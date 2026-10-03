@@ -63,6 +63,8 @@ export function isCustomRun(custom) {
   // about. Missing this line would have let a deliberately-shortened debug run
   // count as a win against the real climb — the whole point of the flag.
   if (custom.mapShape && Object.keys(custom.mapShape).length) return true;
+  // A pinned first seat (SPEC §13.4) is a chosen climb, not the seeded one.
+  if (custom.firstSeat) return true;
   return !!(custom.mods && Object.values(custom.mods).some(Boolean));
 }
 

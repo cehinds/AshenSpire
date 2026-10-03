@@ -17,6 +17,11 @@ import {createRegistries} from './src/model/registries.js';
 import {createRunState} from './src/model/state.js';
 import {configureArmamentKitPreview} from './src/dev/armamentKitPreview.js';
 import {renderCard} from './src/ui/components/card.js';
+import {cardLevelCssProperties,cardShapeCssProperties} from './src/ui/models/CardSizeModel.js';
+// This page draws real playing-card faces without booting main.js, so it must
+// project the card's authored size and shape itself. The stylesheet reads those
+// properties and states no shape of its own (see kit.css, WC0).
+for(const [name,value] of Object.entries({...cardLevelCssProperties(),...cardShapeCssProperties()})) document.documentElement.style.setProperty(name,value);
 const r=createRegistries(contentBundle), $=id=>document.getElementById(id);
 for(const cls of r.classes.all()) $('class').add(new Option(cls.name,cls.id));
 for(const id of ['right','left']) {$(id).add(new Option('Empty Hand',''));for(const p of r.equipment.armaments) $(id).add(new Option(p.name,p.id));}

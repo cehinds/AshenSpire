@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "rogue-nightveil",
+  "classId": "rogue",
+  "armourId": "nightveil",
+  "effectsBaked": false,
+  "source": "sources/rogue-nightveil.png",
+  "sourceSha256": "12c2d1dd6dd967cbf8b850f099492561a2ac32662a8fbc56b0b04c50d75dd935",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.320754716981132,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        8,
+        18,
+        294,
+        318
+      ],
+      "core": [
+        20,
+        30,
+        282,
+        306
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        158.0,
+        288
+      ],
+      "offset": [
+        47,
+        100
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        58,
+        113,
+        419,
+        485
+      ],
+      "file": "frames/rogue-nightveil/STANCE-READY.webp",
+      "sha256": "12a03a992d520f960a257723c5bb63d1c0d85083976fed3bbf88da84418cbe6a"
+    },
+    "ATK-01": {
+      "content": [
+        327,
+        25,
+        608,
+        319
+      ],
+      "core": [
+        339,
+        37,
+        596,
+        307
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        150.5,
+        282
+      ],
+      "offset": [
+        57,
+        108
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        117,
+        422,
+        484
+      ],
+      "file": "frames/rogue-nightveil/ATK-01.webp",
+      "sha256": "faf31291cb4543cee0c84102fe588c73310f8a61167e4b6d8d50d266361c0ad7"
+    },
+    "ATK-02": {
+      "content": [
+        638,
+        26,
+        928,
+        319
+      ],
+      "core": [
+        650,
+        38,
+        916,
+        307
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        156.0,
+        281
+      ],
+      "offset": [
+        50,
+        109
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        55,
+        118,
+        420,
+        483
+      ],
+      "file": "frames/rogue-nightveil/ATK-02.webp",
+      "sha256": "134ff444b99faf78051f927481448f2cdbb189cfe3b3963d0f708b25bea5cf44"
+    },
+    "ATK-03": {
+      "content": [
+        955,
+        24,
+        1254,
+        319
+      ],
+      "core": [
+        967,
+        36,
+        1245,
+        307
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        152.0,
+        283
+      ],
+      "offset": [
+        55,
+        106
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        55,
+        116,
+        450,
+        483
+      ],
+      "file": "frames/rogue-nightveil/ATK-03.webp",
+      "sha256": "73c5021585fb626442967a4bafbf0d3247a096717b03598e054062b2ff845493"
+    },
+    "ATK-04": {
+      "content": [
+        9,
+        332,
+        295,
+        630
+      ],
+      "core": [
+        21,
+        344,
+        283,
+        618
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        156.5,
+        286
+      ],
+      "offset": [
+        49,
+        102
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        60,
+        102,
+        418,
+        492
+      ],
+      "file": "frames/rogue-nightveil/ATK-04.webp",
+      "sha256": "8ad03a0c79ed652c57ea75c571be1b63781606bf2d112ebfbf1ab37840450d72"
+    },
+    "ATK-05": {
+      "content": [
+        322,
+        336,
+        623,
+        632
+      ],
+      "core": [
+        334,
+        348,
+        611,
+        620
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        150.0,
+        284
+      ],
+      "offset": [
+        58,
+        105
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        105,
+        456,
+        490
+      ],
+      "file": "frames/rogue-nightveil/ATK-05.webp",
+      "sha256": "c2cf1a6baebf9286a7b1cbb10e36e980f40809e044c85d380271d57e1d41e483"
+    },
+    "ATK-06": {
+      "content": [
+        644,
+        334,
+        928,
+        632
+      ],
+      "core": [
+        656,
+        346,
+        916,
+        620
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        152.0,
+        286
+      ],
+      "offset": [
+        55,
+        102
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        114,
+        418,
+        490
+      ],
+      "file": "frames/rogue-nightveil/ATK-06.webp",
+      "sha256": "f4fab19f8192b1fe94ea21deca3268b05689a1af750a0a6f5bf4d7afcd35a80f"
+    },
+    "ATK-07": {
+      "content": [
+        964,
+        336,
+        1247,
+        632
+      ],
+      "core": [
+        976,
+        348,
+        1235,
+        620
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        152.0,
+        284
+      ],
+      "offset": [
+        55,
+        105
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        116,
+        416,
+        492
+      ],
+      "file": "frames/rogue-nightveil/ATK-07.webp",
+      "sha256": "ce903749927d2d18849897ff223fa5fd6062e08aa4d3a8201f0077829690e727"
+    },
+    "DEFEND": {
+      "content": [
+        14,
+        659,
+        295,
+        943
+      ],
+      "core": [
+        26,
+        671,
+        283,
+        931
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        151.5,
+        272
+      ],
+      "offset": [
+        56,
+        121
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        133,
+        422,
+        493
+      ],
+      "file": "frames/rogue-nightveil/DEFEND.webp",
+      "sha256": "c7c3128fdf7d599faf3456e6872c24757c27bcca08ce100f12664e9698fc9f14"
+    },
+    "HURT": {
+      "content": [
+        318,
+        653,
+        611,
+        944
+      ],
+      "core": [
+        330,
+        665,
+        599,
+        932
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        170.5,
+        279
+      ],
+      "offset": [
+        31,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        40,
+        120,
+        406,
+        485
+      ],
+      "file": "frames/rogue-nightveil/HURT.webp",
+      "sha256": "b2b91ec9fc30baf4cc7474afe89e96356718034d1ba982b0c3e379c8d806b7e8"
+    },
+    "CAST": {
+      "content": [
+        632,
+        651,
+        950,
+        945
+      ],
+      "core": [
+        644,
+        663,
+        938,
+        933
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        163.0,
+        282
+      ],
+      "offset": [
+        41,
+        108
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        41,
+        118,
+        457,
+        483
+      ],
+      "file": "frames/rogue-nightveil/CAST.webp",
+      "sha256": "7d4fc859c5e2e3e8be4ece4776ac86a114e53ab83622985219f87b15ec990a38"
+    },
+    "BUFF": {
+      "content": [
+        973,
+        638,
+        1218,
+        946
+      ],
+      "core": [
+        985,
+        650,
+        1206,
+        934
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        145.0,
+        296
+      ],
+      "offset": [
+        64,
+        89
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        76,
+        97,
+        375,
+        484
+      ],
+      "file": "frames/rogue-nightveil/BUFF.webp",
+      "sha256": "cf8bb88d1d42b3a4ac4ed215013dd84faa0b0291b1d97c349ba17eb59c9b0c38"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        20,
+        968,
+        312,
+        1222
+      ],
+      "core": [
+        32,
+        980,
+        300,
+        1210
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        154.5,
+        242
+      ],
+      "offset": [
+        52,
+        160
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        61,
+        171,
+        431,
+        491
+      ],
+      "file": "frames/rogue-nightveil/STANCE-AGGRESSIVE.webp",
+      "sha256": "36ccf518831d872e07aa6f9101a073fa0d9759bff3730ba7fc883f515c48d107"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        338,
+        959,
+        612,
+        1225
+      ],
+      "core": [
+        350,
+        971,
+        600,
+        1213
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        145.5,
+        254
+      ],
+      "offset": [
+        64,
+        145
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        157,
+        425,
+        492
+      ],
+      "file": "frames/rogue-nightveil/STANCE-DEFENSIVE.webp",
+      "sha256": "2a9fc93991607aea917673cedfa5242f8f305495bcbcfce4a0aa013a5cf9257e"
+    },
+    "PORTRAIT": {
+      "content": [
+        632,
+        948,
+        945,
+        1230
+      ],
+      "core": [
+        644,
+        960,
+        933,
+        1218
+      ],
+      "scale": 1.4824281150159744,
+      "sourceFootAnchor": [
+        156.5,
+        270
+      ],
+      "offset": [
+        24,
+        80
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        37,
+        90,
+        482,
+        488
+      ],
+      "file": "frames/rogue-nightveil/PORTRAIT.webp",
+      "sha256": "60ec5f08a2252d8cd48f29c145c2c7d9bf0fbc5af691cdbf27a35753e4b39504"
+    },
+    "CONVERSATION": {
+      "content": [
+        992,
+        928,
+        1208,
+        1233
+      ],
+      "core": [
+        1004,
+        940,
+        1196,
+        1221
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        124.0,
+        293
+      ],
+      "offset": [
+        92,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        100,
+        102,
+        374,
+        486
+      ],
+      "file": "frames/rogue-nightveil/CONVERSATION.webp",
+      "sha256": "e9f2c3c55b7034f798fed8b0df271dade0f3766f28a371f4293cb2c06a7ec391"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

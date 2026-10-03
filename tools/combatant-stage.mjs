@@ -7,8 +7,8 @@
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
+import { fileURLToPath } from 'node:url';
+import { buildPageUrl, launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -70,7 +70,7 @@ async function main() {
 
   const served = standalone ? null : await serve({ root: ROOT, port: 8581, open: false });
   const base = standalone
-    ? pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href
+    ? await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html'))
     : `${served.url}/`;
   if (standalone && !existsSync(resolve(ROOT, 'dist/AshenSpire.html'))) {
     console.error('combatant-stage: UNKNOWN — dist/AshenSpire.html is missing');
@@ -139,6 +139,15 @@ async function main() {
         const safeCenter=(safeTop+safeBottom)/2;
         const frames=[...document.querySelectorAll('.combatant')].filter(visible).map((frame) => {
           const card=rect(frame.querySelector('.combatant-card'));
+          // The transparent sprite canvas is not visible artwork. Compare the
+          // intent against its measured idle art top, retaining the card's
+          // bottom (health/details) for hand-clearance checks.
+          const sprite=rect(frame.querySelector('.sprite'));
+          const visibleHeight=Number(frame.dataset.spriteVisibleHeight);
+          if (visibleHeight > 0) {
+            card.top=sprite.bottom-visibleHeight;
+            card.height=card.bottom-card.top;
+          }
           const intentEl=frame.querySelector('.intent');
           const intent=visible(intentEl)?rect(intentEl):null;
           const top=intent?intent.top:card.top;

@@ -81,11 +81,18 @@ check('the retired-name door migrates Vigour to Constitution, never the reverse'
 check('HP and Stamina consume Constitution; HP follows the resolved per-point rule', () => {
   const hp = contentBundle.derivedStatRules.rules.hp;
   const stamina = contentBundle.derivedStatRules.rules.stamina;
-  eq(hp.sourceStat, 'constitution', 'HP source');
+  // Ruleset 7: a base and a decimal weight per attribute, no tier. HP and
+  // Stamina read a spread now; Constitution is the heaviest weight in both.
+  eq(hp.constitution, 4, 'HP source (ruleset 7: four per point of constitution)');
   eq(hp.base, 30, 'HP base');
-  eq(hp.pointsPerTier ?? contentBundle.derivedStatRules.defaults.pointsPerTier, 1, 'HP points per tier');
-  eq(hp.gainPerTier, 2, 'HP gain per tier');
-  eq(stamina.sourceStat, 'constitution', 'Stamina source');
+  eq(hp.perLevel, 2, 'HP growth per level');
+  assert(!('pointsPerTier' in hp) && !('gainPerTier' in hp), 'HP states no tier and no gain');
+  eq(stamina.constitution, 0.5, 'Stamina source (ruleset 7: half a point per constitution)');
+  for (const [id, row] of [['hp', hp], ['stamina', stamina]]) {
+    const heaviest = Object.entries(row).filter(([key]) => contentBundle.attributes.some((a) => a.id === key))
+      .sort((a, b) => b[1] - a[1])[0][0];
+    eq(heaviest, 'constitution', `${id}'s heaviest attribute`);
+  }
 });
 
 
@@ -141,17 +148,28 @@ check('the production content door reports modifiers:null by its named path inst
 });
 
 check('attribute-tier relic rows must fold into their target resource rule at content boot', () => {
-  for (const [field, value] of [['sourceStat', 'constitution'], ['pointsPerTier', 4]]) {
-    const bad = cloneBundle();
-    const relic = bad.relics.find((row) => row.id === 'starstoneShard');
-    relic.passives.modifiers = [{
-      tag: 'resource.attributeTier', resource: 'mana', sourceStat: 'wisdom', pointsPerTier: 5, amountPerTier: 1,
-      [field]: value,
+  const MODIFIER = 'relics.starstoneShard.passives.modifiers[0]';
+  const withTier = (manaRow, patch = {}) => {
+    const bundle = cloneBundle();
+    if (manaRow) bundle.derivedStatRules.rules.mana = manaRow;
+    bundle.relics.find((row) => row.id === 'starstoneShard').passives.modifiers = [{
+      tag: 'resource.attributeTier', resource: 'mana', sourceStat: 'wisdom', pointsPerTier: 1, amountPerTier: 1, ...patch,
     }];
-    const result = validateContent(bad);
-    assert(!result.ok, `validateContent accepted incompatible ${field}`);
-    assert(result.errors.some((row) => row.path === `relics.starstoneShard.passives.modifiers[0].${field}`),
-      `${field} refusal did not name its row: ${JSON.stringify(result.errors)}`);
+    return validateContent(bundle).errors.filter((row) => row.path.startsWith(MODIFIER));
+  };
+  // Ruleset 7's shipped Mana answers to four attributes, so no tier has one
+  // attribute to fold into: the row is refused whole, by the modifier's path.
+  const shipped = withTier(null);
+  assert(shipped.some((row) => row.path === MODIFIER && /weighted across/.test(row.msg)),
+    `a tier on the shipped multi-attribute Mana row was not refused whole: ${JSON.stringify(shipped)}`);
+  // The field-level contract, on a single-attribute Mana row written here: one
+  // point of Wisdom per Mana, so a tier on WIS per 1 point folds cleanly.
+  const WIS_MANA = { base: 1, wisdom: 1, perLevel: 0.2 };
+  eq(JSON.stringify(withTier(WIS_MANA)), '[]', 'a matching WIS/1 tier on a WIS x 1 row');
+  for (const [field, value] of [['sourceStat', 'constitution'], ['pointsPerTier', 4]]) {
+    const errors = withTier(WIS_MANA, { [field]: value });
+    assert(errors.some((row) => row.path === `${MODIFIER}.${field}`),
+      `${field} refusal did not name its row: ${JSON.stringify(errors)}`);
   }
 });
 
@@ -162,11 +180,15 @@ check('attribute-tier relic rows reject a non-floor target rule at content boot'
     tag: 'resource.attributeTier', resource: 'hp', sourceStat: 'constitution',
     pointsPerTier: 1, amountPerTier: 1,
   });
-  bad.derivedStatRules.rules.hp.rounding = 'ceil';
+  // Ruleset 7's shipped HP also reads STR and WIS, which is refused on its
+  // own; a CON-only row written here leaves the rounding as the one defect.
+  bad.derivedStatRules.rules.hp = { base: 30, constitution: 4, perLevel: 2, rounding: 'ceil' };
   const result = validateContent(bad);
   assert(!result.ok, 'validateContent accepted hp rounding=ceil with a tier-folding relic');
-  assert(result.errors.some((row) => row.path === 'relics.forsakenMedallion.passives.modifiers[1]' && row.msg.includes('rounding')),
+  const modifier = result.errors.filter((row) => row.path === 'relics.forsakenMedallion.passives.modifiers[1]');
+  assert(modifier.some((row) => row.msg.includes('rounding')),
     `rounding refusal did not name the modifier row: ${JSON.stringify(result.errors)}`);
+  assert(!modifier.some((row) => /weighted across/.test(row.msg)), `the fixture row is not single-attribute: ${JSON.stringify(modifier)}`);
 });
 
 check('starter relic display numbers derive from modifier rows, never duplicated prose', () => {
@@ -198,24 +220,33 @@ check('fresh runs declare a permanent max-HP adjustment ledger at zero', () => {
 });
 
 check('each adjacent CON point adds exactly the resolved HP gain', () => {
+  // The lean Herald (CON 2, WIS 3) moves points from Wisdom into
+  // Constitution; lean's ceiling is 4, so CON 2 -> 3 -> 4 is its whole range.
+  // Not the Reaver's Strength any more: ruleset 7's HP reads STR 0.35, and
+  // STR 3 -> 2 drops floor(1.05) to 0, which is a point of HP the CON step
+  // did not cost. WIS 0.1 floors to 0 at every lean value, so here the CON
+  // term is the only one that moves.
   const atCon = (constitution) => {
     const source = cloneBundle();
-    const row = clone(source.attributeRules.presets.tuned.reaver);
+    const row = clone(source.attributeRules.presets.lean.herald);
     const delta = constitution - row.constitution;
     row.constitution = constitution;
-    row.strength -= delta;
+    row.wisdom -= delta;
     const registries = createRegistries(source);
     return {
-      run: createRunState({ seed: 0x10 + constitution, classId: 'reaver', registries, attributes: row }),
+      run: createRunState({ seed: 0x10 + constitution, classId: 'herald', registries, attributes: row }),
       registries,
     };
   };
-  const at10 = atCon(10).run;
-  const at14 = atCon(14).run;
-  const { run: at15, registries } = atCon(15);
-  const hp = at15.derivedStatRuleSnapshot.rules.rules.hp;
-  eq(at14.maxHp - at10.maxHp, 4 * hp.gainPerTier, 'four CON points add four resolved gains');
-  eq(at15.maxHp - at14.maxHp, hp.gainPerTier, 'one CON point adds one resolved gain');
+  const at2 = atCon(2).run;
+  const at3 = atCon(3).run;
+  const { run: at4 } = atCon(4);
+  // Ruleset 7: HP's Constitution weight is 4, a whole number, so every point
+  // pays floor(CON x 4) - floor((CON - 1) x 4) = 4 exactly.
+  const hp = at4.derivedStatRuleSnapshot.rules.rules.hp;
+  eq(hp.constitution, 4, 'resolved HP weight on Constitution');
+  eq(at4.maxHp - at2.maxHp, 2 * hp.constitution, 'two CON points add two resolved weights');
+  eq(at4.maxHp - at3.maxHp, hp.constitution, 'one CON point adds one resolved weight');
 });
 
 check('no class authors an HP-per-CON coefficient, and a resurrected one still moves nothing (#484)', () => {
@@ -252,14 +283,18 @@ check('no class authors an HP-per-CON coefficient, and a resurrected one still m
   return `${contentBundle.classes.length} classes clean, all inert under a planted coefficient`;
 });
 
-check('WIS 15 gives three Mana and the Starseer starter relic adds one flat Mana, total four', () => {
+check('WIS 4 gives two Mana over the base 1, and the Starseer starter relic adds one flat Mana, total four', () => {
   const registries = createRegistries(contentBundle);
-  const attrs = { strength: 8, dexterity: 10, constitution: 10, wisdom: 15, intelligence: 10 };
+  // Lean: every attribute at 1 and the three free points poured into Wisdom.
+  const attrs = { strength: 1, dexterity: 1, constitution: 1, wisdom: 4, intelligence: 1 };
   const run = createRunState({
     seed: 0x2515, classId: 'starseer', registries, attributes: attrs,
     startingKitId: 'starseerStarstone', profileMeta: { discoveredArmaments: ['starstoneStaff'] },
   });
-  eq(Math.floor(run.attributes.wisdom / 5), 3, 'Wisdom tiers');
+  // Ruleset 7: Mana = 1 + floor(STR 1 x 0.125) + floor(CON 1 x 0.25)
+  // + floor(WIS 4 x 0.5) + floor(INT 1 x 0.125) = 1 + 0 + 0 + 2 + 0 = 3,
+  // plus the relic's flat 1.
+  eq(run.derivedStatRuleSnapshot.rules.rules.mana.wisdom, 0.5, 'Mana weight on Wisdom');
   eq(resourceModifierBonus(registries, run.relics, 'mana', run.attributes), 1, 'flat relic Mana');
   eq(run.maxMana, 4, 'starting Mana');
 });
@@ -270,12 +305,11 @@ check('a Vigour-era save migrates its allocation and rule snapshot back to Const
   const allocation = old.attributes.constitution ?? old.attributes.vigour;
   old.attributes.vigour = allocation;
   delete old.attributes.constitution;
-  old.derivedStatRuleSnapshot.rulesetVersion = 2;
-  old.derivedStatRuleSnapshot.snapshotVersion = 1;
-  old.derivedStatRuleSnapshot.rules.rulesetVersion = 2;
-  delete old.derivedStatRuleSnapshot.relicModifiers;
-  for (const id of ['hp', 'stamina']) old.derivedStatRuleSnapshot.rules.rules[id].sourceStat = 'vigour';
-  Object.assign(old.derivedStatRuleSnapshot.rules.rules.hp, { pointsPerTier: 1, gainPerTier: 1 });
+  // A real ruleset-2 snapshot, as the shipped Vigour bundle serialized it
+  // (tests/fixtures/run-save-vigour-window.json): ruleset 6 rows have no
+  // `sourceStat` to rename, so a Vigour-era snapshot cannot be forged from one.
+  const fixture = JSON.parse(readFileSync(new URL('../tests/fixtures/run-save-vigour-window.json', import.meta.url), 'utf8'));
+  old.derivedStatRuleSnapshot = clone(fixture.vigourEraNative.derivedStatRuleSnapshot);
   const storage = createMemoryStorage();
   storage.setItem(RUN_KEY, JSON.stringify(old));
   const loaded = createSaveManager(storage).loadRun(registries);
@@ -302,9 +336,9 @@ check('new host snapshots carry the resolved data-owned HP rule', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0xc00, classId: 'herald', registries });
   const hp = run.derivedStatRuleSnapshot.rules.rules.hp;
-  eq(hp.sourceStat, 'constitution', 'snapshot source');
+  eq(hp.constitution, 4, 'snapshot source (ruleset 7: four per point of constitution)');
   assert(Number.isFinite(hp.base), 'snapshot HP base must be host-resolved numeric data');
-  assert(Number.isFinite(hp.gainPerTier), 'snapshot HP coefficient must be host-resolved numeric data');
+  assert(Number.isFinite(hp.constitution), 'snapshot HP coefficient must be host-resolved numeric data');
   eq(run.maxHp, expectedHp(registries, run), 'host-stamped maxHp');
 });
 
@@ -415,7 +449,12 @@ check('a save written by the shipped Vigour bundle migrates to host HP without h
   // player's deficit rather than retaining a superseded maximum.
   eq(after.maxHp, expectedHp(registries, after), 'host-derived max HP');
   eq(after.maxHp - after.hp, before.maxHp - before.hp, 'in-flight HP deficit');
-  eq(after.maxStamina, before.maxStamina, 'in-flight stamina pool');
+  // Stamina is re-derived under the same host rule as HP (ruleset 7, the
+  // fixture's STR 13, DEX 10, CON 12 at level 1: 1 + floor(13 x 0.25)
+  // + floor(10 x 0.25) + floor(12 x 0.5) = 1 + 3 + 2 + 6 = 12), and like HP
+  // it keeps its deficit.
+  eq(after.maxStamina, 12, 'host-derived max Stamina');
+  eq(after.maxStamina - after.stamina, before.maxStamina - before.stamina, 'in-flight Stamina deficit');
   eq(after.attributes.constitution, before.attributes.vigour, 'the points arrive under the live name');
   return `maxHp ${before.maxHp} -> ${after.maxHp}; deficit ${after.maxHp - after.hp} preserved`;
 });

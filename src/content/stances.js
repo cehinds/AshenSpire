@@ -1,11 +1,14 @@
 // src/content/stances.js — Reaver stances as data (SPEC §4.5)
 //
 // At most one stance is active; the enterStance opcode handles exclusivity.
-// Stances are combat-scoped.
+// Stances are combat-scoped. `class` names the class that owns the stance:
+// a card that enters "a Stance of your choice" (Warrior's Vow) offers every
+// stance its player's class owns (model/cardChoices.js).
 
 export const stances = [
   {
     id: 'gorefire',
+    class: 'reaver',
     name: 'Gorefire Stance',
     icon: '🔥',
     onEnter: [{ op: 'loseHp', target: 'self', amount: 2 }],
@@ -22,6 +25,7 @@ export const stances = [
   },
   {
     id: 'bulwark',
+    class: 'reaver',
     name: 'Bulwark Stance',
     icon: '🛡',
     onEnter: [{ op: 'block', target: 'self', amount: 3 }],
@@ -33,5 +37,20 @@ export const stances = [
       },
     ],
     tooltip: 'Whenever you play a Skill, gain 2 Block. On entering: gain 3 Block.',
+  },
+  {
+    // The class ability card's stance (plan phase 5a, proposal §4): Brace
+    // holds the line, and LEAVING it for another stance is the tempo —
+    // the next blows land harder.
+    id: 'brace',
+    class: 'reaver',
+    name: 'Brace',
+    icon: '🦶',
+    onEnter: [{ op: 'block', target: 'self', amount: 4 }],
+    modifiers: { damageTakenMult: 0.75 },
+    hooks: [
+      { on: 'stanceExited', do: [{ op: 'applyStatus', target: 'owner', status: 'strength', stacks: 1 }] },
+    ],
+    tooltip: 'Damage taken −25%. On entering: gain 4 Block. On leaving: gain 1 Strength.',
   },
 ];

@@ -1,0 +1,299 @@
+{
+  "generator": "built-in image_gen",
+  "date": "2026-09-19",
+  "encoding": {
+    "quality": 88,
+    "method": 6,
+    "alpha_quality": 100
+  },
+  "items": [
+    {
+      "id": "weapon-straightSword",
+      "catalogId": "straightSword",
+      "name": "Straight Sword",
+      "group": "Weapons / swords",
+      "source": "sources/weapon-straightSword.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 510613,
+      "sourceSha256": "9177c6e4b51f62c32ff821fd6777bb41da1c3b53fa627484fbcf9293bdb32299",
+      "sourceAlphaBounds": [
+        61,
+        44,
+        1222,
+        1214
+      ],
+      "exports": [
+        {
+          "path": "webp/weapon-straightSword-1024.webp",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "bytes": 55562,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/weapon-straightSword-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 18204,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/weapon-straightSword-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 6930,
+          "alphaVerified": true
+        }
+      ]
+    },
+    {
+      "id": "shield-kiteShield",
+      "catalogId": "kiteShield",
+      "name": "Kite Shield",
+      "group": "Weapons / shields",
+      "source": "sources/shield-kiteShield.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1280573,
+      "sourceSha256": "9132533e2184f07a9d21471a93becccae5ffb19eb944f948dbed8cd0c1cd4791",
+      "sourceAlphaBounds": [
+        49,
+        0,
+        1230,
+        1230
+      ],
+      "exports": [
+        {
+          "path": "webp/shield-kiteShield-1024.webp",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "bytes": 115776,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/shield-kiteShield-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 32124,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/shield-kiteShield-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 10020,
+          "alphaVerified": true
+        }
+      ]
+    },
+    {
+      "id": "armor-reaver-default",
+      "catalogId": "reaver/default",
+      "name": "Wayfarer Plate",
+      "group": "Armor / reaver",
+      "source": "sources/armor-reaver-default.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 2073671,
+      "sourceSha256": "3e39723c5fe660e56d584408f8f383ae3c3c646e7177f9331d4765d2d6d29036",
+      "sourceAlphaBounds": [
+        0,
+        35,
+        1236,
+        1228
+      ],
+      "exports": [
+        {
+          "path": "webp/armor-reaver-default-1024.webp",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "bytes": 181068,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/armor-reaver-default-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 52614,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/armor-reaver-default-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 17496,
+          "alphaVerified": true
+        }
+      ]
+    },
+    {
+      "id": "armor-starseer-default",
+      "catalogId": "starseer/default",
+      "name": "Nightweave",
+      "group": "Armor / starseer",
+      "source": "sources/armor-starseer-default.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1381817,
+      "sourceSha256": "23dab4568446d8ad8e8357a394a6bd91c762f73ce3e03ae8b61d18cddf046ed4",
+      "sourceAlphaBounds": [
+        41,
+        0,
+        1226,
+        1254
+      ],
+      "exports": [
+        {
+          "path": "webp/armor-starseer-default-1024.webp",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "bytes": 132610,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/armor-starseer-default-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 39538,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/armor-starseer-default-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 13570,
+          "alphaVerified": true
+        }
+      ]
+    },
+    {
+      "id": "armor-herald-default",
+      "catalogId": "herald/default",
+      "name": "Rite Vestments",
+      "group": "Armor / herald",
+      "source": "sources/armor-herald-default.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1164221,
+      "sourceSha256": "fd9d9e90d441a15c40aa549156f2b9f2e9cce47fd0b84257215d9b7272fdbd21",
+      "sourceAlphaBounds": [
+        59,
+        12,
+        1200,
+        1239
+      ],
+      "exports": [
+        {
+          "path": "webp/armor-herald-default-1024.webp",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "bytes": 86878,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/armor-herald-default-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 26494,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/armor-herald-default-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 9986,
+          "alphaVerified": true
+        }
+      ]
+    },
+    {
+      "id": "armor-rogue-default",
+      "catalogId": "rogue/default",
+      "name": "Gutter Leathers",
+      "group": "Armor / rogue",
+      "source": "sources/armor-rogue-default.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceBytes": 1551543,
+      "sourceSha256": "90c99b4500b6d03d1d458078420896f73e96abdee86a7e701a9fa79a84ea979c",
+      "sourceAlphaBounds": [
+        49,
+        14,
+        1192,
+        1244
+      ],
+      "exports": [
+        {
+          "path": "webp/armor-rogue-default-1024.webp",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "bytes": 125586,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/armor-rogue-default-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 38042,
+          "alphaVerified": true
+        },
+        {
+          "path": "webp/armor-rogue-default-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 13646,
+          "alphaVerified": true
+        }
+      ]
+    }
+  ]
+}

@@ -88,6 +88,14 @@ function requireClean(problems) {
 export function playerLevel(registries, run) {
   requireClean(levelConfigProblems(registries && registries.balance));
   const starting = registries.balance.levels.playerStartingLevel;
+  // A run with the character ledger (plan phase 6) IS its level; the purchase
+  // count below is the shape of a save written before levels were earned.
+  if (run && run.level && typeof run.level === 'object') {
+    if (!Number.isSafeInteger(run.level.level) || run.level.level < 1) {
+      throw new Error(`run.level.level: must be an integer of at least 1, got ${JSON.stringify(run.level.level)}`);
+    }
+    return run.level.level;
+  }
   const purchases = run && run.levelUps;
   if (purchases == null) return starting;
   if (!Number.isSafeInteger(purchases) || purchases < 0) {

@@ -1,0 +1,56 @@
+{
+  "generator": "Built-in image_gen",
+  "date": "2026-09-19",
+  "reference": {
+    "path": "D:/repos/AshenSpire/art/webp-pack-2026-09-19/sources/bellfoundry-map.png",
+    "role": "Style and camera reference only; preserved unchanged"
+  },
+  "loreSources": [
+    "content/source/worldAtlas.json",
+    "src/content/bossDestinations.js",
+    "SPEC.md \u00c2\u00a7 region seats",
+    "art/environments/world-maps.md"
+  ],
+  "scope": "Original concept geography, not canonical navigation; no runtime changes",
+  "assets": [
+    {
+      "id": "MAP-01-briar-sanctum",
+      "name": "Briar Sanctum",
+      "region": "The Hollow Weald",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire local exploration map, landscape 1536x1024. Create an original premium dark fantasy painterly environment map. High elevated three-quarter cartographic view, terrain fills frame with no sky or horizon, consistent miniature architectural scale, readable branching pale stone footpaths and two alternative routes connecting foreground entrance to main upper destination. Weathered charcoal stone and iron, antique gold accents, restrained color, hand-painted tactile brushwork and fine architectural detail. Clear spatial hierarchy with quiet path areas suitable for later UI overlays. No text, letters, labels, frames, compass, symbols, UI, route dots, characters or watermark. No baked gameplay fog. Reference image is STYLE AND CAMERA context only; create a completely different location, do not duplicate Bellfoundry layout. Subject: Briar Sanctum in The Hollow Weald. A ruined circular gothic sanctuary grown into an enormous dead tree amid dense ancient woodland, interwoven thorn roots and olive moss. Central root-choked cloister, roofless side chapels, shallow dark stream crossed by two old stone bridges, winding paths through broken grave terraces and forest clearings, foreground ruined gate. Muted olive foliage, scattered burgundy leaves, warm antique gold shrine metal, charcoal trunks. Main sanctuary fully visible upper center; no bell tower, industrial furnaces or snow. Every path should be visibly walkable; preserve openings between trees.",
+      "generatedFile": "C:/Users/suprbludude/.codex/generated_images/01a0bad0-adbb-7891-94ea-315ce03f1be0/exec-685dcf3e-23df-4781-873c-07385b0739c2.png",
+      "width": 1536,
+      "height": 1024,
+      "source": "sources/MAP-01-briar-sanctum.png",
+      "webp": "webp/MAP-01-briar-sanctum.webp",
+      "pngBytes": 4037838,
+      "webpBytes": 658660
+    },
+    {
+      "id": "MAP-02-hall-of-mirrors",
+      "name": "Hall of Mirrors",
+      "region": "The Pale Marches",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire local exploration map, landscape 1536x1024. Create an original premium dark fantasy painterly environment map. High elevated three-quarter cartographic view, terrain fills frame with no sky or horizon, consistent miniature architectural scale, readable branching pale stone footpaths and two alternative routes connecting foreground entrance to main upper destination. Weathered charcoal stone and iron, antique gold accents, restrained color, hand-painted tactile brushwork and fine architectural detail. Clear spatial hierarchy with quiet path areas suitable for later UI overlays. No text, letters, labels, frames, compass, symbols, UI, route dots, characters or watermark. No baked gameplay fog. Reference image is STYLE AND CAMERA context only; create a completely different location, do not duplicate Bellfoundry layout. Subject: Hall of Mirrors in The Pale Marches. An abandoned glass regent's palace complex across a frozen indigo tarn, snow swept pale stone terraces, long roofless mirror gallery with tall tarnished silver mirror panels clearly catching cold light, collapsed vaulted glasshouse, elegant gothic buttresses and antique gold window tracery. Composition distinct from reference: palace upper right, foreground entrance lower left, a broad curving causeway encircles the tarn with a branching route through a ruined winter garden on left, linked by an angular stone bridge. Ivory snow against charcoal rock, muted indigo water and shadows, sparse burgundy pennants. No forest, bell tower or furnaces; mirror hall must read as the destination. Broken palace is a coherent physical ruin, not floating architecture.",
+      "generatedFile": "C:/Users/suprbludude/.codex/generated_images/01a0bad0-adbb-7891-94ea-315ce03f1be0/exec-5869adac-2aee-43fc-8c42-a31600547234.png",
+      "width": 1536,
+      "height": 1024,
+      "source": "sources/MAP-02-hall-of-mirrors.png",
+      "webp": "webp/MAP-02-hall-of-mirrors.webp",
+      "pngBytes": 4114187,
+      "webpBytes": 646472
+    },
+    {
+      "id": "MAP-03-furnace-chapel",
+      "name": "Furnace Chapel",
+      "region": "The Cinder Reach",
+      "prompt": "Use case: stylized-concept. Asset type: AshenSpire local exploration map, landscape 1536x1024. Create an original premium dark fantasy painterly environment map. High elevated three-quarter cartographic view, terrain fills frame with no sky or horizon, consistent miniature architectural scale, readable branching pale stone footpaths and two alternative routes connecting foreground entrance to main upper destination. Weathered charcoal stone and iron, antique gold accents, restrained color, hand-painted tactile brushwork and fine architectural detail. Clear spatial hierarchy with quiet path areas suitable for later UI overlays. No text, letters, labels, frames, compass, symbols, UI, route dots, characters or watermark. No baked gameplay fog. Reference image is STYLE AND CAMERA context only; create a completely different location, do not duplicate Bellfoundry layout. Subject: Furnace Chapel in The Cinder Reach. A monumental ruined gothic chapel fused with a sacred furnace, open glowing kiln mouth in the apse, tall blackened chimneys and iron flues, ribbed stone vaults with antique gold reliquary details. Harsh volcanic basalt terraces, banks of pale ash, small controlled ember-red lava fissures deep below paths. Composition distinct from reference: chapel upper left on a basalt platform, foreground entry lower right; diagonal pilgrim stair ascends to a central plaza with an unlit brazier, alternate lower path passes abandoned coal sheds and rejoins over a heavy iron-supported stone viaduct. Readable broad ash-grey paths, weathered charcoal iron, muted burgundy banners, ember orange restricted to furnace and fissures. Dry landscape, no river, no trees, no snow, no bell tower. Imposing sacred-industrial atmosphere without smoke obscuring navigation.",
+      "generatedFile": "C:/Users/suprbludude/.codex/generated_images/01a0bad0-adbb-7891-94ea-315ce03f1be0/exec-159766dd-672f-46fa-b2af-0bfc64f2edaf.png",
+      "width": 1536,
+      "height": 1024,
+      "source": "sources/MAP-03-furnace-chapel.png",
+      "webp": "webp/MAP-03-furnace-chapel.webp",
+      "pngBytes": 3708970,
+      "webpBytes": 574648
+    }
+  ]
+}

@@ -110,7 +110,7 @@ export function armourForClass(classId) {
 
 /** The set a class starts in — the one row per class with no unlock. */
 export function startingArmour(classId) {
-  return armourForClass(classId).find((o) => o.unlock === '') || null;
+  return armourForClass(classId).find((o) => o.unlock === '' && !o.sharedSet) || null;
 }
 
 /** Armour is keyed by (classId, id) because ids repeat across classes. */

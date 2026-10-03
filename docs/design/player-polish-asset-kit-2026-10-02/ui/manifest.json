@@ -1,0 +1,1412 @@
+{
+  "version": 1,
+  "purpose": "Scalable UI concept assets matching the player-polish preview images; integration is separate.",
+  "palette": {
+    "soot": "#0d0b08",
+    "raised": "#171310",
+    "panel": "#241d15",
+    "brass": "#c9a227",
+    "brassWorn": "#a58a52",
+    "brassEdge": "#7a6b54",
+    "ivory": "#e8dcc0",
+    "muted": "#8e826a",
+    "hp": "#a43c35",
+    "mana": "#7fa8c9",
+    "stamina": "#7fd97f",
+    "danger": "#e08585",
+    "bleed": "#e46a44",
+    "blight": "#b5541c",
+    "insanity": "#a06bd0"
+  },
+  "assets": [
+    {
+      "id": "health",
+      "file": "icons/health.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Health engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "mana",
+      "file": "icons/mana.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Mana engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "stamina",
+      "file": "icons/stamina.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Stamina engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "actions",
+      "file": "icons/actions.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Actions engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "block",
+      "file": "icons/block.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Block engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "poise",
+      "file": "icons/poise.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Poise engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "attack",
+      "file": "icons/attack.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Attack engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "skill",
+      "file": "icons/skill.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Skill engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "deck",
+      "file": "icons/deck.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Deck engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "draw",
+      "file": "icons/draw.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Draw engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "discard",
+      "file": "icons/discard.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Discard engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "cinders",
+      "file": "icons/cinders.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Cinders engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "flask-health",
+      "file": "icons/flask-health.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Flask Health engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "flask-mana",
+      "file": "icons/flask-mana.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Flask Mana engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "relic",
+      "file": "icons/relic.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Relic engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "equipment",
+      "file": "icons/equipment.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Equipment engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "sword",
+      "file": "icons/sword.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Sword engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "shield",
+      "file": "icons/shield.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Shield engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "armour",
+      "file": "icons/armour.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Armour engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "inventory",
+      "file": "icons/inventory.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Inventory engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "weight",
+      "file": "icons/weight.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Weight engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "link",
+      "file": "icons/link.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Link engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "compare",
+      "file": "icons/compare.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Compare engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "journey",
+      "file": "icons/journey.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Journey engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "world",
+      "file": "icons/world.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "World engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "map",
+      "file": "icons/map.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Map engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "location",
+      "file": "icons/location.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Location engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "combat",
+      "file": "icons/combat.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Combat engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "boss",
+      "file": "icons/boss.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Boss engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "merchant",
+      "file": "icons/merchant.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Merchant engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "smith",
+      "file": "icons/smith.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Smith engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "rest",
+      "file": "icons/rest.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Rest engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "reward",
+      "file": "icons/reward.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Reward engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "quest",
+      "file": "icons/quest.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Quest engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "dialogue",
+      "file": "icons/dialogue.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Dialogue engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "progression",
+      "file": "icons/progression.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Progression engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "compendium",
+      "file": "icons/compendium.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Compendium engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "coop",
+      "file": "icons/coop.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Coop engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "connected",
+      "file": "icons/connected.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Connected engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "disconnected",
+      "file": "icons/disconnected.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Disconnected engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "history",
+      "file": "icons/history.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "History engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "save",
+      "file": "icons/save.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Save engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "profile",
+      "file": "icons/profile.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Profile engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "settings",
+      "file": "icons/settings.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Settings engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "display",
+      "file": "icons/display.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Display engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "audio",
+      "file": "icons/audio.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Audio engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "controls",
+      "file": "icons/controls.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Controls engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "accessibility",
+      "file": "icons/accessibility.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Accessibility engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "touch",
+      "file": "icons/touch.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Touch engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "contrast",
+      "file": "icons/contrast.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Contrast engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "motion",
+      "file": "icons/motion.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Motion engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "search",
+      "file": "icons/search.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Search engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "menu",
+      "file": "icons/menu.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Menu engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "close",
+      "file": "icons/close.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Close engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "back",
+      "file": "icons/back.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Back engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "next",
+      "file": "icons/next.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Next engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "expand",
+      "file": "icons/expand.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Expand engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "collapse",
+      "file": "icons/collapse.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Collapse engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "check",
+      "file": "icons/check.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Check engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "lock",
+      "file": "icons/lock.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Lock engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "warning",
+      "file": "icons/warning.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Warning engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "info",
+      "file": "icons/info.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Info engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "reset",
+      "file": "icons/reset.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Reset engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "seed",
+      "file": "icons/seed.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Seed engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "target",
+      "file": "icons/target.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Target engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "strength",
+      "file": "icons/strength.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Strength engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "dexterity",
+      "file": "icons/dexterity.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Dexterity engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "weak",
+      "file": "icons/weak.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Weak engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "vulnerable",
+      "file": "icons/vulnerable.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Vulnerable engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "frail",
+      "file": "icons/frail.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Frail engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "bleed",
+      "file": "icons/bleed.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Bleed engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "frost",
+      "file": "icons/frost.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Frost engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "insanity",
+      "file": "icons/insanity.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Insanity engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "blight",
+      "file": "icons/blight.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Blight engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "burn",
+      "file": "icons/burn.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Burn engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "regen",
+      "file": "icons/regen.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Regen engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "madness",
+      "file": "icons/madness.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Madness engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "staggered",
+      "file": "icons/staggered.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Staggered engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "unknown",
+      "file": "icons/unknown.svg",
+      "kind": "icons",
+      "width": 24,
+      "height": 24,
+      "description": "Unknown engraved icon",
+      "transparentOutside": true
+    },
+    {
+      "id": "panel-frame",
+      "file": "components/panel-frame.svg",
+      "kind": "components",
+      "width": 360,
+      "height": 240,
+      "description": "Open brass folio frame",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        24,
+        24,
+        24,
+        24
+      ]
+    },
+    {
+      "id": "panel-backed",
+      "file": "components/panel-backed.svg",
+      "kind": "components",
+      "width": 360,
+      "height": 240,
+      "description": "Backed soot folio panel",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        24,
+        24,
+        24,
+        24
+      ]
+    },
+    {
+      "id": "panel-selected",
+      "file": "components/panel-selected.svg",
+      "kind": "components",
+      "width": 360,
+      "height": 240,
+      "description": "Selected folio panel with additional inner outline",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        24,
+        24,
+        24,
+        24
+      ]
+    },
+    {
+      "id": "mobile-tray",
+      "file": "components/mobile-tray.svg",
+      "kind": "components",
+      "width": 360,
+      "height": 240,
+      "description": "Portrait bottom tray backing; handle is decorative",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        32,
+        24,
+        24,
+        24
+      ]
+    },
+    {
+      "id": "hud-strip",
+      "file": "components/hud-strip.svg",
+      "kind": "components",
+      "width": 360,
+      "height": 64,
+      "description": "Compact HUD strip backing",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        24,
+        24,
+        24,
+        24
+      ]
+    },
+    {
+      "id": "tooltip",
+      "file": "components/tooltip.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 128,
+      "description": "Status and hint folio backing",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        24,
+        24,
+        24,
+        24
+      ]
+    },
+    {
+      "id": "item-slot",
+      "file": "components/item-slot.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Inventory and relic slot backing",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "id": "item-slot-selected",
+      "file": "components/item-slot-selected.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Selected inventory slot with distinct double outline",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "id": "button-neutral",
+      "file": "components/button-neutral.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Neutral action surface",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        16,
+        24,
+        16,
+        24
+      ]
+    },
+    {
+      "id": "button-selected",
+      "file": "components/button-selected.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Selected action surface",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        16,
+        24,
+        16,
+        24
+      ]
+    },
+    {
+      "id": "button-primary-ready",
+      "file": "components/button-primary-ready.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Primary Ready action surface",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        16,
+        24,
+        16,
+        24
+      ]
+    },
+    {
+      "id": "button-primary-focus",
+      "file": "components/button-primary-focus.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Primary Focus action surface",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        16,
+        24,
+        16,
+        24
+      ]
+    },
+    {
+      "id": "button-primary-pressed",
+      "file": "components/button-primary-pressed.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Primary Pressed action surface",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        16,
+        24,
+        16,
+        24
+      ]
+    },
+    {
+      "id": "button-exit-focus",
+      "file": "components/button-exit-focus.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Exit Focus action surface",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        16,
+        24,
+        16,
+        24
+      ]
+    },
+    {
+      "id": "button-danger-ready",
+      "file": "components/button-danger-ready.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Danger Ready action surface",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        16,
+        24,
+        16,
+        24
+      ]
+    },
+    {
+      "id": "button-disabled",
+      "file": "components/button-disabled.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Disabled action surface",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        16,
+        24,
+        16,
+        24
+      ]
+    },
+    {
+      "id": "card-folio",
+      "file": "components/card-folio.svg",
+      "kind": "components",
+      "width": 240,
+      "height": 336,
+      "description": "Folio card frame with clear artwork aperture and text surface",
+      "transparentOutside": true,
+      "slots": {
+        "artwork": [
+          10,
+          10,
+          220,
+          180
+        ],
+        "name": [
+          18,
+          197,
+          204,
+          24
+        ],
+        "type": [
+          18,
+          237,
+          204,
+          20
+        ],
+        "body": [
+          18,
+          274,
+          204,
+          44
+        ]
+      }
+    },
+    {
+      "id": "card-folio-selected",
+      "file": "components/card-folio-selected.svg",
+      "kind": "components",
+      "width": 240,
+      "height": 336,
+      "description": "Folio card frame with clear artwork aperture and text surface",
+      "transparentOutside": true,
+      "slots": {
+        "artwork": [
+          10,
+          10,
+          220,
+          180
+        ],
+        "name": [
+          18,
+          197,
+          204,
+          24
+        ],
+        "type": [
+          18,
+          237,
+          204,
+          20
+        ],
+        "body": [
+          18,
+          274,
+          204,
+          44
+        ]
+      }
+    },
+    {
+      "id": "card-parchment-label",
+      "file": "components/card-parchment-label.svg",
+      "kind": "components",
+      "width": 220,
+      "height": 44,
+      "description": "Parchment card title strip; empty for live text",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        10,
+        18,
+        10,
+        18
+      ]
+    },
+    {
+      "id": "cost-medallion",
+      "file": "components/cost-medallion.svg",
+      "kind": "components",
+      "width": 48,
+      "height": 48,
+      "description": "Unnumbered hexagonal card cost medallion",
+      "transparentOutside": true
+    },
+    {
+      "id": "action-medallion",
+      "file": "components/action-medallion.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Unnumbered Actions counter backing",
+      "transparentOutside": true
+    },
+    {
+      "id": "meter-track",
+      "file": "components/meter-track.svg",
+      "kind": "components",
+      "width": 240,
+      "height": 16,
+      "description": "Empty resource track; fill length comes from actual game state",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        6,
+        8,
+        6,
+        8
+      ]
+    },
+    {
+      "id": "meter-fill-health",
+      "file": "components/meter-fill-health.svg",
+      "kind": "components",
+      "width": 232,
+      "height": 8,
+      "description": "Health resource or buildup fill",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "meter-fill-mana",
+      "file": "components/meter-fill-mana.svg",
+      "kind": "components",
+      "width": 232,
+      "height": 8,
+      "description": "Mana resource or buildup fill",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "meter-fill-stamina",
+      "file": "components/meter-fill-stamina.svg",
+      "kind": "components",
+      "width": 232,
+      "height": 8,
+      "description": "Stamina resource or buildup fill",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "meter-fill-poise",
+      "file": "components/meter-fill-poise.svg",
+      "kind": "components",
+      "width": 232,
+      "height": 8,
+      "description": "Poise resource or buildup fill",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "meter-fill-bleed",
+      "file": "components/meter-fill-bleed.svg",
+      "kind": "components",
+      "width": 232,
+      "height": 8,
+      "description": "Bleed resource or buildup fill",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "meter-fill-blight",
+      "file": "components/meter-fill-blight.svg",
+      "kind": "components",
+      "width": 232,
+      "height": 8,
+      "description": "Blight resource or buildup fill",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "meter-fill-insanity",
+      "file": "components/meter-fill-insanity.svg",
+      "kind": "components",
+      "width": 232,
+      "height": 8,
+      "description": "Insanity resource or buildup fill",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        2,
+        4,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "meter-segments",
+      "file": "components/meter-segments.svg",
+      "kind": "components",
+      "width": 240,
+      "height": 16,
+      "description": "Eight-cell decorative strip example; compose live cell count instead of implying a fixed game maximum",
+      "transparentOutside": true
+    },
+    {
+      "id": "charge-empty",
+      "file": "components/charge-empty.svg",
+      "kind": "components",
+      "width": 20,
+      "height": 24,
+      "description": "Unnumbered flask charge marker",
+      "transparentOutside": true
+    },
+    {
+      "id": "charge-filled",
+      "file": "components/charge-filled.svg",
+      "kind": "components",
+      "width": 20,
+      "height": 24,
+      "description": "Unnumbered flask charge marker",
+      "transparentOutside": true
+    },
+    {
+      "id": "map-node-reachable",
+      "file": "components/map-node-reachable.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Map route node: reachable",
+      "transparentOutside": true
+    },
+    {
+      "id": "map-node-selected",
+      "file": "components/map-node-selected.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Map route node: selected",
+      "transparentOutside": true
+    },
+    {
+      "id": "map-node-visited",
+      "file": "components/map-node-visited.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Map route node: visited",
+      "transparentOutside": true
+    },
+    {
+      "id": "map-node-locked",
+      "file": "components/map-node-locked.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Map route node: locked",
+      "transparentOutside": true
+    },
+    {
+      "id": "map-node-unknown",
+      "file": "components/map-node-unknown.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Map route node: unknown",
+      "transparentOutside": true
+    },
+    {
+      "id": "map-node-current",
+      "file": "components/map-node-current.svg",
+      "kind": "components",
+      "width": 64,
+      "height": 64,
+      "description": "Map route node: current",
+      "transparentOutside": true
+    },
+    {
+      "id": "divider-ornate",
+      "file": "components/divider-ornate.svg",
+      "kind": "components",
+      "width": 480,
+      "height": 20,
+      "description": "Wide horizontal folio divider",
+      "transparentOutside": true
+    },
+    {
+      "id": "divider-plain",
+      "file": "components/divider-plain.svg",
+      "kind": "components",
+      "width": 480,
+      "height": 4,
+      "description": "Plain separator",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        1,
+        2,
+        1,
+        2
+      ]
+    },
+    {
+      "id": "heading-spark",
+      "file": "components/heading-spark.svg",
+      "kind": "components",
+      "width": 40,
+      "height": 40,
+      "description": "Small heading ornament",
+      "transparentOutside": true
+    },
+    {
+      "id": "corner-engraved",
+      "file": "components/corner-engraved.svg",
+      "kind": "components",
+      "width": 40,
+      "height": 40,
+      "description": "Top left frame corner; rotate for other corners",
+      "transparentOutside": true
+    },
+    {
+      "id": "focus-outline",
+      "file": "components/focus-outline.svg",
+      "kind": "components",
+      "width": 280,
+      "height": 56,
+      "description": "Non-color keyboard or controller focus ring",
+      "transparentOutside": true,
+      "nineSliceInsets": [
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    {
+      "id": "selection-tick",
+      "file": "components/selection-tick.svg",
+      "kind": "components",
+      "width": 24,
+      "height": 24,
+      "description": "Selected or collected receipt marker; semantics from model",
+      "transparentOutside": true
+    },
+    {
+      "id": "toggle-off",
+      "file": "components/toggle-off.svg",
+      "kind": "components",
+      "width": 52,
+      "height": 28,
+      "description": "Toggle backing: off; accessible control remains live DOM",
+      "transparentOutside": true
+    },
+    {
+      "id": "toggle-on",
+      "file": "components/toggle-on.svg",
+      "kind": "components",
+      "width": 52,
+      "height": 28,
+      "description": "Toggle backing: on; accessible control remains live DOM",
+      "transparentOutside": true
+    },
+    {
+      "id": "slider-track",
+      "file": "components/slider-track.svg",
+      "kind": "components",
+      "width": 240,
+      "height": 12,
+      "description": "Settings slider track with unlabeled decorative ticks",
+      "transparentOutside": true
+    },
+    {
+      "id": "slider-thumb",
+      "file": "components/slider-thumb.svg",
+      "kind": "components",
+      "width": 28,
+      "height": 28,
+      "description": "Diamond slider thumb; enlarged hit region required",
+      "transparentOutside": true
+    },
+    {
+      "id": "tab-marker",
+      "file": "components/tab-marker.svg",
+      "kind": "components",
+      "width": 12,
+      "height": 32,
+      "description": "Gold persistent category selection marker",
+      "transparentOutside": true
+    },
+    {
+      "id": "target-brackets",
+      "file": "components/target-brackets.svg",
+      "kind": "components",
+      "width": 160,
+      "height": 160,
+      "description": "Combat targeting brackets; no targeting legality encoded",
+      "transparentOutside": true
+    }
+  ],
+  "iconDefaultSize": 24,
+  "iconStrokeWidth": 1.65,
+  "filesCount": 129,
+  "noBakedTextOrGameplayValues": true,
+  "sources": [
+    "docs/design/player-polish-2026-10-01/README.md",
+    "docs/design/player-polish-2026-10-01/05-combat-and-threats.png",
+    "docs/design/player-polish-2026-10-01/07-cards-and-relics.png",
+    "docs/design/player-polish-2026-10-01/12-preferences-and-run-setup.png",
+    "docs/architecture-handoff/COLOR-INTERACTION-CONTRACT.md",
+    "src/content/statuses.js",
+    "styles/base.css",
+    "src/framework/data/theme.js"
+  ]
+}

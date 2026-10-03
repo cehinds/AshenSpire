@@ -127,7 +127,7 @@ const FAN_LIFT_PROP = (() => {
 })();
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
   // THE WAIVER THREADING IS GONE, AND SO IS THE REASON FOR IT. It used to
   // forward --waive into the corpus because doorplant finishes on an UNPLANTED
   // copy that must come back green, and the tree carried #295's two findings —
@@ -140,47 +140,32 @@ if (process.argv.includes('--selftest')) {
     timeoutMs: 900000,
     plants: [
       {
-        // THE ROW GOES ON THE TOPBAR — the state he complained about for the
-        // strip, said of the row. H1 is GREEN under this plant (the cards are
-        // nowhere near the topbar), which is exactly why H1 alone is not enough.
+        // Formation now puts the row in a grid track. Pinning that current
+        // row over the topbar should still be caught by H2.
         name: 'the row is pinned over the topbar',
         edits: [{
-          file: 'styles/combat.css',
-          find: '  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 60;',
-          replace: '  position: fixed; inset-inline: 1.6rem; top: 0; bottom: auto; z-index: 60;',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] > .hand-area > .combat-action-row { position: fixed !important; inset: 0 0 auto !important; z-index: 9999 !important; }",
         }],
         expectRed: /BAD\s+H2 /,
       },
       {
-        // THE ROW RISES INTO THE HAND. `--action-row-drop` is the ONE home for
-        // how far the row hangs BELOW the hand and for the band the column
-        // reserves under it (styles/combat.css, #295) — the base rule's
-        // `bottom` is re-declared later against the safe-area insets, so the
-        // token, not the declaration, is where the plant points. A negative
-        // drop lifts the row into the hand-area and the controls sit under the
-        // fanned cards.
+        // Shift the grid footer into the fitted cards; the old drop token no
+        // longer positions this row under formation.
         name: 'the row rises into the hand-area and the cards lie on it',
         edits: [{
-          file: 'styles/combat.css',
-          find: '.combat { --action-row-drop: 7.6rem; }',
-          replace: '.combat { --action-row-drop: -5rem; }',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] > .hand-area > .combat-action-row { transform: translateY(-100px) !important; }",
         }],
         expectRed: /BAD\s+H1 /,
       },
       {
-        // THE FAN GOES BACK TO PUSHING ITS OUTER CARDS DOWN. The exact
-        // expression that shipped, restored — the outermost cards reach past
-        // the hand and onto the row's band.
-        // The magnitude is the plant's: the shipped 6 px step, hanging downward,
-        // put 5.65 px of card onto the old full-width strip; against a row whose
-        // controls sit under specific columns the outer cards must drop far
-        // enough to reach the piles, so the step is 40 px — the same defect
-        // class (the fan pushing cards down), sized to be seen.
-        name: 'the fan hangs downward from its centre again and the outer cards reach the piles',
+        // Fitted cards use --hand-card-y, not the old transform fan. Push their
+        // actual top positions down onto the action row.
+        name: 'the fitted cards hang down over the action row',
         edits: [{
-          file: 'src/ui/components/hand.js',
-          find: 'translateY(${(Math.abs(i - mid) - mid) * 6}px)',
-          replace: 'translateY(${Math.abs(i - mid) * 40}px)',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { top: calc(var(--hand-card-y) + 100px) !important; }",
         }],
         expectRed: /BAD\s+H1 /,
       },
@@ -191,21 +176,18 @@ if (process.argv.includes('--selftest')) {
         // label, which is why H4 is not a courtesy.
         name: 'END TURN clips its key label, so a wide rebound label disappears',
         edits: [{
-          file: 'styles/combat.css',
-          append: '.combat-action-row > .end-turn { width: 4rem; max-width: 4rem; justify-self: center; overflow: hidden; white-space: nowrap; }',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] .combat-action-row > .end-turn { width: 4rem !important; max-width: 4rem !important; justify-self: center !important; overflow: hidden !important; white-space: nowrap !important; }",
         }],
         expectRed: /BAD\s+H3 /,
       },
       {
-        // THE LIFT STOPS BEING RESERVED. hand.js still lifts the fan; the
-        // stylesheet forgets to make room. This is Law 0 clause 5 as a plant —
-        // the fallback is 0px, so the defect is VISIBLE, and this proves the
-        // check can see it rather than trusting the fallback.
-        name: 'the stylesheets stop reserving the fan lift hand.js publishes',
+        // The fitted hand places cards by absolute coordinates. Put them above
+        // its box to prove H6 still catches a clipped fan in the current layout.
+        name: 'the fitted hand places its cards above the hand box',
         edits: [{
-          file: 'styles/combat.css',
-          find: 'padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }',
-          replace: 'padding-bottom: 1rem; }',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { top: calc(var(--hand-card-y) - 500px) !important; }",
         }],
         expectRed: /BAD\s+H6 /,
       },
@@ -244,15 +226,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 /,
       },
       {
-        // THE ROW IS CLIPPED BY THE BOX IT HANGS BELOW. On the wide layout the
-        // row is absolutely positioned under .hand-area; overflow:hidden there
-        // cuts it off while every box and style stays intact. Red by name on
-        // H3 at the desk cells (the phone row is in flow and not clipped).
-        name: 'the hand-area clips its overflow and the row hangs invisible below it on the wide layout',
+        // The footer now occupies a grid track. Put that track just below the
+        // hand-area and clip the parent, recreating a vanished action row.
+        name: 'the hand-area clips a footer shifted below its box',
         edits: [{
-          file: 'styles/combat.css',
-          find: '.hand-area {\n  height: 23rem; flex-shrink: 0; position: relative;',
-          replace: '.hand-area {\n  height: 23rem; flex-shrink: 0; position: relative; overflow: hidden;',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] > .hand-area { overflow: hidden !important; } :root .combat[data-layout='formation'] > .hand-area > .combat-action-row { position: absolute !important; top: 100% !important; left: 0 !important; right: 0 !important; }",
         }],
         expectRed: /BAD\s+H3 1200x730/,
       },
@@ -459,7 +438,7 @@ if (process.argv.includes('--selftest')) {
         // confident nothing this gate printed over the retired strip.
         name: 'the row stops rendering and no H check may green on the empty population',
         edits: [{
-          file: 'src/ui/screens/combat.js',
+          file: 'src/ui/components/combatActionRow.js',
           find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
           replace: '<div class="combat-action-row-planted-away as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
         }],
@@ -467,12 +446,20 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   };
-  const selftestCode = await doorSelftest(SELFTEST);
+  // A SHARD (`--shard i/n`, tools/doorplant.mjs SHARDS) runs part of the corpus;
+  // the count below is the plants THIS run executed, never the corpus total.
+  const shard = resolveShard();
+  const ran = selectShard(SELFTEST.plants, shard).length;
+  const selftestCode = await doorSelftest({ ...SELFTEST, shard });
   // THE COUNT IS THE CORPUS'S, not a literal: a literal said 8 over nine plants.
   // THE TERMINAL LINE IS IN A FORM tools/verdict.mjs ACCEPTS ("label: OK — N <words>, N caught"): the
   // previous wording was refused as SILENCE on the hosted board (run 299) and the whole
   // browser-guard job read red for a selftest that had caught every plant.
-  if (selftestCode === 0) console.log(`hintstrip-selftest: OK — ${SELFTEST.plants.length} plants, ${SELFTEST.plants.length} caught`);
+  if (selftestCode === 0) {
+    // The qualifier prints on its own line: verdict.mjs ends the counted line at its claim.
+    if (shard) console.log(`hintstrip-selftest: shard ${shard.index}/${shard.count} of a ${SELFTEST.plants.length}-plant corpus`);
+    console.log(`hintstrip-selftest: OK — ${ran} plants, ${ran} caught`);
+  }
   process.exit(selftestCode);
 }
 
@@ -519,13 +506,17 @@ const DECLARED_CONTROLS = Object.freeze([
 // not notice. Naming what is NOT identity is the smaller, more durable list.
 const LAYOUT_MODIFIERS = new Set(['cell', 'stack', 'lg', 'sm', 'wide', 'tall', 'fill']);
 const identityOf = (classList) => classList.split(/\s+/).filter((k) => k && !LAYOUT_MODIFIERS.has(k)).join(' ');
+const ROW_SOURCE = 'src/ui/components/combatActionRow.js';
 const EXPECTED_CONTROLS = (() => {
-  const src = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+  // The row's markup lives in the shared component (#1436: solo and co-op
+  // mount the same row), not in screens/combat.js.
+  const src = readFileSync(join(ROOT, ROW_SOURCE), 'utf8');
   // The row is found by its class PREFIX so the H0 plant (which renames the
   // class to make the row vanish) still parses: that plant must reach H0's
-  // empty-population red, not a thrown "could not read the template".
-  const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<!-- Context hints/);
-  if (!row) throw new Error('hintstrip: could not read the action row out of src/ui/screens/combat.js');
+  // empty-population red, not a thrown "could not read the template". It ends
+  // at the template's closing `</div>\`;` (combatActionRowHtml's return).
+  const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<\/div>`;/);
+  if (!row) throw new Error(`hintstrip: could not read the action row out of ${ROW_SOURCE}`);
   // THE KIT SWEEP (2026-09-04): the row's controls are kit builders, so the
   // hook classes are read off the builder calls — the StatPair's `class:`,
   // `pileButton('<kind>')`, End Turn's `className:` — the same names the
@@ -543,7 +534,7 @@ const EXPECTED_CONTROLS = (() => {
   const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));
   const extra = named.filter((n) => !DECLARED_CONTROLS.some((d) => sameSet(n) === sameSet(d)));
   if (missing.length || extra.length) {
-    throw new Error(`hintstrip: the action row in src/ui/screens/combat.js and DECLARED_CONTROLS disagree — `
+    throw new Error(`hintstrip: the action row in ${ROW_SOURCE} and DECLARED_CONTROLS disagree — `
       + `${missing.length ? `the row no longer names ${missing.map((m) => `"${m}"`).join(', ')}` : ''}`
       + `${missing.length && extra.length ? '; ' : ''}`
       + `${extra.length ? `the row names ${extra.map((m) => `"${m}"`).join(', ')} that this gate does not declare` : ''}`
@@ -1158,7 +1149,8 @@ function judge(r, cell, wide, pointer) {
     ok('H5', cell, `inside the viewport, ${r.strip.h} px tall, position:${r.stripFlow.pos}, column overflow ${colOver} px`);
   }
 
-  // H6 RESERVED — the lift hand.js publishes is actually reserved by the sheets.
+  // H6 RESERVED — legacy transform fans reserve their published lift; the
+  // fitted hand publishes zero because its card tops are inside its own box.
   const lift = parseFloat(r.lift) || 0;
   const padTop = parseFloat(r.handBox.padTop) || 0;
   const clippedTop = r.cards.some((c) => c.top < r.hand.top - 0.5);

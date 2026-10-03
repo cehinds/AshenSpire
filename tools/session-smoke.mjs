@@ -31,7 +31,9 @@ function botTurn(combat, memberId) {
     const card = P.piles.hand.find((h) => {
       const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
       if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana;
+      // Stamina is a price too (plan phase 8 put one on the signature arts):
+      // a play the pool cannot fund throws, and a throw ends the bot's turn.
+      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana && (def.staminaCost || 0) <= (P.entity.stamina || 0);
     });
     // A SELF-TARGETING CARD IS NOT AIMED AT AN ENEMY. The engine refuses one
     // that is ("Invalid self target"), and a refusal here used to end the bot's
@@ -784,7 +786,11 @@ try {
   // zero default.
   {
     const p1m = S.session.members.get('p1');
-    const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {} }).value;
+    // The run's OWN derived-stat rules, the way session.mjs stamps it: recomputing
+    // without them proves the receipt only while the live table happens to equal
+    // the run's snapshot, which is exactly what the snapshot exists to stop
+    // (review, #1217).
+    const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {}, attributes: p1m.run.attributes, derivedStatRuleSnapshot: p1m.run.derivedStatRuleSnapshot }).value;
     // The entity carries it as its poise METER's max (state.js stampPlayerPoiseMax);
     // an absent meter is the engine's "no vessel" — the zero this fix removes.
     const meter = S.live.combat.players.get('p1').entity.poiseMeter;
@@ -801,9 +807,21 @@ try {
   }
   const hostEnemy = S.live.combat.enemies[0];
   const snapshotEnemy = S.snapshot().scene.enemies.find((enemy) => enemy.id === hostEnemy.id);
+  const seatSnap = S.snapshot().scene.players.find((p) => p.id === 'p1');
+  const seatHost = S.live.combat.players.get('p1').entity;
+  ok(JSON.stringify(seatSnap.poiseMeter) === JSON.stringify(seatHost.poiseMeter),
+    `the seat's Poise vessel reaches its client (${JSON.stringify(seatSnap.poiseMeter)}) — the co-op HUD draws the bar from this alone`);
+  {
+    // THE SEAT'S KIT CONFERS ITS PROPERTIES. Phase 8 hung staggerBreak on the
+    // staves; a co-op seat holding one must mount it under its OWN owner key.
+    const P = S.live.combat.players.get('p1');
+    const mounted = Object.values(S.live.combat.propertyMounts || {})
+      .some((owned) => Object.values(owned || {}).some((m) => m.kind === 'armament' || m.kind === 'armour'));
+    ok(!P.loadout || mounted, 'a co-op seat mounts its loadout properties, as the solo player does');
+  }
   ok(JSON.stringify(snapshotEnemy.arcaneExposure) === JSON.stringify(hostEnemy.arcaneExposure), 'combat snapshot transports the host Arcane Exposure state exactly');
   ok(JSON.stringify(snapshotEnemy.damageResistanceBySchool) === JSON.stringify(hostEnemy.damageResistanceBySchool), 'combat snapshot keeps raw school resistance separate');
-  const twoPMult = coopHpMult(2);
+  const twoPMult = coopHpMult(2, S.live.combat.hpFactor) * S.live.combat.extraHpMult;
   ok(S.live && Math.abs(S.live.combat.baseHpMult - twoPMult) < 1e-9, 'enemies scaled to the 2-player headcount');
 
   const p1AttributesBefore = JSON.stringify({
@@ -814,8 +832,10 @@ try {
   // the run remains the sole authority and no combat outcome writes it back.
   S.live.combat.players.get('p1').attributeMode = 'ghost';
   S.live.combat.players.get('p1').attributes.strength = 999;
-  const p2DeckBefore = S.session.members.get('p2').run.deck.length;
-  S.autoResolveCombat(botTurn);
+  // This walk proves membership, rewards and reconnect, not whether today's
+  // starter decks win a randomly rolled encounter. Keep real card resolution
+  // while making this fixture's first victory as certain as its solo one below.
+  S.autoResolveCombat((combat, id) => { for (const e of combat.enemies) if (e.alive) e.hp = Math.min(e.hp, 1); botTurn(combat, id); });
   ok(JSON.stringify({
     attributeMode: S.session.members.get('p1').run.attributeMode,
     attributes: S.session.members.get('p1').run.attributes,
@@ -824,8 +844,12 @@ try {
   if (S.scene.kind === 'reward') {
     ok(!!S.scene.offers.p1 && !!S.scene.offers.p2, 'both present members get their own reward offer');
     ok(COOP_CARD_IDS.includes(S.scene.offers.p1.cardIds[S.scene.offers.p1.cardIds.length - 1]), 'party rewards carry a co-op-only card option');
+    // Combat XP can add level-card rows to the same reward. Count those rows
+    // as well as the explicit encounter card instead of assuming no level-up.
+    const p2DeckBefore = S.session.members.get('p2').run.deck.length;
+    const p2LevelCards = (S.scene.offers.p2.levelCards || []).filter(row => Array.isArray(row.cardIds) && row.cardIds.length).length;
     for (const id of Object.keys(S.scene.offers)) S.chooseReward(id, { cardId: S.scene.offers[id].cardIds[0] });
-    ok(S.session.members.get('p2').run.deck.length === p2DeckBefore + 1, 'p2 deck grew by the chosen card');
+    ok(S.session.members.get('p2').run.deck.length === p2DeckBefore + 1 + p2LevelCards, 'p2 deck grew by the chosen encounter card and any level cards');
   }
 
   // --- drop-out: p2 disconnects; the party fights on rescaled to solo ---
@@ -841,7 +865,7 @@ try {
     for (const m of S.livingMembers()) if (m.run.hp < 10) m.run.hp = m.run.maxHp;
   }
   ok(S.scene.kind === 'combat', 'the solo remaining member reaches the next fight');
-  ok(S.live && Math.abs(S.live.combat.baseHpMult - coopHpMult(1)) < 1e-9, 'enemies rescale DOWN to solo when p2 is away');
+  ok(S.live && Math.abs(S.live.combat.baseHpMult - coopHpMult(1, S.live.combat.hpFactor) * S.live.combat.extraHpMult) < 1e-9, 'enemies rescale DOWN to solo when p2 is away');
   const p2CatchBefore = S.session.members.get('p2').catchup.length;
   // The lone fighter must WIN this one: a lost fight with no living fighter is
   // now the party's defeat, whoever stands outside it (Codex on #549), and
@@ -856,8 +880,9 @@ try {
   const deckBefore = p2.run.deck.length;
   const queued = p2.catchup[0];
   ok(queued.type === 'reward' && queued.offer.cardIds.length > 0, 'queued item is a reward with rolled options');
+  const queuedLevelCards = (queued.offer.levelCards || []).filter(row => Array.isArray(row.cardIds) && row.cardIds.length).length;
   const res = S.resolveCatchup('p2', 0, { cardId: queued.offer.cardIds[0], takeRelic: true, flask: true });
-  ok(res.ok && p2.run.deck.length === deckBefore + 1, 'catch-up replay adds the chosen missed card');
+  ok(res.ok && p2.run.deck.length === deckBefore + 1 + queuedLevelCards, 'catch-up replay adds the chosen missed card and any level cards');
   ok(p2.catchup.length === 0, 'catch-up queue drains after replay');
 
   // --- Mend at a shrine: isolate this rule from the long combat walk above.

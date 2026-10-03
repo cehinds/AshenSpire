@@ -70,13 +70,14 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // shot, its fold host, and the settings variants to boot. A screen with one
 // variant is a screen with no conditional rows, and any row it wipes and never
 // restores is unconditional by construction.
+// THE MERCHANT LEFT THIS LIST ON 2026-09-13. W1d replaced its fold with a
+// category rail (FRONTEND-WIREFRAMES.md rule 11: no accordion as a menu
+// shell), so `.shop-bars` no longer exists and nothing wipes a shop host.
+// Its conditional SELL shelf is now absent from the template itself when the
+// toggle is off (shop.js), and tools/shopbars.mjs S6 checks that absence.
 const SCREENS = [
   { shot: 'customize', host: '.cz-fields', variants: [
     { name: 'default', settings: null },
-  ] },
-  { shot: 'shop', host: '.shop-bars', variants: [
-    { name: 'sell ON  (default)', settings: null },
-    { name: 'sell OFF (his toggle)', settings: { shopSell: false } },
   ] },
 ];
 
@@ -105,7 +106,6 @@ const OBSERVER = `(() => {
   const hostSig = (el) => {
     const cls = (el && el.className || '').toString();
     if (/\\bcz-fields\\b/.test(cls)) return '.cz-fields';
-    if (/\\bshop-bars\\b/.test(cls)) return '.shop-bars';
     return null;
   };
   const log = {};
@@ -281,7 +281,7 @@ async function main() {
   } finally { try { cdp.close(); } catch {} try { await browser.close?.(); } catch {} try { served.close?.(); } catch {} }
   console.log(`  ${checks} checks, ${fails} finding(s)`);
   console.log('\n  BOUNDARY — what a green here does NOT mean:');
-  console.log('   · two screens only (customize, shop). A fold host this file does not name is unwatched.');
+  console.log('   · one screen only (customize; the shop left with its fold). A fold host this file does not name is unwatched.');
   console.log('   · the classification is only as good as the INPUTS swept. A conditional row whose');
   console.log('     input is never moved reads as unconditional, and would red honestly but for the');
   console.log('     wrong reason. Adding a condition means adding a VARIANT, never a row.');

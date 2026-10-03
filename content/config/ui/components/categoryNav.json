@@ -1,0 +1,5 @@
+{
+  "sizing": { "railMinHostWidthRem": 60, "bodyHeightFraction": 0.7 },
+  "positioning": { "railGapRem": 0.6, "railInsetRem": 1.4 },
+  "behavior": { "hysteresisRem": 1 }
+}

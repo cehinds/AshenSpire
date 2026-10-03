@@ -1,0 +1,26 @@
+html.relic-review-page { height:auto; min-height:100%; overflow-x:hidden; overflow-y:auto; overscroll-behavior-y:auto; }
+.relic-review-page body.relic-review { height:auto; min-height:100vh; overflow:visible; overscroll-behavior-y:auto; }
+.relic-review { margin:0; padding:32px; background:#121114; color:#ded6c5; font-family:system-ui,sans-serif; }
+.review-header,.relic-review main { max-width:1250px; margin:0 auto; }
+.review-header { margin-bottom:36px; }
+.review-header h1 { font:38px Georgia,serif; color:#ddc48d; margin:8px 0 18px; }
+.review-kicker { letter-spacing:.15em; font-size:12px; color:#bda779; }
+.review-note { max-width:850px; color:#aaa398; line-height:1.6; }
+.relic-review a { color:#d4b675; }
+.review-controls { display:flex;flex-wrap:wrap;gap:20px;margin-top:24px; }
+.review-controls label { display:flex;flex-direction:column;gap:8px;font-size:14px; }
+.review-controls input,.review-controls select { padding:10px 12px;background:#242126;color:#eee2c8;border:1px solid #65543c;border-radius:4px;min-width:220px; }
+.relic-review article[hidden] { display:none; }
+.relic-review article { content-visibility:auto;contain-intrinsic-size:auto 820px; }
+.relic-review article { background:#1b191e; border:1px solid #494035; border-radius:10px; padding:26px; margin-bottom:32px; }
+.relic-review h2 { font:28px Georgia,serif; color:#e1c892; margin:0 0 6px; }
+.relic-review code { color:#aea394; font-size:13px; }
+.relic-review blockquote { margin:20px 0 14px; padding-left:16px; border-left:2px solid #a88a52; font:italic 21px/1.5 Georgia,serif; color:#ede0c5; }
+.lore-context { max-width:950px; font-size:15px; line-height:1.65; }
+.lore-source { font-size:13px; margin-bottom:22px; color:#afa89b; }
+.card-comparison { display:flex; align-items:flex-start; gap:28px; overflow-x:auto; padding:12px 6px 20px; }
+.card-size-group { flex:none; margin:0; width:var(--sample-width); }
+.card-size-group figcaption { color:#dcc38f; font-size:14px; margin-bottom:12px; min-height:43px; }
+.card-size-group figcaption small { color:#afa89b; display:block; font-size:12px; }
+.card-size-group .equipment-poker-card { width:var(--sample-width) !important; min-width:var(--sample-width); max-width:var(--sample-width); margin:0; pointer-events:none; }
+@media(max-width:600px){.relic-review{padding:16px}.relic-review article{padding:18px}.review-header h1{font-size:30px}}

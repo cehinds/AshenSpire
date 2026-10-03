@@ -40,7 +40,7 @@ jobs:
     if: github.event.ref_type == 'branch' && github.event.ref == 'test'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Recreate test from release (or dev)

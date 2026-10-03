@@ -15,6 +15,7 @@
 export const act3Enemies = [
   {
     id: 'ashRevenant',
+    equipmentPower: 0.15,
     size: 'medium',
     tint: 'var(--ember)',
     name: 'Ash Revenant',
@@ -62,6 +63,7 @@ export const act3Enemies = [
   },
   {
     id: 'valkyrieShade',
+    equipmentPower: 0.25,
     size: 'medium',
     tint: 'var(--blood)',
     name: 'Valkyrie Shade',
@@ -101,6 +103,7 @@ export const act3Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'wyrmLord',
+    equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--gold)',
     name: 'Wyrm Lord',
@@ -129,6 +132,7 @@ export const act3Enemies = [
   // ---- Final boss: The Blighted Valkyrie (GDD §2, SPEC §5.3/§10) ---------------------
   {
     id: 'blightedValkyrie',
+    equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--rot)',
     name: 'The Blighted Valkyrie',

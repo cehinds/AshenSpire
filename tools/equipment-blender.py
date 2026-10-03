@@ -453,6 +453,9 @@ lib["hero_rim"].data.energy = 2.6
 # built at the same hand positions on the same camera — drop straight over them.
 lib["WITH_WEAPON"] = False
 for o in rows("outfits.csv"):
+    # Aliases reuse the canonical rig; do not render a second class-shaped copy.
+    if o.get("artClassId") or (o.get("artKey") and o["artKey"] != o["id"]):
+        continue
     build = CLASS_BUILD.get(o["classId"])
     if not build:
         continue
@@ -488,7 +491,17 @@ audit = {"__name__": "palette_audit", "bpy": bpy, "os": os, "json": json, "math"
 exec(compile(open(audit_path, encoding="utf-8").read(), audit_path, "exec"), audit)
 manifest["audit"] = audit["measure"](OUT, manifest)
 
-with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8", newline="\n") as fh:
+# The manifest is not art: for an output folder under assets/ it is tracked at
+# the same path under asset-data/ (tools/asset-data.mjs, docs/ART-REPO-PLAN.md).
+_rel = os.path.relpath(OUT, ROOT).replace(os.sep, "/")
+if _rel == "assets":
+    MANIFEST_DIR = os.path.join(ROOT, "asset-data")
+elif _rel.startswith("assets/"):
+    MANIFEST_DIR = os.path.join(ROOT, "asset-data", _rel[len("assets/"):])
+else:
+    MANIFEST_DIR = OUT
+os.makedirs(MANIFEST_DIR, exist_ok=True)
+with open(os.path.join(MANIFEST_DIR, "manifest.json"), "w", encoding="utf-8", newline="\n") as fh:
     json.dump(manifest, fh, indent=2, sort_keys=True)
 
 print(f"EQUIPMENT OK: {count} armaments + {sets} armour sets -> {OUT}")

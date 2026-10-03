@@ -292,6 +292,12 @@ function mountDetailsDisclosure(host, rows) {
  */
 export function mountDisclosure(host, entries, {
   moreLabel = 'more', armFace = null, layout = 'flow', structure = 'shared',
+  // A SEPARATE DETAIL HOST (W1n, the Armoury's Inventory): the panel lives in
+  // `revealHost` instead of under the tapped face's line, so a workspace can
+  // put the selected item's detail in its own column beside the collection.
+  // `onReveal(key | null)` reports every open and close. Both are additive:
+  // no existing caller passes them, and without them nothing below changes.
+  revealHost = null, onReveal = null,
 } = {}) {
   const rows = [...(entries || [])];
   if (structure === 'details') return mountDetailsDisclosure(host, rows);
@@ -349,7 +355,14 @@ export function mountDisclosure(host, entries, {
   words.hidden = true;
   panel.appendChild(words);
 
+  /** Close and say so; `shut()` is the silent half open() uses before reopening. */
   function close() {
+    const was = openKey;
+    shut();
+    if (was !== null && onReveal) onReveal(null);
+  }
+
+  function shut() {
     openKey = null;
     panel.hidden = true;
     words.hidden = true;
@@ -380,7 +393,8 @@ export function mountDisclosure(host, entries, {
    * decided where it goes next" trap tooltip.js's place() zeroes itself for.
    */
   function placeUnderRow(button) {
-    if (!button) return;
+    // A separate detail host keeps the panel where it is: there is no line to follow.
+    if (!button || revealHost) return;
     const kin = [...faceBox.children].filter((el) => el !== panel);
     const line = button.getBoundingClientRect().top;
     // The first sibling that starts a LATER line — the panel goes before it.
@@ -416,7 +430,7 @@ export function mountDisclosure(host, entries, {
   function open(key) {
     const entry = rows.find((row) => row.key === key);
     if (!entry) return;
-    close();
+    shut();
     openKey = key;
     const node = held.get(key);
     if (node) surface(node);
@@ -437,6 +451,7 @@ export function mountDisclosure(host, entries, {
     // What this panel just put on the glass may itself be a fold that was
     // placed blind. See MOUNTS, above.
     reflowNested();
+    if (onReveal) onReveal(key);
   }
 
   /** The folded row keeps reporting the current choice after it changes. */
@@ -494,8 +509,9 @@ export function mountDisclosure(host, entries, {
 
   for (const entry of faces) drawFace(entry);
   // The panel joins the row AFTER the faces (see the note at the top of this
-  // function); open() moves it under the tapped face's line.
-  faceBox.appendChild(panel);
+  // function); open() moves it under the tapped face's line. With a separate
+  // detail host it lives there instead and never moves.
+  (revealHost || faceBox).appendChild(panel);
 
   // The expander exists only if the data put something behind it, and its
   // count is counted.

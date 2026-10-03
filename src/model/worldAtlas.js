@@ -11,7 +11,35 @@ function hash(text, initial = 2166136261) {
   for (const c of text) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
   return h;
 }
-export function atlasRevision(data) {
+// Columns that present a row without changing any route, encounter, service
+// or claim. They stay out of the revision, because the revision seeds every
+// journey's route and a saved journey refuses a build whose revision moved:
+// naming who hands a quest over (plan phase 10a, the dialogue screen's
+// speaker) must neither reroute a seed nor strand a journey in progress.
+const PRESENTATION_COLUMNS = Object.freeze({ quests: Object.freeze(['speakerId']) });
+// Rows no node can reach stay out of it for the same reason: a service that
+// no `node_services` row places, a service type no remaining service names,
+// and a handler no remaining type names cannot shape a route, an encounter or
+// a claim. So declaring a service before any point carries it (the wise
+// master, SPEC §14.5) neither reroutes a seed nor strands a journey; placing
+// it on a point does move the revision, as any route change does.
+function unplacedRowsOut(data) {
+  const placed = new Set((data.node_services || []).map((row) => row.serviceId));
+  const services = (data.services || []).filter((row) => placed.has(row.serviceId));
+  const typeIds = new Set(services.map((row) => row.serviceTypeId));
+  const types = (data.service_types || []).filter((row) => typeIds.has(row.serviceTypeId));
+  const handlerIds = new Set(types.map((row) => row.handlerId));
+  const handlers = (data.service_handlers || []).filter((row) => handlerIds.has(row.handlerId));
+  return {
+    ...data,
+    ...(data.services ? { services } : {}),
+    ...(data.service_types ? { service_types: types } : {}),
+    ...(data.service_handlers ? { service_handlers: handlers } : {}),
+  };
+}
+
+export function atlasRevision(source) {
+  const data = unplacedRowsOut(source);
   const text = JSON.stringify(
     Object.keys(data)
       .sort()
@@ -21,6 +49,7 @@ export function atlasRevision(data) {
           .map((row) =>
             JSON.stringify(
               Object.keys(row)
+                .filter((k) => !(PRESENTATION_COLUMNS[table] || []).includes(k))
                 .sort()
                 .map((k) => [k, row[k]]),
             ),
@@ -107,9 +136,16 @@ const rowsFor = (data, name, profile) =>
   data[name].filter((r) => r.profileId === profile.profileId);
 
 /** Bounded search over authored edges, independent of combat RNG. Never relaxes a profile. */
-export function generateJourney(seed, profileId = "wanderer", atlas = ATLAS) {
+export function generateJourney(
+  seed,
+  profileId = "wanderer",
+  atlas = ATLAS,
+  { townsPerActMax = Infinity } = {},
+) {
   const p = atlas.profiles[profileId];
   if (!p) throw Error(`Unknown world profile ${profileId}`);
+  if (!(Number.isInteger(townsPerActMax) && townsPerActMax >= 0) && townsPerActMax !== Infinity)
+    throw Error(`townsPerActMax must be a non-negative integer, got ${JSON.stringify(townsPerActMax)}`);
   const d = atlas.data,
     rng = random(
       `${seed}:${p.profileId}:${p.profileVersion}:${atlas.revision}`,
@@ -243,6 +279,22 @@ export function generateJourney(seed, profileId = "wanderer", atlas = ATLAS) {
       branches > p.branchesMax
     ) {
       last = "active node or alternative budget cannot be met";
+      continue;
+    }
+    // THE TOWN BUDGET (plan phase 7, balance.atlas.townsPerActMax): the city
+    // nodes a route stops at are capped per difficulty act, so attrition
+    // between towns is the run's tension. The start is where the run begins,
+    // not a stop on the road, so it is not counted. A route over the cap is
+    // rolled again like any other budget miss; the default (no cap) leaves
+    // every seeded route exactly as it was.
+    const townsByAct = Object.create(null);
+    for (const id of selected) {
+      if (atlas.nodes[id].nodeTypeId !== "city") continue;
+      const act = atlas.world[id].difficultyAct;
+      townsByAct[act] = (townsByAct[act] || 0) + 1;
+    }
+    if (Object.values(townsByAct).some((n) => n > townsPerActMax)) {
+      last = `more than ${townsPerActMax} town(s) in one act`;
       continue;
     }
     const activeEdges = edges.filter(
@@ -575,7 +627,7 @@ export function journeyProblems(j, atlas = ATLAS) {
     j.activeService &&
     (!j.serviceStates[j.activeService.pointId] ||
       j.activeService.ownerId !== j.currentNodeId ||
-      !["shop", "rest"].includes(j.activeService.handlerId))
+      !["shop", "smith", "master", "rest"].includes(j.activeService.handlerId))
   )
     return ["invalid active service"];
   if (Object.keys(j.outcomes).some((id) => !j.activeNodeIds.includes(id)))

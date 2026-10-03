@@ -8,6 +8,7 @@ import { validateEquipment, stampDeck, startingDeckPlan } from '../src/model/loa
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
+import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
 
@@ -27,8 +28,10 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the authored role copies stop summing to the starting deck size',
         file: 'src/content/balance.js',
-        find: 'roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 }',
-        replace: 'roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 }',
+        // The object spans lines since its note moved in beside it (#1243);
+        // the numbers still sit on one line, and this still breaks the sum.
+        find: 'roleCopies: {\n      attack: 4, guard: 4, technique: 1, signature: 1, ability: 1,',
+        replace: 'roleCopies: {\n      attack: 5, guard: 4, technique: 1, signature: 1, ability: 1,',
         expectRed: /FAIL default roleCopies are 4\/4\/1\/1/,
       },
       {
@@ -47,10 +50,38 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'a silent state-loss profile swap is allowed through (the compatibility refusal dropped)',
+        // TWO SITES GUARD THE ATTACK CASE, AND EITHER ALONE REFUSES IT.
+        // stampDeck checks the attack slots in their own plan loop and then
+        // checks every stamped instance again, both throwing the same
+        // `Incompatible attack profile swap`. Planting one site left the other
+        // to throw it, so this plant read as evidence while proving nothing —
+        // it was UNCAUGHT the moment the baseline stopped drowning it. The
+        // defect named here is the refusal being GONE, so both sites go.
+        edits: [
+          {
+            file: 'src/model/loadout.js',
+            find: 'if (prior && next && prior.compatibility !== next.compatibility) {',
+            replace: 'if (false && prior && next && prior.compatibility !== next.compatibility) {',
+          },
+          {
+            file: 'src/model/loadout.js',
+            find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
+            replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
+          },
+        ],
+        expectRed: /FAIL compatibility is consumed to refuse silent state-loss swaps/,
+      },
+      {
+        name: 'the per-instance refusal drops, leaving the non-attack roles unguarded',
+        // The attack-plan loop only ever sees attack slots, so the per-instance
+        // site is the ONLY thing refusing a guard/technique/kit instance. On
+        // its own it is deletable without a single red, which is why it gets
+        // its own plant and its own named assertion rather than sharing the
+        // attack one.
         file: 'src/model/loadout.js',
         find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
         replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
-        expectRed: /FAIL compatibility is consumed to refuse silent state-loss swaps/,
+        expectRed: /FAIL a non-attack role refuses the same silent state-loss swap/,
       },
     ],
   }));
@@ -71,9 +102,9 @@ const expected = {
 };
 const wantedCounts = { attack: 4, guard: 4, technique: 1 };
 
-check(R.balance.startingDeckSize === 10, 'global startingDeckSize is 10', String(R.balance.startingDeckSize));
-check(JSON.stringify(R.balance.equipment?.roleCopies) === JSON.stringify({ ...wantedCounts, signature: 1 }),
-  'default roleCopies are 4/4/1/1', JSON.stringify(R.balance.equipment?.roleCopies));
+check(R.balance.startingDeckSize === 11, 'global startingDeckSize is 11 (10 before the class ability card joined the kit, plan phase 5a)', String(R.balance.startingDeckSize));
+check(JSON.stringify(R.balance.equipment?.roleCopies) === JSON.stringify({ ...wantedCounts, signature: 1, ability: 1 }),
+  'default roleCopies are 4/4/1/1/1', JSON.stringify(R.balance.equipment?.roleCopies));
 
 for (const [classId, want] of Object.entries(expected)) {
   const cls = R.classes.get(classId);
@@ -100,9 +131,14 @@ for (const [classId, want] of Object.entries(expected)) {
     `${classId} starts with the planned ${plan.guardCount} guard instances`, JSON.stringify(run.deck.map((c) => c.equipmentRole)));
   check(plan.attackCount + plan.guardCount === plan.filler,
     `${classId}: base cards fill exactly what the cap left (${plan.filler})`, `${plan.attackCount}+${plan.guardCount} vs ${plan.filler}`);
-  const signatures = run.deck.filter((c) => !c.equipmentRole);
-  check(signatures.length === 1 && signatures[0].cardId === want.signature,
-    `${classId} preserves one fixed signature instance`, JSON.stringify(signatures));
+  // The class grants: the signature and, since plan phase 5a, the ability
+  // card — one instance each, both from the class.
+  const classGrants = run.deck.filter((c) => !c.equipmentRole);
+  const signatures = classGrants.filter((c) => c.cardId === want.signature);
+  check(signatures.length === 1, `${classId} preserves one fixed signature instance`, JSON.stringify(classGrants));
+  const abilityId = R.classes.get(classId).abilityCard;
+  check(classGrants.length === 2 && classGrants.filter((c) => c.cardId === abilityId).length === 1,
+    `${classId} carries its ability card once beside the signature, and nothing else run-owned at birth`, JSON.stringify(classGrants));
 }
 
 const starseer = createRunState({ seed: 2, classId: 'starseer', registries: R });
@@ -116,15 +152,25 @@ check((magic?.effects.find((e) => e.op === 'damage')?.tags || []).includes('star
 check(Array.isArray(magic?.cardTags) && magic.cardTags.includes('starstone'),
   'Ash Staff attack presents its explicit magic/starstone tag', JSON.stringify(magic?.cardTags));
 check(R.cards.get('starstonePebble').name === 'Starstone Pebble', 'IP-safe Starstone Pebble remains authoritative');
-check(attack?.profileReceipt?.base === 2 && attack.profileReceipt.tier === 2
-  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === 4,
-  'Ash Staff INT receipt is exactly 2 + 2 + 0 = 4', JSON.stringify(attack?.profileReceipt));
-check(magic?.effects.find((e) => e.op === 'damage')?.amount === 4,
-  'resolved Ash Staff execution definition uses receipt value 4', JSON.stringify(magic?.effects));
+check(attack?.profileReceipt?.base === 2 && attack.profileReceipt.rating?.id === 'pr'
+  && attack.profileReceipt.rating.attributeValue === 2
+  && attack.profileReceipt.rating.equipmentBase === 1
+  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === 5,
+  'Ash Staff receipt is 2 base + 3 source PR + 0 rarity = 5', JSON.stringify(attack?.profileReceipt));
+check(magic?.effects.find((e) => e.op === 'damage')?.amount === 2,
+  'resolved Ash Staff definition carries base plus rarity before runtime PR', JSON.stringify(magic?.effects));
+const standardSeer = createRunState({ seed: 2, classId: 'starseer', registries: R, attributeMode: 'standard' });
+const standardReceipt = standardSeer.deck.find((c) => c.equipmentRole === 'attack')?.profileReceipt;
+check(standardReceipt?.base === 2 && standardReceipt.rating?.id === 'pr'
+  && standardReceipt.rating.attributeValue === 12
+  && standardReceipt.rating.equipmentBase === 1
+  && standardReceipt.rarityBonus === 0 && standardReceipt.value === 15,
+  'standard mode uses the same direct PR formula against its saved attributes', JSON.stringify(standardReceipt));
 
 const C = createCombat({
   registries: R,
   rng: createRng(71),
+  ratingsRules: resolveCombatRatings({}, contentBundle),
   player: {
     classId: 'starseer', attributes: starseer.attributes, maxHp: starseer.maxHp, hp: starseer.hp,
     maxMana: starseer.maxMana, mana: starseer.mana, maxStamina: starseer.maxStamina, stamina: starseer.stamina,
@@ -133,6 +179,7 @@ const C = createCombat({
   },
   enemyIds: [R.enemies.ids()[0]],
 });
+for (const enemy of C.enemies) enemy.ratings = { ...enemy.ratings, poise: 0, ward: 0 };
 let liveAttack = [...C.piles.hand, ...C.piles.draw].find((c) => c.equipmentRole === 'attack');
 if (!C.piles.hand.includes(liveAttack)) {
   C.piles.draw.splice(C.piles.draw.indexOf(liveAttack), 1);
@@ -141,8 +188,8 @@ if (!C.piles.hand.includes(liveAttack)) {
 const previewDamage = previewCard(C, liveAttack.instanceId, 'e1').values.find((v) => v.op === 'damage').value;
 const hpBefore = C.enemies[0].hp;
 dispatch(C, { type: 'playCard', cardInstanceId: liveAttack.instanceId, targetId: 'e1' });
-check(previewDamage === 4 && hpBefore - C.enemies[0].hp === previewDamage,
-  'Ash Staff magic preview and execution share exact value 4', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
+check(previewDamage === 5 && hpBefore - C.enemies[0].hp === previewDamage,
+  'Ash Staff magic preview and execution share exact value 5', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
 
 // Stable role identity: a profile swap may change what the card resolves to,
 // never its instance id, upgrade flag, or signature card.
@@ -201,29 +248,35 @@ refuses('mutant: role counts must sum to startingDeckSize', /10|sum|startingDeck
     equipment: {
       ...contentBundle.balance.equipment,
       startingDeck: { ...contentBundle.balance.equipment.startingDeck, enabled: false },
-      roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 },
+      roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1, ability: 1 },
     },
   },
 });
 
-// Host-resolved equipment scaling must be snapshotted, not recomputed from
+// Host-resolved equipment profiles must be snapshotted, not recomputed from
 // whatever profile CSV happens to ship when a save resumes.
 let layered;
 let layeredError = '';
 try {
   layered = createRunState({
     seed: 3, classId: 'starseer', registries: R,
+    // THE MODE LAYER IS NOT A CALLER ARGUMENT. Since 9434b7c5 the creation
+    // mode's own `equipmentProfiles` occupies that slot (state.js
+    // initializeRunDerivedStats), so a caller-supplied modeModifiers.
+    // equipmentProfiles is replaced rather than merged — passing one here
+    // would assert a layer that never lands. `tuned` supplies it instead, and
+    // base === -6 below is the proof it did.
     derivedStatOptions: {
-      modeModifiers: { equipmentProfiles: { staffMagicAttack: { gainPerTier: 2 } } },
-      runModifiers: [{ equipmentProfiles: { staffMagicAttack: { gainPerTier: 3 } } }],
-      explicitOverride: { equipmentProfiles: { staffMagicAttack: { gainPerTier: 4 } } },
+      runModifiers: [{ equipmentProfiles: { staffMagicAttack: { baseValue: 3 } } }],
+      explicitOverride: { equipmentProfiles: { staffMagicAttack: { baseValue: 4 } } },
     },
   });
 } catch (error) { layeredError = error.message; layered = createRunState({ seed: 3, classId: 'starseer', registries: R }); }
 const layeredAttack = layered.deck.find((c) => c.equipmentRole === 'attack');
-check(layeredAttack?.profileReceipt?.gainPerTier === 4 && layeredAttack.profileReceipt.value === 10,
-  'mode/run/explicit equipment scaling resolves once with explicit precedence', layeredError || JSON.stringify(layeredAttack?.profileReceipt));
-check(layered.equipmentProfileRuleSnapshot?.profiles?.staffMagicAttack?.gainPerTier === 4,
+check(layeredAttack?.profileReceipt?.base === 4 && layeredAttack.profileReceipt.rating?.id === 'pr'
+  && layeredAttack.profileReceipt.value === 7,
+  'run/explicit equipment profile resolves once with explicit precedence', layeredError || JSON.stringify(layeredAttack?.profileReceipt));
+check(layered.equipmentProfileRuleSnapshot?.profiles?.staffMagicAttack?.baseValue === 4,
   'run persists the host-resolved equipment profile snapshot', JSON.stringify(layered.equipmentProfileRuleSnapshot));
 
 // A profile's tags are tagging.csv rows now, not a column on the profile, so
@@ -238,7 +291,7 @@ const cloneBundle = () => ({
   },
 });
 const driftBundle = cloneBundle();
-driftBundle.equipment.basicCardProfiles.find((p) => p.id === 'staffMagicAttack').gainPerTier = 99;
+driftBundle.equipment.basicCardProfiles.find((p) => p.id === 'staffMagicAttack').baseValue = 99;
 const driftR = createRegistries(driftBundle);
 const beforeDrift = layeredAttack.profileReceipt.value;
 let driftError = '';
@@ -260,7 +313,7 @@ contentRefuses('schema: negative finite cap is refused', /cap.*negative|non-nega
   (b) => { b.equipment.basicCardProfiles[0].cap = -1; });
 contentRefuses('schema: compatibility vocabulary is role-bound', /compatibility/i,
   (b) => { b.equipment.basicCardProfiles[0].compatibility = 'guard-v1'; });
-for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageSchool', 'baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap', 'flavor', 'mods', 'compatibility']) {
+for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageSchool', 'baseValue', 'ratingId', 'cap', 'flavor', 'mods', 'compatibility']) {
   contentRefuses(`schema completeness: missing ${field} is refused`, new RegExp(`basicCardProfiles.*${field}`, 'i'),
     (b) => { delete b.equipment.basicCardProfiles[0][field]; });
 }
@@ -274,12 +327,10 @@ for (const field of ['id', 'role', 'baseCardId', 'displayName', 'icon', 'damageS
 // its defect becomes impossible to write, and this one has not.
 contentRefuses('tagging: a profile with no tag rows is refused', /basicCardProfiles.*carries no tag/i,
   (b) => { b.tagging = b.tagging.filter((row) => !(row.family === 'basicCardProfile' && row.objectId === 'staffMagicAttack')); });
-contentRefuses('schema product: zero pointsPerTier is refused', /pointsPerTier.*> 0/i,
-  (b) => { b.equipment.basicCardProfiles[0].pointsPerTier = 0; });
 contentRefuses('schema product: negative baseValue is refused', /baseValue.*non-negative/i,
   (b) => { b.equipment.basicCardProfiles[0].baseValue = -1; });
-contentRefuses('schema product: unknown scaling stat is refused', /scalingStat.*Dangling|unknown attributes/i,
-  (b) => { b.equipment.basicCardProfiles[0].scalingStat = 'luck'; });
+contentRefuses('schema product: unknown rating is refused', /ratingId.*luck|Expected one of/i,
+  (b) => { b.equipment.basicCardProfiles[0].ratingId = 'luck'; });
 contentRefuses('schema product: duplicate profile id is refused', /Duplicate profile id/i,
   (b) => { b.equipment.basicCardProfiles.push({ ...b.equipment.basicCardProfiles[0] }); });
 
@@ -291,6 +342,17 @@ let incompatibleSaid = '';
 try { stampDeck(R, incompatible); } catch (error) { incompatibleSaid = error.message; }
 check(/Incompatible attack profile swap/.test(incompatibleSaid),
   'compatibility is consumed to refuse silent state-loss swaps', incompatibleSaid);
+// THE ATTACK PLAN LOOP NEVER SEES THESE. Guard, technique and kit-granted
+// instances are refused by the per-instance site alone; the row above is
+// satisfied by either site and so says nothing about this one. Without this
+// red the non-attack half of the refusal is deletable in silence.
+const incompatibleGuardRun = createRunState({ seed: 34, classId: 'starseer', registries: R });
+const incompatibleGuard = incompatibleGuardRun.deck.find((c) => c.equipmentRole === 'guard');
+incompatibleGuard.profileId = 'staffMagicAttack';
+let incompatibleGuardSaid = '';
+try { stampDeck(R, incompatibleGuardRun); } catch (error) { incompatibleGuardSaid = error.message; }
+check(/Incompatible guard profile swap/.test(incompatibleGuardSaid),
+  'a non-attack role refuses the same silent state-loss swap', incompatibleGuardSaid);
 
 const persisted = createRunState({ seed: 4, classId: 'starseer', registries: R });
 const saveStorage = createMemoryStorage();

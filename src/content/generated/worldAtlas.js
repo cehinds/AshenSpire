@@ -9945,6 +9945,9 @@ export const worldAtlas = {
     },
     {
       "handlerId": "lore"
+    },
+    {
+      "handlerId": "master"
     }
   ],
   "service_types": [
@@ -9972,6 +9975,11 @@ export const worldAtlas = {
       "serviceTypeId": "archive",
       "displayName": "Archive",
       "handlerId": "lore"
+    },
+    {
+      "serviceTypeId": "master",
+      "displayName": "Wise master",
+      "handlerId": "master"
     }
   ],
   "services": [
@@ -9999,6 +10007,11 @@ export const worldAtlas = {
       "serviceId": "archive",
       "displayName": "Read the archive",
       "serviceTypeId": "archive"
+    },
+    {
+      "serviceId": "master",
+      "displayName": "Wise master",
+      "serviceTypeId": "master"
     }
   ],
   "node_services": [
@@ -10169,42 +10182,48 @@ export const worldAtlas = {
       "displayName": "The Road Beyond",
       "description": "Survey the old road and return to the warden. The route must be open in this journey.",
       "objectiveNodeId": "ashen-crown:04:0",
-      "rewardCinders": 25
+      "rewardCinders": 25,
+      "speakerId": "roadWarden"
     },
     {
       "questId": "survey:bellhaven",
       "displayName": "The Road Beyond",
       "description": "Survey the old road and return to the warden. The route must be open in this journey.",
       "objectiveNodeId": "ashen-crown:04:0",
-      "rewardCinders": 25
+      "rewardCinders": 25,
+      "speakerId": "roadWarden"
     },
     {
       "questId": "survey:lantern-haven",
       "displayName": "The Road Beyond",
       "description": "Survey the old road and return to the warden. The route must be open in this journey.",
       "objectiveNodeId": "hollow-weald:04:0",
-      "rewardCinders": 25
+      "rewardCinders": 25,
+      "speakerId": "roadWarden"
     },
     {
       "questId": "survey:frostgate",
       "displayName": "The Road Beyond",
       "description": "Survey the old road and return to the warden. The route must be open in this journey.",
       "objectiveNodeId": "pale-marches:04:0",
-      "rewardCinders": 25
+      "rewardCinders": 25,
+      "speakerId": "roadWarden"
     },
     {
       "questId": "survey:emberhold",
       "displayName": "The Road Beyond",
       "description": "Survey the old road and return to the warden. The route must be open in this journey.",
       "objectiveNodeId": "cinder-reach:04:0",
-      "rewardCinders": 25
+      "rewardCinders": 25,
+      "speakerId": "roadWarden"
     },
     {
       "questId": "survey:saltwatch",
       "displayName": "The Road Beyond",
       "description": "Survey the old road and return to the warden. The route must be open in this journey.",
       "objectiveNodeId": "drowned-coast:04:0",
-      "rewardCinders": 25
+      "rewardCinders": 25,
+      "speakerId": "roadWarden"
     }
   ],
   "node_quests": [

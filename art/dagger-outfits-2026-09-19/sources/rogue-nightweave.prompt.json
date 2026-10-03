@@ -1,0 +1,9 @@
+{
+  "id": "rogue-nightweave",
+  "prompt": "Use case: identity-preserve. Production transparent painted dark-fantasy sprite atlas. Image 1 is the LOCKED SINGLE-DAGGER choreography: preserve exactly its sixteen occupied slots, pose geometry, head angles, limb articulation, empty hand gestures, facing screen right, weapon orientation, forward grip, dagger length, relative body scale, camera and feet anchors. Image 2 is ONLY the class and armor appearance to wear in every slot. Change only character identity and clothing/armor, matching image2 face/helmet/hood/hat, silhouette details, materials and palette. Replace image2 weapons with image1 EXACTLY ONE dagger in anatomical RIGHT hand; anatomical LEFT is always empty. Keep correct two hands and grip. Four columns x four rows, row1 Ready/ATK01/ATK02/ATK03, row2 ATK04/ATK05/ATK06/ATK07, row3 Defend/Hurt/Cast/Aggressive, row4 Defensive/Buff/Portrait/Conversation. All slots full body except portrait. EXACT image1 poses, not new choreography. Remove all aura, halo, particles, glows and magical effects even if present in image2; Cast/Buff are gesture only. True transparent RGBA background, no text/labels/grid/scenery/ground/shadow/checkerboard. Generous transparent gaps between all figures, no overlapping cells. Output 2048 square. Only change the sprite skin from image1 to image2.\nTarget class/outfit appearance: rogue-nightweave.",
+  "references": [
+    "D:/repos/AshenSpire-dagger-rogue-20260919/art/dagger-outfits-2026-09-19/sources/rogue-default.png",
+    "D:/repos/AshenSpire-dagger-rogue-20260919/art/sword-shield-outfits-2026-09-19/frames/rogue-nightweave/STANCE-READY.webp"
+  ],
+  "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bc8e-8f50-7ed2-b72b-baabc5f37e69\\exec-e0f5b264-b75a-4a69-9e11-269450ea5172.png"
+}

@@ -823,5 +823,95 @@ export const itemUpgradeChanges = [
     "nextTier": 1,
     "tag": "relic:passive:power-cost-reduction",
     "value": 1
+  },
+  {
+    "itemRef": "armor/reaver/bastion",
+    "nextTier": 1,
+    "tag": "upgrade:cost:smithing-stone",
+    "value": 1
+  },
+  {
+    "itemRef": "armor/reaver/bastion",
+    "nextTier": 1,
+    "tag": "equipment:poise-threshold",
+    "value": 1
+  },
+  {
+    "itemRef": "armor/starseer/rimeweave",
+    "nextTier": 1,
+    "tag": "upgrade:cost:smithing-stone",
+    "value": 1
+  },
+  {
+    "itemRef": "armor/starseer/rimeweave",
+    "nextTier": 1,
+    "tag": "equipment:poise-threshold",
+    "value": 1
+  },
+  {
+    "itemRef": "armor/rogue/waywatcher",
+    "nextTier": 1,
+    "tag": "upgrade:cost:smithing-stone",
+    "value": 1
+  },
+  {
+    "itemRef": "armor/rogue/waywatcher",
+    "nextTier": 1,
+    "tag": "equipment:poise-threshold",
+    "value": 1
+  },
+  {
+    "itemRef": "armament/frostSpear",
+    "nextTier": 1,
+    "tag": "upgrade:cost:smithing-stone",
+    "value": 1
+  },
+  {
+    "itemRef": "armament/frostSpear",
+    "nextTier": 1,
+    "tag": "card:attack:effect:damage",
+    "value": 3
+  },
+  {
+    "itemRef": "armament/frostSpear",
+    "nextTier": 1,
+    "tag": "card:guard:effect:block",
+    "value": 3
+  },
+  {
+    "itemRef": "armament/cinderAxe",
+    "nextTier": 1,
+    "tag": "upgrade:cost:smithing-stone",
+    "value": 1
+  },
+  {
+    "itemRef": "armament/cinderAxe",
+    "nextTier": 1,
+    "tag": "card:attack:effect:damage",
+    "value": 3
+  },
+  {
+    "itemRef": "armament/cinderAxe",
+    "nextTier": 1,
+    "tag": "card:guard:effect:block",
+    "value": 3
+  },
+  {
+    "itemRef": "armament/duskChime",
+    "nextTier": 1,
+    "tag": "upgrade:cost:smithing-stone",
+    "value": 1
+  },
+  {
+    "itemRef": "armament/duskChime",
+    "nextTier": 1,
+    "tag": "card:attack:effect:damage",
+    "value": 3
+  },
+  {
+    "itemRef": "armament/duskChime",
+    "nextTier": 1,
+    "tag": "card:guard:effect:block",
+    "value": 3
   }
 ];

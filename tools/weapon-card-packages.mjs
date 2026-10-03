@@ -16,6 +16,7 @@ import { createSaveManager, createMemoryStorage, RUN_ARCHIVE_KEY, RUN_KEY } from
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
+import { isPoolDeckMode } from '../src/model/cardRemoval.js';
 
 // Fixed four-slot migration corpus: preserve its pre-kit catalogue. The shipped
 // kit composer is covered exhaustively by tests/armament-combat-kits.test.mjs.
@@ -315,7 +316,7 @@ stampDeck(baseRegistries, mutable);
 const once = JSON.stringify(mutable.deck);
 stampDeck(baseRegistries, mutable);
 check(JSON.stringify(mutable.deck) === once, 'compose/apply twice is byte-identical after the first pass');
-check(mutable.deck.length === 10 && attacks(mutable).length === 4, 'equip preserves deck size and authored attack count');
+check(mutable.deck.length === baseRegistries.balance.startingDeckSize && attacks(mutable).length === 4, 'equip preserves deck size and authored attack count');
 const reboundAttacks = attacks(mutable);
 check(JSON.stringify(reboundAttacks.map((card) => ({ instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, acquiredAt: card.acquiredAt }))) === JSON.stringify(attackIdentityBefore)
   && reboundAttacks.every((card, index) => card.upgraded === false
@@ -420,7 +421,7 @@ if (currentSnapshotLoad.loaded) {
   const restoredRng = createRng(currentSnapshotLoad.loaded.seed, currentSnapshotLoad.loaded.streamCounters);
   const controlRng = createRng(currentSnapshotLoad.loaded.seed, currentSnapshotLoad.loaded.streamCounters);
   const normalizedCountersBeforeRestore = JSON.stringify(controlRng.getCounters());
-  const restored = restoreCombatSnapshot({ registries: baseRegistries, rng: restoredRng, snapshot: loadedSnapshot });
+  const restored = restoreCombatSnapshot({ registries: baseRegistries, rng: restoredRng, snapshot: loadedSnapshot, fallbackPoolDeck: isPoolDeckMode(currentSnapshotLoad.loaded) });
   check(JSON.stringify(serializeCombatSnapshot(restored)) === currentSnapshotBefore, 'current snapshot restores without replaying combat or consuming state');
   const countersAfterRestore = JSON.stringify(restoredRng.getCounters());
   const restoredNextEnemyAi = restoredRng.float('enemyAI');

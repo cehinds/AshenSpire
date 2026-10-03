@@ -19,6 +19,7 @@
 
 import { MODIFIER_KEYS } from '../model/schemas.js';
 import { resolveStackApplications, stackMagnitude } from '../model/combatRules.js';
+import { ratingValue } from '../model/combatRatings.js';
 
 export function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -43,6 +44,19 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
   const def = ctx.registries.statuses.get(statusId);
   if (!target || !target.alive) return;
   let amount = Math.floor(stacks);
+  const weights = ctx.ratingsRules?.statuses?.[statusId];
+  if (weights && target.ratings && source && source.id !== target.id && amount > 0) {
+    const resistance = ratingValue(ctx, target, 'poise') * weights.poise + ratingValue(ctx, target, 'ward') * weights.ward;
+    const cfg = ctx.ratingsRules.resistance;
+    const reduction = Math.min(cfg.maximum, resistance / (cfg.statusK + resistance));
+    target.ratingBuildupRemainders ||= {};
+    const exact = amount * (1 - reduction) + (target.ratingBuildupRemainders[statusId] || 0);
+    const applied = Math.floor(exact + 1e-9);
+    target.ratingBuildupRemainders[statusId] = Math.max(0, exact - applied);
+    ctx.emit('procResisted', { targetId: target.id, status: statusId, blocked: amount - applied, applied });
+    amount = applied;
+    if (!amount) return;
+  }
   if (amount <= 0 && def.stackMode !== 'unique') return;
 
   // Threshold-proc resistance (#61): a carried resist status blocks part of

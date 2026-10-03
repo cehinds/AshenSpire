@@ -170,7 +170,10 @@ const MAX_HP_COMPOSITION = [
     role: 'the load-door integrity assertion',
     anchor: 'const expectedMaxHp = Math.max(1,',
     addends: [
-      "deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value",
+      // RE-AIMED 2026-09-19 (plan phase 6): the derivation gained the run's
+      // character level — the snapshot's `perLevel` term rides it — and the
+      // three addends are otherwise UNCHANGED; a human read the diff.
+      "deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value",
       'hpEquipmentBonus',
       'run.maxHpAdjustment',
     ],
@@ -324,7 +327,7 @@ for (const rel of sources) {
  *
  * Splitting tracks depth AND quotes, because one real addend is a call carrying
  * both commas and a string literal:
- *   deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value
+ *   deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value
  * A naive split on `+` or `,` would tear that into pieces and then complain
  * about names nobody wrote.
  */

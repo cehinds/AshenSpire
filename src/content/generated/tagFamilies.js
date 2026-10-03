@@ -113,5 +113,26 @@ export const tagFamilies = [
     "scopeField": "",
     "label": "Grant",
     "blurb": "Where a starting card comes from. No collection: like `effect`, this family exists only to declare a vocabulary — the order bound cards are dealt in."
+  },
+  {
+    "family": "location",
+    "source": "",
+    "scopeField": "",
+    "label": "Location",
+    "blurb": "Where a run stops: a classic node type (shrine), the Unknown node's camp, an atlas rest service's type (inn, chapel) or one atlas node by id. No collection — the ids are the map's, checked by model/locations.js. Mounted from arrival to departure (engine/locations.js)."
+  },
+  {
+    "family": "companion",
+    "source": "companions",
+    "scopeField": "",
+    "label": "Companion",
+    "blurb": "A temporary ally bought at the market (SPEC §14.3). It travels with the run for a number of fights, and what it does is its property rows here, mounted at combat start (engine/properties.js)."
+  },
+  {
+    "family": "sigil",
+    "source": "sigils",
+    "scopeField": "",
+    "label": "Sigil",
+    "blurb": "A sigil set into an armament's slot at the blacksmith (SPEC §14.3, §14.4). What it does is its property row here, mounted while its armament is equipped (engine/properties.js)."
   }
 ];

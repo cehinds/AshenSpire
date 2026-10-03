@@ -11,7 +11,7 @@
 // suspended (autoplay policy) and resumes on the first user gesture.
 
 import { balance } from '../content/balance.js';
-import { MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
+import { MUSIC_MANIFEST, SCALES, BEDS, MUSIC_TRACK_FALLBACK } from '../content/music.js';
 import { SFX_MANIFEST, SFX_RECIPES, resolveRecipe } from '../content/sfx.js';
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 import { assetUrl } from './assetmap.js';
@@ -441,7 +441,9 @@ export function initAudio(settings = {}) {
     // Prefer an external track for this context if the folder provided any —
     // including over a shipped 'silence': the folder manifest is also a word a
     // human typed on purpose, and the more specific intent wins.
-    const ext = state.tracks[context];
+    // A context the folder left empty may borrow a broader one's tracks
+    // (a region's map music falls back to the plain map list).
+    const ext = state.tracks[context]?.length ? state.tracks[context] : state.tracks[own(MUSIC_TRACK_FALLBACK, context)];
     if (ext && ext.length) {
       playExternal(context, ext, bed);
       return 'external';
@@ -477,6 +479,10 @@ export function initAudio(settings = {}) {
       el = new Audio(url);
       el.crossOrigin = 'anonymous';
       el.preload = 'auto';
+      // One track: let the element loop it natively. Waiting for `ended` and
+      // building a fresh element costs a load and a gap at every boundary,
+      // which undoes a score rendered to loop seamlessly (tools/score/).
+      el.loop = urls.length === 1;
       if (!state.mediaSources.has(el)) {
         const src = ctx.createMediaElementSource(el);
         src.connect(bedGain(bed));
@@ -571,6 +577,7 @@ export function initAudio(settings = {}) {
 
   /**
    * configureMusic({ folder }) — point the engine at a folder/URL of music.
+   * `indexed` (the shipped score only) resolves those paths as asset ids.
    * Fetches `<folder>/manifest.json` mapping context → [file paths], e.g.
    *   { "combat": ["combat/track1.mp3", "combat/track2.mp3"], "boss": [...] }
    * Relative entries resolve against the folder; each context then plays a
@@ -578,26 +585,45 @@ export function initAudio(settings = {}) {
    * manifest / unreachable files → the procedural score is used. Re-applied
    * live restarts the current context so a new folder takes effect at once.
    */
-  async function configureMusic({ folder } = {}) {
+  // Each call takes a ticket; a manifest that resolves after a newer call (the
+  // boot-time shipped folder landing after the player typed their own) is
+  // dropped rather than overwriting the newer choice.
+  let musicConfigTicket = 0;
+  async function configureMusic({ folder, indexed = false } = {}) {
+    const ticket = ++musicConfigTicket;
     state.folder = folder || '';
     state.tracks = {};
+    let tracks = {};
     if (folder) {
       try {
         const base = String(folder).replace(/\/+$/, '');
-        const res = await fetch(`${base}/manifest.json`);
+        // THROUGH THE INDEX (docs/EXTERNAL-ASSETS-PLAN.md §3.9, step 3c), FOR
+        // THE SHIPPED SCORE ONLY. `indexed` is set by main.js when the Custom
+        // music folder is blank and the page plays the score it ships: its
+        // paths are asset ids (`music/manifest.json`,
+        // `music/<context>/<track>.mp3`; content/music.js
+        // SHIPPED_MUSIC_FOLDER is the prefix), which the web edition resolves
+        // to the common pack's objects, and a single file or the source tree
+        // passes through as the same path. A folder the PLAYER typed is
+        // always fetched by its literal path, even when it is spelled `music/`
+        // (music/README.md's own example): it names their files, not ours.
+        const at = indexed ? assetUrl : (path) => path;
+        const res = await fetch(at(`${base}/manifest.json`));
         if (res.ok) {
           const m = await res.json();
           for (const key of MUSIC_CONTEXTS) {
             const list = m[key];
             if (Array.isArray(list) && list.length) {
-              state.tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
+              tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : at(`${base}/${f}`)));
             }
           }
         }
       } catch (e) {
-        state.tracks = {}; // fall back entirely to procedural
+        tracks = {}; // fall back entirely to procedural
       }
     }
+    if (ticket !== musicConfigTicket) return; // superseded by a newer folder
+    state.tracks = tracks;
     // Re-trigger the current context so the new source is used immediately.
     if (state.context && state.musicEnabled && !state.muted) {
       const c = state.context;

@@ -1,0 +1,36 @@
+{
+  "vars": {
+    "effectMs": 260,
+    "castMs": 110,
+    "impactLeadMs": 96
+  },
+  "sizing": {
+    "poseCanvas": 640,
+    "defaultEffectSize": 140,
+    "planEffectSize": 160,
+    "defaultAttachment": 260,
+    "percent": 100,
+    "castSizeFraction": 0.7,
+    "impactSizeFraction": 0.55
+  },
+  "motion": {
+    "defaultDurationMs": "$effectMs",
+    "layerDurationMs": "$effectMs",
+    "layerFrameCount": 6,
+    "minimumFrameMs": 16,
+    "minimumWrappedMs": "$impactLeadMs",
+    "castDelayMs": 65,
+    "castDurationMs": "$castMs",
+    "projectileDelayFraction": 0.3,
+    "targetLocalDelayFraction": 0.25,
+    "impactDelayFraction": 0.55,
+    "impactDurationMs": 160,
+    "impactSize": 110,
+    "impactCastMs": "$castMs",
+    "impactShortMs": 120,
+    "impactLingerMs": 170,
+    "entryOpacityFraction": 0.3,
+    "travelMidFraction": 0.7,
+    "travelMidOffset": 0.6
+  }
+}

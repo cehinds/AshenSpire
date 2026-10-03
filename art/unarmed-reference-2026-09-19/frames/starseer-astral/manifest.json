@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "starseer-astral",
+  "classId": "starseer",
+  "armourId": "astral",
+  "effectsBaked": false,
+  "source": "sources/starseer-astral.png",
+  "sourceSha256": "cdf95f42e0da46ddd6205ad13ef6caab1fc850e19c5e46f70135d2efc496c6a9",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.320754716981132,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        14,
+        1,
+        294,
+        306
+      ],
+      "core": [
+        26,
+        13,
+        282,
+        294
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        151.5,
+        293
+      ],
+      "offset": [
+        56,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        106,
+        414,
+        493
+      ],
+      "file": "frames/starseer-astral/STANCE-READY.webp",
+      "sha256": "2991650976e83229c0a551e46d029868f3b3d1bedd9f3bd27ada0e1c9a4b51ff"
+    },
+    "ATK-01": {
+      "content": [
+        323,
+        1,
+        604,
+        306
+      ],
+      "core": [
+        335,
+        13,
+        592,
+        294
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        152.5,
+        293
+      ],
+      "offset": [
+        55,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        105,
+        425,
+        496
+      ],
+      "file": "frames/starseer-astral/ATK-01.webp",
+      "sha256": "ff1be1a1b27d6544a45cd7683f76c019e78a2b38a42be1b797801e89898e6ee9"
+    },
+    "ATK-02": {
+      "content": [
+        637,
+        1,
+        923,
+        306
+      ],
+      "core": [
+        649,
+        13,
+        911,
+        294
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        152.0,
+        293
+      ],
+      "offset": [
+        55,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        62,
+        106,
+        424,
+        496
+      ],
+      "file": "frames/starseer-astral/ATK-02.webp",
+      "sha256": "8ca73027b92b58d14b44f461a5422ed2f8aa99f4199863a91c6d600d6c0c69ed"
+    },
+    "ATK-03": {
+      "content": [
+        948,
+        1,
+        1251,
+        307
+      ],
+      "core": [
+        960,
+        13,
+        1239,
+        295
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        152.0,
+        294
+      ],
+      "offset": [
+        55,
+        92
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        104,
+        443,
+        487
+      ],
+      "file": "frames/starseer-astral/ATK-03.webp",
+      "sha256": "eae5d2e2363ed4f9da1564549291708b9c455c7899751fee85a0dc93e9277273"
+    },
+    "ATK-04": {
+      "content": [
+        15,
+        314,
+        295,
+        621
+      ],
+      "core": [
+        27,
+        326,
+        283,
+        609
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        150.0,
+        295
+      ],
+      "offset": [
+        58,
+        90
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        91,
+        420,
+        482
+      ],
+      "file": "frames/starseer-astral/ATK-04.webp",
+      "sha256": "35822b4add22283b411972a9ceafe7ec4636a46bfe2125493c0ea46e57ebd9e6"
+    },
+    "ATK-05": {
+      "content": [
+        320,
+        317,
+        633,
+        622
+      ],
+      "core": [
+        332,
+        329,
+        621,
+        610
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        154.0,
+        293
+      ],
+      "offset": [
+        53,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        103,
+        462,
+        490
+      ],
+      "file": "frames/starseer-astral/ATK-05.webp",
+      "sha256": "fe07ad7002e7edafa42a30c9bbfa09de2f09d574b0a30c475e7457b50d986f21"
+    },
+    "ATK-06": {
+      "content": [
+        637,
+        314,
+        922,
+        621
+      ],
+      "core": [
+        649,
+        326,
+        910,
+        609
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        154.5,
+        295
+      ],
+      "offset": [
+        52,
+        90
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        101,
+        423,
+        485
+      ],
+      "file": "frames/starseer-astral/ATK-06.webp",
+      "sha256": "567b69af94d7aaa13f65174af216c08ed4e99463b660a53c0d1e2a60fec9b867"
+    },
+    "ATK-07": {
+      "content": [
+        952,
+        314,
+        1234,
+        621
+      ],
+      "core": [
+        964,
+        326,
+        1222,
+        609
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        152.5,
+        295
+      ],
+      "offset": [
+        55,
+        90
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        98,
+        422,
+        485
+      ],
+      "file": "frames/starseer-astral/ATK-07.webp",
+      "sha256": "04e84e7c50c94452b80a380f1252b155577d3aec88af9b5436e7a15fa8f6325a"
+    },
+    "DEFEND": {
+      "content": [
+        16,
+        627,
+        298,
+        931
+      ],
+      "core": [
+        28,
+        639,
+        286,
+        919
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        153.5,
+        292
+      ],
+      "offset": [
+        53,
+        94
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        104,
+        416,
+        488
+      ],
+      "file": "frames/starseer-astral/DEFEND.webp",
+      "sha256": "adbc6ed2b884da6e1dd853aadd2b2f6f02fa8fa7076318dc40002a2539eaa153"
+    },
+    "HURT": {
+      "content": [
+        324,
+        634,
+        609,
+        931
+      ],
+      "core": [
+        336,
+        646,
+        597,
+        919
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        159.5,
+        285
+      ],
+      "offset": [
+        45,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        57,
+        109,
+        418,
+        483
+      ],
+      "file": "frames/starseer-astral/HURT.webp",
+      "sha256": "b421d22fe61cd8098ab8b97d16729474c662d9c2b18b32c7f7293664f82e83e4"
+    },
+    "CAST": {
+      "content": [
+        635,
+        626,
+        948,
+        933
+      ],
+      "core": [
+        647,
+        638,
+        936,
+        921
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        154.5,
+        295
+      ],
+      "offset": [
+        52,
+        90
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        53,
+        100,
+        462,
+        495
+      ],
+      "file": "frames/starseer-astral/CAST.webp",
+      "sha256": "63a73af4729c05529e046852b92eebdb012fa00a4c77ed200f1285043125def6"
+    },
+    "BUFF": {
+      "content": [
+        968,
+        620,
+        1208,
+        936
+      ],
+      "core": [
+        980,
+        632,
+        1196,
+        924
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        139.0,
+        304
+      ],
+      "offset": [
+        72,
+        78
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        84,
+        87,
+        377,
+        494
+      ],
+      "file": "frames/starseer-astral/BUFF.webp",
+      "sha256": "00f6d1710a57e92505e1000f60ed1628b161b825acc5586479c017293b55acac"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        17,
+        959,
+        310,
+        1225
+      ],
+      "core": [
+        29,
+        971,
+        298,
+        1213
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        156.0,
+        254
+      ],
+      "offset": [
+        50,
+        145
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        62,
+        146,
+        429,
+        492
+      ],
+      "file": "frames/starseer-astral/STANCE-AGGRESSIVE.webp",
+      "sha256": "4a3ea0530ef5177b4fc2c1a4797ff7b52a2476b02452df2dac1a820a8e8eb67b"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        336,
+        947,
+        609,
+        1229
+      ],
+      "core": [
+        348,
+        959,
+        597,
+        1217
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        147.0,
+        270
+      ],
+      "offset": [
+        62,
+        123
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        128,
+        410,
+        486
+      ],
+      "file": "frames/starseer-astral/STANCE-DEFENSIVE.webp",
+      "sha256": "f18756f6ef706bc459b6009fccb44589fb1feb7e201379f3a210e24b27a85cd2"
+    },
+    "PORTRAIT": {
+      "content": [
+        621,
+        936,
+        944,
+        1234
+      ],
+      "core": [
+        633,
+        948,
+        932,
+        1222
+      ],
+      "scale": 1.436532507739938,
+      "sourceFootAnchor": [
+        161.5,
+        286
+      ],
+      "offset": [
+        24,
+        69
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        24,
+        73,
+        476,
+        484
+      ],
+      "file": "frames/starseer-astral/PORTRAIT.webp",
+      "sha256": "3fb0c0d1d8d5ad1ed06b8ed1d50a222a20b2cd99d42aa3feca54d1a71a8b0b5f"
+    },
+    "CONVERSATION": {
+      "content": [
+        978,
+        921,
+        1202,
+        1239
+      ],
+      "core": [
+        990,
+        933,
+        1190,
+        1227
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        124.5,
+        306
+      ],
+      "offset": [
+        92,
+        76
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        92,
+        89,
+        376,
+        495
+      ],
+      "file": "frames/starseer-astral/CONVERSATION.webp",
+      "sha256": "276b616242fb8ccbbd25f63282d3eadc153ad202168865a6427f3fc88f6a3dbe"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

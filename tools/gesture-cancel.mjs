@@ -27,7 +27,7 @@
 //
 // Usage
 //   node tools/gesture-cancel.mjs                 source tree via tools/serve.mjs
-//   node tools/gesture-cancel.mjs --dist          dist/AshenSpire.html over file://
+//   node tools/gesture-cancel.mjs --dist          dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/gesture-cancel.mjs --only 390x844
 // Exit: 0 all green · 1 a finding · 2 usage / no browser / NOTHING RAN
 //
@@ -57,11 +57,11 @@
 // synthesis, or the gesture helper (src/ui/gesture.js) grows its own suite.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is a
@@ -98,11 +98,14 @@ if (process.argv.includes('--selftest')) {
         // Vira's F3, the defect the FIRST fix introduced: suppressClick armed
         // ABOVE the cancelled-return eats exactly one tap — on the very
         // gesture the fix exists to make safe. Swapping the two lines back is
-        // that known-bad, entering where it originally shipped.
+        // that known-bad, entering where it originally shipped. The decision
+        // itself moved to finishCardDrag (src/ui/cardDragEnd.js, #1298); the
+        // plant enters at combat.js's teardown, which still owns the card's
+        // selection state, and fires on exactly a cancelled drag.
         name: 'F3 returns: a cancelled card cannot receive its next tap',
         file: 'src/ui/screens/combat.js',
-        find: "          if (cancelled) return;",
-        replace: "          if (cancelled) { selected = null; selfArm = null; syncCardSelection(); el.style.pointerEvents = 'none'; return; } // planted: cancelled card cannot receive its next tap",
+        find: "            return wasDragging;",
+        replace: "            if (wasDragging && info?.cancelled) { selected = null; selfArm = null; syncCardSelection(); el.style.pointerEvents = 'none'; } // planted: cancelled card cannot receive its next tap\n            return wasDragging;",
         expectRed: /FAIL F3: ONE tap after a cancel selects the card/,
       },
     ],
@@ -143,7 +146,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error('gesture-cancel: no dist — run launch.mjs --build-only'); process.exit(2); }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else { const s = await serve({ root: ROOT, port: 8270, open: false }); server = s.server; base = `http://localhost:${s.port}/`; }
   console.log(`gesture-cancel — ${base}${useDist ? ' (shipped bundle)' : ' (source tree)'}`);
 

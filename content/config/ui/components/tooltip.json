@@ -1,0 +1,7 @@
+{
+  "sizing": { "arrowWidthRem": 0.75, "arrowHeightRem": 0.375 },
+  "positioning": { "arrowInsetRem": 0.5 },
+  "components": {
+    "wireframeByRung": { "small": "WT1", "medium": "WT2", "large": "WT3", "expanded": "WT3" }
+  }
+}

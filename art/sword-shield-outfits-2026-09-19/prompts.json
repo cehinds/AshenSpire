@@ -1,0 +1,327 @@
+{
+  "generator": "OpenAI built-in image_gen",
+  "date": "2026-09-19",
+  "description": "Sword and shield animation atlases for all four classes and armor appearances. Original transparent generation sources retained; exporter normalizes WebP frames.",
+  "generations": [
+    {
+      "id": "reaver",
+      "prompt": "Production game sprite atlas, transparent background. Image1 is the approved Reaver identity, armor and painterly game style. Image2 demonstrates ONLY 4x4 layout, scale and pose range; DO NOT copy its two-handed weapon grip. Create a coherent SWORD AND SHIELD suite: a single modest straight steel arming sword in anatomical RIGHT hand, a round dark steel shield with brass rim strapped to anatomical LEFT forearm. Character faces screen-right in every fullbody slot, shield remains on same arm throughout. Exactly4columns4rows,15occupiedcells, lastcell empty. Row1: READY shieldfront sworddiagonal; ATK01 anticipation sworddrawnback shieldforward; ATK02 windup swordraisedbehindrightshoulder; ATK03 maximumwindup swordoverhead onehand. Row2: ATK04 downwardcut release; ATK05 impact sworddiagonaldownforward; ATK06 followthrough swordlowpasttarget; ATK07 recovery bringing swordup to ready. Row3: DEFEND shieldraisedcoverschest swordheldback; HURT recoiling with bothweaponsretained; CAST swordraisedwithsmallgoldaura shieldretained; aggressive stance swordpointforward shieldclose. Row4: defensive stance shieldforward swordlow; BUFF golden aura withbothweaponsretained; largebust PORTRAIT sameknight; EMPTY. Sameknighthelmet,batteredplate,burgundycape consistentallslots. Fullbody all14poses, feetaligned,equalfiguresize,generouscellpadding, no weapons crossingcellboundaries. Clear hands/grips, shieldneverbecomesaweaponheldbyswordhand, no extra limbs, no text orlabels orgrid orscenery. Output2048square.",
+      "references": [
+        "assets/painted-outfits/reaver/menu.webp",
+        "art/webp-pack-2026-09-19/animations/reaver/greatsword-twoHand/atlas.webp"
+      ],
+      "source": "sources/reaver.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-2430f938-ea28-4c44-9dbc-48fba829ce1c.png"
+    },
+    {
+      "id": "reaver-vigil",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required reaver-vigil character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/reaver-vigil/menu.webp"
+      ],
+      "source": "sources/reaver-vigil.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-75fd5abd-60d2-491a-9593-b14d299ab105.png"
+    },
+    {
+      "id": "reaver-oathsworn",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required reaver-oathsworn character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/reaver-oathsworn/menu.webp"
+      ],
+      "source": "sources/reaver-oathsworn.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-52c8abfa-e73b-4f9e-805d-32017faab96d.png"
+    },
+    {
+      "id": "reaver-warden",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required reaver-warden character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/reaver-warden/menu.webp"
+      ],
+      "source": "sources/reaver-warden.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-46e82875-6537-4998-946e-a8354378eec4.png"
+    },
+    {
+      "id": "starseer",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required starseer character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/starseer/menu.webp"
+      ],
+      "source": "sources/starseer.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-bcd9ae9e-5804-4d3f-abe9-3b9d0c2e3d78.png"
+    },
+    {
+      "id": "starseer-eclipse",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required starseer-eclipse character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/starseer-eclipse/menu.webp"
+      ],
+      "source": "sources/starseer-eclipse.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-d8bcf7bc-4c99-47dc-9587-f928839bce3f.png"
+    },
+    {
+      "id": "starseer-starlit",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required starseer-starlit character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/starseer-starlit/menu.webp"
+      ],
+      "source": "sources/starseer-starlit.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-257e22eb-91ae-4a09-96fc-33edfc9c02fe.png"
+    },
+    {
+      "id": "starseer-astral",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required starseer-astral character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/starseer-astral/menu.webp"
+      ],
+      "source": "sources/starseer-astral.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-a6ed05e2-765f-47a6-af77-1eed28ec2903.png"
+    },
+    {
+      "id": "herald",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required herald character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/herald/menu.webp"
+      ],
+      "source": "sources/herald.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-2f4207f4-9825-4342-ae7c-900c2966155d.png"
+    },
+    {
+      "id": "herald-ossuary",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required herald-ossuary character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/herald-ossuary/menu.webp"
+      ],
+      "source": "sources/herald-ossuary.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-12810c31-b8ec-4b41-bf11-bb9fd24126e6.png"
+    },
+    {
+      "id": "herald-emberhabit",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required herald-emberhabit character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/herald-emberhabit/menu.webp"
+      ],
+      "source": "sources/herald-emberhabit.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-3a551c1c-733a-48f7-9112-4847564fb61f.png"
+    },
+    {
+      "id": "herald-pilgrim",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required herald-pilgrim character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/herald-pilgrim/menu.webp"
+      ],
+      "source": "sources/herald-pilgrim.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-4cf33767-d076-4595-b414-4e5394b3665b.png"
+    },
+    {
+      "id": "rogue",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required rogue character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/rogue/menu.webp"
+      ],
+      "source": "sources/rogue.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-f638c143-a884-44db-b437-61e19756fc41.png"
+    },
+    {
+      "id": "rogue-nightveil",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required rogue-nightveil character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/rogue-nightveil/menu.webp"
+      ],
+      "source": "sources/rogue-nightveil.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-39c9c282-b7a0-4228-9f45-2e40dea3f421.png"
+    },
+    {
+      "id": "rogue-duelist",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required rogue-duelist character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/rogue-duelist/menu.webp"
+      ],
+      "source": "sources/rogue-duelist.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-e780f19d-d6fb-4e0f-b0d4-2f0088e2de1f.png"
+    },
+    {
+      "id": "rogue-shadow",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required rogue-shadow character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/rogue-shadow/menu.webp"
+      ],
+      "source": "sources/rogue-shadow.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-586c4cf9-a199-42e0-b98c-3fe79b676d6a.png"
+    },
+    {
+      "id": "reaver-wayfarerPlate",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required reaver-wayfarerPlate character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-reaver-wayfarerPlate/menu.webp"
+      ],
+      "source": "sources/reaver-wayfarerPlate.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-e69b6c34-f17d-4867-81cb-8549e776a66a.png"
+    },
+    {
+      "id": "reaver-nightweave",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required reaver-nightweave character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-reaver-nightweave/menu.webp"
+      ],
+      "source": "sources/reaver-nightweave.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-3cfefa75-e60d-4acb-bdf2-7dfe78646c90.png"
+    },
+    {
+      "id": "reaver-riteVestments",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required reaver-riteVestments character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-reaver-riteVestments/menu.webp"
+      ],
+      "source": "sources/reaver-riteVestments.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-e51d85ee-6320-4358-9b95-999ac8d56328.png"
+    },
+    {
+      "id": "reaver-gutterLeathers",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required reaver-gutterLeathers character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-reaver-gutterLeathers/menu.webp"
+      ],
+      "source": "sources/reaver-gutterLeathers.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-666e1f85-4466-4e87-bfe9-bbf02c2c3e97.png"
+    },
+    {
+      "id": "starseer-wayfarerPlate",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required starseer-wayfarerPlate character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-starseer-wayfarerPlate/menu.webp"
+      ],
+      "source": "sources/starseer-wayfarerPlate.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-9b49bc8e-5516-4696-bdd5-9cb14053f6be.png"
+    },
+    {
+      "id": "starseer-nightweave",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required starseer-nightweave character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-starseer-nightweave/menu.webp"
+      ],
+      "source": "sources/starseer-nightweave.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-ff3fd83f-7ab7-4e34-ad92-2fa89a4c6e2a.png"
+    },
+    {
+      "id": "starseer-riteVestments",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required starseer-riteVestments character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-starseer-riteVestments/menu.webp"
+      ],
+      "source": "sources/starseer-riteVestments.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-f1849ba3-4482-4634-bfb9-bf3b7765ace7.png"
+    },
+    {
+      "id": "starseer-gutterLeathers",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required starseer-gutterLeathers character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-starseer-gutterLeathers/menu.webp"
+      ],
+      "source": "sources/starseer-gutterLeathers.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-5a64a9e2-12c4-42a6-8f4e-7f0bc30dced2.png"
+    },
+    {
+      "id": "herald-wayfarerPlate",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required herald-wayfarerPlate character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-herald-wayfarerPlate/menu.webp"
+      ],
+      "source": "sources/herald-wayfarerPlate.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-c6c20a22-b32a-43cd-897f-4b072c5120f3.png"
+    },
+    {
+      "id": "herald-nightweave",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required herald-nightweave character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-herald-nightweave/menu.webp"
+      ],
+      "source": "sources/herald-nightweave.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-2cc7f0dd-3d9b-4da4-85f1-fd044099155b.png"
+    },
+    {
+      "id": "herald-riteVestments",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required herald-riteVestments character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-herald-riteVestments/menu.webp"
+      ],
+      "source": "sources/herald-riteVestments.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-12d3038e-d6f8-4544-a27f-5c32ee8923aa.png"
+    },
+    {
+      "id": "herald-gutterLeathers",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required herald-gutterLeathers character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-herald-gutterLeathers/menu.webp"
+      ],
+      "source": "sources/herald-gutterLeathers.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-6e0955fb-c70a-4284-aabf-c411ff7702b1.png"
+    },
+    {
+      "id": "rogue-wayfarerPlate",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required rogue-wayfarerPlate character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-rogue-wayfarerPlate/menu.webp"
+      ],
+      "source": "sources/rogue-wayfarerPlate.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-02fc59a1-152e-4ecb-a085-eb7afd8c0321.png"
+    },
+    {
+      "id": "rogue-nightweave",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required rogue-nightweave character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-rogue-nightweave/menu.webp"
+      ],
+      "source": "sources/rogue-nightweave.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-3ba624b4-58db-45ec-afc4-16502599fb4b.png"
+    },
+    {
+      "id": "rogue-riteVestments",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required rogue-riteVestments character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-rogue-riteVestments/menu.webp"
+      ],
+      "source": "sources/rogue-riteVestments.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-7d953a43-0e87-4d05-9d00-d5a8073a97fb.png"
+    },
+    {
+      "id": "rogue-gutterLeathers",
+      "prompt": "Use case: identity-preserve. Production transparent game sprite atlas. Image1 is the locked SWORD AND SHIELD motion/layout reference. Image2 is the required rogue-gutterLeathers character and armor appearance. Change ONLY character/costume/face/hat/hood in every occupied slot of image1 to match image2 exactly, retaining image2 palette, silhouette and clothing proportions. Replace image2 existing weapons with image1 single straight steel sword in anatomical RIGHT hand and round dark steel brass-rim shield on anatomical LEFT forearm. Shield stays same arm in everypose, retained during cast/buff; no twohandgrip. Preserve image1 exact15occupiedslots on4x4grid, bottomrightempty: row1 ready/ATK01anticipation/ATK02windup/ATK03highwindup; row2 ATK04release/ATK05impact/ATK06followthrough/ATK07recovery; row3 defend/hurt/cast/aggressive; row4 defensive/buff/bustportrait/EMPTY. Fullbodyexceptportrait. All facing screenright, consistentfiguresize, feetaligned, exactsame swordangles and shieldposition perpose. Keep everyweapon andaura inside itscell with generouspadding. Preserve characteridentity acrossallframes; magekeepspointedhat, heraldkeepshoodandhalo, roguekeepshood, knightkeepshelmet as applicable toimage2. Cleanreadablegrips, no extralimbs, no weaponheadintersections. Transparentbackground, no text, no gridlines, no scenery. Output2048square.",
+      "references": [
+        "art/sword-shield-outfits-2026-09-19/sources/reaver.png",
+        "assets/painted-outfits/shared-rogue-gutterLeathers/menu.webp"
+      ],
+      "source": "sources/rogue-gutterLeathers.png",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-1895cab6-b62f-49b8-a158-d52981aa0a6a.png"
+    }
+  ]
+}

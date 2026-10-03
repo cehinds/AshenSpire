@@ -62,8 +62,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser } from './browser.mjs';
+import { fileURLToPath } from 'node:url';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -371,8 +371,10 @@ if (process.argv.includes('--selftest')) {
       // every check that counts plays instead of naming which card left.
       name: 'a drag commits the SELECTED card instead of the dragged one',
       file: 'src/ui/screens/combat.js',
-      find: '          if (plan.legal) playCard(inst.instanceId, plan.targetId || null);',
-      replace: '          if (plan.legal) playCard(selected || inst.instanceId, plan.targetId || null);',
+      // (The drop decision is finishCardDrag, src/ui/cardDragEnd.js since
+      // #1298; which card it plays is still combat.js's `play` op.)
+      find: '          play: (targetId) => playCard(inst.instanceId, targetId),',
+      replace: '          play: (targetId) => playCard(selected || inst.instanceId, targetId),',
       expectRed: /FAIL cell 2 the card that PLAYS is the one under the finger/,
     }, {
       // CELL 3, AND IT IS AIMED AT THE DERIVATION, NOT THE GESTURE. The dial
@@ -538,7 +540,7 @@ async function main() {
   // a death between two of these awaits must still close what already opened.
   const served = useDist ? null : await serve({ root: ROOT, port: 8298, open: false });
   liveServed = served;
-  const base = useDist ? pathToFileURL(resolve(ROOT, 'dist', 'AshenSpire.html')).href : `http://localhost:${served.port}/`;
+  const base = useDist ? await buildPageUrl(resolve(ROOT, 'dist', 'AshenSpire.html')) : `http://localhost:${served.port}/`;
   const browser = await launchBrowser({ prefix: 'carddrag-', browser: browserPath, timeoutMs: 15000 });
   liveBrowser = browser;
   const cdp = connectCdp(browser.wsUrl); liveCdp = cdp; await cdp.ready;

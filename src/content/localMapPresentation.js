@@ -1,9 +1,10 @@
 // Shared defaults; optional map-ID overrides contain presentation only.
 // Content relationships remain in the normalized worldAtlas source tables.
-const LOCAL_MAP_PRESENTATION = Object.freeze({
-  defaultZoom: 1.5, minZoom: 1, maxZoom: 5, zoomStep: 1.25,
-  inspectionFactor: 1.3, dragThreshold: 7, panFraction: .18,
-  focusDuration: 200, wheelSensitivity: .002,
-});
-const LOCAL_MAP_OVERRIDES = Object.freeze({});
+//
+// Both tables live in content/config/ui/presentation/localMapPresentation.json.
+import { uiConfig } from '../config/generated/ui.js';
+
+const { sizing, behavior } = uiConfig.presentation.localMapPresentation;
+const LOCAL_MAP_PRESENTATION = sizing.defaults;
+const LOCAL_MAP_OVERRIDES = behavior.overrides;
 export const localMapPolicy = mapId => ({ ...LOCAL_MAP_PRESENTATION, ...LOCAL_MAP_OVERRIDES[mapId] });

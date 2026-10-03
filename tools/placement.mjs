@@ -48,6 +48,30 @@
 //                 and 66.5%, the Inspect row's right 39% under the DRAW pile so
 //                 a tap there opened the draw modal. THE COUNT IS ZERO, NOT A
 //                 BUDGET: it is a count of touched controls, not a threshold.
+//   P6 ON SCREEN  character creation's header menu opens under its ☰, right-
+//                 aligned to it, AND INSIDE THE VIEWPORT — the claim none of
+//                 P1-P5 makes, and the one the shipped defect broke. The menu
+//                 open-coded its own placement and read the zoom off
+//                 `document.documentElement`, which is the ONE element
+//                 `body { zoom: var(--ui-zoom) }` does not touch, so it
+//                 answered 1.00 at every UI size and visual px went straight
+//                 into a local-px `style.left`. Measured before the fix,
+//                 through this same door, in this file's local px: at
+//                 1920x1080 (--ui-zoom 1.48) the menu's box was
+//                 (1580.8,72.7)-(1800.8,304.7) in a 1297.3x729.7 room — its
+//                 LEFT edge alone 283 px past the right one, so none of it was
+//                 on the glass; at 390x844 (0.90) it was 37 px off its
+//                 button's right edge and still on screen. The popover was
+//                 OPEN the whole time and every category in it hit-testable. A
+//                 menu drawn where nobody can see it reads to a player as a
+//                 button that does nothing, which is how it was reported —
+//                 which is also why NEITHER of the two placement claims the
+//                 other intents make is enough on its own here.
+//                 NOTE THE SHAPE DEPENDENCE: at exactly
+//                 --ui-zoom 1.00 the old arithmetic is CORRECT, so 1200x730
+//                 (which is 1.00) is blind to this whole class — see SHAPES
+//                 below for why 1920x1080 joined it, and the corpus plant for
+//                 the measurement at each of the three.
 //
 // THE DOOR, AND IT IS NARROWER THAN THIS HEADER CLAIMED UNTIL 2026-08-17. Every
 // number is read off a real boot: served over http, loaded in headless Chromium,
@@ -84,10 +108,22 @@
 // new number to this file — it reuses P2's tolerance through gapChecks.
 //
 // BOUNDARIES, and they are real.
-//   · THREE SURFACES, NOT EVERY PLACED THING — and this bullet said TWO until
-//     2026-08-17, when the flask menu became placeAnchored's third caller. The
-//     tooltip, the quick-nav panel and the flask action menu are its callers
-//     today; all three are measured here. tutorial.js still places its own bubble
+//   · FOUR SURFACES, NOT EVERY PLACED THING — and this bullet said TWO until
+//     2026-08-17, when the flask menu became placeAnchored's third caller, and
+//     THREE until #1244 made character creation's header menu its fourth. The
+//     tooltip, the quick-nav panel, the flask action menu and the creation
+//     menu are its callers today; all four are measured here.
+//   · P6 CANNOT SEE WHETHER ☰ CLOSES THE MENU, and that defect shipped. The
+//     menu is opened with `.click()`, a synthesized activation with no
+//     pointerdown/pointerup — so popover light dismiss never runs here. Until
+//     #1244 the ☰ called `togglePopover()` from a click listener: light
+//     dismiss shut the menu on pointerup and the click re-opened it, so with
+//     real CDP input, mouse and touch alike, it read open/open/open/open and
+//     could never be put away. Every P6 above was green on that build. The
+//     fix is `popovertarget` (the browser owns the toggle); the receipt is a
+//     hand measurement with real input, true/false/true/false after it —
+//     a receipt, not coverage. Real input is actionreach's and
+//     screenreach's door, not this one. tutorial.js still places its own bubble
 //     in the veil's local space with its own clamp, and main.js's ?shot=fx points
 //     are a third hand-rolled site. Neither is measured here and neither is
 //     converted — `unknown`, named rather than implied.
@@ -124,8 +160,9 @@
 //     check: P3 stays the hand because the hand is where the corpus can plant,
 //     and a one-off measurement is a receipt, not coverage.
 //   · A RED P1 TAKES P2 WITH IT AND THE DENOMINATOR MOVES SILENTLY. gapChecks
-//     returns after a P1 finding, so a run with an undeclared gap prints 5
-//     checks where the clean run prints 7. It cannot hide a VERDICT — P1 is
+//     returns after a P1 finding, so a run with an undeclared gap on ONE
+//     surface prints one check fewer than the clean run, per shape. It cannot
+//     hide a VERDICT — P1 is
 //     already red and the exit is 1 — but "N check(s)" in the summary is not a
 //     constant and must not be read as a coverage number.
 //   · P3 IS VACUOUS ON A HAND OF ONE. It counts SIBLINGS touched; with a single
@@ -147,7 +184,7 @@
 //     hand, with an injected 4000-character description — the panel stayed on
 //     screen and scrolled inside itself — but that is a receipt, not coverage:
 //     no plant in this corpus renders a long flask.
-//   · LINUX HEADLESS CHROMIUM, two shapes. TEXT SIZE IS NOW MEASURED, UI SIZE IS
+//   · LINUX HEADLESS CHROMIUM, three shapes. TEXT SIZE IS NOW MEASURED, UI SIZE IS
 //     NOT. Law 4 clause 3 says the gap must not answer the Text-size dial;
 //     measured at 1200x730 with ?shotSettings textSize S/M/L/XL, html font-size
 //     9/10/11/12 px, the declared gap stays "14px" and the rendered separation
@@ -277,6 +314,51 @@ if (process.argv.includes('--selftest')) {
         expectRed: /P5 /,
       },
       {
+        // THE SHIPPED DEFECT, PUT BACK: the creation menu takes its placement
+        // arithmetic back, zoom read off <html> and all. The only plant in the
+        // corpus that names its own shape, and it has to: that arithmetic is
+        // CORRECT at --ui-zoom 1.00, which is what the shared 1200x730
+        // resolves to, so run there it is a false NOT-CAUGHT. Measured at each
+        // shape: 1200x730 (1.00) green; 390x844 (0.90) red on align:'end' only,
+        // 37 local px off and still on the screen; 1920x1080 (1.48) red on ON
+        // SCREEN, the menu at (1580.8,72.7)-(1800.8,304.7) in a 1297.3-wide
+        // room. It names the shape that reproduces the REPORTED symptom, so
+        // the red it is graded on is the invisibility and not a near miss.
+        name: 'the creation menu takes its placement back — and reads the zoom off <html>, which never carries it',
+        args: ['--only', '1920x1080'],
+        file: 'src/ui/screens/customize.js',
+        find: "      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });",
+        // Joined lines: the replacement is template-literal code, backticks
+        // and all. Only `find` has to be a literal (tools/plantsites.mjs reads
+        // it statically); a replacement is never scanned.
+        replace: [
+          '      const rect = menu.getBoundingClientRect(); /* planted: the second copy, back */',
+          '      const zoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;',
+          '      headTools.style.left = `${Math.max(8, Math.min(rect.right - headTools.offsetWidth * zoom, innerWidth - headTools.offsetWidth * zoom - 8)) / zoom}px`;',
+          '      headTools.style.top = `${(rect.bottom + 8) / zoom}px`;',
+        ].join('\n'),
+        expectRed: /P6 .*OFF THE SCREEN/,
+      },
+      {
+        // THE CAP GOES ON AFTER THE PLACEMENT — what flask.js and quicknav.js
+        // both do, and what this call site did until review. No shape of its
+        // own: the tight-window claim resizes to its own heights regardless.
+        // placeAnchored then measures the FULL menu, it does not fit under the
+        // button, and clampBox slides it up over the button before the cap
+        // applies. Every shape-height P6 is green on this plant; only the
+        // tight-window one can see it, which is the reason that one exists.
+        name: 'the creation menu is capped AFTER it is placed, so a short window slides it over its own button',
+        file: 'src/ui/screens/customize.js',
+        find: "      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });",
+        replace: [
+          "      headTools.style.maxHeight = ''; /* planted: placed at full height, capped afterwards */",
+          "      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });",
+          "      const placedTop = anchorLocalBox(VIEWPORT_ORIGIN, headTools).top;",
+          '      headTools.style.maxHeight = `${Math.max(0, view.height - placedTop - PAD * 2)}px`;',
+        ].join('\n'),
+        expectRed: /P6 .*is NOT under/,
+      },
+      {
         // The gap loses its home on THIS surface. A second site for the P1
         // assertion. Target the unique selector and force the computed value to
         // zero so the plant is line-ending independent and cannot accidentally
@@ -303,7 +385,16 @@ const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-lin
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 if (!browserPath) { console.error('placement: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const SHAPES = [{ w: 390, h: 844, d: 3, mobile: true }, { w: 1200, h: 730, d: 1, mobile: false }];
+// 1920x1080 IS HERE BECAUSE --ui-zoom 1.00 HIDES A WHOLE CLASS OF DEFECT, and
+// this file had no shape that was not ~1.00. fx.js already records what that
+// costs: "At 1920x1080 the tooltip rendered at top 1406 in a 1080px viewport.
+// Card tooltips did not exist for a player on the commonest desktop
+// resolution." The creation menu shipped the same defect at the same shape
+// (--ui-zoom 1.48, popover at x=2339 in a 1920-wide room) and neither of the
+// two shapes below could see it: 390x844 resolves 0.90, where the same
+// arithmetic is merely 37 local px off, and 1200x730 resolves exactly 1.00,
+// where it is CORRECT. A conversion bug is invisible at the identity.
+const SHAPES = [{ w: 390, h: 844, d: 3, mobile: true }, { w: 1200, h: 730, d: 1, mobile: false }, { w: 1920, h: 1080, d: 1, mobile: false }];
 const GAP_TOL = 0.5; // local px — float noise, not a verdict threshold (see header)
 
 // THE PROPERTY NAME HAS ONE HOME TOO, AND IT IS NOT THIS FILE. fx.js exports
@@ -627,6 +718,94 @@ async function main() {
         else bad('P4', shape, `align: 'end' did not hold — panel right ${r.p.right.toFixed(1)} vs button right ${r.a.right.toFixed(1)} local px, and the panel is not against the bound`);
       }
     }
+    // ---- the creation header menu, and whether it is ON THE SCREEN ---------
+    // The one surface in this file whose defect was INVISIBILITY rather than a
+    // bad neighbour: it opened, correctly sized, past the edge of the viewport.
+    // So this block asserts the two placement claims the other intents assert
+    // AND a third that only makes sense once a placed surface can leave the
+    // screen entirely — that its box is inside the room it was bound to.
+    await cdp.send('Page.navigate', { url: `${base}?shot=customize` }, S);
+    await until(`!!document.querySelector('.screen.customize .cz-menu-button')`, 'creation');
+    await wait(600);
+    await ev(`document.querySelector('.cz-menu-button').click(); true`);
+    const czOpen = await ev(`!!document.querySelector('.cz-header-menu:popover-open')`).catch(() => false)
+      || await until(`!!document.querySelector('.cz-header-menu:popover-open')`, 'creation menu', 4000).then(() => true).catch(() => false);
+    if (!czOpen) bad('P6', shape, 'clicking ☰ in the creation header opened no menu — nothing measured');
+    else {
+      await wait(250);
+      const cz = await ev(READ('.cz-menu-button', '.cz-header-menu'));
+      gapChecks(shape, 'creation menu vs ☰', cz);
+      if (!cz.missing) {
+        const room = await ev(`(() => { const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+          return { z, w: innerWidth/z, h: innerHeight/z }; })()`);
+        // THE CLAIM THE DEFECT BROKE. Half a pixel of slack on each edge is the
+        // same float-noise allowance P2 uses, not a budget: a menu 17 px off the
+        // edge and a menu 745 px off it are the same defect.
+        const inside = cz.p.left >= -0.5 && cz.p.top >= -0.5
+          && cz.p.right <= room.w + 0.5 && cz.p.bottom <= room.h + 0.5;
+        if (inside) ok('P6', shape, `the menu is ON THE SCREEN at --ui-zoom ${room.z} — (${cz.p.left.toFixed(1)},${cz.p.top.toFixed(1)})-(${cz.p.right.toFixed(1)},${cz.p.bottom.toFixed(1)}) inside ${room.w.toFixed(1)}x${room.h.toFixed(1)} local px`);
+        else bad('P6', shape, `the menu is OFF THE SCREEN at --ui-zoom ${room.z} — (${cz.p.left.toFixed(1)},${cz.p.top.toFixed(1)})-(${cz.p.right.toFixed(1)},${cz.p.bottom.toFixed(1)}) against a ${room.w.toFixed(1)}x${room.h.toFixed(1)} local px room. It is open and sized; a player cannot see it, which reads as a ☰ that does nothing`);
+        if (cz.p.top >= cz.a.bottom - 0.5) ok('P6', shape, `the menu opens UNDER ☰ (menu top ${cz.p.top.toFixed(1)} ≥ button bottom ${cz.a.bottom.toFixed(1)} local px)`);
+        else bad('P6', shape, `the menu is NOT under ☰ — menu top ${cz.p.top.toFixed(1)} against button bottom ${cz.a.bottom.toFixed(1)} local px. 'under' is the intent this call site names`);
+        // Same waiver as P4, for the same reason and stated the same way: the
+        // bound outranks `align: 'end'`, and an assertion that excuses itself
+        // silently is the thing this house calls green-that-was-not-clearance.
+        if (Math.abs(cz.p.right - cz.a.right) <= 0.5) ok('P6', shape, `right-aligned to ☰ (${cz.p.right.toFixed(1)} = ${cz.a.right.toFixed(1)} local px)`);
+        else if (cz.p.left <= 4.5) ok('P6', shape, `right-alignment WAIVED — the bound moved it (menu left ${cz.p.left.toFixed(1)} is on the screen margin)`);
+        else bad('P6', shape, `align: 'end' did not hold — menu right ${cz.p.right.toFixed(1)} vs button right ${cz.a.right.toFixed(1)} local px, and the menu is not against the bound`);
+      }
+      // P6 AT A TIGHT WINDOW — the claims that only exist where the menu is
+      // taller than the room under its button, which no shape above is.
+      //
+      //   UNDER, STILL. The menu caps itself to the room below the ☰ and
+      //   the cap has to go on BEFORE placeAnchored measures it. Capped after
+      //   (what flask.js and quicknav.js both do), placeAnchored measures the
+      //   FULL menu, finds it does not fit under the button, and clampBox
+      //   slides it up over the button before the cap applies. Measured at
+      //   1200x260 with the cap last: menu top 4.0 against a button bottom of
+      //   58.0 — `under` asked for, and the menu on the control that summoned
+      //   it. Every shape-height P6 above was green on that build: 730 px is
+      //   not tight, so the question never came up.
+      //   AND THE SECOND OPEN EQUALS THE FIRST. An inline cap left over from a
+      //   previous open is not a measurement of this one; when the cap was
+      //   written after placement, a stale smaller one was measured as this
+      //   open's box (Copilot, #1244): at 1280x260 after an open at 1280x160,
+      //   top 92.9 instead of 4 and 89 local px more of the menu hidden.
+      //
+      // THE HEIGHTS ARE FIXED, NOT THE SHAPE'S, and the check refuses to call
+      // itself green if TIGHT turns out not to be tight at this width — a menu
+      // that fits whole means none of this was measured. 200, not 260: at 260
+      // the menu overflowed by 5-6 local px at every width, so a token change
+      // shrinking it that much would have turned this red about the constant.
+      await ev(`document.querySelector('.cz-header-menu')?.hidePopover?.(); true`);
+      if (czOpen) {
+        const TIGHT = 200; const TIGHTER = 140;
+        const box = () => ev(`(() => { const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+          const p = document.querySelector('.cz-header-menu'); const b = document.querySelector('.cz-menu-button');
+          if (!p || !b || !p.matches(':popover-open')) return null; const r = p.getBoundingClientRect();
+          return { top: r.top/z, shown: r.height/z, hidden: p.scrollHeight - p.clientHeight, buttonBottom: b.getBoundingClientRect().bottom/z }; })()`);
+        const at = async (h) => { await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S); await wait(400); };
+        const openIt = async () => { await ev(`document.querySelector('.cz-menu-button').click(); true`); await wait(250); return box(); };
+        const shut = async () => { await ev(`document.querySelector('.cz-header-menu')?.hidePopover?.(); true`); await wait(120); };
+        await at(TIGHT);
+        const fresh = await openIt(); await shut();
+        await at(TIGHTER); await openIt(); await shut();
+        await at(TIGHT);
+        const again = await openIt(); await shut();
+        await at(vp.h);
+        if (!fresh || !again) {
+          bad('P6', shape, `the menu did not open at ${vp.w}x${TIGHT} — the tight-window claims were not measured`);
+        } else if (!(fresh.hidden > 0)) {
+          bad('P6', shape, `${vp.w}x${TIGHT} is not tight at this width — the menu fits whole (0 px hidden), so the tight-window claims measured nothing. Lower TIGHT for this width rather than reading this as green`);
+        } else {
+          if (fresh.top >= fresh.buttonBottom - 0.5) ok('P6', shape, `at ${vp.w}x${TIGHT} the menu is still UNDER ☰ (top ${fresh.top.toFixed(1)} ≥ button bottom ${fresh.buttonBottom.toFixed(1)}) and scrolls ${fresh.hidden} px inside itself`);
+          else bad('P6', shape, `at ${vp.w}x${TIGHT} the menu is NOT under ☰ — top ${fresh.top.toFixed(1)} against button bottom ${fresh.buttonBottom.toFixed(1)} local px. It was placed at its full height and capped afterwards, so the bound slid it over the button that summoned it`);
+          if (Math.abs(again.top - fresh.top) <= 0.5 && Math.abs(again.shown - fresh.shown) <= 0.5) ok('P6', shape, `at ${vp.w}x${TIGHT} the second open matches the first — top ${again.top.toFixed(1)}, ${again.shown.toFixed(1)} local px shown — after an open at ${vp.w}x${TIGHTER}`);
+          else bad('P6', shape, `at ${vp.w}x${TIGHT} a previous open changed this one — top ${again.top.toFixed(1)} vs ${fresh.top.toFixed(1)}, ${again.shown.toFixed(1)} vs ${fresh.shown.toFixed(1)} local px shown (${again.hidden - fresh.hidden} more px of menu hidden). A cap it wrote last time is being measured as this time's box`);
+        }
+      }
+    }
+
     await cdp.send('Target.closeTarget', { targetId });
   }
 

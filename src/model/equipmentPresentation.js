@@ -122,6 +122,7 @@ function rolesFor(registries, run) {
     run.class,
     run.attributes,
     run.equipmentProfileRuleSnapshot,
+    run,
   ).map((row) => ({ ...row, copies: countOf(row.role) }));
 }
 

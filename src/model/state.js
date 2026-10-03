@@ -20,6 +20,7 @@ import {
   restoreDerivedStatRuleSnapshot,
   resolveDerivedStatRules,
   deriveStat,
+  ruleTierSize,
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
@@ -28,13 +29,61 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
 import { openLedger, closeLedger, note } from './healLedger.js';
+import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
+import { skillsProblems } from './skills.js';
+import { coreTagsProblems } from './classTree.js';
+import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
+import { defaultSeatOrder, seatOrderProblems } from './seats.js';
+import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
+import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
+import { sigilInventoryProblems, attunedSigilProblems } from './sigils.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
 // (initializeRunFlaskCharges); v1 additionally predates starting kits.
-export const RUN_SCHEMA_VERSION = 5;
+// 7 (plan phase 3a): `zones` and `collection` ride the save. They are a
+// PROJECTION of the fields that own the truth today — `class`, `loadout`,
+// `relics`, `deck` — written at every door (createRunState, serializeRun,
+// migrateRunSchema) by syncZones and shape-checked by validateRunShape. The
+// legacy fields stay authoritative until phase 3b flips the readers and
+// writers; until then a save whose zones disagree with its legacy fields is
+// re-projected at the load door with a ledger note, never refused.
+// 12 (SPEC §15.1): a pending reward may carry `levelCards` rows (keyed
+// `levelCard:<n>`, picks in `chosenDraftCardIds`) and `cardMissed`. The bump
+// is what makes an OLDER build refuse-and-keep such a save rather than read
+// it and drop the rows; an 11 save has no level-card rows, so 11 → 12 is a
+// no-op at the migration door.
+// 13 (SPEC §15.3): `smithingStonesRefined`, the refined-stone purse, rides
+// the save. A v12-or-older save is filled with 0 at migrateRunSchema, so an
+// older build can never be the one to write the field away.
+// 14 (SPEC §14.2): a shop stock carries its kind and the offerings its visit
+// laid out (`shopStock.kind`, `shopStock.offerings`, and the same on an atlas
+// shop point's persisted stock). A v13-or-older stock is read as `market`
+// offering today's shelves, filled at migrateRunSchema with nothing rerolled.
+// 15 (SPEC §14.3, §14.6 step 5a): `sigils` (owned, uninstalled sigil ids) and
+// `sigilSlots` (the slots cut into items, keyed like itemMounts) ride the
+// save, and a loadout may carry `boughtArmour`, the armour sets bought at a
+// market. A v14-or-older save is filled with [] and {} at migrateRunSchema;
+// `boughtArmour` is optional (absent means none bought).
+// 16 (SPEC §14.3, §14.6 step 5b): `consumables` ({ [id]: count }, skill books
+// and revive tokens) and `companions` ([{ id, combatsLeft }]) ride the save. A
+// v15-or-older save is filled with {} and [] at migrateRunSchema.
+// 17 (SPEC §14.4, §14.6 step 6): a `blacksmith` stock can sit on `shopStock`
+// and on an atlas smith point's `serviceStates[pointId].stock` (rolled on
+// first entry). The bump is what makes an OLDER build refuse-and-keep such a
+// save rather than open a kind it has no screen for; a v16 save has no
+// blacksmith stock, so 16 → 17 fills nothing at the migration door.
+// 18 (SPEC §14.5, §14.6 step 7): `trainingPool`, the XP a wise master's
+// respec refunded and redistribute spends, rides the save; and a `master`
+// stock can sit on `shopStock` and on an atlas master point's
+// `serviceStates[pointId].stock`, which an older build must refuse and keep.
+// A v17-or-older save is filled with a pool of 0 at migrateRunSchema.
+// 19 (SPEC §15.4, §15.5 step 5): `attunedSigils`, the legendary sigils the run
+// holds attuned (a subset of `sigils`), rides the save. A v18-or-older save is
+// filled with [] at migrateRunSchema and its `sigils` are left untouched.
+export const RUN_SCHEMA_VERSION = 20;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -58,7 +107,7 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
 /**
  * createRunState({ seed, classId, registries }) → new run at floor 0, act 1.
  * Starting deck/relic/HP come from the class def; cinders from
- * balance.startingCinders (default 0).
+ * balance.startingCinders (default 20).
  */
 export function createRunState({
   seed,
@@ -130,6 +179,16 @@ export function createRunState({
     // exactly what the derived-stat table says a point is worth), and this
     // number is what the COST RAMP indexes on. `model/levelup.js`.
     levelUps: 0,
+    // THE CHARACTER LEVEL (plan phase 6): earned XP, the level it has bought,
+    // and the attribute points waiting to be assigned at a shrine. Written
+    // only by model/levelup.js. A fresh run is level 1 with nothing waiting.
+    level: { xp: 0, level: 1, unspentPoints: 0 },
+    // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
+    // written only by model/skills.js awardSkillXp. Empty until a hit lands.
+    skills: {},
+    // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
+    coreTags: [],
+    feats: [],
     // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
     // two are one number only while the level value is one number. Constantine
     // made it a dial on 2026-08-17 ("leave the level up value configurable"),
@@ -140,6 +199,11 @@ export function createRunState({
     levelPoints: 0,
     floor: 0,
     actNumber: 1,
+    // The DEFAULT order — seats by authored baseline — so a run made here is
+    // byte-for-byte the run this function always made. The orchestrator draws
+    // the seeded order on the `seats` stream right after (drawSeatOrder,
+    // engine/actmap.js); a test or tool that never does gets the old climb.
+    seatOrder: defaultSeatOrder(registries),
     mapNodeId: null,
     hp: oldMaxHp,
     maxHp: oldMaxHp,
@@ -148,9 +212,24 @@ export function createRunState({
     equipmentPoolDeficits: { hp: 0, mana: 0, stamina: 0 },
     cinders: registries.balance.startingCinders || 0,
     smithingStones: 0,
+    smithingStonesRefined: 0, // refined Smithing Stones (SPEC §15.3)
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
+    sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
+    // SPEC §14.3: owned sigils not installed anywhere, and the sigil slots cut
+    // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
+    sigils: [],
+    sigilSlots: {},
+    // SPEC §14.5: the XP a wise master's respec refunded, spent on any track
+    // through his redistribute.
+    trainingPool: 0,
+    // SPEC §15.4 (schema 19): the legendary sigils attuned, a subset of `sigils`.
+    attunedSigils: [],
+    // SPEC §14.3 (schema 16): skill books and revive tokens carried, and the
+    // companions travelling with the run.
+    consumables: {},
+    companions: [],
     loadout,
     // THE BIRTH QUOTA, WRITTEN DOWN. How many attack slots this run was composed
     // with is a fact about the run, not something to re-derive from whatever
@@ -160,7 +239,8 @@ export function createRunState({
     // derive it from. So it is recorded here, once, and carried like the
     // profile snapshot beside it.
     equipmentAttackSlotCount: null, // filled in below, from the deck just built
-    relics: [startingRelic.id],
+    // The starting relic, and the class kit's relic beside it (plan phase 5a).
+    relics: [startingRelic.id, ...(classDef.kitRelic && classDef.kitRelic !== startingRelic.id ? [classDef.kitRelic] : [])],
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),
@@ -214,6 +294,9 @@ export function createRunState({
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
+  // The projection, LAST: stampDeck and orderStartingDeck have just composed
+  // the opening deck, and the collection is a copy of that deck.
+  syncZones(run);
   closeLedger(run);
   return run;
 }
@@ -242,12 +325,27 @@ function derivedOptions(registries, extra = {}) {
  * migration. Once a snapshot exists, restores validate and trust the persisted
  * outputs so a later content edit cannot rewrite a climb in progress.
  */
+/** The character level a run's pools are derived at (plan phase 6): 1 for a run whose ledger is absent. */
+export function characterLevelOf(run) {
+  const row = run && run.level;
+  return row && Number.isInteger(row.level) && row.level >= 1 ? row.level : 1;
+}
+
 export function initializeRunDerivedStats(run, registries, {
   snapshot = undefined,
   derivedStatOptions = {},
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
+  // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
+  // A smaller starting pool used to multiply every `pointsPerTier` by the
+  // ratio, which is the same as handing each formula an inflated attribute:
+  // 12 points on the authored 35-point scale meant CON 1 bought the HP of CON
+  // 2.92. The row now reads the attribute the sheet shows — `base +
+  // gainPerTier × floor(attribute ÷ pointsPerTier)` — and a pool worth fewer
+  // points buys fewer pools, which is what a smaller pool means. Runs already
+  // carrying a scaled snapshot keep it: a climb is priced by the rules it was
+  // born under, and `existing` below is still the authority.
   const modeModifiers = modeProfiles
     ? { ...(derivedStatOptions.modeModifiers || {}), equipmentProfiles: modeProfiles }
     : derivedStatOptions.modeModifiers;
@@ -277,7 +375,7 @@ export function initializeRunDerivedStats(run, registries, {
         const persistedMax = run[maxField];
         const adjustment = maxField === 'maxHp' ? run.maxHpAdjustment : 0;
         if (!Number.isFinite(persistedMax) || !Number.isInteger(adjustment)) continue;
-        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: run.attributes, classDef }).value;
+        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value;
         inferred[maxField] = persistedMax - derived - adjustment;
       }
     }
@@ -325,7 +423,7 @@ export function initializeRunDerivedStats(run, registries, {
   // D22 changes the base formula.
   if (run.maxHpAdjustment === undefined) {
     if (restoredExisting && Number.isFinite(run.maxHp)) {
-      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef }).value;
+      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value;
       run.maxHpAdjustment = run.maxHp - (oldDerivedHp + hpEquipmentBonus);
     } else run.maxHpAdjustment = 0;
     note(run, {
@@ -358,7 +456,7 @@ export function initializeRunDerivedStats(run, registries, {
       }
       const equipmentBonus = key === 'maxMana' ? run.equipmentPoolBonuses.maxMana
         : key === 'maxStamina' ? run.equipmentPoolBonuses.maxStamina : 0;
-      const expected = Math.max(0, deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value + equipmentBonus);
+      const expected = Math.max(0, deriveStat(restored.rules, statId, { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value + equipmentBonus);
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
     // MAX-HP HOME 1 of 3 (the validating one). Same formula as home 2 below and
@@ -367,7 +465,7 @@ export function initializeRunDerivedStats(run, registries, {
     // collapse what you cannot watch drift. It states its number so a tool can
     // compare the three instead of trusting that they agree.
     const expectedMaxHp = Math.max(1,
-      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef }).value
+      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value
       + hpEquipmentBonus + run.maxHpAdjustment);
     note(run, {
       kind: 'compute',
@@ -412,7 +510,10 @@ export function initializeRunDerivedStats(run, registries, {
     derivedOptions(registries, effectiveDerivedStatOptions),
   );
   const tierSizes = Object.fromEntries(
-    Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
+    // The granularity a relic term has to match is the row's points-per-
+    // increase divided by the weight it puts on its one attribute, which is the
+    // same number `pointsPerTier` used to be for a single-stat row.
+    Object.entries(hostRules.rules).map(([id, r]) => [id, ruleTierSize(r)]),
   );
   const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
     attributes: run.attributes,
@@ -426,11 +527,11 @@ export function initializeRunDerivedStats(run, registries, {
       relicModifierReceipt,
     });
   const rules = receipt.rules;
-  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
-  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
-  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
-  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
-  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
+  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
 
   const oldHpMax = run.maxHp;
   const oldHp = run.hp;
@@ -522,6 +623,9 @@ export const RUN_SHAPE = [
   // that build had one possible level value (attributes.js).
   { key: 'levelUps', type: 'number', optional: true },
   { key: 'levelPoints', type: 'number', optional: true },
+  // Plan phase 6. Required at schema 10; a preXpLevels save (≤ 9) is filled
+  // at the migration door from its bought levels, with nothing waiting.
+  { key: 'level', type: 'object' },
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
@@ -529,8 +633,21 @@ export const RUN_SHAPE = [
   // falls back to counting a run's own deck for exactly those.
   { key: 'equipmentAttackSlotCount', type: 'number', optional: true },
   { key: 'removedAttackSlotIds', type: 'array', optional: true },
+  // A Sealed/Draft run held to the dealt-deck rule (model/cardRemoval.js
+  // POOL_DECK_RULE). Absent on every Standard run. Schema 20 is the bump that
+  // brought it: a pool save from schema 19 or older has none, and the load
+  // door heals it once and marks it; a schema-20 pool save without it is
+  // refused (engine/save.js). The bump is what makes a schema-19 build refuse
+  // and preserve a schema-20 pool save instead of re-dealing it the
+  // equipment's cards (Codex review on #1479).
+  { key: 'poolDeckRule', type: 'number', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
+  // SPEC §13.4: the seats this run climbs, in order; `actNumber` is the tier
+  // and `seatOrder[tier - 1]` the seat. Required at schema 6; a pre-§13 save
+  // gets the default order at the load door (save.js), never here — this file
+  // has no registries and may not spell a seat id (DEVELOPER.md rule 1).
+  { key: 'seatOrder', type: 'array' },
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
   { key: 'maxHpAdjustment', type: 'number' },
@@ -546,6 +663,10 @@ export const RUN_SHAPE = [
   { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'smithingStones', type: 'number', optional: true },
+  // Refined Smithing Stones (SPEC §15.3, the §14.4 refined stone). Required
+  // at schema 13; a preRefinedStones save (≤ 12) is filled with 0 at the
+  // migration door.
+  { key: 'smithingStonesRefined', type: 'number' },
   { key: 'itemUpgradeLevels', type: 'object', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
@@ -567,7 +688,50 @@ export const RUN_SHAPE = [
   // Optional so a run saved before equipment existed still loads; save.js
   // heals it with a fresh loadout rather than refusing the save.
   { key: 'loadout', type: 'object', optional: true },
+  // Plan phase 3a. Required at schema 7; a preZones save (≤ 6) is filled at
+  // the migration door from the four legacy fields, no registries needed.
+  { key: 'zones', type: 'object' },
+  { key: 'collection', type: 'array' },
+  // Plan phase 5b. Required at schema 9; a preCoreTags save (≤ 8) is filled
+  // with no picks at the migration door.
+  { key: 'coreTags', type: 'array' },
+  { key: 'feats', type: 'array', optional: true },
+  // Plan phase 5c: the item types in hand as each boss fell, for the
+  // bossWithGroup unlock; optional, written at the boss door.
+  { key: 'bossGroups', type: 'object', optional: true },
+  // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
+  // with the empty ledger at the migration door.
+  { key: 'skills', type: 'object' },
+  // SPEC §14.1. Required at schema 11: the owned cards the deck editor took out
+  // of the deck. A preSideboard save (≤ 10) is filled with none at the
+  // migration door. `editMintCounter` keeps minted basics' instance ids unique;
+  // absent means none minted.
+  { key: 'sideboard', type: 'array' },
+  { key: 'editMintCounter', type: 'number', optional: true },
+  // SPEC §14.3. Required at schema 15: the owned, uninstalled sigils and the
+  // sigil slots cut into items (sigilInventoryProblems). A preSigils save
+  // (≤ 14) is filled with [] and {} at the migration door.
+  { key: 'sigils', type: 'array' },
+  { key: 'sigilSlots', type: 'object' },
+  // SPEC §14.3. Required at schema 16: the consumables carried and the
+  // companions travelling (consumablesProblems, companionsProblems). A
+  // preConsumables save (≤ 15) is filled with {} and [] at the migration door.
+  { key: 'consumables', type: 'object' },
+  { key: 'companions', type: 'array' },
+  // SPEC §14.5. Required at schema 18: the training pool a respec fills and
+  // redistribute spends, a whole number of at least 0. A preTrainingPool save
+  // (≤ 17) is filled with 0 at the migration door.
+  { key: 'trainingPool', type: 'number' },
+  // SPEC §15.4. Required at schema 19: the attuned legendaries, a subset of
+  // `sigils` (attunedSigilProblems). A preAttunedSigils save (≤ 18) is filled
+  // with [] at the migration door.
+  { key: 'attunedSigils', type: 'array' },
+  // SPEC §14.2. The open shop visit's stock, null between visits. Since
+  // schema 14 it carries `kind` and `offerings` (shopStockProblems); a
+  // preShopKinds save (≤ 13) is read as a market at the migration door.
+  { key: 'shopStock', type: 'object', optional: true, nullable: true },
   { key: 'seedString', type: 'string', nullable: true },
+  { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
   // Optional, backward-compatible presentation state. It is owned by the run
@@ -576,6 +740,67 @@ export const RUN_SHAPE = [
   { key: 'mapView', type: 'object', optional: true, nullable: true },
   { key: 'combatEntered', type: 'object', nullable: true },
 ];
+
+// ---------------------------------------------------------------------------
+// Zones (plan phase 3a) — the character as cards in zones, projected
+// ---------------------------------------------------------------------------
+
+// The zone map and the projection live in zones.js (a leaf) since phase 3b,
+// so the figure composer and the slot table's door read the same map this
+// run does. Re-exported here for the readers that learned them at 3a.
+export { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones };
+
+/**
+ * syncZones(run) → true if the projection changed what the run carried.
+ *
+ * The ONE writer of `zones` and `collection`. Called at createRunState, in
+ * serializeRun (so what is written is what the legacy fields say at that
+ * moment, whatever a writer did between), at the migration door, at the end
+ * of the two load doors that heal and re-stamp after the migration
+ * (save.js loadRun, tools/session.mjs restoreSession) and in the co-op
+ * session's serialize, which emits member runs without serializeRun. Until
+ * phase 3b, nothing else may write these two fields.
+ */
+export function syncZones(run) {
+  const next = projectZones(run);
+  const changed = JSON.stringify({ z: run.zones, c: run.collection }) !== JSON.stringify({ z: next.zones, c: next.collection });
+  // Write only on change: a save whose projection is current serializes the
+  // very object it was handed, byte for byte (tests hold JSON.stringify(run)
+  // equal across a save — the projection may not move a key or a reference).
+  if (changed) {
+    run.zones = next.zones;
+    run.collection = next.collection;
+  }
+  return changed;
+}
+
+/** The shape of a zone map, refused row by row. */
+export function zonesProblems(zones) {
+  const problems = [];
+  if (!typeOk(zones, 'object')) return ['zones must be an object'];
+  const idOrNullOk = (v) => v === null || (typeof v === 'string' && v.length > 0);
+  if (!idOrNullOk(zones.core)) problems.push('zones.core must be an id or null');
+  if (!typeOk(zones.worn, 'object')) problems.push('zones.worn must be an object');
+  else {
+    for (const slot of WORN_ZONE_SLOTS) if (!idOrNullOk(zones.worn[slot])) problems.push(`zones.worn.${slot} must be an id or null`);
+    for (const key of Object.keys(zones.worn)) if (!WORN_ZONE_SLOTS.includes(key)) problems.push(`zones.worn.${key} is not a worn slot (slots: ${WORN_ZONE_SLOTS.join(', ')})`);
+  }
+  if (!typeOk(zones.hands, 'object')) problems.push('zones.hands must be an object');
+  else {
+    for (const hand of ['main', 'off']) if (!idOrNullOk(zones.hands[hand])) problems.push(`zones.hands.${hand} must be an id or null`);
+    for (const key of Object.keys(zones.hands)) if (!['main', 'off'].includes(key)) problems.push(`zones.hands.${key} is not a hand (main, off)`);
+  }
+  if (!Array.isArray(zones.passive)) problems.push('zones.passive must be an array of relic ids');
+  else zones.passive.forEach((id, i) => { if (typeof id !== 'string' || !id) problems.push(`zones.passive[${i}] must be a relic id`); });
+  // The core card's picked tree nodes (plan phase 5b); absent on a projection
+  // written before them, an array of node ids since.
+  if (zones.coreTags !== undefined) {
+    if (!Array.isArray(zones.coreTags)) problems.push('zones.coreTags must be an array of node ids');
+    else zones.coreTags.forEach((id, i) => { if (typeof id !== 'string' || !id) problems.push(`zones.coreTags[${i}] must be a node id`); });
+  }
+  for (const key of Object.keys(zones)) if (!['core', 'coreTags', 'worn', 'hands', 'passive'].includes(key)) problems.push(`zones.${key} is not a zone (core, coreTags, worn, hands, passive)`);
+  return problems;
+}
 
 function typeOk(value, type) {
   if (type === 'array') return Array.isArray(value);
@@ -586,14 +811,71 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger } = {}) {
+/** The draft rows a pending offer carries, keyed as the reward menu keys them (model/rewardplan.js rowKey). */
+function pendingDraftRows(pending) {
+  const seen = {};
+  const rewards = (pending && pending.rewards) || {};
+  const skill = (Array.isArray(rewards.skillDrafts) ? rewards.skillDrafts : [])
+    .filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+    .map((d) => ({ key: `skillDraft:${d.skillId}:${(seen[`s:${d.skillId}`] = (seen[`s:${d.skillId}`] || 0) + 1) - 1}`, cardIds: d.cardIds, ids: d.cardIds }));
+  // A class draft (plan phase 5b) picks a tree node, keyed by class and ordinal.
+  const cls = (Array.isArray(rewards.classDrafts) ? rewards.classDrafts : [])
+    .filter((d) => d && typeof d.classId === 'string' && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
+    .map((d) => ({ key: `classDraft:${d.classId}:${(seen[`c:${d.classId}`] = (seen[`c:${d.classId}`] || 0) + 1) - 1}`, nodeIds: d.nodeIds, ids: d.nodeIds }));
+  // A level card (SPEC §15.1) picks a card, keyed by its ordinal; its pick is
+  // kept in chosenDraftCardIds beside the skill drafts', one map keyed by row.
+  const level = (Array.isArray(rewards.levelCards) ? rewards.levelCards : [])
+    .filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+    .map((d, i) => ({ key: `levelCard:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: d.cardIds, ids: d.cardIds }));
+  const choices = (Array.isArray(rewards.levelChoices) ? rewards.levelChoices : [])
+    .filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
+    .map((d, i) => {
+      const ids = d.options.map((option) => `${option.kind}:${option.id}`);
+      return { key: `levelChoice:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: ids, ids };
+    });
+  return [...cls, ...skill, ...level, ...choices];
+}
+const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
+
+/**
+ * levelProblems(level) → the character ledger's refusals by name (plan phase
+ * 6): a level from 1, XP and waiting points whole and never negative.
+ */
+export function levelProblems(level) {
+  if (!level || typeof level !== 'object' || Array.isArray(level)) return ['level must be { xp, level, unspentPoints }'];
   const problems = [];
+  for (const key of Object.keys(level)) if (!['xp', 'level', 'unspentPoints'].includes(key)) problems.push(`level.${key} is not a field of the level ledger`);
+  if (!Number.isInteger(level.level) || level.level < 1) problems.push('level.level must be an integer of at least 1');
+  for (const key of ['xp', 'unspentPoints']) {
+    if (!Number.isInteger(level[key]) || level[key] < 0) problems.push(`level.${key} must be a non-negative integer`);
+  }
+  return problems;
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
+  problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
+  for (const [pointId, state] of Object.entries(run.journey?.serviceStates || {})) {
+    if (state && typeof state === 'object') problems.push(...shopStockProblems(state.stock, `journey.serviceStates.${pointId}.stock`, { required: !preShopKinds }));
+  }
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
     if (preEquipmentPools && (f.key === 'equipmentPoolBonuses' || f.key === 'equipmentPoolDeficits')) continue;
+    if (preSeats && f.key === 'seatOrder') continue;
+    if (preZones && (f.key === 'zones' || f.key === 'collection')) continue;
+    if (preSkills && f.key === 'skills') continue;
+    if (preCoreTags && f.key === 'coreTags') continue;
+    if (preXpLevels && f.key === 'level') continue;
+    if (preSideboard && f.key === 'sideboard') continue;
+    if (preRefinedStones && f.key === 'smithingStonesRefined') continue;
+    if (preSigils && (f.key === 'sigils' || f.key === 'sigilSlots')) continue;
+    if (preConsumables && (f.key === 'consumables' || f.key === 'companions')) continue;
+    if (preTrainingPool && f.key === 'trainingPool') continue;
+    if (preAttunedSigils && f.key === 'attunedSigils') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -609,6 +891,41 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   const attributesAbsent = run.attributes === undefined;
   if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
   if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
+  if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
+  if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
+  if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
+  if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
+    if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
+  });
+  problems.push(...sigilInventoryProblems(run), ...attunedSigilProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
+  if (Array.isArray(run.sideboard)) {
+    run.sideboard.forEach((card, i) => {
+      if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
+        problems.push(`sideboard[${i}] must be a card instance with instanceId and cardId`);
+      }
+    });
+    // A set-aside card keeps its identity, so it may share an id with no other
+    // owned card: returning it would put two instances with one id in play.
+    // Only ids the sideboard holds are checked — a pre-§14 deck is not re-judged.
+    const seen = new Set((Array.isArray(run.deck) ? run.deck : []).map((c) => c && c.instanceId));
+    run.sideboard.forEach((card, i) => {
+      const id = card && card.instanceId;
+      if (typeof id !== 'string' || !id) return;
+      if (seen.has(id)) problems.push(`sideboard[${i}] instanceId '${id}' is already owned by another card (deck ∪ sideboard ids must be unique)`);
+      seen.add(id);
+    });
+  }
+  if (run.editMintCounter !== undefined && (!Number.isInteger(run.editMintCounter) || run.editMintCounter < 0)) {
+    problems.push('editMintCounter must be a non-negative integer');
+  }
+  if (Array.isArray(run.collection)) {
+    run.collection.forEach((card, i) => {
+      if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
+        problems.push(`collection[${i}] must be a card instance with instanceId and cardId`);
+      }
+    });
+  }
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
@@ -635,6 +952,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     const entered = run.combatEntered;
     if (typeof entered.nodeId !== 'string' || !entered.nodeId) problems.push('combatEntered.nodeId must be a non-empty string');
     if (typeof entered.encounterId !== 'string' || !entered.encounterId) problems.push('combatEntered.encounterId must be a non-empty string');
+    // SPEC §14.3: a fight a service event started (the market's quest event)
+    // says so, so a resumed save fights that encounter and completes no node.
+    if (entered.serviceEvent !== undefined && typeof entered.serviceEvent !== 'boolean') problems.push('combatEntered.serviceEvent must be true or false when present');
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
     }
@@ -648,8 +968,15 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       problems.push(`${key} must be a non-negative integer`);
     }
   }
+  if (run.level !== undefined) problems.push(...levelProblems(run.level));
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
+  }
+  if (run.trainingPool !== undefined && (!Number.isSafeInteger(run.trainingPool) || run.trainingPool < 0)) {
+    problems.push(`trainingPool must be a whole number of at least 0, got ${JSON.stringify(run.trainingPool)}`);
+  }
+  if (run.smithingStonesRefined !== undefined && (!Number.isInteger(run.smithingStonesRefined) || run.smithingStonesRefined < 0)) {
+    problems.push('smithingStonesRefined must be a non-negative integer');
   }
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
@@ -705,16 +1032,118 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
       if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
       if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+      if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
+      if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
+      if (pending.skillClaims !== undefined) {
+        if (!pending.skillClaims || Array.isArray(pending.skillClaims) || typeof pending.skillClaims !== 'object') problems.push('pendingReward.skillClaims must be an object');
+        else for (const [id, count] of Object.entries(pending.skillClaims)) {
+          if (!id || !Number.isInteger(count) || count < 0) problems.push(`pendingReward.skillClaims.${id || '<empty>'} must be a non-negative integer`);
+        }
+      }
       if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
         problems.push('pendingReward.rewards must be an object');
       }
       if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
         problems.push('pendingReward.states must be an object');
       } else {
-        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
-        for (const [kind, state] of Object.entries(pending.states)) {
-          if (!rewardKinds.includes(kind) || !['taken', 'skipped'].includes(state)) {
-            problems.push(`pendingReward.states.${kind || '<empty>'} must be taken or skipped for a known reward kind`);
+        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic', 'sigil'];
+        const draftKeys = new Set(pendingDraftKeys(pending));
+        for (const [key, state] of Object.entries(pending.states)) {
+          // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
+          if (!(rewardKinds.includes(key) || draftKeys.has(key)) || !['taken', 'skipped'].includes(state)) {
+            problems.push(`pendingReward.states.${key || '<empty>'} must be taken or skipped for a known reward kind`);
+          }
+        }
+      }
+      if (pending.rewards?.skillDrafts !== undefined) {
+        const drafts = pending.rewards.skillDrafts;
+        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.skillDrafts must be an array');
+        else drafts.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillDrafts[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, cardIds }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+        });
+      }
+      if (pending.rewards?.levelCards !== undefined) {
+        // SPEC §15.1: absent on an offer written before the schedule.
+        const rows = pending.rewards.levelCards;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelCards must be an array');
+        else {
+          const ordinals = new Set();
+          rows.forEach((d, i) => {
+            const p = `pendingReward.rewards.levelCards[${i}]`;
+            if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { ordinal, cardIds }`); return; }
+            if (!Number.isInteger(d.ordinal) || d.ordinal < 0 || ordinals.has(d.ordinal)) problems.push(`${p}.ordinal must be a distinct non-negative integer`);
+            ordinals.add(d.ordinal);
+            if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+          });
+        }
+      }
+      if (pending.rewards?.levelChoices !== undefined) {
+        const rows = pending.rewards.levelChoices;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelChoices must be an array');
+        else rows.forEach((d, i) => {
+          const p = `pendingReward.rewards.levelChoices[${i}]`;
+          if (!d || !Number.isInteger(d.ordinal) || d.ordinal < 0 || !Array.isArray(d.options) || !d.options.length) {
+            problems.push(`${p} must have an ordinal and choices`); return;
+          }
+          for (const option of d.options) {
+            if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
+          }
+        });
+      }
+      if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
+        problems.push('pendingReward.rewards.cardMissed must be a boolean');
+      }
+      // SPEC §15.4: a dropped legendary sigil, a sigil id or absent (null is none).
+      if (pending.rewards?.sigilId !== undefined && pending.rewards.sigilId !== null && (typeof pending.rewards.sigilId !== 'string' || !pending.rewards.sigilId)) {
+        problems.push('pendingReward.rewards.sigilId must be a sigil id or absent');
+      }
+      {
+        // The map may be absent (a save written before it existed); the rule
+        // that a Taken draft or level card (SPEC §15.1) names its card holds
+        // all the same, as the class-draft rule below does.
+        const chosen = pending.chosenDraftCardIds === undefined ? {} : pending.chosenDraftCardIds;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
+        else {
+          const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
+          for (const [key, cardId] of Object.entries(chosen)) {
+            const draft = drafts.find((d) => d.key === key);
+            if (!draft || !draft.cardIds.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
+            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${key} requires the draft's Taken state`);
+          }
+          for (const draft of drafts) {
+            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen card`);
+          }
+        }
+      }
+      if (pending.rewards?.classDrafts !== undefined) {
+        const drafts = pending.rewards.classDrafts;
+        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.classDrafts must be an array');
+        else drafts.forEach((d, i) => {
+          const p = `pendingReward.rewards.classDrafts[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { classId, level, nodeIds }`); return; }
+          if (typeof d.classId !== 'string' || !d.classId) problems.push(`${p}.classId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.nodeIds) || !d.nodeIds.length || d.nodeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.nodeIds must be a non-empty array of node ids`);
+        });
+      }
+      {
+        // The map may be absent (a save written before it existed); the rule
+        // that a Taken draft names its node holds all the same.
+        const chosen = pending.chosenDraftNodeIds === undefined ? {} : pending.chosenDraftNodeIds;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftNodeIds must be an object keyed by draft row');
+        else {
+          const drafts = pendingDraftRows(pending).filter((d) => d.nodeIds);
+          for (const [key, nodeId] of Object.entries(chosen)) {
+            const draft = drafts.find((d) => d.key === key);
+            if (!draft || !draft.nodeIds.includes(nodeId)) problems.push(`pendingReward.chosenDraftNodeIds.${key} must name a node of that draft`);
+            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftNodeIds.${key} requires the draft's Taken state`);
+          }
+          for (const draft of drafts) {
+            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
           }
         }
       }
@@ -736,18 +1165,43 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
-  if (Array.isArray(run.deck)) {
-    const bad = run.deck.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
-    if (bad !== -1) problems.push(`deck[${bad}] is not { instanceId, cardId }`);
-    for (let i = 0; i < run.deck.length; i++) {
-      const card = run.deck[i];
+  // The sideboard holds the same instances (SPEC §14.1), so it is held to the
+  // same invariants: a malformed set-aside card is refused here, at the load
+  // door, not when the editor returns it to the deck.
+  for (const pile of ['deck', 'sideboard']) {
+    const cards = run[pile];
+    if (!Array.isArray(cards)) continue;
+    const bad = cards.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
+    if (bad !== -1) problems.push(`${pile}[${bad}] is not { instanceId, cardId }`);
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
       if (!card) continue;
       const schoolAbsent = card.damageSchool === undefined;
       const buildupAbsent = card.exposureBuildupPerHit === undefined;
-      if (schoolAbsent !== buildupAbsent) problems.push(`deck[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
-      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`deck[${i}].damageSchool '${card.damageSchool}' is unknown`);
-      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`deck[${i}].exposureBuildupPerHit must be a non-negative integer`);
+      if (schoolAbsent !== buildupAbsent) problems.push(`${pile}[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
+      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`${pile}[${i}].damageSchool '${card.damageSchool}' is unknown`);
+      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`${pile}[${i}].exposureBuildupPerHit must be a non-negative integer`);
+      if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`${pile}[${i}].ratingId '${card.ratingId}' is unknown`);
+      if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`${pile}[${i}].ratingValue must be a finite non-negative number`);
+      if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`${pile}[${i}].ratingCap must be a finite non-negative number`);
+      // A set-aside attack basic's slot is retired; any other would make the
+      // next restamp disagree with the allocation.
+      if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined
+        && !(Array.isArray(run.removedAttackSlotIds) && run.removedAttackSlotIds.includes(card.equipmentAttackSlotId))) {
+        problems.push(`sideboard[${i}].equipmentAttackSlotId '${card.equipmentAttackSlotId}' must be a retired slot`);
+      }
     }
+  }
+  // Each retired slot holds at most one set-aside basic: a second would be
+  // pushed back into the deck before the restamp refused the duplicate.
+  if (Array.isArray(run.sideboard)) {
+    const slots = new Set();
+    run.sideboard.forEach((card, i) => {
+      const slot = card && card.equipmentAttackSlotId;
+      if (slot === undefined) return;
+      if (slots.has(slot)) problems.push(`sideboard[${i}].equipmentAttackSlotId '${slot}' is held by another set-aside card`);
+      slots.add(slot);
+    });
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
@@ -832,6 +1286,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
 }
 
 export function serializeRun(run) {
+  // What is written is what the legacy fields say NOW — a writer between two
+  // saves touches `relics` or the loadout, never `zones` (syncZones's contract).
+  syncZones(run);
   return JSON.stringify(run);
 }
 
@@ -915,11 +1372,75 @@ export function migrateRunSchema(run) {
   const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
   const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
   const preEquipmentPools = [1, 2, 3, 4].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, ${RUN_SCHEMA_VERSION})`);
+  // v5 and older: no seatOrder. Admitted here; FILLED at the load door
+  // (save.js), which has the registries this file does not (SPEC §13.4).
+  const preSeats = [1, 2, 3, 4, 5].includes(run.schemaVersion);
+  // v6 and older: no zones. Filled HERE, not at the load door, because the
+  // projection reads only the run's own fields (projectZones is registry-free).
+  const preZones = [1, 2, 3, 4, 5, 6].includes(run.schemaVersion);
+  // v7 and older: no skill ledger. Filled HERE with the empty ledger — a run
+  // that never recorded a hit has none, and the shape wants the object.
+  const preSkills = [1, 2, 3, 4, 5, 6, 7].includes(run.schemaVersion);
+  // v8 and older: no class tree picks. Filled HERE with none (plan phase 5b).
+  const preCoreTags = [1, 2, 3, 4, 5, 6, 7, 8].includes(run.schemaVersion);
+  // v9 and older: levels were bought with cinders and counted in `levelUps`.
+  // Filled HERE (plan phase 6): the displayed level those purchases reached,
+  // no XP toward the next, nothing waiting — the points were spent as bought.
+  const preXpLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(run.schemaVersion);
+  // v10 and older: no sideboard. Filled HERE with none (SPEC §14.1): a run the
+  // deck editor never touched has no owned card out of its deck.
+  const preSideboard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(run.schemaVersion);
+  // v11: no level-card rows could be written (SPEC §15.1); nothing to fill.
+  // v12 and older: no refined-stone purse. Filled HERE with 0 (SPEC §15.3):
+  // no refined stone was ever paid before the purse existed.
+  const preRefinedStones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(run.schemaVersion);
+  // v13 and older: a shop stock without a kind. Filled HERE (SPEC §14.2): it
+  // is a market offering today's shelves, and its shelves are kept as saved.
+  const preShopKinds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(run.schemaVersion);
+  // v14 and older: no sigil inventory. Filled HERE (SPEC §14.3): a run that
+  // could not buy a sigil owns none and has cut no slot.
+  const preSigils = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].includes(run.schemaVersion);
+  // v15 and older: no consumables, no companions. Filled HERE (SPEC §14.3): a
+  // run that could not buy either holds none.
+  const preConsumables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(run.schemaVersion);
+  // v16: no blacksmith stock could be written (SPEC §14.4); nothing to fill.
+  // v17 and older: no training pool. Filled HERE with 0 (SPEC §14.5): no
+  // respec could have refunded anything before the wise master existed.
+  const preTrainingPool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(run.schemaVersion);
+  // v18 and older: no attuned sigils. Filled HERE with [] (SPEC §15.4): no
+  // legendary could be attuned before the Sigils panel existed.
+  const preAttunedSigils = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(run.schemaVersion);
+  // v19 and older: no dealt-deck rule. Nothing is filled HERE: the heal
+  // needs the deck's own attack slots, so the load door does it once
+  // (engine/save.js, the POOL-BUILT DECK block), reading this version from
+  // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools });
+  if (preShopKinds) bringShopStockForward(run);
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
+  if (preTrainingPool && (run.trainingPool === undefined || run.trainingPool === null)) run.trainingPool = 0;
+  if (preAttunedSigils && (run.attunedSigils === undefined || run.attunedSigils === null)) run.attunedSigils = [];
+  if (preSigils && (run.sigils === undefined || run.sigils === null)) run.sigils = [];
+  if (preConsumables && (run.consumables === undefined || run.consumables === null)) run.consumables = {};
+  if (preConsumables && (run.companions === undefined || run.companions === null)) run.companions = [];
+  if (preSigils && (run.sigilSlots === undefined || run.sigilSlots === null)) run.sigilSlots = {};
+  if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
+  if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
+  if (preSideboard && (run.sideboard === undefined || run.sideboard === null)) run.sideboard = [];
+  if (preRefinedStones && (run.smithingStonesRefined === undefined || run.smithingStonesRefined === null)) run.smithingStonesRefined = 0;
+  if (preXpLevels && (run.level === undefined || run.level === null)) {
+    run.level = { xp: 0, level: 1 + (Number.isInteger(run.levelUps) && run.levelUps > 0 ? run.levelUps : 0), unspentPoints: 0 };
+  }
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
+  // The projection is re-derived at every load. A schema-7 save that carried
+  // zones disagreeing with its legacy fields (an edit by hand; serializeRun
+  // cannot write one) is brought back to what the authoritative fields say,
+  // and the disagreement is left on the run for the load door's ledger to
+  // note — this file has no open ledger. Never a refusal: the truth is the
+  // legacy fields, and they are intact.
+  const carried = preZones ? undefined : { zones: run.zones, collection: run.collection };
+  if (syncZones(run) && carried) run.reprojectedZones = carried;
   if (originalVersion !== RUN_SCHEMA_VERSION) {
     run.migratedFromRunSchemaVersion = originalVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;
@@ -997,8 +1518,20 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
  */
 export function stampPlayerPoiseMax(entity, max) {
   if (Number.isInteger(max) && max > 0) {
-    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, max)) : 0;
-    entity.poiseMeter = { value, max };
+    // THE GROWTH SURVIVES THE RESTAMP. A fill widens the vessel by
+    // balance.poise.growthMult and records the factor on the meter; the
+    // receipt only ever knows the BASE, so a swap of armaments (or a
+    // restored fight) would otherwise hand a staggered player their
+    // opening threshold back and make the next break cheaper (Codex, #1203).
+    const growths = (entity.poiseMeter && entity.poiseMeter.growths) || 0;
+    const step = (entity.poiseMeter && entity.poiseMeter.growthMult) || 1.25;
+    // Older phase-8 snapshots carried a combined factor instead of a count.
+    // Preserve it as a prefix when later fills add counted growth steps.
+    const legacyGrowth = entity.poiseMeter?.growth || 1;
+    let grownMax = Math.ceil(max * legacyGrowth);
+    for (let i = 0; i < growths; i++) grownMax = Math.ceil(grownMax * step);
+    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, grownMax)) : 0;
+    entity.poiseMeter = { value, max: grownMax, ...(growths ? { growths, growthMult: step } : {}), ...(legacyGrowth !== 1 ? { growth: legacyGrowth } : {}) };
   } else {
     delete entity.poiseMeter;
   }
@@ -1009,17 +1542,19 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1, level = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
     enemyId,
+    level: Number.isSafeInteger(level) && level > 0 ? level : 1,
     hp,
     maxHp: hp,
     block: 0,
     statuses: {},
     poiseMeter: { value: 0, max: poiseMax },
     movesHistory: [],
+    performedMoves: [], // moves that resolved (movesHistory is rolls)
     intent: null,
     pendingMove: null, // delayed-move commitment: { moveId, resolveOnTurn }
     skipNextTurn: false, // set by a poise-meter fill; consumed by the enemy turn
@@ -1030,5 +1565,24 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
     ? { ...structuredClone(arcaneExposure), value: 0 }
     : { mode: 'immune' };
   if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
+  // A fight-wide move-damage scale (SPEC §13.3 balance.bossTiers). Stamped
+  // only when it is not 1, so every unscaled enemy — and every snapshot
+  // written before the row existed — keeps its exact shape.
+  if (damageMult !== 1) entity.damageMult = damageMult;
   return entity;
 }
+
+/**
+ * enemyMoveDamage(enemy, move) → the per-hit base damage this enemy's move
+ * deals: the authored number, scaled by the entity's `damageMult` when it has
+ * one (rounded, never below 1). null for a move with no damage. The one place
+ * an enemy's move damage is read, so the intent, the hit and the move card
+ * cannot disagree.
+ */
+export function enemyMoveDamage(enemy, move) {
+  if (!move || move.damage == null) return null;
+  const mult = enemy && Number.isFinite(enemy.damageMult) ? enemy.damageMult : 1;
+  if (mult === 1 || !(move.damage > 0)) return move.damage;
+  return Math.max(1, Math.round(move.damage * mult));
+}
+import { legacyDungeonProblems } from './legacyDungeon.js';

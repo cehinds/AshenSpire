@@ -1,0 +1,90 @@
+[
+  {
+    "id": "goldenSprout",
+    "name": "Golden Sprout",
+    "subject": "A single cracked antique golden seed with one short curled stem and two broad muted olive leaves tipped with gold emerging from it. Thick simple seed silhouette, small root hugging seed, no soil or pot. Patient, precious, mournful.",
+    "lore": "A sapling waits inside, patient as grief.",
+    "rarity": "common",
+    "prompt": "Use case: stylized-concept. Create one standalone AshenSpire relic inventory illustration on genuine transparent RGBA background, no backdrop, no ground, no checkerboard, no text, no frame. Square image. Dark fantasy hand-painted style, worn charcoal iron, antique gold, restrained burgundy and olive. Broad readable shapes at 64 pixels, rich weathered tactile surfaces, upper-left highlights. Center full object occupying 80% canvas, clear margins, no cropped parts. A single cracked antique golden seed with one short curled stem and two broad muted olive leaves tipped with gold emerging from it. Thick simple seed silhouette, small root hugging seed, no soil or pot. Patient, precious, mournful. Lore: A sapling waits inside, patient as grief.",
+    "acquisition": {
+      "className": "All classes",
+      "method": "Elite-victory relic reward pool and generic relic rolls.",
+      "startingGrant": "Guaranteed if selected as the alternative starting relic for any class.",
+      "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+      "bossRewardDropRate": "0% in the boss-rarity reward roll.",
+      "bossOwner": "None.",
+      "sources": [
+        "src/content/relics.js",
+        "src/engine/encounters.js:rollRelicReward",
+        "src/main.js:2172,2191",
+        "src/content/generated/characterCreation.js"
+      ]
+    }
+  },
+  {
+    "id": "crackedLantern",
+    "name": "Cracked Lantern",
+    "subject": "A small squat weathered charcoal iron lantern with a thick arched carry handle, antique gold corner braces, one large broken glass pane revealing a stubborn little warm amber flame. Three-quarter front view, readable open cage silhouette. No smoke, no surrounding glow cloud.",
+    "lore": "The glass is broken but the flame refuses to notice.",
+    "rarity": "common",
+    "prompt": "Use case: stylized-concept. Create one standalone AshenSpire relic inventory illustration on genuine transparent RGBA background, no backdrop, no ground, no checkerboard, no text, no frame. Square image. Dark fantasy hand-painted style, worn charcoal iron, antique gold, restrained burgundy and olive. Broad readable shapes at 64 pixels, rich weathered tactile surfaces, upper-left highlights. Center full object occupying 80% canvas, clear margins, no cropped parts. A small squat weathered charcoal iron lantern with a thick arched carry handle, antique gold corner braces, one large broken glass pane revealing a stubborn little warm amber flame. Three-quarter front view, readable open cage silhouette. No smoke, no surrounding glow cloud. Lore: The glass is broken but the flame refuses to notice.",
+    "acquisition": {
+      "className": "All classes",
+      "method": "Elite-victory relic reward pool and generic relic rolls.",
+      "startingGrant": "Not a starting selection.",
+      "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+      "bossRewardDropRate": "0% in the boss-rarity reward roll.",
+      "bossOwner": "None.",
+      "sources": [
+        "src/content/relics.js",
+        "src/engine/encounters.js:rollRelicReward",
+        "src/main.js:2172,2191",
+        "src/content/generated/characterCreation.js"
+      ]
+    }
+  },
+  {
+    "id": "bloodstainedChalice",
+    "name": "Bloodstained Chalice",
+    "subject": "One ancient heavy antique gold chalice, broad rounded bowl, short thick stem and wide foot, charcoal tarnish and a deep muted burgundy stain running over one side of its rim. A dark wine-red liquid barely visible inside. Simple ceremonial profile, restrained embossed rim, no jewels, no extra props.",
+    "lore": "It fills a little more each time. You have stopped asking with what.",
+    "rarity": "uncommon",
+    "prompt": "Use case: stylized-concept. Create one standalone AshenSpire relic inventory illustration on genuine transparent RGBA background, no backdrop, no ground, no checkerboard, no text, no frame. Square image. Dark fantasy hand-painted style, worn charcoal iron, antique gold, restrained burgundy and olive. Broad readable shapes at 64 pixels, rich weathered tactile surfaces, upper-left highlights. Center full object occupying 80% canvas, clear margins, no cropped parts. One ancient heavy antique gold chalice, broad rounded bowl, short thick stem and wide foot, charcoal tarnish and a deep muted burgundy stain running over one side of its rim. A dark wine-red liquid barely visible inside. Simple ceremonial profile, restrained embossed rim, no jewels, no extra props. Lore: It fills a little more each time. You have stopped asking with what.",
+    "acquisition": {
+      "className": "All classes",
+      "method": "Elite-victory relic reward pool and generic relic rolls.",
+      "startingGrant": "Not a starting selection.",
+      "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+      "bossRewardDropRate": "0% in the boss-rarity reward roll.",
+      "bossOwner": "None.",
+      "sources": [
+        "src/content/relics.js",
+        "src/engine/encounters.js:rollRelicReward",
+        "src/main.js:2172,2191",
+        "src/content/generated/characterCreation.js"
+      ]
+    }
+  },
+  {
+    "id": "crownOfStitches",
+    "name": "Crown of Stitches",
+    "subject": "One ominous low crown formed of five irregular weathered charcoal iron points and antique gold band segments sewn together with thick coarse burgundy sutures through large holes. Slight three-quarter overhead view showing the empty circular interior. Uneven patched construction, brutally heavy, no head, no flesh, no gore, no gems. Broad iconic crown silhouette.",
+    "lore": "It fits. That is the worst part.",
+    "rarity": "boss",
+    "prompt": "Use case: stylized-concept. Create one standalone AshenSpire relic inventory illustration on genuine transparent RGBA background, no backdrop, no ground, no checkerboard, no text, no frame. Square image. Dark fantasy hand-painted style, worn charcoal iron, antique gold, restrained burgundy and olive. Broad readable shapes at 64 pixels, rich weathered tactile surfaces, upper-left highlights. Center full object occupying 80% canvas, clear margins, no cropped parts. One ominous low crown formed of five irregular weathered charcoal iron points and antique gold band segments sewn together with thick coarse burgundy sutures through large holes. Slight three-quarter overhead view showing the empty circular interior. Uneven patched construction, brutally heavy, no head, no flesh, no gore, no gems. Broad iconic crown silhouette. Lore: It fits. That is the worst part.",
+    "acquisition": {
+      "className": "All classes",
+      "method": "Shared boss-victory relic reward pool.",
+      "startingGrant": "Not a starting selection.",
+      "normalRewardDropRate": "0% in the standard common/uncommon/rare pool.",
+      "bossRewardDropRate": "1 / B per boss relic roll, where B is the number of unowned boss-rarity reward-pool relics (6 before any are owned: 16.67%).",
+      "bossOwner": "No specific boss assignment; shared boss pool.",
+      "sources": [
+        "src/content/relics.js",
+        "src/engine/encounters.js:rollRelicReward",
+        "src/main.js:2172,2191",
+        "src/content/generated/characterCreation.js"
+      ]
+    }
+  }
+]

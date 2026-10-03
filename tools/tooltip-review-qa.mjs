@@ -121,7 +121,8 @@ try {
         await open(page,'combat');
         await page.locator('.hand .card').first().waitFor();
         const enemy=page.locator('.combatant.enemy').first();
-        if(phone)await enemy.locator('.resunit').first().tap();else await enemy.locator('.nm').hover();
+        // WCM0: the name shows on the selected combatant only; select it first.
+        if(phone)await enemy.locator('.resunit').first().tap();else{await enemy.locator('.sprite').click();await enemy.locator('.nm').hover();}
         await page.waitForFunction(()=>document.querySelector('#tooltip[data-open=true][data-tooltip-variant=combatant-context]')||document.querySelector('.combatant-door'));
         check(await page.locator('#tooltip[data-open=true]').count()===1 || await page.locator('.combatant-door').count()===1,`${shape} enemy inspection reachable`);
         if(!await page.locator('.combatant-door').count()) {

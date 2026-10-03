@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "herald-wayfarerPlate",
+  "classId": "herald",
+  "armourId": "wayfarerPlate",
+  "effectsBaked": false,
+  "source": "sources/herald-wayfarerPlate.png",
+  "sourceSha256": "027e3efb8b75754217131b5fd715e99c0a61bea0a5aca0692eb399d168c8d349",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3125,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        28,
+        6,
+        291,
+        316
+      ],
+      "core": [
+        40,
+        18,
+        279,
+        304
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        137.0,
+        298
+      ],
+      "offset": [
+        76,
+        89
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        87,
+        102,
+        415,
+        485
+      ],
+      "file": "frames/herald-wayfarerPlate/STANCE-READY.webp",
+      "sha256": "270b434945f6a609db663c6da5c1be140971e723506c9e5690ed00fe5dbf14a0"
+    },
+    "ATK-01": {
+      "content": [
+        341,
+        6,
+        605,
+        317
+      ],
+      "core": [
+        353,
+        18,
+        593,
+        305
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        134.5,
+        299
+      ],
+      "offset": [
+        79,
+        88
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        90,
+        101,
+        422,
+        483
+      ],
+      "file": "frames/herald-wayfarerPlate/ATK-01.webp",
+      "sha256": "f4c1177d75e59c513d7846bdfd24c089cf42a96363411ae699d03c5379d9980a"
+    },
+    "ATK-02": {
+      "content": [
+        653,
+        10,
+        919,
+        317
+      ],
+      "core": [
+        665,
+        22,
+        907,
+        305
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        135.5,
+        295
+      ],
+      "offset": [
+        78,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        87,
+        102,
+        423,
+        483
+      ],
+      "file": "frames/herald-wayfarerPlate/ATK-02.webp",
+      "sha256": "f96530413a97b1710ad0cd5ba9b76014bb924799a1e39b58b7870d34206285e8"
+    },
+    "ATK-03": {
+      "content": [
+        965,
+        8,
+        1250,
+        316
+      ],
+      "core": [
+        977,
+        20,
+        1238,
+        304
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        136.0,
+        296
+      ],
+      "offset": [
+        78,
+        92
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        89,
+        104,
+        439,
+        485
+      ],
+      "file": "frames/herald-wayfarerPlate/ATK-03.webp",
+      "sha256": "182e7aa004599eff3604e82c6f66e2323e37146157866a2c2e6a19a9a7c65375"
+    },
+    "ATK-04": {
+      "content": [
+        26,
+        317,
+        293,
+        628
+      ],
+      "core": [
+        38,
+        329,
+        281,
+        616
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        136.5,
+        299
+      ],
+      "offset": [
+        77,
+        88
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        83,
+        95,
+        417,
+        492
+      ],
+      "file": "frames/herald-wayfarerPlate/ATK-04.webp",
+      "sha256": "e234618e1b9798ff8d74bc4777323db9aa3033b2f88ab384c1d3e6a53eceaa54"
+    },
+    "ATK-05": {
+      "content": [
+        331,
+        319,
+        620,
+        630
+      ],
+      "core": [
+        343,
+        331,
+        608,
+        618
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        137.0,
+        299
+      ],
+      "offset": [
+        76,
+        88
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        84,
+        92,
+        443,
+        492
+      ],
+      "file": "frames/herald-wayfarerPlate/ATK-05.webp",
+      "sha256": "cc687e816a07bb1384f86100bc48370bf16ccaba8620ef82e033e852ccd70277"
+    },
+    "ATK-06": {
+      "content": [
+        653,
+        320,
+        921,
+        628
+      ],
+      "core": [
+        665,
+        332,
+        909,
+        616
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        135.5,
+        296
+      ],
+      "offset": [
+        78,
+        92
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        87,
+        103,
+        417,
+        487
+      ],
+      "file": "frames/herald-wayfarerPlate/ATK-06.webp",
+      "sha256": "1c9049915f4944e702b4ecc060939f4e17d93c9459cd153d5dd4d868cadd7af1"
+    },
+    "ATK-07": {
+      "content": [
+        968,
+        320,
+        1234,
+        628
+      ],
+      "core": [
+        980,
+        332,
+        1222,
+        616
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        135.5,
+        296
+      ],
+      "offset": [
+        78,
+        92
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        90,
+        100,
+        424,
+        490
+      ],
+      "file": "frames/herald-wayfarerPlate/ATK-07.webp",
+      "sha256": "9d4474a3cc766c6032fb8b8239bc898b4522db970727c82d8919031ecd16d178"
+    },
+    "DEFEND": {
+      "content": [
+        31,
+        639,
+        295,
+        942
+      ],
+      "core": [
+        43,
+        651,
+        283,
+        930
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        135.0,
+        291
+      ],
+      "offset": [
+        79,
+        98
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        92,
+        107,
+        417,
+        485
+      ],
+      "file": "frames/herald-wayfarerPlate/DEFEND.webp",
+      "sha256": "f3c064d89d5aeedaff3d667452723737195d14cfe40c1a8825ebf629afcebf40"
+    },
+    "HURT": {
+      "content": [
+        349,
+        628,
+        609,
+        943
+      ],
+      "core": [
+        361,
+        640,
+        597,
+        931
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        130.5,
+        303
+      ],
+      "offset": [
+        85,
+        82
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        90,
+        93,
+        426,
+        483
+      ],
+      "file": "frames/herald-wayfarerPlate/HURT.webp",
+      "sha256": "80842cd4b2b9b4f19d41a0f82fda92e02de654fedc5910897361a0887924c8fa"
+    },
+    "CAST": {
+      "content": [
+        656,
+        629,
+        936,
+        943
+      ],
+      "core": [
+        668,
+        641,
+        924,
+        931
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        130.5,
+        302
+      ],
+      "offset": [
+        85,
+        84
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        90,
+        90,
+        452,
+        485
+      ],
+      "file": "frames/herald-wayfarerPlate/CAST.webp",
+      "sha256": "74d4fbb221296e205a720a4eae71e2fcc3be6d07c2d9dce714529db76b4c3c8d"
+    },
+    "BUFF": {
+      "content": [
+        984,
+        629,
+        1199,
+        943
+      ],
+      "core": [
+        996,
+        641,
+        1187,
+        931
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        115.0,
+        302
+      ],
+      "offset": [
+        105,
+        84
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        113,
+        96,
+        378,
+        484
+      ],
+      "file": "frames/herald-wayfarerPlate/BUFF.webp",
+      "sha256": "494aea00f443f46f9dbc5cd4f44c3062ac46a11ada7ab8b74f690a26bcb8add0"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        27,
+        954,
+        303,
+        1238
+      ],
+      "core": [
+        39,
+        966,
+        291,
+        1226
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        138.0,
+        272
+      ],
+      "offset": [
+        75,
+        123
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        83,
+        135,
+        424,
+        488
+      ],
+      "file": "frames/herald-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+      "sha256": "c4831eb60e977826455e2cb26288bb62f59c449f11433da2cfdbcac64d0c3cfb"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        343,
+        947,
+        609,
+        1239
+      ],
+      "core": [
+        355,
+        959,
+        597,
+        1227
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        134.5,
+        280
+      ],
+      "offset": [
+        79,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        82,
+        115,
+        415,
+        491
+      ],
+      "file": "frames/herald-wayfarerPlate/STANCE-DEFENSIVE.webp",
+      "sha256": "e8e7c0799d8a7674c3d7e9fc885af839585270514ac676e7326a858e312f9433"
+    },
+    "PORTRAIT": {
+      "content": [
+        634,
+        947,
+        937,
+        1234
+      ],
+      "core": [
+        646,
+        959,
+        925,
+        1222
+      ],
+      "scale": 1.5313531353135315,
+      "sourceFootAnchor": [
+        151.5,
+        275
+      ],
+      "offset": [
+        24,
+        59
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        33,
+        68,
+        482,
+        483
+      ],
+      "file": "frames/herald-wayfarerPlate/PORTRAIT.webp",
+      "sha256": "d9890c5220a09e37d100baae7edaf52d37c555ec1efa30193cc5470aff539832"
+    },
+    "CONVERSATION": {
+      "content": [
+        1005,
+        927,
+        1193,
+        1247
+      ],
+      "core": [
+        1017,
+        939,
+        1181,
+        1235
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        101.5,
+        308
+      ],
+      "offset": [
+        123,
+        76
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        133,
+        85,
+        360,
+        484
+      ],
+      "file": "frames/herald-wayfarerPlate/CONVERSATION.webp",
+      "sha256": "10e3d4a3eecf9b063d45f684b41205c0cd49aa902e99bd96327e9e8953845b4d"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

@@ -8,30 +8,34 @@ A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no
 
 **This is a development preview** — not a release, tag, or production approval. Release status is governed separately and is currently **RED**.
 
+## Test the game now
+
+- **Stable:** the [Play link](https://cehinds.github.io/AshenSpire/AshenSpire.html) above. It serves `main`'s build. There is no separate mobile edition any more: one page picks phone-sized art on a phone (Settings → Display → Art quality, *Auto*), and the old `AshenSpire-mobile.html` link redirects to it once `main` carries this change.
+- **Latest `dev` build** (the built HTML is not committed on `dev`; CI uploads it):
+  1. Sign in to GitHub and open the [dev preview workflow, filtered to `dev`](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev).
+  2. Click the newest run.
+  3. Under **Artifacts** at the bottom of the run summary, click **`dev-standalone-<commit>`** to download a zip.
+  4. Unzip it and open `AshenSpire-dev-preview.html` in a browser. It is the light single file: one ~31 MB file, no install. Artifacts expire after 14 days.
+
+  A pull request's run offers the same artifact for that PR's build. Once the Pages fix ([#1360](https://github.com/cehinds/AshenSpire/pull/1360)) lands, the newest `dev` build is also meant to be at [`…/dev/latest/`](https://cehinds.github.io/AshenSpire/dev/latest/); the artifact stays the path that always works.
+- **Run from source:** install [Node.js](https://nodejs.org) (22 is what CI uses; there is no `package.json` and nothing to `npm install`), clone, then `node tools/launch.mjs` — or `./run.sh` (macOS/Linux) / `run.bat` (Windows), which call it. It builds, serves on `http://localhost:8080` and opens your browser. Options include `--no-open`, `--port <n>`, `--build-only` (write the files, don't serve) and `--full-art` (the release/main shape: high art by default, with the light pack as its fallback).
+
 ## Playable builds
 
-| Branch | Role | Build | Play | Changelog |
+| Branch | Role | Build | Play (newest artifact · Pages) | Changelog |
 |---|---|---|---|---|
-| `main` | stable — the Play link above | [![main build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fmain%2Fbuildordinal.json&query=%24.ordinal&label=main%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/main/) | [latest](https://cehinds.github.io/AshenSpire/main/latest/) · [all](https://cehinds.github.io/AshenSpire/main/) | [log](https://github.com/cehinds/AshenSpire/blob/main/CHANGELOG.md) |
-| `release` | release candidate | [![release build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Frelease%2Fbuildordinal.json&query=%24.ordinal&label=release%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/release/) | [latest](https://cehinds.github.io/AshenSpire/release/latest/) · [all](https://cehinds.github.io/AshenSpire/release/) | [log](https://github.com/cehinds/AshenSpire/blob/release/CHANGELOG.md) |
-| `test` | QA | [![test build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Ftest%2Fbuildordinal.json&query=%24.ordinal&label=test%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/test/) | [latest](https://cehinds.github.io/AshenSpire/test/latest/) · [all](https://cehinds.github.io/AshenSpire/test/) | [log](https://github.com/cehinds/AshenSpire/blob/test/CHANGELOG.md) |
-| `dev` | integration — unreviewed | [![dev build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fdev%2Fbuildordinal.json&query=%24.ordinal&label=dev%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/dev/) | [latest](https://cehinds.github.io/AshenSpire/dev/latest/) · [all](https://cehinds.github.io/AshenSpire/dev/) | [log](https://github.com/cehinds/AshenSpire/blob/dev/CHANGELOG.md) |
+| `main` | stable — the Play link above | [![main build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fmain%2Fbuildordinal.json&query=%24.ordinal&label=main%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/main/) | [latest](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Amain) · [all](https://cehinds.github.io/AshenSpire/main/) | [log](https://github.com/cehinds/AshenSpire/blob/main/CHANGELOG.md) |
+| `release` | release candidate | [![release build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Frelease%2Fbuildordinal.json&query=%24.ordinal&label=release%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/release/) | [latest](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Arelease) · [all](https://cehinds.github.io/AshenSpire/release/) | [log](https://github.com/cehinds/AshenSpire/blob/release/CHANGELOG.md) |
+| `test` | QA | [![test build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Ftest%2Fbuildordinal.json&query=%24.ordinal&label=test%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/test/) | [latest](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Atest) · [all](https://cehinds.github.io/AshenSpire/test/) | [log](https://github.com/cehinds/AshenSpire/blob/test/CHANGELOG.md) |
+| `dev` | integration — unreviewed | [![dev build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fdev%2Fbuildordinal.json&query=%24.ordinal&label=dev%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/dev/) | [latest](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev) · [Pages latest](https://cehinds.github.io/AshenSpire/dev/latest/) (once #1360 lands) · [all](https://cehinds.github.io/AshenSpire/dev/) | [log](https://github.com/cehinds/AshenSpire/blob/dev/CHANGELOG.md) |
 
-- **Read each badge down its own column, not across.** The ordinal counts builds *within the current candidate* and restarts when the candidate advances — the four numbers are not a ranking. `main` predates the restart (it is on the `0.4.0` line, still counting globally), hence the thousands.
+- **Read each badge down its own column, not across.** The ordinal counts builds *within the current candidate* and restarts when the candidate advances, so the four numbers are not a ranking. Each branch's version is in its own `buildordinal.json` and on its title screen.
 - **The number is never typed here.** Each badge reads that branch's committed `buildordinal.json` — the same fact the title screen paints as `BUILD <version>.<ordinal> · src <digest>`.
-- **Addresses:** `…/<branch>/<ordinal>/` is that exact build, byte-identical to the `AshenSpire.html` of the commit that produced it. `…/<branch>/latest/` is the branch's newest. Each index entry links the `CHANGELOG.md` at that build's commit.
-- **Publication:** pushes to `dev`, `test` and `release` publish themselves. A push to **`main` publishes nothing** — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
-- The site is assembled from git history by `node tools/pages-site.mjs`; nothing on it is hand-edited.
-- **Weight:** one self-contained file, art and all, at **~58 MB** on the `0.6.0` line — down from 93 MB before the sprite sheets were re-encoded as WebP (#908). It is a single download with no second request, which is why the number is worth stating: on a phone it is the whole cost of starting.
-
-### Offline
-
-Download **[`AshenSpire.html`](AshenSpire.html)** from the repository root and double-click it — one self-contained file, no installation. It is an alias for [`dist/AshenSpire.html`](dist/AshenSpire.html); both are generated from [`build/AshenSpire.html`](build/AshenSpire.html) by `node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if either copy differs. External music folders need http — see [dist/README.md](dist/README.md).
-
-## Running it
-
-- **One click:** double-click **`run.bat`** (Windows) or run **`./run.sh`** (macOS/Linux) — builds into `dist/`, serves on `http://localhost:8080`, opens your browser. Needs [Node.js](https://nodejs.org) only as a static server + bundler; no packages to install.
-- **Manually:** serve `index.html` with `node tools/serve.mjs`, `npx serve .`, or `python -m http.server`.
+- **Where a build lives.** Every push to `dev`, `test`, `release` or `main` uploads that commit's build as the `<branch>-standalone-<commit>` artifact of the [dev preview workflow](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) (kept 14 days on `dev`, 30 on `test`, 90 on `release`/`main`); **latest** in the table opens that workflow. For a branch whose head no longer commits `AshenSpire.html` — `dev` since 2026-09-26, and each other branch once that change is promoted to it — the artifact is the dependable copy of a newer build. Until the Pages fix ([#1360](https://github.com/cehinds/AshenSpire/pull/1360)) lands, Pages serves only committed builds (`…/<branch>/<ordinal>/`, byte-identical to that commit's `AshenSpire.html`), has no `…/<branch>/latest/` for such a branch, and its section ends at the last committed build. Once it lands, Pages rebuilds those builds from each commit's own source, checks the digest, and serves them at `…/<branch>/latest/` and `…/<branch>/<ordinal>/`.
+- **Publication:** the site is assembled from git history by `node tools/pages-site.mjs` (`.github/workflows/pages-builds.yml`); nothing on it is hand-edited (once #1360 lands, builds a branch no longer commits are rebuilt from source). The workflow is meant to republish it on a push to `dev`; a push to `main` publishes nothing — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
+- **Art tiers and size:** every build is one game file of about 10 MB of code with its art beside it, in content-addressed packs (`packs/` and `objects/`) it loads and hash-checks at runtime ([docs/EXTERNAL-ASSETS-PLAN.md](docs/EXTERNAL-ASSETS-PLAN.md), step 8e). `dev` and `test` carry the **light** art (from the light pack of the art release; `node tools/fetch-art.mjs --pack light,common` fetches it before a build); `release` and `main` default to the **high** art and carry the light art as its fallback. Settings → Display → Art quality picks *Auto*, *Light* or *High* at runtime; *Auto* takes light on a phone. Beside it every build has **one light single file** (~31 MB, everything inline), the download. The full-art single file (~255 MB) and the separate `AshenSpire-mobile.html` are retired. Saves are compatible between them all.
+- **High-res art** lives in the public repo `cehinds/AshenSpire-art`. `art-release.json` pins the release (`hd-assets-v2`: the high, light and common zips), and `node tools/fetch-art.mjs` downloads and verifies them (no token needed; `ART_REPO_TOKEN` only raises the rate limit). To play a light build with it, unpack the release and pick its folder in **Settings → Display → Art quality → Local high-res**; anything the folder lacks keeps the built-in art, and the choice stays on that device.
+- **Offline:** three ways. The **light single file** (the build's *Download*, the root `AshenSpire.html` and `dist/download/AshenSpire.html` after a local build) plays by double-click from disk, no server. On the Pages site, **Download & saves → Make available offline** keeps a build in the browser (phones too), and **Download a folder copy (zip)** saves the game with its packs; unzip it and double-click its HTML. `dist/AshenSpire.html` also opens by double-click while its `packs/` and `objects/` stay beside it. The score plays only over http; from disk the game uses its synthesized music. See [dist/README.md](dist/README.md). `node tools/verify-shipped.mjs` checks that the local copies (`build/`, the root alias, `dist/`) agree.
 
 ## What is this?
 
@@ -40,7 +44,7 @@ Download **[`AshenSpire.html`](AshenSpire.html)** from the repository root and d
 - **Faithful StS mechanics:** 3 energy / draw 5, block that expires, telegraphed intents, exhaust/ethereal/retain, exact StS damage-order math.
 - **Elden Ring flavour with real mechanics:** Bleed as a build-up meter bursting for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and Poise/Stagger that skips enemy turns and opens damage windows.
 - **Equip load and Weight Class:** hands and armour weigh against a capacity from Constitution and Strength; the percentage lands you in Light, Medium or Heavy. Comparing a piece shows the load and class the swap would leave you at.
-- **Stamina, and hands that fight empty:** spend no Stamina in a turn and you recover some. The Dodge Roll checks Dexterity against a d20 for a temporary guard, priced by Weight Class (Light 1 Stamina; Medium 2 + 1 action; Heavy 3 + 2 actions). Empty hands bring the Dodge Roll to your deck; a shield counts as a full hand.
+- **Stamina and the Dodge Roll:** every fight opens with full Stamina; Mana carries between fights. Every deck carries exactly one Dodge Roll, whatever you hold. It checks Dexterity against a d20 and, on success, grants Block (not guaranteed avoidance), priced by Weight Class (Light 1 Stamina; Medium 1 + 1 action; Heavy 2 + 1 action). Afterwards, **Dodge succeeded** / **Dodge failed** beside your character shows the roll, check, difficulty and guard.
 - **One component kit, one run HUD built from it:** every screen draws from one kit — one meter, one swatch, one page door, one modal chrome with the same way out in the same corner. Map and Combat compose the same header, vitals, Quick Access, relic and potion components.
 - **One data-driven Armoury:** Character, Inventory and Hybrid are presentations of the same equipment owner, using the shared Folding Tray grammar. Authored attack slots rebind to the active weapon package — a lone weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows exact before/after counts.
 - **Re-arm during a fight:** equip, move or remove carried weapons and armour on your turn. Costs the same Energy as switching a prepared set; equipment cards, HP/MP/SP limits, Poise and positions update inside the current fight and persist after it. A change you cannot afford is refused without spending anything.
@@ -54,22 +58,22 @@ Download **[`AshenSpire.html`](AshenSpire.html)** from the repository root and d
 - **Rewards you open before you collect:** post-fight spoils are a menu; nothing joins your run until you take it. A reward you have no room for says so and is the only row offering Skip. Settings → Advanced → Reward collection decides whether Continue sweeps up the rest.
 - **A merchant who buys back:** five collapsing bars — cards, relics, flasks, remove-a-card, Sell — one open at a time. He buys relics and flasks back at half his cheapest price; the Sell bar can be switched off in Settings.
 - **An in-game changelog:** Settings → Changelog reads the repository changelog as expandable rows, with build stamps linking back to the exact source.
-- **Responsive browser play:** portrait and short-wide landscape stay playable down to 340 CSS pixels high; smaller viewports show a recoverable short-screen warning instead of a clipped board. Fullscreen is one toggle, first under Settings → Display.
+- **Responsive browser play:** portrait and short-wide landscape stay playable down to 340 CSS pixels high; smaller viewports show a recoverable short-screen warning instead of a clipped board. Fullscreen is one toggle, first under Settings → General → Display.
 
 Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, mockups, art direction). Original brief: **[PROMPT.md](PROMPT.md)**.
 
 ## Recent additions
 
-- **Combat:** act maps offer named boss destinations beyond the guaranteed rest; enemy inspectors show each move's damage, effects, windup and phase unlocks. Twelve enemies use the painted sprites from the Unity fork.
-- **Combat row:** Actions, Draw, centered End Turn, Discard (with separate Discard/Exhaust tabs), Potions at the far right. Potion rows show artwork and counts and expand inline; selecting or expanding one never consumes it. Weapon arts play from the hand.
-- **Traders:** armaments and mountable weapon arts alongside the usual stock. Inspect before buying, or sell an unequipped armament from storage; equipped items explain why they cannot be sold. Weapon arts install through the Armoury's card-mounting controls.
-- **Character creation:** attached foldout cards, folded by default, closing siblings as you open a choice. Text keeps readable minimums on phones.
-- **Armoury:** Character, Equipment, Inventory and Cards tabs, one natural page scroll each. Stats live in Character beside the figure; Cards shows the deck as large separate faces. Change on equipped gear browses compatible inventory; Show all items clears the filter.
-- **Motion:** card arrivals and actions respect Reduced motion (in-game setting *and* OS preference), and the Piles control retains the latest discard or exhaust outcome when animations are skipped.
+From the last two weeks of [CHANGELOG.md](CHANGELOG.md), which names the PR and build behind each.
 
-**Dodge feedback:** after a roll, select **Dodge succeeded** / **Dodge failed** beside your character for the roll, check, difficulty and base guard. Dodge grants Block on success — it does not guarantee avoiding the next attack.
-
-See [CHANGELOG.md](CHANGELOG.md) for the PR and build behind each.
+- **Art quality** (#1339): Settings → Display → Art quality → *Local high-res* plays with full-resolution art from a folder on your device.
+- **A recorded score** (#1328): hosted builds play thirteen tracks — title, shop, rest, combat, elite, boss, victory and one map track per region — composed as code. A build opened from disk keeps the synthesized score.
+- **Settings** (#1277): Advanced opens one topic at a time, Find searches every section, every number has − · slider · field · +, and changed values show a dot and their own Reset.
+- **Dodge and Stamina** (#1309, #1284): a landed Dodge Roll gives real Block; each fight opens with full Stamina; bosses scale with the order you meet them in.
+- **Quest boards** (#1261): every town's inn lists its quests; taking and turning one in is a conversation with the Road Warden.
+- **Character creation** (#1238, #1273): choose **Standard** (your class's preset spread) or **Assign points** (every attribute at 1, three points to place); new players start on the owner's tuned defaults.
+- **Progression** (#1192, #1228): each class level buys a node in a class tree whose top tier names your subclass; the Armoury shows bars for your level and every skill you train.
+- **The opening** (#1211): after creation, six painted scenes lead to your starting place; Advanced → Opening sequence edits them.
 
 ## Screenshots
 
@@ -79,11 +83,15 @@ Captured from the exact `dev` tree by `node tools/screenshot.mjs`; the visible b
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
-> **Look at any image you regenerate before you commit it.** `tools/screenshot.mjs` sizes the *window*, not the viewport, so under Chromium 141 it writes a picture with a blank bottom band and still **exits 0**. Measured 2026-08-21 at `456b8ea`: 87 blank rows on a 1440x860 capture where CDP produced 0. A green exit is not a good picture.
+> **Look at any image you regenerate before you commit it.** `tools/screenshot.mjs` sizes the *window*, not the viewport, so under Chromium 141 it can write a picture with a blank bottom band and still exit 0.
 
 More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-1440.png), [Character](docs/preview/armoury-simple-character-1440.png), [Inventory](docs/preview/armoury-simple-inventory-1440.png), [Cards](docs/preview/armoury-simple-cards-1440.png), [phone cards](docs/preview/armoury-simple-cards-390.png). Title flow: [folded wide](docs/preview/startup-folded-wide-1440x900.png), [folded phone](docs/preview/startup-folded-mobile-390x844.png), [title wide](docs/preview/title-menu-wide-1440x900.png), [Load phone](docs/preview/title-load-mobile-390x844.png). Catalog QA: [title family](docs/preview/component-catalog-title-wide-1440x900.png), [startup family](docs/preview/component-catalog-startup-mobile-390x844.png). Also the [class sprites](docs/preview/class-sprites.svg) and the [menu control audit](docs/preview/menu-control-audit.md).
 
 ## UI component library
+
+- **[Player polish asset kit](docs/design/player-polish-asset-kit-2026-10-02/index.html)** — reusable desktop/mobile artwork, engraved SVG components, canonical art reuse, provenance and a 24-feature integration map. [Integration guide](docs/design/player-polish-asset-kit-2026-10-02/README.md).
+
+- **[Player polish inspiration](docs/design/player-polish-2026-10-01/index.html)** — twelve illustrated concept boards showing desktop and portrait-mobile directions for the player-facing feature families. [Design notes and implementation caveats](docs/design/player-polish-2026-10-01/README.md) distinguish generated examples from the game's rules.
 
 - **[Component catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** ([source](docs/component-catalog.html)) — stable component IDs, model/renderer names, reuse surfaces and a visual miniature per component. Select a card for its detail drawer.
 - **[Markdown catalog](docs/COMPONENT-CATALOG.md)** — the chat-friendly reference.
@@ -96,7 +104,7 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 
 ## Contributing
 
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — working rules: one task per branch, draft PRs into `dev`, only the owner merges to `main`.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — working rules: one task per branch, PRs into `dev` opened ready for review, only the owner merges to `main`.
 - **[DEVELOPER.md](DEVELOPER.md)** — build and test commands; how to add a card, relic, enemy or event.
 - **[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable composition/component contract. The [current-`dev` snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) refreshes automatically after every push to `dev`.
 - **[QA testing](docs/QA-TESTING.md)** and the **[feature delivery loop](docs/FEATURE-DELIVERY-LOOP.md)** — the design → build → responsive playtest → evidence → documentation process. Latest write-up: [Smith modal design](docs/qa/2026-08-25-smith-modal-design.md).
@@ -104,14 +112,14 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 
 ### Branches
 
-`feature/* → dev → release → main`
+`feature/* → dev → test → release → main`
 
 | Branch | Purpose |
 |---|---|
 | `main` | Stable, playable. Only receives merges from `release`. |
-| `release` | Release staging — final checks before `main`. |
-| `test` | QA / balance experiments that may never ship. Branched from `dev`. |
-| `dev` | Integration. Feature branches merge here. |
+| `release` | Release staging, promoted from `test` by the owner through a pinned `rc/<version>` branch — final checks before `main`. |
+| `test` | Heavy CI: each session promotes `dev` here after merging, and the long suites run on that push. Only `dev` promotions land here; balance experiments go on `experiment/*` branches. |
+| `dev` | Integration. Each session merges its own feature PR here once the fast checks pass. |
 | `feature/*` | One branch per unit of work, branched from `dev`, merged back via PR. |
 
 ### Repository layout
@@ -119,7 +127,8 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 ```
 PROMPT.md        the build brief
 SPEC.md          the full design + technical specification (source of truth)
-AshenSpire.html  current standalone development build (root convenience copy)
+AshenSpire.html  standalone build (root alias; built locally or by CI, not committed on dev/test)
+art-release.json pins the art release (high, light, common) in cehinds/AshenSpire-art
 index.html       game entry point
 styles/          CSS
 src/model/       schemas, registries, formula evaluator, validation
@@ -140,11 +149,13 @@ Design rule: adding a new card touches exactly **one** file in `src/content/`.
 |---|---|---|
 | **M1** | Combat vertical slice — Reaver, 24 cards, Act 1 enemies + elite + boss, full combat UI | **shipped** |
 | **M2** | The run — map generation, rewards, relics, flasks, shops, events, save/continue, seeds | **shipped** |
-| **M3** | Content — Rogue, Starseer & Herald, Acts 2–3, full relic/event pools, balance pass | **core shipped**: 4 classes, 3 acts, 40 relics, 10 events, ~30 cards/class + colorless, first balance pass ([BALANCE.md](docs/BALANCE.md)). Deeper pools (~50) and win-rate tuning await M4 telemetry |
-| **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | **shipped**: fx, customization, run-history + win-rate telemetry, shortcuts (1–9 / E / Esc), first-run tutorial, sfx hooks, walkthroughs + perf notes, placeholder art tuned across all acts. Bundling external art/audio is a deliberate v1 deferral (SPEC §11) |
+| **M3** | Content — Rogue, Starseer & Herald, Acts 2–3, full relic/event pools, balance pass | **core shipped**: 4 classes, 3 acts, 63 relics, 25 events, 40 cards per class + 35 colorless, first balance pass ([BALANCE.md](docs/BALANCE.md)). Deeper pools (~50) and win-rate tuning await M4 telemetry |
+| **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | **shipped**: fx, customization, run-history + win-rate telemetry, shortcuts (1–9 / E / Esc), first-run tutorial, sfx hooks, walkthroughs + perf notes, placeholder art tuned across all acts. Since then: painted art, a recorded score for hosted builds (#1328), and high-res art in its own release (#1353) |
 
 Acceptance criteria per milestone: [SPEC.md §9](SPEC.md).
 
 ## Legal
 
-Code is MIT ([LICENSE](LICENSE)). A fan-inspired original work: **no** FromSoftware assets, music or proper nouns; not affiliated with or endorsed by FromSoftware or Bandai Namco. All art assets are CC0/CC-BY/OFL and attributed in [CREDITS.md](CREDITS.md).
+Code is MIT ([LICENSE](LICENSE)). A fan-inspired original work: **no** FromSoftware assets, music or proper nouns; not affiliated with or endorsed by FromSoftware or Bandai Namco.
+
+The [AI disclosure](src/content/aiDisclosure.js) sums it up: "Ashen Spire was built by AI under human direction." AI assistants (Anthropic's Claude) wrote the code, design and writing, an OpenAI image-generation model (ChatGPT Codex) was used for art, and the music was composed as code: written as notes in `music/score/` and rendered by an AI-written synthesizer, with no samples and no AI music model. What each tool made, and how much, is stated in that disclosure, which is the authoritative account: Settings → About, or `node tools/ai-disclosure.mjs --full`. The bundled lore fonts are SIL OFL. [CREDITS.md](CREDITS.md) lists every asset directory with its source and rights, and marks the files whose provenance is not yet recorded.

@@ -54,7 +54,7 @@
 //
 // Usage:  node tools/buildversion.mjs --selftest
 
-import { cpSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
@@ -62,7 +62,63 @@ import { pathToFileURL } from 'node:url';
 import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
-const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
+const COPY = ['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
+
+// CI spreads the expensive real-tree and git-history fixtures across Windows
+// runners. Each shard still enters the same check; the default runs everything.
+const shardArg = process.argv.indexOf('--shard');
+const shardText = shardArg < 0 ? 'all' : process.argv[shardArg + 1];
+const shardMatch = /^(\d+)\/(\d+)$/.exec(shardText || '');
+if (shardText !== 'all' && (!shardMatch || !Number.isSafeInteger(Number(shardMatch[1]))
+  || !Number.isSafeInteger(Number(shardMatch[2])) || Number(shardMatch[2]) < 1
+  || Number(shardMatch[1]) >= Number(shardMatch[2]))) {
+  console.error('buildversion --selftest: --shard must be all or an index/count such as 0/4');
+  process.exit(2);
+}
+const SHARD = shardText === 'all' ? null : { index: Number(shardMatch[1]), count: Number(shardMatch[2]) };
+
+// BALANCED BY MEASURED COST, NOT BY INDEX (owner rule D38, 2026-10-02: every CI
+// job finishes in 20 minutes or less). Shards used to take index mod count in
+// each list separately, so shard 0 got the first plant, the first row-H case
+// AND the traceability corpus, and the Windows shard 0/4 ran 26-36 minutes
+// while 3/4 ran 13-18. Now every unit of work is one item with a cost, and
+// planShards hands them out longest-first to the least-loaded shard (ties to
+// the lowest index) — deterministic, so every shard computes the same plan
+// and runs only its own part, and the union is the whole corpus, each once.
+//
+// THE COSTS ARE DATA, measured on Linux on 2026-10-02 (one whole unsharded run,
+// 21m55s): a planted real tree is ~22.5 s, a row-H case (the tree copied, made
+// a git repo and committed twice) ~55.5 s, the --which history ~1 s. Only the
+// RATIOS matter to the plan; re-measure and edit this row if they drift. The
+// control (~20 s) runs in every shard and is not planned.
+export const SHARD_COST = Object.freeze({ plant: 22.5, history: 55.5, trace: 1 });
+
+/**
+ * items: [{ key, cost }] → Map(key → shard index). Longest-processing-time
+ * first: a stable sort by cost, descending, then each item to the shard with
+ * the least load so far (ties to the lowest index). Pure and deterministic.
+ */
+export function planShards(items, count) {
+  const load = Array.from({ length: count }, () => 0);
+  const plan = new Map();
+  const order = items.map((item, at) => ({ ...item, at })).sort((a, b) => (b.cost - a.cost) || (a.at - b.at));
+  for (const item of order) {
+    let best = 0;
+    for (let i = 1; i < count; i++) if (load[i] < load[best]) best = i;
+    load[best] += item.cost;
+    plan.set(item.key, best);
+  }
+  return plan;
+}
+
+/** Every planned unit of this corpus, in run order. */
+export function shardItems(historyCount = historyCorpus().CASES.length) {
+  return [
+    ...PLANTS.map((_, i) => ({ key: `plant:${i}`, cost: SHARD_COST.plant })),
+    { key: 'trace', cost: SHARD_COST.trace },
+    ...Array.from({ length: historyCount }, (_, i) => ({ key: `history:${i}`, cost: SHARD_COST.history })),
+  ];
+}
 
 // macOS can report ENOTEMPTY for a just-closed Git worktree while directory
 // entries settle. Node retries that class of recursive-removal failure only
@@ -143,7 +199,7 @@ const PLANTS = [
     // caught", the clearance has widened into a hole.
     name: 'a version TYPED into the manifest column arm 2 clears only while it is prose',
     row: 'B NO SECOND COPY',
-    plant: (root) => edit(root, 'assets/classes/successor-packet.manifest.json',
+    plant: (root) => edit(root, 'asset-data/classes/successor-packet.manifest.json',
       (t) => t.replace(/"source_export_recipe_and_tool_version": "[^"]*"/, '"source_export_recipe_and_tool_version": "9.9.z"')),
   },
   // ---- rows F and G, THE LOCK ON A FILE THE DIGEST CANNOT SEE ---------------
@@ -264,6 +320,15 @@ const PLANTS = [
       (t) => t.replace('</head>', '  <link rel="stylesheet" href="vendor/theme.css" />\n</head>')),
   },
   {
+    // A protocol-relative stylesheet href is a PATH to the bundler, not a URL:
+    // resolve(ROOT, '//etc/x.css') reads /etc/x.css. Skipping it as "remote"
+    // would let a read outside the roots through the containment row.
+    name: 'a protocol-relative stylesheet href that the bundler reads as an absolute path',
+    row: 'D CONTAINMENT',
+    plant: (root) => edit(root, 'index.html',
+      (t) => t.replace('</head>', '  <link rel="stylesheet" href="//etc/theme.css" />\n</head>')),
+  },
+  {
     name: 'a source edit that never reached the bundle — the shipped stamp goes stale',
     row: 'E SHIPPED STAMP',
     plant: (root) => appendFileSync(resolve(root, 'src/content/balance.js'), '\n// a real edit nobody rebuilt\n'),
@@ -292,6 +357,35 @@ const PLANTS = [
     name: 'the build date HAND-EDITED — the file and the shipped box disagree about the day',
     row: 'F ORDINAL ON THE BOX',
     plant: (root) => editJson(root, (j) => ({ ...j, built: '1999-12-31' })),
+  },
+  {
+    // A RETIRED EDITION UNDER THE GAME FILE'S NAME. Since step 8e the edition
+    // is the build's default tier, light or high; a `full` stamp there is a
+    // single file from before the flip copied into place.
+    name: 'the game file calls itself the retired FULL edition — an old single file copied over AshenSpire.html',
+    row: 'E SHIPPED STAMP',
+    plant: (root) => edit(root, 'build/AshenSpire.html',
+      (t) => t.replace(/const EDITION = '(high|light)'/, "const EDITION = 'full'")),
+  },
+  {
+    // THE PINNED PACK MISSING (was the mobile plant, step 8e). The pack-shaped
+    // game file is only the game with the packs it pins beside it; one gone is
+    // a build that boots on placeholders, and row E2 must say so by name.
+    name: 'a pack index the game file pins is missing from build/packs/',
+    row: 'E2 SINGLE FILE AND PACKS',
+    plant: (root) => {
+      const pin = JSON.parse(/const ASSET_PACKS = (\{.*?\});\n/.exec(readFileSync(resolve(root, 'build/AshenSpire.html'), 'utf8'))[1]);
+      rmSync(resolve(root, 'build', pin.packs.light.index));
+    },
+  },
+  {
+    // THE LIGHT SINGLE FILE FROM ANOTHER BUILD. The download is held to this
+    // tree's stamp and to edition 'light', so a high or stale file under its
+    // name is caught where the site would publish it.
+    name: 'the light single file calls itself HIGH — another build copied over download/AshenSpire.html',
+    row: 'E2 SINGLE FILE AND PACKS',
+    plant: (root) => edit(root, 'build/download/AshenSpire.html',
+      (t) => t.replace("const EDITION = 'light'", "const EDITION = 'high'")),
   },
   {
     // THE CROSSED LABEL, and it is the failure this field exists to prevent
@@ -379,8 +473,9 @@ function freshRepo() {
 // not a property of a tree. It is a property of a tree AND ITS PARENT, so no
 // file plant can reach it and neither can the history corpus above, which owns
 // a toy repo with no real bundle in it. This one copies the real tree, makes it
-// a git repository, and commits twice — the second commit shipping a changed
-// build/AshenSpire.html with the ordinal left where it was. That is the defect
+// a git repository, and commits twice — the second commit recording a new
+// source digest in buildordinal.json (a rebuild, which is what row H reads now
+// that the bundle is not committed) with the ordinal left where it was. That is the defect
 // in its natural habitat: somebody rebuilds, the ordinal does not move, and two
 // different artifacts read the same number. Exactly what we replaced.
 //
@@ -388,20 +483,14 @@ function freshRepo() {
 // watched GREEN and RED over one variable — otherwise a row that is red at
 // every commit would look like a catch.
 
-function ordinalHistory() {
-  let failures = 0;
-  const say = (ok, label, detail) => {
-    if (!ok) failures += 1;
-    console.log(`  ${ok ? 'RED  ' : 'FAIL '} [H ORDINAL INCREASES] ${ok ? 'caught' : 'NOT CAUGHT'} — ${label}`);
-    console.log(`          ${detail}`);
-  };
+function historyCorpus() {
 
   /**
    * A committed tree, then a second commit that ships a new bundle. `second`
    * rewrites the ordinal record for that second commit, so one function reaches
    * the continuation case AND the candidate-boundary cases review named on #574.
    */
-  const build = (second, first = null) => {
+  const build = (second, first = null, moveDigest = true) => {
     const dir = fresh();
     git(dir, 'init', '-q', '-b', 'main');
     git(dir, 'config', 'user.email', 'selftest@family.local');
@@ -423,13 +512,16 @@ function ordinalHistory() {
       writeFileSync(p, `${JSON.stringify(first(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
     }
     git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'the build that shipped');
-    // A REAL change to the shipped artifact — the same door a rebuild enters by.
-    appendFileSync(resolve(dir, 'build/AshenSpire.html'), '<!-- a later build -->\n');
-    if (second) {
+    // A NEW BUILD, as row H reads one: the recorded source digest moves — the
+    // same door a rebuild enters by (bumpOrdinal writes the digest and the
+    // ordinal in one act). The ordinal is left to `second`.
+    {
       const p = resolve(dir, ORDINAL_HOME);
-      writeFileSync(p, `${JSON.stringify(second(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
+      const rec = JSON.parse(readFileSync(p, 'utf8'));
+      const moved = moveDigest ? { ...rec, digest: 'f0f0f0f0f0' } : rec;
+      writeFileSync(p, `${JSON.stringify(second ? second(moved) : moved, null, 2)}\n`, 'utf8');
     }
-    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'a second build');
+    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '--allow-empty', '-m', 'a second build');
     return dir;
   };
 
@@ -557,16 +649,41 @@ function ordinalHistory() {
       `the target PATCH moves backward while the folded version rises (${MAJOR}.${MINOR}.2-rc.${CANDIDATE}.9 → ${MAJOR}.${MINOR}.1-rc.${CANDIDATE}.10) — two candidate lines the notation cannot tell apart`,
       (j) => ({ ...j, release: `${MAJOR}.${MINOR}.2-rc.${CANDIDATE}`, ordinal: 9 })],
   ];
-  if (BACKWARD === null) {
-    console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);
-  }
+  const skipped = BACKWARD === null
+    ? `  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`
+    : null;
 
   // THREE VERDICTS, NOT TWO. `unknown` is its own expectation because it is its
   // own outcome: check() treats null as blocking exactly as false does, and a
   // case watched merely "not green" could not tell the two apart.
+  // THE DIGEST-UNCHANGED BRANCH. Every case above moves the digest; these two
+  // leave it where it was. A record edit with the same digest used to be row F's
+  // catch against the committed bundle, and since CI rebuilds from the record,
+  // only row H can see it (#1332 review).
+  CASES.push(
+    [(j) => ({ ...j, ordinal: Math.max(0, j.ordinal - 5) }), 'red',
+      'the ordinal is LOWERED by hand with the source digest unchanged — no rebuild moved it, and the box went backwards', null, false],
+    [bump, 'red',
+      'the ordinal is RAISED by hand with the source digest unchanged — it sorts higher, but no build writes a new number without a new digest', null, false],
+    [null, 'green',
+      'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
+  );
+
+  return { build, CASES, skipped };
+}
+
+function ordinalHistory({ build, CASES, skipped }, picked = () => true) {
+  let failures = 0;
+  const say = (ok, label, detail) => {
+    if (!ok) failures += 1;
+    console.log(`  ${ok ? 'RED  ' : 'FAIL '} [H ORDINAL INCREASES] ${ok ? 'caught' : 'NOT CAUGHT'} — ${label}`);
+    console.log(`          ${detail}`);
+  };
+  if (skipped) console.log(skipped);
   const WANT = { red: false, green: true, unknown: null };
-  for (const [second, want, label, first = null] of CASES) {
-    const dir = build(second, first);
+  const selected = CASES.filter((_, index) => picked(index));
+  for (const [second, want, label, first = null, moveDigest = true] of selected) {
+    const dir = build(second, first, moveDigest);
     try {
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
@@ -589,7 +706,7 @@ function ordinalHistory() {
   // DEVELOPER.md warns against a second copy of a corpus size for exactly this,
   // and this repo has paid for it before (opsctl.test.mjs spelled its contract
   // count into its own label).
-  return { failures, cases: CASES.length };
+  return { failures, cases: selected.length };
 }
 
 /** Returns { failures, cases }; prints one line per case. `cases` is what RAN. */
@@ -627,6 +744,15 @@ function traceability() {
       'a digest REPLACED by that merge reports the commit that SHIPPED it, not the one that stopped',
       `whichCommits → ${removed.length === 1 ? removed[0] : JSON.stringify(removed)} (the merge ${merge} must not appear)`);
 
+    // T4 — the shape since the bundle left git: only buildordinal.json records it.
+    writeFileSync(resolve(dir, 'buildordinal.json'), `${JSON.stringify({ ordinal: 1, digest: 'dddddddddd' })}\n`);
+    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'recorded dddddddddd in buildordinal.json, no bundle committed');
+    const recorded = git(dir, 'log', '-1', '--format=%h', 'main').trim();
+    const viaOrdinal = whichCommits('dddddddddd', dir);
+    say(viaOrdinal.length === 1 && viaOrdinal[0].startsWith(recorded),
+      'a digest recorded only in buildordinal.json (no committed bundle) reports the commit that recorded it',
+      `whichCommits → ${viaOrdinal.length === 1 ? viaOrdinal[0] : JSON.stringify(viaOrdinal)}`);
+
     // T3 — the empty edge. A tool that answers everything answers nothing.
     const none = whichCommits('cccccccccc', dir);
     say(none.length === 0, 'a digest no commit ever shipped returns EMPTY, not a plausible commit',
@@ -640,6 +766,15 @@ function traceability() {
 export async function selftest() {
   console.log('buildversion --selftest: every plant is a real edit to a real tree, entered at check(root).');
   console.log('');
+
+  // THE CORPUS COPIES A REAL BUILD, and the build is not committed on dev (since
+  // 2026-09-26), so a fresh checkout has none. Refused by name rather than by a
+  // cpSync stack trace from inside fresh(); never a pass.
+  if (!existsSync(resolve(REPO_ROOT, 'build/AshenSpire.html'))) {
+    console.error('buildversion --selftest: REFUSED — build/AshenSpire.html is missing. The corpus plants edits into a copy of a real build;');
+    console.error('  build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this self-test).');
+    return 1;
+  }
 
   const rel = /version:\s*'([^']+)'/.exec(readFileSync(resolve(REPO_ROOT, 'src/content/index.js'), 'utf8'))[1];
   let failures = 0;
@@ -666,7 +801,17 @@ export async function selftest() {
   }
 
   // ---- the corpus -----------------------------------------------------------
-  for (const p of PLANTS) {
+  const history = historyCorpus();
+  const plan = SHARD ? planShards(shardItems(history.CASES.length), SHARD.count) : null;
+  const inShard = (key) => !plan || plan.get(key) === SHARD.index;
+  if (plan) {
+    const mine = shardItems(history.CASES.length).filter((item) => inShard(item.key));
+    const all = shardItems(history.CASES.length);
+    const sum = (list) => Math.round(list.reduce((n, item) => n + item.cost, 0));
+    console.log(`  shard ${SHARD.index}/${SHARD.count}: ${mine.length} of ${all.length} planned items, ~${sum(mine)} of ~${sum(all)} measured seconds (SHARD_COST, planShards); the control runs in every shard`);
+  }
+  const selectedPlants = PLANTS.filter((_, index) => inShard(`plant:${index}`));
+  for (const p of selectedPlants) {
     const root = fresh();
     try {
       p.plant(root, rel);
@@ -711,21 +856,21 @@ export async function selftest() {
   console.log('');
   console.log('  --which reads HISTORY, not files, so no plant above can reach it. These enter');
   console.log('  at whichCommits() over a real repo with a real merge in it.');
-  const trace = traceability();
+  const trace = inShard('trace') ? traceability() : { failures: 0, cases: 0 };
   const TRACE = trace.cases;
   failures += trace.failures;
 
   console.log('');
   console.log('  Row H is a claim about a commit AND ITS PARENT, so it has its own door too:');
   console.log('  the real tree, made a git repo, committed twice, entered at check(root).');
-  const hist = ordinalHistory();
+  const hist = ordinalHistory(history, (index) => inShard(`history:${index}`));
   const HIST = hist.cases;
   failures += hist.failures;
 
   console.log('');
   console.log(`  the digest this tree derives: ${sourceDigest().digest}`);
   console.log('');
-  const total = PLANTS.length + TRACE + HIST;
+  const total = selectedPlants.length + TRACE + HIST;
   if (failures) {
     console.log(`buildversion --selftest: RED — ${failures} of ${total} known-bads walked through the check.`);
     return 1;
@@ -733,7 +878,7 @@ export async function selftest() {
   // #12: the counted claim terminates the line; the qualifier prints below it.
   console.log(`buildversion --selftest: OK — ${total}/${total} known-bads observed red`);
   console.log('  each by the row or command that owns it,');
-  console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
+  console.log(`  ${selectedPlants.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
   console.log(`  git history and entered at whichCommits(), and ${HIST} planted as a real tree committed twice —`);
   console.log('  the same three doors the real runs use. That last group is watched across all three');
   console.log('  verdicts — RED, GREEN and UNKNOWN — each case naming the one it expects, so a row');

@@ -5,18 +5,37 @@ presentation only; it does not alter damage, resources, targeting, saves or RNG.
 
 ## Builds
 
-Run `node tools/launch.mjs --build-only` to generate both editions:
+Since docs/EXTERNAL-ASSETS-PLAN.md step 8e, `node tools/launch.mjs --build-only`
+writes one tree into `build/` and `dist/` (`--full-art` for release/main's
+high-default build):
 
-- `AshenSpire.html`, `build/AshenSpire.html` and `dist/AshenSpire.html` are the
-  portable single-file game.
-- `build/web/AshenSpire.html` with its sibling `assets/` and `map-detail/` trees
-  is the web edition. Serve/copy that entire directory. Images are requested
-  separately when used. Copying just its HTML will not work offline.
+- `build/AshenSpire.html` and `dist/AshenSpire.html` are the game file, about
+  10 MB of code with no media inside it. Its art, fonts, map tiles and score are
+  objects in `objects/`, listed by the pinned pack indexes in `packs/`
+  (`asset-base.json` beside it), and are requested separately when used. It picks
+  its tier at runtime: Settings → Display → Art quality, where *Auto* takes the
+  light pack on a narrow layout, a phone-sized screen, Save-Data or a
+  low-memory device (step 8c). Serve or copy the whole directory; the folder
+  also plays by double-click while it stays together.
+- `build/download/AshenSpire.html`, `dist/download/AshenSpire.html` and the root
+  `AshenSpire.html` are the **light single file**: the same build with its art
+  inlined from `assets-mobile/` (every image with a side of 384 px or more scaled
+  to 5/16, 512 → 160, all re-encoded lossy, `tools/mobileart-policy.mjs`: q35,
+  alpha q40; full-screen backdrops under `environments/`, `bg/` and `map/` keep
+  0.4 scale at q50, because a 1536-wide backdrop at 5/16 blocks visibly across a
+  phone). It is ~31 MB on 0.7.1 (the retired mobile file's 30 MB budget is an
+  open owner question for it; `verify-shipped.mjs` prints the size against it),
+  with the inlined art itself held under 20 MB by `mobile-art.mjs --check`. It
+  is the build's *Download* on Pages (`/<branch>/<ordinal>/download/`).
+  Regenerate the twins after any change under `assets/` with
+  `node tools/mobile-art.mjs` (needs `cwebp`); `--check` proves the tree without
+  an encoder and is the CI gate. Settings → About names the tier.
+- The separate mobile file (`AshenSpire-mobile.html`, `bundle.mjs --mobile`) and
+  the full-art single file (~253 MB) are retired (owner answers 2 and 6).
 
-The external-art bundler already existed; this change makes the normal launcher
-produce it as well. It does not deploy either edition or change the Pages site.
 Production hosting should cache individual versioned asset URLs and compress
-HTML. The development server deliberately does not claim production caching.
+HTML; the Pages service worker (step 6b) keeps a build for offline play. The
+development server deliberately does not claim production caching.
 
 `tools/assetmime.mjs` excludes the unused `assets/equipment/components/`
 authoring experiments from both outputs. The art source remains in git.
@@ -27,7 +46,8 @@ endings as the bundler.
 
 ## Rendering and input
 
-Settings → Display → Rendering quality offers Auto, Full and Lite. Auto uses
+Settings → General → Combat → Animation & effects → Rendering quality offers
+Auto, Full and Lite. Auto uses
 Lite for a coarse primary pointer and Full otherwise. An explicit choice wins.
 Lite removes expensive sprite filters and cloned target silhouettes, replacing
 the latter with the same relationship color on a ground ring. It disables ambient
@@ -57,6 +77,7 @@ node tests/run-node.mjs
 node tools/launch.mjs --build-only
 node tools/buildversion.mjs --check
 node tools/verify-shipped.mjs
+node tools/mobile-art.mjs --check
 node tools/verify-external.mjs
 node tools/plantsites.mjs --check
 ```

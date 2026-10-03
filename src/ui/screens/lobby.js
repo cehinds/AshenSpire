@@ -18,6 +18,7 @@
 // span[style*="color"]`, `.tint-dot`, `.seed-line`) ride on the kit's parts.
 
 import { lanInfo, lanHost, lanUnhost, lanConnect } from '../../net/lan.js';
+import { playInDeckOrder } from '../../model/deckRules.js';
 import { classGlyph, DEFAULT_SPRITE_STYLE, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } from '../assets.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { refusesWhen } from '../components/refusal.js';
@@ -76,7 +77,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
   function renderBrowse(note) {
     const nameInput = textInput({ id: 'lb-name', maxlength: '18', value: state.name });
     const hostBtn = button({ label: 'Light a fire (host)', weight: 'primary', id: 'lb-host' });
-    const backBtn = button({ label: 'Back', id: 'lb-back' });
+    const backBtn = button({ label: 'Back', role: 'exit', id: 'lb-back', attrs: { 'data-back': '' } });
     const hostsBox = options([flavour('Scanning…', { id: 'lb-scanning' })], { id: 'lb-hosts' });
     mountScreen(pane({
       eyebrow: 'Forsaken Together',
@@ -149,7 +150,9 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, tint: state.tint, spriteStyle: state.spriteStyle, hostKey });
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
+            // The seat draws by its owner's Play in deck order (SPEC §14.1).
+            playInDeckOrder: playInDeckOrder(meta.settings || {}) });
         } else if (msg.t === 'roster') {
           state.players = msg.players;
           if (msg.seedString) state.seedString = msg.seedString;
@@ -228,7 +231,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     const seedInput = iAmHost ? textInput({ id: 'lb-seed', value: state.seedString }) : null;
     const startBtn = iAmHost ? button({ label: allReady ? 'Begin the climb' : 'Begin the climb (waiting for ready)', weight: 'primary', id: 'lb-start', disabled: !(state.players.length && allReady) }) : null;
     const readyBtn = iAmHost ? null : button({ label: state.ready ? '✓ Ready — waiting for the host' : 'Ready up', weight: 'primary', id: 'lb-ready' });
-    const leaveBtn = button({ label: 'Leave', id: 'lb-leave' });
+    const leaveBtn = button({ label: 'Leave', role: 'exit', id: 'lb-leave' });
 
     mountScreen(pane({
       eyebrow: 'Forsaken Together',

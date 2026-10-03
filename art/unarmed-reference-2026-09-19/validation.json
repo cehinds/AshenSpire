@@ -1,0 +1,15 @@
+{
+  "catalogEntries": 35,
+  "expectedAppearances": 32,
+  "exportedAppearances": 32,
+  "missing": [],
+  "frames": 512,
+  "rgba": true,
+  "decodedAlphaExact": true,
+  "anchor": [
+    256,
+    480
+  ],
+  "bodyScaleSharedWithinEachSuite": true,
+  "sourcePngsPreserved": true
+}

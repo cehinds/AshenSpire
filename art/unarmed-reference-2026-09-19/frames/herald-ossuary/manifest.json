@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "herald-ossuary",
+  "classId": "herald",
+  "armourId": "ossuary",
+  "effectsBaked": false,
+  "source": "sources/herald-ossuary.png",
+  "sourceSha256": "7caa763eccf52541351560698b20c069cfc0ddbcb9d9bf2e99e76a60b77f9d70",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3125,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        25,
+        6,
+        293,
+        316
+      ],
+      "core": [
+        37,
+        18,
+        281,
+        304
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        142.5,
+        298
+      ],
+      "offset": [
+        69,
+        89
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        80,
+        102,
+        416,
+        486
+      ],
+      "file": "frames/herald-ossuary/STANCE-READY.webp",
+      "sha256": "83f70e69dcd7b26eb0ac31860c6110955cd6bffc872458abbb6799a5a12fe592"
+    },
+    "ATK-01": {
+      "content": [
+        338,
+        6,
+        610,
+        316
+      ],
+      "core": [
+        350,
+        18,
+        598,
+        304
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        142.0,
+        298
+      ],
+      "offset": [
+        70,
+        89
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        79,
+        99,
+        418,
+        485
+      ],
+      "file": "frames/herald-ossuary/ATK-01.webp",
+      "sha256": "495a8932c4d7033068cb319900f85271d63e3035051935b336c5419aaf0eeb3f"
+    },
+    "ATK-02": {
+      "content": [
+        646,
+        9,
+        927,
+        316
+      ],
+      "core": [
+        658,
+        21,
+        915,
+        304
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        142.5,
+        295
+      ],
+      "offset": [
+        69,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        79,
+        103,
+        427,
+        485
+      ],
+      "file": "frames/herald-ossuary/ATK-02.webp",
+      "sha256": "385028f046144cb1e498256bbfd46fd9abc7df0a0f9b2a938f3cbae691cd1d3d"
+    },
+    "ATK-03": {
+      "content": [
+        965,
+        9,
+        1254,
+        316
+      ],
+      "core": [
+        977,
+        21,
+        1247,
+        304
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        139.0,
+        295
+      ],
+      "offset": [
+        74,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        80,
+        105,
+        453,
+        485
+      ],
+      "file": "frames/herald-ossuary/ATK-03.webp",
+      "sha256": "49316e64d0cf253dd2775b406692bfbf056873ef27e2c0b0b2a53e503d8ee9b9"
+    },
+    "ATK-04": {
+      "content": [
+        27,
+        313,
+        294,
+        629
+      ],
+      "core": [
+        39,
+        325,
+        282,
+        617
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        139.5,
+        304
+      ],
+      "offset": [
+        73,
+        81
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        78,
+        91,
+        414,
+        491
+      ],
+      "file": "frames/herald-ossuary/ATK-04.webp",
+      "sha256": "d72497bbd9ef5fbd31e4e4882c4a29837241b385e8d693cf2fd029291beffba9"
+    },
+    "ATK-05": {
+      "content": [
+        332,
+        321,
+        618,
+        630
+      ],
+      "core": [
+        344,
+        333,
+        606,
+        618
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        142.5,
+        297
+      ],
+      "offset": [
+        69,
+        90
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        78,
+        101,
+        438,
+        492
+      ],
+      "file": "frames/herald-ossuary/ATK-05.webp",
+      "sha256": "0f81be1fbe942a04be45aa5e2e25f8aa271c1908b091272250b330e5e919f1a5"
+    },
+    "ATK-06": {
+      "content": [
+        651,
+        316,
+        924,
+        629
+      ],
+      "core": [
+        663,
+        328,
+        912,
+        617
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        142.0,
+        301
+      ],
+      "offset": [
+        70,
+        85
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        96,
+        428,
+        491
+      ],
+      "file": "frames/herald-ossuary/ATK-06.webp",
+      "sha256": "ccbb195aea984368214f1ebb7e5493dc87d2558507043963fd88650e7dce16f0"
+    },
+    "ATK-07": {
+      "content": [
+        968,
+        313,
+        1242,
+        629
+      ],
+      "core": [
+        980,
+        325,
+        1230,
+        617
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        144.0,
+        304
+      ],
+      "offset": [
+        67,
+        81
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        79,
+        90,
+        419,
+        491
+      ],
+      "file": "frames/herald-ossuary/ATK-07.webp",
+      "sha256": "59e202b2edb2b34e5d22ec38185dad26e45ec916c95c49a240500f9a4997b384"
+    },
+    "DEFEND": {
+      "content": [
+        23,
+        634,
+        296,
+        940
+      ],
+      "core": [
+        35,
+        646,
+        284,
+        928
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        145.5,
+        294
+      ],
+      "offset": [
+        65,
+        94
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        77,
+        106,
+        417,
+        496
+      ],
+      "file": "frames/herald-ossuary/DEFEND.webp",
+      "sha256": "dc9f0aaab166b713c05927a5a3627d9cce42e2236e9233fba543951d0dcc27cb"
+    },
+    "HURT": {
+      "content": [
+        342,
+        627,
+        617,
+        938
+      ],
+      "core": [
+        354,
+        639,
+        605,
+        926
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        149.0,
+        299
+      ],
+      "offset": [
+        60,
+        88
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        61,
+        100,
+        411,
+        487
+      ],
+      "file": "frames/herald-ossuary/HURT.webp",
+      "sha256": "a6a637e1620fb0e4991e07aad75459f8e8d1327fed7044d009a3210bd5f32c8c"
+    },
+    "CAST": {
+      "content": [
+        650,
+        630,
+        951,
+        940
+      ],
+      "core": [
+        662,
+        642,
+        939,
+        928
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        143.5,
+        298
+      ],
+      "offset": [
+        68,
+        89
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        78,
+        92,
+        463,
+        489
+      ],
+      "file": "frames/herald-ossuary/CAST.webp",
+      "sha256": "2f7eced7d881c3875439fd46389d6b9a91375bc8ca10c19813422c6c437238b7"
+    },
+    "BUFF": {
+      "content": [
+        985,
+        621,
+        1208,
+        941
+      ],
+      "core": [
+        997,
+        633,
+        1196,
+        929
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        126.0,
+        308
+      ],
+      "offset": [
+        91,
+        76
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        101,
+        85,
+        374,
+        488
+      ],
+      "file": "frames/herald-ossuary/BUFF.webp",
+      "sha256": "5418929ce4640c7a2aee005622589981cba5da794f8daabf7788f58e90ee1027"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        34,
+        951,
+        314,
+        1225
+      ],
+      "core": [
+        46,
+        963,
+        302,
+        1213
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        140.5,
+        262
+      ],
+      "offset": [
+        72,
+        136
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        84,
+        148,
+        429,
+        495
+      ],
+      "file": "frames/herald-ossuary/STANCE-AGGRESSIVE.webp",
+      "sha256": "8449be9b08994dc779b0ac10b4cc02bdeb3b776af552a360ea435648570bfbf9"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        345,
+        943,
+        615,
+        1231
+      ],
+      "core": [
+        357,
+        955,
+        603,
+        1219
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        141.5,
+        276
+      ],
+      "offset": [
+        70,
+        118
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        125,
+        414,
+        485
+      ],
+      "file": "frames/herald-ossuary/STANCE-DEFENSIVE.webp",
+      "sha256": "77393be000407f25b10e40602406bfe97c6e9584e607e392aafeefdd544ce678"
+    },
+    "PORTRAIT": {
+      "content": [
+        639,
+        925,
+        951,
+        1234
+      ],
+      "core": [
+        651,
+        937,
+        939,
+        1222
+      ],
+      "scale": 1.4871794871794872,
+      "sourceFootAnchor": [
+        156.0,
+        297
+      ],
+      "offset": [
+        24,
+        38
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        25,
+        50,
+        488,
+        486
+      ],
+      "file": "frames/herald-ossuary/PORTRAIT.webp",
+      "sha256": "0cab518e198d5087f88dc3d56ba0523ccdd78460984e1e478dc5551a2bd085ca"
+    },
+    "CONVERSATION": {
+      "content": [
+        997,
+        921,
+        1202,
+        1239
+      ],
+      "core": [
+        1009,
+        933,
+        1190,
+        1227
+      ],
+      "scale": 1.3125,
+      "sourceFootAnchor": [
+        118.5,
+        306
+      ],
+      "offset": [
+        100,
+        78
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        100,
+        89,
+        357,
+        490
+      ],
+      "file": "frames/herald-ossuary/CONVERSATION.webp",
+      "sha256": "673177d91339c1e6ea46548ec4e002bcebcfe024e8fbaa74897c6b443d696608"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

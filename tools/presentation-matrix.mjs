@@ -4,11 +4,11 @@
 // three surfaces and captures failed cells so older fixture drift stays visible.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { META_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { serve } from './serve.mjs';
@@ -130,7 +130,7 @@ function contract(surface, reading) {
     need(reading.kitCount >= 2, 'creation: baseline and discovered alternate are visible');
     need(reading.chosenKit === 1, 'creation: exactly one kit is selected');
     need(reading.alternateSelected === true, 'creation: the discovered alternate can be selected');
-    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Actions / turn|Draw / turn and opening hand',
+    need((reading.derived || []).join('|') === 'HP|Mana|Stamina|Actions / turn|Draw / turn (co-op)',
       'creation: canonical five derived receipts render in order');
     need(reading.roleRows === 4, 'creation: 4/4/1/1 kit receipt exposes three equipment roles plus signature');
     need(reading.equipmentReceiptRows === 3 && reading.hasReceiptMath === true,
@@ -163,7 +163,7 @@ function proveMutants() {
     steps: ['hp-o', 'hp+o', 'mana-o', 'mana+o'], counts: [2, 1], totalLine: '3 of 3 assigned', fullMana: true };
   const creation = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     kitCount: 2, chosenKit: 1, alternateSelected: true,
-    derived: ['HP', 'Mana', 'Stamina', 'Actions / turn', 'Draw / turn and opening hand'], roleRows: 4,
+    derived: ['HP', 'Mana', 'Stamina', 'Actions / turn', 'Draw / turn (co-op)'], roleRows: 4,
     equipmentReceiptRows: 3, signatureRows: 1, hasReceiptMath: true, rolesVisible: true };
   const armoury = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     view: 'hybrid', attributeCount: 5, roles: ['attack', 'guard', 'technique'], hasReceiptMath: true,
@@ -324,7 +324,7 @@ async function main() {
   if (!existsSync(resolve(ROOT, 'dist/AshenSpire.html'))) throw new Error('dist/AshenSpire.html absent');
   mkdirSync(OUT, { recursive: true });
   const source = await serve({ root: ROOT, port: 8347, open: false });
-  const bases = { source: source.url.replace(/\/$/, ''), dist: pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href };
+  const bases = { source: source.url.replace(/\/$/, ''), dist: await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html')) };
   const b = await browser();
   const rows = [];
   try {

@@ -1,0 +1,313 @@
+{
+  "pack": "relic-icons-pack-02",
+  "generator": "built-in image_gen",
+  "date": "2026-09-19",
+  "catalog": "src/content/relics.js",
+  "status": "review art; not wired into runtime",
+  "assets": [
+    {
+      "id": "goldenSprout",
+      "name": "Golden Sprout",
+      "rarity": "common",
+      "source": "sources/goldenSprout.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        21,
+        1230,
+        1238
+      ],
+      "sourceSHA256": "3756a2bdd5e4ec1fc9d35d11ac657989fc291864f59311d263ed53e89f992677",
+      "prompt": "prompts/goldenSprout.txt",
+      "interpretation": "A single cracked antique golden seed with one short curled stem and two broad muted olive leaves tipped with gold emerging from it. Thick simple seed silhouette, small root hugging seed, no soil or pot. Patient, precious, mournful.",
+      "lore": "A sapling waits inside, patient as grief.",
+      "acquisition": {
+        "className": "All classes",
+        "method": "Elite-victory relic reward pool and generic relic rolls.",
+        "startingGrant": "Guaranteed if selected as the alternative starting relic for any class.",
+        "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+        "bossRewardDropRate": "0% in the boss-rarity reward roll.",
+        "bossOwner": "None.",
+        "sources": [
+          "src/content/relics.js",
+          "src/engine/encounters.js:rollRelicReward",
+          "src/main.js:2172,2191",
+          "src/content/generated/characterCreation.js"
+        ]
+      },
+      "exports": [
+        {
+          "path": "webp/goldenSprout-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 46200,
+          "alphaVerified": true,
+          "sha256": "4d7a8d3d6e00c883183a5d09f478f4634dc4e3dffb9698f6ff1c9677134e6692"
+        },
+        {
+          "path": "webp/goldenSprout-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 15810,
+          "alphaVerified": true,
+          "sha256": "d4ddab08afecd0d140efebbfc4d275519b669b5d22a66f84470ea0ea603516dc"
+        },
+        {
+          "path": "webp/goldenSprout-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 6104,
+          "alphaVerified": true,
+          "sha256": "4bd2ace707a13d6ab3b49c492d680b8915c7ab5ac29a3d8b0cc83996565bfc84"
+        },
+        {
+          "path": "webp/goldenSprout-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2506,
+          "alphaVerified": true,
+          "sha256": "063e3f0d0760f08904d54ac0acd0cd7a43ec2c7cb7c2960490972616c28ed50f"
+        }
+      ]
+    },
+    {
+      "id": "crackedLantern",
+      "name": "Cracked Lantern",
+      "rarity": "common",
+      "source": "sources/crackedLantern.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        19,
+        1238,
+        1254
+      ],
+      "sourceSHA256": "f313bb4051541f447aa7ab0d252c223d4d394a05ef76a5868409b4fa2bdc40ac",
+      "prompt": "prompts/crackedLantern.txt",
+      "interpretation": "A small squat weathered charcoal iron lantern with a thick arched carry handle, antique gold corner braces, one large broken glass pane revealing a stubborn little warm amber flame. Three-quarter front view, readable open cage silhouette. No smoke, no surrounding glow cloud.",
+      "lore": "The glass is broken but the flame refuses to notice.",
+      "acquisition": {
+        "className": "All classes",
+        "method": "Elite-victory relic reward pool and generic relic rolls.",
+        "startingGrant": "Not a starting selection.",
+        "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+        "bossRewardDropRate": "0% in the boss-rarity reward roll.",
+        "bossOwner": "None.",
+        "sources": [
+          "src/content/relics.js",
+          "src/engine/encounters.js:rollRelicReward",
+          "src/main.js:2172,2191",
+          "src/content/generated/characterCreation.js"
+        ]
+      },
+      "exports": [
+        {
+          "path": "webp/crackedLantern-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 51884,
+          "alphaVerified": true,
+          "sha256": "2d1bfc5957007c72d0bf00aed2b86339e123091543d3ce0cba737f93a1caa39e"
+        },
+        {
+          "path": "webp/crackedLantern-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 17080,
+          "alphaVerified": true,
+          "sha256": "6228e82667c983d9c7c33de21be90a8718bb7052a8752a5bbf3082e5acfaf335"
+        },
+        {
+          "path": "webp/crackedLantern-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 6218,
+          "alphaVerified": true,
+          "sha256": "4a71315a8a3fc516b0b89ad51dc7ca8c125d022e4581e7ef1e47f2f8cde3b192"
+        },
+        {
+          "path": "webp/crackedLantern-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2376,
+          "alphaVerified": true,
+          "sha256": "105e0c0c6b8383ccb6ce3bd13cc061e7b38b72b890acb627186dbc7ae713e6d3"
+        }
+      ]
+    },
+    {
+      "id": "bloodstainedChalice",
+      "name": "Bloodstained Chalice",
+      "rarity": "uncommon",
+      "source": "sources/bloodstainedChalice.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        0,
+        1240,
+        1238
+      ],
+      "sourceSHA256": "122709f585fdc068484d495c1fbadb948d910e5a34fbbf2bda814ad6d39ce2c9",
+      "prompt": "prompts/bloodstainedChalice.txt",
+      "interpretation": "One ancient heavy antique gold chalice, broad rounded bowl, short thick stem and wide foot, charcoal tarnish and a deep muted burgundy stain running over one side of its rim. A dark wine-red liquid barely visible inside. Simple ceremonial profile, restrained embossed rim, no jewels, no extra props.",
+      "lore": "It fills a little more each time. You have stopped asking with what.",
+      "acquisition": {
+        "className": "All classes",
+        "method": "Elite-victory relic reward pool and generic relic rolls.",
+        "startingGrant": "Not a starting selection.",
+        "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+        "bossRewardDropRate": "0% in the boss-rarity reward roll.",
+        "bossOwner": "None.",
+        "sources": [
+          "src/content/relics.js",
+          "src/engine/encounters.js:rollRelicReward",
+          "src/main.js:2172,2191",
+          "src/content/generated/characterCreation.js"
+        ]
+      },
+      "exports": [
+        {
+          "path": "webp/bloodstainedChalice-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 51478,
+          "alphaVerified": true,
+          "sha256": "92de594691776a63227dba32c12d1428088a362a095fcb1221fd0fdf20dfbbd7"
+        },
+        {
+          "path": "webp/bloodstainedChalice-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 16398,
+          "alphaVerified": true,
+          "sha256": "84fc116c7802baf25b533f657c218f358d14e64dfa0fd7cc4e0c3417b05d77bd"
+        },
+        {
+          "path": "webp/bloodstainedChalice-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 6042,
+          "alphaVerified": true,
+          "sha256": "a17954770803a2a05efd157a72c07fa072b38fa49548bbc59581c5f4790ba05f"
+        },
+        {
+          "path": "webp/bloodstainedChalice-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2430,
+          "alphaVerified": true,
+          "sha256": "bb7282a0197801a3939f5a890084e88a79bbb8616980de4b703c91408f363966"
+        }
+      ]
+    },
+    {
+      "id": "crownOfStitches",
+      "name": "Crown of Stitches",
+      "rarity": "boss",
+      "source": "sources/crownOfStitches.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        21,
+        1234,
+        1228
+      ],
+      "sourceSHA256": "90f37edc1ca71fee8f2c4d2963ff5bd70909f9114147fee476f551b6cfff1bd1",
+      "prompt": "prompts/crownOfStitches.txt",
+      "interpretation": "One ominous low crown formed of five irregular weathered charcoal iron points and antique gold band segments sewn together with thick coarse burgundy sutures through large holes. Slight three-quarter overhead view showing the empty circular interior. Uneven patched construction, brutally heavy, no head, no flesh, no gore, no gems. Broad iconic crown silhouette.",
+      "lore": "It fits. That is the worst part.",
+      "acquisition": {
+        "className": "All classes",
+        "method": "Shared boss-victory relic reward pool.",
+        "startingGrant": "Not a starting selection.",
+        "normalRewardDropRate": "0% in the standard common/uncommon/rare pool.",
+        "bossRewardDropRate": "1 / B per boss relic roll, where B is the number of unowned boss-rarity reward-pool relics (6 before any are owned: 16.67%).",
+        "bossOwner": "No specific boss assignment; shared boss pool.",
+        "sources": [
+          "src/content/relics.js",
+          "src/engine/encounters.js:rollRelicReward",
+          "src/main.js:2172,2191",
+          "src/content/generated/characterCreation.js"
+        ]
+      },
+      "exports": [
+        {
+          "path": "webp/crownOfStitches-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 52786,
+          "alphaVerified": true,
+          "sha256": "ba6574bd651d6f3953011e817401225efb8806888d4fc2e089ca5eebeba23bd6"
+        },
+        {
+          "path": "webp/crownOfStitches-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 18282,
+          "alphaVerified": true,
+          "sha256": "f6941b95e15a78b8bc92e3be4fe419f751d61aeb3414da5a8ef1280d8c0d8fe0"
+        },
+        {
+          "path": "webp/crownOfStitches-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 6946,
+          "alphaVerified": true,
+          "sha256": "c6e1b59614f3506e40ebe63b1feac27a3666d6a93f8f540352e665de58352966"
+        },
+        {
+          "path": "webp/crownOfStitches-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2820,
+          "alphaVerified": true,
+          "sha256": "3772b7f39229fcb443f214dee603ae6f1780e162dc2813d4df2427ce55e01a1e"
+        }
+      ]
+    }
+  ]
+}

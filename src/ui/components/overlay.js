@@ -13,6 +13,7 @@ import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
+import { characterLevelOf } from '../../model/state.js';
 import { closeFlaskActionMenu } from './flask.js';
 import { topVeil } from './veil.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
@@ -41,6 +42,9 @@ let overlayCleanup = [];
 const PANELS = {
   settings: (host, ctx) => renderSettings(host, {
     settings: ctx.settings,
+    previewAttributes: ctx.run?.attributes,
+    previewLevel: ctx.run ? characterLevelOf(ctx.run) : null,
+    previewClassId: ctx.run?.class || null,
     onChange: ctx.onSettingsChange || (() => {}),
     onOffline: ctx.onOffline,
   }),
@@ -189,7 +193,13 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
 
   function selectTab(id) {
     currentTab = id;
-    veil.querySelector('.overlay-modal')?.classList.toggle('settings-surface', id === 'settings');
+    // The `settings-surface` class that used to be toggled here had no reader
+    // in styles/, src/ or tests/ — it was a hook for a stylesheet that was
+    // never written, and while it sat unread the overlay went without the
+    // Settings chrome entirely. The hook that IS read is `data-settings-host`,
+    // which renderSettings sets on the body it filled and dispatchPanel clears
+    // before every render, so a class here would be a second, stale home for
+    // the same fact.
     updateMenuSelection(veil, TABS, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and

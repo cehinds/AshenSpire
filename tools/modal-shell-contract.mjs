@@ -193,8 +193,18 @@ check('every modal close paints a 25% smaller square inside its tap-safe target'
 // THE FOOT IS ON THE LADDER. It carried a data-size the ladder never read
 // (the steps are written for .modal-btnrow), so primary and secondary hugged
 // their own labels. Now the actions row wears both classes and stretches.
+//
+// THE STEP IS RESOLVED, NOT COPIED, since the Wireframes settings (Modals →
+// Modal footer buttons) may move it: `step` is the CALLER's size after that
+// answer, and the caller's own word stays beside it as `data-authored-size` so
+// an open door can be re-resolved. Both halves are read here, so a foot that
+// stopped asking the resolver — or that stopped recording what it asked for —
+// is as red as one that never wore the class.
 check('the footer actions row is a button row',
-  /actions\.className = 'modal-foot-actions modal-btnrow'/.test(shellSource) && /actions\.dataset\.size = size/.test(shellSource),
+  /actions\.className = 'modal-foot-actions modal-btnrow'/.test(shellSource)
+    && /const step = resolveFooterSize\(size, activeWireframeChoice\('wireframeModalFooter'\), BUTTON_ROW_SIZES\)/.test(shellSource)
+    && /actions\.dataset\.authoredSize = size/.test(shellSource)
+    && /actions\.dataset\.size = step/.test(shellSource),
   'a foot that is not a .modal-btnrow gets no step, so its buttons hug their labels');
 check('openModal hands its footSize to the footer', /modalFooter\(\{[^}]*size: footSize/.test(shellSource));
 check('footer buttons share one height', /\.modal-btnrow\s*\{[^}]*align-items:\s*stretch/.test(css) && !/\.modal-foot-actions\s*\{[^}]*align-items:\s*center/.test(css),

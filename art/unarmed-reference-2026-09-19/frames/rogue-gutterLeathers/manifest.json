@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "rogue-gutterLeathers",
+  "classId": "rogue",
+  "armourId": "gutterLeathers",
+  "effectsBaked": false,
+  "source": "sources/rogue-gutterLeathers.png",
+  "sourceSha256": "1dbe7df8aa7cc6a97cb3198ad37588d0d3257690b2d8f32c740ce5aab0a0973c",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.320754716981132,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        27,
+        21,
+        291,
+        319
+      ],
+      "core": [
+        39,
+        33,
+        279,
+        307
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        137.5,
+        286
+      ],
+      "offset": [
+        74,
+        102
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        78,
+        114,
+        423,
+        487
+      ],
+      "file": "frames/rogue-gutterLeathers/STANCE-READY.webp",
+      "sha256": "8c5d1b4c0d45df09ead5ee6b0d50431ef81aa29c434308783e49075f75f75744"
+    },
+    "ATK-01": {
+      "content": [
+        335,
+        27,
+        604,
+        318
+      ],
+      "core": [
+        347,
+        39,
+        592,
+        306
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        140.0,
+        279
+      ],
+      "offset": [
+        71,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        76,
+        124,
+        425,
+        485
+      ],
+      "file": "frames/rogue-gutterLeathers/ATK-01.webp",
+      "sha256": "3c9cc59d3a6bd16d422cb6b29795b6e80cd371f96de277c6e8f8b1be2d269c99"
+    },
+    "ATK-02": {
+      "content": [
+        646,
+        28,
+        930,
+        318
+      ],
+      "core": [
+        658,
+        40,
+        918,
+        306
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        142.5,
+        278
+      ],
+      "offset": [
+        68,
+        113
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        119,
+        432,
+        488
+      ],
+      "file": "frames/rogue-gutterLeathers/ATK-02.webp",
+      "sha256": "37aed2ae3faa96eb05c6cd158ed49822a9422759c9c1a230809dc1d5ec917505"
+    },
+    "ATK-03": {
+      "content": [
+        954,
+        28,
+        1248,
+        318
+      ],
+      "core": [
+        966,
+        40,
+        1236,
+        306
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        148.0,
+        278
+      ],
+      "offset": [
+        61,
+        113
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        126,
+        437,
+        485
+      ],
+      "file": "frames/rogue-gutterLeathers/ATK-03.webp",
+      "sha256": "a70645f6c335f4c23003d49f4edc63f5b583dc0c2b16dcbe0a291544bd7d31eb"
+    },
+    "ATK-04": {
+      "content": [
+        20,
+        335,
+        296,
+        631
+      ],
+      "core": [
+        32,
+        347,
+        284,
+        619
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        146.5,
+        284
+      ],
+      "offset": [
+        63,
+        105
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        72,
+        105,
+        419,
+        493
+      ],
+      "file": "frames/rogue-gutterLeathers/ATK-04.webp",
+      "sha256": "52daf9114cb7a46d8c1ac191d2430b2f8de955f10804b10b5504c32e524d74d4"
+    },
+    "ATK-05": {
+      "content": [
+        316,
+        335,
+        634,
+        631
+      ],
+      "core": [
+        328,
+        347,
+        622,
+        619
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        157.0,
+        284
+      ],
+      "offset": [
+        49,
+        105
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        57,
+        118,
+        460,
+        488
+      ],
+      "file": "frames/rogue-gutterLeathers/ATK-05.webp",
+      "sha256": "c2309b834f1f81c492b459e1ccff892756526c925165bd1475a25b6a6b4cfc0b"
+    },
+    "ATK-06": {
+      "content": [
+        649,
+        335,
+        926,
+        631
+      ],
+      "core": [
+        661,
+        347,
+        914,
+        619
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        145.5,
+        284
+      ],
+      "offset": [
+        64,
+        105
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        77,
+        117,
+        418,
+        493
+      ],
+      "file": "frames/rogue-gutterLeathers/ATK-06.webp",
+      "sha256": "39929dee41b6d06069414d349a0d04a01e0e18118d3024191ac03f807aa36473"
+    },
+    "ATK-07": {
+      "content": [
+        963,
+        338,
+        1238,
+        631
+      ],
+      "core": [
+        975,
+        350,
+        1226,
+        619
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        147.5,
+        281
+      ],
+      "offset": [
+        61,
+        109
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        120,
+        412,
+        496
+      ],
+      "file": "frames/rogue-gutterLeathers/ATK-07.webp",
+      "sha256": "a2089dba806925c00a53eabe1c85fa69ef87053a51929b65210c1ef621d4a2a9"
+    },
+    "DEFEND": {
+      "content": [
+        23,
+        654,
+        299,
+        942
+      ],
+      "core": [
+        35,
+        666,
+        287,
+        930
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        147.0,
+        276
+      ],
+      "offset": [
+        62,
+        115
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        124,
+        416,
+        491
+      ],
+      "file": "frames/rogue-gutterLeathers/DEFEND.webp",
+      "sha256": "9fbd7e2e3210622f4a115b2eca0b4c6adde7b0edbb2d6f225d91632825282034"
+    },
+    "HURT": {
+      "content": [
+        329,
+        650,
+        617,
+        942
+      ],
+      "core": [
+        341,
+        662,
+        605,
+        930
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        160.5,
+        280
+      ],
+      "offset": [
+        44,
+        110
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        56,
+        122,
+        415,
+        484
+      ],
+      "file": "frames/rogue-gutterLeathers/HURT.webp",
+      "sha256": "95364356870f616f7889c4f2a2b127fc1236847071070ee155ea6dd37dc3e85c"
+    },
+    "CAST": {
+      "content": [
+        636,
+        649,
+        948,
+        941
+      ],
+      "core": [
+        648,
+        661,
+        936,
+        929
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        156.5,
+        280
+      ],
+      "offset": [
+        49,
+        110
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        57,
+        111,
+        461,
+        496
+      ],
+      "file": "frames/rogue-gutterLeathers/CAST.webp",
+      "sha256": "db081899b2465a45c399ab69e54d4059b3aa80abed11a49b634159e6377c6a67"
+    },
+    "BUFF": {
+      "content": [
+        968,
+        642,
+        1210,
+        942
+      ],
+      "core": [
+        980,
+        654,
+        1198,
+        930
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        142.5,
+        288
+      ],
+      "offset": [
+        68,
+        100
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        80,
+        103,
+        383,
+        490
+      ],
+      "file": "frames/rogue-gutterLeathers/BUFF.webp",
+      "sha256": "6d7797c983efc74eef0ff89391b80f098078041813cf0008bd9c49f19d9d4ba3"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        29,
+        967,
+        315,
+        1228
+      ],
+      "core": [
+        41,
+        979,
+        303,
+        1216
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        146.5,
+        249
+      ],
+      "offset": [
+        63,
+        151
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        162,
+        429,
+        493
+      ],
+      "file": "frames/rogue-gutterLeathers/STANCE-AGGRESSIVE.webp",
+      "sha256": "cceb7ce3aed63d59296547b093e67f1c14667af7ef1296df460dc16cceac82d8"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        346,
+        959,
+        617,
+        1229
+      ],
+      "core": [
+        358,
+        971,
+        605,
+        1217
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        141.5,
+        258
+      ],
+      "offset": [
+        69,
+        139
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        80,
+        151,
+        422,
+        490
+      ],
+      "file": "frames/rogue-gutterLeathers/STANCE-DEFENSIVE.webp",
+      "sha256": "1b2717a4554bc00d72386168b2423214e8ef804c27d6cbbcc73daf8f2eeb664b"
+    },
+    "PORTRAIT": {
+      "content": [
+        632,
+        952,
+        944,
+        1235
+      ],
+      "core": [
+        644,
+        964,
+        932,
+        1223
+      ],
+      "scale": 1.4871794871794872,
+      "sourceFootAnchor": [
+        156.0,
+        271
+      ],
+      "offset": [
+        24,
+        77
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        33,
+        77,
+        488,
+        484
+      ],
+      "file": "frames/rogue-gutterLeathers/PORTRAIT.webp",
+      "sha256": "6c90a6df29ad56e480a88436b086d855dda7c895963a51f2559a9e695e8eb7bc"
+    },
+    "CONVERSATION": {
+      "content": [
+        979,
+        931,
+        1201,
+        1238
+      ],
+      "core": [
+        991,
+        943,
+        1189,
+        1226
+      ],
+      "scale": 1.320754716981132,
+      "sourceFootAnchor": [
+        133.5,
+        295
+      ],
+      "offset": [
+        80,
+        90
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        89,
+        101,
+        361,
+        487
+      ],
+      "file": "frames/rogue-gutterLeathers/CONVERSATION.webp",
+      "sha256": "0a0fa3cb717214c7491ed703b87ba3200e2bc4ed98c57643e0f2adec89e935c2"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

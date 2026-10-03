@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "reaver-riteVestments",
+  "classId": "reaver",
+  "armourId": "riteVestments",
+  "effectsBaked": false,
+  "source": "sources/reaver-riteVestments.png",
+  "sourceSha256": "099d72175c7f4734d53ac6c701a382c7f62685cb4f94d113528a729f3f407f4a",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3003095975232197,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        15,
+        20,
+        287,
+        316
+      ],
+      "core": [
+        27,
+        32,
+        275,
+        304
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        148.5,
+        284
+      ],
+      "offset": [
+        63,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        68,
+        122,
+        405,
+        484
+      ],
+      "file": "frames/reaver-riteVestments/STANCE-READY.webp",
+      "sha256": "b6bc0a12ac8284f5cefd6aebb599162574ce57f1deef0ba7133cca35d03bf31b"
+    },
+    "ATK-01": {
+      "content": [
+        326,
+        21,
+        601,
+        317
+      ],
+      "core": [
+        338,
+        33,
+        589,
+        305
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        146.0,
+        284
+      ],
+      "offset": [
+        66,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        123,
+        415,
+        484
+      ],
+      "file": "frames/reaver-riteVestments/ATK-01.webp",
+      "sha256": "224a14bfe16897df1ecd830ded69b407758b0f195f573a30ffeccf32e7f55e40"
+    },
+    "ATK-02": {
+      "content": [
+        636,
+        27,
+        924,
+        317
+      ],
+      "core": [
+        648,
+        39,
+        912,
+        305
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        151.0,
+        278
+      ],
+      "offset": [
+        60,
+        119
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        125,
+        424,
+        484
+      ],
+      "file": "frames/reaver-riteVestments/ATK-02.webp",
+      "sha256": "08060c1ca04fb196520c8455a70beb01a3a9873514233a9582266592e1f3de31"
+    },
+    "ATK-03": {
+      "content": [
+        951,
+        23,
+        1249,
+        317
+      ],
+      "core": [
+        963,
+        35,
+        1237,
+        305
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        149.5,
+        282
+      ],
+      "offset": [
+        62,
+        113
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        123,
+        437,
+        491
+      ],
+      "file": "frames/reaver-riteVestments/ATK-03.webp",
+      "sha256": "5410e4c31fff2133daf09a6a3b439ecd573ce09cf3ebeff477f384d134d8a861"
+    },
+    "ATK-04": {
+      "content": [
+        19,
+        330,
+        291,
+        628
+      ],
+      "core": [
+        31,
+        342,
+        279,
+        616
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        145.5,
+        286
+      ],
+      "offset": [
+        67,
+        108
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        80,
+        118,
+        412,
+        486
+      ],
+      "file": "frames/reaver-riteVestments/ATK-04.webp",
+      "sha256": "9cca828fec8a64883e02fadbb3854e4e8dabd0bd94955c9b5e78421f876586cb"
+    },
+    "ATK-05": {
+      "content": [
+        317,
+        330,
+        629,
+        628
+      ],
+      "core": [
+        329,
+        342,
+        617,
+        616
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        150.5,
+        286
+      ],
+      "offset": [
+        60,
+        108
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        120,
+        464,
+        489
+      ],
+      "file": "frames/reaver-riteVestments/ATK-05.webp",
+      "sha256": "17ad7a0e425f8e6bd74f6ff0b4d59a87bc53393860e0b0b1ad7218468c36c31a"
+    },
+    "ATK-06": {
+      "content": [
+        644,
+        332,
+        922,
+        628
+      ],
+      "core": [
+        656,
+        344,
+        910,
+        616
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        148.5,
+        284
+      ],
+      "offset": [
+        63,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        120,
+        416,
+        487
+      ],
+      "file": "frames/reaver-riteVestments/ATK-06.webp",
+      "sha256": "9e9a665087b8a92e7798fa5e892f02171584c6b97354aeabb600d3f9ae25e643"
+    },
+    "ATK-07": {
+      "content": [
+        959,
+        331,
+        1238,
+        628
+      ],
+      "core": [
+        971,
+        343,
+        1226,
+        616
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        152.5,
+        285
+      ],
+      "offset": [
+        58,
+        109
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        120,
+        409,
+        489
+      ],
+      "file": "frames/reaver-riteVestments/ATK-07.webp",
+      "sha256": "9d328f617feed7492f82c28d5984b45cca3e718dd2475b031e39c8494a32d3c1"
+    },
+    "DEFEND": {
+      "content": [
+        17,
+        651,
+        297,
+        936
+      ],
+      "core": [
+        29,
+        663,
+        285,
+        924
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        152.5,
+        273
+      ],
+      "offset": [
+        58,
+        125
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        134,
+        410,
+        492
+      ],
+      "file": "frames/reaver-riteVestments/DEFEND.webp",
+      "sha256": "07339b5559c750e793f13a4b2b76aad16d2bdc5e02d747802400e49e5318609f"
+    },
+    "HURT": {
+      "content": [
+        325,
+        646,
+        607,
+        938
+      ],
+      "core": [
+        337,
+        658,
+        595,
+        926
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        159.0,
+        280
+      ],
+      "offset": [
+        49,
+        116
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        62,
+        126,
+        404,
+        489
+      ],
+      "file": "frames/reaver-riteVestments/HURT.webp",
+      "sha256": "a5bb393e15ac4f561601646a39593eb7fe208002586a110fd0e9fcc31db86a41"
+    },
+    "CAST": {
+      "content": [
+        628,
+        643,
+        951,
+        936
+      ],
+      "core": [
+        640,
+        655,
+        939,
+        924
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        163.0,
+        281
+      ],
+      "offset": [
+        44,
+        115
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        53,
+        121,
+        462,
+        492
+      ],
+      "file": "frames/reaver-riteVestments/CAST.webp",
+      "sha256": "c7eb60f66c0df012a64c984af00fc37752f85515d9bf37b2d46886cf2d766fd5"
+    },
+    "BUFF": {
+      "content": [
+        982,
+        629,
+        1205,
+        937
+      ],
+      "core": [
+        994,
+        641,
+        1193,
+        925
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        125.5,
+        296
+      ],
+      "offset": [
+        93,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        102,
+        101,
+        370,
+        490
+      ],
+      "file": "frames/reaver-riteVestments/BUFF.webp",
+      "sha256": "bbc3801c1296cddde6aac1f1bdd13e7dbb4a5bd355490726dbe6b1c2b3f4f9d5"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        22,
+        969,
+        313,
+        1223
+      ],
+      "core": [
+        34,
+        981,
+        301,
+        1211
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        152.0,
+        242
+      ],
+      "offset": [
+        58,
+        165
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        177,
+        427,
+        486
+      ],
+      "file": "frames/reaver-riteVestments/STANCE-AGGRESSIVE.webp",
+      "sha256": "3d3f140fd983d44751f81a810109e9a94dcefbc9c8a89d718aa3d8460ca15c45"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        338,
+        961,
+        610,
+        1228
+      ],
+      "core": [
+        350,
+        973,
+        598,
+        1216
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        145.5,
+        255
+      ],
+      "offset": [
+        67,
+        148
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        76,
+        154,
+        408,
+        487
+      ],
+      "file": "frames/reaver-riteVestments/STANCE-DEFENSIVE.webp",
+      "sha256": "dc9d628c880bf993bc7935e1c9406a11c296ebc0f69f6c52557438d49ea1e370"
+    },
+    "PORTRAIT": {
+      "content": [
+        623,
+        936,
+        949,
+        1234
+      ],
+      "core": [
+        635,
+        948,
+        937,
+        1222
+      ],
+      "scale": 1.4233128834355828,
+      "sourceFootAnchor": [
+        163.0,
+        286
+      ],
+      "offset": [
+        24,
+        73
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        25,
+        85,
+        488,
+        485
+      ],
+      "file": "frames/reaver-riteVestments/PORTRAIT.webp",
+      "sha256": "52d0c6ec74d8250d9135c3537dd0c3c84cabcc3e09983acfec4aac0f0b49ec60"
+    },
+    "CONVERSATION": {
+      "content": [
+        979,
+        919,
+        1195,
+        1235
+      ],
+      "core": [
+        991,
+        931,
+        1183,
+        1223
+      ],
+      "scale": 1.3003095975232197,
+      "sourceFootAnchor": [
+        130.0,
+        304
+      ],
+      "offset": [
+        87,
+        85
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        88,
+        97,
+        360,
+        484
+      ],
+      "file": "frames/reaver-riteVestments/CONVERSATION.webp",
+      "sha256": "31fc1ff00e52cf3cc52d508fa3fa37ac9ccffdf6060a376753cdd9fcfdb20184"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

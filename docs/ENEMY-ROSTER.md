@@ -6,6 +6,8 @@ Move cards show base values except the current intent, which uses the engine pre
 
 The twelve painted portraits imported from the Unity fork remain unchanged. Fourteen new transparent portraits share their 384 × 384 frame, left-facing orientation and foot anchor. These are idle paintings animated with action-specific movement, not frame-by-frame attack strips. Authored actor and move overrides take precedence over card tags, then intent families; reduced-motion settings suppress action movement. Existing native art remains available for the other enemies and as a loading fallback.
 
+HP below is as authored. Since #1284 a boss is scaled by the tier it is met at, whichever region holds it (`balance.bossTiers`, SPEC §13.3): its region's tier ratio on HP and move damage, then ×0.8 HP and damage as a first boss, ×2.2 HP and ×1.5 damage as a second or final boss.
+
 | Enemy | Role | Act / location | HP | Move set |
 |---|---|---|---|---|
 | Wandering Soldier | normal | Act 1 | 22–26 | Slash; Guard; Warcry |

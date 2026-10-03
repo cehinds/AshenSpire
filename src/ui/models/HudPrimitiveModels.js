@@ -2,10 +2,12 @@ import { componentModel } from './ComponentModel.js';
 import { behaviorModel } from './BehaviorModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
-export function metadataFieldModel(kind, label, value, total = null) {
+// `detail` is a second semantic value printed after the first (the act's seat
+// name); null when the field has none.
+export function metadataFieldModel(kind, label, value, total = null, detail = null) {
   return componentModel(UI.metadataField, {
     variant: kind,
-    properties: { label, value, total },
+    properties: { label, value, total, detail },
   });
 }
 

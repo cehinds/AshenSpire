@@ -9,6 +9,7 @@ import { resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import * as Loadout from '../src/model/loadout.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
+import { classAttributePreset } from '../src/model/attributes.js';
 import { validateContent } from '../src/model/validate.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
@@ -32,8 +33,17 @@ check(dagger?.requirements?.attributes?.dexterity === 11,
   'Dagger explicitly requires DEX 11', JSON.stringify(dagger?.requirements));
 check(ashStaff?.requirements?.attributes?.intelligence === 12,
   'Ash Staff explicitly requires INT 12', JSON.stringify(ashStaff?.requirements));
-check(greatsword?.kind === 'weapon' && greatsword?.hand === 'right',
-  'hand and category remain explicit item data', JSON.stringify(greatsword));
+// EXPLICIT, NOT A REMEMBERED HAND. The claim is that `kind` and `hand` are
+// authored item columns rather than something inferred from tags or the name.
+// Pinning 'right' made it a snapshot instead, and 5819aa58 (2026-08-23,
+// "unify equipment inventory interactions") moved every weapon in weapons.csv
+// onto 'either' — all 25 of them, deliberately and uniformly — so the value
+// moved while the claim did not. `either` is first-class vocabulary, not a
+// gap: loadout.js pieceHand reads it as unconstrained and validateEquipment
+// accepts exactly `${HANDS}|either`. So assert the column is authored and in
+// that closed set, sourced from HANDS rather than re-typed here.
+check(greatsword?.kind === 'weapon' && [...Loadout.HANDS, 'either'].includes(greatsword?.hand),
+  'hand and category remain explicit item data', JSON.stringify({ kind: greatsword?.kind, hand: greatsword?.hand }));
 
 const requirementReceipt = Loadout.equipmentRequirementReceipt;
 const cardCompatibility = Loadout.cardEquipmentCompatibility;
@@ -72,7 +82,17 @@ for (const [field, label] of [
   check(/tagging/i.test(bootSaid), 'boot mutant: missing generated card tags table fails closed', bootSaid);
 }
 
-const duplicatedRequirement = [...R.equipment.equipmentRequirements, { ...R.equipment.equipmentRequirements[0] }];
+// BY NAME, NOT BY INDEX. This duplicated equipmentRequirements[0] while
+// asserting the refusal names greatsword:strength. Row 0 is straightSword's
+// now, so BOTH doors refused correctly and by name ("duplicate
+// 'straightSword:strength'") while these two rows read red — the refusal was
+// never the thing that moved, the positional reach was. Greatsword is this
+// tool's worked example three rows above, so name it.
+const greatswordRequirement = R.equipment.equipmentRequirements
+  .find((row) => row.itemId === 'greatsword' && row.attributeId === 'strength');
+check(greatswordRequirement != null, 'greatsword carries the STR requirement row these mutants duplicate',
+  JSON.stringify(R.equipment.equipmentRequirements));
+const duplicatedRequirement = [...R.equipment.equipmentRequirements, { ...greatswordRequirement }];
 check(/duplicate.*greatsword:strength/i.test(Loadout.validateEquipment(equipmentMutant({ equipmentRequirements: duplicatedRequirement })).join(' | ')),
   'mutant: duplicate item/stat requirement fails closed');
 const bootErrors = (equipment) => validateContent({ ...contentBundle, equipment: { ...contentBundle.equipment, ...equipment } })
@@ -152,16 +172,52 @@ const coop = createCoopCombat({
     maxMana: starseerStrong.run.maxMana, mana: starseerStrong.run.mana,
     maxStamina: starseerStrong.run.maxStamina, stamina: starseerStrong.run.stamina,
     deck: starseerStrong.run.deck, relicIds: [], flasks: [],
+    // THE SAME UNSTAMPED SEAT class-loadouts.mjs carried until Rune found it
+    // building that tool's known-bad (2026-08-15); this file kept it.
+    // createPlayerCombatEntity has refused an unstamped seat since the
+    // derived-authority slice, so this THREW here — 29 PASS lines printed
+    // above the stack trace and every assertion below it never run at all,
+    // which is why the reds under it went unseen. The refusal is correct and
+    // the CALLER was wrong, which is exactly the invariant
+    // tools/derived-runtime-authority.mjs asserts.
+    energyMax: starseerStrong.run.energyMax, drawPerTurn: starseerStrong.run.drawPerTurn,
   }],
 });
 const coopPlayer = coop.players.get('p1');
 const coopCross = [...coopPlayer.piles.hand, ...coopPlayer.piles.draw, ...coopPlayer.piles.discard]
   .find((card) => card.instanceId === crossAttack.instanceId);
+// NOT "NO SUCH FIELD" ANY MORE. e17fef72 gave the seat its own `loadout` on
+// purpose, so the framework Weight Class (dodge pricing and the dodge check)
+// is decided from THIS seat's equipment instead of a Light default — so
+// `hasOwnProperty(coopPlayer, 'loadout')` stopped being the question. The
+// claim it stood for is intact, and is what this row says instead: this seat
+// was handed NO loadout, and the card still carries the whole stamped receipt
+// and resolves to the same final number — which is only possible if the
+// numbers travel on the card. (Never observed either way before now: the
+// unstamped seat above threw first, so nothing from here down ever ran.)
 check(coopCross?.equipmentRole === crossAttack.equipmentRole && coopCross?.profileId === crossAttack.profileId
   && JSON.stringify(coopCross?.profileReceipt) === JSON.stringify(crossAttack.profileReceipt)
   && resolveCard(R, coopCross).effects.find((effect) => effect.op === 'damage')?.amount === crossFinal
-  && !Object.prototype.hasOwnProperty.call(coopPlayer, 'loadout'),
+  && coopPlayer?.loadout == null,
   'co-op carries the stamped role/profile/final card, not a mutable loadout', JSON.stringify(coopCross));
+// The other half of "not MUTABLE", which no row held once the field existed:
+// a seat handed a loadout must CLONE it, or the Weight Class field is a live
+// handle on the run's equipment and co-op can write back through it.
+const coopSeatWithLoadout = createCoopCombat({
+  registries: R, rng: createRng(0xb00), enemyIds: [R.enemies.ids()[0]],
+  players: [{
+    id: 'p1', classId: starseerStrong.run.class, maxHp: starseerStrong.run.maxHp, hp: starseerStrong.run.hp,
+    maxMana: starseerStrong.run.maxMana, mana: starseerStrong.run.mana,
+    maxStamina: starseerStrong.run.maxStamina, stamina: starseerStrong.run.stamina,
+    deck: starseerStrong.run.deck, relicIds: [], flasks: [],
+    energyMax: starseerStrong.run.energyMax, drawPerTurn: starseerStrong.run.drawPerTurn,
+    loadout: starseerStrong.run.loadout,
+  }],
+}).players.get('p1');
+check(coopSeatWithLoadout?.loadout != null
+  && coopSeatWithLoadout.loadout !== starseerStrong.run.loadout
+  && JSON.stringify(coopSeatWithLoadout.loadout) === JSON.stringify(starseerStrong.run.loadout),
+  'a seat handed a loadout clones it rather than aliasing the run', JSON.stringify(coopSeatWithLoadout?.loadout));
 
 const baseline = resolveStartingKit(R, 'starseer', undefined, {});
 let crossStart = '';
@@ -169,10 +225,23 @@ try { resolveStartingKit(R, 'starseer', 'reaverGreatsword', { discoveredArmament
 catch (error) { crossStart = error.message; }
 check(baseline.id === 'starseerBaseline' && /not eligible|class/i.test(crossStart),
   'starting-kit class eligibility stays separate from cross-class loot equipping', crossStart);
+// IT HAS TO SUM TO THE MODE'S FIXED TOTAL OR IT NEVER REACHES THE GATE.
+// `{ ...all10, dexterity: 15 }` is a pre-`tuned` set: it totals 55 (and all10
+// still spells the HP stat `vigour`, which has not been an attribute id since
+// the rename), so createRunState refused it at the ATTRIBUTE door — "total 55
+// must equal 53 for mode 'tuned'" — and this row would have read that as its
+// greatsword red. Derive from the contractual Reaver preset instead (SPEC
+// §5.1: 13/11/11/8/10 = 53) and move three points off STR onto DEX: the total
+// stays whatever the mode says it is, and STR 10 is under the greatsword's
+// authored 12, which is the thing actually being proved. Should a future
+// preset put Reaver STR at 12+, the kit would be allowed and this row goes
+// red on its own rather than passing for the wrong reason.
+const reaverPreset = classAttributePreset(R, 'reaver');
+const reaverWeakStr = { ...reaverPreset, strength: reaverPreset.strength - 3, dexterity: reaverPreset.dexterity + 3 };
 let weakStart = '';
 try {
   createRunState({ seed: 12, classId: 'reaver', registries: R, startingKitId: 'reaverGreatsword',
-    profileMeta: { discoveredArmaments: ['greatsword'] }, attributes: { ...all10, dexterity: 15 } });
+    profileMeta: { discoveredArmaments: ['greatsword'] }, attributes: reaverWeakStr });
 } catch (error) { weakStart = error.message; }
 check(/greatsword|strength|12/i.test(weakStart),
   'starting-kit eligibility does not bypass explicit equipment requirements', weakStart);

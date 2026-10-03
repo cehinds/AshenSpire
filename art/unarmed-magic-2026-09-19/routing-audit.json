@@ -1,0 +1,109 @@
+{
+  "checkedAt": "2026-09-20T03:21:03.459Z",
+  "attackDefinitions": 84,
+  "castingAttackDefinitions": 37,
+  "spellAttacksStillPhysical": [],
+  "regressions": [
+    {
+      "id": "starbladePhalanx",
+      "name": "Starblade Phalanx",
+      "school": "magic",
+      "tags": [
+        "starstone",
+        "guard",
+        "source:spell",
+        "damage:arcane",
+        "delivery:projectile",
+        "theme:astral"
+      ],
+      "actions": [
+        {
+          "classId": "reaver",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "starseer",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "rogue",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "herald",
+          "technique": "cast",
+          "casting": true
+        }
+      ]
+    },
+    {
+      "id": "starSpark",
+      "name": "Star Spark",
+      "school": "magic",
+      "tags": [
+        "source:spell",
+        "damage:arcane",
+        "delivery:projectile",
+        "theme:astral"
+      ],
+      "actions": [
+        {
+          "classId": "reaver",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "starseer",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "rogue",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "herald",
+          "technique": "cast",
+          "casting": true
+        }
+      ]
+    },
+    {
+      "id": "blightwardLash",
+      "name": "Blightward Lash",
+      "school": "arcane",
+      "tags": [
+        "source:spell",
+        "damage:arcane",
+        "delivery:melee",
+        "theme:blight"
+      ],
+      "actions": [
+        {
+          "classId": "reaver",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "starseer",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "rogue",
+          "technique": "cast",
+          "casting": true
+        },
+        {
+          "classId": "herald",
+          "technique": "cast",
+          "casting": true
+        }
+      ]
+    }
+  ]
+}

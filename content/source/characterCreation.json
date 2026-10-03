@@ -1,10 +1,10 @@
 {
   "spritePreviewSide": "right",
-  "visibleModeIds": ["standard", "pointbuy"],
+  "visibleModeIds": ["lean", "assign"],
   "layout": {
     "classPreviewPercent": 30,
     "classChoiceView": "list",
-    "equipmentChoiceView": "list",
+    "equipmentChoiceView": "grid",
     "equipmentAutoAdvance": false
   },
   "equipmentSections": [

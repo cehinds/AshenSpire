@@ -1,0 +1,17 @@
+{
+  "schema": "ashenspire.ui-sketch/1",
+  "name": "Example: combat, one layout with a phone override",
+  "unit": "percent",
+  "breakpoints": [
+    { "id": "narrow", "label": "Narrow (phone)", "maxWidth": 520 },
+    { "id": "compact", "label": "Compact (below 768)", "minWidth": 521, "maxWidth": 767 },
+    { "id": "wide", "label": "Wide", "minWidth": 768 }
+  ],
+  "boxes": [
+    { "id": "hud", "label": "HUD", "x": 0, "y": 0, "w": 100, "h": 10, "layer": 0, "locked": false, "hidden": false, "overrides": {} },
+    { "id": "scene", "label": "Scene", "x": 0, "y": 10, "w": 100, "h": 55, "layer": 0, "locked": false, "hidden": false, "overrides": { "narrow": { "h": 45 } } },
+    { "id": "hand", "label": "Hand", "x": 12, "y": 65, "w": 76, "h": 30, "layer": 1, "locked": false, "hidden": false, "overrides": { "narrow": { "x": 0, "y": 55, "w": 100, "h": 40 } } },
+    { "id": "footer", "label": "Footer", "x": 0, "y": 95, "w": 100, "h": 5, "layer": 0, "locked": true, "hidden": false, "overrides": {} }
+  ],
+  "notes": "A starting point. Switch the device to a phone: the scene shortens and the hand widens through the narrow override."
+}

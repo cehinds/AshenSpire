@@ -1,95 +1,95 @@
-# dist — the standalone build
+# dist — the build, as a player gets it
 
-**There are two shapes of this build now, and this directory holds one of them.**
-`tools/bundle.mjs` writes the consolidated single file by default and the
-de-inlined one with `--external-art`:
+**On `dev` nothing built is tracked here** (since 2026-09-26): every rebuild
+uploaded ~284 MB of new Git LFS objects and exhausted the repository's LFS
+budget. `node tools/launch.mjs --build-only` writes the files described below
+locally (git ignores them), and CI publishes each commit's light single file as
+the `dev-standalone-<commit>` artifact of `.github/workflows/dev-preview.yml`.
+`release` and `main` still track their older single-file copies through Git LFS
+until the owner promotes this change.
+
+## One tree (docs/EXTERNAL-ASSETS-PLAN.md, step 8e)
+
+`tools/launch.mjs` writes the same tree into `build/` and `dist/`:
+
+```
+AshenSpire.html              the game file: ~10 MB of code, no media inside it
+AshenSpire-<version>.html    the same file, version-stamped (dist/ only)
+asset-base.json              {"base":"./"}: where the packs are, for the loader
+packs/                       one index per pack (light, common, and high on
+                             release/main), each with its .js twin, and the
+                             font sidecar fonts-<digest>.js
+objects/<xx>/<sha256>.<ext>  the art, fonts, music and map tiles, named by
+                             their bytes
+download/AshenSpire.html     the LIGHT SINGLE FILE: everything inline, ~31 MB
+```
+
+The root of the repository also carries `AshenSpire.html` as an easy-to-find
+alias. It is the **light single file** (the root has no `packs/` beside it), so
+it plays on its own.
 
 | | size | needs | good for |
 |---|---|---|---|
-| consolidated (this directory, `build/`, the root alias) | **57.6 MB** | nothing — `file://` | double-click, offline, no toolchain |
-| de-inlined (`build/web/`, CI's `preview/`) | **4.9 MB** + art beside it | a server | phones, the hosted site |
+| `AshenSpire.html` here (and in `build/`) | **~10 MB** + `packs/` and `objects/` beside it (~47 MB light, ~230 MB with high) | a server, or a double-click **while the folder stays together** | the hosted site's page; the folder copy |
+| `download/AshenSpire.html` here (and in `build/`, and the root alias) | **~31 MB** | nothing — `file://` | the download: double-click, offline, phones |
 
-91.6% of the single file is 1,929 base64 art URIs, which is the whole 12x
-difference. The de-inlined build fetches art per screen and the browser caches
-it, so a second visit re-downloads none of it; the single file is re-read whole
-every time. Neither replaces the other — ES modules cannot load from `file://`,
-which is why this bundler exists at all, and the de-inlined shape needs http.
+- **The game file** carries the sha256 of each pack index it uses (the
+  `ASSET_PACKS` pin) and checks every index at boot. Its default tier is
+  `light` on dev/test and `high` on release/main (`--full-art`), and Settings →
+  Display → Art quality switches it at runtime (*Auto* picks light on a phone).
+  A high-default build whose high index is missing falls back to light; with no
+  index at all it boots on placeholders, system fonts and the synthesized score,
+  and offers Retry. Opened by double-click it reads the indexes and fonts through
+  their `.js` twins, and the score stays synthesized (Chrome refuses audio
+  routed through Web Audio from a `file:` page).
+- **The light single file** carries the light art inline as `data:` URIs, read
+  from `assets-mobile/` (the twin tree `tools/mobile-art.mjs` shrinks from
+  `assets/` under `tools/mobileart-policy.mjs`). It is the only inline shape
+  left: the full-art single file (~255 MB) and the separate mobile file
+  (`AshenSpire-mobile.html`) were retired at step 8e (owner answers 2 and 6).
 
-Both carry the SAME art: one sweep of `assets/` either inlines each file or
-copies it, so a file good enough to inline is good enough to serve and a file it
-skips is absent from both. `tools/verify-shipped.mjs` proves it for the single
-file (the art is inside it); `tools/verify-external.mjs` and
-`tools/external-play.mjs` prove it for the other, on disk and in a browser.
-
-`AshenSpire.html` here is the whole game compiled into **one self-contained HTML
-file** (all JS inlined as a classic script, all CSS inlined, all art inlined as
-`data:` URIs — no server, no Node, no network). Double-click it to play.
-
-The repository root also carries `AshenSpire.html` as a byte-identical,
-easy-to-find current-build alias. `tools/launch.mjs` refreshes both paths in one
-operation and `tools/verify-shipped.mjs` verifies both against `build/`.
-
-- `AshenSpire.html` — the canonical dist twin of the root current-build alias,
-  **tracked in git** for a player who has no Node and no toolchain. It is a build
-  output living in source control, which is a second copy of the source, and it
-  is kept only for that reason. See *Why this is tracked, and when it stops
-  being* below.
-- `AshenSpire-<version>.html` — a version-stamped copy the launcher emits
-  (e.g. `AshenSpire-0.2.0-ashen.html`). A build artifact, git-ignored. One of
-  these was committed at `40c5b21` because the ignore rule still read
-  `EldenSpire-*` after the rename; it has been deleted.
+`tools/verify-shipped.mjs` proves the copies are this build: the light single
+file and its two copies carry their art and are byte-identical to
+`build/download/AshenSpire.html`; `dist/AshenSpire.html` is
+`build/AshenSpire.html` and the indexes it pins are in `dist/packs/` at their
+pins. `tools/verify-external.mjs` checks every object of a pack-shaped tree;
+`tools/external-play.mjs` plays it in a browser, served and by `--file`.
 
 ## Rebuild
 
 From the project root:
 
 ```
-node tools/launch.mjs --build-only     # rebuild build/ and refresh root + dist/
-node tools/bundle.mjs                  # ONLY the bundler → build/; root + dist/ untouched
-node tools/verify-shipped.mjs          # check root + dist/ ARE that build, and carry art
-
-node tools/bundle.mjs --external-art --out build/web   # the de-inlined build
-node tools/verify-external.mjs                         # its art is present and byte-identical
-CHROME=… node tools/external-play.mjs                  # it actually loads, and nothing 404s
+node tools/launch.mjs --build-only     # build/ and dist/ (light art; --full-art for high + light), and the root alias
+node tools/bundle.mjs [--light]        # ONLY the pack-shaped game → build/ (packs/ and objects/ beside it)
+node tools/bundle.mjs --single-file    # ONLY the light single file → build/download/AshenSpire.html
+node tools/verify-shipped.mjs          # the root alias and dist/ ARE those builds; the single file carries art
+node tools/verify-external.mjs         # the pinned packs and every object they list are present (build/)
+node tools/mobile-art.mjs              # regenerate assets-mobile/ from assets/ (needs cwebp); --check needs no encoder
+CHROME=… node tools/external-play.mjs [--file]   # it loads, served and by double-click, and nothing 404s
 ```
 
-`--external-art` writes `AshenSpire.html`, `assets/` and `map-detail/` into the
-output directory in one pass. The map tiles matter: `src/ui/components/
-mapDetail.js` says detail files are never bundled into the single HTML and that
-"hosted builds carry a sibling map-detail directory" — the de-inlined build is a
-hosted build, so it carries them. `build/web/` is git-ignored; CI rebuilds it.
-
-Note the second line, because this file used to get it wrong ("or just the
-bundler → build/ + copy"): `bundle.mjs` does **not** write to either
-player-facing alias. Only `launch.mjs` copies. That gap is how `dist/` stayed
-stale for months while `build/` was correct; the root alias now shares the same
-single refresh door.
+`bundle.mjs` does **not** write to `dist/` or the root alias. Only `launch.mjs`
+copies, in one refresh, and it removes what an older launcher left there (the
+mobile files, `build/web/`, the `music/` and `map-detail/` copies, older
+version-stamped HTML). `--out` must be under `build/` or `dist/`, or outside the
+checkout; `--external-art`, the flag that used to choose the pack shape, is
+still accepted and changes nothing.
 
 Or use the one-click launcher (`run.bat` on Windows, `run.sh` on macOS/Linux),
-which rebuilds the root and `dist/` aliases, then serves the live app on
-localhost and opens it.
+which rebuilds, then serves the live app on localhost and opens it.
 
-## Why this is tracked, and when it stops being
+## Keep the folder together
 
-A shipped artifact belongs to a *release*, not to a branch. The right home for a
-double-clickable HTML is a release asset built at a tag. This repo has no release
-workflow yet, so deleting the tracked copies today would leave the README's
-root current-build link pointing at nothing — a broken promise to the one
-reader who cannot rebuild.
-
-So it stays, and CI proves it honest instead of trusting that someone remembered
-to rebuild: `.github/workflows/ci.yml` rebuilds from source and fails the run if
-either `AshenSpire.html` or `dist/AshenSpire.html` is not byte-identical to that
-build.
-
-**Removal condition:** both tracked player-facing aliases (`AshenSpire.html` and
-`dist/AshenSpire.html`) are deleted — not amended — the day a release workflow
-attaches the standalone as a release asset and `README.md` links the release
-instead of these paths. At that point each git copy is a second copy with a live
-alternative, which is the defect this section spends three paragraphs excusing.
+`dist/AshenSpire.html` is not self-contained: moved away from `packs/` and
+`objects/` it shows placeholders and says the art could not be loaded. To hand
+someone the game as one file, give them `download/AshenSpire.html`. To hand them
+the folder, zip `dist/` whole (or use the game's own *Download a folder copy
+(zip)* on the Pages site).
 
 ## file:// caveat
 
-The standalone runs from `file://` with the built-in generated score. External
-music from a folder (Settings → Audio → Music folder) needs the game served over
-http — use the launcher or `node tools/serve.mjs`.
+From `file://` both shapes play the built-in synthesized score; the rendered
+tracks and an external music folder (Settings → Audio → Music folder) need the
+game served over http — use the launcher or `node tools/serve.mjs`. LAN co-op
+needs the launcher too.

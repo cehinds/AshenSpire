@@ -31,14 +31,26 @@
 // the chain terminate in a true claim rather than in agreement. Agreement is not
 // synchronization (SOP 5).
 //
-// REMOVAL CONDITION (SOP 1's corollary): deleted — not amended — the day neither
-// player-facing alias is tracked, i.e. when the standalone ships as a release
-// asset and README.md links the release (see dist/README.md, *Why this is
-// tracked*). With no tracked player-facing alias there is nothing for this to
-// verify and the checks become theatre. Also deleted if bundle.mjs stops inlining art into a
+// SINCE 2026-09-26 NONE OF THESE FILES IS TRACKED ON dev. The Git LFS budget ran
+// out (every rebuild uploaded ~284 MB), so the built HTML is ignored, CI builds it
+// on every push, and dev-preview.yml uploads it as the workflow artifact a player
+// or tester downloads. This tool still verifies what that artifact is made of —
+// the files tools/launch.mjs just wrote — and check C now also refuses any of them
+// being TRACKED again, which is the LFS defect coming back through `git add`.
+//
+// REMOVAL CONDITION (SOP 1's corollary): deleted if bundle.mjs stops inlining art into a
 // single file, because then check A is asserting a property the build no longer
 // claims. NOT removed for having passed a long time: --selftest is what keeps it
 // honest, and a --selftest that stops failing on the corpus is itself the alarm.
+//
+// SINCE STEP 8e (docs/EXTERNAL-ASSETS-PLAN.md) ONE FILE STILL INLINES ITS ART: the
+// light single file, build/download/AshenSpire.html, which tools/launch.mjs copies to
+// dist/download/ and to the root alias (owner answer 3). Check A holds those three.
+// build/AshenSpire.html and dist/AshenSpire.html are the PACK-SHAPED game file, and
+// check P holds them instead: it pins ASSET_PACKS, carries no inlined media but the
+// two SVG masks, and every index it pins is in packs/ beside it with that hash.
+// B holds every copy to its build, byte for byte. The mobile file and its budget
+// check retired with the edition (owner answer 2).
 
 import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -50,15 +62,25 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // tool measured a two-merge-stale bundle and printed OK once already. One home:
 // tools/artifact-provenance.mjs. Facts only; it never fails a run.
 import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { MOBILE_BUNDLE_BUDGET_BYTES } from './mobileart-policy.mjs';
+import { createHash } from 'node:crypto';
 printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
+printArtifactProvenance(resolve(ROOT, 'dist/download/AshenSpire.html'), ROOT);
 printArtifactProvenance(resolve(ROOT, 'AshenSpire.html'), ROOT);
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 
-const BUILD = 'build/AshenSpire.html';
+const BUILD = 'build/AshenSpire.html'; // the pack-shaped game file (step 8e)
 const DIST_DIR = 'dist';
-const SHIPPED = 'dist/AshenSpire.html'; // canonical dist twin of the root alias
-const ROOT_CURRENT = 'AshenSpire.html'; // the discoverable root alias README gives a player
+const SHIPPED = 'dist/AshenSpire.html'; // its dist copy, with dist/packs/ and dist/objects/ beside it
+// THE LIGHT SINGLE FILE, the one inline download kept (owner answer 3): built to
+// download/, copied to dist/download/ and to the root alias README gives a player
+// (the root has no packs/ beside it, so its alias is the self-contained file).
+const SINGLE_BUILD = 'build/download/AshenSpire.html';
+const SINGLE_SHIPPED = 'dist/download/AshenSpire.html';
+const ROOT_CURRENT = 'AshenSpire.html';
+// The retired mobile file's root alias: still a home built HTML must never be tracked in.
+const MOBILE_ROOT_CURRENT = 'AshenSpire-mobile.html';
 
 // The stale artifact as committed at 40c5b21: 712667 bytes, no ASSET_MAP token,
 // three inlined images instead of 101. Kept as a corpus entry by blob id rather
@@ -102,7 +124,13 @@ const MIN_ASSET_MAP_ENTRIES = 64;
 // nothing (see the tool's removal condition above). Entries are ADDED only by a
 // human who means to track a new file in dist/ — an addition made to turn CI green
 // is the denylist's failure mode reintroduced by hand.
-const ALLOWED_TRACKED_IN_DIST = [SHIPPED.replace(`${DIST_DIR}/`, ''), 'README.md'];
+// Since 2026-09-26 the built HTML itself is off the list: dist/ tracks its README
+// and nothing else, and checkNoTrackedBuild holds the root and build/ copies.
+const ALLOWED_TRACKED_IN_DIST = ['README.md'];
+
+// The other homes tools/launch.mjs writes built HTML into. Tracked there, it is
+// the ~284 MB-per-rebuild Git LFS upload this repository could no longer pay for.
+const BUILD_HOMES = [ROOT_CURRENT, MOBILE_ROOT_CURRENT, 'build'];
 
 // ---------------------------------------------------------------------------
 // The checks, as pure functions over bytes, so --selftest can feed them a corpus
@@ -144,13 +172,13 @@ export function checkCarriesArt(name, bytes, minEntries = MIN_ASSET_MAP_ENTRIES)
 }
 
 /** B. Is the shipped file the build, byte for byte? */
-export function checkShippedIsBuilt(distName, distBytes, buildBytes) {
+export function checkShippedIsBuilt(distName, distBytes, buildBytes, buildName = BUILD) {
   if (distBytes.equals(buildBytes)) {
-    return { ok: true, code: 'DRIFT', detail: `${distName} is byte-identical to ${BUILD} (${distBytes.length} bytes)` };
+    return { ok: true, code: 'DRIFT', detail: `${distName} is byte-identical to ${buildName} (${distBytes.length} bytes)` };
   }
   return {
     ok: false, code: 'DRIFT',
-    detail: `${distName} (${distBytes.length} bytes) differs from ${BUILD} (${buildBytes.length} bytes). ` +
+    detail: `${distName} (${distBytes.length} bytes) differs from ${buildName} (${buildBytes.length} bytes). ` +
       `Either dist/ is stale — run \`node tools/launch.mjs --build-only\` — or the build is not ` +
       `reproducible on this machine, which tools/dirorder.mjs exists to prevent.`,
   };
@@ -177,6 +205,114 @@ export function checkNoStampedTwin(trackedDistFiles, allowed = ALLOWED_TRACKED_I
     ok: true, code: 'STAMPED_TWIN',
     detail: `dist/ tracks only the allowlist [${allowed.join(', ')}] — no twin, stamped or otherwise`,
   };
+}
+
+/**
+ * C2. Is any built HTML tracked at the root or in build/? It is built by CI and
+ * published as a workflow artifact; tracking it again re-arms the LFS cost.
+ */
+export function checkNoTrackedBuild(trackedPaths) {
+  const html = trackedPaths.filter((f) => /\.html?$/i.test(f));
+  if (html.length) {
+    return {
+      ok: false, code: 'TRACKED_BUILD',
+      detail: `built HTML is tracked: ${html.join(', ')}. It is generated by tools/launch.mjs, ` +
+        `ignored by .gitignore, and published by CI as a workflow artifact — committing it ` +
+        `uploads the whole build to Git LFS on every rebuild. \`git rm --cached\` it.`,
+    };
+  }
+  return { ok: true, code: 'TRACKED_BUILD', detail: `no built HTML is tracked in ${BUILD_HOMES.join(', ')}` };
+}
+
+/**
+ * E. Which edition is this file, and is it one this file may be? Since step 8e
+ * the edition is the build's default tier: the pack-shaped game file is `light`
+ * (dev/test) or `high` (release/main), and the light single file is `light`,
+ * whatever the branch. `full` and `mobile` retired with their single files.
+ */
+export function checkEdition(name, bytes, allowed = ['light', 'high']) {
+  const editions = [...bytes.toString('utf8').matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
+  if (editions.length !== 1) return { ok: false, code: 'EDITION', edition: null, detail: `${name} carries ${editions.length} EDITION literals, expected exactly 1` };
+  if (!allowed.includes(editions[0])) return { ok: false, code: 'EDITION', edition: editions[0], detail: `${name} calls itself the '${editions[0]}' edition — it must be ${allowed.map((e) => `'${e}'`).join(' or ')}` };
+  return { ok: true, code: 'EDITION', edition: editions[0], detail: `${name} is the '${editions[0]}' edition` };
+}
+
+// A data: URI with a real media payload — the same rule verify-external B uses.
+// SVG is left out: the two masks stay inline by design (plan §3.7).
+const REAL_PAYLOAD = /data:(?:image\/(?!svg\+xml)[a-z0-9.+-]+|audio\/[a-z0-9.+-]+|font\/[a-z0-9.+-]+);base64,[A-Za-z0-9+/]{64,}/g;
+const PACK_PIN = /const ASSET_PACKS = (\{.*?\});\n/;
+
+/**
+ * P. Is this the pack-shaped game file, with what it pins beside it? It pins
+ * ASSET_PACKS (a default tier it carries, and the common pack); it inlines no
+ * media but the two SVG masks; and each index it pins, each index's `.js` twin
+ * and the font sidecar are in packs/ beside it, the index and the sidecar's
+ * text hashing to the pin. `readPacked(rel)` returns that file's bytes or null.
+ * verify-external goes further (every object, the CSS template, the tiles and
+ * the score); this is the part a copy in dist/ can drift on.
+ */
+export function checkPackShape(name, bytes, readPacked) {
+  const text = bytes.toString('utf8');
+  const problems = [];
+  const m = PACK_PIN.exec(text);
+  let pin = null;
+  try { pin = m ? JSON.parse(m[1]) : null; } catch { pin = null; }
+  if (!pin || !pin.packs || typeof pin.packs !== 'object' || !Object.keys(pin.packs).length) {
+    return { ok: false, code: 'PACKS', detail: `${name} pins no ASSET_PACKS — it is not the pack-shaped game file (tools/bundle.mjs without --single-file)` };
+  }
+  if (!['light', 'high'].includes(pin.tier) || !pin.packs[pin.tier]) problems.push(`its default tier ${JSON.stringify(pin.tier)} is not a pack it pins`);
+  if (!pin.packs.common) problems.push('it pins no common pack');
+  // Light is the high tier's fallback (the loader drops to it when the high
+  // index fails), so a high-default build that does not pin it has none.
+  if (pin.tier === 'high' && !pin.packs.light) problems.push('its default tier is high but it pins no light pack (the high tier\'s fallback)');
+  // The rest of the folder the loader reads: asset-base.json (where the packs
+  // are) and the objects/ store the indexes name. `readPacked('objects/')` is
+  // truthy when that folder exists beside it and is not empty.
+  const baseBuf = readPacked('asset-base.json');
+  let base = null;
+  try { base = baseBuf ? JSON.parse(baseBuf.toString('utf8')) : null; } catch { base = null; }
+  if (!baseBuf) problems.push('asset-base.json is not beside it');
+  else if (!base || typeof base.base !== 'string') problems.push('asset-base.json beside it names no base');
+  if (!readPacked('objects/')) problems.push('no objects/ store is beside it');
+  // The EDITION stamp IS the default tier since step 8e (Copilot, #1506): a
+  // file that stamps one tier and pins another says the wrong thing in About.
+  const editions = [...text.matchAll(/const EDITION = '([^']*)'/g)].map((e) => e[1]);
+  if (editions.length === 1 && editions[0] !== pin.tier) problems.push(`its EDITION '${editions[0]}' is not the default tier its pin names (${JSON.stringify(pin.tier)})`);
+  // A pinned common pack carries the faces, so the file:// door needs the
+  // font sidecar's pin too, as verify-external requires (Copilot, #1506).
+  if (pin.packs.common && !pin.fonts) problems.push('it pins the common pack but no font sidecar');
+  const inlined = (text.match(REAL_PAYLOAD) || []).length;
+  if (inlined) problems.push(`it inlines ${inlined} media payload(s) besides the SVG masks — art travels in the packs, not in this file`);
+  const sha = (buf) => createHash('sha256').update(buf).digest('hex');
+  let present = 0;
+  for (const [pack, p] of Object.entries(pin.packs)) {
+    const index = String(p && p.index);
+    const buf = readPacked(index);
+    if (!buf) { problems.push(`${pack}: ${index} is not beside it`); continue; }
+    if (sha(buf) !== p.sha256) { problems.push(`${pack}: ${index} does not hash to its pin (${String(p.sha256).slice(0, 12)})`); continue; }
+    // The twin is what the file:// door reads: it must hand the loader exactly
+    // this index's text under this index's name, as verify-external checks
+    // (Copilot, #1506), or a double-click loads a stale or wrong index.
+    const twinPath = index.replace(/\.json$/, '.js');
+    const twin = readPacked(twinPath);
+    if (!twin) { problems.push(`${pack}: the .js twin of ${index} is not beside it (the file:// door reads it)`); continue; }
+    const tm = /^window\.__ashenPack\((".*?"), (".*")\);\n$/s.exec(twin.toString('utf8'));
+    let twinName = null; let twinText = null;
+    try { if (tm) { twinName = JSON.parse(tm[1]); twinText = JSON.parse(tm[2]); } } catch { twinName = null; twinText = null; }
+    const wantName = index.replace(/^.*\//, '').replace(/\.json$/, '');
+    if (twinName !== wantName || twinText !== buf.toString('utf8')) { problems.push(`${pack}: ${twinPath} does not hand the loader ${index}'s text under the name ${wantName}`); continue; }
+    present += 1;
+  }
+  if (pin.fonts) {
+    const buf = readPacked(String(pin.fonts.file));
+    const fm = buf && /^__ashenFonts\("[^"]+", (".*")\);\n$/s.exec(buf.toString('utf8'));
+    let inner = null;
+    try { inner = fm ? JSON.parse(fm[1]) : null; } catch { inner = null; }
+    if (!buf) problems.push(`the font sidecar ${pin.fonts.file} is not beside it`);
+    else if (typeof inner !== 'string' || sha(Buffer.from(inner, 'utf8')) !== pin.fonts.sha256) problems.push(`the font sidecar ${pin.fonts.file} does not hash to its pin`);
+  }
+  if (problems.length) return { ok: false, code: 'PACKS', detail: `${name} is not a whole pack-shaped build: ${problems.join('; ')}. Run node tools/launch.mjs --build-only.` };
+  return { ok: true, code: 'PACKS', detail: `${name} pins ${present} pack(s) (default tier ${pin.tier}), each index and twin beside it at its pin${pin.fonts ? ', the font sidecar too' : ''}; no inlined media but the SVG masks` };
 }
 
 // ---------------------------------------------------------------------------
@@ -301,8 +437,16 @@ if (SELFTEST) {
 
   // 5. The stamped twin, by its real committed name.
   expect('real: AshenSpire-0.2.0-ashen.html tracked in dist/',
-    checkNoStampedTwin(['AshenSpire.html', 'AshenSpire-0.2.0-ashen.html', 'README.md']),
+    checkNoStampedTwin(['AshenSpire-0.2.0-ashen.html', 'README.md']),
     false, 'STAMPED_TWIN');
+  // 5a. The build itself tracked in dist/ again — the LFS cost coming back.
+  expect('dist/AshenSpire.html tracked again',
+    checkNoStampedTwin(['AshenSpire.html', 'README.md']), false, 'STAMPED_TWIN');
+  expect('root AshenSpire.html tracked again',
+    checkNoTrackedBuild(['AshenSpire.html']), false, 'TRACKED_BUILD');
+  expect('build/download/AshenSpire.html tracked again',
+    checkNoTrackedBuild(['build/download/AshenSpire.html']), false, 'TRACKED_BUILD');
+  expect('control: nothing built is tracked', checkNoTrackedBuild([]), true, 'TRACKED_BUILD');
 
   // 5b. VIRA'S NINE TWIN SHAPES, verbatim from her sign-off. The denylist
   //     `/^AshenSpire-.+\.html$/` caught one of these — the one already deleted.
@@ -316,16 +460,80 @@ if (SELFTEST) {
     'AshenSpire-0.2.0-ashen.htm', 'AshenSpire copy.html', 'sub/AshenSpire-9.9.9.html',
   ]) {
     expect(`vira's twin shapes: ${twin} tracked in dist/`,
-      checkNoStampedTwin(['AshenSpire.html', 'README.md', twin]), false, 'STAMPED_TWIN');
+      checkNoStampedTwin(['README.md', twin]), false, 'STAMPED_TWIN');
   }
 
   // 6-8. Positive controls — the checks must not fail everything indiscriminately.
   expect('control: good build carries art', checkCarriesArt('good.html', goodArt), true, 'NO_ART');
+  // The edition (step 8e): the build's default tier, exactly once. The pack
+  // HTML is light or high; the light single file is light and nothing else.
+  const ed = (v) => Buffer.from(`<script>export const EDITION = '${v}';</script>`);
+  expect('edition: a light pack build', checkEdition('light.html', ed('light')), true, 'EDITION');
+  expect('edition: a high pack build', checkEdition('high.html', ed('high')), true, 'EDITION');
+  expect('edition: the light single file', checkEdition('download.html', ed('light'), ['light']), true, 'EDITION');
+  expect('edition: a high build under the light single file\'s name', checkEdition('download.html', ed('high'), ['light']), false, 'EDITION');
+  expect('edition: the retired full single file', checkEdition('full.html', ed('full')), false, 'EDITION');
+  expect('edition: the retired mobile file', checkEdition('mobile.html', ed('mobile')), false, 'EDITION');
+  expect('edition: no EDITION literal', checkEdition('none.html', Buffer.from('<html></html>')), false, 'EDITION');
   expect('control: identical bytes are not drift',
     checkShippedIsBuilt('good.html', goodArt, goodArt), true, 'DRIFT');
-  expect('control: clean dist/ listing', checkNoStampedTwin(['AshenSpire.html', 'README.md']), true, 'STAMPED_TWIN');
+  expect('control: clean dist/ listing', checkNoStampedTwin(['README.md']), true, 'STAMPED_TWIN');
   expect('control: the real tracked dist/ listing passes the allowlist',
     checkNoStampedTwin(ALLOWED_TRACKED_IN_DIST), true, 'STAMPED_TWIN');
+
+  // 9. THE PACK SHAPE (check P, step 8e). A fixture build: a pin naming a
+  //    light and a common index and a font sidecar, the files beside it, and
+  //    each planted defect red by its own name.
+  const hex = (t) => createHash('sha256').update(t).digest('hex');
+  const lightIdx = '{\n"assets/a.webp":["aa",1,"image/webp"]\n}\n';
+  const commonIdx = '{}\n';
+  const fontsText = '{}\n';
+  const files = new Map([
+    ['packs/light-000000000001.json', Buffer.from(lightIdx)],
+    ['packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-000000000001", ${JSON.stringify(lightIdx)});\n`)],
+    ['packs/common-000000000002.json', Buffer.from(commonIdx)],
+    ['packs/common-000000000002.js', Buffer.from(`window.__ashenPack("common-000000000002", ${JSON.stringify(commonIdx)});\n`)],
+    ['packs/fonts-000000000003.js', Buffer.from(`__ashenFonts("fonts-000000000003", ${JSON.stringify(fontsText)});\n`)],
+    ['asset-base.json', Buffer.from('{"base":"./"}\n')],
+    ['objects/', Buffer.from('objects/')],
+  ]);
+  const pinOf = (over = {}) => ({ schema: 1, tier: 'light', packs: {
+    light: { index: 'packs/light-000000000001.json', sha256: hex(lightIdx) },
+    common: { index: 'packs/common-000000000002.json', sha256: hex(commonIdx) },
+  }, fonts: { file: 'packs/fonts-000000000003.js', sha256: hex(fontsText), faces: 0 }, ...over });
+  const packHtml = (pin, extra = '') => Buffer.from(`<script>const ASSET_MAP = {};\nconst ASSET_PACKS = ${JSON.stringify(pin)};\n${extra}</script>`);
+  const reader = (map) => (rel) => map.get(rel) || null;
+  const without = (rel) => { const m = new Map(files); m.delete(rel); return m; };
+  expect('control: a pack build with its packs beside it', checkPackShape('pack.html', packHtml(pinOf()), reader(files)), true, 'PACKS');
+  expect('pack: a single file (no ASSET_PACKS) under the game file\'s name', checkPackShape('pack.html', goodArt, reader(files)), false, 'PACKS');
+  expect('pack: a pinned index missing', checkPackShape('pack.html', packHtml(pinOf()), reader(without('packs/light-000000000001.json'))), false, 'PACKS');
+  expect('pack: an index twin missing (the file:// door)', checkPackShape('pack.html', packHtml(pinOf()), reader(without('packs/common-000000000002.js'))), false, 'PACKS');
+  expect('pack: the font sidecar missing', checkPackShape('pack.html', packHtml(pinOf()), reader(without('packs/fonts-000000000003.js'))), false, 'PACKS');
+  const staleIdx = new Map(files); staleIdx.set('packs/light-000000000001.json', Buffer.from('{}\n'));
+  expect('pack: a stale index under the pinned name', checkPackShape('pack.html', packHtml(pinOf()), reader(staleIdx)), false, 'PACKS');
+  expect('pack: a default tier it does not pin', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high' })), reader(files)), false, 'PACKS');
+  expect('pack: inlined art beside the pin', checkPackShape('pack.html', packHtml(pinOf(), `"assets/a.webp":"data:image/webp;base64,${'A'.repeat(80)}"`), reader(files)), false, 'PACKS');
+  // Copilot's three findings on #1506, each planted.
+  expect('pack: EDITION says high while the pin\'s tier is light', checkPackShape('pack.html', Buffer.from(packHtml(pinOf()).toString().replace('</script>', "export const EDITION = 'high';</script>")), reader(files)), false, 'PACKS');
+  expect('control: EDITION agrees with the pin\'s tier', checkPackShape('pack.html', Buffer.from(packHtml(pinOf()).toString().replace('</script>', "export const EDITION = 'light';</script>")), reader(files)), true, 'PACKS');
+  const badTwin = new Map(files); badTwin.set('packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-000000000001", ${JSON.stringify('{}\n')});\n`));
+  expect('pack: a .js twin whose text is not its index', checkPackShape('pack.html', packHtml(pinOf()), reader(badTwin)), false, 'PACKS');
+  const misnamedTwin = new Map(files); misnamedTwin.set('packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-999999999999", ${JSON.stringify(lightIdx)});\n`));
+  expect('pack: a .js twin under another index\'s name', checkPackShape('pack.html', packHtml(pinOf()), reader(misnamedTwin)), false, 'PACKS');
+  expect('pack: the common pack pinned with no font sidecar pin', checkPackShape('pack.html', packHtml(pinOf({ fonts: null })), reader(files)), false, 'PACKS');
+  // The review's findings on #1506: the rest of the folder, and the fallback.
+  expect('pack: no objects/ store beside it', checkPackShape('pack.html', packHtml(pinOf()), reader(without('objects/'))), false, 'PACKS');
+  expect('pack: no asset-base.json beside it', checkPackShape('pack.html', packHtml(pinOf()), reader(without('asset-base.json'))), false, 'PACKS');
+  const noBase = new Map(files); noBase.set('asset-base.json', Buffer.from('{}\n'));
+  expect('pack: an asset-base.json that names no base', checkPackShape('pack.html', packHtml(pinOf()), reader(noBase)), false, 'PACKS');
+  const highIdx = '{\n"assets/a.webp":["bb",1,"image/webp"]\n}\n';
+  const withHigh = new Map(files);
+  withHigh.set('packs/high-000000000004.json', Buffer.from(highIdx));
+  withHigh.set('packs/high-000000000004.js', Buffer.from(`window.__ashenPack("high-000000000004", ${JSON.stringify(highIdx)});\n`));
+  const highPin = { index: 'packs/high-000000000004.json', sha256: hex(highIdx) };
+  expect('control: a high-default pin with light as its fallback', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high', packs: { ...pinOf().packs, high: highPin } })), reader(withHigh)), true, 'PACKS');
+  expect('pack: a high-default pin with no light pack', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high', packs: { high: highPin, common: pinOf().packs.common } })), reader(withHigh)), false, 'PACKS');
+  expect('control: an inline SVG mask is not inlined art', checkPackShape('pack.html', packHtml(pinOf(), `url("data:image/svg+xml;base64,${'A'.repeat(80)}")`), reader(files)), true, 'PACKS');
 
   boundary([
     'nothing about the working tree — --selftest checks the CHECKS, not the repo',
@@ -335,6 +543,8 @@ if (SELFTEST) {
     ' never "one asset short". An exact count would be two values kept equal by hand',
     'the allowlist is a claim about NAMES tracked in dist/, not about their contents:',
     ' a tracked README.md full of the wrong prose passes here and always will',
+    'check P reads the pins and the index files, not the objects: every object is',
+    ' tools/verify-external.mjs, and whether the art draws is tools/external-play.mjs',
   ]);
   if (bad.length) {
     console.error(`\nverify-shipped --selftest: ${bad.length} case(s) landed on the wrong verdict:`);
@@ -354,33 +564,56 @@ if (SELFTEST) {
 // ---------------------------------------------------------------------------
 console.log('verify-shipped: checking the file a player is handed.\n');
 
-const buildPath = resolve(ROOT, BUILD);
-if (!existsSync(buildPath)) {
-  console.error(`verify-shipped: ${BUILD} does not exist. Run \`node tools/bundle.mjs\` first.`);
-  process.exit(1);
+// A MISSING FILE IS A RECORDED FAILURE, NOT AN EARLY EXIT. Since the built HTML
+// stopped being committed, a fresh checkout has none; recording it keeps the
+// run on its one verdict path (FAILED, or REFUSED when nothing was recorded —
+// the zero-check plant in --selftest depends on reaching that line), and the
+// tracked-file checks below still run.
+const readOrMiss = (rel, why) => {
+  const p = resolve(ROOT, rel);
+  if (existsSync(p)) return readFileSync(p);
+  record({ ok: false, code: 'MISSING', detail: `${rel} does not exist — ${why}` });
+  return null;
+};
+const BUILD_FIRST = 'build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this check).';
+const packedBeside = (dirRel) => (rel) => {
+  const p = resolve(ROOT, dirRel, rel);
+  if (!existsSync(p)) return null;
+  // A folder (`objects/`) answers whether it holds anything, not its bytes.
+  if (rel.endsWith('/')) return readdirSync(p).length ? Buffer.from(rel) : null;
+  return readFileSync(p);
+};
+
+// THE PACK-SHAPED GAME FILE, and its dist/ copy with dist/'s own packs.
+const buildBytes = readOrMiss(BUILD, BUILD_FIRST);
+if (buildBytes) {
+  record(checkPackShape(BUILD, buildBytes, packedBeside('build')));
+  record(checkEdition(BUILD, buildBytes));
+  const shippedBytes = readOrMiss(SHIPPED, 'tools/launch.mjs copies the build tree into dist/.');
+  if (shippedBytes) {
+    record(checkPackShape(SHIPPED, shippedBytes, packedBeside(DIST_DIR)));
+    record(checkShippedIsBuilt(SHIPPED, shippedBytes, buildBytes));
+  }
 }
-const buildBytes = readFileSync(buildPath);
 
-// A on the build first: the chain dist===build only terminates in a true claim if
-// build itself is sound. This is the assertion bundle.mjs printed and never gated.
-record(checkCarriesArt(BUILD, buildBytes));
-
-const shippedPath = resolve(ROOT, SHIPPED);
-if (!existsSync(shippedPath)) {
-  record({ ok: false, code: 'MISSING', detail: `${SHIPPED} does not exist, but README.md links it as the canonical dist twin.` });
-} else {
-  const shippedBytes = readFileSync(shippedPath);
-  record(checkCarriesArt(SHIPPED, shippedBytes));
-  record(checkShippedIsBuilt(SHIPPED, shippedBytes, buildBytes));
-}
-
-const rootCurrentPath = resolve(ROOT, ROOT_CURRENT);
-if (!existsSync(rootCurrentPath)) {
-  record({ ok: false, code: 'MISSING', detail: `${ROOT_CURRENT} does not exist, but README.md links it as the current build.` });
-} else {
-  const rootCurrentBytes = readFileSync(rootCurrentPath);
-  record(checkCarriesArt(ROOT_CURRENT, rootCurrentBytes));
-  record(checkShippedIsBuilt(ROOT_CURRENT, rootCurrentBytes, buildBytes));
+// THE LIGHT SINGLE FILE, and its two copies: A on each (the chain dist===build
+// only terminates in a true claim if the build itself is sound), and B.
+const singleBytes = readOrMiss(SINGLE_BUILD, BUILD_FIRST);
+if (singleBytes) {
+  record(checkCarriesArt(SINGLE_BUILD, singleBytes));
+  record(checkEdition(SINGLE_BUILD, singleBytes, ['light']));
+  // NOT A VERDICT: the plan moves the retired mobile file's 30 MB budget here
+  // (docs/EXTERNAL-ASSETS-PLAN.md §5), but the light single file was already
+  // over it at step 8e and has never been held to it; the number is an open
+  // owner question. Printed, so the drift is seen.
+  const over = singleBytes.length - MOBILE_BUNDLE_BUDGET_BYTES;
+  console.log(`  note        ${SINGLE_BUILD} is ${singleBytes.length} bytes, ${over > 0 ? `${over} over` : `${-over} under`} the retired mobile file's ${MOBILE_BUNDLE_BUDGET_BYTES}-byte budget (not gated; an owner question)`);
+  for (const rel of [SINGLE_SHIPPED, ROOT_CURRENT]) {
+    const bytes = readOrMiss(rel, 'tools/launch.mjs copies the light single file there.');
+    if (!bytes) continue;
+    record(checkCarriesArt(rel, bytes));
+    record(checkShippedIsBuilt(rel, bytes, singleBytes, SINGLE_BUILD));
+  }
 }
 
 // C from git, not the filesystem: an ignored file sitting in dist/ after a
@@ -392,6 +625,14 @@ try {
   record(checkNoStampedTwin(trackedDist));
 } catch (e) {
   record({ ok: false, code: 'STAMPED_TWIN', detail: `could not list tracked files in dist/ (${String(e.message).split('\n')[0]}) — unknown, which blocks` });
+}
+
+try {
+  const trackedBuild = execFileSync('git', ['ls-files', '--', ...BUILD_HOMES], { cwd: ROOT, encoding: 'utf8' })
+    .split('\n').filter(Boolean);
+  record(checkNoTrackedBuild(trackedBuild));
+} catch (e) {
+  record({ ok: false, code: 'TRACKED_BUILD', detail: `could not list tracked built HTML (${String(e.message).split('\n')[0]}) — unknown, which blocks` });
 }
 
 // Report every untracked artifact sitting in dist/, as information not verdict.
@@ -414,6 +655,9 @@ boundary([
   ' that is tools/tutorial-reach.mjs, and it needs a browser at a real --ui-zoom',
   'reproducibility across machines is not checked here — that is the git-diff step',
   ' in .github/workflows/ci.yml running on three runners',
+  'the light single file is held to no byte budget (an owner question since step 8e),',
+  ' and whether its shrunken art reads well on a phone is a seeing seat\'s call',
+  'check P reads the pins and the indexes, not the objects — that is verify-external',
 ]);
 
 const failed = results.filter((r) => !r.ok);
@@ -430,10 +674,14 @@ if (failed.length) {
 // at that door, and the tool that owns a claim should be able to state it.
 //
 // THE FLOOR IS BELOW THE POPULATION AND NEVER TRACKS IT: today this tool
-// records 6 checks. A floor that follows the count upward is a number retyped
-// to match whatever happened, which is the defect one file over (verify's own
-// ASSET_MAP note says the same thing about its own floor).
-const MIN_CHECKS = 4;
+// records 12 checks (4 on the pack-shaped file and its dist copy, 6 on the
+// light single file and its two copies, 2 on what git tracks; step 8e). A floor that
+// follows the count upward is a number retyped to match whatever happened,
+// which is the defect one file over (verify's own ASSET_MAP note says the same
+// thing about its own floor). It was raised from 4 to 8 when the mobile file
+// doubled the population, because a run that silently lost one whole edition
+// would otherwise still clear it.
+const MIN_CHECKS = 8;
 if (results.length < MIN_CHECKS) {
   console.error(`\nverify-shipped: REFUSED — ran ${results.length} check(s), floor is ${MIN_CHECKS}.`);
   console.error('  A tool that checked nothing and a tool that found nothing are the same green (#12).');

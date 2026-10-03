@@ -192,6 +192,10 @@ export const terms = {
       "pluralText": "Parry Tools"
     },
     {
+      "id": "term.dualWield",
+      "canonicalText": "Dual-Wield"
+    },
+    {
       "id": "term.evasion",
       "canonicalText": "Evasion"
     },
@@ -430,6 +434,10 @@ export const terms = {
     {
       "id": "term.tooltip.parryTool",
       "canonicalText": "Bound to an equipped parry tool."
+    },
+    {
+      "id": "term.tooltip.dualWield",
+      "canonicalText": "Played while holding an armament in each hand."
     },
     {
       "id": "term.tooltip.evasion",

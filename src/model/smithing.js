@@ -49,6 +49,15 @@ function itemByRef(registries, itemRef) {
   }
 }
 
+// The basic role a card plays for its source armament. A complete-kit Strike or
+// Guard is `equipmentRole: 'granted'` with its role in `kitRole` (SPEC, Complete
+// armament kits); resolveCard applies tier rows by that same role, so the plan
+// must read it the same way or the preview hides cards the commit improves.
+function smithingRole(instance) {
+  const role = instance?.kitRole || instance?.equipmentRole;
+  return SMITHING_ROLES.includes(role) ? role : null;
+}
+
 function instanceSourceId(registries, run, instance) {
   for (const key of ['sourceArmamentId', 'armamentId', 'weaponId']) {
     if (instance && instance[key] != null) {
@@ -57,8 +66,17 @@ function instanceSourceId(registries, run, instance) {
       return id;
     }
   }
-  if (!instance || !SMITHING_ROLES.includes(instance.equipmentRole)) return null;
-  const row = equipmentRoleSource(registries, run.loadout, run.class, instance.equipmentRole);
+  // A complete-kit basic is owned by the armament that lends it, exactly as
+  // restampSmithingCards stamps it (owner = grantedBy). Both hands can lend the
+  // same kitRole, so the role-based fallback below would name the wrong piece.
+  if (instance?.kitRole && instance.grantedBy != null) {
+    const id = String(instance.grantedBy);
+    if (!armamentById(registries, id)) throw new Error(`Unknown source armament '${id}'`);
+    return id;
+  }
+  const role = smithingRole(instance);
+  if (!role) return null;
+  const row = equipmentRoleSource(registries, run.loadout, run.class, role);
   return row.piece ? row.piece.id : null;
 }
 
@@ -97,7 +115,7 @@ function armamentRolePreviews(registries, run, piece, nextLevel) {
   const live = sourceCards(registries, run, piece.id);
   const rows = [];
   for (const role of SMITHING_ROLES) {
-    const active = live.filter((instance) => instance.equipmentRole === role);
+    const active = live.filter((instance) => smithingRole(instance) === role);
     const carriers = active.length ? active : [rolePreviewInstance(registries, piece, role)].filter(Boolean);
     for (const carrier of carriers) {
       const receipt = smithingCardReceipt(registries, run, carrier, nextLevel);
@@ -128,7 +146,7 @@ function cardChangesForTier(registries, instance, before, after, pieceId, nextLe
   const changes = [];
   for (const row of rows) {
     const descriptor = parseItemUpgradeTag(row.tag, attributeIds);
-    if (!descriptor || descriptor.role !== instance.equipmentRole) continue;
+    if (!descriptor || descriptor.role !== smithingRole(instance)) continue;
     if (descriptor.kind === 'cardEffect') {
       const beforeValue = numericEffect(before, descriptor.op);
       const afterValue = numericEffect(after, descriptor.op);
@@ -154,20 +172,14 @@ export function smithingCardReceipt(registries, run, instance, nextLevel = 0) {
   const after = resolveCard(registries, { ...instance, upgraded: false, smithingLevel: nextLevel });
   const liveProfile = (registries.equipment.basicCardProfiles || []).find((row) => row.id === instance.profileId);
   const profile = run.equipmentProfileRuleSnapshot?.profiles?.[instance.profileId] || liveProfile || null;
-  const scaling = profile ? Object.freeze({
-    attributeId: profile.scalingStat,
-    label: registries.attributes.get(profile.scalingStat).shortLabel,
-    actual: Number.isFinite(run.attributes?.[profile.scalingStat]) ? run.attributes[profile.scalingStat] : null,
-    pointsPerTier: profile.pointsPerTier,
-    gainPerTier: profile.gainPerTier,
-  }) : null;
+  const rating = profile ? Object.freeze({ id: profile.ratingId, label: profile.ratingId.toUpperCase() }) : null;
   return Object.freeze({
     instanceId: instance.instanceId,
     cardId: instance.cardId,
-    role: instance.equipmentRole,
+    role: smithingRole(instance),
     sourceArmamentId: pieceId,
     name: after.name,
-    scaling,
+    rating,
     reference: Object.freeze({
       ...instance,
       ...(Array.isArray(instance.mods) ? { mods: Object.freeze([...instance.mods]) } : {}),
@@ -209,6 +221,27 @@ function stoneBalance(run) {
   const value = run?.smithingStones == null ? 0 : run.smithingStones;
   return integer(value, 'run.smithingStones');
 }
+
+function refinedBalance(run) {
+  const value = run?.smithingStonesRefined == null ? 0 : run.smithingStonesRefined;
+  return integer(value, 'run.smithingStonesRefined');
+}
+
+/**
+ * refinedStoneValue(registries) → how many ordinary stones one refined stone
+ * pays toward an upgrade (SPEC §14.4): the run's frozen
+ * `gameConfig.shops.blacksmith.refineStones.refine.value`, read at every smith
+ * door. Null when the table has no such number (a stripped fixture), and then
+ * no candidate can be paid from the refined purse.
+ */
+export function refinedStoneValue(registries) {
+  const row = (registries?.shops?.blacksmith?.offerings || []).find((offering) => offering && offering.id === 'refineStones');
+  const value = row?.refine?.value;
+  return Number.isSafeInteger(value) && value >= 1 ? value : null;
+}
+
+/** The PURSES an upgrade can be paid from (SPEC §14.4): never mixed. */
+export const SMITHING_PURSES = Object.freeze(['stones', 'refined']);
 
 function levels(run) {
   const current = run?.itemUpgradeLevels == null
@@ -273,8 +306,17 @@ function validateLastReceipt(registries, run) {
     throw new Error('run.lastSmithingReceipt levels do not describe one valid Smithing promotion');
   }
   if (typeof receipt.free !== 'boolean') throw new Error('run.lastSmithingReceipt.free must be boolean');
+  // A receipt written before the refined purse reads as 'stones' (SPEC §14.4).
+  const purse = receipt.purse === undefined ? 'stones' : receipt.purse;
+  if (!SMITHING_PURSES.includes(purse)) throw new Error(`run.lastSmithingReceipt.purse must be one of ${SMITHING_PURSES.join(', ')}`);
+  if (purse === 'refined') {
+    for (const key of ['refinedSpent', 'refinedBalanceBefore', 'refinedBalanceAfter']) integer(receipt[key], `run.lastSmithingReceipt.${key}`);
+    if (receipt.refinedBalanceBefore - receipt.refinedBalanceAfter !== receipt.refinedSpent || receipt.refinedSpent < 1) {
+      throw new Error('run.lastSmithingReceipt refined balance does not describe its Smithing transaction');
+    }
+  }
   const authoredCost = itemUpgradeCost(itemUpgradeRows(registries, receipt.itemRef, receipt.afterLevel));
-  const expectedSpend = receipt.free ? 0 : authoredCost;
+  const expectedSpend = receipt.free || purse === 'refined' ? 0 : authoredCost;
   if (receipt.authoredCost !== authoredCost || receipt.spent !== expectedSpend || receipt.cost !== receipt.spent
       || receipt.stoneBalanceBefore - receipt.stoneBalanceAfter !== receipt.spent) {
     throw new Error('run.lastSmithingReceipt cost/balance does not describe its Smithing transaction');
@@ -349,6 +391,10 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
     if (level > (tiers.at(-1) || 0)) throw new Error(`run.itemUpgradeLevels.${itemRef} exceeds its highest authored tier ${tiers.at(-1) || 0}`);
   }
   const stones = stoneBalance(run);
+  // Refined stones (SPEC §15.3) are the second purse (§14.4): a candidate can
+  // be paid wholly from it, at ceil(cost / refine.value) refined stones.
+  const refined = refinedBalance(run);
+  const refineValue = refinedStoneValue(registries);
   const inventory = carriedIds(run.loadout);
   const candidates = [];
   for (const itemRef of ownedItemRefs(registries, run)) {
@@ -379,6 +425,7 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
       : itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel);
     if (!authoredChanges.length || !changes.length || changes.every((row) => row.before === row.after)) continue;
     const shortfall = Math.max(0, cost - stones);
+    const refinedCost = refineValue ? Math.ceil(cost / refineValue) : null;
     const candidate = {
       itemRef,
       itemKind: identity.itemKind,
@@ -392,6 +439,8 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
       stones,
       shortfall,
       affordable: shortfall === 0,
+      refinedCost,
+      refinedAffordable: refinedCost !== null && refined >= refinedCost,
       inventoryCount: identity.itemKind === 'armament' ? inventory.filter((id) => id === identity.itemId).length : 1,
       requirements,
       authoredChanges: Object.freeze(authoredChanges.map((row) => Object.freeze({ ...row }))),
@@ -401,7 +450,7 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
     };
     candidates.push(Object.freeze(candidate));
   }
-  return Object.freeze({ schemaVersion: SMITHING_SCHEMA_VERSION, stones, candidates: Object.freeze(candidates) });
+  return Object.freeze({ schemaVersion: SMITHING_SCHEMA_VERSION, stones, refined, candidates: Object.freeze(candidates) });
 }
 
 /** Add stable source/tier carriers to deck or hand instances after promotion. */
@@ -417,16 +466,23 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
 }
 
 /** Host-side, revalidated generic commit. `free` is for event/keepsake grants. */
-export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined } = {}) {
+export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined, purse = 'stones' } = {}) {
   const itemRef = typeof requestedItemRef === 'string' && requestedItemRef.includes('/')
     ? requestedItemRef
     : `armament/${requestedItemRef}`;
+  if (!SMITHING_PURSES.includes(purse)) throw new Error(`Unknown Smithing purse '${purse}' (purses: ${SMITHING_PURSES.join(', ')})`);
   const plan = smithingPlan(registries, run, explicitRules);
   const candidate = plan.candidates.find((row) => row.itemRef === itemRef);
   if (!candidate) throw new Error(`Item '${itemRef}' is not an eligible Smithing candidate`);
-  if (!free && !candidate.affordable) throw new Error(`Insufficient Smithing Stones (shortfall ${candidate.shortfall})`);
+  // THE REFINED PURSE (SPEC §14.4): ceil(cost / refine.value) refined stones
+  // and no ordinary stone; the two are never mixed and no change is given.
+  const refinedPurse = !free && purse === 'refined';
+  if (refinedPurse && !candidate.refinedAffordable) throw new Error(`Insufficient refined Smithing Stones (need ${candidate.refinedCost}, have ${plan.refined})`);
+  if (!free && !refinedPurse && !candidate.affordable) throw new Error(`Insufficient Smithing Stones (shortfall ${candidate.shortfall})`);
   const beforeStones = plan.stones;
-  run.smithingStones = free ? beforeStones : beforeStones - candidate.cost;
+  const beforeRefined = plan.refined;
+  run.smithingStones = free || refinedPurse ? beforeStones : beforeStones - candidate.cost;
+  if (refinedPurse) run.smithingStonesRefined = beforeRefined - candidate.refinedCost;
   run.itemUpgradeLevels = { ...levels(run), [itemRef]: candidate.nextLevel };
   delete run.armamentLevels;
   restampSmithingCards(registries, run, cards || run.deck || []);
@@ -440,11 +496,13 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
     beforeLevel: candidate.currentLevel,
     afterLevel: candidate.nextLevel,
     authoredCost: candidate.cost,
-    spent: free ? 0 : candidate.cost,
-    cost: free ? 0 : candidate.cost,
+    spent: free || refinedPurse ? 0 : candidate.cost,
+    cost: free || refinedPurse ? 0 : candidate.cost,
     stoneBalanceBefore: beforeStones,
     stoneBalanceAfter: run.smithingStones,
     free,
+    purse: refinedPurse ? 'refined' : 'stones',
+    ...(refinedPurse ? { refinedSpent: candidate.refinedCost, refinedBalanceBefore: beforeRefined, refinedBalanceAfter: run.smithingStonesRefined } : {}),
     changes: candidate.changes,
     affectedCards: candidate.affectedCards,
   });
@@ -460,8 +518,41 @@ export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRul
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
 }
 
-/** Grant the balance-owned faucet exactly once for a resolved reward. */
-export function grantSmithingReward(registries, run, pool, rewardId) {
+/**
+ * smithingRewardPays(registries, pool) → whether the pool's door pays any
+ * stone at all, ordinary or refined. Treasure calls grantSmithingReward only
+ * when it does (SPEC §15.3): both treasure tables ship at 0, so a treasure
+ * node writes no zero-amount claim and a save is unchanged.
+ */
+export function smithingRewardPays(registries, pool) {
+  const rules = rulesFor(registries);
+  if (!Object.hasOwn(rules.rewardByPool, pool)) throw new Error(`Unknown Smithing reward pool '${pool}'`);
+  return rules.rewardByPool[pool] > 0 || rules.refinedRewardByPool[pool] > 0;
+}
+
+/**
+ * smithingRewardId(run, pool) → the idempotent claim id of one reward door.
+ * A fight's id is the one the combat door has always written (saved claims
+ * depend on it byte for byte); a treasure node's is its own `treasure:` door.
+ */
+export function smithingRewardId(run, pool) {
+  const dungeon = run.legacyDungeon ? `:${run.legacyDungeon.current}` : '';
+  const place = `${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}${dungeon}`;
+  return pool === 'treasure' ? `treasure:${place}` : `combat:${place}:${pool}`;
+}
+
+/**
+ * Grant the balance-owned faucet exactly once for a resolved reward.
+ *
+ * SPEC §15.3: the door pays `rewardByPool[pool]` ordinary stones and
+ * `refinedRewardByPool[pool]` refined stones when the pool pays anything and
+ * `rewardChancePct[pool]` passes — ONE roll for both purses, on the `smith`
+ * stream. 100 and 0 roll nothing, so the shipped table (every chance 100)
+ * moves no stream and pays exactly what it always did. `rng` is needed only
+ * for a partial chance. The claim is recorded whether or not the roll paid,
+ * so a resumed door can never roll twice.
+ */
+export function grantSmithingReward(registries, run, pool, rewardId, rng = null) {
   const rules = rulesFor(registries);
   if (!Object.hasOwn(rules.rewardByPool, pool)) throw new Error(`Unknown Smithing reward pool '${pool}'`);
   if (typeof rewardId !== 'string' || !rewardId) throw new Error('Smithing reward id must be a non-empty string');
@@ -469,10 +560,28 @@ export function grantSmithingReward(registries, run, pool, rewardId) {
   if (claimed.includes(rewardId)) {
     return Object.freeze({ pool, rewardId, amount: 0, duplicate: true, stoneBalanceAfter: stoneBalance(run) });
   }
-  const amount = rules.rewardByPool[pool];
+  const table = rules.rewardByPool[pool];
+  const refinedTable = rules.refinedRewardByPool[pool];
+  const chance = rules.rewardChancePct[pool];
+  let passes = chance >= 100;
+  if (!passes && chance > 0 && (table > 0 || refinedTable > 0)) {
+    if (!rng || typeof rng.chance !== 'function') throw new Error(`Smithing reward pool '${pool}' has a ${chance}% chance and needs the run's rng to roll it`);
+    passes = rng.chance('smith', chance);
+  }
+  const amount = passes ? table : 0;
+  const refined = passes ? refinedTable : 0;
   run.smithingStones = stoneBalance(run) + amount;
+  // The refined purse is optional on the run (absent reads 0), and is
+  // written only when a refined stone is paid, so a run that never saw one
+  // saves exactly the fields it always did.
+  if (refined > 0) run.smithingStonesRefined = refinedBalance(run) + refined;
   run.smithingRewardClaims = [...claimed, rewardId];
-  return Object.freeze({ pool, rewardId, amount, duplicate: false, stoneBalanceAfter: run.smithingStones });
+  // The receipt names the refined purse only when it paid, so a door that
+  // paid ordinary stones alone hands the spoils the receipt it always did.
+  return Object.freeze({
+    pool, rewardId, amount, duplicate: false, stoneBalanceAfter: run.smithingStones,
+    ...(refined > 0 ? { refined, refinedBalanceAfter: run.smithingStonesRefined } : {}),
+  });
 }
 
 /** Initialize or migrate one run in place, returning an explicit receipt. */

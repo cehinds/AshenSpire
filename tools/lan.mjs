@@ -200,9 +200,10 @@ export function attachLan(server, { port, root }) {
     const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, tint: cl.tint, spriteStyle: cl.spriteStyle });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder });
       (cl.locals || []).forEach((lp, i) => game.addMember({
         id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, tint: lp.tint, spriteStyle: lp.spriteStyle,
+        playInDeckOrder: cl.playInDeckOrder, // couch seats share the device's profile
       }));
     }
     game.start();
@@ -226,7 +227,7 @@ export function attachLan(server, { port, root }) {
     switch (msg.t) {
       case 'resync': broadcastState(); return;
       case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
-      case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId); break;
+      case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice); break;
       case 'endTurn': g.combatEndTurn(id); break;
       case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
@@ -248,6 +249,7 @@ export function attachLan(server, { port, root }) {
         pl.name = String(msg.name || 'Forsaken').slice(0, 18);
         pl.classId = msg.classId || null;
         pl.startingKitId = msg.startingKitId || null;
+        pl.playInDeckOrder = msg.playInDeckOrder === true;
         pl.discoveredArmaments = Array.isArray(msg.discoveredArmaments) ? [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))] : [];
         pl.tint = msg.tint || 'gold';
         pl.spriteStyle = msg.spriteStyle || DEFAULT_SPRITE_STYLE;
@@ -255,6 +257,9 @@ export function attachLan(server, { port, root }) {
         // Reconnect into a running game as the same member, if it exists.
         if (session.game && msg.rejoinId && session.game.session.members.has(msg.rejoinId)) {
           pl.id = msg.rejoinId;
+          // The returning player's Play in deck order is read afresh from this
+          // hello (SPEC §14.1), so a change made while away applies next fight.
+          session.game.session.members.get(pl.id).playInDeckOrder = pl.playInDeckOrder;
           session.game.setConnected(pl.id, true);
           sock.write(wsEncode(JSON.stringify({ t: 'rejoined', id: pl.id })));
           broadcastState();
@@ -352,6 +357,11 @@ export function attachLan(server, { port, root }) {
       if (!mids.length) continue;
       cl.id = mids[0];
       cl.ownedIds = mids;
+      // The returning player's current profile decides the draw, not the
+      // value the old host save carried.
+      if (typeof cl.playInDeckOrder === 'boolean') {
+        for (const mid of mids) { const m = game.session.members.get(mid); if (m) m.playInDeckOrder = cl.playInDeckOrder; }
+      }
       resumed.push(...mids);
       sock2.write(wsEncode(JSON.stringify({ t: 'resumed', yourId: mids[0], yourIds: mids, seedString: game.session.seedString })));
     }

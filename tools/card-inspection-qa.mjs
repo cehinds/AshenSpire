@@ -85,13 +85,14 @@ try {
       window.inspectionRun = run;
       mountShop(document.querySelector('#app'),{registries:r,run,meta:{settings:{}},onLeave(){},onChanged(){}});
     });
-    await page.locator('[data-face="bar:armaments"]').click();
+    await page.locator('#shop-cat-armaments').click();
     const merchantBefore = await page.evaluate(() => JSON.stringify(window.inspectionRun));
     const offer = page.locator('.shop-inspect-card').first();
     if (phone) { await offer.tap({position:{x:70,y:90}}); await offer.locator('.card-info-button').tap(); }
     else await offer.click({position:{x:70,y:90}});
     check(await page.locator('.modal .card-inspection-layout').count() === 1, 'merchant shared layout');
-    check(await page.locator('.modal-foot-actions .primary').isDisabled(), 'unaffordable purchase stays disabled while inspect works');
+    // Scoped to the inspection modal: the W1d shop keeps its own footer primary underneath.
+    check(await page.locator('.modal .modal-foot-actions .primary').isDisabled(), 'unaffordable purchase stays disabled while inspect works');
     check(await page.evaluate(() => JSON.stringify(window.inspectionRun)) === merchantBefore, 'inspection does not buy');
     await page.waitForTimeout(400);
     await page.screenshot({ path:resolve(output, `${phone?'phone':'desktop'}-merchant.png`) });

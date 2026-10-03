@@ -24,7 +24,7 @@
 // a caller then has to look up.
 
 /**
- * @typedef {string} TagDomainId          a row in tagDomains.csv: card | creature | item | run
+ * @typedef {string} TagDomainId          a root in nodes.csv: card | creature | item | run | …
  * @typedef {string} TagFamilyId          a row in tagFamilies.csv: card | armament | enemy | ...
  * @typedef {{ id: string, domain: TagDomainId, label: string,
  *             color: string, glyph: string, blurb: string }} Tag
@@ -90,6 +90,10 @@ export function tagService(registries) {
   if (cached) return cached;
 
   const { tags, byId, families, domainsByFamily, byObject } = build(registries);
+  // The domains whose tags never join a list (nodes.csv root `aside`, via the
+  // derived domain rows) — presentation and classification each have their
+  // own reader below.
+  const aside = new Set((registries.tagDomains || []).filter((d) => d && d.aside === true).map((d) => d.id));
 
   /** The scope half of a parent key, from the family's scopeField. */
   const scopeOf = (family, object) => {
@@ -106,7 +110,7 @@ export function tagService(registries) {
      */
     idsOf(family, object) {
       if (!object) return [];
-      return [...new Set((byObject.get(keyOf(family, scopeOf(family, object), object.id)) || []).filter(id=>byId.get(id)?.domain!=='presentation'))];
+      return [...new Set((byObject.get(keyOf(family, scopeOf(family, object), object.id)) || []).filter((id) => !aside.has(byId.get(id)?.domain)))];
     },
 
     /** Explicit visual identity; excluded from ordinary card/equipment queries. */
@@ -174,7 +178,7 @@ export function tagService(registries) {
     assertLegal(family, tagId) {
       const tag = byId.get(tagId);
       if (!tag) {
-        throw new Error(`unknown tag '${tagId}' — register it in content/source/tags.csv (known: ${[...byId.keys()].join(', ')})`);
+        throw new Error(`unknown tag '${tagId}' — register it in content/source/nodes.csv (known: ${[...byId.keys()].join(', ')})`);
       }
       const domains = domainsByFamily.get(family) || [];
       if (!domains.includes(tag.domain)) {

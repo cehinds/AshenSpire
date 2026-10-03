@@ -154,3 +154,92 @@ export function availableEventChoices(choices, subject) {
       && validId(choice.id)
       && eventChoiceRequirementMet(choice.requiresHistory, subject));
 }
+
+// ---------------------------------------------------------------------------
+// QUEST COMPLETION (plan phase 10a; proposal §7.5). A quest completes through
+// one door (engine/quests.js completeQuest), which writes one row of this kind
+// into the SAME run.history the event choices live in — no RUN_SHAPE change,
+// and no wall clock, so the row replays byte-for-byte. At most one row per
+// quest per run: a reload, a replayed commit or a second claim writes nothing.
+// ---------------------------------------------------------------------------
+
+export const QUEST_COMPLETED_HISTORY_KIND = 'questCompleted';
+
+// Where a completion came from: an event chain's completing choice, or an
+// atlas quest's claimed reward.
+export const QUEST_COMPLETION_SOURCES = Object.freeze(['event', 'atlas']);
+
+// Atlas quest ids carry a colon (`survey:crownfall`), so a quest id is the
+// event-id grammar plus ':'.
+const QUEST_ID_PATTERN = /^[A-Za-z][A-Za-z0-9_:-]{0,79}$/;
+
+export function validQuestId(value) {
+  return typeof value === 'string' && QUEST_ID_PATTERN.test(value);
+}
+
+/** Validate only questCompleted rows; every other row kind is left alone. */
+export function questCompletionHistoryProblems(subject) {
+  const history = historyArray(subject);
+  if (!history) return ['history: array required'];
+  const out = [];
+  const seen = new Set();
+  history.forEach((row, index) => {
+    if (!row || row.kind !== QUEST_COMPLETED_HISTORY_KIND) return;
+    if (!validQuestId(row.questId)) out.push(`history[${index}].questId: stable quest id required`);
+    if (!QUEST_COMPLETION_SOURCES.includes(row.source)) {
+      out.push(`history[${index}].source: one of ${QUEST_COMPLETION_SOURCES.join(', ')} required`);
+    }
+    if (seen.has(row.questId)) out.push(`history[${index}].questId: '${row.questId}' completed twice`);
+    seen.add(row.questId);
+  });
+  return out;
+}
+
+/**
+ * Has this run completed `questId`? Presence only: a malformed neighbour row
+ * must not make a completed quest look open, or the door would write it again.
+ */
+export function hasQuestCompletion(subject, questId) {
+  const history = historyArray(subject);
+  if (!history || !validQuestId(questId)) return false;
+  return history.some((row) => row?.kind === QUEST_COMPLETED_HISTORY_KIND && row.questId === questId);
+}
+
+/**
+ * Append `{ kind: 'questCompleted', questId, source }` to run.history, once.
+ * Returns the new row, or null when the quest was already complete (the
+ * idempotent case, not an error).
+ */
+export function recordQuestCompletion(run, { questId, source } = {}) {
+  if (!run || typeof run !== 'object' || !Array.isArray(run.history)) {
+    throw new Error('recordQuestCompletion requires run.history');
+  }
+  if (!validQuestId(questId)) throw new Error(`recordQuestCompletion: stable quest id required, got '${questId}'`);
+  if (!QUEST_COMPLETION_SOURCES.includes(source)) {
+    throw new Error(`recordQuestCompletion: source must be one of ${QUEST_COMPLETION_SOURCES.join(', ')}, got '${source}'`);
+  }
+  if (hasQuestCompletion(run, questId)) return null;
+  const record = { kind: QUEST_COMPLETED_HISTORY_KIND, questId, source };
+  run.history.push(record);
+  return record;
+}
+
+/**
+ * Quest chains are authored as a sidecar beside the events
+ * (`questChains = { [questId]: { steps: [eventId], completes: [{eventId,
+ * choiceId}] } }`). These two readers are the only way the rest of the game
+ * asks about them.
+ */
+export function questChainForEvent(chains, eventId) {
+  for (const [questId, chain] of Object.entries(chains || {})) {
+    if (Array.isArray(chain?.steps) && chain.steps.includes(eventId)) return questId;
+  }
+  return null;
+}
+
+export function questsCompletedBy(chains, { eventId, choiceId } = {}) {
+  return Object.entries(chains || {})
+    .filter(([, chain]) => Array.isArray(chain?.completes)
+      && chain.completes.some((ref) => ref && ref.eventId === eventId && ref.choiceId === choiceId))
+    .map(([questId]) => questId);
+}

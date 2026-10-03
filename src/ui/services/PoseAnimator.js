@@ -38,6 +38,13 @@ const ATTACK_SEQUENCE = ['attack1', 'attack2', 'attack3', 'attack4'];
 // player zone before every timeline, so a stage-local counter was new — and back
 // at attack1 — for every single attack. Keyed by who the figure is, it outlives
 // the DOM the figure is drawn into.
+import { uiConfig } from '../../config/generated/ui.js';
+
+// Play duration and its floor live in
+// content/config/ui/presentation/poseAnimator.json. PCT is the percent unit the
+// layer is written in, not a tunable.
+const POSE_MOTION = uiConfig.presentation.poseAnimator.motion;
+const PCT = uiConfig.presentation.poseAnimator.sizing.percent;
 const swings = new Map();
 
 /** The frame row for one pose, or null when this build does not ship it. */
@@ -57,10 +64,10 @@ export function posesFor(classId, tint) {
 
 function place(img, frame) {
   const { width: cw, height: ch } = POSE_CANVAS;
-  img.style.left = `${(frame.x / cw) * 100}%`;
-  img.style.top = `${(frame.y / ch) * 100}%`;
-  img.style.width = `${(frame.w / cw) * 100}%`;
-  img.style.height = `${(frame.h / ch) * 100}%`;
+  img.style.left = `${(frame.x / cw) * PCT}%`;
+  img.style.top = `${(frame.y / ch) * PCT}%`;
+  img.style.width = `${(frame.w / cw) * PCT}%`;
+  img.style.height = `${(frame.h / ch) * PCT}%`;
 }
 
 /**
@@ -85,10 +92,10 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
   const figureH = Math.max(1, idle.g - idle.y);
   const layer = document.createElement('div');
   layer.className = 'pose-layer';
-  layer.style.height = `${(ch / figureH) * 100}%`;
+  layer.style.height = `${(ch / figureH) * PCT}%`;
   layer.style.aspectRatio = `${cw} / ${ch}`;
-  layer.style.top = `${100 - (idle.g / figureH) * 100}%`;
-  layer.style.transform = `translateX(${-(idle.rx / cw) * 100}%)`;
+  layer.style.top = `${PCT - (idle.g / figureH) * PCT}%`;
+  layer.style.transform = `translateX(${-(idle.rx / cw) * PCT}%)`;
 
   const img = hintImage(document.createElement('img'));
   img.className = 'pose-frame';
@@ -136,7 +143,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     get pose() { return current; },
     setPose,
     /** Hold `pose` for ms, then return to idle. Reduced motion holds nothing. */
-    play(pose, ms = 260) {
+    play(pose, ms = POSE_MOTION.defaultPlayMs) {
       if (reducedMotionRequested() || liteRendering()) return false;
       // Decide what would be shown BEFORE cancelling the hold already running. A
       // pose this build does not carry used to clear the settle timer and then
@@ -146,7 +153,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
       if (!poseFrame(classId, target, tint)) return false;
       if (timer) { clearTimeout(timer); timer = null; }
       setPose(target);
-      timer = setTimeout(settle, Math.max(60, ms));
+      timer = setTimeout(settle, Math.max(POSE_MOTION.minimumPlayMs, ms));
       return true;
     },
     settle,

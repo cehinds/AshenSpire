@@ -33,7 +33,58 @@ const sourcesHtml = (sources, empty) => (sources.length
   ? `<span class="as-kitline">${sources.map((source) => `<span class="ki" data-source-kind="${esc(source.kind)}"><span class="kn">${esc(source.id)}</span> <b>${source.value}</b></span>`).join('')}</span>`
   : flavourHtml(empty));
 
+const attributeNames = {
+  strength: 'Strength',
+  dexterity: 'Dexterity',
+  constitution: 'Constitution',
+  wisdom: 'Wisdom',
+  intelligence: 'Intelligence',
+};
+const numberText = value => Number.isInteger(value) ? String(value) : String(Number(value.toFixed(4)));
+
+function ratingCalculationHtml(id, value, receipt) {
+  const attribute = receipt.ratingAttributes[id];
+  const attributeIds = Object.keys(attributeNames)
+    .filter(attributeId => attribute.weights[attributeId]);
+  const weightedTerms = attributeIds
+    .map(attributeId => `<span class="rating-term" data-attribute-id="${esc(attributeId)}">${esc(attributeNames[attributeId])} <b>${numberText(attribute.values[attributeId])}</b> × ${numberText(attribute.weights[attributeId])} → floor = <b>${numberText(attribute.terms[attributeId])}</b></span>`);
+  const terms = weightedTerms.length
+    ? weightedTerms.join('<span class="rating-separator"> + </span>')
+    : '<span class="rating-term rating-term-empty">No weighted attributes</span>';
+  const formulaTerms = attributeIds.length
+    ? attributeIds.map(attributeId => `<b>${numberText(attribute.terms[attributeId])}</b>`).join(' + ')
+    : '<b>0</b>';
+  const additions = receipt.ratingSources
+    .filter(source => source.kind !== 'attribute' && Number(source[id]))
+    .map(source => `<span class="rating-source" data-source-kind="${esc(source.kind)}"><b>${numberText(source[id])}</b> ${esc(source.name)}</span>`);
+  const formula = [
+    `<span><b>${numberText(attribute.base)}</b> base</span>`,
+    // The one row formula (ruleset 7) has no global multiplier; a fight saved
+    // before it still carries one, and is shown the way it is priced.
+    attribute.multiplier !== 1
+      ? `<span>floor(<b>${numberText(attribute.multiplier)}</b> global × (${formulaTerms}))</span>`
+      : `<span>(${formulaTerms})</span>`,
+    ...(attribute.levelBonus ? [`<span><b>${numberText(attribute.levelBonus)}</b> level</span>`] : []),
+    // A row's min or max held the attribute part: say by how much, so the
+    // shown sum is the one combat uses (Codex, #1296).
+    ...(() => {
+      const scaled = attribute.multiplier !== 1 ? Math.floor(attribute.weighted * attribute.multiplier + 1e-9) : attribute.weighted;
+      const held = attribute.value - (attribute.base + scaled + (attribute.levelBonus || 0));
+      return held ? [`<span><b>${numberText(held)}</b> held to its ${held < 0 ? 'max' : 'min'}</span>`] : [];
+    })(),
+    ...additions,
+  ].join(' + ');
+  return `<div class="rating-calculation" data-rating-id="${esc(id)}">`
+    + `<div class="rating-calculation-head"><span>${esc(id.toUpperCase())}</span><strong>${numberText(value)}</strong></div>`
+    + `<div class="rating-attributes"><span class="rating-line-label">Attributes</span>${terms}</div>`
+    + `<div class="rating-formula"><span class="rating-line-label">Calculation</span>${formula} = <strong>${numberText(value)}</strong></div>`
+    + '</div>';
+}
+
 export function renderPlayerPoise(receipt) {
+  if (receipt.ratings) return `<section class="player-poise-receipt">${eyebrowHtml('Ratings, Poise & Ward')}`
+    + `<div class="rating-calculations">${Object.entries(receipt.ratings).map(([id, value]) => ratingCalculationHtml(id, value, receipt)).join('')}</div>`
+    + flavourHtml(receipt.note) + '</section>';
   return `<section class="player-poise-receipt">${eyebrowHtml(receipt.label)}`
     + sourcesHtml(receipt.sources, 'No item or relic contribution.')
     + pairHtml(`Items ${receipt.equipment} + relics ${receipt.relic}`, `<strong>${receipt.value}</strong>`)
@@ -69,7 +120,8 @@ export function renderRoleCopies(surface) {
     attrs: ` data-role="${esc(row.role)}"`,
     nameHtml: `${esc(row.profile.displayName)} <em class="as-pill role-copy-count">x${row.copies}</em>`,
     hintHtml: `${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}`,
-    valuesHtml: pairHtml(`${row.receipt.base} base + ${row.receipt.tier} tier x ${row.receipt.gainPerTier} + ${row.receipt.rarityBonus} rarity =`, `<strong>${row.receipt.value}</strong>`),
+    valuesHtml: pairHtml(`${row.receipt.base} base + ${row.receipt.rating.value} ${row.receipt.rating.id.toUpperCase()} (${row.receipt.rating.sourceLabel}) + ${row.receipt.rarityBonus} rarity =`,
+    `<strong>${row.receipt.value}</strong>`),
   })).join('');
 }
 

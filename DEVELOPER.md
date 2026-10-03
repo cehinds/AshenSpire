@@ -9,8 +9,225 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
-`node tools/launch.mjs --build-only` produces the standalone aliases and an
-external-art web edition in `build/web/`. Serve the whole web directory for
+**The built standalone HTML is not committed on `dev`** (since 2026-09-26).
+Every rebuild used to upload ~284 MB of new Git LFS objects (the 255 MB full file
+and the 29 MB mobile one) and the repository's LFS budget ran out. Now the root
+`AshenSpire.html`, every HTML under `build/` and `dist/`, and the `packs/`,
+`objects/` and `asset-base.json` beside them are ignored: `node tools/launch.mjs
+--build-only` writes them locally, CI builds them on every push and pull
+request, and `.github/workflows/dev-preview.yml` uploads the light single file
+as the `dev-standalone-<commit>` artifact — that is where a `dev` build is
+downloaded. A `dev` clone needs no Git LFS. `tools/verify-shipped.mjs` fails if
+any of them is tracked again. Historical builds (and `release`/`main`, which
+still carry theirs) remain LFS pointers; readers of those verify content hashes.
+
+A pull request still commits the one derived fact the build writes,
+`buildordinal.json` (plus `src/content/changelog.generated.js`), and its receipt
+names that ordinal. CI rebuilds and requires the rebuild to change nothing
+committed, then runs `node tools/buildversion.mjs --check` against the fresh
+build, so the box and the receipt are still checked to agree.
+
+**Which checks gate a pull request** (owner, 2026-09-26: a PR into `dev` is gated
+by fast checks only, about five minutes or less; the heavy suites run when code
+is pushed to `test` and `release`). Nothing was removed: every check below still
+runs, unchanged, on every push to `test` and `release`, and any workflow can
+still be started by hand on any branch (Actions → *Run workflow*).
+
+| Check (workflow → job) | PR into `dev` | Push to `test` / `release` |
+|---|---|---|
+| `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
+| `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
+| `tests.yml` → core suite | yes | yes (also on push to `dev`) |
+| `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
+| `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
+| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
+| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
+| `tests.yml` → tool self-tests, bundler parse gate | no | yes |
+| `ci.yml` → Fullscreen first through both Settings doors | no | yes |
+| `ci.yml` → what this green does NOT cover (boundary) | no | yes |
+| `ci.yml` → tests (ubuntu, windows, macOS) | no | yes |
+| `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
+| `ci.yml` → the checks that need a real browser | no | yes |
+| `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
+| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>` ([desktop/windows/README.md](desktop/windows/README.md)) | only when the PR touches `desktop/` | yes (also `main`) |
+
+The workflows' own `on:` blocks and job `if:` conditions are the source of this
+table; a skipped job shows on the PR as *skipped*, not as missing.
+
+
+Settings: `src/ui/screens/settings.js` draws only the open Advanced topic and
+searches every section; `src/ui/buildChannel.js` decides whether the debug-only
+sections (tuning, layout, import/export, Defaults & sync) are shown — the
+Settings → Advanced → Developer tools toggle, on by default for dev and test,
+off for an unrecognised file, and hidden (always off) on main and release;
+`src/model/settingsSync.js` keeps a
+settings profile on GitHub. Review, design and next steps are in
+[docs/SETTINGS-REVAMP.md](docs/SETTINGS-REVAMP.md); run
+`node --test tests/settings-revamp.test.mjs`.
+
+Every stat — HP, Mana, Stamina, Actions, opening hand, draw per turn, hand
+size, AR, DR, PR, Ward, Poise — is one row of `src/content/derivedStats.js`
+(ruleset 7, SPEC §3.5), priced by `statRowValue` in `src/model/derivedStats.js`.
+`src/model/statRows.js` decides which rows a run, fight or preview reads (the
+run's snapshot, the retired homes restated exactly for a pre-ruleset-7 run, or
+the live table) and converts the retired settings keys. Hand behaviour options
+live in `src/content/handRules.js` (defaults), `src/model/handRules.js`
+(settings and the fight's rows), and `src/engine/handRules.js`
+(draw/retention/discard planning). Run
+`node --test tests/stat-rows.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs`
+for the focused rules, persistence and settings checks. Advanced → Stats →
+Draw & hand keeps the Opening hand, Draw / turn and Hand size rows beside the
+discard controls, under a live worked example.
+
+`node tools/launch.mjs --build-only` writes **one tree** into `build/` and
+`dist/` (docs/EXTERNAL-ASSETS-PLAN.md step 8e, owner answers 2, 3 and 6): the
+pack-shaped game file `AshenSpire.html` (~10 MB of code, no media) with
+`asset-base.json`, `packs/` and `objects/` beside it, and the **light single
+file** at `download/AshenSpire.html` (~31 MB, every byte inline, held to no
+byte budget); `dist/` also gets the version-stamped `AshenSpire-<version>.html`,
+and the root alias `AshenSpire.html` is the light single file. **By default
+the pack-shaped file's tier is light** (owner, 2026-09-26: dev/test builds are
+light only): the light and common packs, edition `light`. The light art, in
+the packs and in the single file, comes from the light pack of the fetched art
+release (`.art-cache/<tag>/light/`; run `node tools/fetch-art.mjs --pack
+light,common` first — see *The art release* below). `--full-art` builds
+the release/main shape: the high, light and common packs, default tier and
+edition `high`, falling back to light. CI passes `--full-art` only for
+`release` and `main`. The light single file is built either way and always
+says `light`. The full-art single file (~255 MB) and the separate mobile file
+are retired, and `bundle.mjs --mobile` is refused by name. Changing anything under `assets/`
+means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
+from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
+CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Then run
+`node tools/art-manifest.mjs --write`: `art-manifest.json` lists every
+asset id (its runtime `assets/…` path) with the file each tier ships —
+`light` (`assets-mobile/`) and `high` (`assets/`), each with bytes, sha256 and
+pixel size; the placeholder tier has no file. `tests/art-manifest.test.mjs`
+fails the core suite while it is stale, or when any field differs from what
+`--write` produces. The manifest's ids are exactly the paths `assetUrl()` in
+`src/ui/assetmap.js` resolves; `assetUrl()` checks an optional high-res source
+first (built from a manifest by the Art quality setting), then the built-in
+art. Not yet covered: game code still builds many `assets/…` paths from
+templates, and the CSS `url(../assets/…)` backdrops bypass `assetUrl()` in the
+source tree and the light single file (the pack-shaped build reads them through `ASSET_CSS`).
+Schema 2 (docs/EXTERNAL-ASSETS-PLAN.md, step 2) adds `common` ids with one
+`{path, bytes, sha256}` record each: the 15 fonts under `assets/fonts/`,
+`licenses/OFL.txt` (read from `asset-data/fonts/OFL.txt`), `music/manifest.json`
+and the score's MP3s, and the `map-detail/` tiles; readers that walk the light
+and high twins skip them. `node tools/asset-pack.mjs` writes the plan's pack
+format from these trees into `build/asset-pack/` (ignored): a content-addressed
+`objects/<xx>/<sha256>.<ext>` store and `packs/<pack>-<digest12>.json` indexes
+for `light`, `high` and `common`, each with its `.js` twin, plus the
+`packs/fonts-<digest12>.js` sidecar; `--check` verifies a written tree and
+`tests/asset-pack.test.mjs` covers it. **The web edition reads them** (step 3a):
+`bundle.mjs` (the pack shape, its default since step 8e) writes the packs beside its HTML (`light` and
+`common` with `--light`; `high`, `light` and `common` without it), stamps each
+index's sha256 and the default tier into `ASSET_PACKS` (`src/ui/assetPacks.js`),
+and the loader checks the indexes at boot and resolves ids to objects through
+`setBuiltInSource()` in `src/ui/assetmap.js` (high → light → placeholders when
+an index is missing or fails its pin; `tests/asset-packs.test.mjs`).
+The CSS assets follow the same index (step 3b): `tools/asset-css.mjs` moves the
+"AS Lore" `@font-face` rules into an `ASSET_CSS` template with `{{id}}` slots,
+turns each backdrop `url()` into `var(--as-css-<id>, none)` defined there, and
+inlines the two SVG masks as `data:`; the loader fills the slots from the index it
+used (light when high failed) and injects one `<style data-asset-css>`, and a
+failed load injects nothing (no backdrop, system faces; `tests/asset-css.test.mjs`).
+The map-detail tiles and the shipped score follow the common index too (step
+3c): `mapDetail.js` loads each tile as an image of
+`assetUrl('map-detail/<hash>/<edge>/<x>-<y>.webp')` and `audio.js` reads
+`music/manifest.json` and its tracks through `assetUrl()`, so the web edition
+carries no `map-detail/` or `music/` folder; the light single file served over http(s)
+and the source tree still read those folders beside the page
+(`tests/music-tiles-index.test.mjs`).
+`node tools/verify-external.mjs` checks the tree on disk (D: every `ASSET_CSS`
+slot names an id the common index or every art tier lists; E: the common index
+lists every tile and track, and no `map-detail/` or `music/` copy is beside the
+HTML) and
+`node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
+high-default build whose high index was removed; `--block-index` holds and then
+refuses every index: the startup gate must be drawn at once with its "Loading
+art…" line, the title must wait for the load and then offer Retry, and Retry
+must load the art). The cold boot of the web edition draws the startup gate
+while it loads (step 5): its status line and the critical set it counts
+(`content/config`, `presentation.startupGate`) are `src/ui/bootArt.js`, the
+words are `art.*` rows of `uiStrings.csv`, and a failed load shows a notice
+with Retry on the title and in Settings → Art quality
+(`retryBuiltInArt`, `tests/boot-art.test.mjs`). The light single file is
+unchanged: its `ASSET_PACKS` stays null and the loader does nothing.
+
+**On Pages** (step 6b): `tools/pages-site.mjs` serves each build whose rebuild
+writes that web edition as the page at `/<branch>/<ordinal>/`, with an
+`asset-base.json` beside it and its packs and objects in one store at the
+site root shared by every build (`tools/pages-store.mjs`), and its light
+single file whole at `/<branch>/<ordinal>/download/AshenSpire.html`, which
+the Download links and the in-game downloader (`build.json`'s `download`)
+name. `/sw.js` is the service worker (`tools/pages-sw.mjs`: objects
+cache-first and hash-checked, Range answered `206`, pages network-first; its
+kill-switch is the committed `SW_KILL`), registered only by Download & saves
+→ *Make available offline* (`src/ui/offlineInstall.js`). `pages-site --check`
+proves the store, the bases, the downloads and `sw.js`; its `--selftest`
+plants each known-bad. `node tools/pages-offline.mjs` drives the worker in
+Chromium over `serveDir` (`tests/pages-sw.test.mjs` runs it in a sandbox).
+**To pull the worker** from every browser that kept a build: set
+`SW_KILL = true` in `tools/pages-sw.mjs` and merge that PR to `dev`, whose push
+republishes `/sw.js` as the kill-switch; each browser deletes its `ashen-`
+caches, unregisters and reloads the windows it controlled on its next visit.
+Leave it published for weeks, then set it back in a later PR. Publish it from
+`dev`: a site published by a pre-6b `pages-site` has no `/sw.js`, and a 404 does
+not unregister a worker (docs/EXTERNAL-ASSETS-PLAN.md, *Step 6b as built*).
+
+**The art release** (docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md step
+11). `art-release.json` (schema 2) pins one release of `cehinds/AshenSpire-art`:
+its tag (today `hd-assets-v2`) and three zips with their sha256s — `high`
+(`hd-assets-v2.zip`, the full art), `light` (`light-assets-v2.zip`, the
+`assets-mobile/` twins) and `common` (`common-assets-v2.zip`: the fonts,
+`licenses/OFL.txt`, the music and the map tiles). `node tools/fetch-art.mjs`
+fetches all three (`--pack high|light|common`, a comma list, or `all`), refuses
+a zip unless its sha256 is the pinned one and every file matches its record in
+`art-manifest.json`, and unpacks each into `.art-cache/<tag>/<pack>/`
+(gitignored). The art repository is public, so no token is needed: the
+download uses the release's public URL. `ART_REPO_TOKEN` (else `GITHUB_TOKEN`),
+when set, only raises GitHub's rate limit. A failure names its cause (token refused, repository unreadable,
+rate limit, network). `--from <zip>` verifies a zip already on disk (its pack is
+read from its name); `--recheck` re-hashes a cache. The trees here stay until
+step 13, and `node tools/fetch-art.mjs --agree` proves the fetched caches and
+the trees agree byte for byte.
+
+**Every reader of those trees reads the cache** (step 12). The builds
+(`bundle.mjs`, which `launch.mjs` runs, and `asset-pack.mjs`, whose `--source` defaults to
+`auto`), `tools/serve.mjs` (a request under `/assets-mobile/`,
+`/assets/fonts/`, `/music/` or `/map-detail/` of a served checkout), the tests
+and the dev-preview workbench take `assets-mobile/`, `assets/fonts/`, `music/`
+and `map-detail/` from the fetched packs through `tools/art-source.mjs`, and ask
+`art-manifest.json`, not a tree, whether an art id ships. When a pack is not
+fetched, `art-source` falls back to the tree in this checkout with one note
+naming the fetch (until step 13 deletes the trees); `ASHEN_ART_SOURCE=cache`,
+which CI sets, refuses that fallback, and `ASHEN_ART_SOURCE=trees` forces it.
+`node tools/art-source.mjs --which` prints where each tree is read from. So
+before building or playing from source: `node tools/fetch-art.mjs --pack
+light,common` (and `all` for a `--full-art` build). The pin and the manifest are
+build identity (`BUILD_IDENTITY_FILES`). `tools/zip.mjs` is the same file the
+art repository packs with; `tests/fetch-art.test.mjs` pins their shared vector.
+
+**Settings → Display → Art quality** (`src/ui/artTier.js`, `src/ui/highResArt.js`):
+*Auto*, *Light* and *High* choose which pack the web edition loads (step 8c of
+docs/EXTERNAL-ASSETS-PLAN.md). *Auto* is light on a narrow layout
+(`data-layout="narrow"`), on a screen whose short side is at most 600 CSS px
+(a phone in either orientation), with Save-Data on or with
+`navigator.deviceMemory` at or under 2 GB, and the build's default tier otherwise; *Light* and *High* force
+one. The boot load asks for that tier, a change in play reloads the indexes and
+re-points the images on screen (a switch that cannot load keeps the art already
+shown), and the loader's fallback still applies (High on a build without the
+high pack, or whose high index fails, shows light). The light single file and
+the source tree pin no packs, so there *Light* and *High* are disabled and the
+row says why. A stored *Built-in* (the old default) reads as *Auto*.
+*Local high-res* lays full-resolution files over Auto's tier
+from a folder served beside the game (`hd/art-manifest.json` plus `hd/assets/…`,
+found over http) or a folder the player picks (any build, `file://` included;
+the browser hands the files over for this page only, so a reload asks again).
+Anything the folder lacks stays built-in; images already on screen are swapped
+in place and pose preloads are dropped. The setting is `LOCAL_ONLY_KEYS` in
+`src/model/settingsSync.js`: never saved to or loaded from a sync profile. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 
@@ -19,6 +236,24 @@ Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.
 Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
 `--check` verifies complete attack-source mappings and the review table.
 `node tests/run-node.mjs` includes its focused engine regression suite.
+
+Layout numbers (sizes, positions, layers, timings, which parts appear) are
+authored as JSON in `content/config/`, the third authored tree after
+`content/source/` and `content/framework/`. Its README explains the folders,
+the sections, and the `"$name"` variables. `node tools/config-build.mjs`
+compiles it into `src/config/generated/ui.js` (`uiConfig`), and
+`tools/launch.mjs` runs it before every build. `--check` is the drift gate that
+`tests/run-node.mjs` runs, and `tools/content-build.mjs` refuses a config file
+the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
+a compatibility shim composed from `uiConfig`, so change the JSON, never the
+shim or the generated module.
+`ui-studio/` is a standalone local editor for that JSON (see
+[ui-studio/README.md](ui-studio/README.md)): `node ui-studio/server.mjs` draws
+the approved wireframes at real device sizes on a snapping grid, edits any
+value with its unit and variables, validates the tree with `compileEntries`
+before writing, keeps backups, and opens the live game at the chosen size.
+`node --test ui-studio/tests/*.test.mjs` covers the model and the server;
+`node ui-studio/tests/browser.mjs` drives the page in headless Chromium.
 `node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
 and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
 three-build policy through the actual combat engine. Ordinary runs do not select
@@ -51,7 +286,7 @@ the shared `enemySprite()` asset function. The twelve PNGs in
 `assets/enemies-unity/` are unchanged imports from the Unity fork; retain their
 384px square canvas and common foot anchor when replacing them. Keep the
 original sprite files as fallback assets. See CREDITS.md and the extraction
-manifest beside the images for provenance.
+manifest (`asset-data/enemies-unity/provenance.json`) for provenance.
 Combat stature is presentation-only: `CombatSpriteScaleModel.js` uses the
 encounter pool to keep elites at 1.75x and bosses at 2x (Ashheart Dragon at 3x).
 `combatSpriteGeometry.js` caches visible idle bounds, while painted player
@@ -74,7 +309,41 @@ are rechecked at commit. Selling retains upgrades, mount history and permanent
 discovery; it removes only card instances granted by the sold item. Legacy shops
 without the new shelves retain empty shelves instead of rerolling their stock.
 Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
-mounting and save round-trip coverage. Weapon-art packages are authored in
+mounting and save round-trip coverage.
+Shop kinds (SPEC §14.2) are data in `src/content/shops.js`: each kind is a list
+of offerings (`enabled`, `chance`, `weight`, and any price or stock number, each
+with a `[NOTE]`) plus a `guaranteedMinimum`. `src/model/shopKinds.js` validates
+the table and generates the Advanced → Shops rows (`gameConfig.shops.*`, frozen
+per run); `src/engine/shopKinds.js` rolls the kind and the offerings on the
+`shopOffers` stream, while the market's shelves still roll on `shop` through
+`buildShopStock`. A kind gets a weight row, and may carry a non-zero weight,
+only once its screen is in `SHOP_KIND_SCREENS`. Run
+`node --test tests/shop-kinds.test.mjs`.
+The market additions (SPEC §14.3) are market offerings too: `armour`,
+`smithStones`, `sigils` and `innRest`, each at a chance below 100. Their stock
+rolls on `shopOffers` after the offering roll (`buildMarketStock`), their
+purchases are plan/commit pairs in `src/model/marketAdditions.js` (the inn
+rest's commit, which runs the inn's location visit, is `commitInnRest` in
+`src/engine/shopKinds.js`), sigils are `src/content/sigils.js` (owned in
+`run.sigils`, slots in `run.sigilSlots`, `src/model/sigils.js`), and a bought
+armour set is recorded in `run.loadout.boughtArmour`, which `ownership()`
+reads. Run `node --test tests/market-additions.test.mjs`.
+Step 5b adds `skillBooks`, `reviveTokens`, `questEvent` and `companions`.
+Skill books and revive tokens are `src/content/consumables.js`, carried as
+counts in `run.consumables`; companions are `src/content/companions.js`,
+travelling in `run.companions`. Every number either file authors is a
+`gameConfig.consumables.*` / `gameConfig.companions.*` Settings row. A
+companion's effect is its `family = companion` row in `tagging.csv` (a leaf
+under the `companion` branch of `property`), mounted at combat start as a
+`companion` carrier. Reading a book (the Armoury's Inventory), selling one
+back, settling a fight and the content checks are `src/model/consumables.js`;
+a revive token is spent at the death point in `src/engine/actions.js` from
+the fight's copy of the counts, which rides the combat snapshot. Run
+`node --test tests/market-additions-5b.test.mjs`. How many cards a shelf of resting cards
+holds — the merchant's shelves, a mount's deck list — is authored once at
+`content/config/ui/components/card.json -> sizing.shelf`, laid out by
+`.card-shelf` in styles/kit.css, and checked by
+`node --test tests/card-shelf.test.mjs`. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
@@ -87,13 +356,51 @@ only explicit Use may spend a charge. The map Quick Access faces retain real
 44px target boxes to prevent neighboring invisible hit regions overlapping.
 
 ```
-# play (no build step — any static server, or open index.html directly)
-npx serve .            # then http://localhost:3000
+# play (no build step): the source tree, served with its media
+node tools/serve.mjs   # then http://localhost:8080 (or node tools/launch.mjs, which builds first)
 
-# tests (22 assertions, SPEC §8)
-node tests/run-node.mjs        # CI-style, exits 1 on failure
+# build the authored trees (launch.mjs runs the first two for you)
+node tools/config-build.mjs            # content/config/**.json → src/config/generated/ui.js
+node tools/content-build.mjs           # content/source/* → src/content/generated/ (+ the tag tree's views: tags, domains,
+                                       #   pairings, property rules, and src/framework/data/{properties,relations}.js)
+node tools/framework-data-build.mjs    # content/framework/*.json → src/framework/data/ (entities, terms, assets, …)
+node tools/config-build.mjs --check    # drift gate: the generated UI config is current
+
+# tests — the index is derived, never hand-counted (SPEC §8): grep -n "test('" tests/engine.test.js
+node tests/run-node.mjs        # CI-style, exits 1 on failure (runs config-build --check)
+node tests/run-node.mjs --no-selftests    # the fast half: engine suite, every *.test.mjs, tool verdicts
+node tests/run-node.mjs --selftests-only  # the slow half: each tool's --selftest known-bad corpus
 # or open tests/index.html in a browser — same suite, green/red list
+```
 
+Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
+(skipping `node_modules`, `dist`, `build`, `scratch` and dot-directories other
+than `.github`) and hands them to one `node --test`. A new test file needs no
+registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
+map with the reason. `.github/workflows/tests.yml` runs the two halves as two
+Linux jobs, plus the bundler's parse-gate fixtures (`node tools/bundle.test.mjs`,
+several minutes) as a third; on a pull request into `dev` only the fast half
+(`core suite`) runs, and all three run on every push to `test` and `release`
+(see *Which checks gate a pull request* above).
+
+Every browser tool launches Chromium through `tools/browser.mjs` (`CHROME`
+picks the binary). The wait for Chrome's DevTools endpoint is never shorter
+than a launch floor, `LAUNCH_FLOOR_MS` (30000 ms), whatever `timeoutMs` the
+tool passes, because a cold Chrome start on a GitHub runner can take longer
+than the 12000 ms most tools ask for (D35). Set `ASHEN_BROWSER_LAUNCH_MS` to
+change the floor in ms (`0` turns it off; a value that is not a whole number,
+or is above 2147483647, is ignored). A browser that exits or fails to start
+still fails at once; only a slow one is waited for.
+`node --test tests/browser-launch-floor.test.mjs` covers the floor.
+
+Escape and pad B are one input: `src/ui/input.js` dispatches a pad press as
+its bound key at the document, and a screen whose Back is a plain button marks
+it `data-back`, which input.js presses on an Escape nothing else took (D41 in
+docs/FINISH.md). `node --test tests/escape-back.test.mjs` covers the rule in the
+suite; `node tools/escape-back.mjs --check` (hand-run, real Chromium) drives
+every screen in its table with one Escape and one pad B.
+
+```
 # what raises the red failure banner, and what must not
 node --test tests/debug-banner.test.mjs
 ```
@@ -105,6 +412,21 @@ undelivered notifications` is the one a player met, arriving with no filename an
 no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
 and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `tests/debug-banner.test.mjs` holds both edges.
+
+## Where a build comes from (not committed since 2026-09-26)
+
+`node tools/launch.mjs --build-only` still writes the build tree into `build/`
+and `dist/` (the pack-shaped `AshenSpire.html` with its packs, and the light
+single file at `download/`) and the root alias, but only to your working tree:
+git ignores them. Commit the box it moves
+(`buildordinal.json`) and the regenerated changelog module, never the HTML.
+To play a build you did not make, download the `<branch>-standalone-<commit>`
+artifact from that commit's workflow run: every pull request into `dev` and
+every push to `dev`, `test`, `release` and `main` uploads one. A tool or test
+that reads a build builds it first, or is handed that artifact; it never
+skips because a build is missing. The full contract, including the ordinal
+and Pages, is in
+[docs/versioning.md](docs/versioning.md#builds-are-not-committed-2026-09-26).
 
 ## The CI door: a tool's silence is not its success (#12)
 
@@ -184,6 +506,53 @@ question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
 enforces that by refusing bare specifiers); the refusal is what makes the gap
 loud in the meantime.
 
+## Plants and the same door (`tools/doorplant.mjs`)
+
+Every `--selftest` corpus in `tools/` is one mechanic: a known-bad is written as
+FILE BYTES into a copy of this checkout, the tool is run whole from that copy,
+and the run must fail *by the red that plant names*. `doorplant.mjs` is the only
+home of that mechanic; the tools supply the plants and the reds.
+
+```bash
+node tools/doorplant.mjs --selftest   # the harness's own door — seconds, no browser, no port
+node tools/plantsites.mjs --check     # every plant's find-string still resolves — under a second
+```
+
+Both run on every pull request in `dev-preview.yml`'s `preview` job, because a corpus that has
+stopped being able to arm is green for the wrong reason and nothing else notices.
+
+**Plants are authored with `\n`, and line endings belong to the CHECKOUT, not to
+the plant.** The committed blobs are LF and Linux CI checks out LF, but a Windows
+checkout under `core.autocrlf=true` — the Git-for-Windows system default — has a
+CRLF working tree. An exact byte match on a **multi-line** find-string can never
+succeed there. Until 2026-09-17 that made `node tools/startup-gate.mjs
+--selftest` print `SELFTEST RED — 2 plant(s)/edge(s) failed` on Windows and green
+in CI, and both failures read `PLANT SITE DRIFTED` — the same words real drift
+produces, about two sites that had not moved. Single-line plants were unaffected,
+which is what made it look arbitrary. `doorplant` now re-expresses each plant in
+the target file's own line ending before matching and writes the replacement back
+in that ending; `plantsites.mjs` already compared LF-normalised views, so this is
+the same rule at the stage that edits bytes.
+
+**So do not "repair" a drifted plant by spelling `\r\n` into its find-string** —
+that is a plant which only arms on Windows, and it will read as drifted the next
+time anyone runs the corpus on Linux. Author `\n` and let the harness translate.
+
+`PLANT SITE DRIFTED` still means exactly one thing: the site is absent in the
+file's own ending **and** exactly as authored, so the plant never armed and the
+corpus is proving less than it claims. It is a hard red, never a skip. The known
+backlog of genuinely drifted sites is pinned in `tools/plantsites-baseline.json`,
+and `--check` fails in both directions — a site that starts resolving again must
+be recorded in the same change, or the freed slack hides the next regression.
+
+**Verifying a line-ending claim: count bytes, not lines.** Git Bash's
+`grep -c $'\r$'` reports every line of an LF file as matching, so it cannot tell
+the two apart. Ask Node instead:
+
+```bash
+node -e "const b=require('fs').readFileSync(process.argv[1]);let cr=0,lf=0;for(const c of b){if(c===13)cr++;if(c===10)lf++}console.log('CR',cr,'LF',lf)" styles/kit.css
+```
+
 ## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
 
 Every merged pull request must be named by an entry in
@@ -195,19 +564,28 @@ repository.
 ```
 node tools/receipts.mjs --check              # origin/test..HEAD — the promotion
 node tools/receipts.mjs --check --since dev  # any other range
+node tools/receipts.mjs --check --pr <N>     # a pull request head: #N itself has a receipt,
+                                             # stamped with this tree's buildordinal.json
+node tools/receipts.mjs --check --pr auto    # the same, N from GITHUB_EVENT_PATH / GITHUB_REF
 node tools/receipts.mjs --selftest           # the known-bad corpus
 ```
 
-`.github/workflows/receipts.yml` runs both on every push to `dev`. It is bounded
-at the promotion target on purpose: the question is never "does every merge in
-history have a receipt" — the changelog's own header records which stretch is
-deliberately unreconstructed — but "is *this* promotion complete", asked while
-the answer can still be acted on. It does not run on pull requests, where the
-answer would be about merges the author did not make.
+`.github/workflows/receipts.yml` runs the selftest and the range check on every
+push to `dev`. The range is bounded at the promotion target on purpose: the
+question is never "does every merge in history have a receipt" — the
+changelog's own header records which stretch is deliberately unreconstructed —
+but "is *this* promotion complete", asked while the answer can still be acted
+on. On a pull request into `dev` it runs the selftest and `--check --pr auto`
+instead, which judges only that pull request's own number: the range there
+would be about merges the author did not make, but a pull request with no
+receipt of its own is the author's to fix, before merge.
 
 The tool checks **coverage**, not truth: whether an entry exists naming each
-merged pull request. Whether the prose is accurate is not machine-checkable, and
-whether the ordinal on it is the one committed at that merge belongs to
+merged pull request. Whether the prose is accurate is not machine-checkable.
+The one stamp it does check is the `--pr` pull request's own: its receipt must
+carry exactly the release and ordinal of `buildordinal.json` in the tree being
+checked, the box that pull request ships (#1315 merged with `0.7.1.518` on a
+box of 519, and nothing caught it). Older receipts' ordinals belong to
 `tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
 yields no pull-request references at all, that is this tool's own syntax having
 moved out from under it, and it exits **2 (harness could not run)** rather than
@@ -249,8 +627,9 @@ For migrated slices, keep these responsibilities separate:
   accessibility attributes.
 - `src/ui/screens/` projects game state, owns lifecycle, and translates semantic
   commands into domain actions. It does not duplicate extracted markup.
-- `src/ui/behaviors/` owns reusable interaction binding when a migrated slice
-  needs it; callbacks do not live inside models.
+- Reusable interaction binding goes in `src/ui/behaviors/` when a migrated
+  slice first needs it (the folder does not exist yet); callbacks do not live
+  inside models.
 
 Menu and Armoury are the reference implementations. Keep public entry points
 compatible while migrating a vertical slice; do not bulk-move unrelated code.
@@ -292,7 +671,11 @@ model IDs remain in [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
   `changeEquipment`. Both are player-turn-only, pay the authored equipment
   action price, and let the engine reconcile cards, resource vessels, Poise,
   events, and the persisted combat snapshot atomically.
-- Armaments, Inventory, Cards, and Stats compose `trayModel` and `renderTray`.
+- Armaments, Inventory, Cards, and Stats follow the Folding Tray contract
+  ([docs/TRAY-COMPONENTS.md](docs/TRAY-COMPONENTS.md)); the Armoury screen
+  (`src/ui/screens/equipment.js`) draws them itself and keeps sizes through
+  `TraySizeService` — `trayModel`/`renderTray` are used today only by the
+  combatant inspector.
   Folding collapses to the standard header without erasing the remembered
   expanded size. Sort controls and resize handles exist only while expanded
   and only when that tray model declares the corresponding capability.
@@ -318,6 +701,17 @@ node tools/startup-gate.mjs
 node tools/startup-gate.mjs --selftest
 ```
 
+Changes to the in-run Load door (`confirmSlotLoad`, `resumeRun`) run the real
+Quick Menu → Load path: a newer-build slot must be refused with the run kept,
+a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
+hand and deck, and a refused load from the in-run overlay's quick navigation
+must return focus to that overlay's launcher:
+
+```bash
+node tools/slot-load-door.mjs
+node tools/slot-load-door.mjs --selftest
+```
+
 Exact combat-save changes additionally run the real Save / Save and Quit /
 Load-review path at desktop and phone sizes, plus its copied-tree known-bad
 corpus:
@@ -328,6 +722,42 @@ node tools/combat-save.mjs --selftest
 # after the one authorized artifact regeneration:
 node tools/combat-save.mjs --artifact --screenshots
 ```
+
+## Reword the interface (one file: `content/source/uiStrings.csv`)
+
+Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
+screen asks for it by id:
+
+```js
+import { t, tFull, tTip } from '../strings.js';
+t('reward.continue')                         // the control's own words
+t('reward.cinders.title', { amount: 40 })    // {tokens} come from the caller
+tFull('reward.blocked.storage')              // the sentence it means
+tTip('reward.skip')                          // the tooltip a small face gets
+```
+
+Three authored forms per id, never a runtime guess between them: `short` is
+what the control wears, `full` is the sentence it means, `tip` is the tooltip
+title. A blank cell means "this id has no such form", and asking for it throws
+by name — an empty button is the defect this prevents. `extends` fills only the
+cells a row leaves blank, so `reward.skip` is the house Skip with one sentence
+changed.
+
+Rewording the game is then a spreadsheet edit and a rebuild, touching no code:
+
+```bash
+node tools/content-build.mjs      # csv → src/content/generated/uiStrings.js
+node tools/uistrings.mjs --check  # the ratchet, below
+node tests/run-node.mjs           # tests/ui-strings.test.mjs holds the rules
+```
+
+**The migration is a one-way street.** Most screens still hold their own
+sentences; `tools/uistrings.mjs` counts what is left, per file, against
+`tools/uistrings-baseline.json`, and `--check` fails in BOTH directions — a
+file that grew a hardcoded sentence, and a file that migrated one without
+recording it (an overstated baseline hides the next regression in its slack).
+A screen you migrate ends with `node tools/uistrings.mjs --write-baseline` in
+the same commit.
 
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
@@ -358,6 +788,11 @@ should appear in rewards. Notes:
   `stacks: { f: 'add', args: [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
+- `onTurnEndInHand` (optional effect list) fires at the player's turn end for
+  each copy still in hand, before the hand is discarded — Guilt's
+  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in solo and co-op
+  combat. Its numbers bind to the card's text template after `effects`
+  (Guilt's text says `{loseHp}`).
 
 ## Add a status (one file: `src/content/statuses.js`)
 
@@ -430,6 +865,17 @@ but run-level (SPEC §3.4): `addCinders`, `addRelic {random?|id}`,
 the combat orchestrator after `resultText` shows. Nothing to register — every
 shipped event is reachable via Unknown nodes.
 
+A **quest chain** is a sidecar beside the events in the same file: list its
+steps and completing choices in `questChains`, and name each step's speaker in
+`eventSpeakers`. A speaker is a row in `content/source/speakers.csv`
+(`id,name,portraitKey`; the key names existing art, and a blank key shows the
+name plate). A chain's steps open in the dialogue screen, one beat per
+blank-line paragraph of the event's `text`. Both event screens commit a choice
+through `commitEventChoice` (`src/engine/quests.js`); do not call
+`executeRunEffects` and `recordEventChoice` separately, or completion is
+skipped. `node --test tests/quest-dialogue.test.mjs` covers the door, the
+validation refusals and the dialogue model.
+
 > Each walkthrough above is **validation-checked**: add the snippet and run the
 > suite — test 15 (content validation) rejects unknown fields, bad enums,
 > dangling ids, out-of-set opcodes/formulas/predicates, and unbound template
@@ -440,13 +886,13 @@ shipped event is reachable via Unknown nodes.
 
 | Set | Where defined | Contents |
 |---|---|---|
-| Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage |
-| Run opcodes | `RUN_OPCODES` | addCinders, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, loseMaxHpPct, startCombat |
-| Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner |
-| Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
+| Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, dodgeRoll, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, restoreMana, restoreStamina, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage, stagger, arcaneBuildup |
+| Run opcodes | `RUN_OPCODES` | addCinders, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, addFlaskCapacity, loseMaxHpPct, startCombat, swapClass, refillFlasks |
+| Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner, ally, otherEnemies |
+| Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
-| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, everyNthCardThisCombat, random, eventIsAttack, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, all, any, not |
-| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction |
+| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
+| Relic passives | `PASSIVE_KEYS` | arBonus, drBonus, prBonus, poiseBonus, wardBonus, runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
 Escape hatch: `src/content/scripts.js` (named functions callable as
@@ -469,19 +915,42 @@ so every cue keeps the immediate synth. Decode failure logs the exact resolved
 URL, making a bad asset diagnosable without delaying combat feedback. Run
 `node tools/sfx-filename-convention.mjs` after changing this contract.
 
+Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
+D38 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
+timeline per beat, `playEventCues` for instant playback and a fresh fight's
+opening (a boss fight's waits for its name splash to close), and
+`playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
+`src/ui/screens/coop.js`, gated by `receiptSeq`; a late joiner hears only the
+scene the host marks `opening`). `playEventCues` stings once per shared turn,
+however many co-op seats start it. `node --test tests/sound-tiers.test.mjs`
+covers them, including the opening turn and the real co-op session digest;
+`node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
+a remounted one, and a fresh boss fight behind its splash
+(`?shot=boss&shotBossHold=0` lets the splash close).
+
 ## Performance (SPEC §9 M4)
 
 Combat feedback is **CSS-driven**: JS only toggles short-lived classes and
 appends floating numbers/banners that self-remove after ≤320 ms (`src/ui/fx.js`),
-staggered `STEP_MS` apart and skippable on click. There are **no per-frame
-render loops** — paced combat playback (`playTimeline`) is `setTimeout`-driven
-beat by beat, and the one timed loop in the codebase is the gamepad poller
-(`src/ui/input.js`, ~60 Hz `setInterval`) which is **input, not render**, and
-runs only while a controller is connected (started on `gamepadconnected`,
-stopped when the last pad disconnects) — no idle cost. So there are **no
-per-frame JS allocations**; frame rate is just the browser compositing a handful
-of transitions, comfortably 60 fps. Ambient title effects (embers, gold glow)
-are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
+staggered `STEP_MS` apart and skippable on click. Paced combat playback
+(`playTimeline`) is `setTimeout`-driven beat by beat. The JS loops and timers
+are:
+
+- `requestAnimationFrame` loops that stop when their motion ends: the
+  hold-to-confirm progress (`src/ui/components/holdconfirm.js`), map camera
+  glides (`mapboard.js`, `localMapCamera.js`), frame sequences
+  (`src/ui/presentationSequence.js`) and combatant effect layers
+  (`playCombatantEffectLayers`, `src/ui/combatantEffectLayers.js`);
+- the opening's `tick` (`src/ui/screens/prologue.js`), a `requestAnimationFrame`
+  loop that runs every frame while the prologue is mounted, paused or not;
+- timers: the gamepad poller (`src/ui/input.js`, only while a controller is
+  connected), the co-op seat gamepad poll (`src/ui/screens/coop.js`, every
+  120 ms for as long as the co-op screen is open), the music scheduler
+  (`src/ui/audio.js`), and 2 s polls for fullscreen state
+  (`hudQuickSettings.js`) and the co-op lobby. Ambient title effects (embers, gold
+glow) are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
+Rendering-quality options and phone measurements are in
+[docs/MOBILE-PERFORMANCE.md](docs/MOBILE-PERFORMANCE.md).
 
 ## Input — keyboard + gamepad (SPEC §7.3)
 
@@ -507,9 +976,12 @@ is the only writer of `seenTutorial`, the veil came back on every reload.
 viewports (zoom 0.62 → 1.70), advancing each step with **real mouse clicks at
 real screen coordinates**, plus the two exits that need no geometry — Escape,
 and a veil that lets board clicks through (`pointer-events: none`). It also
-walks the real first-run path and asserts the flag persists. Run it after any
-change to the tutorial, to `--ui-zoom`, or to the combat board's layout; it
-prints the boundary of what it did not cover.
+walks the real first-run path (startup gate, slot picker, character creation)
+and, after a reload, reads `seenTutorial` back from durable storage. Run it
+after any change to the tutorial, to `--ui-zoom`, or to the combat board's
+layout; it prints the boundary of what it did not cover. `--only` takes a comma
+list of cases (viewport names, `resize`, `first-run`); `tutorial-reach.yml`
+runs the whole sweep as three such shards on every pull request into `dev`.
 
 ## Character creation — the short form (D26)
 
@@ -545,10 +1017,9 @@ Starting Equip, and Seed sections together as interactive reference specimens.
 The catalog moves the production panels into labeled folios; it does not keep a
 second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`
-verifies the catalog at desktop and 390×844 mobile sizes alongside the player
-flow.
-
-## Standalone build (`build/AshenSpire.html`)
+drives the player flow's stats step at desktop and 390×844 mobile sizes:
+Standard and Assign points for every class, with the Hand and Draw chips
+checked against the hand a solo fight deals. It does not visit the catalog.
 
 ## Shared Load / Quit confirmation
 
@@ -562,12 +1033,45 @@ Add `--selftest` for its seven-plant copied-tree known-bad corpus; add
 `--artifact --screenshots` only after the serialized standalone build has been
 regenerated from frozen source.
 
-## Standalone build (`build/AshenSpire.html`)
+## The build (`build/AshenSpire.html` and `build/download/AshenSpire.html`)
 
-`node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —
-all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
-per-module-closure runtime (so file:// has no module/CORS issue). Double-click
-to play; no server, no Node, no external files. Re-run after any source change.
+`node tools/bundle.mjs` emits the game to `build/`: every ES module bundled
+into one classic `<script>` via a tiny per-module-closure runtime (so file://
+has no module/CORS issue) and all CSS inlined. Since step 8e
+(docs/EXTERNAL-ASSETS-PLAN.md) there are two shapes. With no flag it writes the
+**pack shape**: `AshenSpire.html` with no media inside it, beside
+`asset-base.json`, `packs/` and `objects/` (the high, light and common packs,
+default tier high; `--light` carries light and common, default tier light;
+`--external-art`, its old flag, is still accepted). `--single-file` writes the
+**light single file**, `build/download/AshenSpire.html` by default: the light
+tier's art (the fetched light pack; *The art release*) inlined as `data:` URIs,
+no server, no external files.
+`--mobile` is refused (the edition is retired). Re-run after any source change.
+The pack-shaped folder plays by double-click too, as long as it stays together
+(step 4): under `file://` the loader reads each
+index from its `.js` twin through a `<script>` tag and checks the string
+against the same pin, adds the "AS Lore" faces from the font sidecar as
+`FontFace` objects (Chrome refuses a `file://` page's `@font-face` url()
+loads), and draws sprites, backdrops and map tiles from the objects beside
+the HTML; the score stays synthesized, as for any `file://` page.
+`node tools/external-play.mjs --file` opens it that way in Chromium.
+`node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
+The files are local build output, ignored by git on `dev`: of the build's own
+outputs, commit only `buildordinal.json` (and the generated changelog module).
+Generated content and config modules are committed as usual.
+
+The browser tools that drive a built page (`--dist`, `--standalone`,
+`--artifact`, and `tapsize`/`hudbars`, which always read `dist/`) ask
+`buildPageUrl()` in `tools/browser.mjs` for the URL to open. A self-contained
+single file opens over `file://`, exactly as before; a pack-shaped build (its
+HTML carries a non-empty `ASSET_PACKS` pin, docs/EXTERNAL-ASSETS-PLAN.md step 3a on) is
+served over local http from its own folder, because its indexes arrive by
+`fetch`. It is served under `/<channel>/latest/`, the channel the same file
+reads by double-click (`unknown` for `dist/AshenSpire.html`), so a served page
+keeps the file's channel and debug state instead of reading as `dev` on
+127.0.0.1. (`buildChannel()` honours `/unknown/` only on a loopback host). `ASHEN_BUILD_OVER=file` or `=http` forces either for a run;
+`node tools/browser.mjs --selftest --serve-only` (check S, no browser, run by
+`tests/browser-serve.test.mjs`) checks the helper.
 
 ## Balance & telemetry
 
@@ -578,26 +1082,59 @@ empirical Act-1 win-rate pass (the naive bot). The **Run History** screen
 the live win-rate telemetry the balance pass is tuned against. Re-run the harness
 after any content or tuning change to catch regressions.
 
+Every simulator fight is the live fight: `src/main.js` and the simulators
+(`runsim`, `balance`, `measure-classes`) build a run's combat through
+`src/engine/runCombat.js` (`createRunCombat` — hand rules, rating rules, swap
+price and equipment start statuses from the profile's settings, `{}` for a fresh
+profile) and settle it through `runCombatEnd`, which carries HP, Mana, Stamina
+and flasks into the next fight. The bots choose from `tools/simbot.mjs`
+(`affordableCards`: playable and affordable in Actions, Mana and Stamina, priced
+by the engine's own `cardPlayCosts`), set a refused card aside and play on, and
+concede a fight still open after 150 turns as a stalemate.
+Between fights, `runsim` and `measure-classes` walk one run loop,
+`tools/simrun.mjs` (`createRunLoop`: map path, events and their history,
+shrines, rewards, drafts and the XP a fight pays), so `measure-classes --check`
+can require every fight to open on runsim's state; only the fight bot is each
+tool's own.
+`node tools/balance.mjs --check` fails when docs/BALANCE.md is stale
+(`tests/balance-doc.test.mjs` runs it); regenerate with
+`node tools/balance.mjs > docs/BALANCE.md`. Both also fail when the hand-recorded
+runsim reports in docs/balance-runs.md state a seat or boss multiplier that is
+not the live `balance.seatTiers` / `balance.bossTiers` (`tools/balance-runs-check.mjs`,
+`node --test tests/balance-runs-check.test.mjs`): re-run those reports after a retune.
+
 `node tools/runsim.mjs [N]` goes further: it plays **whole seeded runs** (map
 path → encounters → combats → rewards → shrines/events/ambushes → act bosses,
 Acts 1–3) with the same greedy bot plus a simple pilot. Any crash is a real
 integration bug; the win rate is a completability **floor**, not a balance
-target (the bot can't pilot combos or curate a deck). Baseline at 30 runs/class:
-zero crashes, and the Herald completes full 3-act runs even naively.
+target (the bot can't pilot combos or curate a deck). Baseline at 100
+runs/class on 2026-09-24, under the live rules (plan A1, simulator parity): Reaver
+12, Starseer 1, Rogue 54, Herald 58 wins; zero crashes.
 
 ## M1 known deviations (tracked for M2/M3)
 
-1. **Frostbite** is specced (SPEC §4.4) but not shipped — its
-   "next big hit +30%, then consumed" needs a conditional-consume hook no M1
-   content uses. Lands with the M2 flask that applies it.
-2. **Guilt** ships as an inert unplayable curse — its "lose 1 HP at turn end
-   while in hand" needs an in-hand card hook (engine seam planned with M2's
-   event system, which is the first thing that can grant Guilt).
-3. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
-   a generic choose-one UI primitive is an M2/M3 feature.
-4. **Goreblood** freezes Poise thresholds as well as Bleed (the
-   `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
-   card text says so honestly).
+Frostbite is not on this list: it is CUT (SPEC §4.4, which carries the
+falsifier), not deferred.
+
+None open.
+
+Resolved: **Warrior's Vow** enters a stance of your choice, solo and in co-op.
+Its `enterStance` effect carries `choose: 'classStance'` instead of a fixed
+`stance`; `cardChoicePlan` (engine/combat.js, and engine/coopCombat.js for a
+seat) offers every stance row whose `class` is the player's class (the card's
+own class when the player's owns none, `model/cardChoices.js`), the play intent
+answers it with `choice`, and a play without a legal choice is refused before
+anything is spent. Solo and co-op screens ask through one dialog
+(`ui/components/cardChoiceModal.js`); bots take the first option
+(`tests/warriors-vow.test.mjs`).
+
+Resolved: **Goreblood** no longer freezes Bleed as well as Poise. Bleed
+thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds
+only Poise, and the card text and tooltip say Poise only.
+
+Resolved: **Guilt** is no longer inert. Since #1286 it loses its HP at the end
+of each of your turns while in hand, solo and in co-op, through the card's
+`onTurnEndInHand` hook (see *Add a card* above); the card text binds the amount.
 
 ## Dodge outcome presentation
 
@@ -624,3 +1161,64 @@ Combat cards select before committing. A selected card retains its fan position 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
 
 Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, co-op, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
+
+## Opening sequence
+
+Advanced → Opening configures every scene, class line, caption, control, hold,
+transition and tint, and the staging around them: which painting a scene draws
+on (`art`, any shipped opening painting, not only its own), whether it plays
+(`enabled`), where it plays (`order`), whether it carries a title banner, plus
+the wireframe, artwork scale/fit/focus, text position, alignment, size,
+container (present / visible / opacity / colour) and outline. `prologueSequence`
+turns order and inclusion into the playing order; the indices it returns stay
+indices into the AUTHORED `config.scenes`, which is what `run.prologue.scene`
+and every `gameConfig.prologue.scenes.<id>.*` key are named for, and
+`prologueResumePosition` is how a run paused on a scene since switched off finds
+where to carry on.
+
+Staging is held twice, from one table: `PROLOGUE_STAGE_FIELDS` names every field
+that exists both under `presentation` (the house style) and under each scene's
+`stage` (its own answer, read only when the scene sets `ownStaging`), and the
+rows, the defaults, the validation and `prologueStaging` all read that table, so
+a field cannot be added to one home and forgotten in the other. The `night`
+wash cap that used to be an `if` in the renderer is that scene's own staging.
+
+Scenes are added into named slots, never invented at runtime: the authored
+sequence carries `slots` empty scenes (`extraA`…), switched off, so every key an
+added scene writes is still a key the all-or-nothing importer can refuse a bad
+value for. `prologueSceneCopy`, `prologueSceneClear`, `prologueReorderChanges`
+and `prologueFreeSlot` are the list editor's whole model; Settings only renders
+them. `presets.<id>` are three slots a whole opening parks in
+(`prologueSlotPayload` / `prologueSlotChanges` — loading is a replacement, so
+the change set names the keys to unset as well). Per-scene `music`/`stinger`
+reach the audio engine through the `audio` option `main.js` passes to
+`mountPrologue`; the settings preview passes none and keeps what is playing.
+Deliberate quiet is the `quiet` bed (`src/content/music.js`), never `stopMusic()` —
+the engine remembers the context it is in.
+
+With `captionFixedHeight` on (caption or letterbox layout), the screen sets every
+scene's words at one size: the largest, never above `textScale`, at which the
+longest caption in the opening fits the band, measured in a hidden copy of the
+caption and again on every resize. Under 12 on-screen pixels of dialogue it stops
+shrinking and the band scrolls (a phone on its side at a short band height).
+
+The controls are the FRAME's, not the caption's: a band (`.prologue-bar`) that
+is the last grid row of every wireframe, so text that floats does not take
+Continue with it. `presentation.controlsPosition: 'text'` puts them back under
+the words. `node tools/screenshot.mjs --only prologue` photographs the opening
+(`?shot=prologue`, with `?shotSettings={…}` to stage it), which is how a staging
+change is checked against the real screen rather than against its selectors. The authored
+data is in `content/config/ui/screens/prologue.json`; rebuild with the config
+compiler. Scene file: `prologueScenePreset` exports the opening alone in the
+art-studio preset shape that `parseAdvancedConfigFile` already imports, so the
+scene file and the whole-game configuration carry the same keys and one
+importer reads both.
+`src/model/prologue.js` projects settings without gameplay RNG. The shared
+`mountPrologue` renderer serves new solo games and the settings preview.
+`run.prologue` stores a version, pending/complete status and scene index; new
+runs snapshot the effective overrides in the existing advanced-config snapshot.
+Old saves bypass the opening. The completion callback persists before revealing
+the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
+immutability, class lines, destination, and interrupted save recovery.
+### Ratings and starting pools
+Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its stat row — the same nine fields everywhere (Base, STR, DEX, CON, WIS, INT, Per level, Min, Max) — and its constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js (the stat-row editors), src/model/statRows.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs.

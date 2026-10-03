@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Twin swords · All classes and outfits</title>
+<link rel="stylesheet" href="preview.css">
+<header><div><p class="eyebrow">ASHENSPIRE / ANIMATION WORKSHOP</p><h1>Twin swords</h1><p id="selectedName">All classes and outfits</p></div><nav><a id="sheetLink" href="labeled-sheet.png" target="_blank">Labeled sheet ↗</a><a href="README.md">Coverage & notes</a></nav></header>
+<main>
+<section class="collection"><div class="controls"><label>Class <select id="classFilter"><option value="all">All classes</option><option value="reaver" selected>Reaver</option><option value="starseer">Starseer</option><option value="herald">Herald</option><option value="rogue">Rogue</option></select></label><label>Armor <select id="outfit"></select></label><label><input id="compare" type="checkbox"> Compare current pose</label><span id="coverage"></span></div><div id="outfitGallery"></div></section>
+<section class="viewer" aria-label="Animation preview">
+ <div class="stage checker" id="stage"><img id="sprite" width="512" height="512" alt="Reaver twin-sword pose"><div id="anchor" hidden></div></div>
+ <div class="caption"><strong id="poseName"></strong><span id="poseNote"></span><span id="position"></span></div>
+ <div class="controls"><button id="play" disabled>Loading…</button><button id="previous" aria-label="Previous frame">←</button><button id="next" aria-label="Next frame">→</button><label>Action <select id="action"><option value="attack">Attack sequence</option></select></label></div>
+ <label class="scrub">Playback step <input id="scrub" type="range" min="0" max="8" value="0"><output id="stepCount"></output></label>
+ <div class="controls"><label>Speed <select id="speed"><option value="0.25">¼×</option><option value="0.5">½×</option><option value="1" selected>1×</option><option value="1.5">1½×</option><option value="2">2×</option></select></label><label>Background <select id="background"><option value="checker">Checkerboard</option><option value="dark">Charcoal</option><option value="light">Light</option></select></label><label><input id="showAnchor" type="checkbox"> Foot anchor</label></div>
+ <p class="fine">Right hand: straight sword · Left hand: katana. All body poses retain both blades. Effects are separate. Preview settings stay on this page.</p>
+</section>
+<section class="editor" aria-label="Pose order editor"><p class="eyebrow">PLAYBACK ORDER</p><h2>Shape the attack</h2><p>Source pose IDs stay fixed. Change the sequence below to test a different rhythm.</p>
+ <div class="controls"><label>Milliseconds per step <input id="frameMs" type="number" min="40" max="1000" step="10" value="120"></label><label>Impact step <select id="impact"></select></label></div>
+ <ol id="sequence"></ol><div class="controls"><button id="add">Add step</button><button id="reset">Reset candidate</button><button id="download">Save sequence JSON</button></div>
+ <p id="timing" class="fine"></p><p id="status" role="status">Shared attack sequence for all class and armor appearances.</p>
+</section>
+<section class="poses"><div class="section-title"><h2>All source poses</h2><p>Select a pose to inspect its hands and blades.</p></div><div id="gallery"></div></section>
+<section class="scope"><h2>Coverage & hand assignment</h2><p>One shared twin-sword motion profile, with a painting for each class and armor appearance. Every appearance uses the same pose IDs and sequence.</p><p>Reaver, Rogue, Starseer and Herald · 35 catalog entries · 32 distinct class/armor appearances. The authored assignment is right Straight Sword / left Katana. Reversed hands retain the game's existing presentation; this suite does not silently mirror or swap them.</p></section>
+</main><script src="data.js"></script><script src="preview.js"></script>
+</html>

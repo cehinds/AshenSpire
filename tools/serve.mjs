@@ -4,6 +4,14 @@
 // src/main.js) and the optional music/ folder load correctly (file:// blocks
 // module + audio loading in most browsers). Used by tools/launch.mjs, or run
 // directly:  node tools/serve.mjs [--port N] [--no-open] [--root DIR]
+//
+// THE ART PACKS' TREES COME FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md
+// step 12). Serving a checkout (a root with art-release.json), a request under
+// /assets-mobile/, /assets/fonts/, /music/ or /map-detail/ is answered from
+// .art-cache/<tag>/<pack>/ (node tools/fetch-art.mjs --pack light,common),
+// through tools/art-source.mjs, the one place that may still read those trees
+// here instead (until step 13). Any other root (a build folder) is served as
+// it is on disk.
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -11,6 +19,9 @@ import { resolve, join, extname, normalize } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
+import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
+import { artPath, treeOf } from './art-source.mjs';
+import { existsSync } from 'node:fs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -56,19 +67,57 @@ export function openBrowser(url) {
  * Bumps to the next port if the requested one is in use. `lan: true` attaches
  * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false } = {}) {
+export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false } = {}) {
   const rootResolved = resolve(root);
+  const checkout = existsSync(join(rootResolved, 'art-release.json'));
   let lanLayer = null; // attached after listen (needs the final port)
   const server = createServer(async (req, res) => {
     try {
       if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+      if (urlPath === '/__editor/prologue-defaults') {
+        const remote = req.socket.remoteAddress || '';
+        const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
+        const host = req.headers.host || '';
+        const safeHost = /^(localhost|127\.0\.0\.1):\d+$/.test(host);
+        const authorized = editorWrite && local && safeHost;
+        const reply = (status, value) => {
+          res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+          res.end(JSON.stringify(value));
+        };
+        if (!authorized) { reply(403, { ok: false, error: 'Project editing is unavailable on this server.' }); return; }
+        if (req.method === 'GET') { reply(200, { ok: true, projectDefaults: true }); return; }
+        if (req.method !== 'POST' || req.headers.origin !== `http://${host}` || !String(req.headers['content-type']).startsWith('application/json')) {
+          reply(403, { ok: false, error: 'This save must come from the local scene editor.' }); return;
+        }
+        try {
+          const chunks = []; let size = 0;
+          for await (const chunk of req) {
+            size += chunk.length;
+            if (size > 65536) throw new Error('The scene changes are too large.');
+            chunks.push(chunk);
+          }
+          const changes = JSON.parse(Buffer.concat(chunks).toString('utf8')).changes;
+          reply(200, { ok: true, ...await saveFirstStepDefaults(rootResolved, changes) });
+        } catch (error) { reply(400, { ok: false, error: error.message }); }
+        return;
+      }
       const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '');
       let filePath = rel ? join(rootResolved, rel) : rootResolved;
       if (!resolve(filePath).startsWith(rootResolved)) {
         res.writeHead(403);
         res.end('Forbidden');
         return;
+      }
+      if (checkout && treeOf(rel)) {
+        try {
+          filePath = artPath(rel, { root: rootResolved });
+        } catch (err) {
+          console.error(`serve: ${err.message}`);
+          res.writeHead(404);
+          res.end('Not found');
+          return;
+        }
       }
       let s;
       try {
@@ -178,5 +227,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     root: flag('--root', ROOT_DIR),
     open: !args.includes('--no-open'),
     lan: !args.includes('--no-lan'),
+    editorWrite: args.includes('--editor-write'),
   });
 }

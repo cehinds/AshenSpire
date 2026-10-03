@@ -17,16 +17,73 @@
 export const ASSET_MAP = {};
 /* ASSET_MAP_END */
 
+// THE HIGH-RES TIER (LFS / art-tier plan, steps 3–4, 2026-09-26). An asset id
+// is the runtime path above; art-manifest.json lists, per id, the file
+// each tier ships. The built-in art is whatever this build carries — the light
+// tier on dev/test, the full art on release/main — and a high-res source may be
+// laid over it (the Art quality setting, step 4, sets one). That source is a
+// Map from id to a URL the browser can load: object URLs for a folder the
+// player picked, or `hd/…` paths for a folder served next to the game. It holds
+// only the files that exist, so an id it lacks falls back to the built-in art.
+let highRes = null;
+
+// THE BUILT-IN PACK (docs/EXTERNAL-ASSETS-PLAN.md §3, step 3a). The web
+// edition carries no art inside it: src/ui/assetPacks.js loads the pack index
+// the HTML pins and hands this module a Map from id to the content-addressed
+// object beside the page (`objects/xx/<sha256>.webp`). It sits between the
+// high-res overlay and ASSET_MAP. A single file (ASSET_MAP filled) never gets
+// one: the loader does nothing there.
+let builtIn = null;
+
 /**
- * assetUrl('assets/sprites/reaver_gold.webp') → that path, or the inlined
- * data URI when the build carries one. Unknown paths pass straight through,
- * so a missing asset still 404s visibly rather than silently resolving.
+ * setBuiltInSource(map) — the built-in pack's id → object path Map, or null /
+ * an empty map to remove it. Returns how many ids it now covers.
  */
-export function assetUrl(path) {
-  return ASSET_MAP[path] || path;
+export function setBuiltInSource(map) {
+  builtIn = map && map.size ? map : null;
+  return builtIn ? builtIn.size : 0;
 }
 
-/** True when this build carries its own art (the single-file dist). */
+/** The built-in pack's Map while one is loaded, else null. */
+export function builtInSource() {
+  return builtIn;
+}
+
+/**
+ * setHighResSource(map) — lay a high-res source over the built-in art, or
+ * remove it with null / an empty map. Returns how many ids it now covers.
+ */
+export function setHighResSource(map) {
+  highRes = map && map.size ? map : null;
+  return highRes ? highRes.size : 0;
+}
+
+/**
+ * Which tier an id resolves to right now: 'high' when a high-res source covers
+ * it, else 'built-in' — whichever tier this build carries (light on dev/test,
+ * high on release/main), which the page's EDITION stamp names (since step 8e,
+ * the build's default tier).
+ */
+export function assetTier(path) {
+  return highRes && highRes.has(path) ? 'high' : 'built-in';
+}
+
+/**
+ * assetUrl('assets/sprites/reaver_gold.webp') → the high-res file when a
+ * source covers it, else the built-in pack's object when one is loaded (the
+ * web edition), else the inlined data URI when the build carries one, else the
+ * path. Unknown paths pass straight through, so a missing asset still 404s
+ * visibly rather than silently resolving.
+ */
+export function assetUrl(path) {
+  return (highRes && highRes.get(path)) || (builtIn && builtIn.get(path)) || ASSET_MAP[path] || path;
+}
+
+/**
+ * True when this build carries its own art inline (the light single file, and
+ * older inline builds). A web edition is not inlined; builtInSource() says
+ * whether its pack has loaded.
+ */
 export function assetsAreInlined() {
   return Object.keys(ASSET_MAP).length > 0;
 }

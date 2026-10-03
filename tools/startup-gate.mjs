@@ -58,8 +58,8 @@ function connectCdp(wsUrl) {
 }
 
 if (args.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
-  const code = await doorSelftest({
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
+  const SELFTEST = {
     tool: 'startup-gate.mjs',
     args: ['--only', 'selftest'],
     timeoutMs: 180000,
@@ -260,13 +260,20 @@ if (args.includes('--selftest')) {
         // still lands on top and still closes on its own Escape.
         name: 'Settings stops owning Escape above the expanded title',
         file: 'src/ui/screens/settings.js',
-        find: "  done.addEventListener('click', door.close);",
-        replace: "  done.addEventListener('click', door.close);\n  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant",
+        find: "  done.addEventListener('click', () => {",
+        replace: "  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant\n  done.addEventListener('click', () => {",
         expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
       },
     ],
-  });
-  if (code === 0) console.log('startup-gate-selftest: OK — 26 plants, 26 caught');
+  };
+  // A SHARD (`--shard i/n`, tools/doorplant.mjs SHARDS) runs part of the corpus,
+  // so the count is the plants THIS run executed — never a typed literal (it
+  // read 26 by hand before, a second copy of the corpus size).
+  const shard = resolveShard();
+  const ran = selectShard(SELFTEST.plants, shard).length;
+  const code = await doorSelftest({ ...SELFTEST, shard });
+  if (code === 0 && shard) console.log(`startup-gate-selftest: shard ${shard.index}/${shard.count} of a ${SELFTEST.plants.length}-plant corpus`);
+  if (code === 0) console.log(`startup-gate-selftest: OK — ${ran} plants, ${ran} caught`);
   process.exit(code);
 }
 
@@ -877,25 +884,31 @@ const INK_SCALE = 3;
 // The prompt and the build stamp are still measured as boxes and still land on
 // 0 exactly, so they keep the 1px budget this check has always used.
 //
-// The wordmark is measured as INK, and ink cannot be driven to 0 here. With the
-// principled compensation — half the track, which is exactly the trailing
-// advance letter-spacing adds after the final glyph — it measures:
+// The wordmark is measured as INK, and ink cannot be driven exactly to 0 here.
+// With half the track (the trailing advance letter-spacing adds after the
+// final glyph) and nothing else, it measured:
 //
-//     390 M -1.00   844 M -0.67   1200 M -1.00   2550 M -1.67
-//     390 XL -1.00  844 XL -0.67  1200 XL -1.17  2550 XL -2.00
+//     390 M -1.00   844 M -0.83   1200 M -1.17   2550 M -2.17
+//     390 XL -1.17  844 XL -1.00  1200 XL -1.50  2550 XL -2.67   <- RED
 //
-// Note the type is byte-identical across the Text M row: 48px, same string,
-// same tracking. The residual still varies with viewport width, so it is not a
-// font metric and no single tracking multiplier removes it — doubling the
-// compensation to a full track was measured too and simply moves every shape
-// to the other side of centre, red at three shapes again.
+// That residual WAS a font metric, which this comment once said it was not.
+// Ink is narrower than the advances by the end glyphs' side bearings (Cinzel
+// 700: A 0.008em on the left, E 0.045em on the right), leaving the ink
+// 0.0185em left of centre. The 2550 column read largest because `body { zoom }`
+// is 1.7 there, not because the type differed. styles/kit.css now adds that
+// 0.0185em as `--ink-bias`, and every shape measures:
 //
-// 2.5px is therefore derived from what the correct rendering actually measures,
-// not chosen to make a red shape pass. It keeps its teeth: A11.CENTERING-DETECTOR
-// strips the compensation and reads -6, which is 2.4x this budget, so the defect
-// #910 shipped would still be caught with room to spare. If a future change
-// makes the residual approach this number, that is a real regression to look at
-// rather than a budget to raise.
+//     390 M -0.33   844 M -0.17   1200 M -0.33   2550 M -0.50
+//     390 XL -0.33  844 XL -0.33  1200 XL -0.33  2550 XL -0.67
+//
+// What remains (about a third of a pixel, varying with width) is raster
+// placement and the luminance threshold, not geometry.
+//
+// 2.5px keeps its teeth: A11.CENTERING-DETECTOR strips the compensation and
+// reads -6.33, 2.5x this budget, so the defect #910 shipped would still be
+// caught with room to spare. If a future change makes the residual approach
+// this number — as the uncompensated side bearings did under 1.7x zoom — that
+// is a real regression to look at rather than a budget to raise.
 const INK_BUDGET = 2.5;
 const BOX_BUDGET = 1;
 

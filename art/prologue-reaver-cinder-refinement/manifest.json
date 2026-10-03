@@ -1,0 +1,40 @@
+{
+  "scope": "Scene 4 Reaver class memory only",
+  "generation": "Built-in image_gen; final dark filter included",
+  "webp": {
+    "quality": 88,
+    "effort": 6,
+    "smartSubsample": true,
+    "resize": false
+  },
+  "assets": [
+    {
+      "file": "art/prologue-reaver-cinder-refinement/carry-reaver-desktop.png",
+      "width": 1586,
+      "height": 992,
+      "bytes": 2323813,
+      "sha256": "659741f15ba20e9fd4c187ac0de452f4bf1d5cedf8b8215dbc73281a3c96e9b3"
+    },
+    {
+      "file": "art/prologue-reaver-cinder-refinement/carry-reaver-desktop.webp",
+      "width": 1586,
+      "height": 992,
+      "bytes": 263174,
+      "sha256": "be5ecd5f7bfa3324f8eee6770b351ae86e567ad870f4acef420124fac96e9a31"
+    },
+    {
+      "file": "art/prologue-reaver-cinder-refinement/carry-reaver-mobile.png",
+      "width": 940,
+      "height": 1672,
+      "bytes": 2337513,
+      "sha256": "57a397198aa01e82dc91c7e383e636f652657de9682bb18d6541c64f1fdab44f"
+    },
+    {
+      "file": "art/prologue-reaver-cinder-refinement/carry-reaver-mobile.webp",
+      "width": 940,
+      "height": 1672,
+      "bytes": 276190,
+      "sha256": "e9606c3e220edd98ff294c2fd360bf66d4d53d75a27841e230b86c45be93c4ca"
+    }
+  ]
+}

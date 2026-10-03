@@ -228,7 +228,9 @@ async function main() {
     const wholeCardFill = await evaluate(`(async () => {
       const source = document.querySelector('.armoury-inventory .inventory-detail');
       const reveal = source?.closest('.disc-reveal');
-      const face = [...(source?.closest('.disc-faces')?.children || [])]
+      // W1n: the reveal stands in the detail column beside the collection, so
+      // the face is found in the list rather than among the reveal's siblings.
+      const face = [...(source?.closest('.ep-list')?.querySelectorAll('.disc-face') || [])]
         .find((candidate) => candidate.dataset?.face === source?.dataset.inventoryItem)
         ?.querySelector('.inventory-face');
       const rect = source?.getBoundingClientRect();

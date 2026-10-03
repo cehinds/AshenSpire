@@ -57,14 +57,6 @@ const TARGET_PROPERTY = Object.freeze({
   ally: 'targeting.ally',
 });
 
-const SCALING_PROPERTY = Object.freeze({
-  strength: 'scaling.strength',
-  dexterity: 'scaling.dexterity',
-  constitution: 'scaling.constitution',
-  intelligence: 'scaling.intelligence',
-  wisdom: 'scaling.wisdom',
-});
-
 const PROFILE_ROLE_PROPERTY = Object.freeze({
   attack: 'classification.strike',
   guard: 'classification.guard',
@@ -95,9 +87,16 @@ function checkRarity(value, where) {
  * mods can change keywords, so live decisions must map the resolved def,
  * never the base row). Unknown vocabulary throws by name.
  */
-export function cardPropertyInstances(card) {
+export function cardPropertyInstances(card, kindId = null) {
+  // The card's classification is its KIND ROW in tagging.csv — the node id IS
+  // the framework's own property id — never a translation of card.type. The
+  // import loop passes the row it read from the junction; a RESOLVED def
+  // carries it stamped as `kindIds` (model/registries.js), which is what the
+  // runtime bridge hands in.
+  const kind = kindId || (Array.isArray(card.kindIds) && card.kindIds.length === 1 ? card.kindIds[0] : null);
+  if (!kind) throw new ImportError(`card ${card && card.id}: states no kind — every card carries exactly one classification row in tagging.csv`);
   const properties = [
-    { propertyId: mapped(CARD_TYPE_PROPERTY, card.type, `card ${card.id} type`), source: 'AUTHORED' },
+    { propertyId: kind, source: 'AUTHORED' },
   ];
   if (card.cost !== undefined) {
     properties.push({
@@ -168,6 +167,11 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   // itemTypes) and everything else stays the gameplay `tags` set. The imported
   // entity's `tags` is that same gameplay set, so what the framework sees equals
   // what the live registry holds rather than the unsplit union.
+  const kindOf = (family, object) => {
+    const ids = tags.kindIdsOf(family, object);
+    if (ids.length !== 1) throw new ImportError(`${family} ${object && object.id}: carries ${ids.length} kind row(s) in tagging.csv — every object states exactly one classification node`);
+    return ids[0];
+  };
   const gameplayTagsOf = (family, object) => {
     const ids = tags.tagIdsOf(family, object).filter((id) => !String(id).startsWith('item:'));
     return ids.length ? ids : undefined;
@@ -207,7 +211,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   // ---- cards ---------------------------------------------------------------
   for (const card of bundle.cards) {
     const id = key('card', card.id);
-    const properties = cardPropertyInstances(card);
+    const properties = cardPropertyInstances(card, kindOf('card', card));
     addEntity({
       id,
       kind: 'CARD',
@@ -242,9 +246,6 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
     if (profile.damageSchool) {
       properties.push({ propertyId: mapped(DAMAGE_SCHOOL_PROPERTY, profile.damageSchool, `profile ${profile.id} damageSchool`), source: 'AUTHORED' });
     }
-    if (profile.scalingStat) {
-      properties.push({ propertyId: mapped(SCALING_PROPERTY, profile.scalingStat, `profile ${profile.id} scalingStat`), source: 'AUTHORED' });
-    }
     addEntity({
       id,
       kind: 'CARD',
@@ -256,9 +257,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         baseCardId: profile.baseCardId,
         role: profile.role,
         baseValue: profile.baseValue,
-        pointsPerTier: profile.pointsPerTier,
-        gainPerTier: profile.gainPerTier,
-        rounding: profile.rounding,
+        ratingId: profile.ratingId,
         cap: profile.cap,
         icon: profile.icon,
         tags: tagsOf('basicCardProfile', profile),
@@ -325,6 +324,14 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
       },
     });
   }
+  const armourDefenseRating = (outfit) => {
+    const value = outfit.defenseRating ?? '';
+    if (value === '') return 0;
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(`importer: armour '${outfit.classId}/${outfit.id}' defenseRating must be blank or a non-negative integer, got ${JSON.stringify(value)}`);
+    }
+    return value;
+  };
   for (const outfit of bundle.equipment.armour) {
     const id = key('armor', `${outfit.classId}.${outfit.id}`);
     // The outfit's poise threshold is its weight under the A-side rule, so it
@@ -350,10 +357,11 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         // Outfits author no weight column; the legacy identity `weight ==
         // poiseThreshold` (the armament rule) is adopted for armour as the
         // A-side of the Weight Class A/B (docs/framework-migration-checklist.md).
-        // The B-side — armour weightless — is `itemWeight: 0` here. No
-        // defenseRating column exists for outfits; 0 remains inert.
+        // The B-side — armour weightless — is `itemWeight: 0` here. The
+        // optional outfits.csv defenseRating column carries the piece's own DR
+        // rating; a blank cell is 0.
         itemWeight: outfit.poiseThreshold,
-        defenseRating: 0,
+        defenseRating: armourDefenseRating(outfit),
       },
     });
   }
@@ -416,6 +424,9 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         startingFlaskAllocation: klass.startingFlaskAllocation,
         startingRelic: klass.startingRelic,
         startingSignatureCard: klass.startingSignatureCard,
+        // The kit (plan phase 5a): the ability card and the kit relic.
+        abilityCard: klass.abilityCard,
+        kitRelic: klass.kitRelic,
         eligibleStartingKitIds: klass.eligibleStartingKitIds,
         cardPool: klass.cardPool,
         glyph: klass.glyph,

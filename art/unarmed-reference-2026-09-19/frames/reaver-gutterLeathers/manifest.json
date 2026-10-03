@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "reaver-gutterLeathers",
+  "classId": "reaver",
+  "armourId": "gutterLeathers",
+  "effectsBaked": false,
+  "source": "sources/reaver-gutterLeathers.png",
+  "sourceSha256": "48c9b8628b184c23c5c0543a76268778c120dc6c5703075ede9ecca50d9a3162",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3461538461538463,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        17,
+        20,
+        287,
+        317
+      ],
+      "core": [
+        29,
+        32,
+        275,
+        305
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        148.0,
+        285
+      ],
+      "offset": [
+        57,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        109,
+        408,
+        483
+      ],
+      "file": "frames/reaver-gutterLeathers/STANCE-READY.webp",
+      "sha256": "a02dbb87cf755d1df61c23bddcba1b1a0e021718d7f750181f7e2646768d6c2b"
+    },
+    "ATK-01": {
+      "content": [
+        324,
+        25,
+        600,
+        317
+      ],
+      "core": [
+        336,
+        37,
+        588,
+        305
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        148.5,
+        280
+      ],
+      "offset": [
+        56,
+        103
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        65,
+        115,
+        420,
+        485
+      ],
+      "file": "frames/reaver-gutterLeathers/ATK-01.webp",
+      "sha256": "baba683eb9e15f18d1f064ddfd2f3ab9cb0fc3d6de096c5c3b80b4042b6e2149"
+    },
+    "ATK-02": {
+      "content": [
+        634,
+        28,
+        922,
+        317
+      ],
+      "core": [
+        646,
+        40,
+        910,
+        305
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        151.5,
+        277
+      ],
+      "offset": [
+        52,
+        107
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        115,
+        433,
+        489
+      ],
+      "file": "frames/reaver-gutterLeathers/ATK-02.webp",
+      "sha256": "ab8c9c047667f9507b7c0758dd77c856347fc6f52014d0a02944717f58229420"
+    },
+    "ATK-03": {
+      "content": [
+        947,
+        26,
+        1250,
+        317
+      ],
+      "core": [
+        959,
+        38,
+        1238,
+        305
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        151.0,
+        279
+      ],
+      "offset": [
+        53,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        58,
+        116,
+        448,
+        495
+      ],
+      "file": "frames/reaver-gutterLeathers/ATK-03.webp",
+      "sha256": "faf3ced5d90be8a252221259d8f1772d632d59d55df62e5c0ec316fa40e4b53d"
+    },
+    "ATK-04": {
+      "content": [
+        17,
+        330,
+        293,
+        629
+      ],
+      "core": [
+        29,
+        342,
+        281,
+        617
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        150.0,
+        287
+      ],
+      "offset": [
+        54,
+        94
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        106,
+        418,
+        492
+      ],
+      "file": "frames/reaver-gutterLeathers/ATK-04.webp",
+      "sha256": "f4101c589cd39d823e88db42a7b68cd1229b2cb59709e89cbc7dfdadb5f8a366"
+    },
+    "ATK-05": {
+      "content": [
+        319,
+        331,
+        629,
+        630
+      ],
+      "core": [
+        331,
+        343,
+        617,
+        618
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        151.5,
+        287
+      ],
+      "offset": [
+        52,
+        94
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        61,
+        105,
+        465,
+        490
+      ],
+      "file": "frames/reaver-gutterLeathers/ATK-05.webp",
+      "sha256": "0d9dec0b5d72099acac76c9ba02d79c78e455be0ff59c74ff578a3e676d89904"
+    },
+    "ATK-06": {
+      "content": [
+        637,
+        332,
+        919,
+        629
+      ],
+      "core": [
+        649,
+        344,
+        907,
+        617
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        153.5,
+        285
+      ],
+      "offset": [
+        49,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        58,
+        97,
+        425,
+        485
+      ],
+      "file": "frames/reaver-gutterLeathers/ATK-06.webp",
+      "sha256": "4abb341bac58ca34a0e8092ab39882d9390d687d81817abc5659aeb8ffd782eb"
+    },
+    "ATK-07": {
+      "content": [
+        954,
+        331,
+        1233,
+        629
+      ],
+      "core": [
+        966,
+        343,
+        1221,
+        617
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        155.5,
+        286
+      ],
+      "offset": [
+        47,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        59,
+        106,
+        410,
+        492
+      ],
+      "file": "frames/reaver-gutterLeathers/ATK-07.webp",
+      "sha256": "6dc5c52b16c71164be073eea3eaf1bdf58564e64131db33c3f58ec5c03e1d4a1"
+    },
+    "DEFEND": {
+      "content": [
+        17,
+        657,
+        295,
+        937
+      ],
+      "core": [
+        29,
+        669,
+        283,
+        925
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        152.0,
+        268
+      ],
+      "offset": [
+        51,
+        119
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        123,
+        416,
+        493
+      ],
+      "file": "frames/reaver-gutterLeathers/DEFEND.webp",
+      "sha256": "d3cd0a2c8ca0e1288a69d31fff9c5803a017523c8e5f2c0f4f393e1a7aac8f65"
+    },
+    "HURT": {
+      "content": [
+        320,
+        647,
+        608,
+        938
+      ],
+      "core": [
+        332,
+        659,
+        596,
+        926
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        165.5,
+        279
+      ],
+      "offset": [
+        33,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        36,
+        116,
+        417,
+        489
+      ],
+      "file": "frames/reaver-gutterLeathers/HURT.webp",
+      "sha256": "b02636a70e38e1be33c3a32a0fb7c244825eeead0322b175f985ce44860afee6"
+    },
+    "CAST": {
+      "content": [
+        636,
+        648,
+        948,
+        938
+      ],
+      "core": [
+        648,
+        660,
+        936,
+        926
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        154.5,
+        278
+      ],
+      "offset": [
+        48,
+        106
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        59,
+        118,
+        459,
+        495
+      ],
+      "file": "frames/reaver-gutterLeathers/CAST.webp",
+      "sha256": "7d03091bc360e3b64eeb4ce11c5399d8766671cd54a487708bd5489b2afc03a4"
+    },
+    "BUFF": {
+      "content": [
+        973,
+        634,
+        1201,
+        938
+      ],
+      "core": [
+        985,
+        646,
+        1189,
+        926
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        132.5,
+        292
+      ],
+      "offset": [
+        78,
+        87
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        90,
+        99,
+        373,
+        495
+      ],
+      "file": "frames/reaver-gutterLeathers/BUFF.webp",
+      "sha256": "bf507ef47aca198aab58b1066c7a52d8dea6b821e6e48b103c75c9709bb0844c"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        21,
+        969,
+        312,
+        1222
+      ],
+      "core": [
+        33,
+        981,
+        300,
+        1210
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        155.0,
+        241
+      ],
+      "offset": [
+        47,
+        156
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        60,
+        168,
+        430,
+        492
+      ],
+      "file": "frames/reaver-gutterLeathers/STANCE-AGGRESSIVE.webp",
+      "sha256": "113a4b483793a689c0b5f80a44835ad88ae505ba3f6eac78153f4b63f1cb952c"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        339,
+        964,
+        609,
+        1226
+      ],
+      "core": [
+        351,
+        976,
+        597,
+        1214
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        144.5,
+        250
+      ],
+      "offset": [
+        61,
+        143
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        73,
+        151,
+        424,
+        491
+      ],
+      "file": "frames/reaver-gutterLeathers/STANCE-DEFENSIVE.webp",
+      "sha256": "35328e3b70d9c74ca873ab3e11a8e00eda414b9a24fcce15c668dca3fe93f85a"
+    },
+    "PORTRAIT": {
+      "content": [
+        638,
+        952,
+        943,
+        1228
+      ],
+      "core": [
+        650,
+        964,
+        931,
+        1216
+      ],
+      "scale": 1.521311475409836,
+      "sourceFootAnchor": [
+        152.5,
+        264
+      ],
+      "offset": [
+        24,
+        78
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        24,
+        91,
+        488,
+        491
+      ],
+      "file": "frames/reaver-gutterLeathers/PORTRAIT.webp",
+      "sha256": "cde282a791f017212f4a55bcf64e4c2430920f1d2759ec90ac0d8f994103b6b2"
+    },
+    "CONVERSATION": {
+      "content": [
+        980,
+        927,
+        1197,
+        1234
+      ],
+      "core": [
+        992,
+        939,
+        1185,
+        1222
+      ],
+      "scale": 1.3461538461538463,
+      "sourceFootAnchor": [
+        130.0,
+        295
+      ],
+      "offset": [
+        81,
+        83
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        90,
+        94,
+        361,
+        485
+      ],
+      "file": "frames/reaver-gutterLeathers/CONVERSATION.webp",
+      "sha256": "864b01e1f929608cb965862652b2776e5bce7b924ded2fb527de963d5c9719d4"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

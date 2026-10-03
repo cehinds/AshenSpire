@@ -193,6 +193,9 @@ Restore one stamina at the start of each owner turn after expiring defenses and
 before draw, capped at maximum, regardless of prior spending. Do not also run
 legacy idle-recovery at turn end. Combat initializes pools through the existing
 resource entry rule; the first turn does not grant a duplicate setup refill.
+That entry rule opens every fight with Stamina at its maximum
+(`mechanics.stamina.combatStartRefill: "full"`, owner's call 2026-09-24, plan
+A2); Mana carries between fights as it stands.
 Mana has zero natural turn recovery and retains explicit flask/rest restoration.
 Resource refunds do not reset activation limits or allow replaying a paid effect.
 
@@ -436,7 +439,7 @@ and RNG state. Migration is explicit and idempotent. Either retain the matching
 legacy resolver for active combats or require a safe between-combat transition;
 never reinterpret a legacy in-progress fight with new costs. Unsupported versions
 get a recoverable explanation, not reset possessions or silently duplicated items.
-Maintain the project's 0.6.x.x version line; ruleset identity is a separate concern.
+Maintain the project's 0.7.x.x version line; ruleset identity is a separate concern.
 
 Implementation units are serialized GitHub Issues and branches/PRs targeting dev:
 

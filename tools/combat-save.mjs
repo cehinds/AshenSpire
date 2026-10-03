@@ -31,7 +31,12 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'resume discards the stored exact snapshot and restarts the encounter',
         file: 'src/main.js',
-        find: '  const savedSnapshot = resuming ? run.combatEntered?.snapshot : null;',
+        // RE-POINTED (#1111). The read split in two when resume learned to drop
+        // an ENDED snapshot: `storedSnapshot` is what the slot holds, and
+        // `savedSnapshot` is what combat may actually restore from. The plant
+        // belongs on the SECOND line — that is still "resume restores nothing",
+        // which is the defect this proves the check can see.
+        find: '  const savedSnapshot = storedSnapshot && !storedSnapshot.result ? storedSnapshot : null;',
         replace: '  const savedSnapshot = null; // combat-save selftest plant',
         expectRed: /RED COMBAT-SAVE-EXACT-RESUME/,
       },

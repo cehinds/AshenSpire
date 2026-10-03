@@ -165,7 +165,7 @@ function quickLoadSourceChecks({ main, title, selector }) {
     'QUICK-LOAD-CANCEL-FOCUS', 'Escape, Back, and scrim restore the invoking control'],
     [/onRequestLoad: \(slot\) => confirmSlotLoad\(slot, \{ returnFocusElement \}\)/.test(main),
     'QUICK-LOAD-NO-BYPASS', 'selection requests the exact confirmation instead of resuming directly'],
-    [resumeCalls.length === 1 && /resumeRun\(slot\);/.test(confirm) && !/resumeRun\(activeSlot\)/.test(confirm),
+    [resumeCalls.length === 1 && /resumeRun\(slot[,)]/.test(confirm) && !/resumeRun\(activeSlot\)/.test(confirm),
     'QUICK-LOAD-EXACT-COMMIT', 'the confirmation commits the selected slot exactly once'],
   ];
 }
@@ -203,7 +203,7 @@ if (SOURCE_CONTRACT || SOURCE_SELFTEST) {
       ...sources, selector: sources.selector.replace('queueMicrotask(restoreLauncher)', 'queueMicrotask(() => {})'),
     }],
     ['wrong-slot double commit', 'QUICK-LOAD-EXACT-COMMIT', {
-      ...sources, main: sources.main.replace('      resumeRun(slot);', '      resumeRun(activeSlot);\n      resumeRun(slot);'),
+      ...sources, main: sources.main.replace('      resumeRun(slot, {', '      resumeRun(activeSlot);\n      resumeRun(slot, {'),
     }],
   ];
   for (const [name, expectedCode, planted] of plants) {

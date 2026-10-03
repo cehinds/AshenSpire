@@ -11,11 +11,11 @@ import {createSession,restoreSession} from '../tools/session.mjs';
 const reg=createRegistries(contentBundle);
 const legacyMap=act=>generateActMap({config:reg.mapConfig(act),rng:createRng(701+act)});
 const topology=graph=>Object.values(graph.nodes).map(({id,type,floor,col,next,encounterId})=>({id,type,floor,col,next,encounterId}));
-function altered(act,kind){const id=LEGACY_ACT_BOSSES[act];return createRegistries({...contentBundle,encounters:contentBundle.encounters.flatMap(e=>e.id!==id?[e]:kind==='missing'?[]:[{...e,...(kind==='renamed'?{id:id+'Renamed'}:kind==='wrongPool'?{pool:'normal'}:{act:act===3?1:act+1})}])});}
+function altered(act,kind){const id=LEGACY_ACT_BOSSES[act];return createRegistries({...contentBundle,encounters:contentBundle.encounters.flatMap(e=>e.id!==id?[e]:kind==='missing'?[]:[{...e,...(kind==='renamed'?{id:id+'Renamed'}:kind==='wrongPool'?{pool:'normal'}:{seat:['weald','marches','reach'][act===3?0:act]})}])});}
 function solo(act){const run=createRunState({seed:701,classId:'reaver',registries:reg});run.actNumber=act;run.mapGraph=legacyMap(act);run.mapNodeId=run.mapGraph.shrineId;return run;}
-function lan(act){const host=createSession({registries:reg,seedString:'GOLDBOUGH'});host.addMember({id:'p1',name:'Legacy tester',classId:'reaver'});host.start();const saved=structuredClone(host.serialize());saved.actNumber=act;saved.mapGraph=legacyMap(act);saved.cursorId=saved.mapGraph.shrineId;saved.reachableIds=[saved.mapGraph.bossId];return saved;}
+function lan(act){const host=createSession({registries:reg,seedString:'GOLDBOUGH'});host.addMember({id:'p1',name:'Legacy tester',classId:'reaver'});host.start();const saved=structuredClone(host.serialize());delete saved.seatOrder;saved.actNumber=act;saved.mapGraph=legacyMap(act);saved.cursorId=saved.mapGraph.shrineId;saved.reachableIds=[saved.mapGraph.bossId];return saved;}
 for(const act of [1,2,3]){
- for(const kind of ['missing','renamed','wrongPool','wrongAct']){
+ for(const kind of ['missing','renamed','wrongPool','wrongSeat']){
   test('act '+act+' legacy '+kind+' original boss is refused by solo and LAN loaders',()=>{
    const changed=altered(act,kind),run=solo(act),before=JSON.stringify(run.mapGraph);
    const saves=createSaveManager(createMemoryStorage());saves.saveRun(run);assert.equal(saves.loadRun(changed),null);

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Issue #40: the browser owns touch/pen vertical panning; the map owns only
-// mouse drag-to-pan. This gate exercises the real source or shipped root page.
+// Issue #40: with two-axis map dragging disabled, the browser owns touch/pen
+// vertical panning and the map owns only mouse drag-to-pan.
 
 import {
   cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
@@ -185,7 +185,7 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
         deviceScaleFactor: viewport.scale, mobile: true,
       }, sessionId);
       await cdp.send('Page.navigate', {
-        url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE`,
+        url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE&shotSettings=${encodeURIComponent(JSON.stringify({ mapFreePan: false }))}`,
       }, sessionId);
       await until('map scrollport', `!!(document.querySelector('.map-scroll') && document.querySelector('#zoom-in'))`);
       await evaluate(`(() => {
@@ -329,7 +329,8 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
         secondPointerIgnored: Math.abs(synthetic.mouse.secondDelta) < 0.5,
         mousePrimaryMovesOnce: Math.abs(synthetic.mouse.primaryDelta - 40) < 1.5 && synthetic.mouse.grabbed,
         cancelCleans: synthetic.mouse.cleaned && Math.abs(synthetic.mouse.cancelledDelta) < 0.5,
-        listenerLifecycleCleans: synthetic.listeners.pointerdown === 1
+        // map.js also listens once to distinguish a drag from a node pick.
+        listenerLifecycleCleans: synthetic.listeners.pointerdown === 2
           && synthetic.listeners.pointermove === 0
           && synthetic.listeners.pointerup === 0
           && synthetic.listeners.pointercancel === 0,
@@ -339,7 +340,7 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
         cameraPersists: remountCameraSeries.every((position) => Math.abs(position - persistedBefore) < 2)
           && Math.abs(remount.before - persistedBefore) < 2,
         remountMouseMovesOnce: Math.abs((remount.after - remount.before) - 30) < 1.5 && !remount.grabbing,
-        remountListenerIsSingle: remount.listeners.pointerdown === 1
+        remountListenerIsSingle: remount.listeners.pointerdown === 2
           && remount.listeners.pointermove === 0
           && remount.listeners.pointerup === 0
           && remount.listeners.pointercancel === 0,

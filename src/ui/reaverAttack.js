@@ -2,44 +2,42 @@
 // byte-distinct images; the repeat table avoids inlining forty-four duplicate
 // WebPs into the standalone build.
 import { assetUrl } from './assetmap.js';
+import { builtInFor, whenArtSourceChanges } from './highResArt.js';
 import { DEFAULT_SPRITE_STYLE } from '../model/spriteStyle.js';
 import { liteRendering } from './performance.js';
 import { hintImage } from './imageHints.js';
+import { uiConfig } from '../config/generated/ui.js';
+import { thaw } from '../config/authored.js';
 
-const FRAME_ROOT = 'assets/animations/reaver/default-greatsword/right';
-const NORMAL_LUNGE_MS = 260;
+const ATTACK = uiConfig.presentation.reaverAttack.components.attack;
 
-export const REAVER_ATTACK_RUNS = Object.freeze([
-  Object.freeze(['F03', 3]), Object.freeze(['F04', 3]),
-  Object.freeze(['F05', 3]), Object.freeze(['F06', 3]),
-  Object.freeze(['F03', 3]), Object.freeze(['F08', 4]),
-  Object.freeze(['F10', 3]), Object.freeze(['F09', 6]),
-  Object.freeze(['F12', 1]), Object.freeze(['F11', 1]),
-  Object.freeze(['F13', 1]), Object.freeze(['F14', 7]),
-  Object.freeze(['F15', 4]), Object.freeze(['F17', 3]),
-  Object.freeze(['F16', 2]), Object.freeze(['F18', 4]),
-  Object.freeze(['F02', 3]), Object.freeze(['F03', 6]),
-]);
+const FRAME_ROOT = ATTACK.frameRoot;
+const NORMAL_LUNGE_MS = uiConfig.presentation.reaverAttack.motion.normalLungeMs;
+
+export const REAVER_ATTACK_RUNS = Object.freeze(thaw(ATTACK.runs).map(Object.freeze));
 
 export const REAVER_ATTACK_SEQUENCE = Object.freeze(
   REAVER_ATTACK_RUNS.flatMap(([frameId, count]) => Array(count).fill(frameId))
 );
 
 export const REAVER_ATTACK = Object.freeze({
-  id: 'reaver-attack-v1',
-  facing: 'right',
-  frameMs: 56,
+  id: ATTACK.id,
+  facing: ATTACK.facing,
+  frameMs: ATTACK.frameMs,
   frameCount: REAVER_ATTACK_SEQUENCE.length,
-  durationMs: REAVER_ATTACK_SEQUENCE.length * 56,
+  durationMs: REAVER_ATTACK_SEQUENCE.length * ATTACK.frameMs,
   // P32 is the first Attack End image, immediately after Strike to Impact.
-  impactFrameIndex: 31,
-  impactMs: 31 * 56,
-  anchor: Object.freeze({ x: 0.5, y: 1 }),
+  impactFrameIndex: ATTACK.impactFrameIndex,
+  impactMs: ATTACK.impactFrameIndex * ATTACK.frameMs,
+  anchor: Object.freeze(thaw(ATTACK.anchor)),
 });
 
 const uniqueFrameIds = Object.freeze([...new Set(REAVER_ATTACK_SEQUENCE)]);
-const frameUrl = (frameId) => assetUrl(`${FRAME_ROOT}/${frameId}.webp`);
+const frameUrl = (frameId) => assetUrl(`${FRAME_ROOT}/${frameId}${ATTACK.frameExtension}`);
 let preloadState = 'idle';
+let preloadRound = 0; // a reset starts a new round; an older round's loads no longer count
+// The art source changed (Art quality): the frames warmed so far are the old tier's.
+whenArtSourceChanges(() => { preloadRound += 1; preloadState = 'idle'; });
 
 export function reaverAttackFrameUrls() {
   return uniqueFrameIds.map(frameUrl);
@@ -48,8 +46,10 @@ export function reaverAttackFrameUrls() {
 export function preloadReaverAttackFrames() {
   if (preloadState !== 'idle' || typeof Image === 'undefined') return;
   preloadState = 'loading';
+  const round = preloadRound;
   let remaining = uniqueFrameIds.length;
   const settled = (ok) => {
+    if (round !== preloadRound) return;
     if (!ok) preloadState = 'failed';
     remaining -= 1;
     if (remaining === 0 && preloadState !== 'failed') preloadState = 'ready';
@@ -57,7 +57,13 @@ export function preloadReaverAttackFrames() {
   for (const src of reaverAttackFrameUrls()) {
     const image = new Image();
     image.addEventListener('load', () => settled(true), { once: true });
-    image.addEventListener('error', () => settled(false), { once: true });
+    image.addEventListener('error', function retry() {
+      // A missing high-res frame retries once with the built-in art.
+      const fallback = builtInFor(src);
+      if (fallback && image.getAttribute('src') !== fallback) { image.src = fallback; return; }
+      image.removeEventListener('error', retry);
+      settled(false);
+    });
     image.src = src;
   }
 }
@@ -74,7 +80,7 @@ export function isReaverAttackEligible({ classId, figure, customization, sprites
 }
 
 export function reaverAttackTiming(speed) {
-  const scale = Math.max(0.1, Number(speed?.lungeMs || NORMAL_LUNGE_MS) / NORMAL_LUNGE_MS);
+  const scale = Math.max(uiConfig.presentation.reaverAttack.motion.minimumSpeedScale, Number(speed?.lungeMs || NORMAL_LUNGE_MS) / NORMAL_LUNGE_MS);
   const frameMs = Math.max(1, Math.round(REAVER_ATTACK.frameMs * scale));
   return Object.freeze({
     frameMs,

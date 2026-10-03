@@ -47,6 +47,7 @@
     { "id": "term.twoHanded", "canonicalText": "Two-Handed" },
     { "id": "term.shield", "canonicalText": "Shield", "pluralText": "Shields" },
     { "id": "term.parryTool", "canonicalText": "Parry Tool", "pluralText": "Parry Tools" },
+    { "id": "term.dualWield", "canonicalText": "Dual-Wield" },
 
     { "id": "term.evasion", "canonicalText": "Evasion" },
     { "id": "term.conduit", "canonicalText": "Conduit" },
@@ -116,6 +117,7 @@
     { "id": "term.tooltip.twoHanded", "canonicalText": "Bound to an armament held in both hands." },
     { "id": "term.tooltip.shield", "canonicalText": "Bound to an equipped shield." },
     { "id": "term.tooltip.parryTool", "canonicalText": "Bound to an equipped parry tool." },
+    { "id": "term.tooltip.dualWield", "canonicalText": "Played while holding an armament in each hand." },
 
     { "id": "term.tooltip.evasion", "canonicalText": "Contributes to Dodge Rolls and avoiding damage." },
     { "id": "term.tooltip.conduit", "canonicalText": "Channels magic through an equipped armament." },

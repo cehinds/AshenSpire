@@ -244,6 +244,25 @@ export const BUILT = 'UNDATED';
 export const RUN_PATH = 'UNPLACED';
 /* BUILD_RUNPATH_END */
 
+// ---------------------------------------------------------------------------
+// THE EDITION — WHICH ART TIER THIS BUILD DEFAULTS TO. Since
+// docs/EXTERNAL-ASSETS-PLAN.md step 8e it is the build's default tier: `high`
+// (release/main) or `light` (dev/test, and always the light single file, the
+// one inline download). Same digest, same ordinal, different art — so this is
+// the one fact that tells a bug report's screenshot of a soft sprite from a bug
+// about the sprite. The source tree served by tools/serve.mjs IS the high tier,
+// so `high` is this file's honest resting value rather than a placeholder; the
+// bundler overwrites it for a light build. (`full` and `mobile`, the two single
+// files' editions before the flip, retired with them.)
+// ---------------------------------------------------------------------------
+/* BUILD_EDITION_START */
+export const EDITION = 'high';
+/* BUILD_EDITION_END */
+/** True for the light art tier: dev/test builds, and the light single file. */
+export const BUILD_IS_LIGHT = EDITION === 'light';
+/** True for the high art tier: release/main builds, and the source tree. */
+export const BUILD_IS_HIGH = EDITION === 'high';
+
 /** True when the ordinal in this page belongs to the tree that drew it. */
 export const BUILD_IS_ORDERED = ORDINAL !== 'UNBUMPED';
 
@@ -292,4 +311,4 @@ export const BUILD_STAMP_TEXT = `BUILD ${BUILD_VERSION} · src ${SOURCE}`;
 // then reports it has no reader, because nothing imports it as a vocabulary. A
 // sentence built out of a list looks like a list. One template, no set.
 export const ABOUT_BUILD_LINE =
-  `Ashen Spire ${BUILD_VERSION}${BUILD_IS_DATED ? ` · built ${BUILT}` : ''} · src ${SOURCE}`;
+  `Ashen Spire ${BUILD_VERSION}${BUILD_IS_DATED ? ` · built ${BUILT}` : ''} · src ${SOURCE}${BUILD_IS_LIGHT ? ' · light art' : ''}${BUILD_IS_HIGH ? ' · high art' : ''}`;

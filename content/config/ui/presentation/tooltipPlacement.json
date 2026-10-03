@@ -1,0 +1,13 @@
+{
+  "behavior": {
+    "defaults": {
+      "autoFadeMs": 5000,
+      "topBandViewportPct": 25,
+      "sideBandViewportPct": 30
+    },
+    "limits": {
+      "maxBandPct": 50,
+      "edgeEpsilonPx": 0.5
+    }
+  }
+}

@@ -57,11 +57,17 @@ export function isComponentModel(value) {
 }
 
 export function childModel(parent, component, variant = null) {
-  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
-  const child = parent.children.find((candidate) => candidate.component === component
-    && (variant == null || candidate.variant === variant));
+  const child = optionalChildModel(parent, component, variant);
   if (!child) throw new Error(`${parent.component} is missing child ${component}${variant == null ? '' : `:${variant}`}`);
   return child;
+}
+
+// The same lookup for a child its owner may have filtered out (a HUD layer
+// that is off): null rather than a throw.
+export function optionalChildModel(parent, component, variant = null) {
+  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
+  return parent.children.find((candidate) => candidate.component === component
+    && (variant == null || candidate.variant === variant)) || null;
 }
 
 export function descendantModel(parent, component, variant = null) {

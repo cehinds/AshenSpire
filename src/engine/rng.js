@@ -27,6 +27,28 @@ export const STREAM_NAMES = Object.freeze([
   // its own stream). A save written before the stream existed starts it at 0.
   'smith',
   'combatProcs',
+  // The seat order (SPEC §13.4): drawn exactly once, at run creation, on a
+  // stream of its own — so seeding the order moves no draw on any stream
+  // above, and every existing seed's maps and rolls stay byte-identical
+  // (§13.6). A save written before the stream existed starts it at 0.
+  'seats',
+  // The card reward schedule's chance rolls (SPEC §15.1): appended last so no
+  // stream above moves, and a chance of 100 draws nothing here — so with the
+  // shipped schedule every existing seed rolls exactly what it rolled before.
+  // A save written before the stream existed starts it at 0.
+  'rewardRolls',
+  // The shop visit's rolls (SPEC §14.2): which kind a classic merchant is and
+  // which offerings a visit lays out. Appended last so no stream above moves;
+  // the market's shelves still roll on `shop`, and the shipped table (one
+  // rollable kind, every market chance 100) draws nothing here, so every
+  // existing seed's shelves are byte-identical. A save written before the
+  // stream existed starts it at 0.
+  'shopOffers',
+  // The legendary-sigil drop (SPEC §15.4): appended last so no stream above
+  // moves. A chance of 0 (every pool's shipped value) draws nothing here, so
+  // every existing seed rolls exactly what it rolled before. A save written
+  // before the stream existed starts it at 0.
+  'sigils',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;

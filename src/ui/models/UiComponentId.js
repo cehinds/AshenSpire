@@ -2,6 +2,7 @@
 // enum: Component Models and Views share the names without either owning the
 // other's implementation.
 export const UI_COMPONENTS = Object.freeze({
+  formationLayoutEditor: 'formation-layout-editor',
   startupGate: 'startup-gate',
   startupAshField: 'startup-ash-field',
   startupAshParticle: 'startup-ash-particle',
@@ -10,6 +11,9 @@ export const UI_COMPONENTS = Object.freeze({
   startupSubtitle: 'startup-subtitle',
   startupDivider: 'startup-divider',
   startupPrompt: 'startup-prompt',
+  bootArtStatus: 'boot-art-status',
+  artLoadNotice: 'art-load-notice',
+  artLoadNoticeRetry: 'art-load-notice-retry',
   titleBrandLockup: 'title-brand-lockup',
   titleWordmark: 'title-wordmark',
   titleSubtitle: 'title-subtitle',
@@ -132,6 +136,9 @@ export const UI_COMPONENTS = Object.freeze({
   mountCandidateCard: 'mount-candidate-card',
   mountRow: 'mount-row',
   mountServicePreview: 'mount-service-preview',
+  // SPEC §14.1: the deck editor, and the Quick Access door that opens it.
+  deckEditor: 'deck-editor',
+  deckEditorControl: 'deck-editor-control',
   shopSmithCard: 'shop-smith-card',
   resourceStrip: 'resource-strip',
   modeChoice: 'mode-choice',

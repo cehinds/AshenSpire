@@ -1,7 +1,27 @@
 // tests/run-node.mjs — Node test runner: `node tests/run-node.mjs`
 // Prints one line per test; exits 1 on any failure.
+//
+// TWO LANES, ONE FILE. With no flag this runs everything, as it always has.
+// CI runs the halves as two jobs so the fast one answers first:
+//   --no-selftests    the engine suite, every discovered *.test.mjs, and each
+//                     tool's verdict on the tree as it stands
+//   --selftests-only  only the `--selftest` corpora: "can this check still
+//                     fail?" They are the slow half (minutes, not seconds), and
+//                     weapon-card-packages writes a mutant module into src/
+//                     while it runs, so a concurrent run over the same tree
+//                     can read it — keep the two halves on separate checkouts.
+// The invocations stay in this file either way: tools/gatelist.mjs and
+// tools/testnumbers.mjs read it as the JS gate list.
 
 import { runTests } from './engine.test.js';
+
+const argv = process.argv.slice(2);
+const CORE = !argv.includes('--selftests-only');
+const SELFTESTS = !argv.includes('--no-selftests');
+if (!CORE && !SELFTESTS) {
+  console.error('run-node: --no-selftests with --selftests-only runs nothing');
+  process.exit(2);
+}
 
 // The art manifest is written by tools/equipment-blender.py and records the
 // fields the renderer ACTUALLY read. Loaded here rather than inside the test so
@@ -12,7 +32,7 @@ try {
   const { resolve, dirname } = await import('node:path');
   const { fileURLToPath } = await import('node:url');
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  artManifest = JSON.parse(readFileSync(resolve(root, 'assets/equipment/manifest.json'), 'utf8'));
+  artManifest = JSON.parse(readFileSync(resolve(root, 'asset-data/equipment/manifest.json'), 'utf8'));
 } catch (e) {
   console.warn('  (no art manifest — test 33 will skip; run tools/equipment-blender.py)');
 }
@@ -21,14 +41,15 @@ try {
 // above: engine.test.js also runs in tests/index.html, where there is no `fs`,
 // and an import of `node:fs` in that file would take the browser harness down
 // entirely. Test 49 asks this whether a path the game CONSTRUCTS resolves to a
-// real file; in the browser it is null and the test skips loudly.
+// real file; in the browser it is null and the test skips loudly. Since step
+// 12 (docs/EXTERNAL-ASSETS-PLAN.md) "real" means an id art-manifest.json
+// lists — what the pinned packs carry — not a file in a tree here, which
+// leaves the repository at step 13.
 let assetExists = null;
 try {
-  const { existsSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  assetExists = (rel) => existsSync(resolve(root, rel));
+  const { manifestIds } = await import('../tools/art-source.mjs');
+  const shipped = manifestIds();
+  assetExists = (rel) => shipped.has(rel);
 } catch {
   console.warn('  (no filesystem — test 49 will skip)');
 }
@@ -61,7 +82,9 @@ try {
   console.warn('  (no pre-E6 run-save fixture — test 50e will skip)');
 }
 
-const { passed, failed, results } = await runTests({ artManifest, assetExists, legacyRunSave, preE6RunSave });
+const { passed, failed, results } = CORE
+  ? await runTests({ artManifest, assetExists, legacyRunSave, preE6RunSave })
+  : { passed: 0, failed: 0, results: [] };
 for (const r of results) {
   const tag = r.skipped ? 'SKIP' : r.ok ? 'PASS' : 'FAIL';
   console.log(`${tag}  ${r.name}${r.detail ? ` — ${r.detail}` : ''}`);
@@ -79,6 +102,60 @@ for (const r of results) {
 let zoomExtra = 0;
 let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the same
                     // two-homes defect these two lines exist to catch.
+
+// EVERY *.test.mjs IN THE REPOSITORY, FOUND RATHER THAN LISTED. This used to be
+// a hand-typed array, and eighteen files under tests/ alone had been written,
+// committed and never once run by it or by any workflow; four of them had gone
+// red unseen. A new test file is now in the run the moment it exists. A file
+// that must not be spawned here is named in NOT_SPAWNED with its reason, and an
+// entry whose file has gone is itself a failure, so the list cannot rot quietly.
+if (CORE) {
+  const { spawnSync } = await import('node:child_process');
+  const { readdirSync, existsSync } = await import('node:fs');
+  const { join, relative, sep } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  // Generated output and third-party trees hold no tests of ours. Dot-directories
+  // are skipped except .github, so a workflow helper's own test is found too.
+  const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', 'scratch']);
+  const NOT_SPAWNED = new Map([
+    ['tests/confirmation-modal.test.mjs', 'exports runConfirmationModalContract(); check 76 below calls it'],
+    ['tests/reward-confirm.test.mjs', 'exports runRewardConfirmTests(); called below'],
+    ['tests/card-removal-flick.test.mjs', 'exports runCardRemovalFlickTests(); called below'],
+    ['tools/bundle.test.mjs', 'runs the real bundler against temporary checkouts for several minutes; ci.yml runs it as its own job, `parse-gate`'],
+  ]);
+  const found = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (SKIP_DIRS.has(entry.name) || (entry.name.startsWith('.') && entry.name !== '.github')) continue;
+        walk(join(dir, entry.name));
+      } else if (entry.name.endsWith('.test.mjs')) {
+        found.push(relative(root, join(dir, entry.name)).split(sep).join('/'));
+      }
+    }
+  };
+  walk(root);
+  found.sort();
+  const stale = [...NOT_SPAWNED.keys()].filter(file => !existsSync(join(root, file)));
+  const files = found.filter(file => !NOT_SPAWNED.has(file));
+  // The spec reporter ends with a count and, on a failure, a "failing tests"
+  // section. A red run prints the reporter's whole output: a file that dies
+  // before registering a test (a syntax error, a missing import) shows its
+  // exception ABOVE that section, and the section alone would drop the reason.
+  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  const out = `${result.stdout || ''}${result.stderr || ''}`;
+  const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
+  const ok = result.status === 0 && !stale.length && count('fail') === 0;
+  if (!ok) {
+    console.log(out || String(result.error));
+    for (const file of stale) console.log(`  NOT_SPAWNED names ${file}, which no longer exists — remove the entry`);
+  }
+  console.log(`${ok ? 'PASS' : 'FAIL'}  every discovered test file passes — ${files.length} files, ${count('tests')} tests, ${count('fail')} failed` +
+    ` (${NOT_SPAWNED.size} run elsewhere, each with its reason in NOT_SPAWNED)`);
+  if (ok) zoomPassed++;
+  else zoomExtra++;
+}
 {
   const { execFileSync } = await import('node:child_process');
   const { fileURLToPath } = await import('node:url');
@@ -102,39 +179,43 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     return { text: m[1], why: null };
   };
 
-  const self = run(['--selftest']);
-  const selfV = quote(self.out);
-  console.log(
-    `${self.code === 0 && selfV.text ? 'PASS' : 'FAIL'}  36. the zoom-unit check still catches its own known-bad corpus` +
-      ` — ${selfV.text || `zoomunits --selftest (exit ${self.code}): ${selfV.why}`}`
-  );
-  if (self.code !== 0 || !selfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const self = run(['--selftest']);
+    const selfV = quote(self.out);
+    console.log(
+      `${self.code === 0 && selfV.text ? 'PASS' : 'FAIL'}  36. the zoom-unit check still catches its own known-bad corpus` +
+        ` — ${selfV.text || `zoomunits --selftest (exit ${self.code}): ${selfV.why}`}`
+    );
+    if (self.code !== 0 || !selfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const tree = run([]);
-  // The detail is the tool's OWN RESULT line, quoted — not numbers scraped out of
-  // it and recomposed here. Recomposing is a second home for the verdict, and it
-  // drifted the day admissibility became a fourth failure condition the three
-  // regexes did not know about: the suite printed FAIL beside a name that read
-  // "0 new, 0 vanished". Quoting has no regex to widen, so a clause added to
-  // RESULT reaches this line without anyone remembering to. And a run with NO
-  // RESULT line is itself a failure: the harness could not read the tool, which
-  // is not the same as the tool having nothing to say.
-  // (Bjorn's ruling, 2026-07-28, over my proposal to add a fourth number — his
-  // test is "did something become deletable?"; under this the whole `grab` helper did.)
-  // A verdict is one whole terminated sentence on one line. Without the `.` test a
-  // RESULT that ever wraps is quoted up to the wrap and PASSES on half a sentence —
-  // the `?` defect in a new dress. Bjorn ruled the first wording, then wrapped the
-  // line himself and watched it print `PASS … 9 carried, 0 new,`; this is his
-  // corrected version, taken from his log rather than from a relay of it.
-  const treeV = quote(tree.out);
-  console.log(
-    `${tree.code === 0 && treeV.text ? 'PASS' : 'FAIL'}  37. the carried set of unconverted px writes is exactly as recorded` +
-      ` — ${treeV.text || `zoomunits (exit ${tree.code}): ${treeV.why}`}` +
-      ` (\`node tools/zoomunits.mjs\` for the ledger, \`--raw\` for the bare red)`
-  );
-  if (tree.code !== 0 || !treeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const tree = run([]);
+    // The detail is the tool's OWN RESULT line, quoted — not numbers scraped out of
+    // it and recomposed here. Recomposing is a second home for the verdict, and it
+    // drifted the day admissibility became a fourth failure condition the three
+    // regexes did not know about: the suite printed FAIL beside a name that read
+    // "0 new, 0 vanished". Quoting has no regex to widen, so a clause added to
+    // RESULT reaches this line without anyone remembering to. And a run with NO
+    // RESULT line is itself a failure: the harness could not read the tool, which
+    // is not the same as the tool having nothing to say.
+    // (Bjorn's ruling, 2026-07-28, over my proposal to add a fourth number — his
+    // test is "did something become deletable?"; under this the whole `grab` helper did.)
+    // A verdict is one whole terminated sentence on one line. Without the `.` test a
+    // RESULT that ever wraps is quoted up to the wrap and PASSES on half a sentence —
+    // the `?` defect in a new dress. Bjorn ruled the first wording, then wrapped the
+    // line himself and watched it print `PASS … 9 carried, 0 new,`; this is his
+    // corrected version, taken from his log rather than from a relay of it.
+    const treeV = quote(tree.out);
+    console.log(
+      `${tree.code === 0 && treeV.text ? 'PASS' : 'FAIL'}  37. the carried set of unconverted px writes is exactly as recorded` +
+        ` — ${treeV.text || `zoomunits (exit ${tree.code}): ${treeV.why}`}` +
+        ` (\`node tools/zoomunits.mjs\` for the ledger, \`--raw\` for the bare red)`
+    );
+    if (tree.code !== 0 || !treeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 38 — the BOUND, the arithmetic half only (EldenSpire#15, Marina's Rule 2).
   //
@@ -149,62 +230,64 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   // and rendered off-screen anyway, because it clamped in one space and wrote in
   // another — so a test that only fed clampBox sane numbers would have been green
   // against the actual defect. It cannot see that defect either. It says so.
-  const { clampBox } = await import('../src/ui/fx.js');
-  const view = { width: 1000, height: 800 };
-  const inside = (b, w, h, pad) => b.left >= pad - 0.001 && b.top >= pad - 0.001 && b.left + w <= view.width - pad + 0.001 && b.top + h <= view.height - pad + 0.001;
-  // No `incl. …` summary of what these cover: the case NAMES below are that
-  // description and they are single-homed. The clause that used to sit in the PASS
-  // line was a second copy with nothing holding it to the array, and it drifted —
-  // delete the last case and it still claimed "a finite keep on BOTH far edges"
-  // beside "6/6 cases". Measured or absent; a coverage claim no one maintains is
-  // worse than none, because it reads as a guarantee. The failure path already
-  // names the cases that broke.
-  const cases = [
-    ['a box already inside is not moved', () => {
-      const r = clampBox({ left: 100, top: 100, width: 200, height: 100 }, view);
-      return r.left === 100 && r.top === 100;
-    }],
-    ['a box off the right/bottom is pulled back inside', () => {
-      const r = clampBox({ left: 1400, top: 1400, width: 200, height: 100 }, view);
-      return inside(r, 200, 100, 4);
-    }],
-    ['a box off the left/top is pushed back inside', () => {
-      const r = clampBox({ left: -900, top: -900, width: 200, height: 100 }, view);
-      return inside(r, 200, 100, 4);
-    }],
-    ['a box larger than the view pins to the low edge, never slides off the far one', () => {
-      const r = clampBox({ left: -5000, top: 5000, width: 4000, height: 3000 }, view);
-      return r.left === 4 && r.top === 4;
-    }],
-    ['keep:40 lets a pointer-tracked box overhang, but never vanish', () => {
-      const r = clampBox({ left: -5000, top: -5000, width: 200, height: 100 }, view, { keep: 40 });
-      return r.left + 200 >= 44 && r.top + 100 >= 44 && r.left < 4 && r.top < 4;
-    }],
-    ['keep larger than the box degrades to the whole box, not to a negative bound', () => {
-      const r = clampBox({ left: 9999, top: 9999, width: 20, height: 20 }, view, { keep: 500 });
-      return inside(r, 20, 20, 4);
-    }],
-    // The far edge of the SAME rule, because `lo` and `hi` are different
-    // expressions and the keep:40 case above exercises only `lo`. Its known-bad:
-    // mutate `hi = span - pad - k` to `span - pad - size` and all six cases above
-    // stay green while a pointer-tracked box loses its overhang (956 -> 796).
-    // A finite `keep` on the high edge is the one branch nothing else watches —
-    // no browser run reaches it — so this line is its only witness, and until now
-    // it was a one-sided one.
-    ['keep:40 overhangs the RIGHT/BOTTOM edge too, not just the left/top', () => {
-      const r = clampBox({ left: 9999, top: 9999, width: 200, height: 100 }, view, { keep: 40 });
-      return r.left + 200 > view.width - 4 && r.top + 100 > view.height - 4
-          && r.left <= view.width - 4 - 40 + 0.001 && r.top <= view.height - 4 - 40 + 0.001;
-    }],
-  ];
-  const bad = cases.filter(([, fn]) => !fn()).map(([n]) => n);
-  console.log(
-    `${bad.length ? 'FAIL' : 'PASS'}  38. clampBox keeps a box inside its named container` +
-      ` — ${bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases.`}` +
-      ` (arithmetic only — the space it is computed in is what #15 was, and no unit test can see that)`
-  );
-  if (bad.length) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const { clampBox } = await import('../src/ui/fx.js');
+    const view = { width: 1000, height: 800 };
+    const inside = (b, w, h, pad) => b.left >= pad - 0.001 && b.top >= pad - 0.001 && b.left + w <= view.width - pad + 0.001 && b.top + h <= view.height - pad + 0.001;
+    // No `incl. …` summary of what these cover: the case NAMES below are that
+    // description and they are single-homed. The clause that used to sit in the PASS
+    // line was a second copy with nothing holding it to the array, and it drifted —
+    // delete the last case and it still claimed "a finite keep on BOTH far edges"
+    // beside "6/6 cases". Measured or absent; a coverage claim no one maintains is
+    // worse than none, because it reads as a guarantee. The failure path already
+    // names the cases that broke.
+    const cases = [
+      ['a box already inside is not moved', () => {
+        const r = clampBox({ left: 100, top: 100, width: 200, height: 100 }, view);
+        return r.left === 100 && r.top === 100;
+      }],
+      ['a box off the right/bottom is pulled back inside', () => {
+        const r = clampBox({ left: 1400, top: 1400, width: 200, height: 100 }, view);
+        return inside(r, 200, 100, 4);
+      }],
+      ['a box off the left/top is pushed back inside', () => {
+        const r = clampBox({ left: -900, top: -900, width: 200, height: 100 }, view);
+        return inside(r, 200, 100, 4);
+      }],
+      ['a box larger than the view pins to the low edge, never slides off the far one', () => {
+        const r = clampBox({ left: -5000, top: 5000, width: 4000, height: 3000 }, view);
+        return r.left === 4 && r.top === 4;
+      }],
+      ['keep:40 lets a pointer-tracked box overhang, but never vanish', () => {
+        const r = clampBox({ left: -5000, top: -5000, width: 200, height: 100 }, view, { keep: 40 });
+        return r.left + 200 >= 44 && r.top + 100 >= 44 && r.left < 4 && r.top < 4;
+      }],
+      ['keep larger than the box degrades to the whole box, not to a negative bound', () => {
+        const r = clampBox({ left: 9999, top: 9999, width: 20, height: 20 }, view, { keep: 500 });
+        return inside(r, 20, 20, 4);
+      }],
+      // The far edge of the SAME rule, because `lo` and `hi` are different
+      // expressions and the keep:40 case above exercises only `lo`. Its known-bad:
+      // mutate `hi = span - pad - k` to `span - pad - size` and all six cases above
+      // stay green while a pointer-tracked box loses its overhang (956 -> 796).
+      // A finite `keep` on the high edge is the one branch nothing else watches —
+      // no browser run reaches it — so this line is its only witness, and until now
+      // it was a one-sided one.
+      ['keep:40 overhangs the RIGHT/BOTTOM edge too, not just the left/top', () => {
+        const r = clampBox({ left: 9999, top: 9999, width: 200, height: 100 }, view, { keep: 40 });
+        return r.left + 200 > view.width - 4 && r.top + 100 > view.height - 4
+            && r.left <= view.width - 4 - 40 + 0.001 && r.top <= view.height - 4 - 40 + 0.001;
+      }],
+    ];
+    const bad = cases.filter(([, fn]) => !fn()).map(([n]) => n);
+    console.log(
+      `${bad.length ? 'FAIL' : 'PASS'}  38. clampBox keeps a box inside its named container` +
+        ` — ${bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases.`}` +
+        ` (arithmetic only — the space it is computed in is what #15 was, and no unit test can see that)`
+    );
+    if (bad.length) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 39/40 — every navigable surface declared in data has a handler (#78).
   //
@@ -232,24 +315,28 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
-  const surfSelf = runSurf(['--selftest']);
-  const surfSelfV = quote(surfSelf.out);
-  console.log(
-    `${surfSelf.code === 0 && surfSelfV.text ? 'PASS' : 'FAIL'}  39. the surface check still catches its own known-bad corpus` +
-      ` — ${surfSelfV.text || `surfaces --selftest (exit ${surfSelf.code}): ${surfSelfV.why}`}`
-  );
-  if (surfSelf.code !== 0 || !surfSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const surfSelf = runSurf(['--selftest']);
+    const surfSelfV = quote(surfSelf.out);
+    console.log(
+      `${surfSelf.code === 0 && surfSelfV.text ? 'PASS' : 'FAIL'}  39. the surface check still catches its own known-bad corpus` +
+        ` — ${surfSelfV.text || `surfaces --selftest (exit ${surfSelf.code}): ${surfSelfV.why}`}`
+    );
+    if (surfSelf.code !== 0 || !surfSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const surfTree = runSurf([]);
-  const surfTreeV = quote(surfTree.out);
-  console.log(
-    `${surfTree.code === 0 && surfTreeV.text ? 'PASS' : 'FAIL'}  40. every declared navigable surface has a handler` +
-      ` — ${surfTreeV.text || `surfaces (exit ${surfTree.code}): ${surfTreeV.why}`}` +
-      ` (\`node tools/surfaces.mjs\` for the sets, \`--selftest\` for the reds)`
-  );
-  if (surfTree.code !== 0 || !surfTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const surfTree = runSurf([]);
+    const surfTreeV = quote(surfTree.out);
+    console.log(
+      `${surfTree.code === 0 && surfTreeV.text ? 'PASS' : 'FAIL'}  40. every declared navigable surface has a handler` +
+        ` — ${surfTreeV.text || `surfaces (exit ${surfTree.code}): ${surfTreeV.why}`}` +
+        ` (\`node tools/surfaces.mjs\` for the sets, \`--selftest\` for the reds)`
+    );
+    if (surfTree.code !== 0 || !surfTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 41/42 — the screen census (Marina's ruling, 2026-08-07).
   //
@@ -314,24 +401,28 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
-  const censSelf = runCensus(['--selftest']);
-  const censSelfV = quote(censSelf.out);
-  console.log(
-    `${censSelf.code === 0 && censSelfV.text ? 'PASS' : 'FAIL'}  41. the screen census still catches its own known-bad corpus` +
-      ` — ${censSelfV.text || `screen-census --selftest (exit ${censSelf.code}): ${censSelfV.why}`}`
-  );
-  if (censSelf.code !== 0 || !censSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const censSelf = runCensus(['--selftest']);
+    const censSelfV = quote(censSelf.out);
+    console.log(
+      `${censSelf.code === 0 && censSelfV.text ? 'PASS' : 'FAIL'}  41. the screen census still catches its own known-bad corpus` +
+        ` — ${censSelfV.text || `screen-census --selftest (exit ${censSelf.code}): ${censSelfV.why}`}`
+    );
+    if (censSelf.code !== 0 || !censSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const censTree = runCensus(['--raw']);
-  const censTreeV = quote(censTree.out);
-  console.log(
-    `${censTree.code === 0 && censTreeV.text ? 'PASS' : 'FAIL'}  42. every screen in the tree is mountable, and the census can still read it` +
-      ` — ${censTreeV.text || `screen-census (exit ${censTree.code}): ${censTreeV.why}`}` +
-      ` (\`node tools/screen-census.mjs\` for the checklist itself)`
-  );
-  if (censTree.code !== 0 || !censTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const censTree = runCensus(['--raw']);
+    const censTreeV = quote(censTree.out);
+    console.log(
+      `${censTree.code === 0 && censTreeV.text ? 'PASS' : 'FAIL'}  42. every screen in the tree is mountable, and the census can still read it` +
+        ` — ${censTreeV.text || `screen-census (exit ${censTree.code}): ${censTreeV.why}`}` +
+        ` (\`node tools/screen-census.mjs\` for the checklist itself)`
+    );
+    if (censTree.code !== 0 || !censTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 43–44 — CARD TEXT MARKS HAVE ONE HOME (Sunna). Same two-line shape as 36/37
   // and 41/42, and for the same reason: 43 is the check's own integrity, 44 is
@@ -358,24 +449,28 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
-  const markSelf = runMark(['--selftest']);
-  const markSelfV = quote(markSelf.out);
-  console.log(
-    `${markSelf.code === 0 && markSelfV.text ? 'PASS' : 'FAIL'}  43. the card-text mark check still catches its own known-bad corpus` +
-      ` — ${markSelfV.text || `markhome --selftest (exit ${markSelf.code}): ${markSelfV.why}`}`
-  );
-  if (markSelf.code !== 0 || !markSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const markSelf = runMark(['--selftest']);
+    const markSelfV = quote(markSelf.out);
+    console.log(
+      `${markSelf.code === 0 && markSelfV.text ? 'PASS' : 'FAIL'}  43. the card-text mark check still catches its own known-bad corpus` +
+        ` — ${markSelfV.text || `markhome --selftest (exit ${markSelf.code}): ${markSelfV.why}`}`
+    );
+    if (markSelf.code !== 0 || !markSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const markTree = runMark(['--raw']);
-  const markTreeV = quote(markTree.out);
-  console.log(
-    `${markTree.code === 0 && markTreeV.text ? 'PASS' : 'FAIL'}  44. every card-text mark rule reaches both places card text is drawn` +
-      ` — ${markTreeV.text || `markhome (exit ${markTree.code}): ${markTreeV.why}`}` +
-      ` (\`node tools/markhome.mjs\` for the ledger)`
-  );
-  if (markTree.code !== 0 || !markTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const markTree = runMark(['--raw']);
+    const markTreeV = quote(markTree.out);
+    console.log(
+      `${markTree.code === 0 && markTreeV.text ? 'PASS' : 'FAIL'}  44. every card-text mark rule reaches both places card text is drawn` +
+        ` — ${markTreeV.text || `markhome (exit ${markTree.code}): ${markTreeV.why}`}` +
+        ` (\`node tools/markhome.mjs\` for the ledger)`
+    );
+    if (markTree.code !== 0 || !markTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 45–46 — EVERY NAMED IMPORT RESOLVES TO A REAL EXPORT.
   //
@@ -413,24 +508,28 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
-  const linkSelf = runLink(['--selftest']);
-  const linkSelfV = quote(linkSelf.out);
-  console.log(
-    `${linkSelf.code === 0 && linkSelfV.text ? 'PASS' : 'FAIL'}  45. the link check still catches its own known-bad corpus` +
-      ` — ${linkSelfV.text || `linkcheck --selftest (exit ${linkSelf.code}): ${linkSelfV.why}`}`
-  );
-  if (linkSelf.code !== 0 || !linkSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const linkSelf = runLink(['--selftest']);
+    const linkSelfV = quote(linkSelf.out);
+    console.log(
+      `${linkSelf.code === 0 && linkSelfV.text ? 'PASS' : 'FAIL'}  45. the link check still catches its own known-bad corpus` +
+        ` — ${linkSelfV.text || `linkcheck --selftest (exit ${linkSelf.code}): ${linkSelfV.why}`}`
+    );
+    if (linkSelf.code !== 0 || !linkSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const linkTree = runLink(['--raw']);
-  const linkTreeV = quote(linkTree.out);
-  console.log(
-    `${linkTree.code === 0 && linkTreeV.text ? 'PASS' : 'FAIL'}  46. every named import in the tree resolves to a real export` +
-      ` — ${linkTreeV.text || `linkcheck (exit ${linkTree.code}): ${linkTreeV.why}`}` +
-      ` (\`node tools/linkcheck.mjs\` names the file and the error)`
-  );
-  if (linkTree.code !== 0 || !linkTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const linkTree = runLink(['--raw']);
+    const linkTreeV = quote(linkTree.out);
+    console.log(
+      `${linkTree.code === 0 && linkTreeV.text ? 'PASS' : 'FAIL'}  46. every named import in the tree resolves to a real export` +
+        ` — ${linkTreeV.text || `linkcheck (exit ${linkTree.code}): ${linkTreeV.why}`}` +
+        ` (\`node tools/linkcheck.mjs\` names the file and the error)`
+    );
+    if (linkTree.code !== 0 || !linkTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // ---- 50/51. CAN A PLAYER EVER MEET THIS STATUS? (Rune, 2026-08-08) -------
   //
@@ -489,76 +588,88 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
-  const reachSelf = runReach(['--selftest']);
-  const reachSelfV = quote(reachSelf.out);
-  console.log(
-    // WAS "50." AND COLLIDED WITH engine.test.js's OWN 50. Two tests printed
-    // "PASS  50." in every run: a reader grepping a run for "50." got two
-    // answers, and a reviewer told "50 is red" could not tell which half of the
-    // suite to open. Both numbers were allocated in good faith in different
-    // files; engine.test.js owns a contiguous 47-48-49-50 narrative, so the
-    // intruder is this one. Moved to 29 — the ONE gap in the sequence
-    // (tools/testnumbers.mjs --raw), never used in this repo's history, and the
-    // only number immune to what two in-flight PRs may allocate.
-    // COST, stated rather than hidden: this block reads 36-46, 29, 51-57 now, so
-    // run-node's own numbering is no longer visually contiguous. A display label
-    // is the cheapest thing in the file to spend, and NOTHING CONSUMES IT —
-    // checked, not assumed: the only tool that matches on "FAIL  <x>" is
-    // profile-durability-probe.mjs:154, and its `expectFail` is a NAME
-    // ("P2 two losses produce TWO archives"), not one of these numbers.
-    `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  29. the status-reach check still catches its own known-bad corpus` +
-      ` — ${reachSelfV.text || `statusreach --selftest (exit ${reachSelf.code}): ${reachSelfV.why}`}`
-  );
-  if (reachSelf.code !== 0 || !reachSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const reachSelf = runReach(['--selftest']);
+    const reachSelfV = quote(reachSelf.out);
+    console.log(
+      // WAS "50." AND COLLIDED WITH engine.test.js's OWN 50. Two tests printed
+      // "PASS  50." in every run: a reader grepping a run for "50." got two
+      // answers, and a reviewer told "50 is red" could not tell which half of the
+      // suite to open. Both numbers were allocated in good faith in different
+      // files; engine.test.js owns a contiguous 47-48-49-50 narrative, so the
+      // intruder is this one. Moved to 29 — the ONE gap in the sequence
+      // (tools/testnumbers.mjs --raw), never used in this repo's history, and the
+      // only number immune to what two in-flight PRs may allocate.
+      // COST, stated rather than hidden: this block reads 36-46, 29, 51-57 now, so
+      // run-node's own numbering is no longer visually contiguous. A display label
+      // is the cheapest thing in the file to spend, and NOTHING CONSUMES IT —
+      // checked, not assumed: the only tool that matches on "FAIL  <x>" is
+      // profile-durability-probe.mjs:154, and its `expectFail` is a NAME
+      // ("P2 two losses produce TWO archives"), not one of these numbers.
+      `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  29. the status-reach check still catches its own known-bad corpus` +
+        ` — ${reachSelfV.text || `statusreach --selftest (exit ${reachSelf.code}): ${reachSelfV.why}`}`
+    );
+    if (reachSelf.code !== 0 || !reachSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const reachTree = runReach([]);
-  const reachTreeV = quote(reachTree.out);
-  console.log(
-    `${reachTree.code === 0 && reachTreeV.text ? 'PASS' : 'FAIL'}  51. every shipped status has something that applies it` +
-      ` — ${reachTreeV.text || `statusreach (exit ${reachTree.code}): ${reachTreeV.why}`}` +
-      ` (\`node tools/statusreach.mjs\` names the row and the route)`
-  );
-  if (reachTree.code !== 0 || !reachTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const reachTree = runReach([]);
+    const reachTreeV = quote(reachTree.out);
+    console.log(
+      `${reachTree.code === 0 && reachTreeV.text ? 'PASS' : 'FAIL'}  51. every shipped status has something that applies it` +
+        ` — ${reachTreeV.text || `statusreach (exit ${reachTree.code}): ${reachTreeV.why}`}` +
+        ` (\`node tools/statusreach.mjs\` names the row and the route)`
+    );
+    if (reachTree.code !== 0 || !reachTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const setsSelf = runSets(['--selftest']);
-  const setsSelfV = quote(setsSelf.out);
-  console.log(
-    `${setsSelf.code === 0 && setsSelfV.text ? 'PASS' : 'FAIL'}  52. the closed-set check still catches its own known-bad corpus` +
-      ` — ${setsSelfV.text || `closedsets --selftest (exit ${setsSelf.code}): ${setsSelfV.why}`}`
-  );
-  if (setsSelf.code !== 0 || !setsSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const setsSelf = runSets(['--selftest']);
+    const setsSelfV = quote(setsSelf.out);
+    console.log(
+      `${setsSelf.code === 0 && setsSelfV.text ? 'PASS' : 'FAIL'}  52. the closed-set check still catches its own known-bad corpus` +
+        ` — ${setsSelfV.text || `closedsets --selftest (exit ${setsSelf.code}): ${setsSelfV.why}`}`
+    );
+    if (setsSelf.code !== 0 || !setsSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const setsTree = runSets([]);
-  const setsTreeV = quote(setsTree.out);
-  console.log(
-    `${setsTree.code === 0 && setsTreeV.text ? 'PASS' : 'FAIL'}  53. every exported closed set is read by something` +
-      ` — ${setsTreeV.text || `closedsets (exit ${setsTree.code}): ${setsTreeV.why}`}` +
-      ` (\`node tools/closedsets.mjs\` for the table, \`--selftest\` for the reds)`
-  );
-  if (setsTree.code !== 0 || !setsTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const setsTree = runSets([]);
+    const setsTreeV = quote(setsTree.out);
+    console.log(
+      `${setsTree.code === 0 && setsTreeV.text ? 'PASS' : 'FAIL'}  53. every exported closed set is read by something` +
+        ` — ${setsTreeV.text || `closedsets (exit ${setsTree.code}): ${setsTreeV.why}`}` +
+        ` (\`node tools/closedsets.mjs\` for the table, \`--selftest\` for the reds)`
+    );
+    if (setsTree.code !== 0 || !setsTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const graceSelf = runGrace(['--selftest']);
-  const graceSelfV = quote(graceSelf.out);
-  console.log(
-    `${graceSelf.code === 0 && graceSelfV.text ? 'PASS' : 'FAIL'}  54. the grace-refill refusals still catch their own known-bad corpus` +
-      ` — ${graceSelfV.text || `gracerefill --selftest (exit ${graceSelf.code}): ${graceSelfV.why}`}`
-  );
-  if (graceSelf.code !== 0 || !graceSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const graceSelf = runGrace(['--selftest']);
+    const graceSelfV = quote(graceSelf.out);
+    console.log(
+      `${graceSelf.code === 0 && graceSelfV.text ? 'PASS' : 'FAIL'}  54. the grace-refill refusals still catch their own known-bad corpus` +
+        ` — ${graceSelfV.text || `gracerefill --selftest (exit ${graceSelf.code}): ${graceSelfV.why}`}`
+    );
+    if (graceSelf.code !== 0 || !graceSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const graceTree = runGrace([]);
-  const graceTreeV = quote(graceTree.out);
-  console.log(
-    `${graceTree.code === 0 && graceTreeV.text ? 'PASS' : 'FAIL'}  55. a grace pours what balance.graceRefill says it pours` +
-      ` — ${graceTreeV.text || `gracerefill (exit ${graceTree.code}): ${graceTreeV.why}`}` +
-      ` (\`node tools/gracerefill.mjs\` names each row and what it resolves to)`
-  );
-  if (graceTree.code !== 0 || !graceTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const graceTree = runGrace([]);
+    const graceTreeV = quote(graceTree.out);
+    console.log(
+      `${graceTree.code === 0 && graceTreeV.text ? 'PASS' : 'FAIL'}  55. a grace pours what balance.graceRefill says it pours` +
+        ` — ${graceTreeV.text || `gracerefill (exit ${graceTree.code}): ${graceTreeV.why}`}` +
+        ` (\`node tools/gracerefill.mjs\` names each row and what it resolves to)`
+    );
+    if (graceTree.code !== 0 || !graceTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 56/57 — the relic-modifier vocabulary is ONE vocabulary (Sten, after #178
   // gave relics the power to grant a resource). This is the other half of
@@ -577,24 +688,28 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
-  const vocabSelf = runVocab(['--selftest']);
-  const vocabSelfV = quote(vocabSelf.out);
-  console.log(
-    `${vocabSelf.code === 0 && vocabSelfV.text ? 'PASS' : 'FAIL'}  56. the one-vocabulary check still catches its own known-bad corpus` +
-      ` — ${vocabSelfV.text || `onevocab --selftest (exit ${vocabSelf.code}): ${vocabSelfV.why}`}`
-  );
-  if (vocabSelf.code !== 0 || !vocabSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const vocabSelf = runVocab(['--selftest']);
+    const vocabSelfV = quote(vocabSelf.out);
+    console.log(
+      `${vocabSelf.code === 0 && vocabSelfV.text ? 'PASS' : 'FAIL'}  56. the one-vocabulary check still catches its own known-bad corpus` +
+        ` — ${vocabSelfV.text || `onevocab --selftest (exit ${vocabSelf.code}): ${vocabSelfV.why}`}`
+    );
+    if (vocabSelf.code !== 0 || !vocabSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const vocabTree = runVocab([]);
-  const vocabTreeV = quote(vocabTree.out);
-  console.log(
-    `${vocabTree.code === 0 && vocabTreeV.text ? 'PASS' : 'FAIL'}  57. the relic-modifier vocabulary has one home and one derivation path` +
-      ` — ${vocabTreeV.text || `onevocab (exit ${vocabTree.code}): ${vocabTreeV.why}`}` +
-      ` (\`node tools/onevocab.mjs\` names the copy and the door that disagreed)`
-  );
-  if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const vocabTree = runVocab([]);
+    const vocabTreeV = quote(vocabTree.out);
+    console.log(
+      `${vocabTree.code === 0 && vocabTreeV.text ? 'PASS' : 'FAIL'}  57. the relic-modifier vocabulary has one home and one derivation path` +
+        ` — ${vocabTreeV.text || `onevocab (exit ${vocabTree.code}): ${vocabTreeV.why}`}` +
+        ` (\`node tools/onevocab.mjs\` names the copy and the door that disagreed)`
+    );
+    if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 67/68 — DOES A GATE ACTUALLY RUN ITS INSTRUMENTS, AND DOES IT LISTEN?
   //
@@ -685,33 +800,39 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
-  const gateSelf = runGate(['--selftest']);
-  const gateSelfV = quote(gateSelf.out);
-  console.log(
-    `${gateSelf.code === 0 && gateSelfV.text ? 'PASS' : 'FAIL'}  67. the gate-list check still catches its own known-bad corpus` +
-      ` — ${gateSelfV.text || `gatelist --selftest (exit ${gateSelf.code}): ${gateSelfV.why}`}`
-  );
-  if (gateSelf.code !== 0 || !gateSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const gateSelf = runGate(['--selftest']);
+    const gateSelfV = quote(gateSelf.out);
+    console.log(
+      `${gateSelf.code === 0 && gateSelfV.text ? 'PASS' : 'FAIL'}  67. the gate-list check still catches its own known-bad corpus` +
+        ` — ${gateSelfV.text || `gatelist --selftest (exit ${gateSelf.code}): ${gateSelfV.why}`}`
+    );
+    if (gateSelf.code !== 0 || !gateSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const gateTree = runGate([]);
-  const gateTreeV = quote(gateTree.out);
-  console.log(
-    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  68. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed` +
-      ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
-      ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
-  );
-  if (gateTree.code !== 0 || !gateTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const gateTree = runGate([]);
+    const gateTreeV = quote(gateTree.out);
+    console.log(
+      `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  68. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed` +
+        ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
+        ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
+    );
+    if (gateTree.code !== 0 || !gateTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const numsSelf = runNums(['--selftest']);
-  const numsSelfV = quote(numsSelf.out);
-  console.log(
-    `${numsSelf.code === 0 && numsSelfV.text ? 'PASS' : 'FAIL'}  64. the test-number check still catches its own known-bad corpus` +
-      ` — ${numsSelfV.text || `testnumbers --selftest (exit ${numsSelf.code}): ${numsSelfV.why}`}`
-  );
-  if (numsSelf.code !== 0 || !numsSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const numsSelf = runNums(['--selftest']);
+    const numsSelfV = quote(numsSelf.out);
+    console.log(
+      `${numsSelf.code === 0 && numsSelfV.text ? 'PASS' : 'FAIL'}  64. the test-number check still catches its own known-bad corpus` +
+        ` — ${numsSelfV.text || `testnumbers --selftest (exit ${numsSelf.code}): ${numsSelfV.why}`}`
+    );
+    if (numsSelf.code !== 0 || !numsSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 69 — THE PROBE CORPUS'S OWN DERIVATIONS. Bjorn, 2026-08-22. `tools/watched.mjs`
   // is one of the 131 tools `gatelist` counts as executed by no declared gate
@@ -728,25 +849,29 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
       return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
     }
   };
-  const reads = runReads([]);
-  const readsV = quote(reads.out);
-  console.log(
-    `${reads.code === 0 && readsV.text ? 'PASS' : 'FAIL'}  69. every watched-probe still reads a file that exists and an anchor still in it` +
-      ` — ${readsV.text || `watched --check-reads (exit ${reads.code}): ${readsV.why}`}` +
-      ` (\`node tools/watched.mjs --check-reads\` for the derived file:line of every anchor)`
-  );
-  if (reads.code !== 0 || !readsV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const reads = runReads([]);
+    const readsV = quote(reads.out);
+    console.log(
+      `${reads.code === 0 && readsV.text ? 'PASS' : 'FAIL'}  69. every watched-probe still reads a file that exists and an anchor still in it` +
+        ` — ${readsV.text || `watched --check-reads (exit ${reads.code}): ${readsV.why}`}` +
+        ` (\`node tools/watched.mjs --check-reads\` for the derived file:line of every anchor)`
+    );
+    if (reads.code !== 0 || !readsV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const numsTree = runNums([]);
-  const numsTreeV = quote(numsTree.out);
-  console.log(
-    `${numsTree.code === 0 && numsTreeV.text ? 'PASS' : 'FAIL'}  65. no two tests in this suite wear the same number` +
-      ` — ${numsTreeV.text || `testnumbers (exit ${numsTree.code}): ${numsTreeV.why}`}` +
-      ` (\`node tools/testnumbers.mjs --raw\` for every label and where it is declared)`
-  );
-  if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const numsTree = runNums([]);
+    const numsTreeV = quote(numsTree.out);
+    console.log(
+      `${numsTree.code === 0 && numsTreeV.text ? 'PASS' : 'FAIL'}  65. no two tests in this suite wear the same number` +
+        ` — ${numsTreeV.text || `testnumbers (exit ${numsTree.code}): ${numsTreeV.why}`}` +
+        ` (\`node tools/testnumbers.mjs --raw\` for every label and where it is declared)`
+    );
+    if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 73/74 — module URL/filesystem path conversions use node:url (#13).
   // 73 proves the two required known-bads through the real scanner and runs
@@ -761,24 +886,28 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
-  const urlPathSelf = runUrlPath(['--selftest']);
-  const urlPathSelfV = quote(urlPathSelf.out);
-  console.log(
-    `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  73. the URL/path check catches both known-bads from a spaced working directory` +
-      ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
-  );
-  if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const urlPathSelf = runUrlPath(['--selftest']);
+    const urlPathSelfV = quote(urlPathSelf.out);
+    console.log(
+      `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  73. the URL/path check catches both known-bads from a spaced working directory` +
+        ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
+    );
+    if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const urlPathTree = runUrlPath([]);
-  const urlPathTreeV = quote(urlPathTree.out);
-  console.log(
-    `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  74. module URL/filesystem path conversions use the platform API` +
-      ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
-      ` (\`node tools/urlpath-conversions.mjs\` names each site)`
-  );
-  if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const urlPathTree = runUrlPath([]);
+    const urlPathTreeV = quote(urlPathTree.out);
+    console.log(
+      `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  74. module URL/filesystem path conversions use the platform API` +
+        ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
+        ` (\`node tools/urlpath-conversions.mjs\` names each site)`
+    );
+    if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
   // 77/78 — fixed attack-slot composition. The first line proves the old
   // right-hand-only lookup is still discriminating; the second runs the full
@@ -790,23 +919,102 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
       return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
     }
   };
-  const weaponSelf = runWeaponPackages(['--selftest']);
-  const weaponSelfV = quote(weaponSelf.out);
-  console.log(
-    `${weaponSelf.code === 0 && weaponSelfV.text ? 'PASS' : 'FAIL'}  77. the weapon-package check catches the right-hand-only lookup` +
-      ` — ${weaponSelfV.text || `weapon-card-packages --selftest (exit ${weaponSelf.code}): ${weaponSelfV.why}`}`
-  );
-  if (weaponSelf.code !== 0 || !weaponSelfV.text) zoomExtra++;
-  else zoomPassed++;
+  if (SELFTESTS) {
+    const weaponSelf = runWeaponPackages(['--selftest']);
+    const weaponSelfV = quote(weaponSelf.out);
+    console.log(
+      `${weaponSelf.code === 0 && weaponSelfV.text ? 'PASS' : 'FAIL'}  77. the weapon-package check catches the right-hand-only lookup` +
+        ` — ${weaponSelfV.text || `weapon-card-packages --selftest (exit ${weaponSelf.code}): ${weaponSelfV.why}`}`
+    );
+    if (weaponSelf.code !== 0 || !weaponSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
 
-  const weaponTree = runWeaponPackages([]);
-  const weaponTreeV = quote(weaponTree.out);
-  console.log(
-    `${weaponTree.code === 0 && weaponTreeV.text ? 'PASS' : 'FAIL'}  78. equipped weapons deterministically rebind the fixed authored attack slots` +
-      ` — ${weaponTreeV.text || `weapon-card-packages (exit ${weaponTree.code}): ${weaponTreeV.why}`}`
-  );
-  if (weaponTree.code !== 0 || !weaponTreeV.text) zoomExtra++;
-  else zoomPassed++;
+  if (CORE) {
+    const weaponTree = runWeaponPackages([]);
+    const weaponTreeV = quote(weaponTree.out);
+    console.log(
+      `${weaponTree.code === 0 && weaponTreeV.text ? 'PASS' : 'FAIL'}  78. equipped weapons deterministically rebind the fixed authored attack slots` +
+        ` — ${weaponTreeV.text || `weapon-card-packages (exit ${weaponTree.code}): ${weaponTreeV.why}`}`
+    );
+    if (weaponTree.code !== 0 || !weaponTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
+
+  // 94/95 — reusable UI component contracts (tools/ui-components.mjs, #1316).
+  // C5 and C12 sat red on dev because nothing ran this tool. 94 is the check's
+  // own integrity against its planted corpus; 95 is the tree's state (the
+  // same verdict tests/ui-component-catalogs.test.mjs asserts, quoted here in
+  // the suite's ledger).
+  const runUiComponents = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/ui-components.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const uiSelf = runUiComponents(['--selftest']);
+    const uiSelfV = quote(uiSelf.out);
+    console.log(
+      `${uiSelf.code === 0 && uiSelfV.text ? 'PASS' : 'FAIL'}  94. the UI component check still catches its own known-bad corpus` +
+        ` — ${uiSelfV.text || `ui-components --selftest (exit ${uiSelf.code}): ${uiSelfV.why}`}`
+    );
+    if (uiSelf.code !== 0 || !uiSelfV.text) zoomExtra++;
+    else zoomPassed++;
+  }
+
+  if (CORE) {
+    const uiTree = runUiComponents([]);
+    const uiTreeV = quote(uiTree.out);
+    console.log(
+      `${uiTree.code === 0 && uiTreeV.text ? 'PASS' : 'FAIL'}  95. every reusable UI component contract holds` +
+        ` — ${uiTreeV.text || `ui-components (exit ${uiTree.code}): ${uiTreeV.why}`}` +
+        ` (\`node tools/ui-components.mjs\` names each broken contract)`
+    );
+    if (uiTree.code !== 0 || !uiTreeV.text) zoomExtra++;
+    else zoomPassed++;
+  }
+
+  // 96/97 — the flask action contract (tools/flask-action-contract.mjs).
+  // It sat red on dev because nothing ran it, and it had stopped following
+  // the map's live flask menu (components/runPotions.js, e1ff8c9f4). 96 is
+  // its planted corpus; 97 is the tree. Its verdict is its own "N passed, M failed" line.
+  const runFlaskActions = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/flask-action-contract.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const flaskSelf = runFlaskActions(['--selftest']);
+    const flaskSelfV = flaskSelf.out.match(/^SELFTEST (?:GREEN|RED)[^\n]*/m)?.[0] || '';
+    const flaskSelfOk = flaskSelf.code === 0 && /^SELFTEST GREEN/.test(flaskSelfV);
+    console.log(
+      `${flaskSelfOk ? 'PASS' : 'FAIL'}  96. the flask action contract still catches its own known-bad corpus` +
+        ` — ${flaskSelfV || `flask-action-contract --selftest (exit ${flaskSelf.code}) printed no SELFTEST verdict`}`
+    );
+    if (flaskSelfOk) zoomPassed++;
+    else zoomExtra++;
+  }
+
+  // The enclosing block is unconditional, so the tree verdict carries its own
+  // CORE gate like rung 95: the --selftests-only lane must not run it.
+  if (CORE) {
+    const flaskTree = runFlaskActions([]);
+    const flaskTreeV = flaskTree.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
+    const flaskTreeOk = flaskTree.code === 0 && !!flaskTreeV && flaskTreeV[2] === '0' && Number(flaskTreeV[1]) > 0;
+    const flaskFails = [...flaskTree.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
+    console.log(
+      `${flaskTreeOk ? 'PASS' : 'FAIL'}  97. combat and the map's Potions control share one flask action contract` +
+        ` — ${flaskTreeV ? flaskTreeV[0] : `flask-action-contract (exit ${flaskTree.code}) printed no verdict`}` +
+        `${flaskFails ? ` (${flaskFails})` : ''}` +
+        ` (\`node tools/flask-action-contract.mjs\` names each check)`
+    );
+    if (flaskTreeOk) zoomPassed++;
+    else zoomExtra++;
+  }
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.
@@ -814,7 +1022,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
 // shared component's event contract, while source reads prove both controller
 // paths use it and the underlying overlay yields Escape to the top veil. It
 // does not render pixels or claim responsive geometry; that remains browser QA.
-{
+if (CORE) {
   const { runConfirmationModalContract } = await import('./confirmation-modal.test.mjs');
   const confirmation = await runConfirmationModalContract();
   console.log(
@@ -833,11 +1041,10 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
 // that are not there — the figure then loads nothing for a pose and holds the
 // last frame. And registration lives entirely in these numbers: a frame whose
 // floor line is not below its crop top would place the figure off its feet.
-{
-  const { existsSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+if (CORE) {
+  // Each frame is an art-manifest.json id (step 12), not a file in a tree here.
+  const { manifestIds } = await import('../tools/art-source.mjs');
+  const shipped = manifestIds();
   const { POSE_FRAMES, POSE_STRIP, POSE_DIR, POSE_CANVAS } = await import('../src/content/poseSprites.js');
   const classes = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_')[0]))];
   const tints = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_').at(-1)))];
@@ -847,7 +1054,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
       for (const pose of POSE_STRIP) {
         const row = POSE_FRAMES.get(`${c}_${pose}_${t}`);
         if (!row) { bad.push(`${c}/${pose}/${t}: no row`); continue; }
-        if (!existsSync(resolve(root, POSE_DIR + row.f))) bad.push(`${c}/${pose}/${t}: ${row.f} missing`);
+        if (!shipped.has(POSE_DIR + row.f)) bad.push(`${c}/${pose}/${t}: ${row.f} missing from art-manifest.json`);
         if (!(row.g > row.y)) bad.push(`${c}/${pose}/${t}: floor ${row.g} is not below the crop top ${row.y}`);
         if (row.x + row.w > POSE_CANVAS.width + 1 || row.y + row.h > POSE_CANVAS.height + 1) {
           bad.push(`${c}/${pose}/${t}: crop runs off the ${POSE_CANVAS.width}x${POSE_CANVAS.height} canvas`);
@@ -865,19 +1072,95 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   else zoomPassed++;
 }
 
-{
+// The combat-foundation suites themselves are discovered above; this is the
+// tag-junction audit that used to ride in the same try.
+if (CORE) {
   const { execFileSync } = await import('node:child_process');
   try {
-    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs', 'tests/tooltip-settings.test.mjs', 'tests/offline-play.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
     execFileSync(process.execPath, ['tools/attack-source-audit.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
-    console.log('PASS  combat foundations: engine, co-op, save, preview and trigger regression suite');
+    console.log('PASS  attack-source audit: the tag junction is current (attack-source-audit --check)');
     zoomPassed++;
   } catch (error) {
-    console.log(`FAIL  combat foundations: ${error.stdout || error.message}`);
+    console.log(`FAIL  attack-source audit: ${error.stdout || error.message}`);
     zoomExtra++;
   }
 }
-try {
+// FINISH §10: every asset directory has a CREDITS.md row, and README §Legal
+// names the same AI vendors as the AI disclosure. The selftest is in memory
+// (fixture text only, no copies of the tree), so it is cheap in either lane.
+{
+  const { execFileSync } = await import('node:child_process');
+  const runCredits = (args) => execFileSync(process.execPath, ['tools/credits-check.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+  const lanes = [];
+  if (CORE) lanes.push({ args: [], label: 'credits-check: every asset directory has a CREDITS row; README §Legal agrees with the AI disclosure' });
+  if (SELFTESTS) lanes.push({ args: ['--selftest'], label: 'credits-check --selftest: each rule still goes red on its plant' });
+  for (const lane of lanes) {
+    try {
+      const out = runCredits(lane.args).trim().split('\n').pop();
+      console.log(`PASS  ${lane.label} — ${out}`);
+      zoomPassed++;
+    } catch (error) {
+      console.log(`FAIL  ${lane.label} — ${String(error.stdout || error.message).slice(0, 800)}`);
+      zoomExtra++;
+    }
+  }
+}
+// FINISH §3, *A headless full run in CI*: five whole seeded runs for every
+// class (map → fights → rewards → events → acts → boss), each to a win or a
+// death. Red on a crash, and red on a SOFT-LOCK — a fight the bot's actions
+// never resolve, or a map walk longer than the map without reaching its boss.
+// Seeds are runsim's fixed formula, so the run is the same every time; it takes
+// a few seconds. The selftest plants a throw inside a fight, a stalled fight and
+// a boss-less map cycle, and requires a clean fleet to repeat seed for seed.
+{
+  const { execFileSync } = await import('node:child_process');
+  const runSim = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/runsim.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120000 }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+  const lanes = [];
+  if (CORE) lanes.push({ args: ['5'], label: 'runsim 5: a headless full run for every class on fixed seeds, 0 crashes, 0 soft-locks' });
+  if (SELFTESTS) lanes.push({ args: ['--selftest'], label: 'runsim --selftest: a crash, a stalled fight and a boss-less map each still go red' });
+  for (const lane of lanes) {
+    const r = runSim(lane.args);
+    const result = (r.out.match(/^RESULT: (.*)$/m) || [])[1];
+    const ok = r.code === 0 && result && !/^FAILED/.test(result);
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${lane.label} — ${result || `runsim ${lane.args.join(' ')} (exit ${r.code}): no RESULT line\n${r.out.slice(-800)}`}`);
+    if (ok) zoomPassed++;
+    else zoomExtra++;
+  }
+}
+// The third authored tree: content/config/**.json compiles to
+// src/config/generated/ui.js. A hand edit to the generated module, or a JSON
+// edit nobody compiled, is red here (tests/ui-config.test.mjs holds the rules).
+if (CORE) {
+  const { execFileSync } = await import('node:child_process');
+  try {
+    execFileSync(process.execPath, ['tools/config-build.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated UI config is current with content/config (config-build --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated UI config: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
+  // The tag tree's derived views — tags, domains, pairings, property rules and
+  // src/framework/data/{properties,relations}.js (which bakes the default
+  // balance bindings in) — are generated, and nothing at runtime checks them
+  // against the tree. This is the drift gate: an edit to nodes.csv or
+  // balance.js that was not rebuilt is red here.
+  try {
+    execFileSync(process.execPath, ['tools/content-build.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated content is current with content/source, the tag tree\'s views included (content-build --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated content: ${String(error.stderr || error.stdout || error.message).slice(0, 600)}`);
+    zoomExtra++;
+  }
+}
+if (CORE) try {
   const { runRewardConfirmTests } = await import('./reward-confirm.test.mjs');
   const count = runRewardConfirmTests();
   console.log('PASS  reward selection and confirmation: ' + count + ' checks');
@@ -885,6 +1168,15 @@ try {
 } catch (error) {
   console.log('FAIL  reward selection and confirmation: ' + error.message);
   zoomExtra++;
+}
+if (CORE) try {
+  const { runCardRemovalFlickTests } = await import('./card-removal-flick.test.mjs');
+  const result = runCardRemovalFlickTests();
+  console.log(`PASS  Card removal and touch flick regressions: ${result.checks} checks`);
+  zoomPassed++;
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL  Card removal and touch flick regressions:', error);
 }
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
@@ -981,24 +1273,4 @@ console.log('          76 drives the shared confirmation component in a minimal 
 console.log('          the two controller call sites. It proves cancellation/commit semantics,');
 console.log('          focus containment/return, and native-prompt removal; it does not paint');
 console.log('          the dialog or prove responsive geometry in a real browser.');
-try {
-  const { runCardRemovalFlickTests } = await import('./card-removal-flick.test.mjs');
-  const result = runCardRemovalFlickTests();
-  console.log(`PASS  Card removal and touch flick regressions: ${result.checks} checks`);
-} catch (error) {
-  zoomExtra++;
-  console.error('FAIL  Card removal and touch flick regressions:', error);
-}
-try {
-  await import('./starting-equipment-preview.test.mjs');
-} catch (error) {
-  zoomExtra++;
-  console.error('FAIL Starting equipment previews:', error);
-}
-try {
-  await import('./armament-combat-kits.test.mjs');
-} catch (error) {
-  zoomExtra++;
-  console.error('FAIL Armament combat kits:', error);
-}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

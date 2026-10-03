@@ -1,9 +1,12 @@
 import { mapFogDefs } from './mapFog.js';
+import { dungeonScene } from '../../model/legacyDungeon.js';
 import { assetUrl } from '../assetmap.js';
 import { combatEnvironment } from '../../model/environmentArt.js';
 import { ENVIRONMENTS, ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
 
 export function combatBackdropHtml(run, previewSceneId = null) {
+  const legacy = !previewSceneId && dungeonScene(run);
+  if (legacy) return `<div class="backdrop environment-backdrop" data-region="${legacy.region}" data-scene="${legacy.id}" aria-hidden="true"><svg viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" focusable="false"><image data-layer="floor" href="${assetUrl(legacy.floor)}" width="1536" height="1024"/><image data-layer="background" href="${assetUrl(legacy.background)}" width="1536" height="1024"/></svg></div>`;
   let { region, scene } = combatEnvironment(run);
   if (previewSceneId) {
     region = ENVIRONMENTS.find(r => r.scenes.some(s => s.id === previewSceneId));

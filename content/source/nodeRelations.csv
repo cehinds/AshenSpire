@@ -1,0 +1,41 @@
+# content/source/nodeRelations.csv — edges between nodes (Ashen Spire)
+#
+# One row per edge. The verbs are the framework's, closed (src/model/schemas.js
+# NODE_RELATIONS): INHERITS · PERMITS · REQUIRES · CONFLICTS_WITH · SUPPRESSES ·
+# REPLACES. CONFLICTS_WITH is symmetric; the rest read source → target.
+#
+# PERMITS is what "a kind automatically inherits the methods of that kind"
+# means in data: classification.attack PERMITS damage says an attack may carry
+# the damage subtree. A property rule's old requires/excludes columns are
+# REQUIRES and CONFLICTS_WITH rows here — a list in a cell was the one 1NF
+# break the old table still had.
+#
+# columns: sourceId, relation, targetId, precedence
+sourceId,relation,targetId,precedence
+classification.attack,CONFLICTS_WITH,classification.skill,10
+classification.attack,CONFLICTS_WITH,classification.power,10
+classification.attack,CONFLICTS_WITH,classification.curse,10
+classification.attack,CONFLICTS_WITH,classification.statusCard,10
+classification.skill,CONFLICTS_WITH,classification.power,10
+classification.skill,CONFLICTS_WITH,classification.curse,10
+classification.skill,CONFLICTS_WITH,classification.statusCard,10
+classification.power,CONFLICTS_WITH,classification.curse,10
+classification.power,CONFLICTS_WITH,classification.statusCard,10
+classification.curse,CONFLICTS_WITH,classification.statusCard,10
+classification.strike,CONFLICTS_WITH,classification.guard,10
+classification.strike,INHERITS,classification.attack,20
+lifecycle.exhaust,SUPPRESSES,lifecycle.recall.afterUse,100
+equipment.mainHand,REQUIRES,equipment.bound,10
+equipment.offHand,REQUIRES,equipment.bound,10
+equipment.twoHanded,REQUIRES,equipment.bound,10
+equipment.twoHanded,CONFLICTS_WITH,equipment.offHand,10
+classification.attack,PERMITS,damage,10
+classification.attack,PERMITS,scaling,10
+classification.guard,PERMITS,scaling,10
+classification.guard,PERMITS,utility.evasion,10
+classification.skill,PERMITS,scaling,10
+classification.skill,PERMITS,utility,10
+warlord,CONFLICTS_WITH,bulwarkKing,10
+conduit,CONFLICTS_WITH,reservoir,10
+martyr,CONFLICTS_WITH,saint,10
+assassin,CONFLICTS_WITH,shadow,10

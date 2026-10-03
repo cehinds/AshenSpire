@@ -112,8 +112,8 @@ if (armamentIntrinsicReceipt) {
 if (equipmentSurfaceReceipt) {
   const reaver = createRunState({ seed: 0x51, classId: 'reaver', registries: R });
   const active = equipmentSurfaceReceipt(R, reaver);
-  check(JSON.stringify(active.roleCopies) === JSON.stringify({ attack: 4, guard: 4, technique: 1, signature: 1 }),
-    'active receipt owns exact 4/4/1/1 copy counts', JSON.stringify(active.roleCopies));
+  check(JSON.stringify(active.roleCopies) === JSON.stringify({ attack: 4, guard: 4, technique: 1, signature: 1, ability: 1 }),
+    'active receipt owns exact 4/4/1/1/1 copy counts', JSON.stringify(active.roleCopies));
   check(active.roles.length === 3 && active.roles.every((row) => row.copies === active.roleCopies[row.role]),
     'each equipment role carries its authored copy count', JSON.stringify(active.roles));
   check(active.signature?.copies === 1 && active.signature?.cardId === R.classes.get('reaver').startingSignatureCard,

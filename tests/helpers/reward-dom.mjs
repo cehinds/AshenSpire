@@ -3,7 +3,7 @@ export function rewardDom() {
   class Element {
     constructor(tag) {
       this.tagName = tag.toUpperCase(); this.children = []; this.attributes = new Map();
-      this.dataset = {}; this.style = { setProperty() {}, getPropertyValue() { return ''; }, removeProperty() {} }; this.listeners = new Map();
+      this.dataset = new Proxy({}, { set: (data, key, value) => { data[key] = String(value); this.attributes.set('data-' + key.replace(/[A-Z]/g, c => '-' + c.toLowerCase()), String(value)); return true; } }); this.style = { setProperty() {}, getPropertyValue() { return ''; }, removeProperty() {} }; this.listeners = new Map();
       this.parentNode = null; this.disabled = false; this.hidden = false; this.textContent = '';
       this.classList = {
         contains: name => this.className.split(/\s+/).includes(name),
@@ -70,8 +70,10 @@ export function rewardDom() {
     click() { if (!this.disabled) this.dispatchEvent(new DomEvent('click', { bubbles: true })); }
   }
   class DomEvent {
-    constructor(type, options = {}) { this.type = type; Object.assign(this, options); }
-    preventDefault() { this.defaultPrevented = true; }
+    constructor(type, options = {}) { this.type = type; this.cancelable = false; this.defaultPrevented = false; Object.assign(this, options); }
+    // As in a browser: preventDefault() on an event built without
+    // `cancelable: true` is a no-op (a synthesized pad key once relied on it).
+    preventDefault() { if (this.cancelable) this.defaultPrevented = true; }
     stopPropagation() { this.propagationStopped = true; }
     stopImmediatePropagation() { this.immediatePropagationStopped = true; this.stopPropagation(); }
   }

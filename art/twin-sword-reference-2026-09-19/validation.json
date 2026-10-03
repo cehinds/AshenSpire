@@ -1,0 +1,231 @@
+{
+  "appearanceCount": 32,
+  "catalogEntries": 35,
+  "frames": 512,
+  "groups": [
+    {
+      "id": "reaver",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "reaver-vigil",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.45161290322585046
+    },
+    {
+      "id": "reaver-oathsworn",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4792626728110463
+    },
+    {
+      "id": "reaver-warden",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49308755760370104
+    },
+    {
+      "id": "starseer",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "starseer-eclipse",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "starseer-starlit",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4976958525346049
+    },
+    {
+      "id": "starseer-astral",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "herald",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "herald-ossuary",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "herald-emberhabit",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.47465437788017084
+    },
+    {
+      "id": "herald-pilgrim",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "rogue",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4884792626727972
+    },
+    {
+      "id": "rogue-nightveil",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4884792626727972
+    },
+    {
+      "id": "rogue-duelist",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4884792626727972
+    },
+    {
+      "id": "rogue-shadow",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4976958525346049
+    },
+    {
+      "id": "reaver-wayfarerPlate",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4976958525346049
+    },
+    {
+      "id": "starseer-wayfarerPlate",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4884792626727972
+    },
+    {
+      "id": "herald-wayfarerPlate",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4976958525346049
+    },
+    {
+      "id": "rogue-wayfarerPlate",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4792626728110463
+    },
+    {
+      "id": "reaver-nightweave",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4285714285714448
+    },
+    {
+      "id": "starseer-nightweave",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "herald-nightweave",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4884792626727972
+    },
+    {
+      "id": "rogue-nightweave",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4746543778801424
+    },
+    {
+      "id": "reaver-riteVestments",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4976958525346049
+    },
+    {
+      "id": "starseer-riteVestments",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "herald-riteVestments",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "rogue-riteVestments",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "reaver-gutterLeathers",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.47465437788019926
+    },
+    {
+      "id": "starseer-gutterLeathers",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.49769585253454807
+    },
+    {
+      "id": "herald-gutterLeathers",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4792626728110463
+    },
+    {
+      "id": "rogue-gutterLeathers",
+      "frames": 16,
+      "alphaExact": true,
+      "sourceEdgesClear": true,
+      "maxAnchorErrorPixels": 0.4930875576036442
+    }
+  ]
+}

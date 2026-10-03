@@ -1,0 +1,277 @@
+{
+  "rows": [
+    {
+      "id": "reaver/default",
+      "set": "reaverDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver/CONVERSATION.webp"
+    },
+    {
+      "id": "reaver/vigil",
+      "set": "reaver-vigilDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-vigil/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-vigil/CONVERSATION.webp"
+    },
+    {
+      "id": "reaver/oathsworn",
+      "set": "reaver-oathswornDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-oathsworn/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-oathsworn/CONVERSATION.webp"
+    },
+    {
+      "id": "reaver/warden",
+      "set": "reaver-wardenDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-warden/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-warden/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/default",
+      "set": "starseerDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/eclipse",
+      "set": "starseer-eclipseDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-eclipse/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-eclipse/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/starlit",
+      "set": "starseer-starlitDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-starlit/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-starlit/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/astral",
+      "set": "starseer-astralDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-astral/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-astral/CONVERSATION.webp"
+    },
+    {
+      "id": "herald/default",
+      "set": "heraldDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald/CONVERSATION.webp"
+    },
+    {
+      "id": "herald/ossuary",
+      "set": "herald-ossuaryDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-ossuary/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-ossuary/CONVERSATION.webp"
+    },
+    {
+      "id": "herald/emberhabit",
+      "set": "herald-emberhabitDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-emberhabit/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-emberhabit/CONVERSATION.webp"
+    },
+    {
+      "id": "herald/pilgrim",
+      "set": "herald-pilgrimDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-pilgrim/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-pilgrim/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/default",
+      "set": "rogueDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/nightveil",
+      "set": "rogue-nightveilDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-nightveil/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-nightveil/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/duelist",
+      "set": "rogue-duelistDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-duelist/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-duelist/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/shadow",
+      "set": "rogue-shadowDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-shadow/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-shadow/CONVERSATION.webp"
+    },
+    {
+      "id": "reaver/bastion",
+      "set": "reaver-wardenDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-warden/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-warden/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/rimeweave",
+      "set": "starseer-starlitDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-starlit/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-starlit/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/waywatcher",
+      "set": "rogue-nightveilDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-nightveil/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-nightveil/CONVERSATION.webp"
+    },
+    {
+      "id": "reaver/wayfarerPlate",
+      "set": "reaver-wayfarerPlateDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-wayfarerPlate/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-wayfarerPlate/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/wayfarerPlate",
+      "set": "starseer-wayfarerPlateDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-wayfarerPlate/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-wayfarerPlate/CONVERSATION.webp"
+    },
+    {
+      "id": "herald/wayfarerPlate",
+      "set": "herald-wayfarerPlateDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-wayfarerPlate/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-wayfarerPlate/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/wayfarerPlate",
+      "set": "rogue-wayfarerPlateDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-wayfarerPlate/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-wayfarerPlate/CONVERSATION.webp"
+    },
+    {
+      "id": "reaver/nightweave",
+      "set": "reaver-nightweaveDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-nightweave/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-nightweave/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/nightweave",
+      "set": "starseer-nightweaveDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-nightweave/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-nightweave/CONVERSATION.webp"
+    },
+    {
+      "id": "herald/nightweave",
+      "set": "herald-nightweaveDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-nightweave/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-nightweave/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/nightweave",
+      "set": "rogue-nightweaveDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-nightweave/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-nightweave/CONVERSATION.webp"
+    },
+    {
+      "id": "reaver/riteVestments",
+      "set": "reaver-riteVestmentsDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-riteVestments/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-riteVestments/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/riteVestments",
+      "set": "starseer-riteVestmentsDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-riteVestments/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-riteVestments/CONVERSATION.webp"
+    },
+    {
+      "id": "herald/riteVestments",
+      "set": "herald-riteVestmentsDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-riteVestments/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-riteVestments/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/riteVestments",
+      "set": "rogue-riteVestmentsDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-riteVestments/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-riteVestments/CONVERSATION.webp"
+    },
+    {
+      "id": "reaver/gutterLeathers",
+      "set": "reaver-gutterLeathersDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-gutterLeathers/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/reaver-gutterLeathers/CONVERSATION.webp"
+    },
+    {
+      "id": "starseer/gutterLeathers",
+      "set": "starseer-gutterLeathersDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-gutterLeathers/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/starseer-gutterLeathers/CONVERSATION.webp"
+    },
+    {
+      "id": "herald/gutterLeathers",
+      "set": "herald-gutterLeathersDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-gutterLeathers/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/herald-gutterLeathers/CONVERSATION.webp"
+    },
+    {
+      "id": "rogue/gutterLeathers",
+      "set": "rogue-gutterLeathersDaggerSingle",
+      "played": true,
+      "portrait": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-gutterLeathers/PORTRAIT.webp",
+      "conversation": "http://127.0.0.1:8843/assets/animations/dagger-outfits/rogue-gutterLeathers/CONVERSATION.webp"
+    }
+  ],
+  "observed": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "expected": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "actions": {
+    "guard": "DEFEND",
+    "cast": "CAST",
+    "power": "BUFF"
+  },
+  "errors": []
+}

@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "herald-gutterLeathers",
+  "classId": "herald",
+  "armourId": "gutterLeathers",
+  "effectsBaked": false,
+  "source": "sources/herald-gutterLeathers.png",
+  "sourceSha256": "6f58d140a4e041b1c15b430a2e9f64f023dcbfc5905c7792bc954054e1fd8c3a",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.2844036697247707,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        33,
+        12,
+        286,
+        324
+      ],
+      "core": [
+        45,
+        24,
+        274,
+        312
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        126.5,
+        300
+      ],
+      "offset": [
+        94,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        99,
+        106,
+        407,
+        494
+      ],
+      "file": "frames/herald-gutterLeathers/STANCE-READY.webp",
+      "sha256": "c55462b88aa32950bfa69217ddc816ebfb18865d8a4504b3f3817049dee89230"
+    },
+    "ATK-01": {
+      "content": [
+        338,
+        12,
+        599,
+        324
+      ],
+      "core": [
+        350,
+        24,
+        587,
+        312
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        130.5,
+        300
+      ],
+      "offset": [
+        88,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        96,
+        106,
+        423,
+        491
+      ],
+      "file": "frames/herald-gutterLeathers/ATK-01.webp",
+      "sha256": "67a60093ce4c98fd8a79e14c925858cd3dcd63491c363f5e1e9f81d3256f0d68"
+    },
+    "ATK-02": {
+      "content": [
+        654,
+        18,
+        914,
+        324
+      ],
+      "core": [
+        666,
+        30,
+        902,
+        312
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        128.5,
+        294
+      ],
+      "offset": [
+        91,
+        102
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        93,
+        112,
+        413,
+        486
+      ],
+      "file": "frames/herald-gutterLeathers/ATK-02.webp",
+      "sha256": "7566dbb9daae62c2229209993774dfe0f0caadff737d25571269ac4c1e12e126"
+    },
+    "ATK-03": {
+      "content": [
+        965,
+        15,
+        1254,
+        324
+      ],
+      "core": [
+        977,
+        27,
+        1243,
+        312
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        130.0,
+        297
+      ],
+      "offset": [
+        89,
+        99
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        100,
+        111,
+        460,
+        491
+      ],
+      "file": "frames/herald-gutterLeathers/ATK-03.webp",
+      "sha256": "0f77b88e80b9ac5f3fbb506a990d2fad565f14860e1be4ddd22d8a6304ec047b"
+    },
+    "ATK-04": {
+      "content": [
+        37,
+        325,
+        287,
+        637
+      ],
+      "core": [
+        49,
+        337,
+        275,
+        625
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        125.0,
+        300
+      ],
+      "offset": [
+        95,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        106,
+        106,
+        405,
+        486
+      ],
+      "file": "frames/herald-gutterLeathers/ATK-04.webp",
+      "sha256": "78c7e69e7c097ff5f69484ed15bb9368638c3a963ec2c8fe0eddfb5795ed21ca"
+    },
+    "ATK-05": {
+      "content": [
+        332,
+        328,
+        618,
+        638
+      ],
+      "core": [
+        344,
+        340,
+        606,
+        626
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        134.0,
+        298
+      ],
+      "offset": [
+        84,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        84,
+        108,
+        450,
+        485
+      ],
+      "file": "frames/herald-gutterLeathers/ATK-05.webp",
+      "sha256": "fc8747dc08846ea26a620c39e522566b099ebfad8e4602bbb24c300a856d5593"
+    },
+    "ATK-06": {
+      "content": [
+        655,
+        327,
+        914,
+        638
+      ],
+      "core": [
+        667,
+        339,
+        902,
+        626
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        129.5,
+        299
+      ],
+      "offset": [
+        90,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        96,
+        107,
+        411,
+        483
+      ],
+      "file": "frames/herald-gutterLeathers/ATK-06.webp",
+      "sha256": "98023220b53396bb5357794d73a70ba5a391caac00e48a588130af9fd8cdc6b1"
+    },
+    "ATK-07": {
+      "content": [
+        978,
+        327,
+        1230,
+        638
+      ],
+      "core": [
+        990,
+        339,
+        1218,
+        626
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        126.0,
+        299
+      ],
+      "offset": [
+        94,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        96,
+        108,
+        410,
+        485
+      ],
+      "file": "frames/herald-gutterLeathers/ATK-07.webp",
+      "sha256": "e3af904d614b9cd89b9cf7f2c77b6443b8a535f3fbcd7a2e3cc9e7c4313f6e2e"
+    },
+    "DEFEND": {
+      "content": [
+        42,
+        648,
+        292,
+        947
+      ],
+      "core": [
+        54,
+        660,
+        280,
+        935
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        125.0,
+        287
+      ],
+      "offset": [
+        95,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        104,
+        123,
+        415,
+        486
+      ],
+      "file": "frames/herald-gutterLeathers/DEFEND.webp",
+      "sha256": "9b2c8f0d0aea9948edb8c0b76aced636c6877ba33a9f83b2c6e9e41510ce2a0f"
+    },
+    "HURT": {
+      "content": [
+        361,
+        638,
+        610,
+        948
+      ],
+      "core": [
+        373,
+        650,
+        598,
+        936
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        124.5,
+        298
+      ],
+      "offset": [
+        96,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        104,
+        109,
+        404,
+        486
+      ],
+      "file": "frames/herald-gutterLeathers/HURT.webp",
+      "sha256": "dd4dd4fc687bf32aefd523dc0cc875fcbc900f92e7b5453c69fef8ec48812e14"
+    },
+    "CAST": {
+      "content": [
+        658,
+        637,
+        938,
+        947
+      ],
+      "core": [
+        670,
+        649,
+        926,
+        935
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        128.0,
+        298
+      ],
+      "offset": [
+        92,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        97,
+        108,
+        446,
+        493
+      ],
+      "file": "frames/herald-gutterLeathers/CAST.webp",
+      "sha256": "c9be73910af34b96315a1375d456ec6769fbf68dd68ac49462d4651303b85fa7"
+    },
+    "BUFF": {
+      "content": [
+        1013,
+        628,
+        1211,
+        948
+      ],
+      "core": [
+        1025,
+        640,
+        1199,
+        936
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        99.0,
+        308
+      ],
+      "offset": [
+        129,
+        84
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        130,
+        92,
+        375,
+        486
+      ],
+      "file": "frames/herald-gutterLeathers/BUFF.webp",
+      "sha256": "c3c10ffd5b6dc03a0e15c3a22928429282300ad0e65540fd3584adb6291cb30a"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        29,
+        967,
+        306,
+        1244
+      ],
+      "core": [
+        41,
+        979,
+        294,
+        1232
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        138.5,
+        265
+      ],
+      "offset": [
+        78,
+        140
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        86,
+        151,
+        422,
+        488
+      ],
+      "file": "frames/herald-gutterLeathers/STANCE-AGGRESSIVE.webp",
+      "sha256": "f7b2ddc0e116509ea407b9e076eb8b121616d55d50561bad81846055460452ef"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        348,
+        964,
+        607,
+        1246
+      ],
+      "core": [
+        360,
+        976,
+        595,
+        1234
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        129.5,
+        270
+      ],
+      "offset": [
+        90,
+        133
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        91,
+        143,
+        411,
+        487
+      ],
+      "file": "frames/herald-gutterLeathers/STANCE-DEFENSIVE.webp",
+      "sha256": "ef30b7dcc34194619985d1a48dfb0a1426aeeccc7e126277fa8f80f3b3edaf79"
+    },
+    "PORTRAIT": {
+      "content": [
+        635,
+        944,
+        949,
+        1246
+      ],
+      "core": [
+        647,
+        956,
+        937,
+        1234
+      ],
+      "scale": 1.4777070063694266,
+      "sourceFootAnchor": [
+        157.0,
+        290
+      ],
+      "offset": [
+        24,
+        51
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        31,
+        60,
+        488,
+        487
+      ],
+      "file": "frames/herald-gutterLeathers/PORTRAIT.webp",
+      "sha256": "7cf7c2e2adc94170389e490a1d6038c4bc7fde05a66b9c3808dfe3179b879307"
+    },
+    "CONVERSATION": {
+      "content": [
+        1026,
+        925,
+        1204,
+        1252
+      ],
+      "core": [
+        1038,
+        937,
+        1192,
+        1240
+      ],
+      "scale": 1.2844036697247707,
+      "sourceFootAnchor": [
+        89.0,
+        315
+      ],
+      "offset": [
+        142,
+        75
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        142,
+        86,
+        366,
+        483
+      ],
+      "file": "frames/herald-gutterLeathers/CONVERSATION.webp",
+      "sha256": "82edb72a556612337ebb1ce4b19960e7394d8ce59a9dced400e79157404ef9e9"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

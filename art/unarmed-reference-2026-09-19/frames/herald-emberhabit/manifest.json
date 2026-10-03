@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "herald-emberhabit",
+  "classId": "herald",
+  "armourId": "emberhabit",
+  "effectsBaked": false,
+  "source": "sources/herald-emberhabit.png",
+  "sourceSha256": "4b5f17982198990dd784241fdaed2d124716df101c56e86aca122c199e3df8a4",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3333333333333333,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        19,
+        12,
+        285,
+        315
+      ],
+      "core": [
+        31,
+        24,
+        273,
+        303
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        144.5,
+        291
+      ],
+      "offset": [
+        63,
+        92
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        74,
+        101,
+        418,
+        484
+      ],
+      "file": "frames/herald-emberhabit/STANCE-READY.webp",
+      "sha256": "ca9ae8fe1c4b727fd8fb85ae3d2bf214335506cf25f52b3e5151c66c3feae532"
+    },
+    "ATK-01": {
+      "content": [
+        330,
+        15,
+        598,
+        315
+      ],
+      "core": [
+        342,
+        27,
+        586,
+        303
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        141.5,
+        288
+      ],
+      "offset": [
+        67,
+        96
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        79,
+        108,
+        420,
+        485
+      ],
+      "file": "frames/herald-emberhabit/ATK-01.webp",
+      "sha256": "a617555773c915033f3bc79351982635ba4bc54f964ab3cedc0483ad57dcf471"
+    },
+    "ATK-02": {
+      "content": [
+        633,
+        17,
+        917,
+        315
+      ],
+      "core": [
+        645,
+        29,
+        905,
+        303
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        149.0,
+        286
+      ],
+      "offset": [
+        57,
+        99
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        70,
+        112,
+        435,
+        487
+      ],
+      "file": "frames/herald-emberhabit/ATK-02.webp",
+      "sha256": "935644a00e8819301a8639c2008b3992150c15259a31ec33c7f577195ae6d8f3"
+    },
+    "ATK-03": {
+      "content": [
+        957,
+        14,
+        1244,
+        315
+      ],
+      "core": [
+        969,
+        26,
+        1232,
+        303
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        144.5,
+        289
+      ],
+      "offset": [
+        63,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        108,
+        438,
+        487
+      ],
+      "file": "frames/herald-emberhabit/ATK-03.webp",
+      "sha256": "9ea9a0df9bab28cf6f99595494a480a0732991be1555cdbffe1d7d0414acb867"
+    },
+    "ATK-04": {
+      "content": [
+        19,
+        324,
+        289,
+        626
+      ],
+      "core": [
+        31,
+        336,
+        277,
+        614
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        144.5,
+        290
+      ],
+      "offset": [
+        63,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        74,
+        105,
+        411,
+        487
+      ],
+      "file": "frames/herald-emberhabit/ATK-04.webp",
+      "sha256": "f0d74d602cc1fd4bf0f1db3396a8d9eeb59928c6e9fc6d143a6a2a064550ed8e"
+    },
+    "ATK-05": {
+      "content": [
+        329,
+        324,
+        619,
+        627
+      ],
+      "core": [
+        341,
+        336,
+        607,
+        615
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        143.0,
+        291
+      ],
+      "offset": [
+        65,
+        92
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        77,
+        105,
+        452,
+        493
+      ],
+      "file": "frames/herald-emberhabit/ATK-05.webp",
+      "sha256": "9a6348843d9c21b07ac082b22a12d5432da4ea90368d6291ea21e547f55f64f3"
+    },
+    "ATK-06": {
+      "content": [
+        643,
+        324,
+        911,
+        626
+      ],
+      "core": [
+        655,
+        336,
+        899,
+        614
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        142.5,
+        290
+      ],
+      "offset": [
+        66,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        79,
+        105,
+        411,
+        484
+      ],
+      "file": "frames/herald-emberhabit/ATK-06.webp",
+      "sha256": "ecb6f4702778f5243ea4982af5eb159184efacf06f88b1d16afd4146c4f62172"
+    },
+    "ATK-07": {
+      "content": [
+        962,
+        324,
+        1235,
+        626
+      ],
+      "core": [
+        974,
+        336,
+        1223,
+        614
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        147.0,
+        290
+      ],
+      "offset": [
+        60,
+        93
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        60,
+        93,
+        415,
+        492
+      ],
+      "file": "frames/herald-emberhabit/ATK-07.webp",
+      "sha256": "ed0f5c73855cd5ae80a738900dcb62cbfcdc377d7f0a2acb08f55182d323294c"
+    },
+    "DEFEND": {
+      "content": [
+        21,
+        638,
+        292,
+        936
+      ],
+      "core": [
+        33,
+        650,
+        280,
+        924
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        147.5,
+        286
+      ],
+      "offset": [
+        59,
+        99
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        72,
+        99,
+        408,
+        496
+      ],
+      "file": "frames/herald-emberhabit/DEFEND.webp",
+      "sha256": "75f08e201231e1394c8ac8c385d308e329442dc915052caebd6669abb0a888a6"
+    },
+    "HURT": {
+      "content": [
+        329,
+        649,
+        606,
+        938
+      ],
+      "core": [
+        341,
+        661,
+        594,
+        926
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        154.5,
+        277
+      ],
+      "offset": [
+        50,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        61,
+        124,
+        418,
+        488
+      ],
+      "file": "frames/herald-emberhabit/HURT.webp",
+      "sha256": "c5f2c3ffa67f3acfdb440073d1f7adef6a733f36e41eff3b44ee4d75ddc09bde"
+    },
+    "CAST": {
+      "content": [
+        629,
+        630,
+        940,
+        939
+      ],
+      "core": [
+        641,
+        642,
+        928,
+        927
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        154.5,
+        297
+      ],
+      "offset": [
+        50,
+        84
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        51,
+        97,
+        465,
+        491
+      ],
+      "file": "frames/herald-emberhabit/CAST.webp",
+      "sha256": "820bd20ac6801ad22b987446cb68ad14e0b6b1c7433110b48ec11187e275377e"
+    },
+    "BUFF": {
+      "content": [
+        968,
+        624,
+        1204,
+        939
+      ],
+      "core": [
+        980,
+        636,
+        1192,
+        927
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        140.0,
+        303
+      ],
+      "offset": [
+        69,
+        76
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        69,
+        81,
+        372,
+        496
+      ],
+      "file": "frames/herald-emberhabit/BUFF.webp",
+      "sha256": "cf22f2fc9ef7f68b5bc29c9f3dddd0f225410c3517daae62d2fa92525d86ccd9"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        23,
+        954,
+        304,
+        1223
+      ],
+      "core": [
+        35,
+        966,
+        292,
+        1211
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        149.0,
+        257
+      ],
+      "offset": [
+        57,
+        137
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        69,
+        141,
+        420,
+        495
+      ],
+      "file": "frames/herald-emberhabit/STANCE-AGGRESSIVE.webp",
+      "sha256": "50c874cd4d5530dd31bed670e3c6490f00437f3393d8f6bc236129fb58500782"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        332,
+        955,
+        604,
+        1223
+      ],
+      "core": [
+        344,
+        967,
+        592,
+        1211
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        149.0,
+        256
+      ],
+      "offset": [
+        57,
+        139
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        69,
+        151,
+        409,
+        495
+      ],
+      "file": "frames/herald-emberhabit/STANCE-DEFENSIVE.webp",
+      "sha256": "1560d535eba1d97ae4d57f16a3883cb021b1aa7586dbc5acf6bcbd14926ee5c5"
+    },
+    "PORTRAIT": {
+      "content": [
+        633,
+        936,
+        943,
+        1234
+      ],
+      "core": [
+        645,
+        948,
+        931,
+        1222
+      ],
+      "scale": 1.4967741935483871,
+      "sourceFootAnchor": [
+        155.0,
+        286
+      ],
+      "offset": [
+        24,
+        52
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        34,
+        65,
+        487,
+        485
+      ],
+      "file": "frames/herald-emberhabit/PORTRAIT.webp",
+      "sha256": "0440196815d0322cebabaff7ef1f3ced0b651f46bd382ce22c59ff0cb81613a1"
+    },
+    "CONVERSATION": {
+      "content": [
+        981,
+        921,
+        1185,
+        1231
+      ],
+      "core": [
+        993,
+        933,
+        1173,
+        1219
+      ],
+      "scale": 1.3333333333333333,
+      "sourceFootAnchor": [
+        123.0,
+        298
+      ],
+      "offset": [
+        92,
+        83
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        104,
+        96,
+        351,
+        487
+      ],
+      "file": "frames/herald-emberhabit/CONVERSATION.webp",
+      "sha256": "53c9aa04a723f244b6ff898b7c42a38a7304f21d722e3b5b69c68cd8974c8fed"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

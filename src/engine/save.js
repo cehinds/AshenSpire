@@ -27,20 +27,28 @@
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
 import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
+import { healMissingSlotCells, isItemOwned } from '../model/loadout.js';
+import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from '../model/cardRemoval.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
 import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 import { assertSavedBossReferences } from '../model/mapReferences.js';
+import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
+import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
+import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
+import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
+import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
+import { unknownConsumableId, unknownCompanionId } from '../model/consumables.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -67,7 +75,7 @@ const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older th
 
 // Slot 1 keeps the legacy key (backward compatible: existing saves are slot 1);
 // slots 2..N use suffixed keys. All slot-taking methods default to slot 1.
-function runKey(slot = 1) {
+export function runKey(slot = 1) {
   return slot === 1 ? RUN_KEY : `${RUN_KEY}_s${slot}`;
 }
 
@@ -92,6 +100,21 @@ function hydrateMissingEquipmentProfiles(registries, snapshot) {
   return added;
 }
 
+/**
+ * The class tree's picks, by the run's own class (plan phase 5b): the picks
+ * on the run, the picks a fight in progress carries, and the class a pending
+ * draft names. The shape door proves the arrays; this door proves the tree.
+ */
+function classTreeReferenceProblems(run, registries) {
+  const problems = coreTagsTreeProblems(registries, run.class, run.coreTags, 'coreTags');
+  const snapshot = run.combatEntered && run.combatEntered.snapshot;
+  if (snapshot) problems.push(...coreTagsTreeProblems(registries, run.class, snapshot.coreTags, 'combatEntered.snapshot.coreTags'));
+  for (const draft of (run.pendingReward && run.pendingReward.rewards && run.pendingReward.rewards.classDrafts) || []) {
+    if (draft && draft.classId !== run.class) problems.push(`class draft class '${draft.classId}' is not the run's class '${run.class}'`);
+  }
+  return problems;
+}
+
 function pendingRewardReferenceProblems(pending, registries) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
@@ -99,7 +122,27 @@ function pendingRewardReferenceProblems(pending, registries) {
   for (const cardId of rewards.cardIds || []) {
     if (!registries.cards.has(cardId)) problems.push(`card '${cardId}' is unknown`);
   }
+  for (const draft of rewards.classDrafts || []) {
+    const tree = new Set(classTreeRows(registries, draft && draft.classId).map((row) => row.nodeId));
+    if (!draft || !registries.classes.has(draft.classId)) problems.push(`class draft class '${draft && draft.classId}' is unknown`);
+    for (const nodeId of (draft && draft.nodeIds) || []) {
+      if (!tree.has(nodeId)) problems.push(`class draft node '${nodeId}' is not in the '${draft.classId}' tree`);
+    }
+  }
+  for (const row of Array.isArray(rewards.levelCards) ? rewards.levelCards : []) {
+    for (const cardId of (row && row.cardIds) || []) {
+      if (!registries.cards.has(cardId)) problems.push(`level card '${cardId}' is unknown`);
+    }
+  }
+  for (const draft of rewards.skillDrafts || []) {
+    if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);
+    for (const cardId of (draft && draft.cardIds) || []) {
+      if (!registries.cards.has(cardId)) problems.push(`skill draft card '${cardId}' is unknown`);
+    }
+  }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
+  // SPEC §15.4: a dropped legendary sigil (its rarity is sigilRarityProblems').
+  if (rewards.sigilId && !registries.sigils.has(rewards.sigilId)) problems.push(`sigil '${rewards.sigilId}' is unknown`);
   if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
   if (rewards.armamentId
       && !(registries.equipment.armaments || []).some((piece) => piece.id === rewards.armamentId)) {
@@ -155,7 +198,24 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // run's, and neither is written back — a load must not rewrite a snapshot
   // it understands (tools/weapon-card-packages.mjs holds that line).
   const itemMounts = snapshot.itemMounts !== undefined ? snapshot.itemMounts : run.itemMounts;
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts }, snapshot.piles);
+  // A Sealed/Draft fight keeps its dealt piles: no lent card is dealt into a
+  // resumed fight either (model/cardRemoval.js). The run's own deck mode
+  // decides; the snapshot's flag was cross-checked against it at the door.
+  const poolDeck = isPoolDeckMode(run);
+  const lentBefore = poolDeck ? COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId) : [];
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
+  const lentAfter = new Set(COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId));
+  const swept = lentBefore.filter((id) => !lentAfter.has(id));
+  if (swept.length) {
+    note(run, {
+      kind: 'heal',
+      site: 'save.js:sweepPoolDeckLentCards',
+      field: 'combatEntered.snapshot.piles',
+      was: swept,
+      now: [],
+      why: `a ${run.custom?.deckMode || 'pool'} fight saved by an older build held cards its equipment lent at a mid-fight swap; a dealt deck holds none, so they are swept`,
+    });
+  }
   const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
   // THE BIRTH QUOTA REACHES THE MIGRATION TOO. Persisting it on the run and the
   // combat snapshot is only half the job: this door builds its own plan and
@@ -181,7 +241,11 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     equipmentAttackSlotCount: bornWith,
     removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds,
+    // The run's own stat rows price the ratings the stamp writes.
+    derivedStatRuleSnapshot: snapshot.derivedStatRuleSnapshot || run.derivedStatRuleSnapshot,
+    level: run.level,
     itemMounts,
+    ...(poolDeck ? { poolDeck: true } : {}),
     deck: cards,
   }, cards, {
     adoptEquipmentBonuses: false,
@@ -189,11 +253,24 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   });
   snapshot.itemUpgradeLevels = structuredClone(runLevels);
   delete snapshot.armamentLevels;
+  // The rule rides the snapshot from here on: a fight saved before the fix
+  // has no flag, and restoreCombatSnapshot builds the live combat from the
+  // snapshot alone, so its next mid-fight swap would deal lent cards.
+  if (poolDeck) snapshot.poolDeck = true;
 
   // Commit only after validation and every pile rebind succeed. Resume then
   // observes the exact same loadout in run state and restored combat state.
   run.combatEntered.snapshot = snapshot;
   run.loadout = structuredClone(snapshot.loadout);
+}
+
+// newerRunSchemaVersion(json) → the save's schemaVersion when a NEWER build
+// wrote it, else null. Corrupt JSON is null here: it is refused and archived by
+// the ordinary door, which names why.
+function newerRunSchemaVersion(json) {
+  let v;
+  try { v = JSON.parse(json)?.schemaVersion; } catch { return null; }
+  return Number.isInteger(v) && v > RUN_SCHEMA_VERSION ? v : null;
 }
 
 /**
@@ -498,13 +575,18 @@ export function createSaveManager(storage) {
     saveRun(run, rng, slot = 1) {
       if (rng) run.streamCounters = rng.getCounters();
       ensureProfile(); // a stored run implies a stored profile — never the other way round
-      storage.setItem(runKey(slot), serializeRun(run));
+      // W1l–W1r: the slot says when it was last written. Stamped only when the
+      // write lands, so a full store cannot leave a run claiming a save it lost.
+      const previous = run.savedAt;
+      run.savedAt = new Date().toISOString();
+      try { storage.setItem(runKey(slot), serializeRun(run)); } catch (error) { run.savedAt = previous; throw error; }
     },
 
     /**
      * loadRun(registries, slot?) → run | null. Refuses and archives: corrupt
      * JSON, unknown schemaVersion, or (on contentVersion mismatch) any deck/
      * relic/flask id that no longer resolves against the current registries.
+     * A schemaVersion NEWER than this build is refused and left in the slot.
      */
     loadRun(registries, slot = 1) {
       const json = storage.getItem(runKey(slot));
@@ -512,9 +594,25 @@ export function createSaveManager(storage) {
         runStatusRecord = { state: 'none', reason: `slot ${slot} is empty`, ledger: null };
         return null;
       }
+      // A run written by a NEWER build: refuse AND PRESERVE, the run-side twin
+      // of the profile's 'newer' state. Archiving would clear the slot, and the
+      // player who goes back to the newer build would find their climb gone.
+      // Nothing is archived and nothing is moved; the bytes stay in the slot.
+      const newerVersion = newerRunSchemaVersion(json);
+      if (newerVersion !== null) {
+        runStatusRecord = { state: 'newer', reason: `run schemaVersion ${newerVersion} is newer than this build (${RUN_SCHEMA_VERSION})`, ledger: null, archiveId: null };
+        return null;
+      }
       let run;
       try {
         run = deserializeRun(json);
+        // SPEC §13.4: a save from before seats climbs the order it was already
+        // climbing — the default — and nothing else about it moves, no draw.
+        // A save that HAS an order must name every seat once, or it is a
+        // dangling id and refused like any other (§3.12).
+        if (!Array.isArray(run.seatOrder)) run.seatOrder = defaultSeatOrder(registries);
+        const seatProblems = seatOrderProblems(run.seatOrder, registries);
+        if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
         const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
         if (run.journey) {
           // deserializeRun validated the pinned manifest. Its graph is a derived
@@ -522,7 +620,7 @@ export function createSaveManager(storage) {
           for (const id of Object.keys(run.journey.outcomes)) journeyEncounter(run.journey, id, registries);
           run.mapGraph = journeyGraph(run.journey);
         } else {
-          assertSavedBossReferences(registries, run.mapGraph, mapAct);
+          assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
           run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
         }
         const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);
@@ -533,6 +631,8 @@ export function createSaveManager(storage) {
         if (pendingReferenceProblems.length) {
           throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
         }
+        const treeProblems = classTreeReferenceProblems(run, registries);
+        if (treeProblems.length) throw new Error(`Malformed class tree references: ${treeProblems.join('; ')}`);
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema
@@ -549,6 +649,89 @@ export function createSaveManager(storage) {
             why: 'an older build wrote this save; the schema stamp was brought forward',
           });
         }
+        // Plan phase 3a: `zones`/`collection` are a projection of the legacy
+        // fields and were re-derived at the migration door; a save whose
+        // carried projection disagreed (an edit by hand — serializeRun cannot
+        // write one) is noted here, where the ledger is open, never refused.
+        if (run.reprojectedZones !== undefined) {
+          note(run, {
+            kind: 'overwrite',
+            site: 'state.js:migrateRunSchema',
+            field: 'zones',
+            was: run.reprojectedZones,
+            now: { zones: run.zones, collection: run.collection },
+            why: 'the saved zones disagreed with the class, loadout, relics and deck they are projected from; those fields own the truth until phase 3b, so the projection was re-derived',
+          });
+          delete run.reprojectedZones;
+        }
+        // Plan phase 5b: a class-tree pick no tree holds any more — a content
+        // update renamed or dropped the node — is stale, not a tamper (another
+        // class's node is refused above). It is dropped here, where the ledger
+        // is open, from the run and from a fight in progress; the rest stay.
+        for (const [holder, field] of [[run, 'coreTags'], [run.combatEntered && run.combatEntered.snapshot, 'combatEntered.snapshot.coreTags']]) {
+          const stale = holder ? staleCoreTags(registries, run.class, holder.coreTags) : [];
+          if (!stale.length) continue;
+          const was = [...holder.coreTags];
+          holder.coreTags = holder.coreTags.filter((id) => !stale.includes(id));
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field,
+            was,
+            now: [...holder.coreTags],
+            why: `the class tree of '${run.class}' no longer holds ${stale.map((id) => `'${id}'`).join(', ')}: the pick was dropped, the rest kept`,
+          });
+        }
+        // A sigil id this build does not know (SPEC §14.3) is refused by name:
+        // it would be a carried item with no row to show or install.
+        const strangeSigil = unknownSigilId(registries, run);
+        if (strangeSigil) throw new Error(`sigil '${strangeSigil}' is unknown to this build`);
+        // SPEC §15.4, rarity at every door: every legendary-only position names
+        // a legendary, no other position holds one, and the attuned list fits
+        // the run's own frozen attuneMax and is what a fight in progress carries.
+        const rarityProblems = sigilRarityProblems(registries, run);
+        if (rarityProblems.length) throw new Error(`Malformed sigils: ${rarityProblems.join('; ')}`);
+        // So is a bought armour set (SPEC §14.3, `loadout.boughtArmour`): a set
+        // this build has no row for, for that class, would vanish from the
+        // run's wardrobe without a word (Codex, on #1374).
+        const strangeArmour = (run.loadout?.boughtArmour || []).find((row) => !(registries.equipment.armour || []).some((piece) => piece.classId === row.classId && piece.id === row.id));
+        if (strangeArmour) throw new Error(`bought armour '${strangeArmour.id}' (class '${strangeArmour.classId}') is unknown to this build`);
+        // An UNSOLD offer is not owned: one for a sigil or an armour set this
+        // build no longer has is pruned from the saved shelf, never rerolled,
+        // and the run loads (Codex, on #1374; coordinator ruling).
+        // An OWNED consumable or companion this build does not know (SPEC
+        // §14.3) is refused by name, as an owned sigil is: a count with no row
+        // to read or spend, an ally with no rule to mount.
+        const strangeConsumable = unknownConsumableId(registries, run);
+        if (strangeConsumable) throw new Error(`consumable '${strangeConsumable}' is unknown to this build`);
+        const strangeCompanion = unknownCompanionId(registries, run);
+        if (strangeCompanion) throw new Error(`companion '${strangeCompanion}' is unknown to this build`);
+        const known = {
+          sigilKnown: (id) => registries.sigils.has(id),
+          armourKnown: (classId, id) => (registries.equipment.armour || []).some((piece) => piece.classId === classId && piece.id === id),
+          consumableKnown: (id) => registries.consumables.has(id),
+          companionKnown: (id) => registries.companions.has(id),
+          eventKnown: (id) => registries.events.has(id),
+          // The blacksmith's rack (SPEC §14.4): an unsold armament this build
+          // no longer has is pruned, like any unsold market offer.
+          armamentKnown: (id) => (registries.equipment.armaments || []).some((piece) => piece.id === id),
+          // The master's art shelf and lesson rolls (SPEC §14.5): an unsold
+          // art or a rolled card this build no longer has is pruned.
+          cardKnown: (id) => registries.cards.has(id),
+        };
+        const stocks = [['shopStock', run.shopStock], ...Object.entries(run.journey?.serviceStates || {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock`, state && state.stock])];
+        for (const [field, stock] of stocks) {
+          const removed = pruneUnknownAdditionOffers(stock, known);
+          if (!removed.length) continue;
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field,
+            was: removed,
+            now: null,
+            why: `this build no longer has ${removed.map((row) => `${row.shelf} '${row.id}'${row.classId ? ` (class '${row.classId}')` : ''}`).join(', ')}: the unsold offer was pruned, nothing rerolled`,
+          });
+        }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {
@@ -559,7 +742,7 @@ export function createSaveManager(storage) {
       }
       if (run.contentVersion !== registries.contentVersion) {
         const dangling =
-          (run.deck || []).find((c) => !registries.cards.has(c.cardId)) ||
+          [...(run.deck || []), ...(run.sideboard || [])].find((c) => !registries.cards.has(c.cardId)) ||
           (run.relics || []).find((id) => !registries.relics.has(id)) ||
           (run.flasks || []).find((f) => !registries.flasks.has(f.flaskId));
         if (dangling) {
@@ -595,6 +778,40 @@ export function createSaveManager(storage) {
           was: undefined,
           now: { sets: run.loadout.sets },
           why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
+      }
+      // A slot row that arrived after this save was written (phase 3b: head,
+      // hands, feet) has no cells in it. Give each its empty cells, as a fresh
+      // run has them, and say so — a position the Armoury cannot draw is a
+      // piece the player could never equip.
+      // The active-combat snapshot carries its own loadout (the fight's
+      // authority, SPEC §13.3) and is healed the same way, in the same row.
+      const slotsAdded = healMissingSlotCells(registries, run.loadout);
+      const snapshotSlotsAdded = run.combatEntered && run.combatEntered.snapshot
+        ? healMissingSlotCells(registries, run.combatEntered.snapshot.loadout) : [];
+      if (slotsAdded.length || snapshotSlotsAdded.length) {
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'loadout.sets',
+          was: undefined,
+          now: { slots: slotsAdded, snapshotSlots: snapshotSlotsAdded },
+          why: `the slot table gained ${[...new Set([...slotsAdded, ...snapshotSlotsAdded])].join(', ')} after this save was written; each has its empty cells now, as a fresh run does${snapshotSlotsAdded.length ? ' — in the saved fight\'s loadout too' : ''}`,
+        });
+      }
+      // The skill threshold's standing rule (plan phase 4b, model/skills.js):
+      // a ledger written before the rule existed may stand past `upgradeAt`
+      // with its cards untouched; the rule is idempotent, so the load door
+      // asks it once and says what it did.
+      const skillUpgrades = reconcileSkillUpgrades(registries, run);
+      if (Object.keys(skillUpgrades).length) {
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'deck.upgraded',
+          was: undefined,
+          now: skillUpgrades,
+          why: `the tracks ${Object.keys(skillUpgrades).join(', ')} stand at or past balance.skill.upgradeAt; the cards of their schools are upgraded, as the rule upgrades them at every award`,
         });
       }
       const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);
@@ -640,6 +857,69 @@ export function createSaveManager(storage) {
             why: 'run saved before the birth attack quota was recorded; its own deck is the record of what it was born with',
           });
         }
+        // A POOL-BUILT DECK IS HELD TO ITS OWN RULE, NOT THE COMPOSED ONE.
+        // Sealed and Draft (Custom Climb) deal the starting deck from a pool
+        // after createRunState composed one from the equipment. Before main.js
+        // newRun wrote the dealt deck's own quota (and `poolDeckRule`), the
+        // save kept the composed deck's, naming attack slots the deck never
+        // held, and the full restamp below refused every such save ("attack
+        // instance count 0 does not match authored N"). This one-time heal is
+        // for exactly those saves — a pool run with no `poolDeckRule` and no
+        // retired slot — and replaces a quota ABOVE what the deck holds with
+        // the dealt count. A run that carries the marker is held to its quota
+        // like any other, so a lost attack card is refused, not healed; a gap
+        // or an excess is refused either way; a Standard run is not touched.
+        // Only an ABSENT marker is a pre-fix save. A present marker must be
+        // the one rule this build knows, on a pool run; anything else (a
+        // future rule, a string, null, a marker on a Standard run) is refused
+        // by name, never migrated (Codex review on #1479).
+        // A FLAG IS CHECKED AGAINST THE RUN, NEVER TRUSTED (Codex review on
+        // #1479). `poolDeck` is a fight's flag: on a saved run it is refused,
+        // and a combat snapshot's must agree with the run's own deck mode — a
+        // Standard fight claiming the pool rule would have its equipment cards
+        // swept, a pool fight denying it would be dealt them. Absent on a pool
+        // fight is a pre-fix snapshot; the migration below writes it.
+        if (Object.hasOwn(run, 'poolDeck')) throw new Error('poolDeck is a fight\'s flag, not a run field');
+        {
+          const fight = run.combatEntered && run.combatEntered.snapshot;
+          if (fight && Object.hasOwn(fight, 'poolDeck') && (fight.poolDeck !== true || !isPoolDeckMode(run))) {
+            throw new Error(`combat snapshot poolDeck ${JSON.stringify(fight.poolDeck)} disagrees with the run's '${run.custom?.deckMode || 'standard'}' deck`);
+          }
+        }
+        if (Object.hasOwn(run, 'poolDeckRule')) {
+          if (run.poolDeckRule !== POOL_DECK_RULE) throw new Error(`poolDeckRule ${JSON.stringify(run.poolDeckRule)} is not a dealt-deck rule this build knows (${POOL_DECK_RULE})`);
+          if (!isPoolDeckMode(run)) throw new Error(`poolDeckRule is set on a '${run.custom?.deckMode || 'standard'}' run; only a Sealed or Draft run carries it`);
+        }
+        // The heal is a schema migration: only a save written before schema
+        // 20 can lack the marker. A schema-20 Sealed/Draft save without it
+        // was not written by newRun, so it is refused by name.
+        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule') && run.migratedFromRunSchemaVersion === undefined) {
+          throw new Error(`a schema-${RUN_SCHEMA_VERSION} ${run.custom.deckMode} run is missing poolDeckRule`);
+        }
+        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule')) {
+          const legacy = !(run.removedAttackSlotIds || []).length;
+          const healQuota = (holder, cards) => {
+            const dealt = dealtAttackSlotCount(cards);
+            if (!Number.isInteger(holder.equipmentAttackSlotCount) || holder.equipmentAttackSlotCount <= dealt) return null;
+            const was = holder.equipmentAttackSlotCount;
+            holder.equipmentAttackSlotCount = dealt;
+            return was;
+          };
+          const was = legacy ? healQuota(run, [...(run.deck || []), ...(run.sideboard || [])]) : null;
+          const snapshot = run.combatEntered && run.combatEntered.snapshot;
+          const snapshotWas = legacy && snapshot && snapshot.piles && !(snapshot.removedAttackSlotIds || []).length
+            ? healQuota(snapshot, COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile] || []))
+            : null;
+          run.poolDeckRule = POOL_DECK_RULE;
+          note(run, {
+            kind: 'heal',
+            site: 'save.js:dealtAttackSlotCount',
+            field: 'equipmentAttackSlotCount',
+            was: { run: was, snapshot: snapshotWas, poolDeckRule: undefined },
+            now: { run: run.equipmentAttackSlotCount, snapshot: snapshot ? snapshot.equipmentAttackSlotCount ?? null : null, poolDeckRule: POOL_DECK_RULE },
+            why: `a ${run.custom.deckMode} deck saved before the dealt-deck rule: its birth attack quota is the slots it was dealt, and it is marked as held to that rule from now on`,
+          });
+        }
         const smithingReceipt = initializeRunSmithing(registries, run);
         const hydratedRunProfiles = hydrateMissingEquipmentProfiles(registries, run.equipmentProfileRuleSnapshot);
         const hydratedCombatProfiles = hydrateMissingEquipmentProfiles(registries, run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot);
@@ -658,6 +938,9 @@ export function createSaveManager(storage) {
         // Every load crosses the same deterministic composition door. This is
         // also the one-time migration for legacy role-only attack instances:
         // deck order binds them to attack:0..N-1; no instance is appended.
+        // A pool-built deck (Sealed, Draft) is not dealt the equipment's lent
+        // cards here either (loadout.js reconcileGrantedCards), so a reload
+        // restores it exactly (SPEC §9 M2).
         stampDeck(registries, run, undefined, {
           adoptEquipmentBonuses: false,
           reconcileEquipmentPools: false,
@@ -679,6 +962,13 @@ export function createSaveManager(storage) {
           });
         }
         initializeRunFlaskCharges(run, registries);
+        // Plan phase 3a: the heals above (a missing loadout given the bare
+        // one, the deck re-stamped) wrote the fields the projection is drawn
+        // from, so it is drawn again here — the run that leaves the door
+        // carries a projection that is true NOW, not one that waits for the
+        // next save to catch up. The heals were noted where they fired; the
+        // projection following them is not a second event.
+        syncZones(run);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {
         const reason = e && e.message ? e.message : 'invalid derived-stat snapshot';
@@ -734,6 +1024,11 @@ export function createSaveManager(storage) {
           hp: r.hp,
           maxHp: r.maxHp,
           customization: r.customization,
+          savedAt: typeof r.savedAt === 'string' ? r.savedAt : null,
+          // Written by a NEWER build: loadRun refuses it and keeps the bytes
+          // (state 'newer'), so the picker must say so rather than offer it
+          // as a climb that Continue can open.
+          newer: Number.isInteger(r.schemaVersion) && r.schemaVersion > RUN_SCHEMA_VERSION,
         };
       } catch (e) {
         return null;
@@ -827,6 +1122,8 @@ export function createSaveManager(storage) {
      *        'healed'   — one or more ABSENT fields were filled in, and
      *                     `ledger.entries` says which, from where, with what
      *        'archived' — refused; the bytes were set aside, reason named
+     *        'newer'    — refused; a newer build wrote it, so the bytes stay
+     *                     in the slot untouched and nothing is archived
      *
      * `ledger.healedOnCurrentSchema` is the number this house is watching: a
      * heal on a save written by THIS schema version is not a migration, it is a

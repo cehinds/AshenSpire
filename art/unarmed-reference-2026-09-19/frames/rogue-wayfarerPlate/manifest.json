@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "rogue-wayfarerPlate",
+  "classId": "rogue",
+  "armourId": "wayfarerPlate",
+  "effectsBaked": false,
+  "source": "sources/rogue-wayfarerPlate.png",
+  "sourceSha256": "e692474c9afe7383bb548286d261521694398f1741b9c72d7921248e1a6917b0",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3043478260869565,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        20,
+        19,
+        291,
+        316
+      ],
+      "core": [
+        32,
+        31,
+        279,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        146.5,
+        285
+      ],
+      "offset": [
+        65,
+        108
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        120,
+        416,
+        485
+      ],
+      "file": "frames/rogue-wayfarerPlate/STANCE-READY.webp",
+      "sha256": "fbda56bbde9fa1e40b708b0e4fbf7b96f19ae800c3d0941b564300380b644ac0"
+    },
+    "ATK-01": {
+      "content": [
+        327,
+        23,
+        604,
+        317
+      ],
+      "core": [
+        339,
+        35,
+        592,
+        305
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        148.0,
+        282
+      ],
+      "offset": [
+        63,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        124,
+        413,
+        483
+      ],
+      "file": "frames/rogue-wayfarerPlate/ATK-01.webp",
+      "sha256": "bdd1fa1b0a705a04ebe2f5b7612c97955ea340f03022eea1179a8a358f6c070f"
+    },
+    "ATK-02": {
+      "content": [
+        636,
+        25,
+        922,
+        317
+      ],
+      "core": [
+        648,
+        37,
+        910,
+        305
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        153.5,
+        280
+      ],
+      "offset": [
+        56,
+        115
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        123,
+        420,
+        492
+      ],
+      "file": "frames/rogue-wayfarerPlate/ATK-02.webp",
+      "sha256": "02aa723f07d043fc1f9519ecd0f94667f0477a9632df7defac943a7b49904d5d"
+    },
+    "ATK-03": {
+      "content": [
+        953,
+        25,
+        1248,
+        316
+      ],
+      "core": [
+        965,
+        37,
+        1236,
+        304
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        148.0,
+        279
+      ],
+      "offset": [
+        63,
+        116
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        121,
+        438,
+        488
+      ],
+      "file": "frames/rogue-wayfarerPlate/ATK-03.webp",
+      "sha256": "cc9d8919dfb3637806dd670fae794d491f85484f9b63a7bbd2c9f13a828605c5"
+    },
+    "ATK-04": {
+      "content": [
+        21,
+        333,
+        294,
+        628
+      ],
+      "core": [
+        33,
+        345,
+        282,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        146.0,
+        283
+      ],
+      "offset": [
+        66,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        74,
+        118,
+        413,
+        492
+      ],
+      "file": "frames/rogue-wayfarerPlate/ATK-04.webp",
+      "sha256": "e0ef1bfd7443f488011685c20868ad1abbc8d5cd092181846dad5abe2d5c5ea7"
+    },
+    "ATK-05": {
+      "content": [
+        322,
+        333,
+        627,
+        628
+      ],
+      "core": [
+        334,
+        345,
+        615,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        150.0,
+        283
+      ],
+      "offset": [
+        60,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        60,
+        121,
+        448,
+        487
+      ],
+      "file": "frames/rogue-wayfarerPlate/ATK-05.webp",
+      "sha256": "9d261f5efffb8952eab7e229697bcfefb6f7c7e0e8d43d51f5a68ec437bfea97"
+    },
+    "ATK-06": {
+      "content": [
+        646,
+        334,
+        926,
+        628
+      ],
+      "core": [
+        658,
+        346,
+        914,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        149.0,
+        282
+      ],
+      "offset": [
+        62,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        121,
+        422,
+        486
+      ],
+      "file": "frames/rogue-wayfarerPlate/ATK-06.webp",
+      "sha256": "98323238de486e7acf6cd08c92b87e4fc89304750565fa9182b9d52c96de382d"
+    },
+    "ATK-07": {
+      "content": [
+        960,
+        333,
+        1237,
+        628
+      ],
+      "core": [
+        972,
+        345,
+        1225,
+        616
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        151.0,
+        283
+      ],
+      "offset": [
+        59,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        67,
+        116,
+        408,
+        487
+      ],
+      "file": "frames/rogue-wayfarerPlate/ATK-07.webp",
+      "sha256": "03c3d779bbe7f49c704532aee4c2e90bf44c1e3e1797bb1eeef21b81a1e21521"
+    },
+    "DEFEND": {
+      "content": [
+        20,
+        650,
+        295,
+        937
+      ],
+      "core": [
+        32,
+        662,
+        283,
+        925
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        149.0,
+        275
+      ],
+      "offset": [
+        62,
+        121
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        74,
+        131,
+        411,
+        492
+      ],
+      "file": "frames/rogue-wayfarerPlate/DEFEND.webp",
+      "sha256": "0df8810ca4fab1d9971905159892af51695d7f771decc0d15d94976c4645804b"
+    },
+    "HURT": {
+      "content": [
+        327,
+        645,
+        611,
+        937
+      ],
+      "core": [
+        339,
+        657,
+        599,
+        925
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        160.0,
+        280
+      ],
+      "offset": [
+        47,
+        115
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        56,
+        120,
+        404,
+        491
+      ],
+      "file": "frames/rogue-wayfarerPlate/HURT.webp",
+      "sha256": "98a344b2b837cd8ef3f61f890ffdebaa7575209bb0d87d8d7533571c6b9806ff"
+    },
+    "CAST": {
+      "content": [
+        629,
+        645,
+        951,
+        939
+      ],
+      "core": [
+        641,
+        657,
+        939,
+        927
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        162.0,
+        282
+      ],
+      "offset": [
+        45,
+        112
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        56,
+        121,
+        462,
+        490
+      ],
+      "file": "frames/rogue-wayfarerPlate/CAST.webp",
+      "sha256": "2ad13595cf6cbab4fbdd01fd27d6cb6a93fbb34541691186e7569d095be06807"
+    },
+    "BUFF": {
+      "content": [
+        978,
+        634,
+        1216,
+        938
+      ],
+      "core": [
+        990,
+        646,
+        1204,
+        926
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        135.0,
+        292
+      ],
+      "offset": [
+        80,
+        99
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        85,
+        101,
+        377,
+        496
+      ],
+      "file": "frames/rogue-wayfarerPlate/BUFF.webp",
+      "sha256": "dbaf5e20abadf7b7b858c9372ebf6cc43625ecf9a05b2d9d886510072a9520ae"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        21,
+        971,
+        315,
+        1228
+      ],
+      "core": [
+        33,
+        983,
+        303,
+        1216
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        154.5,
+        245
+      ],
+      "offset": [
+        54,
+        160
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        160,
+        428,
+        493
+      ],
+      "file": "frames/rogue-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+      "sha256": "cd926679e8a84bd196454de613773dc48c9d99ede9869e723e054661616bcc03"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        340,
+        958,
+        611,
+        1231
+      ],
+      "core": [
+        352,
+        970,
+        599,
+        1219
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        145.5,
+        261
+      ],
+      "offset": [
+        66,
+        140
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        71,
+        140,
+        407,
+        486
+      ],
+      "file": "frames/rogue-wayfarerPlate/STANCE-DEFENSIVE.webp",
+      "sha256": "e4ced77e6cb332888ba677d2ccd4aec9e638add1865366a58d539bf4313f47e6"
+    },
+    "PORTRAIT": {
+      "content": [
+        639,
+        954,
+        952,
+        1238
+      ],
+      "core": [
+        651,
+        966,
+        940,
+        1226
+      ],
+      "scale": 1.4824281150159744,
+      "sourceFootAnchor": [
+        156.5,
+        272
+      ],
+      "offset": [
+        24,
+        77
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        25,
+        90,
+        486,
+        498
+      ],
+      "file": "frames/rogue-wayfarerPlate/PORTRAIT.webp",
+      "sha256": "3e0c0c675e3489e6183b993f8e588aefc8fda9c1d44104d7b2f5f621f30cd152"
+    },
+    "CONVERSATION": {
+      "content": [
+        986,
+        930,
+        1199,
+        1238
+      ],
+      "core": [
+        998,
+        942,
+        1187,
+        1226
+      ],
+      "scale": 1.3043478260869565,
+      "sourceFootAnchor": [
+        125.5,
+        296
+      ],
+      "offset": [
+        92,
+        94
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        102,
+        95,
+        361,
+        488
+      ],
+      "file": "frames/rogue-wayfarerPlate/CONVERSATION.webp",
+      "sha256": "bdb73d8549291b2d617740afe9e991dd9b2322c5eafc9583c391703e4be72330"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

@@ -5,6 +5,26 @@
 #   /<branch>/<ordinal>/   that exact build, playable (byte-identical to the commit's AshenSpire.html)
 #   /<branch>/latest/      alias for the branch's newest build
 #
+# THE WEB EDITION AND THE STORE (docs/EXTERNAL-ASSETS-PLAN.md §4, step 6b). A build
+# whose source writes a pack-shaped web edition (build/web, or build/ itself
+# from step 8e) is served as that
+# edition: its 9.5 MB HTML at /<branch>/<ordinal>/ with an asset-base.json, its
+# indexes and objects in ONE store shared by every build (/packs/, /objects/),
+# and its light single file kept whole at /<branch>/<ordinal>/download/, which
+# the Download links name. /sw.js is the service worker (tools/pages-sw.mjs; its
+# kill-switch is the committed SW_KILL there). Older builds keep their shape.
+#
+# BUILDS THAT ARE NO LONGER COMMITTED ARE REBUILT HERE. Since #1332 (2026-09-26)
+# dev commits no built HTML (test, release and main follow on promotion), so git
+# names each build (buildordinal.json) but no longer holds it. The assemble step
+# passes --build-missing: tools/pages-site.mjs rebuilds each such build from its
+# own commit's source (light art on dev/test, --full-art on release/main — the
+# tiers dev-preview.yml builds), refuses one whose rebuild moves the committed
+# box, and serves the rest at /<branch>/<ordinal>/ and /<branch>/latest/.
+# Builds that are still committed are read from git as before, fetching only
+# their own LFS objects; one whose object is gone (the coming purge,
+# docs/ART-REPO-PLAN.md step 7) is skipped and named, not fatal.
+#
 # Everything the site served before (/AshenSpire.html, /docs/…) is still served:
 # the whole `main` tree is the base of the artifact and the only replaced file is
 # the root index.html (main's own is kept at /index-game.html).
@@ -140,6 +160,9 @@ permissions:
 jobs:
   assemble:
     runs-on: ubuntu-latest
+    # Bounded: about 20 light rebuilds (~20 s each) plus hydrating the committed
+    # builds. A run that needs more than this is broken, not slow.
+    timeout-minutes: 45
     # pages: read is what actions/configure-pages needs to read the site's
     # configuration; it deploys nothing. The write and the OIDC token stay on
     # the deploy job alone.
@@ -147,8 +170,15 @@ jobs:
       contents: read
       pages: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
+          # NO LFS CHECKOUT. Nothing here reads the working tree's LFS files: the
+          # generator hydrates only the committed builds it lists
+          # (tools/git-artifact.mjs smudges one object on demand), and it rebuilds
+          # the uncommitted ones from source. Checking out with LFS pulled every
+          # LFS file at the pushed head, and it is a precondition of the LFS purge
+          # (docs/ART-REPO-PLAN.md step 7) that this job stop doing so.
+          lfs: false
           fetch-depth: 0
       # ONE MISSING BRANCH USED TO TAKE DOWN EVERY RUN. `git fetch origin dev
       # test release main` is atomic: `fatal: couldn't find remote ref test`
@@ -176,9 +206,13 @@ jobs:
           if [ -n "$missing" ]; then
             echo "::warning title=A published branch is missing::not on origin:$missing — the site will be assembled without it"
           fi
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - uses: ./.github/actions/setup-node
+      # The checkout above takes no LFS, so the committed builds the generator
+      # lists are hydrated one object at a time with `git lfs smudge`. Without
+      # git-lfs that fails, and the generator throws rather than calling the
+      # builds purged — so say it here, first, by name.
+      - name: git-lfs is available to hydrate committed builds on demand
+        run: git lfs version
       # NO RELEASE-SERIES GATE HERE, and its absence is the point. This workflow
       # runs on pushes to dev, test, release AND main, and it assembles a site
       # out of all four branches' histories — series deliberately mixed, which
@@ -190,25 +224,110 @@ jobs:
       # four — the step that produces the artifact a publication needs. The
       # gate belongs where current builds are made: dev-preview runs it on
       # every push to dev and every PR into dev, and ci.yml on dispatch.
-      - name: Assemble the site from git history — every listed build proven byte-identical
-        run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}"
+      # ONCE main STOPS COMMITTING ITS BUILD (the LFS budget ran out; dev stopped
+      # on 2026-09-26 and main follows on promotion), the stable Play links at the
+      # site root have no file in main's tree. Build main from source here and hand
+      # it to the generator; while main still tracks its build this does nothing.
+      #
+      # FROM STEP 11 (docs/EXTERNAL-ASSETS-PLAN.md) main's tree pins its art
+      # release in a schema-2 art-release.json. When it does, main's own
+      # tools/fetch-art.mjs fetches all three packs (main is the full-art build)
+      # into that worktree's ignored .art-cache/ and proves they match main's
+      # trees; an older main, whose pin has no packs (or no pin), builds as
+      # before. UNDER SCHEMA 2 A FETCH FAILURE BLOCKS PUBLISHING: the step is
+      # `set -e`, so a release main cannot fetch stops the stable build. The art
+      # repository is public, so the fetch needs no token; one is passed only on
+      # a protected branch, and only raises the rate limit (see the env comment
+      # below: that rule is defence in depth, not a boundary). A failure names
+      # its cause.
+      - name: Build main from source when main no longer commits its build
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        run: |
+          set -euo pipefail
+          if git cat-file -e origin/main:AshenSpire.html 2>/dev/null; then
+            echo "main still tracks AshenSpire.html — the generator hydrates it from git"
+            exit 0
+          fi
+          git worktree add --detach "$RUNNER_TEMP/main" origin/main
+          # The probe prints `fetch` (schema 2), `legacy` (no pin, or schema 1),
+          # or fails: a pin that does not parse, or names a schema this workflow
+          # does not know, stops publishing instead of passing as legacy.
+          PIN_MODE=$(cd "$RUNNER_TEMP/main" && node -e "
+            const fs = require('fs');
+            if (!fs.existsSync('art-release.json')) { console.log('legacy'); process.exit(0); }
+            let pin;
+            try { pin = JSON.parse(fs.readFileSync('art-release.json', 'utf8')); }
+            catch (e) { console.error('art-release.json does not parse: ' + e.message); process.exit(2); }
+            const schema = pin && pin.schema;
+            if (schema === 2) console.log('fetch');
+            else if (schema === undefined || schema === 1) console.log('legacy');
+            else { console.error('art-release.json names schema ' + JSON.stringify(schema) + ', which this workflow does not know'); process.exit(2); }
+          ")
+          if [ "$PIN_MODE" = "fetch" ]; then
+            (cd "$RUNNER_TEMP/main" && node tools/fetch-art.mjs --pack all && node tools/fetch-art.mjs --agree --pack all)
+          else
+            echo "main's art-release.json predates the packs (schema 2) — it builds from its trees, with nothing to fetch"
+          fi
+          (cd "$RUNNER_TEMP/main" && node tools/launch.mjs --build-only --full-art)
+          # The same gate every other build workflow applies: a rebuild that had
+          # to rewrite main's committed box is a build main's receipts do not
+          # name, and it must not become the stable Play link.
+          git -C "$RUNNER_TEMP/main" status --porcelain
+          test -z "$(git -C "$RUNNER_TEMP/main" status --porcelain)"
+          (cd "$RUNNER_TEMP/main" && node tools/buildversion.mjs --check)
+          mkdir -p "$RUNNER_TEMP/main-build"
+          # The root alias: the full single file before step 8e, the light single
+          # file from it. The mobile file exists only before step 8e retired it;
+          # from then on the generator writes /AshenSpire-mobile.html as a redirect.
+          cp "$RUNNER_TEMP/main/AshenSpire.html" "$RUNNER_TEMP/main-build/"
+          if [ -f "$RUNNER_TEMP/main/AshenSpire-mobile.html" ]; then
+            cp "$RUNNER_TEMP/main/AshenSpire-mobile.html" "$RUNNER_TEMP/main-build/"
+          fi
+          # THE WEB EDITION, where main's source builds one (docs/EXTERNAL-ASSETS-PLAN.md
+          # step 6b): the generator serves it at the stable Play links, with its packs
+          # and objects in the site's one store, instead of the full single file.
+          # Its home was build/web/ (steps 3a–7) and is build/ itself from step 8e.
+          if [ -f "$RUNNER_TEMP/main/build/web/AshenSpire.html" ]; then
+            cp -r "$RUNNER_TEMP/main/build/web" "$RUNNER_TEMP/main-build/web"
+          elif [ -d "$RUNNER_TEMP/main/build/packs" ]; then
+            mkdir -p "$RUNNER_TEMP/main-build/web"
+            cp -r "$RUNNER_TEMP/main/build/AshenSpire.html" "$RUNNER_TEMP/main/build/asset-base.json" \
+              "$RUNNER_TEMP/main/build/packs" "$RUNNER_TEMP/main/build/objects" "$RUNNER_TEMP/main-build/web/"
+          fi
+          # THE STANDALONE'S PAYLOAD (docs/EXTERNAL-ASSETS-PLAN.md step 12): the
+          # launcher copies map-detail/ and music/ beside the single file from the
+          # fetched common pack. Handed in with the build, so the stable aliases
+          # keep their tiles and score once main's tree no longer carries them
+          # (step 13); pages-site uses these only when main's tree lacks the folder.
+          for d in map-detail music; do
+            if [ -d "$RUNNER_TEMP/main/dist/$d" ]; then cp -r "$RUNNER_TEMP/main/dist/$d" "$RUNNER_TEMP/main-build/$d"; fi
+          done
+          echo "MAIN_BUILD_ARGS=--main-build $RUNNER_TEMP/main-build" >> "$GITHUB_ENV"
+      - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
+        # `keep` from a dispatch is clamped here (1..25) and again in the
+        # generator: each listed uncommitted build is a rebuild.
+        env:
+          KEEP_INPUT: ${{ inputs.keep || '10' }}
+        run: |
+          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-10}
+          if [ "$keep" -lt 1 ]; then keep=1; fi
+          if [ "$keep" -gt 25 ]; then keep=25; fi
+          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" ${MAIN_BUILD_ARGS:-}
       - name: The generator's own drift plant is still caught
-        run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-      # SAY THAT THE SITE IS BEHIND, BECAUSE NOBODY WAS BEING TOLD.
-      #
-      # #553: after #543 correctly took the deploy credential off the push path,
-      # nothing republished — and nothing SAID nothing had republished, so /dev
-      # /test /release served stale builds for hours with every run green.
-      #
-      # A first attempt at this fixed it by publishing automatically behind a
-      # repository-variable switch. That was rejected: publishing the site is an
-      # owner action, taken deliberately each time, and a standing switch is a
-      # delegation to every future push. So this step reports; it does not
-      # publish, and nothing here should ever grow the ability to.
       # SAY WHAT THIS RUN DID, BECAUSE NOBODY WAS BEING TOLD.
       #
       # #553: after #543 correctly took the deploy credential off the push path,

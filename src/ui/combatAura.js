@@ -1,11 +1,19 @@
-import { COMBAT_POSE_STATES } from '../content/combatPoseStates.js';
 // Silhouette effects are applied to the image alpha, never the sprite box.
-export const POWER_FRAMES = Object.freeze({
-  power1: { radius: 1.4, blur: 3, alpha: .55, brightness: 1.03 },
-  power2: { radius: 2.6, blur: 8, alpha: .95, brightness: 1.16 },
-  power3: { radius: 1.8, blur: 5, alpha: .7, brightness: 1.06 },
-});
-const colors = { stamina: '88,225,131', mana: '91,165,255', hp: '255,91,102', power: '220,221,255' };
+//
+// Every number and colour below lives in
+// content/config/ui/presentation/combatAura.json. The three glow strengths the
+// filter chooses between are named there — `lit` for an active cast, `faded`
+// for a resting outline, and the per-power frames — rather than appearing as
+// bare fallbacks inside the expression that picks them.
+import { COMBAT_POSE_STATES } from '../content/combatPoseStates.js';
+import { uiConfig } from '../config/generated/ui.js';
+import { shallowFrozen } from '../config/authored.js';
+
+const { components, behavior, sizing } = uiConfig.presentation.combatAura;
+
+export const POWER_FRAMES = shallowFrozen(components.powerFrames);
+const colors = components.colors;
+
 export function resourceAura(card = {}, receipt) {
   const result = [];
   if ((receipt?.staminaSpent ?? card.staminaCost ?? 0) > 0) result.push('stamina');
@@ -18,18 +26,23 @@ export function resourceAura(card = {}, receipt) {
 }
 export function auraFilter(pose, rest = 'idle', resources = [], active = false) {
   const state = COMBAT_POSE_STATES[rest];
-  if (state && !active) return `drop-shadow(0 0 2px ${state.color}55) drop-shadow(0 0 4px ${state.color}22)`;
+  if (state && !active) {
+    const { innerBlurPx, outerBlurPx, innerAlphaHex, outerAlphaHex } = sizing.restingGlow;
+    return `drop-shadow(0 0 ${innerBlurPx}px ${state.color}${innerAlphaHex}) drop-shadow(0 0 ${outerBlurPx}px ${state.color}${outerAlphaHex})`;
+  }
   const phase = POWER_FRAMES[pose];
-  const guarded = ['guard', 'shieldGuard', 'parry'].includes(rest);
-  const palette = active && resources.length ? resources : phase ? ['power'] : guarded ? ['mana'] : [];
+  const guarded = behavior.guardedRestPoses.includes(rest);
+  const palette = active && resources.length ? resources
+    : phase ? [behavior.defaultPalette]
+      : guarded ? [behavior.guardedPalette] : [];
   if (!palette.length) return 'none';
-  const faded = !active && !phase;
-  const radius = phase?.radius ?? (faded ? 1 : 1.6);
-  const alpha = phase?.alpha ?? (faded ? .26 : .8);
-  const blur = phase?.blur ?? (faded ? 3 : 5);
+  const glow = !active && !phase ? sizing.faded : sizing.lit;
+  const radius = phase?.radius ?? glow.radius;
+  const alpha = phase?.alpha ?? glow.alpha;
+  const blur = phase?.blur ?? glow.blur;
   const filters = palette.flatMap((key, i) => {
-    const color = `rgba(${colors[key] || colors.power},${alpha})`;
-    const r = radius + i * 1.3;
+    const color = `rgba(${colors[key] || colors[behavior.defaultPalette]},${alpha})`;
+    const r = radius + i * sizing.spread;
     return [`drop-shadow(${r}px 0 0 ${color})`, `drop-shadow(${-r}px 0 0 ${color})`, `drop-shadow(0 ${r}px ${blur}px ${color})`];
   });
   if (phase) filters.push(`brightness(${phase.brightness})`);

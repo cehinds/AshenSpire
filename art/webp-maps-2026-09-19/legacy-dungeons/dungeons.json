@@ -1,0 +1,1794 @@
+{
+  "version": 1,
+  "status": "Review prototype; proposed lore and mechanics, not runtime content",
+  "flee": {
+    "base": 40,
+    "dexBaseline": 10,
+    "bonusPerPoint": 3,
+    "min": 10,
+    "max": 85,
+    "failure": "Starts encounter",
+    "success": "Retreat to previous node; encounter stays unresolved"
+  },
+  "dungeons": [
+    {
+      "id": "BS",
+      "assetId": "MAP-01-briar-sanctum",
+      "name": "Briar Sanctum",
+      "theme": "olive",
+      "boss": "Thorn Matriarch",
+      "nodes": [
+        {
+          "id": "BS-01",
+          "number": 1,
+          "x": 36,
+          "y": 72,
+          "kind": "entrance",
+          "name": "Gate of Unkept Names",
+          "speaker": "You",
+          "lore": "Every name on this gate has been scratched out from within.",
+          "reply": "Beneath the cuts, one command survives: Remember us without waking us."
+        },
+        {
+          "id": "BS-02",
+          "number": 2,
+          "x": 32,
+          "y": 64,
+          "kind": "observation",
+          "name": "Rootbound Fork",
+          "speaker": "You",
+          "lore": "The paving divides around a root older than the wall. Both tracks carry fresh mud.",
+          "reply": "The western road serves the graves. The eastern road follows the water toward the sanctum."
+        },
+        {
+          "id": "BS-03",
+          "number": 3,
+          "x": 29,
+          "y": 56,
+          "kind": "encounter",
+          "name": "Pilgrims' Hollow",
+          "speaker": "Briar Hermit",
+          "lore": "Do not pull the thorns from your cloak. They are how she counts who leaves.",
+          "reply": "The hermit remembers a gardener who asked the roots to hold the dying until spring."
+        },
+        {
+          "id": "BS-04",
+          "number": 4,
+          "x": 33,
+          "y": 45,
+          "kind": "observation",
+          "name": "Broken Processional",
+          "speaker": "You",
+          "lore": "The stones are worn at the knees, not the feet.",
+          "reply": "The faithful crawled this road carrying water in their hands."
+        },
+        {
+          "id": "BS-05",
+          "number": 5,
+          "x": 27,
+          "y": 38,
+          "kind": "fight",
+          "name": "Moss Stair",
+          "speaker": "You",
+          "lore": "Something beneath the moss breathes against the stair. A blight hound lifts its head.",
+          "reply": "Its collar bears the same flower carved on the sanctuary door."
+        },
+        {
+          "id": "BS-06",
+          "number": 6,
+          "x": 20,
+          "y": 31,
+          "kind": "shrine",
+          "name": "Chapel of Small Mercies",
+          "speaker": "You",
+          "lore": "A gold cup stands beneath a roof that fell generations ago. It is still full.",
+          "reply": "Rain gathers here even beneath clear skies. Someone kept one small promise."
+        },
+        {
+          "id": "BS-07",
+          "number": 7,
+          "x": 12,
+          "y": 25,
+          "kind": "observation",
+          "name": "Widow's Recess",
+          "speaker": "You",
+          "lore": "A child's wooden shoe rests beside an adult's stone effigy.",
+          "reply": "The inscription leaves space for a second name that was never added."
+        },
+        {
+          "id": "BS-08",
+          "number": 8,
+          "x": 23,
+          "y": 24,
+          "kind": "dialogue",
+          "name": "The Last Grave Tender",
+          "speaker": "Grave Tender",
+          "lore": "I leave one grave open. If I fill it, I have to admit whom it was for.",
+          "reply": "The tender says the Matriarch buried her own name before giving the roots her voice."
+        },
+        {
+          "id": "BS-09",
+          "number": 9,
+          "x": 26,
+          "y": 17,
+          "kind": "cache",
+          "name": "Seed Reliquary",
+          "speaker": "You",
+          "lore": "The reliquary holds seeds wrapped in burial cloth, each labeled with a season.",
+          "reply": "None is marked spring. The sanctum has been waiting longer than its gardeners lived."
+        },
+        {
+          "id": "BS-10",
+          "number": 10,
+          "x": 25,
+          "y": 10,
+          "kind": "observation",
+          "name": "Abandoned Watch Chapel",
+          "speaker": "You",
+          "lore": "A narrow window faces away from the forest and toward the great tree.",
+          "reply": "The watchers feared what their sanctuary might become, not what might enter it."
+        },
+        {
+          "id": "BS-11",
+          "number": 11,
+          "x": 42,
+          "y": 39,
+          "kind": "encounter",
+          "name": "Bridge of Bound Vows",
+          "speaker": "Oathbound Watcher",
+          "lore": "State whom you have come to mourn. A blade is not an answer.",
+          "reply": "Those who cannot name their dead are made to carry the watcher's grief instead."
+        },
+        {
+          "id": "BS-12",
+          "number": 12,
+          "x": 46,
+          "y": 66,
+          "kind": "observation",
+          "name": "Waterward Fork",
+          "speaker": "You",
+          "lore": "A second road leaves the gate beside a channel cut into the rock.",
+          "reply": "The channel once carried offerings downstream. Now the roots drink before the river can."
+        },
+        {
+          "id": "BS-13",
+          "number": 13,
+          "x": 55,
+          "y": 62,
+          "kind": "dialogue",
+          "name": "Thorn Scribe",
+          "speaker": "Thorn Scribe",
+          "lore": "I write the names she forgets. The bark heals faster each year.",
+          "reply": "The scribe shows you a fresh name: their own. They do not remember writing it."
+        },
+        {
+          "id": "BS-14",
+          "number": 14,
+          "x": 67,
+          "y": 54,
+          "kind": "fight",
+          "name": "Lower Stone Bridge",
+          "speaker": "You",
+          "lore": "A blight hound waits where the bridge narrows, its muzzle tangled in prayer cords.",
+          "reply": "The cords were tied to keep a beloved animal from straying. They held too well."
+        },
+        {
+          "id": "BS-15",
+          "number": 15,
+          "x": 77,
+          "y": 47,
+          "kind": "observation",
+          "name": "Candleless Landing",
+          "speaker": "You",
+          "lore": "Wax fills every crack in the landing, but no wick remains.",
+          "reply": "The mourners stopped lighting candles when the roots began reaching toward the flame."
+        },
+        {
+          "id": "BS-16",
+          "number": 16,
+          "x": 81,
+          "y": 43,
+          "kind": "shrine",
+          "name": "East Chapel Steps",
+          "speaker": "You",
+          "lore": "A kneeling statue holds a bowl toward the waterfall.",
+          "reply": "The bowl is dry. Its underside is engraved: Give without being seen."
+        },
+        {
+          "id": "BS-17",
+          "number": 17,
+          "x": 89,
+          "y": 40,
+          "kind": "dialogue",
+          "name": "Keeper of the Empty Bowl",
+          "speaker": "Chapel Keeper",
+          "lore": "She took our hunger first. We thanked her. Then she took what we hungered for.",
+          "reply": "The keeper asks you to remember the taste of bread aloud. For a moment, they smile."
+        },
+        {
+          "id": "BS-18",
+          "number": 18,
+          "x": 91,
+          "y": 56,
+          "kind": "cache",
+          "name": "Waterfall Oratory",
+          "speaker": "You",
+          "lore": "A leather satchel hangs above the spray, protected by a curtain of thorns.",
+          "reply": "Inside lies a farewell never delivered: I will wait at the lower bridge until dawn."
+        },
+        {
+          "id": "BS-19",
+          "number": 19,
+          "x": 84,
+          "y": 32,
+          "kind": "encounter",
+          "name": "The Listening Hedge",
+          "speaker": "Rootbound Pilgrim",
+          "lore": "Speak softly. The leaves repeat whatever they hear to Mother.",
+          "reply": "The pilgrim will let a quiet traveler pass, but a drawn weapon makes every branch turn."
+        },
+        {
+          "id": "BS-20",
+          "number": 20,
+          "x": 81,
+          "y": 25,
+          "kind": "observation",
+          "name": "Pilgrim's Turn",
+          "speaker": "You",
+          "lore": "Footprints circle a single root before joining the upper path.",
+          "reply": "Every pilgrim paused here. The root is polished like a handrail."
+        },
+        {
+          "id": "BS-21",
+          "number": 21,
+          "x": 80,
+          "y": 14,
+          "kind": "observation",
+          "name": "Rear Watch Ruin",
+          "speaker": "You",
+          "lore": "A fallen bell lies stuffed with moss, its clapper deliberately removed.",
+          "reply": "The watch chose silence on the night the tree first answered a prayer."
+        },
+        {
+          "id": "BS-22",
+          "number": 22,
+          "x": 65,
+          "y": 34,
+          "kind": "dialogue",
+          "name": "The Unnamed Gardener",
+          "speaker": "Unnamed Gardener",
+          "lore": "She is not guarding the dead from you. She is guarding them from the morning.",
+          "reply": "The gardener remembers the Matriarch's first wish: let no one under my care be lost."
+        },
+        {
+          "id": "BS-23",
+          "number": 23,
+          "x": 55,
+          "y": 32,
+          "kind": "gate",
+          "name": "Sanctum Stair",
+          "speaker": "You",
+          "lore": "Every root points inward. The stair rises into a silence that feels held shut.",
+          "reply": "Beyond these steps, the Thorn Matriarch keeps the promise that ruined this place."
+        },
+        {
+          "id": "BS-24",
+          "number": 24,
+          "x": 55,
+          "y": 24,
+          "kind": "boss",
+          "name": "Heart of Briar Sanctum",
+          "speaker": "Thorn Matriarch",
+          "lore": "I kept them. Every one. Would you have me call that a sin?",
+          "reply": "Defeat loosens the roots without erasing the graves. The dungeon is cleared; its memories remain."
+        }
+      ],
+      "edges": [
+        {
+          "a": "BS-01",
+          "b": "BS-02",
+          "via": [
+            [
+              35,
+              69
+            ],
+            [
+              34,
+              67
+            ]
+          ]
+        },
+        {
+          "a": "BS-02",
+          "b": "BS-03",
+          "via": [
+            [
+              30,
+              61
+            ]
+          ]
+        },
+        {
+          "a": "BS-03",
+          "b": "BS-04",
+          "via": [
+            [
+              30,
+              52
+            ],
+            [
+              32,
+              49
+            ]
+          ]
+        },
+        {
+          "a": "BS-04",
+          "b": "BS-05",
+          "via": [
+            [
+              32,
+              42
+            ],
+            [
+              29,
+              40
+            ]
+          ]
+        },
+        {
+          "a": "BS-05",
+          "b": "BS-06",
+          "via": [
+            [
+              24,
+              35
+            ]
+          ]
+        },
+        {
+          "a": "BS-06",
+          "b": "BS-07",
+          "via": [
+            [
+              16,
+              29
+            ]
+          ]
+        },
+        {
+          "a": "BS-06",
+          "b": "BS-08",
+          "via": [
+            [
+              22,
+              28
+            ]
+          ]
+        },
+        {
+          "a": "BS-08",
+          "b": "BS-09",
+          "via": [
+            [
+              25,
+              22
+            ]
+          ]
+        },
+        {
+          "a": "BS-09",
+          "b": "BS-10",
+          "via": [
+            [
+              27,
+              14
+            ]
+          ]
+        },
+        {
+          "a": "BS-04",
+          "b": "BS-11",
+          "via": [
+            [
+              35,
+              42
+            ],
+            [
+              38,
+              41
+            ]
+          ]
+        },
+        {
+          "a": "BS-11",
+          "b": "BS-22",
+          "via": [
+            [
+              48,
+              36
+            ],
+            [
+              55,
+              35
+            ],
+            [
+              61,
+              36
+            ]
+          ]
+        },
+        {
+          "a": "BS-22",
+          "b": "BS-23",
+          "via": [
+            [
+              61,
+              34
+            ],
+            [
+              58,
+              34
+            ]
+          ]
+        },
+        {
+          "a": "BS-23",
+          "b": "BS-24",
+          "via": []
+        },
+        {
+          "a": "BS-01",
+          "b": "BS-12",
+          "via": [
+            [
+              39,
+              68
+            ],
+            [
+              42,
+              67
+            ]
+          ]
+        },
+        {
+          "a": "BS-12",
+          "b": "BS-13",
+          "via": [
+            [
+              50,
+              65
+            ]
+          ]
+        },
+        {
+          "a": "BS-13",
+          "b": "BS-14",
+          "via": [
+            [
+              61,
+              59
+            ],
+            [
+              64,
+              57
+            ]
+          ]
+        },
+        {
+          "a": "BS-14",
+          "b": "BS-15",
+          "via": [
+            [
+              70,
+              51
+            ],
+            [
+              74,
+              49
+            ]
+          ]
+        },
+        {
+          "a": "BS-15",
+          "b": "BS-16",
+          "via": [
+            [
+              79,
+              46
+            ]
+          ]
+        },
+        {
+          "a": "BS-16",
+          "b": "BS-17",
+          "via": [
+            [
+              85,
+              43
+            ],
+            [
+              88,
+              43
+            ]
+          ]
+        },
+        {
+          "a": "BS-17",
+          "b": "BS-18",
+          "via": [
+            [
+              87,
+              43
+            ],
+            [
+              85,
+              47
+            ],
+            [
+              87,
+              52
+            ]
+          ]
+        },
+        {
+          "a": "BS-16",
+          "b": "BS-19",
+          "via": [
+            [
+              80,
+              39
+            ],
+            [
+              82,
+              36
+            ]
+          ]
+        },
+        {
+          "a": "BS-19",
+          "b": "BS-20",
+          "via": [
+            [
+              83,
+              29
+            ]
+          ]
+        },
+        {
+          "a": "BS-20",
+          "b": "BS-21",
+          "via": [
+            [
+              81,
+              20
+            ],
+            [
+              79,
+              17
+            ]
+          ]
+        },
+        {
+          "a": "BS-20",
+          "b": "BS-22",
+          "via": [
+            [
+              78,
+              29
+            ],
+            [
+              73,
+              33
+            ],
+            [
+              69,
+              35
+            ]
+          ]
+        },
+        {
+          "a": "BS-15",
+          "b": "BS-22",
+          "via": [
+            [
+              74,
+              44
+            ],
+            [
+              70,
+              41
+            ],
+            [
+              67,
+              37
+            ]
+          ]
+        },
+        {
+          "a": "BS-02",
+          "b": "BS-12",
+          "via": [
+            [
+              38,
+              65
+            ],
+            [
+              42,
+              66
+            ]
+          ]
+        }
+      ],
+      "lanes": [
+        "Grave Road",
+        "Waterward Road"
+      ],
+      "entrance": "BS-01",
+      "bossNode": "BS-24"
+    },
+    {
+      "id": "HM",
+      "assetId": "MAP-02-hall-of-mirrors",
+      "name": "Hall of Mirrors",
+      "theme": "indigo",
+      "boss": "Glass Regent",
+      "nodes": [
+        {
+          "id": "HM-01",
+          "number": 1,
+          "x": 18.0,
+          "y": 80.0,
+          "kind": "entrance",
+          "name": "Gate of Second Faces",
+          "speaker": "You",
+          "lore": "Your reflection reaches the gate a moment before you do.",
+          "reply": "Two roads circle the tarn: the garden path to the west and the high causeway to the east."
+        },
+        {
+          "id": "HM-02",
+          "number": 2,
+          "x": 17,
+          "y": 68,
+          "kind": "observation",
+          "name": "Winter Garden Fork",
+          "speaker": "You",
+          "lore": "The snow is broken by footsteps that never seem to leave.",
+          "reply": "Most turn toward the glasshouse. One set walks backward toward the palace."
+        },
+        {
+          "id": "HM-03",
+          "number": 3,
+          "x": 14,
+          "y": 56,
+          "kind": "encounter",
+          "name": "The Unreflected Porter",
+          "speaker": "Palace Porter",
+          "lore": "Leave your reflection with me. Guests must not bring strangers into court.",
+          "reply": "The porter carries receipts for shadows, smiles, and the right to be remembered."
+        },
+        {
+          "id": "HM-04",
+          "number": 4,
+          "x": 18,
+          "y": 44,
+          "kind": "shrine",
+          "name": "Fountain of Still Water",
+          "speaker": "You",
+          "lore": "The fountain is frozen around a falling drop.",
+          "reply": "The plaque promises a moment without sorrow. It never says the moment will end."
+        },
+        {
+          "id": "HM-05",
+          "number": 5,
+          "x": 18,
+          "y": 35,
+          "kind": "dialogue",
+          "name": "Gardener of Glass",
+          "speaker": "Winter Gardener",
+          "lore": "The Regent wanted flowers that could not die. Glass was only the first attempt.",
+          "reply": "The gardener kept one seed beneath their tongue through every winter of the court."
+        },
+        {
+          "id": "HM-06",
+          "number": 6,
+          "x": 12,
+          "y": 27,
+          "kind": "cache",
+          "name": "Shattered Conservatory",
+          "speaker": "You",
+          "lore": "The collapsed glasshouse shelters a box of ordinary earth.",
+          "reply": "Its label reads: For when Her Grace tires of perfection."
+        },
+        {
+          "id": "HM-07",
+          "number": 7,
+          "x": 20,
+          "y": 24,
+          "kind": "observation",
+          "name": "Glasshouse Crossing",
+          "speaker": "You",
+          "lore": "Glass ribs make a cage around an empty planting bed.",
+          "reply": "There are no roots. These flowers were installed, not grown."
+        },
+        {
+          "id": "HM-08",
+          "number": 8,
+          "x": 28,
+          "y": 33,
+          "kind": "fight",
+          "name": "Statue Walk",
+          "speaker": "You",
+          "lore": "A porcelain sentry turns its face to match yours.",
+          "reply": "Its weapon is real, though its hands are only reflected in the snow."
+        },
+        {
+          "id": "HM-09",
+          "number": 9,
+          "x": 36,
+          "y": 42,
+          "kind": "observation",
+          "name": "The White Landing",
+          "speaker": "You",
+          "lore": "The same farewell is carved into every step in a different hand.",
+          "reply": "Each courtier thought they were the first to ask permission to leave."
+        },
+        {
+          "id": "HM-10",
+          "number": 10,
+          "x": 46,
+          "y": 37,
+          "kind": "encounter",
+          "name": "Bridge of Courtesy",
+          "speaker": "Mirror Usher",
+          "lore": "Bow to the image, never the guest. Images do not change their loyalties.",
+          "reply": "The usher admits the Regent has not crossed this bridge since the first mirror cracked."
+        },
+        {
+          "id": "HM-11",
+          "number": 11,
+          "x": 58,
+          "y": 31,
+          "kind": "dialogue",
+          "name": "The Thawing Witness",
+          "speaker": "Court Witness",
+          "lore": "I saw the original die. Every morning since, another reflection has denied it.",
+          "reply": "The witness cannot tell you which death they mean. Their testimony changes with the light."
+        },
+        {
+          "id": "HM-12",
+          "number": 12,
+          "x": 31,
+          "y": 81,
+          "kind": "observation",
+          "name": "Causeway Fork",
+          "speaker": "You",
+          "lore": "The other road crosses dark water on broad stone arches.",
+          "reply": "The balustrade is warmer than the air, as if another season waits inside the stone."
+        },
+        {
+          "id": "HM-13",
+          "number": 13,
+          "x": 44,
+          "y": 81,
+          "kind": "fight",
+          "name": "The Tarn Span",
+          "speaker": "You",
+          "lore": "A glass-armored sentinel drags its spear along the bridge rail.",
+          "reply": "Each scratch in the rail matches a scar visible beneath its transparent armor."
+        },
+        {
+          "id": "HM-14",
+          "number": 14,
+          "x": 55,
+          "y": 75,
+          "kind": "observation",
+          "name": "Listening Balustrade",
+          "speaker": "You",
+          "lore": "Voices rise through the arches, repeating a conversation you have not had.",
+          "reply": "One voice sounds like yours. It says that you should have taken the garden road."
+        },
+        {
+          "id": "HM-15",
+          "number": 15,
+          "x": 66,
+          "y": 72,
+          "kind": "dialogue",
+          "name": "The Ferry Without Oars",
+          "speaker": "Stranded Ferryman",
+          "lore": "Before the ice, I carried people across. Now I ferry apologies. Neither ever returns.",
+          "reply": "The ferryman points to a palace window where a lantern answers only at noon."
+        },
+        {
+          "id": "HM-16",
+          "number": 16,
+          "x": 77,
+          "y": 67,
+          "kind": "cache",
+          "name": "Icebound Tollhouse",
+          "speaker": "You",
+          "lore": "A brass box contains toll coins polished perfectly blank.",
+          "reply": "The Regent would permit no other sovereign's face within sight of the palace."
+        },
+        {
+          "id": "HM-17",
+          "number": 17,
+          "x": 87,
+          "y": 58,
+          "kind": "encounter",
+          "name": "Rime Watch",
+          "speaker": "Rime Warden",
+          "lore": "Show me the face you wore when you entered. No substitutions.",
+          "reply": "The warden remembers every visitor and no departure. A respectful answer can delay its suspicion."
+        },
+        {
+          "id": "HM-18",
+          "number": 18,
+          "x": 91,
+          "y": 45,
+          "kind": "observation",
+          "name": "Eastern Stair",
+          "speaker": "You",
+          "lore": "Frost has formed on the underside of the steps, against the wind.",
+          "reply": "The cold comes from the hall, not from the mountains."
+        },
+        {
+          "id": "HM-19",
+          "number": 19,
+          "x": 88,
+          "y": 34,
+          "kind": "shrine",
+          "name": "The Unsilvered Niche",
+          "speaker": "You",
+          "lore": "One mirror has had its silver scraped away, leaving a view of bare stone.",
+          "reply": "Someone chose the wall over the face the court demanded."
+        },
+        {
+          "id": "HM-20",
+          "number": 20,
+          "x": 83,
+          "y": 25,
+          "kind": "dialogue",
+          "name": "The Seamstress of Faces",
+          "speaker": "Court Seamstress",
+          "lore": "A face is easier to mend when its owner stops moving.",
+          "reply": "She remembers sewing mourning veils until the Regent outlawed the suggestion of loss."
+        },
+        {
+          "id": "HM-21",
+          "number": 21,
+          "x": 73,
+          "y": 30,
+          "kind": "fight",
+          "name": "Court of Repeated Steps",
+          "speaker": "You",
+          "lore": "Two sentries move as one. Only one leaves tracks.",
+          "reply": "The tracks stop before each mirror and begin again on the other side."
+        },
+        {
+          "id": "HM-22",
+          "number": 22,
+          "x": 71,
+          "y": 20,
+          "kind": "observation",
+          "name": "Blackwater Basin",
+          "speaker": "You",
+          "lore": "The basin reflects an intact palace under a summer sky.",
+          "reply": "A figure at its window closes the curtain when you lean closer."
+        },
+        {
+          "id": "HM-23",
+          "number": 23,
+          "x": 70,
+          "y": 16,
+          "kind": "gate",
+          "name": "Threshold of True Silver",
+          "speaker": "You",
+          "lore": "Your reflection remains at the threshold after you step away.",
+          "reply": "It mouths a warning: do not let her choose which of you leaves."
+        },
+        {
+          "id": "HM-24",
+          "number": 24,
+          "x": 73.0,
+          "y": 12.0,
+          "kind": "boss",
+          "name": "Hall of Mirrors",
+          "speaker": "Glass Regent",
+          "lore": "I have perfected this court. It is the world outside that refuses correction.",
+          "reply": "Victory cracks the false summer in every mirror. The dungeon clears as the tarn begins to thaw."
+        }
+      ],
+      "edges": [
+        {
+          "a": "HM-01",
+          "b": "HM-02",
+          "via": [
+            [
+              17,
+              76
+            ],
+            [
+              16,
+              72
+            ]
+          ]
+        },
+        {
+          "a": "HM-02",
+          "b": "HM-03",
+          "via": [
+            [
+              15,
+              64
+            ]
+          ]
+        },
+        {
+          "a": "HM-03",
+          "b": "HM-04",
+          "via": [
+            [
+              15,
+              52
+            ],
+            [
+              17,
+              48
+            ]
+          ]
+        },
+        {
+          "a": "HM-04",
+          "b": "HM-05",
+          "via": [
+            [
+              17,
+              40
+            ]
+          ]
+        },
+        {
+          "a": "HM-05",
+          "b": "HM-06",
+          "via": [
+            [
+              15,
+              32
+            ]
+          ]
+        },
+        {
+          "a": "HM-06",
+          "b": "HM-07",
+          "via": [
+            [
+              16,
+              26
+            ]
+          ]
+        },
+        {
+          "a": "HM-07",
+          "b": "HM-08",
+          "via": [
+            [
+              24,
+              27
+            ],
+            [
+              27,
+              30
+            ]
+          ]
+        },
+        {
+          "a": "HM-08",
+          "b": "HM-09",
+          "via": [
+            [
+              31,
+              37
+            ],
+            [
+              34,
+              40
+            ]
+          ]
+        },
+        {
+          "a": "HM-09",
+          "b": "HM-10",
+          "via": [
+            [
+              40,
+              40
+            ]
+          ]
+        },
+        {
+          "a": "HM-10",
+          "b": "HM-11",
+          "via": [
+            [
+              52,
+              34
+            ]
+          ]
+        },
+        {
+          "a": "HM-11",
+          "b": "HM-22",
+          "via": [
+            [
+              62,
+              27
+            ],
+            [
+              65,
+              25
+            ],
+            [
+              68,
+              24
+            ]
+          ]
+        },
+        {
+          "a": "HM-22",
+          "b": "HM-23",
+          "via": []
+        },
+        {
+          "a": "HM-23",
+          "b": "HM-24",
+          "via": []
+        },
+        {
+          "a": "HM-01",
+          "b": "HM-12",
+          "via": [
+            [
+              23,
+              81
+            ],
+            [
+              27,
+              80
+            ]
+          ]
+        },
+        {
+          "a": "HM-12",
+          "b": "HM-13",
+          "via": [
+            [
+              36,
+              84
+            ],
+            [
+              39,
+              84
+            ]
+          ]
+        },
+        {
+          "a": "HM-13",
+          "b": "HM-14",
+          "via": [
+            [
+              48,
+              78
+            ],
+            [
+              51,
+              77
+            ]
+          ]
+        },
+        {
+          "a": "HM-14",
+          "b": "HM-15",
+          "via": [
+            [
+              60,
+              74
+            ]
+          ]
+        },
+        {
+          "a": "HM-15",
+          "b": "HM-16",
+          "via": [
+            [
+              71,
+              70
+            ],
+            [
+              74,
+              70
+            ]
+          ]
+        },
+        {
+          "a": "HM-16",
+          "b": "HM-17",
+          "via": [
+            [
+              82,
+              65
+            ],
+            [
+              85,
+              62
+            ]
+          ]
+        },
+        {
+          "a": "HM-17",
+          "b": "HM-18",
+          "via": [
+            [
+              89,
+              54
+            ],
+            [
+              91,
+              50
+            ]
+          ]
+        },
+        {
+          "a": "HM-18",
+          "b": "HM-19",
+          "via": [
+            [
+              90,
+              40
+            ]
+          ]
+        },
+        {
+          "a": "HM-19",
+          "b": "HM-20",
+          "via": [
+            [
+              86,
+              29
+            ]
+          ]
+        },
+        {
+          "a": "HM-20",
+          "b": "HM-21",
+          "via": [
+            [
+              79,
+              28
+            ],
+            [
+              76,
+              29
+            ]
+          ]
+        },
+        {
+          "a": "HM-21",
+          "b": "HM-22",
+          "via": [
+            [
+              73,
+              25
+            ]
+          ]
+        },
+        {
+          "a": "HM-05",
+          "b": "HM-08",
+          "via": [
+            [
+              22,
+              34
+            ],
+            [
+              25,
+              34
+            ]
+          ]
+        }
+      ],
+      "lanes": [
+        "Winter Garden",
+        "Tarn Causeway"
+      ],
+      "entrance": "HM-01",
+      "bossNode": "HM-24"
+    },
+    {
+      "id": "FC",
+      "assetId": "MAP-03-furnace-chapel",
+      "name": "Furnace Chapel",
+      "theme": "ember",
+      "boss": "Furnace Saint",
+      "nodes": [
+        {
+          "id": "FC-01",
+          "number": 1,
+          "x": 74,
+          "y": 76,
+          "kind": "entrance",
+          "name": "Gate of Banked Coals",
+          "speaker": "You",
+          "lore": "The gate is warm enough to hurt through a glove. No fire burns nearby.",
+          "reply": "A pilgrim stair climbs directly toward the chapel; a works road loops through the lower kilns."
+        },
+        {
+          "id": "FC-02",
+          "number": 2,
+          "x": 66,
+          "y": 74,
+          "kind": "observation",
+          "name": "The Ashen Divide",
+          "speaker": "You",
+          "lore": "Two sets of footprints separate: bare feet uphill, iron boots toward the works.",
+          "reply": "Pilgrims and furnace workers shared a gate, but not a destination."
+        },
+        {
+          "id": "FC-03",
+          "number": 3,
+          "x": 55,
+          "y": 76,
+          "kind": "encounter",
+          "name": "The Coal Tally",
+          "speaker": "Chain Scavenger",
+          "lore": "Nothing enters empty-handed. What will you give the flame?",
+          "reply": "The tally board counts workers by weight, beside the coal and the ore."
+        },
+        {
+          "id": "FC-04",
+          "number": 4,
+          "x": 44,
+          "y": 74,
+          "kind": "observation",
+          "name": "Kiln Approach",
+          "speaker": "You",
+          "lore": "Ash has settled into the shape of tools that were taken away long ago.",
+          "reply": "Every tool faced the chapel when the workers laid it down."
+        },
+        {
+          "id": "FC-05",
+          "number": 5,
+          "x": 33,
+          "y": 70,
+          "kind": "dialogue",
+          "name": "The Last Stoker",
+          "speaker": "Old Stoker",
+          "lore": "We thought the heat was a blessing. Then the saint stopped asking for fuel.",
+          "reply": "The old stoker remembers the first night the furnace burned on a prayer alone."
+        },
+        {
+          "id": "FC-06",
+          "number": 6,
+          "x": 23,
+          "y": 65,
+          "kind": "cache",
+          "name": "Cold Coal Shed",
+          "speaker": "You",
+          "lore": "A sealed lunch tin sits between heaps of coal that never caught.",
+          "reply": "Inside, a note asks its reader to be home before the evening bell."
+        },
+        {
+          "id": "FC-07",
+          "number": 7,
+          "x": 16,
+          "y": 57,
+          "kind": "fight",
+          "name": "Quenching Yard",
+          "speaker": "You",
+          "lore": "A cinder mantis unfolds from a slag heap, its legs ringing against the stone.",
+          "reply": "It has nested in a quenching trough dry since the water was diverted to the chapel."
+        },
+        {
+          "id": "FC-08",
+          "number": 8,
+          "x": 15,
+          "y": 47,
+          "kind": "shrine",
+          "name": "Worker's Niche",
+          "speaker": "You",
+          "lore": "A small iron hand protects a candle from the furnace wind.",
+          "reply": "Its inscription offers no miracle, only a safe return after work."
+        },
+        {
+          "id": "FC-09",
+          "number": 9,
+          "x": 26,
+          "y": 40,
+          "kind": "dialogue",
+          "name": "The Soot Confessor",
+          "speaker": "Soot Confessor",
+          "lore": "They confessed exhaustion. I called it doubt. I would like that written down.",
+          "reply": "The confessor has kept every worker's name on strips of unburned cloth."
+        },
+        {
+          "id": "FC-10",
+          "number": 10,
+          "x": 35,
+          "y": 35,
+          "kind": "observation",
+          "name": "The Red Stair",
+          "speaker": "You",
+          "lore": "The stair is swept clean while the surrounding terraces lie deep in ash.",
+          "reply": "Someone still prepares this approach for a congregation that cannot come."
+        },
+        {
+          "id": "FC-11",
+          "number": 11,
+          "x": 44,
+          "y": 39,
+          "kind": "observation",
+          "name": "Brazier of Petition",
+          "speaker": "You",
+          "lore": "The great brazier is cold. Its rim has melted inward.",
+          "reply": "The offerings stopped here when the furnace learned to call the petitioners by name."
+        },
+        {
+          "id": "FC-12",
+          "number": 12,
+          "x": 71,
+          "y": 68,
+          "kind": "observation",
+          "name": "Pilgrims' Stair",
+          "speaker": "You",
+          "lore": "The direct stair climbs above a fissure glowing beneath the paving.",
+          "reply": "The handrail bears thousands of fingerprints baked into old soot."
+        },
+        {
+          "id": "FC-13",
+          "number": 13,
+          "x": 64,
+          "y": 61,
+          "kind": "fight",
+          "name": "Procession Landing",
+          "speaker": "You",
+          "lore": "An ember-starved pilgrim blocks the stair, guarding a coal in cupped hands.",
+          "reply": "The coal is cold. The pilgrim has not noticed."
+        },
+        {
+          "id": "FC-14",
+          "number": 14,
+          "x": 57,
+          "y": 54,
+          "kind": "dialogue",
+          "name": "Bearer of the Last Coal",
+          "speaker": "Coal Bearer",
+          "lore": "If it goes out, she said we all go out. Help me remember who she meant.",
+          "reply": "The bearer remembers children warming their hands at the chapel before the doors were chained."
+        },
+        {
+          "id": "FC-15",
+          "number": 15,
+          "x": 50,
+          "y": 47,
+          "kind": "observation",
+          "name": "Reliquary Steps",
+          "speaker": "You",
+          "lore": "Empty reliquary sockets line the stair like missing teeth.",
+          "reply": "Each held a saint's bone until the furnace demanded a warmer offering."
+        },
+        {
+          "id": "FC-16",
+          "number": 16,
+          "x": 79,
+          "y": 37,
+          "kind": "encounter",
+          "name": "Iron Viaduct",
+          "speaker": "Bridge Warden",
+          "lore": "The upper works are closed. The order is old; my oath is older.",
+          "reply": "The warden will hear a worker's grievance. A threat turns its chain across the bridge."
+        },
+        {
+          "id": "FC-17",
+          "number": 17,
+          "x": 89,
+          "y": 41,
+          "kind": "observation",
+          "name": "Eastern Abutment",
+          "speaker": "You",
+          "lore": "The iron supports sing at a pitch too low to hear clearly.",
+          "reply": "The bridge was tuned to the chapel's hymn so the workers could pray without stopping."
+        },
+        {
+          "id": "FC-18",
+          "number": 18,
+          "x": 90,
+          "y": 28,
+          "kind": "cache",
+          "name": "The Weigh House",
+          "speaker": "You",
+          "lore": "A balance hangs level with a prayer tablet on one pan and a tooth on the other.",
+          "reply": "Its ledger assigns the same value to both: one more hour of heat."
+        },
+        {
+          "id": "FC-19",
+          "number": 19,
+          "x": 81,
+          "y": 20,
+          "kind": "dialogue",
+          "name": "Foreman Without a Shift",
+          "speaker": "Ash Foreman",
+          "lore": "No one dismissed us. Until someone does, the shift is not over.",
+          "reply": "The foreman asks for the workers' names to be spoken outside the reach of the furnace."
+        },
+        {
+          "id": "FC-20",
+          "number": 20,
+          "x": 69,
+          "y": 25,
+          "kind": "fight",
+          "name": "High Works Crossing",
+          "speaker": "You",
+          "lore": "A cinder mantis has woven hot wire across the old service path.",
+          "reply": "The wire was once part of the alarm system. No one answered its last ringing."
+        },
+        {
+          "id": "FC-21",
+          "number": 21,
+          "x": 60,
+          "y": 30,
+          "kind": "observation",
+          "name": "The Joining Road",
+          "speaker": "You",
+          "lore": "The works road and pilgrim stair meet before the chapel terrace.",
+          "reply": "Here the ash erases the difference between bare feet and iron boots."
+        },
+        {
+          "id": "FC-22",
+          "number": 22,
+          "x": 36,
+          "y": 28,
+          "kind": "shrine",
+          "name": "Chapel Forecourt",
+          "speaker": "You",
+          "lore": "Gold trim blackens above a row of names struck from the list of saints.",
+          "reply": "The scratched names belong to those who told the congregation to leave."
+        },
+        {
+          "id": "FC-23",
+          "number": 23,
+          "x": 30,
+          "y": 26,
+          "kind": "gate",
+          "name": "Furnace Threshold",
+          "speaker": "You",
+          "lore": "Heat presses against you like a held breath. The chains are fastened from within.",
+          "reply": "The Furnace Saint has mistaken endurance for devotion. The door opens when you stop kneeling."
+        },
+        {
+          "id": "FC-24",
+          "number": 24,
+          "x": 27,
+          "y": 20,
+          "kind": "boss",
+          "name": "Furnace Chapel",
+          "speaker": "Furnace Saint",
+          "lore": "You call it suffering because you have not yet learned to burn clean.",
+          "reply": "Victory banks the sacred furnace. Volcanic haze settles, the workers' shift ends, and the dungeon clears."
+        }
+      ],
+      "edges": [
+        {
+          "a": "FC-01",
+          "b": "FC-02",
+          "via": [
+            [
+              71,
+              74
+            ],
+            [
+              69,
+              74
+            ]
+          ]
+        },
+        {
+          "a": "FC-02",
+          "b": "FC-03",
+          "via": [
+            [
+              61,
+              77
+            ],
+            [
+              58,
+              77
+            ]
+          ]
+        },
+        {
+          "a": "FC-03",
+          "b": "FC-04",
+          "via": [
+            [
+              49,
+              76
+            ]
+          ]
+        },
+        {
+          "a": "FC-04",
+          "b": "FC-05",
+          "via": [
+            [
+              39,
+              73
+            ]
+          ]
+        },
+        {
+          "a": "FC-05",
+          "b": "FC-06",
+          "via": [
+            [
+              28,
+              68
+            ]
+          ]
+        },
+        {
+          "a": "FC-06",
+          "b": "FC-07",
+          "via": [
+            [
+              19,
+              62
+            ],
+            [
+              17,
+              60
+            ]
+          ]
+        },
+        {
+          "a": "FC-07",
+          "b": "FC-08",
+          "via": [
+            [
+              14,
+              54
+            ],
+            [
+              14,
+              50
+            ]
+          ]
+        },
+        {
+          "a": "FC-08",
+          "b": "FC-09",
+          "via": [
+            [
+              18,
+              43
+            ],
+            [
+              22,
+              41
+            ]
+          ]
+        },
+        {
+          "a": "FC-09",
+          "b": "FC-10",
+          "via": [
+            [
+              30,
+              37
+            ]
+          ]
+        },
+        {
+          "a": "FC-10",
+          "b": "FC-11",
+          "via": [
+            [
+              39,
+              35
+            ],
+            [
+              42,
+              37
+            ]
+          ]
+        },
+        {
+          "a": "FC-11",
+          "b": "FC-22",
+          "via": [
+            [
+              42,
+              33
+            ],
+            [
+              40,
+              31
+            ]
+          ]
+        },
+        {
+          "a": "FC-22",
+          "b": "FC-23",
+          "via": [
+            [
+              33,
+              27
+            ]
+          ]
+        },
+        {
+          "a": "FC-23",
+          "b": "FC-24",
+          "via": []
+        },
+        {
+          "a": "FC-01",
+          "b": "FC-12",
+          "via": [
+            [
+              74,
+              72
+            ]
+          ]
+        },
+        {
+          "a": "FC-12",
+          "b": "FC-13",
+          "via": [
+            [
+              68,
+              65
+            ]
+          ]
+        },
+        {
+          "a": "FC-13",
+          "b": "FC-14",
+          "via": [
+            [
+              60,
+              57
+            ]
+          ]
+        },
+        {
+          "a": "FC-14",
+          "b": "FC-15",
+          "via": [
+            [
+              53,
+              50
+            ]
+          ]
+        },
+        {
+          "a": "FC-15",
+          "b": "FC-21",
+          "via": [
+            [
+              49,
+              43
+            ],
+            [
+              48,
+              36
+            ],
+            [
+              53,
+              32
+            ]
+          ]
+        },
+        {
+          "a": "FC-21",
+          "b": "FC-11",
+          "via": [
+            [
+              53,
+              33
+            ],
+            [
+              48,
+              35
+            ]
+          ]
+        },
+        {
+          "a": "FC-16",
+          "b": "FC-17",
+          "via": [
+            [
+              84,
+              39
+            ]
+          ]
+        },
+        {
+          "a": "FC-17",
+          "b": "FC-18",
+          "via": [
+            [
+              90,
+              36
+            ],
+            [
+              91,
+              32
+            ]
+          ]
+        },
+        {
+          "a": "FC-18",
+          "b": "FC-19",
+          "via": [
+            [
+              87,
+              24
+            ],
+            [
+              84,
+              22
+            ]
+          ]
+        },
+        {
+          "a": "FC-19",
+          "b": "FC-20",
+          "via": [
+            [
+              75,
+              21
+            ],
+            [
+              72,
+              23
+            ]
+          ]
+        },
+        {
+          "a": "FC-20",
+          "b": "FC-21",
+          "via": [
+            [
+              65,
+              27
+            ]
+          ]
+        },
+        {
+          "a": "FC-21",
+          "b": "FC-16",
+          "via": [
+            [
+              64,
+              33
+            ],
+            [
+              70,
+              35
+            ],
+            [
+              74,
+              36
+            ]
+          ]
+        }
+      ],
+      "lanes": [
+        "Lower Works",
+        "Pilgrim Stair"
+      ],
+      "entrance": "FC-01",
+      "bossNode": "FC-24"
+    }
+  ]
+}

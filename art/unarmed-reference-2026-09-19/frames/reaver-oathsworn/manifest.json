@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "reaver-oathsworn",
+  "classId": "reaver",
+  "armourId": "oathsworn",
+  "effectsBaked": false,
+  "source": "sources/reaver-oathsworn.png",
+  "sourceSha256": "a00a7d6148390ab6591d6114dc0b4b8c082663458fdb49ec0576ae9bf8089144",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3291139240506329,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        15,
+        19,
+        289,
+        316
+      ],
+      "core": [
+        27,
+        31,
+        277,
+        304
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        150.5,
+        285
+      ],
+      "offset": [
+        56,
+        101
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        110,
+        417,
+        496
+      ],
+      "file": "frames/reaver-oathsworn/STANCE-READY.webp",
+      "sha256": "f3513325379b534c75ac08dc49b4de03cc8d31c60900cb254aec46809a234363"
+    },
+    "ATK-01": {
+      "content": [
+        324,
+        21,
+        600,
+        316
+      ],
+      "core": [
+        336,
+        33,
+        588,
+        304
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        147.0,
+        283
+      ],
+      "offset": [
+        61,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        69,
+        116,
+        427,
+        484
+      ],
+      "file": "frames/reaver-oathsworn/ATK-01.webp",
+      "sha256": "daa09bd96aa58485f04457bae2ec2ca3159d5a962d6a4af5e2fc566dc962f1f9"
+    },
+    "ATK-02": {
+      "content": [
+        626,
+        25,
+        913,
+        316
+      ],
+      "core": [
+        638,
+        37,
+        901,
+        304
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        151.5,
+        279
+      ],
+      "offset": [
+        55,
+        109
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        63,
+        117,
+        435,
+        485
+      ],
+      "file": "frames/reaver-oathsworn/ATK-02.webp",
+      "sha256": "9b59c75664bb818cf13d3beb8c01c22c729a7f52a5eda1365a06f1e0b2c72ffd"
+    },
+    "ATK-03": {
+      "content": [
+        937,
+        23,
+        1242,
+        316
+      ],
+      "core": [
+        949,
+        35,
+        1230,
+        304
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        152.5,
+        281
+      ],
+      "offset": [
+        53,
+        107
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        56,
+        107,
+        453,
+        488
+      ],
+      "file": "frames/reaver-oathsworn/ATK-03.webp",
+      "sha256": "ae27b409cf46dea966cef4339487d945066875436f8d015de1a1ffb1e1931eb0"
+    },
+    "ATK-04": {
+      "content": [
+        19,
+        330,
+        291,
+        627
+      ],
+      "core": [
+        31,
+        342,
+        279,
+        615
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        147.0,
+        285
+      ],
+      "offset": [
+        61,
+        101
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        72,
+        108,
+        423,
+        491
+      ],
+      "file": "frames/reaver-oathsworn/ATK-04.webp",
+      "sha256": "fd2531dfb36f3d9bc6b7ea4051f3abbcccddc0640c9ba552ebd4a4da01ca04df"
+    },
+    "ATK-05": {
+      "content": [
+        316,
+        330,
+        628,
+        627
+      ],
+      "core": [
+        328,
+        342,
+        616,
+        615
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        152.0,
+        285
+      ],
+      "offset": [
+        54,
+        101
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        62,
+        101,
+        469,
+        487
+      ],
+      "file": "frames/reaver-oathsworn/ATK-05.webp",
+      "sha256": "e593581ac456c4e16d75a23b62004e7173a28873ed98ea22d951d94b62bd9658"
+    },
+    "ATK-06": {
+      "content": [
+        632,
+        331,
+        914,
+        627
+      ],
+      "core": [
+        644,
+        343,
+        902,
+        615
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        152.5,
+        284
+      ],
+      "offset": [
+        53,
+        103
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        66,
+        113,
+        416,
+        491
+      ],
+      "file": "frames/reaver-oathsworn/ATK-06.webp",
+      "sha256": "82a2e48caa00a6cbf8a14c9dfb0bf784ea05a1538894f38e6719f484bf1579c1"
+    },
+    "ATK-07": {
+      "content": [
+        949,
+        332,
+        1226,
+        627
+      ],
+      "core": [
+        961,
+        344,
+        1214,
+        615
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        151.5,
+        283
+      ],
+      "offset": [
+        55,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        55,
+        113,
+        423,
+        491
+      ],
+      "file": "frames/reaver-oathsworn/ATK-07.webp",
+      "sha256": "6a98d2c70983d0d8a78c18382014fdb1da5c4e825fc1bccfdafabc9799875281"
+    },
+    "DEFEND": {
+      "content": [
+        22,
+        653,
+        295,
+        938
+      ],
+      "core": [
+        34,
+        665,
+        283,
+        926
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        147.5,
+        273
+      ],
+      "offset": [
+        60,
+        117
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        72,
+        118,
+        420,
+        496
+      ],
+      "file": "frames/reaver-oathsworn/DEFEND.webp",
+      "sha256": "86967619fb35a0398a0880d7f60334b1405c486f7299d7aee23b8412d5fb428b"
+    },
+    "HURT": {
+      "content": [
+        320,
+        648,
+        607,
+        939
+      ],
+      "core": [
+        332,
+        660,
+        595,
+        927
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        162.5,
+        279
+      ],
+      "offset": [
+        40,
+        109
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        48,
+        121,
+        421,
+        491
+      ],
+      "file": "frames/reaver-oathsworn/HURT.webp",
+      "sha256": "0aa6c7bf7319df08e3abc05accc5eedf66c4d5f397107fa50e794b35c7f4a7f6"
+    },
+    "CAST": {
+      "content": [
+        627,
+        644,
+        943,
+        939
+      ],
+      "core": [
+        639,
+        656,
+        931,
+        927
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        159.0,
+        283
+      ],
+      "offset": [
+        45,
+        104
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        46,
+        104,
+        454,
+        491
+      ],
+      "file": "frames/reaver-oathsworn/CAST.webp",
+      "sha256": "1115845363334a5249f856d44c3ec5686dece7b515833f491cd1093e3a10c85c"
+    },
+    "BUFF": {
+      "content": [
+        962,
+        634,
+        1202,
+        939
+      ],
+      "core": [
+        974,
+        646,
+        1190,
+        927
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        140.0,
+        293
+      ],
+      "offset": [
+        70,
+        91
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        94,
+        389,
+        496
+      ],
+      "file": "frames/reaver-oathsworn/BUFF.webp",
+      "sha256": "4bb908cd69ca7616405d9ed6a5ac1f45ae7d36f70a6b654a4c42628c644cdbd1"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        18,
+        966,
+        313,
+        1222
+      ],
+      "core": [
+        30,
+        978,
+        301,
+        1210
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        157.0,
+        244
+      ],
+      "offset": [
+        47,
+        156
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        60,
+        156,
+        438,
+        488
+      ],
+      "file": "frames/reaver-oathsworn/STANCE-AGGRESSIVE.webp",
+      "sha256": "ed014041e35c975721621b3bb9c8b3c6342099918f88a1033efe54c8663eeb04"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        331,
+        961,
+        608,
+        1226
+      ],
+      "core": [
+        343,
+        973,
+        596,
+        1214
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        151.0,
+        253
+      ],
+      "offset": [
+        55,
+        144
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        64,
+        144,
+        422,
+        491
+      ],
+      "file": "frames/reaver-oathsworn/STANCE-DEFENSIVE.webp",
+      "sha256": "2af2d46eaf2cf0ec5619e9c8ca6ae194dab44317a300540501e0392e04910781"
+    },
+    "PORTRAIT": {
+      "content": [
+        627,
+        966,
+        942,
+        1237
+      ],
+      "core": [
+        639,
+        978,
+        930,
+        1225
+      ],
+      "scale": 1.4730158730158731,
+      "sourceFootAnchor": [
+        157.5,
+        259
+      ],
+      "offset": [
+        24,
+        98
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        24,
+        98,
+        488,
+        494
+      ],
+      "file": "frames/reaver-oathsworn/PORTRAIT.webp",
+      "sha256": "9f9a33c7fe9ce433b24bb98510142468ed4bc84bd0f9c9112dfe4cf2d7eb356f"
+    },
+    "CONVERSATION": {
+      "content": [
+        969,
+        926,
+        1192,
+        1236
+      ],
+      "core": [
+        981,
+        938,
+        1180,
+        1224
+      ],
+      "scale": 1.3291139240506329,
+      "sourceFootAnchor": [
+        119.5,
+        298
+      ],
+      "offset": [
+        97,
+        84
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        97,
+        92,
+        384,
+        495
+      ],
+      "file": "frames/reaver-oathsworn/CONVERSATION.webp",
+      "sha256": "a19ccb5fb72b7516b29f6152fe9e6067c25fabd989d2a13c041d321556608956"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

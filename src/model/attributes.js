@@ -21,6 +21,9 @@ function tables(source) {
     creationModes: Array.isArray(source && source.creationModes) ? source.creationModes : [],
     attributeRules: source && source.attributeRules,
     classes: Array.isArray(source && source.classes) ? source.classes : [],
+    // Read only by the retired-name check: a dead attribute id coming back as
+    // a derived-stat weight is refused there by name.
+    derivedStatRules: source && source.derivedStatRules,
   };
 }
 
@@ -89,6 +92,21 @@ export function creationMode(source, modeId = defaultCreationModeId(source)) {
   const mode = tables(source).creationModes.find((m) => m && m.id === modeId);
   if (!mode) throw new Error(`Unknown attribute creation mode '${modeId}'`);
   return mode;
+}
+
+/**
+ * creationModeHasPoints(mode) → does this mode give a player points to place?
+ *
+ * Yes when any allocation can MOVE: a bonus pool to spend, or — with none —
+ * baseline points that may be taken from one stat and put on another
+ * (below-baseline allowed, with room both under and over the baseline).
+ * Reading the pool alone made such a mode preset-only, so creation never
+ * opened the editor for a redistribution the mode permits (Codex, #1255).
+ */
+export function creationModeHasPoints(mode) {
+  if (!mode) return false;
+  if (mode.bonusPool > 0) return true;
+  return mode.belowBaseline !== 'forbid' && mode.minimum < mode.baseline && mode.maximum > mode.baseline;
 }
 
 export function creationModeSnapshot(source, modeId = defaultCreationModeId(source)) {
@@ -205,8 +223,16 @@ export function migrateRetiredAttributeNames(run, source) {
     const allocationDead = plainObject(run.attributes) && Object.hasOwn(run.attributes, dead);
     const allocationHeir = plainObject(run.attributes) && Object.hasOwn(run.attributes, heir);
     const sourceRows = rules ? Object.entries(rules).filter(([, rule]) => plainObject(rule)) : [];
-    const snapshotDead = sourceRows.filter(([, rule]) => rule.sourceStat === dead).map(([id]) => id);
-    const snapshotHeir = sourceRows.filter(([, rule]) => rule.sourceStat === heir).map(([id]) => id);
+    // A ROW SPELLS A SEAT EITHER WAY: as the retired `sourceStat`, or — since
+    // ruleset 6 — as a weight key. Both are witnesses for the DEAD name.
+    const spells = (rule, id) => rule.sourceStat === id || Object.hasOwn(rule, id);
+    const snapshotDead = sourceRows.filter(([, rule]) => spells(rule, dead)).map(([id]) => id);
+    // THE HEIR IS A WITNESS ONLY WHERE THE DEAD NAME COULD HAVE STOOD INSTEAD.
+    // Every live ruleset-6 row carries a `constitution` weight, so counting
+    // that as a competing claim would refuse to heal any save at all; the
+    // genuine ambiguity is a row that carries BOTH spellings of one seat.
+    const snapshotHeir = sourceRows.filter(([, rule]) => rule.sourceStat === heir
+      || (Object.hasOwn(rule, heir) && spells(rule, dead))).map(([id]) => id);
     const deadPaths = [
       ...(allocationDead ? [`attributes.${dead}`] : []),
       ...snapshotDead.map((id) => `derivedStatRuleSnapshot.rules.rules.${id}.sourceStat`),
@@ -236,7 +262,17 @@ export function migrateRetiredAttributeNames(run, source) {
     if (rules) {
       const moved = [];
       for (const [id, rule] of Object.entries(rules)) {
-        if (plainObject(rule) && rule.sourceStat === dead) { rule.sourceStat = heir; moved.push(id); }
+        if (!plainObject(rule)) continue;
+        let carried = false;
+        if (rule.sourceStat === dead) { rule.sourceStat = heir; carried = true; }
+        // A ruleset-6 snapshot spells the seat as a WEIGHT KEY. No save written
+        // in the three-day window can carry one, but a snapshot restored from
+        // such a save and re-written in the one format would, so the heal walks
+        // both spellings rather than one and a promise. The preflight above has
+        // already refused a row that carries the heir as well, so this can
+        // never overwrite a live weight.
+        if (Object.hasOwn(rule, dead)) { rule[heir] = rule[dead]; delete rule[dead]; carried = true; }
+        if (carried) moved.push(id);
       }
       if (moved.length) {
         note(run, {
@@ -329,6 +365,18 @@ export function attributeContentProblems(source) {
   for (const [dead, heir] of Object.entries(retiredNames(t))) {
     if (liveIds.includes(dead)) out.push({ path: `attributes.${dead}`, msg: `'${dead}' is a retired attribute id (heir '${heir}') and may not return as a row` });
     if (!liveIds.includes(heir)) out.push({ path: `attributeRules.retired.${dead}`, msg: `heir '${heir}' is not a live attribute id` });
+    // THE THIRD CONTENT HOME THE DEAD NAME HAD, and since ruleset 6 it is a
+    // WEIGHT KEY rather than a `sourceStat`. The derived-stat validator would
+    // refuse it as an unknown field; that is true but says nothing about why,
+    // and the whole point of the retired map is that the refusal names the
+    // retirement.
+    const rules = plainObject(t.derivedStatRules) && plainObject(t.derivedStatRules.rules)
+      ? t.derivedStatRules.rules : {};
+    for (const [id, rule] of Object.entries(rules)) {
+      if (!plainObject(rule)) continue;
+      if (Object.hasOwn(rule, dead)) out.push({ path: `derivedStatRules.rules.${id}.${dead}`, msg: `'${dead}' is a retired attribute id (its heir is '${heir}')` });
+      if (rule.sourceStat === dead) out.push({ path: `derivedStatRules.rules.${id}.sourceStat`, msg: `'${dead}' is a retired attribute id (its heir is '${heir}')` });
+    }
   }
   const modeIds = t.creationModes.map((m) => m && m.id).filter((id) => typeof id === 'string');
   const classIds = t.classes.map((c) => c && c.id).filter((id) => typeof id === 'string');
@@ -345,6 +393,60 @@ export function attributeContentProblems(source) {
       const path = `attributeRules.presets.${modeId}.${classId}`;
       if (!Object.hasOwn(byClass, classId)) out.push({ path, msg: 'missing class × mode preset cell' });
       else out.push(...allocationProblems(t, classId, modeId, byClass[classId], path));
+    }
+  }
+  return out;
+}
+
+/**
+ * A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S STARTING GEAR (plan phase 9).
+ * The rebase moved every attribute and every equipment minimum at once, and
+ * nothing cross-read the two: the Starseer's preset lost the Intelligence its
+ * own staff asks for, so creation refused the character the table had just
+ * authored. Summing to the mode total is not enough — the gear the class
+ * starts in has to be holdable by the points the class starts with.
+ *
+ * ONE HOME, TWO DOORS. The content door (model/validate.js) and the Advanced
+ * settings door (model/advancedConfig.js) both ask this question, and they
+ * must answer it the same way: Settings used to accept a preset edit that the
+ * boot then threw the WHOLE configuration away over, behind a generic
+ * "unchanged" notice (review, #1217).
+ *
+ * WHAT IS CROSS-READ: the baseline kit's two hands, and every armour creation
+ * offers that class. The armour half is green today — every class's default
+ * outfit carries no minimum — and it is written anyway, because the defect
+ * this check was added for named the Nightweave as well as the Ash Staff, and
+ * a door that covers half of what it claims is a door that goes quiet on the
+ * other half (review, #1217).
+ *
+ * `presets` is the whole `attributeRules.presets` table, so a caller editing
+ * one mode passes its own edit rather than the content's.
+ */
+export function presetGearProblems({ presets, defaultMode, startingKits, equipmentRequirements, creationClasses }) {
+  const out = [];
+  const byClass = plainObject(presets) ? presets[defaultMode] : null;
+  const reqRows = Array.isArray(equipmentRequirements) ? equipmentRequirements : [];
+  if (!plainObject(byClass) || !reqRows.length) return out;
+  const minimaFor = (itemId) => reqRows.filter((row) => row && row.itemId === itemId);
+  const check = (classId, itemId, what) => {
+    const allocation = byClass[classId];
+    if (!plainObject(allocation)) return;
+    for (const row of minimaFor(itemId)) {
+      const have = allocation[row.attributeId];
+      if (!Number.isInteger(row.minimum) || !Number.isInteger(have) || have >= row.minimum) continue;
+      out.push({
+        path: `attributeRules.presets.${defaultMode}.${classId}.${row.attributeId}`,
+        msg: `is ${have}, but the class's ${what} '${itemId}' asks ${row.minimum} — the preset cannot hold the gear it starts in`,
+      });
+    }
+  };
+  for (const kit of Array.isArray(startingKits) ? startingKits : []) {
+    if (!kit || !kit.baseline) continue;
+    for (const itemId of [kit.rightHand, kit.leftHand].filter(Boolean)) check(kit.classId, itemId, 'baseline kit item');
+  }
+  for (const [classId, row] of Object.entries(plainObject(creationClasses) ? creationClasses : {})) {
+    for (const armourId of Array.isArray(row && row.armourIds) ? row.armourIds : []) {
+      check(classId, armourId, 'starting armour');
     }
   }
   return out;

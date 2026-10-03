@@ -14,6 +14,7 @@
 // fixed-size frame that would shrink the figure to fit a lunge.
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { dataHome } from './asset-data.mjs';
 import { execFileSync } from 'node:child_process';
 import { decodePng, encodePng, contentBox, tintOutfit, withRim, TINTS } from './concept-cutout.mjs';
 
@@ -30,7 +31,8 @@ mkdirSync(outDir, { recursive: true });
 // The output folder is described entirely by the manifest written here, so it is
 // cleared first. A run that carries fewer classes than the folder already held
 // would quietly drop the rest, so say so rather than letting it pass unnoticed.
-const outManifest = join(outDir, 'pose-sprites.manifest.json');
+// A manifest for a folder under assets/ lives under asset-data/ (tools/asset-data.mjs).
+const outManifest = join(dataHome(outDir), 'pose-sprites.manifest.json');
 if (existsSync(outManifest)) {
   try {
     // By class AND pose. Comparing class names alone passed a run that carried
@@ -98,5 +100,6 @@ const manifest = {
   tints: Object.fromEntries(Object.entries(TINTS).map(([k, v]) => [k, '#' + v.map((c) => c.toString(16).padStart(2, '0')).join('')])),
   sprites,
 };
-writeFileSync(join(outDir, 'pose-sprites.manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+mkdirSync(dataHome(outDir), { recursive: true });
+writeFileSync(outManifest, JSON.stringify(manifest, null, 2) + '\n');
 console.log(`pose-sprites: ${sprites.length} sprites -> ${outDir}`);

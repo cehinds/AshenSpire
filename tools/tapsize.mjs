@@ -55,11 +55,11 @@
 // about any control that is not one of the four.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
@@ -174,7 +174,10 @@ function stylesheetHoldsNoConstant(sizes) {
 }
 
 const SELECTORS = {
-  setTab: '.set-tabs .set-tab',
+  // W1a: compact hosts select a section with `.set-cat-select` and keep the
+  // tabs closed; `grp` measures only what is drawn, so each shape counts the
+  // control it actually shows.
+  setTab: '.set-tabs .set-tab, .set-cat-select',
   ovTab: '.overlay-tabs .ov-tab',
   choice: '.choice-group .choice',
   regionFold: '.region-fold',
@@ -337,7 +340,7 @@ const MIN_CELLS = EXPECT_CELLS;
 const FULL_CELLS = 3 * 5 * 2 * SIZES.length; // 3 shapes x 5 UI sizes x 2 text sizes
 const NARROWED = [QUICK ? '--quick' : null, MOBILE_ONLY ? '--mobile' : null].filter(Boolean).join(' + ');
 
-const href = pathToFileURL(resolve(TREE, 'dist/AshenSpire.html')).href;
+const href = await buildPageUrl(resolve(TREE, 'dist/AshenSpire.html'));
 if (!existsSync(resolve(TREE, 'dist/AshenSpire.html'))) {
   console.error(`tapsize: no dist/AshenSpire.html under ${TREE} — run node tools/launch.mjs --build-only first`);
   process.exit(1);

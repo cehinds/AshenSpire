@@ -2,7 +2,7 @@
 // Real Chromium coverage of every canonical armament through the production renderer.
 // node tools/weapon-card-preview.mjs [--shots absolute-output-directory]
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
@@ -57,6 +57,46 @@ try {
     writeFileSync(resolve(output, `${name}.png`), Buffer.from(shot.data, 'base64'));
   };
   const url = `http://localhost:${server.server.address().port}/weapon-cards-preview.html`;
+  // #1164: outside the modal the reading door stacks on its OWN box. A bare
+  // host (reward/inventory/service detail) and an Armoury pane are not
+  // governed by the modal's measured data-card-door, so lay both out for real
+  // and read the pixels: stacked, the details start below the art and are at
+  // least the readable minimum or fill their line, and the art is centred on
+  // its line; wide, the two columns hold with readable details from the start.
+  await send('Emulation.setDeviceMetricsOverride', { width:703, height:900, deviceScaleFactor:1, mobile:false });
+  await send('Page.navigate', { url });
+  await until("document.body?.dataset.previewReady==='true'", 'door-stack preview');
+  await evaluate("document.querySelector('.card-info-button').click()");
+  await until("!!document.querySelector('.modal .card-inspection-layout')", 'door-stack source layout');
+  await evaluate(`(()=>{const source=document.querySelector('.modal .card-inspection-layout');const mount=(host)=>{const layout=source.cloneNode(true);layout.removeAttribute('data-card-door');host.append(layout);return host;};
+    document.querySelector('.modal-close').click();
+    const bare=mount(Object.assign(document.createElement('div'),{id:'door-bare'}));
+    const armoury=Object.assign(document.createElement('div'),{className:'armoury',id:'door-armoury'});armoury.append(mount(Object.assign(document.createElement('div'),{className:'armoury-item-detail'})));
+    document.body.replaceChildren(bare,armoury);})()`);
+  const readable = JSON.parse(readFileSync(resolve(root, 'content/config/ui/components/card.json'), 'utf8')).sizing.doorReadableMinPx;
+  const doorGeometry = host => evaluate(`(()=>{const l=document.querySelector(${JSON.stringify(`${host} .card-inspection-layout`)});const cs=getComputedStyle(l);const b=l.getBoundingClientRect();const left=b.left+parseFloat(cs.paddingLeft),right=b.right-parseFloat(cs.paddingRight);const a=l.querySelector(':scope > .card-inspection-art').getBoundingClientRect();const d=l.querySelector(':scope > .card-inspection-details').getBoundingClientRect();return {left,right,art:{left:a.left,right:a.right,top:a.top,bottom:a.bottom},details:{left:d.left,right:d.right,top:d.top,width:d.width}}})()`);
+  const doorRows = [];
+  for (const width of [601, 650, 703, 1280]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height:900, deviceScaleFactor:1, mobile:false });
+    await wait(100);
+    for (const host of ['#door-bare', '#door-armoury .armoury-item-detail']) {
+      const g = await doorGeometry(host);
+      const label = `door ${host} @${width}`;
+      const line = g.right - g.left;
+      if (width < 800) {
+        check(g.details.top >= g.art.bottom - 0.5, `${label}: details start below the art (${g.details.top} < ${g.art.bottom})`);
+        check(g.details.width >= readable || g.details.width >= line - 1, `${label}: details ${g.details.width}px, not >= ${readable} nor filling ${line}px`);
+        check(Math.abs((g.art.left + g.art.right) / 2 - (g.left + g.right) / 2) <= 1, `${label}: stacked art centred on its line`);
+      } else {
+        check(g.details.left >= g.art.right && g.details.top < g.art.bottom, `${label}: two columns hold`);
+        check(g.details.width >= readable, `${label}: details ${g.details.width}px beside the card, under ${readable}`);
+        check(Math.abs(g.art.left - g.left) <= 1, `${label}: two-column art starts at the start edge`);
+      }
+      doorRows.push(`${width}:${Math.round(g.details.width)}`);
+    }
+    await screenshot(`door-stack-${width}`);
+  }
+  console.log(`door stack (#1164) details px bare/armoury: ${doorRows.join(' ')}. NOT checked: the modal host (tests/card-size-tuning.test.mjs), right-to-left layout, widths other than 601/650/703/1280, playing-card (non-armament) doors.`);
   for (const [name, width, height] of [['desktop',1280,1000],['phone',390,844]]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: name === 'phone' });
     await send('Page.navigate', { url });
@@ -104,7 +144,7 @@ try {
   // A real merchant on a seeded disposable run. Preview/back must not purchase.
   await send('Emulation.setDeviceMetricsOverride', { width:1280, height:1000, deviceScaleFactor:1, mobile:false });
   await evaluate(`(async()=>{const {createRunState}=await import('/src/model/state.js');const {createRng}=await import('/src/engine/rng.js');const {buildShopStock}=await import('/src/engine/encounters.js');const {contentBundle}=await import('/src/content/index.js');const {createRegistries}=await import('/src/model/registries.js');const {mountShop}=await import('/src/ui/screens/shop.js');const r=createRegistries(contentBundle);const run=createRunState({seed:671,classId:'reaver',registries:r});run.cinders=1000;run.shopStock=buildShopStock(r,createRng(671),run);window.weaponPreviewRun=run;document.body.replaceChildren(Object.assign(document.createElement('main'),{id:'app'}));mountShop(document.querySelector('#app'),{registries:r,run,meta:{settings:{}},onLeave(){},onChanged(){}});})()`);
-  await evaluate(`document.querySelector('[data-face="bar:armaments"]').click()`); await wait(100);
+  await evaluate(`document.querySelector('#shop-cat-armaments').click()`); await wait(100);
   check(await evaluate("document.querySelector('.shop-armament-offer').getBoundingClientRect().height>0"), 'merchant shelf exposes weapon cards');
   await screenshot('merchant-offers');
   const before = await evaluate('JSON.stringify(weaponPreviewRun)');

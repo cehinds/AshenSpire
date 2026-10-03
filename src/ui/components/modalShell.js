@@ -34,6 +34,9 @@
 // for loss. `tone: 'danger'` is available and is meant to be rare.
 
 import { esc } from './tooltip.js';
+import { planButtonGroup } from '../models/ButtonSizeModel.js';
+import { resolveModalRung, resolveFooterSize } from '../models/WireframeChoiceModel.js';
+import { activeWireframeChoice } from '../wireframeChoices.js';
 
 /** The one glyph. U+2715; the save-slot modal used U+00D7 and now does not. */
 export const MODAL_CLOSE_GLYPH = '✕';
@@ -47,6 +50,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
   button.type = 'button';
   if (id) button.id = id;
   button.className = `subtle modal-close${className ? ` ${className}` : ''}`;
+  button.dataset.controlRole = 'exit';
   button.title = `${label} (Esc)`;
   button.setAttribute('aria-label', label);
   const face = document.createElement('span');
@@ -65,7 +69,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
  * markup would be a fifth chrome by the end of the week.
  */
 export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
-  return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}"`
+  return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}" data-control-role="exit"`
     + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}"><span class="modal-close-face" aria-hidden="true">${MODAL_CLOSE_GLYPH}</span></button>`;
 }
 
@@ -80,6 +84,12 @@ export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' 
  */
 export function modalFooter({ note = '', secondary = [], primary = null, className = '', size = 'medium' } = {}) {
   if (!BUTTON_ROW_SIZES.includes(size)) throw new Error(`Unknown footer size '${size}'`);
+  // THE CALLER'S STEP IS THE AUTHORED ONE, and the player's answer (Settings →
+  // Advanced → Wireframes → Modals) moves it. `auto` is the caller's own word,
+  // so a footer with no choice in force is byte-identical to the one before
+  // this line existed. The authored step is kept on the row so the same answer
+  // can be re-applied to an OPEN door without knowing what it asked for.
+  const step = resolveFooterSize(size, activeWireframeChoice('wireframeModalFooter'), BUTTON_ROW_SIZES);
   const footer = document.createElement('footer');
   footer.className = `modal-foot${className ? ` ${className}` : ''}`;
   if (note) {
@@ -101,14 +111,28 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
   // and `stretch` (ui.css) gives them one height.
   const actions = document.createElement('div');
   actions.className = 'modal-foot-actions modal-btnrow';
-  actions.dataset.size = size;
-  for (const button of secondary) if (button) actions.appendChild(button);
-  if (primary) {
+  actions.dataset.authoredSize = size;
+  actions.dataset.size = step;
+  const visibleSecondary = secondary.filter(button => button && !button.hidden);
+  const visiblePrimary = primary && !primary.hidden ? primary : null;
+  actions.dataset.actionCount = String(visibleSecondary.length + (visiblePrimary ? 1 : 0));
+  // WCB0: footer siblings take equal shares of the foot after gaps, and a sole
+  // action fills it (ButtonSizeModel). Each button is `full` of its share at
+  // the standard height; the label never picks the width.
+  const plan = planButtonGroup({ kind: 'footer', count: Number(actions.dataset.actionCount) });
+  actions.dataset.buttonGroup = plan.kind;
+  actions.dataset.buttonLayout = plan.layout;
+  for (const button of [...visibleSecondary, visiblePrimary]) if (button?.dataset) button.dataset.buttonSize = plan.size;
+  for (const button of visibleSecondary) actions.appendChild(button);
+  if (visiblePrimary) {
     // `className` and not `classList` — this component is mounted by tests that
     // drive it in a minimal DOM (tests/confirmation-modal.test.mjs), and a
     // shared piece of chrome must not need more of the platform than the
     // surfaces that share it.
-    if (!` ${primary.className} `.includes(' primary ')) {
+    // An exit keeps its role in the primary slot: a sole Back/Close spans the
+    // foot but is never painted as the green way forward (ControlAppearance).
+    const role = primary.dataset?.controlRole ?? primary.getAttribute?.('data-control-role');
+    if (role !== 'exit' && !` ${primary.className} `.includes(' primary ')) {
       primary.className = `${primary.className} primary`.trim();
     }
     actions.appendChild(primary);
@@ -409,6 +433,50 @@ export function modalHead({
  */
 export const MODAL_SIZES = Object.freeze(['sm', 'md', 'lg', 'xl']);
 
+/**
+ * stampModalSize(panel, size) → the panel, wearing both words.
+ *
+ * THE ONE PLACE A MODAL'S WIDTH RUNG IS WRITTEN. `data-authored-size` is what
+ * the surface asked for and never changes; `data-size` is that rung after the
+ * player's answer (Settings → Advanced → Wireframes → Modals), and it is what
+ * kit.css reads. Every door goes through here — openModal, the kit's pageDoor,
+ * the Smith's W1i, the confirmation W2 and the Armoury's W1e — because a
+ * choice that moved only the doors built by one constructor would be a setting
+ * that is right about half the game.
+ */
+export function stampModalSize(panel, size) {
+  if (!MODAL_SIZES.includes(size)) throw new Error(`Unknown modal size '${size}'`);
+  panel.dataset.authoredSize = size;
+  panel.dataset.size = resolveModalRung(size, activeWireframeChoice('wireframeModalWidth'), MODAL_SIZES);
+  return panel;
+}
+
+/**
+ * restampModalWireframes(doc) → how many surfaces were re-resolved.
+ *
+ * A player changing a Modals choice is, almost always, looking at a modal while
+ * they do it: Settings is a W1 door. So the answer is re-applied to everything
+ * already on the page rather than only to the next door opened. Nothing is
+ * re-rendered — the rung and the footer step are two data attributes, and
+ * kit.css owns what they mean — and the AUTHORED value each surface asked for
+ * is the one that is re-resolved, so this is idempotent and never compounds.
+ */
+export function restampModalWireframes(doc = typeof document === 'undefined' ? null : document) {
+  if (!doc) return 0;
+  const width = activeWireframeChoice('wireframeModalWidth', doc.documentElement);
+  const footer = activeWireframeChoice('wireframeModalFooter', doc.documentElement);
+  let restamped = 0;
+  for (const panel of doc.querySelectorAll('.modal[data-authored-size]')) {
+    panel.dataset.size = resolveModalRung(panel.dataset.authoredSize, width, MODAL_SIZES);
+    restamped += 1;
+  }
+  for (const row of doc.querySelectorAll('.modal-foot-actions[data-authored-size]')) {
+    row.dataset.size = resolveFooterSize(row.dataset.authoredSize, footer, BUTTON_ROW_SIZES);
+    restamped += 1;
+  }
+  return restamped;
+}
+
 export function openModal({
   size = 'md',
   className = '',
@@ -438,10 +506,12 @@ export function openModal({
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
 
-  if (!MODAL_SIZES.includes(size)) throw new Error(`Unknown modal size '${size}'`);
   const panel = document.createElement('section');
   panel.className = `modal${className ? ` ${className}` : ''}`;
-  panel.dataset.size = size;
+  // The rung the body asked for, then the player's answer about it. Both words
+  // are written by the one stamp above, which also refuses an unknown rung.
+  stampModalSize(panel, size);
+  panel.dataset.wireframe = role === 'alertdialog' ? 'W2' : 'W1';
   panel.setAttribute('role', role);
   panel.setAttribute('aria-modal', 'true');
   panel.setAttribute('aria-labelledby', titleId);
@@ -494,7 +564,9 @@ export function openModal({
   release = bindModalDismiss({ veil, panel, close, opener });
 
   // Focus the way FORWARD when there is one, else the way out. Never the veil.
+  // A footer exit (the wide Close) outranks the head's small ✕.
   const first = panel.querySelector('.modal-foot-actions .primary')
+    || panel.querySelector('.modal-foot-actions [data-control-role="exit"]')
     || panel.querySelector('[data-focusable="true"]')
     || panel.querySelector('.modal-close');
   first?.focus?.({ preventScroll: true });

@@ -23,7 +23,7 @@
 //
 // WHAT THE DIGEST COVERS, and it is a closed set stated in one place:
 //
-//     index.html · styles/** · src/** · assets/**
+//     index.html · styles/** · src/** · assets/** · assets-mobile/** · asset-data/**
 //     tools/bundle.mjs · tools/buildversion.mjs · tools/dirorder.mjs
 //
 // `buildordinal.json` is deliberately OUTSIDE that set — see INPUT_ROOTS for
@@ -97,6 +97,29 @@ export const RUN_PLACEHOLDER = 'UNPLACED';
 export const RUN_PATH_BUNDLE = 'standalone file';
 export const RUN_PATH_SERVE = 'source tree';
 
+/**
+ * The edition's anchors and its two values. Since step 8e
+ * (docs/EXTERNAL-ASSETS-PLAN.md) the edition is the build's DEFAULT TIER:
+ * `high` (release/main, and the source tree, which serves assets/ as
+ * authored) or `light` (dev/test, and always the light single file). Unlike
+ * the four above, the source holds a real value rather than a placeholder —
+ * the served tree IS the high tier — so row A checks that the value at rest is
+ * `high`. `full` and `mobile`, the two single files' editions before the flip,
+ * are retired with them (owner answers 2 and 6).
+ */
+export const EDITION_MARKER_START = '/* BUILD_EDITION_START */';
+export const EDITION_MARKER_END = '/* BUILD_EDITION_END */';
+export const EDITION_HIGH = 'high';
+/** The light art tier: dev/test builds, and the light single file whatever the branch. */
+export const EDITION_LIGHT = 'light';
+const BUNDLE_EDITIONS = Object.freeze([EDITION_HIGH, EDITION_LIGHT]);
+/**
+ * The light single file (tools/bundle.mjs --single-file), beside the pack-shaped
+ * HTML: the one inline download kept (owner answer 3). Row E2 holds it to this
+ * tree's stamp and the pack HTML's pinned packs to what is on disk.
+ */
+export const SINGLE_FILE_BUNDLE = 'build/download/AshenSpire.html';
+
 /** Where the ORDERING half lives. Outside the digest roots, and see below. */
 export const ORDINAL_HOME = 'buildordinal.json';
 /**
@@ -141,7 +164,11 @@ export const DIGEST_CHARS = 10;
  * subject arriving through a new door, and rows F and G below are the door's
  * lock. They are not a follow-up; they are why this is allowed to exist.
  */
-export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets']);
+// `asset-data` holds the non-art files that used to sit under assets/ (JSON
+// manifests, the class-art packet, the OFL text; docs/ART-REPO-PLAN.md step 4).
+// It stays a root so the digest and row B sweep the same files they did before
+// the move, including the successor packet CONTRACT_COLUMN_SITES names.
+export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data']);
 
 /**
  * The closed executable seam that turns INPUT_ROOTS into the shipped bundle.
@@ -154,6 +181,30 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/assetmime.mjs',
   'tools/buildversion.mjs',
   'tools/dirorder.mjs',
+  'tools/mobileart-policy.mjs',
+  'tools/head-meta.mjs',
+  // THE REST OF THE BUNDLER'S IMPORT GRAPH (docs/EXTERNAL-ASSETS-PLAN.md step
+  // 12): every tools/ module tools/bundle.mjs reaches decides which bytes a
+  // build carries, so a change to any of them is a new build.
+  // tests/build-identity.test.mjs walks that graph and fails on one not here.
+  //   art-source   where the light pack and the fonts are read from (the
+  //                verified cache or, until step 13, the tree)
+  //   fetch-art    what "verified" means for a cached pack; zip.mjs beneath it
+  //   art-manifest the records a pack is checked against, and canonical bytes
+  //   asset-pack   the pack shape: objects/, the indexes, the font sidecar
+  //   asset-css    the ASSET_CSS template and the inlined masks
+  'tools/art-source.mjs',
+  'tools/fetch-art.mjs',
+  'tools/zip.mjs',
+  'tools/art-manifest.mjs',
+  'tools/asset-pack.mjs',
+  'tools/asset-css.mjs',
+  // The art release this tree pins and the manifest every pack is checked
+  // against (docs/EXTERNAL-ASSETS-PLAN.md §2 *Build identity*, step 11). Not
+  // executable, but they decide which media a build is made from once it reads
+  // the fetched cache, so a bumped pin or a changed record is a new build.
+  'art-release.json',
+  'art-manifest.json',
 ]);
 
 /**
@@ -252,7 +303,7 @@ function isDerived(value) {
  */
 const CONTRACT_COLUMN_SITES = Object.freeze([
   {
-    file: 'assets/classes/successor-packet.manifest.json',
+    file: 'asset-data/classes/successor-packet.manifest.json',
     key: 'source_export_recipe_and_tool_version',
     why: 'art runbook §3 twelve-column manifest contract; the value is the column\'s prose answer, not a build version',
   },
@@ -395,7 +446,7 @@ function between(text, start, end, name, line) {
  * NAMED RATHER THAN POSITIONAL: three optional trailing values in a row is how
  * a date lands in an ordinal's slot and ships a plausible wrong string.
  */
-export function stampSource(text, digest, { ordinal = null, built = null, runPath = null } = {}) {
+export function stampSource(text, digest, { ordinal = null, built = null, runPath = null, edition = null } = {}) {
   let out = between(text, MARKER_START, MARKER_END, 'BUILD_SOURCE', `export const SOURCE = '${digest}';`);
   if (ordinal !== null) {
     out = between(out, ORD_MARKER_START, ORD_MARKER_END, 'BUILD_ORDINAL', `export const ORDINAL = '${ordinal}';`);
@@ -405,6 +456,10 @@ export function stampSource(text, digest, { ordinal = null, built = null, runPat
   }
   if (runPath !== null) {
     out = between(out, RUN_MARKER_START, RUN_MARKER_END, 'BUILD_RUNPATH', `export const RUN_PATH = '${runPath}';`);
+  }
+  if (edition !== null) {
+    if (!BUNDLE_EDITIONS.includes(edition)) throw new Error(`unknown edition '${edition}' — a bundle is '${EDITION_HIGH}' or '${EDITION_LIGHT}' (its default tier)`);
+    out = between(out, EDITION_MARKER_START, EDITION_MARKER_END, 'BUILD_EDITION', `export const EDITION = '${edition}';`);
   }
   return out;
 }
@@ -683,7 +738,12 @@ export function stampText(root = REPO_ROOT) {
 // the check
 // ---------------------------------------------------------------------------
 
+// NOT COMMITTED ON dev SINCE THE LFS BUDGET RAN OUT (2026-09-26). Every row
+// that reads it reads the file the last local or CI build wrote; CI builds before
+// it runs --check. buildordinal.json is the one derived fact still committed, so
+// the rows that compare commits (H) and the digest lookup (--which) read it.
 const BUNDLE = 'build/AshenSpire.html';
+const BUILD_FIRST = 'build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this check)';
 
 /** Module ids the committed bundle actually carries: `"src/x.js": function (`. */
 function bundledModuleIds(text) {
@@ -734,11 +794,12 @@ export function check(root = REPO_ROOT) {
       { what: 'ORDINAL', got: slice(ORD_MARKER_START, ORD_MARKER_END), want: /^\s*export const ORDINAL = 'UNBUMPED';\s*$/ },
       { what: 'BUILT', got: slice(DATE_MARKER_START, DATE_MARKER_END), want: /^\s*export const BUILT = 'UNDATED';\s*$/ },
       { what: 'RUN_PATH', got: slice(RUN_MARKER_START, RUN_MARKER_END), want: /^\s*export const RUN_PATH = 'UNPLACED';\s*$/ },
+      { what: 'EDITION', got: slice(EDITION_MARKER_START, EDITION_MARKER_END), want: /^\s*export const EDITION = 'high';\s*$/ },
     ];
     const bad = held.filter((h) => h.got === null || !h.want.test(h.got));
     add(bad.length === 0, 'A ONE HOME',
       bad.length === 0
-        ? `${VERSION_MODULE} holds all four placeholders; the digest, the ordinal, the build date and the run path are injected, never committed`
+        ? `${VERSION_MODULE} holds all four placeholders and rests at edition 'high'; the digest, the ordinal, the build date, the run path and the edition are injected, never committed`
         : `${VERSION_MODULE} does not hold a placeholder — a value typed into source is a version ASSERTED, not derived:`
           + bad.map((h) => `\n      ${h.what}: ${h.got === null ? 'its marker pair is missing' : h.got.trim().slice(0, 100)}`).join(''));
   }
@@ -778,7 +839,7 @@ export function check(root = REPO_ROOT) {
   //     argued: on this tree the site predicate returns 1 hit and it is the real
   //     defect. The obvious alternative — a version-SHAPED literal, /\d+\.\d+/ —
   //     returns 37, of which 36 are SVG stroke widths in src/ui/assets.js and
-  //     `"scale"` values in assets/equipment/manifest.json. A predicate with 36
+  //     `"scale"` values in asset-data/equipment/manifest.json. A predicate with 36
   //     standing false positives gets muted, and a muted check is arm 1's defect
   //     again by another route.
   //
@@ -896,8 +957,18 @@ export function check(root = REPO_ROOT) {
   //     without moving the string.
   const outside = [];
   const index = src('index.html');
-  const hrefs = [...index.matchAll(/<link\b[^>]*\bhref=["']([^"']+)["']/gi)].map((m) => m[1]);
-  for (const h of hrefs) {
+  // The quote that opens an href closes it (an inline data: icon carries the
+  // other quote inside it). Only a NON-stylesheet link with a data:/http(s):
+  // scheme is skipped: tools/bundle.mjs resolves every stylesheet href as a
+  // path, so a stylesheet href is always checked as one, and a protocol-relative
+  // `//x` is a path to the bundler (resolve(ROOT, '//etc/x.css') is /etc/x.css).
+  const links = [...index.matchAll(/<link\b[^>]*>/gi)].map((m) => m[0]);
+  for (const tag of links) {
+    const hm = /\bhref=(["'])(.+?)\1/i.exec(tag);
+    if (!hm) continue;
+    const h = hm[2];
+    const isStylesheet = /\brel=(["'])\s*stylesheet\s*\1/i.test(tag);
+    if (!isStylesheet && /^(data:|https?:)/i.test(h)) continue;
     const r = relative(root, resolve(root, h)).split('\\').join('/');
     if (!insideRoots(r)) outside.push(`index.html → ${h}`);
     else {
@@ -912,7 +983,7 @@ export function check(root = REPO_ROOT) {
   let bundleText = null;
   try { bundleText = src(BUNDLE); } catch { /* reported */ }
   if (bundleText == null) {
-    outside.push(`${BUNDLE} is missing — the module list cannot be bound to the sweep`);
+    outside.push(`${BUNDLE} is missing — the module list cannot be bound to the sweep; ${BUILD_FIRST}`);
   } else {
     for (const id of bundledModuleIds(bundleText)) {
       if (!insideRoots(id)) outside.push(`${BUNDLE} carries module ${id}`);
@@ -931,7 +1002,7 @@ export function check(root = REPO_ROOT) {
   //     this tree derives — which is exactly the question that drifted three
   //     times in palworld-server-tools.
   if (bundleText == null) {
-    add(false, 'E SHIPPED STAMP', `${BUNDLE} is missing — nothing to read a stamp from`);
+    add(false, 'E SHIPPED STAMP', `${BUNDLE} is missing — nothing to read a stamp from; ${BUILD_FIRST}`);
   } else {
     const want = sourceDigest(root).digest;
     const found = [...bundleText.matchAll(/const SOURCE = '([^']*)'/g)].map((m) => m[1]);
@@ -948,9 +1019,70 @@ export function check(root = REPO_ROOT) {
     else if (found[0] !== want) problems.push(`${BUNDLE} carries SOURCE '${found[0]}', this tree derives '${want}' — the shipped stamp is not this source`);
     if (places.length !== 1) problems.push(`${BUNDLE} carries ${places.length} RUN_PATH literals, expected exactly 1`);
     else if (places[0] !== RUN_PATH_BUNDLE) problems.push(`${BUNDLE} says it was drawn by '${places[0]}' — a bundle is a '${RUN_PATH_BUNDLE}', and a page that misnames its own run path sends every bug report to the wrong artifact`);
+    const editions = [...bundleText.matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
+    if (editions.length !== 1) problems.push(`${BUNDLE} carries ${editions.length} EDITION literals, expected exactly 1`);
+    else if (!BUNDLE_EDITIONS.includes(editions[0])) problems.push(`${BUNDLE} calls itself the '${editions[0]}' edition — the edition is the build's default tier, '${EDITION_HIGH}' or, on dev/test, '${EDITION_LIGHT}'`);
     add(problems.length === 0, 'E SHIPPED STAMP',
       problems.length === 0
-        ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest, and names its run path '${RUN_PATH_BUNDLE}'`
+        ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest, names its run path '${RUN_PATH_BUNDLE}' and its edition '${editions[0]}'`
+        : problems.join('\n      '));
+  }
+
+  // E2 — THE LIGHT SINGLE FILE IS THE SAME SOURCE, AND THE PACKS ARE THERE.
+  //      Step 8e retired the mobile file this row used to hold (owner answer
+  //      2). Two files still leave one build: the pack-shaped HTML above and
+  //      the light single file under download/ (owner answer 3). A single file
+  //      rebuilt from an older tree would carry an older digest under the
+  //      download's name, and nothing on the site would notice; so it is held
+  //      to the same digest, the same run path, and edition 'light'. And the
+  //      pack HTML is only the game with the packs it pins beside it, so each
+  //      pinned index (and the font sidecar) must be in build/packs/ and hash
+  //      to its pin.
+  {
+    const problems = [];
+    let singleText = null;
+    try { singleText = src(SINGLE_FILE_BUNDLE); } catch { /* reported */ }
+    const want = sourceDigest(root).digest;
+    if (singleText == null) {
+      problems.push(`${SINGLE_FILE_BUNDLE} is missing — the light single file has not been built (node tools/launch.mjs --build-only)`);
+    } else {
+      const found = [...singleText.matchAll(/const SOURCE = '([^']*)'/g)].map((m) => m[1]);
+      const places = [...singleText.matchAll(/const RUN_PATH = '([^']*)'/g)].map((m) => m[1]);
+      const editions = [...singleText.matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
+      if (found.length !== 1) problems.push(`${SINGLE_FILE_BUNDLE} carries ${found.length} SOURCE literals, expected exactly 1`);
+      else if (found[0] !== want) problems.push(`${SINGLE_FILE_BUNDLE} carries SOURCE '${found[0]}', this tree derives '${want}' — the light single file is not this source`);
+      if (places.length !== 1 || places[0] !== RUN_PATH_BUNDLE) problems.push(`${SINGLE_FILE_BUNDLE} does not name its run path '${RUN_PATH_BUNDLE}' exactly once`);
+      if (editions.length !== 1) problems.push(`${SINGLE_FILE_BUNDLE} carries ${editions.length} EDITION literals, expected exactly 1`);
+      else if (editions[0] !== EDITION_LIGHT) problems.push(`${SINGLE_FILE_BUNDLE} calls itself the '${editions[0]}' edition — the light single file must say '${EDITION_LIGHT}'`);
+    }
+    let pinned = 0;
+    if (bundleText != null) {
+      const m = /const ASSET_PACKS = (\{.*?\});\n/.exec(bundleText);
+      let pin = null;
+      try { pin = m ? JSON.parse(m[1]) : null; } catch { pin = null; }
+      if (!pin || !pin.packs || !Object.keys(pin.packs).length) {
+        problems.push(`${BUNDLE} pins no packs — since step 8e it is the pack-shaped game file, and a build with nothing pinned is not one`);
+      } else {
+        const files = Object.values(pin.packs).map((p) => [p.index, p.sha256]);
+        if (pin.fonts) files.push([pin.fonts.file, pin.fonts.sha256]);
+        for (const [rel, sha] of files) {
+          const abs = resolve(root, 'build', String(rel));
+          if (!existsSync(abs)) { problems.push(`${BUNDLE} pins build/${rel}, which is not on disk`); continue; }
+          let text = readFileSync(abs, 'utf8');
+          // The font sidecar's pin covers the JSON string it hands the loader.
+          if (pin.fonts && rel === pin.fonts.file) {
+            const sm = /^__ashenFonts\((.*)\);\n$/s.exec(text);
+            try { text = sm ? JSON.parse(`[${sm[1]}]`)[1] : null; } catch { text = null; }
+          }
+          const got = text == null ? null : createHash('sha256').update(text, 'utf8').digest('hex');
+          if (got !== sha) problems.push(`build/${rel} does not hash to the pin ${BUNDLE} carries (${String(sha).slice(0, 12)})`);
+          else pinned += 1;
+        }
+      }
+    }
+    add(problems.length === 0, 'E2 SINGLE FILE AND PACKS',
+      problems.length === 0
+        ? `${SINGLE_FILE_BUNDLE} carries the same SOURCE '${want}' and names its edition '${EDITION_LIGHT}'; the ${pinned} pack file(s) ${BUNDLE} pins are in build/packs/ and hash to their pins`
         : problems.join('\n      '));
   }
 
@@ -982,7 +1114,7 @@ export function check(root = REPO_ROOT) {
     add(false, 'F ORDINAL ON THE BOX',
       `${ORDINAL_HOME} could not be read — the ordering half has no home: ${recorded ? recorded.message : 'absent'}`);
   } else if (bundleText == null) {
-    add(false, 'F ORDINAL ON THE BOX', `${BUNDLE} is missing — nothing to read an ordinal from`);
+    add(false, 'F ORDINAL ON THE BOX', `${BUNDLE} is missing — nothing to read an ordinal from; ${BUILD_FIRST}`);
   } else {
     const want = padOrdinal(recorded.ordinal);
     const found = [...bundleText.matchAll(/const ORDINAL = '([^']*)'/g)].map((m) => m[1]);
@@ -1042,6 +1174,13 @@ export function check(root = REPO_ROOT) {
   //     HEAD against its FIRST PARENT, so a merge is judged the same way the
   //     first-parent line reads it and nothing is off by one.
   //
+  //     "THE ARTIFACT CHANGED" IS READ FROM buildordinal.json's DIGEST, not from
+  //     a diff of the bundle. The bundle stopped being committed on dev when the
+  //     LFS budget ran out, so a bundle diff would read "unchanged" forever and
+  //     this row would pass as n/a on every commit. The recorded digest moves in
+  //     exactly the act that bumps the ordinal (bumpOrdinal), so a changed digest
+  //     IS a new build, and it is the fact a pull request still commits.
+  //
   //     THE n/a CASES ARE PASSES AND THEY SAY SO. A root commit has no parent
   //     to compare against, and a parent from before this scheme existed has no
   //     ordinal to compare with. Both are honestly nothing-to-rule-on, and a row
@@ -1053,7 +1192,7 @@ export function check(root = REPO_ROOT) {
   const at = (rev) => {
     try {
       const raw = JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`));
-      return { ordinal: Number(raw.ordinal), release: raw.release ?? null };
+      return { ordinal: Number(raw.ordinal), release: raw.release ?? null, digest: raw.digest ?? null };
     } catch { return null; }
   };
   try {
@@ -1062,15 +1201,31 @@ export function check(root = REPO_ROOT) {
     if (!parent) {
       add(true, 'H ORDINAL INCREASES', 'HEAD has no parent — nothing to compare an ordinal against (n/a, stated)');
     } else {
-      const changed = g('diff', '--name-only', parent, 'HEAD', '--', BUNDLE).trim() !== '';
       const before = at(parent);
       const now = at('HEAD');
-      if (!changed) {
-        add(true, 'H ORDINAL INCREASES', `${BUNDLE} is unchanged between ${parent.slice(0, 7)} and HEAD — no build shipped, so no ordinal was owed (n/a, stated)`);
+      // THE ORDINAL AND RELEASE COUNT TOO, not only the digest. A hand-edit (or a
+      // bad hand-merge) of the record that leaves the digest alone used to be
+      // caught by row F against the committed bundle; CI now rebuilds from the
+      // edited record, so F agrees with it and only this row can see the move.
+      const changed = before === null || now === null || before.digest !== now.digest
+        || before.ordinal !== now.ordinal || before.release !== now.release;
+      const recordOnly = before !== null && now !== null && before.digest === now.digest
+        && (before.ordinal !== now.ordinal || before.release !== now.release);
+      if (recordOnly) {
+        // NOT A BUILD AT ALL. bumpOrdinal moves the ordinal only when the digest
+        // moves, and the release lives inside the digest's roots, so a record
+        // whose number changed under an unchanged digest was edited by hand (or
+        // merged badly) — up or down, it is red, never ranked (#1332 review).
+        add(false, 'H ORDINAL INCREASES',
+          `${ORDINAL_HOME} changed its number (${before.release}.${before.ordinal} → ${now.release}.${now.ordinal}) between`
+          + ` ${parent.slice(0, 7)} and HEAD with the source digest unchanged ('${now.digest}') — no build writes that;`
+          + ` restore the record and rebuild (node tools/launch.mjs --build-only).`);
+      } else if (!changed) {
+        add(true, 'H ORDINAL INCREASES', `${ORDINAL_HOME} records the same build (digest, ordinal and release) at ${parent.slice(0, 7)} and HEAD — no build shipped, so no ordinal was owed (n/a, stated)`);
       } else if (before === null) {
         add(true, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} has no ${ORDINAL_HOME} — the scheme did not exist at the parent (n/a, stated)`);
       } else if (now === null) {
-        add(false, 'H ORDINAL INCREASES', `HEAD changed ${BUNDLE} and has no readable ${ORDINAL_HOME} — a build shipped with no number`);
+        add(false, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} records a build in ${ORDINAL_HOME} and HEAD has no readable one — a build with no number`);
       } else if (before.release === null) {
         // THE TWO NUMBERS ARE NOT IN THE SAME SPACE — 2259 was a position in
         // the retired global sequence and 2 is a count within a candidate — so
@@ -1148,7 +1303,7 @@ export function check(root = REPO_ROOT) {
         const rose = order > 0;
         const where = moved
           ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD`
-          : `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD within release '${now.release}'`;
+          : `the recorded build moved between ${parent.slice(0, 7)} and HEAD within release '${now.release}'`;
         add(rose, 'H ORDINAL INCREASES',
           rose
             ? `${where}, and the version rose ${beforeV.join('.')} → ${nowV.join('.')}`
@@ -1218,11 +1373,18 @@ export function check(root = REPO_ROOT) {
  * pretending the build never existed — the honest answer to "not on this line
  * of history" is not "nowhere".
  */
+//
+// TWO PATHS SINCE THE BUNDLE LEFT GIT. Up to 2026-09-26 the digest was found in
+// the committed bundle; from then on the bundle is built by CI and never
+// committed on dev, and the digest is found where the build records it,
+// buildordinal.json. A commit that shipped either way is a commit that shipped.
+const WHICH_PATHS = Object.freeze([BUNDLE, ORDINAL_HOME]);
+
 export function whichCommits(digest, root = REPO_ROOT) {
   const git = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', maxBuffer: 1 << 28 });
   const candidates = git(
     'log', '--diff-merges=first-parent', '--no-patch', '--format=%H',
-    '-S', digest, '--', BUNDLE,
+    '-S', digest, '--', ...WHICH_PATHS,
   ).split('\n').map((s) => s.trim()).filter(Boolean);
 
   const out = [];
@@ -1231,7 +1393,7 @@ export function whichCommits(digest, root = REPO_ROOT) {
     // git would otherwise decline to grep it. Exit 1 = "not in this blob", which
     // is an answer, not a failure — hence the try rather than a status check.
     let present = false;
-    try { present = git('grep', '-c', '-a', digest, sha, '--', BUNDLE).trim().length > 0; } catch { present = false; }
+    try { present = git('grep', '-c', '-a', digest, sha, '--', ...WHICH_PATHS).trim().length > 0; } catch { present = false; }
     if (present) out.push(git('log', '-1', '--format=%h %s', sha).trim());
   }
   return out;
@@ -1291,8 +1453,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       process.exit(2);
     }
     if (!hits.length) {
-      console.log(`buildversion: no commit of ${BUNDLE} carries '${d}'`);
-      console.log(`  searched: every commit whose ${BUNDLE} differs from its FIRST PARENT, merges included,`);
+      console.log(`buildversion: no commit of ${WHICH_PATHS.join(' or ')} carries '${d}'`);
+      console.log(`  searched: every commit whose ${WHICH_PATHS.join(' or ')} differs from its FIRST PARENT, merges included,`);
       console.log(`  then confirmed against that commit's own blob. A digest introduced by a merge is`);
       console.log(`  reachable; one that only ever existed in an unmerged branch is not.`);
       process.exit(1);

@@ -1,0 +1,327 @@
+{
+  "behavior": {
+    "tags": [
+      [
+        "guard",
+        "guard"
+      ],
+      [
+        "ranged",
+        "projectile"
+      ],
+      [
+        "pierce",
+        "thrust"
+      ],
+      [
+        "starstone",
+        "spell"
+      ],
+      [
+        "ritual",
+        "spell"
+      ],
+      [
+        "gorefire",
+        "spell"
+      ],
+      [
+        "blight",
+        "spell"
+      ],
+      [
+        "oath",
+        "spell"
+      ],
+      [
+        "ash",
+        "spell"
+      ],
+      [
+        "heavy",
+        "strike"
+      ],
+      [
+        "blade",
+        "slash"
+      ],
+      [
+        "flourish",
+        "slash"
+      ],
+      [
+        "precision",
+        "thrust"
+      ],
+      [
+        "guile",
+        "dodge"
+      ],
+      [
+        "venom",
+        "spell"
+      ],
+      [
+        "blood",
+        "slash"
+      ]
+    ],
+    "types": {
+      "attack": "strike",
+      "block": "guard",
+      "buff": "spell",
+      "debuff": "spell",
+      "power": "spell"
+    },
+    "actors": {
+      "reaver": {
+        "spriteClass": "reaver",
+        "tempo": 1.12,
+        "reach": 1.1,
+        "actions": {
+          "dodgeRoll": "dodge",
+          "defend": "guard",
+          "strike": "slash"
+        }
+      },
+      "rogue": {
+        "spriteClass": "rogue",
+        "tempo": 0.78,
+        "reach": 1.15,
+        "actions": {
+          "dodgeRoll": "dodge",
+          "defend": "guard",
+          "strike": "thrust"
+        }
+      },
+      "starseer": {
+        "spriteClass": "starseer",
+        "tempo": 1.05,
+        "reach": 0.75,
+        "actions": {
+          "dodgeRoll": "dodge",
+          "defend": "guard"
+        }
+      },
+      "herald": {
+        "spriteClass": "herald",
+        "tempo": 1.15,
+        "reach": 0.8,
+        "actions": {
+          "dodgeRoll": "dodge",
+          "defend": "guard"
+        }
+      },
+      "wanderingSoldier": {
+        "spriteClass": null,
+        "tempo": 1,
+        "reach": 0.9,
+        "actions": {
+          "slash": "slash",
+          "guard": "guard",
+          "warcry": "spell"
+        }
+      },
+      "blightHound": {
+        "spriteClass": null,
+        "tempo": 0.72,
+        "reach": 1.25,
+        "actions": {
+          "bite": "strike",
+          "lunge": "thrust"
+        }
+      },
+      "fellWarden": {
+        "spriteClass": null,
+        "tempo": 1.3,
+        "reach": 1.15,
+        "actions": {
+          "caneStrike": "strike",
+          "hammerToss": "projectile",
+          "heldBlade": "slash",
+          "twinDaggers": "thrust"
+        }
+      },
+      "lanternMoth": {
+        "spriteClass": null,
+        "tempo": 0.68,
+        "reach": 0.55,
+        "actions": {
+          "lanternDust": "spell",
+          "wingSparks": "projectile"
+        }
+      },
+      "briarHermit": {
+        "spriteClass": null,
+        "tempo": 1.18,
+        "reach": 0.65,
+        "actions": {
+          "rootShelter": "guard",
+          "briarCast": "projectile",
+          "sapMend": "spell"
+        }
+      },
+      "chainScavenger": {
+        "spriteClass": null,
+        "tempo": 0.95,
+        "reach": 1.25,
+        "actions": {
+          "hookCast": "projectile",
+          "chainSnare": "spell",
+          "draggingBlow": "strike"
+        }
+      },
+      "bellKeeper": {
+        "spriteClass": null,
+        "tempo": 1.4,
+        "reach": 0.85,
+        "actions": {
+          "bronzeToll": "spell",
+          "clapperSwing": "slash",
+          "muffledPrayer": "guard",
+          "crackedPeal": "spell"
+        }
+      },
+      "thornMatriarch": {
+        "spriteClass": null,
+        "tempo": 1.3,
+        "reach": 0.8,
+        "actions": {
+          "rootCrown": "guard",
+          "thornNeedles": "projectile",
+          "entwiningRoots": "spell"
+        }
+      },
+      "mirrorScribe": {
+        "spriteClass": null,
+        "tempo": 0.9,
+        "reach": 0.6,
+        "actions": {
+          "silverScript": "spell",
+          "shardVolley": "projectile",
+          "polishedWard": "guard"
+        }
+      },
+      "stitchCrab": {
+        "spriteClass": null,
+        "tempo": 0.75,
+        "reach": 0.85,
+        "actions": {
+          "shellFold": "guard",
+          "seamShears": "slash",
+          "scuttleRush": "thrust"
+        }
+      },
+      "glassRegent": {
+        "spriteClass": null,
+        "tempo": 1.02,
+        "reach": 1.2,
+        "actions": {
+          "prismGuard": "guard",
+          "crystalRapier": "thrust",
+          "splinterRain": "projectile",
+          "shatteredCourt": "spell"
+        }
+      },
+      "marrowOrganist": {
+        "spriteClass": null,
+        "tempo": 1.35,
+        "reach": 0.55,
+        "actions": {
+          "bonePrelude": "spell",
+          "ivoryKeys": "projectile",
+          "funeralChord": "spell",
+          "quietRefrain": "spell"
+        }
+      },
+      "cinderMantis": {
+        "spriteClass": null,
+        "tempo": 0.7,
+        "reach": 1.3,
+        "actions": {
+          "scythePair": "slash",
+          "emberPounce": "thrust",
+          "foldedBlades": "guard"
+        }
+      },
+      "eclipseCantor": {
+        "spriteClass": null,
+        "tempo": 1.1,
+        "reach": 0.5,
+        "actions": {
+          "darkHymn": "spell",
+          "lunarRay": "projectile",
+          "fadingEcho": "spell"
+        }
+      },
+      "furnaceSaint": {
+        "spriteClass": null,
+        "tempo": 1.45,
+        "reach": 1.05,
+        "actions": {
+          "openFurnace": "projectile",
+          "censerSweep": "slash",
+          "coolingAsh": "guard"
+        }
+      },
+      "hollowAstronomer": {
+        "spriteClass": null,
+        "tempo": 1.25,
+        "reach": 0.7,
+        "actions": {
+          "starChart": "spell",
+          "orbitalShards": "projectile",
+          "totalEclipse": "spell",
+          "fallingHeavens": "projectile"
+        }
+      },
+      "ashheartDragon": {
+        "spriteClass": null,
+        "tempo": 1.2,
+        "reach": 1.4,
+        "actions": {
+          "obsidianClaws": "slash",
+          "tailBastion": "guard",
+          "heartRumble": "spell",
+          "ashBreath": "projectile"
+        }
+      }
+    }
+  },
+  "motion": {
+    "families": {
+      "neutral": {
+        "pose": "idle",
+        "motion": "settle"
+      },
+      "slash": {
+        "pose": "attack1",
+        "motion": "sweep"
+      },
+      "thrust": {
+        "pose": "attack2",
+        "motion": "lunge"
+      },
+      "strike": {
+        "pose": "attack3",
+        "motion": "impact"
+      },
+      "projectile": {
+        "pose": "attack4",
+        "motion": "release"
+      },
+      "spell": {
+        "pose": "guard",
+        "motion": "cast"
+      },
+      "guard": {
+        "pose": "guard",
+        "motion": "brace"
+      },
+      "dodge": {
+        "pose": "idle",
+        "motion": "sidestep"
+      }
+    }
+  }
+}

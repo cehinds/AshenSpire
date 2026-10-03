@@ -1,19 +1,93 @@
 # Credits & Asset Licenses
 
+## Player polish asset kit (2026-10-02)
+
+Sixteen original raster paintings, transparent role portraits and panel material
+were generated with OpenAI's built-in Image Generation tool for the owner's
+requested desktop/mobile polish kit. Source prompts and reference provenance:
+[generation records](docs/design/player-polish-asset-kit-2026-10-02/generation.json).
+The [asset manifest](docs/design/player-polish-asset-kit-2026-10-02/manifest.json)
+identifies each original PNG and its checksum. The kit also contains 129 original
+SVG icons, frames and controls, authored directly; their deterministic source is
+[generate-ui-kit.py](docs/design/player-polish-asset-kit-2026-10-02/ui/generate-ui-kit.py).
+No third-party icon pack or artwork was used for these new assets; no third-party
+asset license is claimed for first-party AI-created art or original SVG geometry.
+
+The 49 canonical artwork copies retain their existing source credits and licenses;
+[canonical-map.json](docs/design/player-polish-asset-kit-2026-10-02/canonical-map.json)
+records their original paths and hashes. The three existing font copies retain
+[their OFL license](docs/design/player-polish-asset-kit-2026-10-02/fonts/OFL.txt).
+This kit is a design resource and does not register or replace runtime artwork.
+
+## Player interface polish concepts (2026-10-01)
+
+Twelve original concept boards covering 24 player-facing feature views on
+desktop and portrait mobile were generated with OpenAI's built-in Image
+Generation tool using this project's existing artwork and screen captures.
+The PNG boards, searchable gallery, exact prompts, provenance and review notes
+are preserved in [player polish inspiration](docs/design/player-polish-2026-10-01/README.md).
+These are design references, not runtime assets. No third-party artwork was
+downloaded and no third-party asset license is claimed.
+
+## Empty-hand magic animation suites (2026-09-19)
+
+Original artwork generated for AshenSpire with OpenAI's built-in image generation, using the project's approved class and armor references. Transparent PNG masters and exact prompts: `art/unarmed-magic-2026-09-19/`. Runtime WebP frames: `assets/animations/unarmed-magic/`. All four classes and 35 armor catalog entries share one choreography across 32 distinct appearances; no external artwork was downloaded and no third-party asset license is claimed. The existing `src/ui/assets.js` painted-stage and asset-map path resolves the configured frames.
+
+## Burning and class-memory opening revision (2026-09-19)
+
+Twelve new desktop/portrait paintings generated with OpenAI's built-in Image Generation tool: the inward Burning, forest departure, and four class memories. Compressed WebPs are in `assets/prologue/`; exact prompts and source image names are in `art/prologue-2026-09-19/revision-prompts.json`. PNG masters remain in the owner's local `masters-burning-v2/` folder. The original opening relief is unchanged. No third-party artwork or license is claimed.
+
+The final Herald memory revision depicts the hooded, veiled novice burning from within while collapsing against the monumental summit hearth and tending the Sovereign Ember. Desktop and mobile masters, exact prompts, export settings, checksums and provenance are retained in `art/prologue-herald-summit/`. Generated with OpenAI's built-in Image Generation tool; no third-party artwork or license is claimed.
+
+## Opening sequence art (2026-09-19)
+
+Twelve original desktop/portrait paintings and four transparent class
+adventurers generated with OpenAI's built-in Image Generation tool using the
+project's intro and Crownfall paintings and the owner's weapon-placement
+annotation as references. Source/provenance: `art/prologue-2026-09-19/prompts.json`.
+Runtime art: `assets/prologue/`, compressed WebP with alpha preserved. Original
+PNG masters remain in the author's local art archive. No third-party game
+assets were used and no third-party asset license is claimed.
+
 Every third-party asset shipped in this repository is listed here with its source and license. **A PR that adds an asset without a row in this file does not merge.**
 
 Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
+
+## Painted relic illustrations
+
+The twelve 256px transparent WebPs in `assets/relics/` are project-owned
+AI-generated illustrations created with built-in OpenAI imagegen.
+Sources, exact prompts and export manifests are preserved in
+[relic pack 01](art/relic-icons-pack-01/README.md),
+[relic pack 02](art/relic-icons-pack-02/README.md), and
+[relic pack 03](art/relic-icons-pack-03/README.md).
+No third-party artwork was used and no third-party license is claimed.
 
 ## Painted enemy sprites from the Unity fork
 
 `assets/enemies-unity/painted_*.png` contains twelve unchanged project-owned,
 AI-generated enemy frames from [AshenSpire-Unity](https://github.com/cehinds/AshenSpire-Unity/tree/130d7c5/Unity/Assets/AshenSpire/Resources/Art).
 The Unity fork generated the artwork with the built-in image-generation tool.
-Its extraction manifest is retained as `assets/enemies-unity/provenance.json`.
+Its extraction manifest is retained as `asset-data/enemies-unity/provenance.json`.
 Frames share a 384 × 384 canvas, a (192, 364) foot anchor and left-facing art.
 These are static frames; existing combat effects provide their movement.
 
 ## Painted player outfits
+
+The review-only relic pack in `art/relic-icons-pack-01/` contains four original
+relic paintings generated with the built-in OpenAI image-generation tool and
+16 transparent WebP exports. Exact prompts, unchanged sources, checksums and
+export settings accompany the pack. No third-party artwork or license is
+claimed; these candidates do not replace runtime relic assets.
+
+The new Reaver greatsword reference set in
+`assets/animations/reaver/greatsword-v2/` and the four-class art review pack
+in `art/webp-pack-2026-09-19/` were generated with the built-in OpenAI
+image-generation tool from project-owned painted references. PNG sources,
+exact prompts, WebP exports and approval boundaries are recorded in the pack.
+The owner approved the Reaver greatsword attack order on 2026-09-19.
+These are project-owned AI-generated assets; no third-party license is claimed.
+Only the Reaver binding is activated; the other review-pack sets remain drafts.
 
 Combat technique artwork in `art/painted-combat-2026-09-07/animation-groups/`
 was generated with built-in OpenAI imagegen from the existing project-owned
@@ -51,7 +125,7 @@ Runtime WebP exports are reproducible with tools/painted-outfits-ship.mjs (requi
 > they are. `RUNBOOKS/art.md` §11 requires AI-assisted material to retain its
 > available provenance, so it is stated here rather than left to inference.
 >
-> This closes the gap `assets/classes/SUCCESSOR-CONTRACT.md` §5.1 carried as a
+> This closes the gap `asset-data/classes/SUCCESSOR-CONTRACT.md` §5.1 carried as a
 > blocker from 2026-08-28: the creator was unrecorded, not unknowable. Every visual is generated at
 runtime by `src/ui/assets.js` — the style guide's placeholder recipe (a tinted,
 rounded panel + a Unicode glyph + the entity's name). This is a deliberate design
@@ -71,13 +145,52 @@ row in the table below — no game-code changes.
 | Equipment component reference strips (`assets/equipment/components/v1/**/*.webp`) | five-view modeling and inventory-art references for 39 class equipment components | generated for this project from project-owner-supplied character paintings; indexed by `assets/equipment/components/v1/manifest.json` | AshenSpire | CC0 |
 | Painted equipment turnaround sheets (`docs/low-poly-fighters/*.png`) | the eight reference sheets on the *Low-Poly Fighters — Painted Poses* page (`docs/low-poly-fighters/index.html`) — every equipment piece per class in five orthographic views (top, right, bottom, left, back), two sheets per class: the garments and the kit (hands, feet, weapon) | **AI-generated** painted sheets supplied by the owner (owner statement, 2026-09-05), delivered as `{knight,monk,rogue,wizard}-{wearables,equipment}-turnaround.png` and renamed on commit to the names the page reads. Reference only — nothing loads them at runtime; the shipped per-piece equipment art is the `assets/equipment/*.webp` row above. The painted **pose** sheets that page also shows are covered by the *Pose sprites* row. | AshenSpire (AI-generated) | CC0 |
 | Unicode emoji glyphs (⚔ 🩸 💎 ☄ …) | card/relic/status/enemy icons, sigils | Unicode standard; rendered by the player's OS/browser emoji font | Unicode / OS vendor | Not embedded — system-rendered |
-| Cinzel (display), Inter (body) | typography | referenced by `font-family` with robust system fallbacks (Georgia / system-ui); **not bundled** in v1 | Google Fonts | SIL OFL (when self-hosted) |
+| Cinzel (display), Inter (body) | interface typography | referenced by `font-family` with robust system fallbacks (Georgia / system-ui); the interface copies are **not bundled** in v1 (the card-lore row below bundles separate "AS Lore" copies used only for lore) | Google Fonts | SIL OFL (when self-hosted) |
+| Card lore faces (`assets/fonts/*.woff2`): IM Fell English, EB Garamond, Cormorant Garamond, Crimson Pro, Spectral, Libre Baskerville, Cinzel, Inter — Latin subset, regular and italic | the lore line and lore modal, chosen under Advanced → Text & lore; bundled under their own "AS Lore" family names so they do not change the interface fonts; they reach the page through `@font-face` rules in `styles/kit.css`, rather than through `src/ui/assets.js`. Since EXTERNAL-ASSETS-PLAN step 8e the game file loads them at runtime from the `common` pack (an `ASSET_CSS` slot each, or the font sidecar under `file://`), and only the light single file still inlines them, like the act backdrops. The copyright notices and full licence are `asset-data/fonts/OFL.txt`, which travels in the `common` pack beside the faces as `licenses/OFL.txt` and is repeated in a header comment in `styles/kit.css` so it ships inside every build | [Fontsource](https://fontsource.org) packages of the Google Fonts releases (`cdn.jsdelivr.net/npm/@fontsource/<family>/files/…-latin-*.woff2`) | Google Fonts / each face's designers | SIL OFL 1.1 |
 
 > When real art lands: download from a **Planned source** above, place it under
 > `assets/`, reference it from `src/ui/assets.js`, and add a row here (source URL,
-> author, license). Self-host the Cinzel/Inter `woff2` under `assets/fonts/` with
-> an `@font-face` block and a row here — the fallbacks keep the game readable
-> until then.
+> author, license). The Cinzel/Inter interface faces, when they ship, load at
+> runtime as pack files through the pack loader like every other asset
+> (SPEC §7, *Fonts*; docs/EXTERNAL-ASSETS-PLAN.md) — not from a self-hosted
+> `assets/fonts/` folder, which step 13 retires — with a row here. The system
+> fallbacks keep the game readable until then.
+
+## Remaining asset directories (2026-09-24)
+
+These directories had no attribution row until `node tools/credits-check.mjs`
+required one for every child directory of `assets/` and `music/` and for the
+mobile twin tree. The check counts only a table row whose first cell names the
+path and whose Source and Rights cells are filled; a path named in prose does
+not count. Several rows below restate, in table form, what a prose section of
+this file already records. Each row gives only what the repository records, and
+says so where a fact is not recorded.
+
+| Assets | Source | Rights |
+|---|---|---|
+| `asset-data/components/armoury.json` | Armoury UI component manifest (data, no artwork), written for this project in this repository | Project-owned; MIT with the code |
+| `asset-data/equipment/manifest.json`, `asset-data/poses/pose-sprites.manifest.json`, `asset-data/sprites/class-sprites.manifest.json`, `asset-data/enemy-poses/manifest.json`, `asset-data/enemy-states/manifest.json` | JSON manifests (data, no artwork) describing the art under the matching `assets/` folders, written by this repository's tools (`tools/equipment-blender.py`, `tools/pose-ship.mjs`, `tools/concept-cutout.mjs` and `tools/pose-cutout.mjs`, `art/enemy-poses/build.mjs`, `art/enemy-states/build.mjs`); moved out of `assets/` in #1367 | Project-owned; MIT with the code ([LICENSE](LICENSE)) |
+| `asset-data/fonts/OFL.txt` | The copyright notices of the bundled lore fonts under `assets/fonts/` and the SIL Open Font License 1.1 text (see the card lore faces row above) | SIL Open Font License 1.1: the notices and licence text the fonts' licence requires to be distributed with them |
+| `assets/framework/missing.svg`, `asset-data/framework/silence.txt` | Missing-asset placeholder glyph and silent audio-fallback stub, hand-written in this repository | Project-owned, CC0 |
+| `assets/map/parchment_act{1,2,3}.svg` | Procedural parchment plates generated by this repository's `tools/parchment.mjs` | Project-owned procedural artwork, CC0 |
+| `assets/defeated-poses/`: 49 grounded defeated frames, and their `manifest.json` (tracked as `asset-data/defeated-poses/manifest.json`) | AI-generated from the project's approved enemy idle and painted outfit art; the prompt is in `art/defeated-poses/generation.json`, the 49 source sheets are in `art/defeated-poses/sheets/`, and `art/defeated-poses/build.mjs` exports them (added 2026-09-08). The record does not name the image-generation tool | Project-owned AI-generated artwork; no third-party asset license claimed |
+| `assets/ui/flasks/flask-{crimson,azure}.webp` | Added by the owner on 2026-08-12 as PNGs and converted to WebP on 2026-09-10. The commits record no source or generator | **Provenance not recorded. The owner must confirm it before release** |
+| `assets-mobile/` | Downscaled twin of `assets/`, produced by `tools/mobile-art.mjs`: the light tier (the light pack and the light single file) | Each file has the same source and rights as its `assets/` original |
+| `map-detail/`: the world map's detail tiles (the common art pack) | Cut from the world-map artwork (`art/environments/worlds/`, see the square-world detail remaster below) by `tools/map-detail-build.mjs` | Same source and rights as that artwork: project-owned AI artwork, CC0-1.0 |
+| `licenses/OFL.txt` (the common art pack) | The common pack's copy of `asset-data/fonts/OFL.txt`, shipped beside the fonts it covers | SIL Open Font License 1.1: the notices and licence text the fonts' licence requires to be distributed with them |
+| `asset-data/classes/` | Class-art working documents, JSON manifests and scripts written in this repository (the successor contract, look reference, crop receipts and their checkers). The directory holds no image, audio or font files | Project-owned; MIT with the code ([LICENSE](LICENSE)) |
+| `assets/relics/`: twelve 256px painted relic illustrations | AI-generated with built-in OpenAI imagegen; sources, exact prompts and export manifests in `art/relic-icons-pack-01/`, `-02/` and `-03/` (see *Painted relic illustrations* above) | Project-owned AI-generated artwork; no third-party artwork used and no third-party license claimed |
+| `assets/enemies-unity/`: twelve painted enemy frames, and their `provenance.json` (tracked as `asset-data/enemies-unity/provenance.json`) | Unchanged AI-generated frames from the [AshenSpire-Unity](https://github.com/cehinds/AshenSpire-Unity/tree/130d7c5/Unity/Assets/AshenSpire/Resources/Art) fork, which generated them with its built-in image-generation tool; extraction manifest in `asset-data/enemies-unity/provenance.json` (see *Painted enemy sprites from the Unity fork* above) | Project-owned AI-generated artwork |
+| `assets/enemies-expansion/`: fourteen expansion portraits | Generated for AshenSpire with ChatGPT Codex in September 2026, in the Unity fork's painted style (see *Code* below) | Project-generated artwork, CC0 |
+| `assets/enemy-poses/`: seven replacement idle and 33 attack sprites, plus 26 unchanged idle frames | Generated with built-in image_gen from this project's enemy artwork; sheets, prompts and records in `art/enemy-poses/` (2026-09-07). The 26 unchanged idle frames are copies of their existing credited sources | **Rights not recorded** for the generated sprites: neither this file nor `art/enemy-poses/` states a licence. The owner must confirm them before release |
+| `assets/enemy-states/`: 231 enemy combat-state sprites | Generated with built-in image_gen from the project's approved enemy idle sprites; sheets and generation records in `art/enemy-states/` (2026-09-08) | **Rights not recorded**: neither this file nor `art/enemy-states/` states a licence. The owner must confirm them before release |
+| `assets/environments/*-combat.webp`: five combat-field atlases (twenty locations) | Generated with built-in OpenAI imagegen from the project's regional concept boards; sources and prompt brief in `art/environments/combat-fields/` (see *Combat field backgrounds* below); encoded by `tools/environment-art-build.mjs` | Project-owned AI-generated artwork, CC0-1.0 |
+| `assets/environments/*-map.webp`, `assets/environments/*-world.webp`, `assets/environments/fractured-realm-square.webp`: regional and world maps | Produced with the built-in image generator, per `art/environments/README.md` and `art/environments/world-maps.md`; masters in `art/environments/maps/` and `art/environments/worlds/`; encoded by `tools/environment-art-build.mjs` | Original generated art; no third-party map or screenshot shipped. No licence is recorded |
+| `assets/environments/legacy/`: three dungeon maps and 24 floor/background plates | Generated with OpenAI imagegen; sources, prompts and provenance in `art/webp-maps-2026-09-19/` (see *Playable legacy dungeon environments* below) | Original artwork generated for AshenSpire; no third-party asset license claimed |
+| `assets/environments/crownfall-landmark.webp`, `assets/environments/crownfall-local.webp` | Encoded by `tools/environment-art-build.mjs` from `art/environments/locations/`, added in commit bfc28f1f6 (2026-09-08). Neither the commit nor any file records a source or generator | **Provenance not recorded. The owner must confirm it before release** |
+| `assets/prologue/`: opening-sequence paintings, class adventurers and the starting-path plates | Opening sequence, class adventurers and class-memory revision: generated with OpenAI's built-in Image Generation tool; prompts and provenance in `art/prologue-2026-09-19/` and `art/prologue-herald-summit/` (see *Opening sequence art* and *Burning and class-memory opening revision* above). Starting-path plates: generated, or edited from existing journey art, and refined with the built-in image tool; prompts in `art/prologue-path-art/` | Original artwork for AshenSpire; no third-party artwork used and no third-party license claimed |
+| `assets/readiness-poses/`: twelve readiness and twelve transition pose illustrations | Generated with OpenAI imagegen from the project's painted outfit art; sources and prompts in `art/readiness-poses/` (see *Combat readiness poses* and *Readiness transition sprites* below) | Project-owned, CC0-1.0 |
+| `music/score/` (the score as code) and its renders `music/title/`, `music/map/`, `music/combat/`, `music/elite/`, `music/boss/`, `music/shop/`, `music/rest/`, `music/victory/` | Composed as code for this project: each track is written as note data in `music/score/<id>.mjs` and rendered offline by `tools/score/render.mjs` on the synthesizer in `tools/score/synth.mjs` (additive, Karplus-Strong and noise voices; no samples, no soundfont, no AI music model). Score and tools were written by AI under the owner's direction (see *Rendered music score* below) | Original work for AshenSpire; no third-party recordings, samples or licence |
 
 ## Code
 
@@ -163,3 +276,50 @@ controlled independently from the doorway and sconces.
 `assets/bg/tower-city-background-unlit.webp` is a generated lighting edit of
 that city plate with artificial lights and their reflections removed, exported
 to WebP at quality 90 for the menu's separate background layer.
+
+### Greatsword outfit suites (2026-09-19)
+
+Thirty-one original atlas edits generated with the built-in image_gen tool from the project's approved Reaver motion and existing class/outfit references. Full prompts and PNG masters are in `art/greatsword-outfits-2026-09-19/`; WebP exports cover 32 appearances including the unchanged approved Reaver. Three armor aliases reuse catalog-authorized artwork. No third-party downloads or asserted CC license.
+
+## Sword and shield outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases and 32 aura-free Buff-pose edits generated with the built-in image_gen tool using the project's class/outfit references. Full prompts, PNG masters and adaptive extraction metadata are retained in `art/sword-shield-outfits-2026-09-19/`, including `prompts-no-aura.json`. The 512 runtime WebPs cover 32 appearances and 35 armor entries. Canonical right-sword/left-shield paintings are shared by reversed hand selectors; no separately painted hand swap is claimed. No third-party artwork was downloaded and no third-party license is claimed.
+
+### Single-dagger class/outfit suite (2026-09-19)
+
+Thirty-two transparent atlases generated with built-in image_gen from the project's approved class/outfit paintings, all following one Rogue single-dagger pose reference. Exact prompts, PNG masters, source/frame hashes and normalization records are in `art/dagger-outfits-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and all 35 catalog armor entries. Artwork depicts one right-hand dagger with the left hand empty; no dual-dagger or reversed-hand coverage is claimed. Cast and Buff contain no baked aura or particles. No third-party artwork was downloaded and no third-party license is claimed.
+
+### Shared armor inventory art (2026-09-19)
+Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
+
+Sixteen class-specific shared-outfit atlases were generated with the same tool from the existing class paintings and approved armor references. Sources, prompts, normalization script and review sheet: art/class-outfit-sprites-2026-09-19/. Runtime exports: assets/painted-outfits/shared-*/. Each atlas contains eight poses; no third-party asset license is claimed.
+
+## Playable legacy dungeon environments (2026-09-19)
+
+Three maps and twelve original scene paintings generated with OpenAI imagegen
+for AshenSpire. Runtime assets in `assets/environments/legacy/` use optimized
+map WebPs and 24 lossless alpha floor/background plates. Original sources,
+exact prompts, provenance, and extraction instructions are retained under
+`art/webp-maps-2026-09-19/`. No third-party asset license is claimed.
+
+## Twin-sword outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases generated with the built-in image_gen tool from project-owned class and armor references. Exact prompts, provenance, PNG masters, normalization metadata and the interactive review are retained in `art/twin-sword-reference-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and 35 armor entries, with one shared motion and authored right Straight Sword / left Katana hands. No third-party artwork was downloaded and no third-party license is claimed.
+
+## Unarmed physical outfit suites (2026-09-19)
+
+Thirty-two original transparent atlases generated with built-in OpenAI image generation from the project's class/outfit paintings and one shared unarmed pose reference. Exact prompts and PNG masters are retained in `art/unarmed-reference-2026-09-19/`. The 512 runtime WebPs cover 32 appearances and all 35 armor entries, including three existing catalog art aliases. Both hands are empty; no effects are baked into these frames. No third-party artwork was downloaded and no third-party license is claimed.
+
+## Bow attack outfit suites (2026-09-28)
+
+Eight original transparent atlases generated with the built-in OpenAI image
+generation tool from project-owned character and shortbow references. The PNG
+masters, prompt, row mapping, and normalization script are retained in
+`art/bow-attack-source/`. The 224 runtime WebP frames cover 32 appearances
+and all 35 catalog armor entries. Left-hand bow selectors share the painted
+right-facing choreography. No third-party artwork was downloaded and no
+third-party license is claimed.
+
+## Rendered music score (2026-09-26)
+
+The recorded score is written as code. Each track is a list of notes in `music/score/<id>.mjs`, rendered offline by `node tools/score/render.mjs` on the synthesizer in `tools/score/synth.mjs` into `music/<context>/<id>.mp3`. Every instrument (strings, cello, wordless choir, organ, harp, bells, bowed metal, drones, taiko, frame drum) is synthesized from oscillators and noise: no samples, soundfonts or licensed music, and no AI music model. The two earlier AI-model recordings were removed on the owner's instruction (2026-09-26). No third-party asset licence is claimed.
