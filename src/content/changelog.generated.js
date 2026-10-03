@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1548",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Combat checks follow the Stamina orb",
+    "detail": "Browser checks recognize the shared Stamina artwork and verify that its number and label remain visible. Existing overlap checks remain in place, with added coverage for invisible or covered SVG text. Gameplay is unchanged.",
+    "build": "0.7.1.854",
+    "pullRequest": 1548,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1548"
+  },
+  {
     "id": "pr-1541",
     "date": "2026-10-03",
     "group": "2026-10-03",

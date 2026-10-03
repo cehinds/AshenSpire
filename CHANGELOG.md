@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Combat checks follow the Stamina orb** ([#1548](https://github.com/cehinds/AshenSpire/pull/1548), `0.7.1.854`). Browser checks recognize the shared Stamina artwork and verify that its number and label remain visible. Existing overlap checks remain in place, with added coverage for invisible or covered SVG text. Gameplay is unchanged.
+
 - **Shield and Arcane Ward sit beside your health** ([#1541](https://github.com/cehinds/AshenSpire/pull/1541), `0.7.1.853`). Ordinary Block has a blue shield and turns health blue until it breaks. Magical Block has a purple Arcane Ward badge to its left and adds a gold health outline. Both can appear together; when either disappears, health takes back its space. The two numbers share the existing Block total. Solo and co-op keep the same behavior, including saved fights. Narrow bars show current HP with the full value available in the tooltip.
 - **Build your deck at the Reading Desk** ([#1535](https://github.com/cehinds/AshenSpire/pull/1535), `0.7.1.852`). The illustrated deck editor has compact rows, two-line descriptions, inline Inspect, and proportionate card art. Sapphire Mana and green Stamina symbols show centered costs, with configurable resource grouping and order. Desktop inspection includes a looping skill animation with Pause. Any deck card can return to the library; adding equipment skills requires compatible equipped gear, and removed equipment cards stay removed after saving. A separate visual row editor lets you move, resize and snap components, then export the layout as JSON.
 
