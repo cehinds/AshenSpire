@@ -35,4 +35,8 @@ export const deckRules = Object.freeze({
   // Plain card ids a run with no equipment may add without limit. An equipped
   // run's basics are its attack-slot and guard instances, matched by role.
   unlimitedCardIds: Object.freeze(['strike', 'defend']),
+  equipmentEligibility: Object.freeze({
+    universalTags: Object.freeze(['basic']),
+    weaponTags: Object.freeze(['blade', 'bow', 'ranged']),
+  }),
 });
