@@ -80,9 +80,10 @@ discard controls, under a live worked example.
 `node tools/launch.mjs --build-only` produces the standalone aliases and an
 external-art web edition in `build/web/`. **By default it builds the light art
 tier** (owner, 2026-09-26: dev/test builds are light only): one single file,
-`AshenSpire.html`, whose art payloads come from the committed `assets-mobile/`
-twin tree (~29 MB, edition `light`, no size cap), and a web edition carrying the
-same art. `--full-art` builds the release/main shape instead: the full-art single
+`AshenSpire.html`, whose art payloads come from the light pack of the fetched
+art release (`.art-cache/<tag>/light/`; run `node tools/fetch-art.mjs --pack
+light,common` first — see *The art release* below) (~29 MB, edition `light`, no
+size cap), and a web edition carrying the same art. `--full-art` builds the release/main shape instead: the full-art single
 file (~255 MB) plus the mobile one (`AshenSpire-mobile.html`, the same twins, held
 under 30 MB). CI passes `--full-art` only for `release` and `main`. Changing anything under `assets/`
 means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
@@ -180,8 +181,21 @@ when set, only raises GitHub's rate limit. A failure names its cause (token refu
 rate limit, network). `--from <zip>` verifies a zip already on disk (its pack is
 read from its name); `--recheck` re-hashes a cache. The trees here stay until
 step 13, and `node tools/fetch-art.mjs --agree` proves the fetched caches and
-the trees agree byte for byte; `node tools/asset-pack.mjs --source cache` writes
-the packs from the cache instead of the trees. The pin and the manifest are
+the trees agree byte for byte.
+
+**Every reader of those trees reads the cache** (step 12). The builds
+(`bundle.mjs`, `launch.mjs`, `asset-pack.mjs`, whose `--source` defaults to
+`auto`), `tools/serve.mjs` (a request under `/assets-mobile/`,
+`/assets/fonts/`, `/music/` or `/map-detail/` of a served checkout), the tests
+and the dev-preview workbench take `assets-mobile/`, `assets/fonts/`, `music/`
+and `map-detail/` from the fetched packs through `tools/art-source.mjs`, and ask
+`art-manifest.json`, not a tree, whether an art id ships. When a pack is not
+fetched, `art-source` falls back to the tree in this checkout with one note
+naming the fetch (until step 13 deletes the trees); `ASHEN_ART_SOURCE=cache`,
+which CI sets, refuses that fallback, and `ASHEN_ART_SOURCE=trees` forces it.
+`node tools/art-source.mjs --which` prints where each tree is read from. So
+before building or playing from source: `node tools/fetch-art.mjs --pack
+light,common` (and `all` for a `--full-art` build). The pin and the manifest are
 build identity (`BUILD_IDENTITY_FILES`). `tools/zip.mjs` is the same file the
 art repository packs with; `tests/fetch-art.test.mjs` pins their shared vector.
 
@@ -1019,7 +1033,7 @@ all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
 per-module-closure runtime (so file:// has no module/CORS issue). Double-click
 to play; no server, no Node, no external files. Re-run after any source change.
 With no flag it bundles the full art from `assets/`; `--light` reads the
-`assets-mobile/` twins (the dev/test tier), `--mobile` writes the budgeted
+light pack (the dev/test tier, from the fetched release; *The art release*), `--mobile` writes the budgeted
 `AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML
 in the pack shape (`asset-base.json`, `packs/`, `objects/`; see *Run & test*).
 That folder plays by double-click too, as long as it stays together

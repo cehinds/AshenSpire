@@ -75,7 +75,7 @@ function withPacks(fn, files = FILES) {
   const root = tree(files);
   const out = mkdtempSync(join(tmpdir(), 'asset-pack-out-'));
   try {
-    writePacks({ root, out });
+    writePacks({ source: 'trees', root, out });
     const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
     return fn({ root, out, manifest });
   } finally {
@@ -119,16 +119,16 @@ test('determinism: two writes, and an LF and a CRLF checkout, give identical byt
   const crlf = tree(FILES, { crlf: true });
   const outs = [0, 1, 2].map(() => mkdtempSync(join(tmpdir(), 'asset-pack-out-')));
   try {
-    writePacks({ root: lf, out: outs[0] });
-    writePacks({ root: lf, out: outs[1] });
-    writePacks({ root: crlf, out: outs[2] });
+    writePacks({ source: 'trees', root: lf, out: outs[0] });
+    writePacks({ source: 'trees', root: lf, out: outs[1] });
+    writePacks({ source: 'trees', root: crlf, out: outs[2] });
     const a = snapshot(outs[0]);
     assert.ok(Object.keys(a).length > 10);
     assert.deepEqual(snapshot(outs[1]), a, 'a second run writes the same tree');
     assert.deepEqual(snapshot(outs[2]), a, 'a CRLF checkout writes the same tree');
     // A rewrite over an old tree leaves nothing of the old one behind.
     writeFileSync(join(outs[0], 'packs', 'light-000000000000.json'), '{}\n');
-    writePacks({ root: lf, out: outs[0] });
+    writePacks({ source: 'trees', root: lf, out: outs[0] });
     assert.deepEqual(snapshot(outs[0]), a);
   } finally {
     for (const d of [lf, crlf, ...outs]) rmSync(d, { recursive: true, force: true });
@@ -154,10 +154,10 @@ test('known-bad: an index whose recorded hash disagrees with the manifest, or a 
     assert.match(verifyPacks(out, { manifest: wrong }).join('\n'), /high: assets\/ui\/B\.webp: disagrees with art-manifest\.json/);
     // The writer refuses a source that no longer matches its record, and writes nothing.
     writeFileSync(join(root, 'assets/ui/B.webp'), webp(64, 64, 9));
-    assert.match(planPacks(root).problems.join('\n'), /assets\/ui\/B\.webp: the high file does not match art-manifest\.json/);
+    assert.match(planPacks(root, PACKS, { source: 'trees' }).problems.join('\n'), /assets\/ui\/B\.webp: the high file does not match art-manifest\.json/);
     const out2 = mkdtempSync(join(tmpdir(), 'asset-pack-out-'));
     try {
-      assert.throws(() => writePacks({ root, out: out2 }), /nothing was written/);
+      assert.throws(() => writePacks({ source: 'trees', root, out: out2 }), /nothing was written/);
       assert.deepEqual(readdirSync(out2), []);
     } finally { rmSync(out2, { recursive: true, force: true }); }
   });
@@ -248,7 +248,7 @@ test('known-bad: a tree missing a whole pack is not green; a partial write check
   const root = tree(FILES);
   const out = mkdtempSync(join(tmpdir(), 'asset-pack-out-'));
   try {
-    writePacks({ root, out, packs: ['light'] });
+    writePacks({ source: 'trees', root, out, packs: ['light'] });
     const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
     assert.deepEqual(verifyPacks(out, { manifest, packs: ['light'] }), []);
     assert.match(verifyPacks(out, { manifest }).join('\n'), /no high index[\s\S]*no common index/);
@@ -268,10 +268,10 @@ test('known-bad: a symlinked --out, or a symlinked packs/ inside it, never clear
   try {
     mkdirSync(join(root, 'build'), { recursive: true });
     try { symlinkSync(tracked, join(root, 'build', 'out'), 'dir'); } catch (e) { t.skip(`symlinks unavailable here (${e.code})`); return; }
-    assert.throws(() => writePacks({ root, out: join(root, 'build', 'out') }), /--out src: write under build\/ or dist\//);
+    assert.throws(() => writePacks({ source: 'trees', root, out: join(root, 'build', 'out') }), /--out src: write under build\/ or dist\//);
     mkdirSync(join(root, 'build', 'real'), { recursive: true });
     symlinkSync(join(tracked, 'packs'), join(root, 'build', 'real', 'packs'), 'dir');
-    assert.throws(() => writePacks({ root, out: join(root, 'build', 'real') }), /is a symlink/);
+    assert.throws(() => writePacks({ source: 'trees', root, out: join(root, 'build', 'real') }), /is a symlink/);
     assert.equal(readFileSync(join(tracked, 'keep.js'), 'utf8'), 'tracked\n');
     assert.equal(readFileSync(join(tracked, 'packs', 'keep.txt'), 'utf8'), 'tracked\n');
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -283,23 +283,23 @@ test('known-bad: an unmarked --out with its own packs/ or objects/ is refused, n
   try {
     mkdirSync(join(out, 'objects'), { recursive: true });
     writeFileSync(join(out, 'objects', 'theirs.bin'), 'not ours\n');
-    assert.throws(() => writePacks({ root, out }), /objects is not empty and \.asset-pack is not beside it/);
+    assert.throws(() => writePacks({ source: 'trees', root, out }), /objects is not empty and \.asset-pack is not beside it/);
     assert.equal(readFileSync(join(out, 'objects', 'theirs.bin'), 'utf8'), 'not ours\n');
     assert.ok(!readdirSync(out).includes('.asset-pack'), 'a refused run writes no marker');
     // A same-named file that asset-pack did not write proves nothing.
     writeFileSync(join(out, '.asset-pack'), '');
-    assert.throws(() => writePacks({ root, out }), /was not written by asset-pack/);
+    assert.throws(() => writePacks({ source: 'trees', root, out }), /was not written by asset-pack/);
     assert.equal(readFileSync(join(out, 'objects', 'theirs.bin'), 'utf8'), 'not ours\n');
     assert.equal(readFileSync(join(out, '.asset-pack'), 'utf8'), '', 'a foreign marker is left as it was');
     rmSync(join(out, '.asset-pack'));
     // Empty directories are fine; the write then marks the tree as its own.
     rmSync(join(out, 'objects', 'theirs.bin'));
     mkdirSync(join(out, 'packs'), { recursive: true });
-    writePacks({ root, out });
+    writePacks({ source: 'trees', root, out });
     assert.ok(readdirSync(out).includes('.asset-pack'));
     // A marked tree is cleared and rewritten, strays included.
     writeFileSync(join(out, 'objects', 'stray.bin'), 'x');
-    writePacks({ root, out });
+    writePacks({ source: 'trees', root, out });
     const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
     assert.deepEqual(verifyPacks(out, { manifest }), []);
   } finally {
@@ -343,10 +343,10 @@ test('known-bad: a .asset-pack marker that is a symlink or a directory is refuse
   try {
     writeFileSync(join(elsewhere, 'precious.txt'), 'keep\n');
     mkdirSync(join(out, '.asset-pack'));
-    assert.throws(() => writePacks({ root, out }), /\.asset-pack exists and is not a regular file/);
+    assert.throws(() => writePacks({ source: 'trees', root, out }), /\.asset-pack exists and is not a regular file/);
     rmSync(join(out, '.asset-pack'), { recursive: true });
     try { symlinkSync(join(elsewhere, 'precious.txt'), join(out, '.asset-pack')); } catch (e) { t.skip(`symlinks unavailable here (${e.code})`); return; }
-    assert.throws(() => writePacks({ root, out }), /\.asset-pack exists and is not a regular file/);
+    assert.throws(() => writePacks({ source: 'trees', root, out }), /\.asset-pack exists and is not a regular file/);
     assert.equal(readFileSync(join(elsewhere, 'precious.txt'), 'utf8'), 'keep\n');
     assert.ok(!readdirSync(out).includes('packs'), 'nothing was written');
   } finally {
