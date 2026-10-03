@@ -27,7 +27,8 @@
 #
 # Exit codes: 0 done · 2 download failed · 3 zip sha256 mismatch · 4 an object is
 # missing from the zip or does not match · 5 anything else · 6 (Prune) some unused
-# files could not be removed yet (recorded in install-data\orphans.txt).
+# files could not be removed yet (recorded in install-data\orphans.txt) · 7 (Drop) a
+# file this version installs is already there and not from the previous install.
 # Runs on Windows PowerShell 5.1 (every Windows 10/11) and PowerShell 7.
 
 [CmdletBinding()]
@@ -202,6 +203,17 @@ function Remove-DroppedFiles {
   $now = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
   foreach ($l in [IO.File]::ReadAllLines($NewFiles)) { if ($l) { [void]$now.Add($l) } }
   $root = [IO.Path]::GetFullPath($InstallDir).TrimEnd('\', '/')
+  # A path this version adds that is already on disk is not ours: the old
+  # version never installed it, so the player put it there. Stop before the
+  # copy overwrites it.
+  $was = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+  foreach ($l in [IO.File]::ReadAllLines($OldFiles)) { if ($l) { [void]$was.Add($l) } }
+  $taken = @($now | Where-Object { -not $was.Contains($_) -and $_ -notlike 'install-data/*' -and
+    (Test-Path -LiteralPath (Join-Path $InstallDir ($_.Replace('/', [IO.Path]::DirectorySeparatorChar)))) })
+  if ($taken.Count) {
+    foreach ($t in $taken) { Say "Already in the folder, not from the previous install: $t" }
+    Fail 7 "$($taken.Count) file(s) this version installs already exist and are not from the previous install (first: $($taken[0])). Move them out of the folder and run the installer again."
+  }
   $removed = 0
   $drop = New-Object System.Collections.Generic.List[string]
   foreach ($l in [IO.File]::ReadAllLines($OldFiles)) {

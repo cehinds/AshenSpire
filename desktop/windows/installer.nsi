@@ -20,6 +20,7 @@
 !insertmacro Need VERSION
 !insertmacro Need APP_DIR
 !insertmacro Need UNINSTALL_LIST
+!insertmacro Need UNINSTALL_CHECK
 !insertmacro Need LICENSE_FILE
 !insertmacro Need OUTFILE
 !insertmacro Need HD_URL
@@ -301,6 +302,16 @@ Section "Uninstall"
   ; Exactly the files the installer wrote, then the folder only if it is empty:
   ; nothing the player put there is removed.
 !include "${UNINSTALL_LIST}"
+  ; A file still there was in use (antivirus, a running copy): keep the
+  ; uninstaller, its shortcuts and its Installed apps entry so the player can
+  ; close what holds it and run the uninstall again.
+  StrCpy $9 0
+!include "${UNINSTALL_CHECK}"
+  ${If} $9 == 1
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Some ${APP_NAME} files are in use and were not removed. Close any program using them (or restart Windows) and run the uninstaller again from Installed apps." /SD IDOK
+    SetErrorLevel 2
+    Abort
+  ${EndIf}
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 

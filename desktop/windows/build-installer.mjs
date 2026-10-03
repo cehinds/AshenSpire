@@ -215,6 +215,11 @@ const uninstall = [...new Set(files)].sort().map((f) => `  Delete "$INSTDIR\\${w
   .concat([...dirs].sort((a, b) => b.split('/').length - a.split('/').length || (a < b ? 1 : -1))
     .map((d) => `  RMDir "$INSTDIR\\${win(d)}"`)).join('\n') + '\n';
 writeFileSync(join(STAGE, 'uninstall-files.nsh'), uninstall);
+// ...and the check after it: $9 is 1 when any of those files is still there (in
+// use), so the uninstaller keeps itself and its entry for another try.
+const uninstallCheck = [...new Set(files)].sort()
+  .map((f) => `  \${If} \${FileExists} "$INSTDIR\\${win(f)}"\n    StrCpy $9 1\n  \${EndIf}`).join('\n') + '\n';
+writeFileSync(join(STAGE, 'uninstall-check.nsh'), uninstallCheck);
 const sizeKb = (dir) => {
   let n = 0;
   for (const e of readdirSync(dir, { withFileTypes: true })) n += e.isDirectory() ? sizeKb(join(dir, e.name)) : statSync(join(dir, e.name)).size / 1024;
@@ -235,6 +240,7 @@ run(makensis, [
   define('VERSION', VERSION),
   define('APP_DIR', APP),
   define('UNINSTALL_LIST', join(STAGE, 'uninstall-files.nsh')),
+  define('UNINSTALL_CHECK', join(STAGE, 'uninstall-check.nsh')),
   define('LICENSE_FILE', join(ROOT, 'LICENSE')),
   define('OUTFILE', SETUP),
   define('HD_URL', HD_URL),
