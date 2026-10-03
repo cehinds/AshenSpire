@@ -61,10 +61,14 @@ two-line descriptions, editor drag/resize/snapping, saved drafts and JSON copy.
 Independent review of PR #1535 found and verified a fix for stale sideboard
 mount contents after smith extraction/installation, including unequipped gear.
 The reviewer approved the fix and independently reran its three regression cases.
-Build 0.7.1.840 (digest `6f15217dd5`) completed with the pack and light standalone
+Build 0.7.1.843 (digest `701b02a78b`) completed with the pack and light standalone
 outputs. The packaged game was opened through Map → Deck → Edit deck: inline
 Inspect left the previous card unchanged until pressed, Pause changed to Play,
 all deck images loaded, the card retained its 5:7 ratio, and an equipment card
 was removed and restored successfully. No browser errors were logged.
+After integrating unified turn Stamina, 75 cost/config/deck DOM tests passed,
+including every authored card and upgrade. Independent review approved the alias
+normalization; a legacy Action/Stamina group counts the shared pool once.
+The packaged game displayed Gorefire Slash as MP 1 / SP 1 with both icon images loaded.
 The broader test run overlapped a base merge and is being rerun on the settled
 tree. Final CI/merge evidence will be recorded before promotion.
