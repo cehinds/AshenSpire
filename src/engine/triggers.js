@@ -375,7 +375,6 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       return (row && Number.isInteger(row.level) ? row.level : 0) >= pred.level;
     }
     case 'classLevelAtLeast': {
-      if ((pctx.owner || ctx.player)?.classUnequipped) return false;
       const classId = pctx.owner && pctx.owner.classId ? pctx.owner.classId : (ctx.player && ctx.player.classId);
       const skills = ledgerFor(ctx, pctx.owner);
       const row = skills && classId ? skills[`class:${classId}`] : null;

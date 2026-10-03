@@ -213,8 +213,7 @@ test('FINISH: a skill book bought at the market pays its XP through awardSkillXp
   // Reading it is exactly one awardSkillXp on its track.
   const expected = structuredClone(back);
   awardSkillXp(OUT, expected, def.skill, def.xp);
-  const readPlan = skillBookReadPlan(OUT, back, item.id);
-  const receipt = commitSkillBookRead(OUT, back, { ...readPlan, choice: readPlan.lessons[0] });
+  const receipt = commitSkillBookRead(OUT, back, skillBookReadPlan(OUT, back, item.id));
   assert.deepEqual(back.skills[def.skill], expected.skills[def.skill]);
   assert.equal(receipt.gained, def.xp);
   assert.deepEqual(back.consumables, {}, 'a read book is used up and its entry deleted');
@@ -562,7 +561,7 @@ test('DOM: every 5b shelf lays out its stock, one click buys a book, a token and
     for (const key of ['skillBooks', 'reviveTokens', 'companions']) {
       assert.equal(app.querySelectorAll(`#shop-${key} .shop-offer`).length, run.shopStock[key].length, key);
       app.querySelector(`#shop-cat-${key}`).click();
-      const primary = app.querySelector(key === 'skillBooks' ? '#shop-skillBooks .shop-book-buy' : '#shop-primary');
+      const primary = app.querySelector('#shop-primary');
       assert.ok(primary && !primary.disabled, `${key}: Buy is offered`);
       primary.click();
     }

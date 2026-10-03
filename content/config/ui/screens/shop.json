@@ -8,16 +8,5 @@
     "wideMinRem": 60,
     "detailMaxFraction": 0.5
   },
-  "positioning": { "gapRem": 1 },
-  "components": { "bookOffers": {
-    "artWidth": 11,
-    "actionWidth": 11,
-    "minHeight": 14,
-    "gap": 1.4,
-    "padding": 1.4,
-    "compactArtWidth": 5.2,
-    "compactActionWidth": 7.2,
-    "compactGap": 0.8,
-    "compactPadding": 0.8
-  } }
+  "positioning": { "gapRem": 1 }
 }

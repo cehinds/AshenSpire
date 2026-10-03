@@ -194,7 +194,6 @@ export function createCombat({
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
-      ...(player.classUnequipped ? { classUnequipped: true } : {}),
       maxHp: player.maxHp,
       hp: player.hp,
       maxMana,

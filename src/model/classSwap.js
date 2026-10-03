@@ -26,22 +26,16 @@ import { stampDeck } from './loadout.js';
  * set aside — named on the receipt and the history row, never silently
  * lost. Armaments are the run's and stay.
  */
-export function swapRunClass(registries, run, classId, { preserveProgress = false } = {}) {
+export function swapRunClass(registries, run, classId) {
   if (!registries.classes.has(classId)) throw new Error(`swapClass: unknown class '${classId}'`);
   const from = run.class;
   const fromLevel = skillLevel(run, classSkillId(from));
   if (from === classId) return { from, to: classId, fromLevel, droppedTags: [], resetTracks: [], droppedArmour: [] };
-  // The Mirror still resets class progression, but never forgets ownership.
-  // Clear saved tree picks too, so re-equipping cannot undo that reset.
-  if (!preserveProgress) {
-    run.classCards = Object.fromEntries([...new Set([from, ...Object.keys(run.classCards || {})])].map((id) => [id, { ...run.classCards?.[id], coreTags: [] }]));
-    run.classUnequipped = false;
-  }
   const permitted = new Set(classTreeRows(registries, classId).map((row) => row.nodeId));
   const before = Array.isArray(run.coreTags) ? run.coreTags : [];
   const droppedTags = before.filter((id) => !permitted.has(id));
   run.coreTags = before.filter((id) => permitted.has(id));
-  const resetTracks = preserveProgress ? [] : Object.keys(run.skills || {}).filter((id) => id.startsWith('class:'));
+  const resetTracks = Object.keys(run.skills || {}).filter((id) => id.startsWith('class:'));
   for (const id of resetTracks) delete run.skills[id];
   const droppedArmour = [];
   const armour = ((registries.equipment || {}).armour) || [];

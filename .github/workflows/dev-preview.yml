@@ -301,7 +301,6 @@ jobs:
           cp -r docs/preview/combat-formation "$W/docs/preview/"
           cp -r docs/preview/starting-equipment "$W/docs/preview/"
           cp -r docs/preview/armament-kits "$W/docs/preview/"
-          cp -r docs/preview/book-library "$W/docs/preview/"
           cp -r pose-studio "$W/pose-studio"
           cp -r --update=none "$HIGH_DIR/pose-effects" "$W/assets/"
           cp -r --update=none "$HIGH_DIR/combat-effects" "$HIGH_DIR/painted-outfits" "$W/assets/"

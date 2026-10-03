@@ -101,7 +101,7 @@ export function levelProgress(registries, run) {
  */
 export function skillProgressRows(registries, run, { includeUntouched = false } = {}) {
   const tracks = skillTracks(registries);
-  const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
+  const classId = run && typeof run.class === 'string' ? run.class : '';
   const ownId = classId ? classSkillId(classId) : null;
   if (ownId && !tracks.some((track) => track.id === ownId)) {
     throw new Error(`skillProgressRows: '${classId}' is not a class the registry declares, so it has no class track`);

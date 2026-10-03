@@ -1,6 +1,5 @@
 import { bindCardInspection } from '../components/cardInspection.js';
 import { wireCardShelf } from '../components/cardShelf.js';
-import { applySkillBookOfferTokens, renderSkillBookOffer } from '../components/skillBookOffer.js';
 // The wandering merchant. Stock is rolled once, saved with the run, and read
 // through the W1d workspace: a category rail beside (or above) one W1v pane of
 // offers, the selected offer's detail, and a footer whose right-hand action is
@@ -127,7 +126,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   let activeCategory = 'cards';
   const picks = {};
   let primaryDisarm = null;
-  let bookDisarms = [];
   let layout = null;
   let shelves = null;
 
@@ -139,8 +137,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
   function render() {
     releaseFooter();
-    for (const disarm of bookDisarms) disarm?.();
-    bookDisarms = [];
     if (layout) layout.release();
     if (shelves) shelves.release();
     // WHAT THIS VISIT LAID OUT (SPEC §14.2): a shelf whose offering did not
@@ -208,7 +204,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
 
     const root = app.querySelector('.shop-workspace');
-    applySkillBookOfferTokens(root);
     const frame = root.querySelector('.shop-frame');
     const railed = root.querySelector('.shop-railed');
     const paneHead = root.querySelector('.shop-pane-head');
@@ -381,10 +376,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       const row = app.querySelector(`#shop-${key}`);
       if (!row) return;
       const avail = offerAvailability({ reason: plan.ok ? null : plan.reason });
-      const bookOffer = key === 'skillBooks' ? renderSkillBookOffer({
-        def: plan.def, description: consumableText(registries, plan.def), cost, available: avail.available, reason: plan.reason,
-      }) : null;
-      const tile = bookOffer ? bookOffer.tile : shopItem(title, desc, cost, avail);
+      const tile = shopItem(title, desc, cost, avail);
       addOffer(key, {
         ref, tile, name: title, desc, price: t('shop.price', { cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost }), enabled: !!plan.ok, beat: { id: 'shopBuy', opts: buyItem(kind, title, cost, () => {
@@ -392,13 +384,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
           sfx.play('buy');
           onChanged();
           render();
-          if (bookOffer) (app.querySelector('#shop-skillBooks .shop-book-buy:not(:disabled)') || app.querySelector('#leave-shop'))?.focus({ preventScroll: true });
         }) } },
       });
-      if (bookOffer && plan.ok) {
-        const action = offers[key][offers[key].length - 1].action;
-        bookDisarms.push(arm(bookOffer.buy, action.beat.id, { ...action.beat.opts, showHint: false }));
-      }
       row.appendChild(tile);
     };
     const armourRefs = offerRefs('armour', (stock.armour || []).map((item) => item.id));
@@ -804,7 +791,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // one painted, its head carries its {Status}, the detail describes the
     // selected offer, and the footer's right-hand action is that offer's.
     function paint() {
-      root.dataset.shopContent = activeCategory;
       for (const item of railItems) {
         const on = item.dataset.shopCategory === activeCategory;
         item.classList.toggle('on', on);
@@ -825,14 +811,13 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       picks[activeCategory] = selected ? { ref, index: list.indexOf(selected) } : null;
       for (const offer of list) {
         const on = offer === selected;
-        offer.tile.classList.toggle('is-selected', on && activeCategory !== 'skillBooks');
+        offer.tile.classList.toggle('is-selected', on);
         if (offer.tile.classList.contains('class-pick')) offer.tile.setAttribute('aria-pressed', on ? 'true' : 'false');
       }
 
       detailBox.replaceChildren();
-      const inlineBooks = activeCategory === 'skillBooks';
-      detailBox.hidden = !selected || inlineBooks;
-      if (selected && !inlineBooks) {
+      detailBox.hidden = !selected;
+      if (selected) {
         // Optional rows collapse: an offer without a description or a price
         // draws no empty line for it.
         detailBox.append(...[
@@ -845,7 +830,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
           { class: `shop-detail-avail${selected.avail.available ? ' is-available' : ''}` }),
         ].filter(Boolean));
       }
-      buildFooter(inlineBooks ? null : selected);
+      buildFooter(selected);
     }
 
     function buildFooter(selected) {

@@ -3,16 +3,6 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1521",
-    "date": "2026-10-02",
-    "group": "2026-10-02",
-    "summary": "Read a book, learn a card, keep your class progress",
-    "detail": "Manuals grant their XP and an immediate matching card choice, including cross-class skills. Spellbooks teach spells, Universal Tomes let you choose a track and lesson, and class books unlock reusable class cards that can be equipped or removed to leave an empty slot. The shop's book rows have matching sizes and separate book, details and Buy columns. Ten customizable book recipes combine three painted cover styles, thirty independent symbol variants, colors and trim; Book Atelier exports artwork recipes for future updates. Art comes from the verified hd-assets-v4 pack, including its existing uniform light-sprite policy.",
-    "build": "0.7.1.824",
-    "pullRequest": 1521,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1521"
-  },
-  {
     "id": "pr-1516",
     "date": "2026-10-02",
     "group": "2026-10-02",

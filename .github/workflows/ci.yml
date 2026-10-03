@@ -794,6 +794,11 @@ jobs:
         with:
           lfs: false # the probe serves the source tree
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12): the
+      # served game's art has been the fetched release since step 13.
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       - name: Every flask menu offers the shared plan, and a map Potions choice does and saves what was chosen
@@ -821,6 +826,11 @@ jobs:
         with:
           lfs: false # the probe serves the source tree
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12): the
+      # served game's art has been the fetched release since step 13.
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       - name: ...and that probe can fail (its plants, this leg's half)
@@ -1158,8 +1168,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: false # the art is plain git (not LFS), so the probe's figures load
+          lfs: false # serves the source tree; reads no LFS object
       - uses: ./.github/actions/setup-node
+      # The figure art left this repository at step 13 (docs/EXTERNAL-ASSETS-PLAN.md):
+      # without the fetched packs every figure image 404s and the probe goes red
+      # on "no visible figure image to animate", and the selftest's copied tree
+      # (doorplant extraCopy assets/enemy-poses, …) has nothing to copy.
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
       - name: Every combatant idles, and reduced motion leaves nothing over 0.01 s in one turn
         if: matrix.shard == '0/3'

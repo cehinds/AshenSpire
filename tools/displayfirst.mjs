@@ -1193,19 +1193,22 @@ function selftestPlants() {
       //
       // Each edit carries its following line as an anchor, so neither find
       // becomes ambiguous once the other has been applied.
+      // Re-anchored 2026-10-03: #1489's copy ratchet moved both rows' label and
+      // note to t()/tFull() keys, and the literal-text find DRIFTED (dispatch
+      // run 37098149492).
       name: 'the row trades places with the one behind it in the rendered Display panel',
       edits: [
         {
           file: 'src/ui/screens/settings.js',
           find: [
-            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-            "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
+            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
+            "    note: tFull('settings.row.fullscreen') },",
             '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
           ].join(settingsEol),
           replace: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
-            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
-            "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
+            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
+            "    note: tFull('settings.row.accent') },",
             '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
           ].join(settingsEol),
         },
@@ -1213,13 +1216,13 @@ function selftestPlants() {
           file: 'src/ui/screens/settings.js',
           find: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
-            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
-            "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
+            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
+            "    note: tFull('settings.row.accent') },",
             '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,',
           ].join(settingsEol),
           replace: [
-            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-            "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
+            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
+            "    note: tFull('settings.row.fullscreen') },",
             '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,',
           ].join(settingsEol),
         },

@@ -2831,7 +2831,7 @@ function rollLevelChoices(levelsEarned) {
   for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
     const options = [];
     if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
-    if (offerClassTree && !run.classUnequipped) {
+    if (offerClassTree) {
       const level = Math.max(run.skills?.[classSkillId(run.class)]?.level || 0, firstRewardLevel + ordinal + 1);
       options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
         .map((id) => ({ kind: 'classNode', id })));
@@ -2874,7 +2874,6 @@ function rollSkillDrafts(pool, includeBanked = false) {
  * draftable keeps its draft.
  */
 function rollClassDrafts(includeBanked = false) {
-  if (run.classUnequipped) return [];
   const row = run.skills && run.skills[classSkillId(run.class)];
   if (!row) return [];
   const banked = includeBanked ? pendingSkillLevelCount(registries, run, classSkillId(run.class)) : 0;
@@ -3829,12 +3828,6 @@ if (shotState === 'combat-test') {
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
-    if (new URLSearchParams(location.search).has('shotLibrary')) {
-      const books = registries.consumables.all().filter((row) => row.kind === 'skillBook');
-      run.consumables = Object.fromEntries(books.map((book) => [book.id, 1]));
-      run.shopStock.offerings = ['skillBooks'];
-      run.shopStock.skillBooks = books.map((book) => ({ id: book.id, cost: book.cost }));
-    }
     showShop();
   } else if (shotState === 'blacksmith') {
     // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the atlas

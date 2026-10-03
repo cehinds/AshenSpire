@@ -843,3 +843,25 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
   }
   assert.ok(lines >= 4, `the four fetching workflows pass the token (found ${lines})`);
 });
+
+// Step 13 left three heavy browser jobs (flask-menu, its plants, motion) with
+// no fetch: they served a checkout whose art had gone, and the motion probe
+// went red on figures that 404 (dispatch run 37098149492). Every ci.yml job
+// that checks this repository out fetches the packs before its first step
+// that runs a tool, since any of them may build, serve or copy the art.
+test('every ci.yml job that checks the repository out fetches the art packs before it runs a tool', () => {
+  const yml = readFileSync(fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url)), 'utf8');
+  const jobs = yml.split(/\n(?=  [a-z][a-z0-9-]*:\n)/).slice(1);
+  const missing = [];
+  let checked = 0;
+  for (const job of jobs) {
+    if (!/uses: actions\/checkout@/.test(job)) continue;
+    checked += 1;
+    const name = job.match(/^  ([a-z0-9-]+):/)[1];
+    const fetch = job.search(/uses: \.\/\.github\/actions\/fetch-art\b/);
+    const firstTool = job.search(/run: .*\bnode (tools|tests)\//);
+    if (fetch < 0 || (firstTool >= 0 && firstTool < fetch)) missing.push(name);
+  }
+  assert.ok(checked >= 10, `the job split found the checkout jobs (${checked})`);
+  assert.deepEqual(missing, [], `these jobs run a tool on a checkout with no fetched art: ${missing.join(', ')}`);
+});

@@ -107,13 +107,6 @@ function hydrateMissingEquipmentProfiles(registries, snapshot) {
  */
 function classTreeReferenceProblems(run, registries) {
   const problems = coreTagsTreeProblems(registries, run.class, run.coreTags, 'coreTags');
-  for (const [id, card] of Object.entries(run.classCards || {})) {
-    if (!registries.classes.has(id)) problems.push(`classCards.${id} is an unknown class`);
-    else problems.push(...coreTagsTreeProblems(registries, id, card.coreTags, `classCards.${id}.coreTags`));
-    for (const armourId of card.armour || []) {
-      if (armourId && !(registries.equipment?.armour || []).some((row) => row.classId === id && row.id === armourId)) problems.push(`classCards.${id}.armour names unknown armour '${armourId}'`);
-    }
-  }
   const snapshot = run.combatEntered && run.combatEntered.snapshot;
   if (snapshot) problems.push(...coreTagsTreeProblems(registries, run.class, snapshot.coreTags, 'combatEntered.snapshot.coreTags'));
   for (const draft of (run.pendingReward && run.pendingReward.rewards && run.pendingReward.rewards.classDrafts) || []) {

@@ -62,7 +62,7 @@ export function classDraftPool(registries, classId, coreTags = [], level = 0) {
  * the reward door's one write to the core zone's tags.
  */
 export function pickClassNode(registries, run, nodeId, { levelOverride = null } = {}) {
-  if (!run || !run.class || run.classUnequipped) return false;
+  if (!run || !run.class) return false;
   const level = Number.isInteger(levelOverride) ? levelOverride : skillLevel(run, classSkillId(run.class));
   if (!classDraftPool(registries, run.class, run.coreTags || [], level).includes(nodeId)) return false;
   if (!Array.isArray(run.coreTags)) run.coreTags = [];
@@ -78,7 +78,7 @@ export function pickClassNode(registries, run, nodeId, { levelOverride = null } 
  * of `perWin`.
  */
 export function awardClassXp(registries, run, { victory = false, pool = 'normal', bank = false, multiplier = 1 } = {}) {
-  if (!victory || !run || !run.class || run.classUnequipped) return null;
+  if (!victory || !run || !run.class) return null;
   const xp = ((((registries || {}).balance || {}).skill || {}).class || {}).xp || {};
   const amount = Math.floor(((xp.perWin || 0) + (pool === 'boss' ? (xp.bossKill || 0) : 0)) * multiplier);
   if (!(amount > 0)) return null;

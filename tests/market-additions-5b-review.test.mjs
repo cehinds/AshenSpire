@@ -68,9 +68,6 @@ test('review 1 (DOM): the Armoury offers Read on a skill book out of combat, rea
         assert.equal(foot.length, 1, 'and in the footer');
         const before = run.skills[book().skill]?.xp ?? 0;
         read[0].click();
-        assert.equal(run.consumables[book().id], 2, 'opening the lesson consumes nothing');
-        dom.document.body.querySelector('.book-lesson-option').click();
-        dom.document.body.querySelector('.book-learning-confirm').click();
         assert.equal(run.consumables[book().id], 1, 'one book used');
         assert.ok(run.skills[book().skill], 'the track was paid');
         assert.ok(changed >= 1, 'the change persisted');
