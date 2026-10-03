@@ -561,7 +561,7 @@ test('DOM: every 5b shelf lays out its stock, one click buys a book, a token and
     for (const key of ['skillBooks', 'reviveTokens', 'companions']) {
       assert.equal(app.querySelectorAll(`#shop-${key} .shop-offer`).length, run.shopStock[key].length, key);
       app.querySelector(`#shop-cat-${key}`).click();
-      const primary = app.querySelector('#shop-primary');
+      const primary = app.querySelector(key === 'skillBooks' ? '#shop-skillBooks .shop-book-buy' : '#shop-primary');
       assert.ok(primary && !primary.disabled, `${key}: Buy is offered`);
       primary.click();
     }

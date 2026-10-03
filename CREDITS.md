@@ -1,5 +1,15 @@
 # Credits & Asset Licenses
 
+## Skill-book shop assets (2026-10-02)
+
+Three transparent book paintings and one blank brass button frame generated
+with the built-in OpenAI image generation tool from the owner's approved
+shop preview. No third-party artwork or third-party license is claimed.
+PNG masters, the approved source, exact prompts and export instructions are
+retained in [art/manual-shop-2026-10-02](art/manual-shop-2026-10-02/README.md).
+Runtime WebPs live in `assets/shop/`, with policy-compliant light twins under
+`assets-mobile/shop/`; `assets.js` resolves them through the normal asset map.
+
 ## Player polish asset kit (2026-10-02)
 
 Sixteen original raster paintings, transparent role portraits and panel material

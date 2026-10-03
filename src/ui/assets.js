@@ -16,6 +16,16 @@ import { medallionAnchor } from '../content/classArtAnchors.js';
 import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
 import { createPaintedStage, paintedPresentation } from './paintedOutfits.js';
 import { assetUrl } from './assetmap.js';
+
+/** Skill-book identities and their shared shop chrome use the asset-pack seam. */
+export function skillBookArtwork(def) {
+  const file = ({ shieldManual: 'shield-manual', bladeManual: 'blade-manual' })[def.id] || 'skill-book';
+  return assetUrl(`assets/shop/books/${file}.webp`);
+}
+
+export function shopBuyArtwork() {
+  return assetUrl('assets/shop/brass-button.webp');
+}
 import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 import { hintImage } from './imageHints.js';

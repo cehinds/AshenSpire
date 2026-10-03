@@ -309,6 +309,7 @@ shop.bar.reviveTokens,,REVIVE TOKENS,A token that burns to save you when you wou
 shop.bar.questEvent,,QUEST,"One event the market knows of. Taking it closes the market behind you.",
 shop.bar.companions,,COMPANIONS,Allies who travel with you for a few fights.,
 shop.book.desc,,{text} Read it from the Armoury's Inventory.,,
+shop.book.buy,,Buy,,
 shop.token.desc,,{text} It burns by itself when you need it.,,
 shop.companion.desc,,{blurb} It travels with you for {combats} fights.,,
 shop.quest.name,,{name},,

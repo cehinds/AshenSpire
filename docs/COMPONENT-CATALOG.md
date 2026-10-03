@@ -75,6 +75,15 @@ merchant's offers column is sized from the same model
 (`ShopWorkspaceModel.shopOffersWidthPx`), so the column and the cards standing
 in it cannot disagree about how wide a shelf is.
 
+`skill-book-offer` is the market's full-width `[book | details | Buy]` row.
+`src/ui/components/skillBookOffer.js` renders live consumable copy and price;
+`shop.js` binds the existing purchase review/hold and revalidating commit.
+All rows share the tallest grid track; compact hosts retain all three columns.
+Geometry lives in `ui/screens/shop.json` → `components.bookOffers`. Artwork
+resolves through `assets.js` / `assetUrl`. The book shelf has no duplicate
+detail pane or footer Buy. See the real
+[shop preview](../art/manual-shop-2026-10-02/preview.html).
+
 This is the quick-reference library for the reusable UI vocabulary. The visual
 catalog is available at [`component-catalog.html`](./component-catalog.html).
 Select any component card there to open its detail drawer. The dedicated

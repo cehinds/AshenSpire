@@ -1,0 +1,67 @@
+{
+  "authoringDate": "2026-10-02",
+  "tool": "Built-in OpenAI image_gen",
+  "source": "approved-preview.png",
+  "assets": [
+    {
+      "path": "art/manual-shop-2026-10-02/masters/blade-manual.png",
+      "bytes": 2080450,
+      "sha256": "17da740c6660f8631c0facb4629446b789727e415383c80ccaba472a36aa7c72"
+    },
+    {
+      "path": "art/manual-shop-2026-10-02/masters/brass-button.png",
+      "bytes": 2403710,
+      "sha256": "b53cf6b5c6f0847b47997f94166cdf4a6ab59ba13d11712289ed251aea2b8e69"
+    },
+    {
+      "path": "art/manual-shop-2026-10-02/masters/shield-manual.png",
+      "bytes": 1958189,
+      "sha256": "2638f079fc7636b95b8151da4bc045a2ffd937479111bdf64ed52ef31c7044d3"
+    },
+    {
+      "path": "art/manual-shop-2026-10-02/masters/skill-book.png",
+      "bytes": 1935071,
+      "sha256": "3385afe9c6d3993e46eaee653dc3195d5949974bb0f1dc12d1106c42da657b32"
+    },
+    {
+      "path": "assets/shop/brass-button.webp",
+      "bytes": 11140,
+      "sha256": "0b86f85717a63ed36ee8a35506fb4c4117f979a513d26e5c7df47001f5a8eb5f"
+    },
+    {
+      "path": "assets/shop/books/blade-manual.webp",
+      "bytes": 38212,
+      "sha256": "055e77110119f2d2d3d2e228fa7b236969c43072cd108c160a159e698ebfdbb0"
+    },
+    {
+      "path": "assets/shop/books/shield-manual.webp",
+      "bytes": 39798,
+      "sha256": "4bd5beb73bda5ee9935abd455d026b8d7e10642058bbfbc0d4dd0a6551b8c045"
+    },
+    {
+      "path": "assets/shop/books/skill-book.webp",
+      "bytes": 38690,
+      "sha256": "5948cd9b5e8718577feb7624d58a1a9cc00bc141ff2de1a52bbf517ebf9f4f67"
+    },
+    {
+      "path": "assets-mobile/shop/brass-button.webp",
+      "bytes": 1580,
+      "sha256": "47ffa9164003139103b6fd9ed82256bd6264130aee8a6b733a2e72e289cad9cb"
+    },
+    {
+      "path": "assets-mobile/shop/books/blade-manual.webp",
+      "bytes": 12758,
+      "sha256": "1526417c0803c27d2cfcf58b250d27691a2abe97a61abe82c430ce6c9b29fd79"
+    },
+    {
+      "path": "assets-mobile/shop/books/shield-manual.webp",
+      "bytes": 12468,
+      "sha256": "10c03cc4170320b7c14b41b06292495c843adf96dce3e7e1ce76d1322f199031"
+    },
+    {
+      "path": "assets-mobile/shop/books/skill-book.webp",
+      "bytes": 12454,
+      "sha256": "f3cf6ccde63afadcad9e17c5cc43c0d69198cdcd279f981deb46cf8e1015ac54"
+    }
+  ]
+}

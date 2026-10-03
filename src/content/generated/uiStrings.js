@@ -1865,6 +1865,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.book.buy",
+    "extends": "",
+    "short": "Buy",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.token.desc",
     "extends": "",
     "short": "{text} It burns by itself when you need it.",
