@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Keep positioning controls clear of enemy intents** ([#1552](https://github.com/cehinds/AshenSpire/pull/1552), `0.7.1.864`). Move the Positioning toggle to the player side on short screens. Keep the browser overlap check reliable across authored formation sizes while preserving each fighter's tap target.
+
 - **Small combatants stay reachable** ([#1550](https://github.com/cehinds/AshenSpire/pull/1550), `0.7.1.862`). The player keeps a 44 px touch target when scaled down. Motion and save checks choose an unobstructed target point outside nested intent controls, preserving normal card play and their existing assertions.
 
 - **Combat browser checks keep pace with the game** ([#1548](https://github.com/cehinds/AshenSpire/pull/1548), `0.7.1.860`). Checks recognize the shared Stamina artwork and catch invisible or covered SVG text. A controlled sprite-overlap case keeps intent buttons reachable, and the full-run driver plays affordable attacks and defensive cards through the normal controls. Gameplay is unchanged.
