@@ -98,3 +98,12 @@ test('--seat-tiers pairs each boss multiplier with the boss actually fought', ()
   }
   assert.doesNotMatch(out, /^  tier \d+ in .*boss hp x/m, 'a seat row must not print a boss multiplier of its own');
 });
+
+test('--seat-tiers refuses --endless instead of folding later cycles into tiers 1-3', () => {
+  const r = spawnSync(process.execPath, ['tools/runsim.mjs', '1', '--seat-tiers', '--endless'], {
+    cwd: new URL('..', import.meta.url), encoding: 'utf8', timeout: 120000,
+  });
+  assert.equal(r.status, 2, `expected exit 2, got ${r.status}\n${r.stdout}`);
+  assert.match(r.stderr, /--seat-tiers cannot be combined with --endless/);
+  assert.doesNotMatch(r.stdout, /SEAT TIERS/, 'no per-tier report is printed');
+});

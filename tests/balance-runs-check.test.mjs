@@ -65,3 +65,32 @@ test('a deleted tier/seat row is caught: each table covers its whole tier × sea
   assert.match(recorded, fixedBoss, 'fixture: no fixed-order tier 3 boss row');
   assert.ok(recordedMultiplierProblems(REG, recorded.replace(fixedBoss, '')).some((p) => /Fixed seat order boss table: no row for tier 3 reach/.test(p)));
 });
+
+test('a real boss from another seat, with its own correct scale, is caught', () => {
+  // Tier-1 Weald's bossOmen swapped for the Reach's Furnace Saint at its own
+  // tier-1 scale used to pass: every number was right, the boss was not one
+  // the Weald can send (PR #1473 review).
+  const row = /^\| 1 \| weald \| `bossOmen` \| 0\.800 \| 0\.800 \| (\d+) \| (\d+) \|$/m;
+  assert.match(recorded, row, 'fixture: no seeded tier-1 weald bossOmen row');
+  const planted = recorded.replace(row, '| 1 | weald | `a3_bossFurnaceSaint` | 0.421 | 0.421 | $1 | $2 |');
+  const problems = recordedMultiplierProblems(REG, planted);
+  assert.ok(problems.some((p) => /a3_bossFurnaceSaint' is not a boss the weald seat can send at tier 1/.test(p)), problems.join('\n'));
+  assert.ok(!problems.some((p) => /Boss HP|Boss damage/.test(p)), 'the plant carries the stand-in boss its own correct scale');
+});
+
+test('a duplicated tier/seat row is caught, even with the right multipliers', () => {
+  // A second seeded tier-1 Weald bossOmen row with correct scales but other
+  // counts used to pass: completeness was checked as a Set (PR #1473 review).
+  const bossRow = /^\| 1 \| weald \| `bossOmen` \| 0\.800 \| 0\.800 \| \d+ \| \d+ \|$/m;
+  const m = bossRow.exec(recorded);
+  assert.ok(m, 'fixture: no seeded tier-1 weald bossOmen row');
+  const dupBoss = recorded.replace(m[0], `${m[0]}\n| 1 | weald | \`bossOmen\` | 0.800 | 0.800 | 1 | 1 |`);
+  const problems = recordedMultiplierProblems(REG, dupBoss);
+  assert.ok(problems.some((p) => /2 rows for tier 1 weald bossOmen, expected exactly one/.test(p)), problems.join('\n'));
+  assert.ok(!problems.some((p) => /Boss HP|Boss damage/.test(p)), 'the duplicate carries correct multipliers');
+  const seatRow = /^\| 1 \| weald \| 1\.000 \| .*\|$/m;
+  const s = seatRow.exec(recorded);
+  assert.ok(s, 'fixture: no seeded tier-1 weald Enemy HP × row');
+  const dupSeat = recorded.replace(s[0], `${s[0]}\n| 1 | weald | 1.000 | 1/1 (100.0%) |`);
+  assert.ok(recordedMultiplierProblems(REG, dupSeat).some((p) => /Enemy HP × table: 2 rows for tier 1 weald/.test(p)));
+});
