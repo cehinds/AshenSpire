@@ -30,9 +30,16 @@ const check = (name, ok, detail) => {
 
 // A disposable copy of the repo's source, so a fixture can break a file without
 // touching the working tree.
-function sandbox() {
+// SINCE STEP 8e (docs/EXTERNAL-ASSETS-PLAN.md) the bundler's default is the pack
+// shape, and the one inline shape left is the light single file (--single-file),
+// which reads its payloads from assets-mobile/ with assets/ as the oracle. The
+// parse-gate cases below build that single file (it is what still compiles every
+// module into one classic script, and at ~31 MB it is a tenth of the retired
+// full-art file); `pack: true` adds the trees the pack shape writes from, for
+// the case that builds it.
+function sandbox({ pack = false } = {}) {
   const dir = mkdtempSync(resolve(tmpdir(), 'ashen-bundle-'));
-  for (const d of ['src', 'styles', 'tools', 'assets', 'content']) {
+  for (const d of ['src', 'styles', 'tools', 'assets', 'assets-mobile', 'content', ...(pack ? ['music', 'map-detail', 'asset-data'] : [])]) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
   // buildordinal.json became authored build input after this sandbox was first
@@ -66,8 +73,10 @@ function sandbox() {
   return dir;
 }
 
-function build(dir) {
-  const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs')], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+// The light single file, written where the cases read it (build/AshenSpire.html).
+const SINGLE_FILE_ARGS = ['--single-file', '--out', 'build'];
+function build(dir, args = SINGLE_FILE_ARGS) {
+  const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs'), ...args], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   // A child that died (signal, spawn error) says so, rather than reading as `exit null`.
   const died = r.signal ? `\n[child killed by ${r.signal}]` : r.error ? `\n[child failed: ${r.error.message}]` : '';
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') + died };
@@ -110,7 +119,7 @@ function forceTreeEol(dir, eol) {
       else if (textExts.has(entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase())) paths.push(child);
     }
   };
-  for (const rel of ['src', 'styles', 'assets']) walk(rel);
+  for (const rel of ['src', 'styles', 'assets', 'assets-mobile']) walk(rel);
   paths.push('index.html');
   forceEol(dir, paths, eol);
 }
@@ -135,7 +144,10 @@ function runEolSelftest() {
   const crlfDir = sandbox();
   forceTreeEol(lfDir, 'lf');
   forceTreeEol(crlfDir, 'crlf');
+  // The map key is the runtime id; the light single file's payload is the
+  // light twin's bytes, so that is the source the payloads must equal.
   const binaryRel = 'assets/bg/bg_act1.webp';
+  const binarySrc = 'assets-mobile/bg/bg_act1.webp';
   const lfRun = build(lfDir);
   const lfOut = buildDigest(lfDir, lfRun, binaryRel);
   const crlfRun = build(crlfDir);
@@ -147,8 +159,8 @@ function runEolSelftest() {
     !!lfOut && !!crlfOut && lfOut.hash === crlfOut.hash,
     `LF ${lfOut?.length ?? 0} bytes; CRLF ${crlfOut?.length ?? 0} bytes`);
 
-  const lfBinary = readFileSync(resolve(lfDir, binaryRel));
-  const crlfBinary = readFileSync(resolve(crlfDir, binaryRel));
+  const lfBinary = readFileSync(resolve(lfDir, binarySrc));
+  const crlfBinary = readFileSync(resolve(crlfDir, binarySrc));
   const binaryMapExact = !!lfOut && !!crlfOut && [lfOut.map, crlfOut.map]
     .every((payload) => payload?.equals(lfBinary)) && lfBinary.equals(crlfBinary);
   const binaryCssExact = !!lfOut && !!crlfOut && [lfOut.css, crlfOut.css]
@@ -190,7 +202,7 @@ function runEolSelftest() {
     `  if (!TEXT_ASSET_EXTS.has(extname(absPath).toLowerCase()) && !absPath.endsWith(${JSON.stringify(binaryRel.split('/').pop())})) return bytes;`);
   const binaryPlantedRun = build(binaryPlantedDir);
   const binaryPlantedOut = buildDigest(binaryPlantedDir, binaryPlantedRun, binaryRel);
-  const binarySource = readFileSync(resolve(binaryPlantedDir, binaryRel));
+  const binarySource = readFileSync(resolve(binaryPlantedDir, binarySrc));
   const badMap = binaryPlantedOut && binaryPlantedOut.map;
   const badCss = binaryPlantedOut && binaryPlantedOut.css;
   check('binary preservation known-bad: a binary extension was planted as text', binaryPlanted);
@@ -227,6 +239,28 @@ if (process.argv.includes('--eol-selftest')) {
   const outPath = resolve(dir, 'build/AshenSpire.html');
   check('control: it wrote a real bundle, not a stub',
     existsSync(outPath) && readFileSync(outPath, 'utf8').length > 500000);
+  rmSync(dir, { recursive: true, force: true });
+})();
+
+// ---- 1p. THE PACK SHAPE, the default since step 8e --------------------------
+// Built from the real light and common trees (not a small fixture pack: the
+// packs are written from art-manifest.json, which names every real file, so a
+// fixture would need a fixture manifest the build identity also covers). One
+// case, so the sandbox's ~60 MB of objects is paid once.
+(() => {
+  const dir = sandbox({ pack: true });
+  const r = build(dir, ['--light']);
+  check('pack: the default (pack-shaped) light build exits 0', r.status === 0, `exit ${r.status}: ${r.out.slice(-300)}`);
+  const html = existsSync(resolve(dir, 'build/AshenSpire.html')) ? readFileSync(resolve(dir, 'build/AshenSpire.html'), 'utf8') : '';
+  const pin = (() => { try { return JSON.parse(/const ASSET_PACKS = (\{.*?\});\n/.exec(html)[1]); } catch { return null; } })();
+  check('pack: it pins the light and common packs, default tier light', !!pin && pin.tier === 'light' && !!pin.packs.light && !!pin.packs.common && !pin.packs.high,
+    JSON.stringify(pin && { tier: pin.tier, packs: Object.keys(pin.packs || {}) }));
+  check('pack: each pinned index is written beside it', !!pin && Object.values(pin.packs).every((p) => existsSync(resolve(dir, 'build', p.index))));
+  check('pack: its edition is its default tier', /const EDITION = 'light';/.test(html));
+  check('pack: it inlines no art (ASSET_MAP stays empty)', /ASSET_MAP = \{\}/.test(html) && !/"assets\/[^"]+":\s*"data:image\/webp/.test(html));
+  check('pack: the HTML is code, not media (under 16 MB)', html.length > 500000 && html.length < 16_000_000, `${html.length} bytes`);
+  const mobile = build(dir, ['--mobile']);
+  check('pack: --mobile is refused by name (the edition is retired)', mobile.status === 2 && /--mobile is retired/.test(mobile.out), `exit ${mobile.status}: ${mobile.out.slice(0, 200)}`);
   rmSync(dir, { recursive: true, force: true });
 })();
 
