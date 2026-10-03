@@ -47,9 +47,15 @@ jobs:
       - name: NSIS
         shell: pwsh
         run: |
-          if (-not (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe') -and -not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+          # The Chocolatey feed sometimes answers 504 and choco then exits 0 having
+          # installed nothing: retry, and fail here, by name, if NSIS is still missing.
+          $have = { (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe') -or (Get-Command makensis -ErrorAction SilentlyContinue) }
+          for ($try = 1; -not (& $have) -and $try -le 4; $try++) {
+            if ($try -gt 1) { Start-Sleep -Seconds (15 * $try) }
+            "NSIS install attempt $try"
             choco install nsis -y --no-progress
           }
+          if (-not (& $have)) { throw 'NSIS could not be installed (the Chocolatey feed did not answer)' }
 
       - name: Build the installer
         run: node desktop/windows/build-installer.mjs
