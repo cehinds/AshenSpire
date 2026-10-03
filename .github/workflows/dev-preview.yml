@@ -45,8 +45,8 @@ env:
   # A dispatch from `feature/x` carries a slash; the preview job's first step
   # rewrites CHANNEL without it before anything names a file or an artifact.
   CHANNEL: ${{ github.base_ref || github.ref_name }}
-  # The web (external-art) edition's tier flag for bundle.mjs: light on
-  # dev/test (owner, 2026-09-26), full on release/main.
+  # The pack-shaped build's tier flag for bundle.mjs: light on dev/test
+  # (owner, 2026-09-26), high (no flag) on release/main.
   WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
   # The art packs that tier is made from (docs/EXTERNAL-ASSETS-PLAN.md §2,
   # tools/fetch-art.mjs --pack): light and common on dev/test, all three on
@@ -93,9 +93,12 @@ jobs:
       - name: Make the channel safe for a file and artifact name
         run: echo "CHANNEL=${CHANNEL//\//-}" >> "$GITHUB_ENV"
 
-      - name: Build the standalone
+      - name: Build the game (the pack shape and the light single file)
         id: build
-        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        # Light art on dev/test (owner, 2026-09-26); release/main default to high.
+        # Either way launch.mjs writes the pack-shaped game into build/ and dist/
+        # and the light single file to build/download/ and the root alias
+        # (docs/EXTERNAL-ASSETS-PLAN.md step 8e).
         env:
           ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         run: node tools/launch.mjs --build-only $ART_TIER
@@ -109,10 +112,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p standalone
+          # The root alias is the light single file on every branch since step
+          # 8e: the one inline download (owner answer 3). The full-art single
+          # file and the separate mobile file are retired (owner answers 6, 2).
           cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
-          # Only a --full-art build (release/main) writes a separate mobile file;
-          # a light build IS the phone-sized file.
-          if [ -f AshenSpire-mobile.html ]; then cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"; fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -201,7 +204,7 @@ jobs:
 
       - name: The file a player is handed matches the tree that claims it
         run: node tools/verify-shipped.mjs
-      - name: The mobile art twin tree mirrors assets/ and fits its budget
+      - name: The light art twin tree mirrors assets/ and fits its budget
         run: node tools/mobile-art.mjs --check
 
       # Same budget as the gates above: a pure read, no execution, no browser,
@@ -246,13 +249,14 @@ jobs:
           #
           # The root used to be the single file, so opening the preview on a
           # phone meant 57.6 MB before the first frame. The `build` step's
-          # launch.mjs already wrote the web edition to build/web with this
-          # job's tier (light on dev/test, full on release/main): AshenSpire.html
-          # plus the pack shape (asset-base.json, packs/, objects/ —
-          # docs/EXTERNAL-ASSETS-PLAN.md step 3a); its map tiles and score are
-          # common-pack objects since step 3c, so no map-detail/ or music/
-          # folder comes with it. It is copied here as built, not rebuilt.
-          cp -r build/web/. preview/
+          # launch.mjs already wrote the pack-shaped game to build/ with this
+          # job's tier (light on dev/test, high on release/main): AshenSpire.html
+          # plus asset-base.json, packs/ and objects/ (docs/EXTERNAL-ASSETS-PLAN.md
+          # steps 3a and 8e); its map tiles and score are common-pack objects
+          # since step 3c, so no map-detail/ or music/ folder comes with it. It is
+          # copied here as built, not rebuilt. build/download/ (the light single
+          # file) stays out: it is the standalone artifact.
+          cp -r build/AshenSpire.html build/asset-base.json build/packs build/objects preview/
           cp preview/AshenSpire.html preview/index.html
           # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
           # The source-module preview pages (world-atlas-, equipment-selection-,
@@ -333,9 +337,9 @@ jobs:
             echo "(any static server). Its art is in packs/ and objects/, loaded and"
             echo "hash-checked at runtime. It needs a server. For the double-clickable"
             echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
-            echo "from this same run: AshenSpire-${CHANNEL}-preview.html. On dev and test it"
-            echo "carries the light art tier (~29 MB); on release and main it is the full"
-            echo "art (~250 MB), with AshenSpire-mobile-${CHANNEL}-preview.html beside it."
+            echo "from this same run: AshenSpire-${CHANNEL}-preview.html, the light single"
+            echo "file (~31 MB) on every branch. This folder also opens by double-click"
+            echo "while it stays together; on release and main its default art is high."
             echo
             echo "This is an inspection artifact, not a deployment. The built HTML is not"
             echo "committed; this run's artifacts are this commit's build."
@@ -348,9 +352,9 @@ jobs:
       # exist yet, which is the right behaviour and the wrong placement.
       #
       # --dir is passed to the selftest too. It plants into a COPY of whatever
-      # --dir names; without it the selftest looks for build/web, which this
-      # job never builds, and exits 2 — "the harness could not run", which
-      # blocks without measuring anything.
+      # --dir names; without it the selftest looks for build/ (since step 8e;
+      # build/web before it), and this job's tree to check is preview/, the
+      # copy this job collected.
       #
       # The de-inlined build's art is on disk, not in the HTML, so the guard
       # that reads the shipped file cannot see it. verify-shipped.mjs still
@@ -467,7 +471,7 @@ jobs:
       # the build is cheap without the 52.8 MB of base64 the single file carries.
       - name: The de-inlined build plays, and its art arrives over the wire
         run: |
-          node tools/bundle.mjs --external-art $WEB_TIER --out build/web
+          node tools/bundle.mjs $WEB_TIER --out build/web
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
 
       # THE SAME BUILD BY DOUBLE-CLICK (docs/EXTERNAL-ASSETS-PLAN.md step 4).
@@ -509,7 +513,7 @@ jobs:
       - name: A high-default build with its high index removed falls back to light, CSS included
         run: |
           if [ "$(echo $WEB_TIER)" = "--light" ]; then
-            node tools/bundle.mjs --external-art --out build/web-high
+            node tools/bundle.mjs --out build/web-high
             SRC=build/web-high
           else
             SRC=build/web

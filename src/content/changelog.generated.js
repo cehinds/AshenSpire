@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1506",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "One game file and one download: the separate mobile and full-art files are retired",
+    "detail": "Every build is now one game page of about 10 MB that loads its art, fonts, music and map tiles from files beside it and picks phone-sized art on a phone by itself, plus one self-contained light-art file (about 31 MB) to download and play by double-click. The old mobile link sends you to the main game.",
+    "build": "0.7.1.806",
+    "pullRequest": 1506,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1506"
+  },
+  {
     "id": "pr-1497",
     "date": "2026-10-02",
     "group": "2026-10-02",

@@ -264,6 +264,20 @@ export function strictlyUnderBuild(out, root) {
 }
 
 /**
+ * inBuildOrDist(out, root) → true when `out` is this checkout's build/ or
+ * dist/, or a folder inside either. Since step 8e (docs/EXTERNAL-ASSETS-PLAN.md)
+ * build/ and dist/ themselves are pack-shaped, so tools/bundle.mjs clears the
+ * copies an earlier build left beside the HTML (assets/, map-detail/, music/)
+ * there too; nothing reads those folders beside build/ or dist/ any more.
+ */
+export function inBuildOrDist(out, root) {
+  let real;
+  try { real = guardOut(out, root); } catch { return false; }
+  const rel = posix(relative(realOut(root), real));
+  return /^(build|dist)(\/|$)/.test(rel);
+}
+
+/**
  * The packs/ or objects/ directory to clear. Refused when it is a symlink (it
  * could name a tracked tree), and when it holds anything while `out` carries
  * no MARKER: an --out outside the checkout may be someone else's directory,
