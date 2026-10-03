@@ -307,9 +307,6 @@ const INTENT_OVERLAP = `(() => {
   const playerMoved = player.getBoundingClientRect();
   playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerFrameBox.left) / zoom) + 'px');
   playerFrame.style.setProperty('--enemy-hit-y', ((playerMoved.bottom - playerFrameBox.top) / zoom) + 'px');
-  const centreHit = document.elementFromPoint(centreX, centreY);
-  if (centreHit && playerFrame.contains(centreHit))
-    throw new Error('screenreach: small-player frame centre still hits its own stack: ' + centreHit.className);
   if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
       || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
     throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
@@ -325,6 +322,9 @@ const INTENT_OVERLAP = `(() => {
   const moved = intent.getBoundingClientRect();
   if (b.left > moved.left || b.right < moved.right || b.top > moved.top || b.bottom < moved.bottom)
     throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
+  const centreHit = document.elementFromPoint(centreX, centreY);
+  if (centreHit && playerFrame.contains(centreHit))
+    throw new Error('screenreach: small-player frame centre still hits its own stack: ' + centreHit.className);
   return true;
 })()`;
 
