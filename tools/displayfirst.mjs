@@ -1193,9 +1193,6 @@ function selftestPlants() {
       //
       // Each edit carries its following line as an anchor, so neither find
       // becomes ambiguous once the other has been applied.
-      // Re-anchored 2026-10-03: #1489's copy ratchet moved both rows' label and
-      // note to t()/tFull() keys, and the literal-text find DRIFTED (dispatch
-      // run 37098149492).
       name: 'the row trades places with the one behind it in the rendered Display panel',
       edits: [
         {

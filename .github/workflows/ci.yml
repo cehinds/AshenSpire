@@ -794,8 +794,6 @@ jobs:
         with:
           lfs: false # the probe serves the source tree
       - uses: ./.github/actions/setup-node
-      # The art packs, before anything builds, serves or tests this checkout (step 12): the
-      # served game's art has been the fetched release since step 13.
       - uses: ./.github/actions/fetch-art
         with:
           packs: ${{ env.ART_PACKS }}
@@ -826,8 +824,6 @@ jobs:
         with:
           lfs: false # the probe serves the source tree
       - uses: ./.github/actions/setup-node
-      # The art packs, before anything builds, serves or tests this checkout (step 12): the
-      # served game's art has been the fetched release since step 13.
       - uses: ./.github/actions/fetch-art
         with:
           packs: ${{ env.ART_PACKS }}
@@ -1168,12 +1164,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: false # serves the source tree; reads no LFS object
+          lfs: false # figures are fetched from the pinned art packs below
       - uses: ./.github/actions/setup-node
-      # The figure art left this repository at step 13 (docs/EXTERNAL-ASSETS-PLAN.md):
-      # without the fetched packs every figure image 404s and the probe goes red
-      # on "no visible figure image to animate", and the selftest's copied tree
-      # (doorplant extraCopy assets/enemy-poses, …) has nothing to copy.
       - uses: ./.github/actions/fetch-art
         with:
           packs: ${{ env.ART_PACKS }}

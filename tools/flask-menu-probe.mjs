@@ -91,16 +91,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 if (process.argv.includes('--selftest')) {
   // `--shard i/n` runs the plants at index i mod n (tools/doorplant.mjs SHARDS),
   // so ci.yml can spread the corpus over legs under the 20-minute job rule.
-  //
-  // THE TERMINAL LINE IS IN A FORM tools/verdict.mjs ACCEPTS ("label: OK — N
-  // <words>, N caught"), as startup-gate's and hintstrip's are. doorSelftest's
-  // own "SELFTEST GREEN — …" is not one, so ci.yml's verdict door read the first
-  // dispatch of these legs (run 37098149492) as SILENCE although every plant
-  // was CAUGHT.
   const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
-  const shard = resolveShard();
-  const SELFTEST = {
-    shard,
+  const options = {
+    shard: resolveShard(),
     tool: 'flask-menu-probe.mjs',
     timeoutMs: 240000,
     plants: [
@@ -258,10 +251,8 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   };
-  const ran = selectShard(SELFTEST.plants, shard).length;
-  const code = await doorSelftest(SELFTEST);
-  if (code === 0 && shard) console.log(`flask-menu-probe-selftest: shard ${shard.index}/${shard.count} of a ${SELFTEST.plants.length}-plant corpus`);
-  if (code === 0) console.log(`flask-menu-probe-selftest: OK — ${ran} plants, ${ran} caught`);
+  const code = await doorSelftest(options);
+  if (code === 0) console.log(`flask-menu-probe --selftest: OK — ${selectShard(options.plants, options.shard).length} checks passed`);
   process.exit(code);
 }
 
@@ -1042,12 +1033,7 @@ async function main(args) {
     await launched.close();
     served.server.close();
   }
-  // A terminal line tools/verdict.mjs accepts: "label: OK — N checks passed"
-  // when nothing failed. The old "flask-menu-probe: N passed, M failed" matched
-  // none of its forms (the bare "N passed, M failed" row takes no label), so the
-  // first dispatch (run 37098149492) read 73 passes as SILENCE.
-  if (fail) console.error(`\nflask-menu-probe: RED — ${pass} passed, ${fail} failed`);
-  else console.log(`\nflask-menu-probe: OK — ${pass} checks passed`);
+  console.log(`\n${pass} passed, ${fail} failed`);
   return fail ? 1 : 0;
 }
 
