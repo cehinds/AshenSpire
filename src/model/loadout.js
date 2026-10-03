@@ -181,6 +181,7 @@ export function moveEquipmentPool(holder, maxField, nextMax, carriedDeficit = un
     throw new Error(`moveEquipmentPool requires finite ${maxField}/${currentField}`);
   }
   const oldMax = holder[maxField];
+  const surplus = currentField === 'stamina' ? Math.max(0, holder[currentField] - oldMax) : 0;
   const observedDeficit = Math.max(0, oldMax - holder[currentField]);
   const priorDeficit = Number.isInteger(carriedDeficit) && carriedDeficit >= 0 ? carriedDeficit : observedDeficit;
   // A hidden deficit can be larger than a temporarily shrunken vessel. Account
@@ -188,7 +189,7 @@ export function moveEquipmentPool(holder, maxField, nextMax, carriedDeficit = un
   const representedDeficit = Math.min(priorDeficit, oldMax);
   const deficit = Math.max(0, priorDeficit + observedDeficit - representedDeficit);
   holder[maxField] = nextMax;
-  holder[currentField] = Math.max(0, nextMax - deficit);
+  holder[currentField] = Math.max(0, nextMax - deficit) + surplus;
   return deficit;
 }
 

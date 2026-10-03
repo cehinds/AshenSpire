@@ -381,5 +381,9 @@ were recovered unchanged from the prior deck editor work. They are staged in
 `docs/design/deck-editor/` as design references. The game resolves their matching
 runtime card art from [AshenSpire-art hd-assets-v6](https://github.com/cehinds/AshenSpire-art/releases/tag/hd-assets-v6), with source and rights recorded in that release's CREDITS.md. Source paths,
 source chat IDs and SHA-256 digests are retained in `provenance.json` there.
-No new artwork or third-party license is claimed. The published v6 pack is pinned
+No new artwork or third-party license is claimed. The published v7 pack is pinned
 and verified by the normal game build.
+
+### Stamina orb and mana harness
+
+`assets/ui/stamina-orb/`: original OpenAI imagegen artwork directed and approved by the project owner. Modular weathered metal harness, emerald stamina orb, green sigil, sapphire mana gem and dim spent gem. PNG masters, prompts and approved layout live in cehinds/AshenSpire-art under `art/ui/stamina-orb/`; high and light runtime images ship in `hd-assets-v7`.

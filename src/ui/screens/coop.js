@@ -65,6 +65,7 @@ import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playR
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
+import { combatVitals } from '../models/StaminaOrbModel.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
@@ -443,7 +444,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       weightClass: player.weightClass || null,
     });
     return {
-      energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
+      energy: pools.variable ? 0 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
       // The same numbers as a live preview, so the card face and its tooltip
       // show what the host will charge (renderCard reads opts.preview).
       preview: { costIsX: !!pools.variable, cost: pools.action, manaCost: pools.mana || 0, staminaCost: pools.stamina || 0, tokens: {} },
@@ -778,6 +779,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     setPotionRevealTiming(row, resolveTooltipSettings(meta.settings));
     paintCombatActionCounts(row, {
       energy: meP ? meP.energy : null, energyMax: meP ? meP.energyMax : null,
+      mana: meP?.mana, maxMana: meP?.maxMana, settings: meta.settings || {},
       draw: meP?.drawCount ?? 0, discard: meP?.discardCount ?? 0, exhaust: meP?.exhaustCount ?? 0, browse: false,
     });
     const orb = row.querySelector('.energy-orb');
@@ -871,7 +873,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // from the host snapshot; a missing current/max pair produces no bar.
     const mainHost = app.querySelector('.topbar .resbars-host');
     if (mainHost && meP) {
-      const mainPlan = resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable);
+      const mainPlan = combatVitals(resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable), meta.settings || {});
       mainHost.appendChild(resourceBars(mainPlan, { surface: 'main' }));
     }
 
@@ -900,7 +902,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const nm = statStrip([
         el('span', { class: 'coop-seat-player', style: { color: tintCss(m.tint) }, text: m.name || p.id }),
         p.id === me ? pill({ label: 'you', round: true, on: true }) : null,
-        chip({ key: '⚡', value: `${p.energy}/${p.energyMax}`, attrs: { 'aria-label': `Energy ${p.energy} of ${p.energyMax}` } }),
+        chip({ key: '◆', value: `${p.energy}/${p.energyMax}`, attrs: { class: 'stamina-budget', 'aria-label': `${t('combat.actions')} ${p.energy} of ${p.energyMax}` } }),
         pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
       ], { class: 'centered coop-seat-name' });
       const name = document.createElement('div');
@@ -1007,7 +1009,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const reason = affordable ? null
             : !manaAffordable ? `Need ${costs.mana} Mana; have ${meP.mana}`
               : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
-                : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+                : !energyAffordable ? 'Not enough Stamina' : 'Turn already ended';
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,

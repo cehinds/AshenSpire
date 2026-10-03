@@ -87,7 +87,7 @@ test('registry require() refuses an unknown id by name', () => {
 test('TermRegistry serves short/plural/accessibility contexts and import aliases', () => {
   const terms = new TermRegistry(termsData.terms);
   eq(terms.displayTerm('term.strength', 'short'), 'STR', 'short');
-  eq(terms.displayTerm('term.action', 'plural'), 'Actions', 'plural');
+  eq(terms.displayTerm('term.action', 'plural'), 'Stamina', 'plural');
   eq(terms.displayTerm('term.close', 'accessibility'), 'Close dialog', 'accessibility');
   eq(terms.displayTerm('term.equipmentBound'), 'Equipment-Bound', 'canonical');
   eq(terms.idForAlias('bounded'), 'term.equipmentBound', 'legacy alias maps to Equipment-Bound');
@@ -291,13 +291,13 @@ test('mana: formula weights, zero natural recovery, full rest refill', () => {
   eq(onRestSpot(state).currentMana, 5, 'rest refills to maximum');
 });
 
-test('stamina: idle turns recover 1; a refund does not erase the spend', () => {
+test('stamina: each turn refills fully, with or without spending', () => {
   let state = createResourceState({ maxMana: 0, maxStamina: 5, stamina: 3 });
-  eq(onTurnEndStamina(state).currentStamina, 4, 'idle turn recovers');
+  eq(onTurnEndStamina(state).currentStamina, 5, 'idle turn refills fully');
   state = spendStamina(state, 2);
   state = refundStamina(state, 2);
   eq(state.currentStamina, 3, 'refund returns points');
-  eq(onTurnEndStamina(state).currentStamina, 3, 'but the spend still blocks recovery');
+  eq(onTurnEndStamina(state).currentStamina, 5, 'spending does not block the next turn refill');
 });
 
 // ---- weight and dodge -------------------------------------------------------
@@ -626,7 +626,7 @@ test('bridge cost profiles match the legacy cost fields for every card, base and
       eq(profile.variable, def.cost === 'X', `${where} variable`);
       eq(profile.action, def.cost === 'X' ? 0 : def.cost, `${where} action`);
       eq(profile.mana, def.manaCost || 0, `${where} mana`);
-      eq(profile.stamina, def.staminaCost || 0, `${where} stamina`);
+      eq(profile.stamina, def.cost === 'X' ? 0 : def.cost, `${where} stamina`);
     }
   }
 });
@@ -687,9 +687,8 @@ test('the tooltip cost line renders identically through the framework for every 
       const def = resolveCard(LEGACY_REG, { cardId: card.id, upgraded });
       const pools = bridge.costProfile(def);
       const rendered = `${pools.variable ? 'X' : pools.action} ${bridge.resourceWord('action')}`
-        + (pools.mana ? ` + ${pools.mana} ${bridge.resourceWord('mana')}` : '')
-        + (pools.stamina ? ` + ${pools.stamina} ${bridge.resourceWord('stamina')}` : '');
-      const legacy = `${def.cost} Energy`
+        + (pools.mana ? ` + ${pools.mana} ${bridge.resourceWord('mana')}` : '');
+      const legacy = `${def.cost} Stamina`
         + (def.manaCost ? ` + ${def.manaCost} Mana` : '')
         + (def.staminaCost ? ` + ${def.staminaCost} Stamina` : '');
       eq(rendered, legacy, `${card.id}${upgraded ? '+' : ''} cost line`);
@@ -1033,11 +1032,11 @@ test('the pure dodge is priced by the Weight Class; a guard that dodges keeps it
   const rows = Object.fromEntries(mechanicsHome.mechanics.weight.classes.map((row) => [row.id, row]));
   eq(bridge.costProfile(dodge).stamina, 1, 'outside a fight the authored cost shows (Light\'s)');
   eq(bridge.costProfile(dodge, { weightClass: rows.light }).stamina, 1, 'Light: 1 stamina');
-  eq(bridge.costProfile(dodge, { weightClass: rows.light }).action, 0, 'Light: no action');
+  eq(bridge.costProfile(dodge, { weightClass: rows.light }).action, 1, 'Light: no action');
   eq(bridge.costProfile(dodge, { weightClass: rows.medium }).stamina, 1, 'Medium: 1 stamina (plan A3)');
   eq(bridge.costProfile(dodge, { weightClass: rows.medium }).action, 1, 'Medium: 1 action');
   eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).stamina, 2, 'Heavy: 2 stamina (plan A3: within a Constitution-1 pool)');
-  eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).action, 1, 'Heavy: 1 action (plan A3)');
+  eq(bridge.costProfile(dodge, { weightClass: rows.heavy }).action, 2, 'Heavy: 1 action (plan A3)');
   eq(bridge.costProfile(guard, { weightClass: rows.heavy }).action, 1, 'Evasive Guard keeps its authored action cost');
   eq(bridge.viewFor(dodge).properties.some((p) => p.propertyId === 'utility.evasion'), true, 'a dodge effect compiles to utility.evasion');
   eq(bridge.viewFor(guard).properties.some((p) => p.propertyId === 'utility.evasion'), true, 'the guard that dodges carries utility.evasion too');
@@ -1126,14 +1125,14 @@ test('the dodge roll lands as Block through the framework check, priced by the c
   eq(!!rolled, true, 'the dodge emits its receipt');
   eq(rolled.weightClass, 'light', 'the receipt names the class');
   eq(p.stamina, before.stamina - 1, 'Light: one stamina spent');
-  eq(p.energy, before.energy, 'Light: no action spent');
+  eq(p.energy, p.stamina, 'the legacy field reads the same stamina pool');
   // d20 + DEX mod (10 → 0) + Light evasion 3 > difficulty 10 ⇒ roll ≥ 8 succeeds; guard 3 + 0 + 3 = 6
   eq(rolled.success, rolled.roll >= 8, 'success is the framework check');
   eq(p.block - before.block, rolled.success ? 6 : 0, 'temporary guard lands as Block only on success');
   // The turn spent stamina, so its end recovers nothing …
   const staminaAfterPlay = p.stamina;
   dispatch(combat, { type: 'endTurn' });
-  eq(p.stamina, staminaAfterPlay, 'a spending turn recovers no stamina at its end');
+  eq(p.stamina, p.maxStamina, 'a spending turn refills for the next turn');
   // … and an idle turn recovers one, to the maximum.
   const idleStart = p.stamina;
   dispatch(combat, { type: 'endTurn' });
@@ -1215,7 +1214,7 @@ function dodgeCombatFixture(weight, rolls = [20, 1]) {
 }
 
 for (const [weight, energyCost, staminaCost, guard] of [
-  ['light', 0, 1, 6], ['medium', 1, 1, 4], ['heavy', 1, 2, 3],
+  ['light', 1, 1, 6], ['medium', 1, 1, 4], ['heavy', 2, 2, 3],
 ]) {
   test(`Dodge ${weight}: repeated success/failure spends the live costs once and preserves ordinary Block`, () => {
     const { combat, draws } = dodgeCombatFixture(weight);
@@ -1253,7 +1252,7 @@ for (const [weight, energyCost, staminaCost, guard] of [
       const state = () => JSON.stringify({ energy: p.energy, stamina: p.stamina, hp: p.hp, block: p.block, piles: combat.piles });
       const before = state();
       const id = combat.piles.hand[0].instanceId;
-      assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: id }), new RegExp(`Not enough ${lacking}`));
+      assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: id }), /Not enough stamina/);
       eq(state(), before, 'refused play has no gameplay mutation');
       eq(draws(), 0, 'refused play does not consume a roll');
     }

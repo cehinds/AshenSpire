@@ -15,7 +15,7 @@ const one = { f: 'add', args: [1] };
 export const heraldCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, type: 'skill',
     flavor: "Rite of the Furnace Chapel, for wounds taken in its service.\n\nPerformed swiftly, its prayer cut to the first line. The rubric bids the wound be bound beneath the brand, never over it, that the mark be left clear.\n\nWe bind the wound beneath the unspent brand.",
     keywords: [], icon: '✚',
     effects: [{ op: 'heal', target: 'self', amount: 4 }],
@@ -33,7 +33,7 @@ export const heraldCards = [
       { op: 'gainEnergy', amount: 1 },
       { op: 'draw', amount: 1 },
     ],
-    textTemplate: 'Lose {loseHp} HP. Gain {gainEnergy} Energy. Draw {draw} card.',
+    textTemplate: 'Lose {loseHp} HP. Gain {gainEnergy} Stamina. Draw {draw} card.',
     upgrade: {
       effects: [
         { op: 'loseHp', target: 'self', amount: 1 },
@@ -49,7 +49,7 @@ export const heraldCards = [
     // with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats`
     // (seat order drawn per run), Herald 47 -> 66/120 wins and stalled fights
     // 8 -> 5 without the Mana line.
-    id: 'blightTouch', name: 'Blight Touch', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
+    id: 'blightTouch', name: 'Blight Touch', class: 'herald', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Blessing of the Feral Ember.\n\nTaken from the Chapel's blessing of the sick and turned to what the Feral Ember holds its truer purpose: to give warmth and keep no account. The Saints name it heresy.\n\nThe converts say the touch is warm. None have said otherwise.",
     keywords: [], icon: '🦠',
     effects: [
@@ -123,7 +123,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'graveOffering', name: 'Grave Offering', class: 'herald', rarity: 'common', cost: 2, manaCost: 1, type: 'attack',
     flavor: "Offering at the graves of the crown-born.\n\nUpon the anniversary of their writing, mourners opened the grave and set a coal beside what remained. The Chapel ended the rite in the years of the Marking, saying the dead no longer needed company.\n\nBy then, the mourners had found the graves colder than they ought to be.",
     keywords: [], icon: '🪦',
     effects: [
@@ -155,7 +155,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'contagion', name: 'Contagion', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    id: 'contagion', name: 'Contagion', class: 'herald', rarity: 'common', cost: 1, manaCost: 1, type: 'skill',
     flavor: "Communion of the Feral Ember.\n\nThe Chapel passed one cup along the pews, that the congregation be one body before the fire. The Feral Ember revived the rite with another cup.\n\nWe pass one cup along the pews, and every mouth is red.",
     keywords: [], icon: '☣',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'crimsonBlight', stacks: 2 }],
@@ -213,7 +213,7 @@ export const heraldCards = [
       { op: 'gainEnergy', amount: 2 },
       { op: 'draw', amount: 2 },
     ],
-    textTemplate: 'Lose {loseHp} HP. Gain {gainEnergy} Energy. Draw {draw} cards. Exhaust.',
+    textTemplate: 'Lose {loseHp} HP. Gain {gainEnergy} Stamina. Draw {draw} cards. Exhaust.',
     upgrade: {
       effects: [
         { op: 'loseHp', target: 'self', amount: 3 },
@@ -223,7 +223,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'blightBloom', name: 'Blight Bloom', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    id: 'blightBloom', name: 'Blight Bloom', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill',
     flavor: "Red flowers upon the graves of the crown-born.\n\nThey first appeared in the Furnace Chapel's garden in the Long Winter. The remnant tends them as a sign that the dead are giving yet.\n\nThey spread fastest where the earth is freshly turned. The remnant has begun turning more.",
     keywords: ['exhaust'], icon: '🌺',
     effects: [
@@ -233,7 +233,7 @@ export const heraldCards = [
     upgrade: { keywords: [], textTemplate: "Double the target's Crimson Blight." },
   },
   {
-    id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'attack',
     flavor: "Harvest rite of the Chapel.\n\nA gilded sickle, blessed and carried through the fields of the crown-born. The Chapel found the harvest beautiful, and built a chapel to it. The rubric lists what the sickle is to cut, in the fields and after.\n\nThe second half of the list is written in the old script.",
     keywords: [], icon: '🌾',
     effects: [
@@ -249,7 +249,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'thornHaloCard', name: 'Thorn Halo', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
+    id: 'thornHaloCard', name: 'Thorn Halo', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'power',
     flavor: "Crown of briar, worn at the feast of the Founding.\n\nIn memory of the first Saint, who by Chapel tradition wore thorns in the caldera; each thorn stood for a name carried. In the Long Winter, the Thorn Matriarch grew a crown of her own.\n\nThe remnant counts her a Saint. She was a Warden, and never swore to them.",
     keywords: [], icon: '🌿',
     effects: [{ op: 'applyStatus', target: 'self', status: 'thornHalo', stacks: one }],
@@ -257,7 +257,7 @@ export const heraldCards = [
     upgrade: { manaCost: 0 },
   },
   {
-    id: 'communionCard', name: 'Communion', class: 'herald', rarity: 'uncommon', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
+    id: 'communionCard', name: 'Communion', class: 'herald', rarity: 'uncommon', cost: 2, manaCost: 1, type: 'power',
     flavor: "Sharing of warmth, as kept at the Tidebound Chapel.\n\nThe Saints raised that chapel upon the Drowned Coast to keep watch upon the Spire, which they called heresy. Its congregation shrank with each winter after the Spire was finished.\n\nWe watched from Tidebound Chapel and never saw the heresy lit.",
     keywords: [], icon: '🕊',
     effects: [{ op: 'applyStatus', target: 'self', status: 'communion', stacks: one }],
@@ -281,7 +281,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'plagueBearer', name: 'Plague Bearer', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'plagueBearer', name: 'Plague Bearer', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'attack',
     flavor: "Office of the censer-bearer.\n\nThe Saints taught that the censer's smoke opened doors to the fire's blessing. When the Chapel set the office down, the Feral Ember took it up, and bears the censers lit through the weald.\n\nThe doors open for them more readily than ever they did for the Saints.",
     keywords: [], icon: '🐀',
     effects: [
@@ -315,7 +315,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'stigmataCard', name: 'Stigmata', class: 'herald', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
+    id: 'stigmataCard', name: 'Stigmata', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'power',
     flavor: "Marks of the Saints.\n\nWorn openly upon hands and brow, and held by the Chapel to be a favour of the fire. Novices learned they appeared more reliably upon Saints with a knife at hand.\n\nNovice Wen wrote so plainly, then begged forgiveness for it, twice.",
     keywords: [], icon: '🩹',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stigmata', stacks: one }],
@@ -357,7 +357,7 @@ export const heraldCards = [
 
   // ---- Rares -----------------------------------------------------------------------
   {
-    id: 'secondBloom', name: 'Second Bloom', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
+    id: 'secondBloom', name: 'Second Bloom', class: 'herald', rarity: 'rare', cost: 2, manaCost: 1, type: 'skill',
     flavor: "Rite of recovery, named for the weald's second flowering.\n\nThe orchards bloomed a second time in years when the Field Flame burned strong, and the Chapel claimed both the blossom and the healing as its work. Neither has come since the Burning.\n\nThe last novice performs the rite regardless, and says it works.",
     keywords: ['exhaust'], icon: '🌸',
     effects: [
@@ -367,7 +367,7 @@ export const heraldCards = [
     upgrade: { cost: 1 },
   },
   {
-    id: 'butterflyPlague', name: 'Plague of Butterflies', class: 'herald', rarity: 'rare', cost: 3, staminaCost: 1, manaCost: 1, type: 'skill',
+    id: 'butterflyPlague', name: 'Plague of Butterflies', class: 'herald', rarity: 'rare', cost: 3, manaCost: 1, type: 'skill',
     flavor: "Red moths of the Furnace Chapel's ossuary.\n\nThey dwelt among the bones for as long as the Chapel kept records, and were called the ossuary's keepers. After the Burning, they left the ossuary for the reach.\n\nWe loose the red moths from the ossuary; they know the way.",
     keywords: [], icon: '🦋',
     effects: [
@@ -383,7 +383,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'lifeTitheCard', name: 'Life Tithe', class: 'herald', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
+    id: 'lifeTitheCard', name: 'Life Tithe', class: 'herald', rarity: 'rare', cost: 1, manaCost: 1, type: 'power',
     flavor: "Tithe of life, owed by each crown-born family.\n\nOne day in seven, given to the Chapel's work, as the dead had given all their days. In the years of the Marking, the tithe was extended to newborns, who could not work.\n\nWe bring the cradle where the bier once stood.",
     keywords: [], icon: '⚰',
     effects: [{ op: 'applyStatus', target: 'self', status: 'lifeTithe', stacks: one }],
@@ -391,24 +391,24 @@ export const heraldCards = [
     upgrade: { manaCost: 0 },
   },
   {
-    id: 'crimsonRite', name: 'Crimson Rite', class: 'herald', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'crimsonRite', name: 'Crimson Rite', class: 'herald', rarity: 'rare', cost: 'X', manaCost: 1, type: 'attack',
     flavor: "Chalice of the high altar.\n\nReserved to the Saints. It draws from the Saint as the Saint draws from it. The Furnace Saint performs the rite alone now, and keeps the chalice full.\n\nWe drink from the chalice, and it drinks from us.",
     keywords: [], icon: '🔺',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5, hits: { f: 'energySpent' } },
       { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 2 } },
     ],
-    textTemplate: 'Deal {damage} damage, scaling with Energy spent, then heal 2 per Energy.',
+    textTemplate: 'Deal {damage} damage, scaling with Stamina spent, then heal 2 per Stamina.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 7, hits: { f: 'energySpent' } },
         { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 3 } },
       ],
-      textTemplate: 'Deal {damage} damage, scaling with Energy spent, then heal 3 per Energy.',
+      textTemplate: 'Deal {damage} damage, scaling with Stamina spent, then heal 3 per Stamina.',
     },
   },
   {
-    id: 'blightNova', name: 'Blight Nova', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'blightNova', name: 'Blight Nova', class: 'herald', rarity: 'rare', cost: 2, manaCost: 1, type: 'attack',
     flavor: "Reading of every name, aloud and at once.\n\nComposed by the Furnace Saint after the Burning. The novices say it is what the fire did that night, and that the rite exists so it will be remembered. The remnant holds it holiest of the liturgies.\n\nIt has never been performed to its end.",
     keywords: [], icon: '💥',
     effects: [
@@ -423,7 +423,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'lastRites', name: 'Last Rites', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
+    id: 'lastRites', name: 'Last Rites', class: 'herald', rarity: 'rare', cost: 2, manaCost: 1, type: 'skill',
     flavor: "Rite for those not to be written.\n\nForeigners, criminals, and in the last years, the bought-marked of whom the Chapel had not been told. The rubric forbids a name upon the headstone, and calls this discretion.\n\nThe lower cemetery stands blank by the thousand.",
     keywords: ['exhaust'], icon: '🕯',
     effects: [
@@ -437,7 +437,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'zealotryCard', name: 'Zealotry', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
+    id: 'zealotryCard', name: 'Zealotry', class: 'herald', rarity: 'rare', cost: 2, manaCost: 1, type: 'power',
     flavor: "Creed of the Feral Ember.\n\nEach wound is a door the fire walks through. Its priests bless wounds rather than bind them, and hold that the Chapel knew as much, and hid it behind a ledger.\n\nIts converts do not live long. More come each week.",
     keywords: [], icon: '⚡',
     effects: [{ op: 'applyStatus', target: 'self', status: 'zealotry', stacks: one }],
@@ -445,20 +445,20 @@ export const heraldCards = [
     upgrade: { cost: 1 },
   },
   {
-    id: 'bloodHarvest', name: 'Blood Harvest', class: 'herald', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'bloodHarvest', name: 'Blood Harvest', class: 'herald', rarity: 'rare', cost: 'X', manaCost: 1, type: 'attack',
     flavor: "Reaping of the field of the marked.\n\nSo the liturgy names the gathering of names at the close of a plague year. The Saints went out with sickles and ledgers, and the rite is spoken throughout as thanksgiving.\n\nWe reap the field of the marked, and give thanks.",
     keywords: [], icon: '🌾',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 4, hits: { f: 'energySpent' } },
       { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 3 } },
     ],
-    textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Energy spent. Then heal 3 per Energy.',
+    textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Stamina spent. Then heal 3 per Stamina.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'allEnemies', amount: 6, hits: { f: 'energySpent' } },
         { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 3 } },
       ],
-      textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Energy spent. Then heal 3 per Energy.',
+      textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Stamina spent. Then heal 3 per Stamina.',
     },
   },
 
@@ -483,7 +483,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'witheringTouch', name: 'Withering Touch', class: 'herald', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'witheringTouch', name: 'Withering Touch', class: 'herald', rarity: 'common', cost: 1, manaCost: 1, type: 'attack',
     flavor: "Touch that withers growth.\n\nPermitted by the rubric upon the weeds of the weald's field-shrines, and nothing else. In the years the Field Flame dimmed, a clause was added forbidding its use upon crops.\n\nThe clause is dated after three harvests had failed, and signed by a Saint absent from the roll of Saints.",
     keywords: [], icon: '🦠',
     effects: [
@@ -523,7 +523,7 @@ export const heraldCards = [
     upgrade: { cost: 0 },
   },
   {
-    id: 'bloodOfferingRite', name: 'Blood Offering', class: 'herald', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'bloodOfferingRite', name: 'Blood Offering', class: 'herald', rarity: 'rare', cost: 1, manaCost: 1, type: 'attack',
     flavor: "Bowl filled with the officiant's own blood.\n\nFrom the Chapel's first years, when the Saints were few; revived by the Furnace Saint after the Burning, when they were fewer. He performs it daily, and grows thin.\n\nThe bowl is always full.",
     keywords: [], icon: '⚰',
     effects: [
@@ -539,7 +539,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'harbingerOfBlightCard', name: 'Harbinger of Blight', class: 'herald', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
+    id: 'harbingerOfBlightCard', name: 'Harbinger of Blight', class: 'herald', rarity: 'rare', cost: 2, manaCost: 1, type: 'power',
     flavor: "Title of the Feral Ember's preachers.\n\nThe Chapel gave the same name to the novice who walked before a bier with a bell. The Feral Ember holds that the word was never the Chapel's to give, but the fire's.\n\nWe go before the fire, and it follows us gladly.",
     keywords: [], icon: '❀',
     effects: [{ op: 'applyStatus', target: 'self', status: 'harbingerOfBlight', stacks: one }],
@@ -586,7 +586,7 @@ export const heraldCards = [
   // Litany: the Herald's loop is overheal turned to offence; one card that
   // heals and braces in the same breath.
   {
-    id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
+    id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, type: 'skill',
     flavor: "First prayer of the Furnace Chapel's novices.\n\nSaid over a small hurt, to keep it warm. The novices were taught its words were older than the Chapel, found by the first Saint cut into the caldera wall.\n\nWe give the name. We keep the warmth.",
     keywords: [], icon: '📿',
     effects: [{ op: 'heal', target: 'self', amount: 3 }, { op: 'block', target: 'self', amount: 3 }],

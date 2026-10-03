@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Build your deck at the Reading Desk",
     "detail": "The illustrated deck editor has compact rows, two-line descriptions, inline Inspect, and proportionate card art. Sapphire Mana and green Stamina symbols show centered costs, with configurable resource grouping and order. Desktop inspection includes a looping skill animation with Pause. Any deck card can return to the library; adding equipment skills requires compatible equipped gear, and removed equipment cards stay removed after saving. A separate visual row editor lets you move, resize and snap components, then export the layout as JSON.",
-    "build": "0.7.1.840",
+    "build": "0.7.1.843",
     "pullRequest": 1535,
     "url": "https://github.com/cehinds/AshenSpire/pull/1535"
+  },
+  {
+    "id": "pr-1530",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "One turn budget, with an emerald stamina orb",
+    "detail": "Every class starts with 3 base SP, growing with Dexterity, Constitution, Wisdom, Intelligence and level. Cards and combat actions spend Stamina once, and it refills each turn. The approved emerald orb and weathered harness replace the action counter in solo and co-op, with independently positioned number and SP label. Sapphire diamonds show available mana around the rim; turn Mana ring off in Combat settings to use the top MP bar. Cards use green stamina diamonds. The component artwork is published in the separate art repository and the layout editor remains available.",
+    "build": "0.7.1.842",
+    "pullRequest": 1530,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1530"
   },
   {
     "id": "pr-1532",

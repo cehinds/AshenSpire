@@ -16,7 +16,7 @@ const spendPrepared = () => ({ op: 'removeStatus', target: 'self', status: 'prep
 export const rogueCards = [
   // ---- Non-reward cards: signature + two generated tools -----------------
   {
-    id: 'ambush', name: 'Ambush', class: 'rogue', rarity: 'starter', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'ambush', name: 'Ambush', class: 'rogue', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     flavor: "Opening of the frozen docks.\n\nStrike from beneath a bridge, from behind, before the other has decided there is a fight at all. The docks learned it from the Court's surgeons, who walked the bridges by night with their bags, and always arrived first.\n\nTheir day-books record house calls, but no houses.",
     keywords: [], icon: '🗡',
     effects: [
@@ -68,7 +68,7 @@ export const rogueCards = [
     upgrade: { effects: [prepare(), { op: 'draw', amount: 1 }, { op: 'block', target: 'self', amount: 3 }], textTemplate: 'Become Prepared. Draw {draw} card. Gain {block} Block.' },
   },
   {
-    id: 'backstep', name: 'Backstep', class: 'rogue', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '👣',
+    id: 'backstep', name: 'Backstep', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: [], icon: '👣',
     flavor: "Retreat of the lower-river ice-cutters.\n\nThe cutters know which ice beneath the bridges holds and which only seems to, and sell the knowledge by the season. Their map is drawn inside a cutter's coat and passed down with it.\n\nIts present wearer says it has been wrong since the second winter.",
     effects: [{ op: 'block', target: 'self', amount: 6 }, prepare()],
     textTemplate: 'Gain {block} Block. Become Prepared.',
@@ -110,7 +110,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }] },
   },
   {
-    id: 'ricochet', name: 'Ricochet', class: 'rogue', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack', keywords: [], icon: '➶',
+    id: 'ricochet', name: 'Ricochet', class: 'rogue', rarity: 'common', cost: 1, type: 'attack', keywords: [], icon: '➶',
     flavor: "Blade skipped across the ice.\n\nA children's game on the frozen river, played with pebbles by the young and knives by the old. The ice keeps no witnesses, they say.\n\nIt is said the Marrow Organist, beneath it, hears every throw.",
     effects: [{ op: 'damage', target: 'allEnemies', amount: 4 }],
     textTemplate: 'Deal {damage} damage to ALL enemies.',
@@ -131,7 +131,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'draw', amount: 3 }, { op: 'discard', amount: 1, random: true }] },
   },
   {
-    id: 'vanish', name: 'Vanish', class: 'rogue', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill', keywords: ['exhaust'], icon: '◌',
+    id: 'vanish', name: 'Vanish', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: ['exhaust'], icon: '◌',
     flavor: "Art of the unmarked beneath the bridges.\n\nTaught to the docks by those who lived under the Citadel's bridges before the Decree, when to be seen was to be entered on a roll. Under the bridges there is nothing but ice.\n\nMost of those teachers vanished in the end. Where to, the docks cannot agree.",
     effects: [{ op: 'block', target: 'self', amount: 8 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }],
     textTemplate: 'Gain {block} Block. Become Prepared. Add a Smoke Pellet to your hand. Exhaust.',
@@ -147,7 +147,7 @@ export const rogueCards = [
 
   // ---- Uncommons (13) -----------------------------------------------------
   {
-    id: 'bladeDanceRogue', name: 'Blade Dance', class: 'rogue', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack', keywords: [], icon: '⚔',
+    id: 'bladeDanceRogue', name: 'Blade Dance', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'attack', keywords: [], icon: '⚔',
     flavor: "Cuts in the figure of the Marionettes' dance.\n\nThe surgeons stitched the Court's dancers to their dance when the Court Flame died, and they perform upon the frozen river for no one. The dance was meant to end at dawn.\n\nA small Marionette on the Fourth Bridge waits for the ending. Thieves leave her coins.",
     effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }, { op: 'damage', target: 'enemy', amount: 1, hits: 3, if: PREPARED }, spendPrepared()],
     textTemplate: 'Deal {damage} damage {hits} times. Prepared: deal {damage.2} damage {hits.2} times. Consume Prepared.',
@@ -171,11 +171,11 @@ export const rogueCards = [
     id: 'setupRogue', name: 'Setup', class: 'rogue', rarity: 'uncommon', cost: 0, type: 'skill', keywords: ['exhaust'], icon: '⚙',
     flavor: "Preparation of a dock job.\n\nA window left open on the Lantern Bridge, a lamp turned low, a guard paid to cough. The method is credited to a thief called the Wick, who planned the first robbery of the Regent's hall in the years of the Mark Trade.\n\nIt is said the Court itself paid her to rob it.",
     effects: [prepare(), { op: 'gainEnergy', amount: 1 }, { op: 'addCard', card: 'rogueShiv', pile: 'hand' }],
-    textTemplate: 'Become Prepared. Gain {gainEnergy} Energy. Add a Shiv to your hand. Exhaust.',
-    upgrade: { effects: [prepare(), { op: 'gainEnergy', amount: 1 }, { op: 'draw', amount: 1 }, { op: 'addCard', card: 'rogueShiv', pile: 'hand' }], textTemplate: 'Become Prepared. Gain {gainEnergy} Energy. Draw {draw} card. Add a Shiv to your hand. Exhaust.' },
+    textTemplate: 'Become Prepared. Gain {gainEnergy} Stamina. Add a Shiv to your hand. Exhaust.',
+    upgrade: { effects: [prepare(), { op: 'gainEnergy', amount: 1 }, { op: 'draw', amount: 1 }, { op: 'addCard', card: 'rogueShiv', pile: 'hand' }], textTemplate: 'Become Prepared. Gain {gainEnergy} Stamina. Draw {draw} card. Add a Shiv to your hand. Exhaust.' },
   },
   {
-    id: 'acrobaticsRogue', name: 'Acrobatics', class: 'rogue', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '🤸',
+    id: 'acrobaticsRogue', name: 'Acrobatics', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'skill', keywords: [], icon: '🤸',
     flavor: "The rooftop road of the frozen docks.\n\nBridge rail, lamp post, gutter, never the street. The Court's watch walked only the paved ways, for the paving had been blessed at the Founding and the rooftops had not.\n\nWhether the watch was pious or idle is not agreed.",
     effects: [{ op: 'block', target: 'self', amount: 7 }, { op: 'draw', amount: 2 }, { op: 'discard', amount: 1, random: true }],
     textTemplate: 'Gain {block} Block. Draw {draw} cards. Discard 1 at random.',
@@ -203,7 +203,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }] },
   },
   {
-    id: 'shadowstep', name: 'Shadowstep', class: 'rogue', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '◐',
+    id: 'shadowstep', name: 'Shadowstep', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'skill', keywords: [], icon: '◐',
     flavor: "Step through a pier's shadow.\n\nThe shadows beneath the bridges are let by the season, and rent is owed to whoever held the pier before. Tenancies pass down like a trade.\n\nThe oldest belongs to one not seen since the Decree. The rent is always paid.",
     effects: [{ op: 'block', target: 'self', amount: 5 }, prepare(), { op: 'draw', amount: 1 }],
     textTemplate: 'Gain {block} Block. Become Prepared. Draw {draw} card.',
@@ -231,7 +231,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'venom', stacks: 6 }, prepare()] },
   },
   {
-    id: 'misdirect', name: 'Misdirect', class: 'rogue', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '↪',
+    id: 'misdirect', name: 'Misdirect', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'skill', keywords: [], icon: '↪',
     flavor: "Art of leading the watch astray.\n\nPerfected on the night of the Courtly Decree, when the brand-men came down to the river to mark the last of the unmarked by dawn, and the ice-cutters paid the bridge watch to lead them in circles.\n\nThe Decree said dawn. On that side of the river, dawn came late.",
     effects: [{ op: 'block', target: 'self', amount: 6 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }, prepare()],
     textTemplate: 'Gain {block} Block. Apply {weak} Weak to ALL enemies. Become Prepared.',
@@ -240,14 +240,14 @@ export const rogueCards = [
 
   // ---- Rares (10) ---------------------------------------------------------
   {
-    id: 'assassinate', name: 'Assassinate', class: 'rogue', rarity: 'rare', cost: 2, staminaCost: 1, type: 'attack', keywords: ['exhaust'], icon: '🗡',
+    id: 'assassinate', name: 'Assassinate', class: 'rogue', rarity: 'rare', cost: 2, type: 'attack', keywords: ['exhaust'], icon: '🗡',
     flavor: "Killing blow, struck after a single question.\n\nThe way of a dock thief who hunts one particular Court surgeon. The question has been told upon the docks; the surgeon's name has not. Some believe the question concerns a stitching. Others, that the surgeon is kin.\n\nThe docks have learned not to ask twice.",
     effects: [{ op: 'damage', target: 'enemy', amount: 14 }, { op: 'damage', target: 'enemy', amount: 14, if: PREPARED }, spendPrepared()],
     textTemplate: 'Deal {damage} damage. Prepared: deal {damage.2} more. Consume Prepared. Exhaust.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 18 }, { op: 'damage', target: 'enemy', amount: 18, if: PREPARED }, spendPrepared()] },
   },
   {
-    id: 'thousandCutsRogue', name: 'Thousand Cuts', class: 'rogue', rarity: 'rare', cost: 2, staminaCost: 1, type: 'attack', keywords: [], icon: '✣',
+    id: 'thousandCutsRogue', name: 'Thousand Cuts', class: 'rogue', rarity: 'rare', cost: 2, type: 'attack', keywords: [], icon: '✣',
     flavor: "Many small cuts, each undoing a stitch.\n\nThe surgeons called it the procedure run backward, and forbade it, for a courtier sewn to his post had sworn an oath. The winter after the Burning, a surgeon was found unstitching his own wife from the palace stair.\n\nThe surgeons' day-book records only a failed stitching.",
     effects: [{ op: 'damage', target: 'enemy', amount: 2, hits: 6 }, { op: 'damage', target: 'enemy', amount: 1, hits: 6, if: PREPARED }, spendPrepared()],
     textTemplate: 'Deal {damage} damage {hits} times. Prepared: deal {damage.2} damage {hits.2} times. Consume Prepared.',
@@ -282,7 +282,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'venom', stacks: 7 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }] },
   },
   {
-    id: 'smokeBomb', name: 'Smoke Bomb', class: 'rogue', rarity: 'rare', cost: 1, staminaCost: 1, type: 'skill', keywords: ['exhaust'], icon: '💨',
+    id: 'smokeBomb', name: 'Smoke Bomb', class: 'rogue', rarity: 'rare', cost: 1, type: 'skill', keywords: ['exhaust'], icon: '💨',
     flavor: "Pig's bladder of kiln ash.\n\nSplit upon the stones, it raises a fog the bridge watch reports as a haunting. The ash is from the south-bank kilns, which in the Court's last years were fired with something other than lime.\n\nThe reports are not wholly wrong.",
     effects: [{ op: 'block', target: 'self', amount: 8 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 3 }],
     textTemplate: 'Gain {block} Block. Apply {weak} Weak to ALL enemies. Exhaust.',
@@ -296,10 +296,10 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 4 }, prepare(), { op: 'draw', amount: 1 }] },
   },
   {
-    id: 'perfectHeist', name: 'Perfect Heist', class: 'rogue', rarity: 'rare', cost: 0, staminaCost: 1, type: 'skill', keywords: ['exhaust'], icon: '💎',
+    id: 'perfectHeist', name: 'Perfect Heist', class: 'rogue', rarity: 'rare', cost: 0, type: 'skill', keywords: ['exhaust'], icon: '💎',
     flavor: "Theft of the Glass Regent's mirrors.\n\nEvery mirror is entered in the Hall's inventory, and every one is gone. The older thieves credit the Wick.\n\nThe Hall of Mirrors is full of glass to this day. That is how the docks know it was perfect.",
     effects: [{ op: 'draw', amount: 3 }, { op: 'gainEnergy', amount: 1 }],
-    textTemplate: 'Draw {draw} cards. Gain {gainEnergy} Energy. Exhaust.',
+    textTemplate: 'Draw {draw} cards. Gain {gainEnergy} Stamina. Exhaust.',
     upgrade: { effects: [{ op: 'draw', amount: 4 }, { op: 'gainEnergy', amount: 1 }] },
   },
   {
@@ -316,7 +316,7 @@ export const rogueCards = [
   // ---- The class ability card (plan phase 5a, proposal §4) -----------------
   // Prepare: the Rogue's loop is setup then payoff; the cheapest way in.
   {
-    id: 'prepare', name: 'Prepare', class: 'rogue', rarity: 'starter', cost: 0, staminaCost: 1, type: 'skill',
+    id: 'prepare', name: 'Prepare', class: 'rogue', rarity: 'starter', cost: 0, type: 'skill',
     flavor: "Hands warmed before the work.\n\nCold hands drop knives. Dock children learn to warm their hands before they learn to steal, and never at a fire another has lit. A borrowed fire is a debt, and the docks collect.\n\nThe fires on the Citadel side burn more than wood.",
     keywords: ['exhaust'], icon: '◈',
     effects: [{ op: 'applyStatus', target: 'self', status: 'prepared', stacks: one }],
@@ -346,7 +346,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 4, hits: 2 }] },
   },
   {
-    id: 'nockAndWait', name: 'Nock and Wait', class: 'rogue', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '🎯',
+    id: 'nockAndWait', name: 'Nock and Wait', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: [], icon: '🎯',
     flavor: "The string drawn, the breath held.\n\nA dock archer waits for the tide bell, when every head on the quay turns at once. The bell has rung at the wrong hours since the Burning.\n\nThe archers have learned to wait for the heads instead.",
     effects: [{ op: 'draw', amount: 2 }, prepare()],
     textTemplate: 'Draw {draw} cards. Become Prepared.',

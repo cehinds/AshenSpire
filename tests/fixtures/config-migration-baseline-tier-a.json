@@ -3474,7 +3474,7 @@
                 "__string": "Mana pays spell costs."
               },
               "stamina": {
-                "__string": "Stamina pays physical skill and Dodge costs."
+                "__string": "Stamina pays card and combat costs. It refills at the start of every turn."
               },
               "recovery": {
                 "__string": " Recovers {amount} per turn."
