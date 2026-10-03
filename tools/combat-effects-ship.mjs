@@ -1,6 +1,8 @@
 import {createRequire} from 'node:module';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {applyCardEffectRefresh,writeCombatEffectManifest} from './card-effect-art-build.mjs';
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const require=createRequire(import.meta.url);let sharp;
 try{sharp=require('sharp')}catch{sharp=require('../build/animation-tools/node_modules/sharp')}
 const jobs=[

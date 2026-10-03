@@ -10,9 +10,9 @@
 //   node tools/asset-pack.mjs --source cache|trees|auto [--out <dir>] [--pack …]
 //                                    where the files are read: the fetched release
 //                                    (.art-cache/<tag>/<pack>/, tools/fetch-art.mjs),
-//                                    the trees here, or (auto, the default since
-//                                    step 12) each pack's verified cache, else its
-//                                    tree under tools/art-source.mjs's rule
+//                                    the trees' paths under the root (a sandbox's
+//                                    copies), or (auto, the default) each pack by
+//                                    tools/art-source.mjs's rule
 //
 // WHY (docs/EXTERNAL-ASSETS-PLAN.md §3, step 2). The game is moving from one
 // HTML with every asset inlined to an HTML that loads its assets at runtime
@@ -49,11 +49,11 @@
 // `--source cache` (step 11) every record is read instead from the fetched
 // release, .art-cache/<tag>/<pack>/<record path>, and only from a pack cache
 // tools/fetch-art.mjs has verified against the current pin and manifest; an
-// unfetched or stale pack is refused by name. `auto` (step 12, the default)
-// reads each pack from its cache when it is verified and otherwise from the
-// trees, under the one rule tools/art-source.mjs keeps (ASHEN_ART_SOURCE=cache
-// refuses the fallback). Every source writes the same
-// bytes while `node tools/fetch-art.mjs --agree` is green. Each file is
+// unfetched or stale pack is refused by name. `auto` (the default) asks
+// tools/art-source.mjs: each pack's verified cache, refused by name when it is
+// not fetched (the trees left this repository at step 13), or, under
+// ASHEN_ART_SOURCE=trees, the trees' paths under a sandbox root that copied
+// them there; `--source trees` reads those paths directly. Each file is
 // hashed as it is read and must match its record, so a stale manifest stops the
 // write instead of shipping bytes the manifest does not describe. Text (SVG,
 // JSON, the licence) is packed with LF line endings, so a Windows checkout

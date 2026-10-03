@@ -5,6 +5,8 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MAP_PRESENTATION as policy } from '../src/content/mapPresentation.js';
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const sharp = createRequire(import.meta.url)('sharp');
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sources = [

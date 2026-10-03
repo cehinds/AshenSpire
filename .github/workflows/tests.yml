@@ -34,9 +34,8 @@
 #                packs), the engine suite, every discovered *.test.mjs, each
 #                tool's verdict on the tree as it stands (tests/run-node.mjs),
 #                the no-browser CHANGELOG ordering check with its own
-#                known-bads, then `fetch-art --agree`
-#                (light + common on PRs and dev, all three on test/release;
-#                its time is not yet measured in CI — record it here)
+#                known-bads (step 13 retired the `fetch-art --agree` step
+#                that followed: the trees it compared with are gone)
 #   selftests  — every tool's `--selftest` known-bad corpus (tests/run-node.mjs)
 #   parse-gate — the bundler's parse-gate fixtures (tools/bundle.test.mjs). It
 #                ran as a second step of `selftests` and, at about twelve
@@ -67,15 +66,18 @@ concurrency:
 permissions:
   contents: read
 
-# STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
-# assets/fonts/, music/ and map-detail/ reads the fetched art packs through
-# tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
-# checkout, so a job that builds or serves without fetching first is red now,
-# not when step 13 deletes them. Each job that builds, serves or tests the
-# checkout fetches with ./.github/actions/fetch-art right after setup-node.
+# STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
+# assets-mobile/, the fonts, music/, map-detail/ and art/) left this repository
+# at step 13; every reader reads the fetched art packs through
+# tools/art-source.mjs, which fails (naming the fetch) for a pack that is not
+# fetched. Each job that builds, serves or tests the checkout fetches with
+# ./.github/actions/fetch-art right after setup-node, and fetches ALL THREE
+# packs: the high pack is what /assets/ serves from source (tools/serve.mjs) and
+# what the art checks read, as the assets/ tree was before step 13.
+# ASHEN_ART_SOURCE=cache is the default behaviour now, kept as a name.
 env:
   ASHEN_ART_SOURCE: cache
-  ART_PACKS: ${{ (github.event_name == 'pull_request' || github.ref_name == 'dev') && 'light,common' || 'all' }}
+  ART_PACKS: all
 
 jobs:
   core:
@@ -116,17 +118,6 @@ jobs:
       - name: The ordering check still catches its own known-bads
         if: always()
         run: node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order --selftest
-
-      # THE AGREEMENT CHECK (docs/EXTERNAL-ASSETS-PLAN.md step 11). The packs were
-      # fetched before the suite (step 12: the suite and the builds read them):
-      # light and common on a pull request and on a push to dev, the same as
-      # dev-preview's dev/test build; all three (the 203 MB high zip too) on test
-      # and release, where the long suites already run. The trees are still in
-      # this repository (until step 13), so this job, which gates every pull
-      # request, also proves the release and the trees agree.
-      - name: The fetched art release and the trees here agree byte for byte
-        if: always()
-        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   selftests:
     name: tool self-tests

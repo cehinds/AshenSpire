@@ -6,6 +6,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { Workspace, safePath, walk, hash } from './core.mjs';
 import { CodexBridge } from './codex.mjs';
+import { artDir, artPath, packTreeOf } from '../tools/art-source.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg' };
@@ -32,6 +33,15 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
       walk(root, 'content/source', ['.csv', '.json']), walk(root, 'content/framework', ['.json']), walk(root, 'src', ['.js']), walk(root, 'styles', ['.css']),
       walk(root, 'assets', ['.png', '.webp', '.gif', '.jpg', '.jpeg', '.svg']), walk(root, 'art', ['.png', '.webp', '.gif']), walk(root, 'docs', ['.html']), walk(root, 'art', ['.html']), walk(root, 'editor/workspace', ['.js', '.json', '.html', '.css']),
     ]);
+    // The shipped art left this repository at docs/EXTERNAL-ASSETS-PLAN.md step
+    // 13: the library also lists the fetched high pack's files (tools/art-source.mjs),
+    // by the same `assets/…` ids, beside anything imported under assets/ here.
+    let packed = [];
+    try { packed = await walk(path.dirname(artDir('assets', { root }).dir), 'assets', ['.png', '.webp', '.gif', '.jpg', '.jpeg', '.svg']); } catch {
+      // No high pack: the light pack lists the same ids (assets-mobile/… → assets/…), served as their light twins.
+      try { packed = (await walk(path.dirname(artDir('assets-mobile', { root }).dir), 'assets-mobile', ['.png', '.webp', '.gif', '.jpg', '.jpeg', '.svg'])).map(p => `assets/${p.slice('assets-mobile/'.length)}`); } catch { /* not fetched: the library shows what is on disk */ }
+    }
+    images.push(...packed.filter(p => !images.includes(p))); images.sort();
     const top = (await fs.readdir(root)).filter(n => n.endsWith('.html') && n !== 'AshenSpire.html');
     let branch = 'Unknown'; try { branch = execFileSync('git', ['branch', '--show-current'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim(); } catch {}
     const sprites = [...images.filter(p => p.startsWith('assets/enemies-unity/')), ...images.filter(p => !p.startsWith('assets/enemies-unity/')), ...artImages];
@@ -110,6 +120,13 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
             return send(res, 200, { changes }); // Restore is staged for review, not applied here.
           }
           if (url.pathname === '/api/import') {
+            // A checkout that pins an art release (art-release.json) keeps no art:
+            // assets/ is ignored since docs/EXTERNAL-ASSETS-PLAN.md step 13, so an
+            // image written there would be referenced by content yet never be
+            // committed or shipped. Refused, naming the route art takes instead.
+            if (await fs.stat(path.join(root, 'art-release.json')).then(() => true, () => false)) {
+              return send(res, 409, { error: 'Artwork no longer enters this checkout: assets/ is ignored and nothing written there ships (docs/EXTERNAL-ASSETS-PLAN.md step 13). Add it to cehinds/AshenSpire-art (hd/assets/), let its release publish, then bump art-release.json here and run node tools/art-manifest.mjs --write and node tools/fetch-art.mjs.' });
+            }
             const extension = path.extname(data.name || '').toLowerCase();
             if (!['.png', '.webp', '.gif', '.jpg', '.jpeg'].includes(extension)) throw Error('Import PNG, WebP, GIF or JPEG artwork');
             const bytes = Buffer.from(data.base64 || '', 'base64');
@@ -131,7 +148,15 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         const allowed = /^(assets|art|docs|src|styles|content)\//.test(name) || /^[\w-]+\.html$/.test(name) || /^editor\/workspace\//.test(name);
         if (!allowed || !mime[path.extname(name)]) throw Error('Not a preview asset');
         if (req.headers.host === address) { res.writeHead(302, { Location: `http://${previewAddress}${url.pathname}${url.search}` }); return res.end(); }
-        file = await safePath(root, name);
+        // An art id not on disk here is read from its fetched pack (step 13);
+        // the path is still validated (create: a missing file is not an error yet).
+        file = await safePath(root, name, Boolean(packTreeOf(name)));
+        if (packTreeOf(name) && !(await fs.stat(file).then(() => true, () => false))) {
+          try { file = artPath(name, { root }); } catch {
+            // The high pack not fetched (a light,common fetch): its light twin, as tools/serve.mjs does.
+            if (name.startsWith('assets/')) { try { file = artPath(`assets-mobile/${name.slice('assets/'.length)}`, { root }); } catch { /* not fetched: read below fails as before */ } }
+          }
+        }
       } else {
         const name = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
         if (!['index.html', 'app.js', 'styles.css', 'tables.mjs'].includes(name)) return send(res, 404, { error: 'Not found' });

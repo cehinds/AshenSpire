@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Your phone can buzz on card play, damage taken and turn start",
     "detail": "On a device that can vibrate, playing a card, losing HP and the start of your turn each give a short buzz of its own. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.",
-    "build": "0.7.1.822",
+    "build": "0.7.1.823",
     "pullRequest": 1517,
     "url": "https://github.com/cehinds/AshenSpire/pull/1517"
+  },
+  {
+    "id": "pr-1516",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the art now lives only in its own repository",
+    "detail": "Nothing you play changes. The pictures, fonts, music and map tiles were stored twice, here and in the art repository; the copies here are gone, so a fresh download of the source is about 1.9 GB lighter. Every build now takes its art from the pinned art release, checked file by file, exactly as it already did.",
+    "build": "0.7.1.822",
+    "pullRequest": 1516,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1516"
   },
   {
     "id": "pr-1489",

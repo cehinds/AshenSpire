@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { manifestIds } from '../tools/art-source.mjs';
+const ships = (file) => manifestIds().has(file); // art-manifest.json lists every shipped frame (step 13: the art left this repository)
 import { EQUIPMENT_ANIMATIONS, validateEquipmentAnimations, selectEquipmentAnimation, equipmentAnimationForLoadout, animationClip, animationView, animationTiming } from '../src/model/equipmentAnimation.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -54,7 +55,7 @@ for(const outfit of outfitRows){
   const artId=armourArtKey(outfit.classId,outfit.id);
   const directory=outfit.classId+(artId==='default'?'':'-'+artId);
   assert.ok(animationView(component,'portrait').includes('/'+directory+'/'),'outfit appearance retained');
-  for(const frame of Object.values(component.frames))assert.ok(existsSync(new URL('../'+frame.file,import.meta.url)),frame.file);
+  for(const frame of Object.values(component.frames))assert.ok(ships(frame.file),frame.file);
  }
 }
 const changed=structuredClone(EQUIPMENT_ANIMATIONS);changed.motionProfiles.greatswordTwoHand.clips.greatswordAttack.frameMs=120;
@@ -76,7 +77,7 @@ for(const outfit of outfitRows){
   assert.deepEqual(animationTiming(component,'attack'),{totalMs:1100,impactMs:700});
   const artId=armourArtKey(outfit.classId,outfit.id);
   assert.ok(animationView(component,'portrait').includes('/'+outfit.classId+(artId==='default'?'':'-'+artId)+'/'));
-  for(const frame of Object.values(component.frames))assert.ok(existsSync(new URL('../'+frame.file,import.meta.url)),frame.file);
+  for(const frame of Object.values(component.frames))assert.ok(ships(frame.file),frame.file);
  }
 }
 const swordChanged=structuredClone(EQUIPMENT_ANIMATIONS);
@@ -89,6 +90,6 @@ function equip(right,left){for(const [slot,id]of [['rightHand',right],['leftHand
 equip('greatsword',null);assert.equal(equipmentAnimationForLoadout(r,run.loadout,'reaver').setId,'reaverGreatsword');
 equip('greatsword','buckler');assert.equal(equipmentAnimationForLoadout(r,run.loadout,'reaver')?.motionProfile,'swordShield');
 equip('shortbow',null);assert.equal(equipmentAnimationForLoadout(r,run.loadout,'reaver')?.motionProfile,'bow','shortbow selects its authored motion set');
-for(const frame of Object.values(set.frames))assert.ok(existsSync(new URL('../'+frame.file,import.meta.url)),frame.file);
+for(const frame of Object.values(set.frames))assert.ok(ships(frame.file),frame.file);
 console.log('PASS equipment animation component: ordered groups, equip swaps, references, approved timeline, fallback, validation and asset paths');
 await import('./dagger-animation.test.mjs');
