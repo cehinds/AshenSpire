@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the slowest automated checks no longer wait on a 20-minute download",
     "detail": "Nothing you play changes. Three checks ran out of time before they started, while still downloading the project; the heavy checks now skip the source paintings and old file history they never open, cutting each one's download from about 2.3 GB to about 0.7 GB. Every check still runs; whether all of them now finish inside 20 minutes is confirmed only by the next full run.",
-    "build": "0.7.1.807",
+    "build": "0.7.1.808",
     "pullRequest": 1508,
     "url": "https://github.com/cehinds/AshenSpire/pull/1508"
+  },
+  {
+    "id": "pr-1512",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A master's lesson track with nothing to teach no longer offers Ask",
+    "detail": "When a track had no cards it could teach you (a Herald's shield track, for example), the Ask button still worked and spent the visit's lesson on an empty result. It is now greyed out. Under Chaos Rewards, which can give that track cards, it stays available.",
+    "build": "0.7.1.807",
+    "pullRequest": 1512,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1512"
   },
   {
     "id": "pr-1506",
