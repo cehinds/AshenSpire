@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-03
+
+- **Quick start: from the title to your first card in six presses** ([#1518](https://github.com/cehinds/AshenSpire/pull/1518), `0.7.1.826`). The title has a new Quick start. It begins a climb at once with the recommended character (the Reaver, no keepsake, Standard stats, the class's own starting gear), a fresh seed and the first empty save slot, and skips the opening. The opening still plays on your next ordinary climb. If every slot is full it asks before replacing slot 1, as Begin does. A new player now reaches their first card play in 6 inputs, down from 24 through New and character creation. New still lets you choose everything.
+
 ## 2026-10-02
 
-- **Behind the scenes: every full browser check now has to download the art first** ([#1524](https://github.com/cehinds/AshenSpire/pull/1524), `0.7.1.826`). Nothing you play changes. After the art moved out of this repository, three heavy browser checks ran without downloading it and failed on pictures that never loaded. A test now fails if any check in the full run starts a tool before the art is downloaded, including a tool started from a multi-line step.
+- **Behind the scenes: every full browser check now has to download the art first** ([#1524](https://github.com/cehinds/AshenSpire/pull/1524), `0.7.1.827`). Nothing you play changes. After the art moved out of this repository, three heavy browser checks ran without downloading it and failed on pictures that never loaded. A test now fails if any check in the full run starts a tool before the art is downloaded, including a tool started from a multi-line step.
 - **Behind the scenes: browser checks follow the art and wording updates** ([#1523](https://github.com/cehinds/AshenSpire/pull/1523), `0.7.1.825`). The hand-placement, animation and flask-menu checks use the verified art packs. The Fullscreen test follows the shared wording table, and flask checks report their result in the format CI reads.
 
 - **Read a book, learn a card, keep your class progress** ([#1521](https://github.com/cehinds/AshenSpire/pull/1521), `0.7.1.824`). Manuals grant their XP and an immediate matching card choice, including cross-class skills. Spellbooks teach spells, Universal Tomes let you choose a track and lesson, and class books unlock reusable class cards that can be equipped or removed to leave an empty slot. The shop's book rows have matching sizes and separate book, details and Buy columns. Ten customizable book recipes combine three painted cover styles, thirty independent symbol variants, colors and trim; Book Atelier exports artwork recipes for future updates. Art comes from the verified `hd-assets-v4` pack, including its existing uniform light-sprite policy.
