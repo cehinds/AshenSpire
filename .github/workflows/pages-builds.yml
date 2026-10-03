@@ -6,7 +6,8 @@
 #   /<branch>/latest/      alias for the branch's newest build
 #
 # THE WEB EDITION AND THE STORE (docs/EXTERNAL-ASSETS-PLAN.md §4, step 6b). A build
-# whose source writes a pack-shaped web edition (build/web) is served as that
+# whose source writes a pack-shaped web edition (build/web, or build/ itself
+# from step 8e) is served as that
 # edition: its 9.5 MB HTML at /<branch>/<ordinal>/ with an asset-base.json, its
 # indexes and objects in ONE store shared by every build (/packs/, /objects/),
 # and its light single file kept whole at /<branch>/<ordinal>/download/, which
@@ -284,12 +285,23 @@ jobs:
           test -z "$(git -C "$RUNNER_TEMP/main" status --porcelain)"
           (cd "$RUNNER_TEMP/main" && node tools/buildversion.mjs --check)
           mkdir -p "$RUNNER_TEMP/main-build"
-          cp "$RUNNER_TEMP/main/AshenSpire.html" "$RUNNER_TEMP/main/AshenSpire-mobile.html" "$RUNNER_TEMP/main-build/"
+          # The root alias: the full single file before step 8e, the light single
+          # file from it. The mobile file exists only before step 8e retired it;
+          # from then on the generator writes /AshenSpire-mobile.html as a redirect.
+          cp "$RUNNER_TEMP/main/AshenSpire.html" "$RUNNER_TEMP/main-build/"
+          if [ -f "$RUNNER_TEMP/main/AshenSpire-mobile.html" ]; then
+            cp "$RUNNER_TEMP/main/AshenSpire-mobile.html" "$RUNNER_TEMP/main-build/"
+          fi
           # THE WEB EDITION, where main's source builds one (docs/EXTERNAL-ASSETS-PLAN.md
           # step 6b): the generator serves it at the stable Play links, with its packs
           # and objects in the site's one store, instead of the full single file.
+          # Its home was build/web/ (steps 3a–7) and is build/ itself from step 8e.
           if [ -f "$RUNNER_TEMP/main/build/web/AshenSpire.html" ]; then
             cp -r "$RUNNER_TEMP/main/build/web" "$RUNNER_TEMP/main-build/web"
+          elif [ -d "$RUNNER_TEMP/main/build/packs" ]; then
+            mkdir -p "$RUNNER_TEMP/main-build/web"
+            cp -r "$RUNNER_TEMP/main/build/AshenSpire.html" "$RUNNER_TEMP/main/build/asset-base.json" \
+              "$RUNNER_TEMP/main/build/packs" "$RUNNER_TEMP/main/build/objects" "$RUNNER_TEMP/main-build/web/"
           fi
           # THE STANDALONE'S PAYLOAD (docs/EXTERNAL-ASSETS-PLAN.md step 12): the
           # launcher copies map-detail/ and music/ beside the single file from the
