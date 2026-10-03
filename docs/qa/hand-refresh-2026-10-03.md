@@ -1,0 +1,27 @@
+# Hand refresh browser evidence
+
+PR #1536, 2026-10-03. Standalone build **0.7.1.841**, source digest
+`8894d85d68`, served from the normal root alias with the verified v6 art cache.
+
+A fresh Chromium profile at 1440 × 900 used Quick start with seed 8, entered
+the first fight, played a self-targeted skill, and held End Turn for the
+control's configured 600 ms. The tutorial overlay was dismissed for the image.
+All actions used real CDP mouse or keyboard input; combat state was only read.
+
+The probe passed **9 checks**. The opening hand contained four cards; Quick
+start reached the first play in six inputs. The next player turn held and
+rendered four cards: Guard Counter, Shield Bash, Defend and Strike. Its saved
+rules read `retain: false`, `shuffleHand: true`, `drawMode: fixed`, opening/draw
+base 4, and hand capacity base/max 15. There were no runtime exceptions or
+unexpected HTTP failures. Optional sound-file probes fall back to the authored
+synth recipes (`src/content/sfx.js`); LAN discovery returns unavailable on a
+standalone server (`src/net/lan.js`). Their expected 404 responses are not asset
+failures.
+
+![Four cards on the next player turn](hand-refresh-2026-10-03.png)
+
+The headless regression suite additionally covers Retain accumulation, the
+15-card cap, depleted piles, ordered draw, spell upgrades, played-card
+destinations, solo/co-op overflow and deterministic save/resume. This browser
+pass does not establish physical touch or controller behavior, other browser
+engines, or interactive co-op acceptance.
