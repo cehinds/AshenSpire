@@ -849,8 +849,12 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
 // went red on figures that 404 (dispatch run 37098149492). Every ci.yml job
 // that checks this repository out fetches the packs before its first step
 // that runs a tool, since any of them may build, serve or copy the art.
-test('every ci.yml job that checks the repository out fetches the art packs before it runs a tool', () => {
-  const yml = readFileSync(fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url)), 'utf8');
+//
+// A tool runs from an inline `run: node tools/…` OR from a command line inside
+// a `run: |` / `run: >` block scalar (#1524 review): both are scanned; comment
+// lines inside a block are not commands.
+const TOOL_CMD = /(^|[\s;&|(])node\s+(tools|tests)\//;
+function jobsRunningToolsBeforeFetch(yml) {
   const jobs = yml.split(/\n(?=  [a-z][a-z0-9-]*:\n)/).slice(1);
   const missing = [];
   let checked = 0;
@@ -858,10 +862,47 @@ test('every ci.yml job that checks the repository out fetches the art packs befo
     if (!/uses: actions\/checkout@/.test(job)) continue;
     checked += 1;
     const name = job.match(/^  ([a-z0-9-]+):/)[1];
-    const fetch = job.search(/uses: \.\/\.github\/actions\/fetch-art\b/);
-    const firstTool = job.search(/run: .*\bnode (tools|tests)\//);
-    if (fetch < 0 || (firstTool >= 0 && firstTool < fetch)) missing.push(name);
+    let fetched = false, block = null, bad = false;
+    for (const line of job.split('\n')) {
+      const indent = line.match(/^ */)[0].length;
+      if (block !== null) {
+        if (!line.trim() || indent > block) {
+          if (!fetched && !line.trim().startsWith('#') && TOOL_CMD.test(line)) bad = true;
+          continue;
+        }
+        block = null;
+      }
+      if (/^\s*(-\s+)?uses:\s*\.\/\.github\/actions\/fetch-art\b/.test(line)) fetched = true;
+      const run = line.match(/^(\s*)(-\s+)?run:\s*(.*)$/);
+      if (!run) continue;
+      if (/^[|>][-+0-9]*\s*(#.*)?$/.test(run[3])) { block = run[1].length + (run[2] ? run[2].length : 0); continue; }
+      if (!fetched && TOOL_CMD.test(run[3])) bad = true;
+    }
+    if (!fetched || bad) missing.push(name);
   }
+  return { checked, missing };
+}
+
+test('every ci.yml job that checks the repository out fetches the art packs before it runs a tool', () => {
+  const yml = readFileSync(fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url)), 'utf8');
+  const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
   assert.ok(checked >= 10, `the job split found the checkout jobs (${checked})`);
   assert.deepEqual(missing, [], `these jobs run a tool on a checkout with no fetched art: ${missing.join(', ')}`);
+});
+
+test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool steps before the fetch', () => {
+  const job = (name, steps) => `  ${name}:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n${steps}`;
+  const fetch = '      - uses: ./.github/actions/fetch-art\n        with:\n          packs: all\n';
+  const yml = 'jobs:\n' + [
+    job('good-inline', `${fetch}      - run: node tools/a.mjs\n`),
+    job('good-block', `${fetch}      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs --selftest\n`),
+    job('good-comment-before', `      - name: x\n        run: |\n          # node tools/a.mjs is described here, not run\n          echo hi\n${fetch}`),
+    job('bad-inline', `      - run: node tools/a.mjs\n${fetch}`),
+    job('bad-block', `      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs\n${fetch}`),
+    job('bad-folded', `      - name: x\n        run: >-\n          set -e;\n          node tests/run-node.mjs\n${fetch}`),
+    job('bad-no-fetch', '      - run: echo nothing\n'),
+  ].join('\n') + '\n';
+  const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
+  assert.equal(checked, 7);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch']);
 });
