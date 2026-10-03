@@ -556,6 +556,10 @@ ui-studio/workspace/settings.json
 # High-res art fetched by tools/fetch-art.mjs (docs/ART-REPO-PLAN.md)
 /.art-cache/
 
+# The Windows installer build (desktop/windows/build-installer.mjs): the staged
+# install tree, the packaged Electron app and AshenSpire-Setup-<version>.exe.
+build/windows-installer/
+
 # Regenerable exports of the versioned player polish source kit.
 /docs/design/player-polish-asset-kit-2026-10-02.zip
 /docs/design/player-polish-asset-kit-2026-10-02.zip.sha256
