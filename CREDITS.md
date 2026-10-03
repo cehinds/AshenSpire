@@ -1,5 +1,16 @@
 # Credits & Asset Licenses
 
+## Additional artwork carried by art release v6 (2026-10-03)
+
+These existing art-repository additions accompany the painted-book release.
+Their generation batches are recorded in the [art repository credits](https://github.com/cehinds/AshenSpire-art/blob/main/CREDITS.md).
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/cards/` | Seven original OpenAI-generated card paintings and 56 project-authored SVG motifs, recorded in the art repository's 2026-10-03 additions | First-party generated and authored artwork; no third-party asset license claimed. |
+| `assets/events/` | Original OpenAI-generated event paintings from the art repository's 2026-10-02 production batch | First-party generated artwork; no third-party asset license claimed. |
+| `assets/portraits/` | Original OpenAI-generated Road Warden paintings from the art repository's 2026-10-02 production batch | First-party generated artwork; no third-party asset license claimed. |
+
 ## Skill-book shop assets (2026-10-02)
 
 | Asset path | Source | Rights |
