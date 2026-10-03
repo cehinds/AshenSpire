@@ -6,7 +6,7 @@
 # that sees what that row does is `tools/coop-hud-top.mjs`: it opens the real
 # co-op board (`?shot=coop`) at 390x844, 844x390 and 1280x800 and fails on
 # overlap, a part clipped by any edge of the screen, a lost part (resource
-# bars, any of the three resource rows, Leave, quick settings, or the fight
+# bars, the default HP row, Leave, quick settings, or the fight
 # label off the compact band), horizontal overflow, a part painted over the
 # battlefield, or a compact band that wrapped to two rows.
 # tests/coop-hud-top.test.mjs runs the judge's known-bad corpus with no browser.

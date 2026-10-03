@@ -373,6 +373,9 @@ export function selftest() {
   cases.push(['resource row over battlefield', { ...moveFirstBar({ top: 72, bottom: 82 }), field: { top: 80 } }, 1, {}, /resline reaches into the battlefield/]);
   // An optional fifth field names the failure the case must be caught BY, so a
   // case cannot pass on some other, accidental failure.
+  cases.push(['current HP-only HUD', { ...base, bars: base.bars.slice(0, 1) }, 0, { resourceRows: EXPECTED_RESOURCE_ROWS }]);
+  cases.push(['current HUD loses HP', { ...base, bars: [] }, 1, { resourceRows: EXPECTED_RESOURCE_ROWS }, /0 resource rows shown/]);
+  cases.push(['current HUD duplicates a resource', { ...base, bars: base.bars.slice(0, 2) }, 1, { resourceRows: EXPECTED_RESOURCE_ROWS }, /2 resource rows shown/]);
   const wrong = cases.filter(([, g, want, opts, why]) => {
     const bad = judge(g, 'st', { resourceRows: 3, ...opts });
     return (bad.length > 0 ? 1 : 0) !== want || (why && !bad.some((m) => why.test(m)));
@@ -524,13 +527,13 @@ const REPEAT_STEP = {
   press: `(() => { for (let i = 0; i < 3; i++) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', code: 'KeyF', bubbles: true, repeat: i > 0 }));
     return document.querySelectorAll('.combat-potion-menu').length; })()`,
   lists: `document.querySelectorAll('.combat-potion-menu').length`,
-  // The fixture has SP 2/3 and Mana 1/2 (src/main.js's co-op shot).
-  // Check the independent fixture values, the painted number and both gems.
+  // The Stamina/Mana and Discard/Exhaust labels follow the active seat and paint.
   labels: `(() => { const orb = document.querySelector('.combat.coop .energy-orb'); const spent = document.querySelector('.combat.coop .pile.spent');
+    const seat = window.__coopSnapshotForShot.scene.players.find(p => p.id === 'p1');
     return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '',
-      painted: orb?.querySelector('[data-orb-part="number"]')?.textContent || '',
-      mana: orb?.querySelectorAll('[data-orb-part="diamond"]').length,
-      spentMana: orb?.querySelectorAll('[data-orb-part="spent"]').length,
+      painted: orb?.querySelector('text[data-orb-part=number]')?.textContent || '', ring: orb?.dataset.manaRing,
+      ready: orb?.querySelectorAll('[data-orb-part=diamond]').length, spentGems: orb?.querySelectorAll('[data-orb-part=spent]').length,
+      expected: { stamina: seat.stamina, maxStamina: seat.maxStamina, mana: seat.mana, maxMana: seat.maxMana },
       spent: spent?.getAttribute('aria-label') || '' }; })()`,
 };
 
@@ -542,9 +545,15 @@ async function repeatOpenProbe(cdp, sessionId, base) {
   await ev(SEAT_STEP.ready);
   await wait(300);
   const labels = await ev(REPEAT_STEP.labels);
+  const seat = labels?.expected;
   const labelBad = [];
-  if (labels?.value !== '2' || labels?.painted !== '2' || labels?.orb !== 'Stamina 2 of 3. Mana 1 of 2.') labelBad.push(`labels: Stamina reads "${labels?.orb}" with hidden/painted counts ${labels?.value}/${labels?.painted}; want Stamina 2 of 3. Mana 1 of 2.`);
-  if (labels?.mana !== 1 || labels?.spentMana !== 1) labelBad.push(`labels: Mana ring has ${labels?.mana} available and ${labels?.spentMana} spent diamonds; want 1 of each`);
+  const expectedLabel = seat && `Stamina ${seat.stamina} of ${seat.maxStamina}. Mana ${seat.mana} of ${seat.maxMana}.`;
+  if (!seat || labels.value !== String(seat.stamina) || labels.painted !== labels.value || labels.orb !== expectedLabel) {
+    labelBad.push(`labels: Stamina reads "${labels?.orb}" and paints ${labels?.painted}; want "${expectedLabel}"`);
+  }
+  if (!seat || labels.ring !== 'true' || labels.ready !== seat.mana || labels.spentGems !== seat.maxMana - seat.mana) {
+    labelBad.push(`labels: Mana ring does not show the active seat's available and spent mana`);
+  }
   if (/Open piles/.test(labels?.spent || '')) labelBad.push(`labels: co-op Discard/Exhaust promises "Open piles" (${labels.spent}); co-op has no pile viewer`);
   await ev(REPEAT_STEP.press);
   await wait(400);

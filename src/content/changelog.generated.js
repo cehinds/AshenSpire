@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Installer game versions and Stamina browser checks",
     "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage.",
-    "build": "0.7.1.848",
+    "build": "0.7.1.852",
     "pullRequest": 1540,
     "url": "https://github.com/cehinds/AshenSpire/pull/1540"
+  },
+  {
+    "id": "pr-1536",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep prepared spells and draw a fresh hand each turn",
+    "detail": "Opening and turn draws start at four with Intelligence scaling. Unplayed cards shuffle back into the draw pile unless they have Retain; thirty-one Herald and Starseer spells now keep that keyword when upgraded. Retained cards add to the next full draw, up to a separate default hand limit of fifteen. Solo and co-op share the rule, played cards still leave the hand normally, and existing saved fights preserve their rules. The defaults remain configurable.",
+    "build": "0.7.1.851",
+    "pullRequest": 1536,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1536"
   },
   {
     "id": "pr-1542",

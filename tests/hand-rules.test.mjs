@@ -9,7 +9,7 @@ import { handRulesDefaults } from '../src/content/handRules.js';
 import { handRulesRows, resolveHandRules, handRow, scaledCards, scaledCardsReceipt, HAND_RULES_PREFIX as prefix } from '../src/model/handRules.js';
 import { handStatRows, statRow } from '../src/model/statRows.js';
 import { resolvedRuleRow, statRowValue } from '../src/model/derivedStats.js';
-import { discardChoicePlan } from '../src/engine/handRules.js';
+import { discardChoicePlan, endTurnCardFate } from '../src/engine/handRules.js';
 import { drawCards } from '../src/engine/actions.js';
 import { advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
 
@@ -25,7 +25,7 @@ const registries = createRegistries(contentBundle);
 // groups' numbers exactly: the opening hand was 3 + floor(max(0, INT − 10) ÷
 // 10), which is 2 + floor(INT × 0.1) never below 3; the draw a flat 2 (0–10);
 // the hand size a flat 10 (1–30).
-const LEGACY_RULES = { drawMode: 'fill', overflow: 'keep' };
+const LEGACY_RULES = { drawMode: 'fill', overflow: 'keep', retain: true, shuffleHand: false };
 const LEGACY_ROWS = {
   openingHand: { base: 2, intelligence: 0.1, min: 3, max: 10 },
   draw: { base: 2, min: 0, max: 10 },
@@ -50,7 +50,7 @@ test('the default opening follows the shipped starting rule; unplayed cards surv
   const intelligence = { intelligence: 10 };
   const shipped = fight({}, intelligence, {}, SHIPPED_ROWS);
   assert.equal(shipped.piles.hand.length, scaledCards(SHIPPED_ROWS.openingHand, intelligence));
-  assert.equal(shipped.piles.hand.length, 6); // 4 + floor((10 − 1) × 0.5) = 8, kept within 4–6 (owner, 2026-09-24)
+  assert.equal(shipped.piles.hand.length, 5); // 4 + floor((10 - 4) / 5)
   const c = fight();
   const ids = c.piles.hand.map(c => c.instanceId);
   assert.equal(c.piles.hand.length, 3);
@@ -76,13 +76,11 @@ test('attribute choice, whole-point flooring, bounds and scaling off', () => {
 
 test('fixed draws are the shipped default, drawing the Draw row up to the hand size, and can be changed or scaled', () => {
   assert.equal(handRulesDefaults.drawMode, 'fixed');
-  // INT 4, counted from each row's baseline: opening 4 + floor((4 − 1) × 0.5) = 5,
-  // hand size 7 + floor((4 − 1) × 0.2) = 7, then a fixed 3 + floor((4 − 4) × 0.2) = 3
-  // (FINISH D27), kept to the 2 the hand size leaves room for.
   const shipped = fight({}, { intelligence: 4 }, {}, SHIPPED_ROWS);
-  assert.equal(shipped.piles.hand.length, 5);
+  assert.equal(shipped.piles.hand.length, 4);
   dispatch(shipped, { type: 'endTurn' });
-  assert.equal(shipped.piles.hand.length, 7);
+  assert.equal(shipped.piles.hand.length, 4);
+  assert.equal(shipped.piles.discard.length, 0);
   const c = fight({ drawMode: 'fixed' });
   dispatch(c, { type: 'endTurn' });
   assert.equal(c.piles.hand.length, 5);
@@ -238,69 +236,31 @@ test('the hand receipt is the arithmetic scaledCards does', () => {
   }
 });
 
-// ---- PER-CLASS OPENING HAND (owner, 2026-09-24; #1294, carried into #1296) --
-// "Class base 3–5, +1 from stats" and "start with 4-6 cards":
-// clamp(base + floor(max(0, primary − 1) ÷ 2), 4, 6), each class reading its
-// own primary attribute. Since ruleset 7 that is the `openingHand` row's
-// per-class form: a weight of 0.5 on the primary, counted from 1.
+// The opening defaults now follow Draw scaling. Per-class authoring and
+// snapshot isolation still work; legacy #1294 rows are tested in stat-rows.
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { attributeRules } from '../src/content/attributes.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 
-const OPENING = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'wisdom'], starseer: [5, 'intelligence'] };
+const OPENING = Object.fromEntries(['reaver', 'rogue', 'herald', 'starseer'].map(id => [id, [4, 'intelligence']]));
 const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
-// #1294's formula, written out: the numbers the row must match exactly.
-const shippedOpening = (base, primary) => Math.min(6, Math.max(4, base + Math.floor(Math.max(0, primary - 1) / 2)));
-// ...and #1294's own code, frozen verbatim from dev at 3e1bedca
-// (content/handRules.js defaults, model/handRules.js `handRulesForClass` and
-// `scaledCardsReceipt`), so the row is checked against what #1294 RAN, not
-// only against a restatement of it.
-const PR1294 = Object.freeze({
-  starting: { base: 4, statEnabled: true, stat: 'intelligence', baseline: 1, pointsPerCard: 2, minimum: 4, maximum: 6 },
-  startingByClass: { reaver: { base: 3, stat: 'strength' }, rogue: { base: 4, stat: 'dexterity' }, herald: { base: 4, stat: 'wisdom' }, starseer: { base: 5, stat: 'intelligence' } },
-});
-function handRulesForClass1294(rules, classId = null) {
-  const { startingByClass, ...fight } = structuredClone(rules);
-  const own = classId && startingByClass ? startingByClass[classId] : null;
-  if (own) fight.starting = { ...fight.starting, base: own.base, stat: own.stat };
-  return fight;
-}
-function scaledCards1294(rule, attributes = {}) {
-  const points = Number(attributes?.[rule.stat]) || 0;
-  const bonus = rule.statEnabled ? Math.floor(Math.max(0, points - rule.baseline) / rule.pointsPerCard) : 0;
-  return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + bonus));
-}
 const classRow = (classId, reg = registries) => statRow(reg, { class: classId }, 'openingHand');
 
-test('each class opens on #1294\'s hand exactly, at every primary from 1 to 20', () => {
-  for (const [classId, [base, stat]] of Object.entries(OPENING)) {
+test('each class opens on four plus the usual Intelligence draw scaling', () => {
+  for (const classId of Object.keys(OPENING)) {
     const row = classRow(classId);
-    assert.equal(row.byClass, undefined, 'the per-class form does not ride into a fight');
-    assert.equal(row.base, base);
-    assert.deepEqual(Object.entries(row).filter(([key, value]) => allOnes[key] !== undefined && value), [[stat, 0.5]], `${classId} answers to ${stat} alone`);
-    for (let primary = 1; primary <= 20; primary += 1) {
-      for (const others of [1, 5, 12, 20]) {
-        const attributes = { ...Object.fromEntries(Object.keys(allOnes).map((id) => [id, others])), [stat]: primary };
-        assert.equal(scaledCards(row, attributes), shippedOpening(base, primary), `${classId}, ${stat} ${primary}, others ${others}`);
-        assert.equal(scaledCards(row, attributes), scaledCards1294(handRulesForClass1294(PR1294, classId).starting, attributes), `${classId}: #1294's own code, ${stat} ${primary}`);
-      }
+    assert.equal(row.byClass, undefined);
+    for (let intelligence = 1; intelligence <= 50; intelligence++) {
+      const attributes = { ...allOnes, intelligence };
+      assert.equal(scaledCards(row, attributes), Math.min(10, 4 + Math.floor(Math.max(0, intelligence - 4) / 5)));
     }
   }
-  // The owner's "4-6 cards": all 1s opens 4/4/4/5, the Standard presets 4/5/5/6.
-  assert.deepEqual(Object.keys(OPENING).map(classId => scaledCards(classRow(classId), allOnes)), [4, 4, 4, 5]);
-  assert.deepEqual(Object.keys(OPENING).map(classId => scaledCards(classRow(classId), attributeRules.presets.lean[classId])), [4, 5, 5, 6]);
-  // A class with no row, or no class at all, keeps the shared row (#1294's fallback).
-  for (const run of [{ class: 'nobody' }, null]) {
-    for (let intelligence = 1; intelligence <= 20; intelligence += 1) {
-      assert.equal(scaledCards(statRow(registries, run, 'openingHand'), { ...allOnes, intelligence }), shippedOpening(4, intelligence));
-      assert.equal(scaledCards(statRow(registries, run, 'openingHand'), { ...allOnes, intelligence }), scaledCards1294(handRulesForClass1294(PR1294, run?.class).starting, { ...allOnes, intelligence }));
-    }
-  }
+  assert.deepEqual(Object.keys(OPENING).map(id => scaledCards(classRow(id), attributeRules.presets.lean[id])), [4, 4, 4, 4]);
 });
 
 test('a run fight deals the class opening hand and snapshots it', () => {
-  const expected = { reaver: 4, rogue: 5, herald: 5, starseer: 6 };
+  const expected = { reaver: 4, rogue: 4, herald: 4, starseer: 4 };
   for (const [classId, count] of Object.entries(expected)) {
     const run = createRunState({ seed: 7, classId, registries });
     assert.deepEqual(run.derivedStatRuleSnapshot.rules.rules.openingHand, { ...classRow(classId), perLevel: 0 }, 'the run snapshots its class\'s row, not the table');
@@ -317,7 +277,7 @@ test('a run fight deals the class opening hand and snapshots it', () => {
   const run = createRunState({ seed: 7, classId: 'reaver', registries, attributeMode: 'assign',
     attributes: { strength: 1, dexterity: 1, constitution: 4, wisdom: 1, intelligence: 1 } });
   const combat = createRunCombat({ registries, rng: createRng(7), run, enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.piles.hand.length, 4, 'a Reaver with Strength 1 is lifted from its base of 3 to the floor of 4');
+  assert.equal(combat.piles.hand.length, 4, 'the default opening is four');
 });
 
 test('each class\'s opening hand is its own editor, in the row\'s own fields', () => {
@@ -326,17 +286,17 @@ test('each class\'s opening hand is its own editor, in the row\'s own fields', (
     const baseRow = rows.find(row => row.key === `gameConfig.derivedStatRules.rules.openingHand.byClass.${classId}.base`);
     const statRowSetting = rows.find(row => row.key === `gameConfig.derivedStatRules.rules.openingHand.byClass.${classId}.${stat}`);
     assert.equal(baseRow.def, base);
-    assert.equal(statRowSetting.def, 0.5);
+    assert.equal(statRowSetting.def, 0.2);
   }
   // Tuned through its keys, a class's row moves that class's hand only.
   const tuned = createRegistries(configuredContentBundle(contentBundle, {
     'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 5,
-    'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.strength': 0,
+    'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.intelligence': 0,
     'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.constitution': 0.5,
   }));
-  assert.equal(scaledCards(classRow('reaver', tuned), { ...allOnes, constitution: 5 }), 6);
+  assert.equal(scaledCards(classRow('reaver', tuned), { ...allOnes, constitution: 6 }), 6);
   assert.equal(scaledCards(classRow('reaver', tuned), { ...allOnes, strength: 12 }), 5);
-  assert.equal(scaledCards(classRow('rogue', tuned), attributeRules.presets.lean.rogue), 5, 'another class keeps its own');
+  assert.equal(scaledCards(classRow('rogue', tuned), attributeRules.presets.lean.rogue), 4, 'another class keeps its own');
 });
 
 // "Draw / turn and opening hand" said 3 for a Standard Rogue who opened on 5
@@ -359,7 +319,7 @@ test('character creation\'s Hand chip is the opening hand combat deals, for ever
       assert.equal(draw.length, 1, 'the projected draw row is replaced, not joined');
       assert.equal(draw[0].label, 'Cards drawn each turn');
       // Turn 2 draws what the Draw chip says whenever the hand has the room.
-      const kept = combat.piles.hand.length;
+      const kept = combat.piles.hand.filter(card => endTurnCardFate(combat, card) === 'keep').length;
       dispatch(combat, { type: 'endTurn' });
       if (combat.turn === 2 && combat.handRules.drawMode === 'fixed') {
         const room = scaledCards(handRow(combat.handRules, 'handSize'), run.attributes) - kept;
@@ -394,7 +354,7 @@ test('character creation\'s Draw chip is capped by the hand size when the turn d
 
 test('the hand receipt carries the terms the chips print', () => {
   const receipt = scaledCardsReceipt(classRow('starseer'), { ...allOnes, intelligence: 3 });
-  assert.equal(receipt.value, 6);
-  assert.equal(receipt.bonus, 1);
-  assert.equal(receipt.terms.intelligence, 1);
+  assert.equal(receipt.value, 4);
+  assert.equal(receipt.bonus, 0);
+  assert.equal(receipt.terms.intelligence, 0);
 });
