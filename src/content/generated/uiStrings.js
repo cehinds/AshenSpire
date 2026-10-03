@@ -3,6 +3,20 @@
 
 export const uiStrings = [
   {
+    "id": "combat.protection.block",
+    "extends": "",
+    "short": "Block",
+    "full": "Absorbs attack damage.",
+    "tip": "Block"
+  },
+  {
+    "id": "combat.protection.ward",
+    "extends": "",
+    "short": "Arcane Ward",
+    "full": "Block granted by magical guards. Absorbs attack damage after ordinary Block.",
+    "tip": "Arcane Ward"
+  },
+  {
     "id": "common.back",
     "extends": "",
     "short": "Back",

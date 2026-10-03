@@ -29,6 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
+import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { syncRelicProperties, syncClassProperties, syncLoadoutProperties, syncSigilProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
@@ -388,6 +389,7 @@ function startPlayerPhase(C) {
     e.counters.staminaSpentThisTurn = 0;
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
+    reconcileWardBlock(e);
     // Less what a Stagger took (plan phase 8): owed to this next turn only.
     e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
     e.pendingActionLoss = 0;
@@ -679,7 +681,10 @@ function maybeEndPlayerPhase(C) {
 function enemyPhase(C) {
   C.phase = 'enemy';
   C.emit('enemyTurnStart', { turn: C.turn });
-  for (const e of C.enemies) { if (e.alive && !S.getFlag(C, e, 'retainBlock')) e.block = 0; }
+  for (const e of C.enemies) {
+    if (e.alive && !S.getFlag(C, e, 'retainBlock')) e.block = 0;
+    reconcileWardBlock(e);
+  }
   setActive(C, firstLiving(C));
   drainQueue(C);
   if (C.result) return;
