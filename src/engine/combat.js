@@ -414,6 +414,7 @@ function startPlayerTurn(combat) {
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
   p.energy = Math.max(0, p.energyMax - (p.pendingActionLoss || 0));
+  combat.equipmentPoolDeficits.stamina = p.energyMax - p.energy;
   p.pendingActionLoss = 0;
   recoverRatingMeters(combat, p);
 
@@ -763,7 +764,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No swaps left this turn');
   } else if (p.energy < price.cost) {
-    throw new Error(`Swapping costs ${price.cost} Energy`);
+    throw new Error(`Swapping costs ${price.cost} Stamina`);
   }
 
   // THE LADDER BINDS HERE TOO (#90, Vira's gate), and combat has no profile —
@@ -795,6 +796,8 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
   const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
+  if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
+  else p.stamina -= price.cost;
   // The hand now holds a different set: its old piece's properties leave with
   // it and the new piece's arrive (source ownership, engine/properties.js).
   syncLoadoutProperties(combat);
@@ -810,9 +813,6 @@ function doSwapArmament(combat, { slotId, setIndex }) {
       );
     }
   }
-
-  if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
-  else p.energy -= price.cost;
 
   // Stable generated attack slots rebind wherever combat currently holds them.
   // The intent resolves before this mutation, so no in-flight card changes
@@ -911,7 +911,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No equipment changes left this turn');
   } else if (p.energy < price.cost) {
-    throw new Error(`Changing equipment costs ${price.cost} Energy`);
+    throw new Error(`Changing equipment costs ${price.cost} Stamina`);
   }
 
   const poolBefore = runMods(combat.registries, combat.loadout, p.classId);
@@ -926,6 +926,8 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   // now that equipPiece has committed (engine/properties.js).
   syncLoadoutProperties(combat);
   const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
+  if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
+  else p.stamina -= price.cost;
   combat.equipmentChanged = true;
   const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
   for (const maxField of EQUIPMENT_POOL_FIELDS) {
@@ -936,9 +938,6 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
       p, maxField, nextMax, combat.equipmentPoolDeficits[currentField],
     );
   }
-
-  if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
-  else p.energy -= price.cost;
 
   const run = {
     deck: [],

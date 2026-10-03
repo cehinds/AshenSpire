@@ -597,8 +597,8 @@ const ROWS = [
   { cat: 'Combat', key: 'showPlayedCard', def: false, label: t('settings.row.showPlayedCard'),
     note: tFull('settings.row.showPlayedCard') },
 
-  { cat: 'Combat', key: 'manaRing', def: true, label: 'Mana ring',
-    note: 'Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.' },
+  { cat: 'Combat', key: 'manaRing', def: true, label: t('settings.manaRing'),
+    note: t('settings.manaRing.note') },
 
   ...HUD_VISIBILITY_SETTINGS,
 

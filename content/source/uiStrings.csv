@@ -1066,3 +1066,6 @@ book.read.sideboard,,This card was added to your sideboard because the deck copy
 book.read.noBonus,,No bonus card or feat this time.,,
 book.read.done,,Close book,,
 book.read.complete,,Book read,,
+
+settings.manaRing,,Mana ring,,
+settings.manaRing.note,,Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.,,

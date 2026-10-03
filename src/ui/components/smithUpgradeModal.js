@@ -141,7 +141,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         ]),
         el('span', { class: 'smith-stat-costs as-flavor' }, [
           el('span', {}, ['Weapon Art ', el('strong', { text: `Mana ${stats.weaponArtManaCost}` })]), el('i', { text: ' · ' }),
-          el('span', {}, ['Unique Skill ', el('strong', { text: `Stamina ${stats.uniqueSkillStaminaCost}` })]),
+          el('span', {}, ['Unique Skill ', el('strong', { text: `${t('combat.actions')} ${stats.uniqueSkillStaminaCost}` })]),
         ]),
       ],
       className: 'smith-data-row smith-intrinsic-stats',

@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 import { staminaOrb } from '../../content/staminaOrb.js';
 
 export const manaRingEnabled = (settings = {}) => settings.manaRing !== false;
@@ -16,6 +17,6 @@ export function staminaOrbModel({ stamina = 0, maxStamina = 0, mana = 0, maxMana
     return { id: i < available ? 'diamond' : 'spent', x: 450 + Math.cos(angle) * radius, y: 450 + Math.sin(angle) * radius, size };
   }) : [];
   return { current, maximum, available, count, ring, gems,
-    label: `Stamina ${current} of ${maximum}. Mana ${available} of ${count}.`,
+    label: `${t('combat.actions')} ${current} of ${maximum}. Mana ${available} of ${count}.`,
   };
 }

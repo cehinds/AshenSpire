@@ -1,10 +1,11 @@
 import { staminaOrb } from '../../content/staminaOrb.js';
 import { staminaOrbModel } from '../models/StaminaOrbModel.js';
 import { assetUrl } from '../assetmap.js';
+import { t } from '../strings.js';
 import { esc } from './tooltip.js';
 
 export function staminaOrbHtml() {
-  return '<div class="energy-orb stamina-orb cell" role="status" tabindex="0" aria-label="Stamina"><svg viewBox="0 0 900 900" aria-hidden="true" focusable="false"></svg><span class="sp-v sr-only"></span></div>';
+  return `<div class="energy-orb stamina-orb cell" role="status" tabindex="0" aria-label="${esc(t('combat.actions'))}"><svg viewBox="0 0 900 900" aria-hidden="true" focusable="false"></svg><span class="sp-v sr-only"></span></div>`;
 }
 
 export function paintStaminaOrb(orb, values) {

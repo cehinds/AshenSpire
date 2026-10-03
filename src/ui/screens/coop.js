@@ -902,7 +902,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const nm = statStrip([
         el('span', { class: 'coop-seat-player', style: { color: tintCss(m.tint) }, text: m.name || p.id }),
         p.id === me ? pill({ label: 'you', round: true, on: true }) : null,
-        chip({ key: '◆', value: `${p.energy}/${p.energyMax}`, attrs: { class: 'stamina-budget', 'aria-label': `Stamina ${p.energy} of ${p.energyMax}` } }),
+        chip({ key: '◆', value: `${p.energy}/${p.energyMax}`, attrs: { class: 'stamina-budget', 'aria-label': `${t('combat.actions')} ${p.energy} of ${p.energyMax}` } }),
         pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
       ], { class: 'centered coop-seat-name' });
       const name = document.createElement('div');
