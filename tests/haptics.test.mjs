@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { HAPTIC_PATTERNS, HAPTICS_DEFAULT_ON, HAPTIC_BATCH_GAP_MS, HAPTIC_BATCH_MAX_MS, hapticPatternIssues } from '../src/content/haptics.js';
 import { createHaptics, hapticsEnabled, haptic, joinPatterns } from '../src/ui/haptics.js';
 import { sfx } from '../src/ui/sfx.js';
-import { playBeatCues, playReceiptSounds } from '../src/ui/fx.js';
+import { playBeatCues, playReceiptSounds, playTimeline } from '../src/ui/fx.js';
 
 const NAMED = ['cardPlay', 'damageTaken', 'turnStart'];
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -289,6 +289,47 @@ test('co-op: a setup HP loss (Warden Horn) buzzes the hurt seat in the opening (
   assert.deepEqual(lost.map((e) => e.targetPlayerId), ['p2'], 'the opening digest carries the Horn\'s wound, for its seat');
   assert.ok(felt(() => coopReceiptSounds(scene, 0, ['p2'])).includes('damageTaken'), 'the hurt seat buzzes');
   assert.ok(!felt(() => coopReceiptSounds(scene, 0, ['p1'])).includes('damageTaken'), 'a teammate does not');
+});
+
+test('a skipped timeline still buzzes the hit and the turn start it jumped past, in one call (#1517 review)', async () => {
+  // At Normal pacing a pointer press flushes the timeline: onFlush jumps the
+  // display to the end, and the beats it skipped never reach playBeatCues.
+  const listeners = {};
+  const saved = { add: globalThis.addEventListener, remove: globalThis.removeEventListener };
+  globalThis.addEventListener = (type, fn) => { (listeners[type] = listeners[type] || []).push(fn); };
+  globalThis.removeEventListener = (type, fn) => { listeners[type] = (listeners[type] || []).filter((f) => f !== fn); };
+  const fire = (type) => { for (const fn of (listeners[type] || []).splice(0)) fn(); };
+  const events = [
+    { type: 'enemyMoveStarted', sourceId: 'e1', enemyId: 'e1', kind: 'attack' },
+    { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 6, blocked: 0 },
+    { type: 'hpLost', targetId: 'player', amount: 6, cause: 'attack' },
+    { type: 'playerTurnStart', turn: 2 },
+  ];
+  const ctx = { layer: { closest: () => null }, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {} };
+  const stub = stubNavigator();
+  const before = haptic.sink;
+  const ids = [];
+  const sounds = [];
+  const sfxBefore = sfx.sink;
+  try {
+    const { cue, tick } = manualCue({});
+    haptic.sink = (id) => { ids.push(id); cue(id); };
+    sfx.sink = (id) => sounds.push(id);
+    await new Promise((resolve) => {
+      playTimeline(events, ctx, resolve);
+      // The enemy's beat has started; nothing has been cued yet. Skip it.
+      fire('pointerdown');
+      fire('pointerup');
+    });
+    tick();
+  } finally {
+    haptic.sink = before; sfx.sink = sfxBefore; stub.restore();
+    globalThis.addEventListener = saved.add; globalThis.removeEventListener = saved.remove;
+  }
+  assert.deepEqual(ids, ['damageTaken', 'turnStart'], 'the skipped hit and turn start still buzz');
+  assert.equal(stub.calls.length, 1, 'as one vibrate call');
+  assert.deepEqual(stub.calls[0], joinPatterns(ids.map((id) => HAPTIC_PATTERNS[id])));
+  assert.deepEqual(sounds, [], 'and the skip replays no sound');
 });
 
 test('Settings offers the switch once, under Audio, defaulting to the data value', async () => {

@@ -585,6 +585,16 @@ export function playTimeline(events, ctx, done) {
   dbg.open = (dbg.open || 0) + 1;
 
   const beats = groupBeats(events);
+  // Beats whose cues have played. A skip (or the watchdog) jumps past the
+  // rest, and their haptics still play then, in one tick, so a skipped enemy
+  // hit or turn start still buzzes; their sounds are not replayed.
+  let cued = 0;
+  const cueBeat = (index) => { cued = Math.max(cued, index + 1); };
+  const flushHaptics = () => {
+    const rest = beats.slice(cued);
+    cued = beats.length;
+    for (const beat of rest) playBeatHaptics(beat.events);
+  };
   let flushed = false;
   let finished = false;
   let pendingTimer = null;
@@ -654,6 +664,7 @@ export function playTimeline(events, ctx, done) {
     dlog('fx', 'watchdog forced timeline completion', { open: dbg.open, finished: dbg.finished });
     cancelActorAnimation();
     try {
+      flushHaptics();
       if (ctx.onFlush) ctx.onFlush();
     } catch (e) {
       /* ignore */
@@ -673,6 +684,7 @@ export function playTimeline(events, ctx, done) {
   nextBeat = () => {
     if (finished) return;
     if (flushed) {
+      safe(flushHaptics);
       safe(() => ctx.onFlush && ctx.onFlush());
       finish();
       return;
@@ -681,9 +693,11 @@ export function playTimeline(events, ctx, done) {
       finish();
       return;
     }
+    const beatIndex = bi;
     const beat = beats[bi++];
 
     if (beat.banner) {
+      cueBeat(beatIndex);
       safe(() => playBeatCues(beat.events));
       safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
@@ -746,6 +760,7 @@ export function playTimeline(events, ctx, done) {
           return;
         }
         const applyBeat = () => {
+          cueBeat(beatIndex);
           safe(() => playBeatCues(beat.events));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
@@ -805,15 +820,24 @@ export function playerLostHp(e, isLocalPlayer) {
  */
 export function playBeatCues(events, { isLocalPlayer } = {}) {
   const has = (type) => events.some((e) => e && e.type === type);
-  // Haptics (content/haptics.js): ONE damage buzz per beat that cost the
-  // player HP by any route — an attack's residual, or a direct hpLost
-  // (Guilt, Herald, Gorefire, Venom). An attack's own hpLost twin is skipped,
-  // so the damageDealt/hpLost pair is one hit, not two.
-  if (events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
-  if (has('playerTurnStart')) { sfx.play('turnStinger'); haptic.play('turnStart'); }
+  playBeatHaptics(events, { isLocalPlayer });
+  if (has('playerTurnStart')) sfx.play('turnStinger');
   if (has('deckShuffled')) sfx.play('deckShuffle');
   if (has('cardDrawn')) sfx.play('cardDraw');
   if (has('cardDiscarded')) sfx.play('cardDiscard');
+}
+
+/**
+ * A beat's haptics alone (content/haptics.js): ONE damage buzz per beat that
+ * cost the player HP by any route — an attack's residual, or a direct hpLost
+ * (Guilt, Herald, Gorefire, Venom); an attack's own hpLost twin is skipped,
+ * so the damageDealt/hpLost pair is one hit, not two — then the turn start.
+ * playBeatCues plays it with the beat's sounds; a skipped timeline plays it
+ * alone for the beats it jumped past.
+ */
+export function playBeatHaptics(events, { isLocalPlayer } = {}) {
+  if (events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
+  if (events.some((e) => e && e.type === 'playerTurnStart')) haptic.play('turnStart');
 }
 
 /**
