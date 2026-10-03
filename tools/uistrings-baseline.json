@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 301,
-  "distinct": 251,
+  "sites": 300,
+  "distinct": 250,
   "files": {
     "src/ui/screens/customize.js": 46,
     "src/ui/screens/lobby.js": 23,
@@ -21,7 +21,7 @@
     "src/ui/screens/profileArchive.js": 10,
     "src/ui/components/smithUpgradeModal.js": 9,
     "src/ui/screens/equipment.js": 9,
-    "src/ui/components/tutorial.js": 8,
+    "src/ui/components/tutorial.js": 7,
     "src/ui/components/debugChrome.js": 6,
     "src/ui/components/saveSlotSelector.js": 6,
     "src/ui/screens/controls.js": 6,

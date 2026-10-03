@@ -98,7 +98,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   let disarmDecision = null;
 
   const CHANGE_LABELS = {
-    damage: 'AR', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'ACTION', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
+    damage: 'AR', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
   };
   /** A row's changes as StatPairs with deltas: "AR 7 → 10". */
   const changeSummary = (row) => el('span', { class: 'smith-fold-values' }, row.values.map((change) => {
@@ -141,7 +141,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         ]),
         el('span', { class: 'smith-stat-costs as-flavor' }, [
           el('span', {}, ['Weapon Art ', el('strong', { text: `Mana ${stats.weaponArtManaCost}` })]), el('i', { text: ' · ' }),
-          el('span', {}, ['Unique Skill ', el('strong', { text: `Stamina ${stats.uniqueSkillStaminaCost}` })]),
+          el('span', {}, ['Unique Skill ', el('strong', { text: `${t('combat.actions')} ${stats.uniqueSkillStaminaCost}` })]),
         ]),
       ],
       className: 'smith-data-row smith-intrinsic-stats',

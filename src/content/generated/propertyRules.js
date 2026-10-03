@@ -722,7 +722,7 @@ export const propertyRules = [
     "tag": "spareWhetstone",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first attack while Prepared each combat gains {gainEnergy} Energy."
+    "textTemplate": "Your first attack while Prepared each combat gains {gainEnergy} Stamina."
   },
   {
     "tag": "whettedGuard",

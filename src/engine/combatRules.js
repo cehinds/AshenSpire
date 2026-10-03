@@ -1,3 +1,4 @@
+import { bindTurnStamina } from '../model/turnStamina.js';
 // Revision adapter for the existing solo/co-op action interpreters. No second
 // simulator: the same opcodes, damage entry point, piles, triggers and RNG run.
 import { validateCombatRules, validateCombatProfile, validateAttack, allocateInteger, resolveDamageComponents, weaponImpact, groupedResistance } from '../model/combatRules.js';
@@ -164,7 +165,7 @@ export function foundationCosts(ctx, def, weightClass, legacy) {
   if (!ctx.foundation || !def.effects?.some((e) => e.op === 'dodgeRoll')) return legacy;
   const rules = ctx.foundation.rules.dodge;
   const weight = foundationProfile(ctx, ctx.player).weightClass || weightClass.id;
-  return { ...legacy, action: rules.actions, mana: 0, stamina: rules.stamina[weight], variable: false };
+  return { ...legacy, action: rules.stamina[weight], mana: 0, stamina: rules.stamina[weight], variable: false };
 }
 
 export function assertFoundationPlayable(ctx, def, choice) {
@@ -181,7 +182,7 @@ export function startFoundationTurn(ctx, entity) {
   entity.evade = 0; entity.evadeUses = 0;
   // Setup starts with the supplied pool. Recovery occurs only on later turns.
   if (ctx.turn > 1) {
-    for (const resource of ['stamina', 'mana']) {
+    for (const resource of ['mana']) {
       const maxKey = resource === 'stamina' ? 'maxStamina' : 'maxMana';
       const amount = Math.min(entity[maxKey] - entity[resource], ctx.foundation.rules.recovery[`${resource}PerTurn`]);
       if (amount > 0) { entity[resource] += amount; ctx.emit(`${resource}Recovered`, { targetId: entity.id, amount, reason: 'turnStart' }); }
@@ -210,6 +211,8 @@ function candidateState(ctx) {
     if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
   }
   const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  if (candidate.player) bindTurnStamina(candidate.player);
+  if (candidate.players) for (const seat of candidate.players.values()) bindTurnStamina(seat.entity);
   candidate.emit = (type, payload) => candidate._emitEvent(candidate, type, payload);
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
