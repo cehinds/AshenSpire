@@ -1,0 +1,148 @@
+{
+  "passed": true,
+  "checks": [
+    "full built game boots",
+    "four books and brass button load from external pack",
+    "equal rows without overflow at 593/390/320",
+    "real purchase removes stock",
+    "category persists",
+    "hold purchases commit once each",
+    "last purchase leaves sold-out shelf and focuses Leave",
+    "zero runtime or art-load errors"
+  ],
+  "optionalAudioProbes": [
+    "http://localhost:8768/build/assets/sfx/holdTick_shopBuy.ogg",
+    "http://localhost:8768/build/assets/sfx/buy.ogg"
+  ],
+  "responsive": [
+    {
+      "width": 593,
+      "rows": [
+        {
+          "height": 97.6875,
+          "width": 403.84375,
+          "right": 557.28125,
+          "left": 153.4375,
+          "scroll": 648,
+          "client": 648
+        },
+        {
+          "height": 97.6875,
+          "width": 403.84375,
+          "right": 557.28125,
+          "left": 153.4375,
+          "scroll": 648,
+          "client": 648
+        },
+        {
+          "height": 97.6875,
+          "width": 403.84375,
+          "right": 557.28125,
+          "left": 153.4375,
+          "scroll": 648,
+          "client": 648
+        },
+        {
+          "height": 97.6875,
+          "width": 403.84375,
+          "right": 557.28125,
+          "left": 153.4375,
+          "scroll": 648,
+          "client": 648
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "rows": [
+        {
+          "height": 134.234375,
+          "width": 329.71875,
+          "right": 354.859375,
+          "left": 25.140625,
+          "scroll": 364,
+          "client": 364
+        },
+        {
+          "height": 134.234375,
+          "width": 329.71875,
+          "right": 354.859375,
+          "left": 25.140625,
+          "scroll": 364,
+          "client": 364
+        },
+        {
+          "height": 134.234375,
+          "width": 329.71875,
+          "right": 354.859375,
+          "left": 25.140625,
+          "scroll": 364,
+          "client": 364
+        },
+        {
+          "height": 134.234375,
+          "width": 329.71875,
+          "right": 354.859375,
+          "left": 25.140625,
+          "scroll": 364,
+          "client": 364
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "rows": [
+        {
+          "height": 164.515625,
+          "width": 268.34375,
+          "right": 289.171875,
+          "left": 20.828125,
+          "scroll": 360,
+          "client": 360
+        },
+        {
+          "height": 164.515625,
+          "width": 268.34375,
+          "right": 289.171875,
+          "left": 20.828125,
+          "scroll": 360,
+          "client": 360
+        },
+        {
+          "height": 164.515625,
+          "width": 268.34375,
+          "right": 289.171875,
+          "left": 20.828125,
+          "scroll": 360,
+          "client": 360
+        },
+        {
+          "height": 164.515625,
+          "width": 268.34375,
+          "right": 289.171875,
+          "left": 20.828125,
+          "scroll": 360,
+          "client": 360
+        }
+      ]
+    }
+  ],
+  "art": [
+    {
+      "src": "http://localhost:8768/build/objects/f3/f3cf6ccde63afadcad9e17c5cc43c0d69198cdcd279f981deb46cf8e1015ac54.webp",
+      "width": 320
+    },
+    {
+      "src": "http://localhost:8768/build/objects/10/10c03cc4170320b7c14b41b06292495c843adf96dce3e7e1ce76d1322f199031.webp",
+      "width": 320
+    },
+    {
+      "src": "http://localhost:8768/build/objects/15/1526417c0803c27d2cfcf58b250d27691a2abe97a61abe82c430ce6c9b29fd79.webp",
+      "width": 320
+    },
+    {
+      "src": "http://localhost:8768/build/objects/f3/f3cf6ccde63afadcad9e17c5cc43c0d69198cdcd279f981deb46cf8e1015ac54.webp",
+      "width": 320
+    }
+  ]
+}
