@@ -853,15 +853,19 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
 // A tool runs from an inline `run: node tools/…` OR from a command line inside
 // a `run: |` / `run: >` block scalar (#1524 review): both are scanned; comment
 // lines inside a block are not commands.
-const TOOL_CMD = /(^|[\s;&|(])node\s+(tools|tests)\//;
+// Node options may come first (`node --test tests/…`), and the path may start
+// with `./` (#1524 review, Codex).
+const TOOL_CMD = /(^|[\s;&|(])node(\s+-[^\s]+)*\s+(\.\/)?(tools|tests)\//;
+// Any valid GitHub job id: letters, digits, `-` and `_`, starting with a letter or `_`.
+const JOB_ID = '[A-Za-z_][A-Za-z0-9_-]*';
 function jobsRunningToolsBeforeFetch(yml) {
-  const jobs = yml.split(/\n(?=  [a-z][a-z0-9-]*:\n)/).slice(1);
+  const jobs = yml.split(new RegExp(`\\n(?=  ${JOB_ID}:\\n)`)).slice(1);
   const missing = [];
   let checked = 0;
   for (const job of jobs) {
     if (!/uses: actions\/checkout@/.test(job)) continue;
     checked += 1;
-    const name = job.match(/^  ([a-z0-9-]+):/)[1];
+    const name = job.match(new RegExp(`^  (${JOB_ID}):`))[1];
     let fetched = false, block = null, bad = false;
     for (const line of job.split('\n')) {
       const indent = line.match(/^ */)[0].length;
@@ -901,8 +905,12 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('bad-block', `      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs\n${fetch}`),
     job('bad-folded', `      - name: x\n        run: >-\n          set -e;\n          node tests/run-node.mjs\n${fetch}`),
     job('bad-no-fetch', '      - run: echo nothing\n'),
+    job('bad-node-flag', `      - run: node --test tests/a.test.mjs\n${fetch}`),
+    job('bad-dot-path', `      - run: node ./tools/a.mjs\n${fetch}`),
+    job('good-before-underscore', `${fetch}      - run: echo ok\n`),
+    job('bad_underscore', `      - run: node tools/a.mjs\n${fetch}`),
   ].join('\n') + '\n';
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 7);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch']);
+  assert.equal(checked, 11);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore']);
 });
