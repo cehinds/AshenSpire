@@ -61,7 +61,8 @@ export function setHighResSource(map) {
 /**
  * Which tier an id resolves to right now: 'high' when a high-res source covers
  * it, else 'built-in' — whichever tier this build carries (light on dev/test,
- * full on release/main), which the page's EDITION stamp names.
+ * high on release/main), which the page's EDITION stamp names (since step 8e,
+ * the build's default tier).
  */
 export function assetTier(path) {
   return highRes && highRes.has(path) ? 'high' : 'built-in';

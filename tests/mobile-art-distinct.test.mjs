@@ -19,3 +19,24 @@ test('the bundler aliases byte-identical images instead of inlining them twice',
   assert.match(bundle, /firstKeyOf\.has\(id\)/);
   assert.match(bundle, /ASSET_MAP\[alias\] = ASSET_MAP\[key\]/);
 });
+
+// STEP 8e (docs/EXTERNAL-ASSETS-PLAN.md): the light single file keeps the alias
+// loop above, and the pack shape gets the same saving from its object store,
+// whose names are the bytes: every light id that shares bytes with another
+// shares its one object, so an aliased image is stored and fetched once.
+test('the pack index maps byte-identical light ids to one object', async () => {
+  const { objectPath } = await import('../tools/asset-pack.mjs');
+  const manifest = JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url), 'utf8'));
+  const groups = new Map();
+  for (const [id, rec] of Object.entries(manifest.assets)) {
+    if (!rec.light) continue;
+    const key = `${rec.light.sha256}${id.slice(id.lastIndexOf('.')).toLowerCase()}`;
+    groups.set(key, [...(groups.get(key) || []), id]);
+  }
+  const aliased = [...groups.values()].filter((ids) => ids.length > 1);
+  assert.ok(aliased.length >= 10, `only ${aliased.length} groups of byte-identical light images — the manifest did not load`);
+  for (const ids of aliased) {
+    const objects = new Set(ids.map((id) => objectPath(manifest.assets[id].light.sha256, id)));
+    assert.equal(objects.size, 1, `${ids.join(', ')} share bytes but name ${objects.size} objects`);
+  }
+});

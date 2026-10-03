@@ -21,8 +21,8 @@
 // and proves it can fail with --selftest against planted known-bads rather
 // than asserting its own care.
 //
-//   node tools/verify-external.mjs [--dir build/web]
-//   node tools/verify-external.mjs --selftest [--dir build/web]
+//   node tools/verify-external.mjs [--dir build]
+//   node tools/verify-external.mjs --selftest [--dir build]
 //
 // WHAT IT CHECKS
 //   A  the pins are present: ASSET_MAP is empty, ASSET_PACKS names a default
@@ -75,7 +75,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ARGV = process.argv.slice(2);
 const SELFTEST = ARGV.includes('--selftest');
 const dirFlag = ARGV.indexOf('--dir');
-const OUT = resolve(ROOT, dirFlag >= 0 ? ARGV[dirFlag + 1] : 'build/web');
+const OUT = resolve(ROOT, dirFlag >= 0 ? ARGV[dirFlag + 1] : 'build');
 const MANIFEST = resolve(ROOT, 'art-manifest.json');
 
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
@@ -140,7 +140,7 @@ function verify(outDir) {
 
   // A — the pins
   checks++;
-  if (!/ASSET_MAP = \{\}/.test(text)) findings.push('ASSET_MAP is not empty — this is not the external-art build');
+  if (!/ASSET_MAP = \{\}/.test(text)) findings.push('ASSET_MAP is not empty — this is not the pack-shaped build');
   checks++;
   const pin = readPin(text);
   if (!pin || !pin.packs || typeof pin.packs !== 'object') {
@@ -324,7 +324,7 @@ if (!SELFTEST) {
 // this tool reads (the HTML, asset-base.json, packs/ and objects/).
 const base = OUT;
 if (!existsSync(resolve(base, 'AshenSpire.html'))) {
-  console.error(`verify-external --selftest: no build at ${relative(ROOT, base)} — node tools/bundle.mjs --external-art --out ${relative(ROOT, base)}`);
+  console.error(`verify-external --selftest: no build at ${relative(ROOT, base)} — node tools/bundle.mjs [--light] --out ${relative(ROOT, base)}`);
   process.exit(2);
 }
 // ONE copy, and every plant is undone before the next: a high-tier build is
