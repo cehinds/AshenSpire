@@ -49,6 +49,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
 | `ci.yml` → the checks that need a real browser | no | yes |
 | `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
+| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>` ([desktop/windows/README.md](desktop/windows/README.md)) | only when the PR touches `desktop/` | yes (also `main`) |
 
 The workflows' own `on:` blocks and job `if:` conditions are the source of this
 table; a skipped job shows on the PR as *skipped*, not as missing.
@@ -915,7 +916,7 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 `node tools/sfx-filename-convention.mjs` after changing this contract.
 
 Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
-D38 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
+D48 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
 timeline per beat, `playEventCues` for instant playback and a fresh fight's
 opening (a boss fight's waits for its name splash to close), and
 `playReceiptSounds` for co-op receipts (`coopReceiptSounds` in

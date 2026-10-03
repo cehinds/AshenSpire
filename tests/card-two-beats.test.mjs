@@ -8,11 +8,8 @@
 //   #980 handed the first tap to the action (`actionOwnsTouch` on the Smith
 //        and the merchant) to fix a three-tap count — buying the count by
 //        spending the selecting beat.
-//   #987 gave a truncated card's chevron a private door straight to the
-//        inspect modal, so one gesture meant two things depending on whether
-//        a card's text happened to fit its face.
-//
-// Both are cheap to re-introduce and expensive to notice, so each has a line.
+// The owner removed the extra truncated-text chevron on 2026-10-02;
+// Information is the shared inspection control.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
@@ -32,21 +29,14 @@ ok(/if \(!actionOwnsTouch && touchTaps === 1 && !touchSelectionSafe\)/.test(insp
 ok(!/touchTaps === 2/.test(code),
   'the second tap is never reserved for the information button (the three-tap shape)');
 
-// ---- the chevron begins the beats, it does not spend them -------------------
-const more = inspection.slice(inspection.indexOf("more.addEventListener('click'"));
-ok(/select\(\); revealInfo\(\);/.test(more.slice(0, 400)),
-  'the chevron selects and reveals the `i`');
-ok(!/open\(more\)/.test(code),
-  'the chevron never opens the inspect door itself — the `i` is the one door');
-
 // ---- reading a card spends the beat rather than zeroing it ------------------
 // The tap count moved to ./cardSelection.js, so these now check the CALL
 // rather than the assignment. Same two facts: reading a card never resets its
-// count, and both doors spend exactly one selecting beat.
+// count, and Information spends exactly one selecting beat.
 ok(!/touchTaps = 0|touchedIdentity = null/.test(code),
-  'neither the `i` nor the chevron resets the tap count under a lit card');
-ok((code.match(/spendSelectingBeat\(identity, douse\)/g) || []).length === 2,
-  'both the `i` and the chevron spend exactly one selecting beat');
+  'the `i` never resets the tap count under a lit card');
+ok((code.match(/spendSelectingBeat\(identity, douse\)/g) || []).length === 1,
+  'the `i` spends exactly one selecting beat');
 ok(/countBeat\(identity, douse\)/.test(code),
   'and the face counts its taps through the same store');
 
