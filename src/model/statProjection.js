@@ -22,6 +22,7 @@ function presentationRows(registries) {
   const table = (registries.derivedStatRules || {}).presentation;
   if (!table) throw new Error('statProjection requires derivedStatRules.presentation');
   return Object.entries(table)
+    .filter(([id]) => id !== 'energy')
     .map(([id, row]) => ({ id, ...row }))
     .sort((a, b) => a.order - b.order);
 }
@@ -260,7 +261,7 @@ export function statProjection(registries, run) {
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''}`
         + `${receipt.raw !== receipt.value ? `, held to ${receipt.value === receipt.min ? `at least ${receipt.min}` : `at most ${receipt.value}`}` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
+      note: id === 'stamina' ? 'Pays card and combat costs; refills at the start of every turn.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
     };
   });
   // The rating rows this run reads (its own, or its retired formula restated),

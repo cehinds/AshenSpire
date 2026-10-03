@@ -546,7 +546,7 @@ export const nodeTerms = [
     "nodeId": "spareWhetstone",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first attack while Prepared each combat gains {gainEnergy} Energy."
+    "template": "Your first attack while Prepared each combat gains {gainEnergy} Stamina."
   },
   {
     "nodeId": "whettedGuard",

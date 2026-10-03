@@ -37,7 +37,7 @@ export function resolveBindings(project,context){
   if(b.any.length&&!b.any.some(t=>tags.has(t)))reasons.push('no optional tag matched');
   if(b.none.some(t=>tags.has(t)))reasons.push('excluded tag present');
   const mana=Number(context.manaSpent)||0,stamina=Number(context.staminaSpent)||0,actions=Number(context.energySpent)||0;
-  if(b.resource==='mana'&&mana<=0||b.resource==='stamina'&&stamina<=0||b.resource==='resource'&&mana+stamina<=0||b.resource==='mundane'&&mana+stamina>0||b.resource==='highAction'&&(mana+stamina>0||actions<SEQ.behavior.highActionMinimum))reasons.push('payment condition not met');
+  if(b.resource==='mana'&&mana<=0||b.resource==='stamina'&&stamina<=0||b.resource==='resource'&&mana+stamina<=0||b.resource==='mundane'&&mana>0||b.resource==='highAction'&&(mana>0||actions<SEQ.behavior.highActionMinimum))reasons.push('payment condition not met');
   return {id:b.id,name:b.name,match:!reasons.length,reasons,score:b.priority+(b.objectId?SEQ.behavior.bindingScore.objectMatch:0)};
  });
  const matches=rows.filter(r=>r.match).sort((a,b)=>b.score-a.score),conflict=matches.length>1&&matches[0].score===matches[1].score;

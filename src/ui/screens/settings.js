@@ -302,7 +302,7 @@ function recoverySettingRows() {
   return RECOVERY_POOLS.flatMap((pool) => {
     const D = recoveryRules.defaults[pool];
     const name = names[pool];
-    const row = (field, extra) => ({ cat: 'Advanced', advancedGroup: 'Recovery', statTopic: name, key: recoveryKey(pool, field), ...extra });
+    const row = (field, extra) => ({ cat: 'Advanced', advancedGroup: 'Recovery', statTopic: name, key: recoveryKey(pool, field), ...(pool === 'stamina' ? { retired: true } : {}), ...extra });
     const number = (field, label, note) => row(field, { type: 'number', def: D[field], min: range[field].min, max: range[field].max, label, applied: numberAppliedHtml, note });
     // A fight opens with Stamina full (mechanics.stamina.combatStartRefill),
     // so Stamina restored between fights would be overwritten: no rows for it.
@@ -596,6 +596,9 @@ const ROWS = [
 
   { cat: 'Combat', key: 'showPlayedCard', def: false, label: t('settings.row.showPlayedCard'),
     note: tFull('settings.row.showPlayedCard') },
+
+  { cat: 'Combat', key: 'manaRing', def: true, label: 'Mana ring',
+    note: 'Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.' },
 
   ...HUD_VISIBILITY_SETTINGS,
 

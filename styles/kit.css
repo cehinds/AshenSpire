@@ -4827,7 +4827,8 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation'] .combat-action-row :is(.energy-orb,.combat-potions,.end-turn) {
   height: var(--combat-control-size); min-height: var(--combat-control-size); max-height: var(--combat-control-size);
 }
-:root .combat[data-layout='formation'] .combat-action-row .energy-orb,
+:root .combat[data-layout='formation'] .stamina-budget,
+.combat-action-row .energy-orb,
 :root .combat[data-layout='formation'] .combat-action-row .combat-potions {
   width: var(--combat-control-size); min-width: var(--combat-control-size); aspect-ratio: 1;
 }
@@ -5625,3 +5626,19 @@ button[data-button-size] {
 .book-reading-art { float: right; width: 5.5rem; margin: -0.5rem 0 0.5rem 0.5rem; }
 .inventory-face .book-art { width: 4rem; }
 .inventory-model .book-art { width: min(100%, 15rem); }
+
+/* Unified turn Stamina uses the former action diamond, in green. */
+.card .card-cost-rail > .cost.stamina-cost,
+.card.playing-poker-card .cost.stamina-cost { color: #88e183; border-color: #529b58; background: #14271b; }
+.stamina-budget,
+.combat-action-row .energy-orb,
+.combat-action-row .energy-orb :is(.sp-k, .sp-v) { color: #88e183; }
+
+/* Approved SP Atelier assembly. Keep the shared footer's measured footprint. */
+:root .combat:is(.coop,:not(.coop)) .combat-action-row > .energy-orb.stamina-orb {
+  padding: 0; border: 0; background: transparent; box-shadow: none; position: relative;
+  overflow: visible; display: block;
+}
+:root .combat .stamina-orb > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+:root .combat .stamina-orb > .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+:root .combat .stamina-orb:focus-visible { outline: 2px solid #96cbaa; outline-offset: 2px; }

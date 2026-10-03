@@ -13,7 +13,7 @@
 //   weight     'normal' | 'skinny'  — "poise (very skinny bar)", his words
 //   order      top-to-bottom within a surface; HP, Mana, Stamina, then Poise
 //   surfaces   ['main'] | ['model'] | both — HIS two-HUD split, as data:
-//              main HUD = health, then mana, then stamina. Poise is NOT in the
+//              main HUD = health, then mana. Stamina lives beside the hand. Poise is NOT in the
 //              top HUD; in combat it remains on the player character card.
 //              under the character models = "really just health and poise"
 //   source     WHICH RESOURCE, from the closed set in model/resources.js.
@@ -66,17 +66,6 @@ export const HUD_REFERENCE_MAX = Object.freeze({
 });
 
 export const resources = [
-  {
-    id: 'stamina',
-    name: 'SP',
-    glyph: '▲',
-    tint: '#4d7a45',
-    weight: 'normal',
-    order: 30,
-    surfaces: ['main'],
-    source: 'stamina',
-    domainMax: HUD_REFERENCE_MAX.stamina,
-  },
   {
     id: 'mana',
     name: 'MP',
