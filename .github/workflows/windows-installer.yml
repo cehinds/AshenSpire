@@ -75,6 +75,12 @@ jobs:
           & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File desktop/windows/art-options.ps1 -Config art-release.json -SelectionFile "$env:RUNNER_TEMP\art-selection.ini" -PreviewFile build/windows-installer/art-options-preview.png
           if ($LASTEXITCODE -ne 0) { throw 'art chooser preview failed' }
 
+      - name: Download art separately with checksum verification
+        shell: pwsh
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File tests/windows-art-download.ps1 -Destination "$env:RUNNER_TEMP\standalone-art.zip"
+          if ($LASTEXITCODE -ne 0) { throw 'standalone art download failed' }
+
       - name: Install silently, with the high-resolution art
         shell: pwsh
         run: |
