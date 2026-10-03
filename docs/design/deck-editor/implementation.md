@@ -61,5 +61,10 @@ two-line descriptions, editor drag/resize/snapping, saved drafts and JSON copy.
 Independent review of PR #1535 found and verified a fix for stale sideboard
 mount contents after smith extraction/installation, including unequipped gear.
 The reviewer approved the fix and independently reran its three regression cases.
+Build 0.7.1.840 (digest `6f15217dd5`) completed with the pack and light standalone
+outputs. The packaged game was opened through Map → Deck → Edit deck: inline
+Inspect left the previous card unchanged until pressed, Pause changed to Play,
+all deck images loaded, the card retained its 5:7 ratio, and an equipment card
+was removed and restored successfully. No browser errors were logged.
 The broader test run overlapped a base merge and is being rerun on the settled
-tree. Final build/CI/merge evidence will be recorded before promotion.
+tree. Final CI/merge evidence will be recorded before promotion.
