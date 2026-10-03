@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1518",
-    "date": "2026-10-03",
-    "group": "2026-10-03",
-    "summary": "Quick start: from the title to your first card in six presses",
-    "detail": "The title has a new Quick start. It begins a climb at once with the recommended character (the Reaver, no keepsake, Standard stats, the class's own starting gear), a fresh seed and the first empty save slot, and skips the opening. The opening still plays on your next ordinary climb. If every slot is full it asks before replacing slot 1, as Begin does. A new player now reaches their first card play in 6 inputs, down from 23 through New and character creation. New still lets you choose everything.",
-    "build": "0.7.1.823",
-    "pullRequest": 1518,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1518"
+    "id": "pr-1523",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: browser checks follow the art and wording updates",
+    "detail": "The hand-placement, animation and flask-menu checks use the verified art packs. The Fullscreen test follows the shared wording table, and flask checks report their result in the format CI reads.",
+    "build": "0.7.1.825",
+    "pullRequest": 1523,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1523"
+  },
+  {
+    "id": "pr-1521",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Read a book, learn a card, keep your class progress",
+    "detail": "Manuals grant their XP and an immediate matching card choice, including cross-class skills. Spellbooks teach spells, Universal Tomes let you choose a track and lesson, and class books unlock reusable class cards that can be equipped or removed to leave an empty slot. The shop's book rows have matching sizes and separate book, details and Buy columns. Ten customizable book recipes combine three painted cover styles, thirty independent symbol variants, colors and trim; Book Atelier exports artwork recipes for future updates. Art comes from the verified hd-assets-v4 pack, including its existing uniform light-sprite policy.",
+    "build": "0.7.1.824",
+    "pullRequest": 1521,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1521"
   },
   {
     "id": "pr-1516",

@@ -16,6 +16,11 @@ import { medallionAnchor } from '../content/classArtAnchors.js';
 import { DEFAULT_SPRITE_STYLE, SPRITE_STYLES } from '../model/spriteStyle.js';
 import { createPaintedStage, paintedPresentation } from './paintedOutfits.js';
 import { assetUrl } from './assetmap.js';
+
+/** Shared book-shop chrome uses the asset-pack seam. Books use bookArt.js. */
+export function shopBuyArtwork() {
+  return assetUrl('assets/shop/brass-button.webp');
+}
 import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 import { hintImage } from './imageHints.js';

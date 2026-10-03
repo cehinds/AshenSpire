@@ -1865,6 +1865,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.book.buy",
+    "extends": "",
+    "short": "Buy",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.token.desc",
     "extends": "",
     "short": "{text} It burns by itself when you need it.",
@@ -5305,6 +5312,104 @@ export const uiStrings = [
     "id": "offline.zip.error.generic",
     "extends": "",
     "short": "The folder copy could not be saved. Try again, or use the single-file download above.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.track",
+    "extends": "",
+    "short": "Choose a skill track taught by this book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.empty",
+    "extends": "",
+    "short": "There are no available lessons in this book. It has not been consumed.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.choice",
+    "extends": "",
+    "short": "Choose one lesson from this book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.stale",
+    "extends": "",
+    "short": "Your books have changed. Open this book again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.title",
+    "extends": "",
+    "short": "Read {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.summary",
+    "extends": "",
+    "short": "Gain {xp} XP and learn one selected card. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.track",
+    "extends": "",
+    "short": "XP skill track",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.search",
+    "extends": "",
+    "short": "Find a skill or class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.choose",
+    "extends": "",
+    "short": "Read and learn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.cancel",
+    "extends": "",
+    "short": "Cancel",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.empty",
+    "extends": "",
+    "short": "No lessons match your search.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.rarity",
+    "extends": "",
+    "short": "Skill and spell choices follow the selected track's unlocked rarities; common cards are available from level zero.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.knownClass",
+    "extends": "",
+    "short": "This class is already learned.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.class",
+    "extends": "",
+    "short": "Learn this class card now. Equip or remove it later in your inventory; its progress is kept.",
     "full": "",
     "tip": ""
   },

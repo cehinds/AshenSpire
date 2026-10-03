@@ -50,6 +50,7 @@ export function runCombatPlayer(run) {
     : run.equipmentPoolDeficits;
   return {
     classId: run.class,
+    ...(run.classUnequipped ? { classUnequipped: true } : {}),
     attributes: run.attributes,
     // The character level every stat row's `perLevel` reads (ruleset 7).
     level: Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1,
