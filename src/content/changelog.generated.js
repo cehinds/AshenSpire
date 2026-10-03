@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1527",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Painted books and class-book bonuses",
+    "detail": "Books have separate painted covers and emblems, including a feat emblem, with color across the whole leather binding. Class books grant XP on every read, learn the class on the first read, and independently roll a matching combat card (25%) and feat (5%). Both chances are configurable in Advanced → Shops. The result shows what you received; excess card copies go to the sideboard.",
+    "build": "0.7.1.837",
+    "pullRequest": 1527,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1527"
+  },
+  {
     "id": "pr-1526",
     "date": "2026-10-03",
     "group": "2026-10-03",

@@ -2,12 +2,12 @@
 
 Open [Book Atelier](preview/book-library/layers/atelier.html) through the
 repository preview server. All ten books use the production renderer, with
-three painted cover styles, freely chosen leather and ink colors, three trim
-layers, and ten symbols in solid, line and seal treatments.
+three painted cover styles, freely chosen full-binding and metal colors, three tooling
+layers, and eleven painted emblems in raised, aged and medallion treatments.
 
-Layer order: painted book → front leather color → trim → symbol. Page edges,
-spine and ribbon retain the neutral painted base. The covers share one square
-canvas and registration. The symbols are standalone square SVGs and can also
+Layer order: painted book → full-binding leather color → painted emblem → tooling. Page edges and
+brass fittings retain their natural colors; front, spine, back edge and ribbon recolor together. The covers share one square
+canvas and registration. The symbols are independent transparent painted WebPs and can also
 be reused outside books.
 
 ## Change a book later
@@ -25,14 +25,12 @@ selected book. The tool does not silently write the checkout.
 ## Assets and provenance
 
 The source package lives in [AshenSpire-art](https://github.com/cehinds/AshenSpire-art/tree/main/art/manual-shop-2026-10-02).
-It contains three transparent cover PNG masters, thirty SVG symbol variants,
-three trim SVGs, a color mask, thirty transparent book composition previews,
-the original shop/button masters, exact prompts and an exporter. Painted
-covers were made with OpenAI's built-in image generator; geometric symbols
-and trim are original native SVGs authored by Codex. No third-party art was
-downloaded.
+The painted-v2 folder retains three blank binding PNG masters and eleven painted
+emblem masters (including feat), exact image-generation prompts and a reproducible
+WebP exporter. All painted layers were made with OpenAI's built-in image generator
+from the project's original approved Shield Manual. No third-party art was downloaded.
 
-Game asset IDs start with `assets/shop/layers/` and resolve through `assetUrl`
+Game asset IDs start with `assets/shop/painted/` and resolve through `assetUrl`
 from the pinned, verified art packs. High and light runtime files are released
 by the art repository. The game does not keep a duplicate runtime art tree.
 

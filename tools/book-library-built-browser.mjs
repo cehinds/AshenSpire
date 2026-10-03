@@ -13,7 +13,7 @@ try {
   await page.goto(`${process.env.BOOK_SHOP_URL || 'http://localhost:8768'}/build/AshenSpire.html?shot=shop&shotLibrary=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.locator('#shop-cat-skillBooks').click({ timeout: 120000 });
   assert.equal(await page.locator('.shop-book-offer').count(), 10);
-  assert.equal(await page.locator('[data-book-id="reaverClassBook"] .shop-book-buy').isDisabled(), true);
+  assert.equal(await page.locator('[data-book-id="reaverClassBook"] .shop-book-buy').isDisabled(), false);
   await page.locator('#open-armoury').click();
   await page.locator('[data-surface="armouryView"] [data-member="hybrid"]').click();
   await page.locator('.inventory-face[data-inventory-item="consumable:spellbook"]').click();
@@ -26,6 +26,7 @@ try {
   await page.locator('.armoury-read-book:visible').click();
   await page.locator('[data-lesson-id="starseer"]').click();
   await page.locator('.book-learning-confirm').click();
+  await page.locator('[data-component="book-receipt"]').getByRole('button', { name: 'Close book', exact: true }).click();
   const select = () => page.locator('.inventory-face[data-inventory-item="class:starseer"]').click();
   await select();
   assert.equal(await page.locator('.armoury-class-action:visible').innerText(), 'Equip class');
@@ -37,7 +38,7 @@ try {
   assert.equal(await page.locator('.armoury-class-action:visible').innerText(), 'Equip class');
   await page.screenshot({ animations: 'disabled', path: resolve(output, 'learning-built-classless.png'), fullPage: true });
   assert.deepEqual(errors, []);
-  writeFileSync(resolve(output, 'learning-built-results.json'), JSON.stringify({ passed: true, checks: ['packed game boots', 'ten book offers', 'known class unavailable', 'read cross-class spell from real inventory', 'consume once', 'learn class without auto-equip', 'equip class', 'empty class slot'], errors }, null, 2));
+  writeFileSync(resolve(output, 'learning-built-results.json'), JSON.stringify({ passed: true, checks: ['packed game boots', 'ten book offers', 'known class repeatable', 'read cross-class spell from real inventory', 'consume once', 'learn class without auto-equip', 'class-book receipt', 'equip class', 'empty class slot'], errors }, null, 2));
   console.log('PASS: packed game library, spell learning and reusable class cards; no runtime/art errors');
 } catch (error) {
   await page.screenshot({ animations: 'disabled', path: resolve(output, 'learning-built-failure.png'), fullPage: true });
