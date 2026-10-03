@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1550",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Small combatants stay reachable",
+    "detail": "The player keeps a 44 px touch target when scaled down. Motion and save checks choose an unobstructed target point outside nested intent controls, preserving normal card play and their existing assertions.",
+    "build": "0.7.1.861",
+    "pullRequest": 1550,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1550"
+  },
+  {
     "id": "pr-1543",
     "date": "2026-10-03",
     "group": "2026-10-03",
