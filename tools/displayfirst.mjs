@@ -1198,14 +1198,14 @@ function selftestPlants() {
         {
           file: 'src/ui/screens/settings.js',
           find: [
-            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-            "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
+            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
+            "    note: tFull('settings.row.fullscreen') },",
             '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
           ].join(settingsEol),
           replace: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
-            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
-            "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
+            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
+            "    note: tFull('settings.row.accent') },",
             '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
           ].join(settingsEol),
         },
@@ -1213,13 +1213,13 @@ function selftestPlants() {
           file: 'src/ui/screens/settings.js',
           find: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
-            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
-            "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
+            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
+            "    note: tFull('settings.row.accent') },",
             '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,',
           ].join(settingsEol),
           replace: [
-            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-            "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
+            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
+            "    note: tFull('settings.row.fullscreen') },",
             '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,',
           ].join(settingsEol),
         },

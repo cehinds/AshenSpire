@@ -34,9 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Behind the scenes: the build-number check no longer passes when it cannot read the previous build** ([#1519](https://github.com/cehinds/AshenSpire/pull/1519), `0.7.1.825`). Nothing you play changes. The automatic check that each new build's number is higher than the last one read a previous build record it could not open (a partial or damaged copy of the history), or one too garbled to read, as if there had been no record at all, and passed. It now stops and says it could not tell.
+- **Behind the scenes: the build-number check no longer passes when it cannot read the previous build** ([#1519](https://github.com/cehinds/AshenSpire/pull/1519), `0.7.1.826`). Nothing you play changes. The automatic check that each new build's number is higher than the last one read a previous build record it could not open (a partial or damaged copy of the history), or one too garbled to read, as if there had been no record at all, and passed. It now stops and says it could not tell.
 
 ## 2026-10-02
+
+- **Behind the scenes: browser checks follow the art and wording updates** ([#1523](https://github.com/cehinds/AshenSpire/pull/1523), `0.7.1.825`). The hand-placement, animation and flask-menu checks use the verified art packs. The Fullscreen test follows the shared wording table, and flask checks report their result in the format CI reads.
 
 - **Read a book, learn a card, keep your class progress** ([#1521](https://github.com/cehinds/AshenSpire/pull/1521), `0.7.1.824`). Manuals grant their XP and an immediate matching card choice, including cross-class skills. Spellbooks teach spells, Universal Tomes let you choose a track and lesson, and class books unlock reusable class cards that can be equipped or removed to leave an empty slot. The shop's book rows have matching sizes and separate book, details and Buy columns. Ten customizable book recipes combine three painted cover styles, thirty independent symbol variants, colors and trim; Book Atelier exports artwork recipes for future updates. Art comes from the verified `hd-assets-v4` pack, including its existing uniform light-sprite policy.
 
