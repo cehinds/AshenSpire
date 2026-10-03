@@ -9,7 +9,7 @@ import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { closeSaveSlotSelector, deleteSlotReview, openSaveSlotSelector, slotFacts, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
 import { el, html, titleMenu } from '../kit/index.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
@@ -18,8 +18,15 @@ import { offlinePlay } from '../../content/offlinePlay.js';
 
 let releaseActiveTitleBack = null;
 
+// The Title's default focus, in PRIORITY order, not document order: Continue
+// when there is a run to continue, else Quick start (FINISH §6: a keyboard or
+// controller player's first press after the startup gate is the quick start),
+// else New, else the first live control. One comma-joined querySelector would
+// answer in document order and only happen to agree.
+const TITLE_DEFAULT_FOCUS = ['.slot-continue', '.slot-quick', '.slot-new', 'button']
+  .map((s) => `.title-menu ${s}:not([disabled])`);
 export function focusTitleDefault(app, { showCursor = true } = {}) {
-  const control = app?.querySelector('.title-menu .slot-continue:not([disabled]), .title-menu .slot-new:not([disabled]), .title-menu button:not([disabled])');
+  const control = TITLE_DEFAULT_FOCUS.map((s) => app?.querySelector(s)).find(Boolean);
   if (!control) return false;
   control.focus({ preventScroll: true });
   if (showCursor) focusElement(control);
@@ -31,6 +38,7 @@ export function mountTitle(app, {
   registries,
   onContinue,
   onNew,
+  onQuickStart = null,
   onDelete,
   onHistory,
   onProfile,
@@ -97,6 +105,9 @@ export function mountTitle(app, {
       subtitle: 'A roguelike deckbuilder',
       entries: [
         entry('Continue', 'continue', { className: 'slot-continue', disabled: continueSlot == null, reason: t('title.continue.reason') }),
+        // FINISH §6: the one-press route to a first card play, with authored
+        // defaults (content/source/characterCreation.json `quickStart`).
+        ...(onQuickStart ? [entry(t('title.quickstart'), 'quick-start', { id: 'quick-start', className: 'slot-quick' })] : []),
         entry('Load', 'load', { id: 'load-game' }),
         entry('New', 'new', { id: 'new-game', className: 'slot-new' }),
         // #armaments remains the compatibility anchor for the existing watched probe.
@@ -107,6 +118,8 @@ export function mountTitle(app, {
       ],
       attrs: { 'data-component': UI.titleBrandLockup },
     });
+    const quick = menu.querySelector('#quick-start');
+    if (quick) quick.title = tFull('title.quickstart');
     menu.querySelector('.tm-name').dataset.component = UI.titleWordmark;
     menu.querySelector('.tm-name').classList.add('title-glow');
     menu.querySelector('.tm-sub').dataset.component = UI.titleSubtitle;
@@ -275,6 +288,7 @@ export function mountTitle(app, {
       button.addEventListener('click', () => {
         const action = button.dataset.titleAction;
         if (action === 'continue') onContinue(occupied[0].slot);
+        else if (action === 'quick-start') onQuickStart?.();
         else if (action === 'load') openLoadSelector(button);
         else if (action === 'new') openModal(action);
         else if (action === 'collection' && onCompendium) onCompendium();
