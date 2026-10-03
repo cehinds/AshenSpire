@@ -245,7 +245,8 @@ export function deckEditorCostProblems(rel, presentation) {
   const groups = presentation.components?.resourceGroups;
   if (!Array.isArray(groups) || !groups.length) return [`${at} must be a non-empty array`];
   const out = [], ids = new Set(), resources = new Set();
-  const allowed = ['action', 'mana', 'stamina'];
+  const canonicalResources = ['mana', 'stamina'];
+  const allowed = ['action', ...canonicalResources];
   for (const [index, group] of groups.entries()) {
     if (!isObject(group) || typeof group.id !== 'string' || !/^[a-z][a-z0-9-]*$/.test(group.id)) {
       out.push(`${at}[${index}] needs a lowercase resource group id`);
@@ -261,13 +262,15 @@ export function deckEditorCostProblems(rel, presentation) {
       out.push(`${at}[${index}].resources must be a non-empty array`);
       continue;
     }
-    for (const resource of group.resources) {
-      if (!allowed.includes(resource)) out.push(`${at}: unknown resource "${resource}"`);
-      else if (resources.has(resource)) out.push(`${at}: resource "${resource}" is included more than once`);
+    for (const resource of group.resources) if (!allowed.includes(resource)) out.push(`${at}: unknown resource "${resource}"`);
+    // Old Action/Stamina pairs in one group are one pool. A second group
+    // showing that same pool would misleadingly charge it twice.
+    for (const resource of new Set(group.resources.map(resource => resource === 'action' ? 'stamina' : resource))) {
+      if (resources.has(resource)) out.push(`${at}: resource "${resource}" is included more than once`);
       resources.add(resource);
     }
   }
-  for (const resource of allowed) if (!resources.has(resource)) out.push(`${at}: resource "${resource}" is missing`);
+  for (const resource of canonicalResources) if (!resources.has(resource)) out.push(`${at}: resource "${resource}" is missing`);
   return out;
 }
 

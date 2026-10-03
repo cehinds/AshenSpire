@@ -30,7 +30,7 @@ verified art pipeline. The background uses the pack's title-city artwork.
 - Removed equipment grants remain sideboarded through save/load and combat swaps.
 - Fixed-height rows with two-line bottom-anchored descriptions and inline Inspect.
 - Canonical 5:7 inspection, proportional thumbnails, compact desktop layout.
-- Configurable resource groups and order, default MP then combined SP; icon numbers are separate text.
+- Configurable resource groups and order, default MP then canonical SP; icon numbers are separate text. Action is a legacy alias of Stamina and is counted only once, including older groups naming both. Groups may reorder or combine Mana and Stamina without changing combat payment.
 - Desktop-only skill sprite playback uses combat routing and supports exact-frame Pause/Play.
 - The alternative-art control stays unavailable until alternate artwork is authored.
 - `../deck-row-editor/` provides snapping, resizing, position/font controls, wireframe mode,

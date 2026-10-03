@@ -5,9 +5,14 @@ export const deckEditorResourceGroups = () => uiConfig.presentation.deckEditorCo
 
 export function deckEditorCosts(profile, groups = deckEditorResourceGroups()) {
   return groups.map(({ id, label, resources, art }) => {
-    const variable = profile.variable && resources.includes('action');
-    const fixed = resources.reduce((total, resource) =>
-      total + (variable && resource === 'action' ? 0 : Number(profile[resource] || 0)), 0);
-    return { id, label, resources: [...resources], ...(art ? { art } : {}), value: variable ? `X${fixed ? `+${fixed}` : ''}` : fixed };
+    // Action is a legacy alias of the same turn Stamina pool, never an
+    // additional cost. Older authored groups may contain both spellings.
+    const canonical = [...new Set(resources.map(resource => resource === 'action' ? 'stamina' : resource))];
+    const variable = profile.variable && canonical.includes('stamina');
+    const fixed = canonical.reduce((total, resource) => {
+      const value = resource === 'stamina' ? profile.stamina ?? profile.action : profile[resource];
+      return total + (variable && resource === 'stamina' ? 0 : Number(value || 0));
+    }, 0);
+    return { id, label, resources: canonical, ...(art ? { art } : {}), value: variable ? `X${fixed ? `+${fixed}` : ''}` : fixed };
   });
 }

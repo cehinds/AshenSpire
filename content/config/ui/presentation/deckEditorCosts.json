@@ -2,7 +2,7 @@
   "components": {
     "resourceGroups": [
       { "id": "mana", "label": "MP", "resources": ["mana"], "art": "assets/ui/stamina-orb/diamond.webp" },
-      { "id": "stamina", "label": "SP", "resources": ["action", "stamina"], "art": "assets/ui/stamina-orb/orb.webp" }
+      { "id": "stamina", "label": "SP", "resources": ["stamina"], "art": "assets/ui/stamina-orb/orb.webp" }
     ]
   }
 }
