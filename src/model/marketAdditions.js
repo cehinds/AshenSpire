@@ -158,6 +158,7 @@ export function consumablePurchasePlan(registries, run, shelf, item) {
   let reason = '';
   if (!kind || !offered(run, shelf) || !item || !(run.shopStock[shelf] || []).includes(item)) reason = say('shop.refuse.gone');
   else if (!def || def.kind !== kind || !priced(item.cost)) reason = say('shop.refuse.unpriced');
+  else if (def.learnClass && (run.class === def.learnClass || Object.hasOwn(run.classCards || {}, def.learnClass))) reason = say('book.refuse.knownClass');
   else if (!affordable(run, item.cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, shelf, item, def, cost: item?.cost, revision: revision(run) };
 }
