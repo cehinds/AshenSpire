@@ -44,7 +44,11 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
-const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools'];
+// art-release.json and art-manifest.json are build-identity inputs
+// (tools/buildversion.mjs BUILD_IDENTITY_FILES, assets step 11): a copy without
+// them cannot stamp a build, so every tool that stamps one would go red on the
+// clean copy before any plant is read.
+const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools', 'art-release.json', 'art-manifest.json'];
 
 // LINE ENDINGS ARE NOT PART OF THE PLANT (2026-09-17). Plants are authored with
 // `\n`, because that is what the committed blobs carry and what Linux CI checks
