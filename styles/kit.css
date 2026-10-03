@@ -5649,3 +5649,47 @@ button[data-button-size] {
 :root .combat .stamina-orb > svg { display: block; width: 100%; height: 100%; overflow: visible; }
 :root .combat .stamina-orb > .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 :root .combat .stamina-orb:focus-visible { outline: 2px solid #96cbaa; outline-offset: 2px; }
+
+/* Approved compact defense HUD: Ward, shield, then an elastic HP trough.
+   The wrapper keeps the resource plan's total max-HP-scaled width. */
+:root .combat .combatant .combat-health-row {
+  --health-red: #ad403a; --health-blue: #348fcb; --ward-purple: #9a63d9; --ward-gold: #d8b354;
+  --health-row-h: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1))));
+  display: flex; align-items: center; align-self: center; gap: 2.85%; min-width: calc(112px / var(--ui-zoom, 1)); max-width: 100%;
+  min-height: var(--health-row-h); flex: none;
+}
+:root .combat .combatant .combat-health-row > .combat-health-meter {
+  position: relative; flex: 1 1 0; min-width: 0; --meter-tone: var(--health-red) !important;
+  container-type: inline-size; container-name: combat-health;
+}
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-protected='true'] { --meter-tone: var(--health-blue) !important; }
+:root .combat .combatant .combat-health-meter .m-track { height: var(--health-row-h); border-radius: 5px; background: #0d1412; }
+:root .combat .combatant .combat-health-meter[data-warded='true'] .m-track {
+  outline: max(1px, calc(2px / var(--ui-zoom, 1))) solid var(--ward-gold); outline-offset: 1px;
+  box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #d8b35466;
+}
+:root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; }
+:root .combat .combatant .combat-health-badge {
+  position: relative; flex: 0 0 max(14.285%, calc(26px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
+  color: #fff1d6; font: 500 var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))/1 var(--font-body);
+  font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
+}
+:root .combat .combatant .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
+:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #61abe0, var(--health-blue), #194a6b); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
+:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 3px #348fcb55); }
+:root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); }
+:root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
+:root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #9a63d966); }
+:root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+:root .combat .combatant .combat-health-badge { min-width: max-content; }
+:root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
+@container combat-health (max-width: 4em) {
+  :root .combat .combatant .combat-health-meter .m-value { font-size: 0 !important; }
+  :root .combat .combatant .combat-health-meter .m-value::after {
+    content: attr(data-current-hp); font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)));
+  }
+}
+@media (max-width: 600px) {
+  :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
+  :root .combat .combatant .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
+}

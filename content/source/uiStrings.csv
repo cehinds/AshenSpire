@@ -28,6 +28,8 @@
 # cell containing one into an array, and the loader refuses it by name rather
 # than joining it back into a sentence nobody authored.
 id,extends,short,full,tip
+combat.protection.block,,Block,Absorbs attack damage.,Block
+combat.protection.ward,,Arcane Ward,Block granted by magical guards. Absorbs attack damage after ordinary Block.,Arcane Ward
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
 common.continue,,Continue,Move on from this screen.,Continue

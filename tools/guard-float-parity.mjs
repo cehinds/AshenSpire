@@ -414,7 +414,7 @@ async function browserDoor() {
             const lr=layer.getBoundingClientRect(),ar=anchor.getBoundingClientRect();
             const nodes=[...layer.querySelectorAll('.float-num')];
             const floats=nodes.map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cls:n.className,color:getComputedStyle(n).color,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}});
-            return{receipt:window.__guardReceipt,eventAfter:window.__guardAfter,texts:floats.map(x=>x.text).sort(),floats,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom},anchor:{left:ar.left,top:ar.top,right:ar.right,bottom:ar.bottom},hud:{hp:document.querySelector('[data-eid="player"] [data-res="hp"]')?.textContent?.trim(),block:document.querySelector('[data-eid="player"] .block-badge')?.textContent?.trim()||'0'}};
+            return{receipt:window.__guardReceipt,eventAfter:window.__guardAfter,texts:floats.map(x=>x.text).sort(),floats,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom},anchor:{left:ar.left,top:ar.top,right:ar.right,bottom:ar.bottom},hud:{hp:document.querySelector('[data-eid="player"] [data-res="hp"]')?.textContent?.trim(),block:String(Array.from(document.querySelectorAll('[data-eid="player"] .combat-health-badge-value')).reduce((sum,node)=>sum+Number(node.textContent),0))}};
           })()`);
           check(reading.receipt?.amount === 7 && reading.receipt?.blocked === row.blocked,
             `${row.name}: real solo receipt is amount 7 / blocked ${row.blocked}`, JSON.stringify(reading.receipt));

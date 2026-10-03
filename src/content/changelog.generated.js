@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1541",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Shield and Arcane Ward sit beside your health",
+    "detail": "Ordinary Block has a blue shield and turns health blue until it breaks. Magical Block has a purple Arcane Ward badge to its left and adds a gold health outline. Both can appear together; when either disappears, health takes back its space. The two numbers share the existing Block total. Solo and co-op keep the same behavior, including saved fights. Narrow bars show current HP with the full value available in the tooltip.",
+    "build": "0.7.1.853",
+    "pullRequest": 1541,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1541"
+  },
+  {
     "id": "pr-1535",
     "date": "2026-10-03",
     "group": "2026-10-03",

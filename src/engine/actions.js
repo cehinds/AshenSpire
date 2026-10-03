@@ -43,6 +43,7 @@ import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
+import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -148,6 +149,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   const dmg = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
+  reconcileWardBlock(target);
   const hpLoss = dmg - blocked;
   const components = receipt?.components;
   const hpShares = components && dmg > 0 ? allocateInteger(hpLoss, components.map((c) => c.amount)) : [];
@@ -162,6 +164,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     // it (engine/skillXp.js): which hand, which piece. Absent when no card did.
     ...(carrier && carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}),
     blockRemaining: target.block,
+    ...wardBlockReceipt(target),
     ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
       tags: receipt.tags } : {}),
     isAttack: true,
@@ -245,9 +248,12 @@ export function gainBlock(ctx, entity, base, card = null) {
   if (cap != null && entity.block + amt > cap) {
     amt = Math.max(0, cap - entity.block);
   }
+  reconcileWardBlock(entity);
   entity.block += amt;
+  if (amt > 0 && card && isMagicalAttack(ctx, card)) entity.wardBlock = (entity.wardBlock || 0) + amt;
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
+    ...wardBlockReceipt(entity),
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
     // The card that raised it, when one did (engine/skillXp.js pays its piece's
     // group), and in co-op the seat that played it — a guard cast on an ally
