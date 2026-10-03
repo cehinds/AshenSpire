@@ -91,8 +91,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 if (process.argv.includes('--selftest')) {
   // `--shard i/n` runs the plants at index i mod n (tools/doorplant.mjs SHARDS),
   // so ci.yml can spread the corpus over legs under the 20-minute job rule.
-  const { doorSelftest, resolveShard } = await import('./doorplant.mjs');
-  process.exit(await doorSelftest({
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
+  const options = {
     shard: resolveShard(),
     tool: 'flask-menu-probe.mjs',
     timeoutMs: 240000,
@@ -250,7 +250,10 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL plan: run HUD carried icons, setting off/,
       },
     ],
-  }));
+  };
+  const code = await doorSelftest(options);
+  if (code === 0) console.log(`flask-menu-probe --selftest: OK — ${selectShard(options.plants, options.shard).length} checks passed`);
+  process.exit(code);
 }
 
 // A deadline per CDP command (#1474 review; tools/displayfirst.mjs has the same
