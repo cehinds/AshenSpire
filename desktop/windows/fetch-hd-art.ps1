@@ -226,7 +226,15 @@ function Remove-DroppedFiles {
     return $true
   }
   $taken = @($now | Where-Object {
-    if ($was.Contains($_) -or $_ -like 'install-data/*') { return $false }
+    if ($was.Contains($_)) { return $false }
+    $parts = $_.Split('/')
+    # A parent folder of the new path that is a file the old version never
+    # installed blocks the copy just as the path itself would.
+    for ($k = 1; $k -lt $parts.Count; $k++) {
+      $up = ($parts[0..($k - 1)] -join '/')
+      $upFull = Join-Path $InstallDir ($up.Replace('/', [IO.Path]::DirectorySeparatorChar))
+      if ((Test-Path -LiteralPath $upFull -PathType Leaf) -and -not $was.Contains($up)) { return $true }
+    }
     $full = Join-Path $InstallDir ($_.Replace('/', [IO.Path]::DirectorySeparatorChar))
     (Test-Path -LiteralPath $full) -and -not (& $isOurs $full)
   })
