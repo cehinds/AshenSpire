@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1526",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Class-book reward rules are documented",
+    "detail": "The approved contract keeps class learning and XP, makes class books repeatable, and specifies independent configurable combat-card and feat chances of 25% and 5%. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.835",
+    "pullRequest": 1526,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1526"
+  },
+  {
     "id": "pr-1517",
     "date": "2026-10-03",
     "group": "2026-10-03",
