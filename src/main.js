@@ -10,6 +10,7 @@ import { bootArtStatusModel } from './ui/models/BootArtStatusModel.js';
 import { whenNoOverlay } from './ui/whenNoOverlay.js';
 import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
+import { quickStartRunConfig } from './model/characterCreation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
@@ -136,6 +137,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
+import { createHaptics, haptic } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -363,6 +365,11 @@ seedPromotedDefaults(activeMeta, activeSettings);
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
+// Haptics have their own seam (ui/haptics.js), played by the call sites that
+// mean card play, damage taken and turn start; a moment with a pattern in
+// content/haptics.js vibrates unless Settings → Audio → Haptics is off (read
+// live, per cue). Not fed from sfx ids: equipment swaps share the card sound.
+haptic.sink = createHaptics({ getSettings: () => activeSettings });
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
 initInput({ getSettings: () => activeSettings });
@@ -1075,7 +1082,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1165,11 +1172,14 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
-  startClimb();
+  startClimb({ skipOpening });
 }
 
 // After the deck is finalized (incl. any draft), generate the map and go.
-function startClimb() {
+// `skipOpening` is the Title's Quick start (characterCreation.quickStart): the
+// player asked to be in the climb now, so this climb does not queue the opening.
+// It records nothing as seen — the next ordinary climb still plays it.
+function startClimb({ skipOpening = false } = {}) {
   // A dealt deck (Sealed, Draft, with any picks) was never stamped: give its
   // cards their equipment faces now, as the load door and every later restamp
   // do, so the first fight plays the same cards a reload would. A pool deck is
@@ -1177,7 +1187,7 @@ function startClimb() {
   if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
-  if ((!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
+  if (!skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
     run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
   }
   persist();
@@ -1609,6 +1619,14 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     registries,
     onContinue: (slot) => resumeRun(slot),
     onNew: (slot) => showCustomize(slot),
+    // FINISH §6: authored defaults, a fresh seed, the first empty slot. A full
+    // set of slots falls back to slot 1, where startRunInSlot asks before it
+    // replaces the save there, as Begin does.
+    onQuickStart: () => {
+      rebuildRegistries(saves.loadMeta().settings || {});
+      const empty = slots.find((s) => !s.summary);
+      startRunInSlot({ ...quickStartRunConfig(registries), seedString: randomSeedString() }, empty ? empty.slot : 1);
+    },
     // A delete returns to the door it came from, with the slot now empty.
     onDelete: (slot, from = null) => {
       saves.clearRun(slot);

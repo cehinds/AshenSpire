@@ -17,16 +17,14 @@ try {
   });
   for (const id of ids) for (const cover of ['classic', 'scholar', 'field']) {
     await page.evaluate(async ({ id, cover }) => {
-      const { renderBookArt } = await import('/src/ui/components/bookArt.js');
+      const { renderBookArt } = await import('/docs/preview/book-library/layers/painted/render.js');
       const { BOOK_ART_PRESETS } = await import('/src/content/bookArtPresets.js');
       const book = renderBookArt({ id }, { recipe: { ...BOOK_ART_PRESETS[id], cover } });
       book.style.width = '320px'; document.body.replaceChildren(book);
-      await Promise.all([...book.querySelectorAll('img')].map((img) => img.decode()));
-      // Preload masks before the browser's next paint; they are CSS images.
-      await Promise.all([...book.querySelectorAll('span')].map((node) => new Promise((done, fail) => {
-        const value = node.style.getPropertyValue('--book-layer-mask');
-        if (!value) return done(); const img = new Image(); img.onload = done; img.onerror = fail; img.src = value.slice(5, -2);
+      await Promise.all([...book.querySelectorAll('image')].map((node) => new Promise((done, fail) => {
+        const img = new Image(); img.onload = done; img.onerror = fail; img.src = node.getAttribute('href');
       })));
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
     }, { id, cover });
     await page.screenshot({ path: resolve(out, `${id}-${cover}.png`), omitBackground: true, animations: 'disabled' });
   }

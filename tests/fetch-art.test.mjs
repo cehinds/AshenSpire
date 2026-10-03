@@ -843,3 +843,103 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
   }
   assert.ok(lines >= 4, `the four fetching workflows pass the token (found ${lines})`);
 });
+
+// Step 13 left three heavy browser jobs (flask-menu, its plants, motion) with
+// no fetch: they served a checkout whose art had gone, and the motion probe
+// went red on figures that 404 (dispatch run 37098149492). Every ci.yml job
+// that checks this repository out fetches the packs before its first step
+// that runs a tool, since any of them may build, serve or copy the art.
+//
+// A tool runs from an inline `run: node tools/…` OR from a command line inside
+// a `run: |` / `run: >` block scalar (#1524 review): both are scanned; comment
+// lines inside a block are not commands.
+// Not a parse of the command line: a step runs a repository tool when its
+// command text runs `node` AND names a script under tools/ or tests/. Node
+// options, their operands (`--require x.cjs`), `./` prefixes and env prefixes
+// all sit between the two and none of them can hide the pair (#1524 review,
+// Codex, four rounds of narrower matchers). Over-matching is safe: a step that
+// mentions both without running the tool merely has to come after the fetch.
+const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^\w-])(\.[\\/])?(tools|tests)[\\/][\w./\\-]+\.[cm]?js\b/.test(cmd) };
+// Any valid GitHub job id: letters, digits, `-` and `_`, starting with a letter or `_`.
+const JOB_ID = '[A-Za-z_][A-Za-z0-9_-]*';
+function jobsRunningToolsBeforeFetch(yml) {
+  // A job header: two-space indent, the id bare or quoted, then `:` and an
+  // optional comment (tools/workflow-lint.mjs's fixtures use both forms).
+  const HEADER = new RegExp(`^  (["']?)(${JOB_ID})\\1:[ \\t]*(#.*)?$`);
+  const jobs = [];
+  for (const line of yml.split('\n')) {
+    const h = line.match(HEADER);
+    if (h) jobs.push({ name: h[2], lines: [] });
+    else if (jobs.length) jobs.at(-1).lines.push(line);
+  }
+  const missing = [];
+  let checked = 0;
+  for (const { name, lines } of jobs) {
+    if (!lines.some((l) => !/^\s*#/.test(l) && /actions\/checkout@/.test(l))) continue;
+    checked += 1;
+    // NO YAML PARSING (#1524 review: seven rounds of Codex findings, each a
+    // spelling a narrower parser missed — quoted keys, plain and folded
+    // scalars, continuations, node options). Everything the job says before
+    // its fetch step, comment lines aside, is read as ONE text: if that text
+    // runs `node` and names a script under tools/ or tests/, a tool may run
+    // before the art is there. Over-matching only asks for an earlier fetch.
+    const at = lines.findIndex((l) => !/^\s*#/.test(l) && /\.\/\.github\/actions\/fetch-art\b/.test(l));
+    // A fetch step that carries an `if:` may be skipped on some leg (a matrix
+    // OS, an event), so it is not proof the art is there: the job counts as
+    // having no fetch (#1524 review, Codex).
+    const stepEnd = (i) => {
+      const dash = lines.slice(0, i + 1).reverse().find((l) => /^\s*-\s/.test(l));
+      const indent = dash ? dash.match(/^\s*/)[0].length : 0;
+      let j = i + 1;
+      while (j < lines.length && !(/^\s*-\s/.test(lines[j]) && lines[j].match(/^\s*/)[0].length <= indent) && !(lines[j].trim() && lines[j].match(/^\s*/)[0].length < indent)) j += 1;
+      return j;
+    };
+    const stepStart = (i) => { let k = i; while (k > 0 && !/^\s*-\s/.test(lines[k])) k -= 1; return k; };
+    const conditional = at >= 0 && lines.slice(stepStart(at), stepEnd(at)).some((l) => !/^\s*#/.test(l) && /(^|[\s{,-])["']?if["']?\s*:/.test(l));
+    const fetched = at >= 0 && !conditional;
+    const before = (fetched ? lines.slice(0, at) : lines).filter((l) => !/^\s*#/.test(l)).join(' ').replace(/\\\s+/g, ' ');
+    const bad = TOOL_CMD.test(before);
+    if (!fetched || bad) missing.push(name);
+  }
+  return { checked, missing };
+}
+
+test('every ci.yml job that checks the repository out fetches the art packs before it runs a tool', () => {
+  const yml = readFileSync(fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url)), 'utf8');
+  const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
+  assert.ok(checked >= 10, `the job split found the checkout jobs (${checked})`);
+  assert.deepEqual(missing, [], `these jobs run a tool on a checkout with no fetched art: ${missing.join(', ')}`);
+});
+
+test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool steps before the fetch', () => {
+  const job = (name, steps) => `  ${name}:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n${steps}`;
+  const fetch = '      - uses: ./.github/actions/fetch-art\n        with:\n          packs: all\n';
+  const yml = 'jobs:\n' + [
+    job('good-inline', `${fetch}      - run: node tools/a.mjs\n`),
+    job('good-block', `${fetch}      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs --selftest\n`),
+    job('good-comment-before', `      - name: x\n        run: |\n          # node tools/a.mjs is described here, not run\n          echo hi\n${fetch}`),
+    job('bad-inline', `      - run: node tools/a.mjs\n${fetch}`),
+    job('bad-block', `      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs\n${fetch}`),
+    job('bad-folded', `      - name: x\n        run: >-\n          set -e;\n          node tests/run-node.mjs\n${fetch}`),
+    job('bad-no-fetch', '      - run: echo nothing\n'),
+    job('bad-node-flag', `      - run: node --test tests/a.test.mjs\n${fetch}`),
+    job('bad-dot-path', `      - run: node ./tools/a.mjs\n${fetch}`),
+    job('good-before-underscore', `${fetch}      - run: echo ok\n`),
+    job('bad_underscore', `      - run: node tools/a.mjs\n${fetch}`),
+    job('bad-folded-split', `      - name: x\n        run: >-\n          node\n          tools/build.mjs\n${fetch}`),
+    job('bad-node-operand', `      - run: node --require setup.cjs tools/build.mjs\n${fetch}`),
+    job('bad-plain-multiline', `      - name: x\n        run: node\n          tools/build.mjs\n${fetch}`),
+    job('bad-quoted-run', `      - "run": node tools/a.mjs\n${fetch}`),
+    job('bad-cjs', `      - run: node tools/combat-formation-extra-qa.cjs\n${fetch}`),
+    job('bad-quoted-uses', `      - run: node tools/a.mjs\n${fetch}`).replace('- uses: actions/checkout@v5', '- "uses": actions/checkout@v5'),
+    job('bad-conditional-fetch', `      - uses: ./.github/actions/fetch-art\n        if: runner.os != 'Windows'\n        with:\n          packs: all\n      - run: node tools/a.mjs\n`),
+    job('bad-flow-conditional-fetch', `      - { uses: ./.github/actions/fetch-art, if: runner.os != 'Windows' }\n      - run: node tools/a.mjs\n`),
+    job('bad-windows-path', `      - run: node .\\tools\\build.mjs\n${fetch}`),
+    job('bad-continuation', `      - name: x\n        run: |\n          node \\\n            tools/build.mjs\n${fetch}`),
+  ].join('\n') + '\n'
+    + `  bad-commented: # heavy\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`
+    + `  "bad-quoted":\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`;
+  const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
+  assert.equal(checked, 23);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-flow-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
+});

@@ -71,7 +71,7 @@ export function openBrowser(url) {
  * Bumps to the next port if the requested one is in use. `lan: true` attaches
  * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false } = {}) {
+export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false } = {}) {
   const rootResolved = resolve(root);
   const checkout = existsSync(join(rootResolved, 'art-release.json'));
   const notedMissing = new Set(); // one note per missing pack, not one per request
@@ -215,16 +215,19 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
       }
     });
     server.listen(port, async () => {
+      // `port` 0 asks the OS for a free one; name the port it gave.
+      port = server.address().port;
       const url = `http://localhost:${port}/`;
-      console.log(`\n  ▸ Ashen Spire is live at ${url}`);
-      console.log(`    Serving ${rootResolved}`);
+      const log = quiet ? () => {} : (line) => console.log(line);
+      log(`\n  ▸ Ashen Spire is live at ${url}`);
+      log(`    Serving ${rootResolved}`);
       if (lan) {
         const { attachLan, lanAddress } = await import('./lan.mjs');
         lanLayer = attachLan(server, { port, root: rootResolved });
         server.on('close', () => lanLayer.close());
-        console.log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
+        log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
       }
-      console.log('    Press Ctrl+C to stop.\n');
+      log('    Press Ctrl+C to stop.\n');
       if (open) openBrowser(url);
       done({ server, url, port });
     });

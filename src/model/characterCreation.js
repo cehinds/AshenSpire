@@ -24,7 +24,7 @@ function creationSlotFields(cfg) {
 export function characterCreationProblems(source) {
   const cfg = config(source);
   const problems = [];
-  const allowedRoot = new Set(['spritePreviewSide', 'visibleModeIds', 'layout', 'equipmentSections', 'classes', 'keepsakes']);
+  const allowedRoot = new Set(['spritePreviewSide', 'visibleModeIds', 'layout', 'quickStart', 'equipmentSections', 'classes', 'keepsakes']);
   for (const key of Object.keys(cfg || {})) if (!allowedRoot.has(key)) problems.push(`characterCreation.${key}: Unknown field`);
   if (!SIDES.includes(cfg.spritePreviewSide)) problems.push(`characterCreation.spritePreviewSide: must be ${SIDES.join('|')}`);
   const modeIds = new Set(rows(source, 'creationModes').filter((row) => row && typeof row.id === 'string').map((row) => row.id));
@@ -159,6 +159,7 @@ export function characterCreationProblems(source) {
   }
   for (const classId of classIds) if (!cfg.classes[classId]) problems.push(`characterCreation.classes: missing class '${classId}'`);
   const keepsakes = cfg.keepsakes;
+  problems.push(...quickStartProblems(cfg.quickStart, { classIds, modeIds, keepsakes }));
   if (!Array.isArray(keepsakes) || keepsakes.length < 2) problems.push('characterCreation.keepsakes: must contain at least two choices');
   const seen = new Set();
   for (const row of Array.isArray(keepsakes) ? keepsakes : []) {
@@ -177,6 +178,46 @@ export function characterCreationProblems(source) {
     if (!row || !Array.isArray(row.effects)) problems.push(`${path}.effects: must be an array`);
   }
   return problems;
+}
+
+// THE QUICK START (docs/FINISH.md §6): the Title's one-press route into a
+// climb with authored defaults, so a new player reaches the first card play
+// without walking the whole character workspace. Every default is data here
+// (content/source/characterCreation.json `quickStart`); armour, hands and relic
+// are the class's own baseline (model/state.js), as a climb with none chosen.
+const QUICK_START_FIELDS = Object.freeze(['classId', 'keepsakeId', 'attributeMode', 'skipOpening']);
+
+function quickStartProblems(row, { classIds, modeIds, keepsakes }) {
+  const path = 'characterCreation.quickStart';
+  if (!row || typeof row !== 'object' || Array.isArray(row)) return [`${path}: must be an object`];
+  const problems = [];
+  for (const key of Object.keys(row)) if (!QUICK_START_FIELDS.includes(key)) problems.push(`${path}.${key}: Unknown field`);
+  if (typeof row.classId !== 'string' || !classIds.has(row.classId)) problems.push(`${path}.classId: unknown class '${row.classId}'`);
+  const keepsakeIds = new Set((Array.isArray(keepsakes) ? keepsakes : []).filter((k) => k && typeof k.id === 'string').map((k) => k.id));
+  if (typeof row.keepsakeId !== 'string' || !keepsakeIds.has(row.keepsakeId)) problems.push(`${path}.keepsakeId: unknown keepsake '${row.keepsakeId}'`);
+  if (typeof row.attributeMode !== 'string' || !modeIds.has(row.attributeMode)) problems.push(`${path}.attributeMode: unknown creation mode '${row.attributeMode}'`);
+  if (typeof row.skipOpening !== 'boolean') problems.push(`${path}.skipOpening: must be boolean`);
+  return problems;
+}
+
+/**
+ * quickStartRunConfig(registries) → the `newRun` config the Title's Quick start
+ * begins: the authored class, keepsake and stat mode, the class's starting relic,
+ * and `skipOpening`. The seed and slot are the caller's (a fresh random seed,
+ * the first empty slot). Throws by name when the authored row does not resolve.
+ */
+export function quickStartRunConfig(registries) {
+  const row = config(registries).quickStart;
+  if (!row) throw new Error('characterCreation.quickStart: absent');
+  const cls = registries.classes.get(row.classId);
+  if (!cls) throw new Error(`characterCreation.quickStart.classId: unknown class '${row.classId}'`);
+  return {
+    classId: cls.id,
+    keepsakeId: row.keepsakeId,
+    attributeMode: row.attributeMode,
+    startingRelicId: cls.startingRelic,
+    skipOpening: row.skipOpening === true,
+  };
 }
 
 export function classCreationConfig(registries, classId) {

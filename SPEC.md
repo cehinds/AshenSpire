@@ -2419,6 +2419,8 @@ All prices are in cinders unless stated otherwise, and all are data.
 
 ### 14.3 The market (usual shop)
 
+**Owner amendment, 2026-10-03:** [Class-book rewards contract](docs/CLASS-BOOK-REWARDS-CONTRACT.md) supersedes the class-book first-read-only rule below: repeat reads grant XP and independent configurable technique/feat rolls, defaulting to 25% and 5%.
+
 These offerings extend `buildShopStock`. The existing shelves become offerings with `chance: 100`, so a seed's existing shelves roll the same values. The **Conditional** column is each offering's authored `conditional` flag (§14.2). A conditional offering whose shelf comes up empty is not laid out, and it never counts toward the enablement minimum.
 
 | Offering | What it sells | Conditional | Notes |
