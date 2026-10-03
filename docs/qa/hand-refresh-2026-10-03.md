@@ -4,7 +4,7 @@ PR #1536, 2026-10-03. Standalone build **0.7.1.843**, source digest
 `5cee2758b8`, served from the normal root alias with the verified v7 art cache.
 
 After integrating PR #1530, all 95 hand/Stamina compatibility checks passed.
-The final receipt-only rebuild is 0.7.1.844; it changes the changelog metadata.
+The final receipt-only rebuild is 0.7.1.845; it changes the changelog metadata.
 
 A fresh Chromium profile at 1440 × 900 used Quick start with seed 8, entered
 the first fight, played a self-targeted skill, and held End Turn for the
@@ -28,3 +28,10 @@ The headless regression suite additionally covers Retain accumulation, the
 destinations, solo/co-op overflow and deterministic save/resume. This browser
 pass does not establish physical touch or controller behavior, other browser
 engines, or interactive co-op acceptance.
+
+The co-op layout/interaction probe also passed at 390 × 844, 844 × 390 and
+1280 × 800 using its canned host snapshot. It verifies seat switching, flask
+controls, live snapshot replacement, vow selection, and the active seat's
+Stamina/Mana accessible label, painted number and mana gems. The updated
+geometry judge passes all 49 self-test cases and three unit tests, including
+missing/extra HP rows and the retained multi-row overlap corpus.
