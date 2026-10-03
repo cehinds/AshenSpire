@@ -169,6 +169,15 @@ export function wireFormationPositioning(host, surface, { read, write, getPlan, 
   return { draw, svg, release: () => svg.remove() };
 }
 
+export function combatPositioningBindings({ readSettings, onSettingsChange }) {
+  const readPresentation = () => presentationConfig(readSettings());
+  return {
+    read: () => readPresentation().formationGroups,
+    write: value => onSettingsChange({ [FORMATION_GROUPS_KEY]: value }),
+    readPresentation,
+  };
+}
+
 export function wireCombatPositioning(root, { readSettings, onSettingsChange, onExpand }) {
   const field = root.querySelector('.field'), toggle = root.querySelector('[data-position-toggle]'), panel = root.querySelector('[data-position-panel]');
   let editor = null;
@@ -181,9 +190,7 @@ export function wireCombatPositioning(root, { readSettings, onSettingsChange, on
     wirePositionWindow(panel.querySelector('[data-position-drag]'), panel.parentElement);
     panel.querySelector('[data-position-expand]').addEventListener('click', () => onExpand?.());
     editor = wireFormationPositioning(panel, field, {
-      read: () => readSettings()[FORMATION_GROUPS_KEY],
-      write: value => onSettingsChange({ [FORMATION_GROUPS_KEY]: value }),
-      readPresentation: () => presentationConfig(readSettings()),
+      ...combatPositioningBindings({ readSettings, onSettingsChange }),
       getPlan: () => field.formationPlan || { plan: null, columns: 2, width: 1, height: 1 },
     });
   });
