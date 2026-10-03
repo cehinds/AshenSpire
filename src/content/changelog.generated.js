@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1530",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "One turn budget, with an emerald stamina orb",
+    "detail": "Every class starts with 3 base SP, growing with Dexterity, Constitution, Wisdom, Intelligence and level. Cards and combat actions spend Stamina once, and it refills each turn. The approved emerald orb and weathered harness replace the action counter in solo and co-op, with independently positioned number and SP label. Sapphire diamonds show available mana around the rim; turn Mana ring off in Combat settings to use the top MP bar. Cards use green stamina diamonds. The component artwork is published in the separate art repository and the layout editor remains available.",
+    "build": "0.7.1.842",
+    "pullRequest": 1530,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1530"
+  },
+  {
+    "id": "pr-1532",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Full draws and selective Retain are the approved hand rules",
+    "detail": "The contract starts opening and turn draws at four with Intelligence scaling, keeps Retain cards, shuffles other unplayed cards into the draw pile, and sets a separate default hand limit of fifteen. Retained cards add to the next draw until that limit. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.839",
+    "pullRequest": 1532,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1532"
+  },
+  {
     "id": "pr-1529",
     "date": "2026-10-03",
     "group": "2026-10-03",

@@ -527,7 +527,7 @@ const BALANCE_LABELS = Object.freeze({
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
-  'stagger.player.actionLoss': 'Actions you lose when your meter fills',
+  'stagger.player.actionLoss': 'Stamina you lose when your meter fills',
   'stagger.player.statuses.vulnerable': 'Vulnerable stacks when your meter fills',
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
   'mana.minActionCost': 'Least action cost of a mana card',

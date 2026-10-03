@@ -91,7 +91,7 @@ export function runHeaderStripHtml(model) {
 
 export function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);
-  return `<section class="hud-vitals-panel grow" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
+  return `<section class="hud-vitals-panel grow" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health and mana">
     <div class="resbars-host" ${uiComponentAttrs(meter.component, meter.variant)}></div>
   </section>`;
 }

@@ -648,6 +648,7 @@ export function startingStatRows(bundle) {
         // Filed under this row's own topic of Advanced → Stats
         // (models/AdvancedSettingsGroups.js), one unbroken editor per row.
         advancedGroup: 'Stats', derivedStatId: id, statField: field,
+        ...(id === 'energy' ? { retired: true } : {}),
         settingSection: 'Formula',
         // Fill mode draws to the hand size and never reads Draw / turn, so its
         // editor is shown only while turns draw a fixed number (as the retired
@@ -683,7 +684,8 @@ export function startingStatRows(bundle) {
       ];
       for (const [field, title, min, step, note] of classFields) {
         add(`gameConfig.derivedStatRules.rules.${id}.byClass.${classId}.${field}`, classRow[field] ?? 0, title, 'Stats & resources', {
-          min, step, advancedGroup: 'Stats', derivedStatId: id, statField: field, statClass: classId,
+          min, step, advancedGroup: 'Stats', derivedStatId: id, statField: field,
+          ...(id === 'energy' ? { retired: true } : {}), statClass: classId,
           settingSection: 'Formula',
           ...(field === 'base' ? { integer: true } : {}),
           configPath: ['derivedStatRules', 'rules', id, 'byClass', classId, field],

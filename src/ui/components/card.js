@@ -162,7 +162,6 @@ export function renderCard(registries, ref, opts = {}) {
   // words come from the TermRegistry, like the tooltip's cost line.
   const cost = model.costs.variable ? 'X' : model.costs.action;
   const manaCost = model.costs.mana;
-  const staminaCost = model.costs.stamina;
   const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
   // WC0/WC1: keep every projected cost on the exposed left edge of a fan.
@@ -174,8 +173,7 @@ export function renderCard(registries, ref, opts = {}) {
   // as "free". Only the SECONDARY pools elide at zero: a card that spends no
   // stamina and no mana should not print two empty rails.
   const costRows = [
-    ['action', 'cost', '◆', cost, true],
-    ['stamina', 'stamina-cost', 'ϟ', staminaCost, false],
+    ['stamina', 'cost stamina-cost', '◆', cost, true],
     ['mana', 'mana-cost', '♦', manaCost, false],
   ].filter(([, , , value, keepZero]) => value != null && (keepZero || value !== 0));
   el.dataset.wireframe = 'WC1';
@@ -593,8 +591,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
   // Terms are data; escape them like every other field before innerHTML.
   const word = (resource) => esc(registries.framework.resourceWord(resource));
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
-    + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '')
-    + (pools.stamina ? ` + ${esc(pools.stamina)} ${word('stamina')}` : '');
+    + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '');
   // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
   // meta line as the same tag and value atoms the card face uses.
   let html = `<div class="tt-title">${esc(def.name)}</div>`

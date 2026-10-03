@@ -85,12 +85,10 @@ export function createFrameworkBridge() {
      * their numeric action amount is the caller's to substitute.
      */
     costProfile(def, { powerCostReduction = 0, weightClass = null } = {}) {
-      // The pure dodge is priced by the Weight Class (framework contract:
-      // Weight Class and Dodge Roll — Light 1 stamina / 0 actions, Medium 2/1,
-      // Heavy 3/2 from mechanics.json). The caller passes the class it stands
-      // in; without one (card faces outside a fight) the authored cost shows.
+      // Dodge keeps its weight-priced Stamina cost. `action` is the legacy
+      // cost-field alias, not an additional charge.
       if (weightClass && isPureDodge(def)) {
-        return Object.freeze({ action: weightClass.dodgeActionCost, mana: 0, stamina: weightClass.dodgeStaminaCost, variable: false, classPriced: true });
+        return Object.freeze({ action: weightClass.dodgeStaminaCost, mana: 0, stamina: weightClass.dodgeStaminaCost, variable: false, classPriced: true });
       }
       const view = viewFor(def);
       const modifiers = powerCostReduction && hasProperty(view, 'classification.power')
@@ -102,7 +100,7 @@ export function createFrameworkBridge() {
       return {
         action: amount('action'),
         mana: amount('mana'),
-        stamina: amount('stamina'),
+        stamina: amount('action'), // Same turn cost, exposed under its player-facing name.
         variable: Boolean(action && action.variable),
       };
     },
@@ -113,7 +111,7 @@ export function createFrameworkBridge() {
      * resolved only through TermRegistry.
      */
     resourceWord(resource) {
-      const termId = { action: 'term.energy', mana: 'term.mana', stamina: 'term.stamina' }[resource];
+      const termId = { action: 'term.stamina', mana: 'term.mana', stamina: 'term.stamina' }[resource];
       if (!termId) throw new Error(`bridge: unknown cost resource ${JSON.stringify(resource)}`);
       return terms.displayTerm(termId);
     },
@@ -175,11 +173,7 @@ export function createFrameworkBridge() {
       return dodgeRollCheck({ roll, dexterity, attributeMode, weightClass, otherEvasionModifiers, incomingAttackModifier });
     },
 
-    /**
-     * End-of-turn stamina (framework contract: Mana and Stamina): an IDLE turn
-     * — no stamina spent — recovers mechanics.stamina.idleRecoveryPerTurn, to
-     * the maximum; a turn that spent any recovers nothing.
-     */
+    /** Pure turn-boundary refill, independent of how much was spent. */
     staminaTurnEnd({ currentStamina, maxStamina, staminaSpentThisTurn }) {
       return onTurnEndStamina({ currentStamina, maxStamina, staminaSpentThisTurn });
     },

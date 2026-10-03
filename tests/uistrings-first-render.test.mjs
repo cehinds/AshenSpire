@@ -147,7 +147,7 @@ test('combat potions: the tooltip title is the button\'s own row, so a reword mo
 const fakeCell = () => {
   const attrs = new Map();
   const value = { textContent: '' };
-  return { attrs, value, innerHTML: '', setAttribute: (k, v) => attrs.set(k, String(v)), querySelector: (sel) => (sel === '.sp-v' ? value : null) };
+  return { dataset: {}, attrs, value, innerHTML: '', setAttribute: (k, v) => attrs.set(k, String(v)), querySelector: (sel) => (sel === '.sp-v' || sel === 'svg' ? value : null) };
 };
 const fakeRow = () => {
   const cells = { '.energy-orb': fakeCell(), '.pile.draw': fakeCell(), '.pile.spent': fakeCell() };
@@ -169,7 +169,7 @@ for (const [board, options, counts] of [
     const row = fakeRow();
     paintCombatActionCounts(row, counts);
     const { '.energy-orb': orb, '.pile.spent': spent } = row.cells;
-    assert.equal(orb.attrs.get('aria-label'), `REWORDED actions ${counts.energy} of ${counts.energyMax}`);
+    assert.equal(orb.attrs.get('aria-label'), `REWORDED actions ${counts.energy} of ${counts.energyMax}. Mana 0 of 0.`);
     assert.equal(spent.innerHTML, `<span>REWORDED discard ${counts.discard}</span><small>REWORDED exhaust ${counts.exhaust}</small>`);
     assert.match(spent.attrs.get('aria-label'), new RegExp(`^REWORDED discard ${counts.discard}; REWORDED exhaust ${counts.exhaust}`));
     assert.match(actionsTipHtml(counts.energy, counts.energyMax), /<div class="tt-title">REWORDED actions<\/div>/);
