@@ -1,7 +1,16 @@
 // Spike probe — runs in Electron's isolated preload world.
 // Shares DOM + localStorage with the page but never touches the game's JS scope,
 // so dist/AshenSpire.html ships byte-identical.
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, contextBridge } = require('electron');
+
+// The installed game is already offline, and the folder it is served from has
+// no service worker (sw.js), so Download & saves → "Make available offline"
+// could only fail. Without navigator.serviceWorker the game reports it as
+// unsupported (src/ui/offlineInstall.js offlineSupport). Runs in the page's
+// world before any page script.
+try {
+  contextBridge.executeInMainWorld({ func: () => { delete Navigator.prototype.serviceWorker; } });
+} catch { /* an older Electron: the action stays offered and fails with its own message */ }
 
 const T0 = Number(process.env.SPIKE_T0 || 0);
 const MODE = process.env.SPIKE_MODE || 'write'; // write = first run, read = restart run

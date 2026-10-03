@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the slowest automated checks no longer wait on a 20-minute download",
     "detail": "Nothing you play changes. Three checks ran out of time before they started, while still downloading the project; the heavy checks now skip the source paintings and old file history they never open, cutting each one's download from about 2.3 GB to about 0.7 GB. Every check still runs; whether all of them now finish inside 20 minutes is confirmed only by the next full run.",
-    "build": "0.7.1.808",
+    "build": "0.7.1.809",
     "pullRequest": 1508,
     "url": "https://github.com/cehinds/AshenSpire/pull/1508"
+  },
+  {
+    "id": "pr-1501",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A Windows installer, with the high-resolution art as a choice on the install screen",
+    "detail": "Nothing in the game itself changes. AshenSpire-Setup.exe installs the game for you (no administrator prompt) with Start menu and desktop shortcuts; tick High-resolution art and it downloads the full-resolution art during the install and checks every file, or leave it unticked to play with the standard art and add it later by running the installer again. Uninstalling asks before it deletes your saves.",
+    "build": "0.7.1.808",
+    "pullRequest": 1501,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1501"
   },
   {
     "id": "pr-1512",
