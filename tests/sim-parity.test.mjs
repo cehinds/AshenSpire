@@ -60,6 +60,7 @@ test('runCombatEnd writes HP, Mana and Stamina back to the run', () => {
 
 test('the bot offers only cards affordable in every pool', () => {
   const { combat } = fight('starseer');
+  combat.piles.hand.push({ instanceId: 'free-probe', cardId: 'rogueShiv', upgraded: false });
   const priced = combat.piles.hand.map((h) => ({ h, cost: cardPlayCosts(combat, h.instanceId) }));
   const stamina = priced.find(({ cost }) => cost.stamina > 0);
   assert.ok(stamina, 'the opening hand holds a card that costs Stamina');

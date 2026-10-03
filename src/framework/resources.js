@@ -54,12 +54,9 @@ export function refundStamina(state, amount, { erasesSpend = false } = {}) {
 }
 
 export function onTurnEndStamina(state) {
-  const idle = state.staminaSpentThisTurn === 0;
   return {
     ...state,
-    currentStamina: idle
-      ? Math.min(state.maxStamina, state.currentStamina + mechanics.stamina.idleRecoveryPerTurn)
-      : state.currentStamina,
+    currentStamina: state.maxStamina,
     staminaSpentThisTurn: 0,
   };
 }

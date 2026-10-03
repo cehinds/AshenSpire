@@ -20,9 +20,9 @@ test('action-only magic motifs use mundane variants; paid activations retain fan
  assert.equal(heavy.kind,'whirlwind');assert.ok(heavy.sizeScale>free.sizeScale);
  const stamina=combatEffectPlan({...card,manaCost:0,staminaCost:2});
  assert.equal(stamina.kind,'bloodSlash');assert.equal(stamina.activation,'resourceHigh');assert.ok(stamina.sizeScale>paid.sizeScale);
- // Crimson Cleave now pays Stamina, retaining its authored blood motif.
- assert.equal(plan('crimsonCleave').kind,'bloodSlash');
- assert.equal(plan('crimsonCleave').activation,'resourceHigh');
+ // Turn stamina is the ordinary action budget, so a two-SP cleave is mundane.
+ assert.equal(plan('crimsonCleave').kind,'whirlwind');
+ assert.equal(plan('crimsonCleave').activation,'mundaneHigh');
  assert.equal(plan('disorient').kind,'steelGlint');
 });
 test('cost variants retain auras, defensive identities and actual X spending',()=>{

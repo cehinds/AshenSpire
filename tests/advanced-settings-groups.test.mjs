@@ -604,7 +604,7 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   const stats = advancedSubgroups(rows, 'Stats');
   assert.deepEqual(stats.slice(0, 11).map(group => group.id), STATS_TOPICS.slice(0, 11));
   const topicOf = (key) => stats.find(group => group.rows.some(row => row.key === key))?.id;
-  assert.equal(topicOf('gameConfig.derivedStatRules.rules.energy.dexterity'), 'Actions');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.stamina.dexterity'), 'Stamina');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.draw.base'), 'Draw & hand', 'the Draw row sits beside the hand rules');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.intelligence'), 'Draw & hand');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base'), 'Draw & hand', 'each class opening hand too (owner, 2026-09-24)');
@@ -624,7 +624,7 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.pr.intelligence'), 'Power rating (PR)');
   // Every term of a trait is editable where the trait is — and since ruleset 7
   // every stat has the SAME editor: the same nine fields in the same order.
-  for (const id of ['energy', 'openingHand', 'draw', 'handSize', 'hp', 'stamina', 'mana', 'ar', 'dr', 'pr', 'ward', 'poise']) {
+  for (const id of ['openingHand', 'draw', 'handSize', 'hp', 'stamina', 'mana', 'ar', 'dr', 'pr', 'ward', 'poise']) {
     const own = rows.filter(row => row.derivedStatId === id && !row.statClass && row.statField !== 'attributeBaseline').map(row => row.key.split('.').at(-1));
     assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'perLevel', 'min', 'max'],
       `${id}: base, a weight per attribute, growth per level, bounds`);
@@ -691,22 +691,23 @@ test('a profile last on a merged tab opens on Stats', () => {
 test('the worked example recomputes from the edited values and shows the whole sum', async () => {
   // Ruleset 6: base + Σ floor(attribute × weight) + floor((level − 1) × per level).
   const settings = {
-    'gameConfig.derivedStatRules.rules.energy.base': 2,
-    'gameConfig.derivedStatRules.rules.energy.dexterity': 0,
-    'gameConfig.derivedStatRules.rules.energy.strength': 0.3,
+    'gameConfig.derivedStatRules.rules.stamina.base': 2,
+    'gameConfig.derivedStatRules.rules.stamina.dexterity': 0,
+    'gameConfig.derivedStatRules.rules.stamina.constitution': 0,
+    'gameConfig.derivedStatRules.rules.stamina.strength': 0.3,
     // The stock Actions rule also reads WIS, INT and level; zeroed so the sum
     // under test is exactly base + STR.
-    'gameConfig.derivedStatRules.rules.energy.wisdom': 0,
-    'gameConfig.derivedStatRules.rules.energy.intelligence': 0,
-    'gameConfig.derivedStatRules.rules.energy.perLevel': 0,
+    'gameConfig.derivedStatRules.rules.stamina.wisdom': 0,
+    'gameConfig.derivedStatRules.rules.stamina.intelligence': 0,
+    'gameConfig.derivedStatRules.rules.stamina.perLevel': 0,
   };
   const current = { strength: 11, dexterity: 2, constitution: 3, wisdom: 4, intelligence: 5 };
-  const actions = statsTopicPreview(settings, 'Actions', current);
+  const actions = statsTopicPreview(settings, 'Stamina', current);
   assert.equal(actions.subject.current, true);
   assert.equal(actions.examples[0].lines[0].total, 2 + Math.floor(11 * 0.3));
   assert.match(actions.examples[0].lines[0].expression, /^2 base \+ STR 11 × 0\.3 → 3$/);
-  assert.match(actions.examples[0].hint, /3 more STR would add 1 to Actions/, 'the next point that moves the floored term');
-  assert.match(statsTopicPreviewHtml(settings, 'Actions', current), /= 5<\/b>/);
+  assert.match(actions.examples[0].hint, /3 more STR would add 1 to Stamina/, 'the next point that moves the floored term');
+  assert.match(statsTopicPreviewHtml(settings, 'Stamina', current), /= 5<\/b>/);
 
   // Out of a run the example is a named class, and says so.
   const example = statsTopicPreview({ settingsStatsExampleClass: 'herald' }, 'HP');

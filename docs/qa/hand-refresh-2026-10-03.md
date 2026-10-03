@@ -1,7 +1,10 @@
 # Hand refresh browser evidence
 
-PR #1536, 2026-10-03. Standalone build **0.7.1.841**, source digest
-`8894d85d68`, served from the normal root alias with the verified v6 art cache.
+PR #1536, 2026-10-03. Standalone build **0.7.1.843**, source digest
+`5cee2758b8`, served from the normal root alias with the verified v7 art cache.
+
+After integrating PR #1530, all 95 hand/Stamina compatibility checks passed.
+The final receipt-only rebuild is 0.7.1.844; it changes the changelog metadata.
 
 A fresh Chromium profile at 1440 × 900 used Quick start with seed 8, entered
 the first fight, played a self-targeted skill, and held End Turn for the

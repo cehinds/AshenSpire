@@ -15,7 +15,7 @@ function changeLabel(change) {
     block: 'Guard',
     draw: 'Draw',
     discard: 'Discard',
-    'cost:action': 'Action Cost',
+    'cost:action': 'Stamina Cost',
     'cost:mana': 'Mana Cost',
     'cost:stamina': 'Stamina Cost',
   };

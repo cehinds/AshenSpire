@@ -118,7 +118,7 @@ test('the class preview shows both the Hand and the Draw chip, and not Poise', (
   for (const classId of CLASSES) {
     const run = createRunState({ seed: 7, classId, registries });
     const rows = startingResourceRows(withHandResources(statProjection(registries, run).derived, handResourceRows(registries, run, {})));
-    assert.deepEqual(rows.map((row) => row.id), ['hp', 'mana', 'stamina', 'energy', 'openingHand', 'draw'], classId);
+    assert.deepEqual(rows.map((row) => row.id), ['hp', 'mana', 'stamina', 'openingHand', 'draw'], classId);
   }
   const customize = source('customize.js');
   assert.doesNotMatch(customize, /creationResources\([^)]*\)\.slice\(0, 5\)/, 'no fixed-count slice of the resource rows');

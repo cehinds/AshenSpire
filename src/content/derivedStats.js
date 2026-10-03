@@ -73,7 +73,7 @@ export const derivedStatRules = {
     //       run's first three fights (59, every class pooled). Every stock
     //       pool rises by the same 21: Reaver 70, Starseer 69, Rogue and
     //       Herald 59. Only the base moved; CON still pays 4 a point.
-    energy: { base: 3, strength: 0.1, dexterity: 0.25, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
+    energy: { base: 3, strength: 0.1, dexterity: 0.25, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 }, // Retired save row; combat reads Stamina.
     // Owner, 2026-10-03: open and draw four, with the existing Draw scaling
     // (+1 per five INT above 4). Retain adds to the next draw; the absolute
     // capacity is a separate flat 15. Each row remains configurable, and
@@ -91,7 +91,7 @@ export const derivedStatRules = {
     handSize: { base: 15, min: 1, max: 15 },
     hp: { base: 51, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
     // Budget 1 each, the owner's own sums.
-    stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, perLevel: 0.2 },
+    stamina: { base: 3, dexterity: 0.25, constitution: 0.25, wisdom: 0.2, intelligence: 0.2, perLevel: 0.1 },
     mana: { base: 1, strength: 0.125, constitution: 0.25, wisdom: 0.5, intelligence: 0.125, perLevel: 0.2 },
     // The combat ratings, budget 2. Equipment, relics and statuses add on top.
     ar: { base: 0, strength: 0.75, dexterity: 0.5, constitution: 0.25, wisdom: 0.25, intelligence: 0.25 },
@@ -131,19 +131,9 @@ export const derivedStatRules = {
   presentation: {
     hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'What you have left before the climb ends.' },
     mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Spent by the cards that ask for more than effort.' },
-    stamina: { label: 'Stamina', order: 3, disclosure: 'reveal', sense: 'Spent by cards that ask for it — the dodge roll among them. An idle turn recovers some.' },
-    // ACTIONS, NOT ENERGY — his rename, D17 message 3: "energy (which we
-    // should call actions going forward)", confirmed by D21 as needing no
-    // re-ask. The ENGINE ids are untouched here (`energyMax`, `balance.energy`,
-    // the orb) — that rename is a sequenced act across five branches and is not
-    // this one. What changes is the WORD A PLAYER READS, and since D26 that
-    // word has exactly one home: this row — the frame adopts this row's label
-    // rather than inventing a second one.
-    // NO SURFACE CENSUS ON THIS LINE. One lived here, listing which screens
-    // said which word. It was wrong the day it was written, nothing went red
-    // when it drifted, and it reached him. A spread worth watching gets a
-    // check that can go red, never a comment kept in sync by hand.
-    energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
+    stamina: { label: 'Stamina / turn', faceLabel: 'Stamina', order: 3, disclosure: 'face', sense: 'Pays card and combat costs. Refills at the start of every turn.' },
+    // Retained for old saves and exports; omitted from character stat surfaces.
+    energy: { label: 'Stamina / turn (legacy)', faceLabel: 'Stamina', order: 4, disclosure: 'reveal', sense: 'How much you can do in one turn.' },
     draw: { label: 'Draw / turn', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you draw at the start of each turn.' },
     poise: { label: 'Poise', order: 6, disclosure: 'reveal', sense: 'How much blows you can take before your footing breaks.' },
     openingHand: { label: 'Opening hand', order: 7, disclosure: 'reveal', sense: 'How many cards you hold when a fight begins.' },

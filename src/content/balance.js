@@ -302,14 +302,13 @@ export const balance = {
     },
   },
 
-  // MANA IS THE THIRD COST LINE, NEVER THE FIRST (plan phase 8, proposal §7.1):
-  // a card that costs Mana costs at least this much action and stamina too.
-  // validate.js refuses a card under either floor by name.
+  // Mana is an additional cost beside the single turn-Stamina cost.
+  // minActionCost retains its serialized name; the old additive floor is zero.
   mana: {
-    minActionCost: 1, minStaminaCost: 1,
+    minActionCost: 1, minStaminaCost: 0,
     [NOTE]: {
-      minActionCost: 'The least action a card that costs Mana must also cost — Mana is the third cost line, never the first.',
-      minStaminaCost: 'The least Stamina a card that costs Mana must also cost.',
+      minActionCost: 'The least turn Stamina a card that costs Mana must also cost.',
+      minStaminaCost: 'Retired additive Stamina floor; keep zero.',
     },
   },
 
