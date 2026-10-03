@@ -5,9 +5,9 @@
 //   node tools/offline-play-qa.mjs --offline-only        play the local AshenSpire.html offline
 //   node tools/offline-play-qa.mjs --download-controls-check   picker timing, progress, cancel, disk errors
 //   node tools/offline-play-qa.mjs --live-release-check  the real published feed
-//   node tools/offline-play-qa.mjs --zip [--web build/web]
+//   node tools/offline-play-qa.mjs --zip [--web build]
 //       THE FOLDER COPY (docs/EXTERNAL-ASSETS-PLAN.md §5 B, step 7): publishes
-//       build/web (node tools/launch.mjs --build-only) into a local copy of the
+//       build/ (node tools/launch.mjs --build-only; the pack shape since step 8e) into a local copy of the
 //       Pages shape (tools/pages-store.mjs publishPack, the light single file at
 //       download/, a build.json as tools/pages-site.mjs writes it), boots the
 //       hosted page, has the game assemble its zip, unzips it, checks every
@@ -38,7 +38,7 @@ const liveReleaseCheck = process.argv.includes('--live-release-check');
 const downloadControlsCheck = process.argv.includes('--download-controls-check');
 const zipCheck = process.argv.includes('--zip');
 let zipSite = null, zipUnzipped = null;
-const webDir = resolve(process.argv.includes('--web') ? process.argv[process.argv.indexOf('--web') + 1] : 'build/web');
+const webDir = resolve(process.argv.includes('--web') ? process.argv[process.argv.indexOf('--web') + 1] : 'build');
 const downloads = resolve(out, `downloads-${Date.now()}`); mkdirSync(downloads);
 const html = readFileSync('AshenSpire.html'), build = JSON.parse(readFileSync('buildordinal.json'));
 const metadata = { branch: 'main', version: build.release, ordinal: build.ordinal, bytes: html.length };

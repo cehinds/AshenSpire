@@ -477,15 +477,16 @@ jobs:
         with:
           packs: ${{ env.ART_PACKS }}
 
-      - name: Build the standalone and refresh root + dist/
-        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+      - name: Build the game and refresh root + dist/
+        # Light art on dev/test (owner, 2026-09-26); release/main default to high.
+        # The pack-shaped game and the light single file (step 8e).
         env:
           NODE_OPTIONS: --max-old-space-size=6144
           ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
-      - name: Root + dist carry their art, and ARE the build
+      - name: The light single file carries its art, the pack HTML its packs, and every copy IS the build
         run: node tools/verdict.mjs -- node tools/verify-shipped.mjs
 
       - name: The rebuild changed nothing committed — the ordinal on the box is the one committed
@@ -530,7 +531,11 @@ jobs:
         # diff caught. Each runner hashes what it built; `reproducible-agree`
         # requires all three to be identical.
         shell: bash
-        run: node -e "const c=require('crypto'),f=require('fs');for(const p of ['build/AshenSpire.html','build/AshenSpire-mobile.html'].filter((p)=>f.existsSync(p)))console.log(c.createHash('sha256').update(f.readFileSync(p)).digest('hex')+'  '+p)" > build-digest-${{ matrix.os }}.txt
+        # Since step 8e (docs/EXTERNAL-ASSETS-PLAN.md) that is the pack-shaped
+        # HTML, the light single file AND each pack index (with its .js twin and
+        # the font sidecar): the objects are named by their bytes and listed by
+        # the indexes, so the indexes agreeing is the objects agreeing.
+        run: node -e "const c=require('crypto'),f=require('fs');const packs=f.existsSync('build/packs')?f.readdirSync('build/packs').sort().map((n)=>'build/packs/'+n):[];for(const p of ['build/AshenSpire.html','build/download/AshenSpire.html',...packs].filter((p)=>f.existsSync(p)))console.log(c.createHash('sha256').update(f.readFileSync(p)).digest('hex')+'  '+p)" > build-digest-${{ matrix.os }}.txt
 
       - uses: actions/upload-artifact@v4
         if: matrix.digest
@@ -1120,7 +1125,8 @@ jobs:
           echo "    (the count is printed by the suite itself in the \`test\` job, not asserted here)"
           echo "  · a rebuild changes nothing committed (buildordinal.json is this source's), on each runner"
           echo "  · the three runners build byte-identical standalones (reproducible-agree)"
-          echo "  · root AshenSpire.html and dist/AshenSpire.html carry their inlined art and ARE that build"
+          echo "  · the light single file (root AshenSpire.html, download/) carries its inlined art,"
+          echo "    dist/AshenSpire.html its pinned packs, and each IS that build"
           echo "  · no version-stamped build artifact is tracked in dist/"
           echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
           echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"
