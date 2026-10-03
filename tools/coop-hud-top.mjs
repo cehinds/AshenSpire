@@ -60,7 +60,6 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
-import { META_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 // `singleRow`: short landscape (styles/combat.css `@media (max-height:500px)`)
@@ -648,12 +647,11 @@ async function main(args) {
       const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
       await cdp.send('Page.enable', {}, sessionId);
       await cdp.send('Runtime.enable', {}, sessionId);
-      // Exercise both supported presentations through the profile setting,
-      // before the real renderer boots. The expectations stay independent.
-      const meta = { schemaVersion: META_SCHEMA_VERSION, settings: { manaRing: vp.manaRing }, results: [], discoveredArmaments: [], discoveryReceipts: [] };
-      await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem(${JSON.stringify(META_KEY)}, ${JSON.stringify(JSON.stringify(meta))});` }, sessionId);
+      // Shot mode uses an ephemeral profile; its supported settings door
+      // applies before mounting both boards, independently of expectations.
+      const shotSettings = encodeURIComponent(JSON.stringify({ manaRing: vp.manaRing }));
       await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.width, height: vp.height, deviceScaleFactor: 1, mobile: vp.width < 600 }, sessionId);
-      await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/index.html?shot=coop` }, sessionId);
+      await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/index.html?shot=coop&shotSettings=${shotSettings}` }, sessionId);
       let g = null;
       for (let t = 0; t < 90 && !(g && g.mounted); t++) {
         await wait(500);
@@ -666,7 +664,7 @@ async function main(args) {
         writeFileSync(resolve(shotDir, `coop-hud-top-${label}.png`), Buffer.from(data, 'base64'));
       }
       // The reference: solo combat at the same viewport, the same door.
-      await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/index.html?shot=combat` }, sessionId);
+      await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/index.html?shot=combat&shotSettings=${shotSettings}` }, sessionId);
       let soloBar = null;
       for (let t = 0; t < 90 && !(soloBar && soloBar.mounted && soloBar.row && soloBar.geometry); t++) {
         await wait(500);
