@@ -37,7 +37,10 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
     // 13: the library also lists the fetched high pack's files (tools/art-source.mjs),
     // by the same `assets/…` ids, beside anything imported under assets/ here.
     let packed = [];
-    try { packed = await walk(path.dirname(artDir('assets', { root }).dir), 'assets', ['.png', '.webp', '.gif', '.jpg', '.jpeg', '.svg']); } catch { /* not fetched: the library shows what is on disk */ }
+    try { packed = await walk(path.dirname(artDir('assets', { root }).dir), 'assets', ['.png', '.webp', '.gif', '.jpg', '.jpeg', '.svg']); } catch {
+      // No high pack: the light pack lists the same ids (assets-mobile/… → assets/…), served as their light twins.
+      try { packed = (await walk(path.dirname(artDir('assets-mobile', { root }).dir), 'assets-mobile', ['.png', '.webp', '.gif', '.jpg', '.jpeg', '.svg'])).map(p => `assets/${p.slice('assets-mobile/'.length)}`); } catch { /* not fetched: the library shows what is on disk */ }
+    }
     images.push(...packed.filter(p => !images.includes(p))); images.sort();
     const top = (await fs.readdir(root)).filter(n => n.endsWith('.html') && n !== 'AshenSpire.html');
     let branch = 'Unknown'; try { branch = execFileSync('git', ['branch', '--show-current'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim(); } catch {}
@@ -148,7 +151,12 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         // An art id not on disk here is read from its fetched pack (step 13);
         // the path is still validated (create: a missing file is not an error yet).
         file = await safePath(root, name, Boolean(packTreeOf(name)));
-        if (packTreeOf(name) && !(await fs.stat(file).then(() => true, () => false))) { try { file = artPath(name, { root }); } catch { /* not fetched: read below fails as before */ } }
+        if (packTreeOf(name) && !(await fs.stat(file).then(() => true, () => false))) {
+          try { file = artPath(name, { root }); } catch {
+            // The high pack not fetched (a light,common fetch): its light twin, as tools/serve.mjs does.
+            if (name.startsWith('assets/')) { try { file = artPath(`assets-mobile/${name.slice('assets/'.length)}`, { root }); } catch { /* not fetched: read below fails as before */ } }
+          }
+        }
       } else {
         const name = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
         if (!['index.html', 'app.js', 'styles.css', 'tables.mjs'].includes(name)) return send(res, 404, { error: 'Not found' });
