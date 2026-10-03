@@ -5,13 +5,17 @@
 // module + audio loading in most browsers). Used by tools/launch.mjs, or run
 // directly:  node tools/serve.mjs [--port N] [--no-open] [--root DIR]
 //
-// THE ART PACKS' TREES COME FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md
-// step 12). Serving a checkout (a root with art-release.json), a request under
-// /assets-mobile/, /assets/fonts/, /music/ or /map-detail/ is answered from
-// .art-cache/<tag>/<pack>/ (node tools/fetch-art.mjs --pack light,common),
-// through tools/art-source.mjs, the one place that may still read those trees
-// here instead (until step 13). Any other root (a build folder) is served as
-// it is on disk.
+// THE ART COMES FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md steps 12
+// and 13). Serving a checkout (a root with art-release.json), a request under
+// /assets/ (the high pack), /assets-mobile/ (light), or /assets/fonts/, /music/
+// or /map-detail/ (common) is answered from .art-cache/<tag>/<pack>/ through
+// tools/art-source.mjs: the trees left this repository at step 13. When the
+// high pack is not fetched (node tools/fetch-art.mjs --pack light,common, the
+// fresh-clone fetch), /assets/<id> is answered with the light pack's twin, so
+// the source still plays with art; `--pack all` (CI's) serves the high files
+// the browser gates measure. A pack that is not fetched at all answers 404 and
+// the game draws its placeholders (SPEC §2.4). Any other root (a build folder)
+// is served as it is on disk.
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -20,7 +24,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
-import { artPath, treeOf } from './art-source.mjs';
+import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { existsSync } from 'node:fs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -70,6 +74,7 @@ export function openBrowser(url) {
 export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false } = {}) {
   const rootResolved = resolve(root);
   const checkout = existsSync(join(rootResolved, 'art-release.json'));
+  const notedMissing = new Set(); // one note per missing pack, not one per request
   let lanLayer = null; // attached after listen (needs the final port)
   const server = createServer(async (req, res) => {
     try {
@@ -109,14 +114,24 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
         res.end('Forbidden');
         return;
       }
-      if (checkout && treeOf(rel)) {
+      const tree = checkout ? packTreeOf(rel) : null;
+      if (tree) {
         try {
           filePath = artPath(rel, { root: rootResolved });
         } catch (err) {
-          console.error(`serve: ${err.message}`);
-          res.writeHead(404);
-          res.end('Not found');
-          return;
+          // The high tier, unfetched: its light twin (same id, smaller file).
+          let twin = null;
+          if (tree === HIGH_TREE) {
+            try { twin = artPath(`assets-mobile/${rel.split(/[\\/]/g).join('/').slice(HIGH_TREE.length + 1)}`, { root: rootResolved }); } catch { /* the light pack is not fetched either */ }
+          }
+          if (!twin) {
+            if (!notedMissing.has(tree)) { notedMissing.add(tree); console.error(`serve: ${err.message}`); }
+            res.writeHead(404);
+            res.end('Not found');
+            return;
+          }
+          if (!notedMissing.has('high-as-light')) { notedMissing.add('high-as-light'); console.error(`serve: ${err.message} — answering /assets/ with the light pack's twins meanwhile`); }
+          filePath = twin;
         }
       }
       let s;

@@ -432,7 +432,7 @@ if (TWIN_ART) {
   const missing = [...noLight, ...[...want].filter((p) => !have.has(p))];
   const stray = [...have].filter((p) => !want.has(p));
   if (missing.length || stray.length) {
-    fail(`${ART_FROM} does not hold the light records of art-manifest.json — ${missing.length} missing, ${stray.length} stray; node tools/fetch-art.mjs --pack light (or, for the tree, node tools/mobile-art.mjs --check)`,
+    fail(`${ART_FROM} does not hold the light records of art-manifest.json — ${missing.length} missing, ${stray.length} stray; node tools/fetch-art.mjs --pack light`,
       [...missing.slice(0, 5).map((p) => ({ message: `missing twin: ${MOBILE_ASSET_DIR}/${p}` })),
         ...stray.slice(0, 5).map((p) => ({ message: `stray twin with no source: ${MOBILE_ASSET_DIR}/${p}` }))]);
   }

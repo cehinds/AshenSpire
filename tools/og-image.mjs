@@ -3,9 +3,12 @@
 // THE SHARE IMAGE IS A PAGES PATH, NOT A REPOSITORY PATH (docs/EXTERNAL-ASSETS-PLAN.md,
 // step 6a). It used to name raw.githubusercontent.com/…/main/assets/…, which stops
 // resolving once assets/ leaves main. tools/pages-site.mjs writes `sitePath` at the
-// site root from `source` in main's tree, so index.html's og:image (`url`), the
-// file the site serves and the art it is cut from are named in this one place;
-// tests/web-meta.test.mjs holds index.html to `url`.
+// site root from the object the site's store holds for the art id `source` (main's
+// art-manifest.json row, high else light; docs/EXTERNAL-ASSETS-PLAN.md step 13,
+// when the art left the tree), or from `source` in a branch's tree while one still
+// carries it. So index.html's og:image (`url`), the file the site serves and the
+// art it is cut from are named in this one place; tests/web-meta.test.mjs holds
+// index.html to `url`, and `source` to an id art-manifest.json lists.
 //
 // A PAGES-ONLY MODULE ON PURPOSE. tools/head-meta.mjs is a build-identity input
 // (BUILD_IDENTITY_FILES in tools/buildversion.mjs), so a constant kept there

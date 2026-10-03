@@ -181,15 +181,18 @@ permissions:
 # forced onto Node 24. Both were bumped to @v5 (Node 24) in one commit that did
 # nothing else, so if a run breaks on the bump the diff says why.
 
-# STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
-# assets/fonts/, music/ and map-detail/ reads the fetched art packs through
-# tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
-# checkout, so a job that builds or serves without fetching first is red now,
-# not when step 13 deletes them. Each job that builds, serves or tests the
-# checkout fetches with ./.github/actions/fetch-art right after setup-node.
+# STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
+# assets-mobile/, the fonts, music/, map-detail/ and art/) left this repository
+# at step 13; every reader reads the fetched art packs through
+# tools/art-source.mjs, which fails (naming the fetch) for a pack that is not
+# fetched. Each job that builds, serves or tests the checkout fetches with
+# ./.github/actions/fetch-art right after setup-node, and fetches ALL THREE
+# packs: the high pack is what /assets/ serves from source (tools/serve.mjs) and
+# what the art checks read, as the assets/ tree was before step 13.
+# ASHEN_ART_SOURCE=cache is the default behaviour now, kept as a name.
 env:
   ASHEN_ART_SOURCE: cache
-  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+  ART_PACKS: all
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -287,11 +290,10 @@ jobs:
       - name: Music-only parity can fail (11 plants)
         run: node tools/verdict.mjs -- node tools/music-toggle-parity.mjs --selftest
 
-      - name: The mobile art twin tree mirrors assets/ at the policy's sizes and fits its budget
-        run: node tools/verdict.mjs -- node tools/mobile-art.mjs --check
-
-      - name: That twin-tree gate catches its own known-bads (9 plants)
-        run: node tools/verdict.mjs -- node tools/mobile-art.mjs --selftest
+      # The light twin tree's gate (tools/mobile-art.mjs --check, --selftest)
+      # left with assets-mobile/ at docs/EXTERNAL-ASSETS-PLAN.md step 13: the
+      # art repository generates and checks the light tier, and a fetch here
+      # verifies every light file against art-manifest.json.
 
       - name: Every asset directory has a CREDITS row and README Legal agrees with the AI disclosure
         run: node tools/verdict.mjs -- node tools/credits-check.mjs
@@ -543,16 +545,6 @@ jobs:
           name: build-digest-${{ matrix.os }}
           path: build-digest-${{ matrix.os }}.txt
           retention-days: 7
-
-      # THE AGREEMENT CHECK (docs/EXTERNAL-ASSETS-PLAN.md step 11). The packs were
-      # fetched before the build (step 12: the build reads them); while the trees
-      # are still here, the release and the trees must agree byte for byte.
-      # ONE RUNNER PER OS (the `digest` legs). LAST, so its failure never costs the
-      # runner its digest record or another step's verdict.
-      - name: The fetched packs and the trees agree byte for byte on this OS
-        if: ${{ matrix.digest && !cancelled() }}
-        shell: bash
-        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   reproducible-agree:
     name: the three runners built the same bytes

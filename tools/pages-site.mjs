@@ -169,7 +169,10 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 //     (STABLE_PAYLOAD_DIRS), so the stable links serve what they served before.
 // assets/ STAYS (owner, 2026-10-02): /index-game.html (main's source page),
 // docs/component-catalog.html, items-preview.html, docs/low-poly-fighters/ and
-// pose-studio/ load their images from it. art/ GOES: its seven review sections
+// pose-studio/ load their images from it. It is served from main's tree while
+// main still tracks it; a main from after docs/EXTERNAL-ASSETS-PLAN.md step 13
+// tracks none, and /assets/ is then written from the object store instead
+// (writeSourceAssets: the light tier of main's manifest, about 15 MB). art/ GOES: its seven review sections
 // leave the site and, because discovery reads the assembled tree, the index
 // with them. Plain links into art/ now 404: docs/component-catalog.html,
 // pose-studio/, and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
@@ -806,31 +809,99 @@ function inTree(ref, path) {
 }
 /**
  * THE SHARE IMAGE every build's og:image names (OG_IMAGE in tools/og-image.mjs),
- * written at the site root from the art in main's tree, or from the first other
- * published branch that has it while main predates it. Absent everywhere, the
- * run says so and --check goes red: a link preview with no picture is a defect,
- * not a reason to withhold the site.
+ * written at the site root. Since docs/EXTERNAL-ASSETS-PLAN.md step 13 the art
+ * is no longer in dev's tree (and leaves main's when dev is promoted), so it is
+ * taken FROM THE OBJECT STORE this run published: the object a branch's
+ * art-manifest.json names for OG_IMAGE.source (its high record, else its light
+ * one). A site whose store has neither falls back to the art in main's tree, or
+ * the first other published branch's, while one still carries it (a main from
+ * before step 13). Absent everywhere, the run says so and --check goes red: a
+ * link preview with no picture is a defect, not a reason to withhold the site.
+ * Called after every build is published, so the store is whole.
  */
 function writeOgImage(outDir, mainRef) {
-  const ref = ogImageSource(mainRef);
-  if (!ref) {
-    const why = `no published branch carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
+  const pick = ogImageChoice(outDir, mainRef);
+  if (!pick) {
+    const why = `no object in the store and no published branch's tree carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
     console.log(`  NO OG IMAGE ${why}`);
     if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site has no og:image::${why}`);
     return;
   }
-  writeFileSync(join(outDir, OG_IMAGE.sitePath), readGitArtifact(ROOT, ref, OG_IMAGE.source));
+  writeFileSync(join(outDir, OG_IMAGE.sitePath), ogImageBytes(outDir, pick));
 }
 /**
- * THE ONE ANSWER TO "WHICH BRANCH SUPPLIES THE SHARE IMAGE": main's tree, else
- * the first other published branch that carries OG_IMAGE.source, else null.
- * writeOgImage() and the selftest both ask it, so the selftest compares the
- * served file with the branch that really supplied it (Codex, #1442). `others`
- * and `has` are parameters only so the fallback can be proved without a repo
- * in that state.
+ * /assets/ FOR THE SOURCE PAGES, FROM THE STORE (docs/EXTERNAL-ASSETS-PLAN.md
+ * step 13). /index-game.html, docs/component-catalog.html, items-preview.html,
+ * docs/low-poly-fighters/ and pose-studio/ name images by their `assets/…` id.
+ * While main's tree carries assets/ the base tree serves it; once it does not,
+ * every id main's art-manifest.json lists is written at /<id> from the store
+ * this run published: the light object for an art id (the tier dev and test
+ * ship, about 15 MB, against 185 MB for high), the common one for a font. An id
+ * whose object the store lacks is counted and named, not invented. Returns the
+ * plan --check holds the site to: [{ id, object }], or null when main's tree
+ * still carries assets/ (or has no manifest).
  */
-function ogImageSource(mainRef, others = BRANCHES.filter((b) => b !== 'main').map(refFor), has = (r) => inTree(r, OG_IMAGE.source)) {
-  return [mainRef, ...others].find((r) => r && has(r)) || null;
+function sourceAssetPlan(outDir, mainRef) {
+  if (inTree(mainRef, 'assets')) return null;
+  let rows;
+  try { rows = JSON.parse(git(['show', `${mainRef}:art-manifest.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).assets || {}; } catch { return null; }
+  const plan = [];
+  for (const id of Object.keys(rows).sort()) {
+    if (!id.startsWith('assets/')) continue;
+    const rec = rows[id].light || rows[id].common;
+    if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
+    plan.push({ id, object: objectPath(rec.sha256, id) });
+  }
+  return plan;
+}
+function writeSourceAssets(outDir, mainRef) {
+  const plan = sourceAssetPlan(outDir, mainRef);
+  if (!plan) return;
+  let missing = 0;
+  for (const { id, object } of plan) {
+    const from = join(outDir, object);
+    if (!existsSync(from)) { missing++; continue; }
+    mkdirSync(dirname(join(outDir, id)), { recursive: true });
+    cpSync(from, join(outDir, id));
+  }
+  console.log(`  /assets/ for the source pages: ${plan.length - missing} of ${plan.length} ids written from the store`);
+  if (missing) {
+    const why = `${missing} of main's ${plan.length} assets/ ids have no object in the store; those images are missing on /index-game.html and the preview pages`;
+    console.log(`  ${why}`);
+    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site /assets/ incomplete::${why}`);
+  }
+}
+/** The bytes a choice names: the store's object, or the branch tree's art. */
+function ogImageBytes(outDir, pick) {
+  return pick.from === 'store' ? readFileSync(join(outDir, pick.object)) : readGitArtifact(ROOT, pick.ref, OG_IMAGE.source);
+}
+/** A ref's art-manifest.json row for the share image, or null (no manifest, or no such id). */
+function ogManifestRow(ref) {
+  try { return JSON.parse(git(['show', `${ref}:art-manifest.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).assets?.[OG_IMAGE.source] || null; } catch { return null; }
+}
+/**
+ * THE ONE ANSWER TO "WHERE DOES THE SHARE IMAGE COME FROM": the store's object
+ * for main's manifest row (high, else light), else any other published
+ * branch's; else main's tree, else the first other branch's tree that still
+ * carries OG_IMAGE.source; else null. → { from: 'store', ref, tier, sha, object }
+ * | { from: 'tree', ref } | null. writeOgImage() and --check both ask it, so
+ * --check compares the served file with what really supplied it (Codex, #1442).
+ * `others`, `has` and `rowOf` are parameters only so each fallback can be
+ * proved without a repository in that state.
+ */
+function ogImageChoice(outDir, mainRef, others = BRANCHES.filter((b) => b !== 'main').map(refFor), has = (r) => inTree(r, OG_IMAGE.source), rowOf = ogManifestRow) {
+  const refs = [mainRef, ...others].filter(Boolean);
+  for (const tier of ['high', 'light']) {
+    for (const ref of refs) {
+      const rec = rowOf(ref)?.[tier];
+      if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
+      const object = objectPath(rec.sha256, OG_IMAGE.source);
+      const abs = join(outDir, object);
+      if (existsSync(abs) && sha256(readFileSync(abs)) === rec.sha256) return { from: 'store', ref, tier, sha: rec.sha256, object };
+    }
+  }
+  const ref = refs.find((r) => has(r));
+  return ref ? { from: 'tree', ref } : null;
 }
 const isWebp = (buf) => buf.length > 12 && buf.subarray(0, 4).toString('latin1') === 'RIFF' && buf.subarray(8, 12).toString('latin1') === 'WEBP';
 /** Total bytes and files under `dir`, and the bytes per top-level entry. Symlinks are not followed. */
@@ -985,7 +1056,6 @@ function assemble(outDir, keep) {
     writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
   }
   mainHeadSha = git(['rev-parse', mainRef]).trim();
-  writeOgImage(outDir, mainRef);
   // THE STABLE PLAY LINKS (README: /AshenSpire.html, /AshenSpire-mobile.html).
   // A main tree that no longer tracks its build gets main's CI build instead;
   // with no build handed in, the run fails rather than publishing a site whose
@@ -1118,6 +1188,10 @@ function assemble(outDir, keep) {
   // THE SERVICE WORKER, at the site root, always: the kill-switch must be
   // publishable whatever the site holds (tools/pages-sw.mjs).
   const serviceWorker = { ...writeServiceWorker(outDir, { kill: SW_KILL_RUN }), version: SW_VERSION };
+  // The share image and the source pages' /assets/, now that every build's
+  // objects are in the store.
+  writeOgImage(outDir, mainRef);
+  writeSourceAssets(outDir, mainRef);
   dropBuildTree();
   writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, skipped: skippedBuilds, serviceWorker, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
@@ -1346,10 +1420,16 @@ function baseTreeFindings(dir) {
   // The share image is the supplying branch's art, byte for byte: main's
   // while main carries it, else the fallback writeOgImage() used.
   const og = join(dir, OG_IMAGE.sitePath);
-  const ogRef = ogImageSource(mainRef);
-  if (ogRef) out.push([`/${OG_IMAGE.sitePath} is ${ogRef}'s ${OG_IMAGE.source}, byte for byte`, existsSync(og) && Buffer.compare(readFileSync(og), readGitArtifact(ROOT, ogRef, OG_IMAGE.source)) === 0]);
-  else out.push([`no published branch carries ${OG_IMAGE.source}, and /${OG_IMAGE.sitePath} is said to be missing rather than invented`, !existsSync(og)]);
+  const ogPick = ogImageChoice(dir, mainRef);
+  if (ogPick) out.push([`/${OG_IMAGE.sitePath} is ${ogPick.from === 'store' ? `the store's ${ogPick.object} (${ogPick.ref}'s ${ogPick.tier} ${OG_IMAGE.source})` : `${ogPick.ref}'s ${OG_IMAGE.source}`}, byte for byte`, existsSync(og) && Buffer.compare(readFileSync(og), ogImageBytes(dir, ogPick)) === 0]);
+  else out.push([`neither the store nor any published branch carries ${OG_IMAGE.source}, and /${OG_IMAGE.sitePath} is said to be missing rather than invented`, !existsSync(og)]);
   for (const d of BASE_TREE_KEPT_DIRS) if (inTree(mainRef, d)) out.push([`${d}/ is kept (${d === 'assets' ? 'owner, 2026-10-02' : 'owner answer 7'})`, existsSync(join(dir, d))]);
+  // A main from after step 13 tracks no assets/: the site writes it from the store.
+  const sourcePlan = sourceAssetPlan(dir, mainRef);
+  if (sourcePlan) {
+    const wrong = sourcePlan.filter(({ id, object }) => existsSync(join(dir, object)) && (!existsSync(join(dir, id)) || Buffer.compare(readFileSync(join(dir, id)), readFileSync(join(dir, object))) !== 0));
+    out.push([`/assets/ is main's manifest, written from the store's objects (${sourcePlan.length} ids${wrong.length ? `; wrong: ${wrong.slice(0, 3).map((w) => w.id).join(', ')}` : ''})`, wrong.length === 0]);
+  }
   // The index links nothing under an excluded root (the art review sections).
   const index = existsSync(join(dir, 'index.html')) ? readFileSync(join(dir, 'index.html'), 'utf8') : '';
   const listed = (JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || []).filter((pg) => BASE_TREE_EXCLUDED_DIRS.includes(pg.path.split('/')[0]));
@@ -1404,10 +1484,37 @@ function ogImagePlant() {
     // at all is null — the case writeOgImage() reports instead of throwing.
     const holders = new Set(['origin/test', 'origin/dev']);
     const has = (r) => holders.has(r);
+    const none = () => null;
+    const treeOf = (pick) => (pick && pick.from === 'tree' ? pick.ref : null);
+    // The store (step 13): an object the site holds under a branch's manifest row.
+    const bytes = { high: Buffer.from('RIFF\0\0\0\0WEBPVP8 high'), light: Buffer.from('RIFF\0\0\0\0WEBPVP8 light') };
+    const rows = {};
+    for (const tier of ['high', 'light']) {
+      const shaOf = sha256(bytes[tier]);
+      rows[tier] = { sha256: shaOf, path: `x/${tier}.webp`, bytes: bytes[tier].length };
+      mkdirSync(dirname(join(dir, objectPath(shaOf, OG_IMAGE.source))), { recursive: true });
+    }
+    const placed = (tiers) => {
+      for (const tier of ['high', 'light']) {
+        const abs = join(dir, objectPath(rows[tier].sha256, OG_IMAGE.source));
+        if (tiers.includes(tier)) writeFileSync(abs, bytes[tier]); else rmSync(abs, { force: true });
+      }
+    };
+    const rowFor = (map) => (r) => map[r] || null;
+    placed(['light']);
+    const lightOnly = ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, rowFor({ 'origin/dev': { light: rows.light, high: rows.high } }));
+    placed(['high', 'light']);
+    const highFirst = ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, rowFor({ 'origin/main': { light: rows.light, high: rows.high } }));
+    writeFileSync(join(dir, objectPath(rows.high.sha256, OG_IMAGE.source)), 'not those bytes');
+    const tampered = ogImageChoice(dir, 'origin/main', [], () => false, rowFor({ 'origin/main': { high: rows.high } }));
+    placed([]);
     return [
-      ['the share image comes from main when main carries it', ogImageSource('origin/main', ['origin/dev'], () => true) === 'origin/main'],
-      ['the share image falls back to the first other branch that carries it', ogImageSource('origin/main', [null, 'origin/release', 'origin/test', 'origin/dev'], has) === 'origin/test'],
-      ['no branch carrying the share image is null, not a throw', ogImageSource('origin/main', ['origin/release'], has) === null],
+      ['the share image is the store\'s high object when a branch\'s manifest names one the site holds', highFirst?.from === 'store' && highFirst.tier === 'high' && highFirst.ref === 'origin/main'],
+      ['the share image is the store\'s light object when the site holds no high one (a light-only dev)', lightOnly?.from === 'store' && lightOnly.tier === 'light' && lightOnly.ref === 'origin/dev'],
+      ['a store object whose bytes are not its sha256 is never chosen', tampered === null],
+      ['without a store object, the share image comes from main\'s tree when main carries it', treeOf(ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, none)) === 'origin/main'],
+      ['the share image falls back to the first other branch whose tree carries it', treeOf(ogImageChoice(dir, 'origin/main', [null, 'origin/release', 'origin/test', 'origin/dev'], has, none)) === 'origin/test'],
+      ['no store object and no branch carrying the share image is null, not a throw', ogImageChoice(dir, 'origin/main', ['origin/release'], has, none) === null],
       [`--check is red when /${OG_IMAGE.sitePath} is missing`, redWithout],
       [`--check passes /${OG_IMAGE.sitePath} once it is a WebP`, greenWith],
     ];

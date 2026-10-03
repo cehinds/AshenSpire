@@ -6,6 +6,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { Workspace, safePath, walk, hash } from './core.mjs';
 import { CodexBridge } from './codex.mjs';
+import { artDir, artPath, packTreeOf } from '../tools/art-source.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg' };
@@ -32,6 +33,12 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
       walk(root, 'content/source', ['.csv', '.json']), walk(root, 'content/framework', ['.json']), walk(root, 'src', ['.js']), walk(root, 'styles', ['.css']),
       walk(root, 'assets', ['.png', '.webp', '.gif', '.jpg', '.jpeg', '.svg']), walk(root, 'art', ['.png', '.webp', '.gif']), walk(root, 'docs', ['.html']), walk(root, 'art', ['.html']), walk(root, 'editor/workspace', ['.js', '.json', '.html', '.css']),
     ]);
+    // The shipped art left this repository at docs/EXTERNAL-ASSETS-PLAN.md step
+    // 13: the library also lists the fetched high pack's files (tools/art-source.mjs),
+    // by the same `assets/…` ids, beside anything imported under assets/ here.
+    let packed = [];
+    try { packed = await walk(path.dirname(artDir('assets', { root }).dir), 'assets', ['.png', '.webp', '.gif', '.jpg', '.jpeg', '.svg']); } catch { /* not fetched: the library shows what is on disk */ }
+    images.push(...packed.filter(p => !images.includes(p))); images.sort();
     const top = (await fs.readdir(root)).filter(n => n.endsWith('.html') && n !== 'AshenSpire.html');
     let branch = 'Unknown'; try { branch = execFileSync('git', ['branch', '--show-current'], { cwd: root, encoding: 'utf8', windowsHide: true }).trim(); } catch {}
     const sprites = [...images.filter(p => p.startsWith('assets/enemies-unity/')), ...images.filter(p => !p.startsWith('assets/enemies-unity/')), ...artImages];
@@ -131,7 +138,10 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
         const allowed = /^(assets|art|docs|src|styles|content)\//.test(name) || /^[\w-]+\.html$/.test(name) || /^editor\/workspace\//.test(name);
         if (!allowed || !mime[path.extname(name)]) throw Error('Not a preview asset');
         if (req.headers.host === address) { res.writeHead(302, { Location: `http://${previewAddress}${url.pathname}${url.search}` }); return res.end(); }
-        file = await safePath(root, name);
+        // An art id not on disk here is read from its fetched pack (step 13);
+        // the path is still validated (create: a missing file is not an error yet).
+        file = await safePath(root, name, Boolean(packTreeOf(name)));
+        if (packTreeOf(name) && !(await fs.stat(file).then(() => true, () => false))) { try { file = artPath(name, { root }); } catch { /* not fetched: read below fails as before */ } }
       } else {
         const name = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
         if (!['index.html', 'app.js', 'styles.css', 'tables.mjs'].includes(name)) return send(res, 404, { error: 'Not found' });

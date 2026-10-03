@@ -2,8 +2,24 @@
 // tools/art-manifest.mjs — the data-driven art manifest: one entry per asset id,
 // with the file each art tier ships for it.
 //
-//   node tools/art-manifest.mjs --write    regenerate art-manifest.json
-//   node tools/art-manifest.mjs --check    exit 1 when the manifest and the trees disagree
+//   node tools/art-manifest.mjs --write [--from <dir>]
+//                                          write art-manifest.json from the release
+//                                          art-release.json pins: each pack's zip (from
+//                                          <dir>, else downloaded), held to its pinned
+//                                          sha256, and the art-manifest.json inside it
+//   node tools/art-manifest.mjs --check    exit 1 when the manifest is malformed, or
+//                                          disagrees with a fetched pack's own manifest
+//
+// SINCE STEP 13 (docs/EXTERNAL-ASSETS-PLAN.md; ART-REPO-PLAN step 6) the trees
+// this file was derived from live in cehinds/AshenSpire-art, whose
+// tools/manifest.mjs derives each pack's rows there and ships them inside the
+// pack's zip. This repository's manifest is the union of those three, under the
+// header below: --write assembles it from the pinned zips (the pin's sha256 is
+// the trust anchor, so a re-pin is: edit art-release.json, --write, fetch), and
+// --check holds the committed file to every pack fetched into .art-cache/ (row
+// for row, both ways) and to its own shape. buildManifest() below still derives
+// a manifest from trees under a root, for the sandboxes and fixtures that build
+// one (tests/asset-pack.test.mjs, tests/fetch-art.test.mjs), never this checkout.
 //
 // SCHEMA 2 (docs/EXTERNAL-ASSETS-PLAN.md §2, step 2). Besides the art ids, which
 // keep a `light` and a `high` record, the manifest lists the files the art
@@ -38,10 +54,9 @@
 // (docs/ART-REPO-PLAN.md), and a high-res folder a player picks can be matched
 // to ids by its own copy of this file.
 //
-// DERIVED, NEVER HAND-EDITED: --write regenerates it from the trees; --check is
-// the gate (tests/art-manifest.test.mjs) that fails the day an asset is added,
-// removed or re-encoded without regenerating. Same file filter as the bundler
-// (tools/assetmime.mjs), so the manifest lists exactly what a build can ship.
+// DERIVED, NEVER HAND-EDITED: --write regenerates it from the pinned release;
+// --check is the gate (tests/art-manifest.test.mjs) that fails the day the
+// committed file and a fetched pack disagree, or the file was edited by hand.
 
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -50,6 +65,8 @@ import { fileURLToPath } from 'node:url';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, webpDimensions } from './mobileart-policy.mjs';
+import { download, packsOf, readPin, verifiedPackDir } from './fetch-art.mjs';
+import { readZip } from './zip.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const MANIFEST_PATH = 'art-manifest.json';
@@ -246,6 +263,11 @@ export function buildManifest(root = ROOT) {
     };
   }
   for (const { id, path, source } of commonSources(root)) assets[id] = { common: commonRecord(source, path) };
+  return withHeader(assets);
+}
+
+/** The committed file's header around a set of rows: what --write and buildManifest both write. */
+export function withHeader(assets) {
   return {
     _: 'DERIVED — written by node tools/art-manifest.mjs --write, never by a hand. One entry per asset id (the runtime `assets/…` path, or a `common` pack path: fonts, licenses/OFL.txt, music/, map-detail/).',
     schema: SCHEMA,
@@ -260,6 +282,84 @@ export function buildManifest(root = ROOT) {
   };
 }
 
+const RELEASE_PACKS = Object.freeze(['high', 'light', 'common']);
+const plain = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * releaseManifest(docs) → { manifest, problems }. `docs` maps a pack name to
+ * the art-manifest.json its zip carries (schema 2, `"pack"` naming it). The
+ * high and light zips each list every art id with both its light and high
+ * records (the art repository's tools/manifest.mjs), and must list the same
+ * ids with the same rows; the common zip lists the common ids, one `common`
+ * record each. The union is this repository's manifest.
+ */
+export function releaseManifest(docs) {
+  const problems = [];
+  const assets = {};
+  const from = {};
+  for (const pack of RELEASE_PACKS) {
+    const doc = docs[pack];
+    if (!doc) { problems.push(`the ${pack} pack's ${MANIFEST_PATH} is missing`); continue; }
+    if (!plain(doc) || !plain(doc.assets)) { problems.push(`the ${pack} pack's ${MANIFEST_PATH} has no "assets" object`); continue; }
+    if (doc.schema !== SCHEMA) problems.push(`the ${pack} pack's ${MANIFEST_PATH} is schema ${doc.schema}, not ${SCHEMA}`);
+    if (doc.pack !== pack) problems.push(`the ${pack} pack's ${MANIFEST_PATH} names pack ${JSON.stringify(doc.pack ?? null)}`);
+    for (const [id, row] of Object.entries(doc.assets)) {
+      const tiers = plain(row) ? Object.keys(row).sort().join('+') : '';
+      const want = pack === 'common' ? 'common' : 'high+light';
+      if (tiers !== want || !Object.values(row).every(plain)) { problems.push(`${id}: the ${pack} pack's row has ${tiers || 'no records'}, not ${want}`); continue; }
+      // Key order as buildManifest writes it, so serialize() is byte-stable.
+      const norm = pack === 'common' ? { common: row.common } : { light: row.light, high: row.high };
+      if (assets[id] && JSON.stringify(assets[id]) !== JSON.stringify(norm)) { problems.push(`${id}: the ${from[id]} and ${pack} packs' rows differ`); continue; }
+      if (pack === 'light' && !assets[id] && docs.high) { problems.push(`${id}: in the light pack's manifest, not in the high pack's`); continue; }
+      if (!assets[id]) { assets[id] = norm; from[id] = pack; }
+    }
+  }
+  if (docs.high && docs.light && plain(docs.light.assets)) {
+    for (const id of Object.keys(assets)) if (from[id] === 'high' && !docs.light.assets[id]) problems.push(`${id}: in the high pack's manifest, not in the light pack's`);
+  }
+  const ordered = {};
+  for (const id of Object.keys(assets).sort()) ordered[id] = assets[id];
+  return { manifest: withHeader(ordered), problems };
+}
+
+/**
+ * releaseDocsFromZips(root, { from, get }) → { pack: its zip's manifest }.
+ * Each pinned zip is read from `from` (a directory holding the zips by their
+ * pinned names) or downloaded (tools/fetch-art.mjs download), and refused
+ * unless its sha256 is the one art-release.json pins: the pin is the anchor.
+ */
+export async function releaseDocsFromZips(root = ROOT, { from = null, get = download } = {}) {
+  const pin = readPin(root);
+  const docs = {};
+  for (const pack of packsOf(pin, 'all')) {
+    const { zip, sha256 } = pin.packs[pack];
+    const buf = from ? readFileSync(resolve(from, zip)) : await get(pin, pack);
+    const got = createHash('sha256').update(buf).digest('hex');
+    if (got !== sha256) throw new Error(`${zip}: sha256 ${got}, ${PIN_PATH_NAME} pins ${sha256}`);
+    const entry = readZip(buf).find((e) => e.name === MANIFEST_PATH);
+    if (!entry) throw new Error(`${zip} carries no ${MANIFEST_PATH}`);
+    docs[pack] = JSON.parse(entry.data.toString('utf8'));
+  }
+  return docs;
+}
+const PIN_PATH_NAME = 'art-release.json';
+
+/**
+ * releaseDocsFromCache(root) → { docs, missing }: the manifest each verified
+ * pack cache (.art-cache/<tag>/<pack>/, tools/fetch-art.mjs) carries, and the
+ * packs that are not fetched.
+ */
+export function releaseDocsFromCache(root = ROOT) {
+  const docs = {};
+  const missing = [];
+  for (const pack of RELEASE_PACKS) {
+    let dir;
+    try { dir = verifiedPackDir(pack, { root }); } catch { missing.push(pack); continue; }
+    docs[pack] = JSON.parse(readFileSync(resolve(dir, MANIFEST_PATH), 'utf8'));
+  }
+  return { docs, missing };
+}
+
 /**
  * The bytes --write puts on disk: the header fields pretty-printed, then ONE
  * LINE PER ASSET in id order, so an art change is a one-line diff and the file
@@ -272,67 +372,78 @@ export function serialize(manifest) {
   return `${top},\n  "assets": {\n${rows.join(',\n')}\n  }\n}\n`;
 }
 
-/** checkManifest(root) → list of problems; empty means the manifest is current. */
-export function checkManifest(root = ROOT) {
+/**
+ * checkManifest(root, { docs }) → list of problems; empty means the committed
+ * manifest is well formed and agrees, row for row and both ways, with every
+ * pack whose own manifest `docs` holds (by default: every pack fetched into
+ * .art-cache/, releaseDocsFromCache). A pack that is not fetched is checked by
+ * tools/fetch-art.mjs when it is: its rows must equal this file's.
+ */
+export function checkManifest(root = ROOT, { docs = releaseDocsFromCache(root).docs } = {}) {
   const problems = [];
   const path = resolve(root, MANIFEST_PATH);
   if (!existsSync(path)) return [`${MANIFEST_PATH} is missing — node tools/art-manifest.mjs --write`];
   let committed;
   try { committed = JSON.parse(readFileSync(path, 'utf8')); } catch (e) { return [`${MANIFEST_PATH} is not JSON: ${e.message}`]; }
-  const fresh = buildManifest(root);
   if (committed.schema !== SCHEMA) problems.push(`${MANIFEST_PATH} is schema ${committed.schema}, this tool writes ${SCHEMA}`);
-  const have = committed.assets || {};
-  const want = fresh.assets;
-  const home = (id) => (id.startsWith(`${HIGH_DIR}/`) ? `${HIGH_DIR}/` : 'the common sources');
-  for (const id of Object.keys(want)) {
-    if (!have[id]) { problems.push(`${id}: in ${home(id)} but not in the manifest`); continue; }
-    for (const tier of isCommonEntry(want[id]) ? ['common'] : ['light', 'high']) {
-      const a = have[id][tier];
-      const b = want[id][tier];
-      if (b === null) { problems.push(`${id}: no ${tier} file (${LIGHT_DIR}/ has no twin — node tools/mobile-art.mjs)`); continue; }
-      if (!a || a.sha256 !== b.sha256 || a.bytes !== b.bytes || a.path !== b.path) problems.push(`${id}: the ${tier} file changed since the manifest was written`);
-    }
+  const have = plain(committed.assets) ? committed.assets : {};
+  for (const [id, row] of Object.entries(have)) {
+    const tiers = plain(row) ? Object.keys(row).sort().join('+') : '';
+    if (tiers !== 'common' && tiers !== 'high+light') problems.push(`${id}: has ${tiers || 'no records'} (an art id needs light and high, a common id common alone)`);
   }
-  for (const id of Object.keys(have)) if (!want[id]) problems.push(`${id}: in the manifest but not in ${home(id)}`);
-  // ONE FILE PER COMMON FONT. The light tree still carries the faces (the light
-  // single file inlines them through CSS), so its copy must be the same bytes
-  // the one `common` record names, or the tiers would ship different fonts.
-  for (const id of Object.keys(want)) {
-    if (!id.startsWith(`${HIGH_DIR}/${COMMON_ASSET_PREFIX}`)) continue;
-    const twin = resolve(root, LIGHT_DIR, id.slice(HIGH_DIR.length + 1));
-    if (!existsSync(twin)) problems.push(`${id}: no twin under ${LIGHT_DIR}/ (a common font is the same file in both trees)`);
-    else if (commonRecord(twin, id).sha256 !== want[id].common.sha256) problems.push(`${id}: the ${LIGHT_DIR}/ copy differs from ${HIGH_DIR}/ (a common font is the same file in both trees)`);
+  for (const pack of RELEASE_PACKS) {
+    const doc = docs[pack];
+    if (!doc) continue;
+    const theirs = plain(doc.assets) ? doc.assets : {};
+    const ours = Object.keys(have).filter((id) => plain(have[id]) && (pack === 'common' ? isCommonEntry(have[id]) : !isCommonEntry(have[id])));
+    for (const id of ours) {
+      if (!theirs[id]) problems.push(`${id}: in the manifest, not in the ${pack} pack's`);
+      else if (JSON.stringify(theirs[id]) !== JSON.stringify(have[id])) problems.push(`${id}: its row differs from the ${pack} pack's`);
+    }
+    const mine = new Set(ours);
+    for (const id of Object.keys(theirs)) if (!mine.has(id)) problems.push(`${id}: in the ${pack} pack's manifest, not in this one`);
   }
   if (committed.count !== Object.keys(have).length) problems.push(`${MANIFEST_PATH} says count ${committed.count} but lists ${Object.keys(have).length}`);
-  // AND BYTE FOR BYTE. The messages above name what moved; this catches every
-  // field they do not compare (pixel sizes, the header, an extra key), so a
-  // hand edit anywhere in the file is refused. Line endings are canonical first,
-  // because a Windows checkout may store the file with CRLF.
-  if (!problems.length && serialize(fresh) !== readFileSync(path, 'utf8').replace(/\r\n?/g, '\n')) {
-    problems.push(`${MANIFEST_PATH} differs from what --write produces (a field was edited by hand, e.g. a pixel size)`);
+  // AND BYTE FOR BYTE. Whatever the rows, the file is the header --write gives
+  // around them, one line per id: a hand edit of the header, an extra key or a
+  // reordered record is refused. Line endings are canonical first, because a
+  // Windows checkout may store the file with CRLF.
+  if (!problems.length && serialize(withHeader(have)) !== readFileSync(path, 'utf8').replace(/\r\n?/g, '\n')) {
+    problems.push(`${MANIFEST_PATH} differs from what --write produces (a field was edited by hand)`);
   }
   return problems;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
+  const at = args.indexOf('--from');
+  const from = at >= 0 ? args[at + 1] : null;
   if (args.includes('--write')) {
-    const m = buildManifest();
-    writeFileSync(resolve(ROOT, MANIFEST_PATH), serialize(m), 'utf8');
-    console.log(`art-manifest: OK — ${m.count} assets written to ${MANIFEST_PATH}`);
+    try {
+      const { manifest, problems } = releaseManifest(await releaseDocsFromZips(ROOT, { from }));
+      if (problems.length) throw Object.assign(new Error(`the pinned release's manifests do not make one (${problems.length} problem(s))`), { problems });
+      writeFileSync(resolve(ROOT, MANIFEST_PATH), serialize(manifest), 'utf8');
+      console.log(`art-manifest: OK — ${manifest.count} assets written to ${MANIFEST_PATH} from the release art-release.json pins; now node tools/fetch-art.mjs`);
+    } catch (e) {
+      console.error(`art-manifest: FAIL — ${e.message}`);
+      for (const p of (e.problems || []).slice(0, 20)) console.error(`  · ${p}`);
+      process.exit(1);
+    }
   } else if (args.includes('--check')) {
-    const problems = checkManifest();
+    const { docs, missing } = releaseDocsFromCache();
+    const problems = checkManifest(ROOT, { docs });
     if (problems.length) {
       console.error(`art-manifest: FAIL — ${problems.length} problem(s):`);
       for (const p of problems.slice(0, 20)) console.error(`  · ${p}`);
       if (problems.length > 20) console.error(`  … and ${problems.length - 20} more`);
-      console.error('  Fix: node tools/art-manifest.mjs --write');
+      console.error('  Fix: node tools/art-manifest.mjs --write (from the release art-release.json pins)');
       process.exit(1);
     }
     const n = Object.keys(JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8')).assets).length;
-    console.log(`art-manifest: OK — ${n} checks passed`);
+    const against = Object.keys(docs);
+    console.log(`art-manifest: OK — ${n} ids, well formed${against.length ? `, and equal to the fetched ${against.join(', ')} pack(s)` : ''}${missing.length ? ` (not fetched, so not compared: ${missing.join(', ')})` : ''}`);
   } else {
-    console.error('usage: node tools/art-manifest.mjs --write | --check');
+    console.error('usage: node tools/art-manifest.mjs --write [--from <dir of zips>] | --check');
     process.exit(2);
   }
 }

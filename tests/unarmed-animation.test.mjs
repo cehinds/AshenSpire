@@ -10,7 +10,9 @@ import { contentBundle } from '../src/content/index.js';
 import { tagService } from '../src/model/tagService.js';
 import { resolveActionAnimation } from '../src/model/actionAnimation.js';
 
-const physical=JSON.parse(readFileSync(new URL('../art/unarmed-reference-2026-09-19/runtime-fragment.json',import.meta.url)));
+// The art studio's runtime fragment, kept as a fixture when art/ left for
+// cehinds/AshenSpire-art (docs/EXTERNAL-ASSETS-PLAN.md step 13).
+const physical=JSON.parse(readFileSync(new URL('./fixtures/art-exports/unarmed-reference-2026-09-19/runtime-fragment.json',import.meta.url)));
 // The magic task's public fragment contract, exercising all physical skins.
 // File existence/real generated frames are checked by each pack's CLI and export.
 const magic={schemaVersion:1,motionProfile:'unarmed',ownedRoles:['cast','buff'],

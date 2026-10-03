@@ -8,7 +8,7 @@
 // ── THE DOOR, STATED, BECAUSE THE DOOR NAMED IS THE EXTENT OF THE GREEN ──────
 //
 // Every plant below is a REAL EDIT TO A REAL FILE IN A REAL SOURCE TREE — a
-// byte-for-byte copy of index.html, styles/, src/, assets/ and the committed
+// byte-for-byte copy of index.html, styles/, src/, asset-data/ and the committed
 // bundle — and the tool is then entered at `check(root)`, the same entry point
 // the live run uses. Nothing is handed to a predicate downstream of the sweep:
 // each plant goes through the directory walk, the reader, the canonicalizer and
@@ -62,7 +62,9 @@ import { pathToFileURL } from 'node:url';
 import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
-const COPY = ['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
+// assets/ and assets-mobile/ are not copied: they left this repository at
+// docs/EXTERNAL-ASSETS-PLAN.md step 13 and are no input root (INPUT_ROOTS).
+const COPY = ['index.html', 'styles', 'src', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
 // CI spreads the expensive real-tree and git-history fixtures across Windows
 // runners. Each shard still enters the same check; the default runs everything.

@@ -1,18 +1,23 @@
 // tests/art-manifest.test.mjs — the art manifest is current, and its check can fail.
 //
 // art-manifest.json (tools/art-manifest.mjs) lists every asset id with
-// the file each tier ships. The first test is the gate on the real tree; the
-// rest plant known-bads into a throwaway tree and require the named failure.
+// the file each tier ships. Since step 13 (docs/EXTERNAL-ASSETS-PLAN.md) it is
+// the union of the pinned release's three pack manifests: the first test is the
+// gate on the committed file (against every pack fetched into .art-cache/); the
+// rest build a manifest from a throwaway tree (buildManifest, the derivation the
+// art repository's own tool mirrors), split it into the three packs' manifests
+// the way that repository's tools/pack.mjs does, and plant known-bads.
+// tests/fetch-art.test.mjs covers --write from real zips and the cache.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildManifest, checkManifest, serialize, MANIFEST_PATH, dimensions, isCommonEntry, SCHEMA, LICENSE_ID } from '../tools/art-manifest.mjs';
+import { buildManifest, checkManifest, releaseManifest, serialize, MANIFEST_PATH, dimensions, isCommonEntry, SCHEMA, LICENSE_ID } from '../tools/art-manifest.mjs';
 
-test('art-manifest.json matches assets/, assets-mobile/ and the common sources', () => {
+test('art-manifest.json is well formed and equals every fetched pack\'s own manifest', () => {
   const problems = checkManifest();
-  assert.deepEqual(problems, [], `run node tools/art-manifest.mjs --write:\n${problems.slice(0, 10).join('\n')}`);
+  assert.deepEqual(problems, [], `run node tools/art-manifest.mjs --write (from the pinned release):\n${problems.slice(0, 10).join('\n')}`);
 });
 
 // A minimal VP8L WebP header: RIFF, WEBP, VP8L chunk, signature 0x2f, then
@@ -65,39 +70,69 @@ test('a fresh manifest records both tiers with path, bytes, sha256 and size', ()
   });
 });
 
-test('known-bad: a re-encoded light twin without a regenerated manifest is caught', () => {
+/** The three pack manifests a release of this tree carries (each art zip lists every art id with both records). */
+function packDocs(m) {
+  const { _, schema, tiers } = m;
+  const doc = (pack) => {
+    const rows = Object.fromEntries(Object.entries(m.assets).filter(([, e]) => (pack === 'common') === isCommonEntry(e)));
+    return { _, schema, pack, tiers, count: Object.keys(rows).length, assets: rows };
+  };
+  return { high: doc('high'), light: doc('light'), common: doc('common') };
+}
+
+test('the three packs\' manifests make the committed file back, byte for byte', () => {
   withManifest(base, (root) => {
-    writeFileSync(join(root, 'assets-mobile/bg/a.webp'), webp(614, 410, 7));
-    assert.match(checkManifest(root).join('\n'), /the light file changed/);
+    const m = buildManifest(root);
+    const { manifest, problems } = releaseManifest(packDocs(m));
+    assert.deepEqual(problems, []);
+    assert.equal(serialize(manifest), serialize(m));
+    assert.deepEqual(checkManifest(root, { docs: packDocs(m) }), []);
   });
 });
 
-test('known-bad: a new asset missing from the manifest is caught', () => {
+test('known-bad: a re-encoded light file the manifest was not rewritten for is caught against the fetched pack', () => {
   withManifest(base, (root) => {
-    mkdirSync(join(root, 'assets/ui'), { recursive: true });
-    writeFileSync(join(root, 'assets/ui/b.webp'), webp(64, 64));
-    assert.match(checkManifest(root).join('\n'), /assets\/ui\/b\.webp: in assets\/ but not in the manifest/);
+    const docs = packDocs(buildManifest(root));
+    docs.light.assets['assets/bg/a.webp'] = { ...docs.light.assets['assets/bg/a.webp'], light: { ...docs.light.assets['assets/bg/a.webp'].light, sha256: 'f'.repeat(64) } };
+    assert.match(checkManifest(root, { docs }).join('\n'), /assets\/bg\/a\.webp: its row differs from the light pack's/);
   });
 });
 
-test('known-bad: an asset with no light twin is caught, not skipped', () => {
-  withManifest({ ...base, 'assets/ui/c.webp': webp(32, 32) }, (root) => {
-    assert.match(checkManifest(root).join('\n'), /assets\/ui\/c\.webp: no light file/);
-  });
-});
-
-test('known-bad: a deleted asset still listed is caught', () => {
+test('known-bad: a new id in a release pack missing from the manifest is caught', () => {
   withManifest(base, (root) => {
-    rmSync(join(root, 'assets/bg/a.webp'));
-    assert.match(checkManifest(root).join('\n'), /in the manifest but not in assets\//);
+    const docs = packDocs(buildManifest(root));
+    docs.high.assets['assets/ui/b.webp'] = docs.high.assets['assets/bg/a.webp'];
+    assert.match(checkManifest(root, { docs }).join('\n'), /assets\/ui\/b\.webp: in the high pack's manifest, not in this one/);
   });
 });
 
-test('known-bad: a hand-edited pixel size is caught, not only a changed file', () => {
+test('known-bad: an id the manifest lists with no light record is caught, not skipped', () => {
   withManifest(base, (root) => {
     const p = join(root, MANIFEST_PATH);
-    writeFileSync(p, readFileSync(p, 'utf8').replace('"width":1536', '"width":2048'));
-    assert.match(checkManifest(root).join('\n'), /differs from what --write produces/);
+    const m = JSON.parse(readFileSync(p, 'utf8'));
+    delete m.assets['assets/bg/a.webp'].light;
+    writeFileSync(p, serialize(m));
+    assert.match(checkManifest(root, { docs: {} }).join('\n'), /assets\/bg\/a\.webp: has high \(an art id needs light and high/);
+  });
+});
+
+test('known-bad: an id the manifest still lists after the release dropped it is caught', () => {
+  withManifest(base, (root) => {
+    const docs = packDocs(buildManifest(root));
+    delete docs.high.assets['assets/bg/a.webp'];
+    assert.match(checkManifest(root, { docs }).join('\n'), /assets\/bg\/a\.webp: in the manifest, not in the high pack's/);
+  });
+});
+
+test('known-bad: a hand-edited header is caught, and a hand-edited pixel size is caught against a fetched pack', () => {
+  withManifest(base, (root) => {
+    const p = join(root, MANIFEST_PATH);
+    const docs = packDocs(buildManifest(root));
+    const text = readFileSync(p, 'utf8');
+    writeFileSync(p, text.replace('"width":1536', '"width":2048'));
+    assert.match(checkManifest(root, { docs }).join('\n'), /its row differs from the (high|light) pack's/);
+    writeFileSync(p, text.replace('the style guide recipe', 'a recipe'));
+    assert.match(checkManifest(root, { docs: {} }).join('\n'), /differs from what --write produces/);
   });
 });
 
@@ -187,20 +222,13 @@ test('schema 2: fonts, the licence, music and map tiles are common records; art 
   });
 });
 
-test('known-bad: a light font twin that differs from the common record is caught', () => {
+test('known-bad: a changed track or a new tile the manifest was not rewritten for is caught against the common pack', () => {
   withManifest(commonBase, (root) => {
-    writeFileSync(join(root, 'assets-mobile/fonts/f-400-normal.woff2'), 'other');
-    assert.match(checkManifest(root).join('\n'), /f-400-normal\.woff2: the assets-mobile\/ copy differs/);
-  });
-});
-
-test('known-bad: a changed track or a new tile without a regenerated manifest is caught', () => {
-  withManifest(commonBase, (root) => {
-    writeFileSync(join(root, 'music/title/title.mp3'), 'ID3-retake');
-    mkdirSync(join(root, 'map-detail/abc/256'), { recursive: true });
-    writeFileSync(join(root, 'map-detail/abc/256/1-0.webp'), webp(256, 256, 3));
-    const problems = checkManifest(root).join('\n');
-    assert.match(problems, /music\/title\/title\.mp3: the common file changed/);
-    assert.match(problems, /map-detail\/abc\/256\/1-0\.webp: in the common sources but not in the manifest/);
+    const docs = packDocs(buildManifest(root));
+    docs.common.assets['music/title/title.mp3'] = { common: { ...docs.common.assets['music/title/title.mp3'].common, bytes: 99 } };
+    docs.common.assets['map-detail/abc/256/1-0.webp'] = { common: { path: 'map-detail/abc/256/1-0.webp', bytes: 1, sha256: 'a'.repeat(64) } };
+    const problems = checkManifest(root, { docs }).join('\n');
+    assert.match(problems, /music\/title\/title\.mp3: its row differs from the common pack's/);
+    assert.match(problems, /map-detail\/abc\/256\/1-0\.webp: in the common pack's manifest, not in this one/);
   });
 });

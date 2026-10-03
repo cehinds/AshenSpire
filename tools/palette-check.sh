@@ -99,6 +99,19 @@
 set -u
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROBE="$DIR/palette-probe.html"
+# THE SHIPPED ART IS THE FETCHED HIGH PACK since docs/EXTERNAL-ASSETS-PLAN.md
+# step 13 (the assets/ tree left this repository). The probe reads
+# ../assets/equipment/ beside itself, so a checkout without that folder runs it
+# from a staging copy whose assets/ is the pack (tools/art-source.mjs). The
+# selftest's tree copy below carries its own assets/equipment/ and needs none.
+# No pack is an UNKNOWN (exit 1): silence is not a pass.
+if [ ! -d "$DIR/../assets/equipment" ]; then
+  HIGH_ASSETS="$(cd "$DIR/.." && node tools/art-source.mjs --dir assets)" || { echo "palette-check: the shipped art is not fetched — node tools/fetch-art.mjs --pack high"; exit 1; }
+  HIGH_ASSETS="$(cd "$DIR/.." && cd "$HIGH_ASSETS" && pwd)"
+  STAGE="$(mktemp -d)"; mkdir -p "$STAGE/tools"; cp "$PROBE" "$STAGE/tools/"
+  ln -s "$HIGH_ASSETS" "$STAGE/assets"
+  PROBE="$STAGE/tools/palette-probe.html"
+fi
 PLATE_DIR=""
 [ "${1:-}" = "--plates" ] && { PLATE_DIR="${2:?--plates needs a directory}"; mkdir -p "$PLATE_DIR"; }
 
@@ -125,7 +138,7 @@ if [ "${1:-}" = "--selftest" ]; then
   cp -r "$ROOT/tools" "$WORK/tools"
   mkdir -p "$WORK/content" "$WORK/assets"
   cp -r "$ROOT/content/source" "$WORK/content/source"
-  cp -r "$ROOT/assets/equipment" "$WORK/assets/equipment"
+  cp -r "$(cd "$ROOT" && cd "$(node tools/art-source.mjs --dir assets)" && pwd)/equipment" "$WORK/assets/equipment"
 
   BAD=0
   arm() { # arm <name> <expected-exit> <why>

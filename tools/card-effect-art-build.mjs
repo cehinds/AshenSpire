@@ -3,6 +3,8 @@ import {createRequire} from 'node:module';
 import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const require=createRequire(import.meta.url);
 let sharp;try{sharp=require('sharp')}catch{sharp=require('../build/animation-tools/node_modules/sharp')}
 const root=fileURLToPath(new URL('../',import.meta.url));
