@@ -256,8 +256,8 @@ function handExample(ctx) {
     if (receipt.raw !== receipt.value) expression += `, kept within ${receipt.min ?? 0}–${receipt.max ?? receipt.value}`;
     return { label, expression, total: receipt.value };
   };
-  const capacity = line('Hand size', 'handSize');
-  const opening = line('Opening hand', 'openingHand');
+  const capacity = line(t('statsPreview.overview.handSize'), 'handSize');
+  const opening = line(t('statsPreview.overview.openingHand'), 'openingHand');
   if (opening.total > capacity.total) {
     opening.expression += `, then limited to capacity ${capacity.total}`;
     opening.total = capacity.total;

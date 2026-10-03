@@ -506,7 +506,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         note: budget.points === 1
           ? 'Choose one attribute. Existing points cannot be reduced.'
           : 'Each point was earned by a level; assign as many as you like now and keep the rest. Existing points cannot be reduced.',
-        cancelLabel: 'Cancel',
+        cancelLabel: t('common.cancel'),
         doneLabel: count > 1 ? `Assign ×${count}` : 'Assign',
         doneDisabled: !count,
         rows: level.attributes.map((attr) => ({

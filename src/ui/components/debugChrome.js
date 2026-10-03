@@ -11,11 +11,12 @@
 
 import { el, openModal, button, logBox, flavour, prose, titleS, blocker } from '../kit/index.js';
 import { registerDebugChrome, logText, MAX_ENTRIES } from '../debuglog.js';
+import { t } from '../strings.js';
 
 /** The failure banner: the kit's Blocker with a Title·S, Prose and the one Button. */
 function banner({ title, body, onOpen }) {
   const head = titleS(title, { tag: 'div' });
-  const open = button({ label: 'Command log', className: 'vb-log' });
+  const open = button({ label: t('settings.row.commandLog'), className: 'vb-log' });
   open.addEventListener('click', onOpen);
   const node = blocker('', { attrs: { class: 'validation-banner', role: 'alert' } });
   node.append(head, ...String(body).split('\n').map((line) => prose(line)), open);
@@ -32,7 +33,7 @@ function door() {
     size: 'lg',
     className: 'debug-modal',
     eyebrow: 'Advanced',
-    title: 'Command log',
+    title: t('settings.row.commandLog'),
     body: el('div', { class: 'as-pane' }, [
       flavour(`The last ${MAX_ENTRIES} commands and results between the interface and the engine, newest at the bottom. Copy this into a bug report if the game misbehaves.`),
       body,
@@ -51,7 +52,7 @@ function door() {
   copy.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(logText());
-      copy.textContent = 'Copied';
+      copy.textContent = t('common.copied');
     } catch (e) {
       // Clipboard blocked (e.g. file://): select the text for manual copy.
       const range = document.createRange();

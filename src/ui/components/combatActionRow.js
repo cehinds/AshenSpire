@@ -24,7 +24,7 @@ import { esc } from './tooltip.js';
 import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from './flask.js';
 import { observeIconTray, unobserveIconTray, setIconTrayItems, setIconTrayOverflow, trayIcon } from './iconTray.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
-import { el, statPair, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
+import { el, statPair, button, html, openModal, detailCard, optionCard, flavour, keycap } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 export function pileButton(kind, label) {
@@ -44,7 +44,7 @@ export function pileButton(kind, label) {
  */
 export function combatActionRowHtml({ endTurnId = null } = {}) {
   return `<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': t('combat.actions.remaining') } }))}
+          ${html(statPair({ key: t('combat.actions'), value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': t('combat.actions.remaining') } }))}
           ${html(pileButton('draw', 'Draw'))}
           ${html(button({ label: t('combat.endTurn'), weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall', ...(endTurnId ? { id: endTurnId } : {}) }))}
           ${html(button({ label: t('combat.discard'), className: 'pile spent tall' }))}
@@ -63,7 +63,7 @@ export function setPotionRevealTiming(row, reveal) {
 }
 
 /** The row's tooltips, one wording for both boards (counts read at open time). */
-export const actionsTipHtml = (left, max) => `<div class="tt-title">Actions</div>`
+export const actionsTipHtml = (left, max) => `<div class="tt-title">${esc(t('combat.actions'))}</div>`
   + `${left} of ${max} left this turn.`
   + `<div class="ti-detail">Playing a card spends its cost. Unspent actions do not carry over.</div>`;
 export const drawTipHtml = (count, { browse = true } = {}) => `<div class="tt-title">Draw pile</div>`
@@ -78,6 +78,16 @@ export const SPENT_TIP_HTML = spentTipHtml();
 export const POTIONS_TIP_HTML = `<div class="tt-title">${esc(t('potions.run.title'))}</div>Choose a healing, mana or carried potion. Only Use spends it.`;
 
 /**
+ * paintEndTurnKey(button, key) — End Turn's face with its bound key. Solo's
+ * renderControls repaints it whenever the binding changes; it wears the same
+ * row (combat.endTurn) the first render does, so a reword survives a rebind.
+ */
+export function paintEndTurnKey(endTurn, key) {
+  if (!endTurn || endTurn.querySelector('.et-key')?.textContent === key) return;
+  endTurn.replaceChildren(t('combat.endTurn'), keycap(key, { class: 'et-key' }));
+}
+
+/**
  * Fill the Actions, Draw and Discard/Exhaust cells from plain counts. The
  * accessible labels follow the values (#1436 review): Actions reads "Actions
  * 2 of 3" as solo's renderControls writes it, and `browse: false` (co-op, no
@@ -88,7 +98,7 @@ export function paintCombatActionCounts(row, { energy, energyMax, draw, discard,
   const orb = row.querySelector('.energy-orb');
   if (orb && energy != null) {
     orb.querySelector('.sp-v').textContent = `${energy}/${energyMax}`;
-    orb.setAttribute('aria-label', `Actions ${energy} of ${energyMax}`);
+    orb.setAttribute('aria-label', `${t('combat.actions')} ${energy} of ${energyMax}`);
   }
   const drawNode = row.querySelector('.pile.draw');
   if (drawNode) {
@@ -97,9 +107,13 @@ export function paintCombatActionCounts(row, { energy, energyMax, draw, discard,
   }
   const spent = row.querySelector('.pile.spent');
   if (spent) {
-    const spentHtml = '<span>Discard ' + discard + '</span><small>Exhaust ' + exhaust + '</small>';
+    // The words are the rows the first render wears (combat.discard on the
+    // button, #1489): a repaint that typed them reverted a reword on the
+    // first refresh, on both boards.
+    const [discardWord, exhaustWord] = [t('combat.discard'), t('combat.exhaust')];
+    const spentHtml = `<span>${esc(discardWord)} ${discard}</span><small>${esc(exhaustWord)} ${exhaust}</small>`;
     if (spent.innerHTML !== spentHtml) spent.innerHTML = spentHtml;
-    spent.setAttribute('aria-label', `Discard ${discard}; Exhaust ${exhaust}${browse ? '. Open piles' : ''}`);
+    spent.setAttribute('aria-label', `${discardWord} ${discard}; ${exhaustWord} ${exhaust}${browse ? '. Open piles' : ''}`);
   }
 }
 

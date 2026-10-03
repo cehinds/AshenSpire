@@ -15,7 +15,7 @@ export function openHandDiscard(registries, plan, onConfirm, opener) {
   const confirmReason = reasonWhenDisabled(confirm, () => t('handDiscard.confirm.reason', { minimum: plan.minimum }));
   const refresh = () => {
     count.textContent = `${selected.size} selected · ${plan.minimum ? `Choose at least ${plan.minimum}, up to ${plan.maximum}.` : `Choose up to ${plan.maximum}, or keep all.`} Cards resolve before the next draw.`;
-    confirm.textContent = selected.size ? `Discard ${selected.size} & end turn` : t('handDiscard.keepAllEndTurn');
+    confirm.textContent = selected.size ? t('handDiscard.discardEndTurn', { count: selected.size }) : t('handDiscard.keepAllEndTurn');
     confirm.disabled = selected.size < plan.minimum;
     confirmReason();
     controls.forEach(([input, id]) => { input.disabled = !selected.has(id) && selected.size >= plan.maximum; });
@@ -27,13 +27,13 @@ export function openHandDiscard(registries, plan, onConfirm, opener) {
       for (const card of plan.cards) {
         const item = el('div', { class: 'hand-discard-item' });
         const label = el('label', { class: 'as-btn' });
-        const input = el('input', { type: 'checkbox', 'aria-label': `Discard ${resolveCard(registries, card).name}` });
+        const input = el('input', { type: 'checkbox', 'aria-label': `${t('combat.discard')} ${resolveCard(registries, card).name}` });
         input.dataset.discardId = card.instanceId;
         input.addEventListener('change', () => {
           if (input.checked) selected.add(card.instanceId); else selected.delete(card.instanceId);
           refresh();
         });
-        label.append(input, document.createTextNode(' Discard'));
+        label.append(input, document.createTextNode(` ${t('combat.discard')}`));
         item.append(renderCard(registries, card, { small: true, inspectReadOnly: true }), label);
         controls.push([input, card.instanceId]);
         grid.append(item);

@@ -6149,6 +6149,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.exhaust",
+    "extends": "",
+    "short": "Exhaust",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.actions",
+    "extends": "",
+    "short": "Actions",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.potions.use",
     "extends": "",
     "short": "Use",
@@ -6212,6 +6226,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "handDiscard.discardEndTurn",
+    "extends": "",
+    "short": "Discard {count} & end turn",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "handDiscard.keepAll",
     "extends": "",
     "short": "Keep all",
@@ -6233,9 +6254,16 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "settingsSync.copy.done",
+    "id": "common.copied",
     "extends": "",
     "short": "Copied",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settingsSync.copy.done",
+    "extends": "common.copied",
+    "short": "",
     "full": "",
     "tip": ""
   },

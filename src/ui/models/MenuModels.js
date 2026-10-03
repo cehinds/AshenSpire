@@ -1,6 +1,7 @@
 import { behaviorModel } from './BehaviorModel.js';
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { t } from '../strings.js';
 
 function quickMenuCaptionModel({ mode, label }) {
   return componentModel(UI.quickMenuCaption, {
@@ -43,7 +44,7 @@ export function quickMenuPanelModel({ context, mode, caption, rows }) {
   return componentModel(UI.quickMenuPanel, {
     variant: context,
     properties: { context, mode },
-    accessibility: { role: 'menu', label: 'Quick menu' },
+    accessibility: { role: 'menu', label: t('settings.row.quickNav') },
     children: [quickMenuCaptionModel({ mode, label: caption }), ...rows.map(quickMenuRowModel)],
   });
 }

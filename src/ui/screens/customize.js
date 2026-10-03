@@ -81,7 +81,7 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   ar: 'Attack Rating (AR)',
   dr: 'Defense Rating (DR)',
   pr: 'Power Rating (PR)',
-  openingHand: 'Opening hand',
+  openingHand: t('statsPreview.overview.openingHand'),
   draw: 'Cards drawn each turn',
 });
 
@@ -847,7 +847,7 @@ export function mountCustomize(app, {
       title: 'Assign points',
       remaining: remainingPoints(),
       modal: true,
-      cancelLabel: 'Cancel',
+      cancelLabel: t('common.cancel'),
       doneLabel: 'Continue',
       rows: rowsNow(),
       onDecrease: (id) => step(id, -1),

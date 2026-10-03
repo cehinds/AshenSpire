@@ -343,7 +343,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           <ul class="set-sync-diff">${diff.slice(0, DIFF_PREVIEW).map(({ key, from, to }) => `<li><span>${esc(labelOf.get(key) || key)}</span> <s>${esc(show(from))}</s> → <b>${esc(show(to))}</b></li>`).join('')}</ul>
           ${diff.length > DIFF_PREVIEW ? `<p class="set-note">…and ${diff.length - DIFF_PREVIEW} more.</p>` : ''}
           ${parsed.warnings.length ? `<p class="set-note">${esc(parsed.warnings.join(' '))}</p>` : ''}
-          <div class="set-sync-acts"><button type="button" class="as-btn" data-sync="apply">Apply</button><button type="button" class="as-btn" data-sync="cancel">Cancel</button></div>`
+          <div class="set-sync-acts"><button type="button" class="as-btn" data-sync="apply">Apply</button><button type="button" class="as-btn" data-sync="cancel">${esc(t('common.cancel'))}</button></div>`
         : '<p>This device already matches the profile.</p>';
       box.querySelector('[data-sync="apply"]')?.addEventListener('click', () => {
         try {

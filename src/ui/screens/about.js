@@ -22,6 +22,7 @@ import { AI_DISCLOSURE, disclosureAsText } from '../../content/aiDisclosure.js';
 import { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } from '../../buildversion.js';
 import { CHANGELOG, PROJECT_REPOSITORY_URL } from '../../content/changelog.js';
 import { el, prose, eyebrow, titleS, button, buttonRow, statusText, flavour, fold, hairline } from '../kit/index.js';
+import { t } from '../strings.js';
 
 /**
  * A source-server build is development by construction. A standalone bundle
@@ -81,7 +82,7 @@ export function renderAboutSection(container, {
   locationLike = globalThis.location,
 } = {}) {
   const sections = disclosure.sections.map((s) => el('div', { class: 'about-block' }, [
-    el('div', { class: 'set-section-head' }, [eyebrow('About'), titleS(s.heading, { tag: 'h3' })]),
+    el('div', { class: 'set-section-head' }, [eyebrow(t('settings.group.About')), titleS(s.heading, { tag: 'h3' })]),
     prose(s.body),
   ]));
 

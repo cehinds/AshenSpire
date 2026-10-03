@@ -30,11 +30,16 @@ reword('settings.row.uprightGate', 'REWORDED short-screen row');
 reword('settings.group.Interface', 'REWORDED interface group');
 reword('settings.title', 'REWORDED settings');
 reword('potions.run.title', 'REWORDED potions');
+reword('handDiscard.discardEndTurn', 'REWORDED discard {count} and end');
+reword('combat.endTurn', 'REWORDED end turn');
+reword('combat.discard', 'REWORDED discard');
+reword('combat.exhaust', 'REWORDED exhaust');
+reword('combat.actions', 'REWORDED actions');
 
 const { openHandDiscard } = await import('../src/ui/components/handDiscard.js');
 const { renderSettingsSync } = await import('../src/ui/components/settingsSync.js');
 const { updateUprightGate } = await import('../src/ui/components/upright.js');
-const { POTIONS_TIP_HTML } = await import('../src/ui/components/combatActionRow.js');
+const { POTIONS_TIP_HTML, actionsTipHtml, combatActionRowHtml, paintCombatActionCounts, paintEndTurnKey } = await import('../src/ui/components/combatActionRow.js');
 const { openPrologueSceneEditor } = await import('../src/ui/screens/prologueSceneEditor.js');
 const { prologueSettingKey } = await import('../src/model/prologue.js');
 
@@ -51,7 +56,8 @@ test('hand discard: Confirm wears the reworded row on first render and after a r
     const box = dom.document.body.querySelector('[data-discard-id]');
     assert.ok(box, 'no discard checkbox rendered, so the refresh path went untested');
     box.checked = true; box.dispatchEvent(new dom.Event('change'));
-    assert.notEqual(confirm.textContent, 'REWORDED keep and end', 'one selected should say Discard 1');
+    assert.equal(confirm.textContent, 'REWORDED discard 1 and end', 'one selected wrote a literal Discard count');
+    assert.equal(box.getAttribute('aria-label').split(' ')[0] + ' ' + box.getAttribute('aria-label').split(' ')[1], 'REWORDED discard', 'the checkbox aria-label types its own Discard');
     box.checked = false; box.dispatchEvent(new dom.Event('change'));
     assert.equal(confirm.textContent, 'REWORDED keep and end', 'refresh to zero selected wrote a literal');
     shell?.close?.();
@@ -129,4 +135,66 @@ test('combat potions: the tooltip title is the button\'s own row, so a reword mo
   // Found by the same sweep (#1489): the button read t('potions.run.title') and
   // its tooltip still opened on a literal "Potions".
   assert.match(POTIONS_TIP_HTML, /<div class="tt-title">REWORDED potions<\/div>/);
+});
+
+// Codex, #1489 (comment 4170971444): the action row's first render read
+// combat.endTurn / combat.discard, and the first refresh put 'End Turn',
+// 'Discard' and 'Actions' back — solo through renderControls, both boards
+// through paintCombatActionCounts. The boards build the row from
+// combatActionRowHtml and repaint it with paintCombatActionCounts (both) and
+// paintEndTurnKey (solo, on every rebind check); the source check at the end
+// pins each screen to those paths, so the faces below are the faces they show.
+const fakeCell = () => {
+  const attrs = new Map();
+  const value = { textContent: '' };
+  return { attrs, value, innerHTML: '', setAttribute: (k, v) => attrs.set(k, String(v)), querySelector: (sel) => (sel === '.sp-v' ? value : null) };
+};
+const fakeRow = () => {
+  const cells = { '.energy-orb': fakeCell(), '.pile.draw': fakeCell(), '.pile.spent': fakeCell() };
+  return { cells, querySelector: (sel) => cells[sel] || null };
+};
+
+for (const [board, options, counts] of [
+  ['solo', {}, { energy: 2, energyMax: 3, draw: 5, discard: 4, exhaust: 1 }],
+  ['co-op', { endTurnId: 'coop-endturn' }, { energy: 1, energyMax: 3, draw: 7, discard: 2, exhaust: 0, browse: false }],
+]) {
+  test(`${board} action row: End Turn, Discard and Actions wear the reworded rows on first render and after a repaint`, () => {
+    // First render (the kit serialises through a DOM, so build it under one).
+    const html = withKitDom(() => combatActionRowHtml(options));
+    assert.match(html, /class="[^"]*end-turn[^"]*"[^>]*>(?:<[^>]+>)*REWORDED end turn/, 'End Turn first face');
+    assert.match(html, /class="[^"]*pile spent[^"]*"[^>]*>(?:<[^>]+>)*REWORDED discard/, 'Discard first face');
+    assert.match(html, /energy-orb[\s\S]*?REWORDED actions/, 'Actions first face');
+    assert.doesNotMatch(html, />(End Turn|Discard|Actions)</, 'a literal face survived in the first render');
+    // Repaint.
+    const row = fakeRow();
+    paintCombatActionCounts(row, counts);
+    const { '.energy-orb': orb, '.pile.spent': spent } = row.cells;
+    assert.equal(orb.attrs.get('aria-label'), `REWORDED actions ${counts.energy} of ${counts.energyMax}`);
+    assert.equal(spent.innerHTML, `<span>REWORDED discard ${counts.discard}</span><small>REWORDED exhaust ${counts.exhaust}</small>`);
+    assert.match(spent.attrs.get('aria-label'), new RegExp(`^REWORDED discard ${counts.discard}; REWORDED exhaust ${counts.exhaust}`));
+    assert.match(actionsTipHtml(counts.energy, counts.energyMax), /<div class="tt-title">REWORDED actions<\/div>/);
+  });
+}
+
+test('solo End Turn: a rebind repaint keeps the reworded face', () => {
+  withKitDom((dom) => {
+    const children = [];
+    const endTurn = { querySelector: () => null, replaceChildren: (...nodes) => { children.splice(0, children.length, ...nodes); } };
+    paintEndTurnKey(endTurn, 'E');
+    assert.equal(children[0], 'REWORDED end turn', 'the repaint typed End Turn');
+    assert.equal(children[1].textContent, 'E');
+  });
+});
+
+test('both boards repaint through the shared paths, not their own literals', async () => {
+  const { readFileSync } = await import('node:fs');
+  const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+  const solo = read('src/ui/screens/combat.js');
+  const renderControls = solo.slice(solo.indexOf('function renderControls()'), solo.indexOf('function renderControls()') + 2500);
+  assert.match(renderControls, /paintEndTurnKey\(\$\('\.end-turn'\), etKey\)/, 'solo renderControls repaints End Turn its own way');
+  assert.match(renderControls, /paintCombatActionCounts\(actionRow, \{ energy: combat\.player\.energy, energyMax: combat\.player\.energyMax,/, 'solo renderControls paints Actions its own way');
+  assert.match(solo, /<div class="tt-title">\$\{esc\(t\('combat\.endTurn'\)\)\}<\/div>/, 'solo End Turn tooltip title');
+  const coop = read('src/ui/screens/coop.js');
+  assert.match(coop, /combatActionRowHtml\(\{ endTurnId: 'coop-endturn' \}\)/);
+  assert.match(coop, /paintCombatActionCounts\(row, \{\s*energy: meP/, 'co-op repaints the row its own way');
 });

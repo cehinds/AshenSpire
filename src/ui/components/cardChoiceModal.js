@@ -22,7 +22,7 @@ export function openCardChoiceModal({ plan, cardName = 'Card', opener = document
     opener,
     eyebrow: cardName,
     title: plan.kind === 'stance' ? 'Choose a stance' : 'Choose',
-    closeLabel: `Cancel ${cardName}`,
+    closeLabel: `${t('common.cancel')} ${cardName}`,
     bodyClassName: 'as-pane card-choice-body',
     body: (host) => {
       for (const option of plan.options) {
