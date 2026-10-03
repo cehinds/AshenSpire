@@ -29,20 +29,21 @@ const fightFor = (run, settings = {}, reg = registries) =>
 const capacityOf = (c, run) => scaledCards(handRow(c.handRules, 'handSize'), run.attributes, 1);
 const endsTurnAsDiscard = (c, card) => c.registries.framework.endTurnFate(resolveCard(c.registries, card)) === 'discard';
 
-test('the shipped hand behaviour retains the hand and draws a fixed number', () => {
-  assert.equal(handRulesDefaults.retain, true);
+test('the shipped hand behaviour shuffles ordinary cards and draws a fixed number', () => {
+  assert.equal(handRulesDefaults.retain, false);
+  assert.equal(handRulesDefaults.shuffleHand, true);
   assert.equal(handRulesDefaults.drawMode, 'fixed');
 });
 
-test('the Draw row gives every class 3 cards a turn at creation', () => {
+test('the Draw row gives every class 4 cards a turn at creation', () => {
   for (const classId of CLASSES) {
     const run = createRunState({ seed: 3, classId, registries });
-    assert.equal(run.drawPerTurn, 3, `${classId} draws ${run.drawPerTurn} at creation`);
-    assert.equal(scaledCards(handRow(fightFor(run).handRules, 'draw'), run.attributes, 1), 3, classId);
+    assert.equal(run.drawPerTurn, 4, `${classId} draws ${run.drawPerTurn} at creation`);
+    assert.equal(scaledCards(handRow(fightFor(run).handRules, 'draw'), run.attributes, 1), 4, classId);
   }
 });
 
-test('a new solo fight keeps last turn\'s unplayed cards, draws exactly the Draw stat more (clamped at capacity), and discards nothing', () => {
+test('a new solo fight keeps Retain cards, draws exactly the Draw stat more (clamped at capacity), and discards nothing', () => {
   for (const classId of CLASSES) {
     const run = createRunState({ seed: 5, classId, registries });
     const c = fightFor(run);
@@ -50,7 +51,6 @@ test('a new solo fight keeps last turn\'s unplayed cards, draws exactly the Draw
     const first = c.piles.hand.find((card) => { try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: c.enemies[0].id }); return true; } catch { return false; } });
     assert(first, `${classId}: a card could be played`);
     const kept = c.piles.hand.filter((card) => endTurnCardFate(c, card) === 'keep');
-    assert.equal(kept.length, c.piles.hand.length, `${classId}: the default keeps every ordinary card`);
     const keptIds = ids(kept);
     const discardBefore = ids(c.piles.discard);
     dispatch(c, { type: 'endTurn' });
@@ -66,6 +66,7 @@ test('the draw stops at the hand size when the retained hand is nearly full', ()
   const run = createRunState({ seed: 5, classId: 'starseer', registries });
   const c = fightFor(run);
   const capacity = capacityOf(c, run);
+  c.piles.hand = Array.from({ length: capacity - 1 }, (_, i) => ({ instanceId: `retained${i}`, cardId: 'urgentHeal', upgraded: false }));
   const kept = c.piles.hand.length;
   assert(capacity - kept < run.drawPerTurn, 'fixture: the room left is below the Draw stat');
   dispatch(c, { type: 'endTurn' });
@@ -74,7 +75,7 @@ test('the draw stops at the hand size when the retained hand is nearly full', ()
 
 test('retain-and-fill still works when selected', () => {
   const run = createRunState({ seed: 5, classId: 'reaver', registries });
-  const c = fightFor(run, { [HAND_RULES_PREFIX + 'drawMode']: 'fill' });
+  const c = fightFor(run, { [HAND_RULES_PREFIX + 'drawMode']: 'fill', [HAND_RULES_PREFIX + 'retain']: true });
   const before = ids(c.piles.hand);
   dispatch(c, { type: 'endTurn' });
   assert(before.every((id) => c.piles.hand.some((card) => card.instanceId === id)));
@@ -83,7 +84,7 @@ test('retain-and-fill still works when selected', () => {
 
 test('discard at end of turn still works when selected', () => {
   const run = createRunState({ seed: 5, classId: 'rogue', registries });
-  const c = fightFor(run, { [HAND_RULES_PREFIX + 'retain']: false });
+  const c = fightFor(run, { [HAND_RULES_PREFIX + 'retain']: false, [HAND_RULES_PREFIX + 'shuffleHand']: false });
   const unplayed = ids(c.piles.hand.filter((card) => endsTurnAsDiscard(c, card)));
   dispatch(c, { type: 'endTurn' });
   for (const id of unplayed) assert(c.piles.discard.some((card) => card.instanceId === id), `${id} was discarded`);
@@ -91,7 +92,7 @@ test('discard at end of turn still works when selected', () => {
   assert.equal(c.piles.hand.filter((card) => unplayed.includes(card.instanceId)).length, 0);
 });
 
-test('a run saved before D27 keeps its snapshotted Draw row and its hand behaviour', () => {
+test('a run saved before D27 keeps its snapshotted Draw row while new fights use the current behaviour', () => {
   const run = createRunState({ seed: 7, classId: 'rogue', registries });
   run.derivedStatRuleSnapshot.rules.rules.draw.base = 2; // what a pre-D27 run was born with
   run.drawPerTurn = 2;
@@ -101,10 +102,10 @@ test('a run saved before D27 keeps its snapshotted Draw row and its hand behavio
   assert.equal(loaded.drawPerTurn, 2);
   const c = fightFor(loaded);
   assert.equal(scaledCards(handRow(c.handRules, 'draw'), loaded.attributes, 1), 2);
-  assert.equal(c.handRules.retain, true);
+  assert.equal(c.handRules.retain, false);
   assert.equal(c.handRules.drawMode, 'fixed');
   // A new run on the same content draws the new row.
-  assert.equal(createRunState({ seed: 7, classId: 'rogue', registries }).drawPerTurn, 3);
+  assert.equal(createRunState({ seed: 7, classId: 'rogue', registries }).drawPerTurn, 4);
 });
 
 test('the Draw row is data: overriding its base changes what a new character draws', () => {
@@ -112,7 +113,7 @@ test('the Draw row is data: overriding its base changes what a new character dra
   const run = createRunState({ seed: 3, classId: 'herald', registries: tuned });
   assert.equal(run.drawPerTurn, 2);
   const c = fightFor(run, {}, tuned);
-  const kept = c.piles.hand.length;
+  const kept = c.piles.hand.filter(card => endTurnCardFate(c, card) === 'keep').length;
   dispatch(c, { type: 'endTurn' });
   assert.equal(c.piles.hand.length, Math.min(kept + 2, capacityOf(c, run)));
 });

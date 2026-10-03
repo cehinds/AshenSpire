@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1536",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep prepared spells and draw a fresh hand each turn",
+    "detail": "Opening and turn draws start at four with Intelligence scaling. Unplayed cards shuffle back into the draw pile unless they have Retain; thirty-one Herald and Starseer spells now keep that keyword when upgraded. Retained cards add to the next full draw, up to a separate default hand limit of fifteen. Solo and co-op share the rule, played cards still leave the hand normally, and existing saved fights preserve their rules. The defaults remain configurable.",
+    "build": "0.7.1.851",
+    "pullRequest": 1536,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1536"
+  },
+  {
+    "id": "pr-1542",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keepsake pictures return after an art retry",
+    "detail": "If a keepsake picture fails to load, its icon stands in; retrying the art or changing quality can restore the picture. The compact-art checks now run correctly in CI.",
+    "build": "0.7.1.845",
+    "pullRequest": 1542,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1542"
+  },
+  {
+    "id": "pr-1538",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "More of the climb has its finished artwork",
+    "detail": "The game includes compact card, relic, flask, event, and character art, including the Road Warden. Cards without a painted scene use a simple matching motif. High-resolution pictures remain in the art repository; the game uses its smaller local versions by default.",
+    "build": "0.7.1.845",
+    "pullRequest": 1538,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1538"
+  },
+  {
     "id": "pr-1533",
     "date": "2026-10-03",
     "group": "2026-10-03",
