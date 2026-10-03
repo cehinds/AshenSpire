@@ -1316,7 +1316,8 @@ const PLANTS = [
 function copyTree(dir) {
   cpSync(ROOT, dir, {
     recursive: true,
-    // assets/ and music/ are KEPT: a copy with no art boots a different screen,
+    // assets/, music/ and .art-cache/ (the fetched packs the server reads since
+    // step 12) are KEPT: a copy with no art boots a different screen,
     // and a plant scored against a different screen is scored against nothing.
     //
     // `docs/` IS EXCLUDED, ADDED 2026-08-21 (#179), and the reason is a real
