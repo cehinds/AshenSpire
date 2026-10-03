@@ -359,13 +359,33 @@ const PLANTS = [
     plant: (root) => editJson(root, (j) => ({ ...j, built: '1999-12-31' })),
   },
   {
-    // THE MOBILE EDITION UNDER THE SINGLE-FILE NAME. build/AshenSpire.html is
-    // the full or (dev/test) light single file; a mobile stamp there means the
-    // wrong artifact was copied into place.
-    name: 'the single file calls itself the MOBILE edition — the phone file copied over AshenSpire.html',
+    // A RETIRED EDITION UNDER THE GAME FILE'S NAME. Since step 8e the edition
+    // is the build's default tier, light or high; a `full` stamp there is a
+    // single file from before the flip copied into place.
+    name: 'the game file calls itself the retired FULL edition — an old single file copied over AshenSpire.html',
     row: 'E SHIPPED STAMP',
     plant: (root) => edit(root, 'build/AshenSpire.html',
-      (t) => t.replace(/const EDITION = '(full|light)'/, "const EDITION = 'mobile'")),
+      (t) => t.replace(/const EDITION = '(high|light)'/, "const EDITION = 'full'")),
+  },
+  {
+    // THE PINNED PACK MISSING (was the mobile plant, step 8e). The pack-shaped
+    // game file is only the game with the packs it pins beside it; one gone is
+    // a build that boots on placeholders, and row E2 must say so by name.
+    name: 'a pack index the game file pins is missing from build/packs/',
+    row: 'E2 SINGLE FILE AND PACKS',
+    plant: (root) => {
+      const pin = JSON.parse(/const ASSET_PACKS = (\{.*?\});\n/.exec(readFileSync(resolve(root, 'build/AshenSpire.html'), 'utf8'))[1]);
+      rmSync(resolve(root, 'build', pin.packs.light.index));
+    },
+  },
+  {
+    // THE LIGHT SINGLE FILE FROM ANOTHER BUILD. The download is held to this
+    // tree's stamp and to edition 'light', so a high or stale file under its
+    // name is caught where the site would publish it.
+    name: 'the light single file calls itself HIGH — another build copied over download/AshenSpire.html',
+    row: 'E2 SINGLE FILE AND PACKS',
+    plant: (root) => edit(root, 'build/download/AshenSpire.html',
+      (t) => t.replace("const EDITION = 'light'", "const EDITION = 'high'")),
   },
   {
     // THE CROSSED LABEL, and it is the failure this field exists to prevent

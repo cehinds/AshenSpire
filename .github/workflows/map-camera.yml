@@ -43,6 +43,16 @@ concurrency:
 permissions:
   contents: read
 
+# STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
+# assets/fonts/, music/ and map-detail/ reads the fetched art packs through
+# tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
+# checkout, so a job that builds or serves without fetching first is red now,
+# not when step 13 deletes them. Each job that builds, serves or tests the
+# checkout fetches with ./.github/actions/fetch-art right after setup-node.
+env:
+  ASHEN_ART_SOURCE: cache
+  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+
 jobs:
   refit:
     name: map camera re-fit (real browser)
@@ -54,6 +64,10 @@ jobs:
           lfs: false # serves the checked-out source tree; reads no LFS object
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - uses: ./.github/actions/which-browser
 

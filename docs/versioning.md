@@ -247,6 +247,13 @@ and the receipt rule above are unchanged.
 | `src/content/changelog.generated.js` | `dist/AshenSpire.html`, `dist/AshenSpire-mobile.html` |
 | the CHANGELOG.md receipt | |
 
+*(Since docs/EXTERNAL-ASSETS-PLAN.md step 8e the mobile file is retired, and
+the build is one tree: the pack-shaped `AshenSpire.html` with `asset-base.json`,
+`packs/` and `objects/` beside it, and the light single file at
+`download/AshenSpire.html`, in both `build/` and `dist/`; the root alias is the
+light single file. `.gitignore` ignores every HTML under `build/` and `dist/`
+and the pack trees beside them.)*
+
 `.gitignore` lists the six; `.gitattributes` loses their LFS rules;
 `tools/verify-shipped.mjs` fails if any of them is tracked again. A `dev`
 clone needs no Git LFS. The legacy preview files and everything under

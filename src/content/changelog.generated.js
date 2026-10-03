@@ -8,9 +8,59 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Fighters breathe while they wait",
     "detail": "Your fighter and every enemy now bob gently in place between actions, each at its own rhythm; before, the idle motion was meant to play but reached no one. This covers the Animated, Rendered and Classic figure styles; the Glyph style shows a sigil, not a figure, and stays still, and a fallen fighter, including a downed co-op ally, stops moving. With Reduced motion on, in the game's settings or your device's, they stand still, and a new check plays a whole turn that way to prove nothing on the board moves.",
-    "build": "0.7.1.803",
+    "build": "0.7.1.808",
     "pullRequest": 1475,
     "url": "https://github.com/cehinds/AshenSpire/pull/1475"
+  },
+  {
+    "id": "pr-1512",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A master's lesson track with nothing to teach no longer offers Ask",
+    "detail": "When a track had no cards it could teach you (a Herald's shield track, for example), the Ask button still worked and spent the visit's lesson on an empty result. It is now greyed out. Under Chaos Rewards, which can give that track cards, it stays available.",
+    "build": "0.7.1.807",
+    "pullRequest": 1512,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1512"
+  },
+  {
+    "id": "pr-1506",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "One game file and one download: the separate mobile and full-art files are retired",
+    "detail": "Every build is now one game page of about 10 MB that loads its art, fonts, music and map tiles from files beside it and picks phone-sized art on a phone by itself, plus one self-contained light-art file (about 31 MB) to download and play by double-click. The old mobile link sends you to the main game.",
+    "build": "0.7.1.806",
+    "pullRequest": 1506,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1506"
+  },
+  {
+    "id": "pr-1497",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Smith counts every card an upgrade improves",
+    "detail": "Upgrading a weapon or shield at the Smith already improved the Strike and Guard it lends you, but the preview and the receipt left those two cards out, so it said fewer cards improved than really did and showed a lent Guard as unused. Both now list every card the upgrade changes. Behind the scenes, four checking tools that had fallen behind the game's rules pass again.",
+    "build": "0.7.1.805",
+    "pullRequest": 1497,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1497"
+  },
+  {
+    "id": "pr-1500",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: builds and checks read the game's light art, fonts, music and map tiles from the art release",
+    "detail": "Nothing you play changes. Every build, test and preview page now takes the light art, the lore fonts, the shipped score and the map detail tiles from the verified art release instead of the copies still kept in this repository, so those copies can be removed in a later step.",
+    "build": "0.7.1.804",
+    "pullRequest": 1500,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1500"
+  },
+  {
+    "id": "pr-1505",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the startup-gate checks run again",
+    "detail": "Nothing you play changes. The checks that plant known bugs in a scratch copy of the game did not copy the two files that name the pinned art release. So the copy could not stamp a build, and the checks failed before testing anything.",
+    "build": "0.7.1.803",
+    "pullRequest": 1505,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1505"
   },
   {
     "id": "pr-1509",
