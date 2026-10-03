@@ -74,4 +74,9 @@ test('sprite import validates signatures and never overwrites an existing image'
   const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aKioAAAAASUVORK5CYII=';
   const one = await (await upload({name:'sprite.png',base64:png})).json(), two = await (await upload({name:'sprite.png',base64:png})).json();
   assert.notEqual(one.path,two.path); assert.match(one.path,/^assets\/imported\//);
+  // A checkout that pins an art release keeps no art (step 13): the import is
+  // refused by name instead of writing into the ignored assets/ tree.
+  await fs.writeFile(path.join(root,'art-release.json'),'{}');
+  const refused = await upload({name:'sprite.png',base64:png});
+  assert.equal(refused.status,409); assert.match((await refused.json()).error,/cehinds\/AshenSpire-art/);
 });

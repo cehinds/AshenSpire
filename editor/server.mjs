@@ -117,6 +117,13 @@ export async function createStudio({ root = path.resolve(HERE, '..'), port = 431
             return send(res, 200, { changes }); // Restore is staged for review, not applied here.
           }
           if (url.pathname === '/api/import') {
+            // A checkout that pins an art release (art-release.json) keeps no art:
+            // assets/ is ignored since docs/EXTERNAL-ASSETS-PLAN.md step 13, so an
+            // image written there would be referenced by content yet never be
+            // committed or shipped. Refused, naming the route art takes instead.
+            if (await fs.stat(path.join(root, 'art-release.json')).then(() => true, () => false)) {
+              return send(res, 409, { error: 'Artwork no longer enters this checkout: assets/ is ignored and nothing written there ships (docs/EXTERNAL-ASSETS-PLAN.md step 13). Add it to cehinds/AshenSpire-art (hd/assets/), let its release publish, then bump art-release.json here and run node tools/art-manifest.mjs --write and node tools/fetch-art.mjs.' });
+            }
             const extension = path.extname(data.name || '').toLowerCase();
             if (!['.png', '.webp', '.gif', '.jpg', '.jpeg'].includes(extension)) throw Error('Import PNG, WebP, GIF or JPEG artwork');
             const bytes = Buffer.from(data.base64 || '', 'base64');
