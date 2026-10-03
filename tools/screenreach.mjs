@@ -153,6 +153,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
+        name: 'a small player sprite loses its frame-level tap area',
+        file: 'styles/combat.css',
+        append: '.player-target-hitbox::after { pointer-events: none !important; }',
+        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.combatant/,
+      },
+      {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
         file: 'src/ui/screens/settings.js',
         find: 'if (lifecycleSentinel.isConnected) return;',
@@ -390,7 +396,7 @@ const PROBE = `(() => {
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
       const sr = sprite?.getBoundingClientRect();
-      const reach = c.matches('.enemy-target-hitbox') && sr
+      const reach = c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: sr.left + sr.width / 2 - 22, right: sr.left + sr.width / 2 + 22,
             top: sr.bottom - 22, bottom: sr.bottom + 22 },
           top => top === c || top === sprite || sprite.contains(top))
