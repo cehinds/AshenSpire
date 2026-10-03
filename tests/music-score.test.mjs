@@ -8,7 +8,7 @@
 // committed render can always be reproduced from its source.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -16,9 +16,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { BEDS } = await import('../src/content/music.js');
 const { Score, chord } = await import('../tools/score/compose.mjs');
 const { render } = await import('../tools/score/synth.mjs');
+// The shipped score's manifest and renders are the common pack's (step 12): the
+// manifest is read through tools/art-source.mjs (the fetched release, else the
+// tree until step 13), and a render exists when art-manifest.json lists it.
+const { artPath } = await import('../tools/art-source.mjs');
+const artIds = new Set(Object.keys(JSON.parse(readFileSync(join(ROOT, 'art-manifest.json'), 'utf8')).assets));
 
 const scoreIds = readdirSync(join(ROOT, 'music/score')).filter((f) => f.endsWith('.mjs') && !f.startsWith('_')).map((f) => f.replace(/\.mjs$/, ''));
-const manifest = JSON.parse(readFileSync(join(ROOT, 'music/manifest.json'), 'utf8'));
+const manifest = JSON.parse(readFileSync(artPath('music/manifest.json'), 'utf8'));
 
 test('every score plays under a context the engine has a bed for', async () => {
   assert.ok(scoreIds.length > 0, 'music/score/ holds at least one score');
@@ -32,7 +37,7 @@ test('every score plays under a context the engine has a bed for', async () => {
 
 test('the manifest names exactly one existing render per score', async () => {
   const listed = Object.entries(manifest).filter(([k]) => k !== '_comment').flatMap(([, v]) => v);
-  for (const rel of listed) assert.ok(existsSync(join(ROOT, 'music', rel)), `manifest names a missing file: ${rel}`);
+  for (const rel of listed) assert.ok(artIds.has(`music/${rel}`), `manifest names a file art-manifest.json does not list: ${rel}`);
   const expected = [];
   for (const id of scoreIds) {
     const { context } = await import(pathToFileURL(join(ROOT, 'music/score', `${id}.mjs`)).href);
