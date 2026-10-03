@@ -53,6 +53,7 @@ export function handRulesProblems(rules) {
   if (!rules || typeof rules !== 'object') return ['Hand rules must be an object'];
   const problems = [];
   for (const key of ['retain', 'promptDiscard', 'replaceDiscards', 'reshuffle']) if (typeof rules[key] !== 'boolean') problems.push(`Hand rules: ${key} must be boolean`);
+  if (rules.shuffleHand !== undefined && typeof rules.shuffleHand !== 'boolean') problems.push('Hand rules: shuffleHand must be boolean');
   if (!['fill', 'fixed'].includes(rules.drawMode) || !['keep', 'discard'].includes(rules.overflow)) problems.push('Hand rules: invalid draw or overflow mode');
   if (!Number.isInteger(rules.discardLimit) || rules.discardLimit < 0 || rules.discardLimit > 99) problems.push('Hand rules: invalid discard limit');
   if (rules.rows !== undefined) rowProblems(rules.rows, problems);
@@ -88,7 +89,11 @@ export function handRulesRows() {
     note: 'Whether retained cards past the hand size stay (and block draws) or are discarded at turn end.',
   });
   add('retain', handRulesDefaults.retain, 'Keep unplayed cards after your turn', 'Retention & discards', {
-    note: 'On: cards you do not play stay in hand. Off: they go to the discard pile at turn end.',
+    note: 'On: all unplayed cards stay. Off: only Retain cards stay; other cards follow the shuffle setting. Ethereal still applies.',
+  });
+  add('shuffleHand', handRulesDefaults.shuffleHand, 'Shuffle unplayed cards back into the draw pile', 'Retention & discards', {
+    requires: ['retain', false],
+    note: 'At turn end, return unplayed non-Retain cards to the draw pile and shuffle it. Off: discard them. Retain and Ethereal keep their own rules.',
   });
   add('promptDiscard', false, 'Offer optional discards at turn end', 'Retention & discards', {
     requires: ['retain', true],

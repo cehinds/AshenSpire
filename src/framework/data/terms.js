@@ -377,7 +377,7 @@ export const terms = {
     },
     {
       "id": "term.tooltip.retain",
-      "canonicalText": "Not discarded at the end of your turn."
+      "canonicalText": "Stays in your hand at the end of your turn."
     },
     {
       "id": "term.tooltip.recall",
