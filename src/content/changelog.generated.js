@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The Smith counts every card an upgrade improves",
     "detail": "Upgrading a weapon or shield at the Smith already improved the Strike and Guard it lends you, but the preview and the receipt left those two cards out, so it said fewer cards improved than really did and showed a lent Guard as unused. Both now list every card the upgrade changes. Behind the scenes, four checking tools that had fallen behind the game's rules pass again.",
-    "build": "0.7.1.804",
+    "build": "0.7.1.805",
     "pullRequest": 1497,
     "url": "https://github.com/cehinds/AshenSpire/pull/1497"
+  },
+  {
+    "id": "pr-1500",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: builds and checks read the game's light art, fonts, music and map tiles from the art release",
+    "detail": "Nothing you play changes. Every build, test and preview page now takes the light art, the lore fonts, the shipped score and the map detail tiles from the verified art release instead of the copies still kept in this repository, so those copies can be removed in a later step.",
+    "build": "0.7.1.804",
+    "pullRequest": 1500,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1500"
   },
   {
     "id": "pr-1505",
