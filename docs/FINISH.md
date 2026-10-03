@@ -31,7 +31,7 @@ status* table lists each spec section as built, partly built or planned.
 | Full-run bot wins | Reaver 4/20, Starseer 1/20, Rogue 9/20, Herald 15/20 | `node tools/runsim.mjs 20` (sim does not yet play by live rules, see A1) |
 | FPS on a low-end phone | **unmeasured** | no device profile run yet |
 | Load time | **unmeasured** | — |
-| Console errors across a full run | **unmeasured** (no gate plays a full run) | — |
+| Console errors across a full run | 0 `console.error`, 0 uncaught, 0 other logged errors; 19 optional SFX sample 404s set aside by name | `node tools/full-run-probe.mjs --check` (#1520), local |
 
 ## 1. Spec coverage
 
@@ -66,7 +66,7 @@ status* table lists each spec section as built, partly built or planned.
 ## 3. Full run
 
 - [x] **A headless full run in CI**. Test: `node tools/runsim.mjs 5` on fixed seeds for every class, run by `tests/run-node.mjs`, exits 0 with 0 crashes. — [#1437](https://github.com/cehinds/AshenSpire/pull/1437): `tests/run-node.mjs` (core lane) runs `tools/runsim.mjs 5` — 20 runs over 4 classes, every one to a win or a death, 0 crashes, 0 soft-locks, about 2 s — and red on a crash or a soft-lock (a fight unresolved after its action guard, or an act walk longer than its map); the selftest lane runs `runsim --selftest`, 3/3 plants caught (a throw inside a card's resolution, a stalled fight, a boss-less map cycle; only the engine's named door refusals are set aside, any other dispatch error is a CRASH) plus a clean control and a seed-for-seed repeat (D34).
-- [ ] **A browser full run**. Test: on a fixed seed, Title → Class Select → map → at least 1 combat → boss → Victory or Death → Title → a new run starts, with 0 console errors.
+- [~] **A browser full run**. Test: on a fixed seed, Title → Class Select → map → at least 1 combat → boss → Victory or Death → Title → a new run starts, with 0 console errors. — [#1520](https://github.com/cehinds/AshenSpire/pull/1520): `tools/full-run-probe.mjs --check` (run by `ci.yml`'s *build stamp and cold boot* browser job) drives a normal boot of the source tree in Chromium, seed `FULLRUN1`: title → character creation (Reaver, seed typed into the Seed field) → act map → a first fight played (7 Attack cards over 4 turns, won) → 27 map nodes walked, 11 fights (after the first, resolved through `window.__combat`) → the Furnace Chapel boss, The Furnace Saint, kills the character after 10 End Turns with nothing played → the profile records the loss, slot 1 is cleared → Return to title → New Game → a new act map at floor 0, 70/70 hp. 7/7 checks, 0 `console.error` calls, 0 uncaught exceptions, 0 other browser-logged errors; about 4 min 11 s locally. **Left:** the browser also logs 19 404s for the optional `assets/sfx/<id>.ogg` samples `src/ui/audio.js` probes by design (the synth plays instead); the probe sets those aside by name and counts them, so a strict reading of "0 console errors" is not met until that probe stops 404ing. Victory is not driven (it is the act-3 boss); not yet observed green on a CI runner.
 - [ ] **Save/resume holds in the browser** (§9 M2, §3.12). Test, three separate cases: (a) a reload on the map gives a run deep-equal to the one before, minus timestamps; (b) **Save Game** or **Save and Quit** mid-combat, then a reload, gives back exactly the hand, the piles, the enemies with their intents, and the resources, through the `CombatSnapshotService` record; (c) a plain reload or abandon mid-combat, with no explicit save, restarts that encounter from its entry checkpoint.
 
 ## 4. Balance
