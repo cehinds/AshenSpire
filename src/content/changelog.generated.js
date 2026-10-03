@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1535"
   },
   {
+    "id": "pr-1532",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Full draws and selective Retain are the approved hand rules",
+    "detail": "The contract starts opening and turn draws at four with Intelligence scaling, keeps Retain cards, shuffles other unplayed cards into the draw pile, and sets a separate default hand limit of fifteen. Retained cards add to the next draw until that limit. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.839",
+    "pullRequest": 1532,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1532"
+  },
+  {
     "id": "pr-1529",
     "date": "2026-10-03",
     "group": "2026-10-03",
