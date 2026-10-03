@@ -93,6 +93,53 @@ test('all granted cards can be set aside without reminting on save, combat resto
   assert.equal(moveFromSideboard(REG, run, swordCard.instanceId), false, 'an item-owned mount requires its original source');
 });
 
+test('sideboarded mounts adopt extraction and installation content before allowing an add', async () => {
+  const { commitExtraction, commitInstall } = await import('../src/model/cardExtraction.js');
+  const { deckVariantKey, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const run = freshRun();
+  run.loadout.sets.rightHand[0] = 'katana';
+  stampDeck(REG, run);
+  const mountId = 'weaponArt:katana:katanaDrawCut';
+  const original = structuredClone(run.deck.find((card) => card.instanceId === mountId));
+  assert.ok(original);
+  assert.equal(moveToSideboard(REG, run, mountId), true);
+  const extracted = commitExtraction(REG, run, 'armament/katana', mountId, undefined, { free: true });
+  assert.equal(run.sideboard.find((card) => card.instanceId === mountId).cardId, 'dodgeRoll', 'the library reflects the mount fallback, not the extracted art');
+  assert.equal(ownedCopies(run, 'katanaDrawCut'), 1, 'extraction creates one loose art, without a stale library duplicate');
+  assert.equal(deckCardEquipmentEligible(REG, run, original), false, 'the old advertised identity is no longer current');
+  const edit = openDeckEdit(REG, run);
+  assert.equal(edit.add(`card:${deckVariantKey(original)}`).ok, false, 'a stale tile cannot silently restore another card');
+  const fallback = structuredClone(run.sideboard.find((card) => card.instanceId === mountId));
+  run.deck.find((card) => card.instanceId === extracted.instanceId).upgraded = true;
+  commitInstall(REG, run, 'armament/katana', mountId, extracted.instanceId, undefined, { free: true });
+  const installed = run.sideboard.find((card) => card.instanceId === mountId);
+  assert.equal(installed.cardId, 'katanaDrawCut');
+  assert.equal(installed.upgraded, true);
+  assert.equal(deckCardEquipmentEligible(REG, run, fallback), false, 'the fallback identity becomes stale after installation');
+  assert.equal(edit.add(`card:${deckVariantKey(fallback)}`).ok, false);
+  assert.equal(moveFromSideboard(REG, run, mountId), true);
+  const restored = run.deck.find((card) => card.instanceId === mountId);
+  assert.equal(restored.cardId, 'katanaDrawCut');
+  assert.equal(restored.upgraded, true);
+  assert.equal(ownedCopies(run, 'katanaDrawCut'), 1);
+});
+
+test('smithing a carried but unequipped item also refreshes its library mount', async () => {
+  const { commitExtraction } = await import('../src/model/cardExtraction.js');
+  const run = freshRun();
+  run.loadout.sets.rightHand[0] = 'katana';
+  run.loadout.sets.rightHand[1] = 'straightSword';
+  stampDeck(REG, run);
+  const mountId = 'weaponArt:katana:katanaDrawCut';
+  assert.equal(moveToSideboard(REG, run, mountId), true);
+  run.loadout.active.rightHand = 1;
+  stampDeck(REG, run);
+  commitExtraction(REG, run, 'armament/katana', mountId, undefined, { free: true });
+  assert.equal(run.sideboard.find((card) => card.instanceId === mountId).cardId, 'dodgeRoll');
+  assert.equal(ownedCopies(run, 'katanaDrawCut'), 1);
+  assert.equal(moveFromSideboard(REG, run, mountId), false, 'an unequipped mount still cannot be restored');
+});
+
 test('the defaults are data, and the bounds read them', () => {
   assert.equal(DECK_RULES.defaults.deckEditing, true);
   assert.equal(DECK_RULES.defaults.deckEditingWhere, 'free');

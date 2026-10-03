@@ -2111,8 +2111,32 @@ export function reconcileGrantedCards(registries, run) {
   // the worn equipment's mounts; every other lent card is swept (an older
   // build may have left one) and none is appended.
   const poolDeck = isPoolDeckRun(run);
+  const currentGrants = desiredGrantInstances(registries, run);
+  const currentById = new Map(currentGrants.map((card) => [card.instanceId, card]));
+  // A sideboard entry represents the mount, just like its deck counterpart.
+  // Extraction/installation can replace the card under an unchanged mount id;
+  // adopt that new content before the sideboard suppresses the mount's deal.
+  // Unequipped sources keep their library entries, but smithing those carried
+  // items must still refresh a set-aside mount (or remove a deleted extra mount).
+  if (Array.isArray(run.sideboard)) {
+    const mountsByOwner = new Map();
+    run.sideboard = run.sideboard.flatMap((card) => {
+      if (!isItemOwned(card)) return [card];
+      let desired = currentById.get(currentInstanceId(card));
+      const owner = ownerItemRef(card);
+      if (!desired && owner && !card.kitRole) {
+        if (!mountsByOwner.has(owner)) {
+          const piece = resolveUpgradedEquipment(registries, owner, run.itemUpgradeLevels?.[owner] || 0);
+          mountsByOwner.set(owner, itemMountInstances(registries, run, piece));
+        }
+        desired = mountsByOwner.get(owner).find((mount) => mount.instanceId === card.instanceId);
+        if (!desired) return [];
+      }
+      return [desired ? adoptWanted(card, desired) : card];
+    });
+  }
   const heldAside = new Set((run.sideboard || []).map((card) => currentInstanceId(card)));
-  const allDesired = desiredGrantInstances(registries, run).filter((card) => !heldAside.has(card.instanceId));
+  const allDesired = currentGrants.filter((card) => !heldAside.has(card.instanceId));
   const desired = poolDeck ? playerInstalledGrants(run, allDesired) : allDesired;
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
@@ -2132,6 +2156,11 @@ export function reconcileGrantedCards(registries, run) {
   run.deck.push(...kept);
   for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
   return run.deck;
+}
+
+/** A library grant is addable only while its exact mount still lends that card. */
+export function isCurrentEquipmentGrant(registries, run, card) {
+  return desiredGrantInstances(registries, run).some((desired) => desired.instanceId === card.instanceId && desired.cardId === card.cardId);
 }
 
 /**

@@ -1676,6 +1676,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-pane-title { font-size: 2.1rem; padding-bottom: .7rem; }
   .deck-editor-searchbar { margin-bottom: .7rem; }
   .deck-editor-list { gap: .4rem; padding-top: .25rem; }
+  .deck-editor .deck-editor-inline-inspect { min-height: 2.4rem; height: 2.4rem; }
   .deck-editor-inspector { padding-inline: 1.4rem; gap: .5rem; }
   .deck-editor-reading { padding: 1.8rem 1rem .6rem; }
   .deck-editor .deck-editor-reading .card > .cname { font-size: 1.8rem; }

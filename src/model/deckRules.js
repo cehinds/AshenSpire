@@ -15,7 +15,7 @@ import { deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
 
 import { deckRules } from '../content/deckRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
-import { equippedPieces, isItemOwned, pieceItemRef, stampDeck } from './loadout.js';
+import { equippedPieces, isCurrentEquipmentGrant, isItemOwned, stampDeck } from './loadout.js';
 import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 
@@ -96,8 +96,7 @@ export function deckCardEquipmentEligible(registries, run, card) {
   const pieces = equippedPieces(registries, run.loadout, run.class);
   // A lent card remains an instance of its source item's mount. Restoring it
   // while that mount is absent would make the next restamp discard it.
-  if (card.grantedBy) return String(card.grantedBy).startsWith('unarmed:')
-    || pieces.some((piece) => card.grantedBy === piece.id || card.grantedBy === pieceItemRef(piece));
+  if (card.grantedBy || isItemOwned(card)) return isCurrentEquipmentGrant(registries, run, card);
   if (isUnlimitedBasic(card) || deckRules.unlimitedCardIds.includes(card.cardId)) return true;
   const tags = resolveCard(registries, card).tags || [];
   const rules = deckRules.equipmentEligibility;
