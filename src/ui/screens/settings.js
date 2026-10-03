@@ -25,6 +25,7 @@ import { tierStatus, tierChoiceDisabled, retryOffered, retryBuiltInArt, retryRun
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
+import { HAPTICS_DEFAULT_ON } from '../../content/haptics.js';
 import { balance } from '../../content/balance.js';
 import { VICTORY_XP_DEFAULTS } from '../../model/victoryXpPresentation.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
@@ -606,6 +607,8 @@ const ROWS = [
     note: tFull('settings.row.musicVolume') },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: t('settings.row.sfxVolume'), selfEvident: true,
     note: tFull('settings.row.sfxVolume') },
+  { cat: 'Audio', key: 'haptics', def: HAPTICS_DEFAULT_ON, label: t('settings.row.haptics'),
+    note: tFull('settings.row.haptics') },
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: t('settings.row.musicFolder'),
     placeholder: t('settings.row.musicFolder.placeholder'),
     note: tFull('settings.row.musicFolder') },

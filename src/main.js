@@ -137,6 +137,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
+import { createHaptics, haptic } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -364,6 +365,11 @@ seedPromotedDefaults(activeMeta, activeSettings);
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
+// Haptics have their own seam (ui/haptics.js), played by the call sites that
+// mean card play, damage taken and turn start; a moment with a pattern in
+// content/haptics.js vibrates unless Settings → Audio → Haptics is off (read
+// live, per cue). Not fed from sfx ids: equipment swaps share the card sound.
+haptic.sink = createHaptics({ getSettings: () => activeSettings });
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
 initInput({ getSettings: () => activeSettings });
