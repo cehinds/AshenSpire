@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Build your deck at the Reading Desk",
     "detail": "The illustrated deck editor has compact rows, two-line descriptions, inline Inspect, and proportionate card art. Sapphire Mana and green Stamina symbols show centered costs, with configurable resource grouping and order. Desktop inspection includes a looping skill animation with Pause. Any deck card can return to the library; adding equipment skills requires compatible equipped gear, and removed equipment cards stay removed after saving. A separate visual row editor lets you move, resize and snap components, then export the layout as JSON.",
-    "build": "0.7.1.845",
+    "build": "0.7.1.846",
     "pullRequest": 1535,
     "url": "https://github.com/cehinds/AshenSpire/pull/1535"
+  },
+  {
+    "id": "pr-1542",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keepsake pictures return after an art retry",
+    "detail": "If a keepsake picture fails to load, its icon stands in; retrying the art or changing quality can restore the picture. The compact-art checks now run correctly in CI.",
+    "build": "0.7.1.845",
+    "pullRequest": 1542,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1542"
+  },
+  {
+    "id": "pr-1538",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "More of the climb has its finished artwork",
+    "detail": "The game includes compact card, relic, flask, event, and character art, including the Road Warden. Cards without a painted scene use a simple matching motif. High-resolution pictures remain in the art repository; the game uses its smaller local versions by default.",
+    "build": "0.7.1.845",
+    "pullRequest": 1538,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1538"
   },
   {
     "id": "pr-1533",
