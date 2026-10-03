@@ -20,6 +20,14 @@ masters, prompts and editable vectors are retained in the linked layers kit.
 The old baked book WebPs were retired from runtime packs; their original
 masters remain available in the art package.
 
+The painted revision in `assets/shop/painted/` adds three neutral leather
+bindings and eleven separate painted emblems, including the feat emblem.
+They were generated with the built-in OpenAI image generator using the original
+approved Shield Manual as reference. [PNG masters, exact prompts and exporter](https://github.com/cehinds/AshenSpire-art/tree/main/art/manual-shop-2026-10-02/painted-v2)
+are retained in the art repository. These first-party generated layers have no
+third-party source or license claim. Full-binding recoloring preserves their
+painted shading, brass fittings and parchment.
+
 ## Player polish asset kit (2026-10-02)
 
 Sixteen original raster paintings, transparent role portraits and panel material

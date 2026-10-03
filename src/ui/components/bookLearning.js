@@ -3,15 +3,17 @@ import { el, button } from '../kit/index.js';
 import { modalHead, modalFooter, bindModalDismiss } from './modalShell.js';
 import { renderCard } from './card.js';
 import { t } from '../strings.js';
-import { renderBookArt } from './bookArt.js';
+import { renderBookArt, bookSymbolUrl } from './bookArt.js';
+import { featById } from '../../model/feats.js';
 import { bookLessonCard } from '../../model/bookLearning.js';
+import { learnedClassIds } from '../../model/classLibraryState.js';
 
 let activeClose = null;
 
 export function openBookLearning({ registries, run, id, inCombat = false, settings = {}, onLearn = () => {} }) {
   activeClose?.();
   let plan = skillBookReadPlan(registries, run, id, { inCombat });
-  let choice = null;
+  let choice = plan.def?.learnClass ? plan.lessons[0] : null;
   let release = null;
   const veil = el('div', { class: 'modal-veil book-learning-veil' });
   const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-learning-title', tabindex: '-1', dataset: { component: 'book-learning' } });
@@ -36,7 +38,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
     if (choice.kind === 'card') detail.appendChild(renderCard(registries, bookLessonCard(registries, run, plan.def, plan.skillId, choice.id), { inspectReadOnly: true }));
     else {
       const cls = registries.classes.get(choice.id);
-      detail.append(el('h3', { text: cls.name }), el('p', { text: cls.description }), el('p', { text: t('book.read.class') }));
+      detail.append(el('h3', { text: cls.name }), el('p', { text: cls.description }), el('p', { text: t(learnedClassIds(run).includes(cls.id) ? 'book.read.knownClass' : 'book.read.class') }));
     }
   };
   const draw = () => {
@@ -68,11 +70,12 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
       confirm.disabled = true;
       close();
       onLearn(receipt);
+      if (plan.def.learnClass) showClassBookReceipt({ registries, def: plan.def, receipt });
     } catch (failure) { error.textContent = failure.message; }
   });
   const body = el('div', { class: 'modal-body book-learning-body' }, [
     renderBookArt(plan.def, { className: 'book-reading-art' }),
-    el('p', { text: t('book.read.summary', { xp: plan.def?.xp || 0 }) }),
+    el('p', { text: plan.def?.learnClass ? t('book.read.classSummary', { xp: plan.def.xp, card: plan.def.combatCardChance || 0, feat: plan.def.featChance || 0 }) : t('book.read.summary', { xp: plan.def?.xp || 0 }) }),
     el('label', { for: 'book-learning-track', text: t('book.read.track') }), trackSelect,
     el('p', { class: 'book-learning-rarity', text: t('book.read.rarity') }), search,
     el('div', { class: 'book-lesson-columns' }, [choices, detail]), error,
@@ -80,6 +83,35 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
   panel.append(head, body, modalFooter({ secondary: [cancel], primary: confirm }));
   veil.appendChild(panel); document.body.appendChild(veil);
   release = bindModalDismiss({ veil, panel, close });
-  draw(); search.focus();
+  draw(); showDetail(); search.focus();
   return close;
+}
+
+function showClassBookReceipt({ registries, def, receipt }) {
+  activeClose?.();
+  const veil = el('div', { class: 'modal-veil book-learning-veil' });
+  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-receipt-title', tabindex: '-1', dataset: { component: 'book-receipt' } });
+  let release;
+  const close = () => { release?.(); veil.remove(); if (activeClose === close) activeClose = null; };
+  activeClose = close;
+  const body = el('div', { class: 'modal-body book-learning-body' }, [
+    renderBookArt(def, { className: 'book-reading-art' }),
+    el('p', { text: t('book.read.xpAwarded', { xp: receipt.gained }) }),
+    el('p', { text: t(receipt.classLearned ? 'book.read.classLearned' : 'book.read.knownClass') }),
+  ]);
+  if (receipt.bonuses.card) {
+    body.append(el('p', { text: t('book.read.cardAwarded', { name: receipt.bonuses.card.name }) }));
+    body.append(renderCard(registries, { cardId: receipt.bonuses.card.id, upgraded: false }, { inspectReadOnly: true }));
+    if (receipt.bonuses.card.destination === 'sideboard') body.append(el('p', { text: t('book.read.sideboard') }));
+  }
+  if (receipt.bonuses.feat) body.append(
+    el('img', { src: bookSymbolUrl('feat'), alt: '', width: 72, height: 72 }),
+    el('p', { text: t('book.read.featAwarded', { name: receipt.bonuses.feat.name }) }),
+    el('p', { text: featById(receipt.bonuses.feat.id).description }),
+  );
+  if (!receipt.bonuses.card && !receipt.bonuses.feat) body.append(el('p', { text: t('book.read.noBonus') }));
+  const done = button({ label: t('book.read.done') }); done.addEventListener('click', close);
+  panel.append(modalHead({ title: t('book.read.complete'), titleId: 'book-receipt-title', onClose: close }), body, modalFooter({ primary: done }));
+  veil.append(panel); document.body.append(veil);
+  release = bindModalDismiss({ veil, panel, close }); done.focus();
 }

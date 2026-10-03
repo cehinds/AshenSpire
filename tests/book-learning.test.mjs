@@ -36,7 +36,7 @@ test('book definitions validate, including canonical tags, universal and class b
   }
 });
 
-test('the expanded catalog reaches market stock and already-learned class books cannot be bought', () => {
+test('the expanded catalog reaches market stock including already-learned class books', () => {
   const configured = createRegistries(configuredContentBundle(contentBundle, {
     'gameConfig.shops.market.skillBooks.chance': 100,
     'gameConfig.shops.market.skillBooks.stock': 20,
@@ -51,7 +51,7 @@ test('the expanded catalog reaches market stock and already-learned class books 
     assert.equal(consumablePurchasePlan(configured, run, 'skillBooks', item).ok, true);
   }
   const own = books.find((row) => row.id === 'reaverClassBook');
-  assert.equal(consumablePurchasePlan(configured, run, 'skillBooks', own).ok, false);
+  assert.equal(consumablePurchasePlan(configured, run, 'skillBooks', own).ok, true);
 });
 
 test('reading grants exact XP plus an immediate tagged card before a skill level-up', () => {
@@ -133,7 +133,7 @@ test('class books retain XP, tree picks, armour and card ownership through equip
   const run = fresh(); run.consumables = { starseerClassBook: 2 };
   read(run, 'starseerClassBook');
   assert.equal(run.skills['class:starseer'].xp, 40);
-  assert.equal(skillBookReadPlan(reg, run, 'starseerClassBook').ok, false, 'known class cannot be learned twice');
+  assert.equal(skillBookReadPlan(reg, run, 'starseerClassBook').ok, true, 'known class can still grant XP and bonuses');
   run.skills['class:reaver'] = { xp: 17, level: 2, pendingDrafts: 1 };
   run.coreTags = ['ironFooting'];
   const reaverArmour = [...run.loadout.sets.armor];

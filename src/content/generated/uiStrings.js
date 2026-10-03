@@ -6889,5 +6889,75 @@ export const uiStrings = [
     "short": "— read the lore",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "book.read.classSummary",
+    "extends": "",
+    "short": "Gain {xp} class XP. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.knownClass",
+    "extends": "",
+    "short": "This class is already learned. Reading still grants its XP and any bonus rewards.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.xpAwarded",
+    "extends": "",
+    "short": "Gained {xp} class XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.classLearned",
+    "extends": "",
+    "short": "Class card learned. Equip it later from your inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.cardAwarded",
+    "extends": "",
+    "short": "Combat card learned: {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.featAwarded",
+    "extends": "",
+    "short": "Feat gained: {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.sideboard",
+    "extends": "",
+    "short": "This card was added to your sideboard because the deck copy limit was reached.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.noBonus",
+    "extends": "",
+    "short": "No bonus card or feat this time.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.done",
+    "extends": "",
+    "short": "Close book",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.complete",
+    "extends": "",
+    "short": "Book read",
+    "full": "",
+    "tip": ""
   }
 ];
