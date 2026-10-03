@@ -18,7 +18,7 @@ const CARD_ART = Object.freeze({
 
 export function playingCardArtwork(ref, { large = false } = {}) {
   const name = PROFILE_ART[ref?.profileId] || CARD_ART[ref?.cardId];
-  return name ? `docs/design/deck-editor/assets/cards/${name}-${large ? '1024' : '512'}.webp` : null;
+  return name ? `assets/cards/${name}-${large ? '1024' : '512'}.webp` : null;
 }
 
 /** Reviewed illustrations always win; defaults only fill unillustrated cards. */

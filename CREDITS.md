@@ -359,7 +359,8 @@ The recorded score is written as code. Each track is a list of notes in `music/s
 
 The existing project illustrations, card outline symbols and title-city backdrop
 were recovered unchanged from the prior deck editor work. They are staged in
-`docs/design/deck-editor/` for this local implementation preview. Source paths,
+`docs/design/deck-editor/` as design references. The game resolves their matching
+runtime card art from [AshenSpire-art hd-assets-v6](https://github.com/cehinds/AshenSpire-art/releases/tag/hd-assets-v6), with source and rights recorded in that release's CREDITS.md. Source paths,
 source chat IDs and SHA-256 digests are retained in `provenance.json` there.
-No new artwork or third-party license is claimed. Runtime art-pack publication
-remains a separate step before this preview is shipped.
+No new artwork or third-party license is claimed. The published v6 pack is pinned
+and verified by the normal game build.

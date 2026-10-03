@@ -340,30 +340,40 @@ export function nextFilterPreset(model, view) {
  *   remove(instanceId)  → { ok, refusal }
  *   move(instanceId, ±1) → { ok }           only under playInDeckOrder
  *   moveTo(instanceId, index) → { ok }
+ *   canUndo             → whether a successful edit can be undone
+ *   undo()              → { ok, refusal }  restores the preceding edit state
  *   confirm()           → { ok, refusal }
  *   cancel()
  */
 export function openDeckEdit(registries, run, settings = {}) {
   const snapshot = beginDeckEdit(run);
+  const history = [];
   let closed = false;
   const live = () => { if (closed) throw new Error('openDeckEdit: this editor session is already closed'); };
   const nameOf = (card) => resolveCard(registries, card).name;
+  // Use the same complete state boundary as Cancel: undoing a minted basic
+  // must restore its slot allocation and mint counter as well as both piles.
+  const remember = (before, result) => {
+    if (result.ok) history.push(before);
+    return result;
+  };
   return Object.freeze({
     snapshot,
     add(key) {
       live();
+      const before = beginDeckEdit(run);
       const [kind, id] = String(key || '').split(':');
       if (kind === 'basic') {
         // The mint tile: a fresh copy back, or a new one, never a set-aside
         // (upgraded) copy, which has its own tile.
         const card = addBasicCard(registries, run, id, { plain: !isEquippedRun(run), freshOnly: true });
-        return { ok: !!card, refusal: '' };
+        return remember(before, { ok: !!card, refusal: '' });
       }
       if (kind === 'kept') {
         const variant = String(key).slice('kept:'.length);
         const card = (run.sideboard || []).find((c) => isSetAsideBasic(c) && deckVariantKey(c) === variant);
         if (!card) return { ok: false, refusal: '' };
-        return { ok: moveFromSideboard(registries, run, card.instanceId, settings), refusal: '' };
+        return remember(before, { ok: moveFromSideboard(registries, run, card.instanceId, settings), refusal: '' });
       }
       if (kind !== 'card') throw new Error(`openDeckEdit.add: unknown collection key '${key}'`);
       // `card:<variant>` (a tile's key) moves a copy of exactly that variant;
@@ -376,7 +386,7 @@ export function openDeckEdit(registries, run, settings = {}) {
         const any = (run.deck || []).find((c) => c && matches(c));
         return { ok: false, refusal: t('deckEditor.refuse.allInDeck', { name: any ? nameOf(any) : cardId }) };
       }
-      if (moveFromSideboard(registries, run, loose.instanceId, settings)) return { ok: true, refusal: '' };
+      if (moveFromSideboard(registries, run, loose.instanceId, settings)) return remember(before, { ok: true, refusal: '' });
       const limit = deckCopyLimit(registries, cardId, settings, run.class);
       return { ok: false, refusal: t('deckEditor.refuse.copyLimit', { name: nameOf(loose), limit }) };
     },
@@ -385,7 +395,8 @@ export function openDeckEdit(registries, run, settings = {}) {
       const card = (run.deck || []).find((c) => c && c.instanceId === instanceId);
       if (!card) return { ok: false, refusal: '' };
       if (isLocked(card)) return { ok: false, refusal: t('deckEditor.locked.sentence', { name: nameOf(card), piece: pieceName(registries, card.grantedBy) }) };
-      return { ok: moveToSideboard(registries, run, instanceId), refusal: '' };
+      const before = beginDeckEdit(run);
+      return remember(before, { ok: moveToSideboard(registries, run, instanceId), refusal: '' });
     },
     moveTo(instanceId, index) {
       live();
@@ -393,26 +404,36 @@ export function openDeckEdit(registries, run, settings = {}) {
       const from = run.deck.findIndex((c) => c && c.instanceId === instanceId);
       const to = Math.max(0, Math.min(run.deck.length - 1, index));
       if (from < 0 || from === to) return { ok: false };
+      const before = beginDeckEdit(run);
       const [card] = run.deck.splice(from, 1);
       run.deck.splice(to, 0, card);
-      return { ok: true };
+      return remember(before, { ok: true });
     },
     move(instanceId, delta) {
       const from = run.deck.findIndex((c) => c && c.instanceId === instanceId);
       return this.moveTo(instanceId, from + delta);
+    },
+    undo() {
+      live();
+      if (!history.length) return { ok: false, refusal: '' };
+      cancelDeckEdit(run, history.pop());
+      return { ok: true, refusal: '' };
     },
     confirm() {
       live();
       const refusal = deckEditRefusal(run.deck.length, settings);
       if (refusal) return { ok: false, refusal };
       closed = true;
+      history.length = 0;
       return { ok: true, refusal: '' };
     },
     cancel() {
       live();
       cancelDeckEdit(run, snapshot);
       closed = true;
+      history.length = 0;
     },
+    get canUndo() { return !closed && history.length > 0; },
     get closed() { return closed; },
   });
 }

@@ -6931,5 +6931,75 @@ export const uiStrings = [
     "short": "Remove from deck",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "deckEditor.all",
+    "extends": "",
+    "short": "All",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inDeck",
+    "extends": "",
+    "short": "In Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.searchDeck",
+    "extends": "",
+    "short": "Search your deck…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.display.list",
+    "extends": "",
+    "short": "List",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.display.cards",
+    "extends": "",
+    "short": "Cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.back",
+    "extends": "",
+    "short": "← Back to cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.dropHere",
+    "extends": "",
+    "short": "Drop a card here to add it to your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.undo",
+    "extends": "",
+    "short": "Undo",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.added",
+    "extends": "",
+    "short": "Added {name} to your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.removed",
+    "extends": "",
+    "short": "Removed {name} from your deck.",
+    "full": "",
+    "tip": ""
   }
 ];

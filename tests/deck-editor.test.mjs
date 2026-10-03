@@ -323,6 +323,13 @@ function withDom(fn) {
   const proto = Object.getPrototypeOf(dom.document.body);
   proto.focus = function focus() { dom.document.activeElement = this; this.dispatchEvent(new dom.Event('focus')); };
   proto.replaceChildren = function replaceChildren(...nodes) { this.innerHTML = ''; this.append(...nodes); };
+  // Native <details>.open reflects its boolean attribute. The layout-free
+  // fixture needs that reflection to exercise collapsed-group focus routing.
+  Object.defineProperty(proto, 'open', {
+    configurable: true,
+    get() { return this.hasAttribute('open'); },
+    set(value) { if (value) this.setAttribute('open', ''); else this.removeAttribute('open'); },
+  });
   proto.insertBefore = function insertBefore(node, next) {
     node.remove();
     const at = this.children.indexOf(next);
@@ -532,6 +539,123 @@ test('Reading Desk: search accepts hotkey characters without mutating or closing
     assert.equal(editor.root.querySelectorAll('.deck-editor-tile').length, 0);
     assert.ok(editor.root.querySelector('.deck-editor-empty'));
     assert.deepEqual(editState(run), before);
+    editor.close();
+  });
+});
+
+test('Reading Desk: Undo reverses a row action and Cancel still restores the opening state', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun(), before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step').click();
+    assert.equal(run.deck.length, before.deck.length + 1);
+    assert.equal(editor.root.querySelector('.deck-editor-undo').disabled, false);
+    editor.root.querySelector('.deck-editor-undo').click();
+    assert.deepEqual(editState(run), before);
+    assert.equal(editor.root.querySelector('.deck-editor-undo').disabled, true);
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step').click();
+    editor.root.querySelector('#deck-editor-cancel').click();
+    assert.deepEqual(editState(run), before);
+  });
+});
+
+test('Reading Desk: deck search and Cards mode preserve the run and Back returns to deck', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(dom => {
+    const run = freshRun(), before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const search = editor.root.querySelector('[data-focus-key="deck-search"]');
+    search.value = 'Gorefire';
+    search.dispatchEvent(new dom.Event('input'));
+    assert.equal(editor.root.querySelectorAll('.deck-editor-row').length, 1);
+    editor.root.querySelector('[data-focus-key="display:cards"]').click();
+    assert.ok(editor.root.querySelector('.deck-editor-row .deck-editor-art'));
+    editor.root.querySelector('.deck-editor-row .deck-editor-main').click();
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
+    editor.root.querySelector('[data-focus-key="inspect-back"]').click();
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'deck');
+    assert.deepEqual(editState(run), before);
+    editor.close();
+  });
+});
+
+test('Reading Desk: In Deck hides a removed reward and Undo restores it', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const reward = deckEditorModel({ registries: REG, run }).deck.find(row => row.cardId === 'gorefireSlash');
+    editor.root.querySelector(`[data-focus-key="row-remove:${reward.groupKey}"]`).click();
+    editor.root.querySelector('[data-focus-key="scope:deck"]').click();
+    assert.equal([...editor.root.querySelectorAll('.deck-editor-tile .deck-editor-name')].some(node => node.textContent === reward.name), false);
+    editor.root.querySelector('.deck-editor-undo').click();
+    assert.equal([...editor.root.querySelectorAll('.deck-editor-tile .deck-editor-name')].some(node => node.textContent === reward.name), true);
+    editor.close();
+  });
+});
+
+test('Reading Desk: Inspect navigation focuses Back and preserves the originating pane', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun(), before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    editor.root.querySelector('[data-mobile-tab="deck"]').click();
+    const inspect = editor.root.querySelector('[data-mobile-tab="inspect"]');
+    inspect.focus();
+    editor.dispatch({ family: 'controller', button: 0 });
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
+    assert.equal(document.activeElement.dataset.focusKey, 'inspect-back');
+    editor.dispatch({ family: 'controller', button: 0 });
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'deck');
+    assert.deepEqual(editState(run), before);
+    editor.close();
+  });
+});
+
+test('Reading Desk: removing the inspected final copy keeps Back pointed at Your Deck', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const reward = deckEditorModel({ registries: REG, run }).deck.find(row => row.cardId === 'gorefireSlash');
+    assert.equal(reward.count, 1);
+    editor.root.querySelector(`[data-focus-key="row:${reward.groupKey}"]`).click();
+    editor.root.querySelector('.deck-editor-primary').click();
+    assert.equal(run.deck.some(card => card.instanceId === reward.instanceId), false);
+    editor.root.querySelector('[data-focus-key="inspect-back"]').click();
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'deck');
+    editor.close();
+  });
+});
+
+test('Reading Desk: pane switching and redraw skip rows inside collapsed deck groups', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(dom => {
+    const run = freshRun(), before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const collapse = () => {
+      for (const group of editor.root.querySelectorAll('.deck-editor-group')) {
+        group.open = false;
+        group.dispatchEvent(new dom.Event('toggle'));
+      }
+    };
+    collapse();
+    editor.dispatch({ family: 'controller', button: 5 });
+    assert.equal(document.activeElement.dataset.focusKey, 'deck-search');
+    assert.equal(editor.dispatch({ family: 'keyboard', key: '-' }), false);
+    assert.deepEqual(editState(run), before, 'a hidden row is never removed');
+    assert.ok([...editor.root.querySelectorAll('.deck-editor-group')].every(group => !group.open));
+
+    // A selected row may disappear under a collapsed group between draws.
+    // Restoration must choose the search control rather than the hidden row.
+    editor.root.querySelector('.deck-editor-row .deck-editor-main').focus();
+    collapse();
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step').click();
+    assert.equal(document.activeElement.dataset.focusKey, 'deck-search');
+    assert.equal(run.deck.length, before.deck.length + 1);
+    assert.equal(editor.dispatch({ family: 'keyboard', key: '-' }), false);
+    assert.equal(run.deck.length, before.deck.length + 1);
     editor.close();
   });
 });
@@ -753,7 +877,7 @@ test('DOM: a grouped deck row shows ×N and its － takes one copy', async () =>
     assert.equal(row().querySelector('.deck-editor-count').textContent, '×2');
     row().querySelector('.deck-editor-step[data-action="remove"]').click();
     assert.ok(!run.deck.some((c) => c.instanceId === 'x2') && run.deck.some((c) => c.instanceId === 'x1'), 'one copy left');
-    assert.equal(row().querySelector('.deck-editor-count'), null, 'a single copy shows no count');
+    assert.equal(row().querySelector('.deck-editor-count').textContent, '×1', 'single and multiple copies share the count column');
     editor.close();
   });
 });

@@ -73,7 +73,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let selected = null;
   let query = '';
   let mobileView = 'collection';
+  let inspectOrigin = 'collection';
   let filtersOpen = false;
+  let libraryScope = 'all';
+  let deckQuery = '';
+  let deckDisplay = 'list';
+  const foldedTypes = new Set();
+  let success = '';
 
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
@@ -124,6 +130,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         el('h2', { id: 'deck-editor-title', class: 'deck-editor-title', text: t('deckEditor.readingDesk') }),
         el('p', { class: 'deck-editor-subtitle', text: t('deckEditor.readingHint') }),
       ]),
+      el('span', { class: 'deck-editor-class', text: registries.classes.get(run.class)?.name || run.class }),
       counter,
       curve,
     ]);
@@ -184,7 +191,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const selectionKey = (row, source) => source === 'collection' ? row.key : row.groupKey;
   function select(row, source, open = false) {
     selected = { key: selectionKey(row, source), source, row };
-    if (open) mobileView = 'inspect';
+    if (open) { inspectOrigin = source; mobileView = 'inspect'; }
     panel.dataset.mobileView = mobileView;
     for (const node of panel.querySelectorAll('.deck-editor-main')) {
       const on = node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source;
@@ -193,10 +200,21 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const inspector = panel.querySelector('.deck-editor-inspector');
     if (inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     updateMobileTabs();
+    if (open && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) {
+      focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
+    }
   }
 
   function inspectPane() {
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
+    const back = chip(t('deckEditor.back'), false, () => {
+      mobileView = inspectOrigin;
+      pane = mobileView;
+      focusKey = `mobile:${mobileView}`;
+      draw();
+    }, 'inspect-back');
+    back.classList.add('deck-editor-inspect-back');
+    section.appendChild(back);
     if (!selected) {
       section.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
       return section;
@@ -210,6 +228,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     face.style.setProperty('--card-bands', 'minmax(0, 1fr) minmax(0, 6fr) minmax(0, 2.5fr) minmax(0, .5fr)');
     const well = face.querySelector('.art');
     if (well) well.appendChild(artwork(row, true));
+    if (def.flavor) face.querySelector('.cd-body')?.appendChild(el('p', { class: 'deck-editor-flavor', text: def.flavor.split('\n')[0] }));
     const addAction = source === 'collection';
     const allowed = addAction ? row.addable : row.removable;
     const reason = addAction ? row.refusal : row.lockSentence;
@@ -221,8 +240,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     action.addEventListener('click', () => addAction ? add(row.key) : remove(row.instanceId));
     section.append(
       el('div', { class: 'deck-editor-reading' }, [face,
-        el('p', { class: 'deck-editor-full-rules', text: rulesFor(row) }),
-        def.flavor ? el('p', { class: 'deck-editor-flavor', text: def.flavor.split('\n')[0] }) : null,
         ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
           el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
         ])),
@@ -249,10 +266,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return el('nav', { class: 'deck-editor-mobile-tabs', 'aria-label': t('deckEditor.panes.switch') },
       ['collection', 'inspect', 'deck'].map((id) => {
         const node = chip(t(id === 'inspect' ? 'deckEditor.inspect' : `deckEditor.pane.${id}`), mobileView === id, () => {
+          if (id === 'inspect') inspectOrigin = pane;
           mobileView = id;
           if (id !== 'inspect') pane = id;
           panel.dataset.mobileView = id;
           updateMobileTabs();
+          if (id === 'inspect') focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
         }, `mobile:${id}`);
         node.dataset.mobileTab = id;
         return node;
@@ -261,14 +280,17 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   // `grouped` is a deck row standing for several copies; a collection tile's
   // own counts are its meta line, never a badge.
-  const cardFace = (row, extra, grouped = false) => [
-    !grouped ? artwork(row) : null,
+  const typeName = (row) => model.filters.type.find(entry => entry.id === row.type)?.label || row.type;
+  const cardFace = (row, extra, grouped = false, illustrated = !grouped) => [
+    illustrated ? artwork(row) : null,
+    el('span', { class: 'deck-editor-grip', 'aria-hidden': 'true', text: '⠿' }),
     el('span', { class: 'deck-editor-cost', 'aria-hidden': 'true', text: row.costBucket === 'X' ? 'X' : String(row.cost) }),
     el('span', { class: 'deck-editor-name', text: row.name }),
+    illustrated ? el('span', { class: 'deck-editor-type', dataset: { type: row.type }, text: typeName(row) }) : null,
     el('span', { class: 'deck-editor-meta', text: extra }),
     !grouped ? el('span', { class: 'deck-editor-row-rules', text: rulesFor(row) }) : null,
     // Unordered, a deck row stands for every copy of its variant (SPEC §14.7).
-    grouped && row.countText ? el('span', { class: 'deck-editor-count', title: tFull('deckEditor.count', { count: row.count }), text: row.countText }) : null,
+    grouped ? el('span', { class: 'deck-editor-count', title: tFull('deckEditor.count', { count: row.count }), text: t('deckEditor.count', { count: row.count }) }) : null,
   ].filter(Boolean);
 
 
@@ -286,7 +308,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       try { next.setSelectionRange(caret, caret); } catch { /* search selection varies by browser */ }
     });
     const list = el('div', { class: 'deck-editor-list', role: 'list' });
-    const rows = model.collection.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    const rows = model.collection.filter(row => (libraryScope === 'all' || row.inDeck > 0) && `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
     for (const tile of rows) {
       const main = focusable(el('button', {
         type: 'button', class: 'deck-editor-main', dataset: { action: 'add', key: tile.key },
@@ -311,18 +333,23 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
     const section = paneSection('collection', t('deckEditor.pane.collection'), list);
-    section.insertBefore(search, list);
+    section.insertBefore(el('div', { class: 'deck-editor-searchbar' }, [search,
+      chip(t('deckEditor.all'), libraryScope === 'all', () => { libraryScope = 'all'; draw(); }, 'scope:all'),
+      chip(t('deckEditor.inDeck'), libraryScope === 'deck', () => { libraryScope = 'deck'; draw(); }, 'scope:deck'),
+    ]), list);
     return section;
   }
 
   function deckPane() {
-    const list = el('div', { class: 'deck-editor-list', role: 'list' });
-    for (const row of model.deck) {
+    const list = el('div', { class: `deck-editor-list deck-editor-display-${deckDisplay}`, role: 'list' });
+    const rows = model.deck.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(deckQuery.trim().toLocaleLowerCase()));
+    const groups = new Map();
+    for (const row of rows) {
       const main = focusable(el('button', {
         type: 'button', class: 'deck-editor-main', dataset: { action: 'remove', instanceId: row.instanceId },
         'aria-label': t('deckEditor.inspectNamed', { name: row.name }),
         'aria-pressed': String(selected?.source === 'deck' && selected.key === row.groupKey),
-      }, cardFace(row, row.locked ? row.lockText : t(`deckEditor.source.${row.source}`), true)), `row:${row.groupKey}`);
+      }, cardFace(row, row.locked ? row.lockText : t(`deckEditor.source.${row.source}`), true, deckDisplay === 'cards')), `row:${row.groupKey}`);
       main.dataset.selectionKey = row.groupKey;
       main.dataset.selectionSource = 'deck';
       main.addEventListener('focus', () => select(row, 'deck'));
@@ -358,10 +385,36 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       }), `row-remove:${row.groupKey}`);
       minus.addEventListener('click', () => remove(row.instanceId));
       actions.appendChild(minus);
-      list.appendChild(item);
+      if (model.ordered) list.appendChild(item);
+      else {
+        if (!groups.has(row.type)) groups.set(row.type, []);
+        groups.get(row.type).push({ row, item });
+      }
     }
-    if (!model.deck.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.deck') }));
-    return paneSection('deck', t('deckEditor.pane.deck'), list);
+    for (const [type, entries] of groups) {
+      const details = el('details', { class: 'deck-editor-group', open: !foldedTypes.has(type) }, [
+        focusable(el('summary', { text: `${typeName(entries[0].row)} · ${entries.reduce((sum, entry) => sum + entry.row.count, 0)}` }), `group:${type}`),
+        ...entries.map(entry => entry.item),
+      ]);
+      details.addEventListener('toggle', () => { if (details.open) foldedTypes.delete(type); else foldedTypes.add(type); });
+      list.appendChild(details);
+    }
+    if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.deck') }));
+    const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list);
+    const search = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search');
+    search.addEventListener('input', () => {
+      deckQuery = search.value;
+      const caret = search.selectionStart;
+      draw();
+      const next = panel.querySelector('[data-focus-key="deck-search"]');
+      next.focus();
+      try { next.setSelectionRange(caret, caret); } catch { /* browser search input */ }
+    });
+    section.insertBefore(el('div', { class: 'deck-editor-searchbar' }, [search,
+      ...['list', 'cards'].map(id => chip(t(`deckEditor.display.${id}`), deckDisplay === id, () => { deckDisplay = id; draw(); }, `display:${id}`)),
+    ]), list);
+    section.appendChild(el('div', { class: 'deck-editor-dropwell', text: t('deckEditor.dropHere') }));
+    return section;
   }
 
   function paneSection(id, title, list) {
@@ -469,6 +522,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }, true);
 
   function footer() {
+    const undo = focusable(button({ label: t('deckEditor.undo'), disabled: !session.canUndo, className: 'deck-editor-undo' }), 'undo');
+    undo.addEventListener('click', () => { drop(); session.undo(); success = ''; notice = ''; draw(); });
     const cancel = button({ label: t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
     const done = button({
       label: t('deckEditor.done'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
@@ -492,8 +547,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           panes: '[ ]', filter: actionLabel('deck'), move: actionLabel('endTurn'), done: actionLabel('menu'), cancel: actionLabel('cancel'),
         }),
     });
-    const foot = modalFooter({ secondary: [cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
-    return el('div', { class: 'deck-editor-footer' }, [refusal, keys, foot]);
+    const foot = modalFooter({ secondary: [undo, cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
+    return el('div', { class: 'deck-editor-footer' }, [refusal,
+      el('div', { class: 'deck-editor-feedback', hidden: !success, role: 'status', 'aria-live': 'polite', text: success }), keys, foot]);
   }
 
   function draw() {
@@ -515,8 +571,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function restoreFocus() {
     if (!focusKey) return;
-    const node = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`)
-      || panel.querySelector(`[data-pane="${pane}"] [data-focus-key]`);
+    const previous = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`);
+    const node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous
+      : panel.querySelector(`[data-pane="${pane}"] [data-focus-key]`);
     if (!node) return;
     focusNode(node);
   }
@@ -529,16 +586,20 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   // ---- actions --------------------------------------------------------------
   function add(key) {
+    const name = model.collection.find(row => row.key === key)?.name || '';
     const result = session.add(key);
     notice = result.ok ? '' : result.refusal;
+    success = result.ok ? t('deckEditor.added', { name }) : '';
     draw();
     return result;
   }
 
   function remove(instanceId) {
+    const name = model.deck.find(row => row.instanceId === instanceId)?.name || '';
     if (held === instanceId) drop();
     const result = session.remove(instanceId);
     notice = result.ok ? '' : result.refusal;
+    success = result.ok ? t('deckEditor.removed', { name }) : '';
     draw();
     return result;
   }
@@ -590,7 +651,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const at = DECK_PANES.indexOf(pane);
     pane = DECK_PANES[(at + step + DECK_PANES.length) % DECK_PANES.length];
     mobileView = pane;
-    const first = panel.querySelector(`[data-pane="${pane}"] .deck-editor-main`);
+    const first = [...panel.querySelectorAll(`[data-pane="${pane}"] .deck-editor-main`)]
+      .find(node => node.closest?.('.deck-editor-group')?.open !== false)
+      || panel.querySelector(`[data-pane="${pane}"] [data-focus-key]`);
     focusKey = first ? first.dataset.focusKey : null;
     draw();
   }
@@ -679,7 +742,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const onKey = (ev) => {
     if (session.closed) return;
     // Enter and Space on a real focused button are the browser's own click.
-    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ev.target.tagName === 'BUTTON') return;
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target && ['BUTTON', 'SUMMARY'].includes(ev.target.tagName)) return;
     if (dispatch({ family: 'keyboard', key: ev.key })) {
       ev.preventDefault?.();
       ev.stopPropagation?.();
