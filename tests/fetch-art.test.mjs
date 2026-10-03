@@ -863,13 +863,20 @@ const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^
 // Any valid GitHub job id: letters, digits, `-` and `_`, starting with a letter or `_`.
 const JOB_ID = '[A-Za-z_][A-Za-z0-9_-]*';
 function jobsRunningToolsBeforeFetch(yml) {
-  const jobs = yml.split(new RegExp(`\\n(?=  ${JOB_ID}:\\n)`)).slice(1);
+  // A job header: two-space indent, the id bare or quoted, then `:` and an
+  // optional comment (tools/workflow-lint.mjs's fixtures use both forms).
+  const HEADER = new RegExp(`^  (["']?)(${JOB_ID})\\1:[ \\t]*(#.*)?$`);
+  const jobs = [];
+  for (const line of yml.split('\n')) {
+    const h = line.match(HEADER);
+    if (h) jobs.push({ name: h[2], lines: [] });
+    else if (jobs.length) jobs.at(-1).lines.push(line);
+  }
   const missing = [];
   let checked = 0;
-  for (const job of jobs) {
-    if (!/uses: actions\/checkout@/.test(job)) continue;
+  for (const { name, lines } of jobs) {
+    if (!lines.some((l) => /uses: actions\/checkout@/.test(l))) continue;
     checked += 1;
-    const name = job.match(new RegExp(`^  (${JOB_ID}):`))[1];
     // A block scalar is judged as ONE command string: its non-comment lines
     // joined with spaces and shell `\` continuations removed, so a command a
     // folded scalar or a continuation splits over lines (`node` / `tools/x.mjs`)
@@ -879,7 +886,7 @@ function jobsRunningToolsBeforeFetch(yml) {
       if (!fetched && TOOL_CMD.test(text.join(' ').replace(/\\\s+/g, ' '))) bad = true;
       text = [];
     };
-    for (const line of job.split('\n')) {
+    for (const line of lines) {
       const indent = line.match(/^ */)[0].length;
       if (block !== null) {
         if (!line.trim() || indent > block) {
@@ -892,9 +899,11 @@ function jobsRunningToolsBeforeFetch(yml) {
       if (/^\s*(-\s+)?uses:\s*\.\/\.github\/actions\/fetch-art\b/.test(line)) fetched = true;
       const run = line.match(/^(\s*)(-\s+)?run:\s*(.*)$/);
       if (!run) continue;
-      if (/^[|>][-+0-9]*\s*(#.*)?$/.test(run[3])) { block = run[1].length + (run[2] ? run[2].length : 0); continue; }
-      text.push(run[3]);
-      judge();
+      // Every line indented past the `run:` key belongs to it: a block scalar's
+      // body, or a plain scalar YAML folds onto the first line (`run: node`
+      // then `tools/x.mjs`).
+      block = run[1].length + (run[2] ? run[2].length : 0);
+      if (!/^[|>][-+0-9]*\s*(#.*)?$/.test(run[3])) text.push(run[3]);
     }
     if (block !== null) judge();
     if (!fetched || bad) missing.push(name);
@@ -926,9 +935,12 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('bad_underscore', `      - run: node tools/a.mjs\n${fetch}`),
     job('bad-folded-split', `      - name: x\n        run: >-\n          node\n          tools/build.mjs\n${fetch}`),
     job('bad-node-operand', `      - run: node --require setup.cjs tools/build.mjs\n${fetch}`),
+    job('bad-plain-multiline', `      - name: x\n        run: node\n          tools/build.mjs\n${fetch}`),
     job('bad-continuation', `      - name: x\n        run: |\n          node \\\n            tools/build.mjs\n${fetch}`),
-  ].join('\n') + '\n';
+  ].join('\n') + '\n'
+    + `  bad-commented: # heavy\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`
+    + `  "bad-quoted":\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`;
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 14);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-continuation']);
+  assert.equal(checked, 17);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-continuation', 'bad-commented', 'bad-quoted']);
 });
