@@ -2,11 +2,11 @@ name: Fetch the art packs
 description: >-
   Download the art packs art-release.json pins (tools/fetch-art.mjs), verify
   each against the pin and art-manifest.json, and unpack them into .art-cache/
-  before anything builds or serves the checkout. Since step 12 of
-  docs/EXTERNAL-ASSETS-PLAN.md every reader of assets-mobile/, assets/fonts/,
-  music/ and map-detail/ reads the fetched packs (tools/art-source.mjs), and a
-  workflow that sets ASHEN_ART_SOURCE=cache refuses the trees, so a job that
-  builds or serves without this step is red now rather than at step 13.
+  before anything builds or serves the checkout. The art trees left this
+  repository at step 13 of docs/EXTERNAL-ASSETS-PLAN.md, so every reader of
+  assets/, assets-mobile/, assets/fonts/, music/ and map-detail/ reads the
+  fetched packs (tools/art-source.mjs), and a pack that is not fetched is an
+  error that names this fetch.
 
 # The art repository is public (step 10a), so no token is needed: with none,
 # the zips come from the release's public download URL. A caller on a

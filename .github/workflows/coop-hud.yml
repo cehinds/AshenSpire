@@ -35,15 +35,18 @@ concurrency:
 permissions:
   contents: read
 
-# STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
-# assets/fonts/, music/ and map-detail/ reads the fetched art packs through
-# tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
-# checkout, so a job that builds or serves without fetching first is red now,
-# not when step 13 deletes them. Each job that builds, serves or tests the
-# checkout fetches with ./.github/actions/fetch-art right after setup-node.
+# STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
+# assets-mobile/, the fonts, music/, map-detail/ and art/) left this repository
+# at step 13; every reader reads the fetched art packs through
+# tools/art-source.mjs, which fails (naming the fetch) for a pack that is not
+# fetched. Each job that builds, serves or tests the checkout fetches with
+# ./.github/actions/fetch-art right after setup-node, and fetches ALL THREE
+# packs: the high pack is what /assets/ serves from source (tools/serve.mjs) and
+# what the art checks read, as the assets/ tree was before step 13.
+# ASHEN_ART_SOURCE=cache is the default behaviour now, kept as a name.
 env:
   ASHEN_ART_SOURCE: cache
-  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+  ART_PACKS: all
 
 jobs:
   hudtop:
