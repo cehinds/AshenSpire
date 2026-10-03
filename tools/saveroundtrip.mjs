@@ -503,7 +503,7 @@ function assertPlayerValuesSurvive(old, run, retired, registries) {
   lent.deck = lent.deck.filter((card) => !isItemOwned(card));
   const runOwnedIds = new Set(lent.deck.map((card) => card.instanceId));
   reconcileGrantedCards(registries, lent);
-  const ownerKey = (card) => [card.instanceId, card.cardId, card.equipmentRole, card.kitRole || '', card.grantedBy || ''].join('/');
+  const ownerKey = (card) => [card.instanceId, card.cardId, card.equipmentRole, card.kitRole || '', card.grantedBy || '', card.profileId || ''].join('/');
   const expected = new Map(lent.deck.filter((card) => !runOwnedIds.has(card.instanceId)).map((card) => [card.instanceId, ownerKey(card)]));
   // Each lent card is adopted at most once: two copies of the same valid lent
   // card would both match its expected entry, so multiplicity is checked too.
