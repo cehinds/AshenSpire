@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Shield and Arcane Ward sit beside your health",
     "detail": "Ordinary Block has a blue shield and turns health blue until it breaks. Magical Block has a purple Arcane Ward badge to its left and adds a gold health outline. Both can appear together; when either disappears, health takes back its space. The two numbers share the existing Block total. Solo and co-op keep the same behavior, including saved fights. Narrow bars show current HP with the full value available in the tooltip.",
-    "build": "0.7.1.847",
+    "build": "0.7.1.848",
     "pullRequest": 1541,
     "url": "https://github.com/cehinds/AshenSpire/pull/1541"
+  },
+  {
+    "id": "pr-1542",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keepsake pictures return after an art retry",
+    "detail": "If a keepsake picture fails to load, its icon stands in; retrying the art or changing quality can restore the picture. The compact-art checks now run correctly in CI.",
+    "build": "0.7.1.845",
+    "pullRequest": 1542,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1542"
+  },
+  {
+    "id": "pr-1538",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "More of the climb has its finished artwork",
+    "detail": "The game includes compact card, relic, flask, event, and character art, including the Road Warden. Cards without a painted scene use a simple matching motif. High-resolution pictures remain in the art repository; the game uses its smaller local versions by default.",
+    "build": "0.7.1.845",
+    "pullRequest": 1538,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1538"
   },
   {
     "id": "pr-1533",
