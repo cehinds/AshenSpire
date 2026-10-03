@@ -11,11 +11,12 @@ For how work is branched, reviewed, and merged, see
 
 **The built standalone HTML is not committed on `dev`** (since 2026-09-26).
 Every rebuild used to upload ~284 MB of new Git LFS objects (the 255 MB full file
-and the 29 MB mobile one) and the repository's LFS budget ran out. Now
-`AshenSpire.html`, `AshenSpire-mobile.html`, `build/*.html` and `dist/*.html` are
-ignored: `node tools/launch.mjs --build-only` writes them locally, CI builds them
-on every push and pull request, and `.github/workflows/dev-preview.yml` uploads
-them as the `dev-standalone-<commit>` artifact — that is where a `dev` build is
+and the 29 MB mobile one) and the repository's LFS budget ran out. Now the root
+`AshenSpire.html`, every HTML under `build/` and `dist/`, and the `packs/`,
+`objects/` and `asset-base.json` beside them are ignored: `node tools/launch.mjs
+--build-only` writes them locally, CI builds them on every push and pull
+request, and `.github/workflows/dev-preview.yml` uploads the light single file
+as the `dev-standalone-<commit>` artifact — that is where a `dev` build is
 downloaded. A `dev` clone needs no Git LFS. `tools/verify-shipped.mjs` fails if
 any of them is tracked again. Historical builds (and `release`/`main`, which
 still carry theirs) remain LFS pointers; readers of those verify content hashes.
@@ -77,15 +78,23 @@ for the focused rules, persistence and settings checks. Advanced → Stats →
 Draw & hand keeps the Opening hand, Draw / turn and Hand size rows beside the
 discard controls, under a live worked example.
 
-`node tools/launch.mjs --build-only` produces the standalone aliases and an
-external-art web edition in `build/web/`. **By default it builds the light art
-tier** (owner, 2026-09-26: dev/test builds are light only): one single file,
-`AshenSpire.html`, whose art payloads come from the light pack of the fetched
-art release (`.art-cache/<tag>/light/`; run `node tools/fetch-art.mjs --pack
-light,common` first — see *The art release* below) (~29 MB, edition `light`, no
-size cap), and a web edition carrying the same art. `--full-art` builds the release/main shape instead: the full-art single
-file (~255 MB) plus the mobile one (`AshenSpire-mobile.html`, the same twins, held
-under 30 MB). CI passes `--full-art` only for `release` and `main`. Changing anything under `assets/`
+`node tools/launch.mjs --build-only` writes **one tree** into `build/` and
+`dist/` (docs/EXTERNAL-ASSETS-PLAN.md step 8e, owner answers 2, 3 and 6): the
+pack-shaped game file `AshenSpire.html` (~10 MB of code, no media) with
+`asset-base.json`, `packs/` and `objects/` beside it, and the **light single
+file** at `download/AshenSpire.html` (~31 MB, every byte inline, held to no
+byte budget); `dist/` also gets the version-stamped `AshenSpire-<version>.html`,
+and the root alias `AshenSpire.html` is the light single file. **By default
+the pack-shaped file's tier is light** (owner, 2026-09-26: dev/test builds are
+light only): the light and common packs, edition `light`. The light art, in
+the packs and in the single file, comes from the light pack of the fetched art
+release (`.art-cache/<tag>/light/`; run `node tools/fetch-art.mjs --pack
+light,common` first — see *The art release* below). `--full-art` builds
+the release/main shape: the high, light and common packs, default tier and
+edition `high`, falling back to light. CI passes `--full-art` only for
+`release` and `main`. The light single file is built either way and always
+says `light`. The full-art single file (~255 MB) and the separate mobile file
+are retired, and `bundle.mjs --mobile` is refused by name. Changing anything under `assets/`
 means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
 from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
 CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Then run
@@ -99,7 +108,7 @@ fails the core suite while it is stale, or when any field differs from what
 first (built from a manifest by the Art quality setting), then the built-in
 art. Not yet covered: game code still builds many `assets/…` paths from
 templates, and the CSS `url(../assets/…)` backdrops bypass `assetUrl()` in the
-source tree and the single file (the web edition reads them through `ASSET_CSS`).
+source tree and the light single file (the pack-shaped build reads them through `ASSET_CSS`).
 Schema 2 (docs/EXTERNAL-ASSETS-PLAN.md, step 2) adds `common` ids with one
 `{path, bytes, sha256}` record each: the 15 fonts under `assets/fonts/`,
 `licenses/OFL.txt` (read from `asset-data/fonts/OFL.txt`), `music/manifest.json`
@@ -110,7 +119,7 @@ format from these trees into `build/asset-pack/` (ignored): a content-addressed
 for `light`, `high` and `common`, each with its `.js` twin, plus the
 `packs/fonts-<digest12>.js` sidecar; `--check` verifies a written tree and
 `tests/asset-pack.test.mjs` covers it. **The web edition reads them** (step 3a):
-`bundle.mjs --external-art` writes the packs beside its HTML (`light` and
+`bundle.mjs` (the pack shape, its default since step 8e) writes the packs beside its HTML (`light` and
 `common` with `--light`; `high`, `light` and `common` without it), stamps each
 index's sha256 and the default tier into `ASSET_PACKS` (`src/ui/assetPacks.js`),
 and the loader checks the indexes at boot and resolves ids to objects through
@@ -126,7 +135,7 @@ The map-detail tiles and the shipped score follow the common index too (step
 3c): `mapDetail.js` loads each tile as an image of
 `assetUrl('map-detail/<hash>/<edge>/<x>-<y>.webp')` and `audio.js` reads
 `music/manifest.json` and its tracks through `assetUrl()`, so the web edition
-carries no `map-detail/` or `music/` folder; a single file served over http(s)
+carries no `map-detail/` or `music/` folder; the light single file served over http(s)
 and the source tree still read those folders beside the page
 (`tests/music-tiles-index.test.mjs`).
 `node tools/verify-external.mjs` checks the tree on disk (D: every `ASSET_CSS`
@@ -142,8 +151,8 @@ while it loads (step 5): its status line and the critical set it counts
 (`content/config`, `presentation.startupGate`) are `src/ui/bootArt.js`, the
 words are `art.*` rows of `uiStrings.csv`, and a failed load shows a notice
 with Retry on the title and in Settings → Art quality
-(`retryBuiltInArt`, `tests/boot-art.test.mjs`). The single files are
-unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
+(`retryBuiltInArt`, `tests/boot-art.test.mjs`). The light single file is
+unchanged: its `ASSET_PACKS` stays null and the loader does nothing.
 
 **On Pages** (step 6b): `tools/pages-site.mjs` serves each build whose rebuild
 writes that web edition as the page at `/<branch>/<ordinal>/`, with an
@@ -184,7 +193,7 @@ step 13, and `node tools/fetch-art.mjs --agree` proves the fetched caches and
 the trees agree byte for byte.
 
 **Every reader of those trees reads the cache** (step 12). The builds
-(`bundle.mjs`, `launch.mjs`, `asset-pack.mjs`, whose `--source` defaults to
+(`bundle.mjs`, which `launch.mjs` runs, and `asset-pack.mjs`, whose `--source` defaults to
 `auto`), `tools/serve.mjs` (a request under `/assets-mobile/`,
 `/assets/fonts/`, `/music/` or `/map-detail/` of a served checkout), the tests
 and the dev-preview workbench take `assets-mobile/`, `assets/fonts/`, `music/`
@@ -208,9 +217,9 @@ docs/EXTERNAL-ASSETS-PLAN.md). *Auto* is light on a narrow layout
 one. The boot load asks for that tier, a change in play reloads the indexes and
 re-points the images on screen (a switch that cannot load keeps the art already
 shown), and the loader's fallback still applies (High on a build without the
-high pack, or whose high index fails, shows light). A single file and the
-source tree pin no packs, so there *Light* and *High* are disabled and the row
-says why. A stored *Built-in* (the old default) reads as *Auto*.
+high pack, or whose high index fails, shows light). The light single file and
+the source tree pin no packs, so there *Light* and *High* are disabled and the
+row says why. A stored *Built-in* (the old default) reads as *Auto*.
 *Local high-res* lays full-resolution files over Auto's tier
 from a folder served beside the game (`hd/art-manifest.json` plus `hd/assets/…`,
 found over http) or a folder the player picks (any build, `file://` included;
@@ -346,8 +355,8 @@ only explicit Use may spend a charge. The map Quick Access faces retain real
 44px target boxes to prevent neighboring invisible hit regions overlapping.
 
 ```
-# play (no build step — any static server, or open index.html directly)
-npx serve .            # then http://localhost:3000
+# play (no build step): the source tree, served with its media
+node tools/serve.mjs   # then http://localhost:8080 (or node tools/launch.mjs, which builds first)
 
 # build the authored trees (launch.mjs runs the first two for you)
 node tools/config-build.mjs            # content/config/**.json → src/config/generated/ui.js
@@ -405,9 +414,10 @@ and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 
 ## Where a build comes from (not committed since 2026-09-26)
 
-`node tools/launch.mjs --build-only` still writes `AshenSpire.html`,
-`AshenSpire-mobile.html` and their `build/` and `dist/` copies, but only to
-your working tree: git ignores them. Commit the box it moves
+`node tools/launch.mjs --build-only` still writes the build tree into `build/`
+and `dist/` (the pack-shaped `AshenSpire.html` with its packs, and the light
+single file at `download/`) and the root alias, but only to your working tree:
+git ignores them. Commit the box it moves
 (`buildordinal.json`) and the regenerated changelog module, never the HTML.
 To play a build you did not make, download the `<branch>-standalone-<commit>`
 artifact from that commit's workflow run: every pull request into `dev` and
@@ -1026,18 +1036,22 @@ Add `--selftest` for its seven-plant copied-tree known-bad corpus; add
 `--artifact --screenshots` only after the serialized standalone build has been
 regenerated from frozen source.
 
-## Standalone build (`build/AshenSpire.html`)
+## The build (`build/AshenSpire.html` and `build/download/AshenSpire.html`)
 
-`node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —
-all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
-per-module-closure runtime (so file:// has no module/CORS issue). Double-click
-to play; no server, no Node, no external files. Re-run after any source change.
-With no flag it bundles the full art from `assets/`; `--light` reads the
-light pack (the dev/test tier, from the fetched release; *The art release*), `--mobile` writes the budgeted
-`AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML
-in the pack shape (`asset-base.json`, `packs/`, `objects/`; see *Run & test*).
-That folder plays by double-click too, as long as it stays together
-(docs/EXTERNAL-ASSETS-PLAN.md step 4): under `file://` the loader reads each
+`node tools/bundle.mjs` emits the game to `build/`: every ES module bundled
+into one classic `<script>` via a tiny per-module-closure runtime (so file://
+has no module/CORS issue) and all CSS inlined. Since step 8e
+(docs/EXTERNAL-ASSETS-PLAN.md) there are two shapes. With no flag it writes the
+**pack shape**: `AshenSpire.html` with no media inside it, beside
+`asset-base.json`, `packs/` and `objects/` (the high, light and common packs,
+default tier high; `--light` carries light and common, default tier light;
+`--external-art`, its old flag, is still accepted). `--single-file` writes the
+**light single file**, `build/download/AshenSpire.html` by default: the light
+tier's art (the fetched light pack; *The art release*) inlined as `data:` URIs,
+no server, no external files.
+`--mobile` is refused (the edition is retired). Re-run after any source change.
+The pack-shaped folder plays by double-click too, as long as it stays together
+(step 4): under `file://` the loader reads each
 index from its `.js` twin through a `<script>` tag and checks the string
 against the same pin, adds the "AS Lore" faces from the font sidecar as
 `FontFace` objects (Chrome refuses a `file://` page's `@font-face` url()
@@ -1045,7 +1059,7 @@ loads), and draws sprites, backdrops and map tiles from the objects beside
 the HTML; the score stays synthesized, as for any `file://` page.
 `node tools/external-play.mjs --file` opens it that way in Chromium.
 `node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
-The file is a local build output, ignored by git on `dev`: of the build's own
+The files are local build output, ignored by git on `dev`: of the build's own
 outputs, commit only `buildordinal.json` (and the generated changelog module).
 Generated content and config modules are committed as usual.
 

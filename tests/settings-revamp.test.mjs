@@ -334,7 +334,8 @@ test('the preview standalone files are named so they open as their branch\'s bui
   const { readFileSync } = await import('node:fs');
   const workflow = readFileSync(new URL('../.github/workflows/dev-preview.yml', import.meta.url), 'utf8');
   const names = [...workflow.matchAll(/standalone\/(AshenSpire[^\s"]*\.html)/g)].map((m) => m[1]);
-  assert.ok(names.length >= 2, 'the workflow still writes the standalone files');
+  // One since step 8e: the light single file; the mobile file is retired.
+  assert.ok(names.length >= 1, 'the workflow still writes the standalone file');
   // The workflow names each file for the branch it built (${CHANNEL}: the PR's
   // base or the pushed branch), so a main build must not open as dev.
   for (const channel of ['dev', 'test', 'release', 'main']) {

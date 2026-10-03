@@ -49,6 +49,15 @@ function itemByRef(registries, itemRef) {
   }
 }
 
+// The basic role a card plays for its source armament. A complete-kit Strike or
+// Guard is `equipmentRole: 'granted'` with its role in `kitRole` (SPEC, Complete
+// armament kits); resolveCard applies tier rows by that same role, so the plan
+// must read it the same way or the preview hides cards the commit improves.
+function smithingRole(instance) {
+  const role = instance?.kitRole || instance?.equipmentRole;
+  return SMITHING_ROLES.includes(role) ? role : null;
+}
+
 function instanceSourceId(registries, run, instance) {
   for (const key of ['sourceArmamentId', 'armamentId', 'weaponId']) {
     if (instance && instance[key] != null) {
@@ -57,8 +66,17 @@ function instanceSourceId(registries, run, instance) {
       return id;
     }
   }
-  if (!instance || !SMITHING_ROLES.includes(instance.equipmentRole)) return null;
-  const row = equipmentRoleSource(registries, run.loadout, run.class, instance.equipmentRole);
+  // A complete-kit basic is owned by the armament that lends it, exactly as
+  // restampSmithingCards stamps it (owner = grantedBy). Both hands can lend the
+  // same kitRole, so the role-based fallback below would name the wrong piece.
+  if (instance?.kitRole && instance.grantedBy != null) {
+    const id = String(instance.grantedBy);
+    if (!armamentById(registries, id)) throw new Error(`Unknown source armament '${id}'`);
+    return id;
+  }
+  const role = smithingRole(instance);
+  if (!role) return null;
+  const row = equipmentRoleSource(registries, run.loadout, run.class, role);
   return row.piece ? row.piece.id : null;
 }
 
@@ -97,7 +115,7 @@ function armamentRolePreviews(registries, run, piece, nextLevel) {
   const live = sourceCards(registries, run, piece.id);
   const rows = [];
   for (const role of SMITHING_ROLES) {
-    const active = live.filter((instance) => instance.equipmentRole === role);
+    const active = live.filter((instance) => smithingRole(instance) === role);
     const carriers = active.length ? active : [rolePreviewInstance(registries, piece, role)].filter(Boolean);
     for (const carrier of carriers) {
       const receipt = smithingCardReceipt(registries, run, carrier, nextLevel);
@@ -128,7 +146,7 @@ function cardChangesForTier(registries, instance, before, after, pieceId, nextLe
   const changes = [];
   for (const row of rows) {
     const descriptor = parseItemUpgradeTag(row.tag, attributeIds);
-    if (!descriptor || descriptor.role !== instance.equipmentRole) continue;
+    if (!descriptor || descriptor.role !== smithingRole(instance)) continue;
     if (descriptor.kind === 'cardEffect') {
       const beforeValue = numericEffect(before, descriptor.op);
       const afterValue = numericEffect(after, descriptor.op);
@@ -158,7 +176,7 @@ export function smithingCardReceipt(registries, run, instance, nextLevel = 0) {
   return Object.freeze({
     instanceId: instance.instanceId,
     cardId: instance.cardId,
-    role: instance.equipmentRole,
+    role: smithingRole(instance),
     sourceArmamentId: pieceId,
     name: after.name,
     rating,
