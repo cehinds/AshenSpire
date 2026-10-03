@@ -1,4 +1,5 @@
 import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
+import { deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
 //
 // Pure model: settings and a run in, answers and one-step edits out. The
@@ -159,14 +160,7 @@ export function moveToSideboard(registries, run, instanceId) {
  * are limited (owner ruling 2026-09-26); a card kept from a class the run
  * swapped away from is not. Every other limit is the copies the run owns.
  */
-export function deckCopyLimit(registries, cardId, settings, classId) {
-  const def = registries && registries.cards && registries.cards.has(cardId) ? registries.cards.get(cardId) : null;
-  if (!def || !def.class || def.class === 'colorless') return Infinity;
-  if (classId && def.class !== classId) return Infinity;
-  const rule = deckRules.singleCopy;
-  const limited = rule.types.includes(def.type) || (def.tags || []).some((tag) => rule.tags.includes(tag));
-  return limited ? wholeNumber(setting(settings, 'classSpellPowerCopies'), 'classSpellPowerCopies', 1) : Infinity;
-}
+export const deckCopyLimit = deckCopyLimit_;
 
 /** moveFromSideboard(registries, run, instanceId, settings) → true when the card returned to the deck. */
 export function moveFromSideboard(registries, run, instanceId, settings = {}) {

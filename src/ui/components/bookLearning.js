@@ -4,10 +4,11 @@ import { modalHead, modalFooter, bindModalDismiss } from './modalShell.js';
 import { renderCard } from './card.js';
 import { t } from '../strings.js';
 import { renderBookArt } from './bookArt.js';
+import { bookLessonCard } from '../../model/bookLearning.js';
 
 let activeClose = null;
 
-export function openBookLearning({ registries, run, id, inCombat = false, onLearn = () => {} }) {
+export function openBookLearning({ registries, run, id, inCombat = false, settings = {}, onLearn = () => {} }) {
   activeClose?.();
   let plan = skillBookReadPlan(registries, run, id, { inCombat });
   let choice = null;
@@ -32,7 +33,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, onLear
   const showDetail = () => {
     detail.replaceChildren();
     if (!choice) return;
-    if (choice.kind === 'card') detail.appendChild(renderCard(registries, { cardId: choice.id, upgraded: false }, { inspectReadOnly: true }));
+    if (choice.kind === 'card') detail.appendChild(renderCard(registries, bookLessonCard(registries, run, plan.def, plan.skillId, choice.id), { inspectReadOnly: true }));
     else {
       const cls = registries.classes.get(choice.id);
       detail.append(el('h3', { text: cls.name }), el('p', { text: cls.description }), el('p', { text: t('book.read.class') }));
@@ -62,7 +63,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, onLear
   confirm.addEventListener('click', () => {
     if (committed || !choice) return;
     try {
-      const receipt = commitSkillBookRead(registries, run, { ...plan, choice }, { inCombat });
+      const receipt = commitSkillBookRead(registries, run, { ...plan, choice }, { inCombat, settings });
       committed = true;
       confirm.disabled = true;
       close();

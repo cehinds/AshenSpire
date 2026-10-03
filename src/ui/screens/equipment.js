@@ -1553,7 +1553,7 @@ export function mountEquipment(host, {
         // awardSkillXp on its track (model/consumables.js), then one fewer.
         const label = t('armoury.consumable.read');
         const act = () => {
-          openBookLearning({ registries, run, id: row.id, inCombat, onLearn: () => commit() });
+          openBookLearning({ registries, run, id: row.id, inCombat, settings: meta.settings, onLearn: () => commit() });
         };
         actionButton = button({ label, weight: 'primary', className: 'ep-equip armoury-read-book' });
         actionButton.dataset.act = 'read';

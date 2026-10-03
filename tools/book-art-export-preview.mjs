@@ -3,13 +3,13 @@ import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const out = resolve('art/manual-shop-2026-10-02/layers/composites');
+const out = resolve('docs/preview/book-library/layers/composites');
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROME ? { executablePath: process.env.CHROME } : {}) });
 const page = await browser.newPage({ viewport: { width: 320, height: 320 } });
 await page.route('**/src/buildversion.js', (route) => route.fulfill({ path: resolve('src/buildversion.js'), contentType: 'text/javascript' }));
 try {
-  await page.goto(`${process.env.BOOK_SHOP_URL || 'http://localhost:8768'}/art/manual-shop-2026-10-02/layers/atelier.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${process.env.BOOK_SHOP_URL || 'http://localhost:8768'}/docs/preview/book-library/layers/atelier.html`, { waitUntil: 'networkidle' });
   const ids = await page.evaluate(async () => {
     const { BOOK_ART_PRESETS } = await import('/src/content/bookArtPresets.js');
     document.body.replaceChildren(); document.body.style.cssText = 'margin:0;background:transparent'; document.documentElement.style.background = 'transparent';

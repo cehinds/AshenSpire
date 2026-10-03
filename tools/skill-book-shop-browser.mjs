@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const base = process.env.BOOK_SHOP_URL || 'http://localhost:8768';
-const output = resolve(process.env.BOOK_SHOP_OUTPUT || 'art/manual-shop-2026-10-02/qa');
+const output = resolve(process.env.BOOK_SHOP_OUTPUT || 'docs/preview/book-library/qa');
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROME ? { executablePath: process.env.CHROME } : {}) });
 const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
@@ -18,7 +18,7 @@ page.on('response', (response) => { if (response.status() >= 400) errors.push(`$
 const report = [];
 const open = async (query = '') => {
   console.log('Opening', query || 'default', page.viewportSize());
-  await page.goto(`${base}/art/manual-shop-2026-10-02/preview.html${query}`);
+  await page.goto(`${base}/docs/preview/book-library/preview.html${query}`);
   console.log('Loaded');
   await page.locator('.shop-book-offer').first().waitFor();
   await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.querySelectorAll('.shop-book-art img')].map((img) => img.decode())); });

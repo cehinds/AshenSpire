@@ -8,7 +8,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('response', (response) => { if (response.status() >= 400 && !response.url().includes('/assets/sfx/')) errors.push(`${response.status()} ${response.url()}`); });
-const output = resolve('art/manual-shop-2026-10-02/qa');
+const output = resolve('docs/preview/book-library/qa');
 try {
   await page.goto(`${process.env.BOOK_SHOP_URL || 'http://localhost:8768'}/build/AshenSpire.html?shot=shop&shotLibrary=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await page.locator('#shop-cat-skillBooks').click({ timeout: 120000 });

@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const output = resolve('art/manual-shop-2026-10-02/qa');
+const output = resolve('docs/preview/book-library/qa');
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROME ? { executablePath: process.env.CHROME } : {}) });
 const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
@@ -14,7 +14,7 @@ await page.route('**/src/buildversion.js', (route) => route.fulfill({ path: reso
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('response', (response) => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
-const url = `${process.env.BOOK_SHOP_URL || 'http://localhost:8768'}/art/manual-shop-2026-10-02/preview.html?library=1`;
+const url = `${process.env.BOOK_SHOP_URL || 'http://localhost:8768'}/docs/preview/book-library/preview.html?library=1`;
 const open = async () => { await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 }); await page.getByRole('button', { name: 'Read Spellbook', exact: true }).waitFor(); };
 try {
   await open();

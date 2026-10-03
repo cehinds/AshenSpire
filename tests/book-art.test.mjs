@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { artPath } from '../tools/art-source.mjs';
 import { consumables } from '../src/content/consumables.js';
 import { BOOK_ART_PRESETS } from '../src/content/bookArtPresets.js';
 import { BOOK_COVERS, BOOK_SYMBOLS, BOOK_TREATMENTS, BOOK_TRIMS, BOOK_PALETTE, DEFAULT_BOOK_ART, bookArtRecipe, bookArtProblems, bookArtLayers } from '../src/content/bookArt.js';
@@ -15,12 +16,12 @@ test('every shipped book has a valid independent artwork recipe', () => {
 test('all selectable layers have high and mobile assets, and SVGs have no external dependencies', () => {
   for (const cover of BOOK_COVERS) for (const symbol of BOOK_SYMBOLS) for (const treatment of BOOK_TREATMENTS) for (const trim of BOOK_TRIMS) {
     for (const path of Object.values(bookArtLayers({ cover, symbol, treatment, trim })).filter(Boolean)) {
-      assert.ok(existsSync(`${root}/${path}`), path);
+      assert.ok(existsSync(artPath(path, { root })), path);
       const twin = path.replace(/^assets\//, 'assets-mobile/');
-      assert.ok(existsSync(`${root}/${twin}`), twin);
+      assert.ok(existsSync(artPath(twin, { root })), twin);
       if (path.endsWith('.svg')) {
-        const text = readFileSync(`${root}/${path}`, 'utf8');
-        assert.equal(text, readFileSync(`${root}/${twin}`, 'utf8'));
+        const text = readFileSync(artPath(path, { root }), 'utf8');
+        assert.equal(text, readFileSync(artPath(twin, { root }), 'utf8'));
         assert.doesNotMatch(text, /<script|<foreignObject|\bhref\s*=|\bon\w+\s*=/i);
       }
     }

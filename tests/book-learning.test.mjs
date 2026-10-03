@@ -4,7 +4,9 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { skillBookReadPlan, commitSkillBookRead } from '../src/model/consumables.js';
-import { bookLessons, bookTags } from '../src/model/bookLearning.js';
+import { bookLessons, bookTags, bookLessonCard } from '../src/model/bookLearning.js';
+import { swapRunClass } from '../src/model/classSwap.js';
+import { deckCopyLimit } from '../src/model/deckRules.js';
 import { equipClassCard, learnedClassIds } from '../src/model/classLibrary.js';
 import { awardClassXp } from '../src/model/classTree.js';
 import { runClassIdentity } from '../src/model/classCard.js';
@@ -28,7 +30,7 @@ function read(run, id, pick, skillId) {
 test('book definitions validate, including canonical tags, universal and class books', () => {
   const result = validateContent(contentBundle);
   assert.equal(result.ok, true, JSON.stringify(result.errors));
-  for (const patch of [{ skill: {} }, { learnTags: ['not-a-tag'] }, { learnAny: true, learnTags: ['blade'] }, { skill: 'class:rogue', learnClass: 'starseer' }]) {
+  for (const patch of [{ skill: {} }, { learnTags: ['not-a-tag'] }, { learnAny: true }, { learnAny: true, learnTags: ['blade'] }, { skill: 'class:rogue', learnClass: 'starseer' }]) {
     const bad = { ...contentBundle, consumables: contentBundle.consumables.map((row) => row.id === 'bladeManual' ? { ...row, ...patch } : row) };
     assert.equal(validateContent(bad).ok, false, JSON.stringify(patch));
   }
@@ -182,4 +184,50 @@ test('class equip rejects unknown/unlearned cards, combat and unfinished rewards
   run.pendingReward = {};
   assert.throws(() => equipClassCard(reg, run, null), /reward/);
   assert.equal(run.classUnequipped, undefined);
+});
+
+test('the Mirror retains learned class ownership while resetting all class progress', () => {
+  const run = fresh(); run.consumables = { starseerClassBook: 1 };
+  read(run, 'starseerClassBook');
+  run.skills['class:reaver'] = { level: 3, xp: 17, pendingDrafts: 0 };
+  run.coreTags = ['ironFooting'];
+  swapRunClass(reg, run, 'rogue');
+  assert.deepEqual(new Set(learnedClassIds(run)), new Set(['reaver', 'starseer', 'rogue']));
+  assert.ok(!Object.keys(run.skills).some((id) => id.startsWith('class:')));
+  equipClassCard(reg, run, 'reaver');
+  assert.deepEqual(run.coreTags, [], 'the Mirror reset is not undone by re-equipping');
+});
+
+test('book commit rechecks live copy limits and keeps excess lessons in the sideboard', () => {
+  for (const limit of [1, 2]) {
+    const run = fresh(); run.consumables = { universalTome: 1 };
+    run.skills['item:shield'] = { level: 20, xp: 0, pendingDrafts: 0 };
+    const plan = skillBookReadPlan(reg, run, 'universalTome', { skillId: 'item:shield' });
+    const choice = plan.lessons.find((row) => row.kind === 'card' && deckCopyLimit(reg, row.id, {}, run.class) === 1);
+    assert.ok(choice);
+    run.deck = run.deck.filter((card) => card.cardId !== choice.id);
+    const quote = { ...plan, choice };
+    for (let i = 0; i < limit; i++) run.deck.push({ instanceId: `limit-${i}`, cardId: choice.id, upgraded: false });
+    const receipt = commitSkillBookRead(reg, run, quote, { settings: { classSpellPowerCopies: limit } });
+    assert.equal(receipt.destination, 'sideboard');
+    assert.equal(run.deck.filter((card) => card.cardId === choice.id).length, limit);
+    assert.equal(run.sideboard.at(-1).cardId, choice.id);
+    assert.equal(run.skills['item:shield'].xp, 40);
+    assert.equal(run.consumables.universalTome, undefined);
+  }
+});
+
+test('lesson preview matches the awarded upgrade and leaves the live run untouched', () => {
+  const run = fresh(); run.consumables = { spellbook: 1 };
+  run.skills['item:magic-focus'] = { level: reg.balance.skill.upgradeAt, xp: 0, pendingDrafts: 0 };
+  const plan = skillBookReadPlan(reg, run, 'spellbook');
+  const schools = bookTags(reg, { skill: plan.skillId });
+  const choice = plan.lessons.find((row) => reg.cards.get(row.id).tags.some((tag) => schools.includes(tag)));
+  const before = structuredClone(run);
+  const preview = bookLessonCard(reg, run, plan.def, plan.skillId, choice.id);
+  assert.equal(preview.upgraded, true);
+  assert.deepEqual(run, before);
+  const receipt = read(run, 'spellbook', choice);
+  const actual = run[receipt.destination].at(-1);
+  assert.equal(preview.upgraded, actual.upgraded);
 });

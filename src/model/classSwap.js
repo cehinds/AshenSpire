@@ -31,6 +31,12 @@ export function swapRunClass(registries, run, classId, { preserveProgress = fals
   const from = run.class;
   const fromLevel = skillLevel(run, classSkillId(from));
   if (from === classId) return { from, to: classId, fromLevel, droppedTags: [], resetTracks: [], droppedArmour: [] };
+  // The Mirror still resets class progression, but never forgets ownership.
+  // Clear saved tree picks too, so re-equipping cannot undo that reset.
+  if (!preserveProgress) {
+    run.classCards = Object.fromEntries([...new Set([from, ...Object.keys(run.classCards || {})])].map((id) => [id, { ...run.classCards?.[id], coreTags: [] }]));
+    run.classUnequipped = false;
+  }
   const permitted = new Set(classTreeRows(registries, classId).map((row) => row.nodeId));
   const before = Array.isArray(run.coreTags) ? run.coreTags : [];
   const droppedTags = before.filter((id) => !permitted.has(id));

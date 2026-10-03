@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const output = resolve('art/manual-shop-2026-10-02/layers/qa');
+const output = resolve('docs/preview/book-library/layers/qa');
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROME ? { executablePath: process.env.CHROME } : {}) });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
@@ -13,7 +13,7 @@ page.on('pageerror', (error) => errors.push(error.message));
 page.on('response', (response) => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
 const base = process.env.BOOK_SHOP_URL || 'http://localhost:8768';
 try {
-  await page.goto(`${base}/art/manual-shop-2026-10-02/layers/atelier.html`, { waitUntil: 'networkidle' });
+  await page.goto(`${base}/docs/preview/book-library/layers/atelier.html`, { waitUntil: 'networkidle' });
   assert.equal(await page.locator('#library button').count(), 10);
   await page.locator('[data-book="spellbook"]').click();
   await page.locator('#cover').selectOption('field');
@@ -45,7 +45,7 @@ try {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await page.screenshot({ animations: 'disabled', path: resolve(output, 'atelier-mobile.png'), fullPage: true });
   await page.setViewportSize({ width: 1200, height: 1000 });
-  await page.goto(`${base}/art/manual-shop-2026-10-02/preview.html?library=1`, { waitUntil: 'networkidle' });
+  await page.goto(`${base}/docs/preview/book-library/preview.html?library=1`, { waitUntil: 'networkidle' });
   assert.equal(await page.locator('.shop-book-offer .book-art-symbol').count(), 10);
   await page.screenshot({ animations: 'disabled', path: resolve(output, 'shop-layered.png'), fullPage: true });
   assert.deepEqual(errors, []);

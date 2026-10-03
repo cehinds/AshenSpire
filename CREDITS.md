@@ -4,15 +4,15 @@
 
 | Asset path | Source | Rights |
 | --- | --- | --- |
-| `assets/shop/` | Original OpenAI image generation from the owner's approved shop preview, plus original Codex-authored vector layers; [masters and prompts](art/manual-shop-2026-10-02/layers/README.md) | First-party generated paintings and project-authored SVG artwork; no third-party license claimed. |
+| `assets/shop/` | Original OpenAI image generation from the owner's approved shop preview, plus original Codex-authored vector layers; [masters and prompts](https://github.com/cehinds/AshenSpire-art/tree/main/art/manual-shop-2026-10-02) | First-party generated paintings and project-authored SVG artwork; no third-party license claimed. |
 | `assets-mobile/shop/` | Canonical mobile exports of the same original shop artwork | Same provenance and rights as the masters. |
 
 The original three transparent book paintings and one blank brass button frame were generated
 with the built-in OpenAI image generation tool from the owner's approved
 shop preview. No third-party artwork or third-party license is claimed.
 PNG masters, the approved source, exact prompts and export instructions are
-retained in [art/manual-shop-2026-10-02](art/manual-shop-2026-10-02/README.md).
-Runtime WebPs live in `assets/shop/`, with policy-compliant light twins under
+retained in [the external source package](https://github.com/cehinds/AshenSpire-art/tree/main/art/manual-shop-2026-10-02).
+Runtime WebPs resolve from the art packs as `assets/shop/`, with light twins as
 `assets-mobile/shop/`; the renderer resolves them through the normal asset map.
 The modular edition adds three blank charcoal cover paintings, thirty editable
 SVG symbols, three trim overlays and a front-cover color mask. Its painted
