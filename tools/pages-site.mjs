@@ -881,8 +881,8 @@ function ogManifestRow(ref) {
 }
 /**
  * THE ONE ANSWER TO "WHERE DOES THE SHARE IMAGE COME FROM": the store's object
- * for main's manifest row (high, else light), else any other published
- * branch's; else main's tree, else the first other branch's tree that still
+ * for main's manifest row (high, else light), else each other published
+ * branch's in turn (high, else light); else main's tree, else the first other branch's tree that still
  * carries OG_IMAGE.source; else null. → { from: 'store', ref, tier, sha, object }
  * | { from: 'tree', ref } | null. writeOgImage() and --check both ask it, so
  * --check compares the served file with what really supplied it (Codex, #1442).
@@ -891,8 +891,10 @@ function ogManifestRow(ref) {
  */
 function ogImageChoice(outDir, mainRef, others = BRANCHES.filter((b) => b !== 'main').map(refFor), has = (r) => inTree(r, OG_IMAGE.source), rowOf = ogManifestRow) {
   const refs = [mainRef, ...others].filter(Boolean);
-  for (const tier of ['high', 'light']) {
-    for (const ref of refs) {
+  // Ref first, tier second: main's light object beats another branch's high
+  // one, so the share image stays main's artwork while main has either tier.
+  for (const ref of refs) {
+    for (const tier of ['high', 'light']) {
       const rec = rowOf(ref)?.[tier];
       if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
       const object = objectPath(rec.sha256, OG_IMAGE.source);
@@ -1508,12 +1510,15 @@ function ogImagePlant() {
     const lightOnly = ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, rowFor({ 'origin/dev': { light: rows.light, high: rows.high } }));
     placed(['high', 'light']);
     const highFirst = ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, rowFor({ 'origin/main': { light: rows.light, high: rows.high } }));
+    // Main's high object missing, another branch's high one present: main's light still wins.
+    const mainLight = ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, rowFor({ 'origin/main': { light: rows.light, high: { ...rows.high, sha256: 'f'.repeat(64) } }, 'origin/dev': { high: rows.high } }));
     writeFileSync(join(dir, objectPath(rows.high.sha256, OG_IMAGE.source)), 'not those bytes');
     const tampered = ogImageChoice(dir, 'origin/main', [], () => false, rowFor({ 'origin/main': { high: rows.high } }));
     placed([]);
     return [
       ['the share image is the store\'s high object when a branch\'s manifest names one the site holds', highFirst?.from === 'store' && highFirst.tier === 'high' && highFirst.ref === 'origin/main'],
       ['the share image is the store\'s light object when the site holds no high one (a light-only dev)', lightOnly?.from === 'store' && lightOnly.tier === 'light' && lightOnly.ref === 'origin/dev'],
+      ['main\'s light object is chosen before another branch\'s high one', mainLight?.from === 'store' && mainLight.tier === 'light' && mainLight.ref === 'origin/main'],
       ['a store object whose bytes are not its sha256 is never chosen', tampered === null],
       ['without a store object, the share image comes from main\'s tree when main carries it', treeOf(ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, none)) === 'origin/main'],
       ['the share image falls back to the first other branch whose tree carries it', treeOf(ogImageChoice(dir, 'origin/main', [null, 'origin/release', 'origin/test', 'origin/dev'], has, none)) === 'origin/test'],
