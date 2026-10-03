@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Behind the scenes: a whole run is now played in a real browser",
     "detail": "Nothing you play changes. A new automatic check starts the game from the title, creates a character on a fixed seed, plays a fight, walks the map to the act boss, dies to it, returns to the title and starts a new run, and fails if anything goes wrong on the way or an error is logged.",
-    "build": "0.7.1.825",
+    "build": "0.7.1.826",
     "pullRequest": 1520,
     "url": "https://github.com/cehinds/AshenSpire/pull/1520"
+  },
+  {
+    "id": "pr-1523",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: browser checks follow the art and wording updates",
+    "detail": "The hand-placement, animation and flask-menu checks use the verified art packs. The Fullscreen test follows the shared wording table, and flask checks report their result in the format CI reads.",
+    "build": "0.7.1.825",
+    "pullRequest": 1523,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1523"
   },
   {
     "id": "pr-1521",
