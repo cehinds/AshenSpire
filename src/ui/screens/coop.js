@@ -162,7 +162,7 @@ export function levelCardStrips(registries, offer, picks) {
  * scene the host marks `opening` (the one carrying the setup cues); joining
  * after any action, turn 1 included, replays no history.
  */
-export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null) {
+export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
   // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
   // it (session.mjs settleCombat): the card that ended the fight buzzes, as
   // solo's does. Haptics only — the fight's end has never played their sound.
@@ -174,7 +174,7 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null) {
   // makes sound here, but does not buzz this device. No list = every seat.
   const isLocalPlayer = Array.isArray(localSeats) && localSeats.length ? (id) => localSeats.includes(id) : undefined;
   if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer }); }
-  else if (lastSeq > 0 || scene.opening === true) playReceiptSounds(scene.events || [], { isLocalPlayer });
+  else if (lastSeq > 0 || scene.opening === true) (hapticsOnly ? playReceiptHaptics : playReceiptSounds)(scene.events || [], { isLocalPlayer });
   return seq;
 }
 
@@ -1545,6 +1545,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }
       const latest = unique[unique.length - 1] || s;
       const combatFrames = unique.filter((frame) => frame.scene?.kind === 'combat');
+      // A FIGHT THAT ENDED WHILE ITS ENEMY TURN WAS PACED draws only the
+      // scene that replaced it, so the held combat frames are never rendered:
+      // their haptics (an enemy's hit on this seat, its next turn start)
+      // play here, before that scene. Their sound was never played on this
+      // path, and still is not.
+      if (latest.scene?.kind !== 'combat') {
+        for (const frame of combatFrames) lastSoundSeq = coopReceiptSounds(frame.scene, lastSoundSeq, seats, { hapticsOnly: true });
+      }
       snap = combatFrames.length === unique.length && combatFrames.length > 1
         ? {
             ...latest,

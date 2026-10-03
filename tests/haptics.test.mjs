@@ -332,6 +332,62 @@ test('a skipped timeline still buzzes the hit and the turn start it jumped past,
   assert.deepEqual(sounds, [], 'and the skip replays no sound');
 });
 
+test('co-op: a downed seat spectating does not buzz on a teammate\'s turn; the stinger is shared (#1517 review)', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { createSession } = await import('../tools/session.mjs');
+  const { applyLoseHp } = await import('../src/engine/actions.js');
+  const { coopReceiptSounds } = await import('../src/ui/screens/coop.js');
+  const host = createSession({ registries: createRegistries(contentBundle), seedString: 'HAPT5' });
+  for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
+  host.start();
+  for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
+  const opening = host.snapshot().scene;
+  // The opening: each seat's own start buzzes its own device once.
+  assert.deepEqual(felt(() => coopReceiptSounds(opening, 0, ['p1'])).filter((id) => id === 'turnStart'), ['turnStart']);
+  assert.deepEqual(felt(() => coopReceiptSounds(opening, 0, ['p2'])).filter((id) => id === 'turnStart'), ['turnStart'], 'a later seat\'s start still buzzes it');
+  const heard = coopReceiptSounds(opening, 0, ['p1', 'p2']);
+  const C = host.live.combat;
+  const p1 = C.players.get('p1'); p1.entity.hp = p1.entity.maxHp = 999;
+  applyLoseHp(C, C.players.get('p2').entity, 9999, 'effect');
+  assert.equal(C.players.get('p2').entity.alive, false, 'p2 is down, and spectates');
+  assert.ok(host.combatEndTurn('p1').ok);
+  const scene = host.snapshot().scene;
+  assert.equal(scene.kind, 'combat');
+  const starts = scene.events.filter((e) => e.type === 'playerTurnStart');
+  assert.deepEqual(starts.map((e) => e.playerId), ['p1'], 'only the living seat starts a turn');
+  assert.ok(!felt(() => coopReceiptSounds(scene, heard, ['p2'])).includes('turnStart'), 'the spectator\'s device does not buzz');
+  assert.ok(heardSfx(() => coopReceiptSounds(scene, heard, ['p2'])).includes('turnStinger'), 'but hears the shared stinger');
+  assert.deepEqual(felt(() => coopReceiptSounds(scene, heard, ['p1'])).filter((id) => id === 'turnStart'), ['turnStart'], 'the living seat buzzes');
+});
+
+test('co-op: an enemy turn held back by pacing while the fight ends still buzzes, without sound (#1517 audit)', async () => {
+  // paceEnemyTurn holds frames; when the last is the reward or completion
+  // scene, only that scene is rendered, so the held combat frames are heard
+  // here, haptics only (pacing is DOM-bound: the wiring is read from source).
+  assert.match(src('src/ui/screens/coop.js'),
+    /if \(latest\.scene\?\.kind !== 'combat'\) \{\s*for \(const frame of combatFrames\) lastSoundSeq = coopReceiptSounds\(frame\.scene, lastSoundSeq, seats, \{ hapticsOnly: true \}\);/);
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { createSession } = await import('../tools/session.mjs');
+  const { coopReceiptSounds } = await import('../src/ui/screens/coop.js');
+  const host = createSession({ registries: createRegistries(contentBundle), seedString: 'HAPT1' });
+  for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
+  host.start();
+  for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
+  const heard = coopReceiptSounds(host.snapshot().scene, 0, ['p1', 'p2']);
+  host.combatEndTurn('p1'); host.combatEndTurn('p2');
+  const round = host.snapshot().scene;
+  const full = felt(() => coopReceiptSounds(round, heard, ['p1', 'p2']));
+  assert.ok(full.includes('damageTaken') && full.includes('turnStart'), `the round hurts and starts a turn (${full})`);
+  let ids = [];
+  let next = heard;
+  const sounds = heardSfx(() => { ids = felt(() => { next = coopReceiptSounds(round, heard, ['p1', 'p2'], { hapticsOnly: true }); }); });
+  assert.deepEqual(ids, full, 'the same buzzes');
+  assert.deepEqual(sounds, [], 'and no sound');
+  assert.equal(next, round.receiptSeq, 'the frame is heard, so the scene after it does not replay it');
+});
+
 test('Settings offers the switch once, under Audio, defaulting to the data value', async () => {
   const { settingsRow, settingOn, generalGroups } = await import('../src/ui/screens/settings.js');
   const row = settingsRow('haptics');
