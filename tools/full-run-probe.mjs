@@ -21,8 +21,9 @@
 //              Starting equip, Review), the fixed seed typed into the Review's
 //              own Seed field, Begin; the opening is skipped with its Skip.
 //   MAP        the act map mounts; the save names the fixed seed.
-//   COMBAT     the first fight is PLAYED: each turn the probe plays the Attack
-//              cards in hand on a living enemy, then holds End Turn, until the
+//   COMBAT     the first fight is PLAYED: each turn the probe plays affordable
+//              attacks followed by other cards, confirming friendly targets
+//              through the player, then holds End Turn, until the
 //              fight is won (cap COMBAT_TURNS turns). Its reward is left by
 //              Continue.
 //   WALK       the map is walked floor by floor to the boss: the probe picks a
@@ -337,16 +338,23 @@ async function playFight() {
     if (await ev(combatOver)) return { played, turns: turn };
     await until(`(${combatOver}) || (${COMBAT_READY})`, 'the player turn', 30000);
     await skipTutorial();
+    // Hand nodes are reused across turns. Attempts belong to this turn, not
+    // to a persistent DOM marker that can silently exclude a later draw.
+    const attempted = new Set();
     for (let tries = 0; tries < 12; tries++) {
       if (await ev(combatOver)) return { played, turns: turn };
-      const card = await ev(`(() => { const c = [...document.querySelectorAll('.hand .card.type-attack')].find((c) => !c.classList.contains('unplayable') && !c.dataset.fullRunTried); if (!c) return null; c.dataset.fullRunTried = '1'; return c.dataset.instanceId || c.dataset.cardId; })()`);
+      const card = await ev(`(() => { const tried = ${JSON.stringify([...attempted])}; const cards = [...document.querySelectorAll('.hand .card:not(.unaffordable)')].filter(c => c.dataset.instanceId && !tried.includes(c.dataset.instanceId)); const c = cards.find(c => c.classList.contains('type-attack')) || cards[0]; return c?.dataset.instanceId || null; })()`);
       if (!card) break;
-      const hand = await ev('window.__combat.piles.hand.length');
-      await press(`.hand .card[data-full-run-tried="1"]:not([data-full-run-done])`);
+      attempted.add(card);
+      await press(`.hand .card[data-instance-id=${JSON.stringify(card)}]`);
       await wait(250);
-      if (await has('.combatant.enemy:not(.dead)')) await press('.combatant.enemy:not(.dead)');
-      const left = await ev(`(async () => { const end = Date.now() + 2500; while (Date.now() < end) { if (!window.__combat || window.__combat.piles.hand.length < ${hand}) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`);
-      await ev(`document.querySelectorAll('.hand .card[data-full-run-tried]').forEach((c) => { c.dataset.fullRunDone = '1'; })`);
+      // Defensive and other self cards use the real friendly confirmation;
+      // attacks still go through the enemy's ordinary target control.
+      if (await has('.combatant.player.armed')) await press('.combatant.player.armed');
+      else if (await has('.combatant.enemy:not(.dead)')) await press('.combatant.enemy:not(.dead)');
+      // Draw-on-play can leave the hand's size unchanged. Follow this exact
+      // instance instead of treating a smaller total as the play receipt.
+      const left = await ev(`(async () => { const end = Date.now() + 2500; while (Date.now() < end) { if (!window.__combat || !window.__combat.piles.hand.some(c => c.instanceId === ${JSON.stringify(card)})) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`);
       if (left) { played++; await wait(700); }
       else await S.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }).then(() => S.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }));
     }
@@ -562,8 +570,10 @@ if (!harness) {
           const before = await ev(`({ enemies: window.__combat.enemies.map((e) => e.enemyId + ' ' + e.hp).join(', ') })`);
           firstFight = { ...before, ...(await playFight()) };
           mark(`first fight played (${firstFight.played} cards over ${firstFight.turns} turn(s))`);
-          check(!firstFight.unfinished && await ev(`!!document.querySelector('.reward-veil')`), 'COMBAT',
-            `vs ${before.enemies}: ${firstFight.played} Attack card(s) played over ${firstFight.turns} turn(s), won, the reward menu mounted`);
+          const rewarded = await ev(`!!document.querySelector('.reward-veil')`);
+          const defeated = await has('#to-title');
+          check(!firstFight.unfinished && rewarded, 'COMBAT',
+            `vs ${before.enemies}: ${firstFight.played} card(s) played over ${firstFight.turns} turn(s); ${rewarded ? 'won, reward menu mounted' : defeated ? 'player defeated before rewards' : 'no reward menu; fight unfinished'}`);
         } else {
           await resolveFight();
         }

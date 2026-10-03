@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1550"
   },
   {
+    "id": "pr-1548",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Combat browser checks keep pace with the game",
+    "detail": "Checks recognize the shared Stamina artwork and catch invisible or covered SVG text. A controlled sprite-overlap case keeps intent buttons reachable, and the full-run driver plays affordable attacks and defensive cards through the normal controls. Gameplay is unchanged.",
+    "build": "0.7.1.860",
+    "pullRequest": 1548,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1548"
+  },
+  {
     "id": "pr-1543",
     "date": "2026-10-03",
     "group": "2026-10-03",
