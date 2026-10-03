@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Keep prepared spells and draw a fresh hand each turn** ([#1536](https://github.com/cehinds/AshenSpire/pull/1536), `0.7.1.841`). Opening and turn draws start at four with Intelligence scaling. Unplayed cards shuffle back into the draw pile unless they have Retain; thirty-one Herald and Starseer spells now keep that keyword when upgraded. Retained cards add to the next full draw, up to a separate default hand limit of fifteen. Solo and co-op share the rule, played cards still leave the hand normally, and existing saved fights preserve their rules. The defaults remain configurable.
+
 - **Full draws and selective Retain are the approved hand rules** ([#1532](https://github.com/cehinds/AshenSpire/pull/1532), `0.7.1.839`). The contract starts opening and turn draws at four with Intelligence scaling, keeps Retain cards, shuffles other unplayed cards into the draw pile, and sets a separate default hand limit of fifteen. Retained cards add to the next draw until that limit. This documents the next implementation; gameplay is unchanged in this build.
 
 - **The README explains the current game and where to get each edition** ([#1529](https://github.com/cehinds/AshenSpire/pull/1529), `0.7.1.838`). The guide now covers retained hands, Actions, Stamina and Mana, combat ratings, equipment cards, the sideboard, progression, books and shop services. It links the installer, art repository, Unity adaptation and each browser channel's play and download paths, with verified GitHub build alternatives while hosted paths are unavailable. Gameplay is unchanged.

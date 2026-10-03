@@ -101,7 +101,7 @@
     { "id": "term.tooltip.alternativeCost", "canonicalText": "May be paid with a complete alternative option instead of its listed cost." },
 
     { "id": "term.tooltip.innate", "canonicalText": "Starts each combat on top of your draw pile." },
-    { "id": "term.tooltip.retain", "canonicalText": "Not discarded at the end of your turn." },
+    { "id": "term.tooltip.retain", "canonicalText": "Stays in your hand at the end of your turn." },
     { "id": "term.tooltip.recall", "canonicalText": "Returns to your hand after the named moment instead of being discarded." },
     { "id": "term.tooltip.recallAfterUse", "canonicalText": "Returns to your hand after being played. A forced discard is not a use." },
     { "id": "term.tooltip.recallAfterTurnDraw", "canonicalText": "Returns to your hand after your turn's draw." },
