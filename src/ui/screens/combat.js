@@ -618,7 +618,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
           ...(entity.ratings ? ['ar', 'dr', 'pr'].map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
-          { label: 'Block', value: v.block || 0 },
+          { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
         skillLabel: 'Active skills & stance',
         abilities,
@@ -650,7 +650,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         { label: 'HP', value: v.hp, max: entity.maxHp },
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
         ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
-        { label: 'Block', value: v.block || 0 },
+        { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
       intent: {
         name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),

@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Shield and Arcane Ward sit beside your health** ([#1541](https://github.com/cehinds/AshenSpire/pull/1541), `0.7.1.846`). Ordinary Block has a blue shield and turns health blue until it breaks. Magical Block has a purple Arcane Ward badge to its left and adds a gold health outline. Both can appear together; when either disappears, health takes back its space. The two numbers share the existing Block total. Solo and co-op keep the same behavior, including saved fights. Narrow bars show current HP with the full value available in the tooltip.
+- **Shield and Arcane Ward sit beside your health** ([#1541](https://github.com/cehinds/AshenSpire/pull/1541), `0.7.1.847`). Ordinary Block has a blue shield and turns health blue until it breaks. Magical Block has a purple Arcane Ward badge to its left and adds a gold health outline. Both can appear together; when either disappears, health takes back its space. The two numbers share the existing Block total. Solo and co-op keep the same behavior, including saved fights. Narrow bars show current HP with the full value available in the tooltip.
 
 - **The Windows installer lets you browse and download art versions** ([#1533](https://github.com/cehinds/AshenSpire/pull/1533), `0.7.1.843`). A high-quality artwork button opens art-repository branch and published-version choices, shows installed, required and latest art versions, and lets you install the game's matching pack or save another verified release separately. The installer discloses ChatGPT-generated artwork. README links and action buttons each have their own row, while its opening description stays a plain sentence.
 

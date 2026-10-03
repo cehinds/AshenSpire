@@ -737,7 +737,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'HP', value: entity.hp, max: entity.maxHp },
         { label: 'MP', value: entity.mana, max: entity.maxMana },
         { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
-        { label: 'Block', value: entity.block || 0 },
+        { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
       const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) : null;
