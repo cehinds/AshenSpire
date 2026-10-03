@@ -67,6 +67,14 @@ jobs:
       - name: Build the installer
         run: node desktop/windows/build-installer.mjs
 
+      - name: Art chooser behavior and preview
+        shell: pwsh
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File tests/windows-art-options.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'art chooser behavior tests failed' }
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File desktop/windows/art-options.ps1 -Config art-release.json -SelectionFile "$env:RUNNER_TEMP\art-selection.ini" -PreviewFile build/windows-installer/art-options-preview.png
+          if ($LASTEXITCODE -ne 0) { throw 'art chooser preview failed' }
+
       - name: Install silently, with the high-resolution art
         shell: pwsh
         run: |
@@ -74,7 +82,7 @@ jobs:
           $dir = Join-Path $env:RUNNER_TEMP 'AshenSpire'
           $p = Start-Process $setup.FullName -ArgumentList '/S', "/D=$dir" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "installer exited $($p.ExitCode)" }
-          foreach ($f in 'AshenSpire.exe', 'Uninstall.exe', 'game\AshenSpire.html', 'install-data\fetch-hd-art.ps1') {
+          foreach ($f in 'AshenSpire.exe', 'Uninstall.exe', 'game\AshenSpire.html', 'install-data\fetch-hd-art.ps1', 'install-data\art-options.ps1', 'install-data\art-releases.ps1', 'install-data\art-release.json') {
             if (-not (Test-Path (Join-Path $dir $f))) { throw "missing after install: $f" }
           }
           $packs = Get-ChildItem (Join-Path $dir 'game\packs') -Name
@@ -94,6 +102,9 @@ jobs:
           foreach ($p in 'light-', 'common-', 'high-') {
             if (-not ($packs | Where-Object { $_ -like "$p*.json" })) { throw "no $p index in game\packs — the high-resolution art did not install" }
           }
+          $pin = Get-Content art-release.json -Raw | ConvertFrom-Json
+          $installedArt = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AshenSpire').HDArtVersion
+          if ($installedArt -ne $pin.tag) { throw "installed art version was not recorded: $installedArt" }
           # Every object every index lists is on disk (the game shows no broken art).
           $missing = 0
           foreach ($list in 'base-objects.tsv', 'high-objects.tsv') {
@@ -142,7 +153,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer-${{ github.sha }}
-          path: build/windows-installer/AshenSpire-Setup-*.exe
+          path: |
+            build/windows-installer/AshenSpire-Setup-*.exe
+            build/windows-installer/art-options-preview.png
           compression-level: 0
           retention-days: 30
           if-no-files-found: error

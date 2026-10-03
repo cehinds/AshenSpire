@@ -33,6 +33,27 @@ Unticked, the game plays on the light art. Running the installer again with the
 box ticked adds the art; unticking it there removes it. An upgrade keeps the
 earlier choice and does not download art that is already installed.
 
+The next page has a **High-quality art: choose branch and version** button.
+The chooser shows the current installed art, the release required by this game,
+and the latest published art version after checking GitHub. Branch and version
+selectors use the public `cehinds/AshenSpire-art` catalog; a release is offered
+for download only when the selected branch contains its commit. Branches with
+unpublished work do not have a new packaged version until an art release is
+published. **Refresh branches and art versions** updates the catalog.
+
+**Use this high-quality art for installation** selects the matching game pack.
+Other versions can be saved with **Download this art separately**, which opens
+Save As and checks the archive's SHA-256 before replacing an existing download.
+It does not install the game or change an existing game's art. The pinned pack
+remains available when the catalog is offline; actual downloads need network.
+Closing the chooser leaves the component checkbox unchanged unless you pressed
+the installation button. Silent installs continue to use the pinned pack.
+
+Both the installer page and chooser disclose: **The artwork is completely
+AI-generated with OpenAI ChatGPT under human direction.** Fonts and other
+third-party assets retain their credited licenses. The art repository's
+`CREDITS.md` records provenance and rights.
+
 ## How it works
 
 - **The game** is the web edition (`tools/bundle.mjs --external-art`, high
@@ -51,6 +72,13 @@ earlier choice and does not download art that is already installed.
   cancelled download leaves a working light install. Exit codes: 2 network,
   3 zip mismatch, 4 object mismatch, 5 other; any failure shows a message and the
   install still completes.
+- **The chooser** (`art-options.ps1`, Windows Forms / PowerShell 5.1) discovers
+  branches and public releases through `art-releases.ps1`. It checks release
+  ancestry and restricts download URLs to the art repository. Installation
+  remains pinned to the game's verified indexes; a different release cannot
+  silently bypass those checks. The installed art tag is recorded in the
+  existing uninstall registry entry. Older installs show their version as
+  unrecorded until upgraded.
 - **Prune**: the last step deletes objects no installed index lists (unticked
   art, an older version's files).
 - **Uninstall** removes exactly the installed files and asks before deleting saves.
