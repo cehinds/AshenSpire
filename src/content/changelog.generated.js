@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1555",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep small-player touch checks reliable without artwork",
+    "detail": "Browser checks exercise a deliberately small player in their controlled overlap scene, preserving the foot anchor and verifying that removing its touch target is caught even in copied trees without artwork. Gameplay is unchanged.",
+    "build": "0.7.1.870",
+    "pullRequest": 1555,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1555"
+  },
+  {
     "id": "pr-1552",
     "date": "2026-10-03",
     "group": "2026-10-03",

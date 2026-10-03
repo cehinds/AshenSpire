@@ -72,7 +72,7 @@ import { serve } from './serve.mjs';
 // the copy: same serve.mjs, same browser, same hit-test.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  const selftestCode = await doorSelftest({
+  const corpus = {
     tool: 'screenreach.mjs',
     args: ['--only', '390x650'],
     timeoutMs: 600000,
@@ -156,7 +156,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a small player sprite loses its frame-level tap area',
         file: 'styles/combat.css',
         append: '.player-target-hitbox::after { pointer-events: none !important; }',
-        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.combatant/,
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
@@ -189,8 +189,9 @@ if (process.argv.includes('--selftest')) {
         expectRed: /equipment shortcut did not open Armoury/,
       },
     ],
-  });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 13 plants, 13 caught');
+  };
+  const selftestCode = await doorSelftest(corpus);
+  if (selftestCode === 0) console.log(`screenreach-selftest: OK — ${corpus.plants.length} plants, ${corpus.plants.length} caught`);
   process.exit(selftestCode);
 }
 
@@ -265,6 +266,18 @@ const SETTINGS_CYCLE = `(async () => {
 // must hide it. Both the clean and planted runs use this same fixture.
 const INTENT_OVERLAP = `(() => {
   if (innerWidth !== 390 || innerHeight !== 650) return true;
+  // Missing art uses a wider fallback figure in copied trees. Pin the small
+  // player case below the probe's 24px patch size in both clean and bad runs.
+  const player = document.querySelector('.combatant.player .combatant-card > .sprite');
+  const playerBefore = player?.getBoundingClientRect();
+  if (!playerBefore || !Number.isFinite(playerBefore.width) || playerBefore.width <= 0)
+    throw new Error('screenreach: small-player fixture is missing its sprite');
+  player.style.transformOrigin = 'center bottom';
+  player.style.scale = String(Math.min(1, 16 / playerBefore.width));
+  const playerAfter = player.getBoundingClientRect();
+  if (playerAfter.width >= 24 || Math.abs(playerAfter.bottom - playerBefore.bottom) > 1
+      || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
+    throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
   const frames = [...document.querySelectorAll('.combatant.enemy')];
   const depth = frame => Number(frame.querySelector('.combatant-card > .sprite').style.zIndex);
   const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);

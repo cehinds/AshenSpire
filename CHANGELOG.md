@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Keep small-player touch checks reliable without artwork** ([#1555](https://github.com/cehinds/AshenSpire/pull/1555), `0.7.1.870`). Browser checks exercise a deliberately small player in their controlled overlap scene, preserving the foot anchor and verifying that removing its touch target is caught even in copied trees without artwork. Gameplay is unchanged.
+
 - **Keep positioning controls clear of combatants** ([#1552](https://github.com/cehinds/AshenSpire/pull/1552), `0.7.1.869`). Place the Positioning toggle on the player side in portrait and between the teams on short landscape screens. Keep the browser overlap check reliable across authored formation sizes, and make Quick Start's browser check target fighters without pressing their intent buttons.
 
 - **Small combatants stay reachable** ([#1550](https://github.com/cehinds/AshenSpire/pull/1550), `0.7.1.862`). The player keeps a 44 px touch target when scaled down. Motion and save checks choose an unobstructed target point outside nested intent controls, preserving normal card play and their existing assertions.
