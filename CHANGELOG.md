@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-03
+
+- **Quick start: from the title to your first card in six presses** ([#1518](https://github.com/cehinds/AshenSpire/pull/1518), `0.7.1.822`). The title has a new Quick start. It begins a climb at once with the recommended character (the Reaver, no keepsake, Standard stats, the class's own starting gear), a fresh seed and the first empty save slot, and skips the opening. The opening still plays on your next ordinary climb. If every slot is full it asks before replacing slot 1, as Begin does. A new player now reaches their first card play in 6 inputs, down from 23 through New and character creation. New still lets you choose everything.
+
 ## 2026-10-02
 
 - **Behind the scenes: the game's wording lives in one table again** ([#1489](https://github.com/cehinds/AshenSpire/pull/1489), `0.7.1.821`). Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.

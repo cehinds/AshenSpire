@@ -517,7 +517,7 @@ test('main.js newRun writes the dealt deck\'s quota after the deal, and startCli
   const showDraft = src.indexOf("if (deckMode === 'draft') return showDraft();");
   assert.ok(sealed > 0 && draft > sealed, 'the deal this test mirrors moved');
   assert.ok(quota > draft && quota < showDraft, 'the quota must follow the deal and precede the draft and the first persist');
-  const climb = src.slice(src.indexOf('function startClimb()'), src.indexOf('function showPrologue()'));
+  const climb = src.slice(src.indexOf('function startClimb('), src.indexOf('function showPrologue()'));
   const stamp = climb.indexOf('if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });');
   assert.ok(stamp > 0 && stamp < climb.indexOf('persist();'), 'startClimb must stamp a dealt deck before its first persist');
   const body = src.slice(src.indexOf('function sealedDeckIds'), src.indexOf('function draftBaseIds'));
