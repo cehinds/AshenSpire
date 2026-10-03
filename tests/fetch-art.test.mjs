@@ -895,7 +895,7 @@ function jobsRunningToolsBeforeFetch(yml) {
       return j;
     };
     const stepStart = (i) => { let k = i; while (k > 0 && !/^\s*-\s/.test(lines[k])) k -= 1; return k; };
-    const conditional = at >= 0 && lines.slice(stepStart(at), stepEnd(at)).some((l) => /^\s*(-\s+)?["']?if["']?\s*:/.test(l));
+    const conditional = at >= 0 && lines.slice(stepStart(at), stepEnd(at)).some((l) => !/^\s*#/.test(l) && /(^|[\s{,-])["']?if["']?\s*:/.test(l));
     const fetched = at >= 0 && !conditional;
     const before = (fetched ? lines.slice(0, at) : lines).filter((l) => !/^\s*#/.test(l)).join(' ').replace(/\\\s+/g, ' ');
     const bad = TOOL_CMD.test(before);
@@ -933,12 +933,13 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('bad-cjs', `      - run: node tools/combat-formation-extra-qa.cjs\n${fetch}`),
     job('bad-quoted-uses', `      - run: node tools/a.mjs\n${fetch}`).replace('- uses: actions/checkout@v5', '- "uses": actions/checkout@v5'),
     job('bad-conditional-fetch', `      - uses: ./.github/actions/fetch-art\n        if: runner.os != 'Windows'\n        with:\n          packs: all\n      - run: node tools/a.mjs\n`),
+    job('bad-flow-conditional-fetch', `      - { uses: ./.github/actions/fetch-art, if: runner.os != 'Windows' }\n      - run: node tools/a.mjs\n`),
     job('bad-windows-path', `      - run: node .\\tools\\build.mjs\n${fetch}`),
     job('bad-continuation', `      - name: x\n        run: |\n          node \\\n            tools/build.mjs\n${fetch}`),
   ].join('\n') + '\n'
     + `  bad-commented: # heavy\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`
     + `  "bad-quoted":\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`;
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 22);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
+  assert.equal(checked, 23);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-flow-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
 });
