@@ -32,6 +32,8 @@ const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line
 
 function migratedIds() {
   const ids = new Set(JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/uistrings-migrated-1489.json'), 'utf8')).ids);
+  // Keep the Reading Desk's new rows protected after its branch merges too.
+  for (const id of JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/uistrings-migrated-1535.json'), 'utf8')).ids) ids.add(id);
   // Rows a branch adds after #1489 are swept too while they are under review.
   // A checkout without origin/dev (a tarball, a shallow clone) keeps the frozen list.
   try {
@@ -77,6 +79,12 @@ const ALLOWED = [
   ['src/ui/previews/tooltipReviewScene.js', 'Cards', 'dev review scene category id, compared with ==='],
   ['src/ui/previews/tooltipReviewScene.js', 'Exhaust', 'dev review scene\'s sample keyword tooltip (a card keyword, not the combat pile)'],
   // The same English word naming a different thing. Rewording the row must NOT move these.
+  ['src/ui/components/combatantOverhead.js', 'Inspect', 'combatant overhead inspection names a combatant, not the Reading Desk card inspection action'],
+  ['src/ui/components/creationCards.js', 'List', 'character creation layout selector, separate from the deck display selector'],
+  ['src/ui/components/offlinePlay.js', 'All', 'the save-import replacement warning begins with All slots; it is not the collection filter'],
+  ['src/ui/input.js', 'Inspect', 'global input binding label, separate from the Reading Desk card action'],
+  ['src/ui/screens/settings.js', 'Undo', 'settings change undo, separate from the deck transaction undo'],
+  ['src/ui/screens/worldAtlas.js', 'Inspect', 'local map point inspection aria-label, separate from card inspection'],
   ['src/ui/screens/reward.js', 'Level', '"Level <n>" names a character level; reward.level.button is the verb on the claim button'],
   ['src/ui/screens/rest.js', 'Level', '"Level <n>" names a character level, not the reward claim button'],
   ['src/ui/screens/equipment.js', 'Level', '"Level <n>" names a character level, not the reward claim button'],

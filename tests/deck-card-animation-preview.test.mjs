@@ -73,6 +73,7 @@ function withPreview(options, check) {
   let preview;
   try {
     const run = freshRun();
+    const before = structuredClone(run);
     const ref = options.ref || { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' };
     const plan = deckCardAnimationPlan(registries, run, ref);
     preview = deckCardAnimationPreview({ registries, run, ref, paused: options.paused, onPaused: value => pauses.push(value) }, {
@@ -90,6 +91,8 @@ function withPreview(options, check) {
       step(time) { const callbacks = [...raf.values()]; raf.clear(); for (const fn of callbacks) fn(time); },
       hide(value) { document.hidden = value; for (const fn of [...visibility]) fn(); },
     });
+    preview.dispose();
+    assert.deepEqual(run, before, 'preview playback, lifecycle changes and disposal never mutate the run');
   } finally {
     preview?.dispose();
     for (const [key, value] of Object.entries(saved)) {
@@ -161,6 +164,22 @@ test('visibility and live reduced-motion changes suspend playback; disposal remo
     const prior = pauses.length;
     button.click();
     assert.equal(pauses.length, prior, 'disposed controls have no callbacks');
+  });
+});
+
+test('visibility resume preserves an explicit Pause and disposal prevents future resumes', () => {
+  withPreview({}, ({ preview, stages, raf, button, pauses, step, hide }) => {
+    step(0); step(250);
+    button.click();
+    const painted = [...stages[0].painted];
+    hide(true); hide(false); step(20000);
+    assert.equal(raf.size, 0, 'foregrounding cannot override the player Pause');
+    assert.deepEqual(stages[0].painted, painted);
+    assert.deepEqual(pauses, [true], 'visibility changes emit no player action');
+    preview.dispose();
+    hide(true); hide(false); step(40000);
+    assert.equal(raf.size, 0, 'a disposed preview cannot resume');
+    assert.deepEqual(stages[0].painted, painted);
   });
 });
 
