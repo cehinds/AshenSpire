@@ -788,6 +788,11 @@ jobs:
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 
+      - name: A whole run in the browser — title, class, map, a fight, the boss, death, title, a new run, 0 console errors
+        # FINISH §3 "A browser full run". Serves the source tree (the art packs
+        # fetched above); about 4 minutes measured locally.
+        run: node tools/verdict.mjs -- node tools/full-run-probe.mjs --check
+
   # ---------------------------------------------------------------------------
   # The flask-menu probe, and its plants sharded two ways: their own jobs by the
   # owner's 20-minute rule (D38). The probe serves the SOURCE tree, so no build.

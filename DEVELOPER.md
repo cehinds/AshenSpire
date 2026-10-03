@@ -290,6 +290,21 @@ by its end event), and no script flipbook or tween (3+ changes to one element
 inside 1 s) may run. A motion-on turn is the control that proves the sampler sees both
 kinds. A hand with no Attack is passed with End Turn until one is drawn (the
 selftest runs one plant and its clean copy at `--seed T14`, an all-Skill opening hand). `--selftest` plants sixteen known-bads through `doorplant.mjs` (CI runs them in 3 shards, `--shard i/3`).
+
+`node tools/full-run-probe.mjs` (FINISH §3 "A browser full run") plays one
+whole run in Chromium from a normal boot of the source tree, served as
+`tools/launch.mjs` serves it (LAN layer on): the startup gate and the title's
+New Game, character creation step by step with the fixed seed (`--seed`,
+default `FULLRUN1`) typed into the Review's Seed field, the act map, a first
+fight played with the Attack cards in hand, the map walked to the act boss
+(later fights resolved through `window.__combat`), the boss left to kill the
+character with End Turn alone, Return to title, and a second New Game to a new
+act map. Red on any `console.error`, uncaught exception or browser-logged
+error over the drive; the optional `assets/sfx/<id>.ogg` sample 404s
+(`src/ui/audio.js`) are set aside by name and counted. `--check` prints the
+verdict lines only; CI runs it in `ci.yml`'s *the build stamp and the cold boot
+in a real browser* job. About 4 minutes locally.
+
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in

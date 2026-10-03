@@ -1,0 +1,449 @@
+#!/usr/bin/env node
+// tools/full-run-probe.mjs — one whole run, played in Chromium from the title
+// (docs/FINISH.md §3 "A browser full run").
+//
+//   node tools/full-run-probe.mjs            the drive below, each stage timed; exit 0 green, 1 red, 2 harness
+//   node tools/full-run-probe.mjs --check    the same drive, verdict lines only (CI)
+//   node tools/full-run-probe.mjs --seed S   another fixed seed (default FULLRUN1)
+//   FULL_RUN_PORT=<n>                        serve on another port (default: any free port)
+//   CHROME=<path>                            the browser (tools/browser.mjs)
+//
+// THE DOOR. A normal boot of the SOURCE tree (no `?shot=`, so durable
+// localStorage, the startup gate and the real title), served the way
+// `node tools/launch.mjs` serves local play: tools/serve.mjs with its LAN layer
+// on, so the title's /api/lan/info question is answered as on a player's
+// machine. Every step is a trusted CDP pointer press on the control a player
+// presses (a hold where the control owes one: End Turn, Continue):
+//
+//   TITLE      the startup gate, then the title's New Game door (slot 1).
+//   CLASS      character creation walked step by step (Class, Character,
+//              Starting equip, Review), the fixed seed typed into the Review's
+//              own Seed field, Begin; the opening is skipped with its Skip.
+//   MAP        the act map mounts; the save names the fixed seed.
+//   COMBAT     the first fight is PLAYED: each turn the probe plays the Attack
+//              cards in hand on a living enemy, then holds End Turn, until the
+//              fight is won (cap COMBAT_TURNS turns). Its reward is left by
+//              Continue.
+//   WALK       the map is walked floor by floor to the boss: the probe picks a
+//              lit node (NODE_ORDER: a lit boss first, then Monster, Treasure,
+//              Rest, Shrine, Event, Merchant, Elite; unvisited before visited),
+//              selects it, presses Enter and leaves the room by its own door
+//              (Continue, a choice, Leave). The act's boss node opens its legacy
+//              dungeon, whose rooms are walked the same way to its boss. Fights after
+//              the first are resolved through the debug handle
+//              `window.__combat` (the enemies' hp set to 0, then End Turn
+//              held — the same handle tools/reward-collect-drive.mjs uses):
+//              the first fight already proved play, and the walk proves the
+//              doors between floors.
+//   BOSS       the boss fight, known by its splash (intro.js; counted by a
+//              page-side recorder as it is drawn). The run ends in DEATH,
+//              the way a player loses: the probe holds End Turn every turn and
+//              plays nothing until the boss kills the character (cap
+//              BOSS_TURNS). No hp is written. (Victory is the act-3 boss:
+//              outside one probe's bound; tools/runsim.mjs reaches it headless.)
+//   GAMEOVER   the death screen mounts; the profile's last result is a loss on
+//              this seed and slot 1 is cleared; Return to title.
+//   NEW RUN    the title again; New Game; creation walked again; Begin; a new
+//              act map at floor 0 with full hp.
+//
+// THE VERDICT on console errors, taken over the WHOLE drive (CDP Runtime and
+// Log domains): every `console.error` call, every uncaught exception, and every
+// error entry the browser logs (a failed resource load included). The one set
+// aside BY NAME, and counted and printed every run, is OPTIONAL_404: the
+// optional SFX sample probe in src/ui/audio.js ("SFX ids first try
+// assets/sfx/<id>.ogg"; the synth plays when none is there, by design), whose
+// 404s the browser logs as errors. Any other error, of any kind, is red.
+//
+// BOUNDARY. One class (the first offered), one seed, one viewport (1440x900).
+// It does not judge balance, art or the content of any screen; it proves the
+// doors from title back to title and on into a new run, with no error logged.
+
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+import { launchBrowser } from './browser.mjs';
+import { serve } from './serve.mjs';
+import { seedFromString, seedToString } from '../src/engine/rng.js';
+
+const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const argv = process.argv.slice(2);
+const CHECK = argv.includes('--check');
+const SEED = argv.includes('--seed') ? argv[argv.indexOf('--seed') + 1] : 'FULLRUN1';
+// The run stores the seed's canonical spelling (main.js newRun).
+const CANON = seedToString(seedFromString(SEED));
+const PORT = Number(process.env.FULL_RUN_PORT) || 0;
+const VIEWPORT = { width: 1440, height: 900 };
+const COMBAT_TURNS = 20; // the played first fight
+const BOSS_TURNS = 40; // End Turn held until the boss kills the character
+const MAX_STEPS = 80; // screens the walk may visit before it calls itself lost
+const MOUNT_MS = 60000; // a document coming up from the source tree (see map-camera-persistence.mjs)
+// Optional files the game asks for and is built to do without (see header).
+const OPTIONAL_404 = [/\/assets\/sfx\/[A-Za-z0-9_%-]+\.ogg$/];
+// The walk's preference among lit nodes: the boss the moment one is lit, then
+// the cheapest rooms to leave. Visited nodes (a legacy dungeon keeps the room
+// it stands in lit) come after every unvisited one.
+const NODE_ORDER = ['boss', 'monster', 'treasure', 'rest', 'shrine', 'event', 'merchant', 'elite'];
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const results = [];
+const check = (ok, name, detail) => {
+  results.push(ok);
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${name} — ${detail}`);
+};
+const t0 = Date.now();
+const timings = [];
+let lastMark = t0;
+const mark = (stage) => {
+  const now = Date.now();
+  timings.push({ stage, ms: now - lastMark });
+  lastMark = now;
+  if (!CHECK) console.log(`  [${((now - t0) / 1000).toFixed(1)} s] ${stage} (+${((timings.at(-1).ms) / 1000).toFixed(1)} s)`);
+};
+const say = (line) => { if (!CHECK) console.log(`  ${line}`); };
+
+const errors = [];
+const optional = [];
+function onEvent(m) {
+  if (m.method === 'Runtime.exceptionThrown') {
+    const d = m.params.exceptionDetails;
+    errors.push(`uncaught: ${d.exception?.description || d.text}`);
+  } else if (m.method === 'Runtime.consoleAPICalled' && (m.params.type === 'error' || m.params.type === 'assert')) {
+    errors.push(`console.${m.params.type}: ${m.params.args.map((a) => a.value ?? a.description ?? a.type).join(' ')}`);
+  } else if (m.method === 'Log.entryAdded' && m.params.entry.level === 'error') {
+    const { text, url = '', source } = m.params.entry;
+    if (source === 'network' && OPTIONAL_404.some((re) => re.test(url)) && /status of 404/.test(text)) optional.push(url);
+    else errors.push(`log (${source}): ${text}${url ? ` ${url}` : ''}`);
+  }
+}
+
+// The page-side recorder: the boss splash closes itself after 2.3 s, so it is
+// counted as it is drawn rather than looked for by a poll.
+const RECORDER = `window.__fullRunBossIntros = [];
+new MutationObserver((records) => { for (const r of records) for (const n of r.addedNodes) {
+  if (n.nodeType === 1 && n.classList.contains('boss-intro')) window.__fullRunBossIntros.push((n.querySelector('.bi-name') || n).textContent.trim());
+} }).observe(document, { childList: true, subtree: true });`;
+
+async function session(browser) {
+  const ws = new WebSocket(browser.wsUrl);
+  const pending = new Map();
+  let id = 0;
+  ws.onmessage = (event) => {
+    const m = JSON.parse(event.data);
+    if (m.method) onEvent(m);
+    const call = pending.get(m.id);
+    if (!call) return;
+    pending.delete(m.id);
+    m.error ? call.reject(new Error(m.error.message)) : call.resolve(m.result);
+  };
+  await new Promise((done, fail) => { ws.onopen = done; ws.onerror = fail; });
+  const raw = (method, params = {}, sessionId) => new Promise((done, fail) => {
+    const call = ++id;
+    pending.set(call, { resolve: done, reject: fail });
+    ws.send(JSON.stringify({ id: call, method, params, ...(sessionId ? { sessionId } : {}) }));
+  });
+  const { targetId } = await raw('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await raw('Target.attachToTarget', { targetId, flatten: true });
+  const send = (method, params) => raw(method, params, sessionId);
+  const evaluate = async (expression) => {
+    const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || JSON.stringify(r.exceptionDetails).slice(0, 400));
+    return r.result.value;
+  };
+  await send('Page.enable');
+  await send('Runtime.enable');
+  await send('Log.enable');
+  await send('Emulation.setDeviceMetricsOverride', { ...VIEWPORT, deviceScaleFactor: 1, mobile: false });
+  await send('Page.addScriptToEvaluateOnNewDocument', { source: RECORDER });
+  return { ws, send, evaluate };
+}
+
+let S; // the page session
+const ev = (x) => S.evaluate(x);
+const SCREEN = `(() => ({
+  app: [...document.querySelectorAll('#app > *')].map((e) => e.className).slice(0, 5).join(' | '),
+  text: (document.querySelector('#app') || document.body).innerText.replace(/\\s+/g, ' ').slice(0, 220),
+  top: [...document.querySelectorAll('.modal-veil button, [role=dialog] button')].filter((b) => b.offsetParent && !b.disabled)
+    .map((b) => (b.id || b.className).slice(0, 40) + '=' + b.textContent.trim().slice(0, 20)).slice(0, 16),
+}))()`;
+async function until(expression, what, ms = 20000) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    const v = await ev(expression);
+    if (v) return v;
+    await wait(100);
+  }
+  throw new Error(`timed out after ${ms} ms waiting for ${what}; screen ${JSON.stringify(await ev(SCREEN))}`);
+}
+const point = (selector) => ev(`(() => {
+  const el = document.querySelector(${JSON.stringify(selector)});
+  if (!el) return null;
+  el.scrollIntoView({ block: 'center', inline: 'center' });
+  const b = el.getBoundingClientRect();
+  return { x: b.x + b.width / 2, y: b.y + b.height / 2, hold: Number(el.dataset.holdMs) || 0 };
+})()`);
+// A trusted press at the control's centre; `hold` true holds it for the
+// control's own data-hold-ms (or `ms`) and a margin, as a player's hold.
+async function press(selector, { hold = false, ms = 0 } = {}) {
+  const at = await point(selector);
+  if (!at) throw new Error(`missing ${selector}; screen ${JSON.stringify(await ev(SCREEN))}`);
+  const { x, y } = at;
+  await S.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+  await S.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+  if (hold) await wait((ms || at.hold || 600) + 250);
+  await S.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+  await wait(150);
+}
+const has = (selector) => ev(`!!document.querySelector(${JSON.stringify(selector)})`);
+// A tutorial spotlight over the screen is dismissed by its own Skip.
+async function skipTutorial() {
+  for (let i = 0; i < 4 && await has('.tut-skip'); i++) { await press('.tut-skip'); await wait(250); }
+}
+const savedRun = () => ev(`(() => { try { const r = JSON.parse(localStorage.getItem('sote_run_v1') || 'null'); const g = r && (r.run || r.game || r); return g ? { seed: g.seedString, floor: g.floor, act: g.actNumber, hp: g.hp, maxHp: g.maxHp } : null; } catch { return null; } })()`);
+
+// ---- TITLE → CLASS SELECT → BEGIN → the act map -----------------------------
+async function newGameFromTitle(label) {
+  await until(`!!document.querySelector('.title-menu .slot-new')`, `the title's New Game door (${label})`);
+  await press('.title-menu .slot-new');
+  await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the new-slot modal');
+  await press('[data-title-action="modal-continue"]');
+  await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
+  await press('[data-title-action="review-new"]');
+  await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage of character creation');
+  const className = await ev(`document.querySelector('#cz-classes .cz-class').textContent.trim().replace(/^\\W+/, '').split(/(?=[A-Z][a-z]+ )/)[0]`);
+  await press('#cz-classes .cz-class');
+  await press('#cz-next');
+  await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Character stage');
+  const openFace = async (key) => {
+    await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
+    if (!(await ev(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await press(`[data-face="${key}"]`);
+  };
+  await openFace('primary');
+  // Standard's mode id is `lean` (see map-camera-persistence.mjs).
+  const mode = await ev(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
+  if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
+  await openFace('keepsake');
+  await press('#cz-keepsakes [data-keepsake-id]');
+  await press('#cz-next');
+  await until(`document.querySelector('#cz-tab-equipment')?.getAttribute('aria-selected') === 'true'`, 'the Starting equip stage');
+  await openFace('armour');
+  await press('#cz-armours .equip-chip .equipment-poker-card');
+  await press('#cz-armours .equip-chip .equipment-choose');
+  for (let i = 0; i < 8; i++) {
+    if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+    await press('#cz-next');
+  }
+  await until(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`, 'the Review stage');
+  // The seed goes in through the Review's own Seed field, typed.
+  await press('#seed-input');
+  await ev(`(() => { const i = document.querySelector('#seed-input'); i.select(); })()`);
+  await S.send('Input.insertText', { text: SEED });
+  await wait(150);
+  const typed = await ev(`document.querySelector('#seed-input').value`);
+  await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin to accept the character');
+  await press('#cz-start');
+  await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.map-scroll .map-node'))`, 'the opening or the map', MOUNT_MS);
+  if (await ev(`(() => { const s = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent)); if (!s) return false; s.dataset.fullRunSkip = '1'; return true; })()`)) {
+    await press('[data-full-run-skip]');
+  }
+  await until(`!!document.querySelector('.map-scroll .map-node.reachable')`, 'the act map with a lit node', MOUNT_MS);
+  await skipTutorial();
+  return { className, typed };
+}
+
+// ---- the map: one floor --------------------------------------------------------
+const reachable = () => ev(`[...document.querySelectorAll('.map-scroll .map-node.reachable')].map((n) => ({ id: n.dataset.node, visited: n.classList.contains('visited') || n.classList.contains('current'), type: ${JSON.stringify(NODE_ORDER)}.find((t) => n.classList.contains(t)) || 'unknown' }))`);
+async function enterNode(node) {
+  await press(`.map-node[data-node="${node.id}"]`);
+  // Select, then Enter once the tray has slid open (map.js W4b).
+  await until(`document.querySelector('.map-tray')?.dataset.shown === 'true' && !document.querySelector('#map-enter')?.disabled`, `the tray's Enter for ${node.id}`, 5000);
+  await wait(200);
+  await press('#map-enter');
+  // Entered: the map is gone, or a room (a treasure's spoils) is drawn over it.
+  await until(`!document.querySelector('.map-scroll .map-node.reachable[data-node="${node.id}"]') || !!document.querySelector('.modal-veil')`, `${node.id} to be entered`, MOUNT_MS);
+}
+
+// ---- combat -------------------------------------------------------------------
+const COMBAT_READY = `!!window.__combat && !!document.querySelector('.combat .end-turn') && !document.querySelector('.end-turn').disabled && window.__combat.phase === 'player'`;
+const combatOver = `!document.querySelector('.combat') || !!document.querySelector('.reward-veil') || !!document.querySelector('#to-title')`;
+// End Turn owes a hold (secondbeat.js). A hold that lands while a card is
+// still selected for targeting is spent on the selection, so a turn that has
+// not moved on after the hold is held again (at most END_TURN_HOLDS times).
+const END_TURN_HOLDS = 3;
+async function endTurn() {
+  const turn = await ev('window.__combat.turn');
+  const moved = `(${combatOver}) || window.__combat.turn > ${turn} || window.__combat.phase !== 'player'`;
+  for (let i = 0; i < END_TURN_HOLDS; i++) {
+    await press('.end-turn', { hold: true, ms: 1000 });
+    if (await ev(`(async () => { const end = Date.now() + 4000; while (Date.now() < end) { if (${moved}) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`)) break;
+  }
+  await until(`(${combatOver}) || (window.__combat.turn > ${turn} && ${COMBAT_READY})`, `turn ${turn + 1} or the fight's end`, 40000);
+}
+async function playFight() {
+  let played = 0;
+  for (let turn = 0; turn < COMBAT_TURNS; turn++) {
+    if (await ev(combatOver)) return { played, turns: turn };
+    await until(`(${combatOver}) || (${COMBAT_READY})`, 'the player turn', 30000);
+    await skipTutorial();
+    for (let tries = 0; tries < 12; tries++) {
+      if (await ev(combatOver)) return { played, turns: turn };
+      const card = await ev(`(() => { const c = [...document.querySelectorAll('.hand .card.type-attack')].find((c) => !c.classList.contains('unplayable') && !c.dataset.fullRunTried); if (!c) return null; c.dataset.fullRunTried = '1'; return c.dataset.instanceId || c.dataset.cardId; })()`);
+      if (!card) break;
+      const hand = await ev('window.__combat.piles.hand.length');
+      await press(`.hand .card[data-full-run-tried="1"]:not([data-full-run-done])`);
+      await wait(250);
+      if (await has('.combatant.enemy:not(.dead)')) await press('.combatant.enemy:not(.dead)');
+      const left = await ev(`(async () => { const end = Date.now() + 2500; while (Date.now() < end) { if (!window.__combat || window.__combat.piles.hand.length < ${hand}) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`);
+      await ev(`document.querySelectorAll('.hand .card[data-full-run-tried]').forEach((c) => { c.dataset.fullRunDone = '1'; })`);
+      if (left) { played++; await wait(700); }
+      else await S.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }).then(() => S.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }));
+    }
+    if (await ev(combatOver)) return { played, turns: turn + 1 };
+    await endTurn();
+  }
+  return { played, turns: COMBAT_TURNS, unfinished: true };
+}
+// Fights after the first: resolved through the debug handle, then End Turn.
+async function resolveFight() {
+  await until(`(${combatOver}) || (${COMBAT_READY})`, 'the player turn', 30000);
+  await skipTutorial();
+  await ev(`(() => { for (const e of window.__combat.enemies) { e.hp = 0; e.alive = false; } return true; })()`);
+  await press('.end-turn', { hold: true });
+  await until(combatOver, 'the fight to end', 40000);
+}
+
+// ---- leaving the screen a node opened --------------------------------------
+async function leaveRoom() {
+  for (let step = 0; step < 12; step++) {
+    await wait(300);
+    await skipTutorial();
+    if (await ev(`!!document.querySelector('.map-scroll .map-node.reachable') && !document.querySelector('.modal-veil')`)) return 'map';
+    if (await has('#to-title')) return 'gameover';
+    if (await ev(COMBAT_READY)) return 'combat';
+    if (await has('.reward-veil')) {
+      // Sub-choosers the reward may stack (level, skill draft) close first.
+      for (const done of ['#reward-level-done', '#reward-skill-done', '#reward-back']) if (await has(done)) { await press(done); await wait(200); }
+      // The victory card's Continue (#reward-expand) opens the spoils; their
+      // Continue (#reward-continue, a hold) collects and leaves.
+      if (await has('#reward-expand')) { await press('#reward-expand'); continue; }
+      if (await has('#reward-continue')) { await press('#reward-continue', { hold: true }); continue; }
+    }
+    // A dialogue room (a legacy dungeon's rooms): the first response it
+    // offers (held: a binding one owes a hold), then Continue.
+    if (await has('.dialogue-response:not([disabled])')) { await press('.dialogue-response:not([disabled])', { hold: true, ms: 1000 }); continue; }
+    if (await has('#dialogue-continue:not([disabled])')) { await press('#dialogue-continue'); continue; }
+    if (await has('#event-continue')) { await press('#event-continue', { hold: true }); continue; }
+    if (await has('#choices button:not([disabled])')) { await press('#choices button:not([disabled])', { hold: true }); continue; }
+    if (await has('#leave-shop')) { await press('#leave-shop', { hold: true }); continue; }
+    if (await has('#shrine-leave')) { await press('#shrine-leave', { hold: true }); continue; }
+    if (await has('.confirm-modal [data-confirm="yes"], .as-modal .primary')) { await press('.confirm-modal [data-confirm="yes"], .as-modal .primary'); continue; }
+  }
+  throw new Error(`no way out of this screen: ${JSON.stringify(await ev(SCREEN))}`);
+}
+
+// ---- the drive ------------------------------------------------------------------
+const server = await serve({ root: ROOT, port: PORT, open: false, lan: true });
+const base = `http://localhost:${server.server.address().port}/`;
+let browser;
+let harness = null;
+try {
+  browser = await launchBrowser({ prefix: 'fullrun-', headless: '--headless=new' });
+} catch (e) {
+  harness = `no browser: ${e.message}`;
+}
+if (!harness) {
+  try {
+    S = await session(browser);
+    say(`seed ${SEED}, ${VIEWPORT.width}x${VIEWPORT.height}, ${base}`);
+    await S.send('Page.navigate', { url: base });
+    await until(`!!document.querySelector('.startup-gate')`, 'the startup gate', MOUNT_MS);
+    await ev(`localStorage.clear()`);
+    await S.send('Page.navigate', { url: base });
+    await until(`!!document.querySelector('.startup-gate')`, 'the startup gate (fresh profile)', MOUNT_MS);
+    mark('boot to the startup gate');
+    await press('.startup-gate');
+    const first = await newGameFromTitle('first run');
+    mark('title → class select → map');
+    const begun = await savedRun();
+    check(first.typed === SEED && begun?.seed === CANON && begun.floor === 0, 'TITLE→CLASS→MAP',
+      `${first.className}, seed typed ${JSON.stringify(first.typed)}, saved run seed ${JSON.stringify(begun?.seed)} (${SEED} canonical ${CANON}) at act ${begun?.act} floor ${begun?.floor}`);
+
+    let fights = 0, rooms = [], firstFight = null, boss = null, steps = 0;
+    while (steps++ < MAX_STEPS) {
+      const nodes = await reachable();
+      if (!nodes.length) throw new Error(`the map lights no node; screen ${JSON.stringify(await ev(SCREEN))}`);
+      const pick = [false, true].flatMap((v) => NODE_ORDER.map((t) => nodes.find((n) => n.type === t && n.visited === v))).find(Boolean) || nodes[0];
+      await enterNode(pick);
+      rooms.push(pick.type);
+      let where = await leaveRoom();
+      while (where === 'combat') {
+        fights++;
+        // A boss fight is announced by its splash (intro.js), which the page
+        // recorder below counts the moment it is drawn.
+        if (await ev('window.__fullRunBossIntros.length') > 0) {
+          if (!firstFight) throw new Error('the first fight is the boss');
+          mark(`walk to the boss (${rooms.length} rooms: ${rooms.join(', ')})`);
+          let turns = 0;
+          for (; turns < BOSS_TURNS; turns++) {
+            await until(`(${combatOver}) || (${COMBAT_READY})`, 'the boss turn', 30000);
+            await skipTutorial();
+            if (await ev(combatOver)) break;
+            await endTurn();
+          }
+          boss = { turns, name: await ev('window.__fullRunBossIntros.join(", ")'), enemies: await ev(`window.__combat ? window.__combat.enemies.map((e) => e.enemyId).join(', ') : ''`) };
+          break;
+        }
+        if (!firstFight) {
+          const before = await ev(`({ enemies: window.__combat.enemies.map((e) => e.enemyId + ' ' + e.hp).join(', ') })`);
+          firstFight = { ...before, ...(await playFight()) };
+          mark(`first fight played (${firstFight.played} cards over ${firstFight.turns} turn(s))`);
+          check(!firstFight.unfinished && await ev(`!!document.querySelector('.reward-veil')`), 'COMBAT',
+            `vs ${before.enemies}: ${firstFight.played} Attack card(s) played over ${firstFight.turns} turn(s), won, the reward menu mounted`);
+        } else {
+          await resolveFight();
+        }
+        where = await leaveRoom();
+      }
+      if (boss) break;
+      if (where === 'gameover') throw new Error(`the run ended before the boss, after ${rooms.join(', ')}`);
+    }
+    if (!boss) throw new Error(`no boss after ${MAX_STEPS} map steps (${rooms.join(', ')})`);
+    check(!!firstFight, 'MAP→BOSS', `${rooms.length} map node(s) walked (${rooms.join(', ')}; ${fights} fight(s), the last the boss)`);
+    await until(`!!document.querySelector('#to-title')`, 'the death screen', 30000);
+    mark(`boss ${boss.name} to death in ${boss.turns + 1} turn(s)`);
+    const gameOver = await ev(`(document.querySelector('#app') || document.body).innerText.replace(/\\s+/g, ' ').slice(0, 80)`);
+    // The death is read from storage: the profile's last result and the slot.
+    const death = await ev(`(() => { const m = JSON.parse(localStorage.getItem('sote_meta_v1') || '{}'); const r = (m.results || []).at(-1) || null; return { result: r && { victory: r.victory, seed: r.seed, act: r.act, floor: r.floor, bosses: r.bosses }, slot: localStorage.getItem('sote_run_v1') }; })()`);
+    check(!!death.result && death.result.victory === false && death.result.seed === CANON && death.slot === null, 'BOSS→DEATH',
+      `${boss.name} (${boss.enemies}) killed the character after ${boss.turns + 1} End Turn(s), nothing played, no hp written; the profile records ${JSON.stringify(death.result)}, slot 1 ${death.slot === null ? 'cleared' : 'STILL HOLDS A RUN'}; the screen reads "${gameOver}"`);
+    await press('#to-title', { hold: await ev(`!!document.querySelector('#to-title').dataset.holdMs`) });
+    await until(`!!(document.querySelector('.title-menu .slot-new') || document.querySelector('.startup-gate'))`, 'the title after the run', MOUNT_MS);
+    if (await has('.startup-gate')) await press('.startup-gate');
+    await until(`!!document.querySelector('.title-menu .slot-new')`, 'the title menu after the run');
+    mark('death screen → title');
+    check(true, 'DEATH→TITLE', 'Return to title mounted the title menu and its New Game door');
+    const second = await newGameFromTitle('second run');
+    const again = await savedRun();
+    mark('title → class select → new map');
+    check(again?.seed === CANON && again.floor === 0 && again.hp === again.maxHp && await has('.map-scroll .map-node.reachable'), 'TITLE→NEW RUN',
+      `${second.className}, a new run saved at act ${again?.act} floor ${again?.floor}, hp ${again?.hp}/${again?.maxHp}, the act map lit`);
+    await wait(1500); // late errors (timers, sample probes) land inside the window
+  } catch (e) {
+    check(false, 'DRIVE', `the full run did not finish: ${e.message}`);
+  } finally {
+    S?.ws.close();
+    await browser.close();
+  }
+  check(errors.length === 0, 'CONSOLE', errors.length
+    ? `${errors.length} console error(s): ${errors.slice(0, 8).join(' | ')}`
+    : `0 console errors over the drive (${optional.length} optional SFX sample 404(s) set aside by name: ${[...new Set(optional.map((u) => u.replace(/^.*\//, '')))].join(', ') || 'none'})`);
+}
+server.server.closeAllConnections?.();
+await new Promise((done) => server.server.close(done));
+if (harness) {
+  console.log(`HARNESS ${harness}`);
+  process.exit(2);
+}
+if (!CHECK) console.log(`  timings: ${timings.map((t) => `${t.stage} ${(t.ms / 1000).toFixed(1)} s`).join('; ')}; total ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+else console.log(`full-run: total ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+const failed = results.filter((ok) => !ok).length;
+console.log(`${results.length - failed} passed, ${failed} failed`);
+process.exit(failed ? 1 : 0);
