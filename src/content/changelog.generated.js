@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the art now lives only in its own repository",
     "detail": "Nothing you play changes. The pictures, fonts, music and map tiles were stored twice, here and in the art repository; the copies here are gone, so a fresh download of the source is about 1.9 GB lighter. Every build now takes its art from the pinned art release, checked file by file, exactly as it already did.",
-    "build": "0.7.1.819",
+    "build": "0.7.1.820",
     "pullRequest": 1516,
     "url": "https://github.com/cehinds/AshenSpire/pull/1516"
+  },
+  {
+    "id": "pr-1499",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the map legend's Escape test now opens the node panel first",
+    "detail": "Nothing you play changes. The automatic test for closing the map legend with Escape or pad B never selected a map node, so the node's panel was never open and the test could not see it close by mistake. It now selects a node, checks the panel stays open when the legend closes, and checks the next press closes the panel.",
+    "build": "0.7.1.819",
+    "pullRequest": 1499,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1499"
   },
   {
     "id": "pr-1475",
