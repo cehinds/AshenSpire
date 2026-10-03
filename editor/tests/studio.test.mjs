@@ -74,4 +74,31 @@ test('sprite import validates signatures and never overwrites an existing image'
   const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aKioAAAAASUVORK5CYII=';
   const one = await (await upload({name:'sprite.png',base64:png})).json(), two = await (await upload({name:'sprite.png',base64:png})).json();
   assert.notEqual(one.path,two.path); assert.match(one.path,/^assets\/imported\//);
+  // A checkout that pins an art release keeps no art (step 13): the import is
+  // refused by name instead of writing into the ignored assets/ tree.
+  await fs.writeFile(path.join(root,'art-release.json'),'{}');
+  const refused = await upload({name:'sprite.png',base64:png});
+  assert.equal(refused.status,409); assert.match((await refused.json()).error,/cehinds\/AshenSpire-art/);
+});
+test('with only the light pack fetched, the library lists and the preview serves each art id as its light twin', async t => {
+  // docs/EXTERNAL-ASSETS-PLAN.md step 13: the art is the fetched release; a
+  // light,common fetch has no high pack, so assets/<id> is the light file.
+  const { root } = await fixture(t);
+  const { markerFor, readPin } = await import('../../tools/fetch-art.mjs');
+  const hex = c => c.repeat(64);
+  const pin = { schema: 2, repo: 'cehinds/AshenSpire-art', tag: 'hd-assets-v9', zip: 'hd-assets-v9.zip', sha256: hex('a'), packs: { high: { zip: 'hd-assets-v9.zip', sha256: hex('a') }, light: { zip: 'light-assets-v9.zip', sha256: hex('b') }, common: { zip: 'common-assets-v9.zip', sha256: hex('c') } } };
+  const manifest = { schema: 2, assets: { 'assets/bg/a.webp': { light: { path: 'assets-mobile/bg/a.webp', bytes: 4, sha256: hex('1') }, high: { path: 'assets/bg/a.webp', bytes: 5, sha256: hex('2') } } } };
+  await fs.writeFile(path.join(root, 'art-release.json'), JSON.stringify(pin));
+  await fs.writeFile(path.join(root, 'art-manifest.json'), JSON.stringify(manifest));
+  const light = path.join(root, '.art-cache', pin.tag, 'light');
+  await fs.mkdir(path.join(light, 'assets-mobile/bg'), { recursive: true });
+  await fs.writeFile(path.join(light, 'assets-mobile/bg/a.webp'), 'RIFF');
+  await fs.writeFile(path.join(light, '.verified'), `${markerFor(readPin(root), manifest, 'light')}\n`);
+  const app = await createStudio({root,port:0,stateDir:path.join(root,'state')}); t.after(() => app.close());
+  const {token} = await (await fetch(`${app.url}/api/session`)).json();
+  const inv = await (await fetch(`${app.url}/api/inventory`,{headers:{'x-studio-token':token}})).json();
+  assert.ok(inv.sprites.includes('assets/bg/a.webp'), 'the light pack lists the id');
+  const redirect = await fetch(`${app.url}/game/assets/bg/a.webp`,{redirect:'manual'});
+  const served = await fetch(redirect.headers.get('location'));
+  assert.equal(served.status,200); assert.equal(await served.text(),'RIFF');
 });

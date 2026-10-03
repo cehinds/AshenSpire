@@ -2,9 +2,11 @@
 //
 // The mobile edition is the same game with smaller art. Which files shrink, by
 // how much, and how the result is judged are stated HERE and nowhere else, so
-// the generator (tools/mobile-art.mjs), the bundler (tools/bundle.mjs) and the
-// gate (tools/mobile-art.mjs --check, tools/verify-shipped.mjs) cannot disagree
-// about the shape of the tree they share. This module is pure: no main, no
+// the generator, the bundler (tools/bundle.mjs) and the gates cannot disagree
+// about the shape of the tree they share. Since docs/EXTERNAL-ASSETS-PLAN.md
+// step 13 the generator and its --check (tools/mobile-art.mjs) live in
+// cehinds/AshenSpire-art, beside its own copy of this file; here the bundler
+// and tools/verify-shipped.mjs still read it. This module is pure: no main, no
 // writes, Node core only, so the bundler can import it without running a tool.
 //
 // It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs): a change here

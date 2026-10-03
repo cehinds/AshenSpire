@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-02
 
+- **Behind the scenes: the art now lives only in its own repository** ([#1516](https://github.com/cehinds/AshenSpire/pull/1516), `0.7.1.822`). Nothing you play changes. The pictures, fonts, music and map tiles were stored twice, here and in the art repository; the copies here are gone, so a fresh download of the source is about 1.9 GB lighter. Every build now takes its art from the pinned art release, checked file by file, exactly as it already did.
 - **Behind the scenes: the game's wording lives in one table again** ([#1489](https://github.com/cehinds/AshenSpire/pull/1489), `0.7.1.821`). Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.
 
 - **Behind the scenes: the map legend's Escape test now opens the node panel first** ([#1499](https://github.com/cehinds/AshenSpire/pull/1499), `0.7.1.819`). Nothing you play changes. The automatic test for closing the map legend with Escape or pad B never selected a map node, so the node's panel was never open and the test could not see it close by mistake. It now selects a node, checks the panel stays open when the legend closes, and checks the next press closes the panel.

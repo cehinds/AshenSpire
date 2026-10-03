@@ -4,6 +4,8 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { launchBrowser } from './browser.mjs';
 
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 // Optional external Playwright installation; the project-owned launcher owns the browser profile.
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');

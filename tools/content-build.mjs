@@ -61,6 +61,7 @@ import { dirname, resolve, join, basename, extname, relative, sep } from 'node:p
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { configSourceErrors } from './config-build.mjs';
+import { manifestIds } from './art-source.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -372,6 +373,23 @@ function deriveFrameworkFromTree(parsed) {
     ['properties', { comment: 'DERIVED from content/source/nodes.csv — every node with a visibility, its domain read off its root. The framework contract\'s canonical PropertyDefinition rows; edit the tree, not this.', properties }, 'nodes.csv + nodeTerms.csv'],
     ['relations', { comment: 'DERIVED from content/source/nodeRelations.csv — every edge whose two ends are framework nodes. CONFLICTS_WITH is symmetric; the rest read source->target. PERMITS rows from classification properties to family roots ARE the inheritance allowlist.', relations: rels }, 'nodeRelations.csv'],
   ];
+}
+
+/**
+ * manifestAssetsTree(dir) → dir, filled with one placeholder file per `assets/…`
+ * id art-manifest.json lists, at its path under assets/. The real art left this
+ * repository at docs/EXTERNAL-ASSETS-PLAN.md step 13 (ART-REPO-PLAN's row for
+ * --mutate M6/M7: "builds its fixture tree from the manifest's ids"); the sweep
+ * reads names, never bytes, so the shipped names are the whole of its input.
+ */
+function manifestAssetsTree(dir) {
+  for (const id of manifestIds(ROOT)) {
+    if (!id.startsWith('assets/')) continue;
+    const file = join(dir, ...id.slice('assets/'.length).split('/'));
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, 'x');
+  }
+  return dir;
 }
 
 /**
@@ -727,7 +745,7 @@ async function selftest() {
     try { compiled = compileDir(SRC, OUT, { write: false }); } catch (e) { compiled = { err: e.message }; }
     ok(compiled && !compiled.err && compiled.stale === 0, `content/source compiles and generated files are current${compiled && compiled.err ? ` — ${compiled.err}` : ''}`);
     ok(compiled && !compiled.err && compiled.orphans.length === 0, 'no orphaned generated modules (every generated .js has a living source)');
-    const sw0 = sweepAssets(join(ROOT, 'assets'), b);
+    const sw0 = sweepAssets(manifestAssetsTree(join(tmp, 'shipped-assets')), b);
     ok(sw0.errors.length === 0, `asset sweep clean: ${sw0.bound} sprite(s) bound by convention, ${sw0.artless.length} enemy(ies) art-less (licensed by Law 1 clause 4 — placeholder, not a defect)`);
     const st0 = sweepStraySources(join(ROOT, 'content'));
     ok(st0.length === 0, 'stray-source sweep clean: every *.csv/*.json under content/ sits exactly where the compile reads (content/source/, top level)');
@@ -1053,8 +1071,7 @@ async function mutate() {
     }
     // M6 — a real sprite moved to the wrong folder.
     {
-      const a = join(tmp, 'm6-assets');
-      cpSync(join(ROOT, 'assets'), a, { recursive: true });
+      const a = manifestAssetsTree(join(tmp, 'm6-assets'));
       mkdirSync(join(a, 'bg'), { recursive: true });
       renameSync(join(a, 'sprites', 'enemy_wanderingSoldier.webp'), join(a, 'bg', 'enemy_wanderingSoldier.webp'));
       const r = sweepAssets(a, b);
@@ -1063,8 +1080,7 @@ async function mutate() {
     }
     // M7 — an orphan sprite planted beside the real ones.
     {
-      const a = join(tmp, 'm7-assets');
-      cpSync(join(ROOT, 'assets'), a, { recursive: true });
+      const a = manifestAssetsTree(join(tmp, 'm7-assets'));
       writeFileSync(join(a, 'sprites', 'enemy_wanderingSoldat.webp'), 'x');
       const r = sweepAssets(a, b);
       const hit = r.errors.find((m) => m.includes('NAMES NO ENEMY') && m.includes('wanderingSoldat'));

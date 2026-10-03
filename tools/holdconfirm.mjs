@@ -143,6 +143,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { copySourceArt } from './art-source.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -309,9 +310,11 @@ const PLANTS = [
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'hc-kb-'));
-  for (const d of ['src', 'styles', 'assets', 'content']) {
+  for (const d of ['src', 'styles', 'content']) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
+  // assets/: the fetched high pack and the fonts (the tree left at docs/EXTERNAL-ASSETS-PLAN.md step 13).
+  copySourceArt(dir);
   cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
   return dir;
 }

@@ -43,8 +43,8 @@ it plays on its own.
   their `.js` twins, and the score stays synthesized (Chrome refuses audio
   routed through Web Audio from a `file:` page).
 - **The light single file** carries the light art inline as `data:` URIs, read
-  from `assets-mobile/` (the twin tree `tools/mobile-art.mjs` shrinks from
-  `assets/` under `tools/mobileart-policy.mjs`). It is the only inline shape
+  from the fetched light pack (`node tools/fetch-art.mjs --pack light,common`;
+  the art repository generates the twins from the high tier). It is the only inline shape
   left: the full-art single file (~255 MB) and the separate mobile file
   (`AshenSpire-mobile.html`) were retired at step 8e (owner answers 2 and 6).
 
@@ -60,12 +60,12 @@ pins. `tools/verify-external.mjs` checks every object of a pack-shaped tree;
 From the project root:
 
 ```
+node tools/fetch-art.mjs --pack light,common   # once per art release (all for --full-art): the art is not in this repository
 node tools/launch.mjs --build-only     # build/ and dist/ (light art; --full-art for high + light), and the root alias
 node tools/bundle.mjs [--light]        # ONLY the pack-shaped game → build/ (packs/ and objects/ beside it)
 node tools/bundle.mjs --single-file    # ONLY the light single file → build/download/AshenSpire.html
 node tools/verify-shipped.mjs          # the root alias and dist/ ARE those builds; the single file carries art
 node tools/verify-external.mjs         # the pinned packs and every object they list are present (build/)
-node tools/mobile-art.mjs              # regenerate assets-mobile/ from assets/ (needs cwebp); --check needs no encoder
 CHROME=… node tools/external-play.mjs [--file]   # it loads, served and by double-click, and nothing 404s
 ```
 

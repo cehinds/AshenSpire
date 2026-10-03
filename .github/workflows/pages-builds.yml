@@ -273,7 +273,9 @@ jobs:
             else { console.error('art-release.json names schema ' + JSON.stringify(schema) + ', which this workflow does not know'); process.exit(2); }
           ")
           if [ "$PIN_MODE" = "fetch" ]; then
-            (cd "$RUNNER_TEMP/main" && node tools/fetch-art.mjs --pack all && node tools/fetch-art.mjs --agree --pack all)
+            # --agree (step 11) proves the cache equals main's trees; a main from
+            # after step 13 has no trees, and its fetch-art retired --agree.
+            (cd "$RUNNER_TEMP/main" && node tools/fetch-art.mjs --pack all && if [ -d assets-mobile ]; then node tools/fetch-art.mjs --agree --pack all; fi)
           else
             echo "main's art-release.json predates the packs (schema 2) — it builds from its trees, with nothing to fetch"
           fi
