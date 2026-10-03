@@ -197,6 +197,41 @@ test('a direct HP loss in a co-op receipt batch buzzes the hurt seat', () => {
   assert.deepEqual(felt(() => playReceiptSounds(events, { isLocalPlayer: (id) => id === 'p1' })), []);
 });
 
+test('co-op: a teammate\'s direct HP loss buzzes their device, not mine (#1517 review)', async () => {
+  // Every player entity is id 'player', so an hpLost receipt that names no
+  // seat cannot be told from my own; the engine stamps the seat it cost, and
+  // a receipt with no seat is nobody's here, not everyone's.
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { createSession } = await import('../tools/session.mjs');
+  const { applyLoseHp } = await import('../src/engine/actions.js');
+  const { coopReceiptSounds } = await import('../src/ui/screens/coop.js');
+  const host = createSession({ registries: createRegistries(contentBundle), seedString: 'HAPT2' });
+  for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
+  host.start();
+  for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
+  let heard = coopReceiptSounds(host.snapshot().scene, 0, ['p1', 'p2']);
+  const C = host.live.combat;
+  // p1 acts last, so the shared ctx's active seat is p1 when p2 is hurt —
+  // as when an enemy's move or a status resolves against an inactive seat.
+  const p1 = C.players.get('p1'); p1.entity.energy = 99;
+  p1.piles.hand.push({ instanceId: 'hap-card2', cardId: 'gorefireSlash', upgraded: false });
+  assert.ok(host.combatPlay('p1', 'hap-card2', 'e1').ok);
+  heard = coopReceiptSounds(host.snapshot().scene, heard, ['p1', 'p2']);
+  assert.equal(C.playerKey, 'p1');
+  assert.equal(applyLoseHp(C, C.players.get('p2').entity, 3, 'effect'), 3, 'Guilt/Herald-style loseHp on the teammate');
+  // The scene digest is rebuilt by the next authoritative action: p1 ends
+  // their turn alone, so no enemy acts and the batch carries just that wound.
+  assert.ok(host.combatEndTurn('p1').ok);
+  const scene = host.snapshot().scene;
+  const lost = scene.events.filter((e) => e.type === 'hpLost' && e.targetId === 'player');
+  assert.deepEqual(lost.map((e) => e.targetPlayerId), ['p2'], 'the receipt names the seat it cost');
+  assert.deepEqual(felt(() => coopReceiptSounds(scene, heard, ['p1'])).filter((id) => id === 'damageTaken'), [], 'a teammate\'s wound does not buzz me');
+  assert.deepEqual(felt(() => coopReceiptSounds(scene, heard, ['p2'])).filter((id) => id === 'damageTaken'), ['damageTaken'], 'their own device buzzes');
+  // A co-op receipt with no seat at all is not treated as local.
+  assert.deepEqual(felt(() => playReceiptSounds([{ type: 'hpLost', targetId: 'player', amount: 2, cause: 'effect' }], { isLocalPlayer: (id) => id === 'p1' })), []);
+});
+
 test('Settings offers the switch once, under Audio, defaulting to the data value', async () => {
   const { settingsRow, settingOn, generalGroups } = await import('../src/ui/screens/settings.js');
   const row = settingsRow('haptics');

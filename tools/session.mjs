@@ -558,8 +558,11 @@ export function createSession({ registries, seedString, endless = false, restore
     // to infer a target later from HP or block deltas.
     const emit = combat.emit;
     combat.emit = (type, payload = {}) => emit(type,
+      // The engine names the seat an HP change hit (targetPlayerId) when it
+      // can; the active seat is only the fallback, since an enemy's move or a
+      // status can hurt a seat that is not the active one.
       (type === 'damageDealt' || type === 'hpLost' || type === 'healed') && payload.targetId === 'player'
-        ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
+        ? { ...payload, playerId: payload.playerId ?? payload.targetPlayerId ?? combat.playerKey }
         : ['statusApplied', 'statusExpired'].includes(type) && payload.targetId === 'player'
           ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
         : payload);

@@ -792,8 +792,10 @@ export function playerLostHp(e, isLocalPlayer) {
   if (e.type === 'damageDealt') lost = hurtsPlayer(e) && guardHitFloatParts(e).residual > 0;
   else if (e.type === 'hpLost') lost = hurtsPlayer(e) && e.cause !== 'attack' && (e.amount || 0) > 0;
   if (!lost || typeof isLocalPlayer !== 'function') return lost;
+  // A co-op receipt that names no seat is nobody's here: every player entity
+  // is id 'player', so treating it as local would buzz every device.
   const seat = e.targetPlayerId ?? e.playerId;
-  return seat == null || isLocalPlayer(seat);
+  return seat != null && isLocalPlayer(seat);
 }
 
 /**
