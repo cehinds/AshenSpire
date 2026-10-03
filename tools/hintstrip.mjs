@@ -138,6 +138,10 @@ if (process.argv.includes('--selftest')) {
   const SELFTEST = {
     tool: 'hintstrip.mjs',
     timeoutMs: 900000,
+    // Pixel comparisons need the same orb artwork and fonts as the real row.
+    // A source-only copy otherwise compares fallback/loading paint between
+    // captures and can report text loss with no covering element.
+    extraCopy: ['assets/ui/stamina-orb', 'assets-mobile/ui/stamina-orb', 'assets/fonts'],
     plants: [
       {
         // Formation now puts the row in a grid track. Pinning that current
