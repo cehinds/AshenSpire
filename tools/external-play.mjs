@@ -15,7 +15,7 @@
 // directory), and the map-detail tiles were not copied at all. Static checks
 // were green for both.
 //
-//   node tools/external-play.mjs [--dir build/web] [--expect-tier light] [--plant desktop-light]
+//   node tools/external-play.mjs [--dir build] [--expect-tier light] [--plant desktop-light]
 //
 // Art quality is Auto in a fresh profile, so the phone screens must load light
 // (step 8c) and the desktop screens the build's tier; --expect-tier names the
@@ -45,7 +45,7 @@
 // backdrops, sprites and map tiles as plain loads of the objects beside the
 // HTML, and the score must stay synthesized: no manifest, no track, no music/
 // path is asked for (SPEC §7.4; Web Audio cannot play a file: track).
-//   node tools/external-play.mjs --file [--dir build/web] [--expect-tier light]
+//   node tools/external-play.mjs --file [--dir build] [--expect-tier light]
 //
 // THE INDEX BLOCKED (step 5, --block-index, http only): every packs/ request
 // is held (the cold boot) or refused (the ?shot= screens). The cold boot must
@@ -61,7 +61,7 @@
 // profile auto-load on (Settings → Advanced → Defaults & sync) and its GitHub
 // request held too: the gate must still be drawn at once, not after the
 // profile's 3 s wait (Codex on #1471).
-//   node tools/external-play.mjs --block-index [--dir build/web]
+//   node tools/external-play.mjs --block-index [--dir build]
 //
 // VERDICT: "external-play: OK — N checks passed".
 //
@@ -79,7 +79,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ARGV = process.argv.slice(2);
 const dirFlag = ARGV.indexOf('--dir');
-const DIR = resolve(ROOT, dirFlag >= 0 ? ARGV[dirFlag + 1] : 'build/web');
+const DIR = resolve(ROOT, dirFlag >= 0 ? ARGV[dirFlag + 1] : 'build');
 // --file: open the build by its file:// URL, as a double-click does (step 4).
 const FILE_MODE = ARGV.includes('--file');
 const DIR_URL = pathToFileURL(DIR + '/').href;
@@ -91,7 +91,7 @@ const rel = (url) => {
 };
 
 if (!existsSync(resolve(DIR, 'AshenSpire.html'))) {
-  console.error(`external-play: no build at ${relative(ROOT, DIR)} — node tools/bundle.mjs --external-art --out ${relative(ROOT, DIR)}`);
+  console.error(`external-play: no build at ${relative(ROOT, DIR)} — node tools/bundle.mjs [--light] --out ${relative(ROOT, DIR)}`);
   process.exit(2);
 }
 

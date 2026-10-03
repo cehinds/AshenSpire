@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A Windows installer, with the high-resolution art as a choice on the install screen",
     "detail": "Nothing in the game itself changes. AshenSpire-Setup.exe installs the game for you (no administrator prompt) with Start menu and desktop shortcuts; tick High-resolution art and it downloads the full-resolution art during the install and checks every file, or leave it unticked to play with the standard art and add it later by running the installer again. Uninstalling asks before it deletes your saves.",
-    "build": "0.7.1.805",
+    "build": "0.7.1.807",
     "pullRequest": 1501,
     "url": "https://github.com/cehinds/AshenSpire/pull/1501"
+  },
+  {
+    "id": "pr-1506",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "One game file and one download: the separate mobile and full-art files are retired",
+    "detail": "Every build is now one game page of about 10 MB that loads its art, fonts, music and map tiles from files beside it and picks phone-sized art on a phone by itself, plus one self-contained light-art file (about 31 MB) to download and play by double-click. The old mobile link sends you to the main game.",
+    "build": "0.7.1.806",
+    "pullRequest": 1506,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1506"
+  },
+  {
+    "id": "pr-1497",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Smith counts every card an upgrade improves",
+    "detail": "Upgrading a weapon or shield at the Smith already improved the Strike and Guard it lends you, but the preview and the receipt left those two cards out, so it said fewer cards improved than really did and showed a lent Guard as unused. Both now list every card the upgrade changes. Behind the scenes, four checking tools that had fallen behind the game's rules pass again.",
+    "build": "0.7.1.805",
+    "pullRequest": 1497,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1497"
   },
   {
     "id": "pr-1500",

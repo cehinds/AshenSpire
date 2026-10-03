@@ -107,9 +107,10 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
 
 ### Builds are built by CI, not committed
 
-Owner's rule, 2026-09-26. The standalone HTML (`AshenSpire.html`,
-`AshenSpire-mobile.html` and their `build/` and `dist/` copies) is never
-committed: a pull request carries source, `buildordinal.json`, the
+Owner's rule, 2026-09-26. The built HTML (the root `AshenSpire.html`, and
+every HTML under `build/` and `dist/`, with the `packs/` and `objects/` the
+pack-shaped build writes beside it; docs/EXTERNAL-ASSETS-PLAN.md step 8e) is
+never committed: a pull request carries source, `buildordinal.json`, the
 regenerated `src/content/changelog.generated.js` and its CHANGELOG receipt,
 and regenerated source modules when their authoritative data changes. Built
 HTML remains ignored. CI builds every pull request into `dev` and every

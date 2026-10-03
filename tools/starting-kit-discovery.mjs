@@ -30,7 +30,11 @@ const alternates = {
   reaver: { id: 'reaverGreatsword', rightHand: 'greatsword' },
   starseer: { id: 'starseerStarstone', rightHand: 'starstoneStaff' },
   herald: { id: 'heraldEmberlight', rightHand: 'emberlightSceptre' },
+  // The Rogue joined the class list after this table was written; its
+  // alternate is the only two-piece one, so it also proves "every piece".
+  rogue: { id: 'rogueBow', rightHand: 'shortbow', leftHand: 'parryDagger' },
 };
+const alternatePieces = (classId) => [alternates[classId]?.rightHand, alternates[classId]?.leftHand].filter(Boolean);
 
 check(Array.isArray(R.equipment.startingKits), 'starting kits are a generated equipment table');
 check(R.balance.equipment.startingKitDiscovery?.undiscoveredPresentation === 'hidden',
@@ -46,14 +50,31 @@ for (const classId of R.classes.ids()) {
     `${classId} lists baseline plus alternate eligible kit ids`, JSON.stringify(cls.eligibleStartingKitIds));
   check(baseline.length === 1 && cls.eligibleStartingKitIds?.includes(baseline[0].id),
     `${classId} has exactly one class-listed baseline`, JSON.stringify(baseline));
-  check(classKits.some((row) => row.id === alternates[classId].id && row.rightHand === alternates[classId].rightHand),
+  check(!!alternates[classId], `${classId} has a representative alternate in this tool's table`);
+  // A class missing from the table is reported above; the alternate checks
+  // below cannot run for it, so they are skipped rather than crash the tool.
+  if (!alternates[classId]) continue;
+  check(classKits.some((row) => row.id === alternates[classId]?.id && row.rightHand === alternates[classId]?.rightHand
+      && (row.leftHand || '') === (alternates[classId]?.leftHand || '')),
     `${classId} authors its representative alternate`, JSON.stringify(classKits));
 
   if (typeof startingKitViews === 'function') {
     const fresh = startingKitViews(R, classId, { discoveredArmaments: [] });
     check(fresh.length === 1 && fresh[0].baseline === true,
       `${classId} fresh profile sees baseline only`, JSON.stringify(fresh));
-    const discovered = startingKitViews(R, classId, { discoveredArmaments: [alternates[classId].rightHand] });
+    // Omit each piece in turn: a multi-piece alternate must stay hidden while
+    // ANY one of its authored armaments is undiscovered, not only the last.
+    const pieces = alternatePieces(classId);
+    if (pieces.length > 1) {
+      for (const missing of pieces) {
+        const partial = startingKitViews(R, classId, { discoveredArmaments: pieces.filter((id) => id !== missing) });
+        // The shipped policy hides undiscovered kits outright, so the alternate
+        // must not appear at all, not even as an unavailable row.
+        check(!partial.some((row) => row.id === alternates[classId].id),
+          `${classId} alternate stays hidden while ${missing} is undiscovered`, JSON.stringify(partial));
+      }
+    }
+    const discovered = startingKitViews(R, classId, { discoveredArmaments: alternatePieces(classId) });
     check(discovered.some((row) => row.id === alternates[classId].id && row.available === true),
       `${classId} alternate appears only after every authored armament is discovered`, JSON.stringify(discovered));
     const foreign = startingKitViews(R, classId, { discoveredArmaments: R.equipment.armaments.map((row) => row.id) });
@@ -119,11 +140,44 @@ catch (error) { altError = error.message; }
 check(altRun?.startingKitId === 'reaverGreatsword' && altRun.loadout.sets.rightHand[0] === 'greatsword'
   && altRun.loadout.sets.leftHand[0] === null,
   'authorized alternate creates the exact active loadout and persists kit identity', altError || JSON.stringify(altRun?.loadout));
-check(altRun?.deck.filter((c) => c.equipmentRole === 'attack').length === 4
-  && altRun?.deck.filter((c) => c.equipmentRole === 'guard').length === 4
-  && altRun?.deck.filter((c) => c.equipmentRole === 'technique').length === 1
-  && altRun?.deck.filter((c) => !c.equipmentRole).length === 1,
-  'alternate resolves through the unchanged 4/4/1/1 deck contract');
+// The 4/4/1/1 shape this check once pinned was retired by complete armament
+// kits (#904) and the base-card cap (SPEC, "The starting deck"): bound cards
+// (the item's kit Strike and Guard, its signature Art, the Dodge Roll and the
+// class cards) are dealt first, base Strikes and Defends fill what
+// `startingDeckSize` leaves, odd filler to Attack, and an armed deck carries no
+// global Technique. The alternate must come out of that same composer.
+{
+  const deck = altRun?.deck || [];
+  const cap = R.balance.startingDeckSize;
+  const filler = deck.filter((c) => c.equipmentRole === 'attack' || c.equipmentRole === 'guard');
+  const attacks = filler.filter((c) => c.equipmentRole === 'attack').length;
+  const guards = filler.length - attacks;
+  // Bound cards counted from what the composer must deal, not from the deck's
+  // remainder: the item's kit Strike and Guard, its signature Art, the one
+  // Dodge Roll, and the class's signature and ability cards.
+  const reaver = R.classes.get('reaver');
+  const classCardIds = [reaver.startingSignatureCard, reaver.abilityCard].filter(Boolean);
+  const boundCards = [
+    ...deck.filter((c) => c.equipmentRole === 'granted' && c.grantedBy === 'greatsword'),
+    ...deck.filter((c) => c.equipmentRole === 'weaponArt' && c.grantedBy === 'greatsword'),
+    ...deck.filter((c) => c.cardId === 'dodgeRoll'),
+    ...deck.filter((c) => !c.equipmentRole && classCardIds.includes(c.cardId)),
+  ];
+  const boundCount = 2 + 1 + 1 + classCardIds.length;
+  check(Number.isInteger(cap) && deck.length === cap
+    && deck.some((c) => c.instanceId === 'kit:greatsword:attack' && c.kitRole === 'attack' && c.sourceArmamentId === 'greatsword')
+    && deck.some((c) => c.instanceId === 'kit:greatsword:guard' && c.kitRole === 'guard' && c.sourceArmamentId === 'greatsword')
+    && deck.filter((c) => c.equipmentRole === 'weaponArt' && c.grantedBy === 'greatsword').length === 1
+    && deck.filter((c) => c.cardId === 'dodgeRoll').length === 1
+    && !deck.some((c) => c.equipmentRole === 'technique' || c.kitRole === 'technique')
+    && classCardIds.length === 2 && boundCards.length === boundCount
+    && filler.length === cap - boundCount
+    && boundCards.length + filler.length === deck.length
+    && filler.every((c) => c.sourceArmamentId === 'greatsword')
+    && guards > 0 && (attacks - guards === 0 || attacks - guards === 1),
+    'alternate resolves through the shared starting-deck contract (kit + bound cards first, base cards fill the cap)',
+    JSON.stringify(deck.map((c) => [c.instanceId, c.cardId, c.equipmentRole, c.kitRole])));
+}
 let lockedError = '';
 try { createRunState({ seed: 42, classId: 'reaver', registries: R, startingKitId: 'reaverGreatsword', profileMeta: { discoveredArmaments: [] } }); }
 catch (error) { lockedError = error.message; }
@@ -205,7 +259,10 @@ check(weighted === 'greatsword', 'armament roller consumes authored positive dro
 const customize = readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
 check(/startingKitViews/.test(customize) && /startingKitId/.test(customize),
   'creation consumes the shared kit view and submits kit identity');
-check(!/starstoneStaff|emberlightSceptre|greatsword/.test(customize),
+// Every alternate's pieces, read from this tool's table (the Rogue's included).
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const alternateNames = new RegExp(Object.values(alternates).flatMap((row) => [row.rightHand, row.leftHand]).filter(Boolean).map(escapeRegExp).join('|'));
+check(!alternateNames.test(customize),
   'creation contains no hard-coded alternate names or stats');
 
 const lan = readFileSync(new URL('./lan.mjs', import.meta.url), 'utf8');

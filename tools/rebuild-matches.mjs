@@ -57,6 +57,8 @@ const ABS = resolve(ROOT, BUNDLE);
 // the receipt flow regenerates. Both must survive a rebuild untouched.
 const COMMITTED_OUTPUTS = ['buildordinal.json', 'src/content/changelog.generated.js'];
 // The same tier tools/launch.mjs builds: light unless --full-art (release/main).
+// Since step 8e build/AshenSpire.html is the pack-shaped game file; its pinned
+// index digests are inside it, so its bytes moving is the packs moving.
 const TIER_FLAG = process.argv.includes('--full-art') ? [] : ['--light'];
 
 // A Windows checkout may feed the bundler CRLF source. That is checkout format,

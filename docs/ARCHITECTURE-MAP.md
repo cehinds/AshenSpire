@@ -16,8 +16,12 @@ it does not rewrite this core contract or the component-model contract.
 - macOS/Linux: `run.sh`
 - Source entry: `index.html` -> `src/main.js`
 - Portable build: `dist/AshenSpire.html`, written locally by `run.sh` / `run.bat`
-  (`tools/launch.mjs`); not tracked on `dev`, where CI publishes it as the
-  `dev-standalone-<commit>` workflow artifact
+  (`tools/launch.mjs`). Since EXTERNAL-ASSETS-PLAN step 8e it is the pack-shaped
+  game file and opens by double-click while its `packs/` and `objects/` stay
+  beside it; `dist/download/AshenSpire.html` (and the root `AshenSpire.html`)
+  is the self-contained light single file. Not tracked on `dev`, where CI
+  publishes the light single file as the `dev-standalone-<commit>` workflow
+  artifact
 
 Those public doors remain compatible throughout any restructuring. A structural
 pull request must prove each door it touches before and after the change.
@@ -87,12 +91,12 @@ architecture reason. The intended categories are:
 | `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `DEVELOPER.md`, `SPEC.md`, `PROMPT.md`, `CHANGELOG.md`, `CREDITS.md`, `LICENSE` | Human entry points, contracts, receipts, and licensing |
 | `index.html`, `run.bat`, `run.sh` | Obvious player/developer entry points |
 | `src/`, `content/` | Runtime source and authoritative source data |
-| `assets/`, `assets-mobile/`, `map-detail/`, `styles/`, `music/` | Static presentation resources (`assets-mobile/` is the light-tier twin of `assets/`) |
+| `assets/`, `assets-mobile/`, `map-detail/`, `styles/`, `music/` | Static presentation resources (`assets-mobile/` is the light-tier twin of `assets/`). `assets-mobile/`, `map-detail/` and `music/` move to the art repository's packs and leave this list at EXTERNAL-ASSETS-PLAN step 13, which needs its own owner go-ahead |
 | `asset-data/` | The non-art files that used to sit under `assets/` (JSON manifests, class-art notes and checkers, the font licence text, the silent audio stub), at the same paths below the folder ([ART-REPO-PLAN.md](./ART-REPO-PLAN.md), step 4) |
 | `art/`, `art-manifest.json`, `art-release.json` | Source art (moving to `cehinds/AshenSpire-art`, [ART-REPO-PLAN.md](./ART-REPO-PLAN.md)), the per-tier asset manifest, and the pinned high-res release |
 | `editor/`, `pose-studio/`, `ui-studio/`, `*-preview.html` | Local authoring tools and content preview pages |
 | `tests/`, `tools/` | Verification and development support |
-| `build/`, `dist/`, `buildordinal.json` | Build outputs: the built HTML is ignored on `dev` (only `dist/README.md` is tracked); `buildordinal.json` is committed and checked by `tools/buildversion.mjs --check` |
+| `build/`, `dist/`, `buildordinal.json` | Build outputs: the pack-shaped game file with its `packs/` and `objects/`, and the light single file under `download/` (EXTERNAL-ASSETS-PLAN step 8e), all ignored on `dev` (only `dist/README.md` is tracked); `buildordinal.json` is committed and checked by `tools/buildversion.mjs --check` |
 | `desktop/` | Optional desktop wrapper kept separate from the browser application |
 | `docs/` | Supporting design, architecture, and evidence documents |
 | `scratch/`, `tooltip-review.html`, `tooltip-review-scene.html`, `.nojekyll` | Also tracked at the root today: a scratch area, tooltip review pages, and the Pages no-Jekyll marker |
