@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1524",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every full browser check now has to download the art first",
+    "detail": "Nothing you play changes. After the art moved out of this repository, three heavy browser checks ran without downloading it and failed on pictures that never loaded. A test now fails if any check in the full run starts a tool before the art is downloaded, including a tool started from a multi-line step.",
+    "build": "0.7.1.826",
+    "pullRequest": 1524,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1524"
+  },
+  {
     "id": "pr-1523",
     "date": "2026-10-02",
     "group": "2026-10-02",
