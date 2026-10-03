@@ -412,6 +412,10 @@ mouse, touch-hold, and keyboard surface, while `tray-content` owns scrolling.
 
 ## Menu components
 
+| Component ID | Model | Renderer | Role |
+|---|---|---|---|
+| `installer-art-options` | `desktop/windows/art-releases.ps1` | `desktop/windows/art-options.ps1` + `installer.nsi` | Windows installer artwork chooser: repository branch and published release selectors; installed, required and latest art versions; compatible-pack installation, verified separate ZIP downloads and ChatGPT artwork disclosure. Native preview is included in the Windows installer artifact. |
+
 The production Quick Menu has one stable **Quick Menu** caption and defaults to
 **Mirror** when the stored value is absent or invalid. Mirror keeps the
 Settings/Controls tab strip and adds the contextual dropdown; legacy `off` and
