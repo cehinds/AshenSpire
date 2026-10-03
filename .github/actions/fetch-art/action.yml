@@ -1,0 +1,43 @@
+name: Fetch the art packs
+description: >-
+  Download the art packs art-release.json pins (tools/fetch-art.mjs), verify
+  each against the pin and art-manifest.json, and unpack them into .art-cache/
+  before anything builds or serves the checkout. Since step 12 of
+  docs/EXTERNAL-ASSETS-PLAN.md every reader of assets-mobile/, assets/fonts/,
+  music/ and map-detail/ reads the fetched packs (tools/art-source.mjs), and a
+  workflow that sets ASHEN_ART_SOURCE=cache refuses the trees, so a job that
+  builds or serves without this step is red now rather than at step 13.
+
+# The art repository is public (step 10a), so no token is needed: with none,
+# the zips come from the release's public download URL. A caller on a
+# protected branch may pass ART_REPO_TOKEN in this step's env (gated as
+# tests/fetch-art.test.mjs requires); it only raises the API rate limit.
+#
+# The verified cache is kept between runs with actions/cache, keyed on the pin
+# and the manifest, so a job does not download the release again while neither
+# moved. A restored cache is never trusted by its marker alone: --recheck
+# hashes every file against the manifest again before anything reads it, and
+# --refetch downloads a pack whose cache fails that, in the same run (a cache
+# key is immutable, so a broken cache would otherwise come back on every rerun).
+inputs:
+  packs:
+    description: high, light, common, a comma list, or all
+    required: false
+    default: light,common
+runs:
+  using: composite
+  steps:
+    # A cache key cannot contain a comma, and `light,common` is one.
+    - id: key
+      shell: bash
+      env:
+        ART_PACKS: ${{ inputs.packs }}
+      run: echo "packs=${ART_PACKS//,/-}" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@v4
+      with:
+        path: .art-cache
+        key: art-cache-${{ runner.os }}-${{ steps.key.outputs.packs }}-${{ hashFiles('art-release.json', 'art-manifest.json') }}
+    - shell: bash # $ART_PACKS is an env var; Windows' default shell would not expand it
+      env:
+        ART_PACKS: ${{ inputs.packs }}
+      run: node tools/fetch-art.mjs --recheck --refetch --pack "$ART_PACKS"

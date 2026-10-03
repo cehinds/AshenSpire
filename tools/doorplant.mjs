@@ -47,7 +47,9 @@ const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // art-release.json and art-manifest.json are build-identity inputs
 // (tools/buildversion.mjs BUILD_IDENTITY_FILES, assets step 11): a copy without
 // them cannot stamp a build, so every tool that stamps one would go red on the
-// clean copy before any plant is read.
+// clean copy before any plant is read. Since step 12 a tool also asks
+// art-manifest.json, not a tree, whether an art id ships (tools/art-source.mjs
+// manifestIds), so a copy without it cannot answer.
 const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools', 'art-release.json', 'art-manifest.json'];
 
 // LINE ENDINGS ARE NOT PART OF THE PLANT (2026-09-17). Plants are authored with

@@ -4,6 +4,14 @@
 // src/main.js) and the optional music/ folder load correctly (file:// blocks
 // module + audio loading in most browsers). Used by tools/launch.mjs, or run
 // directly:  node tools/serve.mjs [--port N] [--no-open] [--root DIR]
+//
+// THE ART PACKS' TREES COME FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md
+// step 12). Serving a checkout (a root with art-release.json), a request under
+// /assets-mobile/, /assets/fonts/, /music/ or /map-detail/ is answered from
+// .art-cache/<tag>/<pack>/ (node tools/fetch-art.mjs --pack light,common),
+// through tools/art-source.mjs, the one place that may still read those trees
+// here instead (until step 13). Any other root (a build folder) is served as
+// it is on disk.
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -12,6 +20,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
+import { artPath, treeOf } from './art-source.mjs';
+import { existsSync } from 'node:fs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -59,6 +69,7 @@ export function openBrowser(url) {
  */
 export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false } = {}) {
   const rootResolved = resolve(root);
+  const checkout = existsSync(join(rootResolved, 'art-release.json'));
   let lanLayer = null; // attached after listen (needs the final port)
   const server = createServer(async (req, res) => {
     try {
@@ -97,6 +108,16 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
         res.writeHead(403);
         res.end('Forbidden');
         return;
+      }
+      if (checkout && treeOf(rel)) {
+        try {
+          filePath = artPath(rel, { root: rootResolved });
+        } catch (err) {
+          console.error(`serve: ${err.message}`);
+          res.writeHead(404);
+          res.end('Not found');
+          return;
+        }
       }
       let s;
       try {

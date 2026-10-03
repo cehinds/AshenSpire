@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A Windows installer, with the high-resolution art as a choice on the install screen",
     "detail": "Nothing in the game itself changes. AshenSpire-Setup.exe installs the game for you (no administrator prompt) with Start menu and desktop shortcuts; tick High-resolution art and it downloads the full-resolution art during the install and checks every file, or leave it unticked to play with the standard art and add it later by running the installer again. Uninstalling asks before it deletes your saves.",
-    "build": "0.7.1.804",
+    "build": "0.7.1.805",
     "pullRequest": 1501,
     "url": "https://github.com/cehinds/AshenSpire/pull/1501"
+  },
+  {
+    "id": "pr-1500",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: builds and checks read the game's light art, fonts, music and map tiles from the art release",
+    "detail": "Nothing you play changes. Every build, test and preview page now takes the light art, the lore fonts, the shipped score and the map detail tiles from the verified art release instead of the copies still kept in this repository, so those copies can be removed in a later step.",
+    "build": "0.7.1.804",
+    "pullRequest": 1500,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1500"
   },
   {
     "id": "pr-1505",

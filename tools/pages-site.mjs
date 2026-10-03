@@ -43,8 +43,9 @@ import { folderZipBytes, zipFolderName } from '../src/model/offlineDownload.js';
 import { ASSET_BASE_FILE, packPinOf, packPages, publishPack, serviceWorkerFindings, storeFindings, writeServiceWorker } from './pages-store.mjs';
 import { SW_FILE, SW_KILL, SW_VERSION, serviceWorkerSource } from './pages-sw.mjs';
 import { objectPath } from './asset-pack.mjs';
+import { fetchPlanFor } from './art-source.mjs';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync, symlinkSync, unlinkSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -319,7 +320,26 @@ function rebuildAt(sha, fullArt) {
     run('git', ['checkout', '--force', '--detach', sha], buildTree);
     run('git', ['clean', '-ffdxq'], buildTree);
     const t0 = Date.now();
-    run(process.execPath, ['tools/launch.mjs', '--build-only', ...(fullArt ? ['--full-art'] : [])], buildTree);
+    // THE COMMIT'S ART RELEASE (docs/EXTERNAL-ASSETS-PLAN.md step 12). Its build
+    // reads the packs its own art-release.json pins from .art-cache/, and after
+    // step 13 its tree carries no other copy. So the commit's own fetch-art
+    // fills them first, into one cache shared by every rebuild of this run and
+    // kept OUTSIDE the worktree the clean above empties: .art-cache is a link
+    // to it, removed again before the status gate (git sees a link, not the
+    // ignored directory). A pin from before the packs needs nothing.
+    const plan = fetchPlanFor(buildTree, { fullArt });
+    const cacheLink = join(buildTree, '.art-cache');
+    if (plan) {
+      const shared = rebuildArtCache();
+      mkdirSync(shared, { recursive: true });
+      symlinkSync(shared, cacheLink, 'junction');
+      run(process.execPath, plan, buildTree);
+    }
+    try {
+      run(process.execPath, ['tools/launch.mjs', '--build-only', ...(fullArt ? ['--full-art'] : [])], buildTree);
+    } finally {
+      if (plan) unlinkSync(cacheLink);
+    }
     // The same gate every build workflow applies: a rebuild that rewrote the
     // committed box is not the build this commit names.
     const dirty = run('git', ['status', '--porcelain'], buildTree).trim();
@@ -350,6 +370,8 @@ function rebuildAt(sha, fullArt) {
   return result;
 }
 
+/** The art packs every rebuild of this run fetches into, under --build-missing (outside the worktree). */
+function rebuildArtCache() { return join(resolve(BUILD_MISSING), 'art-cache'); }
 /** The objects every rebuild of this run stages, under --build-missing. */
 function stagingStore() { return join(resolve(BUILD_MISSING), 'store'); }
 /** The pack-shaped web edition of the main build handed in, or null. */
@@ -930,6 +952,14 @@ function assemble(outDir, keep) {
   // map-detail/ and music/ are what /AshenSpire.html fetches beside itself.
   const payload = STABLE_PAYLOAD_DIRS.filter((d) => inTree(mainRef, d));
   if (payload.length) extractTree(mainRef, payload, outDir);
+  // A main whose tree no longer carries them (EXTERNAL-ASSETS-PLAN step 13)
+  // hands them in with its build instead: tools/launch.mjs copies both from the
+  // fetched common pack beside the single file, and pages-builds.yml passes
+  // them in --main-build.
+  for (const d of STABLE_PAYLOAD_DIRS) {
+    if (payload.includes(d) || !MAIN_BUILD || !existsSync(resolve(MAIN_BUILD, d))) continue;
+    cpSync(resolve(MAIN_BUILD, d), join(outDir, d), { recursive: true });
+  }
   // The committed build HTML is left out of the archive and written here, only
   // at the stable paths, hydrated from LFS where it is a pointer.
   for (const name of STABLE_LINKS) for (const artifact of [name, `build/${name}`, `dist/${name}`]) {
@@ -1602,6 +1632,14 @@ try {
       const probe = { branch: 'dev', ordinal: Number(box.ordinal), sha: headSha, source: 'rebuild' };
       const good = artifactsOf({ ...probe, digest: String(box.digest) });
       rules.push([`a rebuild of dev's head ${headSha.slice(0, 10)} serves${good.error ? ` (${good.error})` : ''}`, !good.error && good.html.includes(String(box.digest))]);
+      // Step 12: a head whose pin names the packs was built from them, fetched
+      // by its own fetch-art into the run's shared cache, outside the cleaned
+      // worktree (and the worktree keeps no link to it).
+      const devPin = (() => { try { return JSON.parse(git(['show', `${headSha}:art-release.json`])); } catch { return null; } })();
+      if (devPin && devPin.schema === 2) {
+        const lightMark = join(rebuildArtCache(), String(devPin.tag), 'light', '.verified');
+        rules.push(['a rebuild fetches its commit\'s light pack into the shared cache, outside the worktree', existsSync(lightMark) && !existsSync(join(buildTree, '.art-cache'))]);
+      }
       packPlants = packStorePlants(probe, box, good);
       const wrong = artifactsOf({ ...probe, digest: `not-a-digest-${process.pid}-planted` });
       rules.push(['a rebuild that lacks its commit\'s source digest is refused', /does not carry src digest/.test(wrong.error || '')]);
