@@ -460,8 +460,8 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   const cost = isX ? p.energy : effectiveCost(C, def);
   const pools = F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass }));
   const manaCost = pools.mana;
-  const staminaCost = pools.stamina;
-  if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
+  const staminaCost = cost;
+  if (p.energy < cost) throw new Error(`Not enough stamina (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
   if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
@@ -519,7 +519,6 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
   p.mana -= manaCost;
   if (manaCost > 0) C.emit('manaSpent', { amount: manaCost });
-  p.stamina -= staminaCost;
   if (staminaCost > 0) C.emit('staminaSpent', { amount: staminaCost });
   p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + staminaCost;
 
@@ -643,19 +642,7 @@ function endOnePlayerTurn(C, P) {
     if (C.result) return;
   }
   S.decayAtTurnEnd(C, p);
-  // Stamina (framework contract: Mana and Stamina), per seat: an idle turn
-  // recovers, a spending turn does not — the same rule and door as the solo
-  // engine's end of turn, on this player's own pool and counter.
-  if (!C.foundation && Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
-    const next = C.registries.framework.staminaTurnEnd({
-      currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
-    });
-    if (next.currentStamina !== p.stamina) {
-      const amount = next.currentStamina - p.stamina;
-      p.stamina = next.currentStamina;
-      C.emit('staminaRecovered', { amount, reason: 'idle', playerId: P.id });
-    }
-  }
+  // Stamina refills with the next player turn.
   p.counters.staminaSpentThisTurn = 0;
   const keep = [], toDiscard = [], toExhaust = [];
   for (const card of C.piles.hand) {

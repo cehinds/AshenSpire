@@ -89,7 +89,7 @@ function recoverAtTurnEnd(combat) {
         && (pool !== 'hp' || event.targetId === p.id)) used[pool] = true;
     }
   }
-  for (const pool of RECOVERY_POOLS) {
+  for (const pool of RECOVERY_POOLS.filter((id) => id !== 'stamina')) {
     state.idle[pool] = used[pool] ? 0 : state.idle[pool] + 1;
     const max = p[RECOVERY_MAX[pool]];
     const amount = turnRecovery({ rules: state.rules, pool, round: combat.turn, idleStreak: state.idle[pool], current: p[pool], max });
@@ -455,21 +455,8 @@ function endPlayerTurn(combat, discardIds = []) {
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
-  // …then stamina (framework contract: Mana and Stamina): an idle turn recovers,
-  // a spending turn does not — the framework decides, this engine moves the pool.
-  // A fight built under non-default recovery settings recovers every pool by
-  // those rules instead (engine: recoverAtTurnEnd, model/recoveryRules.js).
+  // Persistent pools use idle recovery; Stamina refills at turn start.
   if (combat.recovery && !combat.foundation) recoverAtTurnEnd(combat);
-  else if (!combat.foundation && Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
-    const next = combat.registries.framework.staminaTurnEnd({
-      currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
-    });
-    if (next.currentStamina !== p.stamina) {
-      const amount = next.currentStamina - p.stamina;
-      p.stamina = next.currentStamina;
-      combat.emit('staminaRecovered', { amount, reason: 'idle' });
-    }
-  }
   p.counters.staminaSpentThisTurn = 0;
 
   // …then discard hand except Retain; Ethereal cards exhaust instead. The
@@ -1014,7 +1001,8 @@ function effectiveCost(combat, def) {
 function playCosts(combat, def) {
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
-  return { energy: def.cost === 'X' ? combat.player.energy : effectiveCost(combat, def), mana: pools.mana, stamina: pools.stamina };
+  const stamina = def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def);
+  return { energy: stamina, mana: pools.mana, stamina };
 }
 
 /** cardPlayCosts(combat, cardInstanceId) → { energy, mana, stamina } for a card in hand. */
@@ -1050,7 +1038,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
 
   const isX = def.cost === 'X';
   const { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def);
-  if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
+  if (p.energy < cost) throw new Error(`Not enough stamina (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
   if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
@@ -1102,7 +1090,6 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
   if (cost > 0 || isX) combat.emit('energySpent', { amount: cost });
   p.mana -= manaCost;
   if (manaCost > 0) combat.emit('manaSpent', { amount: manaCost });
-  p.stamina -= staminaCost;
   if (staminaCost > 0) {
     p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + staminaCost;
     combat.emit('staminaSpent', { amount: staminaCost });
@@ -1359,7 +1346,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     costIsX: isX,
     manaCost: def.manaCost || 0,
     // The stamina badge in a fight is the class-priced one for the pure dodge.
-    staminaCost: F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass })).stamina,
+    staminaCost: shownCost,
     needsTarget: needsEnemyTarget(def),
     values,
     tokens,

@@ -54,11 +54,11 @@ export const reaverCards = [
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'dodgeRoll', target: 'self' }] },
   },
   {
-    id: 'dodgeRoll', name: 'Dodge Roll', class: 'colorless', rarity: 'starter', cost: 0, staminaCost: 1, type: 'skill',
+    id: 'dodgeRoll', name: 'Dodge Roll', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
     flavor: "Tumble of the ship-breakers.\n\nLearned upon hulls that shift with every tide at the Grave of Ships. The hulls were already rotting at anchor when the trade stopped, and on the night of the Burning, every hold went warm at once.\n\nGull-Bet's gang opened the holds the following spring. She has not said what was inside.",
     keywords: [], icon: '💨',
     effects: [{ op: 'dodgeRoll', target: 'self' }],
-    textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 1 Stamina, 1 Energy. Heavy: 2 Stamina, 1 Energy.',
+    textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina.',
     // No `upgrade`: the pure dodge has nothing of its own to improve — its
     // check is Dexterity and the Weight Class, its guard is the framework
     // rule's, its price is the class's. An upgrade that changed none of them
@@ -66,7 +66,7 @@ export const reaverCards = [
     // upgrade opcode never lists a composed instance (see actions.js).
   },
   {
-    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'gorefireSlash', name: 'Gorefire Slash', class: 'reaver', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
     flavor: "Art of the sellswords of the Bastion.\n\nThe hired blades who held the Fell Courtyard wetted their steel with their own blood before each watch, for the Gorefire takes more readily to a blade already red.\n\nThe Wardens called it discipline. The sellswords knew it as a price, paid in advance.",
     keywords: [], icon: '🗡',
     effects: [
@@ -84,7 +84,7 @@ export const reaverCards = [
 
   // ---- Commons ---------------------------------------------------------------
   {
-    id: 'crimsonCleave', name: 'Crimson Cleave', class: 'reaver', rarity: 'common', cost: 2, staminaCost: 1, type: 'attack',
+    id: 'crimsonCleave', name: 'Crimson Cleave', class: 'reaver', rarity: 'common', cost: 2, type: 'attack',
     flavor: "Wide cut of the Fell Courtyard watch.\n\nTaught for a gate choked with bodies. On the night the Bastion burned, the dead came up the Muster Stair in numbers the watch had no word for, and this was the only answer it had.\n\nThe gate log names the watch whole at the bell. Its hand changes halfway down the page.",
     keywords: [], icon: '🪓',
     effects: [
@@ -100,7 +100,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'shieldBash', name: 'Shield Bash', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
+    id: 'shieldBash', name: 'Shield Bash', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Rim-strike of the Wardens' shield line.\n\nDrilled in the years of the Spring Wars, when envoys of the Northern Holds came to the Bastion gate to haggle the price of a spring. The Wardens struck with the rim, for the face bore the gilded crest.\n\nTwice the Holds were struck. Twice they paid.",
     keywords: [], icon: '🛡',
     effects: [
@@ -116,7 +116,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'quickstep', name: 'Quickstep', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill',
+    id: 'quickstep', name: 'Quickstep', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
     flavor: "Footwork of the Bastion's hired blades.\n\nAfter the Burning the weald's spring would not turn, and green came up between the courtyard flags. The sellswords learned short, flat steps upon the moss. The Wardens, who never stood where the footing was worst, did not.\n\nThe steps are counted to a dawn peal that brings no dawn.",
     keywords: [], icon: '👣',
     effects: [
@@ -132,7 +132,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'guardCounter', name: 'Guard Counter', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
+    id: 'guardCounter', name: 'Guard Counter', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Riposte of the sworn Wardens.\n\nThe enemy commits; the Bastion answers, and its answer is always the greater. So the Wardens taught the drill, and so they told of the Spring Wars, in which they claimed never to have struck first.\n\nThe Northern Holds remember it otherwise.",
     keywords: [], icon: '↩',
     effects: [
@@ -257,7 +257,7 @@ export const reaverCards = [
 
   // ---- Uncommons --------------------------------------------------------------
   {
-    id: 'stomp', name: 'Stomp', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
+    id: 'stomp', name: 'Stomp', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
     flavor: "Heel-strike of the Fell Courtyard.\n\nThe Wardens named it unworthy and used it all the same, for in the courtyard the fallen seldom stayed down. Sellswords held that the Wardens objected only to being seen at it.\n\nMany an old Bastion helm bears the dent of a heel.",
     keywords: [], icon: '🦶',
     effects: [
@@ -284,7 +284,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'warSurgeon', name: 'War Surgeon', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
+    id: 'warSurgeon', name: 'War Surgeon', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
     flavor: "Field practice of the Bastion's surgeon-wardens.\n\nThey stitched wounds upon the wall, never below it, for a Warden stitched standing remained a Warden, and one carried to the stool was struck from the roll. The Wardens claimed their surgeons outdid the Chapel's physicians.\n\nThe Chapel's own figures burned with the Chapel.",
     keywords: ['exhaust'], icon: '⚕',
     effects: [
@@ -318,7 +318,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack',
+    id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'attack',
     flavor: "Two short blades, worked in turn, as the weald's sellswords used them.\n\nToo poor for a shield and too proud to carry a Warden's, they were hired for the Bastion's narrow gates. It is said part of their wage was paid in marks rather than coin: a right to the city's warmth.\n\nThose who refused the mark are the ones who tell of it.",
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }],
@@ -326,7 +326,7 @@ export const reaverCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 3 }] },
   },
   {
-    id: 'shieldwall', name: 'Shieldwall', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'skill',
+    id: 'shieldwall', name: 'Shieldwall', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'skill',
     flavor: "Formation of the Bastion's shield line.\n\nRim locked to rim across the Fell Courtyard. The Wardens credited it with holding the gate through three hungry winters of the Spring Wars, when Hold petitioners camped below the walls.\n\nThe field-book enters the price of spring in the same column as the petitioners turned away.",
     keywords: [], icon: '🧱',
     effects: [
@@ -342,7 +342,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'kickOff', name: 'Kick Off', class: 'reaver', rarity: 'uncommon', cost: 0, staminaCost: 1, type: 'attack',
+    id: 'kickOff', name: 'Kick Off', class: 'reaver', rarity: 'uncommon', cost: 0, type: 'attack',
     flavor: "Boot-strike of the Muster Stair.\n\nSellswords learned it upon steps steep enough that the fall does the killing. The Wardens forbade it as common, and had adopted it within a season.\n\nWhat is kicked from the stair now climbs it again.",
     keywords: ['exhaust'], icon: '🥾',
     effects: [
@@ -360,7 +360,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'wardingLunge', name: 'Warding Lunge', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
+    id: 'wardingLunge', name: 'Warding Lunge', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
     flavor: "Guarded advance into the breaking stance.\n\nTaught as the moment to cease holding and begin taking ground. The Warden was to know that moment by the bell. When the Bellfoundry bell cracked, a new line was added beneath.\n\nKnow it by the smell of the courtyard.",
     keywords: [], icon: '🛡',
     effects: [
@@ -392,7 +392,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'warcry', name: 'Warcry', class: 'reaver', rarity: 'uncommon', cost: 0, staminaCost: 1, type: 'skill',
+    id: 'warcry', name: 'Warcry', class: 'reaver', rarity: 'uncommon', cost: 0, type: 'skill',
     flavor: "The bell-roll, shouted.\n\nA custom of the gates farthest from the Bellfoundry, where the bell could not be heard. The Wardens held that the roll bore power of its own if read in order. Sellswords, who were not on it, shouted it all the same.\n\nIt is said the Bell Keeper answers, with a cracked bell.",
     keywords: ['exhaust'], icon: '📣',
     effects: [
@@ -408,7 +408,7 @@ export const reaverCards = [
 
   // ---- Rares -------------------------------------------------------------------
   {
-    id: 'executioner', name: 'Executioner', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, type: 'attack',
+    id: 'executioner', name: 'Executioner', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
     flavor: "Finishing blow of the Fell Warden.\n\nTaught before his leg went the way of the weald and his blade was ground into a cane. The field-book holds that he never struck a man already kneeling.\n\nThe last page in his hand, dated the night of the Burning, is a list of kneeling men.",
     keywords: [], icon: '⚰',
     effects: [
@@ -443,18 +443,18 @@ export const reaverCards = [
     },
   },
   {
-    id: 'stitchedArms', name: 'Stitched Arms', class: 'reaver', rarity: 'rare', cost: 'X', staminaCost: 1, type: 'attack',
+    id: 'stitchedArms', name: 'Stitched Arms', class: 'reaver', rarity: 'rare', cost: 'X', type: 'attack',
     flavor: "Swordwork of the Court's stitched knights.\n\nAfter the Court Flame died, the surgeons sewed the knights to their swords, that no oath might be set down. The Citadel's record names it an honour: a knight's word made flesh.\n\nThe record was written by the surgeons.",
     keywords: [], icon: '🦾',
     effects: [{ op: 'damage', target: 'randomEnemy', amount: 6, hits: { f: 'energySpent' } }],
-    textTemplate: 'Deal {damage} damage to a random enemy, scaling with Energy spent.',
+    textTemplate: 'Deal {damage} damage to a random enemy, scaling with Stamina spent.',
     upgrade: {
       effects: [{ op: 'damage', target: 'randomEnemy', amount: 8, hits: { f: 'energySpent' } }],
-      textTemplate: 'Deal {damage} damage to a random enemy, scaling with Energy spent.',
+      textTemplate: 'Deal {damage} damage to a random enemy, scaling with Stamina spent.',
     },
   },
   {
-    id: 'lastStand', name: 'Last Stand', class: 'reaver', rarity: 'rare', cost: 1, staminaCost: 1, type: 'skill',
+    id: 'lastStand', name: 'Last Stand', class: 'reaver', rarity: 'rare', cost: 1, type: 'skill',
     flavor: "Final entry of the Fell Courtyard gate log.\n\nOne gate, one man, it reads. The man is not named, as though the writer thought none would need it.\n\nThe dead are counted twice upon the page, and the counts do not agree.",
     keywords: ['ethereal'], icon: '🕯',
     effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 20 } }],
@@ -465,7 +465,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, staminaCost: 1, type: 'skill',
+    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, type: 'skill',
     flavor: "Contract of the sellswords of the Fell Courtyard.\n\nHold the gate until relieved; pay in advance. The weald's hired blades held a paid contract sacred, having few other sacred things, and the Wardens despised them for it.\n\nThe last was signed the week before the Burning. Its date of release is blank.",
     keywords: ['innate', 'exhaust'], icon: '📜',
     // "A Stance of your choice" (SPEC §5.2): the play offers every stance the
@@ -513,7 +513,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
+    id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'reaver', rarity: 'rare', cost: 2, manaCost: 1, type: 'power',
     flavor: "Soldier's bargain of the Bastion's lesser shrine.\n\nBlood spilled from an enemy is sworn to the one who spilled it. The Wardens thought it a harmless field-born custom, like the harvest tithe. The Chapel called it a mockery of the Writing, and fined the shrine.\n\nThe fine was paid. The shrine was in use the night of the Burning.",
     keywords: [], icon: '🩸',
     effects: [{ op: 'applyStatus', target: 'self', status: 'sanguinePact', stacks: one }],
@@ -542,7 +542,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'bracingStance', name: 'Bracing Stance', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill',
+    id: 'bracingStance', name: 'Bracing Stance', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
     flavor: "First stance of the Bastion recruit.\n\nFeet planted, shield braced against the Bastion's own wall, before either true stance was taught. Drillmaster Hask taught it thirty winters.\n\nHer last entry is a roll of recruits, every name struck through but one, and that one scraped away.",
     keywords: [], icon: '🛡',
     effects: [
@@ -636,7 +636,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'sunderplate', name: 'Sunderplate', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
+    id: 'sunderplate', name: 'Sunderplate', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
     flavor: "Joint-splitting blow of the Wardens.\n\nDevised in the years of the Mark Trade with the Court's knights in mind, lest the Court forget which flame kept it fed. No occasion of its use is recorded.\n\nBeside the drill, a knight's gorget, its crest scratched out.",
     keywords: [], icon: '⚒',
     effects: [
@@ -657,7 +657,7 @@ export const reaverCards = [
   // Brace: the Reaver's loop is stance switching as tempo. Enter Brace, a
   // stance that holds the line; leaving it hits harder (stances.js brace).
   {
-    id: 'brace', name: 'Brace', class: 'reaver', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
+    id: 'brace', name: 'Brace', class: 'reaver', rarity: 'starter', cost: 1, type: 'skill',
     flavor: "The crouch before either stance.\n\nKnees bent, weight low, the body made ready to be struck. The field-book gives it the first page, and calls it the one lesson all Wardens learned alike, sworn or hired, marked or not.\n\nA later hand has corrected it.",
     keywords: [], icon: '🦶',
     effects: [{ op: 'enterStance', stance: 'brace' }],
@@ -705,7 +705,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'setTheShield', name: 'Set the Shield', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
+    id: 'setTheShield', name: 'Set the Shield', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
     flavor: "The rim planted, the shoulder behind it.\n\nOld Vanguard drill: the shield is set before the enemy is seen, and the man behind it waits. The drill was called cowardice by the Court's duellists, until the night the Court's gate fell.\n\nThe duellists did not drill again.",
     keywords: [], icon: '🛡',
     effects: [
@@ -721,7 +721,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'aegisOfEmbers', name: 'Aegis of Embers', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, type: 'skill',
+    id: 'aegisOfEmbers', name: 'Aegis of Embers', class: 'reaver', rarity: 'rare', cost: 2, type: 'skill',
     flavor: "A shield held into the fire until it glows.\n\nThe last captain of the Vanguard held the causeway so through the whole of the Burning. His shield was found welded to the stones, and his arm was not found at all.\n\nThe stones there are warm still, and soldiers kneel on them.",
     keywords: [], icon: '🔰',
     effects: [

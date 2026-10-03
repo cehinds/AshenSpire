@@ -45,12 +45,15 @@ test('ruleset 7 carries twelve rows in ONE shape: base, five weights, perLevel, 
   }
 });
 
-test("the owner's budget: Mana and Stamina weights sum to 1; the combat ratings to 2", () => {
+test("the owner's budget: Mana weights sum to 1; Stamina scales from base 3; combat ratings sum to 2", () => {
   const sum = (id) => ATTRIBUTES.reduce((total, attr) => total + (table.rules[id][attr] || 0), 0);
   assert.equal(sum('mana'), 1);
   assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0.125, 0, 0.25, 0.5, 0.125]);
   assert.equal(table.rules.mana.base, 1);
-  assert.equal(sum('stamina'), 1);
+  assert.ok(Math.abs(sum('stamina') - 0.9) < 1e-9);
+  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 0.25, 0.25, 0.2, 0.2]);
+  assert.equal(table.rules.stamina.perLevel, 0.1);
+  assert.equal(table.rules.stamina.base, 3);
   for (const id of ['ar', 'dr', 'pr', 'ward', 'poise']) assert(Math.abs(sum(id) - 2) < 1e-9, `${id} sums to 2`);
 });
 

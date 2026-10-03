@@ -32,7 +32,7 @@ import { el, button, buttonRow, titleS, prose } from '../kit/index.js';
 // to derive from. Said here rather than leaving the next reader to work out which
 // of the two rules applied to which line.
 const STEPS = [
-  { sel: '.energy-orb', title: 'Energy', text: 'Three energy each turn. Cards cost energy to play — spend it wisely.' },
+  { sel: '.energy-orb', title: 'Stamina', text: 'Cards spend stamina. It refills each turn. Sapphire diamonds around the orb show your available mana.' },
   { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'Enemies telegraph their next move. The number is the exact damage they will deal to you.' },
   { sel: '.hand .card', title: 'Play cards', text: 'Click a card or press 1–9. Attacks need a target — click an enemy, or drag the card onto it.' },
   { sel: '.end-turn', title: 'End your turn',

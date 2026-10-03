@@ -6124,7 +6124,7 @@ export const uiStrings = [
     "id": "settings.group.Stats",
     "extends": "",
     "short": "Stats",
-    "full": "Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.",
+    "full": "Everything that turns attributes into Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.",
     "tip": ""
   },
   {
@@ -6235,7 +6235,7 @@ export const uiStrings = [
   {
     "id": "combat.actions.remaining",
     "extends": "",
-    "short": "Actions remaining",
+    "short": "Stamina remaining",
     "full": "",
     "tip": ""
   },
@@ -6263,7 +6263,7 @@ export const uiStrings = [
   {
     "id": "combat.actions",
     "extends": "",
-    "short": "Actions",
+    "short": "Stamina",
     "full": "",
     "tip": ""
   },

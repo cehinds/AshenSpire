@@ -35,7 +35,7 @@
 // source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
 // source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
 // source content/config/ui/presentation/startupGate.json a9fb421fb8ef4096
-// source content/config/ui/presentation/tooltipHelp.json f3968b1f1adea5e0
+// source content/config/ui/presentation/tooltipHelp.json 0d41173b062e9a88
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
@@ -47593,7 +47593,7 @@ export const uiConfig = deepFreeze({
             "enemyTurn": "Enemies are resolving their moves. Your next turn follows.",
             "hp": "Health remaining. Reaching zero defeats this combatant.",
             "mana": "Mana pays spell costs.",
-            "stamina": "Stamina pays physical skill and Dodge costs.",
+            "stamina": "Stamina pays card and combat costs. It refills at the start of every turn.",
             "recovery": " Recovers {amount} per turn.",
             "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
             "playerPoise": "Your Stagger threshold — your Constitution, armament, armour and relics steady it. Enemy impact fills it.",

@@ -7,7 +7,7 @@ export function vitalsPanelModel() {
   return panelModel(UI.vitalsPanel, 'vitals', [
     componentModel(UI.resourceMeter, {
       variant: 'main',
-      accessibility: { label: 'Health, mana, and stamina' },
+      accessibility: { label: 'Health and mana' },
       behaviors: [behaviorModel('mount-resource-meters')],
     }),
   ]);

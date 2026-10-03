@@ -756,7 +756,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'restoreStamina': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        const amount = Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1)));
+        const amount = Math.max(0, Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1))));
         t.stamina += amount; ctx.emit('staminaRecovered', { targetId: t.id, amount, reason: 'effect' });
       }
       break;
