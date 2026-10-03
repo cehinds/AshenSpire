@@ -261,6 +261,7 @@ Section "Uninstall"
   !insertmacro CloseRunningGame "un"
   ; Unused art files an earlier prune could not remove (fetch-hd-art.ps1 lists
   ; them, one installer path per line), before the folders are emptied below.
+  StrCpy $8 0
   ClearErrors
   FileOpen $0 "$INSTDIR\install-data\orphans.txt" r
   ${IfNot} ${Errors}
@@ -294,6 +295,9 @@ Section "Uninstall"
         ${Loop}
         ${If} $5 == "ok"
           Delete "$INSTDIR\$1"
+          ${If} ${FileExists} "$INSTDIR\$1"
+            StrCpy $8 1
+          ${EndIf}
         ${EndIf}
       ${EndIf}
     ${Loop}
@@ -305,13 +309,16 @@ Section "Uninstall"
   ; A file still there was in use (antivirus, a running copy): keep the
   ; uninstaller, its shortcuts and its Installed apps entry so the player can
   ; close what holds it and run the uninstall again.
-  StrCpy $9 0
+  StrCpy $9 $8
 !include "${UNINSTALL_CHECK}"
   ${If} $9 == 1
     MessageBox MB_OK|MB_ICONEXCLAMATION "Some ${APP_NAME} files are in use and were not removed. Close any program using them (or restart Windows) and run the uninstaller again from Installed apps." /SD IDOK
     SetErrorLevel 2
     Abort
   ${EndIf}
+  ; Every orphan is gone too: its list goes last, and the folders it kept.
+  Delete "$INSTDIR\install-data\orphans.txt"
+  RMDir "$INSTDIR\install-data"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 

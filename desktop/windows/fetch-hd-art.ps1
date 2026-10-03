@@ -28,7 +28,8 @@
 # Exit codes: 0 done · 2 download failed · 3 zip sha256 mismatch · 4 an object is
 # missing from the zip or does not match · 5 anything else · 6 (Prune) some unused
 # files could not be removed yet (recorded in install-data\orphans.txt) · 7 (Drop) a
-# file this version installs is already there and not from the previous install.
+# file this version installs is already there and not from the previous install ·
+# 8 (Drop) the previous install's file list is missing.
 # Runs on Windows PowerShell 5.1 (every Windows 10/11) and PowerShell 7.
 
 [CmdletBinding()]
@@ -198,7 +199,11 @@ function Install-HighArt {
 }
 
 function Remove-DroppedFiles {
-  if (-not $OldFiles -or -not (Test-Path -LiteralPath $OldFiles)) { return }
+  # Without the old version's list nothing can be told apart (its files from the
+  # player's): an upgrade is refused rather than guessed at.
+  if (-not $OldFiles -or -not (Test-Path -LiteralPath $OldFiles)) {
+    Fail 8 'The previous install has no install-data\files.txt, so its files cannot be told from yours. Uninstall it (or move the folder away) and run this installer again.'
+  }
   if (-not $NewFiles -or -not (Test-Path -LiteralPath $NewFiles)) { Fail 5 'Drop needs -NewFiles.' }
   $now = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
   foreach ($l in [IO.File]::ReadAllLines($NewFiles)) { if ($l) { [void]$now.Add($l) } }
@@ -208,8 +213,23 @@ function Remove-DroppedFiles {
   # copy overwrites it.
   $was = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
   foreach ($l in [IO.File]::ReadAllLines($OldFiles)) { if ($l) { [void]$was.Add($l) } }
-  $taken = @($now | Where-Object { -not $was.Contains($_) -and $_ -notlike 'install-data/*' -and
-    (Test-Path -LiteralPath (Join-Path $InstallDir ($_.Replace('/', [IO.Path]::DirectorySeparatorChar)))) })
+  # A folder where this version puts a file is replaceable when every file in it
+  # is one the old version installed (it goes in the cleanup below).
+  $isOurs = {
+    param($full)
+    if (Test-Path -LiteralPath $full -PathType Leaf) { return $false }
+    $inside = @(Get-ChildItem -LiteralPath $full -Recurse -File -Force)
+    if (-not $inside.Count) { return $false }
+    foreach ($f in $inside) {
+      if (-not $was.Contains($f.FullName.Substring($root.Length + 1).Replace([IO.Path]::DirectorySeparatorChar, '/'))) { return $false }
+    }
+    return $true
+  }
+  $taken = @($now | Where-Object {
+    if ($was.Contains($_) -or $_ -like 'install-data/*') { return $false }
+    $full = Join-Path $InstallDir ($_.Replace('/', [IO.Path]::DirectorySeparatorChar))
+    (Test-Path -LiteralPath $full) -and -not (& $isOurs $full)
+  })
   if ($taken.Count) {
     foreach ($t in $taken) { Say "Already in the folder, not from the previous install: $t" }
     Fail 7 "$($taken.Count) file(s) this version installs already exist and are not from the previous install (first: $($taken[0])). Move them out of the folder and run the installer again."

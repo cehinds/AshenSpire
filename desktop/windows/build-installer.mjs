@@ -208,8 +208,8 @@ for (const r of highRows) { files.push(`game/${r.path}`); dirs.add(`game/${dirna
 for (const f of packFiles.filter((f) => f.startsWith(`${high.name}.`))) files.push(`game/packs/${f}`);
 // The art step's log (fetch-hd-art.ps1 writes it, never the installer).
 files.push('install-data/hd-art.log');
-// …and the unused files a prune could not remove yet (read by the uninstaller first).
-files.push('install-data/orphans.txt');
+// (install-data/orphans.txt, the unused files a prune could not remove yet, is
+// deleted by the uninstaller itself, and only once everything it names is gone.)
 const win = (rel) => rel.split('/').join('\\');
 const uninstall = [...new Set(files)].sort().map((f) => `  Delete "$INSTDIR\\${win(f)}"`)
   .concat([...dirs].sort((a, b) => b.split('/').length - a.split('/').length || (a < b ? 1 : -1))
