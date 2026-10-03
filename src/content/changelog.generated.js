@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the slowest automated checks no longer wait on a 20-minute download",
     "detail": "Nothing you play changes. Three checks ran out of time before they started, while still downloading the project; the heavy checks now skip the source paintings and old file history they never open, cutting each one's download from about 2.3 GB to about 0.7 GB. Every check still runs; whether all of them now finish inside 20 minutes is confirmed only by the next full run.",
-    "build": "0.7.1.809",
+    "build": "0.7.1.811",
     "pullRequest": 1508,
     "url": "https://github.com/cehinds/AshenSpire/pull/1508"
+  },
+  {
+    "id": "pr-1511",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Cards keep just their Information button for full text",
+    "detail": "Clipped descriptions no longer add a separate arrow box above a combat card or push its title aside. Select the card and use its existing (i) button to read the complete details.",
+    "build": "0.7.1.810",
+    "pullRequest": 1511,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1511"
   },
   {
     "id": "pr-1501",
