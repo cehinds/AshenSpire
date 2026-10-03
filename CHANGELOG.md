@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **The Windows installer lets you browse and download art versions** ([#1533](https://github.com/cehinds/AshenSpire/pull/1533), `0.7.1.839`). A high-quality artwork button opens art-repository branch and published-version choices, shows installed, required and latest art versions, and lets you install the game's matching pack or save another verified release separately. The installer discloses ChatGPT-generated artwork. README links and action buttons each have their own row, while its opening description stays a plain sentence.
+
 - **The README explains the current game and where to get each edition** ([#1529](https://github.com/cehinds/AshenSpire/pull/1529), `0.7.1.838`). The guide now covers retained hands, Actions, Stamina and Mana, combat ratings, equipment cards, the sideboard, progression, books and shop services. It links the installer, art repository, Unity adaptation and each browser channel's play and download paths, with verified GitHub build alternatives while hosted paths are unavailable. Gameplay is unchanged.
 
 - **Painted books and class-book bonuses** ([#1527](https://github.com/cehinds/AshenSpire/pull/1527), `0.7.1.837`). Books have separate painted covers and emblems, including a feat emblem, with color across the whole leather binding. Class books grant XP on every read, learn the class on the first read, and independently roll a matching combat card (25%) and feat (5%). Both chances are configurable in Advanced → Shops. The result shows what you received; excess card copies go to the sideboard.
