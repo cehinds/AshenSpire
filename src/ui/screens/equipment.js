@@ -69,6 +69,7 @@ import { clearSelection } from '../components/cardSelection.js';
 import { t } from '../strings.js';
 import { consumableText } from '../../model/consumables.js';
 import { openBookLearning } from '../components/bookLearning.js';
+import { renderBookArt } from '../components/bookArt.js';
 import { equipClassCard } from '../../model/classLibrary.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
@@ -535,6 +536,7 @@ function inventoryFace(registries, row, {
   const el = renderInventoryItemCard(inventoryItemCardModel(row, {
     selected, draggable, classModel,
   }));
+  if (row.read) el.querySelector('.inventory-item-art')?.replaceChildren(renderBookArt(row.item));
   if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     const trail = el.querySelector('.r-trail');
     // WC2: the metadata band ends with how many of this item the run holds.
@@ -582,6 +584,7 @@ function inventoryReveal(registries, row, {
     comparisonHtml: comparisonPresentation === 'inline' ? comparisonHtml : '',
     action,
   });
+  if (row.read) el.querySelector('.inventory-model')?.replaceChildren(renderBookArt(item));
   if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     el.classList.add('poker-inventory-detail');
     el.querySelector('.inventory-model')?.remove();

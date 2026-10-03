@@ -80,7 +80,7 @@ in it cannot disagree about how wide a shelf is.
 `shop.js` binds the existing purchase review/hold and revalidating commit.
 All rows share the tallest grid track; compact hosts retain all three columns.
 Geometry lives in `ui/screens/shop.json` → `components.bookOffers`. Artwork
-resolves through `assets.js` / `assetUrl`. The book shelf has no duplicate
+resolves through `bookArt.renderBookArt` / `assetUrl`. The book shelf has no duplicate
 detail pane or footer Buy. See the real
 [shop preview](../art/manual-shop-2026-10-02/preview.html).
 
@@ -135,6 +135,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
 | `skill-book-offer` | `consumablePurchasePlan`, shop `components.bookOffers` | `skillBookOffer.renderSkillBookOffer` | Market | Uniform book sprite, live details and native Buy control. |
+| `book-art` | `BOOK_ART_PRESETS`, `bookArtRecipe`, `bookArtLayers` | `bookArt.renderBookArt` | Market, Armoury, reading modal, Book Atelier | Painted cover, independently colored leather mask, trim and symbol; three covers, thirty symbol variations and ten authored recipes. |
 | `book-learning` | `skillBookReadPlan`, `bookLessons` | `bookLearning.openBookLearning` | Armoury, library preview | Searchable cross-class lesson choices, XP track selector for universal books, live card preview and atomic Read and learn. Cancelling preserves the book. |
 | `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark and family prompt over River Citadel; activation lights the city, holds for Settings > General > Display > Title screen > Lit city pause, then fades into the layered hall. Title mounts after the fade. |
 | `startup-ash-field` | `startupGateModel.properties.particles` | `startupGate.mountStartupGate` | Startup Gate | Decorative particle host; visual-only and removed with the boot gate. |

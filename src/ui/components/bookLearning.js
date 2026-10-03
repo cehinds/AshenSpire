@@ -3,6 +3,7 @@ import { el, button } from '../kit/index.js';
 import { modalHead, modalFooter, bindModalDismiss } from './modalShell.js';
 import { renderCard } from './card.js';
 import { t } from '../strings.js';
+import { renderBookArt } from './bookArt.js';
 
 let activeClose = null;
 
@@ -69,6 +70,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, onLear
     } catch (failure) { error.textContent = failure.message; }
   });
   const body = el('div', { class: 'modal-body book-learning-body' }, [
+    renderBookArt(plan.def, { className: 'book-reading-art' }),
     el('p', { text: t('book.read.summary', { xp: plan.def?.xp || 0 }) }),
     el('label', { for: 'book-learning-track', text: t('book.read.track') }), trackSelect,
     el('p', { class: 'book-learning-rarity', text: t('book.read.rarity') }), search,

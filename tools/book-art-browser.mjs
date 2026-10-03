@@ -1,0 +1,54 @@
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const output = resolve('art/manual-shop-2026-10-02/layers/qa');
+mkdirSync(output, { recursive: true });
+const browser = await chromium.launch({ headless: true, ...(process.env.CHROME ? { executablePath: process.env.CHROME } : {}) });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+await page.route('**/src/buildversion.js', (route) => route.fulfill({ path: resolve('src/buildversion.js'), contentType: 'text/javascript' }));
+const errors = [];
+page.on('pageerror', (error) => errors.push(error.message));
+page.on('response', (response) => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
+const base = process.env.BOOK_SHOP_URL || 'http://localhost:8768';
+try {
+  await page.goto(`${base}/art/manual-shop-2026-10-02/layers/atelier.html`, { waitUntil: 'networkidle' });
+  assert.equal(await page.locator('#library button').count(), 10);
+  await page.locator('[data-book="spellbook"]').click();
+  await page.locator('#cover').selectOption('field');
+  await page.locator('#symbol').selectOption('starseer');
+  await page.locator('#treatment').selectOption('line');
+  await page.locator('#color').fill('#aa2233');
+  assert.equal(await page.locator('#stage .book-art').getAttribute('data-book-symbol'), 'starseer');
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.locator('[data-book="spellbook"]').click();
+  assert.equal(await page.locator('#color').inputValue(), '#aa2233');
+  assert.equal(await page.locator('#cover').inputValue(), 'field');
+  const downloads = [];
+  page.on('download', (download) => downloads.push(download));
+  await page.locator('#export').click();
+  await page.waitForFunction(() => document.getElementById('status').textContent.includes('Exported'));
+  // Both exports must actually reach the browser download surface.
+  for (let i = 0; i < 40 && downloads.length < 2; i++) await new Promise((r) => setTimeout(r, 100));
+  assert.equal(downloads.length, 2);
+  for (const download of downloads) await download.saveAs(resolve(process.env.TEMP || 'D:/repos/.codex/tmp', 'book-art-' + download.suggestedFilename()));
+  await page.locator('#reset').click();
+  assert.equal(await page.locator('#cover').inputValue(), 'scholar');
+  // Reject malformed import atomically.
+  await page.locator('#file').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"spellbook":{"color":"url(bad)"}}') });
+  await page.waitForFunction(() => document.getElementById('status').textContent.includes('unchanged'));
+  assert.equal(await page.locator('#cover').inputValue(), 'scholar');
+  await page.locator('#reset').click();
+  await page.screenshot({ animations: 'disabled', path: resolve(output, 'atelier-desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.screenshot({ animations: 'disabled', path: resolve(output, 'atelier-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1200, height: 1000 });
+  await page.goto(`${base}/art/manual-shop-2026-10-02/preview.html?library=1`, { waitUntil: 'networkidle' });
+  assert.equal(await page.locator('.shop-book-offer .book-art-symbol').count(), 10);
+  await page.screenshot({ animations: 'disabled', path: resolve(output, 'shop-layered.png'), fullPage: true });
+  assert.deepEqual(errors, []);
+  writeFileSync(resolve(output, 'browser-results.json'), JSON.stringify({ passed: true, checks: ['ten distinct book recipes', 'cover and symbol swapping', 'color draft persists', 'two working exports', 'reset', 'invalid import atomic', '390px layout', 'real shop uses layers'], errors }, null, 2));
+  console.log('PASS: Book Atelier, editable layers, persistence, export, responsive layout and real shop.');
+} finally { await browser.close(); }

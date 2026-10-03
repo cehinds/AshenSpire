@@ -56,9 +56,10 @@ Definitions live in `src/content/consumables.js`. A book may specify one of
 inconsistent class/XP targets and overlapping scopes. No second tag taxonomy
 or duplicate class registry was introduced.
 
-The neutral book sprite is reused for spellbooks, class books and the universal
-tome; the distinct Shield and Blade art remains. All descriptions, purchases
-and reading controls use live content values.
+Each book uses a layered artwork recipe in `src/content/bookArtPresets.js`.
+The Book Atelier supplies independently replaceable covers, colors, trim and
+symbols; see `layers/README.md`. All descriptions, purchases and reading
+controls use live content values.
 
 The original asset kit and shop validation remain in this directory. Learning
 tests: `tests/book-learning.test.mjs`; rendered checks:

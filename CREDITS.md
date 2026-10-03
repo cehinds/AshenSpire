@@ -4,16 +4,21 @@
 
 | Asset path | Source | Rights |
 | --- | --- | --- |
-| `assets/shop/` | Original OpenAI image generation from the owner's approved shop preview; [masters and prompts](art/manual-shop-2026-10-02/README.md) | First-party generated artwork; no third-party license claimed. |
+| `assets/shop/` | Original OpenAI image generation from the owner's approved shop preview, plus original Codex-authored vector layers; [masters and prompts](art/manual-shop-2026-10-02/layers/README.md) | First-party generated paintings and project-authored SVG artwork; no third-party license claimed. |
 | `assets-mobile/shop/` | Canonical mobile exports of the same original shop artwork | Same provenance and rights as the masters. |
 
-Three transparent book paintings and one blank brass button frame generated
+The original three transparent book paintings and one blank brass button frame were generated
 with the built-in OpenAI image generation tool from the owner's approved
 shop preview. No third-party artwork or third-party license is claimed.
 PNG masters, the approved source, exact prompts and export instructions are
 retained in [art/manual-shop-2026-10-02](art/manual-shop-2026-10-02/README.md).
 Runtime WebPs live in `assets/shop/`, with policy-compliant light twins under
-`assets-mobile/shop/`; `assets.js` resolves them through the normal asset map.
+`assets-mobile/shop/`; the renderer resolves them through the normal asset map.
+The modular edition adds three blank charcoal cover paintings, thirty editable
+SVG symbols, three trim overlays and a front-cover color mask. Its painted
+masters, prompts and editable vectors are retained in the linked layers kit.
+The old baked book WebPs were retired from runtime packs; their original
+masters remain available in the art package.
 
 ## Player polish asset kit (2026-10-02)
 

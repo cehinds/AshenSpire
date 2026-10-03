@@ -10,6 +10,7 @@ const output = resolve(process.env.BOOK_SHOP_OUTPUT || 'art/manual-shop-2026-10-
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROME ? { executablePath: process.env.CHROME } : {}) });
 const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+await page.route('**/src/buildversion.js', (route) => route.fulfill({ path: resolve('src/buildversion.js'), contentType: 'text/javascript' }));
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('requestfailed', (request) => errors.push(`${request.url()}: ${request.failure()?.errorText}`));
@@ -20,7 +21,7 @@ const open = async (query = '') => {
   await page.goto(`${base}/art/manual-shop-2026-10-02/preview.html${query}`);
   console.log('Loaded');
   await page.locator('.shop-book-offer').first().waitFor();
-  await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.querySelectorAll('.shop-book-art')].map((img) => img.decode())); });
+  await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.querySelectorAll('.shop-book-art img')].map((img) => img.decode())); });
 };
 try {
   for (const width of [1200, 593, 390, 320]) {
@@ -46,7 +47,7 @@ try {
   }
   await page.setViewportSize({ width: 1200, height: 844 });
   await open('?xp=73');
-  assert.match(await page.locator('[data-book-id="shieldManual"]').innerText(), /73 XP/);
+  assert.match(await page.locator('[data-book-id="shieldManual"]').innerText(), /73 Shield XP/);
   await page.locator('[data-book-id="bladeManual"] .shop-book-buy').click();
   await page.locator('.confirmation-modal').waitFor();
   assert.match(await page.locator('.confirmation-modal').innerText(), /Blade Manual/);

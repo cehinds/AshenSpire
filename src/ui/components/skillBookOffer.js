@@ -1,5 +1,6 @@
 import { button, el, statusText } from '../kit/index.js';
-import { skillBookArtwork, shopBuyArtwork } from '../assets.js';
+import { shopBuyArtwork } from '../assets.js';
+import { renderBookArt } from './bookArt.js';
 import { t } from '../strings.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
@@ -13,10 +14,7 @@ export function applySkillBookOfferTokens(root) {
 
 /** A real purchase control beside readable details, never a nested button. */
 export function renderSkillBookOffer({ def, description, cost, available, reason = '' }) {
-  const artwork = el('img', {
-    class: 'shop-book-art', src: skillBookArtwork(def), alt: '', 'aria-hidden': 'true',
-    width: 320, height: 320, decoding: 'async',
-  });
+  const artwork = renderBookArt(def, { className: 'shop-book-art' });
   const details = el('div', { class: 'cp-body shop-book-details' }, [
     el('h3', { class: 'shop-book-name', text: def.name }),
     el('p', { text: description }),

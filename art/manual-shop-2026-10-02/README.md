@@ -58,3 +58,10 @@ Extract one of the brass Buy button frames from the RIGHT of the reference UI in
 ### Neutral book master
 
 Create a matching generic skill-book sprite from this exact book. Change ONLY the cover: remove the shield crest entirely, replace it with subtle neutral gold filigree, dark reddish brown leather. Preserve the shape, angle, spine, brass corner fittings, parchment pages, bookmark and size. Single closed book, no writing, no weapon symbols, no shield, no specific magical emblem. It will be the neutral artwork for other skill books in this same game shop. Transparent background. Clean alpha cutout, no red fringe. Square canvas.
+# Modular edition
+
+The current game uses the [layered book kit and Book Atelier](layers/README.md).
+Its three covers, thirty symbols and per-book recipes replace the baked book
+WebPs. The original approved art and validation below remain as provenance.
+`export.mjs` below is the historical baked-asset exporter; use
+`layers/export.mjs` for the current runtime assets.

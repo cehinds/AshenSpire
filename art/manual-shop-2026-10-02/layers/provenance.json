@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-02",
+  "method": "OpenAI built-in image_gen; transparent PNG output; no CLI fallback",
+  "vectors": "Original Codex-authored native SVG symbols and trim. Reproducible geometry in export.mjs.",
+  "masters": [
+    {
+      "file": "masters/classic.png",
+      "reference": "../masters/skill-book.png",
+      "generatedFile": "exec-c49a3990-4b86-46b8-bf77-cd3bb81da37f.png",
+      "prompt": "Edit reference into a modular game sprite base: a closed medieval leather book, retain this exact three-quarter camera angle, spine on left, thick parchment page block at bottom, same framing and silhouette. Remove ALL gold filigree, border lines, metal corners, metal bands, rivets and cover symbols. Make leather neutral medium charcoal GRAY, with detailed painted worn grain and subtle edge highlights, so it can be tinted by game code later. Keep parchment warm ivory. Keep gray leather spine bands and a gray ribbon bookmark. Large completely blank front cover with no symbol, no writing. Transparent background. Entire single book fits square canvas with 6 percent padding. Polished painted fantasy inventory sprite, readable at 100 pixels. This is the 'classic' base layer; separate vector metal and symbol overlays will be added by the game. Do not include shadows outside book."
+    },
+    {
+      "file": "masters/scholar.png",
+      "reference": "masters/classic.png",
+      "generatedFile": "exec-1d1e4d78-aad0-49e7-873a-4e24f722de3d.png",
+      "prompt": "Make a texture variant of this exact modular book sprite. Keep pixel registration, silhouette, spine, page block, ribbon, camera, all coordinates and size identical. Change ONLY the leather material: much smoother fine-grained charcoal gray leather, pristine scholarly grimoire with subtle embossed blank double border near front cover edges. Blank cover, no symbol, no writing, no gold, no metal hardware. Keep warm ivory pages. Gray leather supports runtime color tint. Transparent background, same padding, no outside shadow. This is the 'scholar' variant."
+    },
+    {
+      "file": "masters/field.png",
+      "reference": "masters/classic.png",
+      "generatedFile": "exec-810820ac-1c88-47da-b7a1-3cb59753aa94.png",
+      "prompt": "Create the third modular book sprite variant 'field journal'. Keep this exact image's camera, silhouette, cover corners, spine, page block, bookmark, size, registration and transparent padding. Change ONLY the leather material to rough charcoal gray suede with hand stitched thread seam 5 percent inside all four cover edges, lightly weathered. Keep front cover BLANK with no icons or writing; no metal or gold. Keep ivory parchment pages identical. Separately added game-code symbols must fit in the broad blank center. Polished painted fantasy inventory asset, genuine transparent background, no outside shadow."
+    }
+  ]
+}
