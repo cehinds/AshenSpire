@@ -168,7 +168,8 @@ export function wireBattlefieldStage(field, model) {
       // Keep the 44 px target on the clickable frame, above neighbouring art.
       // It does not change the dimensions read by the sprite fitter.
       frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));
-      if (frame.classList.contains('enemy-target-hitbox')) {
+      frame.classList.toggle('player-target-hitbox', frame.classList.contains('player'));
+      if (frame.classList.contains('enemy-target-hitbox') || frame.classList.contains('player-target-hitbox')) {
         const frameRect = frame.getBoundingClientRect();
         frame.style.setProperty('--enemy-hit-x', `${(hostRect.left + hostRect.width / 2 - frameRect.left) / zoom}px`);
         frame.style.setProperty('--enemy-hit-y', `${(hostRect.bottom - frameRect.top) / zoom}px`);
