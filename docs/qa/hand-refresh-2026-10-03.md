@@ -5,7 +5,10 @@ PR #1536, 2026-10-03. Standalone build **0.7.1.846**, source digest
 
 After integrating PR #1530, all 95 hand/Stamina compatibility checks passed.
 The nine browser checks passed again after integrating PRs #1533 and #1538.
-The final receipt-only rebuild is 0.7.1.847; it changes the changelog metadata.
+The final build is 0.7.1.849. Since this browser pass, the receipt was updated
+and the keepsake image fallback was routed through the shared art retry helper;
+hand behavior is unchanged. Both affected art suites pass all 37 tests under
+the CI cache environment.
 
 A fresh Chromium profile at 1440 × 900 used Quick start with seed 8, entered
 the first fight, played a self-targeted skill, and held End Turn for the
