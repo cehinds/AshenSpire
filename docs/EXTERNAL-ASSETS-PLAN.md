@@ -1,5 +1,10 @@
 # Every asset outside the game file — plan
 
+Update, 2026-10-03: the game repository now tracks the simplified
+`assets-mobile/` light tier. The high-resolution `assets/` masters and the
+common fonts, music, and map tiles remain in AshenSpire-art. The step 13
+description below records the earlier external-only state.
+
 Status: **steps 2, 3a, 3b, 3c, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
