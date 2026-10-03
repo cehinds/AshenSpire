@@ -6,11 +6,31 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1540",
     "date": "2026-10-03",
     "group": "2026-10-03",
-    "summary": "Installer game versions, Stamina checks and recoverable keepsake art",
-    "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage. A keepsake image that fails to load now returns when art is retried, and the local-light-art test isolates its automatic mode from the CI cache setting.",
-    "build": "0.7.1.847",
+    "summary": "Installer game versions and Stamina browser checks",
+    "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage.",
+    "build": "0.7.1.848",
     "pullRequest": 1540,
     "url": "https://github.com/cehinds/AshenSpire/pull/1540"
+  },
+  {
+    "id": "pr-1542",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keepsake pictures return after an art retry",
+    "detail": "If a keepsake picture fails to load, its icon stands in; retrying the art or changing quality can restore the picture. The compact-art checks now run correctly in CI.",
+    "build": "0.7.1.845",
+    "pullRequest": 1542,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1542"
+  },
+  {
+    "id": "pr-1538",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "More of the climb has its finished artwork",
+    "detail": "The game includes compact card, relic, flask, event, and character art, including the Road Warden. Cards without a painted scene use a simple matching motif. High-resolution pictures remain in the art repository; the game uses its smaller local versions by default.",
+    "build": "0.7.1.845",
+    "pullRequest": 1538,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1538"
   },
   {
     "id": "pr-1533",
