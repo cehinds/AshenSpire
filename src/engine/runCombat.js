@@ -19,6 +19,7 @@ import { playInDeckOrder } from '../model/deckRules.js';
 import { recoveryRulesFor } from '../model/recoveryRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
+import { isPoolDeckMode } from '../model/cardRemoval.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 import { resolveEnemyLevel } from '../model/levels.js';
@@ -70,6 +71,8 @@ export function runCombatPlayer(run) {
     equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: run.equipmentAttackSlotCount,
     removedAttackSlotIds: run.removedAttackSlotIds,
+    // A dealt deck's fight keeps the dealt deck's rule at its swap door.
+    ...(isPoolDeckMode(run) ? { poolDeck: true } : {}),
     equipmentPoolDeficits,
     itemUpgradeLevels: run.itemUpgradeLevels,
     itemMounts: run.itemMounts,
@@ -85,6 +88,8 @@ export function runCombatPlayer(run) {
     companionIds: (Array.isArray(run.companions) ? run.companions : []).map((row) => row.id),
     // SPEC §14.4: the sigils set into slots, mounted while their armament is worn.
     sigilSlots: run.sigilSlots && typeof run.sigilSlots === 'object' ? run.sigilSlots : {},
+    // SPEC §15.4: the attuned legendaries, mounted at combat start.
+    attunedSigils: Array.isArray(run.attunedSigils) ? run.attunedSigils : [],
   };
 }
 

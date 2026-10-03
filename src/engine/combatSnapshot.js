@@ -6,7 +6,7 @@
 
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
@@ -52,6 +52,7 @@ export function serializeCombatSnapshot(combat) {
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
+    ...(combat.poolDeck ? { poolDeck: true } : {}),
     itemUpgradeLevels: combat.itemUpgradeLevels,
     itemMounts: combat.itemMounts,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
@@ -95,6 +96,8 @@ export function serializeCombatSnapshot(combat) {
     // SPEC §14.4: the sigil slots the fight mounts from, so a restore mounts
     // the same sigils while their armaments are worn.
     sigilSlots: combat.sigilSlots && typeof combat.sigilSlots === 'object' ? combat.sigilSlots : {},
+    // SPEC §15.4: the attuned legendaries, which a restore mounts again.
+    attunedSigils: Array.isArray(combat.attunedSigils) ? combat.attunedSigils : [],
   });
   assertCombatSnapshot(snapshot);
   return snapshot;
@@ -110,7 +113,17 @@ export function serializeCombatSnapshot(combat) {
  * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
  * right to assert against: a load must not rewrite a snapshot it understands.
  */
-export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode }) {
+// `fallback` is run context: a boolean only when the caller holds the run
+// (main.js resumeRun passes isPoolDeckMode(run)). Left undefined, the
+// snapshot's own flag stands, so a standalone round trip of a Sealed or
+// Draft fight restores it; only a supplied context can disagree.
+function restoredPoolDeck(saved, fallback) {
+  if (saved !== undefined && saved !== true) throw new Error(`combat snapshot poolDeck must be true when present (got ${JSON.stringify(saved)})`);
+  if (typeof fallback === 'boolean' && saved === true && fallback === false) throw new Error('combat snapshot poolDeck disagrees with the run\'s deck mode');
+  return saved === true || fallback === true;
+}
+
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
@@ -133,6 +146,9 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
+    // The run's own rule backs the snapshot's flag (model/cardRemoval.js), and
+    // when the caller knows the run the two must agree, never be OR-ed.
+    ...(restoredPoolDeck(saved.poolDeck, fallbackPoolDeck) ? { poolDeck: true } : {}),
     equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
       ? saved.equipmentAttackSlotCount
       : (Number.isFinite(fallbackAttackSlotCount) ? fallbackAttackSlotCount : undefined),
@@ -183,6 +199,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     companions: Array.isArray(saved.companions) ? saved.companions : [],
     // A snapshot from before SPEC §14.4 carries no slots and mounts no sigil.
     sigilSlots: saved.sigilSlots && typeof saved.sigilSlots === 'object' && !Array.isArray(saved.sigilSlots) ? saved.sigilSlots : {},
+    // A snapshot from before SPEC §15.4 carries no attuned sigil and mounts none.
+    attunedSigils: Array.isArray(saved.attunedSigils) ? saved.attunedSigils : [],
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
@@ -198,6 +216,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   syncRelicProperties(combat);
   syncClassProperties(combat);
   syncCompanionProperties(combat);
+  syncSigilProperties(combat);
   // The player's poise max is RE-DERIVED, never trusted from the save (plan
   // phase 8): a fight saved before the formula changed keeps its accumulated
   // value and takes the receipt's max — Constitution, body armour, relics —

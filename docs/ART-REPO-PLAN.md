@@ -128,7 +128,7 @@ This repository keeps:
 | `tools/screenshot.mjs` | by hand | reads `assets/sprites/class-sprites.manifest.json` | reads it from its new home: `asset-data/sprites/class-sprites.manifest.json` (#1367) |
 | `styles/kit.css` | every build | `../assets/fonts/*` | *(superseded)* fonts are one `common` record each and load at runtime through `ASSET_CSS` (EXTERNAL-ASSETS-PLAN step 3b) |
 | README (`npx serve .`, `python -m http.server`) and DEVELOPER ("any static server works") | local dev | a plain static server serves `/assets/…` from disk | the docs name `node tools/serve.mjs` as the way to run from source, because a plain server cannot remap `/assets/…`; the built `AshenSpire.html` still needs no server |
-| `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | *(superseded)* maps every id to the fetch cache's light and common packs by default, and to the kept non-art files for those that are not assets; `--hd` serves the high pack (EXTERNAL-ASSETS-PLAN step 12) |
+| `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | *(superseded)* maps every id to the fetch cache's light and common packs by default, and to the kept non-art files for those that are not assets; `--hd` serves the high pack. **As built at EXTERNAL-ASSETS-PLAN step 12:** it maps `/assets-mobile/`, `/assets/fonts/`, `/music/` and `/map-detail/` to the cache; `/assets/…` (the high tier) moves with step 6 here |
 | `pose-studio/package.mjs`, `editor/server.mjs` | by hand | four `assets/*` trees; `editor` walks all of `assets/` | read the fetched cache (and `art/` below) |
 
 ### Readers of `art/` (source art)
@@ -215,7 +215,7 @@ Each step is one reviewed PR, or one owner action.
 ## Status
 
 - Steps 1–3 are done (2026-09-26). The owner created `cehinds/AshenSpire-art` (private for now; the owner decided on 2026-09-27 to make it public, not yet done). [AshenSpire-art#1](https://github.com/cehinds/AshenSpire-art/pull/1) imported `hd/assets/` (5,201 files) and `art/`, and its release workflow published `hd-assets-v1`: zip sha256 `c03e4024…88a4`, the same bytes as a local pack of that commit.
-- Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. #1367 moved the 23 non-art files to `asset-data/` and switched every reader of them (tools, tests, `src/framework/data/assets.js`, the ship tools that write those manifests, the art pages that fetch `enemy-poses/manifest.json`, CREDITS and the docs). Still to do: switch the `assets/` (high-tier) readers, and add both files to `BUILD_IDENTITY_FILES` in the PR that first builds full art from the cache.
+- Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. #1367 moved the 23 non-art files to `asset-data/` and switched every reader of them (tools, tests, `src/framework/data/assets.js`, the ship tools that write those manifests, the art pages that fetch `enemy-poses/manifest.json`, CREDITS and the docs). Still to do: switch the `assets/` (high-tier) readers. Both files joined `BUILD_IDENTITY_FILES` at [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md) step 11, which also pins `hd-assets-v2` (three zips, schema 2) and fetches each pack into `.art-cache/<tag>/<pack>/`.
 - Releases are automatic: the art repo publishes the next `hd-assets-v<N>` on every merge to `main` that changes the pack ([AshenSpire-art#2](https://github.com/cehinds/AshenSpire-art/pull/2)).
 
 ## Owner answer (2026-09-27)
@@ -238,6 +238,9 @@ question 1, the owner chose to make **`cehinds/AshenSpire-art` public**
   keeps the token optional (`ART_REPO_TOKEN`, else `GITHUB_TOKEN`), sent only
   when set, to raise GitHub's rate limit. CI needs no secret.
 - **Pending owner action:** flipping the visibility in the repository's GitHub
-  settings is not done yet. Until it is, a fetch still needs the token, and
-  `fetch-art`, README.md and DEVELOPER.md still say so. It must happen before
-  EXTERNAL-ASSETS-PLAN step 11 (its step 10a), which drops the requirement.
+  settings is not done yet. Until it is, a fetch needs the token: CI passes
+  the `ART_REPO_TOKEN` secret in the env of every step that fetches, and a
+  local fetch reads `ART_REPO_TOKEN` (else `GITHUB_TOKEN`). The flip must
+  happen before EXTERNAL-ASSETS-PLAN step 11 (its step 10a); the token path in
+  `fetch-art` is only a belt-and-braces fallback. Once the repository is
+  public, the same code needs no token and nothing else changes.

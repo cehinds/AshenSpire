@@ -340,7 +340,7 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: {
-      base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 5, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
+      base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 5, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
       [NOTE]: {
         base: 'Weapon, armour, focus and dual-wield tracks: XP for the first step and the base used for later increases.',
         linear: 'Use base + skill level × base × scaler. Off: use base × exponential growth^skill level.',
@@ -360,7 +360,7 @@ export const balance = {
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 5, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
+      xp: { base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 5, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
       [NOTE]: {
           'xp.base': 'The class track: what its first level step costs.',
           'xp.linear': 'Use base + class skill level × base × scaler. Off: use exponential growth.',
@@ -376,7 +376,7 @@ export const balance = {
     // The drafts a level buys (plan phase 4b, proposal §6.1): pick 1 of
     // `draftSize` cards of the track's schools; at most `draftsPerCombat`
     // drafts per track per reward door, the rest queue; a rarity is drafted
-    // from the level its row names (the game has no legendary rarity, so the
+    // from the level its row names (the game has no legendary relic or card, so the
     // proposal's fourth row has no seat); at `upgradeAt` every deck card of
     // the track's schools is upgraded, the shrine keeping the rest.
     rarityUnlock: {
@@ -670,18 +670,18 @@ export const balance = {
   //
   // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
   // defeated-enemy combat power × 25 × 0.2, kills pay 10 × 0.2 × enemy level,
-  // and each step costs 100 XP.
+  // and the first step costs 100 XP, each later one ×1.75 (owner, 2026-10-02).
   // Settings → Progression → Experience previews the same configured curve
   // and awards the run uses. The existing per-award level cap remains separate.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 10,
+      base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 10,
       [NOTE]: {
         base: 'Character XP for the first step and the base used for later increases.',
         linear: 'Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).',
-        multScaler: 'Linear increase per character level as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
+        multScaler: 'Linear increase per character level as a multiple of the base, used only when the linear curve is on. At base 100 and scaler 1.3: 100, 230, 360 XP.',
         growth: 'Exponential character-step growth, used only when the linear curve is off.',
         roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
       },
@@ -1744,12 +1744,31 @@ export const balance = {
     thornSigil: { bleed: 2 },
     tideSigil: { n: 5, draw: 1 },
     hearthSigil: { block: 3 },
+    // The legendary sigils (SPEC §15.4): attuned, never slotted.
+    vigilSigil: { pct: 50, block: 12 },
+    pyreSigil: { block: 3 },
+    gravelightSigil: { pct: 50, heal: 6 },
+    // How many legendary sigils a run may hold attuned at once (0: none).
+    attuneMax: 1,
+    // The chance, 0-100, that a won fight or a treasure room drops one
+    // legendary sigil the run does not own. Shipped off: 0 draws nothing.
+    dropChancePct: { normal: 0, elite: 0, boss: 0, treasure: 0 },
     [NOTE]: {
       'emberSigil.block': 'Ember Sigil — the Block it gives at the start of each fight, while it sits in a slot of an equipped armament.',
       'thornSigil.bleed': 'Thorn Sigil — the Bleed your first attack hit of each fight applies, while it sits in a slot of an equipped armament.',
       'tideSigil.n': 'Tide Sigil — every this-many-th card you play in a fight draws, while it sits in a slot of an equipped armament.',
       'tideSigil.draw': 'Tide Sigil — how many cards that card draws.',
       'hearthSigil.block': 'Hearth Sigil — the Block you gain whenever you heal, while it sits in a slot of an equipped armament.',
+      'vigilSigil.pct': 'Sigil of the Last Vigil — the HP percent at or below which it raises its guard at the start of a fight, while attuned.',
+      'vigilSigil.block': 'Sigil of the Last Vigil — the Block it gives at the start of a fight you enter at or below its HP percent, while attuned.',
+      'pyreSigil.block': 'Pyre Sigil — the Block you gain whenever a card is exhausted, while attuned.',
+      'gravelightSigil.pct': 'Gravelight Sigil — the HP percent at or below which a fallen enemy heals you, while attuned.',
+      'gravelightSigil.heal': 'Gravelight Sigil — the HP an enemy\'s death heals while you are at or below its HP percent, while attuned.',
+      attuneMax: 'How many legendary sigils a run can hold attuned at once, chosen in the Armoury out of combat. 0 means none can be attuned.',
+      'dropChancePct.normal': 'The chance, 0 to 100, that a won normal fight drops a legendary sigil the run does not own. 0 never drops and draws nothing.',
+      'dropChancePct.elite': 'The chance, 0 to 100, that a won elite fight drops a legendary sigil the run does not own. 0 never drops and draws nothing.',
+      'dropChancePct.boss': 'The chance, 0 to 100, that a boss whose reward menu opens drops a legendary sigil the run does not own. The last boss of a run ends it and drops none. 0 never drops and draws nothing.',
+      'dropChancePct.treasure': 'The chance, 0 to 100, that a treasure room drops a legendary sigil the run does not own. 0 never drops and draws nothing.',
     },
   },
   equipment: {

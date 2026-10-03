@@ -468,14 +468,16 @@ export const reaverCards = [
     id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, staminaCost: 1, type: 'skill',
     flavor: "Contract of the sellswords of the Fell Courtyard.\n\nHold the gate until relieved; pay in advance. The weald's hired blades held a paid contract sacred, having few other sacred things, and the Wardens despised them for it.\n\nThe last was signed the week before the Burning. Its date of release is blank.",
     keywords: ['innate', 'exhaust'], icon: '📜',
-    effects: [{ op: 'enterStance', stance: 'gorefire' }],
-    textTemplate: 'Innate. Enter Gorefire Stance. Exhaust.',
+    // "A Stance of your choice" (SPEC §5.2): the play offers every stance the
+    // player's class owns, and the pick rides the play intent (model/cardChoices.js).
+    effects: [{ op: 'enterStance', choose: 'classStance' }],
+    textTemplate: 'Innate. Enter a Stance of your choice. Exhaust.',
     upgrade: {
       effects: [
-        { op: 'enterStance', stance: 'gorefire' },
+        { op: 'enterStance', choose: 'classStance' },
         { op: 'draw', amount: 1 },
       ],
-      textTemplate: 'Innate. Enter Gorefire Stance. Draw {draw} card. Exhaust.',
+      textTemplate: 'Innate. Enter a Stance of your choice. Draw {draw} card. Exhaust.',
     },
   },
   {

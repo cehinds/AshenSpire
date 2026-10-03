@@ -68,6 +68,7 @@ export function combatSnapshotProblems(snapshot) {
   if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
   if (!Number.isInteger(snapshot.turn) || snapshot.turn < 1) problems.push('turn must be a positive integer');
   try { retiredAttackSlots(snapshot.equipmentAttackSlotCount, snapshot.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
+  if (snapshot.poolDeck !== undefined && snapshot.poolDeck !== true) problems.push('poolDeck must be true when present');
   if (!PHASES.includes(snapshot.phase)) problems.push(`phase must be one of ${PHASES.join(', ')}`);
   if (!RESULTS.includes(snapshot.result)) problems.push("result must be null, 'victory', or 'defeat'");
   if ((snapshot.phase === 'ended') !== (snapshot.result !== null)) problems.push('phase/result must describe the same ended state');
@@ -143,6 +144,12 @@ export function combatSnapshotProblems(snapshot) {
     if (!slots || typeof slots !== 'object' || Array.isArray(slots)
       || Object.values(slots).some((list) => !Array.isArray(list) || list.some((id) => id !== null && !nonEmptyString(id)))) {
       problems.push('sigilSlots must be an object { [itemRef]: (sigilId|null)[] }');
+    }
+  }
+  // SPEC §15.4: the attuned legendaries, a list of distinct sigil ids.
+  if (snapshot.attunedSigils !== undefined) {
+    if (!Array.isArray(snapshot.attunedSigils) || snapshot.attunedSigils.some((id) => !nonEmptyString(id)) || new Set(snapshot.attunedSigils).size !== snapshot.attunedSigils.length) {
+      problems.push('attunedSigils must be a list of distinct sigil ids');
     }
   }
   if (snapshot.companions !== undefined) {
@@ -254,6 +261,12 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
   }
   has(registries.classes, snapshot.player?.classId, 'player.classId');
   for (const id of snapshot.player?.relicIds || []) has(registries.relics, id, 'player.relicIds');
+  // SPEC §15.4 (rarity at every door): an attuned id is a known LEGENDARY.
+  for (const id of Array.isArray(snapshot.attunedSigils) ? snapshot.attunedSigils : []) {
+    if (!nonEmptyString(id)) continue;
+    if (!registries.sigils || !registries.sigils.has(id)) problems.push(`attunedSigils '${id}' is unknown`);
+    else if (registries.sigils.get(id).rarity !== 'legendary') problems.push(`attunedSigils '${id}' is not a legendary sigil`);
+  }
   for (const flask of snapshot.player?.flasks || []) has(registries.flasks, flask?.flaskId, 'player.flasks.flaskId');
   if (snapshot.player?.stanceId != null) has(registries.stances, snapshot.player.stanceId, 'player.stanceId');
   for (const id of Object.keys(snapshot.player?.statuses || {})) has(registries.statuses, id, 'player.statuses');

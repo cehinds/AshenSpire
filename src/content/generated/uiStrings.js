@@ -815,6 +815,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.kind.sigil",
+    "extends": "",
+    "short": "Legendary sigil",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.sigil.note",
+    "extends": "",
+    "short": "Attune it in the Armoury to make it work.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.close",
     "extends": "",
     "short": "Rewards",
@@ -988,6 +1002,55 @@ export const uiStrings = [
     "short": "Saved climb in slot {slot}",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "art.loading",
+    "extends": "",
+    "short": "Loading art…",
+    "full": "The game is loading its art.",
+    "tip": ""
+  },
+  {
+    "id": "art.progress",
+    "extends": "",
+    "short": "Loading art · {done} of {total}",
+    "full": "The game has loaded {done} of the {total} files the title screen needs first.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.gate",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game will show placeholders. You can retry from the title screen.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.notice",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game is showing placeholders.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.settings",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game is showing placeholders. Choose Retry to load it again.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.again",
+    "extends": "",
+    "short": "The art still could not be loaded",
+    "full": "The art still could not be loaded. Check your connection, then try again.",
+    "tip": ""
+  },
+  {
+    "id": "art.retry",
+    "extends": "",
+    "short": "Retry",
+    "full": "Load the art again.",
+    "tip": "Retry"
   },
   {
     "id": "map.enter",
@@ -1914,6 +1977,90 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "armoury.sigils.title",
+    "extends": "",
+    "short": "Sigils",
+    "full": "Your legendary sigils. An attuned sigil works in every fight; attune them here, out of combat.",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.count",
+    "extends": "",
+    "short": "{n} / {max} attuned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.attune",
+    "extends": "",
+    "short": "Attune {name}",
+    "full": "Attune this legendary sigil: it works in every fight while attuned.",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.unattune",
+    "extends": "",
+    "short": "Unattune {name}",
+    "full": "Unattune this legendary sigil: it stays in your inventory and works in no fight until attuned again.",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.attuned",
+    "extends": "",
+    "short": "Attuned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.idle",
+    "extends": "",
+    "short": "Not attuned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.unknown",
+    "extends": "",
+    "short": "There is no sigil '{id}'.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.notCarried",
+    "extends": "",
+    "short": "You do not carry {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.notLegendary",
+    "extends": "",
+    "short": "{name} is not legendary: it works from a slot, not by attunement.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.already",
+    "extends": "",
+    "short": "{name} is already attuned.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.full",
+    "extends": "",
+    "short": "You cannot attune {name}: the most you can attune at once is {max}. Unattune one first.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.notAttuned",
+    "extends": "",
+    "short": "'{id}' is not attuned.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.companion.left",
     "extends": "",
     "short": "{name} · {n} fights left",
@@ -2036,6 +2183,13 @@ export const uiStrings = [
     "id": "shop.refuse.sigilOwned",
     "extends": "",
     "short": "You already hold {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.sigilLegendary",
+    "extends": "",
+    "short": "{name} is legendary: it is never sold, only found.",
     "full": "",
     "tip": ""
   },
@@ -2281,7 +2435,7 @@ export const uiStrings = [
     "id": "settings.shops.topic.master",
     "extends": "",
     "short": "Wise master",
-    "full": "The wise master's offerings and prices. No merchant is a master until its screen ships.",
+    "full": "The wise master's offerings and prices. An atlas master is always one; a merchant on the map is one only when its weight is above 0.",
     "tip": ""
   },
   {
@@ -3016,6 +3170,314 @@ export const uiStrings = [
     "id": "blacksmith.refuse.noMount",
     "extends": "",
     "short": "That mount cannot be worked now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.extract.poolDeck",
+    "extends": "",
+    "short": "A Sealed or Draft deck takes no card the equipment lends, so nothing can be extracted.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.title",
+    "extends": "",
+    "short": "THE WISE MASTER",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.leave",
+    "extends": "",
+    "short": "Leave",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.rail.aria",
+    "extends": "",
+    "short": "The master's offerings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.skillBooks",
+    "extends": "",
+    "short": "SKILL BOOKS",
+    "full": "Books for the skills this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.weaponArts",
+    "extends": "",
+    "short": "WEAPON ARTS",
+    "full": "Weapon arts of the pieces this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.armaments",
+    "extends": "",
+    "short": "ARMAMENTS",
+    "full": "Armaments of the item types this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.training",
+    "extends": "",
+    "short": "TRAINING",
+    "full": "Pay for XP on one of the master's skills.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.respec",
+    "extends": "",
+    "short": "RESPEC",
+    "full": "Return one of the master's skills to level 1, and keep part of its XP in your training pool.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.lesson",
+    "extends": "",
+    "short": "LESSON",
+    "full": "Buy one skill draft for one of the master's skills.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.appraisal",
+    "extends": "",
+    "short": "APPRAISAL",
+    "full": "See the master's skills: level, XP, what a lesson could draw and what a respec would pay.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.redistribute",
+    "extends": "",
+    "short": "REDISTRIBUTE",
+    "full": "Spend your training pool on any skill.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.sell",
+    "extends": "",
+    "short": "SELL",
+    "full": "Sell the skill books and revive tokens you carry.",
+    "tip": ""
+  },
+  {
+    "id": "master.purse",
+    "extends": "",
+    "short": "{cinders} cinders · training pool {pool} XP · {left} session(s) left",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.track.line",
+    "extends": "",
+    "short": "Level {level} · {xp} / {next} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.offer.line",
+    "extends": "",
+    "short": "{text} {cost} cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.respec.line",
+    "extends": "",
+    "short": "refund {refund} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.lesson.unasked",
+    "extends": "",
+    "short": "Ask for a lesson to see its {count} card(s).",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.draws",
+    "extends": "",
+    "short": "A lesson could draw: {names}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.drawsNone",
+    "extends": "",
+    "short": "A lesson could draw nothing now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.respec",
+    "extends": "",
+    "short": "Respec: {refund} XP back for {cost} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.sell.none",
+    "extends": "",
+    "short": "You carry no skill book or revive token to sell.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.buy",
+    "extends": "",
+    "short": "Buy",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.train",
+    "extends": "",
+    "short": "Train ({cost} cinders, +{xp} XP)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.respec",
+    "extends": "",
+    "short": "Respec ({cost} cinders)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.askLesson",
+    "extends": "",
+    "short": "Ask for a lesson",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.lesson",
+    "extends": "",
+    "short": "Learn {name} ({cost} cinders)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.spend",
+    "extends": "",
+    "short": "Spend {amount} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.training",
+    "extends": "",
+    "short": "No training sessions are left this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.respec",
+    "extends": "",
+    "short": "None of the master's skills is at level 2 or higher.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.lesson",
+    "extends": "",
+    "short": "Every one of the master's skills has taken its lesson this visit, or has nothing to draw.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.appraisal",
+    "extends": "",
+    "short": "The master has no skill to appraise.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.redistribute",
+    "extends": "",
+    "short": "Your training pool is empty. A respec fills it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.notOffered",
+    "extends": "",
+    "short": "This master is not offering that.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.untaught",
+    "extends": "",
+    "short": "{master} does not teach {skill}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.trainingSpent",
+    "extends": "",
+    "short": "No training sessions are left this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.respecLevel",
+    "extends": "",
+    "short": "{skill} is at level {level}; a respec needs level 2 or higher.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.unknownTrack",
+    "extends": "",
+    "short": "'{skill}' is not a skill.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.poolEmpty",
+    "extends": "",
+    "short": "Your training pool is empty.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.amount",
+    "extends": "",
+    "short": "Spend a whole amount from 1 to {pool} XP, not {amount}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonUnrolled",
+    "extends": "",
+    "short": "Ask for a lesson in {skill} first.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonEmpty",
+    "extends": "",
+    "short": "There is nothing a lesson in {skill} could teach you now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonTaken",
+    "extends": "",
+    "short": "You have already taken this visit's lesson in {skill}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonCard",
+    "extends": "",
+    "short": "That card is not one of this lesson's.",
     "full": "",
     "tip": ""
   },
@@ -4558,5 +5020,285 @@ export const uiStrings = [
     "short": "Cancel",
     "full": "Put the deck back exactly as it was when the editor opened.",
     "tip": "Cancel"
+  },
+  {
+    "id": "event.continue.reason",
+    "extends": "",
+    "short": "Choose a response first.",
+    "full": "Continue opens once you take one of the responses.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.continue.reason",
+    "extends": "",
+    "short": "Choose a reply first.",
+    "full": "Continue opens once you answer.",
+    "tip": ""
+  },
+  {
+    "id": "reward.confirm.reason",
+    "extends": "",
+    "short": "Choose one first.",
+    "full": "Confirm opens once you pick an option.",
+    "tip": ""
+  },
+  {
+    "id": "reward.continue.reason.levels",
+    "extends": "",
+    "short": "Claim your levels first.",
+    "full": "Continue opens once every level waiting here is claimed.",
+    "tip": ""
+  },
+  {
+    "id": "title.continue.reason",
+    "extends": "",
+    "short": "No saved climb yet.",
+    "full": "Continue resumes a saved climb; start one with New.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.continue.reason",
+    "extends": "",
+    "short": "Choose a slot first.",
+    "full": "The forward button opens once you pick a save slot.",
+    "tip": ""
+  },
+  {
+    "id": "handDiscard.confirm.reason",
+    "extends": "",
+    "short": "Choose at least {minimum}.",
+    "full": "This turn needs at least {minimum} cards discarded.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.class",
+    "extends": "",
+    "short": "Choose a class.",
+    "full": "Continue opens once you pick a class.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.statMode",
+    "extends": "",
+    "short": "Choose how to assign your stats.",
+    "full": "Continue opens once you pick how your stats are set.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.keepsake",
+    "extends": "",
+    "short": "Choose a keepsake.",
+    "full": "Continue opens once you pick a keepsake.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.armour",
+    "extends": "",
+    "short": "Choose starting armour.",
+    "full": "Continue opens once you pick your starting armour.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsLeft.one",
+    "extends": "",
+    "short": "{count} stat point still to assign.",
+    "full": "Assign every stat point before going on.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsLeft",
+    "extends": "",
+    "short": "{count} stat points still to assign.",
+    "full": "Assign every stat point before going on.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsOver.one",
+    "extends": "",
+    "short": "{count} stat point over the pool.",
+    "full": "Take back points until you are within the pool.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsOver",
+    "extends": "",
+    "short": "{count} stat points over the pool.",
+    "full": "Take back points until you are within the pool.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.handNeeds",
+    "extends": "",
+    "short": "{name} needs {stat} {required} — you have {actual}.",
+    "full": "Raise that stat or hold something you can wield.",
+    "tip": ""
+  },
+  {
+    "id": "atlas.enter.reason.none",
+    "extends": "",
+    "short": "Choose a place first.",
+    "full": "Enter opens once you pick a place.",
+    "tip": ""
+  },
+  {
+    "id": "atlas.enter.reason.closed",
+    "extends": "",
+    "short": "No open road to here yet.",
+    "full": "Pick a place on an open road or where you stand.",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.heading",
+    "extends": "",
+    "short": "Download a folder copy (zip)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.button",
+    "extends": "",
+    "short": "Download game folder (zip)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.save",
+    "extends": "",
+    "short": "Save zip file",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.save",
+    "extends": "",
+    "short": "On a computer, choose Download game folder (zip). It is about {mb} MB and saves as {filename}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.saveUnsized",
+    "extends": "",
+    "short": "On a computer, choose Download game folder (zip). It saves as {filename}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.unzip",
+    "extends": "",
+    "short": "Unzip it, and keep the folder together: the game file reads its art from the packs and objects folders beside it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.open",
+    "extends": "",
+    "short": "Double-click the .html file inside the folder to play in your browser. It needs no internet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.limits",
+    "extends": "",
+    "short": "The folder copy shows the light art; recorded music plays only when the folder is served by a web server, so a double-clicked copy uses the synthesized score. Its saves are its own, as with the single file.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.unavailable",
+    "extends": "",
+    "short": "This build is one self-contained file; Download game above is the whole game.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.choose",
+    "extends": "",
+    "short": "Choose where to save the folder copy…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.working",
+    "extends": "",
+    "short": "Building the folder copy… {done} of {total} files · {mb} of {totalMb} MB. Keep this panel open.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.finishing",
+    "extends": "",
+    "short": "Finishing the zip file…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.saved",
+    "extends": "",
+    "short": "Folder copy saved: {files} files, {mb} MB. Unzip it and double-click the .html file inside to play.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.sent",
+    "extends": "",
+    "short": "Folder copy sent to your browser ({mb} MB). If it did not save, choose Save zip file to retry.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.canceled",
+    "extends": "",
+    "short": "Folder copy canceled. No completed zip file was saved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.unreachable",
+    "extends": "",
+    "short": "A file of this build could not be fetched, so no zip was saved. Check your connection and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.page",
+    "extends": "",
+    "short": "The game page did not match the published build, so no zip was saved. Choose Check for updates and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.pack",
+    "extends": "",
+    "short": "This build's art packs are not published in full, so no zip was saved. Try another branch, or the single-file download.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.hash",
+    "extends": "",
+    "short": "A file of this build did not match its published checksum, so no zip was saved. Try again later.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.disk",
+    "extends": "",
+    "short": "There is not enough space where you chose to save, so no zip was saved. Free some space or choose another place, and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.picker",
+    "extends": "",
+    "short": "The browser did not allow saving there, so no zip was saved. Try again and choose another place.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.generic",
+    "extends": "",
+    "short": "The folder copy could not be saved. Try again, or use the single-file download above.",
+    "full": "",
+    "tip": ""
   }
 ];

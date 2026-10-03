@@ -587,6 +587,68 @@ export const propertyRuleEffects = {
       }
     ]
   },
+  "vigilSigil": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "if": {
+          "p": "hpBelowPct",
+          "of": "owner",
+          "pct": {
+            "balance": "sigils.vigilSigil.pct"
+          }
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "sigils.vigilSigil.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "pyreSigil": {
+    "triggers": [
+      {
+        "on": "cardExhausted",
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "sigils.pyreSigil.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "gravelightSigil": {
+    "triggers": [
+      {
+        "on": "enemyDied",
+        "if": {
+          "p": "hpBelowPct",
+          "of": "owner",
+          "pct": {
+            "balance": "sigils.gravelightSigil.pct"
+          }
+        },
+        "do": [
+          {
+            "op": "heal",
+            "target": "owner",
+            "amount": {
+              "balance": "sigils.gravelightSigil.heal"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "warhorn": {
     "triggers": [
       {

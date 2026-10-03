@@ -41,14 +41,15 @@ try {
 // above: engine.test.js also runs in tests/index.html, where there is no `fs`,
 // and an import of `node:fs` in that file would take the browser harness down
 // entirely. Test 49 asks this whether a path the game CONSTRUCTS resolves to a
-// real file; in the browser it is null and the test skips loudly.
+// real file; in the browser it is null and the test skips loudly. Since step
+// 12 (docs/EXTERNAL-ASSETS-PLAN.md) "real" means an id art-manifest.json
+// lists — what the pinned packs carry — not a file in a tree here, which
+// leaves the repository at step 13.
 let assetExists = null;
 try {
-  const { existsSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  assetExists = (rel) => existsSync(resolve(root, rel));
+  const { manifestIds } = await import('../tools/art-source.mjs');
+  const shipped = manifestIds();
+  assetExists = (rel) => shipped.has(rel);
 } catch {
   console.warn('  (no filesystem — test 49 will skip)');
 }
@@ -121,7 +122,7 @@ if (CORE) {
     ['tests/confirmation-modal.test.mjs', 'exports runConfirmationModalContract(); check 76 below calls it'],
     ['tests/reward-confirm.test.mjs', 'exports runRewardConfirmTests(); called below'],
     ['tests/card-removal-flick.test.mjs', 'exports runCardRemovalFlickTests(); called below'],
-    ['tools/bundle.test.mjs', 'runs the real bundler against temporary checkouts for several minutes; CI runs it as its own step'],
+    ['tools/bundle.test.mjs', 'runs the real bundler against temporary checkouts for several minutes; ci.yml runs it as its own job, `parse-gate`'],
   ]);
   const found = [];
   const walk = (dir) => {
@@ -974,6 +975,46 @@ if (CORE) {
     if (uiTree.code !== 0 || !uiTreeV.text) zoomExtra++;
     else zoomPassed++;
   }
+
+  // 96/97 — the flask action contract (tools/flask-action-contract.mjs).
+  // It sat red on dev because nothing ran it, and it had stopped following
+  // the map's live flask menu (components/runPotions.js, e1ff8c9f4). 96 is
+  // its planted corpus; 97 is the tree. Its verdict is its own "N passed, M failed" line.
+  const runFlaskActions = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/flask-action-contract.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const flaskSelf = runFlaskActions(['--selftest']);
+    const flaskSelfV = flaskSelf.out.match(/^SELFTEST (?:GREEN|RED)[^\n]*/m)?.[0] || '';
+    const flaskSelfOk = flaskSelf.code === 0 && /^SELFTEST GREEN/.test(flaskSelfV);
+    console.log(
+      `${flaskSelfOk ? 'PASS' : 'FAIL'}  96. the flask action contract still catches its own known-bad corpus` +
+        ` — ${flaskSelfV || `flask-action-contract --selftest (exit ${flaskSelf.code}) printed no SELFTEST verdict`}`
+    );
+    if (flaskSelfOk) zoomPassed++;
+    else zoomExtra++;
+  }
+
+  // The enclosing block is unconditional, so the tree verdict carries its own
+  // CORE gate like rung 95: the --selftests-only lane must not run it.
+  if (CORE) {
+    const flaskTree = runFlaskActions([]);
+    const flaskTreeV = flaskTree.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
+    const flaskTreeOk = flaskTree.code === 0 && !!flaskTreeV && flaskTreeV[2] === '0' && Number(flaskTreeV[1]) > 0;
+    const flaskFails = [...flaskTree.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
+    console.log(
+      `${flaskTreeOk ? 'PASS' : 'FAIL'}  97. combat and the map's Potions control share one flask action contract` +
+        ` — ${flaskTreeV ? flaskTreeV[0] : `flask-action-contract (exit ${flaskTree.code}) printed no verdict`}` +
+        `${flaskFails ? ` (${flaskFails})` : ''}` +
+        ` (\`node tools/flask-action-contract.mjs\` names each check)`
+    );
+    if (flaskTreeOk) zoomPassed++;
+    else zoomExtra++;
+  }
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.
@@ -1001,10 +1042,9 @@ if (CORE) {
 // last frame. And registration lives entirely in these numbers: a frame whose
 // floor line is not below its crop top would place the figure off its feet.
 if (CORE) {
-  const { existsSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  // Each frame is an art-manifest.json id (step 12), not a file in a tree here.
+  const { manifestIds } = await import('../tools/art-source.mjs');
+  const shipped = manifestIds();
   const { POSE_FRAMES, POSE_STRIP, POSE_DIR, POSE_CANVAS } = await import('../src/content/poseSprites.js');
   const classes = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_')[0]))];
   const tints = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_').at(-1)))];
@@ -1014,7 +1054,7 @@ if (CORE) {
       for (const pose of POSE_STRIP) {
         const row = POSE_FRAMES.get(`${c}_${pose}_${t}`);
         if (!row) { bad.push(`${c}/${pose}/${t}: no row`); continue; }
-        if (!existsSync(resolve(root, POSE_DIR + row.f))) bad.push(`${c}/${pose}/${t}: ${row.f} missing`);
+        if (!shipped.has(POSE_DIR + row.f)) bad.push(`${c}/${pose}/${t}: ${row.f} missing from art-manifest.json`);
         if (!(row.g > row.y)) bad.push(`${c}/${pose}/${t}: floor ${row.g} is not below the crop top ${row.y}`);
         if (row.x + row.w > POSE_CANVAS.width + 1 || row.y + row.h > POSE_CANVAS.height + 1) {
           bad.push(`${c}/${pose}/${t}: crop runs off the ${POSE_CANVAS.width}x${POSE_CANVAS.height} canvas`);
@@ -1063,6 +1103,34 @@ if (CORE) {
       console.log(`FAIL  ${lane.label} — ${String(error.stdout || error.message).slice(0, 800)}`);
       zoomExtra++;
     }
+  }
+}
+// FINISH §3, *A headless full run in CI*: five whole seeded runs for every
+// class (map → fights → rewards → events → acts → boss), each to a win or a
+// death. Red on a crash, and red on a SOFT-LOCK — a fight the bot's actions
+// never resolve, or a map walk longer than the map without reaching its boss.
+// Seeds are runsim's fixed formula, so the run is the same every time; it takes
+// a few seconds. The selftest plants a throw inside a fight, a stalled fight and
+// a boss-less map cycle, and requires a clean fleet to repeat seed for seed.
+{
+  const { execFileSync } = await import('node:child_process');
+  const runSim = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/runsim.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120000 }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+  const lanes = [];
+  if (CORE) lanes.push({ args: ['5'], label: 'runsim 5: a headless full run for every class on fixed seeds, 0 crashes, 0 soft-locks' });
+  if (SELFTESTS) lanes.push({ args: ['--selftest'], label: 'runsim --selftest: a crash, a stalled fight and a boss-less map each still go red' });
+  for (const lane of lanes) {
+    const r = runSim(lane.args);
+    const result = (r.out.match(/^RESULT: (.*)$/m) || [])[1];
+    const ok = r.code === 0 && result && !/^FAILED/.test(result);
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${lane.label} — ${result || `runsim ${lane.args.join(' ')} (exit ${r.code}): no RESULT line\n${r.out.slice(-800)}`}`);
+    if (ok) zoomPassed++;
+    else zoomExtra++;
   }
 }
 // The third authored tree: content/config/**.json compiles to

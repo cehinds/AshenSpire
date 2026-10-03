@@ -59,8 +59,8 @@ export function characterLevel(run) {
 
 /**
  * xpToNext(registries, level) → the XP the step from `level` to `level + 1`
- * costs: linear base + (level − 1) × base × scaler, or legacy
- * `round(base × growth^(level − 1), roundTo)`, the one curve shape
+ * costs: linear base + (level − 1) × base × scaler, or exponential
+ * `round(base × growth^(level − 1), roundTo)` (the shipped default), the one curve shape
  * every track shares (proposal §10; skills.js has the same function for the
  * skill tracks). Level 1's step costs `base`.
  */

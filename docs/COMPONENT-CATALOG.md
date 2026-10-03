@@ -40,7 +40,11 @@ Title and Settings (including in-run Settings). Release metadata supplies its
 version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
 instructions, and transfer limits. The save-transfer engine validates all slots
 before replacing storage and preserves a recovery copy. Import is available from
-Title, with a preview and confirmation. See [offline play](offline-play.md).
+Title, with a preview and confirmation. For a pack-shaped build the modal also
+offers **Download a folder copy (zip)** (`offline-folder-copy`, step 7 of
+docs/EXTERNAL-ASSETS-PLAN.md): the game assembles the page, its light and common
+packs and their objects into one zip, checking each file as it is written. See
+[offline play](offline-play.md).
 
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
 glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
@@ -129,12 +133,16 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `startup-subtitle` | `startupGateModel.properties.subtitle` | `startupGate.mountStartupGate` | Startup Mark | Replaceable genre subtitle. |
 | `startup-divider` | semantic child | `startupGate.mountStartupGate` | Startup Mark | Decorative gold rule separating title copy from the prompt. |
 | `startup-prompt` | input-family prompt record | `startupGate.mountStartupGate` | Startup Mark | Polite live-region invitation updated for pointer, touch, keyboard, or controller. |
+| `boot-art-status` | `bootArtStatusModel` (`bootArt.bootArtLine`) | `bootArtStatus.mountBootArtStatus` (beside the gate, by `main.js showStartupGate`), rewritten by `bootArt.paintBootArt` | Cold boot, beside Startup Gate | Web edition only (a build that pins packs). Not one of the gate's parts: a sibling in `#app`, outside the gate's `role="button"`, laid over its top edge, clear of the lockup and the build stamp, and taking no input. One polite, aria-busy status line — "Loading art…", then "Loading art · n of N" over the critical set `content/config` lists, then nothing; the failure sentence when the load failed. Stays through the reveal; pulses unless Reduced motion. |
+| `art-load-notice` | `artLoadNoticeModel` | `artLoadNotice.mountArtLoadNotice` (drawn by `main.js` through `mountTitle`'s `artNotice`) | Title screen | Web edition only, when the built-in art could not be loaded: a non-blocking panel at the top of the title, its FIRST child, so reading, Tab and cursor order meet it before the menu. Its message is one polite live node rewritten in place; failed, retrying and failed-again states. |
+| `art-load-notice-retry` | `artLoadNoticeModel` child | `artLoadNotice.mountArtLoadNotice` | Art Load Notice | Retry: reloads the indexes through the Art quality queue (`artTier.retryBuiltInArt`, its own 60 s deadline); `aria-disabled` while it runs, keeping focus; a load that succeeds redraws the title on the new art. |
 | `title-brand-lockup` | title content records | `title.mountTitle` | Title screen | Centered wordmark, subtitle, and divider composition. |
 | `title-wordmark` | title content record | `title.mountTitle` | Title Brand Lockup | Main Ashen Spire title text. |
 | `title-subtitle` | title content record | `title.mountTitle` | Title Brand Lockup | Main title genre subtitle. |
 | `title-divider` | semantic child | `title.mountTitle` | Title Brand Lockup | Gold rule and diamond under the title. |
 | `title-menu` | title content records | `title.mountTitle` | Title screen | Centered unfurled Continue / Load / New / Collection / Settings / Quit menu. |
-| `title-menu-item` | action content record + availability | `title.mountTitle` | Title Menu | One keyboard, pointer, touch, and controller-ready menu action. |
+| `title-menu-item` | action content record + availability | `title.mountTitle` | Title Menu | One keyboard, pointer, touch, and controller-ready menu action. A disabled entry with a `reason` (Continue with no save) wears it as a `disabled-reason-note` under it. |
+| `disabled-reason-note` | `refusal.reasonNote` / `reasonWhenDisabled` / `refusesWhen`; kit `titleMenu` entry `reason` | `.as-fieldnote.as-reasonnote` line under the control's button row | Every forward control that can refuse: character creation Next / Continue / Begin, custom run and lobby Begin, event and dialogue Continue, reward Confirm, title Continue, save-slot Continue, hand-discard Confirm, atlas Enter (the act map has none: its tray only opens where Enter is live), Smith and mount-service Confirm | The reason a Next / Continue / Confirm is off, as visible text (FINISH §6): hidden while the control works or is itself hidden, named in its `aria-describedby`, an 11 px floor. Measured by `tools/disabled-reason.mjs`. |
 | `title-menu-gem` | semantic child | `title.mountTitle` | Title Menu Item | Decorative diamond separator shown beneath a menu label. |
 | `title-tagline` | title content record | `title.mountTitle` | Title screen | Replaceable centered closing line beneath the main menu. |
 | `title-menu-modal` | `saveSlotSelectionModel` + save-slot records | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal; selected card, accessibility state, and primary action target share one immutable projection, while `load-review` confirms a twice-activated save before loading. |
@@ -149,6 +157,8 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `title-modal-actions` | `saveSlotSelectionModel` action projection + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue group; Continue remains enabled for and targets the selected slot, while the `load-review` variant becomes Back to Saves / Load Save. |
 | `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu, or from `load-review` to the Load Game slot list with selection preserved. |
 | `title-modal-continue-control` | `saveSlotSelectionModel` action child | `title.mountTitle` | Title Modal Actions | Carries the selected slot as its semantic load/create command payload; the review variant exposes a positive Load Save action. |
+| `offline-play-modal` | `offlinePlay` content record + build.json feed (`releasedDownload`, `releasedZip`) | `offlinePlay.openOfflinePlay` | Title and Settings → Download & saves | Shared Download & saves dialog: branch feed, the light single-file download and its direct link, the folder copy, Make available offline, and save export/import. |
+| `offline-folder-copy` | `releasedZip` plan + `assembleZip` progress (`offline.zip.*` uiStrings) | `offlinePlay.openOfflinePlay` | Download & saves | Folder copy (zip) of a pack-shaped build: four instruction rows, a Download game folder (zip) button that becomes Save zip file after a Blob save, a progress bar and a polite status line; for a single-file build one line says the Download is already the whole game. |
 | `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition of header, resources, controls, and belt. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
@@ -203,7 +213,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
 | `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Faces fan by overlap, grow up to 184 physical pixels wide when space permits, and remain visible, inert and dim during enemy turns. The 5:7 face is the card's one authored shape (`content/config/ui/components/card.json` `sizing.ratio`, projected as `--card-ratio` by `CardSizeModel`): this row said 5:7 while the hand actually drew 5:8, and `node tools/card-one-shape.mjs` now holds every surface to the one number. |
-| `combat-action-rail` | `componentModel` | `combat.js` | Combat | Single centered row: Actions, flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. |
+| `combat-action-rail` | `componentModel` | `components/combatActionRow.js` (mounted by `combat.js` and `coop.js`) | Combat, Co-op combat | Single centered row: Actions, flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. Co-op mounts the same row; its piles show counts (the host sends no cards) and its Potions list belongs to the seat that opened it. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
 | `kit.detailCard` | `detailCard(spec)` | `kit/index.js` detailCard | Inspectors and summaries | One subject described: eyebrow, name, line, meta, and any body the caller adds. The muted variant is the same card standing back. |
@@ -222,6 +232,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `kit.decide` | `decide(spec)` | `kit/index.js` decide | Every door that asks a question | The body of a decision — the question, what it costs, and the ways to answer — the shape a page door wraps when the surface is a question rather than a place. |
 | `equipment-animation-reference` | `equipmentAnimationForLoadout + equipmentAnimations.json` | `paintedOutfits.createPaintedStage + assets.playerSprite` | Solo + co-op + Armoury + conversation + portrait | Derives a presentation set from class, armour, ordered hand weapon groups and optional grip. Named clips provide action and view references; missing bindings retain existing class art. Independent greatsword, sword/shield and unarmed profiles cover all four classes and 35 armor entries, preserving 32 appearances per family. Sword/shield records its authored right-sword/left-shield hands; reversed selectors share that canonical artwork without mirroring. Twin swords add 32 appearances across all 35 entries with a shared profile and optional per-hand item constraints. Only right Straight Sword / left Katana selects these paintings; reversed hands retain existing art. Empty-hand casting and buffs use magic references across all 35 armor entries; ordinary actions retain physical references. The magic gallery preserves all 16 configurable poses. |
 | `touch-flick-practice` | `TouchFlickModel` | `settingsRowHtml + mountFlickPractice` | Accessibility settings + combat hand | Configurable 32–160 CSS-pixel upward flick distance, synchronized field and slider, Reset and harmless practice. Touch, mouse, trackpad and pen share nearest legal target selection on release; selection and Information stay separate. |
+| `settings-choice-row` | settings `ROWS` record (`choices`, `legacyChoices`, `choiceDisabled`) | `settings.settingsRowHtml` | Settings rows | One Settings choice row: a segmented group (three choices or fewer) or a dropdown, from `settingsRowHtml`. A row may disable single choices with `choiceDisabled`: the option or segment is `disabled`/`aria-disabled`, a stored value is kept, and the row's live line says why (Art quality: Light and High in a single file). |
 | `card-shelf` | `CardSizeModel.cardShelf + cardShelfColumnsAt (content/config/ui/components/card.json -> sizing.shelf)` | `cardShelf.wireCardShelf + styles/kit.css .card-shelf` | Merchant shelves (cards, armaments, weapon arts, relics, flasks, sell), card-removal grid, mount service deck list | Row of resting cards: up to four across, every track the same width, floored at a legible minimum and capped at the card resting width. Too narrow for four, it drops a column rather than shaving the cards. |
 | `modal-height-policy` | `measured body overflow` | `modalShell.bindModalDismiss` | All shared dialogs | Standard widths remain independent of height. Overflow promotes the dialog to the long viewport-bounded height; body scrolls while header and footer remain pinned. Promotion remains stable until close. |
 | `card-effect-layers` | `combatEffectPresentation.CARD_EFFECT_LAYERS` | `cardEffectLayers.mountCardEffectLayers / playCardEffectLayers` | Optional accepted card flight | Default OFF: Settings > General > Combat > Animation & effects > Show played card animation. Card flights are independent of caster effects. Payment receipts choose art; cancellation and accessibility preferences suppress playback. |
@@ -270,6 +281,8 @@ startup-gate
    ├─ startup-divider
    └─ startup-prompt
 
+boot-art-status (web edition only; a sibling of startup-gate, not its child)
+
 title screen
 ├─ title-brand-lockup
 │  ├─ title-wordmark
@@ -279,6 +292,8 @@ title screen
 │  └─ title-menu-item × 6
 │     └─ title-menu-gem
 ├─ title-tagline
+├─ art-load-notice (web edition, art failed to load)
+│  └─ art-load-notice-retry
 └─ title-menu-modal
    ├─ title-modal-close-control
    ├─ title-modal-heading + title-modal-divider
@@ -351,6 +366,7 @@ primary-stat-card
 | `smith-upgrade-preview` | `SmithSelectionModel.properties.selected` | grouped delta renderer inside Smith modal | Tier, cost, purse, shortfall, and every sourced basic-card delta |
 | `deck-editor` | `DeckEditorModel.deckEditorModel` + `openDeckEdit` session (`beginDeckEdit`/`cancelDeckEdit`) + `deckEditorDoors` | `deckEditor.mountDeckEditor` | Map Quick Access + Armoury Cards view + atlas header (Free); Rest card of a `deckEdit` place — shrine, inn, chapel (Rest sites only). Two panes (collection / deck), live "N / min–max" counter with the refusal as visible text beside a disabled Done, cost curve, filter and sort chips; tap, ＋/－, drag, keyboard and pad for every move; targets ≥ 48 px on a coarse pointer. |
 | `blacksmith` | `model/blacksmith.js` plans (refine, sigil slots and setting, upgrade from either purse, extract/install/upgrade art, stack copy) + `serviceCandidates` | `blacksmith.mountBlacksmith` (shop W1d workspace, `wireShopLayout`; `smithUpgradeModal` and the mount-service modals for upgrade, extract and install) | Atlas smith point; a merchant whose kind rolls `blacksmith` (SPEC §14.4). One rail item per offering the visit laid out; a service with nothing to act on stays on the rail, shown unavailable with its reason, and becomes usable on the same visit; the header carries stones, refined stones and cinders. |
+| `master` | `model/master.js` plans (training, respec, redistribute, lesson, appraisal) + `masterServiceCandidates`; `engine/shopKinds.js rollMasterLesson` | `master.mountMaster` (the blacksmith's shop W1d workspace, `wireShopLayout`) | Atlas `master` point (none placed yet); a merchant whose kind rolls `master` (SPEC §14.5). One rail item per offering the visit laid out, then Sell (the market's consumable sale, under `shopSell`); a service with nothing to act on stays on the rail, shown unavailable with its reason, and becomes usable on the same visit; a lesson's cards are rolled when asked and kept with the stock; the header carries cinders, the training pool and the sessions left. |
 
 The default Shrine presentation is one vertical list. Every folded option uses
 the same data-owned viewport footprint: width and height percentages come from
@@ -536,7 +552,7 @@ is [`asset-data/components/armoury.json`](../asset-data/components/armoury.json)
 | Character composition | `armoury.characterPane`, `armoury.spritePane`, `armoury.characterSummary`, `armoury.levelProgress`, `armoury.combatPowerCard`, `armoury.combatPowerGroup`, `armoury.combatPowerMetric`, `armoury.attributesCard`, `armoury.attributeCard`, `armoury.relicsCard`, `armoury.skillsCard`, `armoury.skillProgressGroup`, `armoury.skillTrack` |
 | Armaments tray and pane | `armoury.equipmentPane`, `armoury.armamentsCard`, `armoury.armamentsHeader`, `armoury.armamentsFoldButton`, `armoury.armamentsExpanded`, `armoury.armamentsFolded`, `armoury.armamentViewToggle`, `armoury.hybridPaneSplitter` |
 | Procedural equipment-position cards | `armoury.equipmentPositionCard`, `armoury.occupiedPositionCard`, `armoury.emptyPositionCard`, `armoury.lockedPositionCard`, `armoury.positionLabelPane`, `armoury.positionSpritePane`, `armoury.summaryDivider`, `armoury.positionSummaryPane`, `armoury.positionAction`, `armoury.armamentItemCard`, `armoury.armamentDetailPane`, `armoury.armamentGridGroup`, `armoury.positionGridCard`, `armoury.occupiedPositionGridCard`, `armoury.emptyPositionGridCard`, `armoury.lockedPositionGridCard`, `armoury.armamentGridDetails` |
-| Inventory and comparison | `armoury.inventoryCard`, `armoury.paneSplitter`, `armoury.itemCard`, `armoury.inventoryItemClass`, `armoury.itemReveal`, `armoury.comparisonTooltipAnchor`, `armoury.equipmentComparison`, `armoury.inventoryTrayResizeHandle` |
+| Inventory and comparison | `armoury.inventoryCard`, `armoury.sigilsPanel`, `armoury.paneSplitter`, `armoury.itemCard`, `armoury.inventoryItemClass`, `armoury.itemReveal`, `armoury.comparisonTooltipAnchor`, `armoury.equipmentComparison`, `armoury.inventoryTrayResizeHandle` |
 | Cards, Stats, and disclosure | `armoury.cardsCard`, `armoury.cardList`, `armoury.cardRow`, `armoury.cardDetail`, `armoury.cardViewToggle`, `armoury.cardsTrayResizeHandle`, `armoury.statsTray`, `armoury.statsSummary`, `armoury.playerLoadReceipt`, `armoury.statsTrayResizeHandle`, `armoury.disclosure` |
 
 Within each procedural equipment group, empty positions are ordered after the

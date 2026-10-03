@@ -351,7 +351,11 @@ function scoreRuntime(report) {
 }
 
 function copyBundleInputs(to) {
-  for (const name of ['index.html', 'buildordinal.json', 'src', 'styles', 'assets', 'tools']) {
+  // The pin and the manifest are build identity (tools/buildversion.mjs
+  // BUILD_IDENTITY_FILES, docs/EXTERNAL-ASSETS-PLAN.md step 11).
+  // assets-mobile/ too: since step 8e the one inline shape is the light single
+  // file, whose payloads are the light twins (docs/EXTERNAL-ASSETS-PLAN.md).
+  for (const name of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'assets', 'assets-mobile', 'tools']) {
     const from = resolve(ROOT, name);
     if (existsSync(from)) cpSync(from, resolve(to, name), { recursive: true });
   }
@@ -551,12 +555,19 @@ function selftest() {
   const dir = mkdtempSync(join(tmpdir(), 'sfx-convention-artifact-'));
   try {
     copyBundleInputs(dir);
-    mkdirSync(resolve(dir, 'assets/sfx'), { recursive: true });
-    writeFileSync(resolve(dir, 'assets/sfx/cardPlay.ogg'), Buffer.from('OggS-fixture-47'));
+    // The fixture sample in both trees: the light single file inlines the twin
+    // and refuses a source with no twin (tools/bundle.mjs, the twin check).
+    for (const tree of ['assets', 'assets-mobile']) {
+      mkdirSync(resolve(dir, tree, 'sfx'), { recursive: true });
+      writeFileSync(resolve(dir, tree, 'sfx/cardPlay.ogg'), Buffer.from('OggS-fixture-47'));
+    }
     const gitSteps = [
       ['init', '-q'],
-      ['add', 'index.html', 'buildordinal.json', 'src', 'styles', 'assets', 'tools'],
-      ['-c', 'user.name=SFX Fixture', '-c', 'user.email=sfx-fixture@example.invalid',
+      ['add', 'index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'assets', 'assets-mobile', 'tools'],
+      // gc.auto=0: the fixture holds about 6,700 objects, git's default auto-gc
+      // threshold, so a commit could start a detached `git gc` that is still
+      // writing .git/objects when the sandbox is removed (ENOTEMPTY).
+      ['-c', 'gc.auto=0', '-c', 'user.name=SFX Fixture', '-c', 'user.email=sfx-fixture@example.invalid',
         'commit', '-qm', 'fixture'],
     ];
     for (const step of gitSteps) {
@@ -568,7 +579,9 @@ function selftest() {
         return bad;
       }
     }
-    const built = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs')], {
+    // The light single file (the only inline shape since step 8e), written
+    // where this lane has always read the selected artifact.
+    const built = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs'), '--single-file', '--out', 'build'], {
       cwd: dir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
     });
     const artifact = resolve(dir, 'build/AshenSpire.html');

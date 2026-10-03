@@ -72,6 +72,19 @@ function cardAmount(resolveCard, registries, instance, op) {
   return effect?.amount ?? effect?.stacks ?? null;
 }
 
+// A complete-kit Strike or Guard is `equipmentRole: 'granted'` with its basic
+// role in `kitRole` (SPEC, Complete armament kits); a filler basic carries the
+// role in `equipmentRole`. Both are the source armament's, at its Smithing tier.
+function basicRole(card) {
+  return card?.kitRole || card?.equipmentRole;
+}
+
+const BASIC_ROLES = ['attack', 'guard', 'technique'];
+
+function sourcedBasics(cards, pieceId) {
+  return cards.filter((card) => card.sourceArmamentId === pieceId && BASIC_ROLES.includes(basicRole(card)));
+}
+
 async function fromRoot(relative) {
   return import(pathToFileURL(join(ROOT, relative)).href);
 }
@@ -81,7 +94,7 @@ async function main() {
   if (missing.length) throw new Error(`selected root is missing: ${missing.join(', ')}`);
 
   const [{ contentBundle }, registriesModule, validateModule, stateModule, loadoutModule,
-    smithingModule, statProjectionModule, combatModule, combatSnapshotModule, actionsModule, saveModule, rngModule, sessionModule] = await Promise.all([
+    smithingModule, statProjectionModule, combatModule, combatSnapshotModule, actionsModule, saveModule, rngModule, sessionModule, cardRemovalModule] = await Promise.all([
     fromRoot('src/content/index.js'),
     fromRoot('src/model/registries.js'),
     fromRoot('src/model/validate.js'),
@@ -95,6 +108,7 @@ async function main() {
     fromRoot('src/engine/save.js'),
     fromRoot('src/engine/rng.js'),
     fromRoot('tools/session.mjs'),
+    fromRoot('src/model/cardRemoval.js').catch(() => ({})),
   ]);
 
   const { createRegistries, resolveCard, passiveSum } = registriesModule;
@@ -113,14 +127,18 @@ async function main() {
   const { executeRunEffects } = actionsModule;
   const { createSaveManager, createMemoryStorage, RUN_KEY } = saveModule;
   const { createRng } = rngModule;
+  // An older --root has no isPoolDeckMode; no run context is then passed.
+  const runPoolDeck = (run) => cardRemovalModule.isPoolDeckMode?.(run);
   const { createSession, restoreSession } = sessionModule;
 
   const registries = createRegistries(contentBundle);
   const contentVerdict = validateContent(contentBundle);
   check(contentVerdict.ok, 'SMITH-CONTENT-DOOR', 'the shipped economy passes the ordinary boot-time content validator');
   const equipmentItems = [...registries.equipment.armaments, ...registries.equipment.armour];
-  check(equipmentItems.length === 41 && equipmentItems.every((item) => item.entityTags?.length && item.itemTypeTags?.length && item.itemTypes?.length),
-    'SMITH-ITEM-TYPE-TAGS', 'all 41 equipment entities carry authored item:* type tags and normalized display records');
+  // 28 armaments + 35 armour since the content expansion (#1187) added the
+  // Last Lantern gear; the pin stays literal so a dropped item still goes red.
+  check(equipmentItems.length === 63 && equipmentItems.every((item) => item.entityTags?.length && item.itemTypeTags?.length && item.itemTypes?.length),
+    'SMITH-ITEM-TYPE-TAGS', 'all 63 equipment entities carry authored item:* type tags and normalized display records');
   const parryingDagger = registries.equipment.armaments.find((item) => item.id === 'parryDagger');
   check(parryingDagger?.itemTypeTags.join('|') === 'item:blade|item:shield'
       && parryingDagger.itemTypes.map((type) => type.label).join('|') === 'Blade|Shield',
@@ -166,12 +184,25 @@ async function main() {
   const syntheticAttack = syntheticSword?.affectedCards.find((row) => row.role === 'attack');
   const syntheticTechnique = syntheticSword?.affectedCards.find((row) => row.role === 'technique');
   const syntheticGuard = syntheticShield?.affectedCards.find((row) => row.role === 'guard');
-  check(syntheticVerdict.ok && syntheticSword?.cost === 2 && amount(syntheticAttack, 'damage')?.join('|') === '7|8'
+  // Armed decks carry no live Technique since complete kits (#904; SPEC: "New
+  // armed starting decks omit the redundant global technique grant"), so the
+  // Technique row is the authored role preview. Tier-0 values come from the
+  // engine; each synthetic row must move exactly its own value by its delta.
+  const syntheticTechniquePreview = syntheticTechnique
+    || syntheticSword?.previewCards.find((row) => row.role === 'technique');
+  const syntheticAttackBase = syntheticAttack ? cardAmount(resolveCard, syntheticRegistries, syntheticAttack.reference, 'damage') : null;
+  const syntheticGuardBase = syntheticGuard ? cardAmount(resolveCard, syntheticRegistries, syntheticGuard.reference, 'block') : null;
+  const syntheticSwordStr = (contentBundle.equipment.equipmentRequirements || [])
+    .find((row) => row.itemId === 'straightSword' && row.attributeId === 'strength')?.minimum;
+  check(syntheticVerdict.ok && syntheticSword?.cost === 2
+      && Number.isInteger(syntheticAttackBase) && amount(syntheticAttack, 'damage')?.join('|') === `${syntheticAttackBase}|${syntheticAttackBase + 1}`
       && amount(syntheticAttack, 'cost:action')?.join('|') === '1|2'
-      && amount(syntheticTechnique, 'cost:mana')?.join('|') === '0|2'
-      && amount(syntheticGuard, 'block')?.join('|') === '7|11'
+      && amount(syntheticTechniquePreview, 'cost:mana')?.join('|') === '0|2'
+      && Number.isInteger(syntheticGuardBase) && amount(syntheticGuard, 'block')?.join('|') === `${syntheticGuardBase}|${syntheticGuardBase + 4}`
       && amount(syntheticGuard, 'cost:stamina')?.join('|') === '0|1'
-      && syntheticSword.requirements[0]?.currentRequired === 10 && syntheticSword.requirements[0]?.nextRequired === 8,
+      && Number.isInteger(syntheticSwordStr)
+      && syntheticSword.requirements[0]?.currentRequired === syntheticSwordStr
+      && syntheticSword.requirements[0]?.nextRequired === Math.max(0, syntheticSwordStr - 2),
     'SMITH-TAGGED-ITEM-TIER-DELTAS', 'exact item/tier tags independently own Stone cost, AR, Guard, Action, Mana, Stamina, and requirement changes');
   const unknownTagVerdict = validateContent({
     ...contentBundle,
@@ -193,9 +224,10 @@ async function main() {
   });
   const authoredRefs = new Set(authoredRows.map((row) => row.itemRef));
   check(!wrongKindVerdict.ok && wrongKindVerdict.errors.some((row) => /invalid for item kind 'armor'/.test(row.msg))
-      && [...authoredRefs].filter((itemRef) => itemRef.startsWith('armor/')).length === 16
+      // 16 class outfits + Bastion, Rimeweave and Waywatcher from #1187.
+      && [...authoredRefs].filter((itemRef) => itemRef.startsWith('armor/')).length === 19
       && [...authoredRefs].filter((itemRef) => itemRef.startsWith('relic/')).sort().join('|') === 'relic/ancestralHorn|relic/curedHide',
-    'SMITH-KIND-CLOSED-CONTENT', 'the boot door rejects cross-kind tags and ships exactly 16 armour plus two explicit relic packages');
+    'SMITH-KIND-CLOSED-CONTENT', 'the boot door rejects cross-kind tags and ships exactly 19 armour plus two explicit relic packages');
   const newReaver = (seed = 211) => createRunState({ seed, classId: 'reaver', registries });
   const combatPlayer = (candidate) => ({
     classId: candidate.class,
@@ -281,37 +313,86 @@ async function main() {
   dispatch(powerCombat, { type: 'playCard', cardInstanceId: powerCard.instanceId });
   check(powerCombat.player.energy === powerRun.energyMax,
     'SMITH-RELIC-COMBAT-CONSUMER', 'the upgraded Horn moves the real Power-card spend from one Energy to zero');
-  check(sword?.affectedCards.length === 5
-      && sword.affectedCards.filter((row) => row.role === 'attack').length === 4
-      && sword.affectedCards.filter((row) => row.role === 'technique').length === 1,
-    'SMITH-SWORD-PARTITION', 'Straight Sword owns four Attack basics and one Technique basic');
-  check(shield?.affectedCards.length === 4
-      && shield.affectedCards.every((row) => row.role === 'guard'),
-    'SMITH-SHIELD-PARTITION', 'Round Shield owns all four Guard basics and no sword basic');
-  check(sword?.previewCards.some((row) => row.role === 'attack' && row.used === true && row.activeCopies === 4)
-      && sword.previewCards.some((row) => row.role === 'guard' && row.used === false && row.activeCopies === 0)
-      && sword.previewCards.some((row) => row.role === 'technique' && row.used === true && row.activeCopies === 1)
-      && shield?.previewCards.some((row) => row.role === 'attack' && row.used === false && row.activeCopies === 0)
-      && shield.previewCards.some((row) => row.role === 'guard' && row.used === true && row.activeCopies === 4)
+  // SPEC, Complete armament kits: each hand armament lends one Strike and one
+  // Guard (`kit:<item>:attack|guard`); in a shield/non-shield pair the sword
+  // keeps the filler Attack quota and the filler Guards stay the shield's.
+  // Armed starting decks carry no global Technique.
+  const swordBasics = sourcedBasics(run.deck, 'straightSword');
+  const shieldBasics = sourcedBasics(run.deck, 'roundShield');
+  const fillerAttacks = run.deck.filter((card) => card.equipmentRole === 'attack');
+  const fillerGuards = run.deck.filter((card) => card.equipmentRole === 'guard');
+  const ids = (rows, key = 'instanceId') => rows.map((row) => row[key]).sort().join('|');
+  check(swordBasics.some((card) => card.instanceId === 'kit:straightSword:attack' && card.kitRole === 'attack')
+      && swordBasics.some((card) => card.instanceId === 'kit:straightSword:guard' && card.kitRole === 'guard')
+      && fillerAttacks.length > 0 && fillerAttacks.every((card) => card.sourceArmamentId === 'straightSword')
+      && swordBasics.length === 2 + fillerAttacks.length
+      && !run.deck.some((card) => basicRole(card) === 'technique')
+      && ids(sword?.affectedCards || []) === ids(swordBasics),
+    'SMITH-SWORD-PARTITION', `Straight Sword owns its kit Strike and Guard plus the ${fillerAttacks.length} filler Attack basic(s), no Technique, and the plan lists exactly those`);
+  check(shieldBasics.some((card) => card.instanceId === 'kit:roundShield:attack' && card.kitRole === 'attack')
+      && shieldBasics.some((card) => card.instanceId === 'kit:roundShield:guard' && card.kitRole === 'guard')
+      && fillerGuards.length > 0 && fillerGuards.every((card) => card.sourceArmamentId === 'roundShield')
+      && shieldBasics.length === 2 + fillerGuards.length
+      && !shieldBasics.some((card) => card.equipmentRole === 'attack')
+      && ids(shield?.affectedCards || []) === ids(shieldBasics),
+    'SMITH-SHIELD-PARTITION', `Round Shield owns its kit Strike and Guard plus all ${fillerGuards.length} filler Guard basic(s), no filler Attack, and the plan lists exactly those`);
+  const swordAttackCopies = swordBasics.filter((card) => basicRole(card) === 'attack').length;
+  const shieldGuardCopies = shieldBasics.filter((card) => basicRole(card) === 'guard').length;
+  check(sword?.previewCards.some((row) => row.role === 'attack' && row.used === true && row.activeCopies === swordAttackCopies)
+      && sword.previewCards.some((row) => row.role === 'guard' && row.used === true && row.activeCopies === 1)
+      && sword.previewCards.some((row) => row.role === 'technique' && row.used === false && row.activeCopies === 0)
+      && shield?.previewCards.some((row) => row.role === 'attack' && row.used === true && row.activeCopies === 1)
+      && shield.previewCards.some((row) => row.role === 'guard' && row.used === true && row.activeCopies === shieldGuardCopies)
       && shield.previewCards.some((row) => row.role === 'technique' && row.used === false && row.activeCopies === 0),
-    'SMITH-ROLE-PREVIEWS', 'every armament previews basic Strike, Defend, and Technique while displaced hand roles stay explicitly unused');
+    'SMITH-ROLE-PREVIEWS', 'every armament previews basic Strike, Defend, and Technique; kit roles are live and the absent Technique stays explicitly unused');
 
+  // Engine-resolved: the preview's before is the live card at tier 0 and its
+  // after is that value moved by the item's own authored tier-1 row.
+  const tierRow = (pieceId, tag) => authoredRows.find((row) => row.itemRef === `armament/${pieceId}` && row.nextTier === 1 && row.tag === tag)?.value;
+  const swordDamageStep = tierRow('straightSword', 'card:attack:effect:damage');
+  const swordGuardStep = tierRow('straightSword', 'card:guard:effect:block');
+  const swordTechniqueStep = tierRow('straightSword', 'card:technique:effect:block');
+  const shieldGuardStep = tierRow('roundShield', 'card:guard:effect:block');
   const strikePreview = sword?.affectedCards.find((row) => row.role === 'attack');
-  const techniquePreview = sword?.affectedCards.find((row) => row.role === 'technique');
-  const guardPreview = shield?.affectedCards[0];
-  check(JSON.stringify(amount(strikePreview, 'damage')) === '[7,10]'
-      && JSON.stringify(amount(techniquePreview, 'block')) === '[3,5]'
-      && JSON.stringify(amount(guardPreview, 'block')) === '[7,10]',
-    'SMITH-REAL-DELTAS', 'preview is engine-resolved: Strike 7→10, Technique Block 3→5, Guard 7→10');
-  check(strikePreview?.scaling?.attributeId === 'strength'
-      && strikePreview.scaling.label === 'STR'
-      && strikePreview.scaling.actual === run.attributes.strength,
-    'SMITH-SCALING-PREVIEW', 'preview carries the authored profile scaling stat and the run current value');
-  check(sword?.requirements.length === 1
+  const swordGuardPreview = sword?.affectedCards.find((row) => row.role === 'guard');
+  const techniquePreview = sword?.previewCards.find((row) => row.role === 'technique');
+  const guardPreview = shield?.affectedCards.find((row) => row.role === 'guard');
+  const strikeBase = cardAmount(resolveCard, registries, run.deck.find((card) => card.instanceId === 'kit:straightSword:attack'), 'damage');
+  const swordGuardBase = cardAmount(resolveCard, registries, run.deck.find((card) => card.instanceId === 'kit:straightSword:guard'), 'block');
+  const techniqueBase = techniquePreview ? cardAmount(resolveCard, registries, techniquePreview.reference, 'block') : null;
+  const shieldGuardBase = cardAmount(resolveCard, registries, run.deck.find((card) => card.instanceId === 'kit:roundShield:guard'), 'block');
+  const pair = (base, step) => JSON.stringify([base, base + step]);
+  check([swordDamageStep, swordGuardStep, swordTechniqueStep, shieldGuardStep].every((step) => Number.isInteger(step) && step > 0)
+      && [strikeBase, swordGuardBase, techniqueBase, shieldGuardBase].every((base) => Number.isInteger(base))
+      && JSON.stringify(amount(strikePreview, 'damage')) === pair(strikeBase, swordDamageStep)
+      && JSON.stringify(amount(swordGuardPreview, 'block')) === pair(swordGuardBase, swordGuardStep)
+      && JSON.stringify(amount(techniquePreview, 'block')) === pair(techniqueBase, swordTechniqueStep)
+      && JSON.stringify(amount(guardPreview, 'block')) === pair(shieldGuardBase, shieldGuardStep),
+    'SMITH-REAL-DELTAS', `preview is engine-resolved: Strike ${strikeBase}→${strikeBase + swordDamageStep}, sword Guard ${swordGuardBase}→${swordGuardBase + swordGuardStep}, Technique Block ${techniqueBase}→${techniqueBase + swordTechniqueStep}, shield Guard ${shieldGuardBase}→${shieldGuardBase + shieldGuardStep}`);
+  // #1246 replaced attribute-tier scaling with direct source ratings: a
+  // preview names the rating its authored profile reads (the run's snapshot
+  // first), and the live carrier holds the run's current rating value.
+  const strikeProfile = run.equipmentProfileRuleSnapshot?.profiles?.[strikePreview?.reference?.profileId]
+    || registries.equipment.basicCardProfiles.find((row) => row.id === strikePreview?.reference?.profileId);
+  const strikeCarrier = run.deck.find((card) => card.instanceId === strikePreview?.instanceId);
+  check(!!strikeProfile?.ratingId
+      && strikePreview.rating?.id === strikeProfile.ratingId
+      && strikePreview.rating.label === strikeProfile.ratingId.toUpperCase()
+      && strikeCarrier?.ratingId === strikeProfile.ratingId
+      && Number.isInteger(strikeCarrier?.ratingValue),
+    'SMITH-SCALING-PREVIEW', `preview carries the authored profile rating (${strikePreview?.rating?.label}) and the run current value (${strikeCarrier?.ratingValue})`);
+  // The lean scale (SPEC §13.4m) restated equipment minima onto 1-4; the
+  // authored row and the authored tier-one delta decide both numbers.
+  const swordStrBase = (contentBundle.equipment.equipmentRequirements || [])
+    .find((row) => row.itemId === 'straightSword' && row.attributeId === 'strength')?.minimum;
+  const swordStrStep = tierRow('straightSword', 'requirement:strength');
+  check(Number.isInteger(swordStrBase) && Number.isInteger(swordStrStep) && swordStrStep < 0
+      && swordStrBase + swordStrStep >= 0
+      && sword?.requirements.length === 1
       && sword.requirements[0].attributeId === 'strength'
-      && sword.requirements[0].currentRequired === 10
-      && sword.requirements[0].nextRequired === 9,
-    'SMITH-REQUIREMENT-PREVIEW', 'Straight Sword publishes its authored STR 10 minimum and tier-one reduction to STR 9');
+      && sword.requirements[0].currentRequired === swordStrBase
+      && sword.requirements[0].nextRequired === swordStrBase + swordStrStep,
+    'SMITH-REQUIREMENT-PREVIEW', `Straight Sword publishes its authored STR ${swordStrBase} minimum and tier-one reduction to STR ${swordStrBase + swordStrStep}`);
   check(sword?.cost === 1 && sword?.shortfall === 1 && sword?.affordable === false
       && shield?.cost === 1 && shield?.shortfall === 1 && shield?.affordable === false,
     'SMITH-UNAFFORDABLE', 'both choices name cost 1 and shortfall 1 without hiding the picker');
@@ -321,31 +402,43 @@ async function main() {
 
   // Paid transaction, whole-source propagation, cap, free promotion, future
   // copy inheritance, and swap-away/back restoration.
+  const shieldValuesBefore = new Map(shieldBasics.map((card) => [card.instanceId,
+    [cardAmount(resolveCard, registries, card, 'damage'), cardAmount(resolveCard, registries, card, 'block')].join('|')]));
+  const swordAttackAfter = strikeBase + swordDamageStep;
+  const swordGuardAfter = swordGuardBase + swordGuardStep;
+  // Every sword-owned basic at tier 1: attacks at the smithed Strike value,
+  // the kit Guard at the smithed Guard value, no per-copy upgrade flag.
+  const swordAtTierOne = (cards) => cards.length === swordBasics.length
+    && cards.every((card) => card.smithingLevel === 1 && card.upgraded === false)
+    && cards.filter((card) => basicRole(card) === 'attack')
+      .every((card) => cardAmount(resolveCard, registries, card, 'damage') === swordAttackAfter)
+    && cards.filter((card) => basicRole(card) === 'guard')
+      .every((card) => cardAmount(resolveCard, registries, card, 'block') === swordGuardAfter);
   run.smithingStones = 1;
   const paid = commitSmithing(registries, run, 'straightSword');
-  const swordCards = run.deck.filter((card) => card.sourceArmamentId === 'straightSword');
-  const shieldCards = run.deck.filter((card) => card.sourceArmamentId === 'roundShield');
+  const swordCards = sourcedBasics(run.deck, 'straightSword');
+  const shieldCards = sourcedBasics(run.deck, 'roundShield');
   check(paid.cost === 1 && paid.stoneBalanceBefore === 1 && paid.stoneBalanceAfter === 0
       && run.smithingStones === 0 && run.itemUpgradeLevels['armament/straightSword'] === 1,
     'SMITH-SPEND-EXACT', 'paid Smithing spends exactly one Stone and promotes only the source tier');
   const swordPiece = registries.equipment.armaments.find((piece) => piece.id === 'straightSword');
   const reducedRequirement = equipmentRequirementReceipt(registries, swordPiece, run.attributes, { itemUpgradeLevels: run.itemUpgradeLevels });
-  const boundaryBefore = equipmentRequirementReceipt(registries, swordPiece, { ...run.attributes, strength: 9 });
-  const boundaryAfter = equipmentRequirementReceipt(registries, swordPiece, { ...run.attributes, strength: 9 }, { itemUpgradeLevels: run.itemUpgradeLevels });
-  check(reducedRequirement.requirements[0]?.baseRequired === 10
-      && reducedRequirement.requirements[0]?.required === 9
-      && reducedRequirement.requirements[0]?.reduction === 1
+  // One point under the authored minimum: refused unsmithed, held at tier 1.
+  const boundaryStrength = swordStrBase + swordStrStep;
+  const boundaryBefore = equipmentRequirementReceipt(registries, swordPiece, { ...run.attributes, strength: boundaryStrength });
+  const boundaryAfter = equipmentRequirementReceipt(registries, swordPiece, { ...run.attributes, strength: boundaryStrength }, { itemUpgradeLevels: run.itemUpgradeLevels });
+  check(reducedRequirement.requirements[0]?.baseRequired === swordStrBase
+      && reducedRequirement.requirements[0]?.required === swordStrBase + swordStrStep
+      && reducedRequirement.requirements[0]?.reduction === -swordStrStep
       && boundaryBefore.ok === false && boundaryAfter.ok === true,
     'SMITH-REQUIREMENT-ENFORCEMENT', 'the shared equipment gate enforces the promoted armament requirement reduction');
-  check(swordCards.length === 5 && swordCards.every((card) => card.smithingLevel === 1 && card.upgraded === false)
-      && swordCards.filter((card) => card.equipmentRole === 'attack')
-        .every((card) => cardAmount(resolveCard, registries, card, 'damage') === 10)
-      && cardAmount(resolveCard, registries,
-        swordCards.find((card) => card.equipmentRole === 'technique'), 'block') === 5,
-    'SMITH-WHOLE-SOURCE', 'all five sword-owned basics resolve at tier 1 with no per-copy upgrade authority');
-  check(shieldCards.length === 4 && shieldCards.every((card) => card.smithingLevel === 0)
-      && shieldCards.every((card) => cardAmount(resolveCard, registries, card, 'block') === 7),
-    'SMITH-OTHER-SOURCE-STABLE', 'Smithing the sword leaves every shield-owned Guard unchanged');
+  check(swordAtTierOne(swordCards)
+      && ids(paid.affectedCards || []) === ids(swordCards),
+    'SMITH-WHOLE-SOURCE', `all ${swordBasics.length} sword-owned basics (kit Strike and Guard included) resolve at tier 1 with no per-copy upgrade authority, and the receipt names each`);
+  check(shieldCards.length === shieldBasics.length && shieldCards.every((card) => card.smithingLevel === 0)
+      && shieldCards.every((card) => shieldValuesBefore.get(card.instanceId)
+        === [cardAmount(resolveCard, registries, card, 'damage'), cardAmount(resolveCard, registries, card, 'block')].join('|')),
+    'SMITH-OTHER-SOURCE-STABLE', 'Smithing the sword leaves every shield-owned basic (its kit Strike and every Guard) unchanged');
   const stonesAtCap = run.smithingStones;
   check(!smithingPlan(registries, run).candidates.some((row) => row.armamentId === 'straightSword')
       && !!thrown(() => commitSmithing(registries, run, 'straightSword'), /not an eligible Smithing candidate/)
@@ -361,12 +454,9 @@ async function main() {
   const keepsakeRun = newReaver(2111);
   const whetstone = registries.characterCreation.keepsakes.find((row) => row.id === 'whetstoneMemory');
   executeRunEffects({ run: keepsakeRun, registries, rng: createRng(11) }, whetstone.effects);
-  const keepsakeSword = keepsakeRun.deck.filter((card) => card.sourceArmamentId === 'straightSword');
+  const keepsakeSword = sourcedBasics(keepsakeRun.deck, 'straightSword');
   check(keepsakeRun.itemUpgradeLevels['armament/straightSword'] === 1
-      && keepsakeSword.length === 5
-      && keepsakeSword.every((card) => card.smithingLevel === 1 && card.upgraded === false)
-      && keepsakeSword.filter((card) => card.equipmentRole === 'attack')
-        .every((card) => cardAmount(resolveCard, registries, card, 'damage') === 10),
+      && swordAtTierOne(keepsakeSword),
     'SMITH-WHETSTONE-ROUTE', 'Whetstone Memory promotes the whole Straight Sword source while the retired per-copy flag stays clear');
 
   const originalAttack = run.deck.find((card) => card.equipmentRole === 'attack');
@@ -375,22 +465,32 @@ async function main() {
   stampDeck(registries, run, [futureAttack], { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   check(futureAttack.sourceArmamentId === 'straightSword' && futureAttack.smithingLevel === 1
       && futureAttack.upgraded === false
-      && cardAmount(resolveCard, registries, futureAttack, 'damage') === 10,
+      && cardAmount(resolveCard, registries, futureAttack, 'damage') === swordAttackAfter,
     'SMITH-FUTURE-COPY', 'a recreated sourced basic inherits the current armament tier when stamped');
 
   run.loadout.sets.rightHand[1] = 'dagger';
   run.loadout.active.rightHand = 1;
   stampDeck(registries, run);
-  const daggerState = run.deck.filter((card) => card.equipmentRole === 'attack');
-  const awayOk = daggerState.length === 4
-    && daggerState.every((card) => card.sourceArmamentId === 'dagger' && card.smithingLevel === 0)
-    && daggerState.every((card) => cardAmount(resolveCard, registries, card, 'damage') === 7);
+  // The dagger lends its own kit and takes the filler Attack quota, all unsmithed.
+  const daggerProbe = createRunState({ seed: 211, classId: 'reaver', registries });
+  daggerProbe.loadout.sets.rightHand[1] = 'dagger';
+  daggerProbe.loadout.active.rightHand = 1;
+  stampDeck(registries, daggerProbe);
+  const daggerStrike = cardAmount(resolveCard, registries, daggerProbe.deck.find((card) => card.instanceId === 'kit:dagger:attack'), 'damage');
+  const daggerState = sourcedBasics(run.deck, 'dagger');
+  const awayOk = sourcedBasics(run.deck, 'straightSword').length === 0
+    && daggerState.length === swordBasics.length
+    && daggerState.some((card) => card.instanceId === 'kit:dagger:attack')
+    && daggerState.every((card) => card.smithingLevel === 0)
+    && Number.isInteger(daggerStrike)
+    && daggerState.filter((card) => basicRole(card) === 'attack')
+      .every((card) => cardAmount(resolveCard, registries, card, 'damage') === daggerStrike);
   run.loadout.active.rightHand = 0;
   stampDeck(registries, run);
-  const restoredSword = run.deck.filter((card) => card.equipmentRole === 'attack');
-  check(awayOk && restoredSword.length === 4
-      && restoredSword.every((card) => card.sourceArmamentId === 'straightSword' && card.smithingLevel === 1)
-      && restoredSword.every((card) => cardAmount(resolveCard, registries, card, 'damage') === 10),
+  const restoredSword = sourcedBasics(run.deck, 'straightSword');
+  check(awayOk && sourcedBasics(run.deck, 'dagger').length === 0
+      && ids(restoredSword) === ids(swordBasics)
+      && swordAtTierOne(restoredSword),
     'SMITH-SWAP-RESTORE', 'switching to an unsmithed weapon removes the tier; switching back restores it');
 
   // The real combat intent door must recompose all live piles using the
@@ -409,13 +509,11 @@ async function main() {
     enemyIds: ['fellWarden'],
   });
   const swapEvents = dispatch(liveCombat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 }).events;
-  const liveSwordCards = combatCards(liveCombat, (card) => card.equipmentRole === 'attack');
+  const liveSwordCards = combatCards(liveCombat, (card) => card.sourceArmamentId === 'straightSword' && BASIC_ROLES.includes(basicRole(card)));
   check(liveCombat.loadout.active.rightHand === 0
       && swapEvents.filter((event) => event.type === 'armamentSwapped').length === 1
-      && liveSwordCards.length === 4
-      && liveSwordCards.every((card) => card.sourceArmamentId === 'straightSword'
-        && card.smithingLevel === 1
-        && cardAmount(resolveCard, registries, card, 'damage') === 10),
+      && combatCards(liveCombat, (card) => card.sourceArmamentId === 'dagger').length === 0
+      && swordAtTierOne(liveSwordCards),
     'SMITH-COMBAT-SWAP', 'the real combat swap intent restores the smithed sword tier across every live attack pile');
 
   commitCombatSnapshot({ run: liveRun, combat: liveCombat, nodeId: 'gate-node', encounterId: 'fellWarden' });
@@ -428,19 +526,17 @@ async function main() {
       registries,
       rng: createRng(loadedCombatRun.seed, loadedCombatRun.streamCounters),
       snapshot: loadedCombatRun.combatEntered.snapshot,
+      fallbackPoolDeck: runPoolDeck(loadedCombatRun),
     })
     : null;
   const restoredCombatCards = restoredCombat
-    ? combatCards(restoredCombat, (card) => card.equipmentRole === 'attack')
+    ? combatCards(restoredCombat, (card) => card.sourceArmamentId === 'straightSword' && BASIC_ROLES.includes(basicRole(card)))
     : [];
   check(loadedCombatRun?.itemUpgradeLevels?.['armament/straightSword'] === 1
       && loadedCombatRun?.combatEntered?.snapshot?.itemUpgradeLevels?.['armament/straightSword'] === 1
       && restoredCombat?.itemUpgradeLevels?.['armament/straightSword'] === 1
-      && restoredCombatCards.length === 4
-      && restoredCombatCards.every((card) => card.sourceArmamentId === 'straightSword'
-        && card.smithingLevel === 1
-        && cardAmount(resolveCard, registries, card, 'damage') === 10),
-    'SMITH-COMBAT-SNAPSHOT-ROUNDTRIP', 'active-combat save/load and snapshot restore retain tier authority and resolved 10-damage attacks');
+      && swordAtTierOne(restoredCombatCards),
+    'SMITH-COMBAT-SNAPSHOT-ROUNDTRIP', `active-combat save/load and snapshot restore retain tier authority and resolved ${swordAttackAfter}-damage attacks`);
 
   // Current save round-trip and one-time legacy per-copy migration.
   const storage = createMemoryStorage();
@@ -498,22 +594,21 @@ async function main() {
   const migratedLegacyCombatRun = legacyCombatSaves.loadRun(registries);
   const migratedLegacyCombatCards = migratedLegacyCombatRun
     ? ['draw', 'hand', 'discard', 'exhaust'].flatMap((pile) => migratedLegacyCombatRun.combatEntered.snapshot.piles[pile])
-      .filter((card) => card.equipmentRole === 'attack')
+      .filter((card) => card.sourceArmamentId === 'straightSword' && BASIC_ROLES.includes(basicRole(card)))
     : [];
   const restoredLegacyCombat = migratedLegacyCombatRun
     ? restoreCombatSnapshot({
       registries,
       rng: createRng(migratedLegacyCombatRun.seed, migratedLegacyCombatRun.streamCounters),
       snapshot: migratedLegacyCombatRun.combatEntered.snapshot,
+      fallbackPoolDeck: runPoolDeck(migratedLegacyCombatRun),
     })
     : null;
   check(migratedLegacyCombatRun?.itemUpgradeLevels?.['armament/straightSword'] === 1
       && migratedLegacyCombatRun?.combatEntered?.snapshot?.itemUpgradeLevels?.['armament/straightSword'] === 1
-      && migratedLegacyCombatCards.length === 4
-      && migratedLegacyCombatCards.every((card) => card.smithingLevel === 1
-        && cardAmount(resolveCard, registries, card, 'damage') === 10)
+      && swordAtTierOne(migratedLegacyCombatCards)
       && restoredLegacyCombat?.itemUpgradeLevels?.['armament/straightSword'] === 1,
-    'SMITH-LEGACY-COMBAT-MIGRATION', 'legacy active-combat load promotes before restamping and restores every saved attack at tier 1');
+    'SMITH-LEGACY-COMBAT-MIGRATION', 'legacy active-combat load promotes before restamping and restores every saved sword basic at tier 1');
 
   // Malformed persisted numbers fail closed.
   const malformedPurse = newReaver(214);

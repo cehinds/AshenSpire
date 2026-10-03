@@ -44,7 +44,13 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
-const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools'];
+// art-release.json and art-manifest.json are build-identity inputs
+// (tools/buildversion.mjs BUILD_IDENTITY_FILES, assets step 11): a copy without
+// them cannot stamp a build, so every tool that stamps one would go red on the
+// clean copy before any plant is read. Since step 12 a tool also asks
+// art-manifest.json, not a tree, whether an art id ships (tools/art-source.mjs
+// manifestIds), so a copy without it cannot answer.
+const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools', 'art-release.json', 'art-manifest.json'];
 
 // LINE ENDINGS ARE NOT PART OF THE PLANT (2026-09-17). Plants are authored with
 // `\n`, because that is what the committed blobs carry and what Linux CI checks
@@ -120,6 +126,51 @@ function copyTree(extra = [], { includePng = false } = {}, realRoot = REAL_ROOT)
   return dir;
 }
 
+/* ── SHARDS (owner rule D38 in docs/FINISH.md, 2026-10-02: every CI job
+ * finishes in 20 minutes or less) ─────────────────────────────────────────────
+ *
+ * A browser corpus runs its plants one after another, a browser boot each, and
+ * startup-gate's 26 took 41-46 minutes in one CI step. A shard runs a SUBSET of
+ * the plants so CI can spread one corpus over parallel jobs; the union of the
+ * shards is the whole corpus and no plant runs twice.
+ *
+ *   node tools/<tool>.mjs --selftest --shard 1/4     (or DOORPLANT_SHARD=1/4)
+ *
+ * The assignment is plant INDEX modulo COUNT — the rule tools/buildversion-
+ * selftest.mjs already used — so it is deterministic, needs no table, and a new
+ * plant joins a shard by its position alone. Unsharded (no flag, no env, or
+ * `all`) runs every plant, exactly as before. Each shard still finishes with
+ * its clean run(s), so every shard proves its own reds were its plants.
+ * A tool opts in by resolving the shard itself (resolveShard) and passing it
+ * to doorSelftest; doorSelftest's own default is every plant, so a stray
+ * DOORPLANT_SHARD never cuts a corpus whose tool did not opt in.
+ * tests/doorplant-shard.test.mjs pins the partition (union = all, no overlap)
+ * and that every sharded CI job lists every shard of its count.
+ */
+export function parseShard(text) {
+  if (text == null || text === 'all') return null;
+  const m = /^(\d+)\/(\d+)$/.exec(String(text));
+  const index = m ? Number(m[1]) : NaN;
+  const count = m ? Number(m[2]) : NaN;
+  if (!m || !Number.isSafeInteger(index) || !Number.isSafeInteger(count) || count < 1 || index >= count) {
+    throw new Error(`doorplant: shard must be "all" or index/count such as 0/4 (index < count), got ${JSON.stringify(text)}`);
+  }
+  return { index, count };
+}
+
+/** The shard this process was asked for: `--shard i/n` first, then DOORPLANT_SHARD. */
+export function resolveShard(argv = process.argv, env = process.env) {
+  const at = argv.indexOf('--shard');
+  if (at >= 0) return parseShard(argv[at + 1] ?? '');
+  return parseShard(env.DOORPLANT_SHARD || null);
+}
+
+/** The plants one shard runs, in corpus order. `null` shard = every plant. */
+export function selectShard(plants, shard) {
+  if (!shard) return plants.slice();
+  return plants.filter((_, i) => i % shard.count === shard.index);
+}
+
 function runTool(root, tool, args, timeoutMs, env) {
   const r = spawnSync(process.execPath, [join('tools', tool), ...args], {
     cwd: root, timeout: timeoutMs, encoding: 'utf8',
@@ -176,8 +227,10 @@ function runTool(root, tool, args, timeoutMs, env) {
  * corollary, counted not judged): cut them if no plant ever needs a second file
  * or a compile — then they are decoration.
  */
-export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000, env = {}, extraCopy = [], includePng = false, realRoot = REAL_ROOT }) {
+export async function doorSelftest({ tool, plants: corpus, args = [], timeoutMs = 300000, env = {}, extraCopy = [], includePng = false, realRoot = REAL_ROOT, shard = null }) {
+  const plants = selectShard(corpus, shard);
   console.log(`${tool} --selftest — same-door known-bad corpus (${plants.length} plant(s))`);
+  if (shard) console.log(`SHARD ${shard.index}/${shard.count}: plants at index ${shard.index} mod ${shard.count} — ${plants.length} of ${corpus.length}; the other ${shard.count - 1} shard(s) run the rest (see SHARDS in tools/doorplant.mjs).`);
   console.log(`DOOR: each plant enters as FILE BYTES in a copied real tree at the file(s) named below —`);
   console.log(`      the same file the real defect would ship in. The tool then runs WHOLE from that`);
   console.log(`      copy (cwd = copy root): readFileSync, the import graph, serve.mjs and any browser`);
@@ -508,7 +561,7 @@ async function runCorpus(label, realRoot, plants) {
   console.log = tee(log);
   console.error = tee(error);
   let code;
-  try { code = await doorSelftest({ tool: 'fixture-gate.mjs', plants, timeoutMs: 60000, realRoot }); }
+  try { code = await doorSelftest({ tool: 'fixture-gate.mjs', plants, timeoutMs: 60000, realRoot, shard: null }); }
   finally { console.log = log; console.error = error; }
   return { code, out: lines.join('\n') };
 }

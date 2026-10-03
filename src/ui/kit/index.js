@@ -468,16 +468,24 @@ export function decide({ title = '', children = null, prompt = '', attrs = {} } 
     prompt ? el('p', { class: 'prompt', text: prompt }) : null,
   ]);
 }
-/** titleMenu({ name, subtitle, entries: [{ label, attrs, className, disabled }], foot }) */
+/**
+ * titleMenu({ name, subtitle, entries: [{ label, attrs, className, disabled, reason }], foot })
+ * A disabled entry with a `reason` wears it as visible text under it (the
+ * FieldNote, `.as-reasonnote`; FINISH §6), never only as a grey button.
+ */
 export function titleMenu({ name, subtitle: sub = '', entries = [], foot = null, attrs = {} } = {}) {
   return el('div', { ...attrs, class: cls('as-titlemenu', attrs.class) }, [
     el('h1', { class: 'tm-name', text: name, ...(attrs.nameAttrs || {}) }),
     sub ? el('p', { class: 'tm-sub', text: sub, ...(attrs.subAttrs || {}) }) : null,
     ornament(),
-    el('ul', {}, entries.map((entry) => el('li', {}, (() => {
+    el('ul', {}, entries.map((entry, index) => el('li', {}, (() => {
       const node = el('button', { ...(entry.attrs || {}), type: 'button', class: cls('tm-entry', entry.className), text: entry.label });
-      if (entry.disabled) node.disabled = true;
-      return node;
+      if (!entry.disabled) return node;
+      node.disabled = true;
+      if (!entry.reason) return node;
+      const id = `tm-reason-${index}`;
+      node.setAttribute('aria-describedby', id);
+      return [node, el('p', { id, class: 'as-fieldnote as-reasonnote tm-reason', role: 'note', text: entry.reason })];
     })()))),
     ornament(),
     foot,

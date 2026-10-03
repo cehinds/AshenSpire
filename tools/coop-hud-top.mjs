@@ -23,8 +23,34 @@
 //   * in the compact band, every part sits mostly on the row of the tallest;
 //   * every resource bar is inside the viewport and has a width.
 //
+// AND THE BOTTOM BAR (owner, 2026-10-01: "What happened to my action bar at
+// the bottom. It looks so bad now"). The co-op board mounts solo's own action
+// row (src/ui/components/combatActionRow.js). At the same three viewports the
+// tool also opens solo combat (`?shot=combat`) and judges the co-op row
+// against it (judgeBar):
+//   * the co-op row holds exactly solo's five controls, in solo's order —
+//     Actions, Draw, End Turn, Discard/Exhaust, Potions — and no second row of
+//     flask buttons exists (the flasks are behind Potions, as solo's are);
+//   * it takes solo's arrangement: every control at solo's x, width and
+//     height, and on solo's rows (one row wherever solo's footer is one row,
+//     which is every viewport not in short-landscape rails);
+//   * no two controls overlap, none leaves the viewport, the page does not
+//     scroll sideways;
+//   * every control clears the page's own tap floor, and Actions, End Turn
+//     and Potions clear PRIMARY_TARGET_PX (D32, docs/FINISH.md).
+//
+// AND THE POTIONS LIST FOLLOWS ITS SEAT (#1436 review, Codex P1). Couch co-op
+// puts two seats on one screen and Tab switches the active one. The Potions
+// list is a body-level dialog, so a Tab pressed while it is open used to
+// leave it up for the NEW seat, and a confirmed Use spent that seat's charge.
+// Once, at the first viewport, through `?shot=coop&shotSeats=2`
+// (seatSwitchProbe): a confirmed Use from seat 1 sends a flaskIntent as seat
+// 1 (the road works), and a Tab between opening the list and confirming sends
+// no flaskIntent at all.
+//
 //   node tools/coop-hud-top.mjs                 judge, exit 0 green / 1 red / 2 harness
 //   node tools/coop-hud-top.mjs --shots <dir>   also write coop-hud-top-<w>x<h>.png
+//                                               and solo-combat-<w>x<h>.png
 //   COOP_HUD_PORT=<n>                           serve on another port (default 8571)
 //
 // It serves the SOURCE tree (no build, no LFS).
@@ -162,6 +188,133 @@ export function judge(g, label, { singleRow = false } = {}) {
   return bad;
 }
 
+// THE BOTTOM BAR. Solo's five controls, in solo's order; the role is read
+// from the class each control has worn since WGC6.
+export const BAR_ROLES = ['actions', 'draw', 'endTurn', 'discard', 'potions'];
+// Actions, End Turn and Potions are the round and primary targets; the two
+// piles keep the game's own configured target (the page's --tap-floor), which
+// is what solo has always given them (D32, docs/FINISH.md).
+export const PRIMARY_TARGET_PX = 48;
+const PRIMARY_ROLES = new Set(['actions', 'endTurn', 'potions']);
+const BAR_TOLERANCE = 1; // px: the same plan on two boards, sub-pixel rounding aside
+
+const BAR = `(() => {
+  const combat = document.querySelector('.combat[data-layout="formation"]');
+  if (!combat) return { mounted: false };
+  const row = combat.querySelector(':scope > .hand-area > .combat-action-row');
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:absolute;left:-9999px;height:var(--tap-floor)';
+  document.body.appendChild(probe);
+  const floor = probe.getBoundingClientRect().height;
+  probe.remove();
+  const shown = (e) => { const c = getComputedStyle(e); const r = e.getBoundingClientRect(); return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+  const roles = [['actions', '.energy-orb'], ['draw', '.pile.draw'], ['endTurn', '.end-turn'], ['discard', '.pile.spent'], ['potions', '.combat-potions']];
+  const controls = row ? [...row.children].filter((e) => !e.matches('.combat-potion-tray') && shown(e)).map((e) => {
+    const r = e.getBoundingClientRect();
+    const role = roles.find(([, sel]) => e.matches(sel));
+    return { role: role ? role[0] : String(e.className || e.tagName), left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  }) : [];
+  return {
+    mounted: true, coop: combat.classList.contains('coop'),
+    arrangement: combat.dataset.combatArrangement || null,
+    geometry: row ? row.dataset.footerGeometry || null : null,
+    innerWidth, innerHeight, scrollWidth: document.documentElement.scrollWidth,
+    floor, row: !!row, controls,
+    strayFlasks: document.querySelectorAll('.combat .coop-flasks, .combat .coop-flask, .combat [data-coop-flask-slot]').length,
+  };
+})()`;
+
+// Which controls share a row: each control is keyed by the first control
+// (in order) whose vertical band holds most of it.
+function rowsOf(controls) {
+  const anchors = [];
+  return controls.map((c) => {
+    const h = c.bottom - c.top;
+    let at = anchors.findIndex((a) => Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top) >= ROW_SHARE * Math.min(h, a.bottom - a.top) - TOLERANCE);
+    if (at < 0) { anchors.push(c); at = anchors.length - 1; }
+    return at;
+  });
+}
+
+/** Pure judge: the co-op bottom bar against solo's, one viewport → failures. */
+export function judgeBar(coop, solo, label) {
+  const bad = [];
+  if (!coop || !coop.mounted) return [`${label}: co-op board did not mount (bottom bar)`];
+  if (!solo || !solo.mounted) return [`${label}: solo combat did not mount (bottom bar reference)`];
+  if (!coop.row) return [`${label}: co-op board has no action row`];
+  if (!solo.row) return [`${label}: solo combat has no action row to compare against`];
+  const coopRoles = coop.controls.map((c) => c.role);
+  const soloRoles = solo.controls.map((c) => c.role);
+  if (soloRoles.join() !== BAR_ROLES.join()) bad.push(`${label}: solo action row is not the five WGC6 controls (${soloRoles.join(', ')})`);
+  if (coopRoles.join() !== soloRoles.join()) bad.push(`${label}: co-op action row holds ${coopRoles.join(', ') || 'nothing'}, solo holds ${soloRoles.join(', ')}`);
+  if (coop.strayFlasks) bad.push(`${label}: ${coop.strayFlasks} co-op flask control(s) outside the action row (a second bottom row)`);
+  if (coop.arrangement !== solo.arrangement) bad.push(`${label}: co-op arrangement ${coop.arrangement} differs from solo's ${solo.arrangement}`);
+  if (coop.geometry !== 'supported') bad.push(`${label}: co-op action row was not sized by the layout adapter (footer geometry ${coop.geometry})`);
+  if (coop.scrollWidth > coop.innerWidth + TOLERANCE) bad.push(`${label}: co-op page scrolls sideways (${coop.scrollWidth} > ${coop.innerWidth})`);
+  if (!bad.some((m) => /holds|five WGC6/.test(m))) {
+    coop.controls.forEach((c, i) => {
+      const s = solo.controls[i];
+      const off = ['left', 'width', 'height'].filter((k) => Math.abs(c[k] - s[k]) > BAR_TOLERANCE);
+      if (off.length) bad.push(`${label}: co-op ${c.role} differs from solo's in ${off.map((k) => `${k} ${c[k].toFixed(1)} vs ${s[k].toFixed(1)}`).join(', ')}`);
+    });
+    const coopRows = rowsOf(coop.controls).join();
+    const soloRows = rowsOf(solo.controls).join();
+    if (coopRows !== soloRows) bad.push(`${label}: co-op controls sit on rows [${coopRows}], solo's on [${soloRows}]`);
+    if (coop.arrangement !== 'rails' && new Set(rowsOf(coop.controls)).size !== 1) bad.push(`${label}: co-op action row is not one row (${coop.controls.map((c) => `${c.role} ${c.top.toFixed(1)}..${c.bottom.toFixed(1)}`).join(', ')})`);
+  }
+  for (const c of coop.controls) {
+    if (c.left < -TOLERANCE || c.right > coop.innerWidth + TOLERANCE || c.top < -TOLERANCE || c.bottom > coop.innerHeight + TOLERANCE) bad.push(`${label}: co-op ${c.role} leaves the viewport (${c.left.toFixed(1)},${c.top.toFixed(1)}..${c.right.toFixed(1)},${c.bottom.toFixed(1)})`);
+    const least = Math.min(c.width, c.height);
+    if (least < coop.floor - TOLERANCE) bad.push(`${label}: co-op ${c.role} is ${c.width.toFixed(1)}x${c.height.toFixed(1)}, under the ${coop.floor}px tap floor`);
+    if (PRIMARY_ROLES.has(c.role) && least < PRIMARY_TARGET_PX - TOLERANCE) bad.push(`${label}: co-op ${c.role} is ${c.width.toFixed(1)}x${c.height.toFixed(1)}, under ${PRIMARY_TARGET_PX}px`);
+  }
+  for (let i = 0; i < coop.controls.length; i++) for (let j = i + 1; j < coop.controls.length; j++) {
+    const a = coop.controls[i], b = coop.controls[j];
+    const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    if (w > TOLERANCE && h > TOLERANCE) bad.push(`${label}: co-op ${a.role} overlaps ${b.role} (${w.toFixed(1)}x${h.toFixed(1)}px)`);
+  }
+  return bad;
+}
+
+function barSelftest() {
+  const ctl = (role, left, width, top = 790, height = 53) => ({ role, left, width, top, height, right: left + width, bottom: top + height });
+  const soloRow = [ctl('actions', 0, 53), ctl('draw', 57, 64, 794, 44), ctl('endTurn', 124, 143), ctl('discard', 270, 64, 794, 44), ctl('potions', 337, 53)];
+  const base = { mounted: true, coop: false, arrangement: 'stacked', geometry: 'supported', innerWidth: 390, innerHeight: 844, scrollWidth: 390, floor: 44, row: true, controls: soloRow, strayFlasks: 0 };
+  const coop = { ...base, coop: true };
+  const swap = (patch) => ({ ...coop, controls: coop.controls.map((c) => (patch[c.role] ? { ...c, ...patch[c.role], right: (patch[c.role].left ?? c.left) + (patch[c.role].width ?? c.width), bottom: (patch[c.role].top ?? c.top) + (patch[c.role].height ?? c.height) } : c)) });
+  // The owner's before: an Actions circle, a wide End Turn, flasks under it.
+  const before = { ...coop, geometry: null, controls: [ctl('actions', 1, 48, 724, 48), ctl('endTurn', 52, 337, 724, 48)], strayFlasks: 2 };
+  const railsSolo = { ...base, innerWidth: 844, innerHeight: 390, scrollWidth: 844, arrangement: 'rails', controls: [ctl('actions', 0, 53, 337), ctl('draw', 56, 64, 341, 44), ctl('endTurn', 724, 120, 280), ctl('discard', 724, 64, 341, 44), ctl('potions', 791, 53, 337)] };
+  const railsCoop = { ...railsSolo, coop: true };
+  const cases = [
+    ['co-op row is solo row', coop, base, 0],
+    ['the owner\'s before: two controls and a flask row', before, base, 1, /holds actions, endTurn/],
+    ['flask buttons left beside the row', { ...coop, strayFlasks: 2 }, base, 1, /outside the action row/],
+    ['co-op drops Draw', { ...coop, controls: coop.controls.filter((c) => c.role !== 'draw') }, base, 1, /holds actions, endTurn, discard/],
+    ['co-op reorders Potions first', { ...coop, controls: [coop.controls[4], ...coop.controls.slice(0, 4)] }, base, 1, /holds potions/],
+    ['co-op End Turn over-wide', swap({ endTurn: { width: 160 } }), base, 1, /endTurn differs from solo's in width/],
+    ['co-op End Turn over Discard', swap({ endTurn: { width: 150 } }), { ...base, controls: [...soloRow.slice(0, 2), ctl('endTurn', 124, 150), ...soloRow.slice(3)] }, 1, /endTurn overlaps discard/],
+    ['co-op Potions wraps to a second row', swap({ potions: { top: 850 } }), base, 1, /not one row|rows/],
+    ['co-op Potions off the right edge', swap({ potions: { left: 360 } }), { ...base, controls: [...soloRow.slice(0, 4), ctl('potions', 360, 53)] }, 1, /potions leaves the viewport/],
+    ['co-op page scrolls sideways', { ...coop, scrollWidth: 420 }, base, 1, /scrolls sideways/],
+    ['co-op not sized by the adapter', { ...coop, geometry: null }, base, 1, /footer geometry/],
+    ['co-op arrangement differs', { ...coop, arrangement: 'rails' }, base, 1, /arrangement/],
+    ['co-op Actions under 48px', swap({ actions: { width: 46, height: 46 } }), { ...base, controls: [ctl('actions', 0, 46, 790, 46), ...soloRow.slice(1)] }, 1, /actions is .* under 48px/],
+    ['pile under the tap floor', swap({ draw: { height: 40 } }), { ...base, controls: [soloRow[0], ctl('draw', 57, 64, 794, 40), ...soloRow.slice(2)] }, 1, /draw is .* under the 44px tap floor/],
+    ['rails: same two rows as solo', railsCoop, railsSolo, 0],
+    ['rails: co-op folds back to one row', { ...railsCoop, controls: railsCoop.controls.map((c) => ({ ...c, top: 337, bottom: 337 + (c.bottom - c.top) })) }, railsSolo, 1, /rows/],
+    ['co-op did not mount', { mounted: false }, base, 1, /did not mount/],
+    ['co-op has no row', { ...coop, row: false, controls: [] }, base, 1, /no action row/],
+  ];
+  const wrong = cases.filter(([, c, s, want, why]) => {
+    const bad = judgeBar(c, s, 'st');
+    return (bad.length > 0 ? 1 : 0) !== want || (why && !bad.some((m) => why.test(m)));
+  });
+  for (const [name] of wrong) console.error(`  bar selftest: ${name} judged wrongly`);
+  return { total: cases.length, wrong: wrong.length };
+}
+
 export function selftest() {
   const base = { mounted: true, innerWidth: 390, innerHeight: 844, scrollWidth: 390,
     topbar: { left: 0, top: 0, right: 390, bottom: 80, width: 390, height: 80 },
@@ -222,8 +375,247 @@ export function selftest() {
     return (bad.length > 0 ? 1 : 0) !== want || (why && !bad.some((m) => why.test(m)));
   });
   for (const [name] of wrong) console.error(`  selftest: ${name} judged wrongly`);
-  console.log(`coop-hud-top selftest: ${wrong.length ? 'RED' : 'GREEN'} (${cases.length - wrong.length}/${cases.length})`);
-  return wrong.length ? 1 : 0;
+  const bar = barSelftest();
+  const total = cases.length + bar.total, failed = wrong.length + bar.wrong;
+  console.log(`coop-hud-top selftest: ${failed ? 'RED' : 'GREEN'} (${total - failed}/${total}; bottom bar ${bar.total - bar.wrong}/${bar.total})`);
+  return failed ? 1 : 0;
+}
+
+// Runs in the page, a step at a time (seatSwitchProbe drives the keys).
+const SEAT_STEP = {
+  // Seat 2 has not ended its turn, so it COULD drink: the bug's precondition.
+  ready: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
+    window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0; return true; })()`,
+  open: `(async () => { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    document.querySelector('.combat.coop .combat-potions').click();
+    let use = null; for (let t = 0; t < 40 && !use; t++) { await sleep(100); use = document.querySelector('.combat-potion-menu .potion-fold[data-charge-kind] .potion-use'); }
+    if (!use || use.disabled) return 'no usable charge in the Potions list';
+    use.click();
+    let yes = null; for (let t = 0; t < 40 && !yes; t++) { await sleep(100); yes = document.querySelector('.confirmation-modal .confirmation-confirm'); }
+    return yes ? '' : 'Use opened no confirmation'; })()`,
+  confirm: `(async () => { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const yes = document.querySelector('.confirmation-modal .confirmation-confirm'); if (yes) yes.click(); await sleep(400);
+    return window.__coopSentForShot.filter((m) => m.t === 'flaskIntent').map((m) => m.as); })()`,
+  activeSeat: `document.querySelector('.coop-seat-tabs [aria-selected="true"]')?.textContent || ''`,
+};
+
+async function seatSwitchProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)).result?.value;
+  const key = async (k, code, vk) => {
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk }, sessionId);
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk }, sessionId);
+  };
+  const bad = [];
+  const fresh = async () => {
+    await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+    for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
+    await wait(800);
+    await ev(SEAT_STEP.ready);
+    await wait(300);
+  };
+  await fresh();
+  let why = await ev(SEAT_STEP.open);
+  if (why) return [`seat switch: ${why}`];
+  const straight = await ev(SEAT_STEP.confirm);
+  if (!(straight.length === 1 && straight[0] === 'p1')) bad.push(`seat switch: a confirmed Use from seat 1 sent ${JSON.stringify(straight)}, want one flaskIntent as p1`);
+  await fresh();
+  const before = await ev(SEAT_STEP.activeSeat);
+  why = await ev(SEAT_STEP.open);
+  if (why) return [...bad, `seat switch: ${why}`];
+  await key('Tab', 'Tab', 9);
+  await wait(400);
+  const after = await ev(SEAT_STEP.activeSeat);
+  if (before === after) bad.push(`seat switch: Tab did not switch the active seat (${before})`);
+  const switched = await ev(SEAT_STEP.confirm);
+  if (switched.length) bad.push(`seat switch: Tab after opening Potions, then Use, sent ${JSON.stringify(switched)}; want nothing (the list belonged to seat 1)`);
+  console.log(`  ${bad.length ? '✗' : '✓'} seat switch: Use as seat 1 sends ${JSON.stringify(straight)}; after Tab (${before} -> ${after}) sends ${JSON.stringify(switched)}`);
+  return bad;
+}
+
+// THE STANCE CHOOSER OWNS THE COUCH KEYBOARD (#1449 review, Codex P1).
+// Warrior's Vow opens a body-level dialog before its play intent. Tab inside
+// it must move between the stance buttons, not switch the couch seat (which
+// used to drop the pick silently), and the board's 1-9/Q and E keys must not
+// act behind it. A seat switch that does happen (a pad press, a seat tab)
+// closes the chooser, so nothing is chosen for a seat that did not open it.
+// Through `?shot=coop&shotSeats=2` (vowChoiceProbe): seat 1 holds the Vow in
+// slot 1 and stands in Gorefire; key 1 opens the chooser with Gorefire disabled; Tab keeps seat 1 and focus in the dialog;
+// E sends no endTurn; the pick sends one playCard as p1 with that stance; and
+// a seat-tab switch with the chooser open closes it and sends nothing; and a
+// snapshot that leaves combat (another player ends the fight) closes it too.
+const VOW_STEP = {
+  ready: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
+    s.scene.players[0].hand = [{ instanceId: 'vow1', cardId: 'warriorsVow', upgraded: false }, ...s.scene.players[0].hand];
+    s.scene.players[0].stanceId = 'gorefire';
+    window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0; return true; })()`,
+  state: `(() => { const d = document.querySelector('.card-choice'); return {
+    open: !!d, inDialog: !!(d && d.contains(document.activeElement)), options: document.querySelectorAll('.card-choice .card-choice-option').length,
+    disabled: [...document.querySelectorAll('.card-choice .card-choice-option[disabled]')].map((b) => b.dataset.choice),
+    seat: document.querySelector('.coop-seat-tabs [aria-selected="true"]')?.textContent || '',
+    sent: window.__coopSentForShot.map((m) => ({ t: m.t, as: m.as, choice: m.choice })) }; })()`,
+  pick: `(async () => { const b = document.querySelector('.card-choice .card-choice-option:not([disabled])'); const id = b?.dataset.choice || ''; if (b) b.click();
+    await new Promise((r) => setTimeout(r, 400)); return id; })()`,
+  leaveCombat: `(async () => { const s = structuredClone(window.__coopSnapshot); s.scene = { kind: 'complete', victory: true };
+    window.__receiveCoopSnapshotForShot(s); await new Promise((r) => setTimeout(r, 400)); return true; })()`,
+  switchSeat: `(async () => { document.querySelector('.coop-seat-tabs [data-seat-i="1"]')?.click(); await new Promise((r) => setTimeout(r, 400)); return true; })()`,
+};
+
+async function vowChoiceProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)).result?.value;
+  const key = async (k, code, vk) => {
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, ...(k.length === 1 ? { text: k } : {}) }, sessionId);
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk }, sessionId);
+    await wait(300);
+  };
+  const fresh = async () => {
+    await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+    for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
+    await wait(800);
+    await ev(VOW_STEP.ready);
+    await wait(300);
+  };
+  const bad = [];
+  await fresh();
+  const before = await ev(VOW_STEP.state);
+  await key('1', 'Digit1', 49);
+  const opened = await ev(VOW_STEP.state);
+  if (!opened.open || opened.options < 2) return [`vow chooser: key 1 on Warrior's Vow opened ${opened.open ? opened.options + ' option(s)' : 'no chooser'}; want a stance chooser`];
+  // The seat stands in Gorefire: that option is shown but disabled (#1449 review, Codex P2).
+  if (JSON.stringify(opened.disabled) !== '["gorefire"]') bad.push(`vow chooser: in Gorefire the disabled options are ${JSON.stringify(opened.disabled)}; want ["gorefire"]`);
+  await key('Tab', 'Tab', 9);
+  const tabbed = await ev(VOW_STEP.state);
+  if (tabbed.seat !== before.seat) bad.push(`vow chooser: Tab with the chooser open switched the seat (${before.seat} -> ${tabbed.seat}); want the chooser to keep Tab`);
+  if (!tabbed.open || !tabbed.inDialog) bad.push(`vow chooser: after Tab the chooser is ${tabbed.open ? 'open but focus left it' : 'closed'}; want focus inside it`);
+  await key('e', 'KeyE', 69);
+  const ended = await ev(VOW_STEP.state);
+  if (ended.sent.some((m) => m.t === 'endTurn')) bad.push('vow chooser: E behind the open chooser sent endTurn; want nothing');
+  await key('2', 'Digit2', 50);
+  const pressed = await ev(VOW_STEP.state);
+  if (pressed.sent.some((m) => m.t === 'playCard')) bad.push(`vow chooser: key 2 behind the open chooser sent ${JSON.stringify(pressed.sent)}; want nothing`);
+  const choice = await ev(VOW_STEP.pick);
+  const played = await ev(VOW_STEP.state);
+  const plays = played.sent.filter((m) => m.t === 'playCard');
+  if (!(plays.length === 1 && plays[0].as === 'p1' && plays[0].choice === choice && choice && choice !== 'gorefire')) bad.push(`vow chooser: picking ${choice} sent ${JSON.stringify(played.sent)}; want one playCard as p1 with choice ${choice}`);
+  await fresh();
+  await key('1', 'Digit1', 49);
+  await ev(VOW_STEP.switchSeat);
+  const moved = await ev(VOW_STEP.state);
+  if (moved.open) bad.push(`vow chooser: a seat switch (${moved.seat}) left the chooser open over the new seat; want it closed`);
+  if (moved.sent.length) bad.push(`vow chooser: a seat switch with the chooser open sent ${JSON.stringify(moved.sent)}; want nothing`);
+  await fresh();
+  await key('1', 'Digit1', 49);
+  const reopened = await ev(VOW_STEP.state);
+  await ev(VOW_STEP.leaveCombat);
+  const left = await ev(VOW_STEP.state);
+  if (!reopened.open) bad.push('vow chooser: key 1 did not reopen the chooser before the leave-combat check');
+  if (left.open) bad.push('vow chooser: a snapshot that left combat kept the chooser open over the next scene; want it closed');
+  if (left.sent.length) bad.push(`vow chooser: leaving combat with the chooser open sent ${JSON.stringify(left.sent)}; want nothing`);
+  console.log(`  ${bad.length ? '✗' : '✓'} vow chooser: disabled ${JSON.stringify(opened.disabled)}; Tab keeps ${tabbed.seat} (focus in dialog ${tabbed.inDialog}); pick ${choice} sends ${JSON.stringify(plays)}; seat switch closes it (${!moved.open}); leaving combat closes it (${!left.open})`);
+  return bad;
+}
+
+// A flask key pressed twice (or held into keydown repeats) leaves ONE
+// Potions list, and Escape clears the board (#1436 review, Codex P2). Before
+// the fix each press stacked another modal and Escape closed only the newest.
+const REPEAT_STEP = {
+  press: `(() => { for (let i = 0; i < 3; i++) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', code: 'KeyF', bubbles: true, repeat: i > 0 }));
+    return document.querySelectorAll('.combat-potion-menu').length; })()`,
+  lists: `document.querySelectorAll('.combat-potion-menu').length`,
+  // The Actions and Discard/Exhaust labels follow the painted values (#1436 review).
+  labels: `(() => { const orb = document.querySelector('.combat.coop .energy-orb'); const spent = document.querySelector('.combat.coop .pile.spent');
+    return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '', spent: spent?.getAttribute('aria-label') || '' }; })()`,
+};
+
+async function repeatOpenProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)).result?.value;
+  await cdp.send('Page.navigate', { url: `${base}?shot=coop` }, sessionId);
+  for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
+  await wait(800);
+  await ev(SEAT_STEP.ready);
+  await wait(300);
+  const labels = await ev(REPEAT_STEP.labels);
+  const [have, max] = String(labels?.value || '').split('/');
+  const labelBad = [];
+  if (!have || labels.orb !== `Actions ${have} of ${max}`) labelBad.push(`labels: Actions reads "${labels?.orb}" while it shows ${labels?.value}; want "Actions ${have} of ${max}"`);
+  if (/Open piles/.test(labels?.spent || '')) labelBad.push(`labels: co-op Discard/Exhaust promises "Open piles" (${labels.spent}); co-op has no pile viewer`);
+  await ev(REPEAT_STEP.press);
+  await wait(400);
+  const open = await ev(REPEAT_STEP.lists);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
+  await wait(500);
+  const left = await ev(REPEAT_STEP.lists);
+  const bad = [...labelBad];
+  if (open !== 1) bad.push(`repeat open: three flask-key presses left ${open} Potions lists; want 1`);
+  if (left !== 0) bad.push(`repeat open: Escape left ${left} Potions lists over the board; want 0`);
+  console.log(`  ${bad.length ? '✗' : '✓'} repeat open: three flask presses -> ${open} list(s); Escape -> ${left}; labels "${labels?.orb}" / "${labels?.spent}"`);
+  return bad;
+}
+
+// A host response that lands under an open Potions list (#1436 review,
+// Codex P1 and P2). STALE: seat 1 carries Blight Coating in slot 0, opens
+// Use on it, then a snapshot shifts Flask of Stone into slot 0; the confirm
+// must send nothing (before the fix it threw slot 0, the wrong potion).
+// SCENE: the fight ends under the open list; the list must close.
+const LIVE_STEP = {
+  carry: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
+    s.scene.players[0].flasks = [{ flaskId: 'blightCoating' }, { flaskId: 'flaskOfStone' }];
+    window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0; return true; })()`,
+  openSlot0: `(async () => { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    document.querySelector('.combat.coop .combat-potions').click();
+    let use = null; for (let t = 0; t < 40 && !use; t++) { await sleep(100); use = document.querySelector('.combat-potion-menu .potion-fold[data-potion-slot="0"] .potion-use'); }
+    if (!use || use.disabled) return 'no usable carried potion in slot 0';
+    use.click();
+    let yes = null; for (let t = 0; t < 40 && !yes; t++) { await sleep(100); yes = document.querySelector('.confirmation-modal .confirmation-confirm'); }
+    return yes ? '' : 'Use opened no confirmation'; })()`,
+  shift: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
+    s.scene.players[0].flasks = [{ flaskId: 'flaskOfStone' }];
+    window.__receiveCoopSnapshotForShot(s); return true; })()`,
+  openList: `(async () => { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    document.querySelector('.combat.coop .combat-potions').click();
+    for (let t = 0; t < 40 && !document.querySelector('.combat-potion-menu'); t++) await sleep(100);
+    return document.querySelectorAll('.combat-potion-menu').length; })()`,
+  leave: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene = { kind: 'interlude' };
+    window.__receiveCoopSnapshotForShot(s); return true; })()`,
+};
+
+async function liveSnapshotProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)).result?.value;
+  const fresh = async () => {
+    await cdp.send('Page.navigate', { url: `${base}?shot=coop` }, sessionId);
+    for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
+    await wait(800);
+  };
+  const bad = [];
+  // Control: with no snapshot under it, the same carried Use is sent.
+  await fresh();
+  await ev(LIVE_STEP.carry);
+  await wait(300);
+  const ctlWhy = await ev(LIVE_STEP.openSlot0);
+  const control = ctlWhy ? null : await ev(SEAT_STEP.confirm);
+  if (ctlWhy) bad.push(`stale slot control: ${ctlWhy}`);
+  else if (!(control.length === 1 && control[0] === 'p1')) bad.push(`stale slot control: an unshifted Blight Coating Use sent ${JSON.stringify(control)}; want one flaskIntent as p1`);
+  await fresh();
+  await ev(LIVE_STEP.carry);
+  await wait(300);
+  const why = await ev(LIVE_STEP.openSlot0);
+  let stale = null;
+  if (why) bad.push(`stale slot: ${why}`);
+  else {
+    await ev(LIVE_STEP.shift);
+    await wait(300);
+    stale = await ev(SEAT_STEP.confirm);
+    if (stale.length) bad.push(`stale slot: a snapshot moved Flask of Stone into slot 0 under the list, then the Blight Coating Use sent ${JSON.stringify(stale)}; want nothing`);
+  }
+  await fresh();
+  const opened = await ev(LIVE_STEP.openList);
+  await ev(LIVE_STEP.leave);
+  await wait(500);
+  const left = await ev(REPEAT_STEP.lists);
+  if (opened !== 1) bad.push(`scene change: Potions opened ${opened} list(s); want 1`);
+  if (left !== 0) bad.push(`scene change: the fight ended under the Potions list and ${left} list(s) stayed over the next scene; want 0`);
+  console.log(`  ${bad.length ? '✗' : '✓'} live snapshot: carried Use sends ${JSON.stringify(control)}, after a slot shift ${JSON.stringify(stale)}; fight ends under the list -> ${left} list(s)`);
+  return bad;
 }
 
 async function main(args) {
@@ -254,14 +646,36 @@ async function main(args) {
         g = (await cdp.send('Runtime.evaluate', { expression: MEASURE, returnByValue: true }, sessionId)).result?.value;
       }
       if (g && g.mounted) { await wait(1200); g = (await cdp.send('Runtime.evaluate', { expression: MEASURE, returnByValue: true }, sessionId)).result?.value; }
-      const bad = judge(g, label, vp);
-      failures.push(...bad);
-      if (!bad.length) clean++;
-      console.log(`  ${bad.length ? '✗' : '✓'} ${label}: hud-top ${g?.hudTop?.display ?? '?'}, ${g?.parts?.length ?? 0} parts, ${g?.bars?.length ?? 0} bars${bad.length ? '' : ', no overlap/clip/overflow'}`);
-      if (process.env.COOP_HUD_DEBUG) console.log(JSON.stringify(g, null, 1));
+      const coopBar = (await cdp.send('Runtime.evaluate', { expression: BAR, returnByValue: true }, sessionId)).result?.value;
       if (shotDir) {
         const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
         writeFileSync(resolve(shotDir, `coop-hud-top-${label}.png`), Buffer.from(data, 'base64'));
+      }
+      // The reference: solo combat at the same viewport, the same door.
+      await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/index.html?shot=combat` }, sessionId);
+      let soloBar = null;
+      for (let t = 0; t < 90 && !(soloBar && soloBar.mounted && soloBar.row && soloBar.geometry); t++) {
+        await wait(500);
+        soloBar = (await cdp.send('Runtime.evaluate', { expression: BAR, returnByValue: true }, sessionId)).result?.value;
+      }
+      if (soloBar && soloBar.mounted) { await wait(1200); soloBar = (await cdp.send('Runtime.evaluate', { expression: BAR, returnByValue: true }, sessionId)).result?.value; }
+      if (shotDir) {
+        const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
+        writeFileSync(resolve(shotDir, `solo-combat-${label}.png`), Buffer.from(data, 'base64'));
+      }
+      const bad = [...judge(g, label, vp), ...judgeBar(coopBar, soloBar, label)];
+      failures.push(...bad);
+      if (!bad.length) clean++;
+      console.log(`  ${bad.length ? '✗' : '✓'} ${label}: hud-top ${g?.hudTop?.display ?? '?'}, ${g?.parts?.length ?? 0} parts, ${g?.bars?.length ?? 0} bars; `
+        + `bottom bar ${(coopBar?.controls || []).map((c) => c.role).join('/') || 'none'} (${coopBar?.arrangement ?? '?'})${bad.length ? '' : ', matches solo, no overlap/clip/overflow'}`);
+      if (process.env.COOP_HUD_DEBUG) console.log(JSON.stringify({ g, coopBar, soloBar }, null, 1));
+      if (vp === VIEWPORTS[0]) {
+        const seatBad = [...await seatSwitchProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
+          ...await repeatOpenProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
+          ...await liveSnapshotProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
+          ...await vowChoiceProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`)];
+        failures.push(...seatBad);
+        if (seatBad.length && !bad.length) clean--;
       }
       await cdp.send('Target.closeTarget', { targetId });
     }
@@ -271,7 +685,7 @@ async function main(args) {
     served.server.close();
   }
   for (const f of failures) console.error(`  ${f}`);
-  console.log(failures.length ? `  ${failures.length} failure(s)` : '  no overlap, clipping, lost part, two-row compact band, battlefield spill or horizontal overflow');
+  console.log(failures.length ? `  ${failures.length} failure(s)` : '  no overlap, clipping, lost part, two-row compact band, battlefield spill or horizontal overflow; the bottom bar is solo\'s');
   console.log(`coop-hud-top: ${failures.length ? 'RED' : 'GREEN'} (${clean}/${VIEWPORTS.length})`);
   return failures.length ? 1 : 0;
 }

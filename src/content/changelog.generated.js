@@ -3,6 +3,576 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1511",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Cards keep just their Information button for full text",
+    "detail": "Clipped descriptions no longer add a separate arrow box above a combat card or push its title aside. Select the card and use its existing (i) button to read the complete details.",
+    "build": "0.7.1.810",
+    "pullRequest": 1511,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1511"
+  },
+  {
+    "id": "pr-1501",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A Windows installer, with the high-resolution art as a choice on the install screen",
+    "detail": "Nothing in the game itself changes. AshenSpire-Setup.exe installs the game for you (no administrator prompt) with Start menu and desktop shortcuts; tick High-resolution art and it downloads the full-resolution art during the install and checks every file, or leave it unticked to play with the standard art and add it later by running the installer again. Uninstalling asks before it deletes your saves.",
+    "build": "0.7.1.808",
+    "pullRequest": 1501,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1501"
+  },
+  {
+    "id": "pr-1512",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A master's lesson track with nothing to teach no longer offers Ask",
+    "detail": "When a track had no cards it could teach you (a Herald's shield track, for example), the Ask button still worked and spent the visit's lesson on an empty result. It is now greyed out. Under Chaos Rewards, which can give that track cards, it stays available.",
+    "build": "0.7.1.807",
+    "pullRequest": 1512,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1512"
+  },
+  {
+    "id": "pr-1506",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "One game file and one download: the separate mobile and full-art files are retired",
+    "detail": "Every build is now one game page of about 10 MB that loads its art, fonts, music and map tiles from files beside it and picks phone-sized art on a phone by itself, plus one self-contained light-art file (about 31 MB) to download and play by double-click. The old mobile link sends you to the main game.",
+    "build": "0.7.1.806",
+    "pullRequest": 1506,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1506"
+  },
+  {
+    "id": "pr-1497",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Smith counts every card an upgrade improves",
+    "detail": "Upgrading a weapon or shield at the Smith already improved the Strike and Guard it lends you, but the preview and the receipt left those two cards out, so it said fewer cards improved than really did and showed a lent Guard as unused. Both now list every card the upgrade changes. Behind the scenes, four checking tools that had fallen behind the game's rules pass again.",
+    "build": "0.7.1.805",
+    "pullRequest": 1497,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1497"
+  },
+  {
+    "id": "pr-1500",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: builds and checks read the game's light art, fonts, music and map tiles from the art release",
+    "detail": "Nothing you play changes. Every build, test and preview page now takes the light art, the lore fonts, the shipped score and the map detail tiles from the verified art release instead of the copies still kept in this repository, so those copies can be removed in a later step.",
+    "build": "0.7.1.804",
+    "pullRequest": 1500,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1500"
+  },
+  {
+    "id": "pr-1505",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the startup-gate checks run again",
+    "detail": "Nothing you play changes. The checks that plant known bugs in a scratch copy of the game did not copy the two files that name the pinned art release. So the copy could not stamp a build, and the checks failed before testing anything.",
+    "build": "0.7.1.803",
+    "pullRequest": 1505,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1505"
+  },
+  {
+    "id": "pr-1509",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the co-op layout check runs when a build goes to testing",
+    "detail": "Nothing you play changes. The automatic check that the co-op screen's top bar fits on phones and desktops now runs each time a build is promoted to testing, instead of on every proposed change, where it kept stalling and holding other changes up.",
+    "build": "0.7.1.802",
+    "pullRequest": 1509,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1509"
+  },
+  {
+    "id": "pr-1492",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the class balance checker plays the same climbs as the run simulator",
+    "detail": "Nothing you play changes. The tool that counts each class's wins used its own older copy of what happens between fights (levels, drafts, rewards, events). Over 500 climbs it reached different fights and got a different result. It now uses the simulator's own steps between fights, agrees with it fight for fight, and its own self-check runs to the end again instead of crashing.",
+    "build": "0.7.1.801",
+    "pullRequest": 1492,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1492"
+  },
+  {
+    "id": "pr-1495",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Sealed and Draft climbs can no longer extract cards at the smith",
+    "detail": "A Sealed or Draft deck is never given the cards your equipment lends, but extracting one at the Blacksmith, the Shrine or a merchant's smith used to hand you a free copy anyway. In those climbs Extract now shows as unavailable, saying why, and cannot be done; reloading the climb does not bring it back. Seating a card you already own in an item works as before, and Standard climbs are unchanged.",
+    "build": "0.7.1.799",
+    "pullRequest": 1495,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1495"
+  },
+  {
+    "id": "pr-1498",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The game's starting settings follow the owner's latest configuration",
+    "detail": "Character-level XP growth starts at 1.5, reward card choices at zero and the normal-fight card reward chance at 24%. Enemy sprites start at 1.5 scale, the player starts in column 1, row B uses double scale, and the opening's first-step traveller uses the supplied desktop placement. All 38 supplied settings become defaults; settings you already chose keep their values.",
+    "build": "0.7.1.798",
+    "pullRequest": 1498,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1498"
+  },
+  {
+    "id": "pr-1440",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the spec wording for loading assets as separate files is approved",
+    "detail": "This is a docs-only change, and nothing you play changes. The spec now says the game will load its art, fonts and music as separate files, keep one light-art single file you can download and open by double-click, and retire the 254 MB file.",
+    "build": "0.7.1.796",
+    "pullRequest": 1440,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1440"
+  },
+  {
+    "id": "pr-1496",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: reusable desktop and mobile polish artwork is saved with the project",
+    "detail": "The illustrated design direction now has individual paintings, portraits, icons, frames and controls, with recipes for 24 player feature views and copies of the existing game art and fonts they need. Credits, provenance and portable preview helpers are included for the next visual polish pass. These are design assets; the playable screens and game rules stay as they are.",
+    "build": "0.7.1.795",
+    "pullRequest": 1496,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1496"
+  },
+  {
+    "id": "pr-1450",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every change now checks the game's art against the art repository's release",
+    "detail": "Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte.",
+    "build": "0.7.1.794",
+    "pullRequest": 1450,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1450"
+  },
+  {
+    "id": "pr-1488",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Escape and pad B close the map legend before the map",
+    "detail": "With a map node selected and the legend open, one press used to close the node's panel and leave the legend up; it now closes the legend only, and the next press closes the panel. In character creation's Equipment step, Escape went back nowhere while a card's info button was showing, and pad B hid the button instead; both now go back one step, as the Back button does.",
+    "build": "0.7.1.793",
+    "pullRequest": 1488,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1488"
+  },
+  {
+    "id": "pr-1491",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The offline folder download named a browser feature inside the game's core rules code, which the automatic architecture check forbids, so the check had failed on every change since. That name now lives with the game's other content settings.",
+    "build": "0.7.1.792",
+    "pullRequest": 1491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1491"
+  },
+  {
+    "id": "pr-1471",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition shows its art loading on the start screen, and can retry",
+    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
+    "build": "0.7.1.791",
+    "pullRequest": 1471,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+  },
+  {
+    "id": "pr-1485",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fight sounds land at the right moment",
+    "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
+    "build": "0.7.1.790",
+    "pullRequest": 1485,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1485"
+  },
+  {
+    "id": "pr-1486",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the Sealed and Draft reload test checks what this build saves",
+    "detail": "Nothing you play changes. The test that loads a save from an older build kept treating every later save as that older build's, so it never checked that a climb saved again after the fix is saved the new way. It now does.",
+    "build": "0.7.1.789",
+    "pullRequest": 1486,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1486"
+  },
+  {
+    "id": "pr-1468",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The first-fight tutorial no longer sits on your cards",
+    "detail": "The coach marks' speech bubble used to land on the first card in your hand, so you couldn't play that card while the tutorial was showing. The bubble now finds a spot clear of your hand. After a window resize, the spotlight now follows its target until the board stops moving, even on a busy machine that draws the board in fits and starts. Pressing Escape on an armed attack card now also drops the card's highlight, not just its targeting. Behind the scenes, the check that every tutorial button can be reached runs at eight screen sizes on every change, and it confirms that the tutorial stays dismissed after a reload.",
+    "build": "0.7.1.788",
+    "pullRequest": 1468,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1468"
+  },
+  {
+    "id": "pr-1473",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
+    "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
+    "build": "0.7.1.787",
+    "pullRequest": 1473,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1473"
+  },
+  {
+    "id": "pr-1459",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A greyed-out Next now says why",
+    "detail": "When a Next, Continue, Confirm, Begin or Enter button is greyed out because you still have something to do, a short line under it now tells you what, for example \"Choose a class.\", \"Choose a response first.\" or \"No saved climb yet.\" Before, the reason only showed in a tooltip, which you never see on a phone. This covers character creation, events, conversations, card rewards, the title screen and save slots, the discard choice, the atlas, the Smith, and the rewards screen while a level is waiting to be claimed.",
+    "build": "0.7.1.786",
+    "pullRequest": 1459,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1459"
+  },
+  {
+    "id": "pr-1484",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the folder copy refuses a font file it could not fetch",
+    "detail": "Nothing you play changes. The zip download and the site's publishing step now refuse a build whose font file is named in a way the site never publishes, instead of failing partway through the download.",
+    "build": "0.7.1.785",
+    "pullRequest": 1484,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1484"
+  },
+  {
+    "id": "pr-1479",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Sealed and Draft climbs can be continued after a reload",
+    "detail": "A Custom Climb with a Sealed or Draft starting deck could not be loaded again: Continue set the save aside as broken, and the climb also stopped working at the end of its first fight. Both now carry on. A save made before this change loads too, with the fix noted in its load report. An older build of the game won't open a save made by this one; it leaves the save untouched rather than adding cards to your deck. Your dealt deck stays the deck you were dealt. Reloading, a mid-fight save, the end of a fight, changing weapons in the Armoury and swapping weapons mid-fight no longer add your equipment's own cards (its Strike and Defend, weapon arts or Dodge Roll) to it. Your first fight now plays your cards with the same weapon bonuses a reloaded climb gives them.",
+    "build": "0.7.1.784",
+    "pullRequest": 1479,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1479"
+  },
+  {
+    "id": "pr-1472",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Hits sound bigger the harder they land",
+    "detail": "A small hit, a solid hit and a heavy hit now each have their own sound, chosen by the damage it does. Being hit yourself has a sound of its own, your turn starts with a short two-note sting, and drawing, shuffling and discarding cards each make a quiet sound. The first turn of a fight has them too, and so does LAN co-op. Your sound volume and mute settings apply to all of them.",
+    "build": "0.7.1.771",
+    "pullRequest": 1472,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1472"
+  },
+  {
+    "id": "pr-1458",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: no CI job runs longer than 20 minutes",
+    "detail": "Nothing you play changes. The slowest automated checks now run in parallel pieces, so every check still runs but no single job takes more than 20 minutes.",
+    "build": "0.7.1.770",
+    "pullRequest": 1458,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1458"
+  },
+  {
+    "id": "pr-1470",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: a test keeps the Windows file-serving fix from coming back",
+    "detail": "Nothing you play changes. The fix itself landed in #1476; this adds a test that imitates Windows' short folder names on any computer and fails if the local test server ever again turns away files in its own folder.",
+    "build": "0.7.1.769",
+    "pullRequest": 1470,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1470"
+  },
+  {
+    "id": "pr-1480",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Save the game as a folder you can unzip",
+    "detail": "Download & saves now offers a folder copy of a newer build as one zip, beside the single-file download: unzip it, keep the folder together and double-click the game file inside to play offline with the light art. The game checks every file against the published build as it adds it, and saves nothing if one does not match.",
+    "build": "0.7.1.768",
+    "pullRequest": 1480,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1480"
+  },
+  {
+    "id": "pr-1463",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Escape and the controller's B button take you back",
+    "detail": "Run history, the Compendium, Custom Climb, character creation, the LAN lobby, a conversation, a reward's detail view, the quest board and the \"safe to close\" screen now go back when you press Escape or B, the same as pressing their Back button. On a controller, B now also closes Settings, About, Profile and the Armoury, as Escape already did. On the map, Escape or B puts away the selected room's tray. Each press goes back one step: an open tooltip closes first, then a menu or the dialog on top, and only then the screen. Where going back would give something up, Escape and B do nothing, so you have to choose to leave: a shop, the Shrine, your rewards, a fight (they never end your turn), the map, or a finished run.",
+    "build": "0.7.1.767",
+    "pullRequest": 1463,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1463"
+  },
+  {
+    "id": "pr-1481",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: desktop and mobile polish inspiration is saved with the project",
+    "detail": "Twelve illustrated boards explore the player-facing screens, from character creation and combat to towns, equipment, rewards, co-op and settings. The searchable gallery opens each board at full size; exact prompts, art credits and notes distinguish the generated examples from the game's real rules. These are design references, not changes to gameplay.",
+    "build": "0.7.1.765",
+    "pullRequest": 1481,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1481"
+  },
+  {
+    "id": "pr-1478",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Your character level gets dearer with every level too",
+    "detail": "Your first character level still needs 100 XP, but each level after now costs 1.75 times the one before (100, 180, 310, 540, 940) instead of 130 more, the same growth skills and your class already use. Like any XP setting, this reaches a run you already started the next time you load it.",
+    "build": "0.7.1.764",
+    "pullRequest": 1478,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1478"
+  },
+  {
+    "id": "pr-1476",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: two browser-tool checks pass on Mac and Windows again",
+    "detail": "Nothing you play changes. On Windows, the helper that serves the art-pack build to the test tools refused every file it should have served, because it spelled its own folder one way and each file another; it now spells both the same way. On Mac, the check that a browser which dies on start fails at once looked for a program where Macs do not keep it; it now uses one every computer has, and runs on Windows too instead of being skipped.",
+    "build": "0.7.1.760",
+    "pullRequest": 1476,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1476"
+  },
+  {
+    "id": "pr-1448",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: co-op enemy effects on your cards are tested for every player",
+    "detail": "Nothing you play changes. New tests check that an enemy move which makes players draw, discard, exhaust, or shuffle their discard pile back into their deck does it to every living player in a co-op fight, and not to a player who is down or disconnected.",
+    "build": "0.7.1.759",
+    "pullRequest": 1448,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1448"
+  },
+  {
+    "id": "pr-1445",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The opening's words sit in the middle of the caption band",
+    "detail": "The narration is now centred top to bottom in the fixed caption band, not pinned to its top. On a phone turned on its side, where the words sit in a panel beside the painting, the panel now fills its whole column instead of a thin strip at the top.",
+    "build": "0.7.1.758",
+    "pullRequest": 1445,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1445"
+  },
+  {
+    "id": "pr-1461",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition opens by double-click",
+    "detail": "Behind the scenes: the web edition's game file, kept together with its folder of art, now plays when opened straight from disk, with its art, fonts and map close-ups, and the music played by the game's own synthesizer; nothing you play changes.",
+    "build": "0.7.1.757",
+    "pullRequest": 1461,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1461"
+  },
+  {
+    "id": "pr-1449",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Warrior's Vow lets you choose your stance",
+    "detail": "Playing Warrior's Vow used to put you in Gorefire Stance every time, though the card promised a stance of your choice. Now it asks: you pick Gorefire, Bulwark or Brace, each with what it does, and that is the stance you enter. Cancel keeps the card in your hand. It works the same in co-op, and on a shared couch screen the chooser keeps the keyboard while it is open: Tab moves between the stances instead of switching player, and the card and End Turn keys wait until you choose.",
+    "build": "0.7.1.756",
+    "pullRequest": 1449,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1449"
+  },
+  {
+    "id": "pr-1465",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the build checker's self-test catches up with the art-pack change",
+    "detail": "Nothing you play changes. One of the build tool's self-tests plants a deliberate fault in a line the asset loading work rewrote, so it could no longer find that line and the test build's checks went red. It now plants the fault in the line as it reads today.",
+    "build": "0.7.1.754",
+    "pullRequest": 1465,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1465"
+  },
+  {
+    "id": "pr-1447",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: a flask check that had stopped working runs again",
+    "detail": "Nothing you play changes. A check makes sure flasks on the map offer the same choices as flasks in a fight. It had stopped looking at the Potions button you use on the map, and nothing ran it, so it failed without anyone noticing. It now follows that Potions button to the choices each flask offers, and the test suite runs it on every change.",
+    "build": "0.7.1.753",
+    "pullRequest": 1447,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1447"
+  },
+  {
+    "id": "pr-1386",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Skills and your class get dearer with every level",
+    "detail": "Every weapon, armour, focus, dual-wield and class skill still needs 100 XP for its first level, but each level after now costs 1.75 times the one before (100, 175, 305, 535, 940) instead of 130 more. Like any XP setting, this reaches a run you already started the next time you load it. Your character level is unchanged.",
+    "build": "0.7.1.752",
+    "pullRequest": 1386,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1386"
+  },
+  {
+    "id": "pr-1444",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The opening is restaged",
+    "detail": "The first scene shifts its view slightly right. The Burning's camera now rises slowly up the burning towers. The last two scenes pull the camera back, and the final step eases in. The caption band holds one fixed height on every scene, slightly lower than before, and the words take one size across the whole opening: the largest at which the longest line still fits your screen, so nothing spills or needs scrolling. On a phone held sideways the words stop shrinking before they become too small to read, and the longest caption may scroll there.",
+    "build": "0.7.1.750",
+    "pullRequest": 1444,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1444"
+  },
+  {
+    "id": "pr-1454",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition's music and map detail follow its art packs",
+    "detail": "Behind the scenes: the served web edition now finds its recorded score and the sharp map close-ups through the same checked list as its art, instead of from folders copied beside it. When that list does not load, the game plays its built-in generated score and shows the softer map, as it does for any missing file. The downloadable single file is unchanged. Nothing you play changes.",
+    "build": "0.7.1.748",
+    "pullRequest": 1454,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1454"
+  },
+  {
+    "id": "pr-1457",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Turning Developer tools off no longer changes how the game plays",
+    "detail": "On development and test builds, switching Settings → Advanced → Developer tools off and reloading used to drop the developer's chosen starting values for the hidden tuning settings, and switching it back on brought them back. Those values now follow the kind of build you are playing, so the switch only decides which settings sections you see. A downloaded build the game cannot place no longer takes those developer-only values even with the tools switched on; every setting it shows keeps its usual starting value.",
+    "build": "0.7.1.747",
+    "pullRequest": 1457,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1457"
+  },
+  {
+    "id": "pr-1456",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Play the hosted game offline, and download it whole",
+    "detail": "On the build site, newer builds now play as the web edition, loading their art from one shared store, and each build's Download saves the light-art single file, one self-contained HTML that plays by double-click. In the game, Download & saves → Make available offline keeps the build and its art in your browser, so the same address opens without internet (the map uses simpler artwork and the music is synthesized offline); Remove this build's offline copy undoes it.",
+    "build": "0.7.1.745",
+    "pullRequest": 1456,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1456"
+  },
+  {
+    "id": "pr-1455",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Legendary sigils: attune one in the Armoury and it works in every fight",
+    "detail": "Three legendary sigils join the game: the Sigil of the Last Vigil raises a guard when you start a fight wounded, the Pyre Sigil raises a guard whenever a card is exhausted, and the Gravelight Sigil heals you when a foe falls while you are wounded. A new Sigils panel in the Armoury's Inventory view lets you attune and unattune them out of a fight, one at a time by default; an attuned sigil needs no slot and no weapon, and a refusal is shown in the panel. No shop sells one. A won fight, a boss before the last, or a treasure room can drop one you do not own, but every drop chance starts at 0, so none drops until you raise it in Settings. A treasure room's spoils now survive a reload before you take them. Older saves load with nothing attuned.",
+    "build": "0.7.1.744",
+    "pullRequest": 1455,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1455"
+  },
+  {
+    "id": "pr-1452",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Art quality: Auto, Light or High",
+    "detail": "In the web edition, Settings → Display → Art quality now offers Auto, Light, High and Local high-res. Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art the game carries otherwise; Light and High pick one, and the change takes effect at once and is remembered on this device. A single-file copy carries its art inside it, so there Light and High are greyed out and the setting says why.",
+    "build": "0.7.1.742",
+    "pullRequest": 1452,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1452"
+  },
+  {
+    "id": "pr-1453",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: test tools open the art-pack build the way it plays",
+    "detail": "Nothing you play changes. The browser tools that check a built game now ask one helper for its address: a single self-contained file still opens straight from disk, and a build that loads its art from packs is served to them from its own folder on this computer, with the same debug settings the file has.",
+    "build": "0.7.1.741",
+    "pullRequest": 1453,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1453"
+  },
+  {
+    "id": "pr-1439",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the rules for legendary sigils are written down",
+    "detail": "This is a docs-only change, and nothing you play changes yet. The design document now says how a legendary sigil works. You attune it in the Armoury, out of a fight, up to a set number at a time, and it works in every fight while attuned, with no slot or weapon needed. Only a fight or a treasure room can drop one, never a shop, and none drops until you raise its chance in Settings. A save from before keeps its sigils and starts with none attuned.",
+    "build": "0.7.1.740",
+    "pullRequest": 1439,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1439"
+  },
+  {
+    "id": "pr-1446",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the browser checks wait longer for a slow browser to start",
+    "detail": "Nothing you play changes. The automated checks that open the game in a real browser sometimes failed because the browser took longer than 12 seconds to start on the build servers. They now wait up to 30 seconds for it, and this limit can be changed without editing any check. A browser that crashes on start still fails the check at once.",
+    "build": "0.7.1.739",
+    "pullRequest": 1446,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1446"
+  },
+  {
+    "id": "pr-1451",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition's fonts and backdrops follow its art packs",
+    "detail": "Behind the scenes: the served web edition now loads its lore fonts and backdrop pictures through the same checked list as the rest of its art. When the high-resolution list is missing it now shows the light backdrops, the same as the rest of its art, instead of asking for high-resolution pictures the list no longer vouches for; when no list loads it keeps its plain background and system fonts. The door masks stay inside the game file. Nothing you play changes.",
+    "build": "0.7.1.738",
+    "pullRequest": 1451,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1451"
+  },
+  {
+    "id": "pr-1441",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the action-bar layout check runs again",
+    "detail": "Nothing you play changes. When co-op got the solo action bar, the bar's markup moved into a shared component, and the tool that checks the bar never lands on your cards, the top bar or the battlefield was still looking for it in the old place. It stopped before it measured anything. It now reads the shared component and checks all 44 cells again.",
+    "build": "0.7.1.737",
+    "pullRequest": 1441,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1441"
+  },
+  {
+    "id": "pr-1442",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Pages site no longer copies the art review folder",
+    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "build": "0.7.1.736",
+    "pullRequest": 1442,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
+  },
+  {
+    "id": "pr-1443",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition loads its art from hash-pinned packs",
+    "detail": "Behind the scenes: the served web edition now keeps its art as files named by their contents, checks the list of them against a fingerprint inside the game file before using it, and falls back from high to light art (or to placeholders) when a list is missing; the single-file download is unchanged and nothing you play changes.",
+    "build": "0.7.1.735",
+    "pullRequest": 1443,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1443"
+  },
+  {
+    "id": "pr-1437",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every class now plays five whole runs on every change",
+    "detail": "Nothing you play changes. The test suite now plays five full runs for each class without a screen, on fixed seeds. Each run goes from the map through fights, rewards and events to a win or a death. The suite fails if a run crashes or gets stuck, whether in a fight that never ends or on a map path that never reaches the boss.",
+    "build": "0.7.1.734",
+    "pullRequest": 1437,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1437"
+  },
+  {
+    "id": "pr-1435",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: combat screenshots no longer leave out your character",
+    "detail": "Nothing you play changes: your character was always drawn in the game itself. The tool that takes the preview pictures sometimes took the combat picture before your character was painted, which left only a shadow where they stand. It now waits until every fighter's artwork has loaded and the picture holds still, and if that never happens it reports the problem instead of saving the picture. The larger enemies in recent pictures are intended, from the recent changes that made enemies larger on the battlefield.",
+    "build": "0.7.1.733",
+    "pullRequest": 1435,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1435"
+  },
+  {
+    "id": "pr-1436",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Co-op combat has the same bottom bar as solo",
+    "detail": "In a co-op fight the bottom of the screen showed an Actions circle, a stretched End Turn bar and a second row of flask buttons, and it had no Draw, Discard or Potions. Now it is the solo bar: Actions, Draw, End Turn, Discard/Exhaust and Potions, in one tidy row, laid out exactly as solo lays them out on a phone, a sideways phone and a desktop. Your flasks are behind Potions, as they are in solo, and the flask keys open that list. With two players on one screen, the Potions list belongs to whoever opened it: switching seats with Tab closes it, so you can never drink the other player's flask by mistake. A player who is down or disconnected can still open Potions to see what they carry. Each potion's details now say where it goes in co-op: at the selected enemy, or at a player you pick. Pressing a flask key twice no longer stacks a second Potions list over the board, and screen readers hear the Actions count as it changes. If the fight ends while the Potions list is open, it closes, and a Use confirmed after the host has moved your potions spends nothing.",
+    "build": "0.7.1.732",
+    "pullRequest": 1436,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1436"
+  },
+  {
+    "id": "pr-1438",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "A wise master can now train, respec and teach your weapon skills",
+    "detail": "A master teaches three or four skills and sells books, weapon arts and armaments for them. Training buys XP for one of his skills, up to a few sessions per visit. A lesson draws a skill draft of cards for one of his skills, and you buy one for your deck; a reload keeps the same cards. A respec sends a skill at level 2 or higher back to level 1 and pays part of its XP into a training pool, which you can spend on any skill. Appraisal shows each of his skills for free, and you can sell skill books and revive tokens to him. No map place has a master yet; a merchant can be one if you raise its weight in Settings. A save made while visiting a blacksmith in town no longer fails to load, and a custom run's shop price changes now apply to weapon arts too.",
+    "build": "0.7.1.727",
+    "pullRequest": 1438,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1438"
+  },
+  {
+    "id": "pr-1433",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Behind the scenes: the format for loading art, fonts, music and map tiles as separate files is written and checked",
+    "detail": "Nothing you play changes. A new tool packs the art, fonts, music and map tiles into files named by their contents, with an index for each art tier, and the art list now records the fonts, the font licence, the music and the map tiles as one shared set; the game does not load them this way yet.",
+    "build": "0.7.1.726",
+    "pullRequest": 1433,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1433"
+  },
+  {
     "id": "pr-1431",
     "date": "2026-10-01",
     "group": "2026-10-01",

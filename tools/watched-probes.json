@@ -1758,7 +1758,7 @@
   {
    "id": "K6",
    "by": "Codex, HUD menu migration",
-   "read": "src/ui/screens/combat.js (potionEntries and CHARGE_FLASK_KINDS, potion menu data-charges) · src/content/balance.js (flaskCapacity 3)",
+   "read": "src/ui/screens/combat.js (potionEntries) · src/ui/components/combatActionRow.js (combatPotionRows, CHARGE_FLASK_KINDS, potion menu data-charges) · src/content/balance.js (flaskCapacity 3)",
    "anchors": [
     "function potionEntries()",
     "CHARGE_FLASK_KINDS"

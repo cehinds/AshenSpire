@@ -1,5 +1,34 @@
 # Credits & Asset Licenses
 
+## Player polish asset kit (2026-10-02)
+
+Sixteen original raster paintings, transparent role portraits and panel material
+were generated with OpenAI's built-in Image Generation tool for the owner's
+requested desktop/mobile polish kit. Source prompts and reference provenance:
+[generation records](docs/design/player-polish-asset-kit-2026-10-02/generation.json).
+The [asset manifest](docs/design/player-polish-asset-kit-2026-10-02/manifest.json)
+identifies each original PNG and its checksum. The kit also contains 129 original
+SVG icons, frames and controls, authored directly; their deterministic source is
+[generate-ui-kit.py](docs/design/player-polish-asset-kit-2026-10-02/ui/generate-ui-kit.py).
+No third-party icon pack or artwork was used for these new assets; no third-party
+asset license is claimed for first-party AI-created art or original SVG geometry.
+
+The 49 canonical artwork copies retain their existing source credits and licenses;
+[canonical-map.json](docs/design/player-polish-asset-kit-2026-10-02/canonical-map.json)
+records their original paths and hashes. The three existing font copies retain
+[their OFL license](docs/design/player-polish-asset-kit-2026-10-02/fonts/OFL.txt).
+This kit is a design resource and does not register or replace runtime artwork.
+
+## Player interface polish concepts (2026-10-01)
+
+Twelve original concept boards covering 24 player-facing feature views on
+desktop and portrait mobile were generated with OpenAI's built-in Image
+Generation tool using this project's existing artwork and screen captures.
+The PNG boards, searchable gallery, exact prompts, provenance and review notes
+are preserved in [player polish inspiration](docs/design/player-polish-2026-10-01/README.md).
+These are design references, not runtime assets. No third-party artwork was
+downloaded and no third-party asset license is claimed.
+
 ## Empty-hand magic animation suites (2026-09-19)
 
 Original artwork generated for AshenSpire with OpenAI's built-in image generation, using the project's approved class and armor references. Transparent PNG masters and exact prompts: `art/unarmed-magic-2026-09-19/`. Runtime WebP frames: `assets/animations/unarmed-magic/`. All four classes and 35 armor catalog entries share one choreography across 32 distinct appearances; no external artwork was downloaded and no third-party asset license is claimed. The existing `src/ui/assets.js` painted-stage and asset-map path resolves the configured frames.
@@ -117,13 +146,15 @@ row in the table below — no game-code changes.
 | Painted equipment turnaround sheets (`docs/low-poly-fighters/*.png`) | the eight reference sheets on the *Low-Poly Fighters — Painted Poses* page (`docs/low-poly-fighters/index.html`) — every equipment piece per class in five orthographic views (top, right, bottom, left, back), two sheets per class: the garments and the kit (hands, feet, weapon) | **AI-generated** painted sheets supplied by the owner (owner statement, 2026-09-05), delivered as `{knight,monk,rogue,wizard}-{wearables,equipment}-turnaround.png` and renamed on commit to the names the page reads. Reference only — nothing loads them at runtime; the shipped per-piece equipment art is the `assets/equipment/*.webp` row above. The painted **pose** sheets that page also shows are covered by the *Pose sprites* row. | AshenSpire (AI-generated) | CC0 |
 | Unicode emoji glyphs (⚔ 🩸 💎 ☄ …) | card/relic/status/enemy icons, sigils | Unicode standard; rendered by the player's OS/browser emoji font | Unicode / OS vendor | Not embedded — system-rendered |
 | Cinzel (display), Inter (body) | interface typography | referenced by `font-family` with robust system fallbacks (Georgia / system-ui); the interface copies are **not bundled** in v1 (the card-lore row below bundles separate "AS Lore" copies used only for lore) | Google Fonts | SIL OFL (when self-hosted) |
-| Card lore faces (`assets/fonts/*.woff2`): IM Fell English, EB Garamond, Cormorant Garamond, Crimson Pro, Spectral, Libre Baskerville, Cinzel, Inter — Latin subset, regular and italic | the lore line and lore modal, chosen under Advanced → Text & lore; bundled under their own "AS Lore" family names so they do not change the interface fonts; they reach the page through `@font-face` url()s in `styles/kit.css`, which the bundler inlines, like the act backdrops, rather than through `src/ui/assets.js`. The copyright notices and full licence are `asset-data/fonts/OFL.txt`, repeated in a header comment in `styles/kit.css` so they ship inside every build | [Fontsource](https://fontsource.org) packages of the Google Fonts releases (`cdn.jsdelivr.net/npm/@fontsource/<family>/files/…-latin-*.woff2`) | Google Fonts / each face's designers | SIL OFL 1.1 |
+| Card lore faces (`assets/fonts/*.woff2`): IM Fell English, EB Garamond, Cormorant Garamond, Crimson Pro, Spectral, Libre Baskerville, Cinzel, Inter — Latin subset, regular and italic | the lore line and lore modal, chosen under Advanced → Text & lore; bundled under their own "AS Lore" family names so they do not change the interface fonts; they reach the page through `@font-face` rules in `styles/kit.css`, rather than through `src/ui/assets.js`. Since EXTERNAL-ASSETS-PLAN step 8e the game file loads them at runtime from the `common` pack (an `ASSET_CSS` slot each, or the font sidecar under `file://`), and only the light single file still inlines them, like the act backdrops. The copyright notices and full licence are `asset-data/fonts/OFL.txt`, which travels in the `common` pack beside the faces as `licenses/OFL.txt` and is repeated in a header comment in `styles/kit.css` so it ships inside every build | [Fontsource](https://fontsource.org) packages of the Google Fonts releases (`cdn.jsdelivr.net/npm/@fontsource/<family>/files/…-latin-*.woff2`) | Google Fonts / each face's designers | SIL OFL 1.1 |
 
 > When real art lands: download from a **Planned source** above, place it under
 > `assets/`, reference it from `src/ui/assets.js`, and add a row here (source URL,
-> author, license). Self-host the Cinzel/Inter `woff2` under `assets/fonts/` with
-> an `@font-face` block and a row here — the fallbacks keep the game readable
-> until then.
+> author, license). The Cinzel/Inter interface faces, when they ship, load at
+> runtime as pack files through the pack loader like every other asset
+> (SPEC §7, *Fonts*; docs/EXTERNAL-ASSETS-PLAN.md) — not from a self-hosted
+> `assets/fonts/` folder, which step 13 retires — with a row here. The system
+> fallbacks keep the game readable until then.
 
 ## Remaining asset directories (2026-09-24)
 
@@ -144,7 +175,9 @@ says so where a fact is not recorded.
 | `assets/map/parchment_act{1,2,3}.svg` | Procedural parchment plates generated by this repository's `tools/parchment.mjs` | Project-owned procedural artwork, CC0 |
 | `assets/defeated-poses/`: 49 grounded defeated frames, and their `manifest.json` (tracked as `asset-data/defeated-poses/manifest.json`) | AI-generated from the project's approved enemy idle and painted outfit art; the prompt is in `art/defeated-poses/generation.json`, the 49 source sheets are in `art/defeated-poses/sheets/`, and `art/defeated-poses/build.mjs` exports them (added 2026-09-08). The record does not name the image-generation tool | Project-owned AI-generated artwork; no third-party asset license claimed |
 | `assets/ui/flasks/flask-{crimson,azure}.webp` | Added by the owner on 2026-08-12 as PNGs and converted to WebP on 2026-09-10. The commits record no source or generator | **Provenance not recorded. The owner must confirm it before release** |
-| `assets-mobile/` | Downscaled twin of `assets/`, produced by `tools/mobile-art.mjs` for the mobile build | Each file has the same source and rights as its `assets/` original |
+| `assets-mobile/` | Downscaled twin of `assets/`, produced by `tools/mobile-art.mjs`: the light tier (the light pack and the light single file) | Each file has the same source and rights as its `assets/` original |
+| `map-detail/`: the world map's detail tiles (the common art pack) | Cut from the world-map artwork (`art/environments/worlds/`, see the square-world detail remaster below) by `tools/map-detail-build.mjs` | Same source and rights as that artwork: project-owned AI artwork, CC0-1.0 |
+| `licenses/OFL.txt` (the common art pack) | The common pack's copy of `asset-data/fonts/OFL.txt`, shipped beside the fonts it covers | SIL Open Font License 1.1: the notices and licence text the fonts' licence requires to be distributed with them |
 | `asset-data/classes/` | Class-art working documents, JSON manifests and scripts written in this repository (the successor contract, look reference, crop receipts and their checkers). The directory holds no image, audio or font files | Project-owned; MIT with the code ([LICENSE](LICENSE)) |
 | `assets/relics/`: twelve 256px painted relic illustrations | AI-generated with built-in OpenAI imagegen; sources, exact prompts and export manifests in `art/relic-icons-pack-01/`, `-02/` and `-03/` (see *Painted relic illustrations* above) | Project-owned AI-generated artwork; no third-party artwork used and no third-party license claimed |
 | `assets/enemies-unity/`: twelve painted enemy frames, and their `provenance.json` (tracked as `asset-data/enemies-unity/provenance.json`) | Unchanged AI-generated frames from the [AshenSpire-Unity](https://github.com/cehinds/AshenSpire-Unity/tree/130d7c5/Unity/Assets/AshenSpire/Resources/Art) fork, which generated them with its built-in image-generation tool; extraction manifest in `asset-data/enemies-unity/provenance.json` (see *Painted enemy sprites from the Unity fork* above) | Project-owned AI-generated artwork |

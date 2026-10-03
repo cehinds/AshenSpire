@@ -10,15 +10,15 @@ A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no
 
 ## Test the game now
 
-- **Stable:** the [Play link](https://cehinds.github.io/AshenSpire/AshenSpire.html) above. It serves `main`'s build. A mobile edition exists only for builds that have one; `main`'s build had none at the time of writing (2026-09-27).
+- **Stable:** the [Play link](https://cehinds.github.io/AshenSpire/AshenSpire.html) above. It serves `main`'s build. There is no separate mobile edition any more: one page picks phone-sized art on a phone (Settings → Display → Art quality, *Auto*), and the old `AshenSpire-mobile.html` link redirects to it once `main` carries this change.
 - **Latest `dev` build** (the built HTML is not committed on `dev`; CI uploads it):
   1. Sign in to GitHub and open the [dev preview workflow, filtered to `dev`](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev).
   2. Click the newest run.
   3. Under **Artifacts** at the bottom of the run summary, click **`dev-standalone-<commit>`** to download a zip.
-  4. Unzip it and open `AshenSpire-dev-preview.html` in a browser. One ~29 MB file, no install. Artifacts expire after 14 days.
+  4. Unzip it and open `AshenSpire-dev-preview.html` in a browser. It is the light single file: one ~31 MB file, no install. Artifacts expire after 14 days.
 
   A pull request's run offers the same artifact for that PR's build. Once the Pages fix ([#1360](https://github.com/cehinds/AshenSpire/pull/1360)) lands, the newest `dev` build is also meant to be at [`…/dev/latest/`](https://cehinds.github.io/AshenSpire/dev/latest/); the artifact stays the path that always works.
-- **Run from source:** install [Node.js](https://nodejs.org) (22 is what CI uses; there is no `package.json` and nothing to `npm install`), clone, then `node tools/launch.mjs` — or `./run.sh` (macOS/Linux) / `run.bat` (Windows), which call it. It builds, serves on `http://localhost:8080` and opens your browser. Options include `--no-open`, `--port <n>`, `--build-only` (write the files, don't serve) and `--full-art` (the release/main art tier).
+- **Run from source:** install [Node.js](https://nodejs.org) (22 is what CI uses; there is no `package.json` and nothing to `npm install`), clone, then `node tools/launch.mjs` — or `./run.sh` (macOS/Linux) / `run.bat` (Windows), which call it. It builds, serves on `http://localhost:8080` and opens your browser. Options include `--no-open`, `--port <n>`, `--build-only` (write the files, don't serve) and `--full-art` (the release/main shape: high art by default, with the light pack as its fallback).
 
 ## Playable builds
 
@@ -33,9 +33,9 @@ A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no
 - **The number is never typed here.** Each badge reads that branch's committed `buildordinal.json` — the same fact the title screen paints as `BUILD <version>.<ordinal> · src <digest>`.
 - **Where a build lives.** Every push to `dev`, `test`, `release` or `main` uploads that commit's build as the `<branch>-standalone-<commit>` artifact of the [dev preview workflow](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) (kept 14 days on `dev`, 30 on `test`, 90 on `release`/`main`); **latest** in the table opens that workflow. For a branch whose head no longer commits `AshenSpire.html` — `dev` since 2026-09-26, and each other branch once that change is promoted to it — the artifact is the dependable copy of a newer build. Until the Pages fix ([#1360](https://github.com/cehinds/AshenSpire/pull/1360)) lands, Pages serves only committed builds (`…/<branch>/<ordinal>/`, byte-identical to that commit's `AshenSpire.html`), has no `…/<branch>/latest/` for such a branch, and its section ends at the last committed build. Once it lands, Pages rebuilds those builds from each commit's own source, checks the digest, and serves them at `…/<branch>/latest/` and `…/<branch>/<ordinal>/`.
 - **Publication:** the site is assembled from git history by `node tools/pages-site.mjs` (`.github/workflows/pages-builds.yml`); nothing on it is hand-edited (once #1360 lands, builds a branch no longer commits are rebuilt from source). The workflow is meant to republish it on a push to `dev`; a push to `main` publishes nothing — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
-- **Art tiers and size:** `dev` and `test` build the **light** tier — one ~29 MB file whose art comes from the committed `assets-mobile/` twins. `release` and `main` build the **full** art (once `main` takes 0.7.x): `AshenSpire.html` (~255 MB at the time of writing) plus `AshenSpire-mobile.html`, the same build with images shrunk and held **under 30 MB** by `tools/verify-shipped.mjs`. Saves are compatible between them.
-- **High-res art** lives in the private repo `cehinds/AshenSpire-art`. `art-release.json` pins the release (`hd-assets-v1`), and `node tools/fetch-art.mjs` downloads and verifies it (needs `ART_REPO_TOKEN`). To play a light build with it, unpack the release and pick its folder in **Settings → Display → Art quality → Local high-res**; anything the folder lacks keeps the built-in art, and the choice stays on that device.
-- **Offline:** any single `.html` above plays by double-click from disk, no server. External music folders need http — see [dist/README.md](dist/README.md). `node tools/verify-shipped.mjs` checks that the local copies (`build/`, the root aliases, `dist/`) agree.
+- **Art tiers and size:** every build is one game file of about 10 MB of code with its art beside it, in content-addressed packs (`packs/` and `objects/`) it loads and hash-checks at runtime ([docs/EXTERNAL-ASSETS-PLAN.md](docs/EXTERNAL-ASSETS-PLAN.md), step 8e). `dev` and `test` carry the **light** art (from the light pack of the art release; `node tools/fetch-art.mjs --pack light,common` fetches it before a build); `release` and `main` default to the **high** art and carry the light art as its fallback. Settings → Display → Art quality picks *Auto*, *Light* or *High* at runtime; *Auto* takes light on a phone. Beside it every build has **one light single file** (~31 MB, everything inline), the download. The full-art single file (~255 MB) and the separate `AshenSpire-mobile.html` are retired. Saves are compatible between them all.
+- **High-res art** lives in the public repo `cehinds/AshenSpire-art`. `art-release.json` pins the release (`hd-assets-v2`: the high, light and common zips), and `node tools/fetch-art.mjs` downloads and verifies them (no token needed; `ART_REPO_TOKEN` only raises the rate limit). To play a light build with it, unpack the release and pick its folder in **Settings → Display → Art quality → Local high-res**; anything the folder lacks keeps the built-in art, and the choice stays on that device.
+- **Offline:** three ways. The **light single file** (the build's *Download*, the root `AshenSpire.html` and `dist/download/AshenSpire.html` after a local build) plays by double-click from disk, no server. On the Pages site, **Download & saves → Make available offline** keeps a build in the browser (phones too), and **Download a folder copy (zip)** saves the game with its packs; unzip it and double-click its HTML. `dist/AshenSpire.html` also opens by double-click while its `packs/` and `objects/` stay beside it. The score plays only over http; from disk the game uses its synthesized music. See [dist/README.md](dist/README.md). `node tools/verify-shipped.mjs` checks that the local copies (`build/`, the root alias, `dist/`) agree.
 
 ## What is this?
 
@@ -89,6 +89,10 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 
 ## UI component library
 
+- **[Player polish asset kit](docs/design/player-polish-asset-kit-2026-10-02/index.html)** — reusable desktop/mobile artwork, engraved SVG components, canonical art reuse, provenance and a 24-feature integration map. [Integration guide](docs/design/player-polish-asset-kit-2026-10-02/README.md).
+
+- **[Player polish inspiration](docs/design/player-polish-2026-10-01/index.html)** — twelve illustrated concept boards showing desktop and portrait-mobile directions for the player-facing feature families. [Design notes and implementation caveats](docs/design/player-polish-2026-10-01/README.md) distinguish generated examples from the game's rules.
+
 - **[Component catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** ([source](docs/component-catalog.html)) — stable component IDs, model/renderer names, reuse surfaces and a visual miniature per component. Select a card for its detail drawer.
 - **[Markdown catalog](docs/COMPONENT-CATALOG.md)** — the chat-friendly reference.
 - **[Folding Tray gallery](docs/tray-gallery.html)** — every top/right/bottom/left folded and unfolded state; the [Folding Tray contract](docs/TRAY-COMPONENTS.md) defines the grammar.
@@ -124,7 +128,7 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 PROMPT.md        the build brief
 SPEC.md          the full design + technical specification (source of truth)
 AshenSpire.html  standalone build (root alias; built locally or by CI, not committed on dev/test)
-art-release.json pins the high-res art release in cehinds/AshenSpire-art
+art-release.json pins the art release (high, light, common) in cehinds/AshenSpire-art
 index.html       game entry point
 styles/          CSS
 src/model/       schemas, registries, formula evaluator, validation

@@ -30,9 +30,13 @@
 #
 # THREE PARALLEL JOBS, so a slow corpus cannot hold the fast answer hostage and
 # no job reads a tree another is mutating:
-#   core       — the engine suite, every discovered *.test.mjs, each tool's
-#                verdict on the tree as it stands (tests/run-node.mjs), and the
-#                no-browser CHANGELOG ordering check with its own known-bads
+#   core       — the art release fetch first (step 12: the suite reads the
+#                packs), the engine suite, every discovered *.test.mjs, each
+#                tool's verdict on the tree as it stands (tests/run-node.mjs),
+#                the no-browser CHANGELOG ordering check with its own
+#                known-bads, then `fetch-art --agree`
+#                (light + common on PRs and dev, all three on test/release;
+#                its time is not yet measured in CI — record it here)
 #   selftests  — every tool's `--selftest` known-bad corpus (tests/run-node.mjs)
 #   parse-gate — the bundler's parse-gate fixtures (tools/bundle.test.mjs). It
 #                ran as a second step of `selftests` and, at about twelve
@@ -63,6 +67,16 @@ concurrency:
 permissions:
   contents: read
 
+# STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
+# assets/fonts/, music/ and map-detail/ reads the fetched art packs through
+# tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
+# checkout, so a job that builds or serves without fetching first is red now,
+# not when step 13 deletes them. Each job that builds, serves or tests the
+# checkout fetches with ./.github/actions/fetch-art right after setup-node.
+env:
+  ASHEN_ART_SOURCE: cache
+  ART_PACKS: ${{ (github.event_name == 'pull_request' || github.ref_name == 'dev') && 'light,common' || 'all' }}
+
 jobs:
   core:
     name: core suite
@@ -77,6 +91,20 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Engine suite, every discovered test file, and each tool's verdict on the tree
         run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests
@@ -88,6 +116,17 @@ jobs:
       - name: The ordering check still catches its own known-bads
         if: always()
         run: node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order --selftest
+
+      # THE AGREEMENT CHECK (docs/EXTERNAL-ASSETS-PLAN.md step 11). The packs were
+      # fetched before the suite (step 12: the suite and the builds read them):
+      # light and common on a pull request and on a push to dev, the same as
+      # dev-preview's dev/test build; all three (the 203 MB high zip too) on test
+      # and release, where the long suites already run. The trees are still in
+      # this repository (until step 13), so this job, which gates every pull
+      # request, also proves the release and the trees agree.
+      - name: The fetched art release and the trees here agree byte for byte
+        if: always()
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   selftests:
     name: tool self-tests
@@ -105,6 +144,10 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Every tool check still catches its own known-bad corpus
         run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
@@ -120,6 +163,10 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Parse gate — the bundler's own known-bad fixtures
         run: node tools/bundle.test.mjs

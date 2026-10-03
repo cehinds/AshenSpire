@@ -16,6 +16,7 @@ import { createSaveManager, createMemoryStorage, RUN_ARCHIVE_KEY, RUN_KEY } from
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
+import { isPoolDeckMode } from '../src/model/cardRemoval.js';
 
 // Fixed four-slot migration corpus: preserve its pre-kit catalogue. The shipped
 // kit composer is covered exhaustively by tests/armament-combat-kits.test.mjs.
@@ -420,7 +421,7 @@ if (currentSnapshotLoad.loaded) {
   const restoredRng = createRng(currentSnapshotLoad.loaded.seed, currentSnapshotLoad.loaded.streamCounters);
   const controlRng = createRng(currentSnapshotLoad.loaded.seed, currentSnapshotLoad.loaded.streamCounters);
   const normalizedCountersBeforeRestore = JSON.stringify(controlRng.getCounters());
-  const restored = restoreCombatSnapshot({ registries: baseRegistries, rng: restoredRng, snapshot: loadedSnapshot });
+  const restored = restoreCombatSnapshot({ registries: baseRegistries, rng: restoredRng, snapshot: loadedSnapshot, fallbackPoolDeck: isPoolDeckMode(currentSnapshotLoad.loaded) });
   check(JSON.stringify(serializeCombatSnapshot(restored)) === currentSnapshotBefore, 'current snapshot restores without replaying combat or consuming state');
   const countersAfterRestore = JSON.stringify(restoredRng.getCounters());
   const restoredNextEnemyAi = restoredRng.float('enemyAI');

@@ -45,9 +45,21 @@ env:
   # A dispatch from `feature/x` carries a slash; the preview job's first step
   # rewrites CHANNEL without it before anything names a file or an artifact.
   CHANNEL: ${{ github.base_ref || github.ref_name }}
-  # The web (external-art) edition's tier flag for bundle.mjs: light on
-  # dev/test (owner, 2026-09-26), full on release/main.
+  # The pack-shaped build's tier flag for bundle.mjs: light on dev/test
+  # (owner, 2026-09-26), high (no flag) on release/main.
   WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
+  # The art packs that tier is made from (docs/EXTERNAL-ASSETS-PLAN.md §2,
+  # tools/fetch-art.mjs --pack): light and common on dev/test, all three on
+  # release/main.
+  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+
+  # STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
+  # assets/fonts/, music/ and map-detail/ reads the fetched art packs through
+  # tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
+  # checkout, so a job that builds or serves without fetching first is red now,
+  # not when step 13 deletes them. Each job that builds, serves or tests the
+  # checkout fetches with ./.github/actions/fetch-art right after setup-node.
+  ASHEN_ART_SOURCE: cache
 
 jobs:
   preview:
@@ -58,6 +70,20 @@ jobs:
           lfs: false # the build is made below from source; nothing reads LFS
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       # BUILT FIRST, AND UPLOADED WHENEVER THIS SUCCEEDS. The built HTML is not
       # committed, so this run's artifacts are the only copy of this commit's
@@ -67,9 +93,12 @@ jobs:
       - name: Make the channel safe for a file and artifact name
         run: echo "CHANNEL=${CHANNEL//\//-}" >> "$GITHUB_ENV"
 
-      - name: Build the standalone
+      - name: Build the game (the pack shape and the light single file)
         id: build
-        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        # Light art on dev/test (owner, 2026-09-26); release/main default to high.
+        # Either way launch.mjs writes the pack-shaped game into build/ and dist/
+        # and the light single file to build/download/ and the root alias
+        # (docs/EXTERNAL-ASSETS-PLAN.md step 8e).
         env:
           ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         run: node tools/launch.mjs --build-only $ART_TIER
@@ -83,10 +112,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p standalone
+          # The root alias is the light single file on every branch since step
+          # 8e: the one inline download (owner answer 3). The full-art single
+          # file and the separate mobile file are retired (owner answers 6, 2).
           cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
-          # Only a --full-art build (release/main) writes a separate mobile file;
-          # a light build IS the phone-sized file.
-          if [ -f AshenSpire-mobile.html ]; then cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"; fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -175,7 +204,7 @@ jobs:
 
       - name: The file a player is handed matches the tree that claims it
         run: node tools/verify-shipped.mjs
-      - name: The mobile art twin tree mirrors assets/ and fits its budget
+      - name: The light art twin tree mirrors assets/ and fits its budget
         run: node tools/mobile-art.mjs --check
 
       # Same budget as the gates above: a pure read, no execution, no browser,
@@ -219,39 +248,69 @@ jobs:
           #              OWN artifact, dev-standalone; see the upload steps.
           #
           # The root used to be the single file, so opening the preview on a
-          # phone meant 57.6 MB before the first frame. --external-art writes
-          # AshenSpire.html plus assets/ and map-detail/ into preview/ in one
-          # pass (and the shipped score, music/), so the copies that used to place
-          # those by hand are gone with it.
-          # The same tier as the standalone: light on dev/test, full on release/main.
-          node tools/bundle.mjs --external-art $WEB_TIER --out preview
+          # phone meant 57.6 MB before the first frame. The `build` step's
+          # launch.mjs already wrote the pack-shaped game to build/ with this
+          # job's tier (light on dev/test, high on release/main): AshenSpire.html
+          # plus asset-base.json, packs/ and objects/ (docs/EXTERNAL-ASSETS-PLAN.md
+          # steps 3a and 8e); its map tiles and score are common-pack objects
+          # since step 3c, so no map-detail/ or music/ folder comes with it. It is
+          # copied here as built, not rebuilt. build/download/ (the light single
+          # file) stays out: it is the standalone artifact.
+          cp -r build/AshenSpire.html build/asset-base.json build/packs build/objects preview/
           cp preview/AshenSpire.html preview/index.html
+          # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
+          # The source-module preview pages (world-atlas-, equipment-selection-,
+          # armament-kits-preview.html), the pose studio, the art inspection
+          # pages and docs/preview read `assets/…` BY PATH (assetUrl() in source
+          # mode, `../../assets/…` from art/). They get this tier's art in
+          # preview/workbench/assets/, copied from the FETCHED RELEASE (step 12):
+          # the light pack's assets-mobile/ on dev/test, with the common pack's
+          # fonts beside it (the light pack carries no fonts). tools/art-source.mjs
+          # names each cache directory; ASHEN_ART_SOURCE=cache (this workflow's
+          # env) refuses the trees, so an unfetched pack is red here, not at
+          # step 13. release/main copy the high tier, assets/, which leaves this
+          # repository with ART-REPO-PLAN step 6, plus the same fonts.
+          # preview/AshenSpire.html must not get a tree: an id its pack index
+          # misses has to 404 visibly, not load quietly from a tree left beside it.
+          W=preview/workbench
+          mkdir -p "$W/assets" "$W/art/combat-effects-2026-09-07"
+          if [ "$(echo $WEB_TIER)" = "--light" ]; then
+            LIGHT_DIR=$(node tools/art-source.mjs --dir assets-mobile)
+            cp -r "$LIGHT_DIR"/. "$W/assets/"
+          else
+            cp -r assets/. "$W/assets/"
+          fi
+          mkdir -p "$W/assets/fonts"
+          # Assigned first: errexit ignores a failed substitution inside an
+          # argument, which would turn the source into "/.".
+          FONTS_DIR=$(node tools/art-source.mjs --dir assets/fonts)
+          cp -r "$FONTS_DIR"/. "$W/assets/fonts/"
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
-          mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
-          cp -r src preview/src
-          cp world-atlas-preview.html preview/
-          cp equipment-selection-preview.html preview/
-          cp armament-kits-preview.html preview/
-          cp tools/serve-preview.mjs preview/serve-preview.mjs
-          cp -r styles preview/styles
-          # --update=none: the build above already placed this tier's art under
-          # preview/assets/ (the light twins on dev/test); these copies only add
-          # the files it does not ship, and never overwrite its art.
-          cp -r --update=none assets/environments preview/assets/
-          mkdir -p preview/docs/preview
-          cp -r docs/preview/world-atlas preview/docs/preview/
-          cp -r docs/preview/combat-ground preview/docs/preview/
-          cp -r docs/preview/combat-formation preview/docs/preview/
-          cp -r docs/preview/starting-equipment preview/docs/preview/
-          cp -r docs/preview/armament-kits preview/docs/preview/
-          cp -r pose-studio preview/pose-studio
-          cp -r --update=none assets/pose-effects preview/assets/
-          cp -r art/pose-studio preview/art/
-          cp -r art/card-effect-refresh-2026-09-09 preview/art/
-          cp -r --update=none assets/combat-effects assets/painted-outfits preview/assets/
-          cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
-          cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
+          cp -r src "$W/src"
+          cp world-atlas-preview.html equipment-selection-preview.html armament-kits-preview.html "$W/"
+          cp tools/serve-preview.mjs "$W/serve-preview.mjs"
+          cp -r styles "$W/styles"
+          # --update=none: the copy above already placed this tier's art under
+          # workbench/assets/ (the light twins on dev/test); these copies only
+          # add the files it does not ship, and never overwrite its art.
+          cp -r --update=none assets/environments "$W/assets/"
+          mkdir -p "$W/docs/preview"
+          cp -r docs/preview/world-atlas "$W/docs/preview/"
+          cp -r docs/preview/combat-ground "$W/docs/preview/"
+          cp -r docs/preview/combat-formation "$W/docs/preview/"
+          cp -r docs/preview/starting-equipment "$W/docs/preview/"
+          cp -r docs/preview/armament-kits "$W/docs/preview/"
+          cp -r pose-studio "$W/pose-studio"
+          cp -r --update=none assets/pose-effects "$W/assets/"
+          cp -r art/pose-studio "$W/art/"
+          cp -r art/card-effect-refresh-2026-09-09 "$W/art/"
+          cp -r --update=none assets/combat-effects assets/painted-outfits "$W/assets/"
+          cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html "$W/art/combat-effects-2026-09-07/"
+          cp -r art/combat-effects-2026-09-07/inspection "$W/art/combat-effects-2026-09-07/inspection"
+          # The game's own folder carries no art tree; verify-external reads
+          # the pack, and this keeps that honest.
+          test ! -e preview/assets
           {
             echo "AshenSpire ${CHANNEL} preview"
             echo "commit:   ${GITHUB_SHA}"
@@ -259,13 +318,14 @@ jobs:
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
             echo "Open AshenSpire.html locally to play this exact commit."
-            echo "For the equipment review, run node serve-preview.mjs in this folder."
+            echo "The review pages live in workbench/. For the equipment review, run"
+            echo "node serve-preview.mjs in workbench/ (paths below are relative to it)."
             echo "Then open http://127.0.0.1:8318/equipment-selection-preview.html."
             echo "For all 25 armament kits and disposable combat, open http://127.0.0.1:8318/armament-kits-preview.html."
             echo "Use its class and screen-size controls to test hand choices and Continue."
             echo "Equipment screenshots and QA: docs/preview/starting-equipment/index.html."
             echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
-            echo "Open Combat-pose-preview.html for the offline readiness outfit gallery."
+            echo "Open Combat-pose-preview.html (in this folder) for the offline readiness outfit gallery."
             echo "Open docs/preview/combat-formation/index.html for turn and formation comparisons."
             echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
             echo "Open art/combat-effects-2026-09-07/sprite-catalog.html for all 56 six-frame sets."
@@ -274,11 +334,12 @@ jobs:
             echo "Card/tag assignments and screenshots are in the same art folder."
             echo
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
-            echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
+            echo "(any static server). Its art is in packs/ and objects/, loaded and"
+            echo "hash-checked at runtime. It needs a server. For the double-clickable"
             echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
-            echo "from this same run: AshenSpire-${CHANNEL}-preview.html. On dev and test it"
-            echo "carries the light art tier (~29 MB); on release and main it is the full"
-            echo "art (~250 MB), with AshenSpire-mobile-${CHANNEL}-preview.html beside it."
+            echo "from this same run: AshenSpire-${CHANNEL}-preview.html, the light single"
+            echo "file (~31 MB) on every branch. This folder also opens by double-click"
+            echo "while it stays together; on release and main its default art is high."
             echo
             echo "This is an inspection artifact, not a deployment. The built HTML is not"
             echo "committed; this run's artifacts are this commit's build."
@@ -291,9 +352,9 @@ jobs:
       # exist yet, which is the right behaviour and the wrong placement.
       #
       # --dir is passed to the selftest too. It plants into a COPY of whatever
-      # --dir names; without it the selftest looks for build/web, which this
-      # job never builds, and exits 2 — "the harness could not run", which
-      # blocks without measuring anything.
+      # --dir names; without it the selftest looks for build/ (since step 8e;
+      # build/web before it), and this job's tree to check is preview/, the
+      # copy this job collected.
       #
       # The de-inlined build's art is on disk, not in the HTML, so the guard
       # that reads the shipped file cannot see it. verify-shipped.mjs still
@@ -331,6 +392,15 @@ jobs:
           name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
           retention-days: 14
+
+      # THE AGREEMENT CHECK (docs/EXTERNAL-ASSETS-PLAN.md step 11). The packs were
+      # fetched before the build (step 12: the build and the workbench read
+      # them); while the trees are still here, the release and the trees must
+      # agree byte for byte. LAST, AND WHATEVER RAN BEFORE: its failure never
+      # costs this commit its build, its preview package or another gate's verdict.
+      - name: The fetched packs and the trees here agree byte for byte
+        if: ${{ !cancelled() }}
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
   #
@@ -389,6 +459,10 @@ jobs:
         with:
           lfs: false # builds its own de-inlined copy; reads no LFS object
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - uses: ./.github/actions/which-browser
 
@@ -397,8 +471,59 @@ jobs:
       # the build is cheap without the 52.8 MB of base64 the single file carries.
       - name: The de-inlined build plays, and its art arrives over the wire
         run: |
-          node tools/bundle.mjs --external-art $WEB_TIER --out build/web
+          node tools/bundle.mjs $WEB_TIER --out build/web
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
+
+      # THE SAME BUILD BY DOUBLE-CLICK (docs/EXTERNAL-ASSETS-PLAN.md step 4).
+      # Opened by its file:// URL, no server and no flag that loosens Chrome's
+      # file:// rules: the indexes through their .js twins, the faces through
+      # the font sidecar, the sprites, backdrops and map tiles from the objects
+      # beside the HTML, the masks inline, and the score synthesized. About 30 s.
+      - name: The de-inlined build plays by double-click (file://)
+        run: node tools/verdict.mjs -- node tools/external-play.mjs --file --dir build/web
+
+      # THE INDEX BLOCKED (docs/EXTERNAL-ASSETS-PLAN.md step 5). Every packs/
+      # request held, then refused: the cold boot must draw the startup gate at
+      # once with its "Loading art…" line, hold the title until the load has
+      # failed, then show the title's notice with Retry and no failure banner;
+      # with the block lifted, Retry must load the pinned tier and redraw the
+      # title; combat and the map must mount on placeholders. About 40 s.
+      - name: With its index blocked the de-inlined build boots on placeholders, and Retry loads the art
+        run: node tools/verdict.mjs -- node tools/external-play.mjs --block-index --dir build/web
+
+      # THE PAGES SERVICE WORKER (docs/EXTERNAL-ASSETS-PLAN.md step 6b). The web
+      # edition above, published into a local copy of the Pages shape (the shared
+      # store, asset-base.json, /AshenSpire/sw.js) and served under /AshenSpire/:
+      # "Make available offline" keeps it, the worker's scope is /AshenSpire/,
+      # online the network beats the kept copy, offline the page boots from the
+      # cache and a music object answers a Range with a 206, and the kill-switch
+      # unregisters the worker. About a minute.
+      - name: The hosted web edition keeps offline through the Pages service worker, and its kill-switch unregisters it
+        run: node tools/verdict.mjs -- node tools/pages-offline.mjs --web build/web
+
+      # THE TIER FALLBACK, CSS INCLUDED (docs/EXTERNAL-ASSETS-PLAN.md §3.5, step
+      # 3b). A high-default build whose high index is gone must load light: its
+      # sprites, and its ASSET_CSS backdrops and fonts, from light and common
+      # objects, never a high one. On test this job builds the light tier, so the
+      # high-default edition is built here (about 12 s); on release and main the
+      # build above already is one. The copy is hard links, then the pinned high
+      # index (and its .js twin) is removed — the 404 is the plant, which
+      # external-play --expect-tier names and filters. Run twice: over http, and
+      # by file:// (step 4), where the missing twin is the plant.
+      - name: A high-default build with its high index removed falls back to light, CSS included
+        run: |
+          if [ "$(echo $WEB_TIER)" = "--light" ]; then
+            node tools/bundle.mjs --out build/web-high
+            SRC=build/web-high
+          else
+            SRC=build/web
+          fi
+          rm -rf build/web-nohigh
+          cp -al "$SRC" build/web-nohigh
+          ls build/web-nohigh/packs/high-*.json >/dev/null
+          rm build/web-nohigh/packs/high-*.json build/web-nohigh/packs/high-*.js
+          node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web-nohigh --expect-tier light
+          node tools/verdict.mjs -- node tools/external-play.mjs --file --dir build/web-nohigh --expect-tier light
 
       - name: Hand-side placement reaches the correct rendered side
         run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs

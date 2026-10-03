@@ -606,6 +606,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 }
 .as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); background: transparent; box-shadow: none; }
 .as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
+.as-titlemenu .tm-reason { margin: -0.4rem 0 0.6rem; padding: 0; border: 0; color: var(--muted); text-align: center; }
 .as-titlemenu > .as-ornament { margin-top: 1.35rem; margin-inline: auto; }
 .as-titlemenu .tm-foot { --track: 0.2em; margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; }
 
@@ -790,8 +791,7 @@ input[type="range"] { min-height: var(--tap-floor); }
    its landmarks so a landmark that changes moves the box with it. Below the
    band there is ONE budget of rows that tags and text share: one tag row
    leaves three lines of text, two leave two. Both full is the only case that
-   truncates, and a truncated face carries the chevron (hover: the full text;
-   click: the detail door). */
+   truncates; selecting the face reveals its Information button for full text. */
 :root {
   --card-w: 14rem;
   --card-name-h: 2.6rem;      /* FIXED. two lines' worth of room, one line of type */
@@ -1004,28 +1004,6 @@ input[type="range"] { min-height: var(--tap-floor); }
 [data-identity-part="artwork"][data-artwork-anchor] :is(img, video) { object-fit: contain; }
 [data-identity-part="artwork"][data-artwork-anchor="center"] :is(img, video) { object-position: center; }
 [data-identity-part="artwork"][data-artwork-anchor="bottom"] :is(img, video) { object-position: center bottom; }
-/* Truncated is never a dead end: the chevron says there is more. */
-
-/* Truncated is never a dead end: the chevron says there is more. On a face
-   with inspection bound (cardInspection.js) the chevron IS the control — a
-   tap-floor box drawn in the same corner, the glyph where it always sat —
-   and the drawn-only mark yields to it; a face without inspection keeps the
-   mark alone. */
-
-.card[data-truncated="true"]::after { content: '›'; position: absolute; bottom: 0.3rem; right: 0.5rem; color: var(--muted); font-size: 1.3rem; line-height: 1; }
-.card.card-inspection-target[data-truncated="true"]::after { content: none; }
-.card-inspection-target > .card-more-button { display: none; }
-.card-inspection-target[data-truncated="true"] > .card-more-button {
-  display: flex; align-items: flex-end; justify-content: flex-end;
-  position: absolute; right: 0; bottom: 0; z-index: 7;
-  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
-  margin: 0; padding: 0 0.5rem 0.3rem 0; border: 0; border-radius: 0; background: transparent;
-  color: var(--muted); font: inherit; font-size: 1.3rem; line-height: 1; cursor: pointer;
-}
-.card-inspection-target[data-truncated="true"] > .card-more-button:hover,
-.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { color: var(--gold); background: transparent; }
-.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
-
 /* ═══ COMBATANT — one shape, three statures ════════════════════════════════ */
 /* Stature is DERIVED from the encounter pool (normal → normal, elite → large,
    boss → huge). Only the sprite well scales; nameplate, bars and meters stay
@@ -1053,6 +1031,10 @@ input[type="range"] { min-height: var(--tap-floor); }
   display: flex; width: 100%; min-height: 0; padding: 3px 8px;
   margin-top: 6px; font-size: 0.85em; line-height: 1.3;
 }
+/* A card's pending choice (Warrior's Vow's stance, ui/components/cardChoiceModal.js). */
+.card-choice .card-choice-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1rem; }
+.card-choice .card-choice-row { display: flex; flex-direction: column; gap: 0.35rem; }
+.card-choice .card-choice-row .as-prose { margin: 0; }
 /* The full read, in a door: the same sections the edge tray renders. */
 .combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; overflow: hidden; }
 /* W1w: sprite/name/HP preview left, details right; only the details scroll. */
@@ -1232,8 +1214,8 @@ input[type="range"] { min-height: var(--tap-floor); }
    have overflowed its track rather than fitting in it. `--card-w` is the box's
    one width input and the height is computed from its landmarks, not from the
    width — so a narrower card is the same card with its text clamped by the
-   budget that already clamps it (`.ctext` line-clamp, and the chevron that
-   says so), never a cut-off one. */
+   budget that already clamps it (`.ctext` line-clamp); Information opens the
+   full text. */
 .card-shelf .card { --card-w: 100%; width: 100%; flex-shrink: 1; }
 /* `[data-small]` scales the card by transform: on a shelf the TRACK is what
    makes it small, and a transform on top of that only opens a gap. Hover and
@@ -1728,6 +1710,17 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
 .as-fieldnote { flex: 1 1 100%; margin: 0; padding-left: 0.8rem; border-left: 2px solid var(--danger); color: var(--parchment); font-size: 1.2rem; line-height: 1.4; }
 .as-row.setting input[aria-invalid="true"] { border-color: var(--danger); }
+/* The same note under a forward control that refuses (refusal.js reasonNote):
+   the reason a Next / Continue / Confirm is off, as text, never only a tooltip.
+   Its own floor keeps it readable wherever a screen shrinks its type. */
+.as-reasonnote { display: block; flex: 1 1 100%; width: 100%; box-sizing: border-box; margin: 0.4rem 0 0; font-size: max(11px, 1.2rem); text-align: start; }
+.as-reasonnote[hidden] { display: none; }
+/* A hidden row takes its reason line with it (the line is the row's next sibling). */
+[hidden] + .as-reasonnote, [style*="display: none"] + .as-reasonnote { display: none; }
+/* In a foot (a flex row), the shown line takes its own row under the buttons,
+   on the primary's side. */
+.modal-foot:has(> .as-reasonnote:not([hidden])), .as-foot:has(> .as-reasonnote:not([hidden])) { flex-wrap: wrap; }
+.modal-foot > .as-reasonnote, .as-foot > .as-reasonnote { order: 2; margin: 0; padding: 0 0.8rem 0 0; border-left: 0; border-right: 2px solid var(--danger); text-align: end; }
 
 /* ═══ STACK — a column of kit pieces with one gap ══════════════════════════ */
 .as-stack { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; width: 100%; }
@@ -2079,14 +2072,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .level-xp-preview { margin: 0; }
 .level-xp-preview > .level-points-waiting { color: var(--ember); font-weight: 600; }
 .level-points-result[hidden] { display: none; }
-/* A flask button carries a name AND a charge count. The COUNT holds — it is
-   the number a player spends — and the NAME yields to an ellipsis inside the
-   ladder's step. Measured on the co-op board at 1200x730, where "Crimson
-   Flask" ran 16px over its own count. */
-.coop-flask { min-width: 0; }
-.coop-flask > .flask-identity { min-width: 0; overflow: hidden; }
-.coop-flask .flask-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.coop-flask > b { flex: 0 0 auto; }
 
 /* ═══ FOLDED TITLE — the gate is the TitleMenu before its entries ══════════ */
 /* A separate surface from the title menu: the menu is not mounted behind it,
@@ -2120,6 +2105,34 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 @keyframes startupMarkIn { from { opacity: 0; transform: translateY(0.65rem); } to { opacity: 1; transform: none; } }
 @keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
 .reduced-motion .startup-gate > .as-titlemenu, .reduced-motion .startup-gate .tm-foot { animation: none; }
+/* The built-in art's status line (docs/EXTERNAL-ASSETS-PLAN.md step 5): its
+   own component beside the startup gate in #app, not one of the gate's parts
+   (SPEC §7.1), laid over the top edge of the gate, clear of its centred lockup
+   and its build stamp, and taking no input. Only in a build that pins packs. It stays through the reveal while a
+   late load settles; it pulses while loading, plain text with Reduced motion. */
+#app > .boot-art-status {
+  position: fixed; z-index: 2; left: 50%; translate: -50% 0;
+  top: max(1rem, env(safe-area-inset-top));
+  width: min(36rem, calc(100% - 2rem)); margin: 0; min-height: 1.4em;
+  color: var(--parchment); text-align: center; font-size: 0.95rem; letter-spacing: 0.06em; opacity: 0.86;
+  pointer-events: none;
+}
+#app > .boot-art-status[data-state="loading"] { animation: bootArtPulse 1.6s ease-in-out infinite alternate; }
+#app > .boot-art-status[data-state="failed"] { color: var(--gold); opacity: 1; }
+@keyframes bootArtPulse { from { opacity: 0.55; } to { opacity: 0.9; } }
+.reduced-motion #app > .boot-art-status { animation: none; }
+@media (prefers-reduced-motion: reduce) { #app > .boot-art-status { animation: none; } }
+/* The title's notice when the art could not be loaded (step 5): a small panel
+   at the top of the title, never a dialog; Retry is a plain control. */
+.title-screen > .art-load-notice {
+  position: absolute; z-index: 3; top: max(0.8rem, env(safe-area-inset-top)); left: 50%; translate: -50% 0;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem 1rem;
+  width: min(36rem, calc(100% - 2 * (44px + 1.2rem))); padding: 0.7rem 1rem;
+  border: 1px solid var(--line-soft); border-radius: var(--r-3);
+  background: color-mix(in srgb, var(--panel) 90%, transparent); color: var(--parchment);
+}
+.title-screen > .art-load-notice > .art-load-notice-text { margin: 0; flex: 1 1 16rem; text-align: center; }
+.title-screen > .art-load-notice > .art-load-notice-retry { min-height: 44px; min-width: 44px; }
 .startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .startup-ash {
   position: absolute; left: var(--ash-left); bottom: -1rem;
@@ -4670,8 +4683,8 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    from allocateSceneBands (models/CombatLayout.js) through each screen's
    adapter (components/combatLayout.js, components/dialogueStage.js) as
    --w4-band-*; the scene is the flexible row. A screen names only its
-   first-paint fallbacks, which also serve the co-op screen, which does not
-   mount the layout adapter. Combat's hand area spans the context and footer
+   first-paint fallbacks (the co-op screen mounts the same adapter since
+   2026-10-01). Combat's hand area spans the context and footer
    bands and divides them itself. */
 :root :is(.combat[data-layout='formation'], .w4-frame) {
   display: grid; flex: none; height: calc(100dvh / var(--ui-zoom, 1)); min-height: 0; overflow: clip;
@@ -4740,46 +4753,49 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   height: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
 }
 /* WGC6: one centered, tightly packed five-track group sized by
-   packCombatFooter(). Applies once the layout adapter has measured the row. */
-:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']{
+   packCombatFooter(). Applies once the layout adapter has measured the row.
+   Solo and co-op both (`:is(.coop,:not(.coop))` keeps the specificity the old
+   solo-only `:not(.coop)` had); the co-op board mounts the same footer and
+   the same adapter (owner, 2026-10-01). */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']{
   --combat-control-size: var(--footer-circle) !important;
   grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-pile-width) var(--footer-circle);
   justify-content: center; align-items: center; gap: var(--footer-gap);
   width: 100%; max-width: none; height: 100%; padding: 0; box-sizing: border-box;
 }
-:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> * {
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']> * {
   grid-column: span 1; grid-row: 1;
 }
-:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> .pile {
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']> .pile {
   width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) > .hand-area {
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) > .hand-area {
   grid-template-columns: var(--wireframe-rail-width) minmax(0, 1fr) var(--wireframe-rail-width);
   grid-template-rows: minmax(0, 1fr); grid-template-areas: 'lead hand trail';
   column-gap: var(--wireframe-rail-gap);
 }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] {
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] {
   grid-area: 1 / 1 / 2 / 4; z-index: 2; pointer-events: none;
   grid-template-columns: var(--footer-circle) var(--footer-pile-width) minmax(0, 1fr) var(--footer-pile-width) var(--footer-circle);
   grid-template-rows: minmax(0, 1fr) var(--footer-circle) var(--footer-circle);
   row-gap: var(--footer-gap); align-content: stretch;
 }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > * {
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > * {
   grid-row: 3; pointer-events: auto;
 }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .energy-orb { grid-column: 1; }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.draw { grid-column: 2; }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .energy-orb { grid-column: 1; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .pile.draw { grid-column: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
 /* Notched hosts held sideways: the device's safe-area insets (combat.css's
    --safe-*-local, zero on every other host) keep the rails and the hand they
    wrap, the formation, and the HUD's two ends off the notch. The layout
    adapter plans the rails for the width left between the insets. */
-:root .combat[data-layout='formation']:not(.coop) > .hand-area {
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) > .hand-area {
   padding-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
 }
 :root .combat[data-layout='formation']:not(.coop) > .field {
@@ -4985,20 +5001,6 @@ button[data-button-size] {
   width: var(--hand-hit-width); height: var(--hand-card-height); z-index: 20;
   transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
   transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
-}
-/* The next card's hit lane covers this card's lower corner in a tight fan.
-   Keep the reading chevron above the face, fully inside the hand's clip. */
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-more-button {
-  pointer-events: auto; z-index: 21;
-  left: 0; right: auto;
-  top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));
-  bottom: auto;
-  align-items: center; justify-content: center; padding: 0;
-  border: 1px solid var(--line); border-radius: var(--r-2);
-  background: var(--panel);
-}
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-truncated='true'] .cname {
-  box-sizing: border-box; width: 100%; padding-left: var(--tap-floor);
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
   transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));

@@ -48,6 +48,7 @@
 // Math.random — a UI pick that desyncs a seeded run is a defect.
 
 import { renderCard } from '../components/card.js';
+import { sigilRuleText } from '../../model/sigils.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleInspection } from '../components/collectibleCard.js';
 import { esc, attachTooltip, showTooltipFor } from '../components/tooltip.js';
@@ -70,10 +71,11 @@ import { nodeTokens } from '../../model/tree.js';
 import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
+import { reasonWhenDisabled } from '../components/refusal.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -225,6 +227,12 @@ export function mountRewards(app, {
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
+    // SPEC §15.4: a dropped legendary sigil joins the inventory, unattuned;
+    // one the run already holds adds nothing.
+    sigil(row) {
+      if (!(run.sigils || []).includes(row.sigilId)) run.sigils = [...(run.sigils || []), row.sigilId];
+      return true;
+    },
   };
 
   function take(row, viaKind) {
@@ -372,6 +380,13 @@ export function mountRewards(app, {
       case 'relic': {
         const def = registries.relics.get(row.relicId);
         return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
+      }
+      case 'sigil': {
+        const def = registries.sigils.get(row.sigilId);
+        return {
+          title: t('reward.kind.sigil'),
+          body: `<b>${esc(def.name)}</b> — ${esc(sigilRuleText(registries, row.sigilId) || def.blurb)}<br><span style="color:var(--muted)">${esc(t('reward.sigil.note'))}</span>`,
+        };
       }
       default:
         return { title: row.kind, body: '' };
@@ -599,10 +614,14 @@ export function mountRewards(app, {
         'data-confirm-ready': String(plan.rows.every(row => states[row.key] === 'taken' || states[row.key] === 'skipped')),
       },
     });
-    if ((progress?.character && pendingLevelCount(registries, run) > 0)
-      || progress?.skills.some((row) => pendingSkillLevelCount(registries, run, row.id) > 0)) {
+    // A level waiting to be claimed holds Continue until the player claims it:
+    // a lasting refusal, so its reason is a visible line under the footer
+    // (D43), not only the title.
+    const levelsPending = Boolean((progress?.character && pendingLevelCount(registries, run) > 0)
+      || progress?.skills.some((row) => pendingSkillLevelCount(registries, run, row.id) > 0));
+    if (levelsPending) {
       cont.disabled = true;
-      cont.title = 'Claim your levels before continuing';
+      cont.title = t('reward.continue.reason.levels');
     }
     const foot = modalFooter({
       note: cont.dataset.confirmReady === 'true' ? t('reward.hold.complete')
@@ -636,6 +655,8 @@ export function mountRewards(app, {
       app.querySelector('.reward-menu').inert = true;
       cont.disabled = true;
     }
+    // A refill's hold clears by itself within a beat, so it shows no line.
+    reasonWhenDisabled(cont, () => (levelsPending && !refill ? t('reward.continue.reason.levels') : null))();
 
     for (const el of app.querySelectorAll('.reward-kind')) {
       const row = plan.rows.find((r) => r.key === el.dataset.key);
@@ -821,7 +842,7 @@ export function mountRewards(app, {
     const isFlask = row.kind === 'flask';
     const kindLabel = t(isFlask ? 'reward.kind.potion' : row.kind === 'relic' ? 'reward.kind.relic' : 'reward.kind.armament');
     const takeButton = button({ label: t('reward.detail.take', { kind: kindLabel.toLowerCase() }), weight: 'primary', id: 'reward-detail-take' });
-    const backButton = button({ label: t('reward.detail.back'), id: 'reward-back', className: 'subtle' });
+    const backButton = button({ label: t('reward.detail.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
     const detailBody = el('div', { class: 'class-row reward-menu' });
     const armament = !isFlask && registries.equipment.armaments.find(piece => piece.id === row.armamentId);
     if (armament) detailBody.append(renderEquipmentInspection(registries, armament));
@@ -857,7 +878,7 @@ export function mountRewards(app, {
     const isLevelChoice = row.kind === 'levelChoice';
     const ids = isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : row.cardIds;
     const pickField = isNodeRow ? 'nodeId' : isLevelChoice ? 'choiceId' : 'cardId';
-    const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle' });
+    const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
@@ -876,6 +897,9 @@ export function mountRewards(app, {
     let confirming = false;
     const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
     strip.after(message);
+    // Nothing chosen yet: the reason stands under Confirm as text (FINISH §6).
+    // A press in flight is a beat, not a reason, so it stays quiet.
+    const confirmReason = reasonWhenDisabled(confirmButton, () => (selectedCardId ? null : t('reward.confirm.reason')));
     // ONE SELECTION PATH. The strip's own click and the inspect door's Choose
     // both land here, so a card chosen from inside the door is lit in the
     // strip behind it and Back still shows what you picked.
@@ -893,6 +917,7 @@ export function mountRewards(app, {
         candidate.setAttribute('aria-checked', String(selected));
       }
       confirmButton.disabled = false;
+      confirmReason();
       message.hidden = true;
     };
     for (const option of isLevelChoice ? row.options : []) {
@@ -971,6 +996,7 @@ export function mountRewards(app, {
       strip.appendChild(el);
     }
     confirmButton.disabled = !selectedCardId;
+    confirmReason();
     confirmButton.addEventListener('click', () => {
       if (!selectedCardId || confirming || taken()) return;
       confirming = true;

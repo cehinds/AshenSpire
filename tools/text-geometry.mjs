@@ -20,8 +20,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser } from './browser.mjs';
+import { fileURLToPath } from 'node:url';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { balance } from '../src/content/balance.js';
 
@@ -185,7 +185,7 @@ async function main() {
       console.error(`text-geometry: UNKNOWN — ${artifact} is absent; build first.`);
       return 2;
     }
-    base = pathToFileURL(artifact).href;
+    base = await buildPageUrl(artifact);
   } else {
     const served = await serve({ root: ROOT, port: 8274, open: false });
     server = served.server;

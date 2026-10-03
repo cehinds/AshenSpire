@@ -72,8 +72,8 @@ function curveFor(registries, kind) {
 
 /**
  * xpToNext(registries, kind, level) → the XP the step from `level` to
- * `level + 1` costs: linear base + level × base × scaler, or legacy
- * round(base × growth^level, roundTo). One shape for every
+ * `level + 1` costs: linear base + level × base × scaler, or exponential
+ * round(base × growth^level, roundTo) (the shipped default). One shape for every
  * track (proposal §10); the class curve reads balance.skill.class.xp, the
  * rest balance.skill.xp.
  */
@@ -101,8 +101,14 @@ export function skillLevel(run, skillId) {
  * player (ui/screens/reward.js's progression panel reads it through main.js);
  * each step queues one draft (`pendingDrafts`, which phase 4b spends). A
  * non-positive or non-finite amount writes nothing.
+ *
+ * `schools` (optional, SPEC §14.5): the card schools the standing upgrade
+ * reads instead of the held pieces' — the wise master's training passes the
+ * track's loadout-independent schools, so training a track the player is not
+ * holding still upgrades its owned cards. Omitted, `skillSchools` is read
+ * exactly as before.
  */
-export function awardSkillXp(registries, run, skillId, amount) {
+export function awardSkillXp(registries, run, skillId, amount, { schools } = {}) {
   const kind = skillKindOf(registries, skillId);
   if (!kind) throw new Error(`awardSkillXp: '${skillId}' is not a skill track`);
   if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
@@ -123,7 +129,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
   // that joined the deck later, and a ledger written before the rule existed,
   // are upgraded at the next award. Idempotent, so the cost of re-asking is
   // one pass over the deck.
-  const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
+  const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId, { schools }) : [];
   return { skillId, before, after: row.level, levelUps: row.level - before, upgraded, gained: gain };
 }
 
@@ -231,10 +237,11 @@ export function skillUpgradesCards(registries, level) {
  * package or weapon-art card) are the piece's: their upgrade is the smith's
  * tier, and stampDeck re-derives it on every restamp, so a flag written here
  * would be gone by the reward door. Idempotent; a card already upgraded is
- * not counted.
+ * not counted. `schools` (optional, SPEC §14.5) replaces the held pieces'
+ * schools; omitted, `skillSchools` is read as always.
  */
-export function applySkillUpgrades(registries, run, skillId) {
-  const schools = new Set(skillSchools(registries, run.loadout, skillId));
+export function applySkillUpgrades(registries, run, skillId, { schools: given } = {}) {
+  const schools = new Set(Array.isArray(given) ? given : skillSchools(registries, run.loadout, skillId));
   if (!schools.size || !Array.isArray(run.deck)) return [];
   const cards = registries && registries.cards;
   const out = [];

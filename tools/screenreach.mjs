@@ -34,7 +34,7 @@
 //
 // Usage
 //   node tools/screenreach.mjs                    source tree via tools/serve.mjs
-//   node tools/screenreach.mjs --dist             dist/AshenSpire.html over file://
+//   node tools/screenreach.mjs --dist             dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/screenreach.mjs --only 390x844
 //   CHROME=/path/to/chrome node tools/screenreach.mjs
 //
@@ -52,11 +52,11 @@
 // legibility, and cannot see a control that only appears mid-interaction.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
@@ -127,11 +127,11 @@ if (process.argv.includes('--selftest')) {
         expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
       },
       {
-        name: 'the truncated-card chevron is clipped at the top of the hand',
-        file: 'styles/kit.css',
-        find: 'top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));',
-        replace: 'top: calc(-1 * var(--tap-floor));',
-        expectRed: /card More control clipped by the hand/,
+        name: 'an extra card text button returns beside Information',
+        file: 'src/ui/components/cardInspection.js',
+        find: 'card.append(info);',
+        replace: 'card.append(info, Object.assign(document.createElement("button"), { className: "card-more-button", textContent: "›" }));',
+        expectRed: /extra card text control returned/,
       },
       {
         name: 'enemy intent cannot be pressed anywhere in its badge',
@@ -470,15 +470,10 @@ const PROBE = `(() => {
       if (hud && r.top < hud.bottom - 0.5) visual.push(label + ' frame paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
       if (hand && r.bottom > hand.top + 0.5) visual.push(label + ' frame paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
     }
-    // A chevron can win its centre hit-test while the hand clips the top of
-    // its tap-floor box. Keep the whole button inside the hand's visible band.
-    for (const more of document.querySelectorAll('.hand[data-wireframe-hand="true"] .card-more-button')) {
-      if (getComputedStyle(more).display === 'none') continue;
-      const r = more.getBoundingClientRect();
-      const port = more.closest('.hand').getBoundingClientRect();
-      if (r.top < port.top - 0.5 || r.bottom > port.bottom + 0.5)
-        visual.push('card More control clipped by the hand');
-    }
+    // Information is the owner's one card-details control. Detect the removed
+    // extra button through the rendered page, including a reintroduced box.
+    if (document.querySelector('.card-more-button'))
+      visual.push('extra card text control returned; use Information');
   }
   if (window.__settingsListenerBalance) {
     const leaks = Object.entries(window.__settingsListenerBalance).filter(([, count]) => count !== 0);
@@ -521,7 +516,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error(`screenreach: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`); process.exit(2); }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else {
     const s = await serve({ root: ROOT, port: 8264, open: false });
     server = s.server; base = `http://localhost:${s.port}/`;

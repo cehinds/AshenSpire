@@ -1,4 +1,14 @@
-import { applyArtQuality, onArtSourceChange } from './ui/highResArt.js';
+import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
+import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
+import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
+import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
+import { builtInSource } from './ui/assetmap.js';
+import { mountArtLoadNotice } from './ui/components/artLoadNotice.js';
+import { artLoadNoticeModel } from './ui/models/ArtLoadNoticeModel.js';
+import { mountBootArtStatus } from './ui/components/bootArtStatus.js';
+import { bootArtStatusModel } from './ui/models/BootArtStatusModel.js';
+import { whenNoOverlay } from './ui/whenNoOverlay.js';
+import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -21,6 +31,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
+import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
 import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, isLiveXpSetting, updatedXpSnapshot, xpSnapshotFromProfile } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
@@ -48,7 +59,8 @@ import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
 import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
-import { configuredRewardOffer as rewardOfferForSource } from './model/rewardSourcePolicy.js';
+import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint, settleTreasureNode } from './model/rewardSourcePolicy.js';
+import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
@@ -66,8 +78,9 @@ import {
   rollRelicReward,
   rollArmamentDrop,
 } from './engine/encounters.js';
-import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock } from './engine/shopKinds.js';
+import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
+import { mountMaster } from './ui/screens/master.js';
 import { shopStockKind } from './model/shopKinds.js';
 import { commitQuestEvent } from './model/marketAdditions.js';
 import { combatEncounterFor, victoryCompletesJourneyNode, serviceEventCombatEntry } from './model/serviceCombat.js';
@@ -97,7 +110,7 @@ import { mountCompendium } from './ui/screens/compendium.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
 import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
-import { pageDebug } from './ui/buildChannel.js';
+import { pageDebug, promotionDebug } from './ui/buildChannel.js';
 import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
@@ -120,7 +133,7 @@ import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
-import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
+import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
@@ -338,7 +351,7 @@ let activeSettings = bringStoredProfileForward(activeMeta);
 // player chose is theirs. Applied before anything reads the profile.
 // The same step runs again when a restored profile replaces this one.
 function seedPromotedDefaults(meta, settings) {
-  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, pageDebug()));
+  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, promotionDebug()));
   if (!Object.keys(seeded).length) return;
   for (const [key, value] of Object.entries(seeded)) {
     if (value === undefined) delete settings[key]; else settings[key] = value;
@@ -448,6 +461,10 @@ installHoldBeat({ root: document, at: (UI.holdBeat || {}).at || [] });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
+// The music folder: in a build that pins packs (the web edition) it is first
+// applied once the first screen is drawn, after the load has settled; a single
+// file and the source tree apply it at once, as before (assetPacks.js musicHold).
+const bootMusic = musicHold({ configureMusic: (opts) => audio.configureMusic(opts) });
 // UI size — the whole app is zoomed by `body.style.zoom` so every fixed-px
 // element (cards, sprites, map nodes, menus) scales together. "Auto" flexes the
 // zoom with the window against a design baseline so the board fills big screens
@@ -777,6 +794,10 @@ function applyDisplaySettings(settings) {
   // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
   // resolves use the new tier, and anything the source lacks stays built-in.
   applyArtQuality(settings);
+  // Auto / Light / High: which pack the web edition loads (src/ui/artTier.js).
+  // A change in play reloads the indexes; a single file and the source tree
+  // pin no packs and this does nothing.
+  applyArtTier(settings);
   applyHudVisibility(document.documentElement, settings);
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
@@ -887,13 +908,22 @@ function applyDisplaySettings(settings) {
   scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak). Blank means the
-  // score shipped beside the page (content/music.js SHIPPED_MUSIC_FOLDER) when
+  // shipped score (content/music.js SHIPPED_MUSIC_FOLDER: the common pack's
+  // objects in the web edition, the music/ folder beside a single file) when
   // served over http(s); a file:// page cannot fetch it and keeps the synth.
+  // That holds for a double-clicked web edition too (docs/EXTERNAL-ASSETS-PLAN.md
+  // §3.9, step 4): its art, tiles and fonts load from the objects beside it,
+  // but Web Audio cannot play a file: track (a CORS-mode load Chrome refuses,
+  // or silence without one), so the score stays synthesized there.
   const served = /^https?:$/.test(globalThis.location?.protocol || '');
   const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
-  if (folder !== lastMusicFolder) {
-    lastMusicFolder = folder;
-    audio.configureMusic({ folder });
+  // Only the shipped score is read through the asset index; a folder the
+  // player typed is fetched by its literal path, even one spelled `music/`.
+  const indexed = !settings.musicFolder && served;
+  const musicKey = `${indexed ? 'shipped' : 'custom'}:${folder}`;
+  if (musicKey !== lastMusicFolder) {
+    lastMusicFolder = musicKey;
+    bootMusic.apply(folder, { indexed });
   }
   // THE WIREFRAME CHOICES (Settings → Advanced → Wireframes). One word per
   // choice on the root, read by the modal shell, the kit's category navigation,
@@ -1124,6 +1154,13 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   } else if (deckMode === 'draft') {
     run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
   }
+  // The dealt deck replaced the composed one, attack slots and all, so its
+  // birth attack quota is what it holds (none), not the composed deck's; else
+  // the first full restamp (an Armoury swap, a reload) refuses the run.
+  if (isPoolDeckMode(run)) {
+    run.equipmentAttackSlotCount = dealtAttackSlotCount(run.deck);
+    run.poolDeckRule = POOL_DECK_RULE;
+  }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
   if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
@@ -1133,6 +1170,11 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
+  // A dealt deck (Sealed, Draft, with any picks) was never stamped: give its
+  // cards their equipment faces now, as the load door and every later restamp
+  // do, so the first fight plays the same cards a reload would. A pool deck is
+  // dealt no lent card by it (model/cardRemoval.js isPoolDeckMode).
+  if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
   if ((!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
@@ -1440,12 +1482,102 @@ function showStartupGate({ forcedFamily = '' } = {}) {
     onReveal: ({ family }) => {
       startupGatePending = false;
       unmountStartupGate = null;
-      showTitle({
+      // The title draws only once the built-in art has settled (loaded, or
+      // failed by BOOT_WAIT_MS): a press during the load finishes the reveal,
+      // and the gate's line says "Loading art…" until then (step 5).
+      afterBootArt(() => showTitle({
         skipStartup: true,
         focusDefault: true,
         focusCursor: family === 'keyboard' || family === 'controller',
-      });
+      }));
     },
+  });
+  // The built-in art's status line (step 5), beside the gate, never inside it:
+  // the gate's children are SPEC §7.1's, and it is one role="button". None
+  // when nothing is pinned.
+  const artLine = bootArtLine();
+  if (artLine) mountBootArtStatus(app, bootArtStatusModel(artLine));
+}
+
+// ---- THE BUILT-IN ART, AS THE PLAYER SEES IT (docs/EXTERNAL-ASSETS-PLAN.md
+// step 5). A pack build (the web edition) loads its art behind the startup
+// gate. Until the load has SETTLED no screen but the gate is drawn, because a
+// screen drawn on placeholders cannot be re-pointed (step 3a); once it has,
+// afterBootArt runs what waited (the title, after a press). When the load
+// failed, the title carries a non-blocking notice with Retry; a Retry that
+// loads redraws the title on the new art. A single file and the source tree
+// settle at once and never show either.
+let bootArtSettledNow = false;
+const bootArtWaiters = [];
+// Anything else the title waits for once the gate is up (the debug profile
+// auto-load, below), so the gate need not wait for it before it is drawn.
+const titleHolds = [];
+function holdTitleFor(promise) { titleHolds.push(Promise.resolve(promise).catch(() => {})); }
+function afterBootArt(fn) {
+  const go = () => (titleHolds.length ? Promise.all(titleHolds).then(fn) : fn());
+  if (bootArtSettledNow) go();
+  else bootArtWaiters.push(go);
+}
+// null (no notice), 'failed', 'retrying' or 'again' (a Retry failed too).
+let artNoticeState = null;
+function drawArtNotice(root) {
+  if (!artNoticeState) { root.querySelector('.art-load-notice')?.remove(); return; }
+  mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: artNoticeState }), onRetry: retryArtFromTitle });
+}
+function refreshArtNotice() {
+  const root = app.querySelector('.title-screen');
+  if (root) drawArtNotice(root);
+}
+function retryArtFromTitle() {
+  if (artNoticeState === 'retrying' || !artNoticeState) return;
+  retryBuiltInArt(activeSettings);
+}
+// The notice follows every Retry, from the title or from Settings: busy while
+// it runs; then gone (onTierArrived), "still could not be loaded", or, for a
+// Retry the player replaced with a tier switch (null), what it said before.
+let artNoticeBefore = null;
+onRetryProgress(({ phase, result }) => {
+  if (phase === 'start') {
+    if (!artNoticeState || artNoticeState === 'retrying') return;
+    artNoticeBefore = artNoticeState;
+    artNoticeState = 'retrying';
+    refreshArtNotice();
+    return;
+  }
+  if (artNoticeState !== 'retrying') return; // loaded: artArrivedAfterFailure cleared it
+  if (result?.state === 'loaded' || builtInArtStatus().state === 'loaded') return;
+  artNoticeState = result ? 'again' : (artNoticeBefore || 'failed');
+  if (result) bootArtRetried(result);
+  refreshArtNotice();
+});
+// A load arrived after the boot load failed (a Retry from the title or from
+// Settings → Art quality, or a tier switch): the notice goes, and the title,
+// when it is on screen, is drawn again on the new art — once nothing is open
+// over it (Settings, the Load/New door), so the control a dialog returns focus
+// to is not replaced under it; the focused title control keeps the focus.
+let cancelTitleRedraw = () => {};
+function artArrivedAfterFailure() {
+  if (!artNoticeState) return;
+  artNoticeState = null;
+  bootArtRetried(builtInArtStatus());
+  // Read before the notice goes: a Retry pressed on it hands focus to the menu.
+  const fromNotice = !!document.activeElement?.closest?.('.art-load-notice');
+  refreshArtNotice();
+  cancelTitleRedraw();
+  cancelTitleRedraw = whenNoOverlay(() => {
+    // Every art placeholder on the page (an enemy's, a portrait's, a glyph
+    // that stood in for an item) is put back, whatever screen it is on
+    // (src/ui/artFallback.js; review of #1471).
+    restoreArtPlaceholders(document);
+    const root = app.querySelector('.title-screen');
+    // Any other screen (a Retry from the in-run Settings): it redraws its own
+    // art from its own state (combat's enemy placeholders), keeping the rest.
+    if (!root) { try { document.dispatchEvent(new CustomEvent(ART_REDRAW_EVENT)); } catch { /* no document */ } return; }
+    const active = document.activeElement;
+    const action = root.contains(active) ? active.closest?.('[data-title-action]')?.dataset.titleAction : null;
+    const onNotice = fromNotice && !action;
+    showTitle({ skipStartup: true, focusDefault: onNotice, focusCursor: onNotice });
+    if (action) app.querySelector(`.title-screen [data-title-action="${action}"]`)?.focus({ preventScroll: true });
   });
 }
 
@@ -1495,6 +1627,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       showCustomRun(empty ? empty.slot : 1);
     },
     onLan: showLobby,
+    artNotice: drawArtNotice,
   });
   if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
   // Forsaken Together needs the launcher's server behind the page.
@@ -1689,7 +1822,7 @@ function quitGame() {
     <div class="screen farewell">
       <h1 class="title-big">THE EMBER GUTTERS</h1>
       <p class="subtitle" style="text-align:center">Your climb is saved. You may close this window.</p>
-      <button class="subtle" id="farewell-back">Return to title</button>
+      <button class="subtle" id="farewell-back" data-back>Return to title</button>
     </div>`;
   const closeTimer = setTimeout(() => {
     try {
@@ -2076,6 +2209,15 @@ function worldLocationAction(action) {
     run.shopStock = state.stock;
     persist(); return showShop();
   }
+  if (handlerId === 'master') {
+    // The atlas `master` service is a WISE MASTER visit (SPEC §14.5): its
+    // master picked on `shop` and its stock rolled on `shopOffers` on first
+    // entry, kept on the point, so a revisit reopens it as saved. No shipped
+    // point carries the service yet; content places it.
+    state.stock ||= masterVisitStock(registries, rng, run, { priceMult: shopPriceMult(), flatRarity: chaosRewardsOn() });
+    run.shopStock = state.stock;
+    persist(); return showShop();
+  }
   if (handlerId === 'shop') {
     // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
     // `shop`, and which of them are out on `shopOffers`. A custom run's price
@@ -2186,13 +2328,14 @@ function enterNode(nodeId) {
       // nothing new, so a seed's shelves are what they always were.
       // Greedy Merchants and Hoarder scale every price it lays out, the
       // market additions included (SPEC §14.3).
-      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant', priceMult: shopPriceMult() });
+      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant', priceMult: shopPriceMult(), flatRarity: chaosRewardsOn() });
       // Does a smith travel with him? Rolled once here, on the smith's own
       // stream (balance.smithing.services.offeredAt.merchant), and kept with
       // the stock so leaving and re-entering the screen does not roll again.
       // A merchant that turned out to be a blacksmith (SPEC §14.2) is the smith;
       // no add-on is rolled for it.
-      if (stock.kind !== 'blacksmith') stock.smith = smithServicesAt(registries, 'merchant', rng);
+      // Nor for one that turned out to be a wise master (SPEC §14.5).
+      if (stock.kind !== 'blacksmith' && stock.kind !== 'master') stock.smith = smithServicesAt(registries, 'merchant', rng);
       run.shopStock = stock;
       persist();
       return showShop();
@@ -2204,21 +2347,13 @@ function enterNode(nodeId) {
       // §15.3), and only when its tables pay anything: both ship at 0, so no
       // zero-amount claim is written and a save is unchanged.
       const smithingStoneReceipt = treasureSmithingReward();
-      return mountRewards(app, {
-        registries,
-        run,
-        saves,
-        rng,
-        onCollectArmament: (id) => collectArmament(id, 'treasure'),
-        onPersist: persist,
-        rewards: configuredRewardOffer({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, 'treasure'),
-        onDone: () => {
-          rewardDoneCount++;
-          if (run.journey) completeJourneyNode(run.journey);
-          persist();
-          showMap();
-        },
-      });
+      // SPEC §15.4: the treasure CHECKPOINTS its offer (beginPendingReward),
+      // as the legacy dungeon's treasure door does, so a reload remounts an
+      // unclaimed sigil row instead of losing it. A World Journey's atlas
+      // point is completed first: the checkpoint's Continue only persists and
+      // returns to the map.
+      settleTreasureNode(run, completeJourneyNode);
+      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     default:
       throw new Error(`Unknown node kind '${kind}'`);
@@ -2279,7 +2414,7 @@ function enterDungeonLocation() {
       const armamentId = rollDrop('treasure');
       const smithingStoneReceipt = treasureSmithingReward();
       resolveDungeonNode(run);
-      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     case 'combat': return enterCombat(run.legacyDungeon.parentNodeId, dungeonNode(run).encounter);
     case 'dialogue': return showDungeonDialogue();
@@ -2366,7 +2501,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode }) : createRunCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
     rng,
     run,
@@ -2438,10 +2573,18 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     }
     subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
   }
+  // Boss fights open on a name splash (skippable; not repeated on reload-resume).
+  const bossIntro = enc.pool === 'boss' && !resuming;
+  // The setup log as it stands at mount: what a boss splash sounds on close.
+  const openingLog = combat.eventLog.slice();
   mountCombat(app, {
     registries,
     run,
     combat,
+    // A fight created here sounds its opening draw and turn stinger; one
+    // restored from a save does not replay its history (fx playEventCues).
+    // Under a boss splash the cues wait for the splash to close.
+    opening: !savedSnapshot && !bossIntro,
     readSettings: () => activeSettings,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
@@ -2469,11 +2612,15 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
       saves.saveMeta(meta);
     },
   });
-  // Boss fights open on a name splash (skippable; not repeated on reload-resume).
-  if (enc.pool === 'boss' && !resuming) {
+  if (bossIntro) {
     showBossIntro(
       { name: registries.enemies.get(enc.enemies[0]).name, act: run.actNumber },
-      { hold: shotState === 'boss' }
+      {
+        // `?shot=boss` freezes the splash for captures; `&shotBossHold=0`
+        // lets it run and close as a player sees it (tools/sound-opening.mjs).
+        hold: shotState === 'boss' && shotParams.get('shotBossHold') !== '0',
+        onClose: !savedSnapshot ? () => playEventCues(openingLog) : null,
+      }
     );
   }
 }
@@ -2599,6 +2746,7 @@ async function onCombatEnd(result, combat, enc) {
       skillDrafts: bossDrafts,
       ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      ...sigilOffer('boss'),
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
@@ -2622,6 +2770,8 @@ async function onCombatEnd(result, combat, enc) {
     ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
+    // SPEC §15.4: a legendary sigil, on its own `sigils` stream (0 ships: none).
+    ...sigilOffer(enc.pool),
     // Elites are the mid-run source of armaments; ordinary fights are not by
     // default (balance.equipment.drops.chance.normal ships at 0, which rolls
     // nothing — SPEC §15.3 — until the owner raises it).
@@ -2715,18 +2865,17 @@ function rollClassDrafts(includeBanked = false) {
 
 function beginPendingReward(rewards, { source, after }) {
   rewards = configuredRewardOffer(rewards, source);
-  run.pendingReward = {
-    schemaVersion: 1,
-    source,
-    after,
-    rewards: structuredClone(rewards),
-    states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
-    chosenCardId: null,
-    chosenDraftCardIds: {},
-    chosenDraftNodeIds: {},
-  };
+  run.pendingReward = pendingRewardCheckpoint(rewards, { source, after });
   persist();
   return mountPendingReward();
+}
+
+// SPEC §15.4: a legendary sigil drop for this pool, on its own `sigils`
+// stream. The offer carries `sigilId` only when one dropped, so with the
+// shipped chances of 0 every offer is the one it was before, and no stream moves.
+function sigilOffer(pool) {
+  const sigilId = rollSigilDrop(registries, rng, run, pool);
+  return sigilId ? { sigilId } : {};
 }
 
 function configuredRewardOffer(rewards, source) {
@@ -2895,6 +3044,23 @@ function showShop() {
   audio.music('shop');
   // A blacksmith visit is a screen of its own (SPEC §14.4); the same door
   // resumes it after a reload, since the kind rides the stock.
+  // So is a wise master's (SPEC §14.5), by the same door.
+  if (shopStockKind(run.shopStock) === 'master') {
+    return mountMaster(app, {
+      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+      // A lesson's cards are rolled on the run's own `shopOffers` stream, at
+      // the reward door's odds (equal under Chaos Rewards).
+      rng, flatRarity: chaosRewardsOn(),
+      onChanged: () => persist(),
+      onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+      onLeave: () => {
+        finishWorldService();
+        run.shopStock = null;
+        persist();
+        showMap();
+      },
+    });
+  }
   if (shopStockKind(run.shopStock) === 'blacksmith') {
     return mountBlacksmith(app, {
       registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
@@ -3060,12 +3226,12 @@ function poseFxShowcase() {
 // Co-op screenshot states (?shot=coop|coopmap): mount the LAN thin client with
 // a canned server snapshot through a stub socket — no server/second player
 // needed — so the co-op board/map can be photographed like the solo shots.
-function coopStubMount(snapshot, myId) {
+function coopStubMount(snapshot, myId, myIds = null) {
   const sent = [];
   window.__coopSentForShot = sent;
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send(message) { sent.push(message); }, close() {}, get open() { return false; } };
   mountCoop(app, {
-    registries, conn: stub, myId, meta: saves.loadMeta(),
+    registries, conn: stub, myId, ...(myIds ? { myIds } : {}), meta: saves.loadMeta(),
     onSettingsChange: persistSettingsChange,
     onLeave() {},
   });
@@ -3094,8 +3260,8 @@ function coopCombatShot() {
         { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 }, performedMoves: [] },
       ],
       players: [
-        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
-        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
+        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, exhaustCount: 1, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
+        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, exhaustCount: 0, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
       ],
     },
     party,
@@ -3301,9 +3467,19 @@ if (shotState) {
   };
 }
 
+// THE FIRST SCREEN WAITS FOR THE BUILT-IN ART (docs/EXTERNAL-ASSETS-PLAN.md
+// §3, step 3a). The web edition carries no art inside it: src/ui/assetPacks.js
+// loads the pack index the HTML pins, and a screen drawn before that would ask
+// for `assets/…` paths that are not beside the page, and the images' own error
+// handlers would swap in placeholders for good. So the first screen is drawn
+// once the load has SETTLED — loaded, or failed (placeholders), which it is by
+// BOOT_WAIT_MS at the latest; a late index is dropped, never laid over a screen
+// already drawn on placeholders. A single file and the source tree pin
+// nothing, and this calls showFirstScreen() at once.
+function showFirstScreen() {
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
-} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'reward') {
+} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'master' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -3621,6 +3797,20 @@ if (shotState === 'combat-test') {
     run.sigils = [registries.sigils.all()[0].id];
     run.shopStock = buildBlacksmithStock(registries, rng, run);
     showShop();
+  } else if (shotState === 'master') {
+    // THE WISE MASTER (SPEC §14.5), a reach state beside `?shot=blacksmith`:
+    // a master visit posed so each service has something to act on — a
+    // purse of cinders, a skill book to sell, and the first two tracks of the
+    // master the visit picks at level 2 (a respec to make). Which offerings
+    // are out is the harness's own settings door (?shotSettings, Advanced →
+    // Shops).
+    run.cinders = 2000;
+    run.consumables = { [registries.consumables.all().find((def) => def.kind === 'skillBook').id]: 1 };
+    run.shopStock = buildMasterStock(registries, rng, run);
+    for (const skillId of registries.shops.masters.find((row) => row.id === run.shopStock.masterId).skills.slice(0, 2)) {
+      run.skills = { ...run.skills, [skillId]: { xp: 0, level: 2, pendingDrafts: 0 } };
+    }
+    showShop();
   } else if (shotState === 'reward') {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
     // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
@@ -3765,7 +3955,9 @@ if (shotState === 'combat-test') {
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
 } else if (shotState === 'coop') {
-  coopStubMount(coopCombatShot(), 'p1');
+  // `&shotSeats=2`: couch co-op, both canned seats on this one screen (Tab
+  // switches the active seat), so a probe can drive a seat switch.
+  coopStubMount(coopCombatShot(), 'p1', shotParams.get('shotSeats') === '2' ? ['p1', 'p2'] : null);
 } else if (shotState === 'coopmap') {
   const w = shotParams.get('shotWalk');
   if (w != null && !(Number.isInteger(Number(w)) && Number(w) >= 1)) {
@@ -3912,11 +4104,47 @@ if (shotState === 'combat-test') {
   // left for the next start rather than applied mid-session.
   const PROFILE_WAIT_MS = 3000;
   let waiting = true;
-  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting })
+  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting,
+    promoted: promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values })
     .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
     .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
-  Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
-    .finally(() => { waiting = false; showTitle(); });
+  const profileSettled = Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
+    .finally(() => { waiting = false; });
+  if (gateFirst) {
+    // A pack build's cold boot draws the gate at once (step 5): the profile
+    // keeps loading behind it, and the title waits for it as well as the art.
+    holdTitleFor(profileSettled);
+    showTitle();
+  } else {
+    profileSettled.finally(() => showTitle());
+  }
 } else {
   showTitle();
+}
+}
+// THE COLD BOOT DRAWS THE GATE AT ONCE (step 5). The startup gate shows no
+// pack art through an <img> (its backdrops are ASSET_CSS, which arrive with the
+// load), so in a pack build the gate is drawn before the load settles, with its
+// status line; every other first screen (a ?shot= state) still waits for the
+// load, behind the static boot line, as step 3a made it.
+const gateFirst = packsPinned() && (!shotState || shotState === 'startup');
+const dropBootLine = gateFirst ? () => {} : bootLine(app);
+// The boot load asks for the tier Art quality names (Auto decides from the
+// layout applyUiScale has already written); a switch later re-points the
+// images on screen the same way the first load does.
+// A tier switch (or a Retry) re-points the images on screen and, when the boot
+// load had failed, lets the shipped score be read through the new source and
+// takes the title's notice away.
+onTierArrived((map) => { builtInArtArrived(map); bootMusic.sourceArrived(); artArrivedAfterFailure(); });
+whenBuiltInArtReady(() => {
+  bootArtSettledNow = true;
+  if (builtInArtStatus().state === 'failed') artNoticeState = 'failed';
+  // The music folder is applied once the load has settled (the shipped score
+  // resolves through the index); the gate-first boot drew its screen already.
+  bootMusic.firstScreen(() => { dropBootLine(); if (!gateFirst) showFirstScreen(); });
+  for (const fn of bootArtWaiters.splice(0)) fn();
+}, { onSource: builtInArtArrived, tier: requestedTier(activeSettings) });
+if (gateFirst) {
+  startBootArt({ settled: builtInArtSettled(), source: builtInSource });
+  showFirstScreen();
 }

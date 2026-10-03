@@ -25,10 +25,10 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 14 CSS `url(../assets/…)` backdrops (for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
-| 4 | Combat rules | **built**, one deviation | Warrior's Vow enters Gorefire instead of a chosen stance (DEVELOPER "M1 known deviations"; FINISH §1, open). |
-| 5 | Content | **built**, one card open | Warrior's Vow (§5.2) enters Gorefire instead of a chosen stance (FINISH §1, open). 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
+| 4 | Combat rules | **built** | No open M1 deviation: Warrior's Vow enters the stance the player chooses (DEVELOPER "M1 known deviations"; `tests/warriors-vow.test.mjs`). |
+| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
-| 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and not bundled; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
+| 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
 | 8 | Testing | **built** | `tests/run-node.mjs`. |
 | 9 | Milestones M1–M4 | M1, M2 **built**; M3 **partly built**; M4 **partly built** | M3: 7 cards have no route in (`tools/contentreach.mjs`) and there is no balance gate (D1). M4: the feel, performance and asset-pass items are in FINISH §5, §7 and §10. |
 | 10 | Forward hooks | **seams built**, features **planned** | By design: v1 keeps them empty. |
@@ -37,7 +37,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 13 | Seats, zones, skill tracks, class card and tree, levels, recovery, Mana, attributes, quest board | **partly built** | Phase 0 of [proposal-seat-adventure](docs/proposal-seat-adventure.md); plan phases 1–10 of [plan-progression-and-property-system](docs/plan-progression-and-property-system.md), phase 2 only as 2a (2b, relic passives as property rules, is unscheduled). Open, as each subsection's *Not in this phase* line states: the smithing re-point (4b-ii, §13.4e); co-op offers no skill or class draft (§13.4e, §13.4g); no tree screen (§13.4g); four ability-card sentences are approximated (§13.4f); quest XP is unpaid and the co-op host has no quest board (§13.4n). **Post-1.0** (owner decision, 2026-09-27): 3b-ii (equipment rows joining the deck), the class-swap boss-reward door (§13.4h) and quest XP. The tower, city and later seat phases are **planned** in that proposal, with no SPEC section yet; companions are owned by §14.3, not the proposal's phase 5 (owner decision, 2026-09-27). |
 | — | World Journey, shared armour sets, legacy dungeons, the opening prologue, configurable stat pools | **built**, one boundary | `ui/screens/worldAtlas.js`, `legacyDungeon.js`, `prologue.js`; `src/content/derivedStats.js`. The stat-pool rules apply to the solo path only; the combat workshop and LAN paths keep their existing rules until given a rating context (that section's last line). |
 | 14 | Deck editor and the three shops | **partly built** (steps 1–3 of 7) | The SPEC section landed in #1331; step 2, deck rules, the sideboard and ordered draw, landed in #1343 (`tests/deck-rules.test.mjs`); step 3, the deck editor UI and its doors, in #1372 (`tests/deck-editor.test.mjs`). Steps 4–7 (shop kinds, market, blacksmith, wise master) are planned, with no code on `dev`. |
-| 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **partly built** (steps 1 and 3 of 5) | The SPEC section landed in #1348; §15.2 levelling preview and per-fight cap landed in #1349 (`tests/level-pace.test.mjs`). Steps 2 and 4 are open as #1351 and #1352; §15.4 waits on §14 step 5. |
+| 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **built** (steps 1–5 of 5) | The SPEC section landed in #1348; §15.1, the card reward schedule, in #1351 (`tests/card-reward-schedule.test.mjs`); §15.2, the levelling preview and per-fight cap, in #1349 (`tests/level-pace.test.mjs`); §15.3, crafting drops, in #1352 (`tests/crafting-drops.test.mjs`); §15.4, legendary sigils, in #1455 (`tests/legendary-sigils.test.mjs`), to the shapes of #1439. |
 
 ### Combat and equipment revision: implementation contract
 
@@ -71,7 +71,7 @@ on the prototype gate; both remain the contract for the work after 1.0, unchange
 | Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
 | Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
-| Entry point | `index.html` opened directly or via any static server |
+| Entry point | `index.html` served by `node tools/serve.mjs`, which serves the media. Opened from any static server, it still boots and plays; once EXTERNAL-ASSETS-PLAN step 13 moves the media trees to the art repository, such a page has placeholders (§2.4), synthesized audio, system fonts and the low-detail map. Only the built file opens by double-click: the source page loads ES modules, which a `file://` page cannot. |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
 A **run**: pick 1 of 4 classes → traverse a branching node map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from that class's 36-card reward pool + colorless cards → win by defeating the Act 3 boss, or die and see the "YOU PERISHED" screen with seed and stats.
@@ -185,7 +185,7 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
 | `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
 | `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only — no UI imports. |
-| `build/` · `dist/` | The single-file bundle emitted by `tools/bundle.mjs` and its shipped copy. Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
+| `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
 `engine`, `model` and `content`; `engine` may import `model` and `content`; `model` may import
@@ -523,6 +523,15 @@ its mounts, and **seat** a run-owned card in an emptied or open mount.
 - **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
   and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
   per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
+- **Not in a Sealed or Draft run** (owner, 2026-10-02). A pool-built deck is never dealt the
+  equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`), and extracting one would
+  hand the run a free copy of what those modes exclude. `extractionRefusal` answers `poolDeck`
+  from the run's own Custom Climb rules every time, never from a stored field: `extractionPlan`
+  lists no candidate and carries that `refusal`, `commitExtraction` refuses it by name (a free
+  grant too) before touching the run, and every smith door — the Shrine, a merchant's rolled
+  smith, the blacksmith's `extractArt` — shows the service unavailable with the
+  `blacksmith.refuse.extract.poolDeck` sentence. Seating a card the run already owns is
+  unchanged.
 - **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
   the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
   and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
@@ -690,6 +699,14 @@ id only (§3.3).
   saves and deterministically migrated (or receives an explicit schema migration) before any
   current save is written. A missing new field may never make an otherwise valid current save
   archive. Prefer existing opcodes/statuses/snapshots so no new persisted field is needed.
+- **Run schemaVersion 20** (2026-10-02, #1479): a Sealed or Draft run carries
+  `poolDeckRule` (`RUN_SHAPE`; `POOL_DECK_RULE` in `model/cardRemoval.js`), the mark that
+  its starting deck is held to the attack slots it was dealt, not the ones its equipment
+  composes. A Standard run never carries it. A pool save from schema 19 or older has no
+  mark: the load door heals its quota down to the dealt slots once, marks it, and notes the
+  heal. A schema-20 pool save without the mark is refused by name. The bump is what makes a
+  schema-19 build refuse and preserve a schema-20 pool save (runStatus `newer`) instead of
+  dealing the equipment's own cards back into the dealt deck.
 - **Run schemaVersion 3** (2026-08-14): `flaskCharges` carries its **capacity ledger** —
   `base` (born), `grown` (possession door), `granted` (moment door) — and
   `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted`
@@ -1022,10 +1039,12 @@ player assigns them.
 §13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool).
 The configured character curve reads `balance.level.xp`; legacy exponential tables use
 `xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
-The October 1 owner default uses a linear table (`linear: true`):
-`xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`.
-The first character step costs 100 XP and `multScaler` defaults to 1.3;
-at base 100 the steps cost 100, 230, 360, 490 XP. Base, scaler, rounding and
+A linear table (`linear: true`) uses
+`xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`; at base 100 and
+`multScaler` 1.3 (the October 1 default) the steps cost 100, 230, 360, 490 XP.
+Since 2026-10-02 (owner) the character default is exponential (`linear: false`): base 100,
+growth 1.75, roundTo 10 — steps 100, 180, 310, 540, 940, 1,640, 2,870, 5,030, 8,800,
+15,390, so 35,800 XP reaches level 11. Base, scaler, rounding and
 the linear/exponential toggle are configurable. Tables without `linear: true`
 retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
 Older snapshots without that marker use exponential defaults unless the player explicitly
@@ -1038,7 +1057,7 @@ rounding 10 — owner, 2026-09-24): the steps from level 1 cost 10, 10, 10, 10, 
 of 10); the old curve's steps were 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 — 2,030 XP.
 The historical awards were `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
 25 / 75 / 200 before 2026-09-24). The equipment skill tracks (`balance.skill.xp`) and the class
-track (`balance.skill.class.xp`) historically opened at base 5 too (30 and 60 before); the October 1 defaults use base 100. The 11–12 levels a full
+track (`balance.skill.class.xp`) historically opened at base 5 too (30 and 60 before); the October 1 defaults use base 100, and since 2026-10-02 (owner) both use the exponential curve (`linear: false`, growth 1.75, roundTo 5): steps 100, 175, 305, 535, 940 — 2,055 XP to level 5. The character level uses the same ×1.75 growth (above). The 11–12 levels a full
 run earned (measured: 11.5) were measured on the old curve and awards and are due a re-measure;
 `tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
 level; the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the
@@ -1734,7 +1753,7 @@ together.
 - "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
 - Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
 
-  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks in `music/` (listed in `music/manifest.json`; each is written as notes in `music/score/<id>.mjs` and rendered offline by `tools/score/render.mjs`, so the score's source is code), and the two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the `music/` beside the page (`SHIPPED_MUSIC_FOLDER`, `content/music.js`; a `file://` page cannot fetch it and keeps the synth) — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
+  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks (listed in a music manifest; each is written as notes in a score module and rendered offline by `tools/score/render.mjs`, so the score's source is code). Today they are `music/*.mp3` with `music/manifest.json`, and the scores are `music/score/<id>.mjs`. From EXTERNAL-ASSETS-PLAN steps 9–13, the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and the scores and their render tool are authored there under `art/music/`. The two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the shipped tracks, read through the common pack's index in the web edition (EXTERNAL-ASSETS-PLAN step 3c) and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
 
 ### 7.5 Visual style
 
@@ -1749,11 +1768,13 @@ together.
 - Cards: DOM elements (not canvas) — rounded rect, rarity-coloured frame, cost orb top-left,
   type banner. Type presentation (geometry + banner colour per card type) is data:
   `balance.ui.cardTypes`.
-- **Fonts — TO BUILD, and the shipped state is the opposite of what this line used to
-  claim.** Cinzel (display) / Inter (body) are named in `font-family` **with system fallbacks
-  (Georgia / system-ui) and are NOT bundled**; `CREDITS.md` is the authoritative home and says
-  so. Self-hosting the `woff2` under `assets/fonts/` is unfinished work, not a shipped fact.
-  Falsify: `ls assets/fonts` and `grep -n "not bundled" CREDITS.md`.
+- **Fonts — TO BUILD.** Cinzel (display) / Inter (body) are named in `font-family` **with
+  system fallbacks (Georgia / system-ui)**, and the interface copies do not ship yet;
+  `CREDITS.md` is the authoritative home and says so. They will load at runtime as pack
+  files, like every other asset, through the pack loader (EXTERNAL-ASSETS-PLAN step 3b; owner,
+  2026-09-27, which replaces the question of bundling them). Wiring the interface faces
+  themselves is not yet a plan step: step 3b moves only the existing "AS Lore" faces. The
+  system fallbacks stay, for a page whose fonts do not load. Falsify: `grep -n "not bundled" CREDITS.md`.
 
 ---
 
@@ -1862,7 +1883,7 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 
 ## 11. Non-goals (v1)
 
-Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and bundled audio asset files (the score and SFX are synthesized at runtime — §7.4; the manifests accept real files).
+Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and audio bundled into the game file: the rendered score is loaded at runtime (pack files through the common index in the web edition, since EXTERNAL-ASSETS-PLAN step 3c; the `music/` folder beside the page in source and single-file builds), with the synth bed as its fallback, and SFX stay synthesized (§7.4; `SFX_MANIFEST` accepts real files).
 
 Three things this list once excluded have since shipped and are no longer non-goals: **multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player), a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4).
 
@@ -2022,7 +2043,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 - **Run schemaVersion 8.** `run.skills` — `{ [trackId]: { xp, level, pendingDrafts } }` — rides the save (`RUN_SHAPE` row `{ key: 'skills', type: 'object' }`; `validateRunShape` refuses a non-object ledger, a negative or fractional field and a field that is not `xp`/`level`/`pendingDrafts`, by name). A save at schemaVersion ≤ 7 gains the empty ledger at the migration door. `model/skills.js awardSkillXp` is the one writer.
 - **The tracks are derived** (`skillTracks(registries)`): one per `itemType` node except `item:armor` (`item:blade`, `item:shield`, … as weapon tracks; `item:magic-focus` as the focus track), one per framework weight class (`armour:light|medium|heavy`, `content/framework/mechanics.json`), `dualWield`, and `class:<classId>` per class. No second list exists.
-- **One curve.** `xpToNext(registries, kind, level)` reads `balance.skill.xp` (weapon, armour, focus, dual) or `balance.skill.class.xp` (class). A skill starts at level 0: a linear table costs `round(base + level × base × multScaler, roundTo)`, with owner defaults base 100 and scaler 1.3. Tables without `linear: true` retain `round(base × growth^level, roundTo)`. Each step climbed queues one draft in `pendingDrafts`, which phase 4b spends.
+- **One curve.** `xpToNext(registries, kind, level)` reads `balance.skill.xp` (weapon, armour, focus, dual) or `balance.skill.class.xp` (class). A skill starts at level 0: a linear table costs `round(base + level × base × multScaler, roundTo)`; a table without `linear: true` costs `round(base × growth^level, roundTo)`. The owner defaults (2026-10-02) are exponential, base 100 and growth 1.75, for both tables. Each step climbed queues one draft in `pendingDrafts`, which phase 4b spends.
 
 - **Residual XP presentation.** Each manual character or skill claim spends exactly one step. Its compact row resets to zero at the new displayed level, then green fills to the remaining XP and yellow covers it. A full row turns blue and offers the next Level action; a partial row keeps its progress. Repeat for each claim without paying XP again. The refill duration and short pause before opening the claimed level's reward are configurable; reduced motion settles immediately. Other claims are gated during the refill.
 - **The hooks are one listener on the event bus** (`engine/skillXp.js attachSkillXp`, wired in `createCombat` and `createCoopCombat`), and they read the registry, never an entity: `damageDealt`/`blockGained` by a card a piece lent (`sourceHand` or `grantedBy` on the event, which now carry the card) pays `perHit` to that piece's item type, and to `dualWield` while the grip is `dual`; `combatEnd` with victory pays `perWinEquipped` per held group, × `killMult` for the group whose hit killed; `impactDealt` to the wearer pays `1 / impactPerXp` per impact to `armour:heavy` (half to medium); `attackEvaded` by the wearer pays `evadeXp` to `armour:light` (half to medium); `arcaneExposureChanged` by the caster pays `1 / buildupPerXp` per buildup to the focus track. The receipt lives on the combat, keyed by owner (the seat id in co-op) and floored once (`skillXpReceipt`); the run's ledger is written once, by the run's owner — `main.js onCombatEnd`, `tools/session.mjs`'s write-back, `tools/runsim.mjs` — through `applySkillXp`. Combat never writes a run.
@@ -2032,7 +2053,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 - **The progression predicates read the ledger:** `skillLevelAtLeast` and `classLevelAtLeast` read `combat.skills`, the copy of `run.skills` the combat was handed (`player.skills`) — in co-op the OWNER's seat's copy, not the active seat's; a track never touched is level 0. A gate's `skill` must be a derived track id, refused by name otherwise (`validate.js`); the shipped Siphon gates on `item:magic-focus`.
 - **`tools/runsim.mjs --skill-levels`** prints the level each track reached, averaged per class.
 
-*Falsify:* `skillTracks` names `item:blade`, `armour:heavy`, `dualWield` and `class:rogue` and not `item:armor`; `xpToNext(registries, 'weapon', 3)` costs 490 XP with the linear defaults; a legacy exponential fixture costs `round(base × growth³, roundTo)`; a reaver's seeded fight pays `item:blade` exactly `(hits + blocks by cards the sword lent) × perHit` (+ `perWinEquipped`, × `killMult` when the blade killed — the kill is read from the HP the hit left) and `item:shield` the same for the shield's cards, kit and art cards named by the bare piece id included, never `dualWield`, never a `class:` track, and the run's ledger is empty until `applySkillXp`; a rogue with a knife and a sword pays `dualWield` equal to the blade; a schema-7 save loads with `skills: {}`; a fight saved mid-way restores its receipt and ledger and keeps recording, a pre-ledger snapshot resumes with empty ones; a gate on `skill: focus` is refused by name; a co-op guard cast on an ally pays the caster's seat and a seat's gate reads its own ledger; `balance.skill.xp.growth: 0.5` is refused by name.
+*Falsify:* `skillTracks` names `item:blade`, `armour:heavy`, `dualWield` and `class:rogue` and not `item:armor`; `xpToNext(registries, 'weapon', 3)` costs 535 XP with the owner defaults; a linear fixture at base 100 and scaler 1.3 costs 490; a reaver's seeded fight pays `item:blade` exactly `(hits + blocks by cards the sword lent) × perHit` (+ `perWinEquipped`, × `killMult` when the blade killed — the kill is read from the HP the hit left) and `item:shield` the same for the shield's cards, kit and art cards named by the bare piece id included, never `dualWield`, never a `class:` track, and the run's ledger is empty until `applySkillXp`; a rogue with a knife and a sword pays `dualWield` equal to the blade; a schema-7 save loads with `skills: {}`; a fight saved mid-way restores its receipt and ledger and keeps recording, a pre-ledger snapshot resumes with empty ones; a gate on `skill: focus` is refused by name; a co-op guard cast on an ally pays the caster's seat and a seat's gate reads its own ledger; `balance.skill.xp.growth: 0.5` is refused by name.
 
 ### 13.4e Skill drafts: the level buys a pick from the track's own schools (plan phase 4b)
 
@@ -2584,7 +2605,7 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 
 ## 15. Reward schedule, levelling pace, crafting drops and legendary sigils (owner brief, 2026-09-26)
 
-**Status: partly built** (2026-09-27: step 1, this section, landed in #1348; §15.2 levelling preview and per-fight cap landed in #1349; no other step's code is on `dev`). The owner asked for several things:
+**Status: built** (2026-10-02: step 1, this section, landed in #1348; §15.1, the card reward schedule, in #1351; §15.2, the levelling preview and per-fight cap, in #1349; §15.3, crafting drops, in #1352; step 5, legendary sigils (§15.4), in #1455, to the shapes pinned below in #1439). The owner asked for several things:
 - a choice of when card rewards come: after battle, on level-up, both or neither;
 - a percent chance for a card reward to drop;
 - XP settings that show what they do ("I change them and I'm levelling up way too much");
@@ -2625,7 +2646,7 @@ These keys go in `balance.rewards.cardRewards`.
 
 ### 15.2 Levelling pace you can see
 
-The historical September 24 exponential curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) cost 10 XP per level up to level 9. Its historical awards paid 15 per win plus 5, 75 or 200 per normal, elite or boss kill: a three-kill normal fight (30 XP) was worth 3 levels, a one-kill elite fight (90 XP) 8 levels and a one-kill boss fight (215 XP) 13 levels. These are historical pace examples, not current defaults. The October 1 owner curve is the base-100 linear curve defined under **Level curve** and §13.4d; the preview calculates every pace example from the configured curve and awards. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` already rounds the multiplied awards into the configured registries), and `levelUpValue` **replaces** `pointsPerLevel` as the points each level grants. Nothing on the Settings screen shows the result.
+The historical September 24 exponential curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) cost 10 XP per level up to level 9. Its historical awards paid 15 per win plus 5, 75 or 200 per normal, elite or boss kill: a three-kill normal fight (30 XP) was worth 3 levels, a one-kill elite fight (90 XP) 8 levels and a one-kill boss fight (215 XP) 13 levels. These are historical pace examples, not current defaults. The current owner curve (2026-10-02) is the base-100 ×1.75 exponential curve defined under **Level curve** and §13.4d (the October 1 linear curve before it); the preview calculates every pace example from the configured curve and awards. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` already rounds the multiplied awards into the configured registries), and `levelUpValue` **replaces** `pointsPerLevel` as the points each level grants. Nothing on the Settings screen shows the result.
 
 **Owner decision, named.** The September 24 base-5 curve explained the historical fast levelling. The October 1 curve contract supersedes those defaults. This preview feature itself changes no curve or award number; it shows the configured pace so either side can be retuned in Settings.
 
@@ -2673,13 +2694,56 @@ A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a pro
 - **Attunement.** A legendary sigil works while it is **attuned**. The run attunes at most `balance.sigils.attuneMax` (shipped 1) at a time, chosen from the inventory out of combat. The player does this in the **Armoury's Sigils panel** (out of combat only, like every Armoury change that is not a mid-fight swap): each owned legendary shows **Attune** or **Unattune**, through the model pair `attuneSigil(registries, run, id)` / `unattuneSigil(run, id)` in `model/sigils.js`, which refuse by name an unowned or non-legendary id and an attune past `attuneMax` (the sentence is shown in place). `MOUNTABLE_KINDS` gains a `sigil` kind, and a new `syncSigilProperties` mounts each attuned sigil's property under `sigil:<id>` the way `syncRelicProperties` mounts relics. `attunedSigils` is carried into `createCombat`, each co-op seat (`tools/session.mjs`) and combat snapshot restore. `run.attunedSigils: string[]` is saved and checked (each id owned, legendary, and within `attuneMax`). §14.4's slots hold non-legendary sigils. A legendary is attuned, never slotted.
 - **The drop.** It is a new reward kind, `sigil`, after `relic`, with chance `balance.sigils.dropChancePct` `{ normal: 0, elite: 0, boss: 0, treasure: 0 }`. It is shipped off; the owner turns it on in Settings. The roll is on a new stream, **`sigils`**, appended to the end of `STREAM_NAMES`. It never drops a sigil the run already owns, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`.
 
+**The shapes step 5 builds to** (2026-10-02, SPEC-only, before the feature PR per CONTRIBUTING ground rule 1).
+
+- **Rarity at every door.** This one rule governs every persisted position that holds a sigil id. Each position belongs to exactly one of three classes, and the lists below are exhaustive.
+  - **Legendary only.** An id here must name a known legendary sigil. The positions are `run.attunedSigils`, a fight in progress's `combatEntered.snapshot.attunedSigils`, and a pending reward's `pendingReward.rewards.sigilId`.
+  - **Never legendary.** An id here must not name a legendary sigil. The positions are `run.sigilSlots`, a fight in progress's `combatEntered.snapshot.sigilSlots`, the market sigil shelf on `run.shopStock.sigils`, and the same shelf on an atlas point's `journey.serviceStates[pointId].stock.sigils`.
+  - **Either.** `run.sigils` is the inventory, so it holds both kinds: a legendary is carried there, attuned or not, and the non-legendaries wait there for a slot.
+  - `run.attunedSigils` holds no more than the run's `attuneMax`.
+  - The rule is checked at every door that restores a run: the `engine/save.js` load, and the co-op member restore in `tools/session.mjs`, which calls `migrateRunSchema` directly. Both doors read one model check, `sigilRarityProblems(registries, run)` in `model/sigils.js`, which checks both restricted classes.
+  - Each violation is refused by name. The load door archives the save as it does every other malformed reference, and the co-op door refuses that member and keeps the record, as it refuses any member that fails its restore.
+  - As defence in depth, `sigilPurchasePlan` also refuses a legendary by name, so no shelf a hand edit filled can sell one.
+  - A persisted sigil-id position added later must be assigned to one of these classes in the same PR that adds it.
+  - The bullets below cite this rule where they apply it.
+- **The field.** `run.attunedSigils: string[]` holds distinct ids, each also in `run.sigils`. `validateRunShape` is registry-free and refuses, by name: a value that is not a list, an id that is not a non-empty string, an id named twice, and an id that is not in `run.sigils`. Under **rarity at every door** (above), both restore doors refuse, by name, an attuned id that is not a legendary sigil, and a list longer than the run's `attuneMax`. They read that number from the run's frozen `advancedConfigSnapshot` override (`gameConfig.balance.sigils.attuneMax`), else from the bundle default, so the first load pass, which uses the authored registries, does not refuse a run whose Settings row was raised. An unknown attuned id is already refused through `unknownSigilId`, because the list is a subset of `run.sigils`. A legendary in `run.sigilSlots` is refused at the same doors (**rarity at every door**): §14.4's install already refuses one, so only a hand edit can put it there.
+- **Schema.** One bump, 18 → 19. `attunedSigils` is a required `RUN_SHAPE` row at 19. `migrateRunSchema` fills `[]` for a v18-or-older save and leaves `run.sigils` untouched. The step appends one captured schema-19 save to the corpus and edits no existing entry.
+- **The numbers.** `balance.sigils.attuneMax` is a whole number from 0, where 0 means nothing can be attuned. `balance.sigils.dropChancePct.normal|elite|boss|treasure` are whole numbers from 0 to 100, each with an explicit 0–100 `BALANCE_DOMAINS` entry. Every one carries a `[NOTE]`, so it gets a generated `gameConfig.balance.sigils.*` Settings row and is frozen per run. `validateContent` refuses any other value by name.
+- **The model pair.** `attuneSigil(registries, run, id)` and `unattuneSigil(run, id)` each return `{ ok, reason }` and change the run only when `ok`. Each `reason` is one sentence from `uiStrings.csv`.
+  - `attuneSigil` refuses an id the registries do not hold or `run.sigils` does not carry, a sigil that is not legendary, one already attuned, and an attune that would hold more than `attuneMax`.
+  - `unattuneSigil` refuses an id that is not attuned.
+  - Neither draws randomness, and neither needs an equipped armament: an attuned legendary is held by the run, not by a piece. Out of combat is the door's rule, so the Armoury panel shows no buttons in combat.
+- **Mounting.** `sigilCarrier(registries, id, ownerKey)` returns `{ kind: 'sigil', id, instanceId: id, ownerKey, tagIds: propertyTags }` for a legendary sigil, or null for anything else.
+  - `syncSigilProperties(combat, entity, attunedSigils?)` mounts each carrier that is not yet mounted, the way `syncRelicProperties` does. Attunement never changes mid-fight, so it only adds.
+  - The mount carries no `heldBy`, so `syncLoadoutProperties` never unmounts it.
+  - A legendary is never slotted, so its `sigil:<id>` key never meets a slotted sigil's.
+- **The combat.** `combat.attunedSigils: string[]`.
+  - `createCombat` copies the player's `attunedSigils`, which `createRunCombat` takes from `run.attunedSigils`.
+  - The combat snapshot serializes the field. `combatSnapshotProblems` refuses a value that is not a list of distinct non-empty ids, and `combatSnapshotReferenceProblems` refuses, by name, an id the registries do not hold and an id that is not a legendary sigil.
+  - Under **rarity at every door**, the load door also refuses, by name, a fight in progress (`combatEntered.snapshot`) whose `attunedSigils` (an absent field reads as `[]`) is not the same list as `run.attunedSigils`: attunement cannot change mid-fight, so a mismatch is a hand edit. The save is archived the way every other malformed snapshot reference is.
+  - A snapshot written without the field restores with `[]` and mounts none.
+- **Co-op.** The member restore applies **rarity at every door**. Each seat that `tools/session.mjs` builds hands in `attunedSigils` from its member's run. `coopCombat` keeps the list on the seat and mounts it under that seat's key, inside the same `setActive` window as the seat's relics, at the opening and at a mid-fight join. In v1 the co-op reward scene rolls no sigil drop, and its offers are unchanged.
+- **The drop.** The offer field is `rewards.sigilId`: a sigil id, or absent for none.
+  - The menu kind is `sigil`, after `relic` in `REWARD_KIND_ORDER`. Its row key is `sigil`, and its state is `pendingReward.states.sigil`.
+  - Taking the row appends the id to `run.sigils`, unattuned. Taking an id the run already owns adds nothing.
+  - The load door refuses, by name, a `sigilId` that is unknown (`pendingRewardReferenceProblems`) or not legendary (**rarity at every door**).
+  - **The pool is legendary sigils only.** It holds the legendaries the run does not own, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`, in authored order.
+  - `rollSigilDrop` reads the chance for the door's pool. At a chance of 0 it returns none and draws nothing. With an empty pool it returns none and draws nothing. At 100 it makes no chance draw. Between those, it makes one `rng.chance('sigils', pct)`, and a miss returns none. Then it makes one `rng.pick('sigils', pool)`.
+  - It is rolled at a won normal or elite fight, at a boss whose reward menu opens (`main.js onCombatEnd`), and at a treasure room, both the map node and the legacy dungeon's treasure. The map-treasure door (`main.js enterNode`, `case 'treasure'`) checkpoints its offer through `beginPendingReward`, as the legacy dungeon's treasure door already does, so `resumeRun` remounts an unclaimed sigil row after a reload instead of losing it. On a World Journey the door completes its atlas point (`completeJourneyNode`) before it checkpoints, as the legacy dungeon resolves its node first, so claiming the rows never leaves the point open. The last boss of a run ends it with `finishRun(true)` before any reward is built, so it rolls no sigil, and that victory path is not reordered.
+  - With all four chances at the shipped 0, the `sigils` counter never moves. No other stream moves at any setting.
+- **The Armoury's Sigils panel.** A `.armoury-sigils` section in the Inventory view, below the item collection. It appears while the run owns a legendary sigil.
+  - It shows a count, "N / attuneMax attuned", and one row per owned legendary, in `run.sigils` order: its name, its blurb, its rule's sentence (`nodeTerms.csv`), and whether it is attuned.
+  - Out of combat, each row carries **Attune** or **Unattune**. A refusal is shown as text in the panel.
+  - In combat, the rows show and no button is drawn.
+  - Every button is at least 48 CSS px on a coarse pointer and at least 44 px otherwise.
+
 *Falsify:*
 - A sigil with a tag that is not a property node is refused by name.
 - An attuned sigil's trigger fires in a fight, and an unattuned owned sigil's trigger does not.
 - Attuning a second sigil while `attuneMax` is 1 is refused by name.
 - A DOM test opens the Armoury's Sigils panel, taps **Attune** on an owned legendary, sees it listed as attuned and in `run.attunedSigils`, taps **Unattune**, and sees it removed; the panel's buttons are absent in combat.
 - Market and blacksmith stock over 200 seeds never offers a legendary sigil.
-- With defaults, no sigil ever drops. With `dropChancePct.boss: 100`, a boss drops one unowned sigil and never a duplicate.
+- With defaults, no sigil ever drops and no stream counter moves. With `dropChancePct.boss: 100`, a boss drops one unowned legendary sigil and never a duplicate.
 - A save at §14's last schema loads with `attunedSigils: []`, and its `sigils` untouched.
 
 ### 15.5 Build order

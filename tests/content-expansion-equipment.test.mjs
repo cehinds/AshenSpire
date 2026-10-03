@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { manifestIds } from '../tools/art-source.mjs';
+// Step 12: an art path ships when art-manifest.json lists it, not when a tree
+// in this checkout holds the file.
+const SHIPPED = manifestIds();
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -11,8 +14,8 @@ const owns = { has: () => true };
 for (const [id, art, status] of [['frostSpear', 'rimeThrust', 'frost'], ['cinderAxe', 'kilnCleave', 'burn'], ['duskChime', 'vesperWard', 'regen']]) {
   const piece = r.equipment.armaments.find(p => p.id === id);
   assert.ok(piece.dropWeight > 0 && !piece.unlock, `${id}: ordinary weighted discovery`);
-  assert.ok(existsSync(`assets/equipment/icon_${piece.inventoryArtKey}.webp`));
-  assert.ok(existsSync(`assets/equipment/weapon_${piece.artKey}.webp`));
+  assert.ok(SHIPPED.has(`assets/equipment/icon_${piece.inventoryArtKey}.webp`));
+  assert.ok(SHIPPED.has(`assets/equipment/weapon_${piece.artKey}.webp`));
   const run = createRunState({ seed: 17, classId: 'reaver', registries: r });
   assert.ok(equipPiece(r, run.loadout, 'rightHand', 0, id, owns, { inCombat: false, attributes: run.attributes }));
   stampDeck(r, run);
@@ -56,8 +59,8 @@ for (const [classId, id, alias] of [['reaver', 'bastion', 'warden'], ['starseer'
   assert.ok(equipPiece(r, run.loadout, 'armor', 0, id, owns, { inCombat: false, attributes: run.attributes }));
   stampDeck(r, run);
   assert.equal(armourArtKey(classId, id), alias);
-  assert.ok(existsSync(armourMenuAsset(classId, id)));
-  assert.ok(existsSync(`assets/equipment/body_${classId}_${alias}.webp`));
+  assert.ok(SHIPPED.has(armourMenuAsset(classId, id)));
+  assert.ok(SHIPPED.has(`assets/equipment/body_${classId}_${alias}.webp`));
   assert.equal(resolveUpgradedEquipment(r, `armor/${classId}/${id}`, 1).poiseThreshold, piece.poiseThreshold + 1);
 }
 console.log('PASS content expansion equipment: discovery weights, equip, three-card packages, status Arts, upgrades and reused art');
@@ -72,7 +75,7 @@ for (const id of ['frostSpear', 'cinderAxe', 'duskChime', 'straightSword', 'shor
   const piece = r.equipment.armaments.find(p => p.id === id);
   const expected = `assets/equipment/icon_${piece.inventoryArtKey || id}.webp`;
   assert.equal(armamentIconAsset(piece), expected);
-  assert.ok(existsSync(expected));
+  assert.ok(SHIPPED.has(expected));
   const row = { item: piece, id, key: id, name: piece.name, category: 'Weapon', equippedLabels: [] };
   assert.equal(inventoryItemCardModel(row).properties.artAsset, expected);
   const candidate = { itemKind: 'armament', itemId: id, itemRef: `armament/${id}`, mounts: [], affectedCards: [], requirements: [] };

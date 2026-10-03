@@ -33,7 +33,7 @@ Gates G1–G10 need only Node. Run G9 (the build) before G2 and G10, which read 
 the built HTML is not committed, so a clean RC checkout has none until G9 runs. G11 and G12 need a headless Chromium (Playwright
 or a local Edge/Chrome). G13 is a GitHub Actions run, not a local command.
 G14–G20 gate the docs/FINISH.md release criteria that G1–G13 do not cover (see
-*Criterion map*). G14 and G16 need only Node. G15, G17, G18 and G19 have no
+*Criterion map*). G14, G16, G17 and G19 need only Node. G15 and G18 have no
 command yet, and G20 is read from docs/FINISH.md.
 
 ## Gates
@@ -48,8 +48,8 @@ command yet, and G20 is read from docs/FINISH.md.
 | G6 | `node tools/balance.mjs --check` | Exit 0. docs/BALANCE.md matches a fresh run. | `tests/balance-doc.test.mjs` |
 | G7 | `node tools/verdict.mjs -- node tools/workflow-lint.mjs` | Exit 0. No workflow step is missing `run:`/`uses:` and no key is duplicated. | `ci.yml` |
 | G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` `parse-gate` (bundler parse gate) and the `ci.yml` `test` job on ubuntu only, on a push to `test` or `release`. `tests/run-node.mjs` does not run it (`NOT_SPAWNED`), so G1 does not cover it |
-| G9 | `node tools/verdict.mjs -- node tools/launch.mjs --build-only --full-art` | Exit 0. The standalone builds are regenerated from the RC source with the full art and the mobile file, as release/main CI builds them. Without `--full-art` launch builds the light dev/test tier, which is not a release build. | `ci.yml` |
-| G10 | `node tools/verdict.mjs -- node tools/verify-shipped.mjs` | Exit 0, run after G9. The root and `dist/` copies a player is handed carry art and equal the fresh `build/`. | `ci.yml` |
+| G9 | `node tools/verdict.mjs -- node tools/launch.mjs --build-only --full-art` | Exit 0. The build is regenerated from the RC source as release/main CI builds it: the pack-shaped game file with the high, light and common packs (default tier high) and the light single file (docs/EXTERNAL-ASSETS-PLAN.md step 8e). Without `--full-art` launch builds the light dev/test tier, which is not a release build. | `ci.yml` |
+| G10 | `node tools/verdict.mjs -- node tools/verify-shipped.mjs` | Exit 0, run after G9. The light single file and its root and `dist/download/` copies carry art, `dist/AshenSpire.html` carries its pinned packs, and each copy equals the fresh `build/`. | `ci.yml` |
 | G11 | `node tools/contrast-audit.mjs --gate` | Exit 0, **and** the tool's `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off`, **and** its `KNOWN_BELOW` ledger has no text rows (FINISH.md §9, *The palettes pass contrast*). Exit 0 alone only means no new or worsened failure at the profiles it gates. **RED:** since #1291 `cb-safe` is gated, but `KNOWN_BELOW` still holds 12 text rows (the reward Continue HOLD cue and the TAKEN chip and title in each gated profile), all from `opacity` rules in `styles/kit.css`. Green also needs a workflow to run `contrast-audit.mjs --gate` (FINISH.md §9 asks for it in CI); today only a `ci.yml` echo names it. | not yet: no workflow runs it |
 | G12 | `node tools/verdict.mjs -- node tools/about-changelog.mjs` | Exit 0. The in-game changelog is a faithful projection of CHANGELOG.md, in order. | `ci.yml` |
 
@@ -67,12 +67,12 @@ or not a command for it exists yet.
 
 | Gate | Command | Expected result | Where CI runs it |
 |------|---------|-----------------|------------------|
-| G14 | `node tools/runsim.mjs 5` | **RED: not yet in the suite.** Exit 0, ending "No crashes across all simulated runs": fixed seeds, 5 whole headless runs for every class (FINISH.md §3, *A headless full run in CI*). The criterion asks for `tests/run-node.mjs` to run it, and it does not yet, so a hand run on the RC is not enough. Run it bare: its closing line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. It exits 1 on any crash. | not yet: `tests/run-node.mjs` does not run it |
+| G14 | `node tools/runsim.mjs 5` | Exit 0, ending `RESULT: 20 runs over 4 classes (5 fixed seeds each), every one to a win or a death — … 0 crashes, 0 soft-locks.`: fixed seeds, 5 whole headless runs for every class (FINISH.md §3, *A headless full run in CI*). It exits 1 on any crash or soft-lock (a fight its action guard cannot resolve, or an act walk longer than its map). Run it bare: its RESULT line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. `node tools/runsim.mjs --selftest` proves the rung can still go red. | `tests/run-node.mjs` (core lane: `runsim 5`; selftest lane: `runsim --selftest`) |
 | G15 | none yet | **RED: not yet runnable.** A browser run on a fixed seed goes Title → Class Select → map → at least 1 combat → boss → Victory or Death → Title → a new run starts, with 0 console errors (FINISH.md §3, *A browser full run*). No tool in `tools/` plays a full run in a browser. | none |
 | G16 | `node tools/runsim.mjs 100` | **RED: no verdict yet.** Every class's full run completes with no crash and its report lands in BALANCE.md (FINISH.md §4, *A2–A4: bring the classes into the target band*). Owner ruling D1 (2026-09-26): there is no win-rate band for 1.0, and every balance number stays configurable. G16 stays red until that FINISH.md line is ticked `[x]`. | none |
-| G17 | none yet | **RED: not yet runnable.** The Mana-aware A/B run, `node tools/runsim.mjs 50 --mana-ab`, prints each class's win rate and Mana spent with Mana on and off, and the result lands in docs/BALANCE.md (FINISH.md §4, *The Mana-aware A/B balance run*; SPEC §5.5.1 calls it a release gate). `tools/runsim.mjs` has no `--mana-ab` flag yet. | none |
+| G17 | `node tools/runsim.mjs 50 --mana-ab` | Exit 0. The fleet runs twice on the same seeds, Mana OFF (the Mana line never refuses a card) then ON (the shipped game), and the closing `MANA A/B` table prints each class's win rate and mean Mana spent per run for both arms (FINISH.md §4, *The Mana-aware A/B balance run*; SPEC §5.5.1 calls it a release gate). The RC's result is recorded in docs/BALANCE.md §7.1 (kept in docs/balance-runs.md). A report, not a pass band: owner ruling D1 (2026-09-26). | none: run by hand. `tests/runsim-report-flags.test.mjs` pins the output shape on 2 seeds |
 | G18 | none yet | **RED: not yet runnable.** Save and resume hold in a browser, as three separate cases (FINISH.md §3, *Save/resume holds in the browser*; SPEC §9 M2, §3.12): (a) a reload on the map gives a run deep-equal to the one before, minus timestamps; (b) **Save Game** or **Save and Quit** mid-combat, then a reload, gives back exactly the hand, the piles, the enemies with their intents and the resources, through the `CombatSnapshotService` record; (c) a plain reload or abandon mid-combat, with no explicit save, restarts that encounter from its entry checkpoint. No tool in `tools/` drives these in a browser. | none |
-| G19 | none yet | **RED: not yet runnable.** docs/BALANCE.md records the 300-seed per-tier runsim win rates and the configured tier multipliers (FINISH.md §4, *Seat-tier tolerance is stated*; SPEC §13). A report, not a pass band: owner ruling D1 (2026-09-26) sets no win-rate gate for 1.0, so any recorded rate passes. No tool reports win rates per seat tier yet. | none |
+| G19 | `node tools/runsim.mjs 300 --seat-tiers --seeded-seats` | Exit 0. The `SEAT TIERS` block prints the configured `balance.seatTiers` and `balance.bossTiers` rows, read from content, and each tier's clear rate per class and per seat, and docs/BALANCE.md §7.2 (kept in docs/balance-runs.md) records the 300-seed result with those multipliers (FINISH.md §4, *Seat-tier tolerance is stated*; SPEC §13). A report, not a pass band: owner ruling D1 (2026-09-26) sets no win-rate gate for 1.0, so any recorded rate passes. | none: run by hand. `tests/runsim-report-flags.test.mjs` pins the output shape on 2 seeds |
 | G20 | read docs/FINISH.md | **RED** while any criterion the *Criterion map* assigns to G20 is `[ ]` or `[~]` in docs/FINISH.md. Green when every one of them is `[x]` on the RC SHA, each tick checked against the code, a test or a command as FINISH.md requires. A criterion the owner rules out of 1.0 moves to a waiver row in the map, with the reason, in a pull request into `dev`. | none: the map is pinned by `tests/release-checklist.test.mjs` |
 
 ## Criterion map
@@ -137,7 +137,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §8 | #1289 follow-up: a re-fit keeps the tray's selected-destination framing | G20 |
 | §8 | #1164: the card door stacks between 601 and 703 px | G20 |
 | §8 | Offline and installable web edition | G20 |
-| §8 | Pages serves the external-art edition, and the single-file download stays available | G20 |
+| §8 | Pages serves the external-art edition, and the light single-file download stays available | G20 |
 | §8 | One physical iPhone in Safari plays a run before release | G20 |
 | §8 | Background and resume keep the run | G20 |
 | §9 | The palettes pass contrast | G11 |
@@ -152,6 +152,11 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §11 | #1230: the two component catalogs agree | G20 |
 | §11 | #1297 follow-up: C22 compares the semantic and Armoury catalogs separately | G20 |
 | §11 | `tools/ui-components.mjs` is green on `dev` and runs in the suite | G20 |
+| §11 | `tools/flask-action-contract.mjs` is green on `dev` and runs in the suite | G20 |
+| §11 | `tools/measure-classes.mjs --check` (n=500) and `--selftest` are green on `dev` | G20 |
+| §11 | Map Potions onChange persistence/remount is covered by a test | G20 |
+| §11 | Map Potions list and mini-menu selections dispatch the chosen action is covered by a test | G20 |
+| §11 | A real-browser flask-menu behaviour test replaces flask-action-contract's source half | G20 |
 | §11 | DEVELOPER.md has no stale counts | G20 |
 | §12 | The receipts gate is green on `dev` | G3 |
 | §12 | `codex/` and squash merges land with a receipt | G20 |
@@ -161,6 +166,8 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §12 | The slowest `tests.yml` job fits the <10 min target | G20 |
 | §12 | A browser-gate run of `ci.yml` exists on the release candidate | G13 |
 | §12 | Builds are not committed; CI builds them | G20 |
+| §12 | A slow cold Chrome start does not fail a browser job | G20 |
+| §12 | Every `ci.yml` job finishes in 20 minutes or less | G20 |
 | §13 | A written release gate | waived: this checklist is that gate. It is met when this file merges and the owner signs off under it, so it cannot gate itself. |
 | §13 | A release-heading format in CHANGELOG | G20 |
 | §13 | The save-migration test covers the 1.0 schema | G20 |

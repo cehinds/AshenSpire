@@ -13,14 +13,15 @@ import { levelPacePreview } from '../src/ui/models/LevelPacePreviewModel.js';
 
 const registries = createRegistries(contentBundle);
 
-test('the current build starts at 100 XP and adds base × 1.3 for each further step', () => {
+test('the current build starts at 100 XP and each further step costs ×1.75', () => {
   assert.equal(characterXpToNext(registries, 1), 100);
-  assert.deepEqual([1, 2, 3, 4].map((level) => characterXpToNext(registries, level)), [100, 230, 360, 490]);
-  assert.equal(characterXpToNext(registries, 10), 1270);
+  assert.deepEqual([1, 2, 3, 4].map((level) => characterXpToNext(registries, level)), [100, 180, 310, 540]);
+  assert.equal(characterXpToNext(registries, 10), 15390);
   assert.equal(skillXpToNext(registries, 'weapon', 0), 100);
   assert.equal(skillXpToNext(registries, 'class', 0), 100);
-  assert.equal(skillXpToNext(registries, 'weapon', 3), 490);
-  assert.equal(skillXpToNext(registries, 'class', 1), 230);
+  // Skill and class tracks use the owner's ×1.75 curve (2026-10-02).
+  assert.equal(skillXpToNext(registries, 'weapon', 3), 535);
+  assert.equal(skillXpToNext(registries, 'class', 1), 175);
   assert.equal(registries.balance.skill.xp.perHit, 5);
   assert.equal(registries.balance.skill.xp.perWinEquipped, 5);
   assert.equal(registries.balance.skill.class.xp.perWin, 5);

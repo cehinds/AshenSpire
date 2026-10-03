@@ -26,8 +26,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser } from './browser.mjs';
+import { fileURLToPath } from 'node:url';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -48,7 +48,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
   const sourcePlants = [
     {
       name: 'the five controls lose their one semantic owner',
-      file: 'src/ui/screens/combat.js',
+      file: 'src/ui/components/combatActionRow.js',
       find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
       replace: '<div class="combat-action-split as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
       expectRed: /combat-action-row: RED/,
@@ -115,26 +115,22 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       append: '.combat-action-row > .pile.spent { display: none !important; }',
       expectRed: /combat-action-row: RED/,
     },
-    // The co-op board wraps its two controls in their own rail inside the
-    // hand area (src/ui/screens/coop.js); the two plants below break that
-    // rail's two clauses. (The old narrow `.hand-area > .energy-orb` rows have
-    // no subject since the rail took the controls out of the hand area.)
+    // The co-op board mounts solo's own footer (src/ui/screens/coop.js,
+    // components/combatActionRow.js); the two plants below break the two
+    // clauses that made the owner's "it looks so bad now": a control lost
+    // from the co-op row, and a co-op row laid out apart from the plan.
     {
-      // !important because the co-op rail's `position: static` outranks it.
-      name: 'co-op Actions leaves the rail flow',
+      // !important because the kit button's display outranks a plain append.
+      name: 'co-op loses its Draw control',
       file: 'styles/combat.css',
-      append: '.combat-action-row > .energy-orb { position: absolute !important; }',
-      expectRed: /FAIL co-op rail sits under the hand/,
+      append: '.combat.coop .combat-action-row > .pile.draw { display: none !important; }',
+      expectRed: /FAIL co-op mounts solo's five controls/,
     },
     {
-      // Not the rail's `justify-content`: formation's `> * { width: 100% }`
-      // lets End Turn take all the rail's free space, so centring the rail
-      // moves nothing (measured: that plant stayed green). Swapping the two
-      // controls' sides is the defect that breaks the edge clause.
-      name: 'the co-op rail swaps its two controls onto the wrong edges',
+      name: 'co-op lays its row out as its own flex rail again',
       file: 'styles/combat.css',
-      append: '.combat.coop .combat-action-row { flex-direction: row-reverse !important; }',
-      expectRed: /FAIL co-op rail sits under the hand/,
+      append: ':root .combat.coop[data-layout] .combat-action-row[data-footer-geometry] { display: flex !important; justify-content: space-between !important; }',
+      expectRed: /FAIL co-op footer takes the layout adapter's plan/,
     },
   ];
   const coopPlants = sourcePlants.splice(-2);
@@ -276,7 +272,7 @@ const PLAN_TOLERANCE_PX = 1;
 async function main() {
   const served = standalone ? null : await serve({ root: ROOT, port: 8321, open: false });
   const base = standalone
-    ? pathToFileURL(resolve(ROOT, 'AshenSpire.html')).href
+    ? await buildPageUrl(resolve(ROOT, 'AshenSpire.html'))
     : `http://localhost:${served.port}/index.html`;
   const browser = await launchBrowser({ prefix: 'action-row-', browser: browserPath, args: ['--disable-background-networking', '--disable-component-update'], timeoutMs: 15000 });
   const cdp = connectCdp(browser.wsUrl);
@@ -299,7 +295,9 @@ async function main() {
     check(!combatCss.includes("data-armaments-presentation='radial'] .combat .hud-charge-flasks")
       && !combatCss.includes("data-armaments-presentation='radial'] .combat .hud-potions"),
     'Quick Access flasks are not hidden by the Armaments presentation setting');
-    check(combatSource.includes('openSpentPileModal(registries, combat.piles') && combatSource.includes("className: 'combat-potions tall'"),
+    // The footer markup lives in its one home since 2026-10-01; both boards mount it.
+    const rowSource = readFileSync(resolve(ROOT, 'src/ui/components/combatActionRow.js'), 'utf8');
+    check(combatSource.includes('openSpentPileModal(registries, combat.piles') && combatSource.includes('combatActionRowHtml()') && rowSource.includes("className: 'combat-potions tall'"),
     'Combined pile surface and bottom potion control are mounted');
   }
 
@@ -659,59 +657,65 @@ async function main() {
           await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSettings=${settings}` }, sessionId);
           await waitFor(`document.querySelectorAll('.combat.coop .hand .card').length===5`, 'five-card co-op combat');
           await new Promise((pass) => setTimeout(pass, 240));
-          // THE CO-OP RAIL: coop.js lifts Actions and End Turn out of the
-          // hand area's flow into their own `.combat-action-row` rail, appended
-          // under the hand; the co-op formation rule lays it out as a flex row
-          // with space-between (styles/combat.css). It is not the solo WGC6
-          // footer and carries no piles or potions.
+          // THE CO-OP ROW IS SOLO'S ROW (owner, 2026-10-01: "What happened to
+          // my action bar at the bottom"): coop.js mounts the same WGC6 footer
+          // (src/ui/components/combatActionRow.js) under its hand, sized by the
+          // same layout adapter, with the flasks behind Potions. The co-op cell
+          // holds it to the same plan the solo cells read back.
+          // tools/coop-hud-top.mjs compares it against solo, control by
+          // control, on every push to test and release.
           const coop = await evaluate(`(() => {
-            const area=document.querySelector('.combat.coop .hand-area');
+            const combat=document.querySelector('.combat.coop');
+            const area=combat?.querySelector(':scope > .hand-area');
             const hand=area?.querySelector(':scope > .hand');
-            const rail=area?.querySelector(':scope > .combat-action-row');
-            const energy=rail?.querySelector(':scope > .energy-orb');
-            const end=rail?.querySelector(':scope > .end-turn');
-            if (!area||!hand||!rail||!energy||!end) return {missing:{area:!!area,hand:!!hand,rail:!!rail,energy:!!energy,end:!!end}};
+            const row=area?.querySelector(':scope > .combat-action-row');
+            if (!area||!hand||!row) return {missing:{area:!!area,hand:!!hand,row:!!row}};
             const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
             const intersects=(a,b)=>a.left<b.right-0.25&&a.right>b.left+0.25&&a.top<b.bottom-0.25&&a.bottom>b.top+0.25;
-            const hit=(node)=>{const r=rect(node),hits=[];for(let row=0;row<9;row++)for(let col=0;col<5;col++){const x=r.left+r.width*((col+.5)/5),y=r.top+r.height*((row+.5)/9),n=document.elementFromPoint(x,y);hits.push(!!(n&&(n===node||node.contains(n))))}return hits.filter(Boolean).length};
+            const hit=(node)=>{const r=rect(node),hits=[];for(let y=0;y<9;y++)for(let x=0;x<5;x++){const n=document.elementFromPoint(r.left+r.width*((x+.5)/5),r.top+r.height*((y+.5)/9));hits.push(!!(n&&(n===node||node.contains(n))))}return hits.filter(Boolean).length};
+            const selectors=${JSON.stringify(CONTROL_SELECTORS)};
+            const shown=(node)=>{const c=getComputedStyle(node),r=node.getBoundingClientRect();return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0};
+            const order=[...row.children].filter((node)=>!node.matches('.combat-potion-tray')&&shown(node)).map((node)=>selectors.find((sel)=>node.matches(sel))||String(node.className));
+            const nodes=selectors.map((sel)=>row.querySelector(':scope > '+sel));
+            if (nodes.some((node)=>!node)) return {missing:Object.fromEntries(selectors.map((sel,i)=>[sel,!!nodes[i]]))};
+            const boxes=nodes.map(rect);
+            const zoom=combat.clientWidth?combat.getBoundingClientRect().width/combat.clientWidth:1;
+            const planVar=(name)=>parseFloat(row.style.getPropertyValue(name))*zoom;
+            const plan={circle:planVar('--footer-circle'),pileWidth:planVar('--footer-pile-width'),endWidth:planVar('--footer-end-width')};
+            const near=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=${PLAN_TOLERANCE_PX};
+            const [energy,draw,end,spent,potions]=boxes;
             const cards=[...hand.querySelectorAll('.card')].map(rect);
-            const ar=rect(area),hr=rect(hand),rr=rect(rail),er=rect(energy),tr=rect(end);
-            const acs=getComputedStyle(area),rcs=getComputedStyle(rail),es=getComputedStyle(energy),ts=getComputedStyle(end);
-            const zoom=area.clientWidth?ar.width/area.clientWidth:1;
-            const pad=(parseFloat(acs.paddingLeft)+parseFloat(acs.paddingRight))*zoom;
-            const innerLeft=rr.left+parseFloat(rcs.paddingLeft)*zoom, innerRight=rr.right-parseFloat(rcs.paddingRight)*zoom;
+            const pairs=[];
+            for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++) if(intersects(boxes[i],boxes[j])) pairs.push([selectors[i],selectors[j]]);
+            const handBox=rect(hand);
             return {
-              layout:document.documentElement.dataset.layout||null,
-              railChildren:[...rail.children].map((node)=>node.className),
-              soloAbsent:!rail.querySelector('.pile, .combat-potions'),
-              area:ar,hand:hr,rail:rr,energy:er,end:tr,
-              energyPosition:es.position,endPosition:ts.position,
-              fullHand:hr.width>=ar.width-pad-1,
-              below:rr.top>=hr.bottom-0.5,
-              edges:Math.abs(er.left-innerLeft)<=0.5&&Math.abs(innerRight-tr.right)<=0.5,
-              pairClear:!intersects(er,tr),
-              cardsClear:cards.every((card)=>!intersects(card,er)&&!intersects(card,tr)),
-              onGlass:[er,tr].every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
-              hitCounts:[hit(energy),hit(end)],
+              order, geometry:row.dataset.footerGeometry||null, arrangement:combat.dataset.combatArrangement||null,
+              strayFlasks:document.querySelectorAll('.combat .coop-flasks, .combat .coop-flask, .combat [data-coop-flask-slot]').length,
+              plan, boxes,
+              planned:near(energy.width,plan.circle)&&near(potions.width,plan.circle)&&near(draw.width,plan.pileWidth)&&near(spent.width,plan.pileWidth)&&near(end.width,plan.endWidth),
+              pairs, cardsClear:cards.every((card)=>boxes.every((box)=>!intersects(card,box))),
+              onGlass:boxes.every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
+              smallest:Math.min(...boxes.map((r)=>Math.min(r.width,r.height))),
+              oneRow:boxes.every((r)=>Math.min(r.bottom,energy.bottom)-Math.max(r.top,energy.top)>=0.5*r.height),
+              below:boxes.every((r)=>r.top>=handBox.bottom-0.5),
+              endHits:hit(nodes[2]),
             };
           })()`);
           coopRan++;
           const tag = `${shape.width}x${shape.height} Text ${text}, co-op, ${standalone ? 'root' : 'source'}`;
           console.log(`\n  ${tag}`);
           if (coop.missing) {
-            check(false, 'co-op hand area, hand, rail, Actions and End Turn are all present', JSON.stringify(coop.missing));
+            check(false, 'co-op hand area, hand and the five action-row controls are all present', JSON.stringify(coop.missing));
           } else {
-            check(coop.railChildren.length === 2 && coop.soloAbsent,
-              'co-op Actions and End Turn share one co-op rail inside the hand area, apart from the solo footer', JSON.stringify(coop.railChildren));
-            check(coop.fullHand, 'co-op hand keeps the full available row width', JSON.stringify({area:coop.area.width,hand:coop.hand.width}));
-            check(coop.pairClear && coop.cardsClear, 'co-op controls neither overlap each other nor cover cards', JSON.stringify({pairClear:coop.pairClear,cardsClear:coop.cardsClear}));
-            // The co-op Actions orb is round, so its box corners are not its
-            // hit region; End Turn is a rectangle and keeps the 45/45 grid.
-            check(coop.onGlass && Math.min(coop.energy.width,coop.energy.height)>=TAP_FLOOR_PX && coop.hitCounts[1]===45,
-              'co-op Energy keeps visible 44px geometry and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,energy:coop.energy,hits:coop.hitCounts}));
-            check(coop.below && coop.edges && coop.energyPosition==='static' && coop.endPosition==='static',
-              'co-op rail sits under the hand, holds Actions and End Turn in flow, and anchors them to opposite edges',
-              JSON.stringify({layout:coop.layout,below:coop.below,edges:coop.edges,rail:coop.rail,hand:coop.hand,energyPosition:coop.energyPosition,endPosition:coop.endPosition}));
+            check(coop.order.join() === CONTROL_SELECTORS.join() && coop.strayFlasks === 0,
+              'co-op mounts solo\'s five controls in one action row, with no flask row of its own', JSON.stringify({order:coop.order,strayFlasks:coop.strayFlasks}));
+            check(coop.geometry === 'supported' && coop.planned,
+              'co-op footer takes the layout adapter\'s plan: circles, piles and End Turn at their planned widths', JSON.stringify({geometry:coop.geometry,plan:coop.plan,boxes:coop.boxes.map((b)=>Math.round(b.width))}));
+            check(!coop.pairs.length && coop.cardsClear, 'co-op controls neither overlap each other nor cover cards', JSON.stringify({pairs:coop.pairs,cardsClear:coop.cardsClear}));
+            check(coop.onGlass && coop.smallest >= TAP_FLOOR_PX && coop.endHits === 45,
+              'co-op controls are on glass, at least 44px, and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,smallest:coop.smallest,endHits:coop.endHits}));
+            check(coop.arrangement === 'rails' || (coop.oneRow && coop.below),
+              'co-op row is one row under the hand, as solo\'s is', JSON.stringify({arrangement:coop.arrangement,oneRow:coop.oneRow,below:coop.below}));
           }
 
           if (shots) {

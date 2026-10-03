@@ -17,6 +17,7 @@
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
+import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
@@ -92,6 +93,11 @@ export { coopHpMult } from '../src/engine/coopCombat.js';
 // replay at its frozen counters are never the rolls a later node makes live
 // (see settleEvent). No choice draws anything like this many.
 const CATCHUP_RNG_RESERVE = 256;
+
+// THE OPENING'S SOUND CUES (FINISH §5 hit sound tiers). A fight's setup events
+// are not replayed to clients, but these ones carry the opening draw, shuffle
+// and first-turn stinger, so the first scene of a fight keeps them.
+const OPENING_CUE_EVENTS = Object.freeze(['cardDrawn', 'deckShuffled', 'playerTurnStart']);
 /** A deterministic per-member RNG stream, independent of the shared map RNG. */
 function memberRng(seed, index, counters) {
   return createRng((seed ^ ((index + 1) * 0x9e3779b1)) >>> 0, counters || {});
@@ -200,6 +206,12 @@ export function createSession({ registries, seedString, endless = false, restore
         }
         const legacyKit = md.run.schemaVersion === 1;
         migrateRunSchema(md.run);
+        // SPEC §15.4, rarity at every door: this door restores a run without
+        // loadRun, so it asks the same sigil questions engine/save.js does.
+        const strangeSigil = unknownSigilId(registries, md.run);
+        if (strangeSigil) throw new Error(`sigil '${strangeSigil}' is unknown to this build`);
+        const sigilProblems = sigilRarityProblems(registries, md.run);
+        if (sigilProblems.length) throw new Error(`Malformed sigils: ${sigilProblems.join('; ')}`);
         // The PARTY's seat order is the member's (SPEC §13.4): a pre-seat
         // member run has none, and a member that joined mid-climb carries
         // whatever it was born with; the session is the one authority.
@@ -498,6 +510,7 @@ export function createSession({ registries, seedString, endless = false, restore
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       skills: m.run.skills, // the seat's ledger, for the progression predicates (plan phase 4a)
       coreTags: m.run.coreTags, // the seat's class tree picks (plan phase 5b)
+      attunedSigils: m.run.attunedSigils || [], // the seat's attuned legendary sigils (SPEC §15.4)
       // The seat's loadout rides into the co-op engine so the framework Weight
       // Class (dodge check and pricing) is this player's, not a Light default.
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
@@ -603,7 +616,10 @@ export function createSession({ registries, seedString, endless = false, restore
         }
       }
     }
-    live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
+    // Setup events are skipped, except the opening's sound cues (the first
+    // draw, any shuffle, the first turn start), which ride the fight's first
+    // scene once so a co-op client hears the opening as solo does.
+    live = { combat, pool, evCursor: combat.eventLog.length, opening: combat.eventLog.filter((e) => OPENING_CUE_EVENTS.includes(e.type)) };
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
   }
@@ -613,8 +629,8 @@ export function createSession({ registries, seedString, endless = false, restore
     // Compact digest of display-worthy events since the LAST snapshot, so the
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
-    const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+    const events = [...(live.opening || []), ...c.eventLog.slice(live.evCursor || 0)]
+      .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
@@ -627,11 +643,18 @@ export function createSession({ registries, seedString, endless = false, restore
         blockRemaining: e.blockRemaining, success: e.success, blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
         requested: e.requested, attempted: e.attempted,
         threshold: e.threshold, status: e.status, stacks: e.stacks, total: e.total, duration: e.duration,
+        turn: e.turn,
       }));
+    // THE OPENING IS A MARKER, NOT A TURN NUMBER: only the scene that carries
+    // the setup cues is the fight's opening (coop.js coopReceiptSounds), so a
+    // client joining after a turn-1 action does not replay that action.
+    const opening = live.opening != null;
     live.evCursor = c.eventLog.length;
+    live.opening = null;
     return {
       kind: 'combat',
       receiptSeq: ++combatReceiptSeq,
+      opening,
       events,
       pool: live.pool,
       phase: c.phase,
@@ -657,7 +680,7 @@ export function createSession({ registries, seedString, endless = false, restore
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
       players: [...c.players.values()].map((P) => ({
-        id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
+        id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         mana: P.entity.mana, maxMana: P.entity.maxMana,
         stamina: P.entity.stamina, maxStamina: P.entity.maxStamina,
         attributeMode: P.attributeMode, attributes: { ...P.attributes },
@@ -670,7 +693,7 @@ export function createSession({ registries, seedString, endless = false, restore
         // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
-        drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
+        drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
         // AND THEIR TIERS. A client prices a card from this snapshot
@@ -687,9 +710,9 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // Route a member's combat intents to the live shared fight.
-  function combatPlay(memberId, cardInstanceId, targetId) {
+  function combatPlay(memberId, cardInstanceId, targetId, choice) {
     if (!live) return { ok: false, error: 'no combat' };
-    try { playCard(live.combat, memberId, cardInstanceId, targetId); }
+    try { playCard(live.combat, memberId, cardInstanceId, targetId, choice); }
     catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }

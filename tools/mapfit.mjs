@@ -34,7 +34,7 @@
 //
 // Usage
 //   node tools/mapfit.mjs                      source tree via tools/serve.mjs
-//   node tools/mapfit.mjs --dist               dist/AshenSpire.html over file://
+//   node tools/mapfit.mjs --dist               dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/mapfit.mjs --only 390x844
 //   node tools/mapfit.mjs --seeds BJORN1,BJORN2  --floors 1,4,7,10
 //   node tools/mapfit.mjs --quick              one shape, three seeds, entrance only
@@ -84,11 +84,11 @@
 // the animation before the ResizeObserver fires.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 
@@ -208,7 +208,7 @@ async function main() {
   let base;
   let stop = () => {};
   if (useDist) {
-    base = pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href;
+    base = await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html'));
   } else {
     const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8277), open: false });
     base = `http://127.0.0.1:${s.port}/index.html`;

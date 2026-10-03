@@ -26,10 +26,9 @@
 // SHOP_KIND_SCREENS), so the non-conditional minimum binds it and its weight
 // has a Settings row; it still ships at weight 0, and the owner raises it to
 // let a classic merchant be a blacksmith. The atlas smith is always one.
-// THE MASTER has no screen yet (step 7), so `kindWeights` ships it at 0 and
-// validateContent refuses anything else until its screen is registered. Its
-// offerings and prices are written now so the Settings rows exist and a run
-// freezes them; nothing reads them until that screen ships.
+// THE MASTER'S SCREEN SHIPPED at §14.6 step 7 (SPEC §14.5): it also ships at
+// weight 0, and the owner raises it to let a classic merchant be a master. An
+// atlas `master` point is always one, though no shipped point carries it yet.
 import { NOTE } from './balance.js';
 
 const GENERIC_NOTES = Object.freeze({
@@ -74,9 +73,9 @@ export const shops = {
     blacksmith: 0,
     master: 0,
     [NOTE]: {
-      market: 'How likely a merchant on the map is to be the usual market. It is the only kind open so far, so any weight above 0 makes every merchant a market.',
+      market: 'How likely a merchant on the map is to be the usual market. While the other kinds are at 0, any weight above 0 makes every merchant a market.',
       blacksmith: 'How likely a merchant on the map is to be a blacksmith, which offers the blacksmith\'s services instead of market shelves. At 0 no merchant is one; an atlas smith always is.',
-      master: 'How likely a merchant on the map is to be a wise master. Locked at 0 until the master screen ships.',
+      master: 'How likely a merchant on the map is to be a wise master, who trains, respecs and teaches the skills he knows instead of selling market shelves. At 0 no merchant is one.',
     },
   },
 
@@ -210,45 +209,72 @@ export const shops = {
   master: {
     guaranteedMinimum: 2,
     // A respec pays back this whole percentage of the XP spent above level 1
-    // into the training pool (SPEC §14.5); Settings clamps it to 50–75.
+    // into the training pool (SPEC §14.5). Every reader clamps it to 50–75.
     respecRefundPct: 60,
     offerings: [
-      offering('skillBooks', { weight: 40, conditional: true }, { conditional: MAYBE('its books are not written yet, so it is counted as one that can run out') }),
-      offering('weaponArts', { weight: 40, conditional: true }, { conditional: MAYBE('its pool is only the mountable weapon arts the armaments carry') }),
-      offering('armaments', { weight: 30, conditional: true }, { conditional: MAYBE('it never offers an armament you already carry') }),
+      // THE STOCKED SHELVES (SPEC §14.5): each filtered to the visiting
+      // master's tracks, rolled on `shopOffers` after the offering roll.
+      offering('skillBooks', { weight: 40, conditional: true, stock: 2 }, {
+        conditional: MAYBE('no skill book may teach the master\'s skills, or its stock may be 0'),
+        stock: 'How many different skill books for the master\'s skills his shelf holds each visit.',
+      }),
+      offering('weaponArts', { weight: 40, conditional: true, stock: 3 }, {
+        conditional: MAYBE('its pool is only the mountable weapon arts of the pieces the master teaches, and its stock may be 0'),
+        stock: 'How many weapon arts of the master\'s pieces his shelf holds each visit.',
+      }),
+      offering('armaments', { weight: 30, conditional: true, stock: 3 }, {
+        conditional: MAYBE('it never offers an armament you already carry, and its stock may be 0'),
+        stock: 'How many armaments of the master\'s item types his rack holds each visit.',
+      }),
+      // THE SERVICES (SPEC §14.5): each stays laid out once rolled and is
+      // judged live. Training and appraisal can always act: every master
+      // teaches three or four tracks.
       offering('training', {
-        weight: 100, conditional: true,
+        weight: 100, conditional: false, stockKey: 'shops.master.training.training.perVisit',
         training: {
           cinders: 150, xp: 20, perVisit: 3,
           [NOTE]: {
             cinders: 'What one training session costs, in cinders.',
             xp: 'The skill XP one training session pays.',
-            perVisit: 'How many training sessions one master visit sells.',
+            perVisit: 'How many training sessions one master visit sells, whichever skills they train.',
           },
         },
-      }, { conditional: MAYBE('its per-visit sessions can be set to 0') }),
+      }, {
+        conditional: `${ALWAYS} Every master teaches three or four skills, so there is always one to train while its sessions per visit are at least 1.`,
+        stockKey: STOCK_KEY,
+      }),
       offering('respec', {
-        weight: 60, conditional: false,
+        weight: 60, conditional: true,
         respec: {
           cost: {
             base: 200, perLevel: 50,
             [NOTE]: {
               base: 'The cinders every respec costs before its level surcharge.',
-              perLevel: 'The cinders a respec adds for each level the track had.',
+              perLevel: 'The cinders a respec adds for each level the skill had.',
             },
           },
         },
-      }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
+      }, { conditional: SERVICE('none of the master\'s skills may be at level 2 or higher') }),
       offering('lesson', { weight: 50, conditional: true, cinders: 250 }, {
-        conditional: MAYBE('a track may have no skill left to draft'),
-        cinders: 'What one lesson (a skill draft for one of the master\'s tracks) costs, in cinders.',
+        conditional: SERVICE('every one of the master\'s skills may have taken its lesson this visit, or have nothing to draw'),
+        cinders: 'What one lesson (a skill draft for one of the master\'s skills) costs, in cinders.',
       }),
-      offering('appraisal', { weight: 30, conditional: false }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
-      offering('redistribute', { weight: 30, conditional: false }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
+      offering('appraisal', { weight: 30, conditional: false }, { conditional: `${ALWAYS} It is free and shows the master's skills, and every master teaches three or four.` }),
+      offering('redistribute', { weight: 30, conditional: true }, { conditional: SERVICE('your training pool may be empty until a respec fills it') }),
     ],
     [NOTE]: {
       guaranteedMinimum: 'The fewest offerings a master visit lays out. At least 2.',
-      respecRefundPct: 'The whole percentage of the XP spent above level 1 that a respec pays into the training pool, from 50 to 75.',
+      respecRefundPct: 'The whole percentage of the XP spent above level 1 that a respec pays into the training pool. It is read between 50 and 75.',
     },
   },
+
+  // THE MASTERS (SPEC §14.5). Not a kind and no Settings row: who a master
+  // visit can be. A visit picks one on the `shop` stream, in written order.
+  // Each teaches 3 or 4 distinct weapon, focus or dual-wield tracks (never an
+  // armour track, which has no item type, nor a `class:` track, whose respec
+  // would strand the class tree's picks), and speaks as a speakers.csv row.
+  masters: [
+    { id: 'swordSaint', name: 'The Sword Saint', speakerId: 'swordSaint', skills: ['item:blade', 'item:shield', 'dualWield'] },
+    { id: 'starReader', name: 'The Star Reader', speakerId: 'starReader', skills: ['item:magic-focus', 'item:shield', 'item:blade'] },
+  ],
 };

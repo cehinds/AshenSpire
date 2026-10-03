@@ -23,6 +23,8 @@
 //   node tools/tutorial-reach.mjs --screenshot docs/preview/tutorial-escape-target-cancel.png
 //   CHROME=/path/to/chrome node tools/tutorial-reach.mjs
 //   node tools/tutorial-reach.mjs --browser /path/to/chrome --only 1920x1080
+//   node tools/tutorial-reach.mjs --only first-run   (the durable-storage walk alone)
+//   node tools/tutorial-reach.mjs --only 1920x1080,2560x1440,resize   (a CI shard)
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
@@ -34,6 +36,7 @@ import { serve } from './serve.mjs';
 // The orientation gate's one number, read from its single home. See THE FIRST
 // VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
 import { balance } from '../src/content/balance.js';
+import { SETTINGS_DEFAULTS } from '../src/content/settingsDefaults.js';
 
 // Derived here, above --selftest, because BOTH readers need it and two reads of
 // one number is the defect this derivation exists to remove.
@@ -65,6 +68,7 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'tutorial-reach.mjs',
+    extraCopy: ['art-release.json'], // Required by the source server's build identity.
     // DERIVED, not typed — this named the viewport as a literal '800x450' until
     // 2026-08-16. When the gate moved 432 -> 465 the first viewport moved with
     // it and this string did not, so `--only` would have matched NO viewport and
@@ -167,11 +171,31 @@ const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const only = argOf('--only');
+// `--only` takes one case or a comma list of them: viewport names as printed
+// (`1920x1080`), `resize` and `first-run`. CI shards the sweep with it
+// (.github/workflows/tutorial-reach.yml). An unknown name is refused rather than
+// silently matching nothing — an empty sweep is not a pass.
+const CASES = [...VIEWPORTS.map((v) => `${v.w}x${v.h}`), 'resize', 'first-run'];
+// A bare `--only` or `--only ""` is an error (exit 2), not the full sweep.
+// `smallest` names the smallest viewport by role, so the CI matrix does not
+// repeat the gate-derived `800x<gateBelowH>` and go red when the gate moves.
+const onlySet = args.includes('--only')
+  ? new Set((only || '').split(',').map((n) => n.trim()).filter(Boolean).map((n) => (n === 'smallest' ? SMALLEST_VP_NAME : n)))
+  : null;
+if (onlySet) {
+  const unknown = [...onlySet].filter((n) => !CASES.includes(n));
+  if (unknown.length || !onlySet.size) {
+    console.error(`tutorial-reach: --only names no case it knows: ${JSON.stringify(unknown)}; cases are ${CASES.join(', ')}`);
+    process.exit(2);
+  }
+}
+const want = (name) => !onlySet || onlySet.has(name);
 const rootArtifact = args.includes('--root');
 const screenshotPath = argOf('--screenshot');
 
 const fails = [];
-const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); };
+let passedCount = 0;
+const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); else passedCount += 1; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---- minimal CDP client over Node's global WebSocket (per tools/coop-shoot.mjs)
@@ -256,6 +280,39 @@ const SPOT_ON_TARGET = `(() => {
   return { cover: best, sel: bestSel };
 })()`;
 
+// Page-side: resolves once the board and the spotlight are AT REST — the lit
+// box, every step's target, the viewport and --ui-zoom all unchanged for
+// SETTLED_MS of time AND SETTLED_FRAMES rendered frames — and says how long
+// that took. The spotlight checks read after this, never after a fixed sleep.
+// Measured on a loaded 4-core machine: the page delivered a resize 3.6 s after
+// CDP sent it and then rendered in 400-900 ms gaps while the action row
+// re-laid itself, so "1200 ms after the resize" was sometimes before the
+// resize and sometimes mid-move — a reading of the race, not of the game. At
+// rest is the state a player sees, and nothing is loosened by waiting for it:
+// a spotlight that never followed its target is at rest in the wrong place,
+// and the coverage check below still fails it. Never resolving within
+// SETTLED_TIMEOUT_MS is reported as such (`settled: false`) and the caller
+// fails on it — a board that never stops moving is not a pass.
+const SETTLED_MS = 700;
+const SETTLED_FRAMES = 30;
+const SETTLED_TIMEOUT_MS = 15000;
+const SETTLED = `new Promise((resolve) => {
+  const sels = ['.energy-orb', '.enemy-row .intent', '.hand .card', '.end-turn'];
+  const rect = (el) => { if (!el) return '-'; const r = el.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(Math.round).join(','); };
+  const key = () => [innerWidth, innerHeight, getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'),
+    rect(document.querySelector('.tut-spot')), ...sels.map((s) => rect(document.querySelector(s)))].join('|');
+  const t0 = performance.now();
+  let last = key(), since = t0, frames = 0;
+  const tick = () => {
+    const now = performance.now(), k = key();
+    if (k !== last) { last = k; since = now; frames = 0; } else frames += 1;
+    if (now - since >= ${SETTLED_MS} && frames >= ${SETTLED_FRAMES}) return resolve({ settled: true, ms: Math.round(now - t0) });
+    if (now - t0 > ${SETTLED_TIMEOUT_MS}) return resolve({ settled: false, ms: Math.round(now - t0) });
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})`;
+
 async function main() {
   if (!browserPath) throw new Error('no Chrome/Edge found — pass --browser PATH or set $CHROME');
   const { server, port } = await serve({ root: ROOT, port: 8240, open: false });
@@ -322,6 +379,17 @@ async function main() {
     if (pt.scrolled) console.log(`    note: ${label} laid out at top ${pt.top} — scrolled into view to click it`);
     await clickAt(pt.x, pt.y);
   };
+  // A hover tooltip owns the next Escape (tooltip.js peels one layer per
+  // press), and the pointer is left resting wherever the last real click
+  // landed — on a card, or on a combatant the board has just drawn under it.
+  // A Escape aimed at the targeting then closes a tooltip instead, and the case
+  // flakes on timing (it did, 1 run in ~6, 2026-10-02). So before an Escape
+  // under test the pointer is parked in the corner and no tooltip stands — the
+  // state a player is in when they reach for Escape, not a hover they left.
+  const parkPointer = async () => {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, S);
+    await until(`![...document.querySelectorAll('.as-tip')].some((t) => t.style.display === 'block')`, 'no hover tooltip standing', 5000);
+  };
   const advanceToPlayCards = async () => {
     for (let guard = 0; guard < 4; guard++) {
       const title = await evalIn(`(document.querySelector('.tut-title') || {}).textContent || ''`);
@@ -345,7 +413,7 @@ async function main() {
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.enemy-row .enemy.targetable'),
         card: (document.querySelector('.hand .card.selected') || {}).dataset?.cardId || null,
       })`);
-      if (state.armed) return state;
+      if (state.armed) { await parkPointer(); return state; }
     }
     return { armed: false, card: null };
   };
@@ -354,22 +422,119 @@ async function main() {
     // the shot fixture carries Crimson then Blight, while the durable standalone
     // cell intentionally seeds only Blight. Slot 1 would test one and miss the
     // other even though both render the same authored flask.
-    await clickSel('.flask-identity[aria-label="Blight Coating"]', 'Blight Coating flask');
-    await until(`!!document.querySelector('.flask-action-menu [data-flask-action="use"]')`, 'Blight Coating Use action');
+    //
+    // THE ROUTE IS THE POTIONS LIST (combatActionRow.js openCombatPotions), the
+    // way a player reaches a flask in combat since WGC11. This drove the old
+    // per-slot `.flask-action-menu` until 2026-10-02, a surface combat no longer
+    // mounts — so the tool died on a timeout at every viewport, an instrument
+    // fault that read like a game one. The Use row is reached and pressed with
+    // real input; its beat (tap, hold, or a confirmation) is honoured as shipped.
+    await clickSel('.combat-potions', 'the Potions control');
+    const useSel = '.combat-potion-menu .potion-use[aria-label="Use Blight Coating"]';
+    await until(`!!document.querySelector(${JSON.stringify(useSel)})`, 'Blight Coating Use action');
     const pt = await evalIn(`(() => {
-      const b = document.querySelector('.flask-action-menu [data-flask-action="use"]');
-      if (!b) return null;
+      const b = document.querySelector(${JSON.stringify(useSel)});
+      if (!b || b.disabled) return null;
+      b.scrollIntoView({ block: 'center' });
       const r = b.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2, beat: b.dataset.beat };
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, beat: b.dataset.beat || 'tap' };
     })()`);
     if (!pt) return { armed: false, selectedCard: false, beat: null };
     if (pt.beat === 'hold') await holdAt(pt.x, pt.y);
     else await clickAt(pt.x, pt.y);
+    let confirmedAt = null; // set when a confirmation was answered
+    if (await evalIn(`!!document.querySelector('.confirmation-modal .confirmation-confirm')`)) {
+      confirmedAt = Date.now();
+      await clickSel('.confirmation-modal .confirmation-confirm', 'the Use confirmation');
+    }
+    await until(`!document.querySelector('.combat-potion-menu')`, 'the Potions list closing on Use', 5000);
+    // A confirmed answer holds an input shield (confirmationModal.js) that eats
+    // every key and click on `window` in the capture phase for
+    // CONFIRMATION_INPUT_SHIELD_MS after the destination paints, so the
+    // confirming gesture cannot fall through to the board. Its veil can leave the
+    // DOM before its listener does, and a fixed sleep raced it on a slow CI
+    // runner (2026-10-02, the first PR run). So this asks the listener itself:
+    // a probe listener added NOW runs after the shield's, so a synthetic keydown
+    // of an unbound key reaches it only once the shield has let go.
+    if (confirmedAt != null) {
+      await until(`(() => {
+        let through = false;
+        const probe = () => { through = true; };
+        window.addEventListener('keydown', probe, true);
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Unidentified', bubbles: true }));
+        window.removeEventListener('keydown', probe, true);
+        return through;
+      })()`, 'the confirmation input shield releasing', 5000);
+    }
+    await parkPointer();
     const state = await evalIn(`({
       armed: !!document.querySelector('.enemy-row .enemy.targetable'),
       selectedCard: !!document.querySelector('.hand .card.selected'),
     })`);
     return { ...state, beat: pt.beat };
+  };
+
+  // THE FRONT DOOR, AS A NEW PLAYER WALKS IT. Until 2026-10-02 this tool clicked
+  // `.slot-new` on a title that answered at once and found `#cz-start` one press
+  // later. The game grew a startup gate (a timed reveal), a slot picker with a
+  // decision door, and a stepped character workspace whose Begin refuses until
+  // a class, a stat mode, a keepsake and starting armour are chosen — so the
+  // first-run case died on "timeout: the title screen" and checked nothing.
+  // The route below is the one tools/map-camera-persistence.mjs walks (same
+  // selectors, same order), driven here with real clicks at real coordinates.
+  const passStartupGate = async () => {
+    await until(`!!(document.querySelector('.startup-gate') || document.querySelector('.title-menu .slot-new'))`, 'the startup gate or the title');
+    // The gate asks for ENTER OR SPACE; a real key press, as it says.
+    if (await evalIn(`!!document.querySelector('.startup-gate')`)) await pressKey('Enter', 'Enter', 13);
+    await until(`!!document.querySelector('.title-menu .slot-new')`, 'the title screen');
+  };
+  const walkNewClimb = async (seed) => {
+    await clickSel('.title-menu .slot-new', 'NEW');
+    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the new-slot picker');
+    await clickSel('[data-title-action="modal-continue"]', 'the slot picker Continue');
+    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
+    await clickSel('[data-title-action="review-new"]', 'Start in this slot');
+    await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage');
+    // Open means open, never toggle: each fold is a <details>.
+    const openFace = async (key) => {
+      await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
+      if (!(await evalIn(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) {
+        await clickSel(`[data-face="${key}"]`, `the ${key} fold`);
+      }
+    };
+    await clickSel('#cz-classes .cz-class', 'the first class');
+    await clickSel('#cz-next', 'Next (to Character)');
+    await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Character stage');
+    await openFace('primary');
+    const mode = await evalIn(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
+    if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
+    await openFace('keepsake');
+    await clickSel('#cz-keepsakes [data-keepsake-id]', 'the first keepsake');
+    await clickSel('#cz-next', 'Next (to Starting equip)');
+    await until(`document.querySelector('#cz-tab-equipment')?.getAttribute('aria-selected') === 'true'`, 'the Starting equip stage');
+    await openFace('armour');
+    await clickSel('#cz-armours .equip-chip .equipment-poker-card', 'the first armour');
+    await clickSel('#cz-armours .equip-chip .equipment-choose', 'Choose armour');
+    for (let step = 0; step < 8; step += 1) {
+      if (await evalIn(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+      await clickSel('#cz-next', 'Next (towards Review)');
+    }
+    await until(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`, 'the Review stage');
+    // Fix the seed so the first floor reliably offers a fight (the same seed the
+    // ?shot= harness uses); everything else stays at the shipped defaults.
+    await evalIn(`(() => { const s = document.querySelector('#seed-input'); if (!s) return null; s.value = ${JSON.stringify(seed)}; s.dispatchEvent(new Event('input', { bubbles: true })); return s.value; })()`);
+    await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && !b.disabled && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin accepting the finished character', 5000);
+    await clickSel('#cz-start', 'BEGIN THE CLIMB');
+    // A new climb opens on the opening sequence before its map; Skip opening.
+    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.map-node.reachable'))`, 'the opening sequence or the map');
+    const skip = await evalIn(`(() => {
+      const b = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent));
+      if (!b) return false;
+      b.dataset.tutReachSkip = 'true';
+      return true;
+    })()`);
+    if (skip) await clickSel('[data-tut-reach-skip="true"]', 'Skip opening');
+    await until(`!!document.querySelector('.map-node.reachable')`, 'the map');
   };
 
   // A fresh combat board at this viewport, with the tutorial mounted over it.
@@ -390,7 +555,7 @@ async function main() {
 
   if (!rootArtifact) for (const vp of VIEWPORTS) {
     const name = `${vp.w}x${vp.h}`;
-    if (only && only !== name) continue;
+    if (!want(name)) continue;
     console.log(`\n  ${name}`);
     if (!(await boardWithTutorial(vp))) { ok(false, `${name}: tutorial mounted`); continue; }
 
@@ -482,8 +647,10 @@ async function main() {
     let guard = 0;
     let walked = true;
     while (guard++ < 8) {
+      const rest = await evalIn(SETTLED);
       const p = await evalIn(PROBE);
       if (!p.veil) break;
+      ok(rest.settled, `${name}: step "${p.label}" — board and spotlight come to rest (${rest.ms} ms)`);
       const spotOn = await evalIn(SPOT_ON_TARGET);
       const fmt = (b) => (b ? `${b.left},${b.top}..${b.right},${b.bottom} inside=${b.inside} hit=${b.hit}` : 'MISSING');
       console.log(`    step "${p.label}" next[${fmt(p.next)}] skip[${fmt(p.skip)}] spot covers ${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel}`);
@@ -506,15 +673,23 @@ async function main() {
   // others: delete the save, change UI size before continuing). It has to stop
   // being an escape and start being ordinary: --ui-zoom re-flexes on resize, so
   // every callout's coordinate space changes underneath it.
-  if (!only && !rootArtifact) {
+  if (want('resize') && !rootArtifact) {
     console.log('\n  resize mid-tutorial: 2560x1440 → 1280x800');
     await boardWithTutorial({ w: 2560, h: 1440 });
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }, S);
-    await wait(1200); // main.js re-flexes zoom at 150ms, tutorial re-places at 220ms, spot slides 200ms
+    // main.js re-flexes zoom 150 ms after the resize, the tutorial re-places at
+    // 220 ms and follows the board until it holds still, the spot slides 200 ms.
+    // Those are page-clock times from when the page RECEIVES the resize, which a
+    // loaded runner can deliver seconds after CDP sends it — so wait for the
+    // re-flex to happen at all, then for rest, and read only then.
+    let reflexed = false;
+    try { reflexed = await until(`parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) !== 1.7`, 'the zoom re-flex'); } catch { /* reported by the zoom check below */ }
+    const rest = reflexed ? await evalIn(SETTLED) : { settled: false, ms: 0 };
     const p = await evalIn(PROBE);
     const spotOn = await evalIn(SPOT_ON_TARGET);
     console.log(`    ui-zoom now ${p.zoom} · next[${p.next.left},${p.next.top}..${p.next.right},${p.next.bottom}]`);
     ok(p.zoom === 1.07, `resize: --ui-zoom re-flexed 1.7 → 1.07 (else this case tests nothing)`);
+    ok(rest.settled, `resize: board and spotlight come to rest after the re-flex (${rest.ms} ms)`);
     ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, 'resize: both buttons still on-screen and hit-testable');
     ok(spotOn.cover > 0.5, `resize: spotlight still lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);
   }
@@ -530,44 +705,38 @@ async function main() {
   // (main.js pickStorage — the gate added in #8 after the hook clobbered a real
   // save), so there is nothing to read back afterwards. That gate is correct and
   // this check goes the long way round instead of weakening it.
-  if (!only) {
+  if (want('first-run')) {
     console.log(`\n  first-run ${rootArtifact ? 'root artifact' : 'source'} path at 1920x1080: title → BEGIN → first fight → attack Escape → targeted-flask Escape → menu Escape → unarmed Escape → RELOAD`);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, S);
     await cdp.send('Page.navigate', { url: base }, S);
-    await until(`!!document.querySelector('.slot-new')`, 'the title screen');
-    await evalIn(`(() => { localStorage.clear(); return 1; })()`);
+    await until(`document.readyState === 'complete'`, 'the page');
+    ok(await evalIn(`(() => { localStorage.clear(); return localStorage.length === 0; })()`),
+      'first-run: durable storage is empty before boot');
     await cdp.send('Page.navigate', { url: base }, S);
-    await until(`!!document.querySelector('.slot-new')`, 'the title screen, storage cleared');
+    await passStartupGate();
+    // Promoted defaults legitimately save a settings-only profile during boot.
+    // Freshness means no prior play or completed tutorial, not no profile file.
     ok(
-      await evalIn(`localStorage.getItem('sote_meta_v1') === null`),
-      'first-run: a genuinely new player — no meta in durable storage at all'
+      await evalIn(`(() => {
+        const meta = JSON.parse(localStorage.getItem('sote_meta_v1') || 'null');
+        const noRun = !Object.keys(localStorage).some(key => /^sote_run_v1(?:_s\\d+)?$/.test(key));
+        return noRun && (!meta || (meta.settings.seenTutorial !== true &&
+          meta.results.length === 0 && meta.discoveredArmaments.length === 0 && meta.discoveryReceipts.length === 0));
+      })()`),
+      'first-run: a genuinely new player — no saved run, results, discoveries or completed tutorial'
     );
+    ok(await evalIn(`(() => {
+      const meta = JSON.parse(localStorage.getItem('sote_meta_v1') || 'null');
+      return Object.entries(${JSON.stringify(SETTINGS_DEFAULTS.values)}).every(([key, value]) => meta?.settings?.[key] === value);
+    })()`), 'first-run: every promoted default is applied to the fresh profile');
     await wait(400);
-    // Scroll the control into view first, then click where it actually is.
-    //
-    // WHAT THIS USED TO WORK AROUND, AND WHY THE NOTE IS NOW HISTORY. At
-    // 1920x1080 on the shipped defaults, #cz-start ("BEGIN THE CLIMB") laid out
-    // at top 1216 in a 1080px viewport — 136 px below the fold, elementFromPoint
-    // returning null — and this file measured that, printed it, scrolled past it
-    // and went green for a week. A tool that measures a defect and then works
-    // around it reports PASS forever; the phone half of the same defect was
-    // found by eye on a screenshot (Sunna, 2026-08-01), not by anything here.
-    //
-    // FIXED at EldenSpire#29 slice 2: customize's action row is bounded by flow
-    // rather than living in the scrollport (styles/ui.css, .cz-actions), so the
-    // `note:` below no longer fires for #cz-start — and its ABSENCE is evidence,
-    // because it printed on 3da9ca4 and does not print now. The property is
-    // guarded by tools/actionreach.mjs, which exists because this workaround was
-    // the wrong response to a measurement. clickSel stays general: map nodes
-    // live on a pannable canvas and legitimately need it.
-    await clickSel('.slot-new', 'BEGIN A CLIMB');
-    await until(`!!document.querySelector('#cz-start')`, 'the customize screen');
-    // Fix the seed so the first floor reliably offers a fight (the same seed the
-    // ?shot= harness uses); everything else stays at the shipped defaults, which
-    // since #10 means High contrast ON — a real new player's board, not a tuned one.
-    await evalIn(`(() => { const s = document.querySelector('#seed-input'); s.value = 'SHOWCASE'; s.dispatchEvent(new Event('input', { bubbles: true })); return s.value; })()`);
-    await clickSel('#cz-start', 'BEGIN THE CLIMB');
-    await until(`!!document.querySelector('.map-node.reachable')`, 'the map');
+    // History kept short: this path once measured #cz-start laid out below the
+    // fold at 1920x1080, scrolled past it and went green for a week — a tool
+    // that measures a defect and works around it reports PASS forever. That
+    // property is now tools/actionreach.mjs's; clickSel stays general (it
+    // prints a `note:` whenever it has to scroll) because map nodes live on a
+    // pannable canvas and legitimately need it.
+    await walkNewClimb('SHOWCASE');
     await wait(500);
     const haveFight = await evalIn(`!!document.querySelector('.map-node.monster.reachable')`);
     ok(haveFight, 'first-run: the first floor offers a fight to walk into');
@@ -588,10 +757,15 @@ async function main() {
     })()`);
     ok(seededFlask, 'first-run: valid Blight Coating row entered through the durable run save');
     await cdp.send('Page.navigate', { url: base }, S);
-    await until(`!!document.querySelector('.slot-continue')`, 'the title screen with the flask-seeded run');
+    await passStartupGate();
+    await until(`!!document.querySelector('.slot-continue:not([disabled])')`, 'the title screen with the flask-seeded run');
     await clickSel('.slot-continue', 'CONTINUE the flask-seeded run');
     await until(`!!document.querySelector('.map-node.monster.reachable')`, 'the resumed map with a reachable fight');
     await clickSel('.map-node.monster.reachable', 'a monster node');
+    // The resumed map settles its camera and footer after it mounts; ENTER was
+    // measured below the fold (top 1139 in 1080) on one run in ~6 when pressed
+    // at once. Wait for it to stand on screen rather than scroll to it.
+    await until(`(() => { const b = document.querySelector('#map-enter'); if (!b || b.disabled) return false; const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; })()`, 'ENTER on screen', 10000);
     await clickSel('#map-enter', 'ENTER the selected node');
     let mounted = true;
     try {
@@ -681,7 +855,8 @@ async function main() {
       );
       // The claim Sunna's repro actually turns on: "Reload does not clear it."
       await cdp.send('Page.navigate', { url: base }, S);
-      await until(`!!document.querySelector('.slot-continue')`, 'the title screen with a saved run');
+      await passStartupGate();
+      await until(`!!document.querySelector('.slot-continue:not([disabled])')`, 'the title screen with a saved run');
       await clickSel('.slot-continue', 'CONTINUE');
       await until(`!!document.querySelector('.combat')`, 'the fight, resumed');
       await wait(1500); // give a re-mount every chance to appear
@@ -689,6 +864,13 @@ async function main() {
         !(await evalIn(`!!document.querySelector('.tut-veil')`)),
         'first-run: RELOADED and continued — the tutorial did not come back'
       );
+      // The veil staying away is the symptom; the flag is the cause. Read the
+      // durable row itself after the reload, so a re-mount suppressed by some
+      // other path (a stale in-memory flag, a shot hook) cannot pass for it.
+      const reloadedMeta = await evalIn(`localStorage.getItem('sote_meta_v1')`);
+      let reloadedSeen = null;
+      try { reloadedSeen = JSON.parse(reloadedMeta).settings.seenTutorial; } catch { /* absent or unparsable reads as not persisted */ }
+      ok(reloadedSeen === true, `first-run: seenTutorial is still true in durable storage after the reload (read ${JSON.stringify(reloadedSeen)})`);
     }
   }
 
@@ -696,7 +878,15 @@ async function main() {
   await dropBrowser();
   server.close();
 
+  // A run that checked nothing is not a pass (e.g. `--root --only 1920x1080`:
+  // the viewport and resize cases do not run against the root artifact).
+  if (!fails.length && passedCount === 0) {
+    console.error('tutorial-reach: 0 checks ran for this selection — an empty run is not a pass.');
+    process.exit(2);
+  }
   console.log(`\n  ${fails.length ? `${fails.length} FAILED` : 'all checks passed'}`);
+  // The counted verdict tools/verdict.mjs reads (CI runs this through it).
+  console.log(`${passedCount} passed, ${fails.length} failed`);
   console.log(`  boundary: real Chromium headless against the ${rootArtifact ? 'root standalone artifact' : 'source server'} at deviceScaleFactor 1, UI size = Auto, text size M,`);
   console.log('  English strings, one class (reaver/SHOWCASE), solo play. Not checked: text size');
   console.log('  L/XL, the fixed UI-size overrides S..XL, touch or gamepad input, co-op boards,');

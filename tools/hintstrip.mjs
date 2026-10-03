@@ -127,7 +127,7 @@ const FAN_LIFT_PROP = (() => {
 })();
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
   // THE WAIVER THREADING IS GONE, AND SO IS THE REASON FOR IT. It used to
   // forward --waive into the corpus because doorplant finishes on an UNPLANTED
   // copy that must come back green, and the tree carried #295's two findings —
@@ -438,7 +438,7 @@ if (process.argv.includes('--selftest')) {
         // confident nothing this gate printed over the retired strip.
         name: 'the row stops rendering and no H check may green on the empty population',
         edits: [{
-          file: 'src/ui/screens/combat.js',
+          file: 'src/ui/components/combatActionRow.js',
           find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
           replace: '<div class="combat-action-row-planted-away as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
         }],
@@ -446,12 +446,20 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   };
-  const selftestCode = await doorSelftest(SELFTEST);
+  // A SHARD (`--shard i/n`, tools/doorplant.mjs SHARDS) runs part of the corpus;
+  // the count below is the plants THIS run executed, never the corpus total.
+  const shard = resolveShard();
+  const ran = selectShard(SELFTEST.plants, shard).length;
+  const selftestCode = await doorSelftest({ ...SELFTEST, shard });
   // THE COUNT IS THE CORPUS'S, not a literal: a literal said 8 over nine plants.
   // THE TERMINAL LINE IS IN A FORM tools/verdict.mjs ACCEPTS ("label: OK — N <words>, N caught"): the
   // previous wording was refused as SILENCE on the hosted board (run 299) and the whole
   // browser-guard job read red for a selftest that had caught every plant.
-  if (selftestCode === 0) console.log(`hintstrip-selftest: OK — ${SELFTEST.plants.length} plants, ${SELFTEST.plants.length} caught`);
+  if (selftestCode === 0) {
+    // The qualifier prints on its own line: verdict.mjs ends the counted line at its claim.
+    if (shard) console.log(`hintstrip-selftest: shard ${shard.index}/${shard.count} of a ${SELFTEST.plants.length}-plant corpus`);
+    console.log(`hintstrip-selftest: OK — ${ran} plants, ${ran} caught`);
+  }
   process.exit(selftestCode);
 }
 
@@ -498,13 +506,17 @@ const DECLARED_CONTROLS = Object.freeze([
 // not notice. Naming what is NOT identity is the smaller, more durable list.
 const LAYOUT_MODIFIERS = new Set(['cell', 'stack', 'lg', 'sm', 'wide', 'tall', 'fill']);
 const identityOf = (classList) => classList.split(/\s+/).filter((k) => k && !LAYOUT_MODIFIERS.has(k)).join(' ');
+const ROW_SOURCE = 'src/ui/components/combatActionRow.js';
 const EXPECTED_CONTROLS = (() => {
-  const src = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+  // The row's markup lives in the shared component (#1436: solo and co-op
+  // mount the same row), not in screens/combat.js.
+  const src = readFileSync(join(ROOT, ROW_SOURCE), 'utf8');
   // The row is found by its class PREFIX so the H0 plant (which renames the
   // class to make the row vanish) still parses: that plant must reach H0's
-  // empty-population red, not a thrown "could not read the template".
-  const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<!-- Context hints/);
-  if (!row) throw new Error('hintstrip: could not read the action row out of src/ui/screens/combat.js');
+  // empty-population red, not a thrown "could not read the template". It ends
+  // at the template's closing `</div>\`;` (combatActionRowHtml's return).
+  const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<\/div>`;/);
+  if (!row) throw new Error(`hintstrip: could not read the action row out of ${ROW_SOURCE}`);
   // THE KIT SWEEP (2026-09-04): the row's controls are kit builders, so the
   // hook classes are read off the builder calls — the StatPair's `class:`,
   // `pileButton('<kind>')`, End Turn's `className:` — the same names the
@@ -522,7 +534,7 @@ const EXPECTED_CONTROLS = (() => {
   const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));
   const extra = named.filter((n) => !DECLARED_CONTROLS.some((d) => sameSet(n) === sameSet(d)));
   if (missing.length || extra.length) {
-    throw new Error(`hintstrip: the action row in src/ui/screens/combat.js and DECLARED_CONTROLS disagree — `
+    throw new Error(`hintstrip: the action row in ${ROW_SOURCE} and DECLARED_CONTROLS disagree — `
       + `${missing.length ? `the row no longer names ${missing.map((m) => `"${m}"`).join(', ')}` : ''}`
       + `${missing.length && extra.length ? '; ' : ''}`
       + `${extra.length ? `the row names ${extra.map((m) => `"${m}"`).join(', ')} that this gate does not declare` : ''}`

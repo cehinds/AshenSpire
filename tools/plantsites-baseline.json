@@ -142,7 +142,7 @@
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
-      "digest": "4c54bc7ac015d844"
+      "digest": "af34f216bed34c71"
     },
     "tools/combat-save.mjs": {
       "count": 3,
@@ -173,8 +173,8 @@
       "digest": "706f6319c868604e"
     },
     "tools/flask-action-contract.mjs": {
-      "count": 4,
-      "digest": "00a08ead51c44b35"
+      "count": 36,
+      "digest": "f20530f51a5fd9c4"
     },
     "tools/flask-intent-smoke.mjs": {
       "count": 3,
@@ -210,7 +210,7 @@
     },
     "tools/hintstrip.mjs": {
       "count": 11,
-      "digest": "fb2a18e87004ab93"
+      "digest": "361298d7e07344a5"
     },
     "tools/hudbars.mjs": {
       "count": 1,
@@ -222,7 +222,7 @@
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
-      "digest": "10e6feb0b8f14205"
+      "digest": "58548000ac73940c"
     },
     "tools/menufit.mjs": {
       "count": 1,
@@ -282,7 +282,7 @@
     },
     "tools/screenreach.mjs": {
       "count": 9,
-      "digest": "8c89c934bfef71af"
+      "digest": "8f9f23976ec7f119"
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,
