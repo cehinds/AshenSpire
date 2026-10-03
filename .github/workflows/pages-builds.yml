@@ -303,6 +303,14 @@ jobs:
             cp -r "$RUNNER_TEMP/main/build/AshenSpire.html" "$RUNNER_TEMP/main/build/asset-base.json" \
               "$RUNNER_TEMP/main/build/packs" "$RUNNER_TEMP/main/build/objects" "$RUNNER_TEMP/main-build/web/"
           fi
+          # THE STANDALONE'S PAYLOAD (docs/EXTERNAL-ASSETS-PLAN.md step 12): the
+          # launcher copies map-detail/ and music/ beside the single file from the
+          # fetched common pack. Handed in with the build, so the stable aliases
+          # keep their tiles and score once main's tree no longer carries them
+          # (step 13); pages-site uses these only when main's tree lacks the folder.
+          for d in map-detail music; do
+            if [ -d "$RUNNER_TEMP/main/dist/$d" ]; then cp -r "$RUNNER_TEMP/main/dist/$d" "$RUNNER_TEMP/main-build/$d"; fi
+          done
           echo "MAIN_BUILD_ARGS=--main-build $RUNNER_TEMP/main-build" >> "$GITHUB_ENV"
       - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
         # `keep` from a dispatch is clamped here (1..25) and again in the

@@ -120,7 +120,8 @@ if (build.status !== 0) {
 }
 
 // 1b. The light single file into build/download/ — the same source and stamp,
-// every byte inside it, held under its 30 MB budget by the bundler.
+// every byte inside it (about 31 MB; held to no byte budget since step 8e). Its
+// art is the light pack's, which the bundler reads through tools/art-source.mjs.
 console.log('launch: building the light single file (download/)…');
 const single = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--single-file'], { stdio: 'inherit' });
 if (single.status !== 0) {

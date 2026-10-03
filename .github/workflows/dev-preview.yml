@@ -53,6 +53,14 @@ env:
   # release/main.
   ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
 
+  # STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
+  # assets/fonts/, music/ and map-detail/ reads the fetched art packs through
+  # tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
+  # checkout, so a job that builds or serves without fetching first is red now,
+  # not when step 13 deletes them. Each job that builds, serves or tests the
+  # checkout fetches with ./.github/actions/fetch-art right after setup-node.
+  ASHEN_ART_SOURCE: cache
+
 jobs:
   preview:
     runs-on: ubuntu-latest
@@ -62,6 +70,20 @@ jobs:
           lfs: false # the build is made below from source; nothing reads LFS
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       # BUILT FIRST, AND UPLOADED WHENEVER THIS SUCCEEDS. The built HTML is not
       # committed, so this run's artifacts are the only copy of this commit's
@@ -240,14 +262,29 @@ jobs:
           # The source-module preview pages (world-atlas-, equipment-selection-,
           # armament-kits-preview.html), the pose studio, the art inspection
           # pages and docs/preview read `assets/…` BY PATH (assetUrl() in source
-          # mode, `../../assets/…` from art/). They get this tier's art tree in
-          # preview/workbench/assets/ until step 12 points them at the fetched
-          # cache. preview/AshenSpire.html must not: an id its pack index misses
-          # has to 404 visibly, not load quietly from a tree left beside it.
+          # mode, `../../assets/…` from art/). They get this tier's art in
+          # preview/workbench/assets/, copied from the FETCHED RELEASE (step 12):
+          # the light pack's assets-mobile/ on dev/test, with the common pack's
+          # fonts beside it (the light pack carries no fonts). tools/art-source.mjs
+          # names each cache directory; ASHEN_ART_SOURCE=cache (this workflow's
+          # env) refuses the trees, so an unfetched pack is red here, not at
+          # step 13. release/main copy the high tier, assets/, which leaves this
+          # repository with ART-REPO-PLAN step 6, plus the same fonts.
+          # preview/AshenSpire.html must not get a tree: an id its pack index
+          # misses has to 404 visibly, not load quietly from a tree left beside it.
           W=preview/workbench
-          if [ "$(echo $WEB_TIER)" = "--light" ]; then ART_TREE=assets-mobile; else ART_TREE=assets; fi
           mkdir -p "$W/assets" "$W/art/combat-effects-2026-09-07"
-          cp -r "$ART_TREE"/. "$W/assets/"
+          if [ "$(echo $WEB_TIER)" = "--light" ]; then
+            LIGHT_DIR=$(node tools/art-source.mjs --dir assets-mobile)
+            cp -r "$LIGHT_DIR"/. "$W/assets/"
+          else
+            cp -r assets/. "$W/assets/"
+          fi
+          mkdir -p "$W/assets/fonts"
+          # Assigned first: errexit ignores a failed substitution inside an
+          # argument, which would turn the source into "/.".
+          FONTS_DIR=$(node tools/art-source.mjs --dir assets/fonts)
+          cp -r "$FONTS_DIR"/. "$W/assets/fonts/"
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
           cp -r src "$W/src"
@@ -315,9 +352,9 @@ jobs:
       # exist yet, which is the right behaviour and the wrong placement.
       #
       # --dir is passed to the selftest too. It plants into a COPY of whatever
-      # --dir names; without it the selftest looks for build/web, which this
-      # job never builds, and exits 2 — "the harness could not run", which
-      # blocks without measuring anything.
+      # --dir names; without it the selftest looks for build/ (since step 8e;
+      # build/web before it), and this job's tree to check is preview/, the
+      # copy this job collected.
       #
       # The de-inlined build's art is on disk, not in the HTML, so the guard
       # that reads the shipped file cannot see it. verify-shipped.mjs still
@@ -356,30 +393,11 @@ jobs:
           path: preview/
           retention-days: 14
 
-      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
-      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
-      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
-      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The art
-      # repository is public (step 10a), so every run fetches, with or without a
-      # token, and runs the agreement check. A failure names its cause (token
-      # refused, repository unreadable, rate limit, network) on the step and as an
-      # annotation.
-      # LAST, AND WHATEVER RAN BEFORE: a failed fetch never costs this commit
-      # its build, its preview package or another gate's verdict.
-      - name: Fetch the art packs this build's tier uses
-        if: ${{ !cancelled() }}
-        env:
-          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
-          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
-          # Only a push or dispatch of a protected branch (dev, test, release, main)
-          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
-          # it; but anyone who can push a branch can edit this workflow to read any
-          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
-          # move it into a GitHub Environment limited to dev, test, release and main
-          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
-          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
-        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
-
+      # THE AGREEMENT CHECK (docs/EXTERNAL-ASSETS-PLAN.md step 11). The packs were
+      # fetched before the build (step 12: the build and the workbench read
+      # them); while the trees are still here, the release and the trees must
+      # agree byte for byte. LAST, AND WHATEVER RAN BEFORE: its failure never
+      # costs this commit its build, its preview package or another gate's verdict.
       - name: The fetched packs and the trees here agree byte for byte
         if: ${{ !cancelled() }}
         run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
@@ -441,6 +459,10 @@ jobs:
         with:
           lfs: false # builds its own de-inlined copy; reads no LFS object
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - uses: ./.github/actions/which-browser
 

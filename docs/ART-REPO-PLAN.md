@@ -128,7 +128,7 @@ This repository keeps:
 | `tools/screenshot.mjs` | by hand | reads `assets/sprites/class-sprites.manifest.json` | reads it from its new home: `asset-data/sprites/class-sprites.manifest.json` (#1367) |
 | `styles/kit.css` | every build | `../assets/fonts/*` | *(superseded)* fonts are one `common` record each and load at runtime through `ASSET_CSS` (EXTERNAL-ASSETS-PLAN step 3b) |
 | README (`npx serve .`, `python -m http.server`) and DEVELOPER ("any static server works") | local dev | a plain static server serves `/assets/…` from disk | the docs name `node tools/serve.mjs` as the way to run from source, because a plain server cannot remap `/assets/…`; the built `AshenSpire.html` still needs no server |
-| `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | *(superseded)* maps every id to the fetch cache's light and common packs by default, and to the kept non-art files for those that are not assets; `--hd` serves the high pack (EXTERNAL-ASSETS-PLAN step 12) |
+| `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | *(superseded)* maps every id to the fetch cache's light and common packs by default, and to the kept non-art files for those that are not assets; `--hd` serves the high pack. **As built at EXTERNAL-ASSETS-PLAN step 12:** it maps `/assets-mobile/`, `/assets/fonts/`, `/music/` and `/map-detail/` to the cache; `/assets/…` (the high tier) moves with step 6 here |
 | `pose-studio/package.mjs`, `editor/server.mjs` | by hand | four `assets/*` trees; `editor` walks all of `assets/` | read the fetched cache (and `art/` below) |
 
 ### Readers of `art/` (source art)

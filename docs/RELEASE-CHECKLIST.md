@@ -153,6 +153,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §11 | #1297 follow-up: C22 compares the semantic and Armoury catalogs separately | G20 |
 | §11 | `tools/ui-components.mjs` is green on `dev` and runs in the suite | G20 |
 | §11 | `tools/flask-action-contract.mjs` is green on `dev` and runs in the suite | G20 |
+| §11 | `tools/measure-classes.mjs --check` (n=500) and `--selftest` are green on `dev` | G20 |
 | §11 | Map Potions onChange persistence/remount is covered by a test | G20 |
 | §11 | Map Potions list and mini-menu selections dispatch the chosen action is covered by a test | G20 |
 | §11 | A real-browser flask-menu behaviour test replaces flask-action-contract's source half | G20 |

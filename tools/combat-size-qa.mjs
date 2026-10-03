@@ -20,6 +20,8 @@ try {
       errors.push(error); console.error(error);
     });
     page.on('pageerror', error => { errors.push(error.message); console.error('Browser error:', error.message); });
+    // The light tier by URL: tools/serve.mjs answers /assets-mobile/… from the
+    // fetched light pack (step 12), so nothing here reads that tree.
     if (tier === 'light') await page.route('**/assets/**/*.webp', route => route.continue({ url: route.request().url().replace('/assets/', '/assets-mobile/') }));
     await page.goto(base + '?shot=combat', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__renderCombatForShot).catch(async error => {

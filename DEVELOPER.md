@@ -40,7 +40,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `tests.yml` → core suite | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
-| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | yes | yes (also on push to `dev`) |
+| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
@@ -86,7 +86,10 @@ file** at `download/AshenSpire.html` (~31 MB, every byte inline, held to no
 byte budget); `dist/` also gets the version-stamped `AshenSpire-<version>.html`,
 and the root alias `AshenSpire.html` is the light single file. **By default
 the pack-shaped file's tier is light** (owner, 2026-09-26: dev/test builds are
-light only): the light and common packs, edition `light`. `--full-art` builds
+light only): the light and common packs, edition `light`. The light art, in
+the packs and in the single file, comes from the light pack of the fetched art
+release (`.art-cache/<tag>/light/`; run `node tools/fetch-art.mjs --pack
+light,common` first — see *The art release* below). `--full-art` builds
 the release/main shape: the high, light and common packs, default tier and
 edition `high`, falling back to light. CI passes `--full-art` only for
 `release` and `main`. The light single file is built either way and always
@@ -187,8 +190,21 @@ when set, only raises GitHub's rate limit. A failure names its cause (token refu
 rate limit, network). `--from <zip>` verifies a zip already on disk (its pack is
 read from its name); `--recheck` re-hashes a cache. The trees here stay until
 step 13, and `node tools/fetch-art.mjs --agree` proves the fetched caches and
-the trees agree byte for byte; `node tools/asset-pack.mjs --source cache` writes
-the packs from the cache instead of the trees. The pin and the manifest are
+the trees agree byte for byte.
+
+**Every reader of those trees reads the cache** (step 12). The builds
+(`bundle.mjs`, which `launch.mjs` runs, and `asset-pack.mjs`, whose `--source` defaults to
+`auto`), `tools/serve.mjs` (a request under `/assets-mobile/`,
+`/assets/fonts/`, `/music/` or `/map-detail/` of a served checkout), the tests
+and the dev-preview workbench take `assets-mobile/`, `assets/fonts/`, `music/`
+and `map-detail/` from the fetched packs through `tools/art-source.mjs`, and ask
+`art-manifest.json`, not a tree, whether an art id ships. When a pack is not
+fetched, `art-source` falls back to the tree in this checkout with one note
+naming the fetch (until step 13 deletes the trees); `ASHEN_ART_SOURCE=cache`,
+which CI sets, refuses that fallback, and `ASHEN_ART_SOURCE=trees` forces it.
+`node tools/art-source.mjs --which` prints where each tree is read from. So
+before building or playing from source: `node tools/fetch-art.mjs --pack
+light,common` (and `all` for a `--full-art` build). The pin and the manifest are
 build identity (`BUILD_IDENTITY_FILES`). `tools/zip.mjs` is the same file the
 art repository packs with; `tests/fetch-art.test.mjs` pins their shared vector.
 
@@ -1026,8 +1042,9 @@ has no module/CORS issue) and all CSS inlined. Since step 8e
 `asset-base.json`, `packs/` and `objects/` (the high, light and common packs,
 default tier high; `--light` carries light and common, default tier light;
 `--external-art`, its old flag, is still accepted). `--single-file` writes the
-**light single file**, `build/download/AshenSpire.html` by default: the
-`assets-mobile/` twins inlined as `data:` URIs, no server, no external files.
+**light single file**, `build/download/AshenSpire.html` by default: the light
+tier's art (the fetched light pack; *The art release*) inlined as `data:` URIs,
+no server, no external files.
 `--mobile` is refused (the edition is retired). Re-run after any source change.
 The pack-shaped folder plays by double-click too, as long as it stays together
 (step 4): under `file://` the loader reads each
@@ -1073,6 +1090,11 @@ and flasks into the next fight. The bots choose from `tools/simbot.mjs`
 (`affordableCards`: playable and affordable in Actions, Mana and Stamina, priced
 by the engine's own `cardPlayCosts`), set a refused card aside and play on, and
 concede a fight still open after 150 turns as a stalemate.
+Between fights, `runsim` and `measure-classes` walk one run loop,
+`tools/simrun.mjs` (`createRunLoop`: map path, events and their history,
+shrines, rewards, drafts and the XP a fight pays), so `measure-classes --check`
+can require every fight to open on runsim's state; only the fight bot is each
+tool's own.
 `node tools/balance.mjs --check` fails when docs/BALANCE.md is stale
 (`tests/balance-doc.test.mjs` runs it); regenerate with
 `node tools/balance.mjs > docs/BALANCE.md`. Both also fail when the hand-recorded

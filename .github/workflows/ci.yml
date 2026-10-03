@@ -181,6 +181,16 @@ permissions:
 # forced onto Node 24. Both were bumped to @v5 (Node 24) in one commit that did
 # nothing else, so if a run breaks on the bump the diff says why.
 
+# STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
+# assets/fonts/, music/ and map-detail/ reads the fetched art packs through
+# tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
+# checkout, so a job that builds or serves without fetching first is red now,
+# not when step 13 deletes them. Each job that builds, serves or tests the
+# checkout fetches with ./.github/actions/fetch-art right after setup-node.
+env:
+  ASHEN_ART_SOURCE: cache
+  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+
 jobs:
   # ---------------------------------------------------------------------------
   # The engine suite and the guards' own self-tests, on all three platforms.
@@ -216,6 +226,10 @@ jobs:
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       # #12 — THE CI DOOR PROVES ITSELF BEFORE IT JUDGES ANYTHING ELSE.
       # Every checker step below is wrapped in tools/verdict.mjs, which refuses a
@@ -335,6 +349,10 @@ jobs:
           fetch-depth: 0 # the same history the `test` job's checkout has
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Every tool check still catches its own known-bad corpus
         run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
@@ -359,6 +377,10 @@ jobs:
           # and a full-history fetch cost this job 3 of its 16 minutes (run 36981774214)
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Parse gate — the bundler's own known-bad corpus
         # NOTHING RAN THIS FILE, and that is the defect it was written to prevent
@@ -440,6 +462,20 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Build the game and refresh root + dist/
         # Light art on dev/test (owner, 2026-09-26); release/main default to high.
@@ -508,38 +544,13 @@ jobs:
           path: build-digest-${{ matrix.os }}.txt
           retention-days: 7
 
-      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
-      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
-      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
-      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The art
-      # repository is public (step 10a), so every run fetches, with or without a
-      # token, and runs the agreement check. A failure names its cause (token
-      # refused, repository unreadable, rate limit, network) on the step and as an
-      # annotation.
-      # ONE RUNNER PER OS (the `digest` legs), so Windows' twelve shards (and the
-      # two each on Linux and macOS) do not download the release once per shard.
-      # LAST, so a failed fetch never costs the runner its digest record or
-      # another step's verdict.
-      - name: Fetch the art packs this build's tier uses
-        if: ${{ matrix.digest && !cancelled() }}
-        env:
-          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
-          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
-          # Only a push or dispatch of a protected branch (dev, test, release, main)
-          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
-          # it; but anyone who can push a branch can edit this workflow to read any
-          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
-          # move it into a GitHub Environment limited to dev, test, release and main
-          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
-          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
-          ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
-        shell: bash # $ART_PACKS is an env var; Windows' default shell would not expand it
-        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
-
+      # THE AGREEMENT CHECK (docs/EXTERNAL-ASSETS-PLAN.md step 11). The packs were
+      # fetched before the build (step 12: the build reads them); while the trees
+      # are still here, the release and the trees must agree byte for byte.
+      # ONE RUNNER PER OS (the `digest` legs). LAST, so its failure never costs the
+      # runner its digest record or another step's verdict.
       - name: The fetched packs and the trees agree byte for byte on this OS
         if: ${{ matrix.digest && !cancelled() }}
-        env:
-          ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
         shell: bash
         run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
@@ -590,6 +601,10 @@ jobs:
         with:
           lfs: false # serves the source tree; reads no LFS object
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Fullscreen is first and visible through both Settings doors
         run: node tools/verdict.mjs -- node tools/displayfirst.mjs
@@ -611,6 +626,10 @@ jobs:
         with:
           lfs: false # the standalone about-changelog opens is built below
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (about-changelog opens build/AshenSpire.html)
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
@@ -685,6 +704,10 @@ jobs:
         with:
           lfs: false # the standalone is built below
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (the same build browser-guard makes)
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
@@ -735,6 +758,10 @@ jobs:
         with:
           lfs: false # the standalone is built below
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (the same build browser-guard makes)
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
@@ -767,6 +794,10 @@ jobs:
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       - name: Mobile Shrine, combat receipts, Settings lifecycle, and Armoury shortcut
@@ -790,6 +821,10 @@ jobs:
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       # No menu paints two scrollbars on one axis. Kept to the shape
@@ -955,6 +990,10 @@ jobs:
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       - name: …and that gate can fail — its known-bads, each through the real door
@@ -995,6 +1034,10 @@ jobs:
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
       - name: The startup gate can fail by the same rendered door (its plants at index i mod 4)
         # This took 41-46 minutes as one step, one browser boot per plant, run

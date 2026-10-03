@@ -262,6 +262,18 @@ export function checkPackShape(name, bytes, readPacked) {
   }
   if (!['light', 'high'].includes(pin.tier) || !pin.packs[pin.tier]) problems.push(`its default tier ${JSON.stringify(pin.tier)} is not a pack it pins`);
   if (!pin.packs.common) problems.push('it pins no common pack');
+  // Light is the high tier's fallback (the loader drops to it when the high
+  // index fails), so a high-default build that does not pin it has none.
+  if (pin.tier === 'high' && !pin.packs.light) problems.push('its default tier is high but it pins no light pack (the high tier\'s fallback)');
+  // The rest of the folder the loader reads: asset-base.json (where the packs
+  // are) and the objects/ store the indexes name. `readPacked('objects/')` is
+  // truthy when that folder exists beside it and is not empty.
+  const baseBuf = readPacked('asset-base.json');
+  let base = null;
+  try { base = baseBuf ? JSON.parse(baseBuf.toString('utf8')) : null; } catch { base = null; }
+  if (!baseBuf) problems.push('asset-base.json is not beside it');
+  else if (!base || typeof base.base !== 'string') problems.push('asset-base.json beside it names no base');
+  if (!readPacked('objects/')) problems.push('no objects/ store is beside it');
   // The EDITION stamp IS the default tier since step 8e (Copilot, #1506): a
   // file that stamps one tier and pins another says the wrong thing in About.
   const editions = [...text.matchAll(/const EDITION = '([^']*)'/g)].map((e) => e[1]);
@@ -482,6 +494,8 @@ if (SELFTEST) {
     ['packs/common-000000000002.json', Buffer.from(commonIdx)],
     ['packs/common-000000000002.js', Buffer.from(`window.__ashenPack("common-000000000002", ${JSON.stringify(commonIdx)});\n`)],
     ['packs/fonts-000000000003.js', Buffer.from(`__ashenFonts("fonts-000000000003", ${JSON.stringify(fontsText)});\n`)],
+    ['asset-base.json', Buffer.from('{"base":"./"}\n')],
+    ['objects/', Buffer.from('objects/')],
   ]);
   const pinOf = (over = {}) => ({ schema: 1, tier: 'light', packs: {
     light: { index: 'packs/light-000000000001.json', sha256: hex(lightIdx) },
@@ -507,6 +521,18 @@ if (SELFTEST) {
   const misnamedTwin = new Map(files); misnamedTwin.set('packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-999999999999", ${JSON.stringify(lightIdx)});\n`));
   expect('pack: a .js twin under another index\'s name', checkPackShape('pack.html', packHtml(pinOf()), reader(misnamedTwin)), false, 'PACKS');
   expect('pack: the common pack pinned with no font sidecar pin', checkPackShape('pack.html', packHtml(pinOf({ fonts: null })), reader(files)), false, 'PACKS');
+  // The review's findings on #1506: the rest of the folder, and the fallback.
+  expect('pack: no objects/ store beside it', checkPackShape('pack.html', packHtml(pinOf()), reader(without('objects/'))), false, 'PACKS');
+  expect('pack: no asset-base.json beside it', checkPackShape('pack.html', packHtml(pinOf()), reader(without('asset-base.json'))), false, 'PACKS');
+  const noBase = new Map(files); noBase.set('asset-base.json', Buffer.from('{}\n'));
+  expect('pack: an asset-base.json that names no base', checkPackShape('pack.html', packHtml(pinOf()), reader(noBase)), false, 'PACKS');
+  const highIdx = '{\n"assets/a.webp":["bb",1,"image/webp"]\n}\n';
+  const withHigh = new Map(files);
+  withHigh.set('packs/high-000000000004.json', Buffer.from(highIdx));
+  withHigh.set('packs/high-000000000004.js', Buffer.from(`window.__ashenPack("high-000000000004", ${JSON.stringify(highIdx)});\n`));
+  const highPin = { index: 'packs/high-000000000004.json', sha256: hex(highIdx) };
+  expect('control: a high-default pin with light as its fallback', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high', packs: { ...pinOf().packs, high: highPin } })), reader(withHigh)), true, 'PACKS');
+  expect('pack: a high-default pin with no light pack', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high', packs: { high: highPin, common: pinOf().packs.common } })), reader(withHigh)), false, 'PACKS');
   expect('control: an inline SVG mask is not inlined art', checkPackShape('pack.html', packHtml(pinOf(), `url("data:image/svg+xml;base64,${'A'.repeat(80)}")`), reader(files)), true, 'PACKS');
 
   boundary([
@@ -552,7 +578,10 @@ const readOrMiss = (rel, why) => {
 const BUILD_FIRST = 'build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this check).';
 const packedBeside = (dirRel) => (rel) => {
   const p = resolve(ROOT, dirRel, rel);
-  return existsSync(p) ? readFileSync(p) : null;
+  if (!existsSync(p)) return null;
+  // A folder (`objects/`) answers whether it holds anything, not its bytes.
+  if (rel.endsWith('/')) return readdirSync(p).length ? Buffer.from(rel) : null;
+  return readFileSync(p);
 };
 
 // THE PACK-SHAPED GAME FILE, and its dist/ copy with dist/'s own packs.

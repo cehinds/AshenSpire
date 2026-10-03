@@ -14,11 +14,13 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
 import { writePacks, inBuildOrDist, objectPath } from './asset-pack.mjs';
+import { artDir, artPath, treeOf } from './art-source.mjs';
 import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_HIGH, EDITION_LIGHT } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
@@ -124,8 +126,10 @@ function idOf(absPath) {
 // `--single-file`: THE LIGHT SINGLE FILE, the one shape that still inlines.
 // Every module, stylesheet and image travels inside one HTML, so it runs from
 // file:// with no folder beside it — the reason this bundler rewrites ES
-// modules into closures. Its art payloads are the light tier's, read from
-// assets-mobile/ under the same `assets/…` keys. It is held to no byte budget
+// modules into closures. Its art payloads are the light tier's, under the same
+// `assets/…` keys, read since step 12 from the fetched light pack
+// (.art-cache/<tag>/light/, tools/art-source.mjs; assets-mobile/ until step 13
+// when no pack is fetched). It is held to no byte budget
 // (see the note before the write below). It is written to build/download/ by
 // default, the path the Pages site and the in-game Download name (owner
 // answer 3: one light-art single file is kept as the download). It is always
@@ -331,8 +335,61 @@ visit(entryAbs);
 const ASSET_DIR = resolve(ROOT, 'assets');
 // The tree the payloads are READ from. The keys stay `assets/…` whatever it is,
 // because the runtime builds those paths and never learns which edition it is.
-const ART_DIR = TWIN_ART ? resolve(ROOT, MOBILE_ASSET_DIR) : ASSET_DIR;
+// THE LIGHT TIER COMES FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md
+// step 12): .art-cache/<tag>/light/assets-mobile/, which tools/fetch-art.mjs
+// verified against the pin and the manifest. tools/art-source.mjs is the one
+// place that may still read assets-mobile/ from this checkout instead (its
+// fallback, which ends at step 13 with the tree).
+let lightSource = null;
+if (TWIN_ART) {
+  try { lightSource = artDir(MOBILE_ASSET_DIR); } catch (e) { fail(e.message); }
+}
+const ART_DIR = TWIN_ART ? lightSource.dir : ASSET_DIR;
+const ART_FROM = TWIN_ART ? `${lightSource.from === 'cache' ? 'the fetched light pack' : `${MOBILE_ASSET_DIR}/ (no fetched light pack)`}` : 'assets/';
+// The common pack's files (the fonts) are never part of an art tier's sweep:
+// they reach the page through CSS only, read from the common pack below.
+const sweptPath = (rel) => !treeOf(posix.join('assets', rel.split(/[\\/]/g).join('/')));
 const ASSET_MAP_ID = 'src/ui/assetmap.js';
+// art-manifest.json, read once: the light records the twin sweep is held to,
+// and the ids the literal-reference check accepts.
+let manifestCache = null;
+function artManifest() {
+  if (!manifestCache) {
+    try { manifestCache = JSON.parse(readFileSync(resolve(ROOT, 'art-manifest.json'), 'utf8')); }
+    catch (e) { fail(`art-manifest.json cannot be read (${e.message}) — node tools/art-manifest.mjs --write`); }
+  }
+  return manifestCache;
+}
+// A FETCHED FILE IS HELD TO ITS RECORD BEFORE ITS BYTES ARE EMBEDDED. The
+// cache's .verified marker says the pack was whole when fetch-art wrote it,
+// not that nobody touched a file since; a local build reuses the cache without
+// --recheck. So every cache byte this file inlines is checked against
+// art-manifest.json's size and sha256 for that path (light, high or common).
+let manifestRecordMap = null;
+function manifestRecord(path) {
+  if (!manifestRecordMap) {
+    manifestRecordMap = new Map();
+    for (const entry of Object.values(artManifest().assets || {})) {
+      for (const tier of ['light', 'high', 'common']) {
+        const rec = entry && entry[tier];
+        if (rec && typeof rec.path === 'string') manifestRecordMap.set(rec.path, rec);
+      }
+    }
+  }
+  return manifestRecordMap.get(path);
+}
+function checkCachedBytes(absPath, manifestPath) {
+  const raw = readFileSync(absPath);
+  const rec = manifestRecord(manifestPath);
+  const fix = 'node tools/fetch-art.mjs --recheck --refetch';
+  if (!rec) fail(`${manifestPath}: the fetched cache holds a file art-manifest.json has no record of — ${fix}`);
+  const sha = createHash('sha256').update(raw).digest('hex');
+  if (raw.length !== rec.bytes || sha !== rec.sha256) {
+    fail(`${manifestPath}: the fetched cache's bytes disagree with art-manifest.json (${raw.length} bytes, sha256 ${sha.slice(0, 12)}; the record says ${rec.bytes}, ${String(rec.sha256).slice(0, 12)}) — ${fix}`);
+  }
+}
+let manifestIdSet = null;
+const manifestIds = () => (manifestIdSet = manifestIdSet || new Set(Object.keys(artManifest().assets || {})));
 
 function walkAssets(dir) {
   const out = [];
@@ -354,22 +411,28 @@ let packedMusic = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 let authoringBytes = 0;
 if (TWIN_ART) {
-  // THE TWIN TREE IS SWEPT, THE SOURCE TREE IS THE ORACLE. A mobile build that
-  // swept assets-mobile/ alone would ship whatever happened to be there — the
-  // art-less-build bug with a new address. So the two trees are compared file
-  // for file before a byte is inlined: every runtime asset the full build
-  // carries must have a twin, and nothing without a source may ride along.
-  // tools/mobile-art.mjs --check says the same thing with sizes; this is the
-  // bundler refusing to trust that it ran.
-  if (!existsSync(ART_DIR)) fail(`${MOBILE_ASSET_DIR}/ is missing — run node tools/mobile-art.mjs (needs cwebp) to shrink assets/ into it`);
+  // THE TWIN TREE IS SWEPT, THE MANIFEST IS THE ORACLE. A mobile build that
+  // swept the light files alone would ship whatever happened to be there — the
+  // art-less-build bug with a new address. So they are compared file for file
+  // with art-manifest.json's light records before a byte is inlined: every art
+  // id must have its light file, and nothing without a record may ride along.
+  // (Step 12: the oracle was the assets/ tree; the manifest is what
+  // art-manifest.mjs --check holds to both tiers, and it outlives the trees.)
+  if (!existsSync(ART_DIR)) fail(`${idOf(ART_DIR)}/ is missing — node tools/fetch-art.mjs --pack light`);
   const rel = (dir) => walkAssets(dir).map((abs) => relative(dir, abs).split(/[\\/]/g).join('/'))
-    .filter((p) => runtimeAsset(p) && MIME[extname(p).toLowerCase()]);
-  const want = new Set(rel(ASSET_DIR));
+    .filter((p) => runtimeAsset(p) && MIME[extname(p).toLowerCase()] && sweptPath(p));
+  const lightPrefix = `${MOBILE_ASSET_DIR}/`;
+  const artEntries = Object.entries(artManifest().assets || {}).filter(([, entry]) => entry && !entry.common);
+  // An art id with no light record (buildManifest writes `light: null` for a
+  // missing twin) is a missing file, not one to leave out of the comparison.
+  const hasLight = ([, entry]) => Boolean(entry.light) && typeof entry.light.path === 'string' && entry.light.path.startsWith(lightPrefix);
+  const noLight = artEntries.filter((e) => !hasLight(e)).map(([id]) => `${id} (art-manifest.json has no light record)`);
+  const want = new Set(artEntries.filter(hasLight).map(([, entry]) => entry.light.path.slice(lightPrefix.length)));
   const have = new Set(rel(ART_DIR));
-  const missing = [...want].filter((p) => !have.has(p));
+  const missing = [...noLight, ...[...want].filter((p) => !have.has(p))];
   const stray = [...have].filter((p) => !want.has(p));
   if (missing.length || stray.length) {
-    fail(`${MOBILE_ASSET_DIR}/ is not a twin of assets/ — ${missing.length} missing, ${stray.length} stray; run node tools/mobile-art.mjs --check`,
+    fail(`${ART_FROM} does not hold the light records of art-manifest.json — ${missing.length} missing, ${stray.length} stray; node tools/fetch-art.mjs --pack light (or, for the tree, node tools/mobile-art.mjs --check)`,
       [...missing.slice(0, 5).map((p) => ({ message: `missing twin: ${MOBILE_ASSET_DIR}/${p}` })),
         ...stray.slice(0, 5).map((p) => ({ message: `stray twin with no source: ${MOBILE_ASSET_DIR}/${p}` }))]);
   }
@@ -384,6 +447,10 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
   const aliases = [];
   for (const abs of walkAssets(ART_DIR)) {
     const assetPath = relative(ART_DIR, abs);
+    // The fonts are the common pack's (assets/fonts/), never an art tier's:
+    // CSS inlines them below (the single files) or the common index carries
+    // them (the pack shape). Not read here at all.
+    if (!sweptPath(assetPath)) continue;
     if (!runtimeAsset(assetPath)) {
       authoringBytes += statSync(abs).size;
       continue;
@@ -407,15 +474,12 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
       // verify-external C holds the packs to the manifest, and the manifest
       // test holds the manifest to these trees.
       copiedAssets += 1;
-    } else if (key.startsWith('assets/fonts/')) {
-      // FONTS REACH THE PAGE THROUGH CSS ONLY. styles/kit.css names each face
-      // in an @font-face url(), which inlineCssUrls already turns into a data:
-      // URI; nothing asks the asset map for a font. Mapping them too shipped
-      // every face twice (~535 KB), most of the mobile build's headroom. The
-      // external-art branch above leaves them to the common pack, whose
-      // objects the rewritten CSS urls name.
-      continue;
     } else {
+      if (TWIN_ART && lightSource.from === 'cache') checkCachedBytes(abs, `${MOBILE_ASSET_DIR}/${relative(ART_DIR, abs).split(/[\\/]/g).join('/')}`);
+      // (FONTS REACH THE PAGE THROUGH CSS ONLY, and are skipped above.
+      // styles/kit.css names each face in an @font-face url(), which
+      // inlineCssUrls turns into a data: URI; nothing asks the asset map for a
+      // font. Mapping them too shipped every face twice, ~535 KB.)
       const id = distinctAssetId(buf, extname(abs));
       if (firstKeyOf.has(id)) {
         aliases.push([key, firstKeyOf.get(id)]);
@@ -457,7 +521,9 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 //
 // Written BEFORE the HTML, because the HTML pins what was written: each index's
 // sha256 goes into ASSET_PACKS. tools/asset-pack.mjs reads every file from the
-// trees, checks it against art-manifest.json, and refuses (writing nothing)
+// fetched release (each pack's verified .art-cache, step 12; the trees only
+// under tools/art-source.mjs's fallback), checks it against art-manifest.json,
+// and refuses (writing nothing)
 // when they disagree, so a stale manifest stops this build rather than
 // shipping bytes the index does not describe. Its output guard holds here too:
 // packs/ and objects/ are only ever written under build/ or dist/ (ignored) or
@@ -485,7 +551,7 @@ let cssMasksInlined = 0;
 if (EXTERNAL_ART) {
   if (!sources.has(ASSET_PACKS_ID)) fail(`${ASSET_PACKS_ID} is not in the import graph — the web edition would pin packs nothing loads`);
   try {
-    packSummary = writePacks({ root: ROOT, out: OUT_DIR, packs: WEB_PACKS });
+    packSummary = writePacks({ root: ROOT, out: OUT_DIR, packs: WEB_PACKS, source: 'auto' });
   } catch (e) {
     fail(`the asset packs could not be written to ${idOf(OUT_DIR)}: ${e.message}`,
       (e.problems || []).slice(0, 8).map((message) => ({ message })));
@@ -772,9 +838,23 @@ function inlineCssUrls(css, cssAbs) {
   return css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
     if (/^(data:|https?:|\/\/)/i.test(ref)) return whole;
     const assetAbs = resolve(dirname(cssAbs), ref.split('?')[0].split('#')[0]);
-    if (!existsSync(assetAbs)) fail(`asset referenced from CSS not found: ${ref}`);
     const ext = extname(assetAbs).toLowerCase();
     const mime = MIME[ext];
+    // A file of a tree the art packs carry (the fonts, assets/fonts/) is read
+    // from its fetched pack (tools/art-source.mjs; step 12), in every edition.
+    const fromRoot = idOf(assetAbs);
+    if (treeOf(fromRoot)) {
+      let payload;
+      try { payload = artPath(fromRoot); } catch (e) { fail(`${ref}: ${e.message}`); }
+      if (!existsSync(payload)) fail(`asset referenced from CSS not found: ${ref} (${idOf(payload)})`);
+      if (!mime) fail(`unsupported CSS asset type '${ext}' for ${ref}`);
+      if (resolve(payload) !== resolve(ROOT, fromRoot)) checkCachedBytes(payload, fromRoot);
+      const buf = readAssetBytes(payload);
+      inlinedAssets += 1;
+      inlinedAssetBytes += buf.length;
+      return `url("data:${mime};base64,${buf.toString('base64')}")`;
+    }
+    if (!TWIN_ART && !existsSync(assetAbs)) fail(`asset referenced from CSS not found: ${ref}`);
     if (!mime) fail(`unsupported CSS asset type '${ext}' for ${ref}`);
     if (TWIN_ART && !EXTERNAL_ART) {
       // Same rule as the sweep: the stylesheet names the source, the payload
@@ -783,7 +863,8 @@ function inlineCssUrls(css, cssAbs) {
       const fromAssets = relative(ASSET_DIR, assetAbs);
       if (fromAssets.startsWith('..')) fail(`CSS url outside assets/ has no mobile twin: ${ref}`);
       const twin = resolve(ART_DIR, fromAssets);
-      if (!existsSync(twin)) fail(`CSS asset has no twin under ${MOBILE_ASSET_DIR}/: ${ref} — run node tools/mobile-art.mjs`);
+      if (!existsSync(twin)) fail(`CSS asset has no light file in ${ART_FROM}: ${ref} — node tools/fetch-art.mjs --pack light`);
+      if (lightSource.from === 'cache') checkCachedBytes(twin, `${MOBILE_ASSET_DIR}/${fromAssets.split(/[\\/]/g).join('/')}`);
       const buf = readAssetBytes(twin);
       inlinedAssets += 1;
       inlinedAssetBytes += buf.length;
@@ -1100,7 +1181,9 @@ const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
       LITERAL.lastIndex = 0;
       let m;
       while ((m = LITERAL.exec(line)) !== null) {
-        if (!existsSync(resolve(ROOT, m[1]))) dangling.push(`${id} → ${m[1]}`);
+        // An id art-manifest.json lists (step 12: the manifest, not the tree,
+        // which leaves this repository at step 13).
+        if (!manifestIds().has(m[1])) dangling.push(`${id} → ${m[1]}`);
       }
     }
   }
@@ -1108,8 +1191,8 @@ const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
     fail(
       'literal asset reference(s) point at files that do not exist:\n    ' +
       dangling.join('\n    ') +
-      '\n  Either add the file or remove the reference — a path the code states and the ' +
-      'repo lacks fails silently at runtime.'
+      '\n  Either add the art (an art-manifest.json id) or remove the reference — a path the code states and the ' +
+      'manifest lacks fails silently at runtime.'
     );
   }
 }
@@ -1184,7 +1267,7 @@ console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
 console.log('  authoring omitted: ' + Math.round(authoringBytes / 1024) + ' KiB (equipment component experiments)');
 console.log('  shape            : ' + (EXTERNAL_ART ? `pack shape (packs/ and objects/ beside the HTML; served, or by double-click while the folder stays together; default tier ${DEFAULT_TIER})`
-  : `the light single file (art from ${MOBILE_ASSET_DIR}/, inline; runs from file://; no byte budget)`));
+  : `the light single file (art from ${ART_FROM}, inline; runs from file://; no byte budget)`));
 if (EXTERNAL_ART) {
   console.log('  art swept        : ' + copiedAssets + ' files (' + Math.round(mapBytes / 1024) + ' KiB) — carried as packs, not copied');
   for (const [pack, p] of Object.entries(packSummary.packs)) {
