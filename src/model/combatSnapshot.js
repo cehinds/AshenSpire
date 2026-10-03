@@ -42,6 +42,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   for (const key of ['hp', 'maxHp', 'block']) {
     if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
   }
+  if (entity.wardBlock !== undefined && (!Number.isInteger(entity.wardBlock) || entity.wardBlock < 0 || entity.wardBlock > entity.block)) problems.push(`${path}.wardBlock must be a whole number between 0 and block`);
   if (finite(entity.maxHp) && entity.maxHp <= 0) problems.push(`${path}.maxHp must be positive`);
   if (finite(entity.hp) && finite(entity.maxHp) && (entity.hp < 0 || entity.hp > entity.maxHp)) {
     problems.push(`${path}.hp must be between 0 and maxHp`);

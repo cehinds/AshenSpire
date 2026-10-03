@@ -893,6 +893,21 @@ dmg = floor(dmg); if dmg < 0 → 0
 
 (The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
 
+The combat health row shows ordinary Block as a blue shield beside HP. While
+that shield is positive, HP is blue; breaking it restores the normal red (or
+colorblind-safe health color). Block granted by a magical card is recorded as
+optional `wardBlock` provenance within the same Block total and shown as a
+purple Arcane Ward badge left of the shield, with a gold HP outline. Ordinary
+Block is spent first for display; Ward is clamped to the remaining Block after
+hits, caps and turn resets. Both badges sum to Block and absorb the same attack
+damage as before; Ward rating and its buildup meter are separate. Old saves
+without provenance show ordinary Block. Missing badges give their space to HP,
+with a stable row edge and a readable minimum width for low-HP enemies. The HP
+fraction always remains current HP / maximum HP. Solo playback and co-op
+snapshots carry the provenance with their damage and guard receipts.
+Narrow health lanes display current HP alone to prevent number collisions;
+the complete current/maximum value remains in the accessible label and tooltip.
+
 **Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
 
 ### 4.3 Card rules
