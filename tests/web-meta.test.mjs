@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { REQUIRED_HEAD_META, headMetaTags } from '../tools/head-meta.mjs';
 import { OG_IMAGE } from '../tools/og-image.mjs';
 
+import { manifestIds } from '../tools/art-source.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT, p), 'utf8');
 
@@ -35,7 +36,7 @@ test('index.html carries every required web meta tag, each with a value', () => 
   // never a repository path that stops resolving when assets/ leaves main.
   assert.equal(image, OG_IMAGE.url, 'og:image must be the Pages path tools/pages-site.mjs writes (OG_IMAGE in tools/og-image.mjs)');
   assert.equal(new URL(image).pathname, `/AshenSpire/${OG_IMAGE.sitePath}`, 'OG_IMAGE.url must name OG_IMAGE.sitePath at the site root');
-  assert.ok(existsSync(resolve(ROOT, OG_IMAGE.source)), `the share image is cut from ${OG_IMAGE.source}, which is not in the tree`);
+  assert.ok(manifestIds().has(OG_IMAGE.source), `the share image is cut from ${OG_IMAGE.source}, which art-manifest.json does not list (the store holds only what it lists)`);
   assert.match(valueOf(tagFor(head, 'theme-color')), /^#[0-9a-f]{6}$/i, 'theme-color is a hex colour');
   assert.match(valueOf(tagFor(head, 'icon link')), /^data:image\//, 'the icon is inline so the single-file build needs no extra file');
 });

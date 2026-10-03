@@ -5,6 +5,8 @@ import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PAINTED_OUTFITS } from '../src/content/paintedOutfits.js';
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const require = createRequire(import.meta.url);
 let sharp;
 try { sharp = require('sharp'); } catch { sharp = require('../build/animation-tools/node_modules/sharp'); }

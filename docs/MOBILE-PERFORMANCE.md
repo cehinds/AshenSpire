@@ -19,7 +19,7 @@ high-default build):
   also plays by double-click while it stays together.
 - `build/download/AshenSpire.html`, `dist/download/AshenSpire.html` and the root
   `AshenSpire.html` are the **light single file**: the same build with its art
-  inlined from `assets-mobile/` (every image with a side of 384 px or more scaled
+  inlined from the light pack's `assets-mobile/` (every image with a side of 384 px or more scaled
   to 5/16, 512 → 160, all re-encoded lossy, `tools/mobileart-policy.mjs`: q35,
   alpha q40; full-screen backdrops under `environments/`, `bg/` and `map/` keep
   0.4 scale at q50, because a 1536-wide backdrop at 5/16 blocks visibly across a
@@ -27,9 +27,10 @@ high-default build):
   open owner question for it; `verify-shipped.mjs` prints the size against it),
   with the inlined art itself held under 20 MB by `mobile-art.mjs --check`. It
   is the build's *Download* on Pages (`/<branch>/<ordinal>/download/`).
-  Regenerate the twins after any change under `assets/` with
-  `node tools/mobile-art.mjs` (needs `cwebp`); `--check` proves the tree without
-  an encoder and is the CI gate. Settings → About names the tier.
+  The twins are generated, and `mobile-art.mjs --check` run, in
+  `cehinds/AshenSpire-art` since docs/EXTERNAL-ASSETS-PLAN.md step 13; here a
+  fetch (`node tools/fetch-art.mjs --pack light`) verifies every light file
+  against `art-manifest.json`. Settings → About names the tier.
 - The separate mobile file (`AshenSpire-mobile.html`, `bundle.mjs --mobile`) and
   the full-art single file (~253 MB) are retired (owner answers 2 and 6).
 
@@ -77,7 +78,7 @@ node tests/run-node.mjs
 node tools/launch.mjs --build-only
 node tools/buildversion.mjs --check
 node tools/verify-shipped.mjs
-node tools/mobile-art.mjs --check
+node tools/fetch-art.mjs --pack light,common --recheck
 node tools/verify-external.mjs
 node tools/plantsites.mjs --check
 ```

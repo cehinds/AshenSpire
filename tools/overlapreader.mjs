@@ -68,6 +68,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } 
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { copySourceArt } from './art-source.mjs';
 
 const TOOLS = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const args = process.argv.slice(2);
@@ -92,9 +93,11 @@ const ROW_MODES_PAGING = "handLayoutModes: ['paging'],";
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'overlapreader-'));
-  for (const d of ['src', 'styles', 'assets']) {
+  for (const d of ['src', 'styles']) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
+  // assets/: the fetched high pack and the fonts (the tree left at docs/EXTERNAL-ASSETS-PLAN.md step 13).
+  copySourceArt(dir);
   cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
   return dir;
 }

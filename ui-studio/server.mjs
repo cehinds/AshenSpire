@@ -20,6 +20,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomBytes } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
 import { compileEntries, readConfigTree, CONFIG_DIR } from '../tools/config-build.mjs';
+import { artPath, packTreeOf } from '../tools/art-source.mjs';
 import { DEFAULT_SETTINGS, mergeSettings, settingsProblems, sketchProblems } from './model.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -287,7 +288,16 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
         const allowed = /^(assets|art|docs|src|styles|content|music)\//.test(name) || /^[\w-]+\.html$/.test(name);
         if (!allowed || !MIME[path.extname(name)]) throw Error('Not a preview asset');
         if (req.headers.host === address) { res.writeHead(302, { Location: `http://${previewAddress}${url.pathname}${url.search}` }); return res.end(); }
-        file = await safePath(root, name);
+        // The art (assets/, the score's renders under music/, map-detail/) left
+        // this checkout at docs/EXTERNAL-ASSETS-PLAN.md step 13: a pack file not
+        // on disk is read from the fetched packs (tools/art-source.mjs; the high
+        // pack, else the light twin). The name is still validated first.
+        file = await safePath(root, name, { creating: Boolean(packTreeOf(name)) });
+        if (packTreeOf(name) && !(await fs.stat(file).then(() => true, () => false))) {
+          try { file = artPath(name, { root }); } catch {
+            if (name.startsWith('assets/')) { try { file = artPath(`assets-mobile/${name.slice(7)}`, { root }); } catch { /* 404 below */ } }
+          }
+        }
       } else {
         const name = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
         if (!STUDIO_FILES.includes(name)) return send(res, 404, { error: 'Not found' });

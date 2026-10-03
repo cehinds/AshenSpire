@@ -5,6 +5,8 @@ import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const require = createRequire(import.meta.url);
 const sharp = require('sharp');
 const root = fileURLToPath(new URL('../', import.meta.url));

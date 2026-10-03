@@ -8,7 +8,7 @@
 // ── THE DOOR, STATED, BECAUSE THE DOOR NAMED IS THE EXTENT OF THE GREEN ──────
 //
 // Every plant below is a REAL EDIT TO A REAL FILE IN A REAL SOURCE TREE — a
-// byte-for-byte copy of index.html, styles/, src/, assets/ and the committed
+// byte-for-byte copy of index.html, styles/, src/, asset-data/ and the committed
 // bundle — and the tool is then entered at `check(root)`, the same entry point
 // the live run uses. Nothing is handed to a predicate downstream of the sweep:
 // each plant goes through the directory walk, the reader, the canonicalizer and
@@ -62,7 +62,9 @@ import { pathToFileURL } from 'node:url';
 import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
-const COPY = ['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
+// assets/ and assets-mobile/ are not copied: they left this repository at
+// docs/EXTERNAL-ASSETS-PLAN.md step 13 and are no input root (INPUT_ROOTS).
+const COPY = ['index.html', 'styles', 'src', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
 // CI spreads the expensive real-tree and git-history fixtures across Windows
 // runners. Each shard still enters the same check; the default runs everything.
@@ -682,8 +684,13 @@ function historyCorpus() {
     const blob = git(dir, 'rev-parse', `HEAD^:${ORDINAL_HOME}`).trim();
     const loose = resolve(dir, '.git', 'objects', blob.slice(0, 2), blob.slice(2));
     // Loose objects are written read-only; Windows refuses to unlink those.
-    chmodSync(loose, 0o666);
-    rmSync(loose);
+    // Only a loose file can be removed this way: a packed object leaves
+    // nothing at that path, and the guard below then says so plainly instead
+    // of chmod dying on ENOENT.
+    if (existsSync(loose)) {
+      chmodSync(loose, 0o666);
+      rmSync(loose);
+    }
     // The plant proves itself: if the object survived (packed, alternates, or
     // shared with HEAD's record), the case would test nothing, so it refuses.
     let gone = false;
@@ -694,6 +701,31 @@ function historyCorpus() {
     [bump, 'unknown',
       `the PARENT's ${ORDINAL_HOME} blob is missing (partial, shallow or damaged clone), so git cannot show its record — unread is not absent, and the row must not call it the pre-scheme n/a`,
       null, true, dropParentRecord],
+  );
+
+  // THE PARENT RECORD GIT CAN READ BUT NOBODY CAN PARSE. The blob is present,
+  // but it holds a conflict-marked record (a bad hand-merge committed as is),
+  // so JSON.parse throws. That throw used to come back as "no record" — the
+  // pre-scheme n/a, a GREEN — the same hole as the missing blob above. The
+  // hook rewrites the parent commit in place and re-commits HEAD's record
+  // unchanged, so only the parent's text moves the verdict.
+  const conflictParentRecord = (dir) => {
+    const headRecord = git(dir, 'show', `HEAD:${ORDINAL_HOME}`);
+    const parentRecord = git(dir, 'show', `HEAD^:${ORDINAL_HOME}`);
+    const p = resolve(dir, ORDINAL_HOME);
+    git(dir, 'reset', '-q', '--hard', 'HEAD^');
+    writeFileSync(p, `<<<<<<< HEAD\n${parentRecord}=======\n${parentRecord}>>>>>>> other\n`, 'utf8');
+    git(dir, 'commit', '-q', '-a', '--amend', '-m', 'the build that shipped, merged badly');
+    writeFileSync(p, headRecord, 'utf8');
+    git(dir, 'commit', '-q', '-a', '-m', 'a second build');
+    let parses = true;
+    try { JSON.parse(git(dir, 'show', `HEAD^:${ORDINAL_HOME}`)); } catch { parses = false; }
+    if (parses) throw new Error(`selftest plant: the parent's ${ORDINAL_HOME} still parses after the conflict was planted`);
+  };
+  CASES.push(
+    [bump, 'unknown',
+      `the PARENT's ${ORDINAL_HOME} is present but conflict-marked (not JSON) — unparsed is not absent, and the row must not call it the pre-scheme n/a`,
+      null, true, conflictParentRecord],
   );
 
   return { build, CASES, skipped };
