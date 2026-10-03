@@ -20,6 +20,8 @@ import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
+import { playingCardArt, defaultCardArtFallbacks } from '../cardArtwork.js';
+import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
@@ -213,6 +215,7 @@ export function renderCard(registries, ref, opts = {}) {
   });
   let drawn = levelNow();
   const paint = (at) => {
+    const artwork = playingCardArt(ref, { large: at === 'inspect' });
     const visible = new Set(cardFields(at, { surface: opts.surface || 'none' }).visible);
     const region = (key, html) => (visible.has(key) ? html : '');
     // HIDE BY NOT RENDERING. A region left in the markup and hidden in CSS
@@ -252,7 +255,7 @@ export function renderCard(registries, ref, opts = {}) {
       ).join('')}</div>`) +
 
       `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +
-      region('art', `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}"><span class="card-art-glyph">${esc(model.icon)}</span>` +
+      region('art', `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}">${artwork ? `<img class="playing-card-art" data-card-art="${artwork.kind}" src="${esc(assetUrl(artwork.path))}" alt="" loading="lazy" decoding="async">` : ''}<span class="card-art-glyph" aria-hidden="true">${esc(model.icon)}</span>` +
       // Subtypes: authored in content/source/tagging.csv. Untagged cards
       // render nothing here, so the layout is unchanged for them.
       (tags.length && visible.has('tags')
@@ -266,6 +269,16 @@ export function renderCard(registries, ref, opts = {}) {
     // next repaint can tell the two apart. Guarded for the same minimal DOM.
     if (el.children) for (const node of el.children) { if (node.dataset) node.dataset.cardPainted = '1'; }
     for (const node of kept) el.append(node);
+    const image = el.querySelector?.('.playing-card-art');
+    if (image) {
+      const fallbacks = defaultCardArtFallbacks(ref).filter(path => path !== artwork.path);
+      image.addEventListener('error', () => {
+        const next = fallbacks.shift();
+        if (!next) return;
+        image.dataset.cardArt = 'outline';
+        image.src = assetUrl(next);
+      });
+    }
     // A WITHHELD REGION GIVES ITS TRACK BACK.
     //
     // WC1 lays the face out on four authored bands — name / art / body /

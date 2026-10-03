@@ -7,17 +7,16 @@ const SHIPPED = manifestIds();
 import { relics } from '../src/content/relics.js';
 import { relicArtAsset } from '../src/model/relicArt.js';
 
-test('painted relic paths resolve to shipped WebPs for twelve catalog identities', () => {
+test('painted relic paths resolve to shipped WebPs for the full catalog', () => {
   const painted = relics.filter(relic => relicArtAsset(relic));
-  assert.equal(painted.length, 12);
+  assert.equal(painted.length, relics.length);
   for (const relic of painted) {
     assert.ok(SHIPPED.has(relicArtAsset(relic)), relic.id);
     assert.equal(relicArtAsset(relic.id), relicArtAsset(relic));
   }
 });
 
-test('unpainted and unknown relics keep the glyph fallback', () => {
-  assert.equal(relicArtAsset({ id: 'whetstoneFragment' }), null);
+test('unknown relics keep the glyph fallback', () => {
   assert.equal(relicArtAsset({ id: '../unexpected' }), null);
   assert.equal(relicArtAsset(null), null);
 });
