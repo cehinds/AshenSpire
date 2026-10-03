@@ -32,7 +32,7 @@ import { DECK_PANES, deckEditorModel, deckEditorView, nextFilterPreset, openDeck
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
-import { playingCardArt } from '../deckReadingArt.js';
+import { playingCardArt } from '../cardArtwork.js';
 import { assetUrl } from '../assetmap.js';
 import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
@@ -236,8 +236,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
-    const well = face.querySelector('.art');
-    if (well) well.appendChild(artwork(row, true));
     if (def.flavor) face.querySelector('.cd-body')?.appendChild(el('p', { class: 'deck-editor-flavor', text: def.flavor }));
     // The native face keeps its authored shape. Long readings scroll inside
     // their band instead of stretching the whole card; keyboard users can

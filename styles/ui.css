@@ -1441,8 +1441,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-reading .card .card-cost-rail { font-size: 1.6rem; }
 .deck-editor .deck-editor-reading .card .cost { font-size: 1.6rem; padding: .4rem; }
 .deck-editor .deck-editor-reading .card .ctags { z-index: 1; }
-.deck-editor .deck-editor-reading .art > .deck-editor-art { position: absolute; inset: 0; border-radius: 0; object-fit: cover; }
-.deck-editor .deck-editor-reading .art > .deck-editor-art.outline { object-fit: contain; }
+.deck-editor .deck-editor-reading .playing-card-art[data-card-art="outline"] { object-fit: contain; padding: .8rem; box-sizing: border-box; }
 .deck-editor .deck-editor-reading .card-art-glyph { visibility: hidden; }
 .deck-editor-full-rules { font-size: 1.6rem; line-height: 1.55; color: var(--parchment); }
 .deck-editor-flavor { font-size: 1.4rem; line-height: 1.5; font-style: italic; color: var(--muted); }

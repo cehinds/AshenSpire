@@ -547,6 +547,28 @@ test('Reading Desk: search accepts hotkey characters without mutating or closing
   });
 });
 
+test('Reading Desk: inspector uses one native artwork image across card selection', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const { playingCardArt } = await import('../src/ui/cardArtwork.js');
+  withDom(() => {
+    const run = freshRun();
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    try {
+      const tiles = deckEditorModel({ registries: REG, run }).collection.filter(tile => tile.equipmentEligible !== false);
+      for (const tile of tiles.slice(0, 3)) {
+        editor.root.querySelector(`[data-focus-key="tile:${tile.key}"]`).click();
+        editor.root.querySelector(`[data-focus-key="inspect:collection:${tile.key}"]`).click();
+        const face = editor.root.querySelector('.deck-editor-reading .card');
+        const images = face.querySelectorAll('.art img');
+        assert.equal(images.length, 1, tile.name);
+        assert.ok(images[0].classList.contains('playing-card-art'));
+        assert.equal(images[0].getAttribute('data-card-art'), playingCardArt(tile.ref, { large: true }).kind);
+        assert.equal(face.querySelector('.deck-editor-art'), null, 'no second Reading Desk artwork overlay');
+      }
+    } finally { editor.close(); }
+  });
+});
+
 test('Reading Desk: Undo reverses a row action and Cancel still restores the opening state', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
