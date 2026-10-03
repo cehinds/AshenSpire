@@ -173,8 +173,8 @@
       "digest": "706f6319c868604e"
     },
     "tools/flask-action-contract.mjs": {
-      "count": 36,
-      "digest": "f20530f51a5fd9c4"
+      "count": 10,
+      "digest": "63c88aea3a42c684"
     },
     "tools/flask-intent-smoke.mjs": {
       "count": 3,
@@ -183,6 +183,10 @@
     "tools/flask-menu-cancel.mjs": {
       "count": 6,
       "digest": "fd574eb2f9dd3290"
+    },
+    "tools/flask-menu-probe.mjs": {
+      "count": 19,
+      "digest": "2460823b78c7ff3d"
     },
     "tools/flaskbox.mjs": {
       "count": 6,
@@ -286,7 +290,7 @@
     },
     "tools/screenreach.mjs": {
       "count": 9,
-      "digest": "8c89c934bfef71af"
+      "digest": "8f9f23976ec7f119"
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,

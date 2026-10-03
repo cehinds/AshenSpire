@@ -193,6 +193,23 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # LEAN CHECKOUTS (owner rule D38: a job over 20 minutes is refactored, never
+  # given more time). Run 37055409943 (`test`, f15a2250b) cancelled three jobs
+  # at 20 minutes, and all three spent the 20 minutes INSIDE actions/checkout:
+  # the parse gate's depth-1 `git fetch` took 19m45s, and Windows reproducible
+  # 0/12 and 2/12 never left it. No job's own work took more than 12.2 minutes.
+  # The tree at a dev tip is 2.28 GB, 1.56 GB of it source PNGs under art/ and
+  # docs/ that no step of these four jobs opens (an strace of every step,
+  # in the PR that added this block), and the D38 splits took a run from 15 jobs to 35, each fetching
+  # it at once — checkout grew from 0.6-7.8 min to 0.6-20. So `test`,
+  # `test-selftests`, `parse-gate` and `reproducible` check out with
+  # `filter: blob:none` (full history is ~10 MB of commits and trees; a blob a
+  # step reads from history is fetched on demand) and a sparse tree that leaves
+  # out art/**/*.png and docs/**/*.png (~0.72 GB left). Every step still runs,
+  # on the same runners. tests/doorplant-shard.test.mjs pins these four jobs'
+  # checkout options; a job added later is not covered until it is named there.
+  # ---------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
   # The engine suite and the guards' own self-tests, on all three platforms.
   # These assert nothing about byte-identity, so they are the legs least likely
   # to be red for a reason that is really about the runner.
@@ -224,6 +241,14 @@ jobs:
           # that read a build moved to `reproducible`, which builds first.
           lfs: false
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
@@ -347,6 +372,14 @@ jobs:
         with:
           lfs: false
           fetch-depth: 0 # the same history the `test` job's checkout has
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
@@ -375,6 +408,14 @@ jobs:
         with:
           lfs: false # default depth, as tests.yml's parse-gate: the corpus reads no history,
           # and a full-history fetch cost this job 3 of its 16 minutes (run 36981774214)
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
@@ -460,6 +501,14 @@ jobs:
         with:
           lfs: false # the build is made here from source; nothing reads LFS
           fetch-depth: 0
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
@@ -738,6 +787,57 @@ jobs:
 
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
+
+  # ---------------------------------------------------------------------------
+  # The flask-menu probe, and its plants sharded two ways: their own jobs by the
+  # owner's 20-minute rule (D38). The probe serves the SOURCE tree, so no build.
+  # ---------------------------------------------------------------------------
+  browser-flask-menu:
+    name: every flask menu in a real browser
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the probe serves the source tree
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
+
+      - name: Every flask menu offers the shared plan, and a map Potions choice does and saves what was chosen
+        # FINISH §11 (#1447 review, D36): combat's Potions list, the map Potions
+        # list and minis, and the run HUD's room-rail menus opened in Chromium
+        # and compared to flaskActionPlan for the Crimson and Azure flasks and
+        # the carried potions; every map Potions choice driven for what it does;
+        # a Potions action and a "Use flasks outside combat" change saved and
+        # kept across the remount, and the world atlas left mounted by it.
+        # About 2 minutes on the machine it was written on.
+        run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs
+
+  browser-flask-menu-plants:
+    name: flask-menu known-bads in a real browser (${{ matrix.shard }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # tests/doorplant-shard.test.mjs requires every shard of the count here.
+        shard: ['0/2', '1/2']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the probe serves the source tree
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
+
+      - name: ...and that probe can fail (its plants, this leg's half)
+        # Inverted expectation: each plant is copied into its own tree and the
+        # one probe it breaks is run from there (`--only`), then each probe runs
+        # clean. The whole corpus took about 10 minutes unsharded (19 plants) on the machine it
+        # was written on; each leg runs the plants at index i mod 2, so the two
+        # legs together run every plant, each once.
+        run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs --selftest --shard ${{ matrix.shard }}
 
   # ---------------------------------------------------------------------------
   # about-changelog's known-bad corpus, sharded two ways by the owner's 20-minute
@@ -1081,13 +1181,13 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
+    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
           echo "upstream results: test=${{ needs.test.result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
-          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }}"
+          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
           echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
           echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""

@@ -417,41 +417,6 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     revealTimer = null;
     card.classList.remove('inspection-info-visible');
   });
-  // TRUNCATED IS NEVER A DEAD END, AND IT IS STILL THE SAME TWO BEATS
-  // (Constantine, 2026-09-12: *"it should still select and show the (i) button
-  // for more information. all cards should react this way"*).
-  //
-  // A face whose text is clipped (fitCardFace → data-truncated) carries a `›`
-  // in its corner. It began as a muted CSS hint a thumb could not act on;
-  // #987 made it a control that opened the inspect door on ONE tap, and that
-  // is the half that was wrong — it gave one kind of card a private shortcut
-  // past the selecting beat every other card owes, so the same gesture meant
-  // two different things depending on whether a card's text happened to fit.
-  //
-  // The chevron is still a real tap-floor control, and what it does now is
-  // what a tap on the card's own face does: SELECT, draw the selection border,
-  // and reveal the `i` after the authored delay. The `i` is the one door into
-  // information, on every card, truncated or not. The chevron's job is to say
-  // "there is more here" somewhere a thumb can reach — not to be a second
-  // door with its own rules.
-  //
-  // It still swallows its own pointer and touch so the card's tap accounting
-  // never sees it; the chevron begins the two beats rather than spending one.
-  const more = document.createElement('button');
-  more.type = 'button';
-  more.className = 'card-more-button';
-  more.textContent = '›';
-  more.setAttribute('aria-label', `Select ${title} to read its full text`);
-  for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
-    more.addEventListener(type, event => event.stopImmediatePropagation());
-  }
-  more.addEventListener('click', event => {
-    event.preventDefault(); event.stopImmediatePropagation();
-    // The chevron IS the selecting beat, so it spends it rather than zeroing
-    // the count: the next tap on the face is the card's own act.
-    spendSelectingBeat(identity, douse);
-    select(); revealInfo();
-  });
   // A REBUILT CARD ADOPTS THE SELECTION IT ALREADY HELD.
   //
   // Selection is keyed by LOGICAL identity precisely so it survives a host
@@ -483,7 +448,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
   }
-  card.append(info, more);
+  card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
   card.addEventListener('click', event => {
     if (event.target === info) return;

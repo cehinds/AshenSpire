@@ -218,16 +218,27 @@ export function mountTutorial(root, { onDone }) {
   const FRAME_CREDIT_MS = 50;
   let resizeTimer = null;
   let settleRun = 0;
-  const targetKey = () => {
+  //
+  // AND THE KEY IS EVERYTHING place() READS, NOT ONLY THE TARGET. place() keeps
+  // the bubble off the KEEP_CLEAR cards, and the hand re-fans from its own
+  // deferred ResizeObserver layout (hand.js) — which can land after the 220 ms
+  // re-place without moving the step's target at all (Enemy intent, End Turn).
+  // A key of the target alone held still through that, and the bubble was left
+  // on a card (D45 undone by a resize). So the key is the target's box plus
+  // every keep-clear card's: either moving is a re-place.
+  const rectKey = (n) => {
+    const r = n.getBoundingClientRect();
+    return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`;
+  };
+  const settleKey = () => {
     const t = root.querySelector(steps[i]?.sel);
     if (!t) return '';
-    const r = t.getBoundingClientRect();
-    return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`;
+    return [t, ...root.querySelectorAll(KEEP_CLEAR)].map(rectKey).join('|');
   };
   function settle() {
     const run = ++settleRun;
     let prev = performance.now();
-    let last = targetKey();
+    let last = settleKey();
     let elapsed = 0; // rendered ms since settle began
     let still = 0;   // rendered ms the target has held its box
     const tick = () => {
@@ -236,7 +247,7 @@ export function mountTutorial(root, { onDone }) {
       prev = now;
       elapsed += dt;
       if (done || run !== settleRun || elapsed > SETTLE_MAX_MS) return;
-      const key = targetKey();
+      const key = settleKey();
       if (key !== last) { last = key; still = 0; place(); } else still += dt;
       if (still < SETTLE_STILL_MS) requestAnimationFrame(tick);
     };
