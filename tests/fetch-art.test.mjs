@@ -859,7 +859,7 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
 // all sit between the two and none of them can hide the pair (#1524 review,
 // Codex, four rounds of narrower matchers). Over-matching is safe: a step that
 // mentions both without running the tool merely has to come after the fetch.
-const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^\w-])(\.\/)?(tools|tests)\/[\w./-]+\.[cm]?js\b/.test(cmd) };
+const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^\w-])(\.[\\/])?(tools|tests)[\\/][\w./\\-]+\.[cm]?js\b/.test(cmd) };
 // Any valid GitHub job id: letters, digits, `-` and `_`, starting with a letter or `_`.
 const JOB_ID = '[A-Za-z_][A-Za-z0-9_-]*';
 function jobsRunningToolsBeforeFetch(yml) {
@@ -875,7 +875,7 @@ function jobsRunningToolsBeforeFetch(yml) {
   const missing = [];
   let checked = 0;
   for (const { name, lines } of jobs) {
-    if (!lines.some((l) => /uses: actions\/checkout@/.test(l))) continue;
+    if (!lines.some((l) => !/^\s*#/.test(l) && /actions\/checkout@/.test(l))) continue;
     checked += 1;
     // NO YAML PARSING (#1524 review: seven rounds of Codex findings, each a
     // spelling a narrower parser missed — quoted keys, plain and folded
@@ -883,8 +883,20 @@ function jobsRunningToolsBeforeFetch(yml) {
     // its fetch step, comment lines aside, is read as ONE text: if that text
     // runs `node` and names a script under tools/ or tests/, a tool may run
     // before the art is there. Over-matching only asks for an earlier fetch.
-    const at = lines.findIndex((l) => /^\s*(-\s+)?["']?uses["']?:\s*["']?\.\/\.github\/actions\/fetch-art\b/.test(l));
-    const fetched = at >= 0;
+    const at = lines.findIndex((l) => !/^\s*#/.test(l) && /\.\/\.github\/actions\/fetch-art\b/.test(l));
+    // A fetch step that carries an `if:` may be skipped on some leg (a matrix
+    // OS, an event), so it is not proof the art is there: the job counts as
+    // having no fetch (#1524 review, Codex).
+    const stepEnd = (i) => {
+      const dash = lines.slice(0, i + 1).reverse().find((l) => /^\s*-\s/.test(l));
+      const indent = dash ? dash.match(/^\s*/)[0].length : 0;
+      let j = i + 1;
+      while (j < lines.length && !(/^\s*-\s/.test(lines[j]) && lines[j].match(/^\s*/)[0].length <= indent) && !(lines[j].trim() && lines[j].match(/^\s*/)[0].length < indent)) j += 1;
+      return j;
+    };
+    const stepStart = (i) => { let k = i; while (k > 0 && !/^\s*-\s/.test(lines[k])) k -= 1; return k; };
+    const conditional = at >= 0 && lines.slice(stepStart(at), stepEnd(at)).some((l) => /^\s*(-\s+)?["']?if["']?\s*:/.test(l));
+    const fetched = at >= 0 && !conditional;
     const before = (fetched ? lines.slice(0, at) : lines).filter((l) => !/^\s*#/.test(l)).join(' ').replace(/\\\s+/g, ' ');
     const bad = TOOL_CMD.test(before);
     if (!fetched || bad) missing.push(name);
@@ -919,11 +931,14 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('bad-plain-multiline', `      - name: x\n        run: node\n          tools/build.mjs\n${fetch}`),
     job('bad-quoted-run', `      - "run": node tools/a.mjs\n${fetch}`),
     job('bad-cjs', `      - run: node tools/combat-formation-extra-qa.cjs\n${fetch}`),
+    job('bad-quoted-uses', `      - run: node tools/a.mjs\n${fetch}`).replace('- uses: actions/checkout@v5', '- "uses": actions/checkout@v5'),
+    job('bad-conditional-fetch', `      - uses: ./.github/actions/fetch-art\n        if: runner.os != 'Windows'\n        with:\n          packs: all\n      - run: node tools/a.mjs\n`),
+    job('bad-windows-path', `      - run: node .\\tools\\build.mjs\n${fetch}`),
     job('bad-continuation', `      - name: x\n        run: |\n          node \\\n            tools/build.mjs\n${fetch}`),
   ].join('\n') + '\n'
     + `  bad-commented: # heavy\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`
     + `  "bad-quoted":\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`;
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 19);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-continuation', 'bad-commented', 'bad-quoted']);
+  assert.equal(checked, 22);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
 });
