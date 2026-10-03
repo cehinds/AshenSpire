@@ -34,11 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-<<<<<<< HEAD
 - **The Windows installer lets you browse and download art versions** ([#1533](https://github.com/cehinds/AshenSpire/pull/1533), `0.7.1.840`). A high-quality artwork button opens art-repository branch and published-version choices, shows installed, required and latest art versions, and lets you install the game's matching pack or save another verified release separately. The installer discloses ChatGPT-generated artwork. README links and action buttons each have their own row, while its opening description stays a plain sentence.
-=======
+
 - **Full draws and selective Retain are the approved hand rules** ([#1532](https://github.com/cehinds/AshenSpire/pull/1532), `0.7.1.839`). The contract starts opening and turn draws at four with Intelligence scaling, keeps Retain cards, shuffles other unplayed cards into the draw pile, and sets a separate default hand limit of fifteen. Retained cards add to the next draw until that limit. This documents the next implementation; gameplay is unchanged in this build.
->>>>>>> origin/dev
 
 - **The README explains the current game and where to get each edition** ([#1529](https://github.com/cehinds/AshenSpire/pull/1529), `0.7.1.838`). The guide now covers retained hands, Actions, Stamina and Mana, combat ratings, equipment cards, the sideboard, progression, books and shop services. It links the installer, art repository, Unity adaptation and each browser channel's play and download paths, with verified GitHub build alternatives while hosted paths are unavailable. Gameplay is unchanged.
 
