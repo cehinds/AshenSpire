@@ -5767,7 +5767,7 @@ export const uiStrings = [
     "id": "settings.row.haptics",
     "extends": "",
     "short": "Haptics",
-    "full": "Vibrate on card play, damage taken and turn start, on devices that can. Off keeps the device still.",
+    "full": "Vibrate on card play, damage taken and turn start, on devices that can. Separate from sound: muting audio does not stop it. Off keeps the device still.",
     "tip": ""
   },
   {

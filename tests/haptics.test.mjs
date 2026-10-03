@@ -6,6 +6,7 @@
 // it is on (and when it was never set, because the default is on).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { HAPTIC_PATTERNS, HAPTICS_DEFAULT_ON, hapticPatternIssues } from '../src/content/haptics.js';
 import { createHaptics, hapticsEnabled } from '../src/ui/haptics.js';
 
@@ -84,4 +85,18 @@ test('Settings offers the switch once, under Audio, defaulting to the data value
   assert.equal(settingOn({}, 'haptics'), hapticsEnabled({}), 'the row and the runtime agree on an unset key');
   assert.equal(settingOn({ haptics: false }, 'haptics'), false);
   assert.equal(generalGroups('Audio').get('Audio').filter((r) => r.key === 'haptics').length, 1);
+});
+
+test('main.js feeds every sfx cue to both the audio engine and the haptics cue', () => {
+  // The wiring itself: without it the module above is never reached and the
+  // game ships no haptics, while every other test here still passes.
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /import\s*\{\s*createHaptics\s*\}\s*from\s*'\.\/ui\/haptics\.js'/);
+  const m = main.match(/const\s+(\w+)\s*=\s*createHaptics\(/);
+  assert.ok(m, 'main.js creates the haptics cue');
+  const sink = main.match(/sfx\.sink\s*=\s*\((\w+)\)\s*=>\s*\{([^}]*)\}/);
+  assert.ok(sink, 'main.js sets sfx.sink');
+  const [, arg, body] = sink;
+  assert.match(body, new RegExp(`audio\\.sfx\\(${arg}\\)`), 'sfx.sink plays the sound');
+  assert.match(body, new RegExp(`\\b${m[1]}\\(${arg}\\)`), 'sfx.sink fires the haptics cue');
 });
