@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1540",
     "date": "2026-10-03",
     "group": "2026-10-03",
-    "summary": "Behind the scenes: combat checks follow the Stamina orb",
-    "detail": "Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The checks retain their overlap, clipping, accessibility and known-bad coverage. Gameplay is unchanged.",
-    "build": "0.7.1.845",
+    "summary": "Combat checks follow the Stamina orb and keepsake art can recover",
+    "detail": "Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The checks retain their overlap, clipping, accessibility and known-bad coverage. A keepsake image that fails to load now returns when art is retried, and the local-light-art test isolates its automatic mode from the CI cache setting.",
+    "build": "0.7.1.846",
     "pullRequest": 1540,
     "url": "https://github.com/cehinds/AshenSpire/pull/1540"
   },

@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Behind the scenes: combat checks follow the Stamina orb** ([#1540](https://github.com/cehinds/AshenSpire/pull/1540), `0.7.1.845`). Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The checks retain their overlap, clipping, accessibility and known-bad coverage. Gameplay is unchanged.
+- **Combat checks follow the Stamina orb and keepsake art can recover** ([#1540](https://github.com/cehinds/AshenSpire/pull/1540), `0.7.1.846`). Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The checks retain their overlap, clipping, accessibility and known-bad coverage. A keepsake image that fails to load now returns when art is retried, and the local-light-art test isolates its automatic mode from the CI cache setting.
 
 - **The Windows installer lets you browse and download art versions** ([#1533](https://github.com/cehinds/AshenSpire/pull/1533), `0.7.1.843`). A high-quality artwork button opens art-repository branch and published-version choices, shows installed, required and latest art versions, and lets you install the game's matching pack or save another verified release separately. The installer discloses ChatGPT-generated artwork. README links and action buttons each have their own row, while its opening description stays a plain sentence.
 
