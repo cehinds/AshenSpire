@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
     "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
-    "build": "0.7.1.802",
+    "build": "0.7.1.803",
     "pullRequest": 1474,
     "url": "https://github.com/cehinds/AshenSpire/pull/1474"
+  },
+  {
+    "id": "pr-1509",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the co-op layout check runs when a build goes to testing",
+    "detail": "Nothing you play changes. The automatic check that the co-op screen's top bar fits on phones and desktops now runs each time a build is promoted to testing, instead of on every proposed change, where it kept stalling and holding other changes up.",
+    "build": "0.7.1.802",
+    "pullRequest": 1509,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1509"
   },
   {
     "id": "pr-1492",
