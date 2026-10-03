@@ -65,7 +65,7 @@ import { fileURLToPath } from 'node:url';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, webpDimensions } from './mobileart-policy.mjs';
-import { download, packsOf, readPin, verifiedPackDir } from './fetch-art.mjs';
+import { download, markerFor, packDirFor, packsOf, readPin } from './fetch-art.mjs';
 import { readZip } from './zip.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -345,19 +345,33 @@ export async function releaseDocsFromZips(root = ROOT, { from = null, get = down
 const PIN_PATH_NAME = 'art-release.json';
 
 /**
- * releaseDocsFromCache(root) → { docs, missing }: the manifest each verified
- * pack cache (.art-cache/<tag>/<pack>/, tools/fetch-art.mjs) carries, and the
- * packs that are not fetched.
+ * releaseDocsFromCache(root) → { docs, missing, stale }: the manifest each
+ * pack cache of THIS PIN (.art-cache/<tag>/<pack>/, tools/fetch-art.mjs)
+ * carries, the packs with no such cache, and a problem for every cache that
+ * was fetched for this pin's zip but verified against another
+ * art-manifest.json. The cache is read by its zip, not by the verified marker
+ * alone: the marker also digests the committed manifest's rows, so keying on
+ * it would make an edited manifest look unfetched and compare nothing.
  */
 export function releaseDocsFromCache(root = ROOT) {
   const docs = {};
   const missing = [];
+  const stale = [];
+  let pin = null;
+  let manifest = null;
+  try { pin = readPin(root); manifest = JSON.parse(readFileSync(resolve(root, MANIFEST_PATH), 'utf8')); } catch { return { docs, missing: [...RELEASE_PACKS], stale }; }
   for (const pack of RELEASE_PACKS) {
     let dir;
-    try { dir = verifiedPackDir(pack, { root }); } catch { missing.push(pack); continue; }
-    docs[pack] = JSON.parse(readFileSync(resolve(dir, MANIFEST_PATH), 'utf8'));
+    let marker = '';
+    try { dir = packDirFor(pin, pack, root); marker = readFileSync(resolve(dir, '.verified'), 'utf8').trim(); } catch { missing.push(pack); continue; }
+    const zipSha = pin.packs && pin.packs[pack] && pin.packs[pack].sha256;
+    if (!zipSha || marker.split(' ')[0] !== zipSha || !existsSync(resolve(dir, MANIFEST_PATH))) { missing.push(pack); continue; }
+    try { docs[pack] = JSON.parse(readFileSync(resolve(dir, MANIFEST_PATH), 'utf8')); } catch (e) { stale.push(`the fetched ${pack} pack's ${MANIFEST_PATH} cannot be read: ${e.message}`); continue; }
+    let want = null;
+    try { want = markerFor(pin, manifest, pack); } catch { /* the pin names no such zip: reported above */ }
+    if (marker !== want) stale.push(`the fetched ${pack} pack of ${pin.tag} was verified against another ${MANIFEST_PATH}: this one is not what the release says (node tools/art-manifest.mjs --write)`);
   }
-  return { docs, missing };
+  return { docs, missing, stale };
 }
 
 /**
@@ -379,8 +393,10 @@ export function serialize(manifest) {
  * .art-cache/, releaseDocsFromCache). A pack that is not fetched is checked by
  * tools/fetch-art.mjs when it is: its rows must equal this file's.
  */
-export function checkManifest(root = ROOT, { docs = releaseDocsFromCache(root).docs } = {}) {
-  const problems = [];
+export function checkManifest(root = ROOT, opts = {}) {
+  const fromCache = opts.docs ? null : releaseDocsFromCache(root);
+  const docs = opts.docs || fromCache.docs;
+  const problems = [...(opts.stale || (fromCache ? fromCache.stale : []))];
   const path = resolve(root, MANIFEST_PATH);
   if (!existsSync(path)) return [`${MANIFEST_PATH} is missing — node tools/art-manifest.mjs --write`];
   let committed;
@@ -430,8 +446,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       process.exit(1);
     }
   } else if (args.includes('--check')) {
-    const { docs, missing } = releaseDocsFromCache();
-    const problems = checkManifest(ROOT, { docs });
+    const { docs, missing, stale } = releaseDocsFromCache();
+    const problems = checkManifest(ROOT, { docs, stale });
     if (problems.length) {
       console.error(`art-manifest: FAIL — ${problems.length} problem(s):`);
       for (const p of problems.slice(0, 20)) console.error(`  · ${p}`);

@@ -194,7 +194,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   // build carries, so a change to any of them is a new build.
   // tests/build-identity.test.mjs walks that graph and fails on one not here.
   //   art-source   where the light pack and the fonts are read from (the
-  //                verified cache or, until step 13, the tree)
+  //                verified cache; the trees left at step 13)
   //   fetch-art    what "verified" means for a cached pack; zip.mjs beneath it
   //   art-manifest the records a pack is checked against, and canonical bytes
   //   asset-pack   the pack shape: objects/, the indexes, the font sidecar

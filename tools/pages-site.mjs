@@ -1427,8 +1427,11 @@ function baseTreeFindings(dir) {
   // A main from after step 13 tracks no assets/: the site writes it from the store.
   const sourcePlan = sourceAssetPlan(dir, mainRef);
   if (sourcePlan) {
-    const wrong = sourcePlan.filter(({ id, object }) => existsSync(join(dir, object)) && (!existsSync(join(dir, id)) || Buffer.compare(readFileSync(join(dir, id)), readFileSync(join(dir, object))) !== 0));
-    out.push([`/assets/ is main's manifest, written from the store's objects (${sourcePlan.length} ids${wrong.length ? `; wrong: ${wrong.slice(0, 3).map((w) => w.id).join(', ')}` : ''})`, wrong.length === 0]);
+    // Every id must be there and be its object's bytes: an id whose object the
+    // store lacks was never written, and is a missing image, not a pass.
+    const absent = sourcePlan.filter(({ id, object }) => !existsSync(join(dir, object)) || !existsSync(join(dir, id)));
+    const wrong = sourcePlan.filter(({ id, object }) => existsSync(join(dir, object)) && existsSync(join(dir, id)) && Buffer.compare(readFileSync(join(dir, id)), readFileSync(join(dir, object))) !== 0);
+    out.push([`/assets/ is main's manifest, written from the store's objects (${sourcePlan.length - absent.length - wrong.length} of ${sourcePlan.length} ids${absent.length ? `; missing: ${absent.slice(0, 3).map((w) => w.id).join(', ')}${absent.length > 3 ? ' …' : ''}` : ''}${wrong.length ? `; wrong: ${wrong.slice(0, 3).map((w) => w.id).join(', ')}` : ''})`, sourcePlan.length > 0 && absent.length === 0 && wrong.length === 0]);
   }
   // The index links nothing under an excluded root (the art review sections).
   const index = existsSync(join(dir, 'index.html')) ? readFileSync(join(dir, 'index.html'), 'utf8') : '';

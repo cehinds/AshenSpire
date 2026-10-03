@@ -504,6 +504,27 @@ test('known-bad: the release\'s packs that disagree, or a manifest a fetched pac
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('known-bad: an edited manifest is compared with the fetched packs, not taken for an unfetched release', async () => {
+  // The verified marker digests the committed manifest's rows, so a manifest
+  // edited after the fetch makes the cache look unverified; --check must still
+  // read the cache of this pin's zip, name the drift, and go red.
+  const { root, zips } = threePacks();
+  try {
+    await fetchAll(root, zips);
+    assert.deepEqual(checkManifest(root), []);
+    const p = join(root, MANIFEST_PATH);
+    const m = JSON.parse(readFileSync(p, 'utf8'));
+    m.assets['assets/bg/a.webp'].high.sha256 = 'e'.repeat(64);
+    writeFileSync(p, serialize(m));
+    const { missing, stale } = releaseDocsFromCache(root);
+    assert.deepEqual(missing, [], 'the caches of this pin are still read');
+    assert.match(stale.join('\n'), /the fetched (high|light) pack of hd-assets-v2 was verified against another art-manifest\.json/);
+    const problems = checkManifest(root).join('\n');
+    assert.match(problems, /assets\/bg\/a\.webp: its row differs from the (high|light) pack's/);
+    assert.match(problems, /verified against another art-manifest\.json/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('fetch-art --agree is retired with the trees: it exits 2 and says so', () => {
   const tool = fileURLToPath(new URL('../tools/fetch-art.mjs', import.meta.url));
   return new Promise((done, fail) => {
