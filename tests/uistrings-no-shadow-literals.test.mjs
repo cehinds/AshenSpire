@@ -119,20 +119,24 @@ function migratedTexts() {
   return texts;
 }
 
+// Compiled once, swept once: both assertions below read the same hits.
+let swept;
 function sweep() {
-  const texts = migratedTexts();
+  if (swept) return swept;
+  const patterns = [...migratedTexts()].map(([text, rows]) => ({
+    text, rows, re: new RegExp(`(?<=['"\`>])${reEscape(text)}(?=['"\`<]| ?\\$\\{| ['"\`])`),
+  }));
   const hits = [];
   for (const path of walk(join(ROOT, 'src/ui'))) {
     const file = relative(ROOT, path).split('\\').join('/');
     const lines = stripComments(readFileSync(path, 'utf8')).split('\n');
     lines.forEach((line, index) => {
-      for (const [text, rows] of texts) {
-        const re = new RegExp(`(?<=['"\`>])${reEscape(text)}(?=['"\`<]| ?\\$\\{| ['"\`])`, 'g');
-        if (re.test(line)) hits.push({ file, line: index + 1, text, rows, source: line.trim().slice(0, 120) });
+      for (const { text, rows, re } of patterns) {
+        if (line.includes(text) && re.test(line)) hits.push({ file, line: index + 1, text, rows, source: line.trim().slice(0, 120) });
       }
     });
   }
-  return hits;
+  return (swept = hits);
 }
 
 test('the sweep has rows to sweep', () => {
