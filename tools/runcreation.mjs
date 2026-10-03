@@ -305,15 +305,29 @@ function groupC(registries) {
     const saves = createSaveManager(storage);
     const run = createRunState({ seed: 0x4303, classId: 'reaver', registries });
     saves.saveRun(run, createRng(run.seed), 1);
-    const o = JSON.parse(storage.getItem(RUN_KEY));
-    o.schemaVersion = 99; // a version no migration knows
+    const written = storage.getItem(RUN_KEY);
+    // A NEWER schema is refused and PRESERVED (SPEC §3.12, #1304): state
+    // 'newer', nothing archived, the bytes left in the slot for the newer
+    // build. That is a refusal too, and it must say which version it met.
+    const newer = JSON.parse(written);
+    newer.schemaVersion = RUN_SCHEMA_VERSION + 79;
+    const newerBytes = JSON.stringify(newer);
+    storage.setItem(RUN_KEY, newerBytes);
+    assert(saves.loadRun(registries, 1) === null, 'a newer schemaVersion was accepted');
+    const nst = saves.runStatus();
+    assert(nst.state === 'newer', `a newer-build save reported '${nst.state}', not 'newer'`);
+    assert(nst.reason && new RegExp(`schemaVersion ${newer.schemaVersion}\\b`).test(nst.reason), `the newer refusal did not name the version: ${j(nst.reason)}`);
+    assert(!nst.archiveId && storage.getItem(RUN_KEY) === newerBytes, 'a newer-build save was archived or moved; it must stay in its slot');
+    // An OLDER version no migration knows is refused and ARCHIVED.
+    const o = JSON.parse(written);
+    o.schemaVersion = 0; // below v1: a version no migration knows, and not newer
     storage.setItem(RUN_KEY, JSON.stringify(o));
     assert(saves.loadRun(registries, 1) === null, 'an unknown schemaVersion was accepted');
     const st = saves.runStatus();
     assert(st.state === 'archived', `a refused save reported '${st.state}'`);
-    assert(st.reason && /schemaVersion 99/.test(st.reason), `the refusal did not name the version: ${j(st.reason)}`);
+    assert(st.reason && /schemaVersion 0\b/.test(st.reason), `the refusal did not name the version: ${j(st.reason)}`);
     assert(st.archiveId, 'the refusal reported no archive id, so the drawer cannot be reached from the status');
-    return `state 'archived', reason names schemaVersion 99, archive ${st.archiveId}`;
+    return `newer v${newer.schemaVersion} kept in its slot ('newer'); unknown v0 'archived', reason names it, archive ${st.archiveId}`;
   });
 }
 
