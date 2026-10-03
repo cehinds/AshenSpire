@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1523",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: browser checks follow the art and wording updates",
+    "detail": "The hand-placement, animation and flask-menu checks use the verified art packs. The Fullscreen test follows the shared wording table, and flask checks report their result in the format CI reads.",
+    "build": "0.7.1.825",
+    "pullRequest": 1523,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1523"
+  },
+  {
     "id": "pr-1521",
     "date": "2026-10-02",
     "group": "2026-10-02",

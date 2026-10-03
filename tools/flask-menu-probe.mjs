@@ -1030,7 +1030,7 @@ async function main(args) {
     await launched.close();
     served.server.close();
   }
-  console.log(`\nflask-menu-probe: ${pass} passed, ${fail} failed`);
+  console.log(`\n${pass} passed, ${fail} failed`);
   return fail ? 1 : 0;
 }
 

@@ -794,6 +794,9 @@ jobs:
         with:
           lfs: false # the probe serves the source tree
       - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       - name: Every flask menu offers the shared plan, and a map Potions choice does and saves what was chosen
@@ -821,6 +824,9 @@ jobs:
         with:
           lfs: false # the probe serves the source tree
       - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       - name: ...and that probe can fail (its plants, this leg's half)
@@ -1158,8 +1164,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: false # the art is plain git (not LFS), so the probe's figures load
+          lfs: false # figures are fetched from the pinned art packs below
       - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
       - name: Every combatant idles, and reduced motion leaves nothing over 0.01 s in one turn
         if: matrix.shard == '0/3'
