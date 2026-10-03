@@ -48,7 +48,9 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → tests (ubuntu, windows, macOS) | no | yes |
 | `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
 | `ci.yml` → the checks that need a real browser | no | yes |
+| `ci.yml` → idle animation and reduced motion in a real browser (`motion-probe.mjs` and its `--selftest`) | no | yes |
 | `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
+| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>` ([desktop/windows/README.md](desktop/windows/README.md)) | only when the PR touches `desktop/` | yes (also `main`) |
 
 The workflows' own `on:` blocks and job `if:` conditions are the source of this
 table; a skipped job shows on the PR as *skipped*, not as missing.
@@ -275,6 +277,19 @@ moves, phases, seeded encounter reachability and ten named boss locations.
 `node tests/branchingBosses.test.mjs` covers map and save compatibility.
 `node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
 using trusted desktop and phone inputs, including OS and in-game Reduced motion.
+`node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
+and checks that every combatant's visible, loaded figure image is moved by
+exactly one running idle bob (on the image or its `.pose-layer` / `.facing`
+layer, or the Rendered style's `.rendered-stage`), whose keyframes really displace
+it (an opacity pulse or another infinite animation does not count), at boot, after a turn, and with the player redrawn in the Rendered and
+Classic sprite styles. It then plays one full turn under the Reduced motion setting with
+the OS preference emulated, the setting alone and the OS alone: no animation
+`document.getAnimations()` or `Element.animate()` reports may run longer than
+0.01 s (a CSS animation or transition that ends between two frames is caught
+by its end event), and no script flipbook or tween (3+ changes to one element
+inside 1 s) may run. A motion-on turn is the control that proves the sampler sees both
+kinds. A hand with no Attack is passed with End Turn until one is drawn (the
+selftest runs one plant and its clean copy at `--seed T14`, an all-Skill opening hand). `--selftest` plants sixteen known-bads through `doorplant.mjs` (CI runs them in 3 shards, `--shard i/3`).
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in
@@ -711,6 +726,24 @@ node tools/slot-load-door.mjs
 node tools/slot-load-door.mjs --selftest
 ```
 
+Changes to a flask menu (combat's Potions list, the map's Potions control in
+`components/runPotions.js`, the run HUD's room-rail icons) or to how the map
+reads "Use flasks outside combat" run the real menus in Chromium: what each
+offers must equal `flaskActionPlan` for the Crimson and Azure flasks and the
+carried potions, every map Potions choice must do exactly that action, a
+Potions action and a setting change must be saved and survive the map's
+remount with the selected destination kept, and the world atlas must not remount for that setting. Its
+`--selftest` plants nineteen known-bads, each in its own copied tree
+(`--shard i/n` runs part of them). They run in `ci.yml`'s *every flask menu in
+a real browser* and, in two shards, *flask-menu known-bads in a real browser*;
+`tools/flask-action-contract.mjs`
+keeps the Node half (the pure plan, the map model, co-op's host intent):
+
+```bash
+node tools/flask-menu-probe.mjs            # --only persistence|dispatch|plan
+node tools/flask-menu-probe.mjs --selftest
+```
+
 Exact combat-save changes additionally run the real Save / Save and Quit /
 Load-review path at desktop and phone sizes, plus its copied-tree known-bad
 corpus:
@@ -919,7 +952,7 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 `node tools/sfx-filename-convention.mjs` after changing this contract.
 
 Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
-D38 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
+D48 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
 timeline per beat, `playEventCues` for instant playback and a fresh fight's
 opening (a boss fight's waits for its name splash to close), and
 `playReceiptSounds` for co-op receipts (`coopReceiptSounds` in

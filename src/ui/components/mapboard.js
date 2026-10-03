@@ -436,6 +436,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const clipNote = host.querySelector('.map-clipnote');
 
   let drawnCount = 0;
+  // What each drawn node shows, as onPick hands it: a redraw that restores a
+  // selection reads the destination's reading back from here (readingOf).
+  const drawnReadings = new Map();
   for (const n of nodes) {
     // HIDDEN IS NOT `display:none` — the element is never created. A node the
     // player is not meant to know exists must not be in the DOM for a curious
@@ -450,6 +453,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const rd = nodeReading(n, { reveal });
     const shownType = rung === KNOWN ? rd.shownType : 'event';
     const revealed = rung === KNOWN && rd.revealed;
+    drawnReadings.set(n.id, { shownType, revealed });
     const extra = viewer.classes ? viewer.classes(n) : '';
     const cls = [
       'map-node',
@@ -1393,6 +1397,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   return {
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
     recenter, resetFraming, centerOnNode, stepZoom, teardown,
+    readingOf: (id) => drawnReadings.get(id) || null,
     get zoom() { return zoom; },
   };
 }
