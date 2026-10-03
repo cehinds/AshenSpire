@@ -669,6 +669,7 @@ export function createSession({ registries, seedString, endless = false, restore
       headcount: connectedMembers().length,
       enemies: c.enemies.map((e) => ({
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
+        ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
         alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
         // WHAT IT HAS ALREADY DONE. The engine records every move that
         // RESOLVED on `performedMoves` (coopCombat.js, beside combat.js's own
@@ -687,6 +688,7 @@ export function createSession({ registries, seedString, endless = false, restore
       })),
       players: [...c.players.values()].map((P) => ({
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
+        ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
         mana: P.entity.mana, maxMana: P.entity.maxMana,
         stamina: P.entity.stamina, maxStamina: P.entity.maxStamina,
         attributeMode: P.attributeMode, attributes: { ...P.attributes },

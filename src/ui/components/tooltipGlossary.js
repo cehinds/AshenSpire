@@ -1,4 +1,5 @@
 import { statusTooltipText } from '../uiContent.js';
+import { t } from '../strings.js';
 import { registerTooltipDecorator } from './tooltip.js';
 import { terms as frameworkTerms } from '../../framework/data/terms.js';
 
@@ -32,7 +33,7 @@ export function configureTooltipGlossary(registries) {
     }
     // Classification tags explain themselves where rendered. Matching their
     // ordinary words in prose ("decay", "heavy") would invent unrelated links.
-    add('Block', 'Absorbs attack damage. Expires at the start of its owner’s turn unless an effect preserves it.');
+    add(t('combat.protection.block'), 'Absorbs attack damage. Expires at the start of its owner’s turn unless an effect preserves it.');
     add('Poise', 'Poise damage builds toward an enemy’s Stagger threshold.');
     const names = [...terms.keys()].sort((a, b) => b.length - a.length);
     const pattern = names.length ? new RegExp(`\\b(${names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'gi') : null;
