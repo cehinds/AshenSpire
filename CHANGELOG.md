@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Specify formation positioning and reward defaults** ([#1544](https://github.com/cehinds/AshenSpire/pull/1544), `0.7.1.846`). Record the approved mirrored spawn order, authored layout profiles and separate combat, skill and class reward rolls before implementation.
+
 - **The Windows installer lets you browse and download art versions** ([#1533](https://github.com/cehinds/AshenSpire/pull/1533), `0.7.1.843`). A high-quality artwork button opens art-repository branch and published-version choices, shows installed, required and latest art versions, and lets you install the game's matching pack or save another verified release separately. The installer discloses ChatGPT-generated artwork. README links and action buttons each have their own row, while its opening description stays a plain sentence.
 
 - **One turn budget, with an emerald stamina orb** ([#1530](https://github.com/cehinds/AshenSpire/pull/1530), `0.7.1.842`). Every class starts with 3 base SP, growing with Dexterity, Constitution, Wisdom, Intelligence and level. Cards and combat actions spend Stamina once, and it refills each turn. The approved emerald orb and weathered harness replace the action counter in solo and co-op, with independently positioned number and SP label. Sapphire diamonds show available mana around the rim; turn Mana ring off in Combat settings to use the top MP bar. Cards use green stamina diamonds. The component artwork is published in the separate art repository and the layout editor remains available.
