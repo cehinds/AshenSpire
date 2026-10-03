@@ -38,6 +38,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';
   if (!nonEmptyString(entity[defKey])) problems.push(`${path}.${defKey} must be a non-empty string`);
+  if (entity.classUnequipped !== undefined && typeof entity.classUnequipped !== 'boolean') problems.push(`${path}.classUnequipped must be a boolean`);
   for (const key of ['hp', 'maxHp', 'block']) {
     if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
   }

@@ -64,9 +64,9 @@ export function projectZones(run) {
   for (const [zone, slotId] of Object.entries(HAND_SLOT_IDS)) hands[zone] = activeIn(loadout, slotId);
   return {
     zones: {
-      core: idOrNull(run && run.class),
+      core: run?.classUnequipped ? null : idOrNull(run && run.class),
       // The core card's picked tree nodes (plan phase 5b), a copy of run.coreTags.
-      coreTags: Array.isArray(run && run.coreTags) ? run.coreTags.filter((id) => typeof id === 'string' && id) : [],
+      coreTags: !run?.classUnequipped && Array.isArray(run && run.coreTags) ? run.coreTags.filter((id) => typeof id === 'string' && id) : [],
       worn,
       hands,
       passive: Array.isArray(run && run.relics) ? run.relics.filter((id) => typeof id === 'string' && id) : [],

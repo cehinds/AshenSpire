@@ -38,6 +38,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-02
 
+- **Read a book, learn a card, keep your class progress** ([#1521](https://github.com/cehinds/AshenSpire/pull/1521), `0.7.1.824`). Manuals grant their XP and an immediate matching card choice, including cross-class skills. Spellbooks teach spells, Universal Tomes let you choose a track and lesson, and class books unlock reusable class cards that can be equipped or removed to leave an empty slot. The shop's book rows have matching sizes and separate book, details and Buy columns. Ten customizable book recipes combine three painted cover styles, thirty independent symbol variants, colors and trim; Book Atelier exports artwork recipes for future updates. Art comes from the verified `hd-assets-v4` pack, including its existing uniform light-sprite policy.
+
 - **Behind the scenes: the art now lives only in its own repository** ([#1516](https://github.com/cehinds/AshenSpire/pull/1516), `0.7.1.822`). Nothing you play changes. The pictures, fonts, music and map tiles were stored twice, here and in the art repository; the copies here are gone, so a fresh download of the source is about 1.9 GB lighter. Every build now takes its art from the pinned art release, checked file by file, exactly as it already did.
 - **Behind the scenes: the game's wording lives in one table again** ([#1489](https://github.com/cehinds/AshenSpire/pull/1489), `0.7.1.821`). Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.
 
