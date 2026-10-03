@@ -2,6 +2,7 @@ import { FORMATION_GROUPS_KEY, formationGroups, formationGroupOptions, formation
 import { esc } from './tooltip.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { t } from '../strings.js';
+import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 let positioningId = 0;
 
 export function formationPositioningHtml() {
@@ -190,22 +191,28 @@ export function wireCombatPositioning(root, { readSettings, onSettingsChange, on
 }
 
 export function wirePositionWindow(handle, target) {
-  let drag;
+  let windowDrag, dragZoom = 1;
   handle.addEventListener('pointerdown', event => {
     if (event.button !== 0) return;
     const rect = target.getBoundingClientRect(), parent = target.offsetParent?.getBoundingClientRect() || {left:0,top:0};
     const zoom = rect.width / target.offsetWidth || 1;
-    drag = { x:event.clientX, y:event.clientY, left:(rect.left-parent.left)/zoom, top:(rect.top-parent.top)/zoom, zoom };
+    const origin = anchorLocalBox(parent, rect, {zoom});
+    const start = anchorLocalBox(VIEWPORT_ORIGIN, {left:event.clientX,top:event.clientY,width:0,height:0}, {zoom});
+    windowDrag = { origin, start };
+    dragZoom = zoom;
     target.style.margin = '0'; target.style.right = 'auto'; target.style.bottom = 'auto';
-    target.style.left = `${drag.left}px`; target.style.top = `${drag.top}px`;
+    target.style.left = `${origin.left}px`; target.style.top = `${origin.top}px`;
     handle.setPointerCapture(event.pointerId); event.preventDefault();
   });
   handle.addEventListener('pointermove', event => {
-    if (!drag) return;
+    if (!windowDrag) return;
     const parent = target.offsetParent;
-    const width = parent?.clientWidth || window.innerWidth/drag.zoom, height = parent?.clientHeight || window.innerHeight/drag.zoom;
-    target.style.left = `${Math.max(0, Math.min(width-target.offsetWidth,drag.left+(event.clientX-drag.x)/drag.zoom))}px`;
-    target.style.top = `${Math.max(0, Math.min(height-48/drag.zoom,drag.top+(event.clientY-drag.y)/drag.zoom))}px`;
+    const view = anchorLocalBox(VIEWPORT_ORIGIN, {left:0,top:0,width:window.innerWidth,height:window.innerHeight}, {zoom:dragZoom});
+    const point = anchorLocalBox(VIEWPORT_ORIGIN, {left:event.clientX,top:event.clientY,width:0,height:0}, {zoom:dragZoom});
+    const grip = anchorLocalBox(VIEWPORT_ORIGIN, {left:0,top:0,width:0,height:48}, {zoom:dragZoom});
+    const width = parent?.clientWidth || view.width, height = parent?.clientHeight || view.height;
+    target.style.left = `${Math.max(0, Math.min(width-target.offsetWidth,windowDrag.origin.left+point.left-windowDrag.start.left))}px`;
+    target.style.top = `${Math.max(0, Math.min(height-grip.height,windowDrag.origin.top+point.top-windowDrag.start.top))}px`;
   });
-  for (const name of ['pointerup','pointercancel']) handle.addEventListener(name, () => { drag = null; });
+  for (const name of ['pointerup','pointercancel']) handle.addEventListener(name, () => { windowDrag = null; });
 }

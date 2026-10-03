@@ -30,7 +30,8 @@ test('default spawns use the bottom row and opposite outer columns at every grid
 
 test('all selectable dimensions and presets give unique uniform cells and matching actor anchors', () => {
   for (const { value: formationPreset } of FORMATION_PRESETS) for (const formationColumns of [1, 2, 3]) for (const formationRows of [1, 2, 3, 4, 5, 6]) for (const width of [320, 1440]) {
-    const presentation = config({ formationPreset, formationColumns, formationRows, playerSpawnRow: 'F', enemySpawnRow: 'F' });
+    // Validate the unshifted preset geometry independently of the owner's saved group offsets.
+    const presentation = config({ formationPreset, formationColumns, formationRows, playerSpawnRow: 'F', enemySpawnRow: 'F', formationGroups: '[]' });
     const capacity = formationColumns * formationRows;
     const plan = combatFormation({ width, height: 400, friends: ids(capacity), enemies: ids(capacity).map(id => `enemy-${id}`), presentation });
     assert.equal(plan.cells.length, capacity * 2);
