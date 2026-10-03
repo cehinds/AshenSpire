@@ -15,7 +15,9 @@ import { deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
 
 import { deckRules } from '../content/deckRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
-import { isItemOwned, stampDeck } from './loadout.js';
+import { equippedPieces, isItemOwned, pieceItemRef, stampDeck } from './loadout.js';
+import { resolveCard } from './registries.js';
+import { tagService } from './tagService.js';
 
 const D = deckRules.defaults;
 
@@ -88,6 +90,30 @@ export function isUnlimitedBasic(card) {
   return !card.equipmentRole && deckRules.unlimitedCardIds.includes(card.cardId);
 }
 
+/** The editor's equipment gate, shared by its projection and mutation door. */
+export function deckCardEquipmentEligible(registries, run, card) {
+  if (!card) return false;
+  const pieces = equippedPieces(registries, run.loadout, run.class);
+  // A lent card remains an instance of its source item's mount. Restoring it
+  // while that mount is absent would make the next restamp discard it.
+  if (card.grantedBy) return String(card.grantedBy).startsWith('unarmed:')
+    || pieces.some((piece) => card.grantedBy === piece.id || card.grantedBy === pieceItemRef(piece));
+  if (isUnlimitedBasic(card) || deckRules.unlimitedCardIds.includes(card.cardId)) return true;
+  const tags = resolveCard(registries, card).tags || [];
+  const rules = deckRules.equipmentEligibility;
+  if (tags.some((tag) => rules.universalTags.includes(tag))) return true;
+  const schools = new Set(tagService(registries).inDomain('card').map((tag) => tag.id));
+  const equipmentSchools = new Set([...(registries.equipment?.armaments || []), ...(registries.equipment?.armour || [])]
+    .flatMap((piece) => piece.tags || []).filter((tag) => schools.has(tag) && !rules.universalTags.includes(tag)));
+  const required = tags.filter((tag) => equipmentSchools.has(tag));
+  if (!required.length) return true;
+  const held = new Set(pieces.flatMap((piece) => piece.tags || []));
+  // Explicit weapon identity wins over a shared secondary school (a bow's
+  // pierce or flourish must never accidentally unlock a blade ability).
+  const identities = required.filter((tag) => rules.weaponTags.includes(tag));
+  return identities.length ? identities.some((tag) => held.has(tag)) : required.some((tag) => held.has(tag));
+}
+
 /** How many copies of a card id the run owns (deck ∪ sideboard). */
 export function ownedCopies(run, cardId) {
   return [...(run.deck || []), ...(run.sideboard || [])].filter((c) => c && c.cardId === cardId).length;
@@ -130,13 +156,13 @@ function restamp(registries, run) {
 
 /**
  * moveToSideboard(registries, run, instanceId) → true when the card left the deck.
- * An item-owned card is locked (the Armoury decides it). An attack basic's slot
+ * Every card may leave the deck. An attack basic's slot
  * is retired and the instance kept; a plain unlimited basic is deleted.
  */
 export function moveToSideboard(registries, run, instanceId) {
   const index = run.deck.findIndex((c) => c && c.instanceId === instanceId);
   const card = run.deck[index];
-  if (!card || card.grantedBy || isItemOwned(card)) return false;
+  if (!card) return false;
   if (card.equipmentAttackSlotId) {
     const count = slotCount(run);
     const retired = retiredAttackSlots(count, run.removedAttackSlotIds || []);
@@ -149,7 +175,7 @@ export function moveToSideboard(registries, run, instanceId) {
   // A pristine plain basic has nothing to keep; an upgraded or modded one is
   // kept like any owned card and comes back before a fresh one is minted.
   const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length);
-  if (!card.equipmentRole && deckRules.unlimitedCardIds.includes(card.cardId) && pristine) return true;
+  if (!card.equipmentRole && !card.grantedBy && deckRules.unlimitedCardIds.includes(card.cardId) && pristine) return true;
   sideboard(run).push(card);
   return true;
 }
@@ -167,6 +193,7 @@ export function moveFromSideboard(registries, run, instanceId, settings = {}) {
   const pile = sideboard(run);
   const index = pile.findIndex((c) => c && c.instanceId === instanceId);
   if (index < 0) return false;
+  if (!deckCardEquipmentEligible(registries, run, pile[index])) return false;
   const inDeck = run.deck.filter((c) => c && c.cardId === pile[index].cardId).length;
   if (inDeck >= deckCopyLimit(registries, pile[index].cardId, settings, run.class)) return false;
   const [card] = pile.splice(index, 1);

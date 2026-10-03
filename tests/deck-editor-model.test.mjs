@@ -62,9 +62,8 @@ test('Failed mutations and reorder no-ops do not consume an Undo step', () => {
   assert.equal(edit.canUndo, false);
   assert.equal(edit.add('basic:guard').ok, true);
   const changed = beginDeckEdit(run);
-  const locked = run.deck.find((card) => card.grantedBy);
   const reward = run.deck.find((card) => !card.equipmentRole && !card.grantedBy);
-  assert.equal(edit.remove(locked.instanceId).ok, false);
+  assert.equal(edit.remove('missing').ok, false);
   assert.equal(edit.add(`card:${deckVariantKey(reward)}`).ok, false);
   assert.equal(edit.add('kept:missing~~').ok, false);
   assert.equal(edit.moveTo(run.deck[0].instanceId, 0).ok, false);

@@ -7001,5 +7001,75 @@ export const uiStrings = [
     "short": "Removed {name} from your deck.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "deckEditor.animation",
+    "extends": "",
+    "short": "Card animation",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.play",
+    "extends": "",
+    "short": "Play",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.pause",
+    "extends": "",
+    "short": "Pause",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.still",
+    "extends": "",
+    "short": "Card pose",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.unavailable",
+    "extends": "",
+    "short": "No animation available for this card.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.art.alternative",
+    "extends": "",
+    "short": "Alternative artwork",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.art.basicOnly",
+    "extends": "",
+    "short": "Basic artwork is available. Alternative artwork has not been added yet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspectAction",
+    "extends": "",
+    "short": "Inspect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.equipmentNotFound",
+    "extends": "",
+    "short": "Equipment not found",
+    "full": "This card's equipment is no longer in your loadout.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.refuse.equipment",
+    "extends": "deckEditor.equipmentNotFound",
+    "short": "",
+    "full": "",
+    "tip": ""
   }
 ];

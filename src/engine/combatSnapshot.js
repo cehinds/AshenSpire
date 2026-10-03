@@ -52,6 +52,7 @@ export function serializeCombatSnapshot(combat) {
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
+    ...(combat.sideboardedEquipmentCardIds?.length ? { sideboardedEquipmentCardIds: combat.sideboardedEquipmentCardIds } : {}),
     ...(combat.poolDeck ? { poolDeck: true } : {}),
     itemUpgradeLevels: combat.itemUpgradeLevels,
     itemMounts: combat.itemMounts,
@@ -146,6 +147,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
+    sideboardedEquipmentCardIds: saved.sideboardedEquipmentCardIds || [],
     // The run's own rule backs the snapshot's flag (model/cardRemoval.js), and
     // when the caller knows the run the two must agree, never be OR-ed.
     ...(restoredPoolDeck(saved.poolDeck, fallbackPoolDeck) ? { poolDeck: true } : {}),
