@@ -81,6 +81,7 @@ export function wireBattlefieldStage(field, model) {
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }
+      field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
       field.dispatchEvent(new Event('formationlayoutchange'));
     }
     // Writes first, then reads: resetting each sprite's zoom immediately before
@@ -101,7 +102,7 @@ export function wireBattlefieldStage(field, model) {
       const leadingHost = frame.querySelector('.combatant-leading');
       const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
-        * wireframeUi.formation.displayScale;
+        * wireframeUi.formation.displayScale * (slot.characterScale || 1);
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, multiplier, ...geometry, leadingHost,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.

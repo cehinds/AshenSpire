@@ -723,6 +723,16 @@ function collectContentProblems(bundle, errors = []) {
     }
   }
 
+  if (b.balance?.rewards?.sourceBonuses !== undefined) {
+    const bonuses = b.balance.rewards.sourceBonuses;
+    const keys = ['combatFeatChancePct', 'classFeatChancePct', 'classCardChancePct'];
+    if (!bonuses || typeof bonuses !== 'object' || Array.isArray(bonuses)) err('balance.rewards.sourceBonuses', 'must be an object');
+    else {
+      for (const key of Object.keys(bonuses)) if (!keys.includes(key)) err(`balance.rewards.sourceBonuses.${key}`, 'Unknown field');
+      for (const key of keys) if (!Number.isInteger(bonuses[key]) || bonuses[key] < 0 || bonuses[key] > 100) err(`balance.rewards.sourceBonuses.${key}`, 'must be an integer percent 0–100');
+    }
+  }
+
   if (b.balance && b.balance.level !== undefined) {
     const lv = b.balance.level;
     if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');

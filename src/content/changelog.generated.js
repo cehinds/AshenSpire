@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1548",
+    "id": "pr-1543",
     "date": "2026-10-03",
     "group": "2026-10-03",
-    "summary": "Combat browser checks keep pace with the game",
-    "detail": "Checks recognize the shared Stamina artwork and catch invisible or covered SVG text. A controlled sprite-overlap case keeps intent buttons reachable, and the full-run driver plays affordable attacks and defensive cards through the normal controls. Gameplay is unchanged.",
-    "build": "0.7.1.858",
-    "pullRequest": 1548,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1548"
+    "summary": "Place and size your combat formations with a live workbench",
+    "detail": "Move whole rows, columns, teams or custom groups, snap to a 50 px grid, resize characters, test mixed classes and enemies in 1×1, 2×2 or 2×3 layouts, and export the positioning as JSON. The supplied 1×1 and 2×2 layouts retain their own offsets. Spawns fill from opposite bottom corners. Combat now rolls a card at 10% and a separate feat at 5%; skill levels guarantee a card draft, while class levels keep their tree upgrade and add a guaranteed feat plus an independent 25% technique-card chance.",
+    "build": "0.7.1.859",
+    "pullRequest": 1543,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1543"
   },
   {
     "id": "pr-1544",
