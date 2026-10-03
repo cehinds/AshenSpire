@@ -84,15 +84,27 @@ test('a verified pack is read from the cache, whatever the mode but trees', () =
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('known-bad: an unfetched pack is an error naming the fetch, never a fallback (the trees are gone)', () => {
+test('auto uses local light art; other unfetched packs and explicit cache still require a verified release', () => {
   const root = fixture([], { trees: true });
   try {
     for (const [tree, pack] of Object.entries(PACK_TREES)) {
       for (const env of [{}, { ASHEN_ART_SOURCE: 'cache' }]) {
+        if (tree === 'assets-mobile' && !env.ASHEN_ART_SOURCE) {
+          assert.equal(artDir(tree, { root, env }).from, 'trees');
+          continue;
+        }
         assert.throws(() => artDir(tree, { root, env }), new RegExp(`step 13.*fetch-art\\.mjs --pack ${pack}`), `${tree} is not read from the leftover tree`);
       }
     }
     assert.throws(() => artPath('assets/bg/a.webp', { root }), /fetch-art\.mjs --pack high/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('local light art wins in auto even when the light release is cached', () => {
+  const root = fixture(['light'], { trees: true });
+  try {
+    assert.equal(artDir('assets-mobile', { root }).from, 'trees');
+    assert.equal(artDir('assets-mobile', { root, env: { ASHEN_ART_SOURCE: 'cache' } }).from, 'cache');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -150,7 +162,7 @@ test('the CLI names each tree\'s directory from the cache, or fails naming the f
   // a fetched cache, or the run fails and names the fetch for the missing pack.
   const r = spawnSync(process.execPath, [TOOL, '--which'], { encoding: 'utf8', env: { ...process.env, ASHEN_ART_SOURCE: 'auto' } });
   if (r.status === 0) {
-    for (const tree of Object.keys(PACK_TREES)) assert.match(r.stdout, new RegExp(`^${tree.replace('/', '\\/')}\\s+(high|light|common)\\s+cache\\s+\\.art-cache/`, 'm'));
+    for (const tree of Object.keys(PACK_TREES)) assert.match(r.stdout, new RegExp(`^${tree.replace('/', '\\/')}\\s+(high|light|common)\\s+${tree === 'assets-mobile' ? 'trees\\s+assets-mobile' : 'cache\\s+\\.art-cache/'}`, 'm'));
   } else {
     assert.equal(r.status, 1);
     assert.match(r.stderr, /art-source: FAIL — .*node tools\/fetch-art\.mjs --pack (high|light|common)/);
