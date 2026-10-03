@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1517",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Your phone can buzz on card play, damage taken and turn start",
+    "detail": "On a device that can vibrate, playing a card, losing HP and the start of your turn each give a short buzz of its own. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.",
+    "build": "0.7.1.822",
+    "pullRequest": 1517,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1517"
+  },
+  {
     "id": "pr-1489",
     "date": "2026-10-02",
     "group": "2026-10-02",

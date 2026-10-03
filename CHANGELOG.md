@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Your phone can buzz on card play, damage taken and turn start** ([#PRNUM](https://github.com/cehinds/AshenSpire/pull/PRNUM), `0.7.1.822`). On a device that can vibrate, playing a card, losing HP and the start of your turn each give a short buzz of its own. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.
+- **Your phone can buzz on card play, damage taken and turn start** ([#1517](https://github.com/cehinds/AshenSpire/pull/1517), `0.7.1.822`). On a device that can vibrate, playing a card, losing HP and the start of your turn each give a short buzz of its own. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.
 
 ## 2026-10-02
 
