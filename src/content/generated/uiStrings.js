@@ -4716,15 +4716,15 @@ export const uiStrings = [
   {
     "id": "deckEditor.pane.deck",
     "extends": "",
-    "short": "Deck",
-    "full": "The cards you will fight with. Tap one to take it out.",
+    "short": "Your Deck",
+    "full": "Select a card to inspect it. Use Remove to take a copy out.",
     "tip": "Deck"
   },
   {
     "id": "deckEditor.pane.collection",
     "extends": "",
-    "short": "Collection",
-    "full": "Every card you own. Tap one to add it to the deck.",
+    "short": "Card Library",
+    "full": "Select a card to inspect it. Use Add to put a copy in your deck.",
     "tip": "Collection"
   },
   {
@@ -5010,7 +5010,7 @@ export const uiStrings = [
   {
     "id": "deckEditor.keys",
     "extends": "",
-    "short": "Tap, ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
+    "short": "Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
     "full": "",
     "tip": ""
   },
@@ -6873,6 +6873,62 @@ export const uiStrings = [
     "id": "lore.line.hint",
     "extends": "",
     "short": "— read the lore",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.readingDesk",
+    "extends": "",
+    "short": "Reading Desk",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.readingHint",
+    "extends": "",
+    "short": "Build your deck one card at a time.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.filterSort",
+    "extends": "",
+    "short": "Filters and sort",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspect",
+    "extends": "",
+    "short": "Inspect card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspectNamed",
+    "extends": "",
+    "short": "Inspect {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.search",
+    "extends": "",
+    "short": "Search cards…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.addSelected",
+    "extends": "",
+    "short": "Add to deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.removeSelected",
+    "extends": "",
+    "short": "Remove from deck",
     "full": "",
     "tip": ""
   }

@@ -9,7 +9,7 @@
 // piles, the attack-slot allocation and the mint counter come back exactly.
 //
 // EVERY DRAG HAS TWO TWINS (SPEC §14.1 UX). A card moves by:
-//   · a tap on its tile or row (the main face is one big button),
+//   · the selected card's explicit Add / Remove action (a row tap inspects),
 //   · the row's own ＋ or － button,
 //   · a drag, on pointer events so a finger drags as well as a mouse,
 //   · the keyboard: + adds the focused tile, − or Delete removes the focused
@@ -30,6 +30,12 @@ import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
+import { renderCard, staticTokens } from '../components/card.js';
+import { resolveCard } from '../../model/registries.js';
+import { playingCardArt } from '../deckReadingArt.js';
+import { assetUrl } from '../assetmap.js';
+import { cardShapeCssProperties } from '../models/CardSizeModel.js';
+import { keywordExplanations } from '../components/tooltipGlossary.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
 // (input.js hands every other press to the focus cursor and the bindings).
@@ -64,6 +70,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let notice = '';
   let model = null;
   let releaseGate = null;
+  let selected = null;
+  let query = '';
+  let mobileView = 'collection';
+  let filtersOpen = false;
 
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
@@ -78,7 +88,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const focusable = (node, key) => {
     node.dataset.focusKey = key;
     node.dataset.focusable = 'true';
-    node.addEventListener('focus', () => { focusKey = key; pane = node.closest?.('[data-pane]')?.dataset.pane || pane; });
+    const remember = () => { focusKey = key; pane = node.closest?.('[data-pane]')?.dataset.pane || pane; };
+    node.addEventListener('gpfocus', remember);
+    node.addEventListener('focus', () => { remember(); focusElement(node); });
     return node;
   };
 
@@ -108,7 +120,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       ]));
     }
     return el('header', { class: 'deck-editor-head' }, [
-      el('h2', { id: 'deck-editor-title', class: 'deck-editor-title', text: t('deckEditor.title') }),
+      el('div', {}, [
+        el('h2', { id: 'deck-editor-title', class: 'deck-editor-title', text: t('deckEditor.readingDesk') }),
+        el('p', { class: 'deck-editor-subtitle', text: t('deckEditor.readingHint') }),
+      ]),
       counter,
       curve,
     ]);
@@ -135,7 +150,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       view = deckEditorView({ ...view, sort: s.id });
       draw();
     }, `sort:${s.id}`));
-    return el('div', { class: 'deck-editor-tools' }, [
+    const details = el('details', { class: 'deck-editor-tools', open: filtersOpen }, [
+      el('summary', { text: t('deckEditor.filterSort') }),
       el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.filters') }, [
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.filters') }), ...filterChips,
       ]),
@@ -145,14 +161,112 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.sort') }), ...sortChips,
       ]),
     ]);
+    details.addEventListener('toggle', () => { filtersOpen = details.open; });
+    return details;
+  }
+
+  function rulesFor(row) {
+    const def = resolveCard(registries, row.ref);
+    const tokens = staticTokens(def);
+    return String(def.textTemplate || '').replace(/\{([^}]+)\}/g, (match, key) => tokens[key] ?? match);
+  }
+
+  function artwork(row, large = false) {
+    const art = playingCardArt(row.ref, { large });
+    const img = el('img', {
+      class: `deck-editor-art${art?.kind === 'outline' ? ' outline' : ''}`,
+      src: art ? assetUrl(art.path) : '', alt: '', draggable: 'false',
+    });
+    img.addEventListener('error', () => { img.hidden = true; });
+    return img;
+  }
+
+  const selectionKey = (row, source) => source === 'collection' ? row.key : row.groupKey;
+  function select(row, source, open = false) {
+    selected = { key: selectionKey(row, source), source, row };
+    if (open) mobileView = 'inspect';
+    panel.dataset.mobileView = mobileView;
+    for (const node of panel.querySelectorAll('.deck-editor-main')) {
+      const on = node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source;
+      node.setAttribute('aria-pressed', String(on));
+    }
+    const inspector = panel.querySelector('.deck-editor-inspector');
+    if (inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
+    updateMobileTabs();
+  }
+
+  function inspectPane() {
+    const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
+    if (!selected) {
+      section.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
+      return section;
+    }
+    const { row, source } = selected;
+    const def = resolveCard(registries, row.ref);
+    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect' });
+    for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
+    // The Reading Desk gives the illustration the reference's larger share;
+    // this does not change the native card layout on any other surface.
+    face.style.setProperty('--card-bands', 'minmax(0, 1fr) minmax(0, 6fr) minmax(0, 2.5fr) minmax(0, .5fr)');
+    const well = face.querySelector('.art');
+    if (well) well.appendChild(artwork(row, true));
+    const addAction = source === 'collection';
+    const allowed = addAction ? row.addable : row.removable;
+    const reason = addAction ? row.refusal : row.lockSentence;
+    const action = focusable(button({
+      label: t(addAction ? 'deckEditor.addSelected' : 'deckEditor.removeSelected'),
+      weight: 'primary', className: 'deck-editor-primary', disabled: !allowed,
+      attrs: { 'aria-describedby': 'deck-editor-selected-reason' },
+    }), 'selected-action');
+    action.addEventListener('click', () => addAction ? add(row.key) : remove(row.instanceId));
+    section.append(
+      el('div', { class: 'deck-editor-reading' }, [face,
+        el('p', { class: 'deck-editor-full-rules', text: rulesFor(row) }),
+        def.flavor ? el('p', { class: 'deck-editor-flavor', text: def.flavor.split('\n')[0] }) : null,
+        ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
+          el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
+        ])),
+      ]),
+      el('div', { class: 'deck-editor-selected-actions' }, [
+        el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reason || (addAction ? row.countText : row.countText || t(`deckEditor.source.${row.source}`)) }),
+        action,
+      ]),
+    );
+    return section;
+  }
+
+  function updateMobileTabs() {
+    for (const node of panel.querySelectorAll('[data-mobile-tab]')) {
+      const on = node.dataset.mobileTab === mobileView;
+      node.setAttribute('aria-pressed', String(on));
+      node.classList.toggle('on', on);
+    }
+    const panes = panel.querySelector('.deck-editor-panes');
+    if (panes) panes.dataset.active = pane;
+  }
+
+  function navigation() {
+    return el('nav', { class: 'deck-editor-mobile-tabs', 'aria-label': t('deckEditor.panes.switch') },
+      ['collection', 'inspect', 'deck'].map((id) => {
+        const node = chip(t(id === 'inspect' ? 'deckEditor.inspect' : `deckEditor.pane.${id}`), mobileView === id, () => {
+          mobileView = id;
+          if (id !== 'inspect') pane = id;
+          panel.dataset.mobileView = id;
+          updateMobileTabs();
+        }, `mobile:${id}`);
+        node.dataset.mobileTab = id;
+        return node;
+      }));
   }
 
   // `grouped` is a deck row standing for several copies; a collection tile's
   // own counts are its meta line, never a badge.
   const cardFace = (row, extra, grouped = false) => [
+    !grouped ? artwork(row) : null,
     el('span', { class: 'deck-editor-cost', 'aria-hidden': 'true', text: row.costBucket === 'X' ? 'X' : String(row.cost) }),
     el('span', { class: 'deck-editor-name', text: row.name }),
     el('span', { class: 'deck-editor-meta', text: extra }),
+    !grouped ? el('span', { class: 'deck-editor-row-rules', text: rulesFor(row) }) : null,
     // Unordered, a deck row stands for every copy of its variant (SPEC §14.7).
     grouped && row.countText ? el('span', { class: 'deck-editor-count', title: tFull('deckEditor.count', { count: row.count }), text: row.countText }) : null,
   ].filter(Boolean);
@@ -162,15 +276,28 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
 
   function collectionPane() {
+    const search = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.search'), 'aria-label': t('deckEditor.search'), value: query }), 'search');
+    search.addEventListener('input', () => {
+      query = search.value;
+      const caret = search.selectionStart;
+      draw();
+      const next = panel.querySelector('.deck-editor-search');
+      next.focus();
+      try { next.setSelectionRange(caret, caret); } catch { /* search selection varies by browser */ }
+    });
     const list = el('div', { class: 'deck-editor-list', role: 'list' });
-    for (const tile of model.collection) {
+    const rows = model.collection.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+    for (const tile of rows) {
       const main = focusable(el('button', {
         type: 'button', class: 'deck-editor-main', dataset: { action: 'add', key: tile.key },
-        'aria-label': tFull('deckEditor.add', { name: tile.name }),
-        'aria-disabled': tile.addable ? 'false' : 'true',
-        title: tile.refusal || tFull('deckEditor.add', { name: tile.name }),
+        'aria-label': t('deckEditor.inspectNamed', { name: tile.name }),
+        'aria-pressed': String(selected?.source === 'collection' && selected.key === tile.key),
       }, cardFace(tile, tile.countText)), `tile:${tile.key}`);
-      main.addEventListener('click', () => add(tile.key));
+      main.dataset.selectionKey = tile.key;
+      main.dataset.selectionSource = 'collection';
+      main.addEventListener('focus', () => select(tile, 'collection'));
+      main.addEventListener('gpfocus', () => select(tile, 'collection'));
+      main.addEventListener('click', () => select(tile, 'collection', true));
       const plus = focusable(el('button', {
         type: 'button', class: 'deck-editor-step', dataset: { action: 'add', key: tile.key },
         'aria-label': tFull('deckEditor.add', { name: tile.name }), 'aria-disabled': tile.addable ? 'false' : 'true',
@@ -182,8 +309,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false' },
       }, [main, el('div', { class: 'deck-editor-actions' }, [plus])]));
     }
-    if (!model.collection.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
-    return paneSection('collection', t('deckEditor.pane.collection'), list);
+    if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
+    const section = paneSection('collection', t('deckEditor.pane.collection'), list);
+    section.insertBefore(search, list);
+    return section;
   }
 
   function deckPane() {
@@ -191,11 +320,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     for (const row of model.deck) {
       const main = focusable(el('button', {
         type: 'button', class: 'deck-editor-main', dataset: { action: 'remove', instanceId: row.instanceId },
-        'aria-label': row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
-        'aria-disabled': row.removable ? 'false' : 'true',
-        title: row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
+        'aria-label': t('deckEditor.inspectNamed', { name: row.name }),
+        'aria-pressed': String(selected?.source === 'deck' && selected.key === row.groupKey),
       }, cardFace(row, row.locked ? row.lockText : t(`deckEditor.source.${row.source}`), true)), `row:${row.groupKey}`);
-      main.addEventListener('click', () => remove(row.instanceId));
+      main.dataset.selectionKey = row.groupKey;
+      main.dataset.selectionSource = 'deck';
+      main.addEventListener('focus', () => select(row, 'deck'));
+      main.addEventListener('gpfocus', () => select(row, 'deck'));
+      main.addEventListener('click', () => select(row, 'deck', true));
       const item = el('div', {
         class: `deck-editor-item deck-editor-row${row.locked ? ' locked' : ''}${held === row.instanceId ? ' held' : ''}`, role: 'listitem',
         dataset: { instanceId: row.instanceId, source: row.source },
@@ -259,8 +391,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const payloadOf = (target) => {
     const main = target?.closest?.('.deck-editor-main');
     if (!main || !isInside(main, panel)) return null;
-    if (main.dataset.action === 'add' && main.getAttribute('aria-disabled') !== 'true') return { kind: 'tile', key: main.dataset.key, source: main };
-    if (main.dataset.action === 'remove' && (main.getAttribute('aria-disabled') !== 'true' || model.ordered)) return { kind: 'row', key: main.dataset.instanceId, source: main };
+    if (main.dataset.action === 'add' && model.collection.find(row => row.key === main.dataset.key)?.addable) return { kind: 'tile', key: main.dataset.key, source: main };
+    if (main.dataset.action === 'remove' && (model.deck.find(row => row.instanceId === main.dataset.instanceId)?.removable || model.ordered)) return { kind: 'row', key: main.dataset.instanceId, source: main };
     return null;
   };
   const clearMarks = () => {
@@ -366,9 +498,18 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function draw() {
     model = deckEditorModel({ registries, run, settings, view });
+    const rows = selected?.source === 'deck' ? model.deck : model.collection;
+    const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
+    if (current) selected = { ...selected, row: current };
+    else {
+      const row = model.collection[0] || model.deck[0];
+      const source = model.collection.length ? 'collection' : 'deck';
+      selected = row ? { row, source, key: selectionKey(row, source) } : null;
+    }
     panel.replaceChildren?.();
     if (!panel.replaceChildren) panel.innerHTML = '';
-    panel.append(header(), tools(), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), deckPane()]), footer());
+    panel.dataset.mobileView = mobileView;
+    panel.append(header(), el('div', { class: 'deck-editor-toolbar' }, [navigation(), tools()]), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
     restoreFocus();
   }
 
@@ -448,7 +589,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   function switchPane(step) {
     const at = DECK_PANES.indexOf(pane);
     pane = DECK_PANES[(at + step + DECK_PANES.length) % DECK_PANES.length];
-    const first = panel.querySelector(`[data-pane="${pane}"] [data-focus-key]`);
+    mobileView = pane;
+    const first = panel.querySelector(`[data-pane="${pane}"] .deck-editor-main`);
     focusKey = first ? first.dataset.focusKey : null;
     draw();
   }
@@ -505,6 +647,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const key = input.key || '';
     const probe = { key };
     if (key === 'Escape') { doCancel(); return true; }
+    if (focused()?.tagName === 'INPUT') return false;
     // `[` / `]` are the tab ring's (input.js), which switches the pane once;
     // answering them here too switched it twice, i.e. not at all.
     if (matchAction(probe, 'menu')) { doDone(); return true; }
@@ -572,7 +715,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   draw();
-  const first = panel.querySelector('[data-pane="collection"] [data-focus-key]');
+  const first = panel.querySelector('[data-pane="collection"] .deck-editor-main');
   if (first) focusNode(first);
 
   liveEditor = { root, dispatch, close: () => { if (!session.closed) session.cancel(); close(); }, session };

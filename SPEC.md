@@ -2368,11 +2368,11 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
   - The co-op path (`coopCombat.js`) reads each seat's owner's setting when it builds that seat's pile, and carries it per seat.
 
 **UX.** The component is `DeckEditorModel` plus `mountDeckEditor`, with an entry in `docs/component-catalog.html`.
-- **Layout.** The collection pane is on the left (top on a portrait phone) and the deck pane is on the right (bottom).
+- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones switch between collection, inspection and deck views.
 - **Header.** It shows the live counter "N / min–max", which turns red and shows the refusal sentence when out of bounds. Beside it is a compact cost-curve histogram.
 - **Filters and sort.** Filter chips cover type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded. Sort chips cover cost, name, type and source.
-- **Every drag has two twins.** A tap on a collection tile adds the card, and a tap on a deck row removes it. Each row also carries explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
-- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes. A adds or removes the focused card. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
+- **Every drag has two twins.** A tap on a collection tile or deck row inspects the card without changing the run. The Reading Desk inspector carries an explicit Add to deck or Remove from deck action; rows also carry explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
+- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes. A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
 - **Target size.** Every target is at least 48 CSS px on a coarse pointer and at least 44 px otherwise, and text is at least 11 px at 360×640 (FINISH §8).
 
 *Falsify:*
@@ -2595,7 +2595,7 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 | Deck list collapsed to one row per card variant (id + upgrade + mods; for a locked card, also its owner) with a ×N count | Hearthstone, Arena, LoR | **Yes**, except while **Play in deck order** is on | Counts are the scan-friendly view; in ordered mode each copy is its own row so it can be placed. A Strike and a Strike+ stay two rows: merging them would hide the upgrade and make ＋/－ ambiguous, and the collection tiles use the same variant key. |
 | Live size counter "N / min–max", red when out of bounds, Done disabled with a sentence | Hearthstone (30/30), Snap (12/12), Arena (60+) | **Yes** | The invalid state must be explained, not just coloured (SPEC §7.5, FINISH §6). |
 | Copy limit shown on the collection tile ("2 owned, 1 in deck") and greyed when exhausted | Hearthstone, LoR, Arena | **Yes** | Weapon arts and techniques are limited to owned copies; basics show ∞. |
-| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the collection is small (≤ ~60 ids), so no search box in v1. |
+| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the Reading Desk also offers a text search over collection names and resolved rules. |
 | Mana/cost curve histogram | Hearthstone, Arena, LoR | **Yes, compact** | Cheap to derive; the one analytic players ask for. |
 | Undo / "revert to deck on entry" | Snap (discard changes), Arena | **Yes** — Cancel restores the entry deck | Editing is out of combat, so a whole-session revert is simple and safe. |
 | Deck edited mid-run only at rest or through removals | Slay the Spire, Monster Train, Inscryption | **As an option** (`Rest sites only`) | The owner wants to compare it with Free editing; roguelike tension comes from this restriction. |

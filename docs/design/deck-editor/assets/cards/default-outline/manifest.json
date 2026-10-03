@@ -1,0 +1,2146 @@
+{
+  "schema": "ashen-spire-default-card-art",
+  "version": 1,
+  "created": "2026-10-01",
+  "sourceCatalog": "src/content/index.js",
+  "style": {
+    "stroke": "#b2afa2",
+    "strokeWidth": 1.35,
+    "viewBox": "0 0 128 128",
+    "fill": "none",
+    "transparent": true,
+    "recommendedSurface": "#242727",
+    "recommendedOccupancyPercent": 68
+  },
+  "precedence": [
+    "reviewed-equipment-profile-art",
+    "reviewed-card-art",
+    "fallback-profile-icon",
+    "fallback-card-icon",
+    "default-icon"
+  ],
+  "default": {
+    "file": "icons/default.svg",
+    "rationale": "A neutral four-point sigil is reserved for unknown content."
+  },
+  "coverage": {
+    "cards": 195,
+    "cardsWithReviewedArt": 4,
+    "cardsNeedingFallback": 191,
+    "profiles": 17,
+    "profilesWithReviewedArt": 3,
+    "icons": 56
+  },
+  "cards": {
+    "strike": {
+      "name": "Strike",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "sword",
+      "file": "icons/sword.svg",
+      "rationale": "A single blade communicates a clean cut.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "defend": {
+      "name": "Defend",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "technique": {
+      "name": "Footwork",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "footwork",
+      "file": "icons/footwork.svg",
+      "rationale": "Two footprints communicate movement and positioning.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "evasiveGuard": {
+      "name": "Evasive Guard",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "dodge",
+      "file": "icons/dodge.svg",
+      "rationale": "A turning arrow communicates evasion.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "dodgeRoll": {
+      "name": "Dodge Roll",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "dodge",
+      "file": "icons/dodge.svg",
+      "rationale": "A turning arrow communicates evasion.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "gorefireSlash": {
+      "name": "Gorefire Slash",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": "assets/cards/gorefire-slash-512.webp"
+    },
+    "crimsonCleave": {
+      "name": "Crimson Cleave",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "axe",
+      "file": "icons/axe.svg",
+      "rationale": "A broad cutting head communicates a cleave.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "shieldBash": {
+      "name": "Shield Bash",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "counter",
+      "file": "icons/counter.svg",
+      "rationale": "A shield and return arrow communicate a guarded response.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "quickstep": {
+      "name": "Quickstep",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "footwork",
+      "file": "icons/footwork.svg",
+      "rationale": "Two footprints communicate movement and positioning.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "guardCounter": {
+      "name": "Guard Counter",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "counter",
+      "file": "icons/counter.svg",
+      "rationale": "A shield and return arrow communicate a guarded response.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "ironResolve": {
+      "name": "Iron Resolve",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "shieldwall",
+      "file": "icons/shieldwall.svg",
+      "rationale": "Layered shields communicate reinforced defense.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": "assets/cards/iron-resolve-512.webp"
+    },
+    "serratedBlade": {
+      "name": "Serrated Blade",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "enterGorefire": {
+      "name": "Enter: Gorefire",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "flame",
+      "file": "icons/flame.svg",
+      "rationale": "A single flame communicates fire.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "enterBulwark": {
+      "name": "Enter: Bulwark",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "riposte": {
+      "name": "Riposte",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "counter",
+      "file": "icons/counter.svg",
+      "rationale": "A shield and return arrow communicate a guarded response.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "rend": {
+      "name": "Rend",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "cleavingBlow": {
+      "name": "Cleaving Blow",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "axe",
+      "file": "icons/axe.svg",
+      "rationale": "A broad cutting head communicates a cleave.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "stomp": {
+      "name": "Stomp",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "boot",
+      "file": "icons/boot.svg",
+      "rationale": "A boot communicates a kick, stomp, or leg action.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "rallyingStandard": {
+      "name": "Rallying Standard",
+      "class": "reaver",
+      "type": "power",
+      "icon": "banner",
+      "file": "icons/banner.svg",
+      "rationale": "A raised pennant communicates rallying or conviction.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "warSurgeon": {
+      "name": "War Surgeon",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "heal",
+      "file": "icons/heal.svg",
+      "rationale": "A simple medical cross communicates healing.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "hemorrhage": {
+      "name": "Hemorrhage",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "twinbladeFlurry": {
+      "name": "Twinblade Flurry",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "daggers",
+      "file": "icons/daggers.svg",
+      "rationale": "Paired blades communicate repeated hits.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "shieldwall": {
+      "name": "Shieldwall",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "shieldwall",
+      "file": "icons/shieldwall.svg",
+      "rationale": "Layered shields communicate reinforced defense.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "kickOff": {
+      "name": "Kick Off",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "boot",
+      "file": "icons/boot.svg",
+      "rationale": "A boot communicates a kick, stomp, or leg action.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "wardingLunge": {
+      "name": "Warding Lunge",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "lunge",
+      "file": "icons/lunge.svg",
+      "rationale": "A blade with three motion strokes communicates thrusting or a lance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "impale": {
+      "name": "Impale",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "lunge",
+      "file": "icons/lunge.svg",
+      "rationale": "A blade with three motion strokes communicates thrusting or a lance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "warcry": {
+      "name": "Warcry",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "banner",
+      "file": "icons/banner.svg",
+      "rationale": "A raised pennant communicates rallying or conviction.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "executioner": {
+      "name": "Executioner",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "coffin",
+      "file": "icons/coffin.svg",
+      "rationale": "A spare coffin communicates death or offering.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "goreblood": {
+      "name": "Goreblood",
+      "class": "reaver",
+      "type": "power",
+      "icon": "crown",
+      "file": "icons/crown.svg",
+      "rationale": "A spare crown communicates authority or heightened power.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "unbreakable": {
+      "name": "Unbreakable",
+      "class": "reaver",
+      "type": "power",
+      "icon": "shieldwall",
+      "file": "icons/shieldwall.svg",
+      "rationale": "Layered shields communicate reinforced defense.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "stitchedArms": {
+      "name": "Stitched Arms",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "fist",
+      "file": "icons/fist.svg",
+      "rationale": "A closed fist communicates an unarmed strike.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "lastStand": {
+      "name": "Last Stand",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "candle",
+      "file": "icons/candle.svg",
+      "rationale": "A quiet candle communicates prayer, rites, or endurance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": "assets/cards/last-stand-512.webp"
+    },
+    "warriorsVow": {
+      "name": "Warrior's Vow",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "scroll",
+      "file": "icons/scroll.svg",
+      "rationale": "An open scroll communicates a vow or a plan.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "ruinousBlow": {
+      "name": "Ruinous Blow",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "hammer",
+      "file": "icons/hammer.svg",
+      "rationale": "A heavy hammer communicates impact or Poise damage.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bloodhuntersStrike": {
+      "name": "Bloodhunter's Strike",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "sanguinePactCard": {
+      "name": "Sanguine Pact",
+      "class": "reaver",
+      "type": "power",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "goreslash": {
+      "name": "Goreslash",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bracingStance": {
+      "name": "Bracing Stance",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "flameToBlade": {
+      "name": "Flame to Blade",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "flame",
+      "file": "icons/flame.svg",
+      "rationale": "A single flame communicates fire.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "ironVowCard": {
+      "name": "Iron Vow",
+      "class": "reaver",
+      "type": "power",
+      "icon": "chain",
+      "file": "icons/chain.svg",
+      "rationale": "Two linked loops communicate binding or an oath.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bloodTithe": {
+      "name": "Blood Tithe",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "poiseBreaker": {
+      "name": "Poise Breaker",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "hammer",
+      "file": "icons/hammer.svg",
+      "rationale": "A heavy hammer communicates impact or Poise damage.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "rondelParry": {
+      "name": "Rondel Parry",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "counter",
+      "file": "icons/counter.svg",
+      "rationale": "A shield and return arrow communicate a guarded response.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "sunderplate": {
+      "name": "Sunderplate",
+      "class": "reaver",
+      "type": "attack",
+      "icon": "hammer",
+      "file": "icons/hammer.svg",
+      "rationale": "A heavy hammer communicates impact or Poise damage.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "brace": {
+      "name": "Brace",
+      "class": "reaver",
+      "type": "skill",
+      "icon": "boot",
+      "file": "icons/boot.svg",
+      "rationale": "A boot communicates a kick, stomp, or leg action.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starstonePebble": {
+      "name": "Starstone Pebble",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "crystal",
+      "file": "icons/crystal.svg",
+      "rationale": "A faceted stone communicates preparation or crystalline magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "cometFragment": {
+      "name": "Comet Fragment",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "comet",
+      "file": "icons/comet.svg",
+      "rationale": "A moving stone communicates a meteor or fragment.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starbladePhalanx": {
+      "name": "Starblade Phalanx",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "daggers",
+      "file": "icons/daggers.svg",
+      "rationale": "Paired blades communicate repeated hits.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "crystalBarrier": {
+      "name": "Crystal Barrier",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "crystal",
+      "file": "icons/crystal.svg",
+      "rationale": "A faceted stone communicates preparation or crystalline magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starShower": {
+      "name": "Star Shower",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "stars",
+      "file": "icons/stars.svg",
+      "rationale": "A large star with small sparks communicates starlight.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "scholarsInsight": {
+      "name": "Scholar's Insight",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "book",
+      "file": "icons/book.svg",
+      "rationale": "An open book communicates study or insight.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "frostVeil": {
+      "name": "Frost Veil",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "frost",
+      "file": "icons/frost.svg",
+      "rationale": "A six-arm crystal communicates frost.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starSlicer": {
+      "name": "Star Slicer",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "sword",
+      "file": "icons/sword.svg",
+      "rationale": "A single blade communicates a clean cut.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starstoneWard": {
+      "name": "Starstone Ward",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starlance": {
+      "name": "Starlance",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "lunge",
+      "file": "icons/lunge.svg",
+      "rationale": "A blade with three motion strokes communicates thrusting or a lance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "twinkling": {
+      "name": "Twinkling",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "stars",
+      "file": "icons/stars.svg",
+      "rationale": "A large star with small sparks communicates starlight.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "frostNova": {
+      "name": "Frost Nova",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "frost",
+      "file": "icons/frost.svg",
+      "rationale": "A six-arm crystal communicates frost.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starstoneArc": {
+      "name": "Starstone Arc",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "lightning",
+      "file": "icons/lightning.svg",
+      "rationale": "An angular bolt communicates an arc or sudden burst.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "lucidity": {
+      "name": "Lucidity",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "moon",
+      "file": "icons/moon.svg",
+      "rationale": "A crescent communicates lunar magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "stargazerCard": {
+      "name": "Stargazer",
+      "class": "starseer",
+      "type": "power",
+      "icon": "constellation",
+      "file": "icons/constellation.svg",
+      "rationale": "Connected star points communicate astral guidance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "astralArmorCard": {
+      "name": "Astral Armor",
+      "class": "starseer",
+      "type": "power",
+      "icon": "orbit",
+      "file": "icons/orbit.svg",
+      "rationale": "Intersecting orbits communicate a sustained arcane field.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "moonrendCut": {
+      "name": "Moonrend Cut",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "moon",
+      "file": "icons/moon.svg",
+      "rationale": "A crescent communicates lunar magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "meteorite": {
+      "name": "Meteorite",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "comet",
+      "file": "icons/comet.svg",
+      "rationale": "A moving stone communicates a meteor or fragment.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "meteorSwarm": {
+      "name": "Meteor Swarm",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "comet",
+      "file": "icons/comet.svg",
+      "rationale": "A moving stone communicates a meteor or fragment.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "gravityWell": {
+      "name": "Gravity Well",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "void",
+      "file": "icons/void.svg",
+      "rationale": "Concentric warped rings communicate gravity.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "azureCoilCard": {
+      "name": "Azure Coil",
+      "class": "starseer",
+      "type": "power",
+      "icon": "orbit",
+      "file": "icons/orbit.svg",
+      "rationale": "Intersecting orbits communicate a sustained arcane field.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "astralCleave": {
+      "name": "Astral Cleave",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "sword",
+      "file": "icons/sword.svg",
+      "rationale": "A single blade communicates a clean cut.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "radiantSpray": {
+      "name": "Radiant Spray",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "beam",
+      "file": "icons/beam.svg",
+      "rationale": "A pointed star and ray communicate a radiant burst.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "supernova": {
+      "name": "Supernova",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "beam",
+      "file": "icons/beam.svg",
+      "rationale": "A pointed star and ray communicate a radiant burst.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "timeDilation": {
+      "name": "Time Dilation",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "hourglass",
+      "file": "icons/hourglass.svg",
+      "rationale": "An hourglass communicates time or an execution opportunity.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starstoneKris": {
+      "name": "Starstone Kris",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "sword",
+      "file": "icons/sword.svg",
+      "rationale": "A single blade communicates a clean cut.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "constellationCard": {
+      "name": "Constellation",
+      "class": "starseer",
+      "type": "power",
+      "icon": "constellation",
+      "file": "icons/constellation.svg",
+      "rationale": "Connected star points communicate astral guidance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starfallBeam": {
+      "name": "Starfall Beam",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "beam",
+      "file": "icons/beam.svg",
+      "rationale": "A pointed star and ray communicate a radiant burst.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starcaller": {
+      "name": "Starcaller",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "stars",
+      "file": "icons/stars.svg",
+      "rationale": "A large star with small sparks communicates starlight.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "umbralWard": {
+      "name": "Umbral Ward",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "waxingMoonCard": {
+      "name": "Waxing Moon",
+      "class": "starseer",
+      "type": "power",
+      "icon": "moon",
+      "file": "icons/moon.svg",
+      "rationale": "A crescent communicates lunar magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "shootingShard": {
+      "name": "Shooting Shard",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "crystal",
+      "file": "icons/crystal.svg",
+      "rationale": "A faceted stone communicates preparation or crystalline magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "wardingStar": {
+      "name": "Warding Star",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starPath": {
+      "name": "Star Path",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "constellation",
+      "file": "icons/constellation.svg",
+      "rationale": "Connected star points communicate astral guidance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "moonlitShieldCard": {
+      "name": "Moonlit Shield",
+      "class": "starseer",
+      "type": "power",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "celestialLance": {
+      "name": "Celestial Lance",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "lunge",
+      "file": "icons/lunge.svg",
+      "rationale": "A blade with three motion strokes communicates thrusting or a lance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "astromancerCard": {
+      "name": "Astromancer",
+      "class": "starseer",
+      "type": "power",
+      "icon": "book",
+      "file": "icons/book.svg",
+      "rationale": "An open book communicates study or insight.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "starSpark": {
+      "name": "Star Spark",
+      "class": "starseer",
+      "type": "attack",
+      "icon": "stars",
+      "file": "icons/stars.svg",
+      "rationale": "A large star with small sparks communicates starlight.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "astralInsight": {
+      "name": "Astral Insight",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "book",
+      "file": "icons/book.svg",
+      "rationale": "An open book communicates study or insight.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "attune": {
+      "name": "Attune",
+      "class": "starseer",
+      "type": "skill",
+      "icon": "crystal",
+      "file": "icons/crystal.svg",
+      "rationale": "A faceted stone communicates preparation or crystalline magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "urgentHeal": {
+      "name": "Urgent Heal",
+      "class": "herald",
+      "type": "skill",
+      "icon": "heal",
+      "file": "icons/heal.svg",
+      "rationale": "A simple medical cross communicates healing.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bloodPact": {
+      "name": "Blood Pact",
+      "class": "herald",
+      "type": "skill",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "blightTouch": {
+      "name": "Blight Touch",
+      "class": "herald",
+      "type": "attack",
+      "icon": "plague",
+      "file": "icons/plague.svg",
+      "rationale": "An irregular spore communicates blight, contagion, or corruption.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "flagellation": {
+      "name": "Flagellation",
+      "class": "herald",
+      "type": "attack",
+      "icon": "chain",
+      "file": "icons/chain.svg",
+      "rationale": "Two linked loops communicate binding or an oath.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "penance": {
+      "name": "Penance",
+      "class": "herald",
+      "type": "skill",
+      "icon": "candle",
+      "file": "icons/candle.svg",
+      "rationale": "A quiet candle communicates prayer, rites, or endurance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "litany": {
+      "name": "Litany",
+      "class": "herald",
+      "type": "skill",
+      "icon": "candle",
+      "file": "icons/candle.svg",
+      "rationale": "A quiet candle communicates prayer, rites, or endurance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "graveOffering": {
+      "name": "Grave Offering",
+      "class": "herald",
+      "type": "attack",
+      "icon": "coffin",
+      "file": "icons/coffin.svg",
+      "rationale": "A spare coffin communicates death or offering.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bloodletting": {
+      "name": "Bloodletting",
+      "class": "herald",
+      "type": "skill",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": "assets/cards/bloodletting-512.webp"
+    },
+    "contagion": {
+      "name": "Contagion",
+      "class": "herald",
+      "type": "skill",
+      "icon": "plague",
+      "file": "icons/plague.svg",
+      "rationale": "An irregular spore communicates blight, contagion, or corruption.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "cullTheWeak": {
+      "name": "Cull the Weak",
+      "class": "herald",
+      "type": "attack",
+      "icon": "dagger",
+      "file": "icons/dagger.svg",
+      "rationale": "A compact knife communicates a precise attack.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "transfusion": {
+      "name": "Transfusion",
+      "class": "herald",
+      "type": "skill",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "blightward": {
+      "name": "Blightward",
+      "class": "herald",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "martyrBlood": {
+      "name": "Martyr's Blood",
+      "class": "herald",
+      "type": "skill",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "blightBloom": {
+      "name": "Blight Bloom",
+      "class": "herald",
+      "type": "skill",
+      "icon": "flower",
+      "file": "icons/flower.svg",
+      "rationale": "Four petals communicate growth or renewal.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "sacredHarvest": {
+      "name": "Sacred Harvest",
+      "class": "herald",
+      "type": "attack",
+      "icon": "leaf",
+      "file": "icons/leaf.svg",
+      "rationale": "A single leaf communicates harvest or reclamation.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "thornHaloCard": {
+      "name": "Thorn Halo",
+      "class": "herald",
+      "type": "power",
+      "icon": "thorns",
+      "file": "icons/thorns.svg",
+      "rationale": "A thorned ring communicates a painful ward.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "communionCard": {
+      "name": "Communion",
+      "class": "herald",
+      "type": "power",
+      "icon": "sun",
+      "file": "icons/sun.svg",
+      "rationale": "A ring of rays communicates sacred light.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "gildedOath": {
+      "name": "Gilded Oath",
+      "class": "herald",
+      "type": "skill",
+      "icon": "crown",
+      "file": "icons/crown.svg",
+      "rationale": "A spare crown communicates authority or heightened power.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "plagueBearer": {
+      "name": "Plague Bearer",
+      "class": "herald",
+      "type": "attack",
+      "icon": "plague",
+      "file": "icons/plague.svg",
+      "rationale": "An irregular spore communicates blight, contagion, or corruption.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "exsanguinate": {
+      "name": "Exsanguinate",
+      "class": "herald",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "stigmataCard": {
+      "name": "Stigmata",
+      "class": "herald",
+      "type": "power",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "scourge": {
+      "name": "Scourge",
+      "class": "herald",
+      "type": "attack",
+      "icon": "bandage",
+      "file": "icons/bandage.svg",
+      "rationale": "A wrapped dressing communicates treatment or wounds.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "reclamation": {
+      "name": "Reclamation",
+      "class": "herald",
+      "type": "skill",
+      "icon": "leaf",
+      "file": "icons/leaf.svg",
+      "rationale": "A single leaf communicates harvest or reclamation.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "secondBloom": {
+      "name": "Second Bloom",
+      "class": "herald",
+      "type": "skill",
+      "icon": "flower",
+      "file": "icons/flower.svg",
+      "rationale": "Four petals communicate growth or renewal.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "butterflyPlague": {
+      "name": "Plague of Butterflies",
+      "class": "herald",
+      "type": "skill",
+      "icon": "butterfly",
+      "file": "icons/butterfly.svg",
+      "rationale": "Symmetric wings communicate a butterfly swarm.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "lifeTitheCard": {
+      "name": "Life Tithe",
+      "class": "herald",
+      "type": "power",
+      "icon": "coffin",
+      "file": "icons/coffin.svg",
+      "rationale": "A spare coffin communicates death or offering.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "crimsonRite": {
+      "name": "Crimson Rite",
+      "class": "herald",
+      "type": "attack",
+      "icon": "wave",
+      "file": "icons/wave.svg",
+      "rationale": "Three waves communicate a flowing rite.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "blightNova": {
+      "name": "Blight Nova",
+      "class": "herald",
+      "type": "attack",
+      "icon": "lightning",
+      "file": "icons/lightning.svg",
+      "rationale": "An angular bolt communicates an arc or sudden burst.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "lastRites": {
+      "name": "Last Rites",
+      "class": "herald",
+      "type": "skill",
+      "icon": "candle",
+      "file": "icons/candle.svg",
+      "rationale": "A quiet candle communicates prayer, rites, or endurance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "zealotryCard": {
+      "name": "Zealotry",
+      "class": "herald",
+      "type": "power",
+      "icon": "banner",
+      "file": "icons/banner.svg",
+      "rationale": "A raised pennant communicates rallying or conviction.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bloodHarvest": {
+      "name": "Blood Harvest",
+      "class": "herald",
+      "type": "attack",
+      "icon": "leaf",
+      "file": "icons/leaf.svg",
+      "rationale": "A single leaf communicates harvest or reclamation.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "painOffering": {
+      "name": "Pain Offering",
+      "class": "herald",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "witheringTouch": {
+      "name": "Withering Touch",
+      "class": "herald",
+      "type": "attack",
+      "icon": "plague",
+      "file": "icons/plague.svg",
+      "rationale": "An irregular spore communicates blight, contagion, or corruption.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "desperateRite": {
+      "name": "Desperate Rite",
+      "class": "herald",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "emberTideCard": {
+      "name": "Ember Tide",
+      "class": "herald",
+      "type": "power",
+      "icon": "flame",
+      "file": "icons/flame.svg",
+      "rationale": "A single flame communicates fire.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bloodOfferingRite": {
+      "name": "Blood Offering",
+      "class": "herald",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "harbingerOfBlightCard": {
+      "name": "Harbinger of Blight",
+      "class": "herald",
+      "type": "power",
+      "icon": "plague",
+      "file": "icons/plague.svg",
+      "rationale": "An irregular spore communicates blight, contagion, or corruption.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "blightwardLash": {
+      "name": "Blightward Lash",
+      "class": "herald",
+      "type": "attack",
+      "icon": "plague",
+      "file": "icons/plague.svg",
+      "rationale": "An irregular spore communicates blight, contagion, or corruption.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "lastMercy": {
+      "name": "Last Mercy",
+      "class": "herald",
+      "type": "skill",
+      "icon": "heal",
+      "file": "icons/heal.svg",
+      "rationale": "A simple medical cross communicates healing.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "warmLitany": {
+      "name": "Warm Litany",
+      "class": "herald",
+      "type": "skill",
+      "icon": "candle",
+      "file": "icons/candle.svg",
+      "rationale": "A quiet candle communicates prayer, rites, or endurance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "ambush": {
+      "name": "Ambush",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "dagger",
+      "file": "icons/dagger.svg",
+      "rationale": "A compact knife communicates a precise attack.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "rogueShiv": {
+      "name": "Shiv",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "dagger",
+      "file": "icons/dagger.svg",
+      "rationale": "A compact knife communicates a precise attack.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "smokePellet": {
+      "name": "Smoke Pellet",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "smoke",
+      "file": "icons/smoke.svg",
+      "rationale": "A low cloud communicates smoke or obscuring dust.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "quickCut": {
+      "name": "Quick Cut",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "sword",
+      "file": "icons/sword.svg",
+      "rationale": "A single blade communicates a clean cut.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "feint": {
+      "name": "Feint",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "dodge",
+      "file": "icons/dodge.svg",
+      "rationale": "A turning arrow communicates evasion.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "backstep": {
+      "name": "Backstep",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "footwork",
+      "file": "icons/footwork.svg",
+      "rationale": "Two footprints communicate movement and positioning.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "twinPrick": {
+      "name": "Twin Prick",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "daggers",
+      "file": "icons/daggers.svg",
+      "rationale": "Paired blades communicate repeated hits.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "pocketSand": {
+      "name": "Pocket Sand",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "smoke",
+      "file": "icons/smoke.svg",
+      "rationale": "A low cloud communicates smoke or obscuring dust.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "hamstringRogue": {
+      "name": "Hamstring",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "boot",
+      "file": "icons/boot.svg",
+      "rationale": "A boot communicates a kick, stomp, or leg action.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "serratedShiv": {
+      "name": "Serrated Shiv",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "smokeVeil": {
+      "name": "Smoke Veil",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "smoke",
+      "file": "icons/smoke.svg",
+      "rationale": "A low cloud communicates smoke or obscuring dust.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "ricochet": {
+      "name": "Ricochet",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "bow",
+      "file": "icons/bow.svg",
+      "rationale": "A bow and arrow communicate a ranged shot.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "lowBlow": {
+      "name": "Low Blow",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "boot",
+      "file": "icons/boot.svg",
+      "rationale": "A boot communicates a kick, stomp, or leg action.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "pilfer": {
+      "name": "Pilfer",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "hand",
+      "file": "icons/hand.svg",
+      "rationale": "An open hand communicates stealing or a touch.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "vanish": {
+      "name": "Vanish",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "mask",
+      "file": "icons/mask.svg",
+      "rationale": "An empty mask communicates concealment.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "cheapShot": {
+      "name": "Cheap Shot",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "beam",
+      "file": "icons/beam.svg",
+      "rationale": "A pointed star and ray communicate a radiant burst.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bladeDanceRogue": {
+      "name": "Blade Dance",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "daggers",
+      "file": "icons/daggers.svg",
+      "rationale": "Paired blades communicate repeated hits.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "garrote": {
+      "name": "Garrote",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "chain",
+      "file": "icons/chain.svg",
+      "rationale": "Two linked loops communicate binding or an oath.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "fanOfKnives": {
+      "name": "Fan of Knives",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "knifeFan",
+      "file": "icons/knifeFan.svg",
+      "rationale": "Three angled knives communicate a volley.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "setupRogue": {
+      "name": "Setup",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "gear",
+      "file": "icons/gear.svg",
+      "rationale": "A sparse gear communicates setup.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "acrobaticsRogue": {
+      "name": "Acrobatics",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "footwork",
+      "file": "icons/footwork.svg",
+      "rationale": "Two footprints communicate movement and positioning.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "disorient": {
+      "name": "Disorient",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "focus",
+      "file": "icons/focus.svg",
+      "rationale": "An eye with a central ring communicates focus, perception, or disorientation.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "coupDeGrace": {
+      "name": "Coup de Grace",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "skull",
+      "file": "icons/skull.svg",
+      "rationale": "A skull communicates a finishing attack or frailty.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "sap": {
+      "name": "Sap",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "dagger",
+      "file": "icons/dagger.svg",
+      "rationale": "A compact knife communicates a precise attack.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "shadowstep": {
+      "name": "Shadowstep",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "footwork",
+      "file": "icons/footwork.svg",
+      "rationale": "Two footprints communicate movement and positioning.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "afterimageCard": {
+      "name": "Afterimage",
+      "class": "rogue",
+      "type": "power",
+      "icon": "shadow",
+      "file": "icons/shadow.svg",
+      "rationale": "A fading figure communicates an afterimage.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bloodletterRogue": {
+      "name": "Bloodletter",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "blood",
+      "file": "icons/blood.svg",
+      "rationale": "A single droplet communicates blood, bleeding, or sacrifice.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "venomcoat": {
+      "name": "Venomcoat",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "serpent",
+      "file": "icons/serpent.svg",
+      "rationale": "A winding snake communicates venom.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "misdirect": {
+      "name": "Misdirect",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "dodge",
+      "file": "icons/dodge.svg",
+      "rationale": "A turning arrow communicates evasion.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "assassinate": {
+      "name": "Assassinate",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "dagger",
+      "file": "icons/dagger.svg",
+      "rationale": "A compact knife communicates a precise attack.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "thousandCutsRogue": {
+      "name": "Thousand Cuts",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "daggers",
+      "file": "icons/daggers.svg",
+      "rationale": "Paired blades communicate repeated hits.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "deadlyTempoCard": {
+      "name": "Deadly Tempo",
+      "class": "rogue",
+      "type": "power",
+      "icon": "hourglass",
+      "file": "icons/hourglass.svg",
+      "rationale": "An hourglass communicates time or an execution opportunity.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "opportunistCard": {
+      "name": "Opportunist",
+      "class": "rogue",
+      "type": "power",
+      "icon": "focus",
+      "file": "icons/focus.svg",
+      "rationale": "An eye with a central ring communicates focus, perception, or disorientation.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "envenomCard": {
+      "name": "Envenom",
+      "class": "rogue",
+      "type": "power",
+      "icon": "plague",
+      "file": "icons/plague.svg",
+      "rationale": "An irregular spore communicates blight, contagion, or corruption.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "toxicVolley": {
+      "name": "Toxic Volley",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "bow",
+      "file": "icons/bow.svg",
+      "rationale": "A bow and arrow communicate a ranged shot.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "smokeBomb": {
+      "name": "Smoke Bomb",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "smoke",
+      "file": "icons/smoke.svg",
+      "rationale": "A low cloud communicates smoke or obscuring dust.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "executionWindow": {
+      "name": "Execution Window",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "hourglass",
+      "file": "icons/hourglass.svg",
+      "rationale": "An hourglass communicates time or an execution opportunity.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "perfectHeist": {
+      "name": "Perfect Heist",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "crystal",
+      "file": "icons/crystal.svg",
+      "rationale": "A faceted stone communicates preparation or crystalline magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "deathblow": {
+      "name": "Deathblow",
+      "class": "rogue",
+      "type": "attack",
+      "icon": "skull",
+      "file": "icons/skull.svg",
+      "rationale": "A skull communicates a finishing attack or frailty.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "prepare": {
+      "name": "Prepare",
+      "class": "rogue",
+      "type": "skill",
+      "icon": "crystal",
+      "file": "icons/crystal.svg",
+      "rationale": "A faceted stone communicates preparation or crystalline magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "katanaDrawCut": {
+      "name": "Draw Cut",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "sword",
+      "file": "icons/sword.svg",
+      "rationale": "A single blade communicates a clean cut.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "greatswordSunderingHew": {
+      "name": "Sundering Hew",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "axe",
+      "file": "icons/axe.svg",
+      "rationale": "A broad cutting head communicates a cleave.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "honedEdge": {
+      "name": "Honed Edge",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "sword",
+      "file": "icons/sword.svg",
+      "rationale": "A single blade communicates a clean cut.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "ironSkin": {
+      "name": "Iron Skin",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "fieldDressing": {
+      "name": "Field Dressing",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "bandage",
+      "file": "icons/bandage.svg",
+      "rationale": "A wrapped dressing communicates treatment or wounds.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "hex": {
+      "name": "Hex",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "candle",
+      "file": "icons/candle.svg",
+      "rationale": "A quiet candle communicates prayer, rites, or endurance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "transmute": {
+      "name": "Transmute",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "flask",
+      "file": "icons/flask.svg",
+      "rationale": "A flask communicates transmutation.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "twinFang": {
+      "name": "Twin Fang",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "daggers",
+      "file": "icons/daggers.svg",
+      "rationale": "Paired blades communicate repeated hits.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "blindingSand": {
+      "name": "Blinding Sand",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "smoke",
+      "file": "icons/smoke.svg",
+      "rationale": "A low cloud communicates smoke or obscuring dust.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "hamstring": {
+      "name": "Hamstring",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "boot",
+      "file": "icons/boot.svg",
+      "rationale": "A boot communicates a kick, stomp, or leg action.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "masterOfStrategy": {
+      "name": "Master of Strategy",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "scroll",
+      "file": "icons/scroll.svg",
+      "rationale": "An open scroll communicates a vow or a plan.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bashingBlow": {
+      "name": "Bashing Blow",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "hammer",
+      "file": "icons/hammer.svg",
+      "rationale": "A heavy hammer communicates impact or Poise damage.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "quickGuard": {
+      "name": "Quick Guard",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "sweepingBlow": {
+      "name": "Sweeping Blow",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "axe",
+      "file": "icons/axe.svg",
+      "rationale": "A broad cutting head communicates a cleave.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "enfeeble": {
+      "name": "Enfeeble",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "skull",
+      "file": "icons/skull.svg",
+      "rationale": "A skull communicates a finishing attack or frailty.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "colossusSmash": {
+      "name": "Colossus Smash",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "hammer",
+      "file": "icons/hammer.svg",
+      "rationale": "A heavy hammer communicates impact or Poise damage.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "wound": {
+      "name": "Wound",
+      "class": "colorless",
+      "type": "status",
+      "icon": "wound",
+      "file": "icons/wound.svg",
+      "rationale": "A broken stitched line communicates injury.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "dazed": {
+      "name": "Dazed",
+      "class": "colorless",
+      "type": "status",
+      "icon": "focus",
+      "file": "icons/focus.svg",
+      "rationale": "An eye with a central ring communicates focus, perception, or disorientation.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "slimed": {
+      "name": "Slimed",
+      "class": "colorless",
+      "type": "status",
+      "icon": "plague",
+      "file": "icons/plague.svg",
+      "rationale": "An irregular spore communicates blight, contagion, or corruption.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "guilt": {
+      "name": "Guilt",
+      "class": "colorless",
+      "type": "curse",
+      "icon": "chain",
+      "file": "icons/chain.svg",
+      "rationale": "Two linked loops communicate binding or an oath.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "rallyingBanner": {
+      "name": "Rallying Banner",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "banner",
+      "file": "icons/banner.svg",
+      "rationale": "A raised pennant communicates rallying or conviction.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "sharedFlame": {
+      "name": "Shared Flame",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "heal",
+      "file": "icons/heal.svg",
+      "rationale": "A simple medical cross communicates healing.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "ashOath": {
+      "name": "Oath of Ash",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "chain",
+      "file": "icons/chain.svg",
+      "rationale": "Two linked loops communicate binding or an oath.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "shieldGuardian": {
+      "name": "Guardian",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "guardianBulwark": {
+      "name": "Enter: Bulwark",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "shieldBastion": {
+      "name": "Bastion",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "spikedReprisal": {
+      "name": "Spiked Reprisal",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "counter",
+      "file": "icons/counter.svg",
+      "rationale": "A shield and return arrow communicate a guarded response.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "rimeThrust": {
+      "name": "Rime Thrust",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "lunge",
+      "file": "icons/lunge.svg",
+      "rationale": "A blade with three motion strokes communicates thrusting or a lance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "kilnCleave": {
+      "name": "Kiln Cleave",
+      "class": "colorless",
+      "type": "attack",
+      "icon": "flame",
+      "file": "icons/flame.svg",
+      "rationale": "A single flame communicates fire.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "vesperWard": {
+      "name": "Vesper Ward",
+      "class": "colorless",
+      "type": "skill",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    }
+  },
+  "profiles": {
+    "unarmedAttack": {
+      "name": "Unarmed Strike",
+      "baseCardId": "strike",
+      "icon": "fist",
+      "file": "icons/fist.svg",
+      "rationale": "A closed fist communicates an unarmed strike.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "shieldAttack": {
+      "name": "Shield Strike",
+      "baseCardId": "strike",
+      "icon": "counter",
+      "file": "icons/counter.svg",
+      "rationale": "A shield and return arrow communicate a guarded response.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bladeAttack": {
+      "name": "Slashing Strike",
+      "baseCardId": "strike",
+      "icon": "sword",
+      "file": "icons/sword.svg",
+      "rationale": "A single blade communicates a clean cut.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": "assets/cards/slashing-strike-512.webp"
+    },
+    "twinbladeAttack": {
+      "name": "Twinblade Flurry",
+      "baseCardId": "strike",
+      "icon": "daggers",
+      "file": "icons/daggers.svg",
+      "rationale": "Paired blades communicate repeated hits.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "daggerPierceAttack": {
+      "name": "Piercing Flurry",
+      "baseCardId": "strike",
+      "icon": "daggers",
+      "file": "icons/daggers.svg",
+      "rationale": "Paired blades communicate repeated hits.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "bowPierceAttack": {
+      "name": "Piercing Shot",
+      "baseCardId": "strike",
+      "icon": "bow",
+      "file": "icons/bow.svg",
+      "rationale": "A bow and arrow communicate a ranged shot.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "staffMagicAttack": {
+      "name": "Staff Magic Strike",
+      "baseCardId": "strike",
+      "icon": "staff",
+      "file": "icons/staff.svg",
+      "rationale": "A crystal-tipped staff communicates channeled magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "sceptreArcaneAttack": {
+      "name": "Arcane Strike",
+      "baseCardId": "strike",
+      "icon": "flame",
+      "file": "icons/flame.svg",
+      "rationale": "A single flame communicates fire.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "unarmedGuard": {
+      "name": "Evasive Guard",
+      "baseCardId": "evasiveGuard",
+      "icon": "dodge",
+      "file": "icons/dodge.svg",
+      "rationale": "A turning arrow communicates evasion.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "weaponGuard": {
+      "name": "Weapon Guard",
+      "baseCardId": "defend",
+      "icon": "counter",
+      "file": "icons/counter.svg",
+      "rationale": "A shield and return arrow communicate a guarded response.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "shieldGuard": {
+      "name": "Shield Defend",
+      "baseCardId": "defend",
+      "icon": "shield",
+      "file": "icons/shield.svg",
+      "rationale": "A nested shield communicates protection.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": "assets/cards/shield-defend-512.webp"
+    },
+    "staffGuard": {
+      "name": "Arcane Ward",
+      "baseCardId": "defend",
+      "icon": "orbit",
+      "file": "icons/orbit.svg",
+      "rationale": "Intersecting orbits communicate a sustained arcane field.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "sceptreGuard": {
+      "name": "Ritual Ward",
+      "baseCardId": "defend",
+      "icon": "thorns",
+      "file": "icons/thorns.svg",
+      "rationale": "A thorned ring communicates a painful ward.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "unarmedTechnique": {
+      "name": "Dodge Roll",
+      "baseCardId": "dodgeRoll",
+      "icon": "dodge",
+      "file": "icons/dodge.svg",
+      "rationale": "A turning arrow communicates evasion.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "weaponTechnique": {
+      "name": "Weapon Technique",
+      "baseCardId": "technique",
+      "icon": "lunge",
+      "file": "icons/lunge.svg",
+      "rationale": "A blade with three motion strokes communicates thrusting or a lance.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": "assets/cards/weapon-technique-512.webp"
+    },
+    "bowTechnique": {
+      "name": "Steady Aim",
+      "baseCardId": "technique",
+      "icon": "focus",
+      "file": "icons/focus.svg",
+      "rationale": "An eye with a central ring communicates focus, perception, or disorientation.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    },
+    "staffTechnique": {
+      "name": "Staff Channel",
+      "baseCardId": "technique",
+      "icon": "staff",
+      "file": "icons/staff.svg",
+      "rationale": "A crystal-tipped staff communicates channeled magic.",
+      "use": "only-when-official-art-is-unavailable",
+      "officialArt": null
+    }
+  },
+  "provenance": {
+    "kind": "original-vector-art",
+    "externalAssets": [],
+    "reference": "User-provided simple outline card icons; original vector construction, no copied image pixels."
+  }
+}

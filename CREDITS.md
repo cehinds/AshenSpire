@@ -354,3 +354,12 @@ third-party license is claimed.
 ## Rendered music score (2026-09-26)
 
 The recorded score is written as code. Each track is a list of notes in `music/score/<id>.mjs`, rendered offline by `node tools/score/render.mjs` on the synthesizer in `tools/score/synth.mjs` into `music/<context>/<id>.mp3`. Every instrument (strings, cello, wordless choir, organ, harp, bells, bowed metal, drones, taiko, frame drum) is synthesized from oscillators and noise: no samples, soundfonts or licensed music, and no AI music model. The two earlier AI-model recordings were removed on the owner's instruction (2026-09-26). No third-party asset licence is claimed.
+
+## Recovered Reading Desk references (2026-10-03)
+
+The existing project illustrations, card outline symbols and title-city backdrop
+were recovered unchanged from the prior deck editor work. They are staged in
+`docs/design/deck-editor/` for this local implementation preview. Source paths,
+source chat IDs and SHA-256 digests are retained in `provenance.json` there.
+No new artwork or third-party license is claimed. Runtime art-pack publication
+remains a separate step before this preview is shipped.

@@ -1312,12 +1312,12 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    least 11 px on glass at 360x640 (FINISH §8). Collection left, deck right;
    collection on top, deck below on a portrait phone. */
 .deck-editor-veil {
-  --deck-editor-target: max(var(--tap-floor), calc(44px / var(--ui-zoom, 1)));
+  --deck-editor-target: max(calc(var(--tap-target, 44px) / var(--ui-zoom, 1)), calc(44px / var(--ui-zoom, 1)));
   --deck-editor-text: max(1.3rem, calc(11px / var(--ui-zoom, 1)));
   align-items: stretch;
 }
 @media (pointer: coarse) {
-  .deck-editor-veil { --deck-editor-target: max(var(--tap-floor), calc(48px / var(--ui-zoom, 1))); }
+  .deck-editor-veil { --deck-editor-target: max(calc(var(--tap-target, 44px) / var(--ui-zoom, 1)), calc(48px / var(--ui-zoom, 1))); }
 }
 .deck-editor {
   display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 0.8rem;
@@ -1382,6 +1382,120 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-keys { margin: 0; color: var(--muted); }
 @media (pointer: coarse) { .deck-editor-keys { display: none; } }
 .deck-editor-foot .as-btn { min-height: var(--deck-editor-target); font-size: max(1em, var(--deck-editor-text)); }
+
+/* Reading Desk: collection, persistent inspection, compact deck. Artwork is
+   staged beside the recovered references until the art release adopts it. */
+.deck-editor-veil { padding: 0; }
+.deck-editor {
+  width: 100%; max-width: 168rem; padding: 2rem 2.4rem 1.2rem;
+  background: #100e0b url('../docs/design/deck-editor/assets/backdrop.webp') center / cover;
+  background-blend-mode: soft-light; border-color: #51432c;
+  font-family: Georgia, 'Times New Roman', serif;
+  --deck-editor-text: max(1.6rem, calc(12px / var(--ui-zoom, 1)));
+  --deck-min-text: calc(11px / var(--ui-zoom, 1));
+  --muted: #b8a88b; --line: #51432c; --line-soft: #665339;
+  --control-positive-fill: #c9a227; --control-positive-border: #f1cf71; --control-positive-text: #181006;
+}
+.deck-editor-head { padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
+.deck-editor-title { font: 2.8rem Georgia, serif; letter-spacing: .04em; color: #e5c992; }
+.deck-editor-subtitle { margin: .5rem 0 0; color: var(--muted); }
+.deck-editor-counter { margin-left: auto; font-size: 1.8rem; }
+.deck-editor-curve { margin-left: 1.5rem; }
+.deck-editor-toolbar { display: flex; align-items: start; gap: 1rem; }
+.deck-editor-tools { width: 100%; }
+.deck-editor-tools > summary { cursor: pointer; min-height: var(--deck-editor-target); display: list-item; align-content: center; color: var(--muted); }
+.deck-editor-tools[open] { padding-bottom: .8rem; }
+.deck-editor-tools .deck-editor-chips { flex-wrap: wrap; overflow: visible; margin-top: .6rem; }
+.deck-editor-chip { border-radius: .5rem; }
+.deck-editor-panes { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.15fr) minmax(0, .85fr); gap: 2.2rem; grid-template-rows: minmax(0, 1fr); }
+.deck-editor-pane { background: transparent; border: 0; border-radius: 0; }
+.deck-editor-pane-title { font: 2.6rem Georgia, serif; color: #f0ddba; letter-spacing: 0; text-transform: none; padding: .4rem 0 1.2rem; }
+.deck-editor-search { flex: none; box-sizing: border-box; width: 100%; min-height: var(--deck-editor-target); background: #12100d; border: 1px solid var(--line-soft); border-radius: .6rem; color: var(--parchment); font: inherit; padding: .7rem 1rem; margin-bottom: 1.2rem; }
+.deck-editor-list { padding: 0 .3rem .5rem 0; gap: .7rem; scrollbar-width: thin; }
+.deck-editor-item { flex-wrap: nowrap; gap: .3rem; }
+.deck-editor-main { background: #18140f; border-color: var(--line); border-radius: .6rem; padding: .7rem; row-gap: .4rem; }
+.deck-editor-main[aria-pressed="true"] { border-color: #d5af49; box-shadow: inset 0 0 0 1px #806020; background: #282012; }
+.deck-editor-tile .deck-editor-main { grid-template-columns: 7.8rem minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr; }
+.deck-editor-art { width: 100%; height: 100%; object-fit: cover; border-radius: .3rem; }
+.deck-editor-tile .deck-editor-art { grid-column: 1; grid-row: 1 / 4; min-height: 8rem; max-height: 10rem; }
+.deck-editor-art.outline { object-fit: contain; padding: .8rem; box-sizing: border-box; background: #211b13; }
+.deck-editor-tile .deck-editor-name { grid-column: 2; grid-row: 1; font-weight: 700; white-space: normal; }
+.deck-editor-tile .deck-editor-meta { grid-column: 2; grid-row: 2; font-size: 1.1rem; white-space: normal; }
+.deck-editor-tile .deck-editor-cost { grid-column: 3; grid-row: 1 / 3; }
+.deck-editor-row-rules { grid-column: 2 / 4; grid-row: 3; color: #ded0b8; font-size: 1.5rem; line-height: 1.4; }
+.deck-editor-cost { width: 1.8em; height: 1.8em; background: #203747; border-color: #8bb1d0; color: #e8f4ff; }
+.deck-editor-step { border-radius: .5rem; background: #1b1711; }
+.deck-editor-tile.spent .deck-editor-name { color: inherit; }
+.deck-editor-row .deck-editor-main { min-height: 6.2rem; }
+.deck-editor-row .deck-editor-name { font-size: 1.6rem; }
+.deck-editor-row .deck-editor-name { grid-column: 2; grid-row: 1; }
+.deck-editor-row .deck-editor-meta { font-size: 1.1rem; grid-column: 2; grid-row: 2; }
+.deck-editor-inspector { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 1rem; border-inline: 1px solid var(--line); padding: 0 2.2rem; }
+.deck-editor-reading { min-height: 0; overflow-y: auto; scrollbar-width: thin; padding: .8rem 1rem; flex: 1; }
+.deck-editor-reading > .card { --card-w: 100%; width: 100%; max-width: 40rem; margin: 0 auto; pointer-events: none; box-sizing: border-box; }
+.deck-editor-reading .card > .cname { font-size: 2.3rem; padding: 1rem; }
+.deck-editor-reading .card .ctext { font-size: 1.8rem; line-height: 1.45; }
+.deck-editor-reading .card .cd-body { display: flex; flex-direction: column; }
+.deck-editor-reading .card .cd-body .ctext { flex: 1; display: block; padding-top: 1.8rem; text-align: center; }
+.deck-editor-reading .card .ctype { font-size: 1.4rem; letter-spacing: .16em; }
+.deck-editor-reading .card .card-cost-rail { font-size: 1.6rem; }
+.deck-editor-reading .card .cost { font-size: 1.6rem; padding: .4rem; }
+.deck-editor-reading .card .ctags { z-index: 1; }
+.deck-editor-reading .art > .deck-editor-art { position: absolute; inset: 0; border-radius: 0; }
+.deck-editor-reading .card-art-glyph { visibility: hidden; }
+.deck-editor-full-rules { font-size: 1.6rem; line-height: 1.55; color: var(--parchment); }
+.deck-editor-flavor { font-size: 1.4rem; line-height: 1.5; font-style: italic; color: var(--muted); }
+.deck-editor-keyword { padding: 1rem 0; border-top: 1px solid var(--line); font-size: 1.4rem; line-height: 1.5; }
+.deck-editor-keyword strong { color: #99bfdd; font-size: 1.7rem; }
+.deck-editor-keyword p { margin: .3rem 0 0; color: var(--muted); }
+.deck-editor-selected-actions { flex: none; padding: 0 1rem 1rem; }
+.deck-editor-selected-reason { color: var(--muted); line-height: 1.4; margin: .4rem 0 1rem; }
+.deck-editor-primary { width: 100%; min-height: var(--deck-editor-target); font: 700 1.9rem Georgia, serif; }
+.deck-editor .deck-editor-primary { background: #c9a227; color: #181006; border-color: #f1cf71; font: 700 1.9rem Georgia, serif; }
+.deck-editor .deck-editor-primary:disabled { background: #30281c; color: #b8a88b; border-color: #665339; }
+.deck-editor .deck-editor-foot { justify-content: flex-end; }
+.deck-editor .deck-editor-foot .as-btn { flex: 0 0 auto; min-width: 12rem; }
+.deck-editor .deck-editor-foot .modal-btnrow { width: min(100%, 30rem); margin-left: auto; }
+.deck-editor .deck-editor-done { background: #c9a227; color: #181006; border-color: #f1cf71; }
+.deck-editor-footer { border-top: 1px solid var(--line); padding-top: .8rem; }
+.deck-editor-keys { font-size: 1.1rem; }
+.deck-editor-mobile-tabs { display: none; }
+.deck-editor :focus-visible { outline: 2px solid #f0ce70; outline-offset: 2px; }
+.deck-editor-tile .deck-editor-meta, .deck-editor-row .deck-editor-meta,
+.deck-editor-keys, .deck-editor-reading .card :is(.ctag, .card-metadata) { font-size: max(1.1rem, var(--deck-min-text)); }
+.deck-editor-row-rules { font-size: max(1.5rem, var(--deck-min-text)); }
+.deck-editor-keyword, .deck-editor-flavor, .deck-editor-reading .card .ctype { font-size: max(1.4rem, var(--deck-min-text)); }
+.deck-editor-row .deck-editor-name, .deck-editor-full-rules, .deck-editor-reading .card .cost { font-size: max(1.6rem, var(--deck-min-text)); }
+.deck-editor-row:has(.deck-editor-order) { flex-wrap: wrap; }
+.deck-editor-row:has(.deck-editor-order) .deck-editor-main { flex-basis: 100%; }
+@media (max-width: 900px) {
+  .deck-editor { padding: 1.2rem; }
+  .deck-editor-panes { gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .85fr); }
+  .deck-editor-inspector { padding-inline: .5rem; }
+  .deck-editor-tile .deck-editor-main { grid-template-columns: 5rem minmax(0, 1fr) auto; }
+}
+@media (max-width: 700px) {
+  .deck-editor { gap: .5rem; }
+  .deck-editor-title { font-size: 2.3rem; }
+  .deck-editor-subtitle, .deck-editor-curve, .deck-editor-keys { display: none; }
+  .deck-editor-counter { font-size: max(1.4rem, var(--deck-min-text)); }
+  .deck-editor-toolbar { flex-direction: column; gap: 0; }
+  .deck-editor-mobile-tabs { display: flex; gap: .5rem; width: 100%; }
+  .deck-editor-mobile-tabs > button { flex: 1; padding: 0 .4rem; }
+  .deck-editor-mobile-tabs > button[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
+  .deck-editor-tools > summary { min-height: var(--deck-editor-target); }
+  .deck-editor-tools[open] { max-height: 24vh; overflow-y: auto; }
+  .deck-editor-panes { display: block; min-height: 0; overflow: hidden; }
+  .deck-editor-panes > * { display: none; height: 100%; box-sizing: border-box; }
+  .deck-editor[data-mobile-view="collection"] [data-pane="collection"],
+  .deck-editor[data-mobile-view="deck"] [data-pane="deck"],
+  .deck-editor[data-mobile-view="inspect"] .deck-editor-inspector { display: flex; }
+  .deck-editor-pane-title { font-size: 2.1rem; padding-bottom: .6rem; }
+  .deck-editor-tile .deck-editor-main { grid-template-columns: 6.5rem minmax(0, 1fr) auto; }
+  .deck-editor-inspector { border: 0; padding: 0; }
+  .deck-editor-reading > .card { max-width: 29rem; }
+  .deck-editor-foot .as-btn { min-width: 8rem; }
+}
 .armoury-edit-deck { align-self: flex-start; min-height: var(--tap-floor); }
 
 /* SPEC §15.4 — the Armoury's Sigils panel (src/ui/screens/equipment.js

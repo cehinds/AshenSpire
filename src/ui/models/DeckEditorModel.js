@@ -92,6 +92,7 @@ function typeLabel(type) {
 function describe(registries, card) {
   const def = resolveCard(registries, card);
   return {
+    ref: Object.freeze({ ...card, mods: card.mods ? Object.freeze([...card.mods]) : undefined }),
     cardId: card.cardId,
     name: def.name,
     cost: def.cost,

@@ -323,6 +323,12 @@ function withDom(fn) {
   const proto = Object.getPrototypeOf(dom.document.body);
   proto.focus = function focus() { dom.document.activeElement = this; this.dispatchEvent(new dom.Event('focus')); };
   proto.replaceChildren = function replaceChildren(...nodes) { this.innerHTML = ''; this.append(...nodes); };
+  proto.insertBefore = function insertBefore(node, next) {
+    node.remove();
+    const at = this.children.indexOf(next);
+    if (at < 0) return this.appendChild(node);
+    this.children.splice(at, 0, node); node.parentNode = this; return node;
+  };
   // The fixture keeps `dataset` and the data-* attributes apart; the kit writes
   // `dataset`, so selectors read it back through the attribute methods.
   const dataKey = (key) => key.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase());
@@ -398,7 +404,7 @@ function withDom(fn) {
   }
 }
 
-test('DOM: tap, ＋/－, a keyboard and a gamepad dispatch add and remove cards; Done and Cancel', async () => {
+test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Done and Cancel', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom((dom, win) => {
     const run = freshRun();
@@ -419,9 +425,11 @@ test('DOM: tap, ＋/－, a keyboard and a gamepad dispatch add and remove cards;
     assert.equal(counter().textContent, `${n} / ${n}–∞`);
     assert.equal(doneButton().disabled, false);
 
-    // Tap a deck row: it leaves the deck, and Done is refused in visible text.
+    // Selection is read-only. Only the explicit inspector action changes a copy.
     const card = ordinary(run);
     root.querySelector(`.deck-editor-row[data-instance-id="${card.instanceId}"] .deck-editor-main`).click();
+    assert.equal(run.deck.length, n, 'inspecting a deck copy does not remove it');
+    root.querySelector('.deck-editor-primary').click();
     assert.equal(run.deck.length, n - 1);
     assert.equal(counter().textContent, `${n - 1} / ${n}–∞`);
     assert.equal(counter().dataset.state, 'out');
@@ -434,6 +442,8 @@ test('DOM: tap, ＋/－, a keyboard and a gamepad dispatch add and remove cards;
 
     // Tap its collection tile: the same instance comes back.
     root.querySelector(`.deck-editor-tile[data-key="card:${deckVariantKey(card)}"] .deck-editor-main`).click();
+    assert.equal(run.deck.length, n - 1, 'inspecting a collection copy does not add it');
+    root.querySelector('.deck-editor-primary').click();
     assert.ok(run.deck.some((c) => c.instanceId === card.instanceId));
     assert.equal(refusal().hasAttribute('hidden'), true, 'back in bounds, no refusal');
 
@@ -455,11 +465,16 @@ test('DOM: tap, ＋/－, a keyboard and a gamepad dispatch add and remove cards;
     // The gamepad: A on a focused tile adds it; RB/LB switch panes; A on a row removes it.
     root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-main').focus();
     assert.equal(editor.dispatch({ family: 'controller', button: 0 }), true);
+    assert.equal(run.deck.length, n, 'pad A inspects the row');
+    root.querySelector('.deck-editor-primary').focus();
+    editor.dispatch({ family: 'controller', button: 0 });
     assert.equal(run.deck.length, n + 1);
     editor.dispatch({ family: 'controller', button: 5 });
     assert.equal(root.querySelector('.deck-editor-panes').dataset.active, 'deck', 'RB moves to the deck pane');
     const guardRow = run.deck.filter((c) => c.equipmentRole === 'guard').at(-1);
     root.querySelector(`.deck-editor-row[data-instance-id="${guardRow.instanceId}"] .deck-editor-main`).focus();
+    editor.dispatch({ family: 'controller', button: 0 });
+    root.querySelector('.deck-editor-primary').focus();
     editor.dispatch({ family: 'controller', button: 0 });
     assert.equal(run.deck.length, n);
     editor.dispatch({ family: 'controller', button: 4 });
@@ -484,6 +499,7 @@ test('DOM: Start confirms inside the bounds, and the Escape key cancels', async 
     let done = 0;
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: { deckMinSize: 1 }, onDone: () => { done += 1; } });
     editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-main').click();
+    editor.root.querySelector('.deck-editor-primary').click();
     const size = run.deck.length;
     editor.dispatch({ family: 'controller', button: 9 });
     assert.equal(done, 1, 'Start is Done');
@@ -498,6 +514,48 @@ test('DOM: Start confirms inside the bounds, and the Escape key cancels', async 
     assert.equal(cancelled, 1);
     assert.deepEqual(editState(again), before);
   });
+});
+
+test('Reading Desk: search accepts hotkey characters without mutating or closing the editor', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom((dom) => {
+    const run = freshRun();
+    const before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const search = editor.root.querySelector('.deck-editor-search');
+    search.focus();
+    for (const key of ['+', '-', 'Delete', 'Backspace', 'Enter', ' ']) {
+      assert.equal(editor.dispatch({ family: 'keyboard', key }), false, `${key} belongs to the search input`);
+    }
+    search.value = 'zzzz-no-card';
+    search.dispatchEvent(new dom.Event('input'));
+    assert.equal(editor.root.querySelectorAll('.deck-editor-tile').length, 0);
+    assert.ok(editor.root.querySelector('.deck-editor-empty'));
+    assert.deepEqual(editState(run), before);
+    editor.close();
+  });
+});
+
+test('Reading Desk: locked equipment is inspectable but its primary removal action stays disabled', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const row = editor.root.querySelector('.deck-editor-row.locked .deck-editor-main');
+    row.click();
+    assert.equal(editor.root.querySelector('.deck-editor-primary').disabled, true);
+    assert.match(editor.root.querySelector('#deck-editor-selected-reason').textContent, /equipment|comes with/);
+    assert.deepEqual(editState(run), before);
+    editor.close();
+  });
+});
+
+test('Reading Desk: shared glossary explains repeated keywords once', async () => {
+  const { keywordExplanations } = await import('../src/ui/components/tooltipGlossary.js');
+  const rows = keywordExplanations(REG, 'Gain 3 Block. Keep Block.');
+  assert.equal(rows.filter(row => row.name.toLowerCase() === 'block').length, 1);
+  assert.match(rows.find(row => row.name.toLowerCase() === 'block').explanation, /attack damage/i);
 });
 
 test('DOM: a held row moves with the arrows under play-in-deck-order', async () => {
