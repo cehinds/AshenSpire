@@ -73,7 +73,7 @@ export const starseerCards = [
   {
     id: 'crystalBarrier', name: 'Crystal Barrier', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     flavor: "Pane of starstone, cut as the great lens was cut.\n\nThe great lens cracked in the frost of the eclipse, yet held the light. The Astronomer credited his grinding.\n\nMaud Vell, who ground it, said the crack had closed a little by morning. She would not grind another.",
-    keywords: [], icon: '🔷',
+    keywords: ['retain'], icon: '🔷',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
       { op: 'block', target: 'self', amount: 4, if: CHARGED },
@@ -121,7 +121,7 @@ export const starseerCards = [
     // build-up; the proc pays the Weak. Numbers PROVISIONAL, like the row's.
     id: 'frostVeil', name: 'Frost Veil', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     flavor: "Rime drawn over the body.\n\nFirst seen upon the Observatory's upper terrace on the night of the eclipse, when the terrace froze in the space of a breath and every instrument stopped. The apprentice Hollis logged the hour, and wrote that he did not trust it.\n\nThe hour has since been corrected, in an unknown hand.",
-    keywords: [], icon: '🌫',
+    keywords: ['retain'], icon: '🌫',
     effects: [
       { op: 'block', target: 'self', amount: 4 },
       { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 },
@@ -157,7 +157,7 @@ export const starseerCards = [
   {
     id: 'starstoneWard', name: 'Starstone Ward', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
     flavor: "Slab of starstone, raised as a shield.\n\nAfter the fashion of the Observatory's doors, cut by builders whose name the Chapel did not keep. Starstone stays cold where all else warms.\n\nThe apprentices believed those doors were not made to open from within.",
-    keywords: [], icon: '🔰',
+    keywords: ['retain'], icon: '🔰',
     effects: [
       { op: 'block', target: 'self', amount: 4 },
       { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1, if: CHARGED },
@@ -266,7 +266,7 @@ export const starseerCards = [
   {
     id: 'stargazerCard', name: 'Stargazer', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
     flavor: "The long watch at the eyepiece.\n\nThe Astronomer kept it a hundred years by his own count, recording the coal's dimming and never its meaning. The Chapel admired his restraint.\n\nHis apprentices believed he watched something he had already resolved not to describe.",
-    keywords: [], icon: '🔭',
+    keywords: ['retain'], icon: '🔭',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stargazer', stacks: one }],
     textTemplate: 'At the start of your turn, gain Starstone Charge.',
     upgrade: { manaCost: 0 },
@@ -303,7 +303,7 @@ export const starseerCards = [
   {
     id: 'meteorite', name: 'Meteorite', class: 'starseer', rarity: 'uncommon', cost: 3, staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "Heavy fall, called upon one enemy.\n\nThe largest fragment the Starwatch recovered weighed more than its size allowed. The miners who carried it said it weighed more atop the stair than at its foot.\n\nThe Astronomer had it weighed at both ends, and recorded the results in cipher.",
-    keywords: [], icon: '🪨',
+    keywords: ['retain'], icon: '🪨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 18, if: { p: 'not', pred: CHARGED } },
       { op: 'damage', target: 'enemy', amount: 24, if: CHARGED },
@@ -321,7 +321,7 @@ export const starseerCards = [
   {
     id: 'meteorSwarm', name: 'Meteor Swarm', class: 'starseer', rarity: 'uncommon', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "Many falls, called as one.\n\nChart 43 records two falls in a single night. Miners were sent to both sites and found no crater at either. The Astronomer entered both regardless, for his lens could not err.\n\nA third mark on chart 43, in another ink, is nowhere explained.",
-    keywords: [], icon: '☄',
+    keywords: ['retain'], icon: '☄',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 5 },
       { op: 'damage', target: 'allEnemies', amount: 5, if: CHARGED },
@@ -339,7 +339,7 @@ export const starseerCards = [
   {
     id: 'gravityWell', name: 'Gravity Well', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'skill',
     flavor: "Pull of the Observatory's great pendulum.\n\nThe pendulum swung true for most of the Starwatch's history. In the years the Spire was built, it leaned toward the coast, and did not recover.\n\nThe Astronomer ordered the foundations inspected. The report is blank.",
-    keywords: [], icon: '🕳',
+    keywords: ['retain'], icon: '🕳',
     effects: [
       { op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 2 },
       { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1, if: CHARGED },
@@ -407,7 +407,7 @@ export const starseerCards = [
   {
     id: 'supernova', name: 'Supernova', class: 'starseer', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "Brightest working in the charts.\n\nThe final predictive chart forecasts a light great enough to burn the paper it is drawn upon. The Starwatch took it for the fate of a star.\n\nThe chart is unsigned and undated. The apprentices swore it was not among the sheets they left upon his desk.",
-    keywords: [], icon: '💥',
+    keywords: ['retain'], icon: '💥',
     effects: [{ op: 'damage', target: 'allEnemies', amount: 8, hits: { f: 'energySpent' } }, GAIN_CHARGE],
     textTemplate: 'Deal {damage} damage to ALL enemies, scaling with Energy spent.',
     upgrade: {
@@ -418,10 +418,10 @@ export const starseerCards = [
   {
     id: 'timeDilation', name: 'Time Dilation', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "Slowing of the moment, after the eclipse.\n\nBy the Starwatch's reckoning the eclipse lasted a single night. By the Observatory clock, it has not ended. Anselm, keeper of the clock, refused to reset it.\n\nHe was found beside it, standing as he stood when the light went.",
-    keywords: ['exhaust'], icon: '⏳',
+    keywords: ['exhaust', 'retain'], icon: '⏳',
     effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'draw', amount: 3 }, GAIN_CHARGE],
     textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards. Exhaust.',
-    upgrade: { keywords: [], textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards.' },
+    upgrade: { keywords: ['retain'], textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards.' },
   },
   {
     id: 'starstoneKris', name: 'Starstone Kris', class: 'starseer', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
@@ -454,7 +454,7 @@ export const starseerCards = [
   {
     id: 'starfallBeam', name: 'Starfall Beam', class: 'starseer', rarity: 'rare', cost: 3, staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "Column of falling light.\n\nModelled upon a fall the Astronomer charted in advance. He foresaw where it would strike upon the caldera rim, and sent no warning to the mine camps there, for they were unmarked, and absent from the Court's maps.\n\nHis margin gives the fall's weight to the grain. Of the camps, nothing.",
-    keywords: [], icon: '🔆',
+    keywords: ['retain'], icon: '🔆',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 12, if: { p: 'not', pred: CHARGED } },
       { op: 'damage', target: 'allEnemies', amount: 20, if: CHARGED },
@@ -491,7 +491,7 @@ export const starseerCards = [
   {
     id: 'umbralWard', name: 'Umbral Ward', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "Ward of shadow, after the eclipse.\n\nDuring the eclipse the Observatory cast no shadow, which the Starwatch recorded as a curiosity of the light. The apprentices upon the terrace cast shadows as ever.\n\nTheirs fell toward the Observatory, not away.",
-    keywords: [], icon: '🌑',
+    keywords: ['retain'], icon: '🌑',
     effects: [
       { op: 'block', target: 'self', amount: 20, if: { p: 'not', pred: CHARGED } },
       { op: 'block', target: 'self', amount: 30, if: CHARGED },
@@ -655,11 +655,11 @@ export const starseerCards = [
   {
     id: 'attune', name: 'Attune', class: 'starseer', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
     flavor: "First exercise of the apprentice.\n\nHold the stone until pulse and rhythm match. The Starwatch taught that starstone answers rhythm, not force, and credited the principle to the Astronomer.\n\nThe standing stones upon the marches road hum in the same rhythm. They are older than he.",
-    keywords: ['exhaust'], icon: '✴',
+    keywords: ['exhaust', 'retain'], icon: '✴',
     effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
     textTemplate: 'Restore {restoreMana} Mana. Exhaust.',
     upgrade: {
-      keywords: [],
+      keywords: ['retain'],
       effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
       textTemplate: 'Restore {restoreMana} Mana.',
     },
@@ -751,7 +751,7 @@ export const starseerCards = [
   {
     id: 'ashCircle', name: 'Ash Circle', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "A ring of ash poured round the feet.\n\nThe apprentices drew one about the great lens each eclipse, to keep the dark from settling on the glass. On the last eclipse the ring was drawn, and the dark settled elsewhere.\n\nNobody inside the ring was harmed. Nobody outside it was found.",
-    keywords: [], icon: '⭕',
+    keywords: ['retain'], icon: '⭕',
     effects: [
       { op: 'block', target: 'self', amount: 10 },
       { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2, if: CHARGED },
@@ -769,7 +769,7 @@ export const starseerCards = [
   {
     id: 'kindledOmen', name: 'Kindled Omen', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "A sign read in sparks, then set upon a foe.\n\nThe apprentices threw pinches of ash into the brazier and named the shapes the sparks made. Most were nothing. A few were names of the living.\n\nThose whose names were read seldom lived the year, and the practice was stopped.",
-    keywords: [], icon: '✨',
+    keywords: ['retain'], icon: '✨',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2 },
       { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 },
@@ -825,7 +825,7 @@ export const starseerCards = [
   {
     id: 'phoenixChart', name: 'Phoenix Chart', class: 'starseer', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "A chart that redraws itself from its ash.\n\nOne page of the burned catalogue did not stay burned. Each dawn it lay whole in the courtyard, its stars a little moved. The apprentices burned it thrice more.\n\nIt returned each time, and each time a little warmer to the touch.",
-    keywords: ['exhaust'], icon: '🐦',
+    keywords: ['exhaust', 'retain'], icon: '🐦',
     effects: [
       { op: 'heal', target: 'self', amount: 8 },
       { op: 'block', target: 'self', amount: 8 },
@@ -861,7 +861,7 @@ export const starseerCards = [
   {
     id: 'riteOfCinders', name: 'Rite of Cinders', class: 'starseer', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "The embers stirred, and the mind with them.\n\nThe apprentices performed it before long watches, breathing the smoke of burned charts until the stars came clearer. The Astronomer called it poisoning. He also asked what they saw.\n\nThey saw a great deal. Little of it was in the sky.",
-    keywords: ['exhaust'], icon: '♨',
+    keywords: ['exhaust', 'retain'], icon: '♨',
     effects: [
       { op: 'gainEnergy', amount: 1 },
       { op: 'draw', amount: 2 },

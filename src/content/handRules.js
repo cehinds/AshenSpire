@@ -6,12 +6,12 @@
 // like every other stat. What stays is how a hand BEHAVES, which no attribute
 // decides.
 //
-// THE SOLO DEFAULT (FINISH D27, decided 2026-09-27 under the owner's
-// delegation; SPEC §4.1):
-// retain the hand; draw the Draw stat each turn, up to capacity. Fill mode
-// (retain-and-fill) and `retain: false` (discard at turn end) stay selectable.
+// Default (owner, 2026-10-03): shuffle unplayed non-Retain cards into the
+// draw pile, keep Retain cards, then draw the full Draw stat up to capacity.
+// Missing shuffleHand in an older saved fight keeps its discard behaviour.
 export const handRulesDefaults = {
-  retain: true,
+  retain: false,
+  shuffleHand: true,
   promptDiscard: false,
   discardLimit: 10,
   replaceDiscards: false,

@@ -15,7 +15,7 @@ import { formationMovePlan } from '../model/formationMovement.js';
 // Headless: no document/window/localStorage/timers.
 
 import * as A from './actions.js';
-import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice } from './handRules.js';
+import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice, returnUnplayedCards } from './handRules.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './combatRatings.js';
@@ -472,7 +472,7 @@ function endPlayerTurn(combat, discardIds = []) {
   }
   p.counters.staminaSpentThisTurn = 0;
 
-  // …then discard hand except Retain; Ethereal cards exhaust instead. The
+  // …then refresh ordinary cards, keeping Retain; Ethereal cards exhaust. The
   // fate of each card is the framework's call (src/framework/lifecycle.js);
   // this engine only moves the card and emits the receipt.
   const keep = [];
@@ -490,10 +490,7 @@ function endPlayerTurn(combat, discardIds = []) {
     combat.piles.exhaust.push(card);
     combat.emit('cardExhausted', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'ethereal' });
   }
-  for (const card of toDiscard) {
-    combat.piles.discard.push(card);
-    combat.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' });
-  }
+  returnUnplayedCards(combat, toDiscard);
 
   // Unspent energy is lost.
   p.energy = 0;

@@ -322,9 +322,9 @@ owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's t
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
 | Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
 | Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
-| Opening hand (`openingHand`) | per class | per class | per class | — | per class | per class | — | 4–6 | #1294's class hand: base 3/4/4/5 and 0.5 on the primary (STR/DEX/WIS/INT) for Reaver/Rogue/Herald/Starseer, counted from 1 (§4.1). Shared fallback: 4 + 0.5 INT. |
-| Draw / turn (`draw`) | 3 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4 (`attributeBaseline: 4`); every fight, co-op included. Base 3 since FINISH D27 (2026-09-27; was 2, the retired hand rules `turn` group): the largest draw a retained hand of 7 is never capped at on creation — 5 was capped on 47–83% of turns in the simulator. A run born earlier keeps its snapshotted base. |
-| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 | — | 1–30 | Counted from INT 1 (`attributeBaseline: 1`): exactly the retired `capacity` group at every INT (it also replaced `balance.handMax`). |
+| Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; configurable per-class overrides remain available. |
+| Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards only reduce this when capacity is reached. |
+| Hand size (`handSize`) | 15 | — | — | — | — | — | — | 1–15 | Flat absolute capacity by default, independently configurable. |
 | AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |
 | PR (`pr`) | 0 | — | 0.25 | 0.5 | 0.5 | 0.75 | — | — | 〃 |
@@ -829,52 +829,35 @@ cards by the run's three hand rows of §3.5 — **Opening hand** (`openingHand`)
 (`draw`) and **Hand size** (`handSize`) — priced by the one row formula and snapshotted with the
 run. Advanced → Stats → Draw & hand edits those rows with the same fields as every other stat,
 beside the hand's behaviour options, which are not stat rows: retain, optional discard prompt,
-discard limit, replacement draws, overflow, reshuffle and draw mode (`content/handRules.js`).
-The opening hand is also bounded by the hand size. **Solo default (FINISH D27, decided 2026-09-27 under the
-owner's delegation): retain the hand; draw the Draw stat each turn, up to capacity.** Unplayed cards stay
-in hand at turn end (nothing is discarded), and each later turn draws a **fixed** number — the
-Draw / turn row, never past the hand size (a data row). Both other modes stay selectable: fill
-mode (with retain, the old retain-and-fill) draws up to the hand size, and retain off discards
-unplayed cards at turn end (the numbered sequence below). A run keeps the Draw row it was born
-with (its snapshot), so a saved run draws as it always did. Overflow defaults to **discard**: retained cards past
-the hand size are selected for discard at turn end. Opening counts are evaluated at combat start;
-later draws and the hand size at turn start. **Co-op reads the same rows**: each seat's opening
-hand, turn draw and hand size come from its own run's rows, it keeps unplayed cards under the
-shipped behaviour options and discards what is over its hand size at turn end. A seat or saved
-fight born before ruleset 7 keeps what it had: solo, its hand rules as saved (the retired
-single-stat groups, read exactly); co-op, a fresh hand of its derived draw capped at the retired
-fallback of 5.
+discard limit, replacement draws, overflow, reshuffle, shuffleHand and draw mode (`content/handRules.js`).
+The opening hand is also bounded by the hand size.
 
-**The opening hand is the class's (owner, 2026-09-24: "Class base 3–5, +1 from stats"; "start
-with 4-6 cards"; shipped in #1294 and carried into ruleset 7).** The `openingHand` row has a
-**per-class form** (`byClass`): each class states its own base and attribute weights, and the
-row's `min`, `max` and `attributeBaseline` are shared. `attributeBaseline: 1` counts only the
-attribute points above 1, so a weight of 0.5 is exactly #1294's floor(max(0, primary − 1) / 2)
-and the opening hand is clamp(base + floor(max(0, primary − 1) / 2), 4, 6):
+**Default (owner, 2026-10-03): draw the full turn amount, retaining tagged cards,
+up to an absolute hand limit of 15.** The opening and turn draw rows start at
+4 and use the existing Draw scaling: +1 per five Intelligence above 4, capped
+at 10 by default. The Hand size row is a separate flat 15; it does not grow
+with attributes. All three rows remain configurable, including per-class
+opening overrides. New runs snapshot those rows; existing runs keep theirs.
 
-| Class | Base | Primary (weight 0.5) | Standard preset (primary 3) | Primary 1 |
-|---|---|---|---|---|
-| Reaver | 3 | STR | 4 | 4 |
-| Rogue | 4 | DEX | 5 | 4 |
-| Herald | 4 | WIS | 5 | 4 |
-| Starseer | 5 | INT | 6 | 5 |
+At turn end, keep cards carrying Retain, resolve Ethereal and other explicit
+lifecycle rules, and shuffle ordinary unplayed cards directly into the draw
+pile (`shuffleHand: true`). Played cards and forced or chosen discards stay in
+the discard pile until its normal reshuffle. Retain does not change a played
+card's destination. The authored Herald and Starseer pools give Retain to
+selected healing, ward, setup and costly spells, including their upgrades.
+At the next turn draw `min(Draw / turn, max(0, Hand size - retained count))`:
+two retained cards plus a draw of four produces six cards; twelve retained
+cards draw only three under the default limit of fifteen. A full hand draws
+nothing and consumes no draw-pile cards. A depleted deck can supply fewer.
 
-A run snapshots its own class's row (the per-class form resolves at birth and never rides into
-a save or a fight); the shared base 4 and Intelligence weight 0.5 are the fallback for a fight
-with no class (a headless fixture). Advanced → Stats → Draw & hand edits each class's base and
-weights as its own row group (`gameConfig.derivedStatRules.rules.openingHand.byClass.<class>.
-<field>`), beside the shared Min, Max and "attribute points before bonuses". A run started
-between #1294 and ruleset 7 (ruleset 6) opens on #1294's class hand exactly, its own
-`handRules.startingByClass` tuning included; #1294's settings keys convert exactly onto the
-row on import, boot and restore, and a stored or imported opening-hand maximum of exactly 15
-(the retired default cap, with a minimum of 3 beside it) is dropped with a warning first.
-#1294's shared opening base and attribute (`gameConfig.handRules.starting.base|stat`) are
-**retired, not migrated** (#1318): nothing reads them, and each key (plain or
-`settings.`-prefixed) is dropped wherever a profile, run snapshot or imported file carries it —
-with one warning naming the per-class rows when its value was not a stock one (base 3 or 4,
-Intelligence). Copying one shared value onto every class would flatten the four openings into
-one. A run snapshot keeps its limits; both drops share one door (`withoutRetiredOpeningHand`,
-`model/statRows.js`) and say so in one warning.
+Solo and co-op use the same refresh rule and each seat's own piles and rows.
+The explicit Play in deck order option returns the unplayed cards to the
+bottom in deck order without consuming shuffle RNG. `retain: true` still
+keeps all ordinary unplayed cards; disabling `shuffleHand` restores discard
+cleanup, and `drawMode: 'fill'` remains available. Forced overflow discards
+remain discards even with shuffle enabled. A saved fight without shuffleHand
+keeps its prior discard behaviour; rule snapshots and the run's RNG counters
+preserve deterministic resume. Pre-ruleset-7 hand-group adapters remain intact.
 
 Optional discards are selected when ending a turn; cancel leaves the turn
 untouched. Turn-end effects resolve before eligible selected cards move to

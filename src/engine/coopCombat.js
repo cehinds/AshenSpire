@@ -46,7 +46,7 @@ import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } fr
 import { refreshCombatRatings } from './combatRatings.js';
 import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
-import { turnDrawCount, endTurnCardFate } from './handRules.js';
+import { turnDrawCount, endTurnCardFate, returnUnplayedCards } from './handRules.js';
 import { orderedDrawPile } from '../model/deckRules.js';
 
 const QUEUE_GUARD = 10000;
@@ -668,10 +668,11 @@ function endOnePlayerTurn(C, P) {
   }
   // Kept cards past the seat's hand size go to the discard, as a solo fight's
   // overflow does (co-op has no turn-end discard prompt).
-  if (P.handRules && P.handRules.overflow === 'discard' && keep.length > C.handMax) toDiscard.push(...keep.splice(C.handMax));
+  const overflow = P.handRules && P.handRules.overflow === 'discard' ? keep.splice(C.handMax) : [];
   C.piles.hand = keep;
   for (const card of toExhaust) { C.piles.exhaust.push(card); C.emit('cardExhausted', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'ethereal' }); }
-  for (const card of toDiscard) { C.piles.discard.push(card); C.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' }); }
+  for (const card of overflow) { C.piles.discard.push(card); C.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' }); }
+  returnUnplayedCards(C, toDiscard);
   p.energy = 0;
   drainQueue(C);
 }

@@ -754,18 +754,18 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.handRules.drawMode': 'fill',
   }, 'Draw & hand', { intelligence: 9 });
   const opening = hand.examples[0].lines[0];
-  // The shared opening-hand row counts the points above 1 (its
-  // `attributeBaseline`, #1294), and says so: 4 + floor((9 − 1) × 0.25) = 6.
-  assert.equal(opening.total, 4 + Math.floor((9 - 1) * 0.25));
-  assert.match(opening.expression, /^4 base \+ INT \(9 − 1\) × 0\.25 → 2/);
+  // The shared opening-hand row counts the points above 4 (its
+  // `attributeBaseline`), and says so: 4 + floor((9 − 4) × 0.25) = 5.
+  assert.equal(opening.total, 4 + Math.floor((9 - 4) * 0.25));
+  assert.match(opening.expression, /^4 base \+ INT \(9 − 4\) × 0\.25 → 1/);
   // The legacy Draw conversion (co-op and older fights) is gone: the Draw /
   // turn row IS the draw, so the topic shows the one hand example.
   assert.deepEqual(hand.examples.map(entry => entry.kind), ['hand']);
   assert.equal(hand.examples[0].lines[1].label, 'Each turn, at most', 'filling to capacity is a ceiling, not a promise');
-  // Fill's ceiling is the Hand size row: 7 base + floor((INT 9 − 1) × 0.2) = 8.
-  assert.equal(hand.examples[0].lines[1].total, 7 + Math.floor((9 - 1) * 0.2));
+  // Fill's ceiling is the separate flat Hand size row of 15.
+  assert.equal(hand.examples[0].lines[1].total, 15);
   assert.equal(hand.examples[0].lines[2].label, 'Hand size');
-  assert.match(hand.examples[0].lines[2].expression, /^7 base \+ INT \(9 − 1\) × 0\.2 → 1$/);
+  assert.match(hand.examples[0].lines[2].expression, /^15 base$/);
   assert.match(statsTopicPreview({ 'gameConfig.handRules.reshuffle': false }, 'Draw & hand').examples[0].lines[1].expression, /not reshuffled/);
   const fixed = statsTopicPreview({
     'gameConfig.handRules.drawMode': 'fixed',
@@ -775,10 +775,10 @@ test('the worked example recomputes from the edited values and shows the whole s
   assert.equal(fixed.examples[0].lines[1].total, 5, 'a fixed draw never shows more than capacity allows');
   assert.match(fixed.examples[0].lines[1].expression, /limited to capacity 5/);
   const replacing = statsTopicPreview({
-    'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
+    'gameConfig.handRules.retain': true, 'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
   }, 'Draw & hand');
   assert.match(replacing.examples[0].lines[1].label, /before replacements/, 'a replaced discard can draw past the base amount');
-  const deepSettings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 20, 'gameConfig.derivedStatRules.rules.openingHand.max': 30, 'gameConfig.derivedStatRules.rules.handSize.base': 20 };
+  const deepSettings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 20, 'gameConfig.derivedStatRules.rules.openingHand.max': 30, 'gameConfig.derivedStatRules.rules.handSize.base': 20, 'gameConfig.derivedStatRules.rules.handSize.max': 30 };
   const deep = statsTopicPreview(deepSettings, 'Draw & hand');
   assert.equal(deep.examples[0].lines[0].total, born('reaver', deepSettings).deck.length, 'an opening hand cannot exceed the starting deck');
   // `startingDeckSize` budgets only filler; bound cards ride on top, so the
@@ -895,7 +895,7 @@ test('the example shows what a run is born with at the edges', async () => {
   const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.stamina.perLevel': 0.125 }, 'Stamina', { constitution: 1 }, 9);
   assert.match(eighth.examples[0].lines[0].expression, /8 levels × 0\.125 → 1/);
   const drawGrowth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
-  // Stock Draw / turn at INT 1, level 9: 3 base (FINISH D22) + nothing above 4 + floor(8 × 0.125) = 4.
-  assert.equal(drawGrowth.examples[0].lines[1].total, 4);
-  assert.match(drawGrowth.examples[0].lines[1].expression, /^3 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
+  // Stock Draw / turn at INT 1, level 9: 4 base + nothing above 4 + floor(8 × 0.125) = 5.
+  assert.equal(drawGrowth.examples[0].lines[1].total, 5);
+  assert.match(drawGrowth.examples[0].lines[1].expression, /^4 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
 });

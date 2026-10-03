@@ -260,11 +260,11 @@ test('a stock lean character is priced by the rows, with no scale in between', (
   assert.equal(run.drawPerTurn, pool('draw'));
   assert.equal(run.maxMana, pool('mana'));
   // The numbers those rows now state for a stock lean Reaver (STR 3, DEX 1,
-  // CON 2, WIS 1, INT 1): Actions sit at their base of 3, draw at its base of 3
-  // (FINISH D22; INT 1 is below the row's baseline of 4), and Mana at its
+  // CON 2, WIS 1, INT 1): Actions sit at their base of 3, draw at its base of 4
+  // (INT 1 is below the row's baseline of 4), and Mana at its
   // base of 1 — WIS 1 at 0.5 a point floors to nothing, and no other term
   // reaches a whole point on the lean span.
-  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 3, 1]);
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 4, 1]);
 });
 
 test('the baseline is a dial, and it decides the total when it is set', () => {

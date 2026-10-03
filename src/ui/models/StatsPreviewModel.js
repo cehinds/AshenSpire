@@ -291,7 +291,7 @@ function handExample(ctx) {
       turn.total = capacity.total;
     }
     if (replacing) turn.expression += '; plus one for each card you chose to discard, never past capacity';
-    if (rules.retain) turn.expression += '; fewer when kept cards fill the hand';
+    turn.expression += '; fewer when retained cards leave too little room';
   }
   // Either mode stops when there is nothing left to draw (engine/actions.js
   // `drawCards`), and without a reshuffle the discard pile never refills it.
@@ -300,7 +300,9 @@ function handExample(ctx) {
     : '; fewer once the draw pile is empty (the discard pile is not reshuffled)';
   return {
     kind: 'hand', id: 'hand', title: t('statsPreview.hand.title'), lines: [opening, turn, capacity],
-    hint: rules.retain ? 'Unplayed cards stay in hand.' : 'Unplayed cards are discarded at turn end.',
+    hint: rules.retain ? 'Unplayed cards stay in hand.' : rules.shuffleHand
+      ? 'Retain cards stay in hand; other unplayed cards shuffle back into the draw pile. Ethereal still applies.'
+      : 'Retain cards stay in hand; other unplayed cards are discarded at turn end. Ethereal still applies.',
     sense: '',
   };
 }

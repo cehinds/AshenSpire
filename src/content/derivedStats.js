@@ -74,37 +74,21 @@ export const derivedStatRules = {
     //       pool rises by the same 21: Reaver 70, Starseer 69, Rogue and
     //       Herald 59. Only the base moved; CON still pays 4 a point.
     energy: { base: 3, strength: 0.1, dexterity: 0.25, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
-    // The hand. Draw / turn and Hand size were single-attribute rules on INT,
-    // base + floor(max(0, INT − baseline) ÷ pointsPerCard); each is restated
-    // EXACTLY as a weight of 1 ÷ pointsPerCard counted from its baseline
-    // (`attributeBaseline`), so every INT reads what it read before.
-    //
-    // THE OPENING HAND IS FOUR TO SIX CARDS, BY CLASS (owner, 2026-09-24:
-    // "start with 4-6 cards depending on the base (3-5)", shipped in #1294):
-    // each class opens on its own base, plus one card for every two points of
-    // its primary attribute above 1 —
-    //   clamp(base + floor(max(0, primary − 1) / 2), 4, 6)
-    // — which is a weight of 0.5 counted from 1 (`attributeBaseline`). The
-    // Standard presets (primary 3) open 4 / 5 / 5 / 6; all 1s open 4 / 4 / 4 / 5.
-    // The shared base and Intelligence weight are the fallback for a fight
-    // with no class (a headless fixture); every shipped class has its own row.
+    // Owner, 2026-10-03: open and draw four, with the existing Draw scaling
+    // (+1 per five INT above 4). Retain adds to the next draw; the absolute
+    // capacity is a separate flat 15. Each row remains configurable, and
+    // existing runs continue to read their snapshotted rows.
     openingHand: {
-      base: 4, intelligence: 0.5, attributeBaseline: 1, min: 4, max: 6,
+      base: 4, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10,
       byClass: {
-        reaver: { base: 3, strength: 0.5 },
-        rogue: { base: 4, dexterity: 0.5 },
-        herald: { base: 4, wisdom: 0.5 },
-        starseer: { base: 5, intelligence: 0.5 },
+        reaver: { base: 4, intelligence: 0.2 },
+        rogue: { base: 4, intelligence: 0.2 },
+        herald: { base: 4, intelligence: 0.2 },
+        starseer: { base: 4, intelligence: 0.2 },
       },
     },
-    // Base 3 since FINISH D27 (2026-09-27, decided under the owner's
-    // delegation: retain the hand and draw the Draw stat each turn, up to
-    // capacity). The target was about 5 unless that floods a retained hand; `node tools/runsim.mjs` and a turn census
-    // showed 5 (and 4) clipped by the hand size of 7 on up to 83% (36%) of
-    // turns, so 3 is the largest draw that is never capped at creation. A run
-    // born earlier keeps its snapshotted base 2.
-    draw: { base: 3, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
-    handSize: { base: 7, intelligence: 0.2, attributeBaseline: 1, min: 1, max: 30 },
+    draw: { base: 4, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
+    handSize: { base: 15, min: 1, max: 15 },
     hp: { base: 51, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
     // Budget 1 each, the owner's own sums.
     stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, perLevel: 0.2 },
