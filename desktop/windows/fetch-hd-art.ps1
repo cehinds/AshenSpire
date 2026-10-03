@@ -291,6 +291,9 @@ function Invoke-Prune {
   foreach ($f in Get-ChildItem -LiteralPath $objects -Recurse -File) {
     $rel = $f.FullName.Substring($root.Length + 1) -replace '\\', '/'
     if ($keep.Contains($rel)) { continue }
+    # Only the store's own names (sha256, lower-case hex, in its two-digit
+    # folder); any other file is the player's and stays (as on uninstall).
+    if ($rel -cnotmatch '^objects/([0-9a-f]{2})/\1[0-9a-f]{62}\.[^/]+$') { continue }
     try { Remove-Item -LiteralPath $f.FullName -Force; $removed++ }
     catch { $orphans.Add('game\' + $rel.Replace('/', '\')); Say "Could not remove $rel now: $($_.Exception.Message)" }
   }
