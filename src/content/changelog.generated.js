@@ -8,9 +8,59 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the balance report's checks are stricter",
     "detail": "Nothing you play changes. The run simulator now refuses to print per-act difficulty for an endless climb, where later loops would have been counted as the first three acts, and the balance notes' check now catches a boss listed for a region that cannot meet it, or the same row recorded twice.",
-    "build": "0.7.1.808",
+    "build": "0.7.1.814",
     "pullRequest": 1487,
     "url": "https://github.com/cehinds/AshenSpire/pull/1487"
+  },
+  {
+    "id": "pr-1490",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The tutorial bubble moves off your cards when the hand rearranges itself",
+    "detail": "After a window resize, your hand can spread itself out again a moment after the tutorial has found a spot for its speech bubble. If that put a card under the bubble, the bubble stayed there and you couldn't click that card. The bubble now moves whenever your cards move, not only when the thing it points at moves.",
+    "build": "0.7.1.813",
+    "pullRequest": 1490,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1490"
+  },
+  {
+    "id": "pr-1493",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every owner decision has its own number",
+    "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D48, and a test fails if two decisions ever share a number again.",
+    "build": "0.7.1.812",
+    "pullRequest": 1493,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
+    "id": "pr-1508",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the slowest automated checks no longer wait on a 20-minute download",
+    "detail": "Nothing you play changes. Three checks ran out of time before they started, while still downloading the project; the heavy checks now skip the source paintings and old file history they never open, cutting each one's download from about 2.3 GB to about 0.7 GB. Every check still runs; whether all of them now finish inside 20 minutes is confirmed only by the next full run.",
+    "build": "0.7.1.811",
+    "pullRequest": 1508,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1508"
+  },
+  {
+    "id": "pr-1511",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Cards keep just their Information button for full text",
+    "detail": "Clipped descriptions no longer add a separate arrow box above a combat card or push its title aside. Select the card and use its existing (i) button to read the complete details.",
+    "build": "0.7.1.810",
+    "pullRequest": 1511,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1511"
+  },
+  {
+    "id": "pr-1501",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A Windows installer, with the high-resolution art as a choice on the install screen",
+    "detail": "Nothing in the game itself changes. AshenSpire-Setup.exe installs the game for you (no administrator prompt) with Start menu and desktop shortcuts; tick High-resolution art and it downloads the full-resolution art during the install and checks every file, or leave it unticked to play with the standard art and add it later by running the installer again. Uninstalling asks before it deletes your saves.",
+    "build": "0.7.1.808",
+    "pullRequest": 1501,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1501"
   },
   {
     "id": "pr-1512",
