@@ -1611,6 +1611,10 @@ The editor groups the complete inventory into stable nested sections:
   with front/back meaning identified per side; formation spacing, player and
   enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
   data-owned combat presentation values that do not alter asset identity.
+  Default spawns start on the lowest row in the outermost column of each team,
+  placing player and enemy starts farthest apart. Fill each row from outside toward
+  the centre, then move upward. For two columns and three rows, player rows read
+  `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
   The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
   The combat sizing workbench loads the matching layout when switching grid dimensions,
   retains each layout's draft edits for the modal session, and offers **Load supplied positioning**
