@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Behind the scenes: every full browser check now has to download the art first",
     "detail": "Nothing you play changes. After the art moved out of this repository, three heavy browser checks ran without downloading it and failed on pictures that never loaded. A test now fails if any check in the full run starts a tool before the art is downloaded, including a tool started from a multi-line step.",
-    "build": "0.7.1.827",
+    "build": "0.7.1.829",
     "pullRequest": 1524,
     "url": "https://github.com/cehinds/AshenSpire/pull/1524"
+  },
+  {
+    "id": "pr-1519",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: the build-number check no longer passes when the previous build's record is missing or unreadable",
+    "detail": "Nothing you play changes. The automatic check that each new build's number is higher than the last one treated a previous build record it could not open (a damaged copy of the history), or one too garbled to read, as if there had been no record at all, and passed. It now stops and says it could not tell. A shallow copy that holds no previous build at all still passes, as before.",
+    "build": "0.7.1.828",
+    "pullRequest": 1519,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1519"
   },
   {
     "id": "pr-1518",
