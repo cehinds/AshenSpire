@@ -15,6 +15,10 @@
 // through registerDebugChrome(); main.js imports that module once. Until it
 // has, a banner still stands (plain DOM wearing the kit's classes) — a
 // failure at boot must never wait for chrome.
+//
+// strings.js is itself a leaf (it imports only generated data), so this
+// module stays one.
+import { t } from './strings.js';
 
 export const MAX_ENTRIES = 300;
 const entries = [];
@@ -94,7 +98,7 @@ function bareBanner({ title, body, onOpen }) {
   const open = document.createElement('button');
   open.type = 'button';
   open.className = 'as-btn vb-log';
-  open.textContent = 'Command log';
+  open.textContent = t('settings.row.commandLog');
   open.addEventListener('click', onOpen);
   node.appendChild(open);
   const more = () => { const m = document.createElement('span'); m.className = 'as-flavor'; node.insertBefore(m, open); return m; };

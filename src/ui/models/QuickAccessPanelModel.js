@@ -28,7 +28,7 @@ export function quickAccessPanelModel(controls, layers = { armoury: true, menu: 
     })] : []),
     ...(layers.menu ? [actionControlModel(UI.quickMenuControl, {
       id: controls.menuId,
-      label: 'Quick menu',
+      label: t('settings.row.quickNav'),
       glyph: '☰',
       hint: controls.menuHint,
       command: 'open-quick-menu',

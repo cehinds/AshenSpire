@@ -1,5 +1,6 @@
 import { equipmentDetails } from './equipmentCard.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { t } from '../strings.js';
 
 // A connected element owns the observers and popover, including across stage changes.
 class CreationTagRow extends HTMLElement {
@@ -13,14 +14,14 @@ class CreationTagRow extends HTMLElement {
       this.popup = document.createElement('div');
       this.popup.className = 'cc-tags-popup';
       this.popup.setAttribute('popover', 'auto');
-      this.popup.setAttribute('aria-label', 'Additional equipment tags');
+      this.popup.setAttribute('aria-label', t('equipment.tags.more.aria'));
       this.append(this.more, this.popup);
       const open = () => {
         if (this.popup.matches(':popover-open')) return;
         this.popup.replaceChildren();
         const explanation = document.createElement('p');
         explanation.className = 'cc-tag-explanation';
-        explanation.textContent = 'Select a tag for details.';
+        explanation.textContent = t('equipment.tags.prompt');
         for (const tag of this.tags.filter(tag => tag.hidden)) {
           const button = document.createElement('button');
           button.type = 'button'; button.className = 'inspection-tag';
@@ -81,7 +82,7 @@ export function compactEquipmentDetails(name, explanations) {
   if (tags) {
     const row = document.createElement('creation-tag-row');
     row.className = 'inspection-tags cc-single-tags';
-    row.setAttribute('aria-label', 'Equipment tags');
+    row.setAttribute('aria-label', t('equipment.tags.aria'));
     row.append(...tags.childNodes); tags.replaceWith(row);
   }
   return details;

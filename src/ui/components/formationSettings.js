@@ -5,6 +5,7 @@ import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { formationTileOutline } from './formationGrid.js';
 import { esc } from './tooltip.js';
 import { UI_COMPONENTS, uiComponentAttrs } from './uiComponents.js';
+import { t } from '../strings.js';
 
 const prefix = `${ADVANCED_CONFIG_PREFIX}presentation.`;
 
@@ -98,7 +99,7 @@ export function mountFormationSettings(container, settings, onChange, rows) {
   };
   const update = () => {
     host.dataset.dirty = 'true';
-    status.textContent = 'Preview only — apply to save your layout.';
+    status.textContent = t('formation.layout.previewOnly');
     host.querySelectorAll('[data-preset]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.preset === draft.formationPreset)));
     draw();
   };
@@ -136,7 +137,7 @@ export function mountFormationSettings(container, settings, onChange, rows) {
   const apply = () => {
     const changes = Object.fromEntries([...editable].map(key => [`${prefix}${key}`, draft[key]]));
     if (onChange(changes)?.ok === false) {
-      status.textContent = 'The layout could not be saved. Your preview is still available; try applying again.';
+      status.textContent = t('formation.layout.saveFailed');
       return false;
     }
     Object.assign(settings, changes);

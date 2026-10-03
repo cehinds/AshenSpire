@@ -3,13 +3,14 @@
 // and why not, when it cannot — and Use as the one footer action when the
 // host's flask plan offers it. The header close is the only way out; there is
 // no footer Close beside it.
+import { t } from '../strings.js';
 
 export function potionInspectionView({ charges = null, use = null } = {}) {
   const chargeLine = Number.isInteger(charges) && charges >= 0
     ? `${charges} charge${charges === 1 ? '' : 's'} remaining.`
     : null;
   const action = use
-    ? Object.freeze({ id: 'use', label: String(use.label || 'Use'), enabled: !!use.enabled, reason: use.enabled ? '' : String(use.reason || '') })
+    ? Object.freeze({ id: 'use', label: String(use.label || t('combat.potions.use')), enabled: !!use.enabled, reason: use.enabled ? '' : String(use.reason || '') })
     : null;
   return Object.freeze({
     chargeLine,

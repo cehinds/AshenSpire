@@ -339,7 +339,7 @@ export function mountRewards(app, {
         const option = row.options.find((entry) => `${entry.kind}:${entry.id}` === chosen);
         const feat = option?.kind === 'feat' ? featById(option.id) : null;
         const node = option?.kind === 'classNode' ? (registries.nodes || []).find((entry) => entry.id === option.id) : null;
-        return { title: 'Level choice', body: state === 'taken'
+        return { title: t('reward.level.choice.title'), body: state === 'taken'
           ? `${esc(feat?.name || node?.label || option?.id || '')} gained.`
           : `Choose one of ${row.options.length} feats or class upgrades.` };
       }
@@ -452,8 +452,8 @@ export function mountRewards(app, {
 
   function renderSkillReward(skillId, claim) {
     const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
-    const done = button({ label: 'Continue', weight: 'primary', id: 'reward-skill-done' });
-    door({ eyebrow: 'Skill Level Up', title: `${label} · Level ${claim.after}`,
+    const done = button({ label: t('common.continue'), weight: 'primary', id: 'reward-skill-done' });
+    door({ eyebrow: t('reward.level.skill.eyebrow'), title: `${label} · Level ${claim.after}`,
       body: el('p', { text: `Your ${label} skill is now level ${claim.after}.` }),
       foot: modalFooter({ primary: done, className: 'reward-foot', size: 'medium' }) });
     done.addEventListener('click', renderMenu);
@@ -461,7 +461,7 @@ export function mountRewards(app, {
 
   function statAllocationSection() {
     if (settings.levelUpAllocateStats !== true || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
-    const host = el('section', { class: 'reward-stat-allocation', 'aria-label': 'Assign stats' });
+    const host = el('section', { class: 'reward-stat-allocation', 'aria-label': t('reward.level.assignStats.aria') });
     const draw = () => {
       const points = run.level?.unspentPoints || 0;
       const attrs = levelUpPlan(registries, run).attributes;
@@ -489,12 +489,12 @@ export function mountRewards(app, {
   }
 
   function renderLevelReward(claim) {
-    const done = button({ label: 'Continue', weight: 'primary', id: 'reward-level-done' });
+    const done = button({ label: t('common.continue'), weight: 'primary', id: 'reward-level-done' });
     const body = el('div', { class: 'reward-level-claim' }, [
       el('p', { text: `Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned` }),
       statAllocationSection(),
     ]);
-    door({ eyebrow: 'Level Up', title: `Level ${claim.after}`, body,
+    door({ eyebrow: t('reward.level.eyebrow'), title: `Level ${claim.after}`, body,
       foot: modalFooter({ primary: done, className: 'reward-foot', size: 'medium' }) });
     done.addEventListener('click', () => renderMenu());
   }
@@ -691,8 +691,8 @@ export function mountRewards(app, {
     }
 
     attachTooltip(cont, () => (mode === 'auto'
-      ? `<div class="tt-title">Continue</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
-      : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
+      ? `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
+      : `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Done — only what you chose comes along.')}`));
     const finish = () => {
       // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
       // closed set); the auto pick advances the same stream, so a seeded run
@@ -787,7 +787,7 @@ export function mountRewards(app, {
       el('span', { class: 'rp-level', text: row.kind === 'character' ? `Level ${row.level}` : t('reward.progress.level', { level: row.level }) }),
       bar,
       next,
-      ready ? button({ label: 'Level', className: 'reward-level-up', disabled: !!refill, attrs: { 'data-track': row.id, 'aria-label': `Level up ${label}` } }) : null,
+      ready ? button({ label: t('reward.level.button'), className: 'reward-level-up', disabled: !!refill, attrs: { 'data-track': row.id, 'aria-label': `Level up ${label}` } }) : null,
       row.kind !== 'character' && row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
       // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
       row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
@@ -1045,16 +1045,16 @@ export function mountRewards(app, {
       ? savedRows : [{ kind: 'legacy', amount: total }];
     const options = victoryXpPresentation(settings, document.body.classList.contains('reduced-motion'));
     const timing = victoryXpTiming(rows.length, options);
-    const open = button({ label: 'Continue', weight: 'primary', id: 'reward-expand', className: 'reward-compact-continue', disabled: true });
+    const open = button({ label: t('common.continue'), weight: 'primary', id: 'reward-expand', className: 'reward-compact-continue', disabled: true });
     const formula = el('span', { class: 'reward-compact-formula' });
-    const more = el('button', { class: 'reward-compact-more', type: 'button', text: '+…', 'aria-label': 'Show full XP calculation' });
+    const more = el('button', { class: 'reward-compact-more', type: 'button', text: '+…', 'aria-label': t('reward.xp.more.aria') });
     more.hidden = true;
     const arithmetic = el('span', { class: 'reward-compact-arithmetic' }, [formula, more]);
-    const value = el('strong', { class: 'reward-compact-value', text: '0 XP', 'aria-live': 'polite' });
+    const value = el('strong', { class: 'reward-compact-value', text: t('reward.xp.zero'), 'aria-live': 'polite' });
     const summary = el('div', { class: 'reward-compact-summary' }, [
-      el('span', { class: 'reward-compact-heading', text: 'Total XP' }), arithmetic, value,
+      el('span', { class: 'reward-compact-heading', text: t('reward.xp.total') }), arithmetic, value,
     ]);
-    const list = el('ol', { class: 'reward-compact-list', 'aria-label': 'XP earned this fight' });
+    const list = el('ol', { class: 'reward-compact-list', 'aria-label': t('reward.xp.list.aria') });
     list.style.setProperty('--receipt-rows', String(options.visibleRows));
     const body = el('div', { class: 'reward-compact-xp' }, [summary, list]);
     const modal = door({ eyebrow: '', title: rewards.title || t('reward.title.victory'),

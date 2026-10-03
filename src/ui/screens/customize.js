@@ -81,7 +81,7 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   ar: 'Attack Rating (AR)',
   dr: 'Defense Rating (DR)',
   pr: 'Power Rating (PR)',
-  openingHand: 'Opening hand',
+  openingHand: t('statsPreview.overview.openingHand'),
   draw: 'Cards drawn each turn',
 });
 
@@ -847,7 +847,7 @@ export function mountCustomize(app, {
       title: 'Assign points',
       remaining: remainingPoints(),
       modal: true,
-      cancelLabel: 'Cancel',
+      cancelLabel: t('common.cancel'),
       doneLabel: 'Continue',
       rows: rowsNow(),
       onDecrease: (id) => step(id, -1),
@@ -1421,10 +1421,10 @@ export function mountCustomize(app, {
   // than borrowing the first option's name.
   const UNCHOSEN = '—';
   const characterRows = [
-    { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
+    { key: 'primary', label: t('creation.section.primary'), node: $('#cz-primary-group'), value: () => (
       selectedRow(state.attributeMode, visibleModes)?.label || UNCHOSEN
     ) },
-    { key: 'keepsake', label: 'KEEPSAKE', node: $('#cz-keepsake-group'), value: () => (
+    { key: 'keepsake', label: t('creation.section.keepsake'), node: $('#cz-keepsake-group'), value: () => (
       selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || UNCHOSEN
     ) },
   ];
@@ -1464,13 +1464,13 @@ export function mountCustomize(app, {
   const panels = stages;
   const selectedName = (id, rows, fallback = '—') => (rows.find((row) => row.id === id) || {}).name || fallback;
   const sectionRows = [
-    { key: 'class', label: 'CLASS', node: panels.class, value: () => (state.classChosen ? registries.classes.get(state.classId).name : UNCHOSEN) },
-    { key: 'character', label: 'CHARACTER', node: panels.character, value: () => state.name || 'Forsaken' },
-    { key: 'equipment', label: 'STARTING EQUIP', node: panels.equipment, value: () => {
+    { key: 'class', label: t('creation.section.class'), node: panels.class, value: () => (state.classChosen ? registries.classes.get(state.classId).name : UNCHOSEN) },
+    { key: 'character', label: t('creation.section.character'), node: panels.character, value: () => state.name || 'Forsaken' },
+    { key: 'equipment', label: t('creation.section.equipment'), node: panels.equipment, value: () => {
       const arms = registries.equipment.armaments;
       return `${selectedName(state.startingHands.leftHand, arms, 'Empty Hand')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty Hand')}`;
     } },
-    { key: 'review', label: 'REVIEW', node: panels.review, value: () => seedInput.value.trim() || '—' },
+    { key: 'review', label: t('creation.section.review'), node: panels.review, value: () => seedInput.value.trim() || '—' },
   ];
   let fold = null;
   if (catalog) {
@@ -1514,8 +1514,8 @@ export function mountCustomize(app, {
     )));
     drawDisclosureKeepsakes();
     const disclosureSpecimen = mountDisclosure(disclosureHost, [
-      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Assign points' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
-      { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: 'KEEPSAKE', value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
+      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: t('creation.section.primary'), value: 'Assign points' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
+      { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: t('creation.section.keepsake'), value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');

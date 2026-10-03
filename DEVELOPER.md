@@ -812,7 +812,11 @@ sentences; `tools/uistrings.mjs` counts what is left, per file, against
 file that grew a hardcoded sentence, and a file that migrated one without
 recording it (an overstated baseline hides the next regression in its slack).
 A screen you migrate ends with `node tools/uistrings.mjs --write-baseline` in
-the same commit.
+the same commit. `tests/run-node.mjs` runs `--check` as rung 99 (and
+`--selftest` as rung 98), so the `core suite` job of every pull request fails on
+drift. Before that nothing ran it, and from 2026-09-17 to 2026-10-02 about 230
+sentences landed in code across 24 files without anyone seeing the red. Never
+regenerate the baseline to cover a file that GREW: move the sentence to a row.
 
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
