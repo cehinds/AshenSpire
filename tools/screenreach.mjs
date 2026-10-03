@@ -274,6 +274,9 @@ const INTENT_OVERLAP = `(() => {
     throw new Error('screenreach: small-player fixture is missing its sprite');
   player.style.transformOrigin = 'center bottom';
   player.style.scale = String(Math.min(1, 16 / playerBefore.width));
+  // Artwork may overhang its host. Keep this deliberately small fixture's
+  // actual hit surface inside the measured 16px host.
+  player.style.overflow = 'clip';
   const playerAfter = player.getBoundingClientRect();
   if (playerAfter.width >= 24 || Math.abs(playerAfter.bottom - playerBefore.bottom) > 1
       || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
@@ -293,6 +296,23 @@ const INTENT_OVERLAP = `(() => {
   sprite.style.scale = String(Math.max(1, (a.width + 16) / initial.width, (a.height + 64) / initial.height));
   const grown = sprite.getBoundingClientRect();
   const field = sprite.closest('.field'), fieldBox = field.getBoundingClientRect(), zoom = fieldBox.width / field.clientWidth;
+  // A grid-cell centre can otherwise hit the player's name or artwork and
+  // bypass the foot-patch check. Move the whole stack into a separate side
+  // patch and reanchor the existing target; its size and stacking stay real.
+  const playerFrame = player.closest('.combatant'), playerStack = player.closest('.combatant-stack');
+  const playerFrameBox = playerFrame.getBoundingClientRect(), stackBox = playerStack.getBoundingClientRect();
+  const centreX = playerFrameBox.left + playerFrameBox.width / 2, centreY = playerFrameBox.top + playerFrameBox.height / 2;
+  const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
+  playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
+  const playerMoved = player.getBoundingClientRect();
+  playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerFrameBox.left) / zoom) + 'px');
+  playerFrame.style.setProperty('--enemy-hit-y', ((playerMoved.bottom - playerFrameBox.top) / zoom) + 'px');
+  const centreHit = document.elementFromPoint(centreX, centreY);
+  if (centreHit && playerFrame.contains(centreHit))
+    throw new Error('screenreach: small-player frame centre still hits its own stack: ' + centreHit.className);
+  if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
+      || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
+    throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
   // Stage the pair in the clear centre so neither existing fighter's target
   // becomes an accidental second obstruction in this controlled scene.
   sprite.style.translate = ((fieldBox.left + fieldBox.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
