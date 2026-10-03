@@ -11,7 +11,10 @@
 // It walks two routes and prints both counts:
 //   quick    — Title -> Quick start -> (opening sequence, if it plays) -> a fight
 //              on the map -> the first card play. JUDGED against BUDGET below,
-//              the number the FINISH line states.
+//              the number the FINISH line states. Run twice: once on the random
+//              seed a player gets, once pinned to SKILLS_ONLY_SEED, whose
+//              opening hand holds no attack. It also checks the fresh Title's
+//              default focus is Quick start (the keyboard/controller route).
 //   baseline — the full character-creation route (New -> slot -> Start ->
 //              class -> Next -> stat mode -> keepsake -> Next -> armour ->
 //              Choose -> Next… -> Begin -> Skip opening -> fight -> card play),
@@ -21,13 +24,16 @@
 // and checks the opening plays (Quick start records nothing as seen).
 //
 // What counts as one input: one mouse click (press + release) or one key press.
-// A native <select> changed from the keyboard is counted as 2 (open, pick).
+// A native <select> is driven as a player would: a click to open it, one
+// ArrowDown per option moved, Enter to commit, each counted; its value is read
+// back from the control, never set by the script.
 // The startup gate's Enter counts: it is the first thing the Title asks for.
 // "First card play" is read from the fight itself:
 // `window.__combat.player.counters.cardsPlayedThisCombat` goes from 0 to 1.
 //
 //   node tools/quick-start-inputs.mjs                 (both routes, judge quick)
 //   node tools/quick-start-inputs.mjs --only quick    (the judged route alone)
+//   node tools/quick-start-inputs.mjs --only quick --quick-seed 8   (pin the first pass's seed)
 //   CHROME=/path/to/chrome node tools/quick-start-inputs.mjs
 //
 // Exit 0 when the quick route is within budget, 1 when it is not or a route
@@ -54,11 +60,15 @@ const BROWSERS = [
 // docs/FINISH.md §6: "A quick start gives the first card play in 6 inputs or
 // fewer (baseline 26)." The acceptance number, not a game setting.
 const BUDGET = 6;
+// A seed whose shuffled Reaver opening hand holds only skills (Defend, Dodge
+// Roll, Brace…), found with --quick-seed. The skills-only pass pins it.
+const SKILLS_ONLY_SEED = 8;
 const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const ROUTES = ['quick', 'baseline'];
 const only = argOf('--only');
+const pinSeed = argOf('--quick-seed') == null ? null : Number(argOf('--quick-seed'));
 if (args.includes('--only') && !ROUTES.includes(only)) {
   console.error(`quick-start-inputs: --only takes one of ${ROUTES.join(', ')}; got ${JSON.stringify(only)}`);
   process.exit(2);
@@ -129,6 +139,7 @@ async function main() {
 
   // THE COUNTER. Every input the script spends goes through `spend`.
   let inputs = [];
+  let lastHand = null;
   const spend = (label, n = 1) => { for (let i = 0; i < n; i += 1) inputs.push(label); };
   const clickAt = async (x, y) => {
     for (const type of ['mousePressed', 'mouseReleased']) {
@@ -195,13 +206,39 @@ async function main() {
       if (confirm) await click('[data-qs-confirm="true"]', 'confirm the fight');
       else await wait(600);
     }
-    await until(`!!window.__combat && !!document.querySelector('.hand .card.type-attack:not(.unaffordable)')`, 'the first fight with a playable attack');
+    // Any affordable card is a first card play. A shuffled opening hand can
+    // hold no attack at all (Defend, Dodge Roll, Brace…), so the probe takes an
+    // attack when the hand has one (the common route, counted the same as
+    // before) and otherwise the first affordable card, and it clicks a target
+    // only when the card arms targeting.
+    await until(`!!window.__combat && !!document.querySelector('.hand .card:not(.unaffordable)')`, 'the first fight with a playable card');
     await wait(800);
     const played = () => evalIn(`window.__combat?.player?.counters?.cardsPlayedThisCombat || 0`);
     ok((await played()) === 0, 'the fight opens with no card played');
-    await click('.hand .card.type-attack:not(.unaffordable)', 'an attack card');
-    await until(`!!document.querySelector('.enemy-row .enemy.targetable')`, 'targeting armed', 5000);
-    await click('.enemy-row .enemy.targetable', 'its target');
+    const kind = await evalIn(`(() => {
+      const hand = [...document.querySelectorAll('.hand .card')];
+      hand.forEach((c) => delete c.dataset.qsCard);
+      const pick = hand.find((c) => c.classList.contains('type-attack') && !c.classList.contains('unaffordable')) || hand.find((c) => !c.classList.contains('unaffordable'));
+      if (!pick) return null;
+      pick.dataset.qsCard = 'true';
+      return { attack: pick.classList.contains('type-attack'), types: hand.map((c) => [...c.classList].find((k) => k.startsWith('type-')) || '?') };
+    })()`);
+    if (!kind) throw new Error('no affordable card in the opening hand');
+    lastHand = kind;
+    await click('[data-qs-card="true"]', kind.attack ? 'an attack card' : 'a playable card (no attack in hand)');
+    const t0 = Date.now();
+    let targeted = false;
+    // A selected card waits for its confirm (combat.js syncCardSelection): an
+    // enemy-targeted card lights the targetable enemies, a self-targeted one
+    // arms the player (`.combatant.player.armed`, "Play selected card on
+    // yourself"). Whichever the board asks for is clicked, once, and counted.
+    while (Date.now() - t0 < 5000 && (await played()) < 1) {
+      const ask = targeted ? null : await evalIn(`document.querySelector('.combatant.player.armed') ? 'self' : document.querySelector('.enemy-row .enemy.targetable') ? 'enemy' : null`);
+      if (ask === 'self') await click('.combatant.player.armed', 'play it on yourself');
+      else if (ask === 'enemy') await click('.enemy-row .enemy.targetable', 'its target');
+      else { await wait(120); continue; }
+      targeted = true;
+    }
     await until(`(window.__combat?.player?.counters?.cardsPlayedThisCombat || 0) >= 1`, 'the first card play', 8000);
     ok(true, 'the first card was played');
   };
@@ -228,8 +265,7 @@ async function main() {
     await click('#cz-next', 'Next (to Character)');
     await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Character stage');
     await openFace('primary');
-    spend('stat mode select (open, pick)', 2);
-    await evalIn(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
+    await chooseStatMode('lean');
     await openFace('keepsake');
     await click('#cz-keepsakes [data-keepsake-id]', 'a keepsake');
     await click('#cz-next', 'Next (to Starting equip)');
@@ -245,15 +281,86 @@ async function main() {
     await click('#cz-start', 'BEGIN THE CLIMB');
   };
 
+  // The stat-mode <select>, driven with real input only. A real click on the
+  // control focuses it and opens its popup; the popup's highlight starts on the
+  // selected option and is not readable from the page, so the presses are
+  // worked out from the options themselves (ArrowDown skips disabled ones):
+  // one ArrowDown per enabled option between the current one and the wanted
+  // one, then Enter to commit. Each is counted. The value is then read back
+  // from the control, never written by the script.
+  const chooseStatMode = async (wanted) => {
+    const sel = '#cz-statedit .cc-mode-select';
+    const read = () => evalIn(`(() => {
+      const s = document.querySelector(${JSON.stringify(sel)});
+      if (!s) return null;
+      const opts = [...s.options];
+      const target = opts.findIndex((o) => o.value === ${JSON.stringify(wanted)});
+      const from = Math.max(0, s.selectedIndex);
+      const downs = target < from ? -1 : opts.slice(from + 1, target + 1).filter((o) => !o.disabled).length;
+      return { value: s.value, focused: document.activeElement === s, downs };
+    })()`);
+    await click(sel, 'stat mode select (open)');
+    const start = await read();
+    if (!start?.focused) throw new Error('the stat mode select did not take focus from a real click');
+    if (start.downs < 0) throw new Error(`the stat mode select offers no ${wanted} below its current option`);
+    for (let step = 0; step < start.downs; step += 1) await pressKey('ArrowDown', 'ArrowDown', 40, 'stat mode select (ArrowDown)');
+    await pressKey('Enter', 'Enter', 13, 'stat mode select (Enter)');
+    const end = await read();
+    ok(end?.value === wanted, `the stat mode select reads ${JSON.stringify(wanted)} after real keyboard input (got ${JSON.stringify(end?.value)})`);
+    if (end?.value !== wanted) throw new Error(`the stat mode select never reached ${wanted}`);
+  };
+
+  // Quick start draws a fresh seed with Math.random (main.js randomSeedString:
+  // seedToString((Math.random() * 0xffffffff) >>> 0)). To pin one, the next
+  // Math.random call alone returns the value that maps to `seed`; the real one
+  // is put back at once. The seed the run got is then read from its save.
+  const pinNextSeed = (seed) => evalIn(`(() => {
+    const real = Math.random;
+    Math.random = () => { Math.random = real; return (${seed} + 0.5) / 0xffffffff; };
+    return true;
+  })()`);
+  const savedSeed = () => evalIn(`(() => {
+    for (const k of Object.keys(localStorage)) {
+      if (!/^sote_run_v1(_s\\d+)?$/.test(k)) continue;
+      try { const r = JSON.parse(localStorage.getItem(k)); const run = r.run || r; if (run.seed != null || run.seedString) return { seed: run.seed ?? null, seedString: run.seedString ?? null }; } catch {}
+    }
+    return null;
+  })()`);
+
   const counts = {};
   if (want('quick')) {
     console.log('\n  quick route: Title -> Quick start -> first card play (fresh profile, 1440x900)');
     await freshBoot();
     ok(await evalIn(`!!document.querySelector('.title-menu [data-title-action="quick-start"]:not([disabled])')`), 'the Title offers Quick start');
+    // A keyboard or controller player presses nothing to reach it: after the
+    // startup gate's Enter the Title's default focus is Quick start, so the
+    // next Enter / A press is the Quick start press this route counts.
+    ok(await evalIn(`document.activeElement?.dataset?.titleAction === 'quick-start'`), `a fresh profile's Title focuses Quick start (focused: ${await evalIn(`document.activeElement?.dataset?.titleAction || document.activeElement?.id || document.activeElement?.tagName || null`)})`);
+    if (pinSeed != null) await pinNextSeed(pinSeed);
     await click('.title-menu [data-title-action="quick-start"]', 'Quick start');
     await toFirstCardPlay();
+    console.log(`    opening hand: ${lastHand.types.join(', ')}`);
     counts.quick = report('quick');
     ok(counts.quick <= BUDGET, `quick start reaches the first card play in ${counts.quick} inputs (budget ${BUDGET})`);
+
+    // THE SKILLS-ONLY OPENING, pinned. Quick start's seed is random, and a
+    // legal Reaver opening can hold no attack at all; the route above meets
+    // whichever hand the seed deals. This pass pins a seed known to deal only
+    // skills, so the path that plays a non-attack card is exercised on every
+    // run instead of on one run in several.
+    console.log(`\n  quick route, skills-only opening hand (seed pinned to ${SKILLS_ONLY_SEED})`);
+    await freshBoot();
+    await pinNextSeed(SKILLS_ONLY_SEED);
+    await click('.title-menu [data-title-action="quick-start"]', 'Quick start');
+    await toFirstCardPlay();
+    console.log(`    opening hand: ${lastHand.types.join(', ')}`);
+    const pinned = await savedSeed();
+    ok(pinned?.seed === SKILLS_ONLY_SEED, `the pinned run was dealt seed ${SKILLS_ONLY_SEED} (saved: ${JSON.stringify(pinned)})`);
+    ok(!lastHand.types.includes('type-attack'), `seed ${SKILLS_ONLY_SEED} still opens with no attack in hand (if this fails, the deal changed: pick another skills-only seed with --quick-seed and update SKILLS_ONLY_SEED)`);
+    counts.quickSkillsOnly = report('quick, skills-only hand');
+    ok(counts.quickSkillsOnly <= BUDGET, `quick start with a skills-only hand reaches the first card play in ${counts.quickSkillsOnly} inputs (budget ${BUDGET})`);
+    // Back to the first pass's profile shape for the opening check below: one
+    // quick-start climb in slot 1, nothing recorded as seen.
 
     // The changelog's promise: Quick start skips the opening for its own climb
     // only and records nothing as seen, so the same profile's next ordinary
@@ -300,10 +407,11 @@ async function main() {
   }
   console.log(`\n  counts: ${JSON.stringify(counts)}`);
   console.log(`${passedCount} passed, ${fails.length} failed`);
-  console.log('  boundary: real Chromium headless against the source server at 1440x900, mouse and Enter only,');
+  console.log('  boundary: real Chromium headless against the source server at 1440x900, mouse clicks, Enter and ArrowDown only,');
   console.log('  a fresh profile with the shipped defaults (slot 1 empty). Not checked: touch or gamepad input,');
   console.log('  a profile whose every slot is full (Quick start then asks before replacing), or other browsers.');
   if (fails.length) process.exit(1);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
+

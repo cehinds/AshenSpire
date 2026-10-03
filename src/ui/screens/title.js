@@ -18,8 +18,15 @@ import { offlinePlay } from '../../content/offlinePlay.js';
 
 let releaseActiveTitleBack = null;
 
+// The Title's default focus, in PRIORITY order, not document order: Continue
+// when there is a run to continue, else Quick start (FINISH §6: a keyboard or
+// controller player's first press after the startup gate is the quick start),
+// else New, else the first live control. One comma-joined querySelector would
+// answer in document order and only happen to agree.
+const TITLE_DEFAULT_FOCUS = ['.slot-continue', '.slot-quick', '.slot-new', 'button']
+  .map((s) => `.title-menu ${s}:not([disabled])`);
 export function focusTitleDefault(app, { showCursor = true } = {}) {
-  const control = app?.querySelector('.title-menu .slot-continue:not([disabled]), .title-menu .slot-new:not([disabled]), .title-menu button:not([disabled])');
+  const control = TITLE_DEFAULT_FOCUS.map((s) => app?.querySelector(s)).find(Boolean);
   if (!control) return false;
   control.focus({ preventScroll: true });
   if (showCursor) focusElement(control);

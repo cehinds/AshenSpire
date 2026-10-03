@@ -62,3 +62,14 @@ test('the Title offers Quick start and the composition root begins it without th
   assert.match(main, /startClimb\(\{ skipOpening \}\)/);
   assert.match(main, /if \(!skipOpening && \(!shotState/);
 });
+
+test('the Title focuses Quick start by priority, after Continue and before New', () => {
+  // The browser check is tools/quick-start-inputs.mjs ("a fresh profile's Title
+  // focuses Quick start"); this pins the priority list it relies on.
+  const title = readFileSync(`${ROOT}src/ui/screens/title.js`, 'utf8');
+  const list = title.match(/const TITLE_DEFAULT_FOCUS = \[([^\]]*)\]/);
+  assert.ok(list, 'title.js names its default-focus priority list');
+  const order = [...list[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.deepEqual(order.slice(0, 3), ['.slot-continue', '.slot-quick', '.slot-new']);
+  assert.match(title, /TITLE_DEFAULT_FOCUS\.map\(\(s\) => app\?\.querySelector\(s\)\)\.find\(Boolean\)/);
+});

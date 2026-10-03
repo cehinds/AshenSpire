@@ -517,7 +517,13 @@ test('main.js newRun writes the dealt deck\'s quota after the deal, and startCli
   const showDraft = src.indexOf("if (deckMode === 'draft') return showDraft();");
   assert.ok(sealed > 0 && draft > sealed, 'the deal this test mirrors moved');
   assert.ok(quota > draft && quota < showDraft, 'the quota must follow the deal and precede the draft and the first persist');
-  const climb = src.slice(src.indexOf('function startClimb('), src.indexOf('function showPrologue()'));
+  // Matched up to the open paren, so a parameter list (Quick start's
+  // `{ skipOpening }`, #1518) does not empty the slice; a missing anchor fails
+  // by name instead of slicing from -1.
+  const climbAt = src.indexOf('function startClimb(');
+  const climbEnd = src.indexOf('function showPrologue()');
+  assert.ok(climbAt > 0 && climbEnd > climbAt, 'startClimb or showPrologue moved: re-anchor this mirror');
+  const climb = src.slice(climbAt, climbEnd);
   const stamp = climb.indexOf('if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });');
   assert.ok(stamp > 0 && stamp < climb.indexOf('persist();'), 'startClimb must stamp a dealt deck before its first persist');
   const body = src.slice(src.indexOf('function sealedDeckIds'), src.indexOf('function draftBaseIds'));
