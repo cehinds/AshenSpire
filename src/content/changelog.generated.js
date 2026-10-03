@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The tutorial bubble moves off your cards when the hand rearranges itself",
     "detail": "After a window resize, your hand can spread itself out again a moment after the tutorial has found a spot for its speech bubble. If that put a card under the bubble, the bubble stayed there and you couldn't click that card. The bubble now moves whenever your cards move, not only when the thing it points at moves.",
-    "build": "0.7.1.805",
+    "build": "0.7.1.807",
     "pullRequest": 1490,
     "url": "https://github.com/cehinds/AshenSpire/pull/1490"
+  },
+  {
+    "id": "pr-1506",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "One game file and one download: the separate mobile and full-art files are retired",
+    "detail": "Every build is now one game page of about 10 MB that loads its art, fonts, music and map tiles from files beside it and picks phone-sized art on a phone by itself, plus one self-contained light-art file (about 31 MB) to download and play by double-click. The old mobile link sends you to the main game.",
+    "build": "0.7.1.806",
+    "pullRequest": 1506,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1506"
+  },
+  {
+    "id": "pr-1497",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Smith counts every card an upgrade improves",
+    "detail": "Upgrading a weapon or shield at the Smith already improved the Strike and Guard it lends you, but the preview and the receipt left those two cards out, so it said fewer cards improved than really did and showed a lent Guard as unused. Both now list every card the upgrade changes. Behind the scenes, four checking tools that had fallen behind the game's rules pass again.",
+    "build": "0.7.1.805",
+    "pullRequest": 1497,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1497"
   },
   {
     "id": "pr-1500",
