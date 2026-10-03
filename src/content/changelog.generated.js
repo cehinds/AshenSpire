@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1529",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "The README explains the current game and where to get each edition",
+    "detail": "The guide now covers retained hands, Actions, Stamina and Mana, combat ratings, equipment cards, the sideboard, progression, books and shop services. It links the installer, art repository, Unity adaptation and each browser channel's play and download paths, with verified GitHub build alternatives while hosted paths are unavailable. Gameplay is unchanged.",
+    "build": "0.7.1.838",
+    "pullRequest": 1529,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1529"
+  },
+  {
     "id": "pr-1527",
     "date": "2026-10-03",
     "group": "2026-10-03",

@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **The README explains the current game and where to get each edition** ([#1529](https://github.com/cehinds/AshenSpire/pull/1529), `0.7.1.838`). The guide now covers retained hands, Actions, Stamina and Mana, combat ratings, equipment cards, the sideboard, progression, books and shop services. It links the installer, art repository, Unity adaptation and each browser channel's play and download paths, with verified GitHub build alternatives while hosted paths are unavailable. Gameplay is unchanged.
+
 - **Painted books and class-book bonuses** ([#1527](https://github.com/cehinds/AshenSpire/pull/1527), `0.7.1.837`). Books have separate painted covers and emblems, including a feat emblem, with color across the whole leather binding. Class books grant XP on every read, learn the class on the first read, and independently roll a matching combat card (25%) and feat (5%). Both chances are configurable in Advanced → Shops. The result shows what you received; excess card copies go to the sideboard.
 
 - **Class-book reward rules are documented** ([#1526](https://github.com/cehinds/AshenSpire/pull/1526), `0.7.1.835`). The approved contract keeps class learning and XP, makes class books repeatable, and specifies independent configurable combat-card and feat chances of 25% and 5%. This documents the next implementation; gameplay is unchanged in this build.
