@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Combat checks follow the Stamina orb** ([#1548](https://github.com/cehinds/AshenSpire/pull/1548), `0.7.1.854`). Browser checks recognize the shared Stamina artwork and verify that its number and label remain visible. Existing overlap checks remain in place, with added coverage for invisible or covered SVG text. Gameplay is unchanged.
+- **Combat browser checks keep pace with the game** ([#1548](https://github.com/cehinds/AshenSpire/pull/1548), `0.7.1.858`). Checks recognize the shared Stamina artwork and catch invisible or covered SVG text. A controlled sprite-overlap case keeps intent buttons reachable, and the full-run driver plays affordable attacks and defensive cards through the normal controls. Gameplay is unchanged.
 - **Specify formation positioning and reward defaults** ([#1544](https://github.com/cehinds/AshenSpire/pull/1544), `0.7.1.857`). Record the approved mirrored spawn order, authored layout profiles and separate combat, skill and class reward rolls before implementation.
 
 - **Shield and Arcane Ward sit beside your health** ([#1541](https://github.com/cehinds/AshenSpire/pull/1541), `0.7.1.853`). Ordinary Block has a blue shield and turns health blue until it breaks. Magical Block has a purple Arcane Ward badge to its left and adds a gold health outline. Both can appear together; when either disappears, health takes back its space. The two numbers share the existing Block total. Solo and co-op keep the same behavior, including saved fights. Narrow bars show current HP with the full value available in the tooltip.

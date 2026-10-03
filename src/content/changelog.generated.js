@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1548",
     "date": "2026-10-03",
     "group": "2026-10-03",
-    "summary": "Combat checks follow the Stamina orb",
-    "detail": "Browser checks recognize the shared Stamina artwork and verify that its number and label remain visible. Existing overlap checks remain in place, with added coverage for invisible or covered SVG text. Gameplay is unchanged.",
-    "build": "0.7.1.854",
+    "summary": "Combat browser checks keep pace with the game",
+    "detail": "Checks recognize the shared Stamina artwork and catch invisible or covered SVG text. A controlled sprite-overlap case keeps intent buttons reachable, and the full-run driver plays affordable attacks and defensive cards through the normal controls. Gameplay is unchanged.",
+    "build": "0.7.1.858",
     "pullRequest": 1548,
     "url": "https://github.com/cehinds/AshenSpire/pull/1548"
   },
