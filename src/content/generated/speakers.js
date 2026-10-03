@@ -15,7 +15,7 @@ export const speakers = [
   {
     "id": "roadWarden",
     "name": "The Road Warden",
-    "portraitKey": ""
+    "portraitKey": "roadWarden"
   },
   {
     "id": "swordSaint",

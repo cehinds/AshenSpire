@@ -15,6 +15,8 @@
 import { attachTooltip, esc } from './tooltip.js';
 import { t } from '../strings.js';
 import { relicIcon } from '../assets.js';
+import { keepsakeArtAsset } from '../../content/keepsakeArt.js';
+import { assetUrl } from '../assetmap.js';
 import { mountDisclosure } from './disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import {
@@ -286,8 +288,12 @@ export function sigilChoiceButton(glyph, selected, onChoose) {
 
 /** A keepsake: an OptionCard. */
 export function keepsakeChoiceButton(keepsake, selected, onChoose) {
+  const artPath = keepsakeArtAsset(keepsake);
+  const art = artPath ? el('span', { class: 'og relic-art', 'aria-hidden': 'true' },
+    el('img', { src: assetUrl(artPath), alt: '', width: '48', height: '48' })) : null;
+  art?.querySelector('img')?.addEventListener('error', () => { art.textContent = keepsake.icon; }, { once: true });
   const button = optionCard({
-    glyph: keepsake.icon, name: keepsake.name, description: keepsake.desc, selected, arrow: false,
+    glyph: keepsake.icon, art, name: keepsake.name, description: keepsake.desc, selected, arrow: false,
     className: `cz-keepsake${selected ? ' chosen' : ''}`,
     attrs: { dataset: { keepsakeId: keepsake.id }, 'aria-label': `${keepsake.name}. ${keepsake.desc}` },
   });

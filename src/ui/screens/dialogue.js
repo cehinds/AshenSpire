@@ -26,6 +26,7 @@
 // offer the responses a second time, and it does not replay the entrance.
 import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
+import { speakerPortraitAsset } from '../../content/speakerArt.js';
 import { availableEventChoices } from '../../model/quests.js';
 import { figureSpec } from '../../model/loadout.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
@@ -44,6 +45,7 @@ import { reducedMotionRequested } from '../motion.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { t } from '../strings.js';
+import { assetUrl } from '../assetmap.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
 
 const layerAttr = (name) => `layer${name[0].toUpperCase()}${name.slice(1)}`;
@@ -57,7 +59,8 @@ export function mountDialogue(app, options) {
   const speaker = options.speaker || registries.speakers.get(registries.eventSpeakers[eventId]);
   // Art exists for the key when a shipped enemy answers to it; otherwise the
   // model hands back the name plate, never a blank.
-  const portraitAvailable = !!speaker.portraitKey && registries.enemies.has(speaker.portraitKey);
+  const stillPortrait = speakerPortraitAsset(speaker.portraitKey);
+  const portraitAvailable = !!speaker.portraitKey && (registries.enemies.has(speaker.portraitKey) || !!stillPortrait);
   const arm = beatArmer(meta, registries);
   const disarmers = [];
   // Every number and switch below is the W4c scene config (uiConfig.scenes.w4c)
@@ -138,7 +141,9 @@ export function mountDialogue(app, options) {
   const speakerSlot = portrait({
     side: first.speaker.side, wireframe: 'WGQ3', layer: 'npcPortrait', kind: first.speaker.portrait.kind,
     // enemySprite faces its art toward the player (assets.spriteMirror).
-    art: first.speaker.portrait.kind === 'art' ? enemySprite(registries.enemies.get(first.speaker.portrait.key)) : null,
+    art: first.speaker.portrait.kind !== 'art' ? null : stillPortrait
+      ? el('div', { class: 'speaker-portrait-still' }, el('img', { class: 'speaker-portrait-image', src: assetUrl(stillPortrait), alt: '' }))
+      : enemySprite(registries.enemies.get(first.speaker.portrait.key)),
     name: speaker.name,
   });
   const portraits = el('div', { class: 'dialogue-portraits', dataset: { layer: 'portraits' } }, [playerSlot, speakerSlot]);
