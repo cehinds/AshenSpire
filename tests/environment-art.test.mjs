@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { manifestIds } from '../tools/art-source.mjs';
+// Step 12: an id ships when art-manifest.json lists it (the pinned packs carry
+// exactly those), not when a tree in this checkout happens to hold the file.
+const SHIPPED = manifestIds();
 import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
 import { regionForRun, combatEnvironment, worldMapForRun } from '../src/model/environmentArt.js';
 import { mapTerrainHtml } from '../src/ui/components/environmentArt.js';
@@ -26,7 +29,7 @@ test('region depends on seed and act, not battle progress or engine randomness',
 
 test('atlas rectangles stay inside shipped images and all artwork exists', () => {
   for (const r of ENVIRONMENTS) {
-    for (const path of [r.atlas, r.map]) assert.ok(existsSync(new URL('../' + path, import.meta.url)), path);
+    for (const path of [r.atlas, r.map]) assert.ok(SHIPPED.has(path), path);
     assert.equal(r.scenes.length, 4);
     for (const { box: [x, y, w, h], floorStart, fieldRatio, groundAnchor } of r.scenes) {
       assert.ok(x >= 0 && y >= 0 && w > 0 && h > 0);
@@ -64,5 +67,5 @@ test('mega map stays fixed across acts, routes and reloads, with all layouts rea
   assert.equal(worldMapForRun({ ...run, actNumber: 5, floor: 12, path: ['a', 'b'] }), world);
   assert.equal(worldMapForRun(JSON.parse(JSON.stringify(run))), world);
   assert.equal(new Set(Array.from({ length: 100 }, (_, i) => worldMapForRun({ seedString: String(i) }).id)).size, MEGA_MAPS.length);
-  for (const w of MEGA_MAPS) assert.ok(existsSync(new URL('../' + w.map, import.meta.url)), w.map);
+  for (const w of MEGA_MAPS) assert.ok(SHIPPED.has(w.map), w.map);
 });

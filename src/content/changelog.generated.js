@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A master's lesson track with nothing to teach no longer offers Ask",
     "detail": "When a track had no cards it could teach you (a Herald's shield track, for example), the Ask button still worked and spent the visit's lesson on an empty result. It is now greyed out. Under Chaos Rewards, which can give that track cards, it stays available.",
-    "build": "0.7.1.804",
+    "build": "0.7.1.805",
     "pullRequest": 1512,
     "url": "https://github.com/cehinds/AshenSpire/pull/1512"
+  },
+  {
+    "id": "pr-1500",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: builds and checks read the game's light art, fonts, music and map tiles from the art release",
+    "detail": "Nothing you play changes. Every build, test and preview page now takes the light art, the lore fonts, the shipped score and the map detail tiles from the verified art release instead of the copies still kept in this repository, so those copies can be removed in a later step.",
+    "build": "0.7.1.804",
+    "pullRequest": 1500,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1500"
   },
   {
     "id": "pr-1505",

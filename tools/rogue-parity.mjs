@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Rogue full-slice contract. Source/model only: no browser and no generated build.
 
-import { existsSync } from 'node:fs';
+import { manifestIds } from './art-source.mjs';
 import { resolve } from 'node:path';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -117,10 +117,10 @@ check(kits.every((kit) => ['dagger', 'shortbow'].includes(kit.rightHand)
   && ['', 'buckler', 'parryDagger'].includes(kit.leftHand)), 'Rogue kits reuse registered armament kinds');
 
 for (const tint of ['ember', 'frost', 'gold', 'grace', 'rot']) {
-  check(existsSync(resolve(ROOT, `assets/sprites/rogue_${tint}.webp`)), `Rogue ${tint} stage sprite exists`);
+  check(manifestIds(ROOT).has(`assets/sprites/rogue_${tint}.webp`), `Rogue ${tint} stage sprite exists (an art-manifest.json id)`);
 }
 for (const artKey of [...new Set(outfits.map((row) => row.artKey || row.id))]) {
-  check(existsSync(resolve(ROOT, `assets/equipment/body_rogue_${artKey}.webp`)), `Rogue ${artKey} body layer exists`);
+  check(manifestIds(ROOT).has(`assets/equipment/body_rogue_${artKey}.webp`), `Rogue ${artKey} body layer exists (an art-manifest.json id)`);
 }
 
 let run = null;
