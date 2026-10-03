@@ -42,7 +42,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { copySourceArt, SANDBOX_ENV } from './art-source.mjs';
+import { artPath, copySourceArt, packTreeOf, SANDBOX_ENV } from './art-source.mjs';
 
 const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // art-release.json and art-manifest.json are build-identity inputs
@@ -119,6 +119,12 @@ function copyTree(extra = [], { includePng = false } = {}, realRoot = REAL_ROOT)
     // tool that asks for it gets the fetched high pack's files (and the fonts)
     // at that path, read in the copy with ASHEN_ART_SOURCE=trees (doorSelftest).
     if (entry === 'assets') { copySourceArt(dir, { root: realRoot }); continue; }
+    // A narrower entry inside a pack's tree (motion-probe's assets/enemy-poses,
+    // …) is that directory of the fetched pack, copied to the same path.
+    if (packTreeOf(entry)) {
+      cpSync(artPath(entry, { root: realRoot }), join(dir, entry), { recursive: true });
+      continue;
+    }
     const from = join(realRoot, entry);
     if (!existsSync(from)) continue;
     cpSync(from, join(dir, entry), {
@@ -252,7 +258,7 @@ export async function doorSelftest({ tool, plants: corpus, args = [], timeoutMs 
   console.log(`                failed by some OTHER red · RED-NOT-EXIT = red printed, exit still 0 ·`);
   console.log(`                DRIFTED = the find-string is gone, so the plant never armed at all.`);
   const root = copyTree(extraCopy, { includePng }, realRoot);
-  if (extraCopy.includes('assets')) env = { ...env, ...SANDBOX_ENV };
+  if (extraCopy.some((entry) => entry === 'assets' || packTreeOf(entry))) env = { ...env, ...SANDBOX_ENV };
   let failed = 0;
   try {
     for (const p of plants) {
