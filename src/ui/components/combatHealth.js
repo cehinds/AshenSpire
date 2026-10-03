@@ -20,6 +20,13 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = 'Abso
   hp.classList.add('combat-health-meter');
   hp.dataset.protected = String(model.protected);
   hp.dataset.warded = String(model.warded);
+  const healthValue = hp.querySelector('.m-value');
+  if (healthValue) {
+    // Narrow phone lanes show current HP; the full fraction remains the
+    // accessible label, tooltip, and wide-layout text.
+    healthValue.dataset.currentHp = healthValue.textContent.split('/')[0].trim();
+    healthValue.setAttribute('aria-label', healthValue.textContent);
+  }
   for (const badge of model.badges) {
     const node = document.createElement('span');
     node.className = `combat-health-badge combat-health-${badge.kind}`;

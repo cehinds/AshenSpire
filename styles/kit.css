@@ -5652,6 +5652,7 @@ button[data-button-size] {
 }
 :root .combat .combatant .combat-health-row > .combat-health-meter {
   position: relative; flex: 1 1 0; min-width: 0; --meter-tone: var(--health-red) !important;
+  container-type: inline-size; container-name: combat-health;
 }
 :root .combat .combatant .combat-health-row > .combat-health-meter[data-protected='true'] { --meter-tone: var(--health-blue) !important; }
 :root .combat .combatant .combat-health-meter .m-track { height: var(--health-row-h); border-radius: 5px; background: #0d1412; }
@@ -5672,7 +5673,14 @@ button[data-button-size] {
 :root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
 :root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #9a63d966); }
 :root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+:root .combat .combatant .combat-health-badge { min-width: max-content; }
 :root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
+@container combat-health (max-width: 4em) {
+  :root .combat .combatant .combat-health-meter .m-value { font-size: 0 !important; }
+  :root .combat .combatant .combat-health-meter .m-value::after {
+    content: attr(data-current-hp); font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)));
+  }
+}
 @media (max-width: 600px) {
   :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
   :root .combat .combatant .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }

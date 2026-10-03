@@ -905,6 +905,8 @@ without provenance show ordinary Block. Missing badges give their space to HP,
 with a stable row edge and a readable minimum width for low-HP enemies. The HP
 fraction always remains current HP / maximum HP. Solo playback and co-op
 snapshots carry the provenance with their damage and guard receipts.
+Narrow health lanes display current HP alone to prevent number collisions;
+the complete current/maximum value remains in the accessible label and tooltip.
 
 **Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
 
