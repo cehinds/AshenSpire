@@ -859,7 +859,7 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
 // all sit between the two and none of them can hide the pair (#1524 review,
 // Codex, four rounds of narrower matchers). Over-matching is safe: a step that
 // mentions both without running the tool merely has to come after the fetch.
-const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^\w-])(\.\/)?(tools|tests)\/[\w./-]+\.m?js\b/.test(cmd) };
+const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^\w-])(\.\/)?(tools|tests)\/[\w./-]+\.[cm]?js\b/.test(cmd) };
 // Any valid GitHub job id: letters, digits, `-` and `_`, starting with a letter or `_`.
 const JOB_ID = '[A-Za-z_][A-Za-z0-9_-]*';
 function jobsRunningToolsBeforeFetch(yml) {
@@ -877,35 +877,16 @@ function jobsRunningToolsBeforeFetch(yml) {
   for (const { name, lines } of jobs) {
     if (!lines.some((l) => /uses: actions\/checkout@/.test(l))) continue;
     checked += 1;
-    // A block scalar is judged as ONE command string: its non-comment lines
-    // joined with spaces and shell `\` continuations removed, so a command a
-    // folded scalar or a continuation splits over lines (`node` / `tools/x.mjs`)
-    // is still seen (#1524 review, Codex).
-    let fetched = false, block = null, bad = false, text = [];
-    const judge = () => {
-      if (!fetched && TOOL_CMD.test(text.join(' ').replace(/\\\s+/g, ' '))) bad = true;
-      text = [];
-    };
-    for (const line of lines) {
-      const indent = line.match(/^ */)[0].length;
-      if (block !== null) {
-        if (!line.trim() || indent > block) {
-          if (!line.trim().startsWith('#')) text.push(line.trim());
-          continue;
-        }
-        block = null;
-        judge();
-      }
-      if (/^\s*(-\s+)?uses:\s*\.\/\.github\/actions\/fetch-art\b/.test(line)) fetched = true;
-      const run = line.match(/^(\s*)(-\s+)?run:\s*(.*)$/);
-      if (!run) continue;
-      // Every line indented past the `run:` key belongs to it: a block scalar's
-      // body, or a plain scalar YAML folds onto the first line (`run: node`
-      // then `tools/x.mjs`).
-      block = run[1].length + (run[2] ? run[2].length : 0);
-      if (!/^[|>][-+0-9]*\s*(#.*)?$/.test(run[3])) text.push(run[3]);
-    }
-    if (block !== null) judge();
+    // NO YAML PARSING (#1524 review: seven rounds of Codex findings, each a
+    // spelling a narrower parser missed — quoted keys, plain and folded
+    // scalars, continuations, node options). Everything the job says before
+    // its fetch step, comment lines aside, is read as ONE text: if that text
+    // runs `node` and names a script under tools/ or tests/, a tool may run
+    // before the art is there. Over-matching only asks for an earlier fetch.
+    const at = lines.findIndex((l) => /^\s*(-\s+)?["']?uses["']?:\s*["']?\.\/\.github\/actions\/fetch-art\b/.test(l));
+    const fetched = at >= 0;
+    const before = (fetched ? lines.slice(0, at) : lines).filter((l) => !/^\s*#/.test(l)).join(' ').replace(/\\\s+/g, ' ');
+    const bad = TOOL_CMD.test(before);
     if (!fetched || bad) missing.push(name);
   }
   return { checked, missing };
@@ -936,11 +917,13 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('bad-folded-split', `      - name: x\n        run: >-\n          node\n          tools/build.mjs\n${fetch}`),
     job('bad-node-operand', `      - run: node --require setup.cjs tools/build.mjs\n${fetch}`),
     job('bad-plain-multiline', `      - name: x\n        run: node\n          tools/build.mjs\n${fetch}`),
+    job('bad-quoted-run', `      - "run": node tools/a.mjs\n${fetch}`),
+    job('bad-cjs', `      - run: node tools/combat-formation-extra-qa.cjs\n${fetch}`),
     job('bad-continuation', `      - name: x\n        run: |\n          node \\\n            tools/build.mjs\n${fetch}`),
   ].join('\n') + '\n'
     + `  bad-commented: # heavy\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`
     + `  "bad-quoted":\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`;
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 17);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-continuation', 'bad-commented', 'bad-quoted']);
+  assert.equal(checked, 19);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-continuation', 'bad-commented', 'bad-quoted']);
 });
