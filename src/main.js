@@ -136,6 +136,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
+import { createHaptics } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -362,7 +363,10 @@ function seedPromotedDefaults(meta, settings) {
 seedPromotedDefaults(activeMeta, activeSettings);
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
-sfx.sink = (id) => audio.sfx(id);
+// Haptics ride the same seam: a cue with a pattern in content/haptics.js also
+// vibrates, unless Settings → Audio → Haptics is off (read live, per cue).
+const haptics = createHaptics({ getSettings: () => activeSettings });
+sfx.sink = (id) => { audio.sfx(id); haptics(id); };
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
 initInput({ getSettings: () => activeSettings });

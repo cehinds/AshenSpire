@@ -5764,6 +5764,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.row.haptics",
+    "extends": "",
+    "short": "Haptics",
+    "full": "Vibrate on card play, damage taken and turn start, on devices that can. Off keeps the device still.",
+    "tip": ""
+  },
+  {
     "id": "settings.row.musicFolder",
     "extends": "",
     "short": "Custom music folder",
