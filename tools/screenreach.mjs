@@ -72,7 +72,7 @@ import { serve } from './serve.mjs';
 // the copy: same serve.mjs, same browser, same hit-test.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  const selftestCode = await doorSelftest({
+  const corpus = {
     tool: 'screenreach.mjs',
     args: ['--only', '390x650'],
     timeoutMs: 600000,
@@ -189,8 +189,9 @@ if (process.argv.includes('--selftest')) {
         expectRed: /equipment shortcut did not open Armoury/,
       },
     ],
-  });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — every planted regression caught');
+  };
+  const selftestCode = await doorSelftest(corpus);
+  if (selftestCode === 0) console.log(`screenreach-selftest: OK — ${corpus.plants.length} plants, ${corpus.plants.length} caught`);
   process.exit(selftestCode);
 }
 
