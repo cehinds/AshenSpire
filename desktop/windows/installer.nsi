@@ -24,6 +24,7 @@
 !insertmacro Need LICENSE_FILE
 !insertmacro Need OUTFILE
 !insertmacro Need HD_URL
+!insertmacro Need HD_TAG
 !insertmacro Need HD_SHA256
 !insertmacro Need HD_MB
 !insertmacro Need HD_SIZE_KB
@@ -62,6 +63,7 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 !include "Sections.nsh"
+!include "nsDialogs.nsh"
 
 !define MUI_ABORTWARNING
 !define MUI_COMPONENTSPAGE_SMALLDESC
@@ -72,6 +74,7 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
 !insertmacro MUI_PAGE_COMPONENTS
+Page custom ArtPage
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE DirectoryLeave
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -90,6 +93,11 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 ; installer registered), so its files may be cleaned up; 0 on a first install,
 ; where nothing already in the folder is touched.
 Var Upgrade
+Var ArtDialog
+Var ArtButton
+Var ArtCurrent
+Var ArtInstalled
+
 
 ; $R0 = "ok" when $INSTDIR may be installed into: it does not exist, is empty,
 ; or is the folder this installer registered (an upgrade). Anything else is a
@@ -244,6 +252,8 @@ Section "High-resolution art (download, about ${HD_MB} MB)" SecHD
   ${If} $0 != 0
     DetailPrint "High-resolution art was not installed (code $0)."
     MessageBox MB_OK|MB_ICONEXCLAMATION "The high-resolution art could not be installed (code $0; the details are in the list behind this message).$\r$\n$\r$\n${APP_NAME} is installed and plays with its standard art. To try again, run this installer again with the high-resolution art ticked." /SD IDOK
+  ${Else}
+    WriteRegStr HKCU "${UNINST_KEY}" "HDArtVersion" "${HD_TAG}"
   ${EndIf}
 SectionEnd
 
@@ -268,6 +278,7 @@ Section "-Prune"
     IntOp $1 ${BASE_SIZE_KB} + ${HD_SIZE_KB}
   ${Else}
     StrCpy $1 ${BASE_SIZE_KB}
+    DeleteRegValue HKCU "${UNINST_KEY}" "HDArtVersion"
   ${EndIf}
   WriteRegDWORD HKCU "${UNINST_KEY}" "EstimatedSize" $1
 SectionEnd
@@ -280,6 +291,55 @@ Function .onInit
   ${AndIf} ${FileExists} "$0\${APP_EXE}"
   ${AndIfNot} ${FileExists} "$0\game\packs\high-*.json"
     !insertmacro UnselectSection ${SecHD}
+  ${EndIf}
+FunctionEnd
+
+Function ArtPage
+  !insertmacro MUI_HEADER_TEXT "High-quality artwork" "Choose an art branch/version, or download artwork separately."
+  nsDialogs::Create 1018
+  Pop $ArtDialog
+  ${If} $ArtDialog == error
+    Abort
+  ${EndIf}
+  StrCpy $ArtInstalled "Standard art only"
+  ReadRegStr $0 HKCU "${UNINST_KEY}" "InstallLocation"
+  ${If} ${FileExists} "$0\game\packs\high-*.json"
+    ReadRegStr $ArtInstalled HKCU "${UNINST_KEY}" "HDArtVersion"
+    ${If} $ArtInstalled == ""
+      StrCpy $ArtInstalled "High-quality art (older installer; version unrecorded)"
+    ${EndIf}
+  ${EndIf}
+  ${NSD_CreateLabel} 0 0 100% 36u "Current installed art: $ArtInstalled$\r$\nArt required by this game: ${HD_TAG}"
+  Pop $0
+  ${NSD_CreateLabel} 0 42u 100% 30u "The art chooser lists the latest published version and the art repository's branches. Other releases can be saved separately."
+  Pop $0
+  ${NSD_CreateButton} 0 80u 100% 24u "High-quality art: choose branch and version..."
+  Pop $ArtButton
+  ${NSD_OnClick} $ArtButton OpenArtOptions
+  ${NSD_CreateLabel} 0 112u 100% 18u "Installation follows the High-resolution art checkbox on the previous page."
+  Pop $ArtCurrent
+  ${NSD_CreateLabel} 0 139u 100% 30u "Artwork is completely AI-generated with OpenAI ChatGPT under human direction. Fonts and third-party assets keep their credited licenses."
+  Pop $0
+  nsDialogs::Show
+FunctionEnd
+
+Function OpenArtOptions
+  InitPluginsDir
+  File "/oname=$PLUGINSDIR\art-options.ps1" "${APP_DIR}\install-data\art-options.ps1"
+  File "/oname=$PLUGINSDIR\art-releases.ps1" "${APP_DIR}\install-data\art-releases.ps1"
+  File "/oname=$PLUGINSDIR\art-release.json" "${APP_DIR}\install-data\art-release.json"
+  Delete "$PLUGINSDIR\art-selection.ini"
+  EnableWindow $ArtButton 0
+  nsExec::ExecToLog '"${PS_EXE}" -NoProfile -STA -ExecutionPolicy Bypass -File "$PLUGINSDIR\art-options.ps1" -Config "$PLUGINSDIR\art-release.json" -SelectionFile "$PLUGINSDIR\art-selection.ini" -InstalledVersion "$ArtInstalled"'
+  Pop $0
+  EnableWindow $ArtButton 1
+  ${If} $0 != 0
+    MessageBox MB_OK|MB_ICONEXCLAMATION "The art chooser could not open. The matching high-quality art remains available through the component checkbox."
+  ${EndIf}
+  ReadINIStr $0 "$PLUGINSDIR\art-selection.ini" "art" "Install"
+  ${If} $0 == 1
+    !insertmacro SelectSection ${SecHD}
+    ${NSD_SetText} $ArtCurrent "Selected for installation: ${HD_TAG} high-quality art"
   ${EndIf}
 FunctionEnd
 

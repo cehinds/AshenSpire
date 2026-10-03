@@ -1,25 +1,62 @@
 # AshenSpire — Ashen Spire
 
-A browser roguelike that combines card combat with equipment, attributes, skill training, and exploration. Build a character as well as a deck: the weapons you hold shape your basic attacks, armour changes your defenses and weight class, and books can teach skills from other classes. Written in vanilla JavaScript ES modules, HTML, and CSS, with Node tooling for builds and local LAN play.
+A browser roguelike that combines card combat with equipment, attributes, skill training, and exploration.
 
-**[Play / download builds](https://cehinds.github.io/AshenSpire/)** · **[Windows installer](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest)** · **[Art repository](https://github.com/cehinds/AshenSpire-art)** · **[Unity version: AshenedSpire](https://github.com/cehinds/AshenSpire-Unity)** · **[Changelog](CHANGELOG.md)**
+- Build a character as well as a deck: weapons shape your basic attacks, armour changes your defenses and weight class, and books can teach skills from other classes.
+- Play single-player or optional LAN co-op.
+- Choose from four starting classes and follow seeded regional routes in resumable runs with configurable rules.
+- Written in vanilla JavaScript ES modules, HTML, and CSS, with Node tooling for builds and local LAN play.
+- This README describes the current browser game's `dev`/`test` mechanics; a published `release` or `main` build can be older. The title screen and each branch's build list identify the version you are playing.
 
-Single-player with optional LAN co-op. Four starting classes, seeded regional routes, resumable runs, and configurable rules. This README describes the current browser game's `dev`/`test` mechanics; a published `release` or `main` build can be older. The title screen and each branch's build list identify the version you are playing.
+- **[Play / download builds](https://cehinds.github.io/AshenSpire/)**
+- **[Windows installer](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest)**
+- **[Art repository](https://github.com/cehinds/AshenSpire-art)**
+- **[Unity version: AshenedSpire](https://github.com/cehinds/AshenSpire-Unity)**
+- **[Changelog](CHANGELOG.md)**
 
 **This is a development preview**, not production approval. Release acceptance is tracked separately in [docs/FINISH.md](docs/FINISH.md).
 
 ## Play and download
 
-| Version | Purpose | Play in browser | Download for offline play | Build history / version |
-|---|---|---|---|---|
-| **test** | Latest promoted game; full QA runs here | [Play test](https://cehinds.github.io/AshenSpire/test/latest/) | [Download test HTML](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html) · [GitHub build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Atest) | [Test builds](https://cehinds.github.io/AshenSpire/test/) |
-| **release** | Owner-selected release candidate | [Play release](https://cehinds.github.io/AshenSpire/release/latest/) | [Download release HTML](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html) · [GitHub build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Arelease) | [Release builds](https://cehinds.github.io/AshenSpire/release/) |
-| **main** | Owner-promoted stable channel | [Play main](https://cehinds.github.io/AshenSpire/main/latest/) | [Download main HTML](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html) · [GitHub build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Amain) | [Main builds](https://cehinds.github.io/AshenSpire/main/) |
-| **dev** | Integration source | [Play dev](https://cehinds.github.io/AshenSpire/dev/latest/) | [Download dev HTML](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html) · [GitHub build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev) | [Dev builds](https://cehinds.github.io/AshenSpire/dev/) |
+### Test
 
-**Hosted availability, checked 2026-10-03:** the test/release/main game and HTML-download paths above returned 404 during this update. Their GitHub build downloads are available. Use the build zip until those hosted paths are published; a green source/build check alone does not prove a live Pages URL.
+Latest promoted game; full QA runs here.
 
-The hosted links select the latest **published** build, which can lag the branch while publishing runs. For a **GitHub build zip**, sign in, open a successful run for the branch, and download its `<branch>-standalone-<commit>` artifact. Unzip and open `AshenSpire-<branch>-preview.html` (for example, `AshenSpire-test-preview.html`), the self-contained light-art game file. Artifacts are kept for 14 days on dev, 30 on test, and 90 on release/main. Older builds may have different download names; their build lists provide the matching links.
+- [Play test](https://cehinds.github.io/AshenSpire/test/latest/)
+- [Download test HTML](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html)
+- [GitHub test build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Atest)
+- [Test build history / version](https://cehinds.github.io/AshenSpire/test/)
+
+### Release
+
+Owner-selected release candidate.
+
+- [Play release](https://cehinds.github.io/AshenSpire/release/latest/)
+- [Download release HTML](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html)
+- [GitHub release build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Arelease)
+- [Release build history / version](https://cehinds.github.io/AshenSpire/release/)
+
+### Main
+
+Owner-promoted stable channel.
+
+- [Play main](https://cehinds.github.io/AshenSpire/main/latest/)
+- [Download main HTML](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html)
+- [GitHub main build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Amain)
+- [Main build history / version](https://cehinds.github.io/AshenSpire/main/)
+
+### Dev
+
+Integration source.
+
+- [Play dev](https://cehinds.github.io/AshenSpire/dev/latest/)
+- [Download dev HTML](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html)
+- [GitHub dev build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev)
+- [Dev build history / version](https://cehinds.github.io/AshenSpire/dev/)
+
+**Hosted availability, checked 2026-10-03:** the test/release/main game and HTML-download paths above returned 404 during the mechanics update. Their GitHub build downloads are available. Use the build zip until those hosted paths are published; a green source/build check alone does not prove a live Pages URL.
+
+The hosted links select the latest **published** build, which can lag the branch while publishing runs. For a **GitHub build zip**, sign in, open a successful run for the branch, and download its `<branch>-standalone-<commit>` artifact. Unzip and open `AshenSpire-<branch>-preview.html` (for example, `AshenSpire-test-preview.html`), the self-contained light-art game file. Artifacts are kept for 14 days on dev, 30 on test, and 90 on release/main. Older builds may have different download names; their build histories provide the matching links.
 
 Versions use `<major>.<minor>.<candidate>.<build>`. The build counter restarts when the candidate changes, so compare the full stamp, not just its last number. The source record is each branch's `buildordinal.json`; the build list and title screen identify the published artifact. See [versioning](docs/versioning.md).
 
@@ -27,16 +64,16 @@ Versions use `<major>.<minor>.<candidate>.<build>`. The build counter restarts w
 
 [Download an installer from the Windows installer workflow](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest). Sign in to GitHub, open a successful run on the branch you want, and download `windows-installer-<commit>` under **Artifacts**. Unzip and run `AshenSpire-Setup-<version>.exe`.
 
-The installer runs for your Windows user without an administrator prompt and creates Start menu and optional desktop shortcuts. Its **High-resolution art** option downloads and verifies the pinned art release during installation; the standard light art works without it. See the [installer guide](desktop/windows/README.md) for install, upgrade, and uninstall behavior. Installer artifacts are separate from the browser HTML downloads.
+The installer runs for your Windows user without an administrator prompt and creates Start menu and optional desktop shortcuts. Its **High-quality art: choose branch and version** button opens the art repository's branch and published-version selectors. It shows your installed art version, the art required by this game, and the latest published art version. Choose the compatible high-resolution pack for installation, or **Download this art separately** to save a verified release zip without installing it. Other art versions remain separate downloads until a game build pins them; the standard light art works without the optional pack. The installer discloses that the artwork is completely AI-generated with OpenAI ChatGPT under human direction, with credited licenses retained for fonts and other third-party assets. See the [installer guide](desktop/windows/README.md) for install, upgrade, and uninstall behavior. Installer artifacts are separate from the browser HTML downloads.
 
 ### Art and the Unity version
 
-- **[AshenSpire-art](https://github.com/cehinds/AshenSpire-art)** holds the runtime art, fonts, recorded music, map tiles, and authoring sources. [Art releases](https://github.com/cehinds/AshenSpire-art/releases) provide high, light, and common packs. The browser game uses the release pinned in `art-release.json`; use that matching release rather than assuming the newest art is compatible with an older game.
+- **[AshenSpire-art](https://github.com/cehinds/AshenSpire-art)** holds the high-resolution masters, fonts, recorded music, map tiles, and authoring sources. This repository carries the simplified `assets-mobile/` light tier. [Art releases](https://github.com/cehinds/AshenSpire-art/releases) provide the matching high, light, and common packs; `art-release.json` pins the compatible release.
 - **[AshenedSpire — Unity adaptation](https://github.com/cehinds/AshenSpire-Unity)** is a separate mobile-first native C# project. Its [playable channels and downloads](https://cehinds.github.io/AshenSpire-Unity/) and [milestone status](https://github.com/cehinds/AshenSpire-Unity/blob/dev/docs/Unity-Milestones.md) have their own version and parity evidence; the browser build number does not describe the Unity build.
 
 ### Local and offline play
 
-Install Node.js 22, clone this repository, and fetch the pinned art with `node tools/fetch-art.mjs --pack light,common`. Then run `node tools/launch.mjs`, `run.bat` on Windows, or `./run.sh` on macOS/Linux. There is no root `package.json` and no root `npm install` step. The launcher builds the game, serves it at `http://localhost:8080`, and opens your browser. Options include `--no-open`, `--port <n>`, `--build-only`, and `--full-art` (fetch the high pack too for that build).
+Install Node.js 22, clone this repository, and fetch the shared assets with `node tools/fetch-art.mjs --pack common`. The local light tier is already present; `node tools/fetch-art.mjs --pack light` is optional when checking the release copy. Then run `node tools/launch.mjs`, `run.bat` on Windows, or `./run.sh` on macOS/Linux. There is no root `package.json` and no root `npm install` step. The launcher builds the game, serves it at `http://localhost:8080`, and opens your browser. Options include `--no-open`, `--port <n>`, `--build-only`, and `--full-art` (fetch the high pack too for that build).
 
 New builds provide a web game with external art packs and a self-contained light-art HTML download. The download plays by double-click with no server; local builds put it at `AshenSpire.html` and `dist/download/AshenSpire.html`. The web edition at `dist/AshenSpire.html` also opens from disk while its `packs/` and `objects/` remain beside it. Hosted builds can be cached with **Download & saves → Make available offline**, or downloaded as a folder zip. Recorded music plays over HTTP; disk builds use synthesized music. LAN co-op requires the launcher's Node server. Details: [dist/README.md](dist/README.md).
 
@@ -69,7 +106,7 @@ Select a card to preview its legal targets. Its circular **(i)** button opens th
 
 The current solo rules use **Attack Rating (AR)**, **Defense Rating (DR)**, and **Potency Rating (PR)** alongside HP, Mana, Stamina, **Poise**, and **Ward**. Attributes, equipment, relics, and statuses contribute to them. Physical attack damage uses AR, physical defensive Block uses DR, and magical damage, Block, and healing use PR. Poise and Ward also resist physical and magical damage and configured hostile status buildup.
 
-Hits that damage HP can build physical impact against Poise or magical impact against Ward. Breaking Poise causes **Stagger**; breaking Ward causes **Disruption**. Under these solo defaults an enemy loses its next move, while the player loses an Action on the next turn. Block that absorbs the entire hit prevents its automatic impact. Bleed, Venom, Frost, Crimson Blight, and other effects have their own buildup, duration, or trigger rules; inspect them in combat for the current values.
+Hits that damage HP can build physical impact against Poise or magical impact against Ward. Breaking Poise causes **Stagger**; breaking Ward causes **Disruption**. Under these solo defaults an enemy loses its next move, while the player starts the next turn with reduced Stamina. Block that absorbs the entire hit prevents its automatic impact. Bleed, Venom, Frost, Crimson Blight, and other effects have their own buildup, duration, or trigger rules; inspect them in combat for the current values.
 
 Equipment weight versus carrying capacity determines **Light, Medium, or Heavy** weight class. In a Standard deck, Dodge Roll is an equipment-independent card. It checks Dexterity against a d20 and grants Block on success; it does not guarantee avoidance. Light and Medium cost 1 Stamina; Heavy costs 2 Stamina. The combat result shows the check and guard gained.
 

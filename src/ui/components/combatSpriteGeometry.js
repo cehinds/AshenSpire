@@ -59,7 +59,7 @@ export function visibleArtBox(host, refresh) {
       width: Math.max(1, stageHeight * Number(stage.dataset.idleWidthRatio || stageWidth / stageHeight)),
     };
   }
-  const img = host.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
+  const img = host.querySelector('.enemy-pose-idle, .painted-presentation, .speaker-portrait-image, .facing > img');
   if (!img) return whole;
   const bounds = imageBounds(img, refresh);
   if (!bounds) return img.complete && img.naturalWidth ? whole : null;
