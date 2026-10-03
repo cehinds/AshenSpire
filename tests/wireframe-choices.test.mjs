@@ -139,7 +139,8 @@ test('the Wireframes tab: one drop-down row per choice, filed under its family',
   // The Layout tab (id Wireframes) opens on the three families, in catalogue
   // order; card sizes and the window follow them (2026-09-23).
   const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Wireframes').slice(0, WIREFRAME_CHOICE_GROUPS.length);
-  assert.deepEqual(groups.map((group) => group.id), WIREFRAME_CHOICE_GROUPS.map((group) => group.label));
+  assert.deepEqual(groups.map((group) => group.id), WIREFRAME_CHOICE_GROUPS.map((group) => group.id));
+  assert.deepEqual(groups.map((group) => group.label), WIREFRAME_CHOICE_GROUPS.map((group) => group.label));
   assert.deepEqual(groups.map((group) => group.rows.map((row) => row.key)),
     WIREFRAME_CHOICE_GROUPS.map((group) => group.choices.map((choice) => choice.key)));
 });

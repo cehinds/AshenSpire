@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "checks": [
+    "ten distinct book recipes",
+    "cover and symbol swapping",
+    "color draft persists",
+    "two working exports",
+    "reset",
+    "invalid import atomic",
+    "390px layout",
+    "real shop uses layers"
+  ],
+  "errors": []
+}

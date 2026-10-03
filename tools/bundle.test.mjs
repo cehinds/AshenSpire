@@ -13,6 +13,7 @@
 // Run:  node tools/bundle.test.mjs
 // Exit 0 = every case behaved. Exit 1 = at least one did not, and it says which.
 
+import { copyPackTrees, SANDBOX_ENV } from './art-source.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, appendFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -32,16 +33,20 @@ const check = (name, ok, detail) => {
 // touching the working tree.
 // SINCE STEP 8e (docs/EXTERNAL-ASSETS-PLAN.md) the bundler's default is the pack
 // shape, and the one inline shape left is the light single file (--single-file),
-// which reads its payloads from assets-mobile/ with assets/ as the oracle. The
-// parse-gate cases below build that single file (it is what still compiles every
-// module into one classic script, and at ~31 MB it is a tenth of the retired
-// full-art file); `pack: true` adds the trees the pack shape writes from, for
-// the case that builds it.
+// which reads its payloads from the light pack with art-manifest.json as the
+// oracle. The parse-gate cases below build that single file (it is what still
+// compiles every module into one classic script, and at ~31 MB it is a tenth of
+// the retired full-art file); `pack: true` adds the trees the pack shape writes
+// from, for the case that builds it. SINCE STEP 13 the art trees are not in the
+// checkout: each sandbox gets its copy from the fetched packs (copyPackTrees,
+// tools/art-source.mjs) and builds with ASHEN_ART_SOURCE=trees, so a fixture
+// can edit its own copy (the EOL cases do) and never the cache.
 function sandbox({ pack = false } = {}) {
   const dir = mkdtempSync(resolve(tmpdir(), 'ashen-bundle-'));
-  for (const d of ['src', 'styles', 'tools', 'assets', 'assets-mobile', 'content', ...(pack ? ['music', 'map-detail', 'asset-data'] : [])]) {
+  for (const d of ['src', 'styles', 'tools', 'content', ...(pack ? ['asset-data'] : [])]) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
+  copyPackTrees(dir, ['assets-mobile', 'assets/fonts', ...(pack ? ['music', 'map-detail'] : [])]);
   // buildordinal.json became authored build input after this sandbox was first
   // written. Omitting it makes every real-bundler fixture refuse before it can
   // reach the property the fixture is meant to exercise.
@@ -76,7 +81,7 @@ function sandbox({ pack = false } = {}) {
 // The light single file, written where the cases read it (build/AshenSpire.html).
 const SINGLE_FILE_ARGS = ['--single-file', '--out', 'build'];
 function build(dir, args = SINGLE_FILE_ARGS) {
-  const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs'), ...args], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs'), ...args], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...SANDBOX_ENV } });
   // A child that died (signal, spawn error) says so, rather than reading as `exit null`.
   const died = r.signal ? `\n[child killed by ${r.signal}]` : r.error ? `\n[child failed: ${r.error.message}]` : '';
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') + died };

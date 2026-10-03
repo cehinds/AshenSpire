@@ -67,7 +67,11 @@ import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t } from '../strings.js';
-import { consumableText, skillBookReadPlan, commitSkillBookRead } from '../../model/consumables.js';
+import { consumableText } from '../../model/consumables.js';
+import { openBookLearning } from '../components/bookLearning.js';
+import { renderBookArt } from '../components/bookArt.js';
+import { equipClassCard } from '../../model/classLibrary.js';
+import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
 import {
   armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
@@ -228,14 +232,14 @@ export function viewLayout(id) {
 const REGIONS = [
   {
     id: 'slots',
-    label: 'Slots',
+    label: t('armoury.tab.slots'),
     sel: '.armoury-body',
     count: (el) => el.querySelectorAll('.equip-slot').length,
     unit: 'slot',
   },
   {
     id: 'inventory',
-    label: 'Inventory',
+    label: t('armoury.tab.inventory'),
     sel: '.armoury-inventory',
     count: (el) => [...el.querySelectorAll('[data-inventory-item]')]
       .reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
@@ -243,14 +247,14 @@ const REGIONS = [
   },
   {
     id: 'cards',
-    label: 'Cards',
+    label: t('armoury.tab.cards'),
     sel: '.armoury-strip',
     count: (el) => el.querySelectorAll('[data-card-row]').length,
     unit: 'card',
   },
   {
     id: 'stats',
-    label: 'Stats',
+    label: t('armoury.tab.stats'),
     sel: '.armoury-stats-tray',
     count: () => null,
     unit: 'summary',
@@ -532,6 +536,7 @@ function inventoryFace(registries, row, {
   const el = renderInventoryItemCard(inventoryItemCardModel(row, {
     selected, draggable, classModel,
   }));
+  if (row.read) el.querySelector('.inventory-item-art')?.replaceChildren(renderBookArt(row.item));
   if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     const trail = el.querySelector('.r-trail');
     // WC2: the metadata band ends with how many of this item the run holds.
@@ -579,6 +584,7 @@ function inventoryReveal(registries, row, {
     comparisonHtml: comparisonPresentation === 'inline' ? comparisonHtml : '',
     action,
   });
+  if (row.read) el.querySelector('.inventory-model')?.replaceChildren(renderBookArt(item));
   if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     el.classList.add('poker-inventory-detail');
     el.querySelector('.inventory-model')?.remove();
@@ -1534,13 +1540,20 @@ export function mountEquipment(host, {
         const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
         // The footer runs the same act, through the same hold, as the card.
         if (plan) footerPlans.set(row.key, { ...plan, act, holdMs: inventoryItemClass.holdAction ? holdDuration : 0 });
+      } else if (row.classCard && !inCombat) {
+        const equipped = !run.classUnequipped && run.class === row.id;
+        const label = equipped ? 'Unequip class' : 'Equip class';
+        const act = () => { equipClassCard(registries, run, equipped ? null : row.id, { inCombat }); commit(); };
+        actionButton = button({ label, weight: 'primary', className: 'ep-equip armoury-class-action', disabled: !!run.pendingReward });
+        actionButton.title = run.pendingReward ? 'Finish the pending reward before changing class cards.' : '';
+        actionButton.addEventListener('click', (event) => { event.stopPropagation(); act(); });
+        if (!run.pendingReward) footerPlans.set(row.key, { label, kind: 'class', act, holdMs: 0 });
       } else if (row.read && !inCombat) {
         // SPEC §14.3: a skill book is read here, out of combat only — one
         // awardSkillXp on its track (model/consumables.js), then one fewer.
         const label = t('armoury.consumable.read');
         const act = () => {
-          commitSkillBookRead(registries, run, skillBookReadPlan(registries, run, row.id, { inCombat }), { inCombat });
-          commit();
+          openBookLearning({ registries, run, id: row.id, inCombat, settings: meta.settings, onLearn: () => commit() });
         };
         actionButton = button({ label, weight: 'primary', className: 'ep-equip armoury-read-book' });
         actionButton.dataset.act = 'read';
@@ -1676,10 +1689,10 @@ export function mountEquipment(host, {
     const runStats = run.stats || {};
     const group = (title, chips, attrs = {}) => detailCard({ eyebrow: title, muted: true, attrs: { class: 'armoury-stats-group', ...attrs }, children: statStrip(chips.map(([key, value]) => chip({ key, value: String(value) }))) });
     const box = el('div', { class: 'armoury-stats-summary', dataset: { component: 'armoury.statsSummary' } }, [
-      detailCard({ eyebrow: 'Character', name: cls?.name || run.class, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
+      detailCard({ eyebrow: 'Character', name: runClassIdentity(registries, run).name, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
       group('Combat', [['Strike', valueFor('attack')], [labelFor('technique'), valueFor('technique')], ['Defense', valueFor('guard')]]),
       group('Attributes', projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
-      group('Resources', [['Actions', derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
+      group('Resources', [[t('combat.actions'), derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
       group('Run', [['Fights won', runStats.fightsWon || 0], ['Damage dealt', runStats.damageDealt || 0], ['Damage taken', runStats.damageTaken || 0]]),
       detailCard({ eyebrow: 'Relics', muted: true, attrs: { class: 'armoury-stats-group' }, children: relicNames.length
         ? kitLine(relicNames.map((name) => kitItem({ glyph: '◆', name })))
@@ -1956,10 +1969,11 @@ export function mountEquipment(host, {
   /** The character's summary is a LabelStack: Eyebrow (the case is the stylesheet's), Title·S, Subtitle. */
   function characterSummaryPanel() {
     const cls = registries.classes.get(run.class);
+    const identity = runClassIdentity(registries, run);
     return el('header', { class: 'character-summary as-labelstack' }, [
-      eyebrow(`Forsaken · ${cls.name} · Level ${characterLevel(run)}`, { class: 'character-kicker' }),
-      titleS(cls.name, { tag: 'h3' }),
-      subtitle(cls.description || ''),
+      eyebrow(`Forsaken · ${identity.name} · Level ${characterLevel(run)}`, { class: 'character-kicker' }),
+      titleS(identity.name, { tag: 'h3' }),
+      subtitle(run.classUnequipped ? 'Class slot empty. Equip a learned class from your inventory.' : cls.description || ''),
       characterLevelMeter(),
     ]);
   }

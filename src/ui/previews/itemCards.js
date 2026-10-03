@@ -3,6 +3,7 @@ import { createRegistries } from '../../model/registries.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { createPaintedStage } from '../paintedOutfits.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
+import { t } from '../strings.js';
 const registries = createRegistries(contentBundle);
 const gallery = document.querySelector('#weapon-gallery');
 const sharedArmor = new URL(location.href).searchParams.has('sharedArmor');
@@ -12,8 +13,8 @@ const equipment = sharedArmor
 if (sharedArmor) {
   document.body.classList.add('shared-armor-preview');
   document.title = 'AshenSpire · All-class armor';
-  document.querySelector('h1').textContent = 'Armor for every class';
-  document.querySelector('header p:last-child').textContent = 'Available in the Armoury. Meet the listed attribute requirement to equip a set. Select a card to inspect bonuses and tags.';
+  document.querySelector('h1').textContent = t('preview.itemCards.title');
+  document.querySelector('header p:last-child').textContent = t('preview.itemCards.intro');
 }
 for (const item of equipment) {
   const rendered = renderEquipmentCard(registries, item, sharedArmor ? { level: 'inspect' } : {});
@@ -36,7 +37,7 @@ for (const item of equipment) {
     figure.stage = stage;
   }
   const label = document.createElement('label');
-  label.textContent = 'Preview pose';
+  label.textContent = t('preview.itemCards.pose');
   const select = document.createElement('select');
   select.setAttribute('aria-label', `${item.name} preview pose`);
   for (const [value, text] of [['idle', 'Standing'], ['guard', 'Guarding'], ['attack2', 'Attacking'], ['power2', 'Casting'], ['hit', 'Hurt'], ['defeated', 'Defeated'], ['prepared', 'Prepared'], ['bloodRite', 'Blood Rite']]) {

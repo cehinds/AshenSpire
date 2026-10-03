@@ -1,9 +1,0 @@
-{
-  "enemies": 33,
-  "frames": 66,
-  "legacyReplacements": 7,
-  "unchangedPaintedIdles": 26,
-  "dimensions": "384x384 RGBA",
-  "distinctAttacks": true,
-  "transparentMargins": true
-}

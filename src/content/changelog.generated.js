@@ -3,6 +3,106 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1521",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Read a book, learn a card, keep your class progress",
+    "detail": "Manuals grant their XP and an immediate matching card choice, including cross-class skills. Spellbooks teach spells, Universal Tomes let you choose a track and lesson, and class books unlock reusable class cards that can be equipped or removed to leave an empty slot. The shop's book rows have matching sizes and separate book, details and Buy columns. Ten customizable book recipes combine three painted cover styles, thirty independent symbol variants, colors and trim; Book Atelier exports artwork recipes for future updates. Art comes from the verified hd-assets-v4 pack, including its existing uniform light-sprite policy.",
+    "build": "0.7.1.824",
+    "pullRequest": 1521,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1521"
+  },
+  {
+    "id": "pr-1516",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the art now lives only in its own repository",
+    "detail": "Nothing you play changes. The pictures, fonts, music and map tiles were stored twice, here and in the art repository; the copies here are gone, so a fresh download of the source is about 1.9 GB lighter. Every build now takes its art from the pinned art release, checked file by file, exactly as it already did.",
+    "build": "0.7.1.822",
+    "pullRequest": 1516,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1516"
+  },
+  {
+    "id": "pr-1489",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the game's wording lives in one table again",
+    "detail": "Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.",
+    "build": "0.7.1.821",
+    "pullRequest": 1489,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1489"
+  },
+  {
+    "id": "pr-1499",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the map legend's Escape test now opens the node panel first",
+    "detail": "Nothing you play changes. The automatic test for closing the map legend with Escape or pad B never selected a map node, so the node's panel was never open and the test could not see it close by mistake. It now selects a node, checks the panel stays open when the legend closes, and checks the next press closes the panel.",
+    "build": "0.7.1.819",
+    "pullRequest": 1499,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1499"
+  },
+  {
+    "id": "pr-1475",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fighters breathe while they wait",
+    "detail": "Your fighter and every enemy now bob gently in place between actions, each at its own rhythm; before, the idle motion was meant to play but reached no one. This covers the Animated, Rendered and Classic figure styles; the Glyph style shows a sigil, not a figure, and stays still, and a fallen fighter, including a downed co-op ally, stops moving. With Reduced motion on, in the game's settings or your device's, they stand still, and a new check plays a whole turn that way to prove nothing on the board moves.",
+    "build": "0.7.1.818",
+    "pullRequest": 1475,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1475"
+  },
+  {
+    "id": "pr-1474",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
+    "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
+    "build": "0.7.1.816",
+    "pullRequest": 1474,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1474"
+  },
+  {
+    "id": "pr-1487",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the balance report's checks are stricter",
+    "detail": "Nothing you play changes. The run simulator now refuses to print per-act difficulty for an endless climb, where later loops would have been counted as the first three acts, and the balance notes' check now catches a boss listed for a region that cannot meet it, or the same row recorded twice.",
+    "build": "0.7.1.814",
+    "pullRequest": 1487,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1487"
+  },
+  {
+    "id": "pr-1490",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The tutorial bubble moves off your cards when the hand rearranges itself",
+    "detail": "After a window resize, your hand can spread itself out again a moment after the tutorial has found a spot for its speech bubble. If that put a card under the bubble, the bubble stayed there and you couldn't click that card. The bubble now moves whenever your cards move, not only when the thing it points at moves.",
+    "build": "0.7.1.813",
+    "pullRequest": 1490,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1490"
+  },
+  {
+    "id": "pr-1493",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every owner decision has its own number",
+    "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D48, and a test fails if two decisions ever share a number again.",
+    "build": "0.7.1.812",
+    "pullRequest": 1493,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
+    "id": "pr-1508",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the slowest automated checks no longer wait on a 20-minute download",
+    "detail": "Nothing you play changes. Three checks ran out of time before they started, while still downloading the project; the heavy checks now skip the source paintings and old file history they never open, cutting each one's download from about 2.3 GB to about 0.7 GB. Every check still runs; whether all of them now finish inside 20 minutes is confirmed only by the next full run.",
+    "build": "0.7.1.811",
+    "pullRequest": 1508,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1508"
+  },
+  {
     "id": "pr-1511",
     "date": "2026-10-02",
     "group": "2026-10-02",

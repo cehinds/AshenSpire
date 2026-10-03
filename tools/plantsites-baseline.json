@@ -173,8 +173,8 @@
       "digest": "706f6319c868604e"
     },
     "tools/flask-action-contract.mjs": {
-      "count": 36,
-      "digest": "f20530f51a5fd9c4"
+      "count": 10,
+      "digest": "63c88aea3a42c684"
     },
     "tools/flask-intent-smoke.mjs": {
       "count": 3,
@@ -183,6 +183,10 @@
     "tools/flask-menu-cancel.mjs": {
       "count": 6,
       "digest": "fd574eb2f9dd3290"
+    },
+    "tools/flask-menu-probe.mjs": {
+      "count": 19,
+      "digest": "2460823b78c7ff3d"
     },
     "tools/flaskbox.mjs": {
       "count": 6,
@@ -227,6 +231,10 @@
     "tools/menufit.mjs": {
       "count": 1,
       "digest": "eeefabab3caca651"
+    },
+    "tools/motion-probe.mjs": {
+      "count": 18,
+      "digest": "1ff760852f3a4451"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
@@ -326,7 +334,7 @@
     },
     "tools/text-geometry.mjs": {
       "count": 9,
-      "digest": "52448ef30ad89ec6"
+      "digest": "5401de8f2dfaf295"
     },
     "tools/title-new-slot.mjs": {
       "count": 4,

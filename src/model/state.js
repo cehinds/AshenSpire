@@ -32,6 +32,7 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
+import { classLibraryProblems } from './classLibraryState.js';
 import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
@@ -895,6 +896,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  problems.push(...classLibraryProblems(run));
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
     if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
   });
@@ -1471,13 +1473,14 @@ export function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
+export function createPlayerCombatEntity({ classId, classUnequipped = false, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
     id: 'player',
     kind: 'player',
     classId,
+    ...(classUnequipped ? { classUnequipped: true } : {}),
     hp: hp != null ? hp : maxHp,
     maxHp,
     mana: mana != null ? mana : maxMana,

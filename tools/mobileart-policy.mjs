@@ -2,15 +2,23 @@
 //
 // The mobile edition is the same game with smaller art. Which files shrink, by
 // how much, and how the result is judged are stated HERE and nowhere else, so
-// the generator (tools/mobile-art.mjs), the bundler (tools/bundle.mjs) and the
-// gate (tools/mobile-art.mjs --check, tools/verify-shipped.mjs) cannot disagree
-// about the shape of the tree they share. This module is pure: no main, no
+// the generator, the bundler (tools/bundle.mjs) and the gates cannot disagree
+// about the shape of the tree they share. Since docs/EXTERNAL-ASSETS-PLAN.md
+// step 13 the generator and its --check (tools/mobile-art.mjs) live in
+// cehinds/AshenSpire-art, beside its own copy of this file; here the bundler
+// and tools/verify-shipped.mjs still read it. This module is pure: no main, no
 // writes, Node core only, so the bundler can import it without running a tool.
 //
 // It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs): a change here
 // changes what the mobile bundle carries, so it moves build identity.
 
 import { createHash } from 'node:crypto';
+// Shared with AshenSpire-art's released uniform light-sprite policy.
+const SPRITE_ASSET_FAMILIES = Object.freeze([
+  'animations', 'sprites', 'poses', 'painted-outfits', 'readiness-poses',
+  'enemy-poses', 'enemy-states', 'defeated-poses', 'enemies-unity',
+  'enemies-expansion', 'combat-effects', 'pose-effects', 'equipment',
+]);
 
 /** Where the shrunken twins live, mirroring assets/ path for path. */
 export const MOBILE_ASSET_DIR = 'assets-mobile';
@@ -42,9 +50,9 @@ export const POLICY = Object.freeze({
   // stretched across a ~1170 px phone and blocks visibly; 0.4 at quality 50
   // costs ~0.6 MB raw over the whole set and reads clean. First match wins.
   overrides: Object.freeze([
-    // The seven-step bow sheet adds 224 distinct frames. At 64px the motion
-    // stays readable in the light build without exceeding its 30 MB download.
-    Object.freeze({ prefixes: Object.freeze(['animations/bow/']), scale: 0.1, quality: 5 }),
+    // Every figure, frame and effect uses the same reduction, including small
+    // cropped poses. Registration and playback timing remain in native units.
+    Object.freeze({ prefixes: Object.freeze(SPRITE_ASSET_FAMILIES.map(family => `${family}/`)), scaleFrom: 0, scale: 0.3125, quality: 35, alphaQuality: 40 }),
     Object.freeze({ prefixes: Object.freeze(['environments/', 'bg/', 'map/']), scale: 0.4, quality: 50 }),
   ]),
 });
@@ -137,5 +145,5 @@ export function webpDimensions(buf) {
  */
 export function twinDimensions({ width, height }, policy = POLICY) {
   if (Math.max(width, height) < policy.scaleFrom) return { width, height };
-  return { width: Math.round(width * policy.scale), height: Math.round(height * policy.scale) };
+  return { width: Math.max(1, Math.round(width * policy.scale)), height: Math.max(1, Math.round(height * policy.scale)) };
 }

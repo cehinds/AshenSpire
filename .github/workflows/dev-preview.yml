@@ -48,17 +48,21 @@ env:
   # The pack-shaped build's tier flag for bundle.mjs: light on dev/test
   # (owner, 2026-09-26), high (no flag) on release/main.
   WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
-  # The art packs that tier is made from (docs/EXTERNAL-ASSETS-PLAN.md §2,
-  # tools/fetch-art.mjs --pack): light and common on dev/test, all three on
-  # release/main.
-  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+  # The art packs this workflow fetches (docs/EXTERNAL-ASSETS-PLAN.md §2,
+  # tools/fetch-art.mjs --pack): all three on every branch since step 13. The
+  # build carries only its tier's (light and common on dev/test), but the
+  # workbench copies the high pack's folders the light one lacks.
+  ART_PACKS: all
 
-  # STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
-  # assets/fonts/, music/ and map-detail/ reads the fetched art packs through
-  # tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
-  # checkout, so a job that builds or serves without fetching first is red now,
-  # not when step 13 deletes them. Each job that builds, serves or tests the
-  # checkout fetches with ./.github/actions/fetch-art right after setup-node.
+  # STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
+  # assets-mobile/, the fonts, music/, map-detail/ and art/) left this repository
+  # at step 13; every reader reads the fetched art packs through
+  # tools/art-source.mjs, which fails (naming the fetch) for a pack that is not
+  # fetched. Each job that builds, serves or tests the checkout fetches with
+  # ./.github/actions/fetch-art right after setup-node, and fetches ALL THREE
+  # packs: the high pack is what /assets/ serves from source (tools/serve.mjs) and
+  # what the art checks read, as the assets/ tree was before step 13.
+  # ASHEN_ART_SOURCE=cache is the default behaviour now, kept as a name.
   ASHEN_ART_SOURCE: cache
 
 jobs:
@@ -204,9 +208,6 @@ jobs:
 
       - name: The file a player is handed matches the tree that claims it
         run: node tools/verify-shipped.mjs
-      - name: The light art twin tree mirrors assets/ and fits its budget
-        run: node tools/mobile-art.mjs --check
-
       # Same budget as the gates above: a pure read, no execution, no browser,
       # well under a second, on the runner this job already pays for. It walks
       # every in-tree module regardless of who imports it, so a rename that
@@ -234,9 +235,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p preview
-          node tools/readiness-preview-build.mjs preview
-          mkdir -p preview/art/readiness-poses
-          cp -r art/readiness-poses/inspection preview/art/readiness-poses/inspection
+          # The readiness-pose gallery and the art/ inspection pages left with
+          # art/ (docs/EXTERNAL-ASSETS-PLAN.md step 13, ART-REPO-PLAN step 6):
+          # cehinds/AshenSpire-art publishes them from its own workflow.
           # TWO SHAPES, AND THE ROOT IS THE FAST ONE.
           #
           # preview/     the de-inlined build: 4.9 MB of HTML beside the art,
@@ -260,29 +261,28 @@ jobs:
           cp preview/AshenSpire.html preview/index.html
           # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
           # The source-module preview pages (world-atlas-, equipment-selection-,
-          # armament-kits-preview.html), the pose studio, the art inspection
-          # pages and docs/preview read `assets/…` BY PATH (assetUrl() in source
-          # mode, `../../assets/…` from art/). They get this tier's art in
-          # preview/workbench/assets/, copied from the FETCHED RELEASE (step 12):
-          # the light pack's assets-mobile/ on dev/test, with the common pack's
-          # fonts beside it (the light pack carries no fonts). tools/art-source.mjs
-          # names each cache directory; ASHEN_ART_SOURCE=cache (this workflow's
-          # env) refuses the trees, so an unfetched pack is red here, not at
-          # step 13. release/main copy the high tier, assets/, which leaves this
-          # repository with ART-REPO-PLAN step 6, plus the same fonts.
-          # preview/AshenSpire.html must not get a tree: an id its pack index
-          # misses has to 404 visibly, not load quietly from a tree left beside it.
+          # armament-kits-preview.html), the pose studio and docs/preview read
+          # `assets/…` BY PATH (assetUrl() in source mode). They get this tier's
+          # art in preview/workbench/assets/, copied from the FETCHED RELEASE
+          # (the art trees left this repository at step 13): the light pack's
+          # assets-mobile/ on dev/test, the high pack's assets/ on release/main,
+          # with the common pack's fonts beside either. tools/art-source.mjs
+          # names each cache directory, and fails (naming the fetch) for a pack
+          # that is not fetched. preview/AshenSpire.html must not get a tree: an
+          # id its pack index misses has to 404 visibly, not load quietly from a
+          # tree left beside it.
           W=preview/workbench
-          mkdir -p "$W/assets" "$W/art/combat-effects-2026-09-07"
+          mkdir -p "$W/assets"
+          # Assigned first: errexit ignores a failed substitution inside an
+          # argument, which would turn the source into "/.".
+          HIGH_DIR=$(node tools/art-source.mjs --dir assets)
           if [ "$(echo $WEB_TIER)" = "--light" ]; then
             LIGHT_DIR=$(node tools/art-source.mjs --dir assets-mobile)
             cp -r "$LIGHT_DIR"/. "$W/assets/"
           else
-            cp -r assets/. "$W/assets/"
+            cp -r "$HIGH_DIR"/. "$W/assets/"
           fi
           mkdir -p "$W/assets/fonts"
-          # Assigned first: errexit ignores a failed substitution inside an
-          # argument, which would turn the source into "/.".
           FONTS_DIR=$(node tools/art-source.mjs --dir assets/fonts)
           cp -r "$FONTS_DIR"/. "$W/assets/fonts/"
           # The standalone is collected and uploaded by its own steps, right
@@ -294,20 +294,17 @@ jobs:
           # --update=none: the copy above already placed this tier's art under
           # workbench/assets/ (the light twins on dev/test); these copies only
           # add the files it does not ship, and never overwrite its art.
-          cp -r --update=none assets/environments "$W/assets/"
+          cp -r --update=none "$HIGH_DIR/environments" "$W/assets/"
           mkdir -p "$W/docs/preview"
           cp -r docs/preview/world-atlas "$W/docs/preview/"
           cp -r docs/preview/combat-ground "$W/docs/preview/"
           cp -r docs/preview/combat-formation "$W/docs/preview/"
           cp -r docs/preview/starting-equipment "$W/docs/preview/"
           cp -r docs/preview/armament-kits "$W/docs/preview/"
+          cp -r docs/preview/book-library "$W/docs/preview/"
           cp -r pose-studio "$W/pose-studio"
-          cp -r --update=none assets/pose-effects "$W/assets/"
-          cp -r art/pose-studio "$W/art/"
-          cp -r art/card-effect-refresh-2026-09-09 "$W/art/"
-          cp -r --update=none assets/combat-effects assets/painted-outfits "$W/assets/"
-          cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html "$W/art/combat-effects-2026-09-07/"
-          cp -r art/combat-effects-2026-09-07/inspection "$W/art/combat-effects-2026-09-07/inspection"
+          cp -r --update=none "$HIGH_DIR/pose-effects" "$W/assets/"
+          cp -r --update=none "$HIGH_DIR/combat-effects" "$HIGH_DIR/painted-outfits" "$W/assets/"
           # The game's own folder carries no art tree; verify-external reads
           # the pack, and this keeps that honest.
           test ! -e preview/assets
@@ -325,13 +322,10 @@ jobs:
             echo "Use its class and screen-size controls to test hand choices and Continue."
             echo "Equipment screenshots and QA: docs/preview/starting-equipment/index.html."
             echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
-            echo "Open Combat-pose-preview.html (in this folder) for the offline readiness outfit gallery."
             echo "Open docs/preview/combat-formation/index.html for turn and formation comparisons."
             echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
-            echo "Open art/combat-effects-2026-09-07/sprite-catalog.html for all 56 six-frame sets."
-            echo "For the interactive card preview, serve this folder over HTTP and open"
-            echo "art/combat-effects-2026-09-07/index.html?integrated=1."
-            echo "Card/tag assignments and screenshots are in the same art folder."
+            echo "The art inspection pages (combat-effect catalog, readiness gallery) are"
+            echo "published by cehinds/AshenSpire-art since the art left this repository."
             echo
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
             echo "(any static server). Its art is in packs/ and objects/, loaded and"
@@ -392,15 +386,6 @@ jobs:
           name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
           retention-days: 14
-
-      # THE AGREEMENT CHECK (docs/EXTERNAL-ASSETS-PLAN.md step 11). The packs were
-      # fetched before the build (step 12: the build and the workbench read
-      # them); while the trees are still here, the release and the trees must
-      # agree byte for byte. LAST, AND WHATEVER RAN BEFORE: its failure never
-      # costs this commit its build, its preview package or another gate's verdict.
-      - name: The fetched packs and the trees here agree byte for byte
-        if: ${{ !cancelled() }}
-        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
   #

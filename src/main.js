@@ -2078,19 +2078,36 @@ function showDraft() {
  * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
  * the map's own reads — grep `meta.settings` in ui/screens/map.js and
  * model/mapknowledge.js and mapboard.js, and they are the keys below.
+ *
+ * AND "Use flasks outside combat", which the map's Potions control
+ * (components/runPotions.js) and the run HUD's flask icons read at mount. A
+ * change here replaces `activeMeta`, so without the redraw the map kept
+ * refusing Drink after the player had turned it on, and its own redraw after a
+ * Potions action re-read the meta it was mounted with
+ * (tools/flask-menu-probe.mjs, persistence).
  */
 const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
+// Only where a flask surface reads it: the world atlas is a `.mapscreen` too but
+// has no Potions control, and a remount drops its selected destination
+// (#1474 review).
+const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
-  if (!MAP_REMOUNT_KEYS.some((k) => k in changed)) return;
-  if (!app.querySelector('.mapscreen')) return;
-  showMap();
+  const screen = app.querySelector('.mapscreen');
+  if (!screen) return;
+  const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);
+  const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');
+  // The flask key only changes what the Potions control offers, so the redraw
+  // keeps the destination the player had selected (#1474 review).
+  const selectedId = !mapKey && flaskKey ? screen.querySelector('.map-node.selected')?.dataset.node || null : null;
+  if (mapKey || flaskKey) showMap({ selectedId });
 }
 
-function showMap() {
+function showMap(opts) {
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
-  if (run.legacyDungeon) return showLegacyDungeon();
+  if (run.legacyDungeon) return showLegacyDungeon({ selectedId });
   if (run.journey) return mountWorldAtlas(app, {
     run, registries,
     serviceContext: {
@@ -2111,6 +2128,7 @@ function showMap() {
     registries,
     run,
     meta: activeMeta,
+    selectedId,
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
@@ -2395,11 +2413,13 @@ function combatMods(pool, encounter = null) {
   return { hpMult, damageMult, enemyStatuses, playerStatuses };
 }
 
-function showLegacyDungeon() {
+function showLegacyDungeon(opts) {
+  // A flask-only redraw hands back the selected node, as on the act map.
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   if (run.pendingReward) return mountPendingReward();
   if (run.legacyDungeon.activeRest) return showRest();
   if (run.legacyDungeon.pending) return showDungeonDialogue();
-  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow,
+  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow, selectedId,
     onTravel: id => { if (travelDungeon(run, id)) { persist(); enterDungeonLocation(); } },
     onInspect: enterDungeonLocation, onLeave: leaveLegacyDungeon });
 }
@@ -2811,7 +2831,7 @@ function rollLevelChoices(levelsEarned) {
   for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
     const options = [];
     if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
-    if (offerClassTree) {
+    if (offerClassTree && !run.classUnequipped) {
       const level = Math.max(run.skills?.[classSkillId(run.class)]?.level || 0, firstRewardLevel + ordinal + 1);
       options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
         .map((id) => ({ kind: 'classNode', id })));
@@ -2854,6 +2874,7 @@ function rollSkillDrafts(pool, includeBanked = false) {
  * draftable keeps its draft.
  */
 function rollClassDrafts(includeBanked = false) {
+  if (run.classUnequipped) return [];
   const row = run.skills && run.skills[classSkillId(run.class)];
   if (!row) return [];
   const banked = includeBanked ? pendingSkillLevelCount(registries, run, classSkillId(run.class)) : 0;
@@ -3419,6 +3440,21 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // THE FLASKS, read-only, same species: the live run's flask ledger and
+  // carried potions beside the slot's saved copy, and the stored "Use flasks
+  // outside combat" setting. tools/flask-menu-probe.mjs proves a map Potions
+  // action and a setting change are SAVED, which a shot boot's memory storage
+  // hides from any localStorage read. Shot boots only; a player never has it.
+  window.__flasks = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    const charges = (r) => (r && r.flaskCharges ? { hp: r.flaskCharges.hpCurrent, mana: r.flaskCharges.manaCurrent } : null);
+    const carried = (r) => (r ? (r.flasks || []).map((f) => f.flaskId) : null);
+    return {
+      charges: charges(run), savedCharges: charges(saved),
+      carried: carried(run), savedCarried: carried(saved),
+      savedOutsideCombat: ((saves.loadMeta() || {}).settings || {}).useRestorativeFlasksOutsideCombat ?? null,
+    };
+  };
   // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
   // proves WHEN an armament becomes owned (meta.found) and stored (the run's
   // loadout) around the reward menu, and a shot boot runs on MEMORY storage
@@ -3587,6 +3623,15 @@ if (shotState === 'combat-test') {
   const posedPools = ['shotMaxHp', 'shotMana', 'shotMaxMana', 'shotMaxStamina']
     .some((k) => shotParams.has(k));
   if (posedPools && shotState === 'map') showMap();
+  // `?shotCarried=<flaskId,...>` — CARRY POTIONS ON THE MAP. The map pose
+  // carries none, so its Potions minis and the run HUD's carried icons had
+  // nothing to open; tools/flask-menu-probe.mjs compares their menus with the
+  // shared plan. Unknown ids are skipped; the map is redrawn, as above.
+  const shotCarried = shotState === 'map' ? shotParams.get('shotCarried') : null;
+  if (shotCarried) {
+    run.flasks = shotCarried.split(',').filter((id) => registries.flasks.has(id)).map((flaskId) => ({ flaskId }));
+    showMap();
+  }
   // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
   //
   // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map
@@ -3784,6 +3829,12 @@ if (shotState === 'combat-test') {
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
+    if (new URLSearchParams(location.search).has('shotLibrary')) {
+      const books = registries.consumables.all().filter((row) => row.kind === 'skillBook');
+      run.consumables = Object.fromEntries(books.map((book) => [book.id, 1]));
+      run.shopStock.offerings = ['skillBooks'];
+      run.shopStock.skillBooks = books.map((book) => ({ id: book.id, cost: book.cost }));
+    }
     showShop();
   } else if (shotState === 'blacksmith') {
     // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the atlas

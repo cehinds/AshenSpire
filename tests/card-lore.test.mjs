@@ -45,7 +45,7 @@ test('loreParts splits identity, history and a closing line set apart', () => {
 
 test('lore type resolves unknown values to the defaults and stamps words, not lengths', () => {
   const fallback = resolveLoreType({ loreFace: 'Comic Sans', loreSize: 'XXL', loreSlant: 'oblique' });
-  assert.equal(fallback.face, LORE_FACES.find((face) => face.label === LORE_TYPE_DEFAULTS.loreFace).id);
+  assert.equal(fallback.face, LORE_FACES.find((face) => face.id === LORE_TYPE_DEFAULTS.loreFace).id);
   assert.equal(fallback.size, LORE_TYPE_DEFAULTS.loreSize);
   assert.equal(fallback.slant, LORE_TYPE_DEFAULTS.loreSlant);
   const root = { dataset: {} };

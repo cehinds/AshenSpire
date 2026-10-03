@@ -47,6 +47,8 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PARCHMENT_ACTS, PARCHMENT_EXT, parchmentAsset } from '../src/ui/uiContent.js';
 
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['assets']);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CHECK = process.argv.includes('--check');
 

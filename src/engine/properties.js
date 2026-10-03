@@ -209,7 +209,7 @@ function coreTagsOf(combat, owner) {
  */
 export function syncClassProperties(combat, entity) {
   const owner = entity || (combat && combat.player);
-  if (!combat || !owner || !owner.classId) return;
+  if (!combat || !owner || !owner.classId || owner.classUnequipped) return;
   const ownerKey = triggerOwnerKey(combat, owner);
   const carrier = classCarrier(combat.registries, owner.classId, ownerKey, coreTagsOf(combat, owner));
   if (!carrier) return;
