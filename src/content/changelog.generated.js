@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "The Windows installer lets you browse and download art versions",
     "detail": "A high-quality artwork button opens art-repository branch and published-version choices, shows installed, required and latest art versions, and lets you install the game's matching pack or save another verified release separately. The installer discloses ChatGPT-generated artwork. README links and action buttons each have their own row, while its opening description stays a plain sentence.",
-    "build": "0.7.1.839",
+    "build": "0.7.1.840",
     "pullRequest": 1533,
     "url": "https://github.com/cehinds/AshenSpire/pull/1533"
+  },
+  {
+    "id": "pr-1532",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Full draws and selective Retain are the approved hand rules",
+    "detail": "The contract starts opening and turn draws at four with Intelligence scaling, keeps Retain cards, shuffles other unplayed cards into the draw pile, and sets a separate default hand limit of fifteen. Retained cards add to the next draw until that limit. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.839",
+    "pullRequest": 1532,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1532"
   },
   {
     "id": "pr-1529",
