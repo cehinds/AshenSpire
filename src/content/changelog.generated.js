@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1511",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Cards keep just their Information button for full text",
+    "detail": "Clipped descriptions no longer add a separate arrow box above a combat card or push its title aside. Select the card and use its existing (i) button to read the complete details.",
+    "build": "0.7.1.806",
+    "pullRequest": 1511,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1511"
+  },
+  {
     "id": "pr-1505",
     "date": "2026-10-02",
     "group": "2026-10-02",
