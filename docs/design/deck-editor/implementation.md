@@ -53,10 +53,13 @@ cover the actual game door, add/save/reopen, asset-object loading, Undo, search,
 view switching, folded groups and mobile action reachability.
 
 See `/design-qa.md` for captures, intentional visual differences and scope.
-Current refinement checks: 39 deck DOM tests; 34 model/removal tests; 64 save/pool
-regressions; five animation lifecycle/routing tests; 35 cost/config tests; three
+Current refinement checks: 39 deck DOM tests; 100 combined model/removal, save/pool
+and smith extraction/install regressions; five animation lifecycle/routing tests; 35 cost/config tests; three
 row-editor geometry/import tests. Browser checks verified exact-frame pause,
 mobile absence of sprite images, all resource icons loaded, fixed 82px rows,
 two-line descriptions, editor drag/resize/snapping, saved drafts and JSON copy.
+Independent review of PR #1535 found and verified a fix for stale sideboard
+mount contents after smith extraction/installation, including unequipped gear.
+The reviewer approved the fix and independently reran its three regression cases.
 The broader test run overlapped a base merge and is being rerun on the settled
 tree. Final build/CI/merge evidence will be recorded before promotion.
