@@ -213,7 +213,8 @@ test('FINISH: a skill book bought at the market pays its XP through awardSkillXp
   // Reading it is exactly one awardSkillXp on its track.
   const expected = structuredClone(back);
   awardSkillXp(OUT, expected, def.skill, def.xp);
-  const receipt = commitSkillBookRead(OUT, back, skillBookReadPlan(OUT, back, item.id));
+  const readPlan = skillBookReadPlan(OUT, back, item.id);
+  const receipt = commitSkillBookRead(OUT, back, { ...readPlan, choice: readPlan.lessons[0] });
   assert.deepEqual(back.skills[def.skill], expected.skills[def.skill]);
   assert.equal(receipt.gained, def.xp);
   assert.deepEqual(back.consumables, {}, 'a read book is used up and its entry deleted');

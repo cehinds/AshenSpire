@@ -21,6 +21,8 @@ import { createRunState } from './src/model/state.js';
 import { createRng } from './src/engine/rng.js';
 import { buildMarketStock } from './src/engine/shopKinds.js';
 import { mountShop } from './src/ui/screens/shop.js';
+import { mountEquipment } from './src/ui/screens/equipment.js';
+import { openBookLearning } from './src/ui/components/bookLearning.js';
 
 // A disposable visit rendered and bought through the production shop.
 // No saved game or storage is read or written by this preview.
@@ -31,7 +33,9 @@ const run = createRunState({ seed: 21, classId: 'reaver', registries });
 run.cinders = Number(params.get('cinders') || 999);
 run.shopStock = buildMarketStock(registries, createRng(21), run, { meta: { settings } });
 run.shopStock.offerings = ['skillBooks'];
-const ids = ['shieldManual', 'bladeManual', ...(params.has('all') ? ['focusTreatise', 'pairedStepsPrimer'] : [])];
+const ids = params.has('library') ? registries.consumables.all().filter((row) => row.kind === 'skillBook').map((row) => row.id)
+  : ['shieldManual', 'bladeManual', ...(params.has('all') ? ['focusTreatise', 'pairedStepsPrimer'] : [])];
+if (params.has('library')) run.consumables = Object.fromEntries(ids.map((id) => [id, 1]));
 run.shopStock.skillBooks = ids.map((id) => ({ id, cost: registries.consumables.get(id).cost }));
 let changes = 0;
 mountShop(document.getElementById('app'), {
@@ -41,6 +45,14 @@ mountShop(document.getElementById('app'), {
 });
 document.querySelector('#shop-cat-skillBooks').click();
 window.bookShopPreview = { run, registries, changes: () => changes };
+if (params.has('library')) {
+  const toolbar = document.createElement('nav');
+  toolbar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;gap:8px;padding:8px;background:#17130e;flex-wrap:wrap';
+  const add = (label, action) => { const button = document.createElement('button'); button.textContent = label; button.addEventListener('click', action); toolbar.appendChild(button); };
+  add('Inventory & class cards', () => mountEquipment(document.body, { registries, run, meta: { settings: { equipView: 'hybrid' } }, inCombat: false, onClose() {}, onChange() { changes++; } }));
+  for (const id of ['shieldManual', 'spellbook', 'universalTome', 'starseerClassBook']) add(`Read ${registries.consumables.get(id).name}`, () => openBookLearning({ registries, run, id, onLearn() { changes++; } }));
+  document.body.appendChild(toolbar);
+}
 </script>
 </body>
 </html>

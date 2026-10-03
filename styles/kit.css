@@ -5635,3 +5635,25 @@ button[data-button-size] {
   padding: 0;
   align-self: center;
 }
+
+/* Book lessons use live card faces and a searchable, keyboard-operable list. */
+.book-learning-veil { z-index: 13000; }
+.book-learning-panel { width: min(90rem, 96vw); max-height: 94dvh; display: flex; flex-direction: column; }
+.book-learning-body { overflow: auto; min-height: 0; display: grid; gap: 1rem; padding: 1.4rem; }
+.book-learning-body > p { margin: 0; }
+.book-learning-body input, .book-learning-body select { width: 100%; min-height: 44px; padding: .8rem 1rem; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-2); }
+.book-learning-body select:disabled { opacity: 1; color: var(--ink-dim); }
+.book-learning-rarity { color: var(--ink-dim); font-size: 1.2rem; }
+.book-lesson-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr); gap: 1.4rem; }
+.book-lesson-list { display: grid; align-content: start; gap: .6rem; max-height: 42dvh; overflow: auto; }
+.book-lesson-option.as-btn { min-height: 44px; width: 100%; text-align: left; white-space: normal; }
+.book-lesson-option[aria-pressed='true'] { outline: 2px solid var(--gold); outline-offset: -2px; }
+.book-lesson-detail { display: grid; justify-items: center; align-content: start; gap: 1rem; }
+.book-lesson-detail > p { width: 100%; }
+.book-learning-status { color: var(--gold); }
+@media (max-width: 600px) {
+  .book-learning-panel { font-size: 14px; }
+  .book-lesson-columns { grid-template-columns: minmax(0, 1fr); }
+  .book-lesson-list { max-height: 25dvh; }
+  .book-learning-rarity { font-size: 12px; }
+}

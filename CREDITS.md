@@ -2,6 +2,11 @@
 
 ## Skill-book shop assets (2026-10-02)
 
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/shop/` | Original OpenAI image generation from the owner's approved shop preview; [masters and prompts](art/manual-shop-2026-10-02/README.md) | First-party generated artwork; no third-party license claimed. |
+| `assets-mobile/shop/` | Canonical mobile exports of the same original shop artwork | Same provenance and rights as the masters. |
+
 Three transparent book paintings and one blank brass button frame generated
 with the built-in OpenAI image generation tool from the owner's approved
 shop preview. No third-party artwork or third-party license is claimed.

@@ -26,7 +26,7 @@ import { stampDeck } from './loadout.js';
  * set aside — named on the receipt and the history row, never silently
  * lost. Armaments are the run's and stay.
  */
-export function swapRunClass(registries, run, classId) {
+export function swapRunClass(registries, run, classId, { preserveProgress = false } = {}) {
   if (!registries.classes.has(classId)) throw new Error(`swapClass: unknown class '${classId}'`);
   const from = run.class;
   const fromLevel = skillLevel(run, classSkillId(from));
@@ -35,7 +35,7 @@ export function swapRunClass(registries, run, classId) {
   const before = Array.isArray(run.coreTags) ? run.coreTags : [];
   const droppedTags = before.filter((id) => !permitted.has(id));
   run.coreTags = before.filter((id) => permitted.has(id));
-  const resetTracks = Object.keys(run.skills || {}).filter((id) => id.startsWith('class:'));
+  const resetTracks = preserveProgress ? [] : Object.keys(run.skills || {}).filter((id) => id.startsWith('class:'));
   for (const id of resetTracks) delete run.skills[id];
   const droppedArmour = [];
   const armour = ((registries.equipment || {}).armour) || [];

@@ -1,3 +1,4 @@
+import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
 //
 // Pure model: settings and a run in, answers and one-step edits out. The
@@ -98,12 +99,7 @@ export function ownedCopies(run, cardId) {
  * reward or purchase lands at the same length; the ids an unchanged run mints
  * are the ones it always minted.
  */
-export function unusedInstanceId(run, prefix, cardId) {
-  const taken = new Set([...(run.deck || []), ...(run.sideboard || [])].map((c) => c && c.instanceId));
-  let n = (run.deck || []).length;
-  while (taken.has(`${prefix}${n}_${cardId}`)) n++;
-  return `${prefix}${n}_${cardId}`;
-}
+export const unusedInstanceId = unusedInstanceId_;
 
 function sideboard(run) {
   if (!Array.isArray(run.sideboard)) run.sideboard = [];

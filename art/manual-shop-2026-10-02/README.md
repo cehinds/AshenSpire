@@ -1,5 +1,9 @@
 # Skill-book shop asset kit
 
+The subsequent mechanics extension is documented in [BOOK-LIBRARY.md](BOOK-LIBRARY.md):
+immediate lessons, cross-class spells, universal books and reusable class cards.
+The asset exports below remain the same four reusable art files.
+
 Owner request: “make these options uniform in size, and acutually have a book on it
 [ [book sprite] [details] [buy]] show me a preview”. After the preview:
 “ok, break these down into assets and make this”.
