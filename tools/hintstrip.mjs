@@ -497,7 +497,7 @@ const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
 // both Discard and Exhaust, and Potions occupies the rightmost slot. Weapon
 // Arts remains in the hand/Armoury rather than a sixth HUD control.
 const DECLARED_CONTROLS = Object.freeze([
-  'energy-orb', 'pile draw', 'end-turn', 'pile spent', 'combat-potions',
+  'energy-orb stamina-orb', 'pile draw', 'end-turn', 'pile spent', 'combat-potions',
 ]);
 
 // A control's IDENTITY is its class tokens minus the kit's layout modifiers.
@@ -529,6 +529,15 @@ const EXPECTED_CONTROLS = (() => {
   const named = [
     ...[...row[0].matchAll(/class(?:Name)?: '([^']+)'/g)].map((m) => identityOf(m[1])),
     ...[...row[0].matchAll(/pileButton\('([a-z]+)'/g)].map((m) => `pile ${m[1]}`),
+    // The orb is a shared HTML renderer now. Follow its actual source only
+    // when the row mounts it; removing the call or changing its identity
+    // must still disagree with the independently declared controls above.
+    ...(row[0].includes('${staminaOrbHtml()}') ? (() => {
+      const orbSource = readFileSync(join(ROOT, 'src/ui/components/staminaOrb.js'), 'utf8');
+      const orb = orbSource.match(/return `<div class="([^"]+)"/);
+      if (!orb) throw new Error('hintstrip: could not read the shared stamina orb template');
+      return [identityOf(orb[1])];
+    })() : []),
   ].filter(Boolean);
   const sameSet = (x) => x.split(/\s+/).sort().join(' ');
   const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));

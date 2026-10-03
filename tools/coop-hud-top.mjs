@@ -15,7 +15,7 @@
 //   * no part is lost: the resource bars, Leave and the quick-settings cluster
 //     are always there, the fight label is there off the compact band (the
 //     compact band hides it by design), and exactly EXPECTED_RESOURCE_ROWS
-//     resource rows (HP, Mana, Stamina) are shown;
+//     resource rows (HP with the default Mana ring) are shown;
 //   * every visible part of the HUD top lies inside the viewport on all four
 //     sides, and every part but the floating quick-settings cluster inside the
 //     topbar band;
@@ -60,6 +60,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { META_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 // `singleRow`: short landscape (styles/combat.css `@media (max-height:500px)`)
@@ -72,9 +73,9 @@ export const VIEWPORTS = [
   { width: 1280, height: 800, singleRow: false },
 ];
 const TOLERANCE = 0.5; // px: sub-pixel rounding, never a real overlap
-// The canned co-op host snapshot's seat shows HP, Mana and Stamina, one
-// `.resline` each. A row that goes missing is a lost part.
-export const EXPECTED_RESOURCE_ROWS = 3;
+// With the default Mana ring, only HP remains in the top bars. SP and Mana
+// are checked on the shared orb below. Disabling the ring adds the MP bar.
+export const EXPECTED_RESOURCE_ROWS = 1;
 // Compact band: a part must share at least this share of its own height with
 // the tallest part's row, so one sitting mostly on a second line is caught.
 const ROW_SHARE = 0.5;
@@ -139,7 +140,7 @@ const MEASURE = `(() => {
 })()`;
 
 /** Pure judge over one viewport's measurement → list of failure strings. */
-export function judge(g, label, { singleRow = false } = {}) {
+export function judge(g, label, { singleRow = false, resourceRows = EXPECTED_RESOURCE_ROWS } = {}) {
   const bad = [];
   if (!g || !g.mounted) return [`${label}: co-op formation board did not mount`];
   if (!g.topbar || !g.hudTop) return [`${label}: no .topbar > .hud-top`];
@@ -148,7 +149,7 @@ export function judge(g, label, { singleRow = false } = {}) {
   if (!g.parts.some((p) => p.name === 'coop-leave')) bad.push(`${label}: Leave button missing from the HUD top`);
   if (!g.parts.some((p) => p.name === 'hud-quick-settings')) bad.push(`${label}: quick-settings cluster missing from the topbar`);
   if (!singleRow && !g.parts.some((p) => p.name === 'fight-label')) bad.push(`${label}: fight label missing from the HUD top`);
-  if ((g.bars || []).length !== EXPECTED_RESOURCE_ROWS) bad.push(`${label}: ${(g.bars || []).length} resource rows shown, want ${EXPECTED_RESOURCE_ROWS} (HP, Mana, Stamina)`);
+  if ((g.bars || []).length !== resourceRows) bad.push(`${label}: ${(g.bars || []).length} resource rows shown, want ${resourceRows}`);
   const measured = [...g.parts, ...(g.bars || [])];
   // Resource rows are children of the host: check each row against the band
   // and its peers without counting its overlap with its own parent.
@@ -328,6 +329,9 @@ export function selftest() {
   const without = (name) => ({ ...base, parts: base.parts.filter((p) => p.name !== name) });
   const cases = [
     ['clean layout', base, 0],
+    ['default ring leaves one HP row', { ...base, bars: base.bars.slice(0, 1) }, 0, { resourceRows: 1 }],
+    ['ring off leaves HP and MP rows', { ...base, bars: base.bars.slice(0, 2) }, 0, { resourceRows: 2 }],
+    ['ring off loses the MP row', { ...base, bars: base.bars.slice(0, 1) }, 1, { resourceRows: 2 }, /1 resource rows shown, want 2/],
     ['overlap', { ...base, parts: base.parts.map((p) => p.name === 'coop-leave' ? { ...p, left: 250 } : p) }, 1],
     ['overflow', { ...base, scrollWidth: 420 }, 1],
     ['clipped Leave', { ...base, parts: base.parts.map((p) => p.name === 'coop-leave' ? { ...p, left: 380, right: 450 } : p) }, 1],
@@ -371,7 +375,7 @@ export function selftest() {
   // An optional fifth field names the failure the case must be caught BY, so a
   // case cannot pass on some other, accidental failure.
   const wrong = cases.filter(([, g, want, opts, why]) => {
-    const bad = judge(g, 'st', opts);
+    const bad = judge(g, 'st', { resourceRows: 3, ...opts });
     return (bad.length > 0 ? 1 : 0) !== want || (why && !bad.some((m) => why.test(m)));
   });
   for (const [name] of wrong) console.error(`  selftest: ${name} judged wrongly`);
@@ -521,9 +525,14 @@ const REPEAT_STEP = {
   press: `(() => { for (let i = 0; i < 3; i++) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', code: 'KeyF', bubbles: true, repeat: i > 0 }));
     return document.querySelectorAll('.combat-potion-menu').length; })()`,
   lists: `document.querySelectorAll('.combat-potion-menu').length`,
-  // The Actions and Discard/Exhaust labels follow the painted values (#1436 review).
+  // The fixture has SP 2/3 and Mana 1/2 (src/main.js's co-op shot).
+  // Check the independent fixture values, the painted number and both gems.
   labels: `(() => { const orb = document.querySelector('.combat.coop .energy-orb'); const spent = document.querySelector('.combat.coop .pile.spent');
-    return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '', spent: spent?.getAttribute('aria-label') || '' }; })()`,
+    return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '',
+      painted: orb?.querySelector('[data-orb-part="number"]')?.textContent || '',
+      mana: orb?.querySelectorAll('[data-orb-part="diamond"]').length,
+      spentMana: orb?.querySelectorAll('[data-orb-part="spent"]').length,
+      spent: spent?.getAttribute('aria-label') || '' }; })()`,
 };
 
 async function repeatOpenProbe(cdp, sessionId, base) {
@@ -534,9 +543,9 @@ async function repeatOpenProbe(cdp, sessionId, base) {
   await ev(SEAT_STEP.ready);
   await wait(300);
   const labels = await ev(REPEAT_STEP.labels);
-  const [have, max] = String(labels?.value || '').split('/');
   const labelBad = [];
-  if (!have || labels.orb !== `Actions ${have} of ${max}`) labelBad.push(`labels: Actions reads "${labels?.orb}" while it shows ${labels?.value}; want "Actions ${have} of ${max}"`);
+  if (labels?.value !== '2' || labels?.painted !== '2' || labels?.orb !== 'Stamina 2 of 3. Mana 1 of 2.') labelBad.push(`labels: Stamina reads "${labels?.orb}" with hidden/painted counts ${labels?.value}/${labels?.painted}; want Stamina 2 of 3. Mana 1 of 2.`);
+  if (labels?.mana !== 1 || labels?.spentMana !== 1) labelBad.push(`labels: Mana ring has ${labels?.mana} available and ${labels?.spentMana} spent diamonds; want 1 of each`);
   if (/Open piles/.test(labels?.spent || '')) labelBad.push(`labels: co-op Discard/Exhaust promises "Open piles" (${labels.spent}); co-op has no pile viewer`);
   await ev(REPEAT_STEP.press);
   await wait(400);
@@ -632,12 +641,17 @@ async function main(args) {
   let clean = 0;
   try {
     await cdp.ready;
-    for (const vp of VIEWPORTS) {
-      const label = `${vp.width}x${vp.height}`;
+    const probes = VIEWPORTS.flatMap(vp => [true, false].map(manaRing => ({ ...vp, manaRing })));
+    for (const [index, vp] of probes.entries()) {
+      const label = `${vp.width}x${vp.height}-ring-${vp.manaRing ? 'on' : 'off'}`;
       const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
       await cdp.send('Page.enable', {}, sessionId);
       await cdp.send('Runtime.enable', {}, sessionId);
+      // Exercise both supported presentations through the profile setting,
+      // before the real renderer boots. The expectations stay independent.
+      const meta = { schemaVersion: META_SCHEMA_VERSION, settings: { manaRing: vp.manaRing }, results: [], discoveredArmaments: [], discoveryReceipts: [] };
+      await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem(${JSON.stringify(META_KEY)}, ${JSON.stringify(JSON.stringify(meta))});` }, sessionId);
       await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.width, height: vp.height, deviceScaleFactor: 1, mobile: vp.width < 600 }, sessionId);
       await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/index.html?shot=coop` }, sessionId);
       let g = null;
@@ -663,13 +677,13 @@ async function main(args) {
         const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
         writeFileSync(resolve(shotDir, `solo-combat-${label}.png`), Buffer.from(data, 'base64'));
       }
-      const bad = [...judge(g, label, vp), ...judgeBar(coopBar, soloBar, label)];
+      const bad = [...judge(g, label, { ...vp, resourceRows: vp.manaRing ? 1 : 2 }), ...judgeBar(coopBar, soloBar, label)];
       failures.push(...bad);
       if (!bad.length) clean++;
       console.log(`  ${bad.length ? '✗' : '✓'} ${label}: hud-top ${g?.hudTop?.display ?? '?'}, ${g?.parts?.length ?? 0} parts, ${g?.bars?.length ?? 0} bars; `
         + `bottom bar ${(coopBar?.controls || []).map((c) => c.role).join('/') || 'none'} (${coopBar?.arrangement ?? '?'})${bad.length ? '' : ', matches solo, no overlap/clip/overflow'}`);
       if (process.env.COOP_HUD_DEBUG) console.log(JSON.stringify({ g, coopBar, soloBar }, null, 1));
-      if (vp === VIEWPORTS[0]) {
+      if (index === 0) {
         const seatBad = [...await seatSwitchProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
           ...await repeatOpenProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
           ...await liveSnapshotProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
@@ -686,7 +700,7 @@ async function main(args) {
   }
   for (const f of failures) console.error(`  ${f}`);
   console.log(failures.length ? `  ${failures.length} failure(s)` : '  no overlap, clipping, lost part, two-row compact band, battlefield spill or horizontal overflow; the bottom bar is solo\'s');
-  console.log(`coop-hud-top: ${failures.length ? 'RED' : 'GREEN'} (${clean}/${VIEWPORTS.length})`);
+  console.log(`coop-hud-top: ${failures.length ? 'RED' : 'GREEN'} (${clean}/${VIEWPORTS.length * 2})`);
   return failures.length ? 1 : 0;
 }
 
