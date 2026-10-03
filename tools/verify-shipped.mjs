@@ -42,6 +42,15 @@
 // single file, because then check A is asserting a property the build no longer
 // claims. NOT removed for having passed a long time: --selftest is what keeps it
 // honest, and a --selftest that stops failing on the corpus is itself the alarm.
+//
+// SINCE STEP 8e (docs/EXTERNAL-ASSETS-PLAN.md) ONE FILE STILL INLINES ITS ART: the
+// light single file, build/download/AshenSpire.html, which tools/launch.mjs copies to
+// dist/download/ and to the root alias (owner answer 3). Check A holds those three.
+// build/AshenSpire.html and dist/AshenSpire.html are the PACK-SHAPED game file, and
+// check P holds them instead: it pins ASSET_PACKS, carries no inlined media but the
+// two SVG masks, and every index it pins is in packs/ beside it with that hash.
+// B holds every copy to its build, byte for byte. The mobile file and its budget
+// check retired with the edition (owner answer 2).
 
 import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -54,25 +63,23 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // tools/artifact-provenance.mjs. Facts only; it never fails a run.
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 import { MOBILE_BUNDLE_BUDGET_BYTES } from './mobileart-policy.mjs';
+import { createHash } from 'node:crypto';
 printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
+printArtifactProvenance(resolve(ROOT, 'dist/download/AshenSpire.html'), ROOT);
 printArtifactProvenance(resolve(ROOT, 'AshenSpire.html'), ROOT);
-printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire-mobile.html'), ROOT);
-printArtifactProvenance(resolve(ROOT, 'AshenSpire-mobile.html'), ROOT);
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 
-const BUILD = 'build/AshenSpire.html';
+const BUILD = 'build/AshenSpire.html'; // the pack-shaped game file (step 8e)
 const DIST_DIR = 'dist';
-const SHIPPED = 'dist/AshenSpire.html'; // canonical dist twin of the root alias
-const ROOT_CURRENT = 'AshenSpire.html'; // the discoverable root alias README gives a player
-
-// THE SECOND DOWNLOAD. The mobile single file (tools/bundle.mjs --mobile) has the
-// same three homes as the full one and is held to the same chain — carries art,
-// IS the build — plus one claim of its own: it fits the budget the owner set
-// (under 30 MB, tools/mobileart-policy.mjs), and it is smaller than the full file,
-// or it is not a mobile edition at all but the full one under a second name.
-const MOBILE_BUILD = 'build/AshenSpire-mobile.html';
-const MOBILE_SHIPPED = 'dist/AshenSpire-mobile.html';
+const SHIPPED = 'dist/AshenSpire.html'; // its dist copy, with dist/packs/ and dist/objects/ beside it
+// THE LIGHT SINGLE FILE, the one inline download kept (owner answer 3): built to
+// download/, copied to dist/download/ and to the root alias README gives a player
+// (the root has no packs/ beside it, so its alias is the self-contained file).
+const SINGLE_BUILD = 'build/download/AshenSpire.html';
+const SINGLE_SHIPPED = 'dist/download/AshenSpire.html';
+const ROOT_CURRENT = 'AshenSpire.html';
+// The retired mobile file's root alias: still a home built HTML must never be tracked in.
 const MOBILE_ROOT_CURRENT = 'AshenSpire-mobile.html';
 
 // The stale artifact as committed at 40c5b21: 712667 bytes, no ASSET_MAP token,
@@ -218,37 +225,94 @@ export function checkNoTrackedBuild(trackedPaths) {
 }
 
 /**
- * E. Which edition is this single file, and is it one a single file may be?
- * `full` (release/main, --full-art) or `light` (dev/test default since
- * 2026-09-26). The answer also decides whether a mobile file is owed at all.
+ * E. Which edition is this file, and is it one this file may be? Since step 8e
+ * the edition is the build's default tier: the pack-shaped game file is `light`
+ * (dev/test) or `high` (release/main), and the light single file is `light`,
+ * whatever the branch. `full` and `mobile` retired with their single files.
  */
-export function checkEdition(name, bytes) {
+export function checkEdition(name, bytes, allowed = ['light', 'high']) {
   const editions = [...bytes.toString('utf8').matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
   if (editions.length !== 1) return { ok: false, code: 'EDITION', edition: null, detail: `${name} carries ${editions.length} EDITION literals, expected exactly 1` };
-  if (!['full', 'light'].includes(editions[0])) return { ok: false, code: 'EDITION', edition: editions[0], detail: `${name} calls itself the '${editions[0]}' edition — the single file is 'full' or 'light'` };
+  if (!allowed.includes(editions[0])) return { ok: false, code: 'EDITION', edition: editions[0], detail: `${name} calls itself the '${editions[0]}' edition — it must be ${allowed.map((e) => `'${e}'`).join(' or ')}` };
   return { ok: true, code: 'EDITION', edition: editions[0], detail: `${name} is the '${editions[0]}' edition` };
 }
 
+// A data: URI with a real media payload — the same rule verify-external B uses.
+// SVG is left out: the two masks stay inline by design (plan §3.7).
+const REAL_PAYLOAD = /data:(?:image\/(?!svg\+xml)[a-z0-9.+-]+|audio\/[a-z0-9.+-]+|font\/[a-z0-9.+-]+);base64,[A-Za-z0-9+/]{64,}/g;
+const PACK_PIN = /const ASSET_PACKS = (\{.*?\});\n/;
+
 /**
- * D. Is the mobile file a mobile file — under its budget, and smaller than the
- * full one? Both halves are one verdict because both mean the same thing: the
- * player on a phone was handed the download this edition exists to avoid.
+ * P. Is this the pack-shaped game file, with what it pins beside it? It pins
+ * ASSET_PACKS (a default tier it carries, and the common pack); it inlines no
+ * media but the two SVG masks; and each index it pins, each index's `.js` twin
+ * and the font sidecar are in packs/ beside it, the index and the sidecar's
+ * text hashing to the pin. `readPacked(rel)` returns that file's bytes or null.
+ * verify-external goes further (every object, the CSS template, the tiles and
+ * the score); this is the part a copy in dist/ can drift on.
  */
-export function checkMobileFits(name, mobileBytes, fullBytes, budget = MOBILE_BUNDLE_BUDGET_BYTES) {
+export function checkPackShape(name, bytes, readPacked) {
+  const text = bytes.toString('utf8');
   const problems = [];
-  if (mobileBytes.length > budget) problems.push(`${mobileBytes.length} bytes is over the ${budget}-byte budget`);
-  if (mobileBytes.length >= fullBytes.length) problems.push(`${mobileBytes.length} bytes is not smaller than the full file's ${fullBytes.length}`);
-  if (problems.length) {
-    return {
-      ok: false, code: 'MOBILE_BUDGET',
-      detail: `${name} is not a mobile edition: ${problems.join('; ')}. Tighten tools/mobileart-policy.mjs, ` +
-        `regenerate the light tier (node tools/mobile-art.mjs; from step 13, in the art repository), rebuild.`,
-    };
+  const m = PACK_PIN.exec(text);
+  let pin = null;
+  try { pin = m ? JSON.parse(m[1]) : null; } catch { pin = null; }
+  if (!pin || !pin.packs || typeof pin.packs !== 'object' || !Object.keys(pin.packs).length) {
+    return { ok: false, code: 'PACKS', detail: `${name} pins no ASSET_PACKS — it is not the pack-shaped game file (tools/bundle.mjs without --single-file)` };
   }
-  return {
-    ok: true, code: 'MOBILE_BUDGET',
-    detail: `${name} is ${mobileBytes.length} bytes — under the ${budget}-byte budget, and ${fullBytes.length - mobileBytes.length} bytes smaller than the full file`,
-  };
+  if (!['light', 'high'].includes(pin.tier) || !pin.packs[pin.tier]) problems.push(`its default tier ${JSON.stringify(pin.tier)} is not a pack it pins`);
+  if (!pin.packs.common) problems.push('it pins no common pack');
+  // Light is the high tier's fallback (the loader drops to it when the high
+  // index fails), so a high-default build that does not pin it has none.
+  if (pin.tier === 'high' && !pin.packs.light) problems.push('its default tier is high but it pins no light pack (the high tier\'s fallback)');
+  // The rest of the folder the loader reads: asset-base.json (where the packs
+  // are) and the objects/ store the indexes name. `readPacked('objects/')` is
+  // truthy when that folder exists beside it and is not empty.
+  const baseBuf = readPacked('asset-base.json');
+  let base = null;
+  try { base = baseBuf ? JSON.parse(baseBuf.toString('utf8')) : null; } catch { base = null; }
+  if (!baseBuf) problems.push('asset-base.json is not beside it');
+  else if (!base || typeof base.base !== 'string') problems.push('asset-base.json beside it names no base');
+  if (!readPacked('objects/')) problems.push('no objects/ store is beside it');
+  // The EDITION stamp IS the default tier since step 8e (Copilot, #1506): a
+  // file that stamps one tier and pins another says the wrong thing in About.
+  const editions = [...text.matchAll(/const EDITION = '([^']*)'/g)].map((e) => e[1]);
+  if (editions.length === 1 && editions[0] !== pin.tier) problems.push(`its EDITION '${editions[0]}' is not the default tier its pin names (${JSON.stringify(pin.tier)})`);
+  // A pinned common pack carries the faces, so the file:// door needs the
+  // font sidecar's pin too, as verify-external requires (Copilot, #1506).
+  if (pin.packs.common && !pin.fonts) problems.push('it pins the common pack but no font sidecar');
+  const inlined = (text.match(REAL_PAYLOAD) || []).length;
+  if (inlined) problems.push(`it inlines ${inlined} media payload(s) besides the SVG masks — art travels in the packs, not in this file`);
+  const sha = (buf) => createHash('sha256').update(buf).digest('hex');
+  let present = 0;
+  for (const [pack, p] of Object.entries(pin.packs)) {
+    const index = String(p && p.index);
+    const buf = readPacked(index);
+    if (!buf) { problems.push(`${pack}: ${index} is not beside it`); continue; }
+    if (sha(buf) !== p.sha256) { problems.push(`${pack}: ${index} does not hash to its pin (${String(p.sha256).slice(0, 12)})`); continue; }
+    // The twin is what the file:// door reads: it must hand the loader exactly
+    // this index's text under this index's name, as verify-external checks
+    // (Copilot, #1506), or a double-click loads a stale or wrong index.
+    const twinPath = index.replace(/\.json$/, '.js');
+    const twin = readPacked(twinPath);
+    if (!twin) { problems.push(`${pack}: the .js twin of ${index} is not beside it (the file:// door reads it)`); continue; }
+    const tm = /^window\.__ashenPack\((".*?"), (".*")\);\n$/s.exec(twin.toString('utf8'));
+    let twinName = null; let twinText = null;
+    try { if (tm) { twinName = JSON.parse(tm[1]); twinText = JSON.parse(tm[2]); } } catch { twinName = null; twinText = null; }
+    const wantName = index.replace(/^.*\//, '').replace(/\.json$/, '');
+    if (twinName !== wantName || twinText !== buf.toString('utf8')) { problems.push(`${pack}: ${twinPath} does not hand the loader ${index}'s text under the name ${wantName}`); continue; }
+    present += 1;
+  }
+  if (pin.fonts) {
+    const buf = readPacked(String(pin.fonts.file));
+    const fm = buf && /^__ashenFonts\("[^"]+", (".*")\);\n$/s.exec(buf.toString('utf8'));
+    let inner = null;
+    try { inner = fm ? JSON.parse(fm[1]) : null; } catch { inner = null; }
+    if (!buf) problems.push(`the font sidecar ${pin.fonts.file} is not beside it`);
+    else if (typeof inner !== 'string' || sha(Buffer.from(inner, 'utf8')) !== pin.fonts.sha256) problems.push(`the font sidecar ${pin.fonts.file} does not hash to its pin`);
+  }
+  if (problems.length) return { ok: false, code: 'PACKS', detail: `${name} is not a whole pack-shaped build: ${problems.join('; ')}. Run node tools/launch.mjs --build-only.` };
+  return { ok: true, code: 'PACKS', detail: `${name} pins ${present} pack(s) (default tier ${pin.tier}), each index and twin beside it at its pin${pin.fonts ? ', the font sidecar too' : ''}; no inlined media but the SVG masks` };
 }
 
 // ---------------------------------------------------------------------------
@@ -380,8 +444,8 @@ if (SELFTEST) {
     checkNoStampedTwin(['AshenSpire.html', 'README.md']), false, 'STAMPED_TWIN');
   expect('root AshenSpire.html tracked again',
     checkNoTrackedBuild(['AshenSpire.html']), false, 'TRACKED_BUILD');
-  expect('build/AshenSpire-mobile.html tracked again',
-    checkNoTrackedBuild(['build/AshenSpire-mobile.html']), false, 'TRACKED_BUILD');
+  expect('build/download/AshenSpire.html tracked again',
+    checkNoTrackedBuild(['build/download/AshenSpire.html']), false, 'TRACKED_BUILD');
   expect('control: nothing built is tracked', checkNoTrackedBuild([]), true, 'TRACKED_BUILD');
 
   // 5b. VIRA'S NINE TWIN SHAPES, verbatim from her sign-off. The denylist
@@ -401,11 +465,15 @@ if (SELFTEST) {
 
   // 6-8. Positive controls — the checks must not fail everything indiscriminately.
   expect('control: good build carries art', checkCarriesArt('good.html', goodArt), true, 'NO_ART');
-  // The edition: a single file is full or light, exactly once, and nothing else.
+  // The edition (step 8e): the build's default tier, exactly once. The pack
+  // HTML is light or high; the light single file is light and nothing else.
   const ed = (v) => Buffer.from(`<script>export const EDITION = '${v}';</script>`);
-  expect('edition: light single file', checkEdition('light.html', ed('light')), true, 'EDITION');
-  expect('edition: full single file', checkEdition('full.html', ed('full')), true, 'EDITION');
-  expect('edition: the mobile file under the single-file name', checkEdition('mobile.html', ed('mobile')), false, 'EDITION');
+  expect('edition: a light pack build', checkEdition('light.html', ed('light')), true, 'EDITION');
+  expect('edition: a high pack build', checkEdition('high.html', ed('high')), true, 'EDITION');
+  expect('edition: the light single file', checkEdition('download.html', ed('light'), ['light']), true, 'EDITION');
+  expect('edition: a high build under the light single file\'s name', checkEdition('download.html', ed('high'), ['light']), false, 'EDITION');
+  expect('edition: the retired full single file', checkEdition('full.html', ed('full')), false, 'EDITION');
+  expect('edition: the retired mobile file', checkEdition('mobile.html', ed('mobile')), false, 'EDITION');
   expect('edition: no EDITION literal', checkEdition('none.html', Buffer.from('<html></html>')), false, 'EDITION');
   expect('control: identical bytes are not drift',
     checkShippedIsBuilt('good.html', goodArt, goodArt), true, 'DRIFT');
@@ -413,20 +481,59 @@ if (SELFTEST) {
   expect('control: the real tracked dist/ listing passes the allowlist',
     checkNoStampedTwin(ALLOWED_TRACKED_IN_DIST), true, 'STAMPED_TWIN');
 
-  // 9. THE MOBILE BUDGET, both edges and both halves. The budget is a byte
-  //    count and nothing else, so the corpus is bytes: a file one byte over the
-  //    number fails, a file at the number passes, and a "mobile" file that is
-  //    the full file's size fails whatever the number says.
-  const full = Buffer.alloc(200);
-  expect('mobile: one byte over the budget fails',
-    checkMobileFits('synthetic-mobile.html', Buffer.alloc(101), full, 100), false, 'MOBILE_BUDGET');
-  expect('mobile: the full file under the mobile name fails',
-    checkMobileFits('synthetic-mobile.html', full, full, 1000), false, 'MOBILE_BUDGET');
-  expect('mobile: larger than the full file fails even under budget',
-    checkMobileFits('synthetic-mobile.html', Buffer.alloc(201), full, 1000), false, 'MOBILE_BUDGET');
-  expect('control: exactly at the budget, smaller than full, passes',
-    checkMobileFits('synthetic-mobile.html', Buffer.alloc(100), full, 100), true, 'MOBILE_BUDGET');
-  expect('control: the real budget is the owner\'s number', { ok: MOBILE_BUNDLE_BUDGET_BYTES === 30_000_000, code: 'MOBILE_BUDGET', detail: '' }, true, 'MOBILE_BUDGET');
+  // 9. THE PACK SHAPE (check P, step 8e). A fixture build: a pin naming a
+  //    light and a common index and a font sidecar, the files beside it, and
+  //    each planted defect red by its own name.
+  const hex = (t) => createHash('sha256').update(t).digest('hex');
+  const lightIdx = '{\n"assets/a.webp":["aa",1,"image/webp"]\n}\n';
+  const commonIdx = '{}\n';
+  const fontsText = '{}\n';
+  const files = new Map([
+    ['packs/light-000000000001.json', Buffer.from(lightIdx)],
+    ['packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-000000000001", ${JSON.stringify(lightIdx)});\n`)],
+    ['packs/common-000000000002.json', Buffer.from(commonIdx)],
+    ['packs/common-000000000002.js', Buffer.from(`window.__ashenPack("common-000000000002", ${JSON.stringify(commonIdx)});\n`)],
+    ['packs/fonts-000000000003.js', Buffer.from(`__ashenFonts("fonts-000000000003", ${JSON.stringify(fontsText)});\n`)],
+    ['asset-base.json', Buffer.from('{"base":"./"}\n')],
+    ['objects/', Buffer.from('objects/')],
+  ]);
+  const pinOf = (over = {}) => ({ schema: 1, tier: 'light', packs: {
+    light: { index: 'packs/light-000000000001.json', sha256: hex(lightIdx) },
+    common: { index: 'packs/common-000000000002.json', sha256: hex(commonIdx) },
+  }, fonts: { file: 'packs/fonts-000000000003.js', sha256: hex(fontsText), faces: 0 }, ...over });
+  const packHtml = (pin, extra = '') => Buffer.from(`<script>const ASSET_MAP = {};\nconst ASSET_PACKS = ${JSON.stringify(pin)};\n${extra}</script>`);
+  const reader = (map) => (rel) => map.get(rel) || null;
+  const without = (rel) => { const m = new Map(files); m.delete(rel); return m; };
+  expect('control: a pack build with its packs beside it', checkPackShape('pack.html', packHtml(pinOf()), reader(files)), true, 'PACKS');
+  expect('pack: a single file (no ASSET_PACKS) under the game file\'s name', checkPackShape('pack.html', goodArt, reader(files)), false, 'PACKS');
+  expect('pack: a pinned index missing', checkPackShape('pack.html', packHtml(pinOf()), reader(without('packs/light-000000000001.json'))), false, 'PACKS');
+  expect('pack: an index twin missing (the file:// door)', checkPackShape('pack.html', packHtml(pinOf()), reader(without('packs/common-000000000002.js'))), false, 'PACKS');
+  expect('pack: the font sidecar missing', checkPackShape('pack.html', packHtml(pinOf()), reader(without('packs/fonts-000000000003.js'))), false, 'PACKS');
+  const staleIdx = new Map(files); staleIdx.set('packs/light-000000000001.json', Buffer.from('{}\n'));
+  expect('pack: a stale index under the pinned name', checkPackShape('pack.html', packHtml(pinOf()), reader(staleIdx)), false, 'PACKS');
+  expect('pack: a default tier it does not pin', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high' })), reader(files)), false, 'PACKS');
+  expect('pack: inlined art beside the pin', checkPackShape('pack.html', packHtml(pinOf(), `"assets/a.webp":"data:image/webp;base64,${'A'.repeat(80)}"`), reader(files)), false, 'PACKS');
+  // Copilot's three findings on #1506, each planted.
+  expect('pack: EDITION says high while the pin\'s tier is light', checkPackShape('pack.html', Buffer.from(packHtml(pinOf()).toString().replace('</script>', "export const EDITION = 'high';</script>")), reader(files)), false, 'PACKS');
+  expect('control: EDITION agrees with the pin\'s tier', checkPackShape('pack.html', Buffer.from(packHtml(pinOf()).toString().replace('</script>', "export const EDITION = 'light';</script>")), reader(files)), true, 'PACKS');
+  const badTwin = new Map(files); badTwin.set('packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-000000000001", ${JSON.stringify('{}\n')});\n`));
+  expect('pack: a .js twin whose text is not its index', checkPackShape('pack.html', packHtml(pinOf()), reader(badTwin)), false, 'PACKS');
+  const misnamedTwin = new Map(files); misnamedTwin.set('packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-999999999999", ${JSON.stringify(lightIdx)});\n`));
+  expect('pack: a .js twin under another index\'s name', checkPackShape('pack.html', packHtml(pinOf()), reader(misnamedTwin)), false, 'PACKS');
+  expect('pack: the common pack pinned with no font sidecar pin', checkPackShape('pack.html', packHtml(pinOf({ fonts: null })), reader(files)), false, 'PACKS');
+  // The review's findings on #1506: the rest of the folder, and the fallback.
+  expect('pack: no objects/ store beside it', checkPackShape('pack.html', packHtml(pinOf()), reader(without('objects/'))), false, 'PACKS');
+  expect('pack: no asset-base.json beside it', checkPackShape('pack.html', packHtml(pinOf()), reader(without('asset-base.json'))), false, 'PACKS');
+  const noBase = new Map(files); noBase.set('asset-base.json', Buffer.from('{}\n'));
+  expect('pack: an asset-base.json that names no base', checkPackShape('pack.html', packHtml(pinOf()), reader(noBase)), false, 'PACKS');
+  const highIdx = '{\n"assets/a.webp":["bb",1,"image/webp"]\n}\n';
+  const withHigh = new Map(files);
+  withHigh.set('packs/high-000000000004.json', Buffer.from(highIdx));
+  withHigh.set('packs/high-000000000004.js', Buffer.from(`window.__ashenPack("high-000000000004", ${JSON.stringify(highIdx)});\n`));
+  const highPin = { index: 'packs/high-000000000004.json', sha256: hex(highIdx) };
+  expect('control: a high-default pin with light as its fallback', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high', packs: { ...pinOf().packs, high: highPin } })), reader(withHigh)), true, 'PACKS');
+  expect('pack: a high-default pin with no light pack', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high', packs: { high: highPin, common: pinOf().packs.common } })), reader(withHigh)), false, 'PACKS');
+  expect('control: an inline SVG mask is not inlined art', checkPackShape('pack.html', packHtml(pinOf(), `url("data:image/svg+xml;base64,${'A'.repeat(80)}")`), reader(files)), true, 'PACKS');
 
   boundary([
     'nothing about the working tree — --selftest checks the CHECKS, not the repo',
@@ -436,7 +543,8 @@ if (SELFTEST) {
     ' never "one asset short". An exact count would be two values kept equal by hand',
     'the allowlist is a claim about NAMES tracked in dist/, not about their contents:',
     ' a tracked README.md full of the wrong prose passes here and always will',
-    'the mobile budget is bytes: a file under 30 MB that looks terrible passes here',
+    'check P reads the pins and the index files, not the objects: every object is',
+    ' tools/verify-external.mjs, and whether the art draws is tools/external-play.mjs',
   ]);
   if (bad.length) {
     console.error(`\nverify-shipped --selftest: ${bad.length} case(s) landed on the wrong verdict:`);
@@ -456,68 +564,56 @@ if (SELFTEST) {
 // ---------------------------------------------------------------------------
 console.log('verify-shipped: checking the file a player is handed.\n');
 
-const buildPath = resolve(ROOT, BUILD);
-// A MISSING BUILD IS A RECORDED FAILURE, NOT AN EARLY EXIT. Since the built HTML
+// A MISSING FILE IS A RECORDED FAILURE, NOT AN EARLY EXIT. Since the built HTML
 // stopped being committed, a fresh checkout has none; recording it keeps the
 // run on its one verdict path (FAILED, or REFUSED when nothing was recorded —
 // the zero-check plant in --selftest depends on reaching that line), and the
 // tracked-file checks below still run.
-const buildBytes = existsSync(buildPath) ? readFileSync(buildPath) : null;
-if (!buildBytes) {
-  record({ ok: false, code: 'MISSING', detail: `${BUILD} does not exist — build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this check).` });
-} else {
+const readOrMiss = (rel, why) => {
+  const p = resolve(ROOT, rel);
+  if (existsSync(p)) return readFileSync(p);
+  record({ ok: false, code: 'MISSING', detail: `${rel} does not exist — ${why}` });
+  return null;
+};
+const BUILD_FIRST = 'build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this check).';
+const packedBeside = (dirRel) => (rel) => {
+  const p = resolve(ROOT, dirRel, rel);
+  if (!existsSync(p)) return null;
+  // A folder (`objects/`) answers whether it holds anything, not its bytes.
+  if (rel.endsWith('/')) return readdirSync(p).length ? Buffer.from(rel) : null;
+  return readFileSync(p);
+};
 
-// A on the build first: the chain dist===build only terminates in a true claim if
-// build itself is sound. This is the assertion bundle.mjs printed and never gated.
-record(checkCarriesArt(BUILD, buildBytes));
-const editionCheck = checkEdition(BUILD, buildBytes);
-record(editionCheck);
-
-const shippedPath = resolve(ROOT, SHIPPED);
-if (!existsSync(shippedPath)) {
-  record({ ok: false, code: 'MISSING', detail: `${SHIPPED} does not exist — tools/launch.mjs writes it beside the build.` });
-} else {
-  const shippedBytes = readFileSync(shippedPath);
-  record(checkCarriesArt(SHIPPED, shippedBytes));
-  record(checkShippedIsBuilt(SHIPPED, shippedBytes, buildBytes));
-}
-
-const rootCurrentPath = resolve(ROOT, ROOT_CURRENT);
-if (!existsSync(rootCurrentPath)) {
-  record({ ok: false, code: 'MISSING', detail: `${ROOT_CURRENT} does not exist — tools/launch.mjs writes it as the current-build alias.` });
-} else {
-  const rootCurrentBytes = readFileSync(rootCurrentPath);
-  record(checkCarriesArt(ROOT_CURRENT, rootCurrentBytes));
-  record(checkShippedIsBuilt(ROOT_CURRENT, rootCurrentBytes, buildBytes));
-}
-
-// THE MOBILE FILE: the same chain, plus the budget. A missing mobile build is a
-// FAIL and not a skip — README hands a player two links now, and a tool that
-// verified one of them and said OK would be verify-shipped's own founding bug.
-const mobileBuildPath = resolve(ROOT, MOBILE_BUILD);
-if (editionCheck.edition === 'light') {
-  // A light build writes no mobile file: the light single file IS the
-  // phone-sized art. Any AshenSpire-mobile.html on disk is a leftover from a
-  // --full-art build and is not what this run ships.
-  console.log(`  note        ${BUILD} is the light edition — no mobile file is owed`);
-} else if (!existsSync(mobileBuildPath)) {
-  record({ ok: false, code: 'MISSING', detail: `${MOBILE_BUILD} does not exist — run \`node tools/launch.mjs --build-only\`, which builds both editions.` });
-} else {
-  const mobileBuildBytes = readFileSync(mobileBuildPath);
-  record(checkCarriesArt(MOBILE_BUILD, mobileBuildBytes));
-  record(checkMobileFits(MOBILE_BUILD, mobileBuildBytes, buildBytes));
-  for (const [label, rel] of [['canonical dist twin', MOBILE_SHIPPED], ['root alias', MOBILE_ROOT_CURRENT]]) {
-    const p = resolve(ROOT, rel);
-    if (!existsSync(p)) {
-      record({ ok: false, code: 'MISSING', detail: `${rel} does not exist — tools/launch.mjs writes it as the mobile ${label}.` });
-      continue;
-    }
-    const bytes = readFileSync(p);
-    record(checkCarriesArt(rel, bytes));
-    record(checkShippedIsBuilt(rel, bytes, mobileBuildBytes, MOBILE_BUILD));
+// THE PACK-SHAPED GAME FILE, and its dist/ copy with dist/'s own packs.
+const buildBytes = readOrMiss(BUILD, BUILD_FIRST);
+if (buildBytes) {
+  record(checkPackShape(BUILD, buildBytes, packedBeside('build')));
+  record(checkEdition(BUILD, buildBytes));
+  const shippedBytes = readOrMiss(SHIPPED, 'tools/launch.mjs copies the build tree into dist/.');
+  if (shippedBytes) {
+    record(checkPackShape(SHIPPED, shippedBytes, packedBeside(DIST_DIR)));
+    record(checkShippedIsBuilt(SHIPPED, shippedBytes, buildBytes));
   }
 }
 
+// THE LIGHT SINGLE FILE, and its two copies: A on each (the chain dist===build
+// only terminates in a true claim if the build itself is sound), and B.
+const singleBytes = readOrMiss(SINGLE_BUILD, BUILD_FIRST);
+if (singleBytes) {
+  record(checkCarriesArt(SINGLE_BUILD, singleBytes));
+  record(checkEdition(SINGLE_BUILD, singleBytes, ['light']));
+  // NOT A VERDICT: the plan moves the retired mobile file's 30 MB budget here
+  // (docs/EXTERNAL-ASSETS-PLAN.md §5), but the light single file was already
+  // over it at step 8e and has never been held to it; the number is an open
+  // owner question. Printed, so the drift is seen.
+  const over = singleBytes.length - MOBILE_BUNDLE_BUDGET_BYTES;
+  console.log(`  note        ${SINGLE_BUILD} is ${singleBytes.length} bytes, ${over > 0 ? `${over} over` : `${-over} under`} the retired mobile file's ${MOBILE_BUNDLE_BUDGET_BYTES}-byte budget (not gated; an owner question)`);
+  for (const rel of [SINGLE_SHIPPED, ROOT_CURRENT]) {
+    const bytes = readOrMiss(rel, 'tools/launch.mjs copies the light single file there.');
+    if (!bytes) continue;
+    record(checkCarriesArt(rel, bytes));
+    record(checkShippedIsBuilt(rel, bytes, singleBytes, SINGLE_BUILD));
+  }
 }
 
 // C from git, not the filesystem: an ignored file sitting in dist/ after a
@@ -559,8 +655,9 @@ boundary([
   ' that is tools/tutorial-reach.mjs, and it needs a browser at a real --ui-zoom',
   'reproducibility across machines is not checked here — that is the git-diff step',
   ' in .github/workflows/ci.yml running on three runners',
-  'the mobile file is held to a byte budget, not to a look: whether its shrunken',
-  ' art reads well on a phone is a seeing seat\'s call, never this tool\'s',
+  'the light single file is held to no byte budget (an owner question since step 8e),',
+  ' and whether its shrunken art reads well on a phone is a seeing seat\'s call',
+  'check P reads the pins and the indexes, not the objects — that is verify-external',
 ]);
 
 const failed = results.filter((r) => !r.ok);
@@ -577,7 +674,8 @@ if (failed.length) {
 // at that door, and the tool that owns a claim should be able to state it.
 //
 // THE FLOOR IS BELOW THE POPULATION AND NEVER TRACKS IT: today this tool
-// records 12 checks (6 on the full file, 6 on the mobile one). A floor that
+// records 12 checks (4 on the pack-shaped file and its dist copy, 6 on the
+// light single file and its two copies, 2 on what git tracks; step 8e). A floor that
 // follows the count upward is a number retyped to match whatever happened,
 // which is the defect one file over (verify's own ASSET_MAP note says the same
 // thing about its own floor). It was raised from 4 to 8 when the mobile file
