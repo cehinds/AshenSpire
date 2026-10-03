@@ -74,6 +74,7 @@
 // running animation's keyframes are not all the same value; the probe does
 // not measure on-screen pixels.
 
+import { pointerTargetExpression } from './pointer-target.mjs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { launchBrowser } from './browser.mjs';
@@ -431,13 +432,7 @@ async function boot({ send, evaluate }, base, { setting, os }) {
   await wait(800);
 }
 
-const point = (evaluate, selector) => evaluate(`(() => {
-  const el = document.querySelector(${JSON.stringify(selector)});
-  if (!el) throw new Error('missing ' + ${JSON.stringify(selector)});
-  el.scrollIntoView({ block: 'nearest' });
-  const b = el.getBoundingClientRect();
-  return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
-})()`);
+const point = (evaluate, selector) => evaluate(pointerTargetExpression(selector));
 
 async function press({ send, evaluate }, selector, holdMs = 0) {
   const at = await point(evaluate, selector);
