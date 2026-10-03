@@ -103,7 +103,7 @@ test('auto uses local light art; other unfetched packs and explicit cache still 
 test('local light art wins in auto even when the light release is cached', () => {
   const root = fixture(['light'], { trees: true });
   try {
-    assert.equal(artDir('assets-mobile', { root }).from, 'trees');
+    assert.equal(artDir('assets-mobile', { root, env: {} }).from, 'trees');
     assert.equal(artDir('assets-mobile', { root, env: { ASHEN_ART_SOURCE: 'cache' } }).from, 'cache');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
