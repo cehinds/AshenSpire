@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1536",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep prepared spells and draw a fresh hand each turn",
+    "detail": "Opening and turn draws start at four with Intelligence scaling. Unplayed cards shuffle back into the draw pile unless they have Retain; thirty-one Herald and Starseer spells now keep that keyword when upgraded. Retained cards add to the next full draw, up to a separate default hand limit of fifteen. Solo and co-op share the rule, played cards still leave the hand normally, and existing saved fights preserve their rules. The defaults remain configurable.",
+    "build": "0.7.1.851",
+    "pullRequest": 1536,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1536"
+  },
+  {
     "id": "pr-1542",
     "date": "2026-10-03",
     "group": "2026-10-03",

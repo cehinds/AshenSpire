@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Keep prepared spells and draw a fresh hand each turn** ([#1536](https://github.com/cehinds/AshenSpire/pull/1536), `0.7.1.851`). Opening and turn draws start at four with Intelligence scaling. Unplayed cards shuffle back into the draw pile unless they have Retain; thirty-one Herald and Starseer spells now keep that keyword when upgraded. Retained cards add to the next full draw, up to a separate default hand limit of fifteen. Solo and co-op share the rule, played cards still leave the hand normally, and existing saved fights preserve their rules. The defaults remain configurable.
 - **Keepsake pictures return after an art retry** ([#1542](https://github.com/cehinds/AshenSpire/pull/1542), `0.7.1.845`). If a keepsake picture fails to load, its icon stands in; retrying the art or changing quality can restore the picture. The compact-art checks now run correctly in CI.
 - **More of the climb has its finished artwork** ([#1538](https://github.com/cehinds/AshenSpire/pull/1538), `0.7.1.845`). The game includes compact card, relic, flask, event, and character art, including the Road Warden. Cards without a painted scene use a simple matching motif. High-resolution pictures remain in the art repository; the game uses its smaller local versions by default.
 

@@ -207,7 +207,7 @@ export function withoutRetiredOpeningHand(entries, warnings = null, { limits = t
     const said = [];
     if (dropsLimits) {
       const dropsMinimum = entries.some(retiredMinimum);
-      said.push(`the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current ${LEGACY_HAND_GROUPS.starting.minimum}–${LEGACY_HAND_GROUPS.starting.maximum} applies`);
+      said.push(`the old limit${dropsMinimum ? 's of 3–15 cards were' : ' of 15 cards was'} left out, so the current opening-hand limits apply`);
     }
     if (shared.some((entry) => !stockSharedOpening(entry))) {
       said.push('the shared base cards and attribute are retired and were left out: each class opens on its own. Use Stats → Draw & hand → each class\'s Opening hand base and attribute weights');
