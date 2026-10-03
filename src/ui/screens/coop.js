@@ -67,6 +67,8 @@ import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
 import { resourceBars } from '../components/resbars.js';
+import { combatHealthRow } from '../components/combatHealth.js';
+import { blockPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
@@ -711,6 +713,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
     const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
     const bars = resourceBars(plan, { surface: 'model' });
+    const hp = bars.querySelector('.as-meter[data-res="hp"]');
+    if (hp) {
+      const next = hp.nextSibling;
+      const health = combatHealthRow(hp, blockPresentation(ent));
+      bars.insertBefore(health, next);
+    }
     wrap.classList.add('as-meters', 'tight');
     while (bars.firstChild) wrap.append(bars.firstChild);
     if (isEnemy) {
@@ -718,14 +726,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (arcane) wrap.appendChild(arcane);
     }
     return wrap;
-  }
-  function blockBadge(block) {
-    if (!block || block <= 0) return null;
-    const b = document.createElement('div');
-    b.className = 'block-badge';
-    b.textContent = block;
-    attachTooltip(b, () => `<div class="tt-title">Block ${block}</div>Absorbs attack damage.`);
-    return b;
   }
   function intentEl(intent) {
     return combatantIntent(intent, () => intentTooltip(intent, { victim: 'each hero' }));
@@ -893,7 +893,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
       for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
-      const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,
       // first child), a "you" Pill, the energy Chip, and the seat's state as
@@ -949,7 +948,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, e));
-      const bb = blockBadge(e.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = def.name; box.appendChild(nm);
       box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (

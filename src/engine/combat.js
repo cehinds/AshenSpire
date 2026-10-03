@@ -1,4 +1,5 @@
 import { formationMovePlan } from '../model/formationMovement.js';
+import { reconcileWardBlock } from '../model/blockPresentation.js';
 // src/engine/combat.js — action queue + turn loop (generic interpreter)
 // (SPEC §3.9, §4.1–§4.3, §4.6)
 //
@@ -410,6 +411,7 @@ function startPlayerTurn(combat) {
     const cap = S.getCap(combat, p, 'blockCap');
     if (cap != null) p.block = Math.min(p.block, cap);
   }
+  reconcileWardBlock(p);
 
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
@@ -496,6 +498,7 @@ function enemyPhase(combat) {
   for (const e of combat.enemies) {
     if (!e.alive) continue;
     if (!S.getFlag(combat, e, 'retainBlock')) e.block = 0;
+    reconcileWardBlock(e);
   }
   drainQueue(combat);
   if (combat.result) return;

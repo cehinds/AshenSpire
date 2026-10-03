@@ -497,6 +497,7 @@ export function receipt() {
     catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
     overhead: read('src/ui/components/combatantOverhead.js'),
+    health: read('src/ui/components/combatHealth.js'),
     battlefieldStage: read('src/ui/components/battlefieldStage.js'),
     battlefieldStageModel: read('src/ui/models/BattlefieldStageModel.js'),
     spriteScale: read('src/ui/models/CombatSpriteScaleModel.js'),
@@ -634,7 +635,7 @@ export function findings(r) {
       || !/UI\.procStatusBar/.test(r.combat)
       || !/UI\.statusEffectTray/.test(r.combat)
       || !/UI\.intentIndicator/.test(r.overhead)
-      || !/UI\.blockBadge/.test(r.combat)
+      || !/UI\.blockBadge/.test(r.health) || !/combatHealthRow\(/.test(r.combat) || !/combatHealthRow\(/.test(r.coop)
       || !/UI\.arcaneExposureBar/.test(r.exposure)
       || !/UI\.tooltip/.test(r.tooltip)
       || !/UI\.guardedDamageIndicator/.test(r.fx)
