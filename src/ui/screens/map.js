@@ -73,11 +73,12 @@ export function releaseMapScreen() {
   liveMapViewportRelease = null;
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, onEditDeck = null, quickControls = {}, mapAdapter = null }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, onEditDeck = null, quickControls = {}, mapAdapter = null, selectedId = null }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   releaseMapScreen();
-  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, onEditDeck, quickControls, mapAdapter });
+  // A redraw keeps the destination the player selected (#1474 review).
+  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, onEditDeck, quickControls, mapAdapter, selectedId: selection.selectedId });
   const map = mapAdapter?.graph || run.mapGraph;
   const current = mapAdapter ? mapAdapter.current : run.mapNodeId;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
@@ -288,6 +289,18 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       ]));
     enterButton.disabled = !view.canEnter;
     enterButton.textContent = view.canEnter ? (mapAdapter?.enterLabel?.(id) || t('map.enterNamed', { name: mapAdapter ? map.nodes[id].name : view.kindName })) : t('map.enter');
+  }
+  // A redraw of this same map (a Potions action, a flask-setting change) hands
+  // back the node the player had selected: it stays selected and its tray
+  // opens again, rather than the redraw silently dropping the destination.
+  // The reading (what the node shows, and whether it is revealed) comes back
+  // from the board just drawn, so the tray names the same destination it did.
+  if (selectedId && reachable.has(selectedId)) {
+    const reading = board.readingOf(selectedId);
+    if (reading) readings.set(selectedId, reading);
+    selection = { selectedId };
+    renderSelection();
+    openTray();
   }
 
   // The legend hangs off the ? IN THE ZOOM BAR, so it is mounted inside that

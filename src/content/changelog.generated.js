@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the art now lives only in its own repository",
     "detail": "Nothing you play changes. The pictures, fonts, music and map tiles were stored twice, here and in the art repository; the copies here are gone, so a fresh download of the source is about 1.9 GB lighter. Every build now takes its art from the pinned art release, checked file by file, exactly as it already did.",
-    "build": "0.7.1.815",
+    "build": "0.7.1.819",
     "pullRequest": 1516,
     "url": "https://github.com/cehinds/AshenSpire/pull/1516"
+  },
+  {
+    "id": "pr-1475",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fighters breathe while they wait",
+    "detail": "Your fighter and every enemy now bob gently in place between actions, each at its own rhythm; before, the idle motion was meant to play but reached no one. This covers the Animated, Rendered and Classic figure styles; the Glyph style shows a sigil, not a figure, and stays still, and a fallen fighter, including a downed co-op ally, stops moving. With Reduced motion on, in the game's settings or your device's, they stand still, and a new check plays a whole turn that way to prove nothing on the board moves.",
+    "build": "0.7.1.818",
+    "pullRequest": 1475,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1475"
+  },
+  {
+    "id": "pr-1474",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
+    "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
+    "build": "0.7.1.816",
+    "pullRequest": 1474,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1474"
   },
   {
     "id": "pr-1487",
