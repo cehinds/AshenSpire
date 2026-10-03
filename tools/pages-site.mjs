@@ -43,8 +43,9 @@ import { folderZipBytes, zipFolderName } from '../src/model/offlineDownload.js';
 import { ASSET_BASE_FILE, packPinOf, packPages, publishPack, serviceWorkerFindings, storeFindings, writeServiceWorker } from './pages-store.mjs';
 import { SW_FILE, SW_KILL, SW_VERSION, serviceWorkerSource } from './pages-sw.mjs';
 import { objectPath } from './asset-pack.mjs';
+import { fetchPlanFor } from './art-source.mjs';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync, symlinkSync, unlinkSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -319,7 +320,26 @@ function rebuildAt(sha, fullArt) {
     run('git', ['checkout', '--force', '--detach', sha], buildTree);
     run('git', ['clean', '-ffdxq'], buildTree);
     const t0 = Date.now();
-    run(process.execPath, ['tools/launch.mjs', '--build-only', ...(fullArt ? ['--full-art'] : [])], buildTree);
+    // THE COMMIT'S ART RELEASE (docs/EXTERNAL-ASSETS-PLAN.md step 12). Its build
+    // reads the packs its own art-release.json pins from .art-cache/, and after
+    // step 13 its tree carries no other copy. So the commit's own fetch-art
+    // fills them first, into one cache shared by every rebuild of this run and
+    // kept OUTSIDE the worktree the clean above empties: .art-cache is a link
+    // to it, removed again before the status gate (git sees a link, not the
+    // ignored directory). A pin from before the packs needs nothing.
+    const plan = fetchPlanFor(buildTree, { fullArt });
+    const cacheLink = join(buildTree, '.art-cache');
+    if (plan) {
+      const shared = rebuildArtCache();
+      mkdirSync(shared, { recursive: true });
+      symlinkSync(shared, cacheLink, 'junction');
+      run(process.execPath, plan, buildTree);
+    }
+    try {
+      run(process.execPath, ['tools/launch.mjs', '--build-only', ...(fullArt ? ['--full-art'] : [])], buildTree);
+    } finally {
+      if (plan) unlinkSync(cacheLink);
+    }
     // The same gate every build workflow applies: a rebuild that rewrote the
     // committed box is not the build this commit names.
     const dirty = run('git', ['status', '--porcelain'], buildTree).trim();
@@ -332,9 +352,13 @@ function rebuildAt(sha, fullArt) {
     // THE PACK-SHAPED WEB EDITION, where this commit builds one: its HTML and
     // packs/ beside the single files, and its objects merged into one staging
     // store every rebuild of this run shares (content-addressed, so a file
-    // twenty builds use is copied once).
-    const web = join(buildTree, 'build', 'web');
-    if (existsSync(join(web, 'AshenSpire.html')) && packPinOf(readFileSync(join(web, 'AshenSpire.html')))) {
+    // twenty builds use is copied once). Two layouts, by the commit's own
+    // launcher: build/web/ (steps 3a–7), or, from step 8e, build/ itself, with
+    // the light single file at build/download/AshenSpire.html (also the root
+    // alias, copied above as AshenSpire.html).
+    const packHome = (dir) => existsSync(join(dir, 'AshenSpire.html')) && packPinOf(readFileSync(join(dir, 'AshenSpire.html')));
+    const web = packHome(join(buildTree, 'build', 'web')) ? join(buildTree, 'build', 'web') : join(buildTree, 'build');
+    if (packHome(web)) {
       mkdirSync(join(dir, WEB_DIR), { recursive: true });
       cpSync(join(web, 'AshenSpire.html'), join(dir, WEB_DIR, 'AshenSpire.html'));
       if (existsSync(join(web, 'packs'))) cpSync(join(web, 'packs'), join(dir, WEB_DIR, 'packs'), { recursive: true });
@@ -350,6 +374,8 @@ function rebuildAt(sha, fullArt) {
   return result;
 }
 
+/** The art packs every rebuild of this run fetches into, under --build-missing (outside the worktree). */
+function rebuildArtCache() { return join(resolve(BUILD_MISSING), 'art-cache'); }
 /** The objects every rebuild of this run stages, under --build-missing. */
 function stagingStore() { return join(resolve(BUILD_MISSING), 'store'); }
 /** The pack-shaped web edition of the main build handed in, or null. */
@@ -415,10 +441,11 @@ function artifactsOf(b) {
   if (!web) return { html, mobile, edition };
   // A PACK-SHAPED BUILD: the page is the web edition, and the download is the
   // build's LIGHT single file, kept whole (owner answer 3): AshenSpire.html on
-  // a light build, the light-art mobile file on a full-art one (until step 8e
-  // builds the light single file under that name).
+  // a light build, the light-art mobile file on a full-art one before step 8e,
+  // and from step 8e AshenSpire.html whatever the tier (launch.mjs writes the
+  // light single file there on every build; its EDITION stamp says 'light').
   if (b.digest && !web.html.includes(b.digest)) return { error: `the rebuilt web edition does not carry src digest ${b.digest}` };
-  const single = edition === 'light' ? html : mobile;
+  const single = edition === 'light' ? html : (mobile || (editionOf(html) === 'light' ? html : null));
   if (!single) return { error: 'a full-art pack build with no light-art single file to publish at download/' };
   return { html: web.html, web, download: single, edition };
 }
@@ -446,6 +473,18 @@ function committedEditions(html, hasMobile, fetchMobile) {
 function rebuiltEdition(fullArt, hasMobile) {
   return fullArt || hasMobile ? 'full' : 'light';
 }
+/** The EDITION a built HTML stamps (src/buildversion.js), or null. */
+function editionOf(html) {
+  const m = /const EDITION = '([^']*)'/.exec(Buffer.isBuffer(html) ? html.toString('utf8') : String(html));
+  return m ? m[1] : null;
+}
+/**
+ * THE RETIRED MOBILE LINK (step 8e, owner answer 2). README's stable
+ * /AshenSpire-mobile.html, and its /build/ and /dist/ aliases, become one-line
+ * redirects to AshenSpire.html beside them once main's build is pack-shaped:
+ * that one page picks the light tier on a phone (Settings → Art quality, Auto).
+ */
+const MOBILE_REDIRECT = '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=AshenSpire.html"><title>Ashen Spire</title><link rel="canonical" href="AshenSpire.html"><p>The mobile edition is now the main game, which picks phone-sized art itself: <a href="AshenSpire.html">play Ashen Spire</a>.</p>\n';
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 
 /**
@@ -930,6 +969,14 @@ function assemble(outDir, keep) {
   // map-detail/ and music/ are what /AshenSpire.html fetches beside itself.
   const payload = STABLE_PAYLOAD_DIRS.filter((d) => inTree(mainRef, d));
   if (payload.length) extractTree(mainRef, payload, outDir);
+  // A main whose tree no longer carries them (EXTERNAL-ASSETS-PLAN step 13)
+  // hands them in with its build instead: tools/launch.mjs copies both from the
+  // fetched common pack beside the single file, and pages-builds.yml passes
+  // them in --main-build.
+  for (const d of STABLE_PAYLOAD_DIRS) {
+    if (payload.includes(d) || !MAIN_BUILD || !existsSync(resolve(MAIN_BUILD, d))) continue;
+    cpSync(resolve(MAIN_BUILD, d), join(outDir, d), { recursive: true });
+  }
   // The committed build HTML is left out of the archive and written here, only
   // at the stable paths, hydrated from LFS where it is a pointer.
   for (const name of STABLE_LINKS) for (const artifact of [name, `build/${name}`, `dist/${name}`]) {
@@ -953,11 +1000,12 @@ function assemble(outDir, keep) {
   // A main build handed in that carries a pack-shaped web edition (MAIN_BUILD/web,
   // pages-builds.yml copies build/web there) serves it at the stable Play link:
   // the 9.5 MB page, an asset-base.json beside each location, the store at the
-  // root (step 6b). The mobile link keeps its file until step 8e redirects it.
+  // root (step 6b). The mobile link is then a redirect to it (step 8e).
   const mainPack = !mainTracksBuild && MAIN_BUILD ? stableWebEdition() : null;
   const stableWrite = (dir, artifact) => {
     if (artifact === 'AshenSpire.html' && mainPack) { publishPack(outDir, dir, mainPack.html, mainPack.from, { name: artifact }); return; }
     mkdirSync(join(outDir, dir), { recursive: true });
+    if (artifact === MOBILE_ARTIFACT && mainPack) { writeFileSync(join(outDir, dir, artifact), MOBILE_REDIRECT); return; }
     cpSync(resolve(MAIN_BUILD, artifact), join(outDir, dir, artifact));
   };
   for (const artifact of STABLE_LINKS) {
@@ -971,7 +1019,7 @@ function assemble(outDir, keep) {
   // same file there, so a seeded main must not 404 at /build/ or /dist/.
   if (!mainTracksBuild && MAIN_BUILD) {
     for (const artifact of STABLE_LINKS) {
-      if (!existsSync(resolve(MAIN_BUILD, artifact))) continue;
+      if (!existsSync(resolve(MAIN_BUILD, artifact)) && !(artifact === MOBILE_ARTIFACT && mainPack)) continue;
       for (const alias of STABLE_ALIASES) stableWrite(alias, artifact);
     }
   }
@@ -1307,8 +1355,14 @@ function baseTreeFindings(dir) {
   const listed = (JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || []).filter((pg) => BASE_TREE_EXCLUDED_DIRS.includes(pg.path.split('/')[0]));
   const linked = BASE_TREE_EXCLUDED_DIRS.filter((d) => index.includes(`href="${d}/`));
   out.push([`the site index lists and links no page under ${BASE_TREE_EXCLUDED_DIRS.join(', ')}${listed.length || linked.length ? ` (found: ${[...listed.map((pg) => pg.path), ...linked].join(', ')})` : ''}`, listed.length === 0 && linked.length === 0]);
+  const packMain = !inTree(mainRef, 'AshenSpire.html') && MAIN_BUILD && stableWebEdition();
   for (const name of STABLE_LINKS) for (const artifact of [name, `build/${name}`, `dist/${name}`]) {
     const fromMain = inTree(mainRef, artifact);
+    if (!fromMain && packMain && name === MOBILE_ARTIFACT) {
+      const at = join(dir, artifact);
+      out.push([`stable link /${artifact} redirects to the AshenSpire.html beside it (the mobile edition is retired, step 8e)`, existsSync(at) && readFileSync(at, 'utf8') === MOBILE_REDIRECT]);
+      continue;
+    }
     const fromBuild = !inTree(mainRef, 'AshenSpire.html') && MAIN_BUILD && existsSync(resolve(MAIN_BUILD, name));
     if (!fromMain && !fromBuild) continue;
     const web = !fromMain && name === 'AshenSpire.html' ? stableWebEdition() : null;
@@ -1602,6 +1656,14 @@ try {
       const probe = { branch: 'dev', ordinal: Number(box.ordinal), sha: headSha, source: 'rebuild' };
       const good = artifactsOf({ ...probe, digest: String(box.digest) });
       rules.push([`a rebuild of dev's head ${headSha.slice(0, 10)} serves${good.error ? ` (${good.error})` : ''}`, !good.error && good.html.includes(String(box.digest))]);
+      // Step 12: a head whose pin names the packs was built from them, fetched
+      // by its own fetch-art into the run's shared cache, outside the cleaned
+      // worktree (and the worktree keeps no link to it).
+      const devPin = (() => { try { return JSON.parse(git(['show', `${headSha}:art-release.json`])); } catch { return null; } })();
+      if (devPin && devPin.schema === 2) {
+        const lightMark = join(rebuildArtCache(), String(devPin.tag), 'light', '.verified');
+        rules.push(['a rebuild fetches its commit\'s light pack into the shared cache, outside the worktree', existsSync(lightMark) && !existsSync(join(buildTree, '.art-cache'))]);
+      }
       packPlants = packStorePlants(probe, box, good);
       const wrong = artifactsOf({ ...probe, digest: `not-a-digest-${process.pid}-planted` });
       rules.push(['a rebuild that lacks its commit\'s source digest is refused', /does not carry src digest/.test(wrong.error || '')]);
