@@ -1376,7 +1376,7 @@
   {
    "id": "S4",
    "by": "Bjorn",
-   "read": "src/ui/screens/combat.js (endTurnBeat = arm($('.end-turn'), 'endTurn', …), the .et-key kbd) · src/ui/components/holdbeat.js (beat-hold, data-hold-action — they LEFT holdconfirm.js)",
+   "read": "src/ui/screens/combat.js (endTurnBeat = arm($('.end-turn'), 'endTurn', …)) · src/ui/components/combatActionRow.js (paintEndTurnKey, the .et-key kbd — it LEFT combat.js's renderControls in #1489) · src/ui/components/holdbeat.js (beat-hold, data-hold-action — they LEFT holdconfirm.js)",
    "anchors": [
     "endTurnBeat",
     "et-key",

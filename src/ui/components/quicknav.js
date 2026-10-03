@@ -43,6 +43,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { closeFlaskActionMenu } from './flask.js';
 import { quickMenuPanelModel } from '../models/MenuModels.js';
 import { renderQuickMenu } from './menuComponents.js';
+import { t } from '../strings.js';
 
 // The player's presentation choice, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -165,7 +166,7 @@ export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, c
   const model = quickMenuPanelModel({
     context,
     mode,
-    caption: 'Quick menu',
+    caption: t('settings.row.quickNav'),
     rows,
   });
   const { veil, panel } = renderQuickMenu(model, {

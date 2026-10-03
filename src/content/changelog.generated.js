@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1489",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the game's wording lives in one table again",
+    "detail": "Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.",
+    "build": "0.7.1.821",
+    "pullRequest": 1489,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1489"
+  },
+  {
     "id": "pr-1499",
     "date": "2026-10-02",
     "group": "2026-10-02",
