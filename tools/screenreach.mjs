@@ -254,20 +254,37 @@ const SETTINGS_CYCLE = `(async () => {
 })()`;
 
 // Keep the overlap regression independent of sprite proportions and formation
-// spacing: place a real neighbouring sprite over the whole intent badge. The
+// spacing: place the intent over a real neighbouring sprite. The
 // normal overhead layer must remain hittable; the frame-stacking plant below
 // must hide it. Both the clean and planted runs use this same fixture.
 const INTENT_OVERLAP = `(() => {
   if (innerWidth !== 390 || innerHeight !== 650) return true;
-  const intent = document.querySelector('.combatant.enemy[data-eid="e1"] .intent');
-  const sprite = document.querySelector('.combatant.enemy[data-eid="e2"] .combatant-card > .sprite');
+  const frames = [...document.querySelectorAll('.combatant.enemy')];
+  const depth = frame => Number(frame.querySelector('.combatant-card > .sprite').style.zIndex);
+  const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
+  const high = frames.find(frame => depth(frame) > depth(low));
+  const intent = low?.querySelector('.intent');
+  const sprite = high?.querySelector('.combatant-card > .sprite');
   if (!intent || !sprite) throw new Error('screenreach: intent overlap fixture is missing its two enemies');
-  const a = intent.getBoundingClientRect(), b = sprite.getBoundingClientRect();
-  const scale = b.width / sprite.offsetWidth;
-  sprite.style.translate = ((a.left + a.width / 2 - b.left - b.width / 2) / scale) + 'px '
-    + ((a.top + a.height / 2 - b.top - b.height / 2) / scale) + 'px';
-  const moved = sprite.getBoundingClientRect();
-  if (moved.left > a.left || moved.right < a.right || moved.top > a.top || moved.bottom < a.bottom)
+  const a = intent.getBoundingClientRect(), initial = sprite.getBoundingClientRect();
+  const intentScale = a.width / intent.offsetWidth, spriteScale = initial.width / sprite.offsetWidth;
+  // Authored formations can make this neighbour narrower than an XL badge.
+  // Grow only the fixture's artwork, retaining its normal stacking context.
+  sprite.style.transformOrigin = 'center bottom';
+  sprite.style.scale = String(Math.max(1, (a.width + 16) / initial.width, (a.height + 64) / initial.height));
+  const grown = sprite.getBoundingClientRect();
+  const field = sprite.closest('.field'), fieldBox = field.getBoundingClientRect(), zoom = fieldBox.width / field.clientWidth;
+  // Stage the pair in the clear centre so neither existing fighter's target
+  // becomes an accidental second obstruction in this controlled scene.
+  sprite.style.translate = ((fieldBox.left + fieldBox.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
+    + ((fieldBox.top + fieldBox.height / 2 - grown.top - grown.height / 2) / spriteScale) + 'px';
+  const b = sprite.getBoundingClientRect(), frameBox = high.getBoundingClientRect();
+  high.style.setProperty('--enemy-hit-x', ((b.left + b.width / 2 - frameBox.left) / zoom) + 'px');
+  high.style.setProperty('--enemy-hit-y', ((b.bottom - frameBox.top) / zoom) + 'px');
+  intent.style.translate = ((b.left + b.width / 2 - a.left - a.width / 2) / intentScale) + 'px '
+    + ((b.top + 8 - a.top) / intentScale) + 'px';
+  const moved = intent.getBoundingClientRect();
+  if (b.left > moved.left || b.right < moved.right || b.top > moved.top || b.bottom < moved.bottom)
     throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
   return true;
 })()`;
