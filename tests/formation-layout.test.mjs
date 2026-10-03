@@ -9,6 +9,25 @@ import { formationMovePlan } from '../src/model/formationMovement.js';
 const ids = n => Array.from({ length: n }, (_, i) => `actor-${i}`);
 const config = values => presentationConfig(Object.fromEntries(Object.entries(values).map(([key, value]) => [`gameConfig.presentation.${key}`, value])));
 
+test('both teams fill outside-in across each row, then upward, matching 56/34/12 and 65/43/21', () => {
+  for (const width of [390, 1440]) for (const count of [1, 2, 3, 4, 5, 6]) {
+    const plan = combatFormation({ width, height: 420, friends: ids(count), enemies: ids(count),
+      presentation: config({ formationColumns: 2, formationRows: 3 }) });
+    assert.deepEqual(plan.slots.filter(s => s.side === 'player').map(s => s.cell), ['C1', 'C2', 'B1', 'B2', 'A1', 'A2'].slice(0, count));
+    assert.deepEqual(plan.slots.filter(s => s.side === 'enemy').map(s => s.cell), ['C4', 'C3', 'B4', 'B3', 'A4', 'A3'].slice(0, count));
+  }
+});
+
+test('default spawns use the bottom row and opposite outer columns at every grid size', () => {
+  for (const columns of [1, 2, 3]) for (const rows of [1, 2, 3, 4, 5, 6]) {
+    const values = config({ formationColumns: columns, formationRows: rows });
+    assert.equal(formationSpawn(values, 'player'), `${'ABCDEF'[rows - 1]}1`);
+    assert.equal(formationSpawn(values, 'enemy'), `${'ABCDEF'[rows - 1]}${columns * 2}`);
+    assert.equal(formationSpawn({}, 'player', { columns, rows }), `${'ABCDEF'[rows - 1]}1`);
+    assert.equal(formationSpawn({}, 'enemy', { columns, rows }), `${'ABCDEF'[rows - 1]}${columns * 2}`);
+  }
+});
+
 test('all selectable dimensions and presets give unique uniform cells and matching actor anchors', () => {
   for (const { value: formationPreset } of FORMATION_PRESETS) for (const formationColumns of [1, 2, 3]) for (const formationRows of [1, 2, 3, 4, 5, 6]) for (const width of [320, 1440]) {
     const presentation = config({ formationPreset, formationColumns, formationRows, playerSpawnRow: 'F', enemySpawnRow: 'F' });

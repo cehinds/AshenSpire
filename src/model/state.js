@@ -187,6 +187,8 @@ export function createRunState({
     // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
     // written only by model/skills.js awardSkillXp. Empty until a hit lands.
     skills: {},
+    // Last claimed class level whose separate feat/technique offer was issued.
+    classRewardLevels: {},
     // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
     coreTags: [],
     feats: [],
@@ -855,6 +857,12 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
+  if (run.classRewardLevels !== undefined) {
+    if (!run.classRewardLevels || typeof run.classRewardLevels !== 'object' || Array.isArray(run.classRewardLevels)) problems.push('classRewardLevels must be an object');
+    else for (const [id, level] of Object.entries(run.classRewardLevels)) {
+      if (!id || !Number.isInteger(level) || level < 0) problems.push(`classRewardLevels.${id} must be a non-negative integer`);
+    }
+  }
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
@@ -1095,6 +1103,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
             if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
           }
         });
+      }
+      for (const key of ['levelChoices', 'levelCards']) {
+        for (const [i, row] of (Array.isArray(pending.rewards?.[key]) ? pending.rewards[key] : []).entries()) {
+          if (!row || row.source === undefined) continue;
+          const path = `pendingReward.rewards.${key}[${i}]`;
+          if (!['combat', 'class'].includes(row.source) || (key === 'levelCards' && row.source !== 'class')) problems.push(`${path}.source is invalid`);
+          if (row.source === 'class' && (typeof row.skillId !== 'string' || !row.skillId.startsWith('class:') || !Number.isInteger(row.claimOrdinal) || row.claimOrdinal < 0)) problems.push(`${path} must name a class track and claim ordinal`);
+        }
       }
       if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
         problems.push('pendingReward.rewards.cardMissed must be a boolean');

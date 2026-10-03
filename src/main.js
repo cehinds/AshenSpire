@@ -55,6 +55,7 @@ import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRul
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
 import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
+import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
@@ -73,7 +74,6 @@ import {
   rollEncounter,
   rollRuneReward,
   rollCombatCardOffer,
-  rollSkillDraftIds,
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
@@ -2782,7 +2782,7 @@ async function onCombatEnd(result, combat, enc) {
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelsEarned),
+      ...rollCardRows('boss', levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       ...sigilOffer('boss'),
       armamentId: bossArmament,
@@ -2792,12 +2792,10 @@ async function onCombatEnd(result, combat, enc) {
       xpBefore,
       levelChoices,
     };
-    return beginPendingReward(bossRewards, { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
+    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
   }
 
-  // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
-  // a level the fight bought is offered as a pick from the track's own
-  // schools, and while one is on the table the class-card offer is not.
+  // Skill and class level rewards are independent of the combat card roll.
   const drafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
   const classDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
   const rewards = {
@@ -2805,7 +2803,7 @@ async function onCombatEnd(result, combat, enc) {
     cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
     classDrafts,
     skillDrafts: drafts,
-    ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelsEarned),
+    ...rollCardRows(enc.pool, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
     // SPEC §15.4: a legendary sigil, on its own `sigils` stream (0 ships: none).
@@ -2820,21 +2818,27 @@ async function onCombatEnd(result, combat, enc) {
     xpBefore,
     levelChoices,
   };
-  beginPendingReward(rewards, { source: enc.pool, after: 'map' });
+  beginPendingReward(withSourceBonuses(rewards), { source: enc.pool, after: 'map' });
+
+  function withSourceBonuses(offer) {
+    return runSourceRewardOffer(registries, rng, run, offer, {
+      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, flatRarity: chaosRewardsOn(),
+    });
+  }
 }
 
 /**
- * The spoils' card rows (SPEC §15.1): the card offer — unless a draft holds
- * its seat, the schedule turns it off for this pool, or its chance misses —
+ * The spoils' card rows (SPEC §15.1): the independent combat card offer,
+ * unless the schedule turns it off for this pool or its chance misses,
  * and a level card per level this fight bought when `onLevelUp` is on. The
  * decision is engine/encounters.js rollCombatCardOffer's; this hands it the
  * run's facts and returns the offer fields (`cardIds`, and `cardMissed` /
  * `levelCards` only when they say something, so the shipped schedule writes
  * the offer it wrote before).
  */
-function rollCardRows(pool, draftWaiting, levelUps) {
+function rollCardRows(pool, levelUps) {
   return rollCombatCardOffer(registries, rng, {
-    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: !!draftWaiting,
+    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: false,
     levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
   }).rewards;
 }
@@ -2876,7 +2880,7 @@ function rollSkillDrafts(pool, includeBanked = false) {
     const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
     for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
       const level = row.level + banked;
-      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
+      const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
       if (cardIds.length) out.push({ skillId: track.id, level, cardIds, claimOrdinal: i < queued ? 0 : i - queued + 1 });
     }
   }
@@ -2936,7 +2940,13 @@ function mountPendingReward() {
       pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
-    onClaimSkill: (skillId) => claimBankedSkillLevel(registries, run, skillId),
+    onClaimSkill: (skillId) => {
+      const claim = claimBankedSkillLevel(registries, run, skillId);
+      if (claim && skillId === classSkillId(run.class)) {
+        run.classRewardLevels = { ...run.classRewardLevels, [run.class]: claim.after };
+      }
+      return claim;
+    },
     onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
     onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,

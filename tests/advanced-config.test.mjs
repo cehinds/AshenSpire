@@ -126,15 +126,15 @@ test('presentation config clamps numbers and refuses unknown rows', () => {
   });
   assert.equal(config.playerSpriteScale, 2);
   assert.equal(config.enemySpawnRow, 'A');
-  assert.equal(config.playerSpawnRow, 'C');
+  assert.equal(config.playerSpawnRow, 'F');
   assert.equal(config.playerSpawnColumn, '2');
-  assert.equal(config.enemySpawnColumn, '3');
+  assert.equal(config.enemySpawnColumn, '6');
 });
 
-test('formation defaults put the player at C2 and enemies at C3', () => {
+test('formation defaults clamp to the bottom row and opposite outer columns', () => {
   const config = presentationConfig({});
-  assert.equal(`${config.playerSpawnRow}${config.playerSpawnColumn}`, 'C2');
-  assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'C3');
+  assert.equal(`${config.playerSpawnRow}${config.playerSpawnColumn}`, 'F1');
+  assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'F6');
 });
 
 test('formation appearance validates scales, colors, shapes and offsets', () => {
