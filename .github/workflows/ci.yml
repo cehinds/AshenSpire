@@ -1147,13 +1147,41 @@ jobs:
         # every plant, each once.
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest --shard ${{ matrix.shard }}
 
+  # FINISH §5 "The idle animation plays" and §9 "Reduced motion is proven in a
+  # browser". Its own job so its bound is its own: one probe run is about a
+  # minute and the seven-plant selftest about ten (measured locally), inside
+  # the 20 below.
+  browser-motion:
+    name: idle animation and reduced motion in a real browser (${{ matrix.shard }})
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # SHARDED, NOT GIVEN MORE TIME (owner rule D38, 2026-10-02): each leg runs
+    # the --selftest plants at index i mod 3 plus its own clean edge
+    # (tools/doorplant.mjs SHARDS); the probe itself runs once, on leg 0/3.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['0/3', '1/3', '2/3']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the art is plain git (not LFS), so the probe's figures load
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
+      - name: Every combatant idles, and reduced motion leaves nothing over 0.01 s in one turn
+        if: matrix.shard == '0/3'
+        run: node tools/verdict.mjs -- node tools/motion-probe.mjs
+      - name: …and that gate can fail (its known-bads, this leg's shard)
+        run: node tools/verdict.mjs -- node tools/motion-probe.mjs --selftest --shard ${{ matrix.shard }}
+
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
   # ---------------------------------------------------------------------------
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, display-first]
+    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Named boundary
@@ -1161,7 +1189,7 @@ jobs:
           echo "upstream results: test=${{ needs.test.result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
           echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
           echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
-          echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} display-first=${{ needs['display-first'].result }}"
+          echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
@@ -1202,6 +1230,10 @@ jobs:
           echo "    not furniture, and a card dipping into them touching nothing is not measured."
           echo "  · every legal left/right armament slot reaches the correct rendered side"
           echo "    of the viewer-facing figure, with all five same-door known-bads caught"
+          echo "  · on seed MOTION1 every living combatant's visible figure is moved by a running"
+          echo "    idle animation, at boot and after one turn; and one full turn under Reduced"
+          echo "    motion (setting+OS, setting, OS) shows no animation over 0.01 s and no script"
+          echo "    flipbook, with sixteen same-door known-bads caught (browser-motion, in 3 shards)"
           # WAS: "...and it is the only rendered claim in this file that is about the
           # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
           # Armoury step below — a second browser-driven rendered-layout claim in this
@@ -1250,7 +1282,7 @@ jobs:
           # PASS over this rather than let it stand, on her own test: a MISSING boundary
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Eight jobs open a browser."
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Nine jobs open a browser."
           echo "    browser-guard owns focused checks like hand-side placement, browser-guard-stamp"
           echo "    the build stamp and cold boot, browser-guard-changelog the changelog's known-bads;"
           echo "    browser-layout-guard owns phone reach, browser-layout-hintstrip the hint strip and"
@@ -1258,8 +1290,9 @@ jobs:
           echo "    Settings through BOTH the cold Startup -> Title door and the in-run door. It sends"
           echo "    a complete CDP Enter down/up through Startup, then the Settings controls are DOM"
           echo "    clicks. browser-startup-plants runs the cold-boot known-bad corpus, in shards."
-          echo "    These gates inspect focused rectangles or alpha-weighted rendered pixels;"
-          echo "    none fights, wins, loses, or finishes a run, or proves general playability."
+          echo "    browser-motion samples idle and reduced motion over one seeded combat turn."
+          echo "    These gates inspect focused rectangles, alpha-weighted rendered pixels or"
+          echo "    animation state; none wins, loses, or finishes a run, or proves general playability."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
