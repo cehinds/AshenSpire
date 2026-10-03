@@ -144,7 +144,7 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+.*\.enemy-pose-stage/,
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+.*\.enemy-pose-stage/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
@@ -253,6 +253,25 @@ const SETTINGS_CYCLE = `(async () => {
   return true;
 })()`;
 
+// Keep the overlap regression independent of sprite proportions and formation
+// spacing: place a real neighbouring sprite over the whole intent badge. The
+// normal overhead layer must remain hittable; the frame-stacking plant below
+// must hide it. Both the clean and planted runs use this same fixture.
+const INTENT_OVERLAP = `(() => {
+  if (innerWidth !== 390 || innerHeight !== 650) return true;
+  const intent = document.querySelector('.combatant.enemy[data-eid="e1"] .intent');
+  const sprite = document.querySelector('.combatant.enemy[data-eid="e2"] .combatant-card > .sprite');
+  if (!intent || !sprite) throw new Error('screenreach: intent overlap fixture is missing its two enemies');
+  const a = intent.getBoundingClientRect(), b = sprite.getBoundingClientRect();
+  const scale = b.width / sprite.offsetWidth;
+  sprite.style.translate = ((a.left + a.width / 2 - b.left - b.width / 2) / scale) + 'px '
+    + ((a.top + a.height / 2 - b.top - b.height / 2) / scale) + 'px';
+  const moved = sprite.getBoundingClientRect();
+  if (moved.left > a.left || moved.right < a.right || moved.top > a.top || moved.bottom < a.bottom)
+    throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
+  return true;
+})()`;
+
 // Every screen that can be reached without playing the game. `boss` holds a
 // splash deliberately covering the board, so its controls ARE covered by
 // design and it is listed with `overlay: true` rather than left out — a screen
@@ -265,6 +284,7 @@ const SCREENS = [
     overlay: 'the Armoury opened by the preserved equipment shortcut covers the map on purpose' },
   { name: 'combat', q: '?shot=combat', ready: `!!document.querySelector('.combat .hand .card')` },
   { name: 'combat-xl', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length` },
+  { name: 'combat-overlap', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length`, setup: INTENT_OVERLAP },
   { name: 'death', q: '?shot=death', ready: `!!document.querySelector('#app button')` },
   // EldenSpire#29 slice 1. Added the day the state existed. This file's own
   // boundary has said since it was written that customize/shop/rest/rewards
