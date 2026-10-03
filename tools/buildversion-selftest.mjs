@@ -680,8 +680,10 @@ function historyCorpus() {
   // (ordinal bumped with the digest), so only the missing object moves the
   // verdict. A missing parent COMMIT needs no case of its own: `git rev-list
   // --parents` already fails on it and the row's catch says UNKNOWN.
-  const dropParentRecord = (dir) => {
-    const blob = git(dir, 'rev-parse', `HEAD^:${ORDINAL_HOME}`).trim();
+  // `spec` picks the object: the parent's record blob, HEAD's record
+  // blob, or the parent's root tree (so `git ls-tree` itself fails).
+  const dropObject = (spec, what) => (dir) => {
+    const blob = git(dir, 'rev-parse', spec).trim();
     const loose = resolve(dir, '.git', 'objects', blob.slice(0, 2), blob.slice(2));
     // Loose objects are written read-only; Windows refuses to unlink those.
     // Only a loose file can be removed this way: a packed object leaves
@@ -695,12 +697,26 @@ function historyCorpus() {
     // shared with HEAD's record), the case would test nothing, so it refuses.
     let gone = false;
     try { git(dir, 'cat-file', '-e', blob); } catch { gone = true; }
-    if (!gone) throw new Error(`selftest plant: the parent's ${ORDINAL_HOME} blob ${blob.slice(0, 7)} is still readable after removing it`);
+    if (!gone) throw new Error(`selftest plant: ${what} ${blob.slice(0, 7)} is still readable after removing it`);
   };
+  const dropParentRecord = dropObject(`HEAD^:${ORDINAL_HOME}`, `the parent's ${ORDINAL_HOME} blob`);
+  const dropHeadRecord = dropObject(`HEAD:${ORDINAL_HOME}`, `HEAD's ${ORDINAL_HOME} blob`);
+  const dropParentTree = dropObject('HEAD^^{tree}', "the parent's root tree");
   CASES.push(
     [bump, 'unknown',
       `the PARENT's ${ORDINAL_HOME} blob is missing (partial, shallow or damaged clone), so git cannot show its record — unread is not absent, and the row must not call it the pre-scheme n/a`,
-      null, true, dropParentRecord],
+      null, true, dropParentRecord, /^UNKNOWN — [0-9a-f]{7}'s tree names /],
+    // THE SYMMETRIC CASE: HEAD's own record blob is the one git cannot read.
+    // The diagnosis must name HEAD, not the parent (#1519 review).
+    [bump, 'unknown',
+      `HEAD's ${ORDINAL_HOME} blob is missing, so git cannot show this change's own record — unread is not absent, and the row must say so about HEAD`,
+      null, true, dropHeadRecord, /^UNKNOWN — HEAD's tree names /],
+    // THE TREE ITSELF IS UNREADABLE: `git ls-tree` fails, so nobody knows whether
+    // the parent's tree names the record. The row must say the tree could not be
+    // inspected and must NOT claim it names buildordinal.json (#1519 review).
+    [bump, 'unknown',
+      `the PARENT's root tree is missing, so git ls-tree itself fails — the row must say the tree could not be inspected, not that it names ${ORDINAL_HOME}`,
+      null, true, dropParentTree, /^UNKNOWN — [0-9a-f]{7}'s tree could not be inspected /],
   );
 
   // THE PARENT RECORD GIT CAN READ BUT NOBODY CAN PARSE. The blob is present,
@@ -741,13 +757,15 @@ function ordinalHistory({ build, CASES, skipped }, picked = () => true) {
   if (skipped) console.log(skipped);
   const WANT = { red: false, green: true, unknown: null };
   const selected = CASES.filter((_, index) => picked(index));
-  for (const [second, want, label, first = null, moveDigest = true, after = null] of selected) {
+  for (const [second, want, label, first = null, moveDigest = true, after = null, says = null] of selected) {
     const dir = build(second, first, moveDigest);
     try {
       if (after) after(dir);
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
-      const hit = row !== undefined && row.ok === WANT[want];
+      // `says`, when given, pins the diagnosis too: a right verdict for the
+      // wrong reason (the wrong commit named, or a fact never established) fails.
+      const hit = row !== undefined && row.ok === WANT[want] && (says === null || says.test(detail));
       if (want === 'red') say(hit, label, detail);
       else {
         if (!hit) failures += 1;

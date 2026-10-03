@@ -1227,7 +1227,10 @@ export function check(root = REPO_ROOT) {
       try {
         listed = g('ls-tree', '--full-tree', '--name-only', rev, '--', ORDINAL_HOME).trim();
       } catch (e) {
-        return { unreadable: why(e) };
+        // THE TREE ITSELF COULD NOT BE LISTED (its tree object missing or
+        // damaged). Whether it names the record at all is then unknown, so this
+        // is a third fact, kept apart from "named but unreadable" (#1519 review).
+        return { uninspected: why(e) };
       }
       return listed ? { unreadable: why(shown) } : null;
     }
@@ -1244,6 +1247,14 @@ export function check(root = REPO_ROOT) {
     } else {
       const before = at(parent);
       const now = at('HEAD');
+      const blind = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.uninspected);
+      if (blind) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${blind[0]}'s tree could not be inspected (${blind[1].uninspected}), so whether it records ${ORDINAL_HOME} at all is not known;`
+          + ` an unlisted tree is not one without a record, so this is not the pre-scheme n/a;`
+          + ` fetch the missing history (git fetch --unshallow, or a full clone) rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
       const unread = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.unreadable);
       if (unread) {
         add(null, 'H ORDINAL INCREASES',
