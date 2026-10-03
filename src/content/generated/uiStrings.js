@@ -5057,6 +5057,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "title.quickstart",
+    "extends": "",
+    "short": "Quick start",
+    "full": "Begin a climb at once with the recommended character, a fresh seed and no opening; New lets you choose everything.",
+    "tip": "Quick start"
+  },
+  {
     "id": "title.slots.continue.reason",
     "extends": "",
     "short": "Choose a slot first.",
