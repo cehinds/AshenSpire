@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Painted books and class-book bonuses** ([#1527](https://github.com/cehinds/AshenSpire/pull/1527), `0.7.1.837`). Books have separate painted covers and emblems, including a feat emblem, with color across the whole leather binding. Class books grant XP on every read, learn the class on the first read, and independently roll a matching combat card (25%) and feat (5%). Both chances are configurable in Advanced → Shops. The result shows what you received; excess card copies go to the sideboard.
+
 - **Class-book reward rules are documented** ([#1526](https://github.com/cehinds/AshenSpire/pull/1526), `0.7.1.835`). The approved contract keeps class learning and XP, makes class books repeatable, and specifies independent configurable combat-card and feat chances of 25% and 5%. This documents the next implementation; gameplay is unchanged in this build.
 
 - **Your phone can buzz on card play, damage taken and turn start** ([#1517](https://github.com/cehinds/AshenSpire/pull/1517), `0.7.1.834`). On a device that can vibrate, playing a card, losing HP (from a hit, or from a card, curse or status that costs HP) and the start of your turn each give a short buzz of its own; in co-op, your own plays, wounds and turns buzz your device, not a teammate's. Changing equipment does not buzz. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.
