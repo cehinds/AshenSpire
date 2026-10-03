@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Your phone can buzz on card play, damage taken and turn start",
     "detail": "On a device that can vibrate, playing a card, losing HP (from a hit, or from a card, curse or status that costs HP) and the start of your turn each give a short buzz of its own; in co-op, your own plays and wounds buzz your device, not a teammate's. Changing equipment does not buzz. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.",
-    "build": "0.7.1.827",
+    "build": "0.7.1.829",
     "pullRequest": 1517,
     "url": "https://github.com/cehinds/AshenSpire/pull/1517"
+  },
+  {
+    "id": "pr-1519",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: the build-number check no longer passes when the previous build's record is missing or unreadable",
+    "detail": "Nothing you play changes. The automatic check that each new build's number is higher than the last one treated a previous build record it could not open (a damaged copy of the history), or one too garbled to read, as if there had been no record at all, and passed. It now stops and says it could not tell. A shallow copy that holds no previous build at all still passes, as before.",
+    "build": "0.7.1.828",
+    "pullRequest": 1519,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1519"
   },
   {
     "id": "pr-1518",

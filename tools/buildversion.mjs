@@ -1202,11 +1202,42 @@ export function check(root = REPO_ROOT) {
   // `fatal: not a git repository`, and a row that already resolves that to
   // UNKNOWN in its own words does not also need git shouting between the rows.
   const g = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  // UNREAD IS NOT ABSENT. `null` means the commit's tree has no record — the
+  // pre-scheme n/a. A record the tree NAMES but git cannot hand over (its blob
+  // missing from a partial, shallow or damaged clone) is a different fact, and
+  // it comes back as { unreadable } so the row can say UNKNOWN instead of
+  // mistaking it for a parent from before the scheme. So is a record git hands
+  // over that is not JSON (a conflict-marked or truncated file): it comes back
+  // as { unparsable }, never as null. `--full-tree` makes the path read from
+  // the top of the repository, as `<rev>:<path>` does.
+  // git's own reason rides along: the first line of `e.message` is only
+  // "Command failed: git …"; the `fatal: …` line on stderr says whether the
+  // object is missing or the path is wrong.
+  const why = (e) => {
+    const said = String(e && e.stderr || '').split('\n').map((l) => l.trim()).find(Boolean);
+    const head = String(e && e.message || e).split('\n')[0];
+    return said ? `${head}: ${said}` : head;
+  };
   const at = (rev) => {
+    let text;
     try {
-      const raw = JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`));
+      text = g('show', `${rev}:${ORDINAL_HOME}`);
+    } catch (shown) {
+      let listed;
+      try {
+        listed = g('ls-tree', '--full-tree', '--name-only', rev, '--', ORDINAL_HOME).trim();
+      } catch (e) {
+        // THE TREE ITSELF COULD NOT BE LISTED (its tree object missing or
+        // damaged). Whether it names the record at all is then unknown, so this
+        // is a third fact, kept apart from "named but unreadable" (#1519 review).
+        return { uninspected: why(e) };
+      }
+      return listed ? { unreadable: why(shown) } : null;
+    }
+    try {
+      const raw = JSON.parse(text);
       return { ordinal: Number(raw.ordinal), release: raw.release ?? null, digest: raw.digest ?? null };
-    } catch { return null; }
+    } catch (e) { return { unparsable: String(e && e.message || e).split('\n')[0] }; }
   };
   try {
     const parents = g('rev-list', '--parents', '-n', '1', 'HEAD').trim().split(/\s+/);
@@ -1216,6 +1247,38 @@ export function check(root = REPO_ROOT) {
     } else {
       const before = at(parent);
       const now = at('HEAD');
+      const blind = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.uninspected);
+      if (blind) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${blind[0]}'s tree could not be inspected (${blind[1].uninspected}), so whether it records ${ORDINAL_HOME} at all is not known;`
+          + ` an unlisted tree is not one without a record, so this is not the pre-scheme n/a;`
+          + ` fetch the missing history (git fetch --unshallow, or a full clone) rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      const unread = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.unreadable);
+      if (unread) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${unread[0]}'s tree names ${ORDINAL_HOME} but git could not read it (${unread[1].unreadable}).`
+          + ` A record git cannot show is not one that is absent, so this is not the pre-scheme n/a;`
+          + ` fetch the missing history (git fetch --unshallow, or a full clone) rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      // A RECORD THAT IS NOT JSON. At the parent, nothing about its build can be
+      // established, so it is UNKNOWN — not the pre-scheme n/a it used to pass
+      // as. At HEAD it is this change's own record, broken, so it is red.
+      if (now && now.unparsable) {
+        add(false, 'H ORDINAL INCREASES',
+          `HEAD's ${ORDINAL_HOME} is not valid JSON (${now.unparsable}) — a build with no readable number;`
+          + ` restore the record and rebuild (node tools/launch.mjs --build-only).`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      if (before && before.unparsable) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${parent.slice(0, 7)}'s ${ORDINAL_HOME} is not valid JSON (${before.unparsable}), so the parent's build cannot be read;`
+          + ` a record that cannot be parsed is not one that is absent, so this is not the pre-scheme n/a.`
+          + ` Merge a base whose record parses rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
       // THE ORDINAL AND RELEASE COUNT TOO, not only the digest. A hand-edit (or a
       // bad hand-merge) of the record that leaves the digest alone used to be
       // caught by row F against the committed bundle; CI now rebuilds from the
