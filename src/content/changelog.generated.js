@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the balance report's checks are stricter",
     "detail": "Nothing you play changes. The run simulator now refuses to print per-act difficulty for an endless climb, where later loops would have been counted as the first three acts, and the balance notes' check now catches a boss listed for a region that cannot meet it, or the same row recorded twice.",
-    "build": "0.7.1.807",
+    "build": "0.7.1.808",
     "pullRequest": 1487,
     "url": "https://github.com/cehinds/AshenSpire/pull/1487"
+  },
+  {
+    "id": "pr-1512",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A master's lesson track with nothing to teach no longer offers Ask",
+    "detail": "When a track had no cards it could teach you (a Herald's shield track, for example), the Ask button still worked and spent the visit's lesson on an empty result. It is now greyed out. Under Chaos Rewards, which can give that track cards, it stays available.",
+    "build": "0.7.1.807",
+    "pullRequest": 1512,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1512"
   },
   {
     "id": "pr-1506",

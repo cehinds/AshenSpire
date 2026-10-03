@@ -545,6 +545,27 @@ test('Copilot on #1438: the lesson check and appraisal use the roll\'s own odds 
   assert.ok(rollMasterLesson(registries, rng, run, skillId, { flatRarity: true }).cardIds.length > 0);
 });
 
+test('Codex on #1504: a track with no lesson cards draws its Ask disabled; Chaos Rewards, which gives it cards, enables it', () => {
+  const balance = structuredClone(contentBundle.balance);
+  balance.rewards.rarityWeights.normal = { ...balance.rewards.rarityWeights.normal, common: 0 };
+  const registries = createRegistries({ ...contentBundle, balance, shops: registriesWith(ALL_OUT).shops });
+  const { run, rng } = masterRun(registries, { seed: 30 });
+  const skillId = masterOf(registries, run).skills[0];
+  assert.deepEqual(lessonPool(registries, run, skillId), [], 'commons at weight 0: nothing to draw');
+  const ask = (flatRarity) => withKitDom((dom) => {
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountMaster(app, { registries, run, rng, flatRarity, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    const id = `master-ask-${String(skillId).replace(/[^a-z0-9]/gi, '-')}`;
+    const button = app.querySelectorAll('button').find((b) => b.id === id);
+    assert.ok(button, `the Ask button for ${skillId} is drawn`);
+    return button.disabled;
+  });
+  assert.equal(ask(false), true, 'nothing to roll: Ask is disabled');
+  assert.equal(run.shopStock.lessons?.[skillId], undefined, 'and no empty roll was kept');
+  assert.equal(ask(true), false, 'Chaos Rewards opens the pool: Ask is enabled');
+});
+
 test('Codex and Copilot on #1438: a custom price multiplier scales the master\'s weapon arts once, through the atlas and the merchant alike', () => {
   const plainRun = () => createRunState({ seed: 9, classId: 'reaver', registries: OUT });
   const plain = buildMasterStock(OUT, createRng(9), plainRun());
