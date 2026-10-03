@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Full draws and selective Retain are the approved hand rules** ([#1532](https://github.com/cehinds/AshenSpire/pull/1532), `0.7.1.839`). The contract starts opening and turn draws at four with Intelligence scaling, keeps Retain cards, shuffles other unplayed cards into the draw pile, and sets a separate default hand limit of fifteen. Retained cards add to the next draw until that limit. This documents the next implementation; gameplay is unchanged in this build.
+
 - **The README explains the current game and where to get each edition** ([#1529](https://github.com/cehinds/AshenSpire/pull/1529), `0.7.1.838`). The guide now covers retained hands, Actions, Stamina and Mana, combat ratings, equipment cards, the sideboard, progression, books and shop services. It links the installer, art repository, Unity adaptation and each browser channel's play and download paths, with verified GitHub build alternatives while hosted paths are unavailable. Gameplay is unchanged.
 
 - **Painted books and class-book bonuses** ([#1527](https://github.com/cehinds/AshenSpire/pull/1527), `0.7.1.837`). Books have separate painted covers and emblems, including a feat emblem, with color across the whole leather binding. Class books grant XP on every read, learn the class on the first read, and independently roll a matching combat card (25%) and feat (5%). Both chances are configurable in Advanced → Shops. The result shows what you received; excess card copies go to the sideboard.

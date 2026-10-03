@@ -853,8 +853,8 @@ nothing and consumes no draw-pile cards. A depleted deck can supply fewer.
 Solo and co-op use the same refresh rule and each seat's own piles and rows.
 The explicit Play in deck order option returns the unplayed cards to the
 bottom in deck order without consuming shuffle RNG. `retain: true` still
-keeps all ordinary unplayed cards; disabling `shuffleHand` restores discard
-cleanup, and `drawMode: 'fill'` remains available. Forced overflow discards
+keeps all ordinary unplayed cards; with `retain: false`, disabling `shuffleHand`
+restores discard cleanup, and `drawMode: 'fill'` remains available. Forced overflow discards
 remain discards even with shuffle enabled. A saved fight without shuffleHand
 keeps its prior discard behaviour; rule snapshots and the run's RNG counters
 preserve deterministic resume. Pre-ruleset-7 hand-group adapters remain intact.
@@ -867,7 +867,8 @@ Overflow either preserves existing cards or requires selection of excess cards
 at turn end. Draw effects stop at capacity without consuming the draw pile;
 reshuffling can be disabled. Rules and pending replacement draws survive saves.
 Settings changes apply next combat. Existing saved fights and LAN combat retain
-their previous rules; the numbered legacy sequence below describes those rules.
+their snapshotted rules. The numbered legacy sequence below is an illustrative
+baseline; saved stat rows and hand options override its draw and cleanup defaults.
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
 2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
