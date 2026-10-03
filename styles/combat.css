@@ -1132,7 +1132,7 @@
   width: max-content; min-width: 0; scale: none; flex: none; pointer-events: auto;
   transition: none !important;
 }
-:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox::after {
+:root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox)::after {
   content: ''; position: absolute;
   left: var(--enemy-hit-x); top: var(--enemy-hit-y);
   width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));

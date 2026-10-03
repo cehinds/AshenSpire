@@ -74,6 +74,7 @@
 // running animation's keyframes are not all the same value; the probe does
 // not measure on-screen pixels.
 
+import { pointerTargetExpression } from './pointer-target.mjs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { launchBrowser } from './browser.mjs';
@@ -431,27 +432,7 @@ async function boot({ send, evaluate }, base, { setting, os }) {
   await wait(800);
 }
 
-const point = (evaluate, selector) => evaluate(`(() => {
-  const el = document.querySelector(${JSON.stringify(selector)});
-  if (!el) throw new Error('missing ' + ${JSON.stringify(selector)});
-  el.scrollIntoView({ block: 'nearest' });
-  const b = el.getBoundingClientRect();
-  // A formation can place an intent button over the combatant's center.
-  // Hit-test real pointer destinations so targeting does not open that nested
-  // control. Never dispatch directly or click through an overlapping actor.
-  for (const fy of [0.5, 0.75, 0.25, 0.9, 0.1]) {
-    for (const fx of [0.5, 0.25, 0.75]) {
-      const x = b.x + b.width * fx, y = b.y + b.height * fy;
-      if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
-      const hit = document.elementFromPoint(x, y);
-      if (!hit || !el.contains(hit)) continue;
-      const control = hit.closest('button, input, select, textarea, a, [role="button"]');
-      if (control && control !== el && el.contains(control)) continue;
-      return { x, y };
-    }
-  }
-  throw new Error('no unobstructed pointer destination for ' + ${JSON.stringify(selector)});
-})()`);
+const point = (evaluate, selector) => evaluate(pointerTargetExpression(selector));
 
 async function press({ send, evaluate }, selector, holdMs = 0) {
   const at = await point(evaluate, selector);
