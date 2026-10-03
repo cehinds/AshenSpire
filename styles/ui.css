@@ -668,7 +668,7 @@ button.ev-choice {
 #cz-equipment-receipts, .armoury-equipment-receipts { font-size: max(13px, 1em); }
 #cz-equipment-receipts small, .armoury-equipment-receipts small { font-size: max(13px, 0.84em); line-height: 1.35; }
 
-@media (max-width: 700px) {
+@media (max-width: 1000px) {
   .armoury-equipment-receipts, .armoury-equipment-receipts * { min-width: 0; overflow-wrap: anywhere; }
   .armoury-equipment-receipts .equip-role-receipts > div { grid-template-columns: minmax(0, 1fr); }
   .armoury-equipment-receipts .equip-role-receipts small { grid-column: 1; }
@@ -1312,12 +1312,12 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    least 11 px on glass at 360x640 (FINISH §8). Collection left, deck right;
    collection on top, deck below on a portrait phone. */
 .deck-editor-veil {
-  --deck-editor-target: max(var(--tap-floor), calc(44px / var(--ui-zoom, 1)));
+  --deck-editor-target: max(calc(var(--tap-target, 44px) / var(--ui-zoom, 1)), calc(44px / var(--ui-zoom, 1)));
   --deck-editor-text: max(1.3rem, calc(11px / var(--ui-zoom, 1)));
   align-items: stretch;
 }
 @media (pointer: coarse) {
-  .deck-editor-veil { --deck-editor-target: max(var(--tap-floor), calc(48px / var(--ui-zoom, 1))); }
+  .deck-editor-veil { --deck-editor-target: max(calc(var(--tap-target, 44px) / var(--ui-zoom, 1)), calc(48px / var(--ui-zoom, 1))); }
 }
 .deck-editor {
   display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 0.8rem;
@@ -1382,6 +1382,325 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-keys { margin: 0; color: var(--muted); }
 @media (pointer: coarse) { .deck-editor-keys { display: none; } }
 .deck-editor-foot .as-btn { min-height: var(--deck-editor-target); font-size: max(1em, var(--deck-editor-text)); }
+
+/* Reading Desk: collection, persistent inspection, compact deck. Runtime
+   artwork resolves through the published art pack; references stay in docs. */
+.deck-editor-veil { padding: 0; }
+.deck-editor {
+  width: 100%; max-width: 168rem; padding: 2rem 2.4rem 1.2rem;
+  background: #100e0b url('../assets/bg/title-city-tower.webp') center / cover;
+  background-blend-mode: soft-light; border-color: #51432c;
+  font-family: Georgia, 'Times New Roman', serif;
+  --deck-editor-text: max(1.6rem, calc(12px / var(--ui-zoom, 1)));
+  --deck-min-text: calc(11px / var(--ui-zoom, 1));
+  --muted: #b8a88b; --line: #51432c; --line-soft: #665339;
+  --control-positive-fill: #c9a227; --control-positive-border: #f1cf71; --control-positive-text: #181006;
+}
+.deck-editor-head { padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
+.deck-editor-title { font: 2.8rem Georgia, serif; letter-spacing: .04em; color: #e5c992; }
+.deck-editor-subtitle { margin: .5rem 0 0; color: var(--muted); }
+.deck-editor-counter { margin-left: auto; font-size: 1.8rem; }
+.deck-editor-curve { margin-left: 1.5rem; }
+.deck-editor-toolbar { display: flex; align-items: start; gap: 1rem; }
+.deck-editor-tools { width: 100%; }
+.deck-editor-tools > summary { cursor: pointer; min-height: var(--deck-editor-target); display: list-item; align-content: center; color: var(--muted); }
+.deck-editor-tools[open] { padding-bottom: .8rem; }
+.deck-editor-tools .deck-editor-chips { flex-wrap: wrap; overflow: visible; margin-top: .6rem; }
+.deck-editor-chip { border-radius: .5rem; }
+.deck-editor-panes { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.15fr) minmax(0, .85fr); gap: 2.2rem; grid-template-rows: minmax(0, 1fr); }
+.deck-editor-pane { background: transparent; border: 0; border-radius: 0; }
+.deck-editor-pane-title { font: 2.6rem Georgia, serif; color: #f0ddba; letter-spacing: 0; text-transform: none; padding: .4rem 0 1.2rem; }
+.deck-editor-search { flex: none; box-sizing: border-box; width: 100%; min-height: var(--deck-editor-target); background: #12100d; border: 1px solid var(--line-soft); border-radius: .6rem; color: var(--parchment); font: inherit; padding: .7rem 1rem; margin-bottom: 1.2rem; }
+.deck-editor-list { padding: 0 .3rem .5rem 0; gap: .7rem; scrollbar-width: thin; }
+.deck-editor-item { flex-wrap: nowrap; gap: .3rem; }
+.deck-editor-main { background: #18140f; border-color: var(--line); border-radius: .6rem; padding: .7rem; row-gap: .4rem; }
+.deck-editor-main[aria-pressed="true"] { border-color: #d5af49; box-shadow: inset 0 0 0 1px #806020; background: #282012; }
+.deck-editor-tile .deck-editor-main { grid-template-columns: 7.8rem minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr; }
+.deck-editor-art { width: 100%; height: 100%; object-fit: cover; border-radius: .3rem; }
+.deck-editor-tile .deck-editor-art { grid-column: 1; grid-row: 1 / 4; min-height: 8rem; max-height: 10rem; }
+.deck-editor-art.outline { object-fit: contain; padding: .8rem; box-sizing: border-box; background: #211b13; }
+.deck-editor-tile .deck-editor-name { grid-column: 2; grid-row: 1; font-weight: 700; white-space: normal; }
+.deck-editor-tile .deck-editor-meta { grid-column: 2; grid-row: 2; font-size: 1.1rem; white-space: normal; }
+.deck-editor-tile .deck-editor-cost { grid-column: 3; grid-row: 1 / 3; }
+.deck-editor-row-rules { grid-column: 2 / 4; grid-row: 3; color: #ded0b8; font-size: 1.5rem; line-height: 1.4; }
+.deck-editor-cost { width: 1.8em; height: 1.8em; background: #203747; border-color: #8bb1d0; color: #e8f4ff; }
+.deck-editor-step { border-radius: .5rem; background: #1b1711; }
+.deck-editor-tile.spent .deck-editor-name { color: inherit; }
+.deck-editor-row .deck-editor-main { min-height: 6.2rem; }
+.deck-editor-row .deck-editor-name { font-size: 1.6rem; }
+.deck-editor-row .deck-editor-name { grid-column: 2; grid-row: 1; }
+.deck-editor-row .deck-editor-meta { font-size: 1.1rem; grid-column: 2; grid-row: 2; }
+.deck-editor-inspector { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 1rem; border-inline: 1px solid var(--line); padding: 0 2.2rem; }
+.deck-editor-reading { min-height: 0; overflow-y: auto; scrollbar-width: thin; padding: .8rem 1rem; flex: 1; }
+.deck-editor .deck-editor-reading > .card { --card-w: 100%; width: 100%; max-width: 40rem; margin: 0 auto; pointer-events: none; box-sizing: border-box; }
+.deck-editor .deck-editor-reading .card > .cname { font-size: 2.3rem; padding: 1rem; }
+.deck-editor .deck-editor-reading .card .ctext { font-size: 1.8rem; line-height: 1.45; }
+.deck-editor .deck-editor-reading .card .cd-body { display: flex; flex-direction: column; }
+.deck-editor .deck-editor-reading .card .cd-body .ctext { flex: 1; display: block; padding-top: 1.8rem; text-align: center; }
+.deck-editor .deck-editor-reading .card .ctype { font-size: 1.4rem; letter-spacing: .16em; }
+.deck-editor .deck-editor-reading .card .card-cost-rail { font-size: 1.6rem; }
+.deck-editor .deck-editor-reading .card .cost { font-size: 1.6rem; padding: .4rem; }
+.deck-editor .deck-editor-reading .card .ctags { z-index: 1; }
+.deck-editor .deck-editor-reading .playing-card-art[data-card-art="outline"] { object-fit: contain; padding: .8rem; box-sizing: border-box; }
+.deck-editor .deck-editor-reading .card-art-glyph { visibility: hidden; }
+.deck-editor-full-rules { font-size: 1.6rem; line-height: 1.55; color: var(--parchment); }
+.deck-editor-flavor { font-size: 1.4rem; line-height: 1.5; font-style: italic; color: var(--muted); }
+.deck-editor-keyword { padding: 1rem 0; border-top: 1px solid var(--line); font-size: 1.4rem; line-height: 1.5; }
+.deck-editor-keyword strong { color: #99bfdd; font-size: 1.7rem; }
+.deck-editor-keyword p { margin: .3rem 0 0; color: var(--muted); }
+.deck-editor-selected-actions { flex: none; padding: 0 1rem 1rem; }
+.deck-editor-selected-reason { color: var(--muted); line-height: 1.4; margin: .4rem 0 1rem; }
+.deck-editor-primary { width: 100%; min-height: var(--deck-editor-target); font: 700 1.9rem Georgia, serif; }
+.deck-editor .deck-editor-primary { background: #c9a227; color: #181006; border-color: #f1cf71; font: 700 1.9rem Georgia, serif; }
+.deck-editor .deck-editor-primary:disabled { background: #30281c; color: #b8a88b; border-color: #665339; }
+.deck-editor .deck-editor-foot { justify-content: flex-end; }
+.deck-editor .deck-editor-foot .as-btn { flex: 0 0 auto; min-width: 12rem; }
+.deck-editor .deck-editor-foot .modal-btnrow { width: min(100%, 30rem); margin-left: auto; }
+.deck-editor .deck-editor-done { background: #c9a227; color: #181006; border-color: #f1cf71; }
+.deck-editor-footer { border-top: 1px solid var(--line); padding-top: .8rem; }
+.deck-editor-keys { font-size: 1.1rem; }
+.deck-editor-mobile-tabs { display: none; }
+.deck-editor :focus-visible { outline: 2px solid #f0ce70; outline-offset: 2px; }
+.deck-editor-tile .deck-editor-meta, .deck-editor-row .deck-editor-meta,
+.deck-editor-keys, .deck-editor .deck-editor-reading .card :is(.ctag, .card-metadata) { font-size: max(1.1rem, var(--deck-min-text)); }
+.deck-editor-row-rules { font-size: max(1.5rem, var(--deck-min-text)); }
+.deck-editor-keyword, .deck-editor-flavor, .deck-editor .deck-editor-reading .card .ctype { font-size: max(1.4rem, var(--deck-min-text)); }
+.deck-editor-row .deck-editor-name, .deck-editor-full-rules, .deck-editor .deck-editor-reading .card .cost { font-size: max(1.6rem, var(--deck-min-text)); }
+.deck-editor-row:has(.deck-editor-order) { flex-wrap: wrap; }
+.deck-editor-row:has(.deck-editor-order) .deck-editor-main { flex-basis: 100%; }
+@media (max-width: 900px) {
+  .deck-editor { padding: 1.2rem; }
+  .deck-editor-panes { gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .85fr); }
+  .deck-editor-inspector { padding-inline: .5rem; }
+  .deck-editor-tile .deck-editor-main { grid-template-columns: 5rem minmax(0, 1fr) auto; }
+}
+@media (max-width: 1000px) {
+  .deck-editor { gap: .5rem; }
+  .deck-editor-title { font-size: 2.3rem; }
+  .deck-editor-subtitle, .deck-editor-curve, .deck-editor-keys { display: none; }
+  .deck-editor-counter { font-size: max(1.4rem, var(--deck-min-text)); }
+  .deck-editor-toolbar { flex-direction: column; gap: 0; }
+  .deck-editor-mobile-tabs { display: flex; gap: .5rem; width: 100%; }
+  .deck-editor-mobile-tabs > button { flex: 1; padding: 0 .4rem; }
+  .deck-editor-mobile-tabs > button[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
+  .deck-editor-tools > summary { min-height: var(--deck-editor-target); }
+  .deck-editor-tools[open] { max-height: 24vh; overflow-y: auto; }
+  .deck-editor-panes { display: block; min-height: 0; overflow: hidden; }
+  .deck-editor-panes > * { display: none; height: 100%; box-sizing: border-box; }
+  .deck-editor[data-mobile-view="collection"] [data-pane="collection"],
+  .deck-editor[data-mobile-view="deck"] [data-pane="deck"],
+  .deck-editor[data-mobile-view="inspect"] .deck-editor-inspector { display: flex; }
+  .deck-editor-pane-title { font-size: 2.1rem; padding-bottom: .6rem; }
+  .deck-editor-tile .deck-editor-main { grid-template-columns: 6.5rem minmax(0, 1fr) auto; }
+  .deck-editor-inspector { border: 0; padding: 0; }
+  .deck-editor .deck-editor-reading > .card { max-width: 29rem; }
+  .deck-editor-foot .as-btn { min-width: 8rem; }
+}
+/* Reading Desk reference refinements. Native card facts remain authoritative. */
+.deck-editor { background-color: #221b13; scrollbar-color: #75613c #19150f; }
+.deck-editor-class { color: #e5c992; margin-left: auto; }
+.deck-editor-counter { margin-left: 0; }
+.deck-editor-searchbar { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; flex: none; }
+.deck-editor-searchbar .deck-editor-search { flex: 1 1 12rem; width: 0; min-width: 8rem; margin: 0; }
+.deck-editor-searchbar .deck-editor-chip { padding-inline: .8rem; }
+.deck-editor-tile .deck-editor-main { grid-template-columns: 9.5rem minmax(0, 1fr) auto; grid-template-rows: auto auto auto auto; }
+.deck-editor-tile .deck-editor-art { grid-row: 1 / 5; min-height: 9rem; max-height: 11rem; }
+.deck-editor-tile .deck-editor-meta { grid-row: 4; grid-column: 2 / 4; }
+.deck-editor-type { grid-row: 2; grid-column: 2; font: 700 max(1.1rem, var(--deck-min-text)) system-ui, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: #97bad2; }
+.deck-editor-type[data-type="attack"] { color: #e5a96e; }
+.deck-editor-grip { color: #a48f6c; grid-column: 3; grid-row: 4; justify-self: end; font: 1.8rem sans-serif; }
+.deck-editor-row .deck-editor-main { grid-template-columns: 3rem minmax(0, 1fr) auto; }
+.deck-editor-row .deck-editor-cost { grid-column: 3; grid-row: 1 / 3; }
+.deck-editor-row .deck-editor-count { grid-column: 1; grid-row: 1; }
+.deck-editor-row .deck-editor-grip { grid-column: 1; grid-row: 2; justify-self: center; }
+.deck-editor-row .deck-editor-meta { font-size: max(1.1rem, var(--deck-min-text)); }
+.deck-editor-dropwell { margin: 1rem 0; padding: 1.6rem 1rem; border: 1px dashed #b59046; border-radius: .7rem; text-align: center; color: #d6bd8e; flex: none; }
+.deck-editor-group > summary { cursor: pointer; min-height: var(--deck-editor-target); align-content: center; color: #d6bd8e; font-weight: 700; }
+.deck-editor-group .deck-editor-item { margin-bottom: .5rem; }
+.deck-editor-display-cards .deck-editor-main { grid-template-columns: 6rem minmax(0, 1fr) auto; grid-template-rows: auto auto auto; }
+.deck-editor-display-cards .deck-editor-art { grid-column: 1; grid-row: 1 / 4; max-height: 9rem; }
+.deck-editor-display-cards .deck-editor-count { grid-column: 3; grid-row: 3; }
+.deck-editor-display-cards .deck-editor-type { grid-column: 2; grid-row: 2; }
+.deck-editor-display-cards .deck-editor-meta { grid-row: 3; }
+.deck-editor-display-cards .deck-editor-grip { display: none; }
+.deck-editor-reading { padding: 2.4rem 1.4rem 1rem; }
+.deck-editor .deck-editor-reading > .card { width: min(100%, var(--deck-inspect-width)); max-width: none; aspect-ratio: var(--card-ratio); height: auto; min-height: 0; overflow: visible; grid-template-rows: var(--card-bands); }
+.deck-editor .deck-editor-reading .card > .cname { text-align: center; padding: .5rem 2.8rem; white-space: normal; min-height: 0; }
+.deck-editor .deck-editor-reading .card > .art { height: auto; aspect-ratio: auto; min-height: 0; }
+.deck-editor .deck-editor-reading .card .ctext { overflow: visible; -webkit-line-clamp: unset; max-height: none; }
+.deck-editor .deck-editor-reading .card .cd-body .ctext { padding: 1.4rem 1.2rem .7rem; flex: none; }
+.deck-editor .deck-editor-reading .card .cd-body { overflow-y: auto; min-height: 0; pointer-events: auto; scrollbar-width: thin; }
+.deck-editor .deck-editor-reading .card .deck-editor-flavor { padding: 0 1.6rem 1.4rem; margin: 0; text-align: center; white-space: pre-line; }
+.deck-editor .deck-editor-reading .card .card-cost-rail { top: -1.5rem; left: -1.3rem; right: auto; z-index: 3; }
+.deck-editor .deck-editor-reading .card .cost { display: grid; place-items: center; width: 4.8rem; height: 4.8rem; padding: 0; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #7297b1, #29455b 55%, #112432); border: 2px solid #c7b78b; box-shadow: 0 0 0 3px #423723; font: 2.8rem Georgia, serif; color: #fff2cf; }
+.deck-editor .deck-editor-reading .card .cost > span { display: none; }
+.deck-editor .deck-editor-reading .card .cost { justify-content: center; align-content: center; }
+.deck-editor .deck-editor-reading .card .card-cost-rail > :is(.stamina-cost, .mana-cost) { font-size: max(1.4rem, var(--deck-min-text)); line-height: 1.3; padding: .3rem .5rem; border: 1px solid #796741; background: #181b1e; border-radius: .5rem; }
+.deck-editor-inspect-back { display: none; }
+.deck-editor-feedback { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #d6bd8e; min-height: var(--deck-editor-target); }
+.deck-editor-feedback[hidden] { display: none; }
+.deck-editor-feedback .deck-editor-undo { min-height: var(--deck-editor-target); min-width: 8rem; }
+.deck-editor .deck-editor-foot > .modal-btnrow { width: min(100%, 32rem); margin-left: auto; }
+@media (min-width: 1001px) and (max-height: 820px) {
+  .deck-editor .deck-editor-reading > .card { width: min(100%, var(--deck-inspect-width), max(180px, calc((100dvh - 340px) * var(--card-ratio)))); }
+  .deck-editor .deck-editor-reading .card > .cname { font-size: 2rem; padding-block: .8rem; }
+  .deck-editor .deck-editor-reading .card .cd-body .ctext { padding-top: .8rem; }
+}
+@media (max-width: 1100px) and (min-width: 1001px) {
+  .deck-editor-tile .deck-editor-main { grid-template-columns: 5rem minmax(0, 1fr) auto; }
+}
+@media (max-width: 1000px) {
+  .deck-editor-class { display: none; }
+  .deck-editor-counter { margin-left: auto; }
+  .deck-editor-tile .deck-editor-main { grid-template-columns: 8rem minmax(0, 1fr) auto; }
+  .deck-editor-inspect-back { display: block; align-self: start; flex: none; }
+  .deck-editor[data-mobile-view="inspect"] .deck-editor-toolbar { display: none; }
+  .deck-editor[data-mobile-view="inspect"] { grid-template-rows: auto minmax(0, 1fr) auto; }
+  .deck-editor-reading { padding-top: 1.8rem; }
+  .deck-editor-dropwell { display: none; }
+  .deck-editor .deck-editor-foot > .modal-btnrow { width: 100%; }
+}
+/* Compact Reading Desk rows share a two-line layout across both lists.
+   Inspect is a sibling button, never a nested control inside the row button. */
+.deck-editor {
+  --deck-row-art: 5.6rem;
+  --deck-row-height: 8.2rem;
+  --deck-row-cost: max(3.4rem, calc(30px / var(--ui-zoom, 1)));
+  --deck-cost-count: 2;
+  --deck-row-costs: calc(var(--deck-row-cost) * var(--deck-cost-count) + .4rem * (var(--deck-cost-count) - 1));
+  --deck-inline-inspect: max(5.4rem, var(--deck-editor-target));
+}
+.deck-editor .deck-editor-item { position: relative; gap: .3rem; margin-top: .25rem; }
+.deck-editor .deck-editor-main {
+  position: relative; grid-template-columns: 1rem var(--deck-row-art) minmax(0, 1fr) var(--deck-row-costs);
+  grid-template-rows: var(--deck-row-cost) minmax(0, 1fr); column-gap: .55rem; row-gap: 0;
+  height: var(--deck-row-height); min-height: var(--deck-row-height); max-height: var(--deck-row-height);
+  box-sizing: border-box; padding: .4rem .6rem; border-radius: .5rem;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.deck-editor .deck-editor-main[data-illustrated="false"] { grid-template-columns: 1rem minmax(0, 1fr) var(--deck-row-costs); }
+.deck-editor .deck-editor-grip { grid-column: 1; grid-row: 1 / 3; align-self: center; justify-self: start; font-size: 1.6rem; }
+.deck-editor .deck-editor-main > .deck-editor-art {
+  grid-column: 2; grid-row: 1 / 3; width: var(--deck-row-art); height: var(--deck-row-art);
+  min-height: 0; max-height: none; align-self: center; object-fit: contain; padding: 0; background: #17130e;
+}
+.deck-editor .deck-editor-main > .deck-editor-art.outline { padding: .4rem; }
+.deck-editor .deck-editor-heading {
+  grid-column: 3; grid-row: 1; min-width: 0; display: flex; align-items: baseline; gap: .5rem;
+  flex-wrap: nowrap; line-height: 1.2; padding-block: .15rem; overflow: hidden; max-height: 1.5em;
+}
+.deck-editor .deck-editor-heading .deck-editor-name { min-width: 0; font-weight: 700; font-size: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck-editor .deck-editor-heading .deck-editor-type { flex: none; font-size: max(.9rem, var(--deck-min-text)); letter-spacing: .035em; }
+.deck-editor .deck-editor-row-rules {
+  grid-column: 3; grid-row: 2; align-self: end; min-width: 0; margin: 0;
+  font-size: max(1.2rem, var(--deck-min-text)); line-height: 1.35; max-height: 2.7em;
+  white-space: normal; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+.deck-editor .deck-editor-main[data-illustrated="false"] > :is(.deck-editor-heading, .deck-editor-row-rules, .deck-editor-meta) { grid-column: 2; }
+.deck-editor .deck-editor-costs { grid-column: -2; grid-row: 1; display: flex; justify-content: flex-end; align-items: center; gap: .4rem; }
+.deck-editor .deck-editor-costs .deck-editor-cost {
+  grid-column: auto; grid-row: auto; flex: none; width: var(--deck-row-cost); height: var(--deck-row-cost);
+  box-sizing: border-box; font: 700 max(1.6rem, calc(14px / var(--ui-zoom, 1))) Georgia, serif;
+  background: radial-gradient(circle at 35% 25%, #52778e, #1f3a50 70%); border-color: #92b4cc;
+}
+.deck-editor .deck-editor-costs .resource-stamina { background: radial-gradient(circle at 35% 25%, #726f38, #3d4223 70%); border-color: #bdba77; color: #fff4c8; }
+.deck-editor .deck-editor-costs .deck-editor-cost { display: flex; flex-direction: column; justify-content: center; line-height: 1; }
+.deck-editor .deck-editor-costs .deck-editor-cost small { font: 700 max(.75rem, calc(8px / var(--ui-zoom, 1))) system-ui, sans-serif; line-height: 1; }
+.deck-editor .deck-editor-costs .deck-editor-cost > span { line-height: 1; }
+.deck-editor .deck-editor-costs .deck-editor-cost:has(.deck-editor-resource-icon) {
+  position: relative; border: 0; border-radius: 0; background: none; padding: 0; color: #fff;
+}
+.deck-editor .deck-editor-resource-icon { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.deck-editor .deck-editor-cost:has(.deck-editor-resource-icon) .deck-editor-resource-value {
+  position: relative; z-index: 1; font: 700 max(1.8rem, calc(16px / var(--ui-zoom, 1))) Georgia, serif; line-height: 1;
+  color: #fff; paint-order: stroke fill; -webkit-text-stroke: 1px #17202a; text-shadow: 0 1px 2px #000, 0 0 2px #000;
+}
+.deck-editor .deck-editor-cost:has(.deck-editor-resource-icon) small {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.deck-editor .deck-editor-reading .card .card-costs,
+.deck-editor .deck-editor-reading .card .card-cost-rail:has(.deck-editor-costs) {
+  position: absolute; top: .5rem; right: .5rem; left: auto; width: auto; transform: none;
+  display: flex; align-items: center; justify-content: flex-end; z-index: 3;
+}
+.deck-editor .deck-editor-reading .card > .deck-editor-costs { position: absolute; top: .5rem; right: .5rem; z-index: 3; }
+.deck-editor .deck-editor-reading .card:has(.deck-editor-costs) > .cname { padding-inline: 1rem calc(var(--deck-row-costs) + 1rem); }
+.deck-editor .deck-editor-count { grid-column: -2; grid-row: 2; align-self: center; justify-self: end; font-size: max(1.2rem, var(--deck-min-text)); }
+.deck-editor .deck-editor-meta { grid-column: 3; grid-row: 2; align-self: end; font-size: max(1.1rem, var(--deck-min-text)); white-space: normal; line-height: 1.25; max-height: 2.5em; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.deck-editor .deck-editor-meta:empty { display: none; }
+.deck-editor .deck-editor-main:has(.deck-editor-meta:not(:empty)) .deck-editor-row-rules { display: none; }
+.deck-editor .deck-editor-actions { align-self: stretch; align-items: center; }
+.deck-editor .deck-editor-actions > .deck-editor-step { height: var(--deck-editor-target); padding-inline: .3rem; }
+.deck-editor .deck-editor-item:has(.deck-editor-main[aria-pressed="true"]) { z-index: 1; }
+.deck-editor .deck-editor-main[aria-pressed="true"] {
+  transform: translateY(-2px); box-shadow: 0 5px 10px #0008, inset 0 0 0 1px #806020; background: #2c2315;
+}
+.deck-editor .deck-editor-item:has(.deck-editor-inline-inspect:not([hidden])) .deck-editor-row-rules { padding-right: var(--deck-inline-inspect); }
+.deck-editor .deck-editor-inline-inspect {
+  position: absolute; z-index: 2; right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .6rem);
+  bottom: .6rem; min-width: var(--deck-inline-inspect); min-height: var(--deck-editor-target); padding: .2rem .35rem;
+  border: 0; border-radius: .4rem; background: transparent; color: #efd18c;
+  font: 700 max(1.1rem, var(--deck-min-text)) Georgia, serif; text-decoration: underline; text-underline-offset: .2em; cursor: pointer;
+}
+.deck-editor .deck-editor-inline-inspect:hover { background: #4b3b2080; }
+.deck-editor .deck-editor-inline-inspect[hidden] { display: none; }
+.deck-editor .deck-editor-item:is(.ineligible, .equipment-missing) .deck-editor-main { opacity: .45; cursor: not-allowed; }
+.deck-editor .deck-editor-art-toggle { display: flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; min-height: var(--deck-editor-target); margin-top: .6rem; font-size: max(1.2rem, var(--deck-min-text)); color: var(--muted); }
+.deck-editor .deck-editor-row:has(.deck-editor-order) { display: grid; grid-template-columns: minmax(0, 1fr); }
+.deck-editor .deck-editor-row:has(.deck-editor-order) .deck-editor-actions { justify-content: flex-end; }
+.deck-editor .deck-editor-row:has(.deck-editor-order) .deck-editor-inline-inspect { right: calc(var(--deck-row-costs) + .6rem); bottom: calc(var(--deck-editor-target) + .9rem); }
+
+/* The combat stage keeps its authored square canvas and foot baseline. */
+.deck-editor-animation { margin: 1rem auto; max-width: var(--deck-inspect-width, 32rem); border-block: 1px solid var(--line); }
+.deck-editor-animation[hidden] { display: none; }
+.deck-editor-animation-stage { position: relative; height: 10rem; overflow: hidden; background: radial-gradient(ellipse at 50% 100%, #5f472233, transparent 70%); }
+.deck-editor-animation-stage .pose-stage { position: absolute; width: 100%; height: 8.5rem; bottom: .5rem; left: 0; }
+.deck-editor-animation-stage .pose-layer { position: absolute; left: 50%; pointer-events: none; }
+.deck-editor-animation-stage .pose-frame { position: absolute; object-fit: contain; max-width: none; }
+.deck-editor-animation-stage .combat-pose-aura { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.deck-editor-animation-stage .combat-pose-aura svg { width: 100%; height: 100%; }
+.deck-editor-animation-controls { display: flex; align-items: center; justify-content: space-between; gap: .8rem; font-size: max(1.1rem, var(--deck-min-text)); color: var(--muted); }
+.deck-editor .deck-editor-animation-toggle { min-height: var(--deck-editor-target); min-width: var(--deck-editor-target); font-size: inherit; }
+.deck-editor-animation.paused * { animation-play-state: paused !important; }
+@media (min-width: 1001px) {
+  .deck-editor { padding: 1.2rem 1.6rem .8rem; gap: .5rem; --deck-editor-text: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
+  .deck-editor-head { padding-bottom: .6rem; }
+  .deck-editor-title { font-size: 2.2rem; }
+  .deck-editor-subtitle { margin-top: .25rem; font-size: 1.2rem; }
+  .deck-editor-counter { font-size: 1.5rem; }
+  .deck-editor-curve { height: 3.8rem; }
+  .deck-editor-curve-fill { height: calc(var(--share, 0) * 2.2rem); }
+  .deck-editor-panes { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.05fr) minmax(0, 1fr); gap: 1.4rem; }
+  .deck-editor-pane-title { font-size: 2.1rem; padding-bottom: .7rem; }
+  .deck-editor-searchbar { margin-bottom: .7rem; }
+  .deck-editor-list { gap: .4rem; padding-top: .25rem; }
+  .deck-editor .deck-editor-inline-inspect { min-height: 2.4rem; height: 2.4rem; }
+  .deck-editor-inspector { padding-inline: 1.4rem; gap: .5rem; }
+  .deck-editor-reading { padding: 1.8rem 1rem .6rem; }
+  .deck-editor .deck-editor-reading .card > .cname { font-size: 1.8rem; }
+  .deck-editor .deck-editor-reading .card .ctext { font-size: 1.4rem; line-height: 1.4; }
+  .deck-editor .deck-editor-reading .card .ctype { font-size: max(1.1rem, var(--deck-min-text)); }
+  .deck-editor .deck-editor-reading .card .deck-editor-flavor { font-size: max(1.1rem, var(--deck-min-text)); padding-inline: 1rem; }
+  .deck-editor-keyword { padding-block: .6rem; font-size: max(1.2rem, var(--deck-min-text)); }
+  .deck-editor-keyword strong { font-size: 1.4rem; }
+  .deck-editor-selected-actions { padding: 0 .6rem .4rem; }
+  .deck-editor .deck-editor-primary { font-size: 1.6rem; }
+  .deck-editor-dropwell { padding: 1rem .6rem; margin-block: .6rem; }
+  .deck-editor-footer { padding-top: .5rem; }
+  .deck-editor .deck-editor-foot > .modal-btnrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 33rem); gap: .6rem; }
+  .deck-editor .deck-editor-foot .as-btn { width: auto; min-width: 0; max-width: 100%; }
+}
+@media (max-width: 1000px) {
+  .deck-editor { --deck-row-art: 4.4rem; --deck-row-cost: max(3.2rem, calc(28px / var(--ui-zoom, 1))); --deck-inline-inspect: max(4.8rem, var(--deck-editor-target)); }
+  .deck-editor .deck-editor-main { column-gap: .35rem; padding-inline: .35rem; }
+  .deck-editor .deck-editor-heading { gap: .2rem .4rem; font-size: max(1.3rem, var(--deck-min-text)); }
+  .deck-editor .deck-editor-inline-inspect { right: calc(var(--deck-editor-target) + .3rem + var(--deck-row-costs) + .35rem); padding-inline: .1rem; }
+  .deck-editor-animation { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck-editor .deck-editor-main { transition: none; }
+}
 .armoury-edit-deck { align-self: flex-start; min-height: var(--tap-floor); }
 
 /* SPEC §15.4 — the Armoury's Sigils panel (src/ui/screens/equipment.js

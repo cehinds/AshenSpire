@@ -738,8 +738,8 @@ deckEditor.rest,,Edit deck,Rearrange your deck with the cards you own. Leaving t
 deckEditor.armoury,,Edit deck,Open the deck editor with the cards you own.,Edit deck
 deckEditor.counter,,{count} / {min}–{max},"Cards in the deck, then the fewest and the most the editor lets you confirm.",Deck size
 deckEditor.unlimited,,∞,No limit.,
-deckEditor.pane.deck,,Deck,The cards you will fight with. Tap one to take it out.,Deck
-deckEditor.pane.collection,,Collection,Every card you own. Tap one to add it to the deck.,Collection
+deckEditor.pane.deck,,Your Deck,Select a card to inspect it. Use Remove to take a copy out.,Deck
+deckEditor.pane.collection,,Card Library,Select a card to inspect it. Use Add to put a copy in your deck.,Collection
 deckEditor.panes.switch,,Switch pane,Move between the collection and the deck.,Switch pane
 deckEditor.curve,,Cost curve,How many cards in the deck cost each amount.,Cost curve
 deckEditor.curve.bar,,{bucket},{count} cards cost {bucket}.,
@@ -780,7 +780,7 @@ deckEditor.refuse.copyLimit,,{name} is limited to {limit} in the deck.,,
 deckEditor.refuse.allInDeck,,Every {name} you own is already in the deck.,,
 deckEditor.empty.deck,,No card in the deck matches these filters.,,
 deckEditor.empty.collection,,No card you own matches these filters.,,
-deckEditor.keys,,"Tap, ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",,
+deckEditor.keys,,"Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",,
 deckEditor.done,,Done,Keep this deck.,Done
 deckEditor.cancel,,Cancel,Put the deck back exactly as it was when the editor opened.,Cancel
 # ---- why a forward control is off (docs/FINISH.md §6) ------------------------
@@ -1060,6 +1060,35 @@ settings.row.wireframeSceneFloor,,Scene ground line,How the painting is cropped 
 combat.potions.use.aria,,Use {name},,
 combat.potions.use.question,,Use {name}? {remaining} remaining.,,
 lore.line.hint,,— read the lore,,
+
+deckEditor.readingDesk,,Reading Desk,,
+deckEditor.readingHint,,Build your deck one card at a time.,,
+deckEditor.filterSort,,Filters and sort,,
+deckEditor.inspect,,Inspect card,,
+deckEditor.inspectNamed,,Inspect {name},,
+deckEditor.search,,Search cards…,,
+deckEditor.addSelected,,Add to deck,,
+deckEditor.removeSelected,,Remove from deck,,
+deckEditor.all,,All,,
+deckEditor.inDeck,,In Deck,,
+deckEditor.searchDeck,,Search your deck…,,
+deckEditor.display.list,,List,,
+deckEditor.display.cards,,Cards,,
+deckEditor.back,,← Back to cards,,
+deckEditor.dropHere,,Drop a card here to add it to your deck.,,
+deckEditor.undo,,Undo,,
+deckEditor.added,,Added {name} to your deck.,,
+deckEditor.removed,,Removed {name} from your deck.,,
+deckEditor.animation,,Card animation,,
+deckEditor.animation.play,,Play,,
+deckEditor.animation.pause,,Pause,,
+deckEditor.animation.still,,Card pose,,
+deckEditor.animation.unavailable,,No animation available for this card.,,
+deckEditor.art.alternative,,Alternative artwork,,
+deckEditor.art.basicOnly,,Basic artwork is available. Alternative artwork has not been added yet.,,
+deckEditor.inspectAction,,Inspect,,
+deckEditor.equipmentNotFound,,Equipment not found,This card's equipment is no longer in your loadout.,
+deckEditor.refuse.equipment,deckEditor.equipmentNotFound,,,
 book.read.classSummary,,Gain {xp} class XP. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Cancel keeps the book.,,
 book.read.knownClass,,This class is already learned. Reading still grants its XP and any bonus rewards.,,
 book.read.xpAwarded,,Gained {xp} class XP.,,
