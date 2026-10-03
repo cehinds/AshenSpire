@@ -3,6 +3,76 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1527",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Painted books and class-book bonuses",
+    "detail": "Books have separate painted covers and emblems, including a feat emblem, with color across the whole leather binding. Class books grant XP on every read, learn the class on the first read, and independently roll a matching combat card (25%) and feat (5%). Both chances are configurable in Advanced → Shops. The result shows what you received; excess card copies go to the sideboard.",
+    "build": "0.7.1.837",
+    "pullRequest": 1527,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1527"
+  },
+  {
+    "id": "pr-1526",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Class-book reward rules are documented",
+    "detail": "The approved contract keeps class learning and XP, makes class books repeatable, and specifies independent configurable combat-card and feat chances of 25% and 5%. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.835",
+    "pullRequest": 1526,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1526"
+  },
+  {
+    "id": "pr-1517",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Your phone can buzz on card play, damage taken and turn start",
+    "detail": "On a device that can vibrate, playing a card, losing HP (from a hit, or from a card, curse or status that costs HP) and the start of your turn each give a short buzz of its own; in co-op, your own plays, wounds and turns buzz your device, not a teammate's. Changing equipment does not buzz. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.",
+    "build": "0.7.1.834",
+    "pullRequest": 1517,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1517"
+  },
+  {
+    "id": "pr-1520",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: a whole run is now played in a real browser",
+    "detail": "Nothing you play changes. A new automatic check starts the game from the title, creates a character on a fixed seed, plays a fight, walks the map to the act boss, dies to it, returns to the title and starts a new run, and fails if anything goes wrong on the way or an error is logged.",
+    "build": "0.7.1.830",
+    "pullRequest": 1520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1520"
+  },
+  {
+    "id": "pr-1524",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: every full browser check now has to download the art first",
+    "detail": "Nothing you play changes. After the art moved out of this repository, three heavy browser checks ran without downloading it and failed on pictures that never loaded. A test now fails if any check in the full run starts a tool before the art is downloaded, including a tool started from a multi-line step.",
+    "build": "0.7.1.829",
+    "pullRequest": 1524,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1524"
+  },
+  {
+    "id": "pr-1519",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: the build-number check no longer passes when the previous build's record is missing or unreadable",
+    "detail": "Nothing you play changes. The automatic check that each new build's number is higher than the last one treated a previous build record it could not open (a damaged copy of the history), or one too garbled to read, as if there had been no record at all, and passed. It now stops and says it could not tell. A shallow copy that holds no previous build at all still passes, as before.",
+    "build": "0.7.1.828",
+    "pullRequest": 1519,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1519"
+  },
+  {
+    "id": "pr-1518",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Quick start: from the title to your first card in six presses",
+    "detail": "The title has a new Quick start. It begins a climb at once with the recommended character (the Reaver, no keepsake, Standard stats, the class's own starting gear), a fresh seed and the first empty save slot, and skips the opening. The opening still plays on your next ordinary climb. If every slot is full it asks before replacing slot 1, as Begin does. A new player now reaches their first card play in 6 inputs, down from 24 through New and character creation. New still lets you choose everything.",
+    "build": "0.7.1.826",
+    "pullRequest": 1518,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1518"
+  },
+  {
     "id": "pr-1523",
     "date": "2026-10-02",
     "group": "2026-10-02",

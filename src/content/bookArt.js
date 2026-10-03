@@ -2,7 +2,7 @@ import { BOOK_ART_PRESETS } from './bookArtPresets.js';
 
 // Extend these catalogs to add another cover or symbol; paths use assetUrl.
 export const BOOK_COVERS = ['classic', 'scholar', 'field'];
-export const BOOK_SYMBOLS = ['blade', 'shield', 'focus', 'paired', 'spell', 'universal', 'reaver', 'starseer', 'rogue', 'herald'];
+export const BOOK_SYMBOLS = ['blade', 'shield', 'focus', 'paired', 'spell', 'universal', 'reaver', 'starseer', 'rogue', 'herald', 'feat'];
 export const BOOK_TREATMENTS = ['solid', 'line', 'seal'];
 export const BOOK_TRIMS = ['none', 'corners', 'frame', 'arcane'];
 export const BOOK_PALETTE = ['#ac782d', '#277348', '#346e9f', '#7541a5', '#247c7a', '#a34237', '#514b9b', '#3e6261', '#98582d', '#6f737b'];
@@ -23,11 +23,11 @@ export function bookArtRecipe(def, override) {
   return bookArtProblems(recipe).length ? { ...DEFAULT_BOOK_ART } : { ...recipe };
 }
 export function bookArtLayers(recipe) {
-  const root = 'assets/shop/layers';
+  const root = 'assets/shop/painted';
   return {
     base: `${root}/covers/${recipe.cover}.webp`,
-    tint: `${root}/cover-tint.svg`,
-    symbol: `${root}/symbols/${recipe.symbol}-${recipe.treatment}.svg`,
-    trim: recipe.trim === 'none' ? null : `${root}/trims/${recipe.trim}.svg`,
+    symbol: `${root}/symbols/${recipe.symbol}.webp`,
+    // Recoloring and optional tooling are computed by the shared SVG renderer.
+    trim: null,
   };
 }

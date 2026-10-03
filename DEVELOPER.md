@@ -41,6 +41,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
+| `quick-start.yml` → Title Quick start to the first card play within 6 inputs (`quick-start-inputs.mjs --only quick`, real browser) | yes | yes (also on push to `dev`) |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
@@ -317,6 +318,24 @@ Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in
 `src/content/actionAnimations.js`. Keep those mappings separate from mechanics.
+
+`node tools/full-run-probe.mjs` (FINISH §3 "A browser full run") plays one
+whole run in Chromium from a normal boot of the source tree, served as
+`tools/launch.mjs` serves it (LAN layer on): the startup gate and the title's
+New Game, character creation step by step with the fixed seed (`--seed`,
+default `FULLRUN1`) typed into the Review's Seed field, the act map, a first
+fight played with the Attack cards in hand, the map walked to the act boss
+(later fights resolved through `window.__combat`), the boss left to kill the
+character with End Turn alone, Return to title, and a second New Game to a new
+act map. Red on any `console.error`, uncaught exception or browser-logged
+error over the drive; the optional `assets/sfx/<id>.ogg` sample 404s
+(`src/ui/audio.js`) are set aside by name and counted (about 18–19 a run;
+the count varies with timing). `--check` prints the verdict lines only; CI runs
+it in `ci.yml`'s *the build stamp and the cold boot in a real browser* job.
+About 4 minutes locally. `--selftest` (seconds, no browser; run by
+`tests/full-run-probe.test.mjs`) plants a `console.error`, an uncaught
+exception and non-sound 404s through the drive's own classifier and requires
+each red, and an optional SFX 404 set aside.
 
 Painted enemy art is selected in `src/content/enemyArt.js` and rendered through
 the shared `enemySprite()` asset function. The twelve PNGs in

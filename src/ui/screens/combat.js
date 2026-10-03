@@ -54,6 +54,7 @@ import {
 import { MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
+import { haptic } from '../haptics.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
 import { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
@@ -2256,6 +2257,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     flyCard(instanceId, targetId, out.events);
     sfx.play('cardPlay');
+    haptic.play('cardPlay'); // the card-play buzz is THIS site's, not the shared sound id's
     busy = true;
     afterDispatch(out.events);
   }

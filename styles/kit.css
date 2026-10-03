@@ -5622,11 +5622,7 @@ button[data-button-size] {
   .book-learning-rarity { font-size: 12px; }
 }
 .book-art { display: inline-block; position: relative; isolation: isolate; width: 100%; aspect-ratio: 1; flex-shrink: 0; }
-.book-art > .book-art-base { display: block; width: 100%; height: 100%; object-fit: contain; }
-.book-art-tint, .book-art-trim, .book-art-symbol { position: absolute; inset: 0; background: var(--book-layer-color); mask: var(--book-layer-mask) center / contain no-repeat; -webkit-mask: var(--book-layer-mask) center / contain no-repeat; pointer-events: none; }
-.book-art-tint { mix-blend-mode: color; }
-.book-art-trim { opacity: .85; filter: drop-shadow(1px 2px 1px #21150d); }
-.book-art-symbol { inset: 25% auto auto 38%; width: 36%; height: 38%; transform: matrix(1,-.21,.4,1,0,0); filter: drop-shadow(1px 2px 1px #21150d); }
+.book-art > svg { display: block; width: 100%; height: 100%; pointer-events: none; }
 .book-reading-art { float: right; width: 5.5rem; margin: -0.5rem 0 0.5rem 0.5rem; }
 .inventory-face .book-art { width: 4rem; }
 .inventory-model .book-art { width: min(100%, 15rem); }
