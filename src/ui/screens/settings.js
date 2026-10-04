@@ -471,8 +471,6 @@ const ROWS = [
     label: t('settings.row.victoryXpSkillWeight'), note: tFull('settings.row.victoryXpSkillWeight') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpAllocateStats', def: false, label: t('settings.row.levelUpAllocateStats'),
     note: tFull('settings.row.levelUpAllocateStats') },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'manualLevelUp', def: true, label: t('settings.row.manualLevelUp'),
-    note: tFull('settings.row.manualLevelUp') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelStatPoints', def: true, label: t('settings.row.rewardLevelStatPoints'),
     note: tFull('settings.row.rewardLevelStatPoints') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelFeats', def: true, label: t('settings.row.rewardLevelFeats'),

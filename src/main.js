@@ -2730,7 +2730,9 @@ async function onCombatEnd(result, combat, enc) {
     tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
   };
   const pendingBefore = pendingLevelCount(registries, run);
-  const manualLevelUp = settingOn(saves.loadMeta().settings, 'manualLevelUp');
+  // Every level waits for its press (SPEC §13.4o): XP is always banked, and the
+  // reward door's Level up claims it. No setting applies a level on its own.
+  const manualLevelUp = true;
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
@@ -2901,7 +2903,7 @@ function rollLevelChoices(levelsEarned) {
   const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
   if (!offerFeats && !offerClassTree) return [];
   const out = [];
-  const firstRewardLevel = run.level.level - (settingOn(settings, 'manualLevelUp') ? 0 : levelsEarned);
+  const firstRewardLevel = run.level.level;
   for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
     const options = [];
     if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
@@ -2961,7 +2963,7 @@ function rollClassDrafts(includeBanked = false) {
 function beginPendingReward(rewards, { source, after }) {
   rewards = configuredRewardOffer(rewards, source);
   rewards = mergeProgressionRewards(run.deferredProgression, rewards, run, {
-    manual: settingOn(saves.loadMeta().settings, 'manualLevelUp'),
+    manual: true,
     characterStart: rewards.characterRewardStart ?? run.level?.level ?? 1,
   });
   const { available, deferred } = partitionProgressionRewards(rewards, run);

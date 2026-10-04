@@ -877,7 +877,6 @@ settings.row.victoryXpCharacterWeight,,Character XP time share,Relative share of
 settings.row.victoryXpClassWeight,,Class XP time share,Relative share of the total animation time.,
 settings.row.victoryXpSkillWeight,,Skill XP time share,"Relative share, split between the skills shown.",
 settings.row.levelUpAllocateStats,,Assign stats in Level Up,Show shrine-style stat allocation in the level reward panel. Off: earned points wait for a Shrine.,
-settings.row.manualLevelUp,,Click to level up,"When XP fills a character or skill bar, wait for its Level button before advancing. Off: earned levels advance automatically.",
 settings.row.rewardLevelStatPoints,,Level Up · Stat points,Grant stat points when an earned character level is claimed.,
 settings.row.rewardLevelFeats,,Level Up · Feats,Offer permanent passive feats when a character level is claimed.,
 settings.row.rewardLevelClassTree,,Level Up · Class upgrades,Include eligible class-tree upgrades alongside feats in the character-level choices.,

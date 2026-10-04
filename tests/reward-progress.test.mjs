@@ -602,6 +602,7 @@ test('bars take turns: with the character and a skill both ready, only the chara
       saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
     });
     assert.deepEqual(app.querySelectorAll('.reward-level-up').map(b => b.dataset.track), ['character']);
+    assert.equal(app.querySelector('.rp-layered-bar[data-track="item:blade"]').classList.contains('rp-bar-ready'), false, 'a bar waiting its turn keeps its normal look');
     app.querySelector('.reward-level-up').click();
     app.querySelector('#reward-level-continue').click();
     assert.deepEqual(app.querySelectorAll('.reward-level-up').map(b => b.dataset.track), ['item:blade'], 'then the skill takes its turn');

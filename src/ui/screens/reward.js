@@ -554,7 +554,11 @@ export function mountRewards(app, {
   async function playXpAnimation(host) {
     const active = () => host?.isConnected && app.querySelector('.reward-claim-layout') === host;
     const pendingRefill = refill;
-    const bars = [...app.querySelectorAll('.reward-claim-layout .rp-layered-bar[data-animate="1"]')];
+    // Fill in turn order — the character, the class, then the skills — so the
+    // first bar to stop at a level is the one whose turn it is.
+    const turn = (bar) => (bar.dataset.kind === 'character' ? 0 : bar.dataset.kind === 'class' ? 1 : 2);
+    const bars = [...app.querySelectorAll('.reward-claim-layout .rp-layered-bar[data-animate="1"]')]
+      .map((bar, index) => ({ bar, index })).sort((a, b) => turn(a.bar) - turn(b.bar) || a.index - b.index).map(({ bar }) => bar);
     const requested = Number(pendingRefill ? settings.levelUpRefillSeconds : settings.victoryXpSeconds);
     const total = document.body.classList.contains('reduced-motion') ? 0
       : Math.max(0, Math.min(12000, (Number.isFinite(requested) ? requested : pendingRefill ? 0.8 : 3) * 1000));
@@ -635,7 +639,7 @@ export function mountRewards(app, {
     const content = [head, el('div', { class: 'modal-body reward-body' }, body), foot];
     const open = app.querySelector('.reward-veil .reward-door');
     if (open && open.rewardDoorOwner === doorOwner) {
-      for (const key of ['rewardDetail', 'victoryCompact']) {
+      for (const key of ['rewardDetail', 'victoryCompact', 'rewardLevel']) {
         open.removeAttribute(`data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`);
         delete open.dataset[key];
       }
@@ -897,9 +901,9 @@ export function mountRewards(app, {
       class: 'rp-next',
       text: row.capped ? t('reward.progress.capped') : row.kind === 'character' ? `Level ${row.level + 1}` : t('reward.progress.next', { level: row.level + 1 }),
     });
-    const ready = xpAnimationDone && (row.kind === 'character'
-      ? pendingLevelCount(registries, run) > 0
-      : !!onClaimSkill && pendingSkillLevelCount(registries, run, row.id) > 0);
+    // Only the bar whose turn it is turns blue and carries Level up; another
+    // with a level waiting keeps its normal look until its turn comes.
+    const ready = readyTrack() === row.id;
     const target = row.fraction * 100;
     const before = row.kind === 'character' ? rewards.xpBefore?.character : rewards.xpBefore?.tracks?.[row.id];
     const old = (!refill || refill.id !== row.id) && before && before.level === row.level && row.xpToNext
@@ -926,7 +930,7 @@ export function mountRewards(app, {
       el('span', { class: 'rp-level', text: row.kind === 'character' ? `Level ${row.level}` : t('reward.progress.level', { level: row.level }) }),
       bar,
       next,
-      ready && readyTrack() === row.id ? button({ label: t('reward.level.button'), className: 'reward-level-up', attrs: { 'data-track': row.id, 'aria-label': `${t('reward.level.button')} ${label}` } }) : null,
+      ready ? button({ label: t('reward.level.button'), className: 'reward-level-up', attrs: { 'data-track': row.id, 'aria-label': `${t('reward.level.button')} ${label}` } }) : null,
       row.kind !== 'character' && row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
       // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
       row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,

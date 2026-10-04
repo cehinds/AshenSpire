@@ -5645,13 +5645,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "settings.row.manualLevelUp",
-    "extends": "",
-    "short": "Click to level up",
-    "full": "When XP fills a character or skill bar, wait for its Level button before advancing. Off: earned levels advance automatically.",
-    "tip": ""
-  },
-  {
     "id": "settings.row.rewardLevelStatPoints",
     "extends": "",
     "short": "Level Up · Stat points",
