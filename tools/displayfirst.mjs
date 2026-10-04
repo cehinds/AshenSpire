@@ -1200,13 +1200,13 @@ function selftestPlants() {
           find: [
             "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
             "    note: tFull('settings.row.fullscreen') },",
-            '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
+            '  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy',
           ].join(settingsEol),
           replace: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
             "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
             "    note: tFull('settings.row.accent') },",
-            '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
+            '  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy',
           ].join(settingsEol),
         },
         {
