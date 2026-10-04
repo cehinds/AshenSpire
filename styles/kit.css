@@ -4889,6 +4889,10 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   position: absolute; left: var(--art-x); top: var(--art-y); width: var(--art-w); height: var(--art-h);
   min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); max-height: none;
 }
+/* The authored plate can be shorter than the primary action's physical target. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] > .end-turn {
+  min-width: calc(48px / var(--ui-zoom, 1)); min-height: calc(48px / var(--ui-zoom, 1));
+}
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:focus-visible {
   outline: 2px solid #e9c783; outline-offset: 3px;
 }
