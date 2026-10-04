@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
-- **Victory stops flashing; level rewards wait for you** ([#1590](https://github.com/cehinds/AshenSpire/pull/1590), `0.7.1.910`). The victory window no longer fades out and back in as XP fills and levels are claimed: it opens once, and only the bars move. Claiming a level, by hand or with guided level-up, no longer forces its reward choice open. A line under the bars records each level, and the reward that level unlocked appears in the list raised and blue, rising into place once, to open whenever you choose.
+- **Victory stops flashing; level rewards wait for you** ([#1590](https://github.com/cehinds/AshenSpire/pull/1590), `0.7.1.911`). The victory window no longer fades out and back in as XP fills and levels are claimed: it opens once, and only the bars move. Claiming a level, by hand or with guided level-up, no longer forces its reward choice open. A line under the bars records each level, and the reward that level unlocked appears in the list raised and blue, rising into place once, to open whenever you choose.
 
 - **Recover from brief Windows art-cache locks** ([#1589](https://github.com/cehinds/AshenSpire/pull/1589), `0.7.1.908`). When an art cache needs replacing, briefly locked Windows files get a bounded retry before the game tooling reports a failure. A permanently refused rename still reports an error and leaves the existing files intact.
 
