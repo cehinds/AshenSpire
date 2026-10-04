@@ -409,8 +409,20 @@
         ]
       },
       "newPerspectiveOptions": {
-        "desktop": [],
-        "mobile": []
+        "desktop": [
+          "assets/scenes/old-aqueduct-desktop.webp",
+          "assets/scenes/drowned-hamlet-desktop.webp",
+          "assets/scenes/frozen-camp-desktop.webp",
+          "assets/scenes/caldera-rim-desktop.webp",
+          "assets/scenes/drowned-orchard-desktop.webp"
+        ],
+        "mobile": [
+          "assets/scenes/old-aqueduct-mobile.webp",
+          "assets/scenes/drowned-hamlet-mobile.webp",
+          "assets/scenes/frozen-camp-mobile.webp",
+          "assets/scenes/caldera-rim-mobile.webp",
+          "assets/scenes/drowned-orchard-mobile.webp"
+        ]
       },
       "components": [
         "assets/components/portrait-mat.svg",
@@ -432,7 +444,10 @@
         "assets/reused/ui/icons/next.svg",
         "assets/reused/ui/icons/dialogue.svg"
       ],
-      "decorations": [],
+      "decorations": [
+        "assets/decorations/second-cairn-fallen.webp",
+        "assets/decorations/second-cairn-raised.webp"
+      ],
       "layout": {
         "desktop": {
           "referenceSize": [
@@ -474,7 +489,9 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -527,8 +544,20 @@
         ]
       },
       "newPerspectiveOptions": {
-        "desktop": [],
-        "mobile": []
+        "desktop": [
+          "assets/scenes/old-aqueduct-desktop.webp",
+          "assets/scenes/drowned-hamlet-desktop.webp",
+          "assets/scenes/frozen-camp-desktop.webp",
+          "assets/scenes/caldera-rim-desktop.webp",
+          "assets/scenes/drowned-orchard-desktop.webp"
+        ],
+        "mobile": [
+          "assets/scenes/old-aqueduct-mobile.webp",
+          "assets/scenes/drowned-hamlet-mobile.webp",
+          "assets/scenes/frozen-camp-mobile.webp",
+          "assets/scenes/caldera-rim-mobile.webp",
+          "assets/scenes/drowned-orchard-mobile.webp"
+        ]
       },
       "components": [
         "assets/components/navigation-sidebar.svg",
@@ -560,7 +589,11 @@
         "assets/components/zoom-in.svg",
         "assets/components/zoom-out.svg"
       ],
-      "decorations": [],
+      "decorations": [
+        "assets/decorations/road-signal-beacon.webp",
+        "assets/decorations/second-cairn-fallen.webp",
+        "assets/decorations/second-cairn-raised.webp"
+      ],
       "layout": {
         "desktop": {
           "referenceSize": [
@@ -603,7 +636,9 @@
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
         "Separate focus, persistent selection, disabled state and actual legal action.",
-        "Canonical map is the default. New city perspective is a hero/service background, not a coordinate-compatible map replacement."
+        "Canonical map is the default. New city perspective is a hero/service background, not a coordinate-compatible map replacement.",
+        "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -654,8 +689,20 @@
         ]
       },
       "newPerspectiveOptions": {
-        "desktop": [],
-        "mobile": []
+        "desktop": [
+          "assets/scenes/old-aqueduct-desktop.webp",
+          "assets/scenes/drowned-hamlet-desktop.webp",
+          "assets/scenes/frozen-camp-desktop.webp",
+          "assets/scenes/caldera-rim-desktop.webp",
+          "assets/scenes/drowned-orchard-desktop.webp"
+        ],
+        "mobile": [
+          "assets/scenes/old-aqueduct-mobile.webp",
+          "assets/scenes/drowned-hamlet-mobile.webp",
+          "assets/scenes/frozen-camp-mobile.webp",
+          "assets/scenes/caldera-rim-mobile.webp",
+          "assets/scenes/drowned-orchard-mobile.webp"
+        ]
       },
       "components": [
         "assets/components/navigation-sidebar.svg",
@@ -683,7 +730,10 @@
         "assets/reused/ui/icons/lock.svg"
       ],
       "decorations": [
-        "assets/decorations/torn-standard.webp"
+        "assets/decorations/torn-standard.webp",
+        "assets/decorations/road-signal-beacon.webp",
+        "assets/decorations/second-cairn-fallen.webp",
+        "assets/decorations/second-cairn-raised.webp"
       ],
       "layout": {
         "desktop": {
@@ -726,7 +776,9 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -817,7 +869,9 @@
       ],
       "decorations": [
         "assets/decorations/torn-standard.webp",
-        "assets/decorations/hanging-lantern.webp"
+        "assets/decorations/hanging-lantern.webp",
+        "assets/decorations/caravan-medicine-strongbox.webp",
+        "assets/decorations/road-signal-beacon.webp"
       ],
       "layout": {
         "desktop": {
@@ -861,7 +915,8 @@
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
         "Separate focus, persistent selection, disabled state and actual legal action.",
-        "Canonical map is the default. New city perspective is a hero/service background, not a coordinate-compatible map replacement."
+        "Canonical map is the default. New city perspective is a hero/service background, not a coordinate-compatible map replacement.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -913,10 +968,20 @@
       },
       "newPerspectiveOptions": {
         "desktop": [
-          "assets/scenes/furnace-chapel-desktop.webp"
+          "assets/scenes/furnace-chapel-desktop.webp",
+          "assets/scenes/old-aqueduct-desktop.webp",
+          "assets/scenes/drowned-hamlet-desktop.webp",
+          "assets/scenes/frozen-camp-desktop.webp",
+          "assets/scenes/caldera-rim-desktop.webp",
+          "assets/scenes/drowned-orchard-desktop.webp"
         ],
         "mobile": [
-          "assets/scenes/furnace-chapel-mobile.webp"
+          "assets/scenes/furnace-chapel-mobile.webp",
+          "assets/scenes/old-aqueduct-mobile.webp",
+          "assets/scenes/drowned-hamlet-mobile.webp",
+          "assets/scenes/frozen-camp-mobile.webp",
+          "assets/scenes/caldera-rim-mobile.webp",
+          "assets/scenes/drowned-orchard-mobile.webp"
         ]
       },
       "components": [
@@ -945,7 +1010,8 @@
         "assets/reused/ui/icons/next.svg"
       ],
       "decorations": [
-        "assets/decorations/torn-standard.webp"
+        "assets/decorations/torn-standard.webp",
+        "assets/decorations/hanging-chain-hooks.webp"
       ],
       "layout": {
         "desktop": {
@@ -988,7 +1054,9 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -1064,14 +1132,24 @@
           "assets/enemies/wandering-soldier-three-quarter.webp",
           "assets/enemies/blight-hound-three-quarter.webp",
           "assets/enemies/wandering-soldier-inspector.webp",
-          "assets/enemies/blight-hound-inspector.webp"
+          "assets/enemies/blight-hound-inspector.webp",
+          "assets/scenes/old-aqueduct-desktop.webp",
+          "assets/scenes/drowned-hamlet-desktop.webp",
+          "assets/scenes/frozen-camp-desktop.webp",
+          "assets/scenes/caldera-rim-desktop.webp",
+          "assets/scenes/drowned-orchard-desktop.webp"
         ],
         "mobile": [
           "assets/scenes/ruined-courtyard-mobile.webp",
           "assets/enemies/wandering-soldier-three-quarter.webp",
           "assets/enemies/blight-hound-three-quarter.webp",
           "assets/enemies/wandering-soldier-inspector.webp",
-          "assets/enemies/blight-hound-inspector.webp"
+          "assets/enemies/blight-hound-inspector.webp",
+          "assets/scenes/old-aqueduct-mobile.webp",
+          "assets/scenes/drowned-hamlet-mobile.webp",
+          "assets/scenes/frozen-camp-mobile.webp",
+          "assets/scenes/caldera-rim-mobile.webp",
+          "assets/scenes/drowned-orchard-mobile.webp"
         ]
       },
       "components": [
@@ -1149,7 +1227,8 @@
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
         "Separate focus, persistent selection, disabled state and actual legal action.",
-        "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors."
+        "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors.",
+        "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly."
       ],
       "unresolvedIconAliases": []
     },
@@ -1249,7 +1328,9 @@
         "assets/reused/ui/icons/insanity.svg",
         "assets/reused/ui/icons/attack.svg"
       ],
-      "decorations": [],
+      "decorations": [
+        "assets/decorations/hanging-chain-hooks.webp"
+      ],
       "layout": {
         "desktop": {
           "referenceSize": [
@@ -1292,7 +1373,8 @@
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
         "Separate focus, persistent selection, disabled state and actual legal action.",
-        "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors."
+        "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -1377,7 +1459,9 @@
         "assets/reused/ui/icons/weight.svg",
         "assets/reused/ui/icons/lock.svg"
       ],
-      "decorations": [],
+      "decorations": [
+        "assets/decorations/open-codex-stand.webp"
+      ],
       "layout": {
         "desktop": {
           "referenceSize": [
@@ -1419,7 +1503,8 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -1507,7 +1592,8 @@
         "assets/reused/ui/icons/link.svg"
       ],
       "decorations": [
-        "assets/decorations/fieldcase-still-life.webp"
+        "assets/decorations/fieldcase-still-life.webp",
+        "assets/decorations/open-codex-stand.webp"
       ],
       "layout": {
         "desktop": {
@@ -1550,7 +1636,8 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -1635,7 +1722,8 @@
         "assets/reused/ui/icons/link.svg"
       ],
       "decorations": [
-        "assets/decorations/fieldcase-still-life.webp"
+        "assets/decorations/fieldcase-still-life.webp",
+        "assets/decorations/open-codex-stand.webp"
       ],
       "layout": {
         "desktop": {
@@ -1678,7 +1766,8 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -1888,7 +1977,8 @@
       ],
       "decorations": [
         "assets/decorations/fieldcase-still-life.webp",
-        "assets/decorations/hanging-lantern.webp"
+        "assets/decorations/hanging-lantern.webp",
+        "assets/decorations/caravan-medicine-strongbox.webp"
       ],
       "layout": {
         "desktop": {
@@ -1931,7 +2021,8 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -2020,7 +2111,9 @@
         "assets/reused/ui/icons/cinders.svg",
         "assets/reused/ui/icons/back.svg"
       ],
-      "decorations": [],
+      "decorations": [
+        "assets/decorations/hanging-chain-hooks.webp"
+      ],
       "layout": {
         "desktop": {
           "referenceSize": [
@@ -2062,7 +2155,8 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -2119,10 +2213,20 @@
       },
       "newPerspectiveOptions": {
         "desktop": [
-          "assets/scenes/chapel-rest-desktop.webp"
+          "assets/scenes/chapel-rest-desktop.webp",
+          "assets/scenes/old-aqueduct-desktop.webp",
+          "assets/scenes/drowned-hamlet-desktop.webp",
+          "assets/scenes/frozen-camp-desktop.webp",
+          "assets/scenes/caldera-rim-desktop.webp",
+          "assets/scenes/drowned-orchard-desktop.webp"
         ],
         "mobile": [
-          "assets/scenes/chapel-rest-mobile.webp"
+          "assets/scenes/chapel-rest-mobile.webp",
+          "assets/scenes/old-aqueduct-mobile.webp",
+          "assets/scenes/drowned-hamlet-mobile.webp",
+          "assets/scenes/frozen-camp-mobile.webp",
+          "assets/scenes/caldera-rim-mobile.webp",
+          "assets/scenes/drowned-orchard-mobile.webp"
         ]
       },
       "components": [
@@ -2149,7 +2253,10 @@
         "assets/reused/ui/icons/stamina.svg",
         "assets/reused/ui/icons/actions.svg"
       ],
-      "decorations": [],
+      "decorations": [
+        "assets/decorations/second-cairn-fallen.webp",
+        "assets/decorations/second-cairn-raised.webp"
+      ],
       "layout": {
         "desktop": {
           "referenceSize": [
@@ -2191,7 +2298,9 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -2283,7 +2392,8 @@
         "assets/reused/ui/icons/next.svg"
       ],
       "decorations": [
-        "assets/decorations/torn-standard.webp"
+        "assets/decorations/torn-standard.webp",
+        "assets/decorations/caravan-medicine-strongbox.webp"
       ],
       "layout": {
         "desktop": {
@@ -2326,7 +2436,8 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -2410,7 +2521,8 @@
         "assets/reused/ui/icons/dexterity.svg"
       ],
       "decorations": [
-        "assets/materials/weathered-parchment.webp"
+        "assets/materials/weathered-parchment.webp",
+        "assets/decorations/open-codex-stand.webp"
       ],
       "layout": {
         "desktop": {
@@ -2454,7 +2566,8 @@
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
         "Separate focus, persistent selection, disabled state and actual legal action.",
-        "Parchment is a non-seamless cover material, dark DOM text recommended; undiscovered masks come from real item art and discovery state."
+        "Parchment is a non-seamless cover material, dark DOM text recommended; undiscovered masks come from real item art and discovery state.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -2538,7 +2651,8 @@
         "assets/components/favorite-star.svg"
       ],
       "decorations": [
-        "assets/materials/weathered-parchment.webp"
+        "assets/materials/weathered-parchment.webp",
+        "assets/decorations/open-codex-stand.webp"
       ],
       "layout": {
         "desktop": {
@@ -2582,7 +2696,8 @@
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
         "Separate focus, persistent selection, disabled state and actual legal action.",
-        "Parchment is a non-seamless cover material, dark DOM text recommended; undiscovered masks come from real item art and discovery state."
+        "Parchment is a non-seamless cover material, dark DOM text recommended; undiscovered masks come from real item art and discovery state.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -2776,10 +2891,20 @@
       },
       "newPerspectiveOptions": {
         "desktop": [
-          "assets/scenes/aftermath-desktop.webp"
+          "assets/scenes/aftermath-desktop.webp",
+          "assets/scenes/old-aqueduct-desktop.webp",
+          "assets/scenes/drowned-hamlet-desktop.webp",
+          "assets/scenes/frozen-camp-desktop.webp",
+          "assets/scenes/caldera-rim-desktop.webp",
+          "assets/scenes/drowned-orchard-desktop.webp"
         ],
         "mobile": [
-          "assets/scenes/aftermath-mobile.webp"
+          "assets/scenes/aftermath-mobile.webp",
+          "assets/scenes/old-aqueduct-mobile.webp",
+          "assets/scenes/drowned-hamlet-mobile.webp",
+          "assets/scenes/frozen-camp-mobile.webp",
+          "assets/scenes/caldera-rim-mobile.webp",
+          "assets/scenes/drowned-orchard-mobile.webp"
         ]
       },
       "components": [
@@ -2805,7 +2930,10 @@
         "assets/reused/ui/icons/deck.svg",
         "assets/reused/ui/icons/reset.svg"
       ],
-      "decorations": [],
+      "decorations": [
+        "assets/decorations/second-cairn-fallen.webp",
+        "assets/decorations/second-cairn-raised.webp"
+      ],
       "layout": {
         "desktop": {
           "referenceSize": [
@@ -2847,7 +2975,9 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },
@@ -2983,7 +3113,8 @@
       "constraints": [
         "Use canonical game data for all live fields; the screenshot is a visual reference.",
         "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-        "Separate focus, persistent selection, disabled state and actual legal action."
+        "Separate focus, persistent selection, disabled state and actual legal action.",
+        "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
       ],
       "unresolvedIconAliases": []
     },

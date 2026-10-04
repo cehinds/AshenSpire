@@ -94,7 +94,9 @@
     "assets/reused/ui/icons/insanity.svg",
     "assets/reused/ui/icons/attack.svg"
   ],
-  "decorations": [],
+  "decorations": [
+    "assets/decorations/hanging-chain-hooks.webp"
+  ],
   "layout": {
     "desktop": {
       "referenceSize": [
@@ -137,7 +139,8 @@
     "Use canonical game data for all live fields; the screenshot is a visual reference.",
     "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
     "Separate focus, persistent selection, disabled state and actual legal action.",
-    "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors."
+    "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors.",
+    "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
   ],
   "unresolvedIconAliases": []
 }

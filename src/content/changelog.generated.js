@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1599",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "More reusable scenes and foreground props",
+    "detail": "The player artwork collection adds five lore-grounded locations in separate desktop and mobile compositions, plus six transparent props including both Second Cairn sword states. Its 316 components include unchanged PNG masters, WebP exports, exact prompts and responsive layer recipes for game integration. Live game artwork bindings are unchanged.",
+    "build": "0.7.1.921",
+    "pullRequest": 1599,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1599"
+  },
+  {
     "id": "pr-1600",
     "date": "2026-10-04",
     "group": "2026-10-04",
