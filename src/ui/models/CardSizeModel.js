@@ -1,3 +1,5 @@
+// The approved illustrated template supersedes the legacy 5:7 default below.
+import { CARD_COMPONENTS } from '../../content/cardComponents.generated.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
 // THE ONE HOME FOR HOW BIG A CARD IS.
@@ -68,7 +70,7 @@ const LEVELS = ['glance', 'focus', 'inspect'];
 // through wireframeUi, and the stylesheet reads the custom properties below.
 
 /** The authored shape, checked. `ratio` is width/height; `bands` are the four face tracks. */
-export function cardShape(config = uiConfig.components.card.sizing) {
+export function cardShape(config = { ...uiConfig.components.card.sizing, ratio: CARD_COMPONENTS.template.width / CARD_COMPONENTS.template.height }) {
   const ratio = Number(config?.ratio);
   if (!Number.isFinite(ratio) || ratio <= 0) {
     throw new Error(`card sizing.ratio must be a positive width/height fraction, got ${JSON.stringify(config?.ratio)}`);

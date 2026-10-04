@@ -14,6 +14,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
+import { generateCardComponents, writeCardObjects } from './card-components.mjs';
 import { createHash } from 'node:crypto';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
@@ -225,6 +226,7 @@ function fail(msg, items) {
 // ---------------------------------------------------------------------------
 // 1. Parse index.html: ordered stylesheet hrefs + module entry src.
 // ---------------------------------------------------------------------------
+const compiledCardComponents = generateCardComponents(ROOT);
 const indexPath = resolve(ROOT, 'index.html');
 if (!existsSync(indexPath)) fail('index.html not found at ' + indexPath);
 const indexHtml = readText(indexPath);
@@ -1211,6 +1213,7 @@ const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
 // whole property is a second copy of a path. OUT_DIR / OUT_PATH, one home.
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_PATH, html, 'utf8');
+writeCardObjects(compiledCardComponents, OUT_DIR);
 
 // THE SIBLING DIRECTORIES THE WEB EDITION NO LONGER CARRIES (step 3c).
 //

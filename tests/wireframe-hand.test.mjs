@@ -32,6 +32,6 @@ test('excess cards overflow horizontally with the same face size',()=>{
 });
 test('a roomy desktop hand uses the available height for larger readable cards', () => {
  const plan = handLayout({width:1876,height:300,count:3,rem:16});
- assert.ok(plan.cardWidth >= 180);
+ assert.ok(plan.cardHeight >= 250, 'roomy hands keep a legible face height at the authored 2:3 ratio');
  assert.ok(plan.top + plan.cardHeight <= 300);
 });

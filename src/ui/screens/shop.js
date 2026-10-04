@@ -11,6 +11,7 @@ import { equipmentCardArt } from '../assets.js';
 // transactions revalidate through armamentTrading.js.
 
 import { renderCard } from '../components/card.js';
+import { servicePortrait } from '../components/servicePortrait.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
@@ -23,7 +24,7 @@ import { canRemoveDeckCard, removeDeckCard } from '../../model/cardRemoval.js';
 import { carriedIds } from '../../model/loadout.js';
 import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale } from '../../model/armamentTrading.js';
 import { openModal, modalHead, modalFooter } from '../components/modalShell.js';
-import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
+import { button, statusText, el, railItem } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t } from '../strings.js';
 import { purchaseReview, burnReview, sellReview } from '../models/ConfirmationReviewModel.js';
@@ -127,7 +128,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   // re-renders the screen; the player stays on the shelf he was on, and the
   // selection moves to the offer now standing where the bought one stood
   // (ShopWorkspaceModel.resolveShopSelection), never back to the first shelf.
-  let activeCategory = 'cards';
+  let activeCategory = 'relics';
   const picks = {};
   let primaryDisarm = null;
   let offerDisarms = [];
@@ -211,6 +212,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
 
     const root = app.querySelector('.shop-workspace');
+    root.prepend(servicePortrait('merchant'));
     applySkillBookOfferTokens(root);
     const frame = root.querySelector('.shop-frame');
     const railed = root.querySelector('.shop-railed');
@@ -290,7 +292,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         el.classList.add('unaffordable');
       }
       addOffer('cards', {
-        ref: cardRefs[i], tile: wrap, name: def.name, desc: el.querySelector('.ctext')?.textContent || def.rarity || '',
+        ref: cardRefs[i], tile: wrap, name: def.name, desc: el.querySelector('[data-card-binding="rules"], .ctext')?.textContent || def.rarity || '',
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buy } },
       });
@@ -327,7 +329,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       card.addEventListener('click', () => openWeaponArt(item, card));
       card.addEventListener('cardinspectionselect', () => select('weaponArts', artRefs[i]));
       addOffer('weaponArts', {
-        ref: artRefs[i], tile: wrap, name: quote.def ? quote.def.name : item.id, desc: card.querySelector('.ctext')?.textContent || t('shop.weaponArt.eyebrow'),
+        ref: artRefs[i], tile: wrap, name: quote.def ? quote.def.name : item.id, desc: card.querySelector('[data-card-binding="rules"], .ctext')?.textContent || t('shop.weaponArt.eyebrow'),
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: !!quote.ok, run: () => openWeaponArt(item, card) },
       });
@@ -794,16 +796,20 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       item.addEventListener('click', () => showCategory(key));
       return item;
     });
-    // The kit's W1 category navigation: the rail beside the pane on wide
-    // frames, one [Category ▾] selector above it on compact ones (rule 11: no
-    // horizontal strip). `data-shop-rail` mirrors the nav's own decision so
-    // the frame's grid and the nav can never disagree.
-    const nav = categoryNav({
-      items: railItems, ariaLabel: t('shop.rail.aria'), railAttrs: { class: 'shop-rail' }, toggleId: 'shop-cat-select',
-      onChange: ({ mode }) => { root.dataset.shopRail = mode === 'rail' ? 'side' : 'top'; },
-    });
-    railed.prepend(nav.rail);
-    nav.attach(railed);
+    // The artwork presents stock as drawers. Keep one live pane and move it
+    // after the selected drawer; the same stock and selection power mobile.
+    root.dataset.shopRail = 'drawers';
+    const shopPane = root.querySelector('.shop-pane');
+    const categorySelect = el('select', { id: 'shop-cat-select', 'aria-label': t('shop.rail.aria'), class: 'shop-category-select' });
+    for (const item of railItems) {
+      item.removeAttribute('role');
+      item.removeAttribute('aria-selected');
+      item.setAttribute('tabindex', '0');
+      railed.append(item);
+      categorySelect.append(el('option', { value: item.dataset.shopCategory, text: t(RAIL_LABEL[item.dataset.shopCategory]) }));
+    }
+    categorySelect.addEventListener('change', () => showCategory(categorySelect.value));
+    railed.before(categorySelect);
     const footHost = document.createElement('div');
     footHost.className = 'shop-foot-host';
     frame.appendChild(footHost);
@@ -829,8 +835,14 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       for (const item of railItems) {
         const on = item.dataset.shopCategory === activeCategory;
         item.classList.toggle('on', on);
-        item.setAttribute('aria-selected', on ? 'true' : 'false');
+        item.setAttribute('aria-expanded', on ? 'true' : 'false');
         if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+      }
+      categorySelect.value = activeCategory;
+      const drawer = railItems.find(item => item.dataset.shopCategory === activeCategory);
+      if (drawer && drawer.nextSibling !== shopPane) {
+        shopPane.remove();
+        drawer.after(shopPane);
       }
       for (const shelf of offersBox.querySelectorAll('[data-shop-shelf]')) shelf.hidden = shelf.dataset.shopShelf !== activeCategory;
       // The shelf that just appeared had no box to measure while it was

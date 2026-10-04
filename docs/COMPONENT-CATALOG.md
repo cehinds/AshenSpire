@@ -133,6 +133,11 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
+| `player.scenePainting` | `PlayerArtworkModel` | `scenePainting`, `servicePortrait` | Title, rest and services | Painted scenery with independent foreground layers. |
+| `player.engravedIcon` | `engravedGlyphId` | `engravedIcon`, `engravedIconHtml` | Shared controls | Current-color engraved icons with tier-aware masks. |
+| `illustrated-card` | `card-layout.json`, generated card objects | `illustratedCardHtml`, `fitIllustratedCardText` | All ability cards | Clipped proportional art, live centered rules, stamina/mana banners and tags. |
+| `illustrated-background` | Environment artwork and floor model | `illustratedBackground` | Battlefields | Layered painting preserves authored floor anchors. |
+| `illustrated-vitality-hud` | `RunHudViewModel` | `hudmeta`, `runHud` | Run screens | Enlarged HP above relics with transparent background and illustrated controls. |
 | `skill-book-offer` | `consumablePurchasePlan`, shop `components.bookOffers` | `skillBookOffer.renderSkillBookOffer` | Market | Uniform book sprite, live details and native Buy control. |
 | `merchant-offer` | `ShopWorkspaceModel` offers + shared book-offer tokens | `merchantOffer.arrangeMerchantOffer` + `shop.mountShop` | Merchant buy, sell and service shelves | Equal full-width artwork/details/action rows, with native inspections, confirmations and holds. Actions stack below details on phones; selected action remains in the footer. |
 | `book-art` | `BOOK_ART_PRESETS`, `bookArtRecipe`, `bookArtLayers` | `bookArt.renderBookArt` | Market, Armoury, reading modal, Book Atelier | Painted cover, independently colored leather mask, trim and symbol; three covers, thirty symbol variations and ten authored recipes. |

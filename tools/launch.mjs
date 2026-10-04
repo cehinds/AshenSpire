@@ -144,6 +144,7 @@ const stale = [
   resolve(distDir, 'map-detail'),
   resolve(distDir, 'packs'),         // replaced whole below
   resolve(distDir, 'objects'),
+  resolve(distDir, 'cards'),
 ];
 if (existsSync(distDir)) {
   for (const name of readdirSync(distDir)) {
@@ -166,7 +167,7 @@ if (removed.length) console.log(`launch: removed ${removed.length} stale launche
 const html = resolve(buildDir, 'AshenSpire.html');
 const singleFile = resolve(buildDir, 'download', 'AshenSpire.html');
 mkdirSync(resolve(distDir, 'download'), { recursive: true });
-for (const part of ['packs', 'objects']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
+for (const part of ['packs', 'objects', 'cards']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
 for (const part of ['asset-base.json', '.asset-pack']) copyFileSync(resolve(buildDir, part), resolve(distDir, part));
 const aliases = [
   [html, resolve(distDir, 'AshenSpire.html')],
