@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1606",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Phone fighters no longer stack",
+    "detail": "Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. Formations with more than one row keep their previous size.",
+    "build": "0.7.1.921",
+    "pullRequest": 1606,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1606"
+  },
+  {
     "id": "pr-1600",
     "date": "2026-10-04",
     "group": "2026-10-04",
