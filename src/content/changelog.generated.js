@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1592",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Reset all sits last under Interface",
+    "detail": "The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.",
+    "build": "0.7.1.915",
+    "pullRequest": 1592,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1592"
+  },
+  {
     "id": "pr-1594",
     "date": "2026-10-04",
     "group": "2026-10-04",

@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
+- **Reset all sits last under Interface** ([#1592](https://github.com/cehinds/AshenSpire/pull/1592), `0.7.1.915`). The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.
+
 - **Keep settings ordering checks working after Reset all** ([#1594](https://github.com/cehinds/AshenSpire/pull/1594), `0.7.1.913`). The fullscreen ordering regression fixture now follows the reset row's current source location. Its intentional bad ordering and detection assertions remain unchanged.
 
 - **Victory stops flashing; level rewards wait for you** ([#1590](https://github.com/cehinds/AshenSpire/pull/1590), `0.7.1.912`). The victory window no longer fades out and back in as XP fills and levels are claimed: it opens once, and only the bars move. Claiming a level, by hand or with guided level-up, no longer forces its reward choice open. A line under the bars records each level, and the reward that level unlocked appears in the list raised and blue, rising into place once, to open whenever you choose.
