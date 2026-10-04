@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1560",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep positioning tools off the combat screen",
+    "detail": "Remove the Positioning button and its combat panel while keeping saved formations applied.",
+    "build": "0.7.1.873",
+    "pullRequest": 1560,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1560"
+  },
+  {
     "id": "pr-1557",
     "date": "2026-10-03",
     "group": "2026-10-03",
