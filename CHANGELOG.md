@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
+- **Keep settings ordering checks working after Reset all** ([#1594](https://github.com/cehinds/AshenSpire/pull/1594), `0.7.1.910`). The fullscreen ordering regression fixture now follows the reset row's current source location. Its intentional bad ordering and detection assertions remain unchanged.
+
 - **Reusable artwork for every player screen** ([#1588](https://github.com/cehinds/AshenSpire/pull/1588), `0.7.1.909`). A portable art collection covers 24 player views in desktop and mobile layouts: new scene perspectives, enemy bodies and portraits, transparent props, and scalable boxes, menus and controls. PNG masters, WebP exports, an offline catalog and layer recipes are included for game integration. The live game presentation is unchanged.
 
 - **Recover from brief Windows art-cache locks** ([#1589](https://github.com/cehinds/AshenSpire/pull/1589), `0.7.1.908`). When an art cache needs replacing, briefly locked Windows files get a bounded retry before the game tooling reports a failure. A permanently refused rename still reports an error and leaves the existing files intact.
