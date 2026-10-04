@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1585",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Reset every setting from one button",
+    "detail": "Settings → Display → Interface has a Reset all button. It asks first, then returns every setting to its default, with Undo for a few seconds. Reset all in the options menu now asks first too. Saves and progress are untouched.",
+    "build": "0.7.1.904",
+    "pullRequest": 1585,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1585"
+  },
+  {
     "id": "pr-1582",
     "date": "2026-10-04",
     "group": "2026-10-04",

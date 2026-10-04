@@ -5435,6 +5435,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.row.resetAllSettings",
+    "extends": "",
+    "short": "Reset all settings",
+    "full": "Put every setting back to its default. Asks first, and the change can be undone for a few seconds.",
+    "tip": ""
+  },
+  {
+    "id": "settings.resetAll.title",
+    "extends": "",
+    "short": "Reset all settings?",
+    "full": "Every setting, in every section, goes back to its default. Saves and progress are not touched.",
+    "tip": ""
+  },
+  {
+    "id": "settings.resetAll.confirm",
+    "extends": "",
+    "short": "Reset all",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "settings.row.useSprites",
     "extends": "",
     "short": "Character sprites",
