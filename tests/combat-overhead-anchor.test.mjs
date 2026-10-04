@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { combatFormation, combatOverheadAnchorX, combatOverheadAnchors } from '../src/ui/models/CombatFormationModel.js';
+import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
+import { combatOverheadAnchorX, combatOverheadAnchors } from '../src/ui/models/CombatOverheadModel.js';
 import { fitCombatSprites } from '../src/ui/models/CombatSpriteScaleModel.js';
 import { presentationConfig } from '../src/model/advancedConfig.js';
+import { anchorLocalBox, VIEWPORT_ORIGIN } from '../src/ui/fx.js';
 
 const ownerAt = (controls, x) => controls.findLast(control =>
   x >= control.x - control.width / 2 && x <= control.x + control.width / 2)?.id;
@@ -70,7 +72,8 @@ test('overhead offsets convert screen pixels once and retain the measured contro
     const localControlWidth = 108 / zoom;
     const overheadX = combatOverheadAnchorX({ width: fieldWidth, x: reservedX,
       controlWidth: localControlWidth * zoom });
-    const localOffset = (overheadX - artX) / zoom;
+    const localOffset = anchorLocalBox(VIEWPORT_ORIGIN,
+      { left: overheadX - artX, top: 0, width: 0, height: 0 }, { zoom }).left;
     assert.equal(artX + localOffset * zoom, overheadX);
     assert.ok(overheadX + localControlWidth * zoom / 2 <= fieldWidth - 6);
     assert.ok(overheadX - localControlWidth * zoom / 2 >= 6);

@@ -1,6 +1,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { combatFormation, combatOverheadAnchors } from '../models/CombatFormationModel.js';
+import { combatFormation } from '../models/CombatFormationModel.js';
+import { combatOverheadAnchors } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
@@ -178,7 +179,9 @@ export function wireBattlefieldStage(field, model) {
       // slots instead of following that inward art clamp. Only the narrow
       // composition changes; the control stack's vertical gap stays intact.
       const overheadX = overheads.find(overhead => overhead.id === slot.id)?.x ?? x;
-      if (leadingHost) leadingHost.style.left = `${(overheadX - x) / zoom}px`;
+      const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+        { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
+      if (leadingHost) leadingHost.style.left = `${overheadLocal.left}px`;
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
       frame.style.setProperty('--overhead-top', `${-14 / zoom}px`);
