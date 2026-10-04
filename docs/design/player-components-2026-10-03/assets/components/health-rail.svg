@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="20" viewBox="0 0 240 20" fill="none" role="img" aria-labelledby="health-rail-title"><title id="health-rail-title">Empty health rail; clip independent live fill</title><defs>
+      <linearGradient id="health-rail-metal" x1="0" y1="0" x2="0.6" y2="1"><stop stop-color="#514535"/><stop offset=".18" stop-color="#dcc18a"/><stop offset=".38" stop-color="#a88c53"/><stop offset=".64" stop-color="#554837"/><stop offset=".82" stop-color="#bd9c59"/><stop offset="1" stop-color="#534536"/></linearGradient>
+      <linearGradient id="health-rail-soot" x2="0" y2="1"><stop stop-color="#242019"/><stop offset=".45" stop-color="#15130f"/><stop offset="1" stop-color="#0c0c0a"/></linearGradient>
+      <radialGradient id="health-rail-light"><stop stop-color="#d6b667" stop-opacity=".26"/><stop offset="1" stop-color="#d6b667" stop-opacity="0"/></radialGradient>
+    </defs><rect x="2" y="2" width="236" height="16" rx="4" fill="#0c0c0a" stroke="url(#health-rail-metal)"/><rect x="5" y="5" width="230" height="10" rx="2" stroke="#5e5543" stroke-width=".6"/></svg>

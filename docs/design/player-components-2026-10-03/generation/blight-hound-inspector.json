@@ -1,0 +1,11 @@
+{
+  "id": "blight-hound-inspector",
+  "group": "enemies",
+  "canonical": "assets/enemy-poses/blightHound_idle.webp",
+  "reference": "references/05-combat-and-threats.png",
+  "prompt": "ONE high-quality square transparent enemy-inspector portrait for Ashen Spire. FIRST reference authoritative identity: Blight Hound with elongated snarling canine muzzle, ragged ears, dark patchy hide, jagged dorsal spines, green luminous blight sacs and restrained green drool. KEEP GREEN blight. SECOND screenshot painterly style only, do not change to fire wolf. Detailed head and upper shoulders viewed nearly FRONT with muzzle tilted slightly screen LEFT, recognizable ugly quadrupedal hound not humanoid/demon, realistic weathered brown/black texture with tiny sickly green glow. Entire silhouette centered with generous transparent margins, actual alpha background, no text, UI, frame, landscape, shadow plate, fire or extra animal.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-aea65247-cdc1-483c-9aac-3a8d940aad40.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "master": "masters/enemies/blight-hound-inspector.png"
+}

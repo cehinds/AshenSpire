@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Victory stops flashing; level rewards wait for you",
     "detail": "The victory window no longer fades out and back in as XP fills and levels are claimed: it opens once, and only the bars move. Claiming a level, by hand or with guided level-up, no longer forces its reward choice open. A line under the bars records each level, and the reward that level unlocked appears in the list raised and blue, rising into place once, to open whenever you choose.",
-    "build": "0.7.1.911",
+    "build": "0.7.1.912",
     "pullRequest": 1590,
     "url": "https://github.com/cehinds/AshenSpire/pull/1590"
+  },
+  {
+    "id": "pr-1588",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Reusable artwork for every player screen",
+    "detail": "A portable art collection covers 24 player views in desktop and mobile layouts: new scene perspectives, enemy bodies and portraits, transparent props, and scalable boxes, menus and controls. PNG masters, WebP exports, an offline catalog and layer recipes are included for game integration. The live game presentation is unchanged.",
+    "build": "0.7.1.909",
+    "pullRequest": 1588,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1588"
   },
   {
     "id": "pr-1589",

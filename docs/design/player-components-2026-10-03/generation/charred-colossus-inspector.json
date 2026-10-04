@@ -1,0 +1,11 @@
+{
+  "id": "charred-colossus-inspector",
+  "group": "enemies",
+  "canonical": "assets/enemy-poses/charredColossus_idle.webp",
+  "reference": "references/05-combat-and-threats.png",
+  "prompt": "ONE high-quality square transparent boss-inspector portrait for Ashen Spire. FIRST reference authoritative identity: Charred Colossus with massive rounded layered basalt shoulders, small rounded stone head sunk between them, simple bright pale eyes, molten amber-white fissures and core glow through upper chest. SECOND screenshot painterly quality reference only. Nearly FRONT head/shoulders/chest bust, fine charred rock plates and believable molten light, soot/umber black stone. Preserve small rounded head, no helmet/horns/crown, no new symbols, weapons or green magic. Entire upper silhouette within square with generous transparent margins, actual alpha background. No scene, UI, words, numeric stat, border, smoke veil, shadow plate or extra figure.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-67d275d1-a41b-434c-a413-cec4ad1dda36.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "master": "masters/enemies/charred-colossus-inspector.png"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "spoils-desktop",
+  "group": "scenes",
+  "reference": "references/09-rest-and-rewards.png",
+  "prompt": "Create a high-quality isolated production background matching the supplied Ashen Spire screenshot's painterly realism, tangible ruined gothic architecture, soot black and umber stone, cold grey mist, tarnished brass, tiny warm ember accents, quiet grandeur. Reconstruct the artwork, no screenshot crop. NO interface, frames, cards, texts, letters, numerals, markers, route lines, UI symbols or logos. No foreground characters. Use only the lower rewards painting: wide landscape 16:9 devastated battlefield at warm grey sunset, distant shattered gothic spires and ruined aqueducts, tiny circling ravens, torn unmarked old cloth standard and abandoned helmet/shield at far lower left, embers amongst foreground rubble. Center three fifths stays dark and quietly detailed beneath separate selectable reward cards, right lower corner calm. No body or gore.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-de64eb66-841d-41b8-86f1-06be5942284d.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": false,
+  "master": "masters/scenes/spoils-desktop.png"
+}

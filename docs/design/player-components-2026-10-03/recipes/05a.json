@@ -1,0 +1,161 @@
+{
+  "id": "05a",
+  "name": "Tactical combat",
+  "sourceModules": [
+    "src/ui/screens/combat.js"
+  ],
+  "sharedAssets": [
+    "assets/reused/ui/components/panel-frame.svg",
+    "assets/reused/ui/components/panel-backed.svg",
+    "assets/reused/ui/components/button-neutral.svg",
+    "assets/reused/ui/components/button-primary-ready.svg",
+    "assets/reused/ui/components/button-disabled.svg",
+    "assets/reused/ui/components/focus-outline.svg",
+    "assets/reused/ui/components/divider-plain.svg",
+    "assets/reused/materials/soot-leather-material.png",
+    "assets/reused/ui/components/hud-strip.svg",
+    "assets/reused/ui/components/card-folio.svg",
+    "assets/reused/ui/components/cost-medallion.svg",
+    "assets/reused/ui/components/target-brackets.svg",
+    "assets/reused/ui/components/meter-track.svg"
+  ],
+  "mobileComposition": "Canonical combat image is an atlas: use scene boxes/floorStart from existing resolver, not entire atlas. Keep fighters clear above focused hand.",
+  "family": "combat",
+  "reference": "references/05-combat-and-threats.png",
+  "referenceFeature": "upper",
+  "visualParts": [
+    "Authored arena/floor",
+    "canonical player and two enemy sprites",
+    "hero HUD",
+    "flask/relic sockets",
+    "intent bubbles",
+    "health/poise rails",
+    "card fan",
+    "cost tokens",
+    "turn orb"
+  ],
+  "liveFields": [
+    "fighter anchors",
+    "target",
+    "intent",
+    "HP",
+    "poise",
+    "actual costs/effects",
+    "draw/discard counts",
+    "turn availability"
+  ],
+  "artwork": {
+    "desktop": [
+      "assets/reused/canonical/assets/environments/cinder-reach-combat.webp",
+      "assets/reused/canonical/assets/painted-outfits/reaver/menu.webp",
+      "assets/reused/canonical/assets/enemy-poses/wanderingSoldier_idle.webp",
+      "assets/reused/canonical/assets/enemy-poses/blightHound_idle.webp",
+      "assets/reused/illustrations/card-attack-illustration.png",
+      "assets/reused/illustrations/card-guard-illustration.png",
+      "assets/reused/illustrations/card-ember-illustration.png"
+    ],
+    "mobile": [
+      "assets/reused/canonical/assets/environments/cinder-reach-combat.webp",
+      "assets/reused/canonical/assets/painted-outfits/reaver/menu.webp",
+      "assets/reused/canonical/assets/enemy-poses/wanderingSoldier_idle.webp",
+      "assets/reused/canonical/assets/enemy-poses/blightHound_idle.webp",
+      "assets/reused/illustrations/card-attack-illustration.png",
+      "assets/reused/illustrations/card-guard-illustration.png",
+      "assets/reused/illustrations/card-ember-illustration.png"
+    ]
+  },
+  "newPerspectiveOptions": {
+    "desktop": [
+      "assets/scenes/ruined-courtyard-desktop.webp",
+      "assets/enemies/wandering-soldier-three-quarter.webp",
+      "assets/enemies/blight-hound-three-quarter.webp",
+      "assets/enemies/wandering-soldier-inspector.webp",
+      "assets/enemies/blight-hound-inspector.webp"
+    ],
+    "mobile": [
+      "assets/scenes/ruined-courtyard-mobile.webp",
+      "assets/enemies/wandering-soldier-three-quarter.webp",
+      "assets/enemies/blight-hound-three-quarter.webp",
+      "assets/enemies/wandering-soldier-inspector.webp",
+      "assets/enemies/blight-hound-inspector.webp"
+    ]
+  },
+  "components": [
+    "assets/components/combat-intent.svg",
+    "assets/components/health-rail.svg",
+    "assets/components/buildup-rail.svg",
+    "assets/components/turn-orb.svg",
+    "assets/components/card-engraved.svg",
+    "assets/components/card-selection.svg",
+    "assets/components/cost-hexagon.svg",
+    "assets/components/engraved-folio-frame.svg",
+    "assets/components/engraved-folio-backed.svg",
+    "assets/components/action-neutral.svg",
+    "assets/components/action-ready.svg",
+    "assets/components/action-selected.svg",
+    "assets/components/action-danger.svg",
+    "assets/components/action-disabled.svg",
+    "assets/components/focus-ring.svg",
+    "assets/components/mobile-action-tray.svg"
+  ],
+  "icons": [
+    "assets/reused/ui/icons/health.svg",
+    "assets/reused/ui/icons/mana.svg",
+    "assets/reused/ui/icons/stamina.svg",
+    "assets/reused/ui/icons/block.svg",
+    "assets/reused/ui/icons/attack.svg",
+    "assets/reused/ui/icons/draw.svg",
+    "assets/reused/ui/icons/discard.svg",
+    "assets/reused/ui/icons/flask-health.svg",
+    "assets/reused/ui/icons/flask-mana.svg",
+    "assets/reused/ui/icons/relic.svg"
+  ],
+  "decorations": [
+    "assets/decorations/torn-standard.webp"
+  ],
+  "layout": {
+    "desktop": {
+      "referenceSize": [
+        1440,
+        900
+      ],
+      "regions": [
+        "context/rail",
+        "main stage or collection",
+        "selected inspector/comparison",
+        "bottom actions"
+      ]
+    },
+    "mobile": {
+      "referenceSize": [
+        390,
+        844
+      ],
+      "regions": [
+        "compact HUD",
+        "upper artwork or selected stage",
+        "one open detail tray",
+        "bottom safe-area actions"
+      ],
+      "note": "Canonical combat image is an atlas: use scene boxes/floorStart from existing resolver, not entire atlas. Keep fighters clear above focused hand."
+    },
+    "shortLandscape": "Fold context and inspector; allow stage pan and detail scrolling; keep actions reachable."
+  },
+  "layerOrder": [
+    "background",
+    "canonical objects or optional illustrations",
+    "optional decor",
+    "readability veil",
+    "panel material",
+    "frame or socket",
+    "live DOM labels and values",
+    "selection/focus/availability overlay"
+  ],
+  "constraints": [
+    "Use canonical game data for all live fields; the screenshot is a visual reference.",
+    "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
+    "Separate focus, persistent selection, disabled state and actual legal action.",
+    "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors."
+  ],
+  "unresolvedIconAliases": []
+}
