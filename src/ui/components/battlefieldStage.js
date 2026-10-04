@@ -1,6 +1,6 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { combatFormation } from '../models/CombatFormationModel.js';
+import { combatFormation, combatOverheadAnchors } from '../models/CombatFormationModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
@@ -102,12 +102,19 @@ export function wireBattlefieldStage(field, model) {
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
       const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
+      // Inspect and intent stack vertically except on short landscape screens,
+      // where their complete side-by-side union must stay inside the field.
+      // Decorative shortcut keys do not enlarge the actionable control box.
+      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control')]
+        .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0) : [];
+      const leadingWidth = leadingRects.length ? (Math.max(...leadingRects.map(rect => rect.right))
+        - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
         * wireframeUi.formation.displayScale * (slot.characterScale || 1);
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, multiplier, ...geometry, leadingHost,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
-        leadingHeight,
+        leadingHeight, leadingWidth,
         // Reading controls do not change the unselected fitting envelope.
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
     });
@@ -116,18 +123,28 @@ export function wireBattlefieldStage(field, model) {
       minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 });
     const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
       .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
+    const growthFor = (actor, fitted) => {
+      const requestedGrowth = actor.frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, actor.slot.row)] : 1;
+      return Math.min(requestedGrowth, Math.max(1,
+        (actor.slot.ground - actor.leading - 6) / fitted.visibleHeight),
+        // Selection must not make the player tower over a foe already capped
+        // by the available headroom on a short screen.
+        actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
+    };
+    const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width,
+      controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
+        const fitted = sizes.find(size => size.id === actor.slot.id);
+        const bottom = actor.slot.ground - fitted.visibleHeight * growthFor(actor, fitted) - 14;
+        return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: actor.slot.x,
+          width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
+      }) }) : [];
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
       // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
       if (leadingHost) resizeObserver.observe(leadingHost);
       const fitted = sizes.find(size => size.id === slot.id);
       if (!fitted) continue;
-      const requestedGrowth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, slot.row)] : 1;
-      const growth = Math.min(requestedGrowth, Math.max(1,
-        (slot.ground - actor.leading - 6) / fitted.visibleHeight),
-        // Selection must not make the player tower over a foe already capped
-        // by the available headroom on a short screen.
-        actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
+      const growth = growthFor(actor, fitted);
       // The fit already carries the presentation multiplier, capped to the
       // screen (CombatSpriteScaleModel); only the selection growth is added.
       const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
@@ -156,6 +173,12 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
+      // The half-field art floor may move two enemies to the same painted
+      // centre. Their intent/Inspect controls retain their distinct reserved
+      // slots instead of following that inward art clamp. Only the narrow
+      // composition changes; the control stack's vertical gap stays intact.
+      const overheadX = overheads.find(overhead => overhead.id === slot.id)?.x ?? x;
+      if (leadingHost) leadingHost.style.left = `${(overheadX - x) / zoom}px`;
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
       frame.style.setProperty('--overhead-top', `${-14 / zoom}px`);
