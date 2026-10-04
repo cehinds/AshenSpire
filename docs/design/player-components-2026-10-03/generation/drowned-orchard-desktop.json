@@ -1,0 +1,44 @@
+{
+  "id": "drowned-orchard-desktop",
+  "tool": "image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": false,
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/assets/scenes/crownfall-desktop.webp",
+      "role": "style reference only, painted materials, depth and palette; do not copy city subject",
+      "packageReference": "assets/scenes/crownfall-desktop.webp",
+      "referenceScope": "delivered package reference"
+    }
+  ],
+  "sourceLore": [
+    {
+      "path": "src/content/surveyQuestLore.js",
+      "keys": [
+        "survey:saltwatch"
+      ],
+      "details": "Salt crust on upper branches; old watermarks below feet; mooring ring above drowned doorway."
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: text-free painted environment layer for AshenSpire, not a screenshot. Style: polished hand-painted dark fantasy environment illustration matching the weathered stone, iron, aged brass and restrained ember warmth of the supplied style reference. Detailed tactile brushwork, atmospheric depth, natural silhouettes, no photographic look. Do not reproduce the reference architecture literally. No people, foreground characters, NPC identities, text, lettering, UI, borders, labels, numbers, stat values, map coordinates, logos or game symbols.\nPrimary request: Drowned Orchard on the Drowned Coast: gnarled orchard branches with pale salt crust high above still dark tidal water. A half-submerged ruined stone doorway has an old rusted iron mooring ring anchored conspicuously above its opening; faded natural tide-stain bands lower on the wall are now submerged. No text or drawn measurement lines. Landscape desktop composition: salt branches and ring/doorway grouped at left/center, orchard trunks receding through water, quiet mist and slate water along right quarter for future inspector. No fruit harvest, boats, people or magical sky; faint muted amber dusk.\nOrientation: wide landscape. Full-frame opaque background, text-free.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-730070f8-3f20-4bb7-b47a-25018a89bc3c.png",
+  "file": "masters/scenes/drowned-orchard-desktop.png",
+  "sha256": "a9edf12379c41c5134978b8dd0f274e0897bf3f211412bdfcbf9b4a5ed083ecb",
+  "bytes": 2744187,
+  "width": 1672,
+  "height": 941,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "group": "scenes",
+  "master": "masters/scenes/drowned-orchard-desktop.png",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-730070f8-3f20-4bb7-b47a-25018a89bc3c.png",
+  "transparent_background": false,
+  "stagingMasterRelativePath": "masters/drowned-orchard-desktop.png",
+  "sourceRecordTool": "built-in image_gen.imagegen",
+  "sourceRecordSha256": "febcbe15e0c327d227daf40288d5c390878bb8f8867977081ca46ea12773041a",
+  "sourceMasterSha256": "a9edf12379c41c5134978b8dd0f274e0897bf3f211412bdfcbf9b4a5ed083ecb",
+  "reference": "assets/scenes/crownfall-desktop.webp",
+  "sourcePromptSha256": "04b0fed8dcaa5104ef022bdd0932a51460c96dba1fd0329f0f48066e83ddd06e"
+}

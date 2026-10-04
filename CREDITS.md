@@ -2,7 +2,7 @@
 
 ## Player component collection (2026-10-04)
 
-The owner's expanded desktop/mobile screenshot breakdown contains 27 new raster
+The owner's expanded desktop/mobile screenshot breakdown contains 43 new raster
 scene perspectives, static enemy illustrations, transparent decorations and a
 parchment material made with OpenAI's built-in Image Generation tool, plus 71
 original SVG frames, menu shells, controls and visual motifs authored directly.

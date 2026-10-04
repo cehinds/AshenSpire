@@ -1,0 +1,44 @@
+{
+  "id": "drowned-hamlet-mobile",
+  "tool": "image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": false,
+  "refs": [
+    {
+      "path": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-957914f4-cb05-4220-9806-cd8bca2f30d7.png",
+      "role": "place design and painted style reference; independently recompose in portrait, do not merely crop",
+      "packageReference": "masters/scenes/drowned-hamlet-desktop.png",
+      "referenceScope": "delivered package reference"
+    }
+  ],
+  "sourceLore": [
+    {
+      "path": "src/content/surveyQuestLore.js",
+      "keys": [
+        "survey:lantern-haven"
+      ],
+      "details": "Flowering branches without fruit; layered blossoms through drowned doorways."
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: text-free painted environment layer for AshenSpire, not a screenshot. Style: polished hand-painted dark fantasy environment illustration matching the weathered stone, iron, aged brass and restrained ember warmth of the supplied style reference. Detailed tactile brushwork, atmospheric depth, natural silhouettes, no photographic look. Do not reproduce the reference architecture literally. No people, foreground characters, NPC identities, text, lettering, UI, borders, labels, numbers, stat values, map coordinates, logos or game symbols.\nPrimary request: Independently compose a tall phone painting of Drowned Hamlet. One weathered arched cottage doorway partly submerged in dark still water at the upper-middle left, framed by fruitless flowering branches. Fresh pale blossoms float clearly on the water with last year's sodden brown blossoms underneath visible in shallower foreground. Keep the hamlet and distant mist above, darker quiet water below for future DOM text. Maintain the reference hamlet's architecture, materials and flowers, but arrange them to read as one scene in portrait; not a crop or a wide-image shrink.\nOrientation: tall portrait. Full-frame opaque background.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-53734248-625d-45c9-8883-11d8d250a93a.png",
+  "file": "masters/scenes/drowned-hamlet-mobile.png",
+  "sha256": "40b370deaf57b0e632d6d853f752a8d1fb7a55e6f09407863afb1476f9ef9ffc",
+  "bytes": 2817958,
+  "width": 941,
+  "height": 1672,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "group": "scenes",
+  "master": "masters/scenes/drowned-hamlet-mobile.png",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-53734248-625d-45c9-8883-11d8d250a93a.png",
+  "transparent_background": false,
+  "stagingMasterRelativePath": "masters/drowned-hamlet-mobile.png",
+  "sourceRecordTool": "built-in image_gen.imagegen",
+  "sourceRecordSha256": "e311716ee22c1c6fd6a31773f165720819ec01569422c2f2bf438765b0668171",
+  "sourceMasterSha256": "40b370deaf57b0e632d6d853f752a8d1fb7a55e6f09407863afb1476f9ef9ffc",
+  "reference": "masters/scenes/drowned-hamlet-desktop.png",
+  "sourcePromptSha256": "3e1eaed2463bd94a1fd432686ae14260c855f85c470b3fd15f19179965cd8c3e"
+}

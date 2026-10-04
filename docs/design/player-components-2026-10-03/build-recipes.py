@@ -87,6 +87,11 @@ SCENES={'04a':('crownfall-desktop','crownfall-mobile'),
         '09b':('spoils-desktop','spoils-mobile'),
         '11a':('fellowship-desktop','fellowship-mobile'),
         '11b':('aftermath-desktop','aftermath-mobile')}
+# BEGIN OCTOBER 4 EXPANSION
+EXPANSION_OPTIONS = {'desktop': ['assets/scenes/old-aqueduct-desktop.webp', 'assets/scenes/drowned-hamlet-desktop.webp', 'assets/scenes/frozen-camp-desktop.webp', 'assets/scenes/caldera-rim-desktop.webp', 'assets/scenes/drowned-orchard-desktop.webp'], 'mobile': ['assets/scenes/old-aqueduct-mobile.webp', 'assets/scenes/drowned-hamlet-mobile.webp', 'assets/scenes/frozen-camp-mobile.webp', 'assets/scenes/caldera-rim-mobile.webp', 'assets/scenes/drowned-orchard-mobile.webp']}
+EXPANSION_DECORATIONS = {'04a': ['assets/decorations/caravan-medicine-strongbox.webp', 'assets/decorations/road-signal-beacon.webp'], '08a': ['assets/decorations/caravan-medicine-strongbox.webp'], '09b': ['assets/decorations/caravan-medicine-strongbox.webp'], '04b': ['assets/decorations/hanging-chain-hooks.webp'], '05b': ['assets/decorations/hanging-chain-hooks.webp'], '08b': ['assets/decorations/hanging-chain-hooks.webp'], '07a': ['assets/decorations/open-codex-stand.webp'], '10a': ['assets/decorations/open-codex-stand.webp'], '10b': ['assets/decorations/open-codex-stand.webp'], '12a': [], '03a': ['assets/decorations/road-signal-beacon.webp', 'assets/decorations/second-cairn-fallen.webp', 'assets/decorations/second-cairn-raised.webp'], '03b': ['assets/decorations/road-signal-beacon.webp', 'assets/decorations/second-cairn-fallen.webp', 'assets/decorations/second-cairn-raised.webp'], '02b': ['assets/decorations/second-cairn-fallen.webp', 'assets/decorations/second-cairn-raised.webp'], '09a': ['assets/decorations/second-cairn-fallen.webp', 'assets/decorations/second-cairn-raised.webp'], '11b': ['assets/decorations/second-cairn-fallen.webp', 'assets/decorations/second-cairn-raised.webp'], '06a': ['assets/decorations/open-codex-stand.webp'], '06b': ['assets/decorations/open-codex-stand.webp']}
+# END OCTOBER 4 EXPANSION
+
 NAMES=['arrival-and-identity','story-and-choices','world-and-routes','cities-and-dungeons',
        'combat-and-threats','armoury-and-inventory','cards-and-relics','merchant-and-forge',
        'rest-and-rewards','growth-and-discovery','company-and-history','preferences-and-run-setup']
@@ -147,6 +152,11 @@ def run():
         if id in ['06b','07a','07b','08a']:decoration.append('assets/decorations/fieldcase-still-life.webp')
         if id in ['04a','07b','08a']:decoration.append('assets/decorations/hanging-lantern.webp')
         if id in ['10a','10b']:decoration.append('assets/materials/weathered-parchment.webp')
+        # October 4 destination/prop options remain deliberate static illustrations.
+        if id in ['02b','03a','03b','04b','05a','09a','11b']:
+            for device in optional:
+                optional[device] += EXPANSION_OPTIONS[device]
+        decoration += EXPANSION_DECORATIONS.get(id, [])
         recipe={**old,'family':family,'reference':board,'referenceFeature':'upper' if id.endswith('a') else 'lower',
                 'visualParts':parts.split(', '),'liveFields':fields.split(', '),
                 'artwork':original_art,'newPerspectiveOptions':optional,'components':components,
@@ -165,6 +175,10 @@ def run():
             recipe['constraints'].append('Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors.')
         if id=='11a':recipe['constraints'].append('Decorative seated travellers are baked into fellowship scenes, not selectable player sprites. Route voting and lobby readiness remain separate actual phases.')
         if id in ['10a','10b']:recipe['constraints'].append('Parchment is a non-seamless cover material, dark DOM text recommended; undiscovered masks come from real item art and discovery state.')
+        if id in ['02b','03a','03b','04b','05a','09a','11b']:
+            recipe['constraints'].append('October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.')
+        if id in EXPANSION_DECORATIONS:
+            recipe['constraints'].append('October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art.')
         allpaths=original_art['desktop']+original_art['mobile']+shared+components+icons+decoration+optional['desktop']+optional['mobile']
         for path in allpaths:
             if path not in assets:raise ValueError('Recipe '+id+' missing '+path)

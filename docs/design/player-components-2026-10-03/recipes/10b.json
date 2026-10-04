@@ -78,7 +78,8 @@
     "assets/components/favorite-star.svg"
   ],
   "decorations": [
-    "assets/materials/weathered-parchment.webp"
+    "assets/materials/weathered-parchment.webp",
+    "assets/decorations/open-codex-stand.webp"
   ],
   "layout": {
     "desktop": {
@@ -122,7 +123,8 @@
     "Use canonical game data for all live fields; the screenshot is a visual reference.",
     "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
     "Separate focus, persistent selection, disabled state and actual legal action.",
-    "Parchment is a non-seamless cover material, dark DOM text recommended; undiscovered masks come from real item art and discovery state."
+    "Parchment is a non-seamless cover material, dark DOM text recommended; undiscovered masks come from real item art and discovery state.",
+    "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
   ],
   "unresolvedIconAliases": []
 }
