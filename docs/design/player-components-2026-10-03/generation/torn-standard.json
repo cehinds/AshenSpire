@@ -1,0 +1,10 @@
+{
+  "id": "torn-standard",
+  "group": "decorations",
+  "reference": "references/04-cities-and-dungeons.png",
+  "prompt": "Create ONE isolated high-resolution reusable foreground decoration for Ashen Spire matching the left margin torn standard in this screenshot. Tall battered dark iron crossbar on slender spear-shaped pole, extremely weathered deep umber cloth hanging vertically in uneven ragged strips, muted brass edge stitching, folds and fraying, painted realistic tactile cloth and rusty metal, restrained amber edge light. Completely plain textile: NO words, letters, heraldic symbols, logos or emblems. Full pole and cloth contained with generous transparent margin, transparent background, no sky, ground, architecture, scenery, shadow plate or UI. Main cloth occupies middle of tall portrait asset, separate game background will show through genuine alpha holes between ragged strips.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-5307940b-2dc3-4530-9707-65434744ac13.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "master": "masters/decorations/torn-standard.png"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "crownfall-mobile",
+  "group": "scenes",
+  "reference": "references/04-cities-and-dungeons.png",
+  "prompt": "High-end Ashen Spire game production asset, the same quiet-grandeur painterly realism as the reference screenshot: soot black, weathered umber, aged oxidized brass, warm ivory, fog, small restrained ember lights; intricate tangible architecture and natural wear, never clean glossy fantasy. Reconstruct the requested isolated artwork at high resolution, not a screenshot crop. Absolutely no letters, words, numbers, interface, panels, icons, pins, paths, watermarks or border. No new lore symbols or recognizable NPC identities. Background layer from the TOP mobile city view only: separate portrait 9:16 composition of ruined gothic refuge city, central tall cathedral upper middle, broken stone viaducts, warm lantern-lit small inn and market buildings across middle, lower third dim rocky foreground to sit above/beneath a separate live detail tray. Keep distinct inn, smithy, market architectural landmarks in view, no markers. No people in foreground.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-21ce475a-68a4-4fff-8892-e16056800e3d.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": false,
+  "master": "masters/scenes/crownfall-mobile.png"
+}

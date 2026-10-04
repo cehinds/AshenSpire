@@ -1,0 +1,126 @@
+{
+  "id": "08a",
+  "name": "Merchant",
+  "sourceModules": [
+    "src/ui/screens/shop.js"
+  ],
+  "sharedAssets": [
+    "assets/reused/ui/components/panel-frame.svg",
+    "assets/reused/ui/components/panel-backed.svg",
+    "assets/reused/ui/components/button-neutral.svg",
+    "assets/reused/ui/components/button-primary-ready.svg",
+    "assets/reused/ui/components/button-disabled.svg",
+    "assets/reused/ui/components/focus-outline.svg",
+    "assets/reused/ui/components/divider-plain.svg",
+    "assets/reused/materials/soot-leather-material.png",
+    "assets/reused/ui/components/item-slot.svg",
+    "assets/reused/ui/components/button-disabled.svg"
+  ],
+  "mobileComposition": "Portrait upper hero and one product tray; affordability and stock stay live.",
+  "family": "merchant",
+  "reference": "references/08-merchant-and-forge.png",
+  "referenceFeature": "upper",
+  "visualParts": [
+    "Separate market scene and merchant portrait",
+    "category accordion headings",
+    "stock object sockets",
+    "item detail/price/affordability",
+    "sell/remove controls"
+  ],
+  "liveFields": [
+    "canonical merchant identity",
+    "stock",
+    "price",
+    "cinders",
+    "affordability and buy/sell legality"
+  ],
+  "artwork": {
+    "desktop": [
+      "assets/reused/scenes/merchant-desktop.png",
+      "assets/reused/illustrations/merchant-portrait.png",
+      "assets/reused/canonical/assets/relics/crackedLantern.webp"
+    ],
+    "mobile": [
+      "assets/reused/scenes/merchant-mobile.png",
+      "assets/reused/illustrations/merchant-portrait.png",
+      "assets/reused/canonical/assets/relics/crackedLantern.webp"
+    ]
+  },
+  "newPerspectiveOptions": {
+    "desktop": [],
+    "mobile": []
+  },
+  "components": [
+    "assets/components/portrait-mat.svg",
+    "assets/components/accordion-heading.svg",
+    "assets/components/item-mat.svg",
+    "assets/components/selection-ring.svg",
+    "assets/components/service-inspector.svg",
+    "assets/components/receipt-row.svg",
+    "assets/components/engraved-folio-frame.svg",
+    "assets/components/engraved-folio-backed.svg",
+    "assets/components/action-neutral.svg",
+    "assets/components/action-ready.svg",
+    "assets/components/action-selected.svg",
+    "assets/components/action-danger.svg",
+    "assets/components/action-disabled.svg",
+    "assets/components/focus-ring.svg",
+    "assets/components/mobile-action-tray.svg"
+  ],
+  "icons": [
+    "assets/reused/ui/icons/deck.svg",
+    "assets/reused/ui/icons/relic.svg",
+    "assets/reused/ui/icons/flask-health.svg",
+    "assets/reused/ui/icons/cinders.svg",
+    "assets/reused/ui/icons/merchant.svg",
+    "assets/reused/ui/icons/back.svg"
+  ],
+  "decorations": [
+    "assets/decorations/fieldcase-still-life.webp",
+    "assets/decorations/hanging-lantern.webp"
+  ],
+  "layout": {
+    "desktop": {
+      "referenceSize": [
+        1440,
+        900
+      ],
+      "regions": [
+        "context/rail",
+        "main stage or collection",
+        "selected inspector/comparison",
+        "bottom actions"
+      ]
+    },
+    "mobile": {
+      "referenceSize": [
+        390,
+        844
+      ],
+      "regions": [
+        "compact HUD",
+        "upper artwork or selected stage",
+        "one open detail tray",
+        "bottom safe-area actions"
+      ],
+      "note": "Portrait upper hero and one product tray; affordability and stock stay live."
+    },
+    "shortLandscape": "Fold context and inspector; allow stage pan and detail scrolling; keep actions reachable."
+  },
+  "layerOrder": [
+    "background",
+    "canonical objects or optional illustrations",
+    "optional decor",
+    "readability veil",
+    "panel material",
+    "frame or socket",
+    "live DOM labels and values",
+    "selection/focus/availability overlay"
+  ],
+  "constraints": [
+    "Use canonical game data for all live fields; the screenshot is a visual reference.",
+    "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
+    "Separate focus, persistent selection, disabled state and actual legal action."
+  ],
+  "unresolvedIconAliases": []
+}
