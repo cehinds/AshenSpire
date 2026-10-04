@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Level-up rewards planned",
     "detail": "The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.",
-    "build": "0.7.1.920",
+    "build": "0.7.1.922",
     "pullRequest": 1602,
     "url": "https://github.com/cehinds/AshenSpire/pull/1602"
+  },
+  {
+    "id": "pr-1599",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "More reusable scenes and foreground props",
+    "detail": "The player artwork collection adds five lore-grounded locations in separate desktop and mobile compositions, plus six transparent props including both Second Cairn sword states. Its 316 components include unchanged PNG masters, WebP exports, exact prompts and responsive layer recipes for game integration. Live game artwork bindings are unchanged.",
+    "build": "0.7.1.921",
+    "pullRequest": 1599,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1599"
   },
   {
     "id": "pr-1600",

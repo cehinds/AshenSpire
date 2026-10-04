@@ -34,8 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
-- **Level-up rewards planned** ([#1602](https://github.com/cehinds/AshenSpire/pull/1602), `0.7.1.920`). The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.
+- **Level-up rewards planned** ([#1602](https://github.com/cehinds/AshenSpire/pull/1602), `0.7.1.922`). The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.
 
+
+- **More reusable scenes and foreground props** ([#1599](https://github.com/cehinds/AshenSpire/pull/1599), `0.7.1.921`). The player artwork collection adds five lore-grounded locations in separate desktop and mobile compositions, plus six transparent props including both Second Cairn sword states. Its 316 components include unchanged PNG masters, WebP exports, exact prompts and responsive layer recipes for game integration. Live game artwork bindings are unchanged.
 - **Bigger fighters on phones, more card text** ([#1600](https://github.com/cehinds/AshenSpire/pull/1600), `0.7.1.919`). On a narrow screen combatants now grow to half the battlefield's height wherever there is headroom above them, keeping their relative sizes and staying on their own side of the field. Card body text in the hand is 2pt smaller so more of each effect shows.
 
 - **Reset all sits last under Interface** ([#1592](https://github.com/cehinds/AshenSpire/pull/1592), `0.7.1.915`). The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.

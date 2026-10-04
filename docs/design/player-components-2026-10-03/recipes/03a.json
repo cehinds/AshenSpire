@@ -47,8 +47,20 @@
     ]
   },
   "newPerspectiveOptions": {
-    "desktop": [],
-    "mobile": []
+    "desktop": [
+      "assets/scenes/old-aqueduct-desktop.webp",
+      "assets/scenes/drowned-hamlet-desktop.webp",
+      "assets/scenes/frozen-camp-desktop.webp",
+      "assets/scenes/caldera-rim-desktop.webp",
+      "assets/scenes/drowned-orchard-desktop.webp"
+    ],
+    "mobile": [
+      "assets/scenes/old-aqueduct-mobile.webp",
+      "assets/scenes/drowned-hamlet-mobile.webp",
+      "assets/scenes/frozen-camp-mobile.webp",
+      "assets/scenes/caldera-rim-mobile.webp",
+      "assets/scenes/drowned-orchard-mobile.webp"
+    ]
   },
   "components": [
     "assets/components/navigation-sidebar.svg",
@@ -80,7 +92,11 @@
     "assets/components/zoom-in.svg",
     "assets/components/zoom-out.svg"
   ],
-  "decorations": [],
+  "decorations": [
+    "assets/decorations/road-signal-beacon.webp",
+    "assets/decorations/second-cairn-fallen.webp",
+    "assets/decorations/second-cairn-raised.webp"
+  ],
   "layout": {
     "desktop": {
       "referenceSize": [
@@ -123,7 +139,9 @@
     "Use canonical game data for all live fields; the screenshot is a visual reference.",
     "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
     "Separate focus, persistent selection, disabled state and actual legal action.",
-    "Canonical map is the default. New city perspective is a hero/service background, not a coordinate-compatible map replacement."
+    "Canonical map is the default. New city perspective is a hero/service background, not a coordinate-compatible map replacement.",
+    "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.",
+    "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
   ],
   "unresolvedIconAliases": []
 }
