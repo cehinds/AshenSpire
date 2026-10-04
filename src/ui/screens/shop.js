@@ -292,7 +292,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         el.classList.add('unaffordable');
       }
       addOffer('cards', {
-        ref: cardRefs[i], tile: wrap, name: def.name, desc: el.querySelector('.ctext')?.textContent || def.rarity || '',
+        ref: cardRefs[i], tile: wrap, name: def.name, desc: el.querySelector('[data-card-binding="rules"], .ctext')?.textContent || def.rarity || '',
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buy } },
       });
@@ -329,7 +329,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       card.addEventListener('click', () => openWeaponArt(item, card));
       card.addEventListener('cardinspectionselect', () => select('weaponArts', artRefs[i]));
       addOffer('weaponArts', {
-        ref: artRefs[i], tile: wrap, name: quote.def ? quote.def.name : item.id, desc: card.querySelector('.ctext')?.textContent || t('shop.weaponArt.eyebrow'),
+        ref: artRefs[i], tile: wrap, name: quote.def ? quote.def.name : item.id, desc: card.querySelector('[data-card-binding="rules"], .ctext')?.textContent || t('shop.weaponArt.eyebrow'),
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: !!quote.ok, run: () => openWeaponArt(item, card) },
       });

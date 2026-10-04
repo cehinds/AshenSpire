@@ -418,13 +418,6 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-run-meta { display:none; }
 :root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .resbar { width:100% !important; }
-/* Stock tiles show artwork and price; the selected drawer gives the full rules. */
-:root .shop-workspace .shop-collectible-offer > .equipment-poker-card { height:12rem; min-height:0; aspect-ratio:auto; }
-:root .shop-workspace .shop-collectible-offer .epc-frame { position:relative; transform:none; width:100%; height:100%; padding:.4rem; grid-template-rows:1.8rem minmax(0,1fr); border-radius:2px; }
-:root .shop-workspace .shop-collectible-offer .epc-name { position:static; inset:auto; font:600 1.1rem var(--font-heading); height:auto; min-height:0; padding:.1rem; grid-row:1; }
-:root .shop-workspace .shop-collectible-offer .epc-art { grid-row:2; width:100%; height:100%; }
-:root .shop-workspace .shop-collectible-offer :is(.epc-facts,.epc-effects,.epc-tags,.epc-flavor,.epc-footer,.card-info-button,.card-more-button) { display:none; }
-:root .shop-workspace .shop-collectible-offer > .cp-body { margin-top:.2rem; }
 
 
 .title-screen .title-landscape { position:absolute; inset:-1%; z-index:0; background:inherit; pointer-events:none; }
@@ -435,7 +428,6 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 /* Dodge already reveals its full rules through normal card selection. */
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'] > .card-more-button { display:none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'][data-truncated='true'] .cname { padding-left:0; }
-:root .shop-workspace .shop-collectible-offer .epc-art img { padding:4px; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; }
 :root[data-layout='narrow'] .title-screen .tm-name { position:absolute; top:5rem; left:0; width:100%; margin:0; font-size:3.5rem; }
 :root[data-layout='narrow'] .title-screen .tm-sub { position:absolute; top:10rem; left:0; width:100%; }
@@ -445,7 +437,6 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root[data-layout='narrow'] .combat .turn-ribbon { top:25%; font-size:1.2rem; }
 :root[data-layout='narrow'] .combat .combatant-leading .intent { font-size:calc(18px / var(--ui-zoom,1)) !important; min-width:calc(56px / var(--ui-zoom,1)); }
 :root[data-layout='narrow'] .combat .combatant-leading .intent .as-glyph { display:none; }
-:root .shop-workspace .shop-collectible-offer > .equipment-poker-card { height:10rem; }
 :root .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }
 :root .rest-screen.choice-screen .rest-door { flex:0 1 48%; max-height:48%; background-color:#17130fd4; background-image:none; }
 :root .rest-screen.choice-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:4.5rem; }
