@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Level up waits for you, over the bar that filled",
     "detail": "When a bar reaches a level after a fight, it stops and a blue Level up button covers it. Nothing levels up until you press it. Pressing it opens a popup with that level's rewards in blue; choose one, or come back to it later. Continue fills the rest of the XP, and the next bar takes its turn: character first, then class, then skills. The guided level-up setting is gone, because every level now works this way.",
-    "build": "0.7.1.928",
+    "build": "0.7.1.930",
     "pullRequest": 1609,
     "url": "https://github.com/cehinds/AshenSpire/pull/1609"
+  },
+  {
+    "id": "pr-1607",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Clear enemy intents on short phones",
+    "detail": "Enemy intent labels and Inspect controls stay distinct when enlarged fighters move inward to fit the battlefield. Their full control boxes keep six pixels of space in the same row, with room for wider intent text and Inspect, while fighter size and targeting stay intact.",
+    "build": "0.7.1.928",
+    "pullRequest": 1607,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1607"
   },
   {
     "id": "pr-1602",
