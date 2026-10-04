@@ -155,9 +155,9 @@ async function main() {
       const before = e.getBoundingClientRect();
       if (before.bottom > innerHeight || before.top < 0) e.scrollIntoView({ block: 'center' });
       const r = e.getBoundingClientRect();
-      // A fighter's centre can be an intent button. Count one real click on
-      // the requested target, using the same visible-point rule as motion.
-      const { x, y } = e.matches('.combatant') ? ${pointerTargetExpression(sel)}
+      // Fighter centres may contain intent buttons; a card's centre can be
+      // covered by a tooltip or neighbouring card. Use a visible hit point.
+      const { x, y } = e.matches('.combatant, .hand .card') ? ${pointerTargetExpression(sel)}
         : { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       const hit = document.elementFromPoint(x, y);
       return { x, y, expected: e.textContent?.trim().slice(0, 100), hit: hit?.tagName + '.' + hit?.className, inside: !!hit && e.contains(hit) };
