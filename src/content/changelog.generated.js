@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Level-up rewards planned",
     "detail": "The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.",
-    "build": "0.7.1.922",
+    "build": "0.7.1.924",
     "pullRequest": 1602,
     "url": "https://github.com/cehinds/AshenSpire/pull/1602"
+  },
+  {
+    "id": "pr-1605",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Smoother map and animated fighters on phones",
+    "detail": "Choosing a destination on the map no longer slows the game while its panel is open. On touch screens, fighters animate again (attack poses, enemy attack art and the idle sway) instead of standing frozen, and animated sprites and weapon effects no longer blink between frames. Attacks lean from the feet instead of rocking the whole figure side to side.",
+    "build": "0.7.1.923",
+    "pullRequest": 1605,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1605"
   },
   {
     "id": "pr-1599",

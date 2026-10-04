@@ -36,7 +36,8 @@ export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets
  const emission=()=>actor&&localBox?combatantEmissionBox(actor,'hand',localBox,layer)||from:from;
  const attached=(kind,options)=>{
   const stop=playCombatantEffectLayers(actor,kind,{...options,onStop:()=>set.delete(stop)});
-  if(stop){set.add(stop);stops.push(stop);}return stop;
+  // Weapon-attached layers swap frames too; fetch and decode them before the first swap.
+  if(stop){warmEffectFrames(kind,combatEffectFrames(kind));set.add(stop);stops.push(stop);}return stop;
  };
  // Painted attacks extend the casting point after 28% of their pose sequence.
  // Resolve the moving source at release, rather than firing from the wind-up.
@@ -69,7 +70,7 @@ export function playCombatEffect(layer,from,kind,{to=null,direction='auto',durat
  const frames=combatEffectFrames(kind);if(!frames.length)return ()=>{};
  const presentation=combatEffectPresentation(kind);size*=presentation.sizeScale;
  warmEffectFrames(kind,frames);
- const el=hintImage(document.createElement('img'));el.className='painted-combat-effect';el.alt='';el.setAttribute('aria-hidden','true');el.dataset.effect=kind;
+ const el=hintImage(document.createElement('img'),{swapped:true});el.className='painted-combat-effect';el.alt='';el.setAttribute('aria-hidden','true');el.dataset.effect=kind;
  const x=from.left+from.width/2-size/2,y=from.top+from.height/2-size/2;
  el.style.cssText=`position:absolute;pointer-events:none;width:${size}px;height:${size}px;left:${x}px;top:${y}px;object-fit:contain;z-index:4;`;
  // Each frame re-resolves when shown, so a tier change mid-effect never mixes tiers.
