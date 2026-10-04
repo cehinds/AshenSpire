@@ -5,7 +5,7 @@ import { arrangeMerchantOffer } from '../components/merchantOffer.js';
 import { renderBookArt } from '../components/bookArt.js';
 import { equipmentCardArt } from '../assets.js';
 // The wandering merchant. Stock is rolled once, saved with the run, and read
-// through the W1d workspace: a category rail beside (or above) one W1v pane of
+// through the W1d workspace: a bottom category dock below one W1v pane of
 // offers, the selected offer's detail, and a footer whose right-hand action is
 // the selected offer's. Armament inspection uses the Armoury card components;
 // transactions revalidate through armamentTrading.js.
@@ -240,7 +240,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     armamentItems.forEach(({ item, plan }, i) => {
       const tile = armamentOffer(plan.def, () => inspectArmament(item, 'buy'), plan.ok ? `${plan.cost} cinders` : plan.reason);
       addOffer('armaments', {
-        ref: armamentRefs[i], tile, name: plan.def.name, desc: '',
+        ref: armamentRefs[i], tile, name: plan.def.name, desc: plan.def.blurb || '', inspect: () => inspectArmament(item, 'buy'),
         price: t('shop.price', { cost: plan.cost }), avail: offerAvailability({ reason: plan.ok ? null : plan.reason }),
         action: { kind: 'buy', label: t('shop.action.buy', { cost: plan.cost }), enabled: !!plan.ok, run: () => inspectArmament(item, 'buy') },
       });
@@ -594,7 +594,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         const avail = offerAvailability({ reason: plan.ok ? null : plan.reason });
         if (avail.available) sellAvailable++;
         addOffer('sell', {
-          ref: armamentSellRefs[i], tile, name: plan.def.name, desc: '',
+          ref: armamentSellRefs[i], tile, name: plan.def.name, desc: plan.def.blurb || '', inspect: () => inspectArmament(plan.id, 'sell'),
           price: t('shop.price.back', { price: plan.price }), avail,
           action: { kind: 'sell', label: t('shop.action.sell', { price: plan.price }), enabled: !!plan.ok, run: () => inspectArmament(plan.id, 'sell') },
         });
@@ -613,6 +613,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         addOffer('sell', {
           ref: consumableRefs[i], tile, name: plan.def.name, desc,
           visual: plan.def.kind === 'skillBook' ? renderBookArt(plan.def) : null,
+          thumbnail: plan.def.kind === 'skillBook' ? renderBookArt(plan.def) : null,
           price: t('shop.price.back', { price: plan.price }), avail,
           action: { kind: 'sell', label: t('shop.action.sell', { price: plan.price }), enabled: !!plan.ok, beat: { id: 'shopSell', opts: {
             ...sellReview({ kind: 'consumable', name: plan.def.name, price: plan.price }),
@@ -674,7 +675,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // the footer's action commits through the tile's own beat.
     for (const key of ['relics', 'flasks', 'sell', ...ADDITION_SHELVES]) {
       for (const offer of offers[key] || []) {
-        if (!offer.tile.classList.contains('class-pick')) continue;
+        if (!offer.tile.matches('.class-pick, .shop-book-offer')) continue;
         offer.tile.addEventListener('click', () => select(key, offer.ref));
         offer.tile.addEventListener('keydown', (event) => {
           if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -683,12 +684,17 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         });
       }
     }
-    // Armament tiles select through the inspection's own selecting beat.
+    // Armament inspection and its compact thumbnail select the same offer.
     for (const key of ['armaments', 'sell']) {
       for (const offer of offers[key] || []) {
         if (!offer.tile.classList.contains('shop-armament-offer')) continue;
         offer.tile.addEventListener('cardinspectionselect', () => select(key, offer.ref));
+        offer.tile.addEventListener('click', () => select(key, offer.ref), true);
       }
+    }
+    // Keyboard inspection/action focus also selects its offer for the footer.
+    for (const [key, list] of Object.entries(offers)) {
+      for (const offer of list) offer.tile.addEventListener('focusin', () => select(key, offer.ref));
     }
 
     // ---- the rail: one item per category, each with its {Status} ---------
@@ -707,20 +713,16 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       item.addEventListener('click', () => showCategory(key));
       return item;
     });
-    // The artwork presents stock as drawers. Keep one live pane and move it
-    // after the selected drawer; the same stock and selection power mobile.
-    root.dataset.shopRail = 'drawers';
-    const shopPane = root.querySelector('.shop-pane');
-    const categorySelect = el('select', { id: 'shop-cat-select', 'aria-label': t('shop.rail.aria'), class: 'shop-category-select' });
+    // A fixed bottom dock leaves the entire pane available for four offers.
+    root.dataset.shopRail = 'dock';
+    const dock = el('nav', { class: 'merchant-category-dock', 'aria-label': t('shop.rail.aria') });
     for (const item of railItems) {
       item.removeAttribute('role');
       item.removeAttribute('aria-selected');
       item.setAttribute('tabindex', '0');
-      railed.append(item);
-      categorySelect.append(el('option', { value: item.dataset.shopCategory, text: t(RAIL_LABEL[item.dataset.shopCategory]) }));
+      dock.append(item);
     }
-    categorySelect.addEventListener('change', () => showCategory(categorySelect.value));
-    railed.before(categorySelect);
+    railed.after(dock);
     const footHost = document.createElement('div');
     footHost.className = 'shop-foot-host';
     frame.appendChild(footHost);
@@ -749,18 +751,13 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         item.setAttribute('aria-expanded', on ? 'true' : 'false');
         if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
       }
-      categorySelect.value = activeCategory;
-      const drawer = railItems.find(item => item.dataset.shopCategory === activeCategory);
-      if (drawer && drawer.nextSibling !== shopPane) {
-        shopPane.remove();
-        drawer.after(shopPane);
-      }
       for (const shelf of offersBox.querySelectorAll('[data-shop-shelf]')) shelf.hidden = shelf.dataset.shopShelf !== activeCategory;
       // The shelf that just appeared had no box to measure while it was
       // hidden, so it is measured now rather than on its first resize.
       shelves?.apply();
-      root.querySelector('.shop-pane').setAttribute('aria-labelledby', `shop-cat-${activeCategory}`);
-      paneHead.replaceChildren(statusText(statusOf(activeCategory), { class: 'shop-pane-status', role: 'status' }));
+      if (activeCategory) root.querySelector('.shop-pane').setAttribute('aria-labelledby', `shop-cat-${activeCategory}`);
+      else root.querySelector('.shop-pane').removeAttribute('aria-labelledby');
+      paneHead.replaceChildren(...(activeCategory ? [el('span', { text: t(RAIL_LABEL[activeCategory]) }), statusText(statusOf(activeCategory), { class: 'shop-pane-status', role: 'status' })] : []));
 
       const list = offers[activeCategory] || [];
       const ref = resolveShopSelection(list.map((offer) => offer.ref), picks[activeCategory],
@@ -769,7 +766,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       picks[activeCategory] = selected ? { ref, index: list.indexOf(selected) } : null;
       for (const offer of list) {
         const on = offer === selected;
-        offer.tile.classList.toggle('is-selected', on && activeCategory !== 'skillBooks');
+        offer.tile.classList.toggle('is-selected', on);
         if (offer.tile.classList.contains('class-pick') && !offer.rowAction) offer.tile.setAttribute('aria-pressed', on ? 'true' : 'false');
         if (offer.rowAction) offer.rowAction.hidden = !offer.action;
       }
@@ -790,7 +787,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
           { class: `shop-detail-avail${selected.avail.available ? ' is-available' : ''}` }),
         ].filter(Boolean));
       }
-      buildFooter(inlineBooks ? null : selected);
+      buildFooter(selected);
     }
 
     function buildFooter(selected) {
@@ -932,6 +929,14 @@ export function wireShopLayout(root) {
     root.style.setProperty('--shop-offers-fr', `${plan.offersFr}fr`);
     root.style.setProperty('--shop-detail-fr', `${plan.detailFr}fr`);
     root.style.setProperty('--shop-gap', `${plan.gap}px`);
+    if (root.classList.contains('merchant-workspace')) {
+      const port = root.querySelector('.shop-offers');
+      const gap = 6;
+      // Four rows plus three gaps and the shelf's two 2px padding edges.
+      // Short landscape windows retain a readable minimum and scroll.
+      const zoom = Number(style.getPropertyValue('--ui-zoom')) || 1;
+      root.style.setProperty('--merchant-row-height', `${Math.max(88 / zoom, Math.floor((port.clientHeight - gap * 3 - 4) / 4))}px`);
+    }
     if (plan.detailMax == null) root.style.removeProperty('--shop-detail-max');
     else root.style.setProperty('--shop-detail-max', `${plan.detailMax}px`);
   }

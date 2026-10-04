@@ -1,5 +1,23 @@
 import { button, el, statusText } from '../kit/index.js';
 import { t } from '../strings.js';
+import { openModal } from './modalShell.js';
+
+/** Small art target; the complete description and original visual stay inspectable. */
+export function merchantThumbnail({ visual, detail = visual, name, desc = '', inspect = null }) {
+  const control = button({ label: '', className: 'merchant-thumbnail', attrs: { 'aria-label': t('deckEditor.inspectNamed', { name }) } });
+  control.append(visual, el('span', { class: 'merchant-inspect-label', text: t('deckEditor.inspectAction') }));
+  control.addEventListener('keydown', event => event.stopPropagation());
+  control.addEventListener('click', event => {
+    event.stopPropagation();
+    if (inspect) { inspect(); return; }
+    const back = button({ label: t('shop.back'), role: 'exit' });
+    const shell = openModal({ title: name, bodyClassName: 'merchant-inspection', body: host => {
+      host.append(detail, el('p', { text: desc }));
+    }, secondary: [back] });
+    back.addEventListener('click', shell.close);
+  });
+  return control;
+}
 
 // Reuse the offer's live card/inspection node, so its existing interactions
 // remain available alongside the explicit row action. No prices are derived here.
@@ -30,6 +48,10 @@ export function arrangeMerchantOffer(offer, { fallback = '◇' } = {}) {
   tile.tabIndex = -1;
   tile.removeAttribute('aria-pressed');
   tile.style.cssText = '';
-  tile.replaceChildren(el('div', { class: 'merchant-offer-media' }, visual), details, actions);
+  const image = visual.matches('img') ? visual : visual.querySelector('.epc-art img, img');
+  // Clone only artwork, never miniature card text or interactive card controls.
+  const art = offer.thumbnail || (image || visual).cloneNode(true);
+  const media = merchantThumbnail({ visual: art, detail: visual, name, desc, inspect: offer.inspect });
+  tile.replaceChildren(el('div', { class: 'merchant-offer-media' }, media), details, actions);
   return control;
 }

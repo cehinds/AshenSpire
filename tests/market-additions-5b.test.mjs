@@ -545,6 +545,22 @@ test('a v16 save carrying consumables, companions and 5b stock loads with every 
 // The screens
 // ---------------------------------------------------------------------------
 
+test('DOM: a saved visit containing only retired sales still lets the player leave', () => {
+  withKitDom((dom) => {
+    const { run } = marketRun();
+    run.shopStock.offerings = ['cards', 'weaponArts'];
+    run.shopStock.smith = null;
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    let left = false;
+    mountShop(app, { registries: OUT, run, meta: { settings: { shopSell: false } }, onLeave() { left = true; }, onChanged() {} });
+    assert.equal(app.querySelectorAll('[data-shop-category]').length, 0);
+    assert.equal(app.querySelector('#shop-primary'), null);
+    app.querySelector('#leave-shop').click();
+    assert.equal(left, true);
+  });
+});
+
 test('DOM: every 5b shelf lays out its stock, one click buys a book, a token and a companion, and a book sells from the Sell pane', () => {
   withKitDom((dom) => {
     const { run } = marketRun();

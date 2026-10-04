@@ -53,6 +53,38 @@ try {
     await category('relics');
     await page.screenshot({ path: resolve(output, `merchant-${width}.png`) });
   }
+  for (const [width, height] of [[1440, 960], [566, 837], [390, 844], [320, 844]]) {
+    await page.setViewportSize({ width, height });
+    await open('?fourOffers=1');
+    for (const key of ['relics', 'skillBooks']) {
+      await category(key);
+      await page.waitForTimeout(100);
+      const bounds = await page.locator(`[data-shop-shelf="${key}"]`).evaluate(shelf => {
+        const rows = [...shelf.querySelectorAll('.shop-offer')].map(node => {
+          const r = node.getBoundingClientRect();
+          return { top: r.top, bottom: r.bottom, height: r.height, overflow: node.scrollWidth - node.clientWidth };
+        });
+        const port = document.querySelector('.shop-offers').getBoundingClientRect();
+        return { rows, top: port.top, bottom: port.bottom, frameBottom: document.querySelector('.shop-frame').getBoundingClientRect().bottom };
+      });
+      assert.ok(bounds.rows.length >= 5, 'fixture includes an offer beyond the four visible');
+      assert.ok(bounds.rows[0].top >= bounds.top && bounds.rows[3].bottom <= bounds.bottom + 1, `${key} four visible at ${width}x${height}: ${JSON.stringify(bounds)}`);
+      assert.ok(bounds.frameBottom <= height + 1, 'footer fits viewport');
+      assert.ok(bounds.rows.every(row => row.overflow <= 1), 'rows fit horizontally');
+      await page.screenshot({ path: resolve(output, `four-${key}-${width}.png`) });
+      const thumb = page.locator(`[data-shop-shelf="${key}"] .merchant-thumbnail`).first();
+      const purse = await page.evaluate(() => merchantPreview.run.cinders);
+      await thumb.focus();
+      await page.keyboard.press('Enter');
+      await page.locator('.merchant-inspection').waitFor({ state: 'visible' });
+      assert.ok((await page.locator('.merchant-inspection > p').innerText()).length > 10, 'complete description in inspection');
+      await page.keyboard.press('Escape');
+      assert.equal(await thumb.evaluate(node => node === document.activeElement), true, 'inspection returns focus');
+      assert.equal(await page.evaluate(() => merchantPreview.run.cinders), purse, 'inspection never spends cinders');
+      await page.locator(`[data-shop-shelf="${key}"] .shop-offer`).nth(4).scrollIntoViewIfNeeded();
+      assert.ok(await page.locator(`[data-shop-shelf="${key}"] .shop-offer`).nth(4).isVisible(), 'fifth offer reachable');
+    }
+  }
   await page.setViewportSize({ width: 1440, height: 960 });
   await open();
   const legacyStock = await page.evaluate(() => JSON.stringify([merchantPreview.run.shopStock.cards, merchantPreview.run.shopStock.weaponArts]));
@@ -69,6 +101,14 @@ try {
   assert.equal(await page.evaluate(() => JSON.stringify([merchantPreview.run.shopStock.cards, merchantPreview.run.shopStock.weaponArts])), legacyStock, 'legacy card stock is not rewritten or rerolled');
   await open();
   await category('armaments');
+  const secondArmament = page.locator('#shop-armaments .merchant-offer').nth(1);
+  const secondName = await secondArmament.locator('h3').innerText();
+  await secondArmament.locator('.merchant-thumbnail').click();
+  await page.keyboard.press('Escape');
+  assert.ok(await secondArmament.evaluate(node => node.classList.contains('is-selected')), 'inspecting second armament selects it');
+  await page.locator('#shop-primary').click();
+  assert.equal(await page.locator('[role="dialog"] .modal-head h2').innerText(), secondName, 'footer opens the selected armament');
+  await page.keyboard.press('Escape');
   await page.locator('#shop-armaments .merchant-offer-action:enabled').first().click();
   assert.equal(await page.locator('[role="dialog"]:visible').count(), 1, 'one armament inspection');
   await page.keyboard.press('Escape');
