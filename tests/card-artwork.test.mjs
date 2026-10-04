@@ -20,6 +20,13 @@ test('authored card art is matched by its own id', () => {
   assert.equal(playingCardArtwork({ cardId: 'bloodletting' }), 'assets/cards/bloodletting-512.webp');
   assert.equal(playingCardArtwork({ cardId: 'ironResolve' }), 'assets/cards/iron-resolve-512.webp');
   assert.equal(playingCardArtwork({ cardId: 'lastStand' }, { large: true }), 'assets/cards/last-stand-1024.webp');
+  for (const [cardId, slug] of [['starstonePebble', 'starstone-pebble'], ['urgentHeal', 'urgent-heal'], ['ambush', 'ambush']]) {
+    for (const large of [false, true]) {
+      const path = `assets/cards/${slug}-${large ? 1024 : 512}.webp`;
+      assert.deepEqual(playingCardArt({ cardId }, { large }), { path, kind: 'official' });
+      assert.ok(SHIPPED.has(path), `painted starter is present in the pinned art release: ${path}`);
+    }
+  }
   assert.equal(playingCardArtwork({ cardId: 'unknown' }), null);
 });
 

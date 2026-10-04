@@ -1,0 +1,129 @@
+{
+  "errors": [],
+  "checks": [
+    {
+      "width": 1200,
+      "tier": "high",
+      "overflow": false,
+      "images": [
+        {
+          "id": "starstonePebble",
+          "src": "assets/cards/starstone-pebble-1024.webp",
+          "kind": "official",
+          "width": 1024,
+          "height": 683,
+          "renderedWidth": 302.21875
+        },
+        {
+          "id": "urgentHeal",
+          "src": "assets/cards/urgent-heal-1024.webp",
+          "kind": "official",
+          "width": 1024,
+          "height": 683,
+          "renderedWidth": 302.21875
+        },
+        {
+          "id": "ambush",
+          "src": "assets/cards/ambush-1024.webp",
+          "kind": "official",
+          "width": 1024,
+          "height": 683,
+          "renderedWidth": 302.21875
+        }
+      ]
+    },
+    {
+      "width": 1200,
+      "tier": "light",
+      "overflow": false,
+      "images": [
+        {
+          "id": "starstonePebble",
+          "src": "assets-mobile/cards/starstone-pebble-1024.webp",
+          "kind": "official",
+          "width": 320,
+          "height": 213,
+          "renderedWidth": 302.21875
+        },
+        {
+          "id": "urgentHeal",
+          "src": "assets-mobile/cards/urgent-heal-1024.webp",
+          "kind": "official",
+          "width": 320,
+          "height": 213,
+          "renderedWidth": 302.21875
+        },
+        {
+          "id": "ambush",
+          "src": "assets-mobile/cards/ambush-1024.webp",
+          "kind": "official",
+          "width": 320,
+          "height": 213,
+          "renderedWidth": 302.21875
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "tier": "high",
+      "overflow": false,
+      "images": [
+        {
+          "id": "starstonePebble",
+          "src": "assets/cards/starstone-pebble-1024.webp",
+          "kind": "official",
+          "width": 1024,
+          "height": 683,
+          "renderedWidth": 302.21875
+        },
+        {
+          "id": "urgentHeal",
+          "src": "assets/cards/urgent-heal-1024.webp",
+          "kind": "official",
+          "width": 1024,
+          "height": 683,
+          "renderedWidth": 302.21875
+        },
+        {
+          "id": "ambush",
+          "src": "assets/cards/ambush-1024.webp",
+          "kind": "official",
+          "width": 1024,
+          "height": 683,
+          "renderedWidth": 302.21875
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "tier": "light",
+      "overflow": false,
+      "images": [
+        {
+          "id": "starstonePebble",
+          "src": "assets-mobile/cards/starstone-pebble-1024.webp",
+          "kind": "official",
+          "width": 320,
+          "height": 213,
+          "renderedWidth": 302.21875
+        },
+        {
+          "id": "urgentHeal",
+          "src": "assets-mobile/cards/urgent-heal-1024.webp",
+          "kind": "official",
+          "width": 320,
+          "height": 213,
+          "renderedWidth": 302.21875
+        },
+        {
+          "id": "ambush",
+          "src": "assets-mobile/cards/ambush-1024.webp",
+          "kind": "official",
+          "width": 320,
+          "height": 213,
+          "renderedWidth": 302.21875
+        }
+      ]
+    }
+  ]
+}
