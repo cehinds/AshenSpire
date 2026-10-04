@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
+- **Test builds carry the full art** ([#1603](https://github.com/cehinds/AshenSpire/pull/1603), `0.7.1.920`). Test builds now link the high-resolution art pack, as release and main do, defaulting to high art with the light art as fallback. Dev builds stay light-only.
+
 - **Bigger fighters on phones, more card text** ([#1600](https://github.com/cehinds/AshenSpire/pull/1600), `0.7.1.919`). On a narrow screen combatants now grow to half the battlefield's height wherever there is headroom above them, keeping their relative sizes and staying on their own side of the field. Card body text in the hand is 2pt smaller so more of each effect shows.
 
 - **Reset all sits last under Interface** ([#1592](https://github.com/cehinds/AshenSpire/pull/1592), `0.7.1.915`). The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.

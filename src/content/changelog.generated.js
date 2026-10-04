@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1603",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Test builds carry the full art",
+    "detail": "Test builds now link the high-resolution art pack, as release and main do, defaulting to high art with the light art as fallback. Dev builds stay light-only.",
+    "build": "0.7.1.920",
+    "pullRequest": 1603,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1603"
+  },
+  {
     "id": "pr-1600",
     "date": "2026-10-04",
     "group": "2026-10-04",
