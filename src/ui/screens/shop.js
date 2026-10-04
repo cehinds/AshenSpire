@@ -218,7 +218,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     const detailBox = root.querySelector('.shop-detail');
     frame.prepend(modalHead({
       title: t('shop.title'), closeLabel: t('shop.leave'), onClose: onLeave, showMenuButton: false,
-      extras: hud ? null : statusText(t('shop.purse', { cinders: run.cinders }), { class: 'modal-head-status' }),
+      extras: app.querySelector('.hud-cinders') ? null : statusText(t('shop.purse', { cinders: run.cinders }), { class: 'modal-head-status' }),
     }));
 
     // ---- the offers, one list per category: what each tile is, what it

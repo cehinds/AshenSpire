@@ -243,7 +243,7 @@ const READ = `(() => {
     sellNodes: document.querySelectorAll('#shop-cat-sell, #shop-sell').length,
     // THE PURSE IS THE BAND'S (runHud.js, 2026-09-11): the screen's own
     // 'Cinders N' line is gone; the run HUD's chip is the one home.
-    cinders: (() => { const el = document.querySelector('.hud-cinders .cv'); const m = el && el.textContent.match(/(\\d+)/); return m ? +m[1] : null; })(),
+    cinders: (() => { const el = document.querySelector('.hud-cinders .cv, .merchant-workspace .modal-head-status'); const m = el && el.textContent.match(/(\\d+)/); return m ? +m[1] : null; })(),
   };
 })()`;
 
@@ -393,7 +393,7 @@ async function main() {
 
     // S6 — his toggle: ABSENT, not greyed. The harness settings door.
     await cdp.send('Page.navigate', { url: `${base}?shot=shop${settingsQuery({ ...(vp.settings || {}), shopSell: false })}` }, S);
-    await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail, toggle off', 60000);
+    await until(`!!document.querySelector('.merchant-workspace [data-shop-category]')`, 'shop rail, toggle off', 60000);
     await wait(400);
     const off = await ev(READ);
     const offKeys = off.bars.map((b) => b.key);
