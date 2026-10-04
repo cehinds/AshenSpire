@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Clear enemy intents on short phones",
     "detail": "Enemy intent labels and Inspect controls stay distinct when enlarged fighters move inward to fit the battlefield. Their full control boxes keep six pixels of space in the same row, with room for wider intent text and Inspect, while fighter size and targeting stay intact.",
-    "build": "0.7.1.926",
+    "build": "0.7.1.928",
     "pullRequest": 1607,
     "url": "https://github.com/cehinds/AshenSpire/pull/1607"
   },
