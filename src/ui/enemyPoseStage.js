@@ -2,7 +2,6 @@ import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { assetUrl } from './assetmap.js';
 import { ENEMY_STATE_SCALE } from '../content/enemyStateArt.js';
 import { ENEMY_STATE_POSES, enemyPresentation, enemyAuraFilter } from './enemyStates.js';
-import { liteRendering } from './performance.js';
 
 export function createEnemyPoseStage(host, facing, idle, id, entity) {
   host.classList.add('enemy-pose-stage');
@@ -30,7 +29,7 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
     frame.removeAttribute('src');
     const artId = pose === 'defeated' ? DEFEATED_ART[id]?.file || '' : `assets/enemy-states/${id}_${pose}.webp`;
     ids.set(pose, artId);
-    if (!liteRendering() && artId) frame.src = assetUrl(artId);
+    if (artId) frame.src = assetUrl(artId);
   }
   idle.addEventListener('error', draw);
   function setState(next) {
@@ -46,7 +45,6 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
     dispose() { clearTimeout(timer); timer = null; },
     enemy: true, poses: ['idle', 'attack', ...ENEMY_STATE_POSES, 'defeated'], setState, settle,
     play(pose, ms = 300) {
-      if (liteRendering() && pose !== 'defeated') return false;
       if (presentation.rest === 'defeated' && pose !== 'defeated') return false;
       clearTimeout(timer);
       if (pose === 'defeated') {

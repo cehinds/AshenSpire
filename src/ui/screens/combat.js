@@ -303,8 +303,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       '--enemy-attack-duration': totalMs + 'ms',
       '--action-travel': `${direction * 26 * reach}px`,
       '--action-recoil': `${-direction * 12 * reach}px`,
-      '--action-tilt': `${direction * 12 * reach}deg`,
-      '--action-windup-tilt': `${-direction * 8 * reach}deg`,
+      // Tilt does not grow past reach 1: at reach 2 a sweep swung 48 degrees.
+      '--action-tilt': `${direction * 12 * Math.min(reach, 1)}deg`,
+      '--action-windup-tilt': `${-direction * 8 * Math.min(reach, 1)}deg`,
       '--action-lift': `${-8 * reach}px`,
     };
     const original = Object.keys(overrides).map((name) => [name, actorEl.style.getPropertyValue(name), actorEl.style.getPropertyPriority(name)]);

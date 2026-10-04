@@ -239,7 +239,15 @@
 .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); stroke-width: 4; }
 /* The pad cursor and hover both repaint the stroke; the glow keeps the
    selection visible under either. */
-.map-node.selected { filter: drop-shadow(0 0 5px var(--parchment)); }
+/* The glow sits on the static disc, not the group: the halo and reach-stroke
+   pulses would otherwise re-filter the whole node every frame, which cost
+   ~80% of a core on the compositor while the tray stayed open. The pulses
+   stop under selection; the tray already says which node is chosen. */
+.map-node.selected > circle:not(.node-halo) {
+  filter: drop-shadow(0 0 5px var(--parchment));
+  animation: none; stroke-opacity: 1;
+}
+.map-node.selected .node-halo { animation: none; stroke-opacity: 0.55; transform: scale(0.9); }
 /* The selection glow is a node's only selection mark (owner, 2026-09-13).
    A press on a node also runs the tooltip's tap-to-select, which marks it
    `.tooltip-selected`; kit.css outlines that in gold, and the box sat beside

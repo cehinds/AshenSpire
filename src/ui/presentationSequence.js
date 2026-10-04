@@ -43,7 +43,7 @@ export function playPresentationSequence(layer,from,context,{targets=[],duration
    // Target anchors/travel only appear for actual recipients from the caller.
    const recipients=clip.anchor==='target'||clip.travel?targets:[null];
    for(let i=0;i<recipients.length;i++){
-    const key=clip.id+':'+i;live.add(key);let img=nodes.get(key);if(!img){img=hintImage(document.createElement('img'));img.className='studio-combat-effect';img.alt='';img.setAttribute('aria-hidden','true');img.style.cssText='position:absolute;pointer-events:none;object-fit:contain;';nodes.set(key,img);effectLayer(clip).append(img);}
+    const key=clip.id+':'+i;live.add(key);let img=nodes.get(key);if(!img){img=hintImage(document.createElement('img'),{swapped:true});img.className='studio-combat-effect';img.alt='';img.setAttribute('aria-hidden','true');img.style.cssText='position:absolute;pointer-events:none;object-fit:contain;';nodes.set(key,img);effectLayer(clip).append(img);}
     img.src=project.assets[frames[clip.effect][clip.frame]]||combatEffectFrames(clip.effect)[clip.frame];img.dataset.effect=clip.effect;
     const target=recipients[i],sx=from.width/REF.figureReference.width,sy=from.height/REF.figureReference.height;
     let x=from.left+from.width/2+(clip.x-ANCHORS.torso[0])*REF.referenceWidth*sx,y=from.top+from.height*REF.verticalCentreFraction+(clip.y-ANCHORS.torso[1])*REF.referenceHeight*sy;
