@@ -7211,12 +7211,5 @@ export const uiStrings = [
     "short": "Recovery preview",
     "full": "Recovery preview",
     "tip": ""
-  },
-  {
-    "id": "title.saved.continue",
-    "extends": "",
-    "short": "Continue",
-    "full": "Continue",
-    "tip": ""
   }
 ];
