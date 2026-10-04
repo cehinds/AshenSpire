@@ -86,7 +86,8 @@
     "assets/reused/ui/icons/next.svg"
   ],
   "decorations": [
-    "assets/decorations/torn-standard.webp"
+    "assets/decorations/torn-standard.webp",
+    "assets/decorations/caravan-medicine-strongbox.webp"
   ],
   "layout": {
     "desktop": {
@@ -129,7 +130,8 @@
   "constraints": [
     "Use canonical game data for all live fields; the screenshot is a visual reference.",
     "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
-    "Separate focus, persistent selection, disabled state and actual legal action."
+    "Separate focus, persistent selection, disabled state and actual legal action.",
+    "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
   ],
   "unresolvedIconAliases": []
 }

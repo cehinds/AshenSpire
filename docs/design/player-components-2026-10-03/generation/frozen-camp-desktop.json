@@ -1,0 +1,44 @@
+{
+  "id": "frozen-camp-desktop",
+  "tool": "image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": false,
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/assets/scenes/crownfall-desktop.webp",
+      "role": "style reference only, painted materials, depth and palette; do not copy city subject",
+      "packageReference": "assets/scenes/crownfall-desktop.webp",
+      "referenceScope": "delivered package reference"
+    }
+  ],
+  "sourceLore": [
+    {
+      "path": "src/content/surveyQuestLore.js",
+      "keys": [
+        "survey:frostgate"
+      ],
+      "details": "Old winter road; thaw stakes unchanged for a generation; ice swallowing the stakes' lashings."
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: text-free painted environment layer for AshenSpire, not a screenshot. Style: polished hand-painted dark fantasy environment illustration matching the weathered stone, iron, aged brass and restrained ember warmth of the supplied style reference. Detailed tactile brushwork, atmospheric depth, natural silhouettes, no photographic look. Do not reproduce the reference architecture literally. No people, foreground characters, NPC identities, text, lettering, UI, borders, labels, numbers, stat values, map coordinates, logos or game symbols.\nPrimary request: Frozen Camp beside an old winter road, a long winter that has not thawed for generations. Show weathered timber thaw stakes bound with frayed lashings visibly swallowed by accumulated ice, beside low abandoned camp shelters and a frozen route. Landscape desktop composition: foreground ice-encased stake cluster at left/center, old winter road receding behind it, quiet charcoal blue snow shadows and mist on the right quarter for a future inspector. No inhabitants, bonfire, flag lettering, thaw or green spring growth.\nOrientation: wide landscape. Full-frame opaque background, text-free.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-e957d482-7aec-4fbe-9ba5-2cf1656bb438.png",
+  "file": "masters/scenes/frozen-camp-desktop.png",
+  "sha256": "ae11eed00032bffc9689b7941fb9d9d19f75e5bd4dd28de11d942aaa9361a874",
+  "bytes": 2725182,
+  "width": 1672,
+  "height": 941,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "group": "scenes",
+  "master": "masters/scenes/frozen-camp-desktop.png",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-e957d482-7aec-4fbe-9ba5-2cf1656bb438.png",
+  "transparent_background": false,
+  "stagingMasterRelativePath": "masters/frozen-camp-desktop.png",
+  "sourceRecordTool": "built-in image_gen.imagegen",
+  "sourceRecordSha256": "5e649731e420f83b39cbb9728a41eeb27d66c408c83712f87bfd2735d5a40fe0",
+  "sourceMasterSha256": "ae11eed00032bffc9689b7941fb9d9d19f75e5bd4dd28de11d942aaa9361a874",
+  "reference": "assets/scenes/crownfall-desktop.webp",
+  "sourcePromptSha256": "5319e1a7b08275062b9b970b7151c97836433bba0d0680938e9e5393577af1fc"
+}
