@@ -3233,13 +3233,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
       const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
       const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
+      const fromMenu = !!button.closest('.set-options');
       headerTools.querySelector('details').open = false;
       const run = () => {
         resetKeys(settings, onChange, keys, label);
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       };
       // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
-      if (button.dataset.resetConfig === 'all') confirmResetAll(run, headerTools.querySelector('.set-options summary')); else run();
+      if (button.dataset.resetConfig === 'all') confirmResetAll(run, fromMenu ? headerTools.querySelector('.set-options summary') : button); else run();
     };
   });
 
@@ -4028,6 +4029,7 @@ function settingsHeaderTools() {
   const tools = document.createElement('div');
   tools.className = 'set-header-tools';
   tools.innerHTML = '<input hidden type="search" data-advanced-search aria-label="Find a setting" placeholder="Find a setting…">'
+    + '<button type="button" class="as-btn set-reset-defaults" data-reset-config="all">' + esc(t('settings.defaults.reset')) + '</button>'
     + '<button type="button" class="as-btn set-changed-toggle" data-changed-toggle aria-pressed="false" title="Show only the settings you have changed">Changed</button>'
     + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
     + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'

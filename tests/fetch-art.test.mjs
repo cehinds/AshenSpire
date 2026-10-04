@@ -645,7 +645,11 @@ test('known-bad: an embedded or cached manifest that parses to something other t
     try {
       const { dir } = await fetchArt({ root: ok.root, pack: 'common', from: ok.zips.common });
       writeFileSync(join(dir, MANIFEST_PATH), text);
-      await assert.rejects(fetchArt({ root: ok.root, pack: 'common', recheck: true }), (e) => { assert.match(e.problems.join('\n'), /the cached art-manifest\.json (is not a JSON object|has an "assets" that is not an object)/, text); return true; });
+      await assert.rejects(fetchArt({ root: ok.root, pack: 'common', recheck: true }), (e) => {
+        assert.ok(Array.isArray(e.problems), `Expected manifest refusal for ${text}; received ${e.stack}`);
+        assert.match(e.problems.join('\n'), /the cached art-manifest\.json (is not a JSON object|has an "assets" that is not an object)/, text);
+        return true;
+      });
     } finally { rmSync(ok.root, { recursive: true, force: true }); }
   }
 });
