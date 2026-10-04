@@ -51,7 +51,7 @@
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
-  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) 90%, #17130f 100%);
+  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) calc(var(--scene-paint-bottom, 100%) - 12%), #17130f var(--scene-paint-bottom, 100%));
 }
 
 /* A pale alpha-shaped edge plus dark separation reads on snow and charcoal.

@@ -1,5 +1,5 @@
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
-import { footerArtHeight } from '../models/FooterLayoutModel.js';
+import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
 import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
 import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js';
 
@@ -60,6 +60,7 @@ export function wireCombatLayout(combatEl) {
       combatEl.style.setProperty('--wireframe-rail-gap', bands.rails.gap + 'px');
     }
     if (!row) return;
+    row.style.setProperty('--footer-art-width', footerArtWidth(width, zoom) + 'px');
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.
     const host = row.parentElement || combatEl;
