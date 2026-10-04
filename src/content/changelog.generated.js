@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1570"
   },
   {
+    "id": "pr-1569",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Learn cards from books instead of buying loose cards",
+    "detail": "The merchant no longer offers Cards or Weapon Arts for direct purchase. Books, equipment, relics, supplies and services remain, including on saved visits.",
+    "build": "0.7.1.889",
+    "pullRequest": 1569,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1569"
+  },
+  {
     "id": "pr-1567",
     "date": "2026-10-03",
     "group": "2026-10-03",
