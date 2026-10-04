@@ -192,14 +192,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H1 /,
       },
       {
-        // THE SILENT CLIP. END TURN is squeezed to a width its key label cannot
-        // fit and told to hide the overflow, so a wide rebound label draws
-        // outside its control without a mark. H3 catches it ONLY under the wide
-        // label, which is why H4 is not a courtesy.
+        // Move the live SVG key beyond a clipped control. Enlarging the SVG's
+        // CSS width alone is inert with preserveAspectRatio + text fitting.
         name: 'END TURN clips its key label, so a wide rebound label disappears',
         edits: [{
           file: 'styles/kit.css',
-          append: ":root .combat[data-layout='formation'] .combat-action-row > .end-turn { width: 4rem !important; max-width: 4rem !important; overflow: hidden !important; } .combat-action-row .end-turn .footer-art-face { min-width: 20rem !important; }",
+          append: ":root .combat[data-layout='formation'] .combat-action-row > .end-turn { overflow: hidden !important; } .combat-action-row [data-footer-binding='endTurnKey'] { transform: translateX(1000px) !important; }",
         }],
         expectRed: /BAD\s+H3 /,
       },

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { footerLayout } from '../src/content/footerLayout.js';
+import { footerLayout, footerSizing } from '../src/content/footerLayout.js';
 import { footerBounds, footerLayoutModel, footerText, footerArtHeight, footerStaminaLayers } from '../src/ui/models/FooterLayoutModel.js';
 import { allocateCombatBands } from '../src/ui/models/CombatLayout.js';
 
@@ -21,7 +21,8 @@ assert.equal(footerText({ text: '<img src=x>', binding: 'static' }, {}), '<img s
 const moved = footerLayoutModel({ ...footerLayout, items: footerLayout.items.map(n => n.asset === 'draw' || n.binding?.startsWith('draw') ? { ...n, x: n.x + 60 } : n) });
 assert.equal(moved.groups.draw.bounds.x, plan.groups.draw.bounds.x + 60);
 assert.deepEqual(footerBounds([]), { x: 0, y: 0, w: 1, h: 1 });
-assert.equal(footerArtHeight(1000, 1), 164);
+assert.equal(footerArtHeight(1000, 1), footerSizing.maximumWidthPx * plan.bounds.h / plan.bounds.w);
+assert.equal(footerArtHeight(500, 2) * 2, footerArtHeight(1000, 1), 'physical footer proportions survive UI zoom');
 assert.equal(footerArtHeight(195, 2), 46);
 for (const [width, height] of [[1280, 900], [390, 844], [844, 390]]) {
   const base = allocateCombatBands({ width, height });

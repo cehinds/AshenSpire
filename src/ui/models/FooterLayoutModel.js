@@ -1,3 +1,5 @@
+import { footerLayout, footerSizing } from '../../content/footerLayout.js';
+
 // Semantic ownership survives the editor's selection/docking groups.
 const assetRoles = { frame: 'sp', orb: 'sp', sigil: 'sp', diamond: 'sp', spent: 'sp', draw: 'draw', plate: 'end', 'spent-cards': 'discard', potions: 'potions' };
 const bindingRoles = { sp: 'sp', spLabel: 'sp', draw: 'draw', drawLabel: 'draw', endTurn: 'end', endTurnKey: 'end', discard: 'discard', exhaust: 'discard', potions: 'potions' };
@@ -31,7 +33,12 @@ export function footerText(item, values) {
 // The decorated footer gets space without stealing the battlefield's floor.
 // Small hosts retain the existing rails and touch-target geometry.
 export function footerArtHeight(width, zoom = 1) {
-  return Math.min(164 / zoom, Math.max(92 / zoom, width * .20));
+  const bounds = footerLayoutModel(footerLayout).bounds;
+  return Math.max(footerSizing.minimumHeightPx / zoom, footerArtWidth(width, zoom) * bounds.h / bounds.w);
+}
+
+export function footerArtWidth(width, zoom = 1) {
+  return Math.min(width, footerSizing.maximumWidthPx / zoom);
 }
 
 // Resample the authored ring around its ordered sockets for the live capacity.
