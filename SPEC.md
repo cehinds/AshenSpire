@@ -1043,7 +1043,8 @@ A linear table (`linear: true`) uses
 `multScaler` 1.3 (the October 1 default) the steps cost 100, 230, 360, 490 XP.
 Since 2026-10-02 (owner) the character default is exponential (`linear: false`): base 100,
 growth 1.75, roundTo 10 — steps 100, 180, 310, 540, 940, 1,640, 2,870, 5,030, 8,800,
-15,390, so 35,800 XP reaches level 11. Base, scaler, rounding and
+15,390, so 35,800 XP reaches level 11. **Changing (owner, 2026-10-04, §13.4o):** base 200, same
+growth — steps 200, 350, 610 …, 71,560 XP to level 11; not yet applied. Base, scaler, rounding and
 the linear/exponential toggle are configurable. Tables without `linear: true`
 retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
 Older snapshots without that marker use exponential defaults unless the player explicitly
@@ -2050,7 +2051,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 - **Run schemaVersion 8.** `run.skills` — `{ [trackId]: { xp, level, pendingDrafts } }` — rides the save (`RUN_SHAPE` row `{ key: 'skills', type: 'object' }`; `validateRunShape` refuses a non-object ledger, a negative or fractional field and a field that is not `xp`/`level`/`pendingDrafts`, by name). A save at schemaVersion ≤ 7 gains the empty ledger at the migration door. `model/skills.js awardSkillXp` is the one writer.
 - **The tracks are derived** (`skillTracks(registries)`): one per `itemType` node except `item:armor` (`item:blade`, `item:shield`, … as weapon tracks; `item:magic-focus` as the focus track), one per framework weight class (`armour:light|medium|heavy`, `content/framework/mechanics.json`), `dualWield`, and `class:<classId>` per class. No second list exists.
-- **One curve.** `xpToNext(registries, kind, level)` reads `balance.skill.xp` (weapon, armour, focus, dual) or `balance.skill.class.xp` (class). A skill starts at level 0: a linear table costs `round(base + level × base × multScaler, roundTo)`; a table without `linear: true` costs `round(base × growth^level, roundTo)`. The owner defaults (2026-10-02) are exponential, base 100 and growth 1.75, for both tables. **Changing (owner, 2026-10-04, §13.4o):** growth 1.83 for both tables, 50,635 XP to level 10; not yet applied. Each step climbed queues one draft in `pendingDrafts`, which phase 4b spends.
+- **One curve.** `xpToNext(registries, kind, level)` reads `balance.skill.xp` (weapon, armour, focus, dual) or `balance.skill.class.xp` (class). A skill starts at level 0: a linear table costs `round(base + level × base × multScaler, roundTo)`; a table without `linear: true` costs `round(base × growth^level, roundTo)`. The owner defaults (2026-10-02) are exponential, base 100 and growth 1.75, for both tables. **Changing (owner, 2026-10-04, §13.4o):** growth 1.83 for both tables, base 100 (skill) and 400 (class); not yet applied. Each step climbed queues one draft in `pendingDrafts`, which phase 4b spends.
 
 - **Residual XP presentation.** Each manual character or skill claim spends exactly one step. Its compact row resets to zero at the new displayed level, then green fills to the remaining XP and yellow covers it. A full row turns blue and offers the next Level action; a partial row keeps its progress. Repeat for each claim without paying XP again. The refill duration and short pause before opening the claimed level's reward are configurable; reduced motion settles immediately. Other claims are gated during the refill.
 - **The hooks are one listener on the event bus** (`engine/skillXp.js attachSkillXp`, wired in `createCombat` and `createCoopCombat`), and they read the registry, never an entity: `damageDealt`/`blockGained` by a card a piece lent (`sourceHand` or `grantedBy` on the event, which now carry the card) pays `perHit` to that piece's item type, and to `dualWield` while the grip is `dual`; `combatEnd` with victory pays `perWinEquipped` per held group, × `killMult` for the group whose hit killed; `impactDealt` to the wearer pays `1 / impactPerXp` per impact to `armour:heavy` (half to medium); `attackEvaded` by the wearer pays `evadeXp` to `armour:light` (half to medium); `arcaneExposureChanged` by the caster pays `1 / buildupPerXp` per buildup to the focus track. The receipt lives on the combat, keyed by owner (the seat id in co-op) and floored once (`skillXpReceipt`); the run's ledger is written once, by the run's owner — `main.js onCombatEnd`, `tools/session.mjs`'s write-back, `tools/runsim.mjs` — through `applySkillXp`. Combat never writes a run.
@@ -2190,10 +2191,18 @@ Recorded before any code (owner rule: a mechanics change lands in SPEC first). I
 - **Passive tag effects.** A reward may attach a tag to the character that changes every card carrying the skill's tags. Example: Shield +3 Block on each Shield card's Block, shown in the card's Block number.
 - **Critical hits** (new). Example feat, Blade level 2: Blade-tagged attacks crit with chance 0.05 + (0.1·DEX + 0.2·WIS + 0.1·INT) / 100 (no floor), capped at 0.5; a crit deals 1.5× damage. Chances from several sources add before the cap.
 - **The character bar keeps its own rewards** (§13.4i: attribute points, the feat or class choice); only skill and class bars use the table above.
-- **Curve.** Skill and class tracks (`balance.skill.xp`, `balance.skill.class.xp`) move to base 100, growth **1.83**, roundTo 5: 50,635 XP from level 0 to level 10 (steps 100, 185, 335, 615, 1120, 2050, 3755, 6875, 12580, 23020). The character curve is unchanged.
+- **Curves** (base XP per track, owner 2026-10-04; growth as stated, roundTo unchanged):
+
+  | Track | Table | Base | Growth | First step | Total to level 10 |
+  |---|---|---|---|---|---|
+  | Character (starts at 1) | `balance.level.xp` | **200** (was 100) | 1.75 | 200 | 40,770 (level 1 → 10) |
+  | Skill (starts at 0) | `balance.skill.xp` | 100 | **1.83** (was 1.75) | 100 | 50,635 (level 0 → 10) |
+  | Class (starts at 0) | `balance.skill.class.xp` | **400** (was 100) | **1.83** (was 1.75) | 400 | 202,515 (level 0 → 10) |
+
+  Skill steps: 100, 185, 335, 615, 1120, 2050, 3755, 6875, 12580, 23020. Class steps are those ×4 (400 … 92070).
 - **Not yet built:** all of it; A, B and C each land as their own pull request and update this section's *Falsify* line as they ship.
 
-*Falsify (once built):* a full bar shows Level up over the bar and the surplus XP is not applied until it is pressed; pressing opens a modal whose rows also appear lifted in the list until accepted; closing it resumes the surplus; skill level 4 grants a card, an upgrade, a feat pick and an attribute pick from the linked set; skill level 10 grants the second +1 flat; a rank-5 Slash is offered only at Blade 5 or above; Shield's +3 Block applies once per Shield card played and twice after two picks; a WIS 10, DEX 0, INT 0 Blade attack crits at 7%; `xpToNext(registries, 'weapon', 9)` costs 23020.
+*Falsify (once built):* a full bar shows Level up over the bar and the surplus XP is not applied until it is pressed; pressing opens a modal whose rows also appear lifted in the list until accepted; closing it resumes the surplus; skill level 4 grants a card, an upgrade, a feat pick and an attribute pick from the linked set; skill level 10 grants the second +1 flat; a rank-5 Slash is offered only at Blade 5 or above; Shield's +3 Block applies once per Shield card played and twice after two picks; a WIS 10, DEX 0, INT 0 Blade attack crits at 7%; `xpToNext(registries, 'weapon', 9)` costs 23020, `xpToNext(registries, 'class', 0)` costs 400, and the character's first step costs 200.
 
 ### 13.5 The last seat opens the causeway to the Ashen Spire
 
