@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Remove the combat Positioning button",
     "detail": "The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.",
-    "build": "0.7.1.872",
+    "build": "0.7.1.874",
     "pullRequest": 1558,
     "url": "https://github.com/cehinds/AshenSpire/pull/1558"
   },

@@ -1,6 +1,5 @@
 import { FORMATION_GROUPS_KEY, formationGroups, formationGroupOptions, formationGroupContains, formationMember, snapFormationTranslation, FORMATION_SNAP_STEP, positioningConfiguration } from '../../model/formationGroups.js';
 import { esc } from './tooltip.js';
-import { presentationConfig } from '../../model/advancedConfig.js';
 import { t } from '../strings.js';
 let positioningId = 0;
 
@@ -166,13 +165,4 @@ export function wireFormationPositioning(host, surface, { read, write, getPlan, 
   svg.addEventListener('pointercancel', () => { drag = null; draw(); });
   draw();
   return { draw, svg, release: () => svg.remove() };
-}
-
-export function combatPositioningBindings({ readSettings, onSettingsChange }) {
-  const readPresentation = () => presentationConfig(readSettings());
-  return {
-    read: () => readPresentation().formationGroups,
-    write: value => onSettingsChange({ [FORMATION_GROUPS_KEY]: value }),
-    readPresentation,
-  };
 }
