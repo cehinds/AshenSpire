@@ -142,7 +142,7 @@
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
-      "digest": "af34f216bed34c71"
+      "digest": "c1a69c2b796ba05f"
     },
     "tools/combat-save.mjs": {
       "count": 3,
@@ -214,7 +214,7 @@
     },
     "tools/hintstrip.mjs": {
       "count": 12,
-      "digest": "4bb688218514e95d"
+      "digest": "aae881d4915774c0"
     },
     "tools/hudbars.mjs": {
       "count": 1,

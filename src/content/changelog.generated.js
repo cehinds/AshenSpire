@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1560"
   },
   {
+    "id": "pr-1534",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Painted, editable combat footer",
+    "detail": "The stamina orb, draw cradle, End Turn plate, discarded cards and potion tray now assemble from separate painted components. Footer Atelier can move, resize and snap them together, and edit live text bindings, fonts and positions independently of the images. Solo and co-op keep their existing actions, with readable compact controls on phones and short landscape screens. The five new light images total about 9 KB.",
+    "build": "0.7.1.872",
+    "pullRequest": 1534,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1534"
+  },
+  {
     "id": "pr-1557",
     "date": "2026-10-03",
     "group": "2026-10-03",

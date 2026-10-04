@@ -3,8 +3,11 @@
 //
 // The real ?shot=combat door supplies the hand, settings, input wiring, and
 // rendered controls. This instrument measures the WGC6 footer: five persistent
-// controls in one grid, (Actions) [Draw] [End Turn] [Discard] (Potions),
-// packed as ONE centred group sized by packCombatFooter()
+// controls, (Actions) [Draw] [End Turn] [Discard] (Potions), in a centred
+// authored desktop composition or compact grid sized by packCombatFooter().
+// Hands (1/6/7) sample sparse and denser reachable drawCards states. The
+// current cap is 15, but the stock Reaver deck has only 11 cards: this matrix
+// does not claim a full-capacity hand; shotHand refuses unreachable counts.
 // (src/ui/models/CombatLayout.js) — two circles of one diameter, two piles of
 // one width, End Turn between them, one model gap. On a short landscape host
 // (#1043) allocateCombatBands() folds the same five controls into rails beside
@@ -16,7 +19,7 @@
 //
 // Usage:
 //   node tools/combat-action-row.mjs
-//   node tools/combat-action-row.mjs --only 884x1326 --text XL --hand 8
+//   node tools/combat-action-row.mjs --only 884x1326 --text XL --hand 7
 //   node tools/combat-action-row.mjs --standalone
 //   node tools/combat-action-row.mjs --coop-only
 //   node tools/combat-action-row.mjs --shots docs/preview --label before
@@ -49,8 +52,8 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'the five controls lose their one semantic owner',
       file: 'src/ui/components/combatActionRow.js',
-      find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
-      replace: '<div class="combat-action-split as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
+      find: '<div class="combat-action-row as-btnrow" data-footer-art="pending" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
+      replace: '<div class="combat-action-split as-btnrow" data-footer-art="pending" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">',
       expectRed: /combat-action-row: RED/,
     },
     // THE WGC6 PLANTS (2026-09-13). The three plants these replace moved the
@@ -72,11 +75,11 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       // Centring is only observable where End Turn is capped by its envelope,
       // so this plant runs on 1200x730 (see the selftest passes below).
       wide: true,
-      name: 'the packed group is no longer centred in the footer',
+      name: 'the authored group is no longer centred in the footer',
       file: 'styles/kit.css',
-      find: '  justify-content: center; align-items: center; gap: var(--footer-gap);',
-      replace: '  justify-content: start; align-items: center; gap: var(--footer-gap);',
-      expectRed: /FAIL the five controls pack as one centred group/,
+      find: 'height: 100%; margin-inline: auto;',
+      replace: 'height: 100%; margin-inline: 0;',
+      expectRed: /FAIL authored controls follow their layout geometry/,
     },
     {
       name: 'the controls spread apart instead of sharing the model gap',
@@ -136,7 +139,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
   const coopPlants = sourcePlants.splice(-2);
   const narrowPlants = sourcePlants.filter((plant) => !plant.wide);
   const widePlants = sourcePlants.filter((plant) => plant.wide);
-  const NARROW_ARGS = ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '8'];
+  const NARROW_ARGS = ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '7'];
   const WIDE_ARGS = ['--solo-only', '--only', '1200x730', '--text', 'M', '--hand', '7'];
   let code = await doorSelftest({
     tool: 'combat-action-row.mjs',
@@ -197,7 +200,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
 }
 
 if (onlyText && !['M', 'XL'].includes(onlyText)) throw new Error(`--text must be M or XL (got ${onlyText})`);
-if (onlyHand && ![1, 7, 8].includes(Number(onlyHand))) throw new Error(`--hand must be 1, 7, or 8 (got ${onlyHand})`);
+if (onlyHand && ![1, 6, 7].includes(Number(onlyHand))) throw new Error(`--hand must be 1, 6, or 7 (got ${onlyHand})`);
 
 const browserCandidates = [
   process.env.CHROME,
@@ -224,7 +227,7 @@ const shapes = [
   { width: 1200, height: 730 },
 ].filter((cell) => !only || `${cell.width}x${cell.height}` === only);
 const texts = ['M', 'XL'].filter((text) => !onlyText || text === onlyText);
-const hands = [1, 7, 8].filter((hand) => !onlyHand || hand === Number(onlyHand));
+const hands = [1, 6, 7].filter((hand) => !onlyHand || hand === Number(onlyHand));
 if (!shapes.length || !texts.length || !hands.length) {
   console.error('combat-action-row: requested filters selected no cell');
   process.exit(2);
@@ -324,7 +327,8 @@ async function main() {
         if (await evaluate(expression)) return;
         await new Promise((pass) => setTimeout(pass, 50));
       }
-      throw new Error(`timed out waiting for ${label}`);
+      const diagnostic=await evaluate(`({url:location.href,ready:document.readyState,combat:!!document.querySelector('.combat'),cards:document.querySelectorAll('.hand .card').length,text:document.body.innerText.slice(0,900)})`);
+      throw new Error(`timed out waiting for ${label}: ${JSON.stringify(diagnostic)}`);
     };
     const click = async (selector) => {
       const point = await evaluate(`(() => {
@@ -417,6 +421,15 @@ async function main() {
       const laneNode=document.querySelector('.combat:not(.coop) .hand-overlay')||document.querySelector('.combat:not(.coop) .hand');
       const lane=laneNode&&visible(laneNode)?rect(laneNode):null;
       const ownerBox=owner?rect(owner):null;
+      const authored=owner?.dataset.footerArt==='true'&&owner.dataset.footerCompact==='false';
+      const area=owner?.parentElement, areaBox=area?rect(area):null;
+      const authoredBoxes=authored&&ownerBox?selectors.map(selector=>{
+        const node=owner.querySelector(selector), actual=by[selector];
+        if(!node||!actual)return {selector,matches:false};
+        const pct=name=>parseFloat(node.style.getPropertyValue(name))/100;
+        const expected={left:ownerBox.left+pct('--art-x')*ownerBox.width,top:ownerBox.top+pct('--art-y')*ownerBox.height,width:Math.max(44,pct('--art-w')*ownerBox.width),height:Math.max(44,pct('--art-h')*ownerBox.height)};
+        return {selector,expected,matches:Object.keys(expected).every(key=>near(actual[key],expected[key]))};
+      }):null;
       const gaps=all&&!rails?[draw.left-energy.right,end.left-draw.right,discard.left-end.right,potions.left-discard.right]:null;
       const quickAccess=[document.querySelector('#combat-armoury'),document.querySelector('#combat-menu')];
       return {
@@ -424,9 +437,10 @@ async function main() {
         composition:document.documentElement.dataset.composition||null,
         state:document.documentElement.dataset.actionRowProbe||'rest',
         arrangement,
-        owner:{exists:!!owner,display:grid?.display||null,columns:grid?.gridTemplateColumns||null,geometry:owner?.dataset.footerGeometry||null},
+        owner:{exists:!!owner,display:grid?.display||null,columns:grid?.gridTemplateColumns||null,geometry:owner?.dataset.footerGeometry||null,controlCount:owner?[...owner.children].filter(node=>!node.matches('.footer-art-rails,.combat-potion-tray')&&visible(node)).length:0},
         owned:!!owner&&selectors.every((selector)=>owner.contains(document.querySelector(selector))),
         controls,pairs,foreign,plan,zoom:+zoom.toFixed(4),
+        authored:authored?{boxes:authoredBoxes,centred:!!areaBox&&near((ownerBox.left+ownerBox.right)/2,(areaBox.left+areaBox.right)/2)}:null,
         onGlass:shown.every((r)=>r.left>=-0.25&&r.top>=-0.25&&r.right<=innerWidth+0.25&&r.bottom<=innerHeight+0.25),
         minTap:shown.length?Math.min(...shown.map((r)=>Math.min(r.width,r.height))):0,
         order:{
@@ -453,7 +467,7 @@ async function main() {
         sizes:!all?null:{
           circles:near(energy.width,plan.circle)&&near(energy.height,plan.circle)&&near(potions.width,plan.circle)&&near(potions.height,plan.circle),
           endTurn:near(end.height,plan.circle)&&near(end.width,plan.endWidth),
-          piles:near(draw.width,plan.pileWidth)&&near(discard.width,plan.pileWidth)&&near(draw.height,plan.pileHeight)&&near(discard.height,plan.pileHeight),
+          piles:near(draw.width,plan.pileWidth)&&near(discard.width,plan.pileWidth)&&near(draw.height,rails?plan.circle:ownerBox.height)&&near(discard.height,rails?plan.circle:ownerBox.height),
         },
         quickAccess:{
           count:quickAccess.filter(visible).length,
@@ -500,8 +514,8 @@ async function main() {
 
           for (const state of STATES) {
             if (state === 'armed') {
-              if (hand < 7) continue;
-              const attackIndex = await evaluate(`[...document.querySelectorAll('.hand .card')].findIndex((card)=>card.querySelector('.ctype')?.textContent.includes('ATTACK'))`);
+              if (hand < 6) continue;
+              const attackIndex = await evaluate(`[...document.querySelectorAll('.hand .card')].findIndex((card)=>card.classList.contains('type-attack')&&card.getAttribute('aria-disabled')!=='true'&&!card.classList.contains('unaffordable'))`);
               let armed = false;
               if (attackIndex >= 0 && attackIndex < 9) {
                 const key = String(attackIndex + 1);
@@ -513,7 +527,7 @@ async function main() {
               if (!armed) {
                 failures++;
                 console.log(`\n  ${shape.width}x${shape.height} Text ${text}, hand ${hand}, armed`);
-                console.log('    FAIL real card could not be armed at its centre');
+                console.log('    FAIL real card could not be armed through its bound shortcut: '+JSON.stringify(await evaluate(`[...document.querySelectorAll('.hand .card')].map(card=>({type:card.querySelector('.ctype')?.textContent,classes:card.className,disabled:card.getAttribute('aria-disabled')}))`)));
                 continue;
               }
             }
@@ -546,31 +560,34 @@ async function main() {
             const tag = `${shape.width}x${shape.height} Text ${text}, hand ${hand}, ${state}, ${standalone ? 'root' : 'source'}`;
             console.log(`\n  ${tag}`);
             console.log(`    arrangement ${now.arrangement || '(none)'} · footer plan ${now.owner.geometry || '(none)'} · zoom ${now.zoom}`);
-            check(now.owner.exists && now.owner.display === 'grid' && now.owned && now.owner.geometry === 'supported',
-              'one WGC6 grid owns Actions, Draw, End Turn, Discard, and Potions on a supported packCombatFooter plan', JSON.stringify(now.owner));
+            check(now.owner.exists && now.owner.controlCount===5 && now.owner.display === (now.authored ? 'block' : 'grid') && now.owned && now.owner.geometry === 'supported',
+              'one supported footer owns Actions, Draw, End Turn, Discard, and Potions in its declared layout', JSON.stringify(now.owner));
             // WGC6 (#1043's CombatLayout.js): five tracks, circle / pile / End
             // Turn / pile / circle, not the kit ButtonRow's six equal tracks.
-            check((now.owner.columns?.match(/px/g)||[]).length===5,
-              'the footer resolves to five tracks: (Actions) [Draw] [End Turn] [Discard] (Potions)', JSON.stringify(now.owner));
+            check(now.authored ? now.authored.boxes.length===5 : (now.owner.columns?.match(/px/g)||[]).length===5,
+              now.authored ? 'the footer assigns five authored component boxes' : 'the footer resolves to five tracks: (Actions) [Draw] [End Turn] [Discard] (Potions)', JSON.stringify(now.owner));
             check(now.pairs.length === 0, 'action controls have zero pairwise hit-box intersections', JSON.stringify(now.pairs));
             check(now.foreign.length === 0, 'action controls intersect no card or pager', JSON.stringify(now.foreign));
             check(now.onGlass && now.minTap >= TAP_FLOOR_PX,
               'every visible action control is on glass and at least 44px', JSON.stringify({onGlass:now.onGlass,minTap:now.minTap}));
             check(now.controls.filter((control)=>control.visible).every((control)=>control.samples>0&&control.hitCount===control.samples&&control.centreHit),
               'every visible action control answers every sample inside its own shape and at its centre', JSON.stringify(now.controls.map((c)=>[c.selector,c.round,`${c.hitCount}/${c.samples}`,c.centreNode])));
-            check(now.controls.filter((control)=>control.visible).every((control)=>control.position!=='absolute'),
-              'grid children do not escape through absolute positioning', JSON.stringify(now.controls.map((c)=>[c.selector,c.position])));
+            check(now.controls.filter((control)=>control.visible).every((control)=>now.authored ? control.position==='absolute' : control.position!=='absolute'),
+              'controls use authored positioning or the compact grid as declared', JSON.stringify(now.controls.map((c)=>[c.selector,c.position])));
             check(now.order.persistent && now.order.ordered,
               'Actions, Draw, End Turn, Discard, and Potions stay present and in WGC6 order', JSON.stringify(now.order));
-            if (now.arrangement === 'rails') {
+            if (now.authored) {
+              check(now.authored.centred&&now.authored.boxes.every(box=>box.matches),
+                'authored controls follow their layout geometry in one centred footer',JSON.stringify(now.authored));
+            } else if (now.arrangement === 'rails') {
               check(!!now.rails && now.rails.leading && now.rails.trailing && now.rails.endOver && now.rails.baseline,
                 'short-landscape rails wrap the hand: (Actions)[Draw] lead, End Turn stands over [Discard](Potions)', JSON.stringify(now.rails));
             } else {
               check(!!now.packed && now.packed.oneRow && now.packed.gapsMatch && now.packed.centreDelta != null && now.packed.centreDelta <= PLAN_TOLERANCE_PX,
                 'the five controls pack as one centred group separated by the model gap', JSON.stringify({plan:now.plan.gap,...now.packed}));
             }
-            check(!!now.sizes && now.sizes.circles && now.sizes.endTurn && now.sizes.piles,
-              'circles share the model diameter; End Turn and the piles take their packCombatFooter sizes', JSON.stringify({plan:now.plan,sizes:now.sizes,rendered:now.controls.map((c)=>[c.selector,+(c.width||0).toFixed(2),+(c.height||0).toFixed(2)])}));
+            check(now.authored ? now.authored.boxes.every(box=>box.matches) : !!now.sizes && now.sizes.circles && now.sizes.endTurn && now.sizes.piles,
+              now.authored ? 'authored controls keep their independently configured sizes' : 'circles share the model diameter; End Turn and the piles take their packCombatFooter sizes', JSON.stringify(now.authored ? now.authored.boxes : {plan:now.plan,sizes:now.sizes,rendered:now.controls.map((c)=>[c.selector,+(c.width||0).toFixed(2),+(c.height||0).toFixed(2)])}));
             check(now.quickAccess.allVisible && now.quickAccess.armamentsAbsent,
               'Armoury and Menu remain visible above the bottom inventory controls', JSON.stringify(now.quickAccess));
 
@@ -631,8 +648,8 @@ async function main() {
               check(await closeViewer(), "the pile viewer's single Close ends it after Discard");
             }
 
-            const capture = shots && (only || ((shape.width===390&&shape.height===844&&text==='XL'&&hand===8&&state==='rest')
-              || (shape.width===884&&shape.height===1326&&text==='XL'&&hand===8&&state==='exhaust')
+            const capture = shots && (only || ((shape.width===390&&shape.height===844&&text==='XL'&&hand===7&&state==='rest')
+              || (shape.width===884&&shape.height===1326&&text==='XL'&&hand===7&&state==='exhaust')
               || (shape.width===1200&&shape.height===730&&text==='M'&&hand===7&&state==='rest')));
             if (capture) {
               await evaluate(`(() => {
@@ -675,7 +692,7 @@ async function main() {
             const hit=(node)=>{const r=rect(node),hits=[];for(let y=0;y<9;y++)for(let x=0;x<5;x++){const n=document.elementFromPoint(r.left+r.width*((x+.5)/5),r.top+r.height*((y+.5)/9));hits.push(!!(n&&(n===node||node.contains(n))))}return hits.filter(Boolean).length};
             const selectors=${JSON.stringify(CONTROL_SELECTORS)};
             const shown=(node)=>{const c=getComputedStyle(node),r=node.getBoundingClientRect();return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0};
-            const order=[...row.children].filter((node)=>!node.matches('.combat-potion-tray')&&shown(node)).map((node)=>selectors.find((sel)=>node.matches(sel))||String(node.className));
+            const order=[...row.children].filter((node)=>!node.matches('.footer-art-rails,.combat-potion-tray')&&shown(node)).map((node)=>selectors.find((sel)=>node.matches(sel))||String(node.className));
             const nodes=selectors.map((sel)=>row.querySelector(':scope > '+sel));
             if (nodes.some((node)=>!node)) return {missing:Object.fromEntries(selectors.map((sel,i)=>[sel,!!nodes[i]]))};
             const boxes=nodes.map(rect);
@@ -688,11 +705,16 @@ async function main() {
             const pairs=[];
             for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++) if(intersects(boxes[i],boxes[j])) pairs.push([selectors[i],selectors[j]]);
             const handBox=rect(hand);
+            const authored=row.dataset.footerArt==='true'&&row.dataset.footerCompact==='false', rowBox=rect(row);
+            const authoredPlanned=authored&&getComputedStyle(row).display==='block'&&nodes.every((node,i)=>{
+              const pct=name=>parseFloat(node.style.getPropertyValue(name))/100,box=boxes[i];
+              return near(box.left,rowBox.left+pct('--art-x')*rowBox.width)&&near(box.top,rowBox.top+pct('--art-y')*rowBox.height)&&near(box.width,Math.max(44,pct('--art-w')*rowBox.width))&&near(box.height,Math.max(44,pct('--art-h')*rowBox.height));
+            });
             return {
-              order, geometry:row.dataset.footerGeometry||null, arrangement:combat.dataset.combatArrangement||null,
+              order, authored, geometry:row.dataset.footerGeometry||null, arrangement:combat.dataset.combatArrangement||null,
               strayFlasks:document.querySelectorAll('.combat .coop-flasks, .combat .coop-flask, .combat [data-coop-flask-slot]').length,
               plan, boxes,
-              planned:near(energy.width,plan.circle)&&near(potions.width,plan.circle)&&near(draw.width,plan.pileWidth)&&near(spent.width,plan.pileWidth)&&near(end.width,plan.endWidth),
+              planned:authored?authoredPlanned:getComputedStyle(row).display==='grid'&&near(energy.width,plan.circle)&&near(potions.width,plan.circle)&&near(draw.width,plan.pileWidth)&&near(spent.width,plan.pileWidth)&&near(end.width,plan.endWidth),
               pairs, cardsClear:cards.every((card)=>boxes.every((box)=>!intersects(card,box))),
               onGlass:boxes.every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
               smallest:Math.min(...boxes.map((r)=>Math.min(r.width,r.height))),
@@ -710,11 +732,11 @@ async function main() {
             check(coop.order.join() === CONTROL_SELECTORS.join() && coop.strayFlasks === 0,
               'co-op mounts solo\'s five controls in one action row, with no flask row of its own', JSON.stringify({order:coop.order,strayFlasks:coop.strayFlasks}));
             check(coop.geometry === 'supported' && coop.planned,
-              'co-op footer takes the layout adapter\'s plan: circles, piles and End Turn at their planned widths', JSON.stringify({geometry:coop.geometry,plan:coop.plan,boxes:coop.boxes.map((b)=>Math.round(b.width))}));
+              'co-op footer takes the layout adapter\'s plan: authored boxes or compact widths', JSON.stringify({geometry:coop.geometry,authored:coop.authored,plan:coop.plan,boxes:coop.boxes.map((b)=>Math.round(b.width))}));
             check(!coop.pairs.length && coop.cardsClear, 'co-op controls neither overlap each other nor cover cards', JSON.stringify({pairs:coop.pairs,cardsClear:coop.cardsClear}));
             check(coop.onGlass && coop.smallest >= TAP_FLOOR_PX && coop.endHits === 45,
               'co-op controls are on glass, at least 44px, and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,smallest:coop.smallest,endHits:coop.endHits}));
-            check(coop.arrangement === 'rails' || (coop.oneRow && coop.below),
+            check(coop.arrangement === 'rails' || ((coop.authored || coop.oneRow) && coop.below),
               'co-op row is one row under the hand, as solo\'s is', JSON.stringify({arrangement:coop.arrangement,oneRow:coop.oneRow,below:coop.below}));
           }
 
