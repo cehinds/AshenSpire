@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1540",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Installer game versions and Stamina browser checks",
+    "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage. Later integration retains the current shared-orb, resource-identity and built-tree probes. The illustrated desktop End Turn plate keeps its 48-pixel primary target after zoom.",
+    "build": "0.7.1.893",
+    "pullRequest": 1540,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1540"
+  },
+  {
+    "id": "pr-1573",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "A clearer resource orb and more skyline",
+    "detail": "The stamina number sits centered above its SP label with clear separation, and the battlefield ground recedes to show more of the skyline while keeping combatants grounded.",
+    "build": "0.7.1.892",
+    "pullRequest": 1573,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1573"
+  },
+  {
     "id": "pr-1570",
     "date": "2026-10-03",
     "group": "2026-10-03",
@@ -11,16 +31,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.890",
     "pullRequest": 1570,
     "url": "https://github.com/cehinds/AshenSpire/pull/1570"
-  },
-  {
-    "id": "pr-1540",
-    "date": "2026-10-03",
-    "group": "2026-10-03",
-    "summary": "Installer game versions and Stamina browser checks",
-    "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage. Later integration retains the current shared-orb, resource-identity and built-tree probes. The illustrated desktop End Turn plate keeps its 48-pixel primary target after zoom.",
-    "build": "0.7.1.892",
-    "pullRequest": 1540,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1540"
   },
   {
     "id": "pr-1569",
