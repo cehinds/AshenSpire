@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1599"
   },
   {
+    "id": "pr-1600",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Bigger fighters on phones, more card text",
+    "detail": "On a narrow screen combatants now grow to half the battlefield's height wherever there is headroom above them, keeping their relative sizes and staying on their own side of the field. Card body text in the hand is 2pt smaller so more of each effect shows.",
+    "build": "0.7.1.919",
+    "pullRequest": 1600,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1600"
+  },
+  {
     "id": "pr-1592",
     "date": "2026-10-04",
     "group": "2026-10-04",

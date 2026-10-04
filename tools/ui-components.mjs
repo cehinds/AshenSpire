@@ -618,7 +618,7 @@ export function findings(r) {
       // `base` across every actor and derives each sprite's height from it —
       // this asserts the reduce and the apply, so a return to per-frame
       // scaling is red.
-      || !/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors \}\)/.test(r.battlefieldStage)
+      || !/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors[,\s}]/.test(r.battlefieldStage)
       || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
       // A presentation multiplier (sprite scale settings) grows a figure after
       // this shared height, capped per side to the screen (2026-09-27).
