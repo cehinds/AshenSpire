@@ -2206,6 +2206,7 @@ Recorded before any code (owner rule: a mechanics change lands in SPEC first). E
   | Skill (starts at 0) | `balance.skill.xp` | 100 | **1.83** (was 1.75) | 5 | 100 | 50,635 (10 steps, level 0 → 10) |
   | Class (starts at 0) | `balance.skill.class.xp` | **400** (was 100) | **1.83** (was 1.75) | 5 | 400 | 202,515 (10 steps, level 0 → 10) |
 
+  **Character level cap: 20** (owner, 2026-10-04): `balance.levelUp.maxLevels` 20 (was null, no ceiling); XP past level 20 stays on the ledger as `maxLevels` already does. On the curve above, level 1 → 20 costs 11,058,120 XP (step 19 → 20 alone is 4,739,310).
   Skill steps: 100, 185, 335, 615, 1120, 2050, 3755, 6875, 12580, 23020. Class steps (each rounded on its own): 400, 730, 1340, 2450, 4485, 8210, 15025, 27495, 50310, 92070.
 - **Not yet built:** all of it; A, B and C each land as their own pull request and update this section's *Falsify* line as they ship.
 
