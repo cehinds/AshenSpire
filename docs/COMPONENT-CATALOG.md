@@ -71,18 +71,22 @@ shelf so a last row of two is not drawn wider than the four above it. The
 card-removal grid and mount service deck list retain this card-grid layout.
 Merchant buy, sell and service shelves override the track layout with
 `merchant-offer`: full-width artwork/details/action rows sharing the book
-shelf's spacing tokens. Native card faces and inspection remain in the artwork
-column; complete descriptions and explicit actions sit alongside them.
+shelf's spacing tokens. Compact artwork opens inspection with the complete
+description. Four equal-height offers fit the pane on portrait and desktop
+hosts; additional stock scrolls. A fixed bottom category dock keeps navigation
+and the selected purchase footer below the offers. Short landscape hosts scroll
+at a readable minimum row height.
 Direct Cards and loose Weapon Arts purchases are absent from the merchant,
 including saved visits. Books, armaments, relics, supplies and services remain.
 
 `skill-book-offer` is the market's full-width `[book | details | Buy]` row.
 `src/ui/components/skillBookOffer.js` renders live consumable copy and price;
 `shop.js` binds the existing purchase review/hold and revalidating commit.
-All rows share the tallest grid track; compact hosts retain all three columns.
-Geometry lives in `ui/screens/shop.json` → `components.bookOffers`. Artwork
-resolves through `bookArt.renderBookArt` / `assetUrl`. The book shelf has no duplicate
-detail pane or footer Buy. See the real
+Four equal-height rows fit the merchant pane; compact hosts retain all three columns.
+Shared tokens live in `ui/screens/shop.json` → `components.bookOffers`; the merchant's
+four-row height is measured by `wireShopLayout`, with its compact composition in
+`styles/player-polish.css`. Artwork
+resolves through `bookArt.renderBookArt` / `assetUrl`. The book shelf uses the selected footer Buy and an Inspect thumbnail for full details. See the real
 [shop preview](../docs/preview/book-library/preview.html).
 
 This is the quick-reference library for the reusable UI vocabulary. The visual
@@ -141,7 +145,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `illustrated-background` | Environment artwork and floor model | `illustratedBackground` | Battlefields | Layered painting preserves authored floor anchors. |
 | `illustrated-vitality-hud` | `RunHudViewModel` | `hudmeta`, `runHud` | Run screens | Enlarged HP above relics with transparent background and illustrated controls; measured combat header clearance stays reserved. |
 | `skill-book-offer` | `consumablePurchasePlan`, shop `components.bookOffers` | `skillBookOffer.renderSkillBookOffer` | Market | Uniform book sprite, live details and native Buy control. |
-| `merchant-offer` | `ShopWorkspaceModel` offers + shared book-offer tokens | `merchantOffer.arrangeMerchantOffer` + `shop.mountShop` | Merchant buy, sell and service shelves | Equal full-width artwork/details/action rows, with native inspections, confirmations and holds. Actions stack below details on phones; selected action remains in the footer. |
+| `merchant-offer` | `ShopWorkspaceModel` offers + shared book-offer tokens | `merchantOffer.arrangeMerchantOffer` + `shop.mountShop` | Merchant buy, sell and service shelves | Equal full-width artwork/details/action rows, with native inspections, confirmations and holds. Four compact rows with art inspection, a fixed bottom category dock, and selected footer action; three columns remain on phones. |
 | `book-art` | `BOOK_ART_PRESETS`, `bookArtRecipe`, `bookArtLayers` | `bookArt.renderBookArt` | Market, Armoury, reading modal, Book Atelier | Painted cover, independently colored leather mask, trim and symbol; three covers, thirty symbol variations and ten authored recipes. |
 | `book-learning` | `skillBookReadPlan`, `bookLessons` | `bookLearning.openBookLearning` | Armoury, library preview | Searchable cross-class lesson choices, XP track selector for universal books, live card preview and atomic Read and learn. Cancelling preserves the book. |
 | `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark and family prompt over River Citadel; activation lights the city, holds for Settings > General > Display > Title screen > Lit city pause, then fades into the layered hall. Title mounts after the fade. |

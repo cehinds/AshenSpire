@@ -487,3 +487,58 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 
 /* Enlarge the complete HP row while reserving its scaled height above relics. */
 :root .shared-hud .resbars-host { zoom:1.22; }
+
+/* Approved merchant composition: four compact offers, category dock, footer.
+   All dimensions below are local CSS pixels; UI zoom keeps tap targets physical. */
+:root .shop-workspace.merchant-workspace { --merchant-gold:var(--gold); padding:7rem 2rem 1rem; }
+:root .shop-workspace.merchant-workspace .shop-railed { overflow:hidden; gap:0; }
+:root .shop-workspace.merchant-workspace .shop-pane { flex:1 1 auto; min-height:0; max-height:none; padding:0 1rem; display:flex; flex-direction:column; }
+:root .shop-workspace.merchant-workspace .shop-pane-head { display:flex; justify-content:space-between; align-items:center; flex:0 0 auto; min-height:2.8rem; margin:0; color:var(--gold); }
+:root .shop-workspace.merchant-workspace .shop-pane > .shop-body { height:auto; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); gap:0; }
+:root .shop-workspace.merchant-workspace .shop-offers { min-height:0; }
+:root .shop-workspace.merchant-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services) { display:grid; grid-template-columns:minmax(0,1fr); grid-auto-rows:var(--merchant-row-height,110px); gap:6px; align-content:start; }
+:root .merchant-workspace .shop-offers > #shop-skillBooks:not([hidden]) { grid-auto-rows:var(--merchant-row-height,110px); gap:6px; }
+:root .merchant-workspace #shop-skillBooks > .shop-book-offer,
+:root .shop-workspace.merchant-workspace .shop-shelf :is(.merchant-offer,.shop-book-offer) {
+ display:grid; grid-template-columns:calc(60px / var(--ui-zoom,1)) minmax(0,1fr) calc(76px / var(--ui-zoom,1));
+ gap:calc(9px / var(--ui-zoom,1)); align-items:center; width:100%; max-width:none; height:var(--merchant-row-height,110px); min-height:0;
+ margin:0; padding:calc(6px / var(--ui-zoom,1)); box-sizing:border-box; border:1px solid var(--line-soft); border-radius:4px;
+ background:linear-gradient(110deg,var(--panel),var(--bg)); box-shadow:none;
+}
+:root .merchant-workspace #shop-skillBooks > .is-selected,
+:root .shop-workspace.merchant-workspace .shop-shelf .is-selected { --gold:var(--merchant-gold); border-color:var(--gold); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 20%,transparent); }
+:root .shop-workspace.merchant-workspace :is(.merchant-offer-details,.shop-book-details) { padding:0; border:0; margin:0; min-width:0; }
+:root .shop-workspace.merchant-workspace :is(.merchant-offer-details,.shop-book-details) > h3 { font-size:calc(15px / var(--ui-zoom,1)); line-height:1.15; color:var(--gold); margin:0 0 4px; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+:root .shop-workspace.merchant-workspace :is(.merchant-offer-details,.shop-book-details) > p { font-size:calc(12px / var(--ui-zoom,1)); line-height:1.3; color:var(--ink-dim); display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+:root .shop-workspace.merchant-workspace .shop-book-details > .shop-book-usage { display:none; }
+:root .shop-workspace.merchant-workspace .shop-offer-avail { font-size:calc(10px / var(--ui-zoom,1)); line-height:1.2; }
+:root .shop-workspace.merchant-workspace :is(.merchant-offer-actions,.shop-book-actions) { grid-column:auto; display:grid; gap:4px; min-width:0; }
+:root .shop-workspace.merchant-workspace :is(.merchant-offer-price,.shop-book-price) { font-size:calc(11px / var(--ui-zoom,1)); line-height:1.2; color:var(--gold); }
+:root .shop-workspace.merchant-workspace :is(.merchant-offer-action,.shop-book-buy) { min-height:calc(44px / var(--ui-zoom,1)); height:auto; padding:4px; font-size:calc(13px / var(--ui-zoom,1)); border:1px solid var(--control-positive-border); border-radius:3px; background-color:var(--control-positive-fill); background-image:none; color:var(--control-positive-text); }
+:root .shop-workspace.merchant-workspace :is(.merchant-offer-action,.shop-book-buy):disabled { opacity:.55; }
+.merchant-thumbnail.as-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; min-height:44px; width:100%; height:100%; max-height:96px; padding:2px; border:1px solid var(--line-soft); border-radius:3px; background:var(--bg-raise); color:var(--ink-dim); }
+.merchant-thumbnail > :first-child { width:100%; height:calc(100% - 15px); min-height:0; object-fit:contain; flex:1 1 auto; }
+.merchant-inspect-label { font-size:10px; line-height:13px; flex:0 0 auto; }
+:root .shop-workspace.merchant-workspace .merchant-offer-media { height:100%; min-height:0; grid-row:auto; }
+:root .shop-workspace.merchant-workspace .merchant-thumbnail { max-height:calc(90px / var(--ui-zoom,1)); min-width:0; min-height:calc(44px / var(--ui-zoom,1)); }
+:root .shop-workspace.merchant-workspace .merchant-inspect-label { font-size:calc(10px / var(--ui-zoom,1)); line-height:1.2; }
+:root .shop-workspace.merchant-workspace .merchant-offer-glyph { min-height:0; font-size:3rem; }
+.merchant-inspection { display:grid; justify-items:center; gap:1rem; }
+.merchant-inspection > :first-child { max-width:min(100%,28rem); }
+.merchant-inspection > .book-art { width:24rem; }
+.merchant-inspection > p { white-space:pre-line; color:var(--parchment); }
+:root .shop-workspace.merchant-workspace .merchant-category-dock { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:calc(44px / var(--ui-zoom,1)); max-height:calc(94px / var(--ui-zoom,1)); overflow:auto; gap:6px; padding:6px 1rem; border-top:1px solid var(--line-soft); }
+:root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; min-height:0; padding:2px; width:100%; font-size:calc(11px / var(--ui-zoom,1)); line-height:1.2; color:var(--ink-dim); border:1px solid var(--line-soft); background:var(--panel); }
+:root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem.on { --gold:var(--merchant-gold); color:var(--gold); border-color:var(--gold); }
+:root .shop-workspace.merchant-workspace .merchant-category-dock .as-status { font-size:calc(9px / var(--ui-zoom,1)); line-height:1.1; color:inherit; }
+:root .shop-workspace.merchant-workspace .shop-foot .modal-foot-actions { flex-direction:row; flex-wrap:nowrap; }
+:root .shop-workspace.merchant-workspace .shop-foot .as-btn { min-height:calc(44px / var(--ui-zoom,1)); }
+:root[data-layout='narrow'] .shop-workspace.merchant-workspace { padding:6rem .8rem .5rem; }
+:root[data-layout='narrow'] .merchant-workspace .shop-frame { width:100%; }
+:root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head { grid-template-columns:minmax(0,1fr) auto auto; gap:8px; }
+:root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head-status { grid-column:2; grid-row:1; font-size:11px; }
+:root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-close { grid-column:3; }
+@media (max-height:500px) {
+ :root .shop-workspace.merchant-workspace { padding-top:1rem; }
+ :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(6,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1)); }
+}

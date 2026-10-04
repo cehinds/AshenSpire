@@ -44,6 +44,11 @@ run.smithingStones = 12;
 run.loadout.storage.push('katana');
 run.shopStock = buildMarketStock(registries, createRng(21), run, { meta: { settings }, innInTown: true });
 run.shopStock.smith = { offered: true, services: ['upgrade', 'extract', 'install'] };
+// Four-offer QA fixture only: production visits still use their saved stock.
+if (params.has('fourOffers')) {
+  run.shopStock.relics = registries.relics.all().filter(def => def.rarity !== 'starter').slice(0, 5).map(def => ({ id: def.id, cost: 180 }));
+  run.shopStock.skillBooks = registries.consumables.all().filter(def => def.kind === 'skillBook').slice(0, 5).map(def => ({ id: def.id, cost: 180 }));
+}
 let changes = 0;
 mountShop(document.getElementById('app'), {
   registries, run, meta: { settings },
