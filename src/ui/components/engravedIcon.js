@@ -1,6 +1,6 @@
 // Original icon geometry from the reviewed player-polish kit. Masks inherit
 // the caller's semantic colour; canonical item/character paintings stay intact.
-import { assetUrl, assetTier } from '../assetmap.js';
+import { assetUrl } from '../assetmap.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 const ICONS = new Set('accessibility actions armour attack audio back bleed blight block boss burn check cinders close collapse combat compare compendium connected contrast controls coop deck dexterity dialogue discard disconnected display draw equipment expand flask-health flask-mana frail frost health history info insanity inventory journey link location lock madness mana map menu merchant motion next poise profile progression quest regen relic reset rest reward save search seed settings shield skill smith staggered stamina strength sword target touch unknown vulnerable warning weak weight world'.split(' '));
@@ -17,21 +17,12 @@ export function engravedIconUrl(id) {
   const resolved = engravedIconId(id);
   return resolved ? assetUrl(`assets/player-polish/ui/icons/${resolved}.svg`) : null;
 }
-// CSS carries an exporter-inlined fallback for file play. Chromium rejects
-// relative/file SVG masks in CORS mode; picked-folder blob URLs are usable.
-// The original vectors are identical in both built-in tiers. A served high-res
-// manifest can name missing files; CSS masks have no error event, so keep the
-// embedded original for that unverified overlay. Picked-folder blobs are real
-// files and may override it without making icon-only controls disappear.
-export function engravedMaskUrl(id, protocol = globalThis.location?.protocol) {
+// Both tiers carry identical vectors. Keep the exporter-inlined CSS mask so
+// file play and external builds share a CORS-safe source. A verified picked
+// folder may override it with its already-loaded blob or data URL.
+export function engravedMaskUrl(id) {
   const url = engravedIconUrl(id);
-  const resolved = engravedIconId(id);
-  if (resolved && assetTier(`assets/player-polish/ui/icons/${resolved}.svg`) === 'high' && !/^(data:|blob:)/i.test(url)) return null;
-  if (protocol === 'file:' && url && !/^(data:|blob:|https?:)/i.test(url)) return null;
-  // CSS custom-property URLs resolve at the consuming stylesheet. Resolve
-  // against the document first so native ESM and exported builds agree.
-  return url && /^https?:$/.test(protocol) && globalThis.location?.href
-    ? new URL(url, globalThis.location.href).href : url;
+  return url && /^(data:|blob:)/i.test(url) ? url : null;
 }
 const maskValue = (url) => `url("${String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n\f]/g, '')}")`;
 const htmlAttribute = (value) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

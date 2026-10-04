@@ -279,10 +279,9 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 .customize .cc-preview-side { background:none; }
 .customize .cc-stats-side { background-color:#17130fee; }
 
-/* The field fits itself to the available corridor and keeps its native floor
-   anchors. Floating HUD surfaces return the former opaque header to scenery. */
-:root .combat[data-layout='formation'] { grid-template-rows:0 minmax(0,1fr) var(--w4-band-context,30%) var(--w4-band-footer,5%); }
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
+/* Keep the measured HUD clearance and native formation floor anchors. Only
+   the opaque backing is removed; combatants must not stand behind HP. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud { z-index:20; background:none; border:0; pointer-events:none; }
 .combat > .combat-hud .hud-info-row,
 .combat > .combat-hud .hud-vitals-panel,
 .combat > .combat-hud .hud-control-grid,

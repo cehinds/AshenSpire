@@ -115,7 +115,8 @@ if (argv.includes('--selftest')) {
     // that draw nothing; IDLE goes red on an image that did not load. The
     // seed's Reaver fights in the sword-and-shield set's outfit frames.
     extraCopy: ['assets/enemy-poses', 'assets/enemy-states', 'assets/defeated-poses', 'assets/painted-outfits',
-      'assets/animations/sword-shield-outfits'],
+      'assets/animations/sword-shield-outfits', 'assets/cards', 'assets/card-components',
+      'assets/player-polish/illustrations', 'assets/equipment'],
     plants: [
       {
         name: 'the idle bob goes back to the dead `.sprite > img` selector',
