@@ -3,6 +3,7 @@ import { shopBuyArtwork } from '../assets.js';
 import { renderBookArt } from './bookArt.js';
 import { t } from '../strings.js';
 import { uiConfig } from '../../config/generated/ui.js';
+import { merchantThumbnail } from './merchantOffer.js';
 
 /** Shared geometry comes from the shop's authored presentation document. */
 export function applySkillBookOfferTokens(root) {
@@ -29,6 +30,8 @@ export function renderSkillBookOffer({ def, description, cost, available, reason
   const art = shopBuyArtwork();
   const artUrl = document.baseURI ? new URL(art, document.baseURI).href : art;
   buy.style.setProperty('--book-buy-art', `url("${artUrl}")`);
+  buy.addEventListener('click', event => event.stopPropagation());
+  buy.addEventListener('keydown', event => event.stopPropagation());
   const actions = el('div', { class: 'shop-book-actions' }, [
     buy, el('span', { class: 'shop-book-price', text: t('shop.price', { cost }) }),
   ]);
@@ -36,6 +39,6 @@ export function renderSkillBookOffer({ def, description, cost, available, reason
   const tile = el('article', {
     class: `shop-book-offer${available ? '' : ' locked'}`,
     'aria-label': def.name, dataset: { bookId: def.id },
-  }, [artwork, details, actions]);
+  }, [merchantThumbnail({ visual: artwork, detail: renderBookArt(def), name: def.name, desc: `${description}\n${t('shop.book.desc', { text: '' }).trim()}` }), details, actions]);
   return { tile, buy };
 }

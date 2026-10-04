@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **See four merchant offers at once** ([#1575](https://github.com/cehinds/AshenSpire/pull/1575), `0.7.1.895`). Compact artwork, details and Buy controls fit above a fixed bottom category dock. Inspect opens the complete item or book, and the selected footer action follows mouse and keyboard selection. Warm brown panels and gold highlights match the approved shop preview.
+
 - **Installer game versions and Stamina browser checks** ([#1540](https://github.com/cehinds/AshenSpire/pull/1540), `0.7.1.893`). The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage. Later integration retains the current shared-orb, resource-identity and built-tree probes. The illustrated desktop End Turn plate keeps its 48-pixel primary target after zoom.
 
 - **A clearer resource orb and more skyline** ([#1573](https://github.com/cehinds/AshenSpire/pull/1573), `0.7.1.892`). The stamina number sits centered above its SP label with clear separation, and the battlefield ground recedes to show more of the skyline while keeping combatants grounded.
