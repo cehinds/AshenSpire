@@ -383,7 +383,7 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-bottom { background:none; }
 
 :root .combat[data-layout='formation'] > .hand-area { margin:0; padding:0; }
-:root .combat[data-layout='formation'] .environment-backdrop::before { background:linear-gradient(180deg,#08070610 25%,transparent 55%,#080706a0 100%); }
+:root .combat[data-layout='formation'] .environment-backdrop::before { background:linear-gradient(180deg,#08070610 25%,transparent calc(var(--scene-paint-bottom, 100%) - 16%),#17130f var(--scene-paint-bottom, 100%)); }
 :root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 2px 2px #100b08a0); }
 .combat .turn-ribbon { top:3%; background:#16120bbc; }
 
