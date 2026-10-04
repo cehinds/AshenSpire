@@ -915,11 +915,17 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
       // #550). Read before the text's ancestors are made non-hit-testable,
       // which would drop that boundary from the stack.
       for (const [x, y] of pts) for (const n of (overAt(x, y) || [])) { if (n.contains(el)) { if (!above.has(n)) above.set(n, []); above.get(n).push([x, y]); } else if (!found.includes(n)) found.push(n); }
+      // Preserve the actual paint order BEFORE removing the text ancestors
+      // from hit testing. A positioned background below a z-indexed label
+      // becomes hittable after that removal, but is still below its text.
+      const textStacks = pts.map(([x,y]) => document.elementsFromPoint(x,y));
       for (const n of chain) n.style.setProperty('pointer-events', 'none', 'important');
       try {
-        for (const [x, y] of pts) {
+        for (const [point, [x, y]] of pts.entries()) {
           for (const n of document.elementsFromPoint(x, y)) {
             if (!(n === el || el.contains(n))) continue; // outside the control: judged above, by the paint stack
+            const stack = textStacks[point], textAt = stack.findIndex(node => chain.includes(node));
+            if (!chain.includes(n) && textAt >= 0 && stack.indexOf(n) > textAt) continue;
             // SVG uses painter order inside its viewport. A filtered image
             // before the text is its background, even though the filter forms
             // a CSS stacking context. Later SVG objects remain cover candidates.
