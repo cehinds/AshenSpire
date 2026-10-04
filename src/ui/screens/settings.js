@@ -529,11 +529,6 @@ const ROWS = [
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: t('settings.row.uiScale'), applied: appliedHtml,
     note: tFull('settings.row.uiScale') },
-  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
-  // to miss. Both doors ask first through confirmResetAll. Last in Interface on
-  // purpose: tools/displayfirst.mjs plants expect fullscreen then accent first.
-  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
-    note: tFull('settings.row.resetAllSettings') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: t('settings.row.cardMotif'),
     note: tFull('settings.row.cardMotif') },
@@ -592,6 +587,11 @@ const ROWS = [
   { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
     choices: ['off', 'mirror', 'switcher'], label: t('settings.row.quickNav'),
     note: tFull('settings.row.quickNav') },
+  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
+  // to miss. Both doors ask first through confirmResetAll. Last in Interface on
+  // purpose: tools/displayfirst.mjs plants expect fullscreen then accent first.
+  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
+    note: tFull('settings.row.resetAllSettings') },
 
   { cat: 'Combat', key: 'armamentsPresentation', type: 'choice', def: 'radial',
     choices: ['radial', 'fixed'], label: t('settings.row.armamentsPresentation'),
