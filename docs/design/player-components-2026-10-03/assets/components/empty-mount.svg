@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="128" viewBox="0 0 96 128" fill="none" role="img" aria-labelledby="empty-mount-title"><title id="empty-mount-title">Empty compatible slot, availability supplied by actual model</title><defs>
+      <linearGradient id="empty-mount-metal" x1="0" y1="0" x2="0.6" y2="1"><stop stop-color="#514535"/><stop offset=".18" stop-color="#dcc18a"/><stop offset=".38" stop-color="#a88c53"/><stop offset=".64" stop-color="#554837"/><stop offset=".82" stop-color="#bd9c59"/><stop offset="1" stop-color="#534536"/></linearGradient>
+      <linearGradient id="empty-mount-soot" x2="0" y2="1"><stop stop-color="#242019"/><stop offset=".45" stop-color="#15130f"/><stop offset="1" stop-color="#0c0c0a"/></linearGradient>
+      <radialGradient id="empty-mount-light"><stop stop-color="#d6b667" stop-opacity=".26"/><stop offset="1" stop-color="#d6b667" stop-opacity="0"/></radialGradient>
+    </defs><rect x="8" y="8" width="80" height="112" rx="3" stroke="#8e826a" stroke-dasharray="5 4"/><path d="M40 60h16M48 52v16" stroke="#8e826a"/></svg>

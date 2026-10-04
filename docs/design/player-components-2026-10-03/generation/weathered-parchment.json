@@ -1,0 +1,10 @@
+{
+  "id": "weathered-parchment",
+  "group": "materials",
+  "reference": "references/10-growth-and-discovery.png",
+  "prompt": "Create one high quality text-free game UI material matching ONLY the parchment under the progression tree and compendium in the reference. Flat orthographic square sheet surface, warm ivory/umber weathered rag paper, subtle fibers, gently mottled ageing, tiny edge creases, restrained smoke staining. Quiet center remains smooth and readable for black live UI text. Fill entire square canvas with paper, no border, no torn alpha edges, no marks, writing, drawings, map, symbols, tree, objects, lighting casts or interface. This is a non-seamless cover texture.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-db82a29a-d55b-49d2-9620-af31dc0a35f3.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": false,
+  "master": "masters/materials/weathered-parchment.png"
+}

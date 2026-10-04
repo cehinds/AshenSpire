@@ -1,0 +1,143 @@
+{
+  "id": "05b",
+  "name": "Boss and status inspection",
+  "sourceModules": [
+    "src/ui/screens/combat.js"
+  ],
+  "sharedAssets": [
+    "assets/reused/ui/components/panel-frame.svg",
+    "assets/reused/ui/components/panel-backed.svg",
+    "assets/reused/ui/components/button-neutral.svg",
+    "assets/reused/ui/components/button-primary-ready.svg",
+    "assets/reused/ui/components/button-disabled.svg",
+    "assets/reused/ui/components/focus-outline.svg",
+    "assets/reused/ui/components/divider-plain.svg",
+    "assets/reused/materials/soot-leather-material.png",
+    "assets/reused/ui/components/hud-strip.svg",
+    "assets/reused/ui/components/tooltip.svg",
+    "assets/reused/ui/components/meter-fill-health.svg",
+    "assets/reused/ui/components/meter-fill-poise.svg",
+    "assets/reused/ui/components/card-folio-selected.svg"
+  ],
+  "mobileComposition": "Selected status inspection is a fold; keep boss silhouette and action intent readable.",
+  "family": "boss",
+  "reference": "references/05-combat-and-threats.png",
+  "referenceFeature": "lower",
+  "visualParts": [
+    "Authored boss arena and floor",
+    "boss silhouette",
+    "player sprite",
+    "boss intent and health/poise",
+    "expandable status detail",
+    "selected card frame"
+  ],
+  "liveFields": [
+    "boss identity",
+    "sprite anchors",
+    "intent",
+    "status buildup and duration",
+    "selected card"
+  ],
+  "artwork": {
+    "desktop": [
+      "assets/reused/canonical/assets/environments/legacy/FC-ENV-01-background.webp",
+      "assets/reused/canonical/assets/environments/legacy/FC-ENV-01-floor.webp",
+      "assets/reused/canonical/assets/enemy-poses/charredColossus_idle.webp",
+      "assets/reused/illustrations/card-attack-illustration.png",
+      "assets/reused/illustrations/card-guard-illustration.png",
+      "assets/reused/illustrations/card-ember-illustration.png"
+    ],
+    "mobile": [
+      "assets/reused/canonical/assets/environments/legacy/FC-ENV-01-background.webp",
+      "assets/reused/canonical/assets/environments/legacy/FC-ENV-01-floor.webp",
+      "assets/reused/canonical/assets/enemy-poses/charredColossus_idle.webp",
+      "assets/reused/illustrations/card-attack-illustration.png",
+      "assets/reused/illustrations/card-guard-illustration.png",
+      "assets/reused/illustrations/card-ember-illustration.png"
+    ]
+  },
+  "newPerspectiveOptions": {
+    "desktop": [
+      "assets/scenes/furnace-chapel-desktop.webp",
+      "assets/enemies/charred-colossus-three-quarter.webp",
+      "assets/enemies/charred-colossus-inspector.webp"
+    ],
+    "mobile": [
+      "assets/scenes/furnace-chapel-mobile.webp",
+      "assets/enemies/charred-colossus-three-quarter.webp",
+      "assets/enemies/charred-colossus-inspector.webp"
+    ]
+  },
+  "components": [
+    "assets/components/combat-intent.svg",
+    "assets/components/health-rail.svg",
+    "assets/components/buildup-rail.svg",
+    "assets/components/status-tooltip.svg",
+    "assets/components/card-engraved.svg",
+    "assets/components/card-selection.svg",
+    "assets/components/turn-orb.svg",
+    "assets/components/engraved-folio-frame.svg",
+    "assets/components/engraved-folio-backed.svg",
+    "assets/components/action-neutral.svg",
+    "assets/components/action-ready.svg",
+    "assets/components/action-selected.svg",
+    "assets/components/action-danger.svg",
+    "assets/components/action-disabled.svg",
+    "assets/components/focus-ring.svg",
+    "assets/components/mobile-action-tray.svg"
+  ],
+  "icons": [
+    "assets/reused/ui/icons/health.svg",
+    "assets/reused/ui/icons/poise.svg",
+    "assets/reused/ui/icons/bleed.svg",
+    "assets/reused/ui/icons/blight.svg",
+    "assets/reused/ui/icons/insanity.svg",
+    "assets/reused/ui/icons/attack.svg"
+  ],
+  "decorations": [],
+  "layout": {
+    "desktop": {
+      "referenceSize": [
+        1440,
+        900
+      ],
+      "regions": [
+        "context/rail",
+        "main stage or collection",
+        "selected inspector/comparison",
+        "bottom actions"
+      ]
+    },
+    "mobile": {
+      "referenceSize": [
+        390,
+        844
+      ],
+      "regions": [
+        "compact HUD",
+        "upper artwork or selected stage",
+        "one open detail tray",
+        "bottom safe-area actions"
+      ],
+      "note": "Selected status inspection is a fold; keep boss silhouette and action intent readable."
+    },
+    "shortLandscape": "Fold context and inspector; allow stage pan and detail scrolling; keep actions reachable."
+  },
+  "layerOrder": [
+    "background",
+    "canonical objects or optional illustrations",
+    "optional decor",
+    "readability veil",
+    "panel material",
+    "frame or socket",
+    "live DOM labels and values",
+    "selection/focus/availability overlay"
+  ],
+  "constraints": [
+    "Use canonical game data for all live fields; the screenshot is a visual reference.",
+    "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
+    "Separate focus, persistent selection, disabled state and actual legal action.",
+    "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors."
+  ],
+  "unresolvedIconAliases": []
+}

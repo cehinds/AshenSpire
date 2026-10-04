@@ -1,0 +1,11 @@
+{
+  "id": "wandering-soldier-inspector",
+  "group": "enemies",
+  "canonical": "assets/enemy-poses/wanderingSoldier_idle.webp",
+  "reference": "references/05-combat-and-threats.png",
+  "prompt": "ONE high-quality square transparent enemy-inspector portrait for Ashen Spire. FIRST reference authoritative identity: Wandering Soldier in battered closed-visored silver/dark iron helmet, rust-red scarf, worn iron plate shoulders, tattered cloth; sword/shield are not required in portrait, do not invent weapons. SECOND screenshot supplies painterly fidelity only. Shoulder-up FRONT three-quarter portrait with visor facing slightly screen LEFT, small readable engraved and chipped metal details, muted soot/umber and aged brass reflections, restrained cold rim light, no face exposed or new glowing eyes. Center entire head/shoulders inside square with generous transparent margins, hard cutout shoulder edge clean, actual transparent background. No UI, text, border, scene, smoke veil, solid shadow or decorative medallion.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-f0733c20-2f77-486a-a9f9-53e15283c858.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "master": "masters/enemies/wandering-soldier-inspector.png"
+}
