@@ -70,14 +70,24 @@
       "assets/enemies/wandering-soldier-three-quarter.webp",
       "assets/enemies/blight-hound-three-quarter.webp",
       "assets/enemies/wandering-soldier-inspector.webp",
-      "assets/enemies/blight-hound-inspector.webp"
+      "assets/enemies/blight-hound-inspector.webp",
+      "assets/scenes/old-aqueduct-desktop.webp",
+      "assets/scenes/drowned-hamlet-desktop.webp",
+      "assets/scenes/frozen-camp-desktop.webp",
+      "assets/scenes/caldera-rim-desktop.webp",
+      "assets/scenes/drowned-orchard-desktop.webp"
     ],
     "mobile": [
       "assets/scenes/ruined-courtyard-mobile.webp",
       "assets/enemies/wandering-soldier-three-quarter.webp",
       "assets/enemies/blight-hound-three-quarter.webp",
       "assets/enemies/wandering-soldier-inspector.webp",
-      "assets/enemies/blight-hound-inspector.webp"
+      "assets/enemies/blight-hound-inspector.webp",
+      "assets/scenes/old-aqueduct-mobile.webp",
+      "assets/scenes/drowned-hamlet-mobile.webp",
+      "assets/scenes/frozen-camp-mobile.webp",
+      "assets/scenes/caldera-rim-mobile.webp",
+      "assets/scenes/drowned-orchard-mobile.webp"
     ]
   },
   "components": [
@@ -155,7 +165,8 @@
     "Use canonical game data for all live fields; the screenshot is a visual reference.",
     "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
     "Separate focus, persistent selection, disabled state and actual legal action.",
-    "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors."
+    "Use existing combatEnvironment atlas boxes and floorStart for canonical scenes. New backgrounds/cutouts require authored anchors and binding before combat integration; they are already usable in static encounter inspectors.",
+    "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly."
   ],
   "unresolvedIconAliases": []
 }

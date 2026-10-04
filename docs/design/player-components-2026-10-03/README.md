@@ -1,6 +1,6 @@
 # Ashen Spire component collection
 
-**300 reusable artwork files**, decomposed from all twelve original desktop/mobile boards: **27 new raster artworks, 71 new SVG components, 194 unchanged first-kit assets and 8 additional unchanged canonical objects**. Three existing fonts and their OFL license are included separately. Open **index.html** for screen breakdowns, individual-file downloads and editable HTML composition demonstrations.
+**316 reusable artwork files**, decomposed from all twelve original desktop/mobile boards: **43 new raster artworks, 71 new SVG components, 194 unchanged first-kit assets and 8 additional unchanged canonical objects**. Three existing fonts and their OFL license are included separately. Open **index.html** for screen breakdowns, individual-file downloads and editable HTML composition demonstrations.
 
 This is an expanded art delivery begun October 3 and completed October 4, 2026. The original screenshots were visually inspected in full: 24 feature views, with 48 desktop/mobile renditions. **breakdown.json** records board coverage. **recipes/01a.json** through **recipes/12b.json** describe visible pieces, independent layer order, portable file paths, live fields, responsive composition and runtime binding constraints for each feature.
 
@@ -8,9 +8,9 @@ This is an expanded art delivery begun October 3 and completed October 4, 2026. 
 
 | Family | Delivered pieces |
 | --- | --- |
-| Scene perspectives | 17 text-free paintings: Crownfall overview and street level, furnace chapel, clear-floor courtyard, chapel rest, rewards, fellowship and aftermath each in landscape/portrait; one square inn interior |
+| Scene perspectives | 27 text-free paintings; the original city, chapel, courtyard, rest, reward, fellowship, aftermath and inn perspectives plus separate desktop/portrait Old Aqueduct, Drowned Hamlet, Frozen Camp, Caldera Rim and Drowned Orchard views |
 | Enemies | Wandering Soldier, Blight Hound and Charred Colossus each as a three-quarter body cutout and front inspector bust |
-| Foreground decoration | Separate torn standard, hanging lantern and books/fieldcase/candle still life, all with actual alpha |
+| Foreground decoration | 9 independent true-alpha props: original standard, lantern and fieldcase still life plus Second Cairn fallen/raised swords, road beacon, caravan medicine strongbox, hanging chain/hooks and open codex/bookstand |
 | Material | Weathered parchment cover surface; not seamless |
 | Boxes and menus | Engraved folios, portrait/item mats, comparison/receipt/party/quest shells, action and focus/selection states, card aperture/cost pieces, chamber/talent sockets, meters/intents, pause/confirmation/dropdown/menu windows, navigation/settings/filter/search rows and visual motifs |
 
@@ -63,3 +63,9 @@ python verify-collection.py
 Python requires Pillow. Static rendering requires Sharp through normal Node resolution, or `ASHENSPIRE_SHARP_MODULE` set to an installed module path. All new outputs stay under this D: workspace. The helpers do not call the image API; new raster generation requires the built-in tool and its saved prompts. The verifier checks every declared image, vector, master, font, recipe path, local HTML/CSS reference and script syntax, then writes a ZIP with fixed metadata. Owned paths come from explicit manifests/recipes and named package files; caches and unrelated local files are excluded even when they use a valid image extension. ZIP reproducibility is tied to identical package bytes and the same Python implementation.
 
 Static visual and package evidence is in **VALIDATION.md**. Browser preview access was blocked by the app's URL policy, so interactive catalog behavior and the current game preview are not claimed as browser-verified. This collection does not register assets, change gameplay or replace the live UI; the separate conversion work can consume the delivered files and explicit recipes.
+
+## October 4 canonical motif expansion
+
+Ten opaque desktop/portrait destination paintings extend the existing canonical survey motifs: Old Aqueduct, Drowned Hamlet, Frozen Camp, Caldera Rim and Drowned Orchard. Six independent true-alpha decorations supply Second Cairn fallen/raised sword poses, road signal beacon, caravan medicine strongbox, hanging chain/hooks and open codex/bookstand. Their saved generation records preserve exact prompts, supplied reference roles, source-lore keys, original generator paths and unchanged source hashes.
+
+These are optional scene/inspection layers. Map coordinates, combat floors, NPC identity, inventory/reward types and Cairn choice state still come from canonical runtime content. Recipe options never make either sword pose an automatic gameplay-state receipt.

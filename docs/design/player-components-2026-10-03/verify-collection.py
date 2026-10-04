@@ -75,6 +75,21 @@ def run():
                 if a['export']['resized'] or a['export']['cropped']:raise ValueError('Unexpected raster manipulation')
                 with Image.open(original) as im:
                     if im.size!=(a['width'],a['height']):raise ValueError('Master/export size mismatch')
+                    if a['export']['lossless']:
+                        with Image.open(p) as exported:
+                            if im.getchannel('A').tobytes()!=exported.getchannel('A').tobytes():
+                                raise ValueError('Cutout alpha pixels changed '+a['id'])
+                generation=json.loads(safe(a['generation']).read_text(encoding='utf-8'))
+                if generation.get('sourceMasterSha256') and generation['sourceMasterSha256']!=a['masterSha256']:
+                    raise ValueError('Generator provenance hash mismatch '+a['id'])
+                if generation.get('sourcePromptSha256') and hashlib.sha256(generation['prompt'].encode('utf-8')).hexdigest()!=generation['sourcePromptSha256']:
+                    raise ValueError('Exact UTF-8 prompt changed '+a['id'])
+                references=generation.get('refs',[])+generation.get('previousVersion',{}).get('refs',[])
+                for reference in references:
+                    if reference.get('packageReference'):safe(reference['packageReference'])
+                if generation.get('reference'):safe(generation['reference'])
+                for source in generation.get('sourceLore',[]):
+                    if source.get('packageReference'):safe(source['packageReference'])
     for a in m['fonts']:
         if sha(safe(a['file']))!=a['sha256']:raise ValueError('Font changed '+a['file'])
     rs=json.loads(safe('screen-recipes.json').read_text(encoding='utf-8'))['recipes']

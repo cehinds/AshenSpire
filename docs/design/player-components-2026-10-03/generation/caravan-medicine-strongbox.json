@@ -1,0 +1,47 @@
+{
+  "id": "caravan-medicine-strongbox",
+  "tool": "image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": true,
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/assets/decorations/fieldcase-still-life.webp",
+      "role": "style/material/alpha cutout reference only",
+      "packageReference": "assets/decorations/fieldcase-still-life.webp",
+      "referenceScope": "delivered package reference"
+    }
+  ],
+  "sourceLore": [
+    {
+      "path": "src/content/events.js",
+      "keys": [
+        "lanternCaravan"
+      ],
+      "details": "Last caravan wagon carries signal lantern; medicine strongbox belongs to Lantern Haven and cold hamlets. No contents visually specified."
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: reusable isolated foreground prop for AshenSpire, on genuine transparent alpha background. Polished hand-painted dark fantasy, weathered tactile surfaces, dark iron, aged brass and restrained ember-warm highlights, same painted language as the reference. Full object visible with generous transparent margins; no hard rectangular backing, background scenery, opaque backdrop, fake checkerboard, labels, lettering, UI, borders, logos, stat values, map coordinates or characters. Maintain clear silhouette readable on mobile. Do not add unrelated props.\nPrimary request: A single closed portable medicine strongbox carried on a mud-spattered survivor caravan: dark weathered timber body reinforced by battered iron bands, practical aged brass latch and side carrying handles, traces of dried road mud at the base. Clear sturdy silhouette in three-quarter view. Contents remain concealed, no lettering or medical cross or symbols painted on it, no potions, coins, medicines or contents outside. Transparent background and soft tight grounded shadow only, full box with generous margins, suitable for an event choice thumbnail.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-58cd2db6-0ae4-449a-92be-5351114d0ac8.png",
+  "file": "masters/decorations/caravan-medicine-strongbox.png",
+  "sha256": "3c009835246169af533d0f5a52f901baa71fda810121a520c0e2ab0b104ee193",
+  "bytes": 2575574,
+  "width": 1536,
+  "height": 1024,
+  "imageMode": "RGBA",
+  "alphaExtrema": [
+    0,
+    254
+  ],
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "group": "decorations",
+  "master": "masters/decorations/caravan-medicine-strongbox.png",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-58cd2db6-0ae4-449a-92be-5351114d0ac8.png",
+  "transparent_background": true,
+  "stagingMasterRelativePath": "masters/caravan-medicine-strongbox.png",
+  "sourceRecordTool": "built-in image_gen.imagegen",
+  "sourceRecordSha256": "d24a5114e59a33a91fd9684440fb50b0f6a45ee7310d9724a7b2ccd8bce1dd9d",
+  "sourceMasterSha256": "3c009835246169af533d0f5a52f901baa71fda810121a520c0e2ab0b104ee193",
+  "reference": "assets/decorations/fieldcase-still-life.webp",
+  "sourcePromptSha256": "bda47b794cf575b4c9c9b5b2f3619880fd8517409ebf7790ab8ed010db4b89a0"
+}
