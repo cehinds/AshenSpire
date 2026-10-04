@@ -33,7 +33,16 @@ Unticked, the game plays on the light art. Running the installer again with the
 box ticked adds the art; unticking it there removes it. An upgrade keeps the
 earlier choice and does not download art that is already installed.
 
-The next page has a **High-quality art: choose branch and version** button.
+The next page has a **Choose game and high-quality art versions** button.
+The game selectors list **test**, **release**, **main**, and **dev** and up to
+five available successful installer builds per branch. Each version is read
+from the exact build commit. **Download this game installer** opens that exact
+GitHub artifact; GitHub sign-in is required. Unzip and run the downloaded
+installer to install that game version and its matching art. Expired artifacts,
+failed builds and pull-request previews are excluded. A branch with no available
+installer says so. This installer continues to install its own bundled game,
+whose version and branch are shown above the selectors.
+
 The chooser shows the current installed art, the release required by this game,
 and the latest published art version after checking GitHub. Branch and version
 selectors use the public `cehinds/AshenSpire-art` catalog; a release is offered

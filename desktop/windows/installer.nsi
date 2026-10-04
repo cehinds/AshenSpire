@@ -295,7 +295,7 @@ Function .onInit
 FunctionEnd
 
 Function ArtPage
-  !insertmacro MUI_HEADER_TEXT "High-quality artwork" "Choose an art branch/version, or download artwork separately."
+  !insertmacro MUI_HEADER_TEXT "Game and high-quality artwork" "Choose game and art branches/versions, or download artwork separately."
   nsDialogs::Create 1018
   Pop $ArtDialog
   ${If} $ArtDialog == error
@@ -311,9 +311,9 @@ Function ArtPage
   ${EndIf}
   ${NSD_CreateLabel} 0 0 100% 36u "Current installed art: $ArtInstalled$\r$\nArt required by this game: ${HD_TAG}"
   Pop $0
-  ${NSD_CreateLabel} 0 42u 100% 30u "The art chooser lists the latest published version and the art repository's branches. Other releases can be saved separately."
+  ${NSD_CreateLabel} 0 42u 100% 30u "Choose a game installer from test, release, main or dev, and browse the art repository's branches and versions. Art can be saved separately."
   Pop $0
-  ${NSD_CreateButton} 0 80u 100% 24u "High-quality art: choose branch and version..."
+  ${NSD_CreateButton} 0 80u 100% 24u "Choose game and high-quality art versions..."
   Pop $ArtButton
   ${NSD_OnClick} $ArtButton OpenArtOptions
   ${NSD_CreateLabel} 0 112u 100% 18u "Installation follows the High-resolution art checkbox on the previous page."
@@ -327,10 +327,12 @@ Function OpenArtOptions
   InitPluginsDir
   File "/oname=$PLUGINSDIR\art-options.ps1" "${APP_DIR}\install-data\art-options.ps1"
   File "/oname=$PLUGINSDIR\art-releases.ps1" "${APP_DIR}\install-data\art-releases.ps1"
+  File "/oname=$PLUGINSDIR\game-releases.ps1" "${APP_DIR}\install-data\game-releases.ps1"
+  File "/oname=$PLUGINSDIR\installer-build.json" "${APP_DIR}\install-data\installer-build.json"
   File "/oname=$PLUGINSDIR\art-release.json" "${APP_DIR}\install-data\art-release.json"
   Delete "$PLUGINSDIR\art-selection.ini"
   EnableWindow $ArtButton 0
-  nsExec::ExecToLog '"${PS_EXE}" -NoProfile -STA -ExecutionPolicy Bypass -File "$PLUGINSDIR\art-options.ps1" -Config "$PLUGINSDIR\art-release.json" -SelectionFile "$PLUGINSDIR\art-selection.ini" -InstalledVersion "$ArtInstalled"'
+  nsExec::ExecToLog '"${PS_EXE}" -NoProfile -STA -ExecutionPolicy Bypass -File "$PLUGINSDIR\art-options.ps1" -Config "$PLUGINSDIR\art-release.json" -GameConfig "$PLUGINSDIR\installer-build.json" -SelectionFile "$PLUGINSDIR\art-selection.ini" -InstalledVersion "$ArtInstalled"'
   Pop $0
   EnableWindow $ArtButton 1
   ${If} $0 != 0
