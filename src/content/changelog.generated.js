@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Phone fighters no longer stack",
     "detail": "Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. A side standing in more than one row, or whose art is too wide to grow, keeps its previous size; it is never made smaller.",
-    "build": "0.7.1.925",
+    "build": "0.7.1.926",
     "pullRequest": 1606,
     "url": "https://github.com/cehinds/AshenSpire/pull/1606"
+  },
+  {
+    "id": "pr-1602",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Level-up rewards planned",
+    "detail": "The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.",
+    "build": "0.7.1.924",
+    "pullRequest": 1602,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1602"
   },
   {
     "id": "pr-1605",

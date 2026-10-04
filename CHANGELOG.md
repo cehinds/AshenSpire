@@ -34,7 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
-- **Phone fighters no longer stack** ([#1606](https://github.com/cehinds/AshenSpire/pull/1606), `0.7.1.925`). Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. A side standing in more than one row, or whose art is too wide to grow, keeps its previous size; it is never made smaller.
+- **Phone fighters no longer stack** ([#1606](https://github.com/cehinds/AshenSpire/pull/1606), `0.7.1.926`). Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. A side standing in more than one row, or whose art is too wide to grow, keeps its previous size; it is never made smaller.
+
+- **Level-up rewards planned** ([#1602](https://github.com/cehinds/AshenSpire/pull/1602), `0.7.1.924`). The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.
+
 
 - **Smoother map and animated fighters on phones** ([#1605](https://github.com/cehinds/AshenSpire/pull/1605), `0.7.1.923`). Choosing a destination on the map no longer slows the game while its panel is open. On touch screens, fighters animate again (attack poses, enemy attack art and the idle sway) instead of standing frozen, and animated sprites and weapon effects no longer blink between frames. Attacks lean from the feet instead of rocking the whole figure side to side.
 
