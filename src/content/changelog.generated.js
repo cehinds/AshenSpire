@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Installer game versions and Stamina browser checks",
     "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage.",
-    "build": "0.7.1.852",
+    "build": "0.7.1.853",
     "pullRequest": 1540,
     "url": "https://github.com/cehinds/AshenSpire/pull/1540"
+  },
+  {
+    "id": "pr-1535",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Build your deck at the Reading Desk",
+    "detail": "The illustrated deck editor has compact rows, two-line descriptions, inline Inspect, and proportionate card art. Sapphire Mana and green Stamina symbols show centered costs, with configurable resource grouping and order. Desktop inspection includes a looping skill animation with Pause. Any deck card can return to the library; adding equipment skills requires compatible equipped gear, and removed equipment cards stay removed after saving. A separate visual row editor lets you move, resize and snap components, then export the layout as JSON.",
+    "build": "0.7.1.852",
+    "pullRequest": 1535,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1535"
   },
   {
     "id": "pr-1536",
