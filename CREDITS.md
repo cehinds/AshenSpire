@@ -397,3 +397,13 @@ and verified by the normal game build.
 ### Stamina orb and mana harness
 
 `assets/ui/stamina-orb/`: original OpenAI imagegen artwork directed and approved by the project owner. Modular weathered metal harness, emerald stamina orb, green sigil, sapphire mana gem and dim spent gem. PNG masters, prompts and approved layout live in cehinds/AshenSpire-art under `art/ui/stamina-orb/`; high and light runtime images ship in `hd-assets-v7`.
+
+## Approved illustrated card and scene components (art release v9)
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/player-polish/` | [Approved paintings and authored SVG kit](https://github.com/cehinds/AshenSpire-art/tree/main/art/player-polish-runtime), imported from the owner-approved JavaScript prototype | First-party OpenAI-generated paintings and project-authored SVGs; no third-party license claimed. |
+| `assets/card-components/` | [Editable Card Studio masters and export hashes](https://github.com/cehinds/AshenSpire-art/tree/main/art/illustrated-card-components) | Original project-generated artwork and authored layers; lossless runtime derivatives; no third-party license claimed. |
+| `assets/ui-components/` | [Approved Armoury and Menu layers](https://github.com/cehinds/AshenSpire-art/tree/main/art/illustrated-card-components) | Original project-generated artwork and authored layers; no third-party license claimed. |
+
+The matching assets-mobile derivatives retain the same provenance and rights.

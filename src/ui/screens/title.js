@@ -143,7 +143,7 @@ export function mountTitle(app, {
       list.querySelector('.slot-continue')?.classList.add('is-highlighted');
       const resume = list.querySelector('.slot-continue');
       const copy = el('span', { class: 'title-save-preview' }, [
-        el('span', { class: 'title-save-heading', text: 'Continue' }),
+        el('span', { class: 'title-save-heading', text: t('title.saved.continue') }),
         el('span', { class: 'title-save-name', text: saved.summary.className }),
         el('span', { class: 'title-save-facts', text: slotFacts(saved.summary) }),
       ]);

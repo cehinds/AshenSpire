@@ -1103,3 +1103,5 @@ book.read.complete,,Book read,,
 
 settings.manaRing,,Mana ring,,
 settings.manaRing.note,,Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.,,
+rest.recovery.heading,,Recovery preview,Recovery preview,
+title.saved.continue,,Continue,Continue,

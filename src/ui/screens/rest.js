@@ -6,7 +6,7 @@
 // which is the clearest illustration in the tree of why the form is derived
 // rather than chosen:
 //
-//   REST activates directly in the experimental game. Its recovery ledger
+//   REST retains its hold confirmation. Its recovery ledger
 //   previews the exact live result; the visit owns availability and commitment.
 //   SMITH CONFIRMS. Constantine asked for the upgrade preview to be
 //   confirmable. #105 shipped a per-card HOVER tooltip, which on a phone was
@@ -370,8 +370,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // The second slot: what arriving already restored, then each choice's state.
   // The names are read off the mounted cards, so a choice keeps one title.
   consequences.insertAdjacentHTML('beforeend', refillLineHtml(registries, refill));
-  const recovery = el('section', { class: 'rest-recovery', 'aria-label': 'Recovery preview' });
-  recovery.append(el('h3', { class: 'as-eyebrow', text: 'Recovery preview' }));
+  const recovery = el('section', { class: 'rest-recovery', 'aria-label': t('rest.recovery.heading') });
+  recovery.append(el('h3', { class: 'as-eyebrow', text: t('rest.recovery.heading') }));
   for (const [icon, label, before, after] of [
     ['health', 'HP', run.hp, noRest ? run.hp : Math.min(run.maxHp, run.hp + heal)],
     ['mana', 'Mana', run.mana, noRest ? run.mana : manaAfter],
