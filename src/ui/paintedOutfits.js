@@ -9,7 +9,6 @@ import { assetUrl } from './assetmap.js';
 import { reducedMotionRequested } from './motion.js';
 import { hintImage } from './imageHints.js';
 import { preloadPoses } from './services/posePreloads.js';
-import { liteRendering } from './performance.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { animationArt, animationClip, animationTiming, animationView } from '../model/equipmentAnimation.js';
 
@@ -96,7 +95,7 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   layer.className = 'pose-layer';
   layer.style.cssText = `height:${STAGE.canvas / height * STAGE.percent}%;aspect-ratio:1;top:${STAGE.percent - STAGE.floorY / height * STAGE.percent}%;transform:translateX(-50%);`;
   layer.style.isolation = 'isolate';
-  const img = hintImage(document.createElement('img'));
+  const img = hintImage(document.createElement('img'), { swapped: true });
   img.className = 'pose-frame';
   img.alt = classId;
   img.style.cssText = 'inset:0;width:100%;height:100%;';
@@ -236,7 +235,7 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     play(pose, ms = TIME.defaultPlayMs, aura = []) {
       if (pose === POSE.defeatedPose) { setRestPose(POSE.defeatedPose); return true; }
       if (resting === POSE.defeatedPose) return false;
-      if (reducedMotionRequested() || liteRendering()) { settle(); return false; }
+      if (reducedMotionRequested()) { settle(); return false; }
       const sequence = sequenceFor(POSE.attackPoses.includes(pose) ? POSE.attackSequenceKey : pose);
       if (!sequence.length) return false;
       clear();

@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Phone fighters no longer stack",
     "detail": "Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. A side standing in more than one row, or whose art is too wide to grow, keeps its previous size; it is never made smaller.",
-    "build": "0.7.1.923",
+    "build": "0.7.1.925",
     "pullRequest": 1606,
     "url": "https://github.com/cehinds/AshenSpire/pull/1606"
+  },
+  {
+    "id": "pr-1605",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Smoother map and animated fighters on phones",
+    "detail": "Choosing a destination on the map no longer slows the game while its panel is open. On touch screens, fighters animate again (attack poses, enemy attack art and the idle sway) instead of standing frozen, and animated sprites and weapon effects no longer blink between frames. Attacks lean from the feet instead of rocking the whole figure side to side.",
+    "build": "0.7.1.923",
+    "pullRequest": 1605,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1605"
+  },
+  {
+    "id": "pr-1599",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "More reusable scenes and foreground props",
+    "detail": "The player artwork collection adds five lore-grounded locations in separate desktop and mobile compositions, plus six transparent props including both Second Cairn sword states. Its 316 components include unchanged PNG masters, WebP exports, exact prompts and responsive layer recipes for game integration. Live game artwork bindings are unchanged.",
+    "build": "0.7.1.921",
+    "pullRequest": 1599,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1599"
   },
   {
     "id": "pr-1600",
