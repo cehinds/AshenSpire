@@ -15,6 +15,8 @@ import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
+import { assetUrl } from '../assetmap.js';
+import { engravedIconHtml } from '../components/engravedIcon.js';
 
 let releaseActiveTitleBack = null;
 
@@ -109,12 +111,12 @@ export function mountTitle(app, {
         // defaults (content/source/characterCreation.json `quickStart`).
         ...(onQuickStart ? [entry(t('title.quickstart'), 'quick-start', { id: 'quick-start', className: 'slot-quick' })] : []),
         entry('Load', 'load', { id: 'load-game' }),
-        entry('New', 'new', { id: 'new-game', className: 'slot-new' }),
+        entry('Begin the climb', 'new', { id: 'new-game', className: 'slot-new' }),
+        ...(onHistory ? [entry('Run history', 'history', { id: 'run-history' })] : []),
         // #armaments remains the compatibility anchor for the existing watched probe.
-        entry('Collection', 'collection', { id: 'armaments' }),
+        entry('Compendium', 'collection', { id: 'armaments' }),
         entry('Settings', 'settings', { id: 'settings' }),
-        ...(onOffline ? [entry(offlinePlay.title, 'offline', { id: 'download-game' })] : []),
-        entry('Quit', 'quit', { id: 'quit-game' }),
+        ...(onLan ? [entry('Forsaken Together', 'lan', { id: 'lan-play' })] : []),
       ],
       attrs: { 'data-component': UI.titleBrandLockup },
     });
@@ -130,22 +132,36 @@ export function mountTitle(app, {
     list.className = 'title-menu';
     list.dataset.component = UI.titleMenu;
     list.setAttribute('aria-label', 'Ashen Spire main menu');
+    for (const [action, icon] of Object.entries({ history: 'history', collection: 'compendium', settings: 'settings', lan: 'coop' })) {
+      list.querySelector(`[data-title-action="${action}"]`)?.insertAdjacentHTML('afterbegin', engravedIconHtml(icon));
+    }
     // W3b: an available Continue is highlighted and its exact save sits beside
     // the menu (below it on narrow hosts); the wordmark above stays centred.
     // With no save this is W3a: the lone centred menu, no empty placeholder.
     const saved = occupied[0];
     if (saved) {
       list.querySelector('.slot-continue')?.classList.add('is-highlighted');
-      const home = document.createElement('div');
-      home.className = 'title-home';
-      list.replaceWith(home);
-      home.append(list, el('aside', { class: 'title-save-preview', 'aria-label': t('title.save.aria', { slot: saved.slot }) }, [
-        el('p', { class: 'as-eyebrow', text: t('title.save.eyebrow') }),
-        el('p', { class: 'title-save-name', text: saved.summary.className }),
-        el('p', { class: 'title-save-facts', text: slotFacts(saved.summary) }),
-        el('p', { class: 'title-save-identity', text: t('title.save.identity', { slot: saved.slot, seed: saved.summary.seedString || '—' }) }),
-      ]));
+      const resume = list.querySelector('.slot-continue');
+      const copy = el('span', { class: 'title-save-preview' }, [
+        el('span', { class: 'title-save-heading', text: 'Continue' }),
+        el('span', { class: 'title-save-name', text: saved.summary.className }),
+        el('span', { class: 'title-save-facts', text: slotFacts(saved.summary) }),
+      ]);
+      resume.replaceChildren(copy);
+      resume.insertAdjacentHTML('afterbegin', engravedIconHtml('journey'));
+      resume.insertAdjacentHTML('beforeend', engravedIconHtml('next'));
     }
+    // These secondary doors invoke the host's existing navigation callbacks.
+    const more = el('details', { class: 'title-more' }, [el('summary', {}, 'More')]);
+    const moreEntries = [
+      entry('Load a climb', 'load', { id: 'load-game' }),
+      ...(onCustom ? [entry('Custom climb', 'custom', { id: 'custom-run' })] : []),
+      ...(onProfile ? [entry('Profile', 'profile', { id: 'profile' })] : []),
+      ...(onOffline ? [entry(offlinePlay.title, 'offline', { id: 'download-game' })] : []),
+      entry('Quit', 'quit', { id: 'quit-game' }),
+    ];
+    for (const item of moreEntries) more.append(el('button', { type: 'button', class: 'as-btn', ...item.attrs }, item.label));
+    menu.append(more);
     const tagline = document.createElement('p');
     tagline.className = 'tm-foot title-tagline';
     tagline.dataset.component = UI.titleTagline;
@@ -253,18 +269,26 @@ export function mountTitle(app, {
   function render() {
     app.innerHTML = `
       <div class="screen title-screen">
+        <div class="title-landscape" aria-hidden="true"></div>
+        <img class="title-traveler" src="${assetUrl('assets/player-polish/illustrations/title-traveler.webp')}" alt="" aria-hidden="true">
         <div class="tower-hall" aria-hidden="true"><div class="tower-interior-city"></div><div class="tower-door-frame"></div></div>
         ${Array.from({ length: 7 }, (_, i) => `<span class="ember" style="left:${8 + ((i * 13.7) % 84)}%;animation-delay:${(i * 1.7) % 9}s;animation-duration:${7 + (i % 4) * 2}s"></span>`).join('')}
         ${hudQuickSettingsHtml(hudQuickSettingsModel({ place: 'title', presentation: registries.balance.ui.hudQuickSettings, settings: meta.settings || {} }))}
         ${menuHtml()}
         ${buildStampHtml('title')}
-        <button type="button" class="tower-preview-replay">Replay entrance</button>
+        <button type="button" class="tower-preview-replay">Replay scene</button>
         ${modalHtml()}
       </div>`;
 
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
     const root = app.querySelector('.title-screen');
-    root.querySelector('.tower-preview-replay')?.addEventListener('click', () => onCollapse?.());
+    const replayScene = () => {
+      if (document.body.classList.contains('reduced-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      root.querySelector('.title-landscape')?.animate([{ opacity: .35, transform: 'scale(1.04)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 1400, easing: 'ease-out' });
+      root.querySelector('.title-traveler')?.animate([{ opacity: 0, transform: 'translateX(-18px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 1000, easing: 'ease-out' });
+    };
+    root.querySelector('.tower-preview-replay')?.addEventListener('click', replayScene);
+    replayScene();
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
@@ -292,6 +316,10 @@ export function mountTitle(app, {
         else if (action === 'load') openLoadSelector(button);
         else if (action === 'new') openModal(action);
         else if (action === 'collection' && onCompendium) onCompendium();
+        else if (action === 'history') onHistory?.();
+        else if (action === 'profile') onProfile?.();
+        else if (action === 'custom') onCustom?.();
+        else if (action === 'lan') onLan?.();
         else if (action === 'settings') onSettings();
         else if (action === 'offline') onOffline?.();
         else if (action === 'quit' && onQuit) onQuit();
@@ -314,10 +342,6 @@ export function mountTitle(app, {
     });
     wireDelete(root);
     artNotice?.(root);
-    if (onHistory) void onHistory;
-    if (onProfile) void onProfile;
-    if (onCustom) void onCustom;
-    if (onLan) void onLan;
   }
 
   render();
@@ -342,6 +366,14 @@ export function mountTitle(app, {
       event.preventDefault();
       event.stopImmediatePropagation();
       closeSaveSlotSelector();
+      return;
+    }
+    const more = app.querySelector('.title-more[open]');
+    if (more) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      more.open = false;
+      more.querySelector('summary')?.focus();
       return;
     }
 

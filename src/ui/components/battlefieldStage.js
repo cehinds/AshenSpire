@@ -190,13 +190,15 @@ export function wireBattlefieldStage(field, model) {
     }
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();
-    combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
-    combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
-    // WGS1: crop the scene's painted plate so its ground line meets the floor
-    // band (WGS7) and its sky fills the rest (WGS6). Feet are not moved. The
-    // fitter is the W4 parent's, shared with the quest dialogue.
+    combat.style.setProperty('--environment-top', '0px');
+    combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
+    // One painted scene extends behind the cards. Fit the whole atlas cell,
+    // rather than extending the field crop into an adjacent cell in the atlas.
     const backdrop = combat.querySelector('.environment-backdrop');
-    if (backdrop) fitSceneBackdrop(backdrop, { width: backdrop.clientWidth, height: fieldRect.height / zoom, zoom });
+    if (backdrop) fitSceneBackdrop(backdrop, {
+      width: backdrop.clientWidth, height: rect.height / zoom, zoom,
+      config: { ...wireframeUi.scene, floorFraction: .5 },
+    });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };

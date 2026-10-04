@@ -6,9 +6,8 @@
 // which is the clearest illustration in the tree of why the form is derived
 // rather than chosen:
 //
-//   REST holds. Rest and Smith are two adjacent panels and taking either closes
-//   the other, so the mistake is a THUMB LANDING 14 px OFF — and the answer is
-//   the fill, inside the same gesture.
+//   REST activates directly in the experimental game. Its recovery ledger
+//   previews the exact live result; the visit owns availability and commitment.
 //   SMITH CONFIRMS. Constantine asked for the upgrade preview to be
 //   confirmable. #105 shipped a per-card HOVER tooltip, which on a phone was
 //   nothing at all, and then one tap committed. Smithing now selects the source
@@ -38,6 +37,8 @@ import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { scenePainting } from '../components/scenePainting.js';
+import { engravedIconHtml } from '../components/engravedIcon.js';
 // THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
 // kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
 // tap-floor buttons trailing — the total is StatusText, the cinder preview
@@ -221,8 +222,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // introduction). The refill sentence moves to the second slot, below.
   const choicesHtml = `
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
-        <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt">
-          <div class="glyph">♨</div>
+        <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt" role="button" tabindex="${noRest ? '-1' : '0'}" aria-disabled="${noRest ? 'true' : 'false'}">
+          <div class="glyph">${engravedIconHtml('rest')}</div>
           <div class="cp-body">
             <h3>Rest</h3>
             <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
@@ -231,7 +232,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         ${stay.services.smith ? `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
              role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
              aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
-          <div class="glyph">⚒</div>
+          <div class="glyph">${engravedIconHtml('equipment')}</div>
           <div class="cp-body">
             <h3>Upgrade an Item</h3>
             <p>${canInspectSmithing
@@ -356,6 +357,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // #1195), so the foot is the way out.
   const leave = multiUse || relicNoRest ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
+  app.querySelector('.rest-screen').appendChild(scenePainting('rest'));
   mountChoiceBody(app.querySelector('.rest-screen'), {
     className: 'rest-door',
     eyebrow: t('rest.eyebrow'),
@@ -368,8 +370,18 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // The second slot: what arriving already restored, then each choice's state.
   // The names are read off the mounted cards, so a choice keeps one title.
   consequences.insertAdjacentHTML('beforeend', refillLineHtml(registries, refill));
-  consequences.append(
-    el('h3', { class: 'as-eyebrow', text: t('rest.consequences.heading') }),
+  const recovery = el('section', { class: 'rest-recovery', 'aria-label': 'Recovery preview' });
+  recovery.append(el('h3', { class: 'as-eyebrow', text: 'Recovery preview' }));
+  for (const [icon, label, before, after] of [
+    ['health', 'HP', run.hp, noRest ? run.hp : Math.min(run.maxHp, run.hp + heal)],
+    ['mana', 'Mana', run.mana, noRest ? run.mana : manaAfter],
+  ]) {
+    const gain = after - before;
+    recovery.append(el('div', { class: 'rest-recovery-row', html: `${engravedIconHtml(icon)}<span>${label}</span><span>${before} → <strong>${after}</strong></span><span class="rest-recovery-gain">${gain > 0 ? `+${gain}` : '—'}</span>` }));
+  }
+  consequences.append(recovery);
+  consequences.append(el('details', { class: 'rest-availability' }, [
+    el('summary', { text: t('rest.consequences.heading') }),
     el('ul', { class: 'choice-status-list' }, availability.rows.map((entry) => {
       const card = app.querySelector(offeredChoices.find((choice) => choice.id === entry.id).selector);
       return el('li', { class: 'choice-status-row', dataset: { option: entry.id, state: entry.state } }, [
@@ -377,7 +389,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         el('span', { class: 'choice-status-state', text: t(`rest.state.${entry.state}`) }),
       ]);
     })),
-  );
+  ]));
 
   if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => remount() });
 
@@ -412,7 +424,13 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
-    arm(app.querySelector('#rest-opt'), 'shrineRest', {
+    const restOption = app.querySelector('#rest-opt');
+    restOption.addEventListener('keydown', event => {
+      if (event.defaultPrevented || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      restOption.click();
+    });
+    arm(restOption, 'shrineRest', {
       // W2a: question, the Shrine and the pools it acts on, the exact recovery.
       ...restReview({ shrine: locationTitle(stay.locationId), heal, manaGain, hp: run.hp, maxHp: run.maxHp, mana: run.mana, maxMana: run.maxMana, multiUse }),
       onConfirm: () => {

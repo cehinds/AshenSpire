@@ -572,3 +572,8 @@ build/windows-installer/
 # Regenerable exports of the versioned player polish source kit.
 /docs/design/player-polish-asset-kit-2026-10-02.zip
 /docs/design/player-polish-asset-kit-2026-10-02.zip.sha256
+
+# Generated per-card release objects.
+/build/cards/
+/dist/cards/
+/build/**/cards/

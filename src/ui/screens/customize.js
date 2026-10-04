@@ -600,7 +600,7 @@ export function mountCustomize(app, {
         // Framed, not bare: the chosen sigil rides the figure here as it does
         // everywhere else a figure is drawn. `classic` draws its own sigil
         // inside the silhouette, so it keeps going through classSprite().
-        : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'portrait'))
+        : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'stand'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 
@@ -630,7 +630,7 @@ export function mountCustomize(app, {
     const run = previewRun();
     const projection = statProjection(registries, run);
     const sprite = spritesAreEnabled()
-      ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
+      ? paintedPresentation(state.classId, state.startingArmourId, 'stand')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
     const resources = classResourceGrid(classPreviewResources(run, projection));
