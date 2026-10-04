@@ -2900,6 +2900,10 @@ body.pad-mode .as-keycap.float { display: none; }
 /* A painted face (a flask) sits in the round well the way a glyph does. */
 .icon-tray .as-pip > .flask-identity { display: grid; place-items: center; width: 78%; height: 78%; }
 .icon-tray .as-pip > .flask-identity :is(.flask-art, .flask-art-image) { display: grid; place-items: center; width: 100%; height: 100%; object-fit: contain; }
+.combat-potion-tray .potion-mini > span:not(.as-pill) { display: grid; place-items: center; width: 78%; height: 78%; }
+.combat-potion-tray .potion-mini .flask-identity,
+.combat-potion-tray .potion-mini .flask-identity :is(.flask-art,.flask-art-image) { width: 100%; height: 100%; object-fit: contain; }
+.combat-potion-tray .potion-mini > .as-pill { right: 0; bottom: 0; }
 /* The +N tile: a round tile that opens the host's full list (WCF2), or a
    disclosure whose popover holds the rest. */
 .icon-tray > .status-overflow-more {
@@ -4877,6 +4881,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .combat-action-row[data-footer-art] .stamina-orb > svg text { visibility: hidden; }
 .footer-compact-label { display: none; }
 .footer-art-rails { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+.combat-action-row .footer-art-rails > .footer-art-face { height: 100%; }
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] {
   display: block; width: min(100%, calc(950px / var(--ui-zoom, 1))); height: 100%; margin-inline: auto;
 }
@@ -4906,6 +4911,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
+.combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */

@@ -166,6 +166,8 @@ export async function run({ root = REPO_ROOT, out = resolve(REPO_ROOT, 'tools/re
 
   await c.send('Page.enable');
   await c.send('Runtime.enable');
+  // Freeze scripted scene transitions as well as CSS before comparing ink crops.
+  await c.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
   const ev = async (expr) => {
     const r = await c.send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true });
     if (r.exceptionDetails) return { __err: r.exceptionDetails.exception?.description || 'eval error' };
