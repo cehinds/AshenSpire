@@ -24,7 +24,7 @@
 // source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
 // source content/config/ui/presentation/combatEffectPlayback.json 4b0ffab1ce763e37
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
-// source content/config/ui/presentation/combatFormationModel.json 7b45c4e60eafd36a
+// source content/config/ui/presentation/combatFormationModel.json 4308c60b406408ea
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/deckEditorCosts.json 04140679f73bb06a
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
@@ -3064,6 +3064,7 @@ export const uiConfig = deepFreeze({
         },
         "figureReference": 150,
         "artWidthAllowance": 1.8,
+        "narrowMinHeightFraction": 0.5,
         "ceiling": {
           "heightFraction": 0.52,
           "widthFraction": 0.16
