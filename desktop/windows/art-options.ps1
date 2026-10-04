@@ -5,18 +5,25 @@ param(
   [Parameter(Mandatory = $true)][string]$Config,
   [Parameter(Mandatory = $true)][string]$SelectionFile,
   [string]$InstalledVersion = 'Standard art only',
+  [string]$GameConfig,
   [string]$PreviewFile
 )
 $ErrorActionPreference = 'Stop'
 $pin = Get-Content -LiteralPath $Config -Raw | ConvertFrom-Json
 if ($pin.repo -ne 'cehinds/AshenSpire-art' -or $pin.tag -notmatch '^hd-assets-v[0-9]+$') { throw 'Invalid installer art configuration.' }
 . (Join-Path $PSScriptRoot 'art-releases.ps1')
+. (Join-Path $PSScriptRoot 'game-releases.ps1')
+$game = [pscustomobject]@{ Version = 'Bundled game'; Branch = 'test' }
+if ($GameConfig) {
+  $game = Get-Content -LiteralPath $GameConfig -Raw | ConvertFrom-Json
+  if ($game.Version -notmatch '^\d+\.\d+\.\d+\.\d+$' -or -not $game.Branch) { throw 'Invalid installer game configuration.' }
+}
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 $form = New-Object Windows.Forms.Form
-$form.Text = 'Ashen Spire - High-quality artwork'
-$form.ClientSize = New-Object Drawing.Size(640, 440)
+$form.Text = 'Ashen Spire - Game and artwork versions'
+$form.ClientSize = New-Object Drawing.Size(640, 680)
 $form.FormBorderStyle = 'FixedDialog'; $form.MaximizeBox = $false; $form.MinimizeBox = $false
 $form.StartPosition = 'CenterScreen'; $form.AutoScaleMode = 'Dpi'
 function Label([string]$Text, [int]$X, [int]$Y, [int]$W, [int]$H) {
@@ -29,22 +36,60 @@ function Button([string]$Text, [int]$Y) {
   $control.Text = $Text; $control.SetBounds(24, $Y, 592, 34); $form.Controls.Add($control)
   return $control
 }
-$heading = Label 'High-quality artwork' 24 18 592 28
+$heading = Label 'Game and high-quality artwork' 24 18 592 28
 $heading.Font = New-Object Drawing.Font('Segoe UI', 15, [Drawing.FontStyle]::Bold)
-$null = Label "Current installed art: $InstalledVersion`r`nArt required by this game: $($pin.tag)" 24 54 592 38
-$latest = Label 'Latest published art: not checked yet' 24 98 592 22
-$null = Label 'Art repository branch' 24 130 290 20
-$null = Label 'Published art version' 326 130 290 20
-$branch = New-Object Windows.Forms.ComboBox; $branch.DropDownStyle = 'DropDownList'; $branch.SetBounds(24, 154, 290, 28)
-$version = New-Object Windows.Forms.ComboBox; $version.DropDownStyle = 'DropDownList'; $version.SetBounds(326, 154, 290, 28)
+$null = Label "This installer contains game $($game.Version) ($($game.Branch))." 24 54 592 22
+$null = Label 'Game branch' 24 80 290 20
+$null = Label 'Game version' 326 80 290 20
+$gameBranch = New-Object Windows.Forms.ComboBox; $gameBranch.DropDownStyle = 'DropDownList'; $gameBranch.SetBounds(24, 104, 290, 28)
+$gameVersion = New-Object Windows.Forms.ComboBox; $gameVersion.DropDownStyle = 'DropDownList'; $gameVersion.SetBounds(326, 104, 290, 28)
+$form.Controls.AddRange(@($gameBranch, $gameVersion))
+foreach ($item in 'test', 'release', 'main', 'dev') { $null = $gameBranch.Items.Add($item) }
+$gameBranch.SelectedItem = if ($game.Branch -in @('test', 'release', 'main', 'dev')) { $game.Branch } else { 'test' }
+$gameStatus = Label 'Choose a branch and refresh to find its available installer versions.' 24 139 592 30
+$getGame = Button 'Download this game installer (opens GitHub)...' 175
+$getGame.Enabled = $false
+$refreshGame = Button 'Refresh game versions for this branch' 217
+$artHeading = Label 'High-quality artwork for this installer' 24 269 592 25
+$artHeading.Font = New-Object Drawing.Font('Segoe UI', 12, [Drawing.FontStyle]::Bold)
+$null = Label "Current installed art: $InstalledVersion`r`nArt required by game $($game.Version): $($pin.tag)" 24 302 592 38
+$latest = Label 'Latest published art: not checked yet' 24 348 592 22
+$null = Label 'Art repository branch' 24 380 290 20
+$null = Label 'Published art version' 326 380 290 20
+$branch = New-Object Windows.Forms.ComboBox; $branch.DropDownStyle = 'DropDownList'; $branch.SetBounds(24, 404, 290, 28)
+$version = New-Object Windows.Forms.ComboBox; $version.DropDownStyle = 'DropDownList'; $version.SetBounds(326, 404, 290, 28)
 $form.Controls.AddRange(@($branch, $version))
 $null = $branch.Items.Add('main'); $branch.SelectedIndex = 0
 $null = $version.Items.Add($pin.tag); $version.SelectedIndex = 0
-$status = Label 'The matching game art is available even when the online catalog is offline.' 24 191 592 39
-$install = Button 'Use this high-quality art for installation' 236
-$download = Button 'Download this art separately...' 278
-$refresh = Button 'Refresh branches and art versions' 320
-$null = Label 'The artwork is completely AI-generated with OpenAI ChatGPT under human direction. Fonts and other third-party assets retain their credited licenses.' 24 366 592 42
+$status = Label 'The matching game art is available even when the online catalog is offline.' 24 439 592 39
+$install = Button 'Use this high-quality art for installation' 484
+$download = Button 'Download this art separately...' 526
+$refresh = Button 'Refresh branches and art versions' 568
+$null = Label 'The artwork is completely AI-generated with OpenAI ChatGPT under human direction. Fonts and other third-party assets retain their credited licenses.' 24 614 592 42
+$script:gameBuilds = @(); $script:loadingGame = $false
+$refreshGame.add_Click({
+  if ($script:loadingGame -or $script:downloading) { return }
+  try {
+    $script:loadingGame = $true; Busy $true 'Loading available game installers from GitHub...'
+    $gameStatus.Text = 'Loading successful builds and exact game versions...'; $form.Refresh()
+    $script:gameBuilds = @(Get-GameBuilds ([string]$gameBranch.SelectedItem))
+    $gameVersion.Items.Clear()
+    foreach ($build in $script:gameBuilds) { $null = $gameVersion.Items.Add($build.Label) }
+    if ($gameVersion.Items.Count) { $gameVersion.SelectedIndex = 0 }
+    $gameStatus.Text = if ($script:gameBuilds.Count) { 'Download the selected installer, then run it for that game and its matching art. GitHub sign-in is required.' } else { 'No completed installer downloads remain for this branch. You can still install the bundled game.' }
+  } catch {
+    $script:gameBuilds = @(); $gameVersion.Items.Clear()
+    $gameStatus.Text = 'Game catalog unavailable: ' + $_.Exception.Message
+  } finally {
+    $script:loadingGame = $false; Busy $false ''; $getGame.Enabled = $gameVersion.SelectedIndex -ge 0
+    UpdateSelection
+  }
+})
+$gameBranch.add_SelectedIndexChanged({ $refreshGame.PerformClick() })
+$gameVersion.add_SelectedIndexChanged({ $getGame.Enabled = -not $script:loadingGame -and $gameVersion.SelectedIndex -ge 0 })
+$getGame.add_Click({
+  if ($getGame.Enabled -and $gameVersion.SelectedIndex -ge 0) { Open-GameBuild $script:gameBuilds[$gameVersion.SelectedIndex] }
+})
 $script:catalog = $null; $script:updating = $false
 $script:downloading = $false; $script:cancelDownload = $false
 $form.add_FormClosing({
@@ -59,6 +104,8 @@ function SelectedRelease {
 function Busy([bool]$Value, [string]$Message) {
   $form.UseWaitCursor = $Value; $branch.Enabled = -not $Value; $version.Enabled = -not $Value
   $refresh.Enabled = -not $Value; $install.Enabled = -not $Value; $download.Enabled = -not $Value
+  $gameBranch.Enabled = -not $Value; $gameVersion.Enabled = -not $Value; $refreshGame.Enabled = -not $Value
+  $getGame.Enabled = -not $Value -and $gameVersion.SelectedIndex -ge 0
   $status.Text = $Message; $form.Refresh()
 }
 function UpdateSelection {
@@ -137,12 +184,13 @@ $download.add_Click({
 if ($PreviewFile) {
   # Deterministic render for CI review, with no network or interactive window.
   $latest.Text = 'Latest published art: check with Refresh branches and art versions'
+  $null = $gameVersion.Items.Add("$($game.Version) (bundled installer)"); $gameVersion.SelectedIndex = 0; $getGame.Enabled = $false
   $form.ShowInTaskbar = $false; $form.Opacity = 0
   $form.Show(); [Windows.Forms.Application]::DoEvents()
   $bitmap = New-Object Drawing.Bitmap($form.Width, $form.Height)
   try { $form.DrawToBitmap($bitmap, (New-Object Drawing.Rectangle(0, 0, $form.Width, $form.Height))); $bitmap.Save($PreviewFile, [Drawing.Imaging.ImageFormat]::Png) }
   finally { $bitmap.Dispose(); $form.Close(); $form.Dispose() }
 } else {
-  $form.add_Shown({ $refresh.PerformClick() })
+  $form.add_Shown({ $refresh.PerformClick(); $refreshGame.PerformClick() })
   $null = $form.ShowDialog(); $form.Dispose()
 }

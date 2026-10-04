@@ -72,7 +72,9 @@ jobs:
         run: |
           & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File tests/windows-art-options.ps1
           if ($LASTEXITCODE -ne 0) { throw 'art chooser behavior tests failed' }
-          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File desktop/windows/art-options.ps1 -Config art-release.json -SelectionFile "$env:RUNNER_TEMP\art-selection.ini" -PreviewFile build/windows-installer/art-options-preview.png
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File tests/windows-game-options.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'game chooser behavior tests failed' }
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File desktop/windows/art-options.ps1 -Config art-release.json -GameConfig build/windows-installer/stage/app/install-data/installer-build.json -SelectionFile "$env:RUNNER_TEMP\art-selection.ini" -PreviewFile build/windows-installer/art-options-preview.png
           if ($LASTEXITCODE -ne 0) { throw 'art chooser preview failed' }
 
       - name: Download art separately with checksum verification
@@ -88,7 +90,7 @@ jobs:
           $dir = Join-Path $env:RUNNER_TEMP 'AshenSpire'
           $p = Start-Process $setup.FullName -ArgumentList '/S', "/D=$dir" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "installer exited $($p.ExitCode)" }
-          foreach ($f in 'AshenSpire.exe', 'Uninstall.exe', 'game\AshenSpire.html', 'install-data\fetch-hd-art.ps1', 'install-data\art-options.ps1', 'install-data\art-releases.ps1', 'install-data\art-release.json') {
+          foreach ($f in 'AshenSpire.exe', 'Uninstall.exe', 'game\AshenSpire.html', 'install-data\fetch-hd-art.ps1', 'install-data\art-options.ps1', 'install-data\art-releases.ps1', 'install-data\game-releases.ps1', 'install-data\installer-build.json', 'install-data\art-release.json') {
             if (-not (Test-Path (Join-Path $dir $f))) { throw "missing after install: $f" }
           }
           $packs = Get-ChildItem (Join-Path $dir 'game\packs') -Name

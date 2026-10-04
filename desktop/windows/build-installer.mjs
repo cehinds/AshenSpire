@@ -139,8 +139,10 @@ for (const f of packFiles.filter((f) => f.startsWith(`${high.name}.`))) cpSync(j
 writeFileSync(join(DATA, 'high-objects.tsv'), tsv(highRows));
 writeFileSync(join(DATA, 'base-objects.tsv'), tsv(baseRows));
 cpSync(join(HERE, 'fetch-hd-art.ps1'), join(DATA, 'fetch-hd-art.ps1'));
-for (const script of ['art-options.ps1', 'art-releases.ps1']) cpSync(join(HERE, script), join(DATA, script));
+for (const script of ['art-options.ps1', 'art-releases.ps1', 'game-releases.ps1']) cpSync(join(HERE, script), join(DATA, script));
 cpSync(join(ROOT, 'art-release.json'), join(DATA, 'art-release.json'));
+const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || 'local';
+writeFileSync(join(DATA, 'installer-build.json'), JSON.stringify({ Version: VERSION, Branch: branch }) + '\n');
 
 const HD_MB = Math.round(highOnlyBytes / 1e6);
 console.log(`build-installer: staged ${GAME}`);
