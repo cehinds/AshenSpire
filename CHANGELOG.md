@@ -36,6 +36,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Remove the combat Positioning button** ([#1558](https://github.com/cehinds/AshenSpire/pull/1558), `0.7.1.874`). The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.
 
+- **Exercise the small-player foot target on every platform** ([#1557](https://github.com/cehinds/AshenSpire/pull/1557), `0.7.1.871`). Separate the browser fixture's player stack from the grid-cell center and keep its sprite inside the measured small bounds, so text and artwork cannot bypass the minimum touch-target check. Gameplay is unchanged.
+
 - **Keep small-player touch checks reliable without artwork** ([#1555](https://github.com/cehinds/AshenSpire/pull/1555), `0.7.1.870`). Browser checks exercise a deliberately small player in their controlled overlap scene, preserving the foot anchor and verifying that removing its touch target is caught even in copied trees without artwork. Gameplay is unchanged.
 
 - **Keep positioning controls clear of combatants** ([#1552](https://github.com/cehinds/AshenSpire/pull/1552), `0.7.1.869`). Place the Positioning toggle on the player side in portrait and between the teams on short landscape screens. Keep the browser overlap check reliable across authored formation sizes, and make Quick Start's browser check target fighters without pressing their intent buttons.

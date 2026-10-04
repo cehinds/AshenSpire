@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1558",
+    "id": "pr-1557",
     "date": "2026-10-03",
     "group": "2026-10-03",
-    "summary": "Remove the combat Positioning button",
-    "detail": "The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.",
-    "build": "0.7.1.874",
-    "pullRequest": 1558,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1558"
+    "summary": "Exercise the small-player foot target on every platform",
+    "detail": "Separate the browser fixture's player stack from the grid-cell center and keep its sprite inside the measured small bounds, so text and artwork cannot bypass the minimum touch-target check. Gameplay is unchanged.",
+    "build": "0.7.1.871",
+    "pullRequest": 1557,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1557"
   },
   {
     "id": "pr-1555",
