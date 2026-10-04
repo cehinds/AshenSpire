@@ -37,6 +37,7 @@ import {
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
+import { openConfirmationModal } from '../components/confirmationModal.js';
 import { t, tFull, has as hasString } from '../strings.js';
 import { LORE_FACES, LEGACY_LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_TYPE_DEFAULTS } from '../models/LoreTypeModel.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
@@ -323,6 +324,10 @@ const ROWS = [
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },
+  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
+  // to miss. Both doors ask first through confirmResetAll.
+  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
+    note: tFull('settings.row.resetAllSettings') },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
   // ---- cat: 'Combat' -----------------------------------------------------
@@ -1543,6 +1548,24 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
   offerUndo(label, undo, seedMoved ? seedPatch(seedBefore, changed[SEED_KEY]) : null);
   return snapshot;
+}
+
+/** allResettableKeys() → every stored key Reset all puts back, inert retired ones included. */
+export function allResettableKeys() {
+  return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
+}
+
+/** confirmResetAll(onConfirm, returnFocusElement) — the danger confirmation both Reset-all doors open. */
+export function confirmResetAll(onConfirm, returnFocusElement = document.activeElement) {
+  return openConfirmationModal({
+    title: t('settings.resetAll.title'),
+    message: tFull('settings.resetAll.title'),
+    confirmLabel: t('settings.resetAll.confirm'),
+    cancelLabel: t('common.cancel'),
+    tone: 'danger',
+    onConfirm,
+    returnFocusElement,
+  });
 }
 
 const VALUE_ROW_TYPES = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', undefined, 'toggle']);
@@ -3210,9 +3233,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
       const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
       const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
-      resetKeys(settings, onChange, keys, label);
       headerTools.querySelector('details').open = false;
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+      const run = () => {
+        resetKeys(settings, onChange, keys, label);
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+      };
+      // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
+      if (button.dataset.resetConfig === 'all') confirmResetAll(run, headerTools.querySelector('.set-options summary')); else run();
     };
   });
 
@@ -3469,6 +3496,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       showSettingsNotice(on ? 'Developer tools on: tuning and diagnostics sections are shown.' : 'Developer tools off.');
       repaintPanel({ keepScroll: true });
     });
+  });
+
+  container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
+    btn.addEventListener('click', () => confirmResetAll(() => {
+      resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
+      container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
+    }, btn));
   });
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
@@ -3996,7 +4031,7 @@ function settingsHeaderTools() {
     + '<button type="button" class="as-btn set-changed-toggle" data-changed-toggle aria-pressed="false" title="Show only the settings you have changed">Changed</button>'
     + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
     + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'
-    + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">Reset all settings</button>'
+    + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">' + esc(t('settings.row.resetAllSettings')) + '</button>'
     + (pageDebug() ? '<button type="button" class="as-btn" data-export-settings>Export configuration</button>'
       : '<button type="button" class="as-btn" data-clear-tuning hidden>Clear hidden tuning</button>') + '</div></details>';
   const exportItem = tools.querySelector('[data-export-settings]');
