@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1581",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Keep armament checks accurate after merging",
+    "detail": "The checks retain the new armament text after promotion and exercise explicit equipment actions, read-only card holds, inline comparisons and fitted inspection cards. The compact armament and level-reward behavior is unchanged.",
+    "build": "0.7.1.898",
+    "pullRequest": 1581,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1581"
+  },
+  {
     "id": "pr-1578",
     "date": "2026-10-04",
     "group": "2026-10-04",

@@ -1,0 +1,30 @@
+{
+  "_": "Compact Armament uiStrings ids added by PR #1578. Keep their no-shadow coverage after origin/dev contains the merged rows, including the distinct formation Move to allowance.",
+  "ids": [
+    "armoury.positions.title",
+    "armoury.action.inspect",
+    "armoury.action.inspectNamed",
+    "armoury.action.choose",
+    "armoury.action.replace",
+    "armoury.action.chooseFor",
+    "armoury.action.unequip",
+    "armoury.action.unequipNamed",
+    "armoury.action.activate",
+    "armoury.action.activateNamed",
+    "armoury.inspect.title",
+    "armoury.destination.for",
+    "armoury.destination.title",
+    "armoury.destination.hint",
+    "armoury.destination.review",
+    "armoury.destination.choose",
+    "armoury.destination.back",
+    "armoury.destination.showAll",
+    "armoury.change.equipped",
+    "armoury.change.stored",
+    "armoury.change.unequipped",
+    "armoury.change.combatUnavailable",
+    "armoury.action.unequipFrom",
+    "armoury.action.moveTo",
+    "armoury.action.equipTo"
+  ]
+}
