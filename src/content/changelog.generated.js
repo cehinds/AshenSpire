@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-04",
     "group": "2026-10-04",
     "summary": "Phone fighters no longer stack",
-    "detail": "Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. Formations with more than one row keep their previous size.",
-    "build": "0.7.1.921",
+    "detail": "Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. A side standing in more than one row, or whose art is too wide to grow, keeps its previous size; it is never made smaller.",
+    "build": "0.7.1.923",
     "pullRequest": 1606,
     "url": "https://github.com/cehinds/AshenSpire/pull/1606"
   },

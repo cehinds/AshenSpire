@@ -116,31 +116,45 @@ test('a phone cell no longer boxes the figure into a thumbnail', () => {
   assert.ok(player.visibleHeight >= 80, `player figure ${player.visibleHeight}px`);
 });
 
-test('the narrow-layout floor lifts every figure to half the field, keeping size order and sides', () => {
+test('the narrow-layout floor lifts one-row sides to half the field, keeping spacing and sides', () => {
   const width = 360, height = 445, floor = height * 0.5;
   for (const preset of ['straight', 'classic-v']) {
     const plan = combatFormation({ width, height, friends: ['p'], enemies: ['e', 'e2'],
       presentation: { formationPreset: preset, formationRows: 1, formationColumns: 2 } });
-    const actors = plan.slots.map((slot, i) => ({ slot, ratio: i === 1 ? 1.75 : 1, leading: 66,
-      visibleHeight: 180, visibleWidth: i === 2 ? 285 : 120 }));
+    const actors = plan.slots.map((slot, i) => ({ slot, ratio: i === 1 ? 1.75 : 1, leading: 66, visibleHeight: 180, visibleWidth: 120 }));
     const plain = fitCombatSprites({ width, height, actors });
     const sizes = fitCombatSprites({ width, height, actors, minHeight: floor });
     sizes.forEach((s, i) => {
-      const a = actors[i], headroom = (a.slot.fitGround ?? a.slot.ground) - a.leading - 6;
-      const sideXs = actors.filter(b => (b.slot.x > width / 2) === (a.slot.x > width / 2)).map(b => b.slot.x);
+      const a = actors[i], enemy = a.slot.side === 'enemy', headroom = (a.slot.fitGround ?? a.slot.ground) - a.leading - 6;
+      const sideXs = actors.filter(b => b.slot.side === a.slot.side).map(b => b.slot.x);
       const sideCap = (width / 2 - 12 - (Math.max(...sideXs) - Math.min(...sideXs))) * a.visibleHeight / a.visibleWidth;
       assert.ok(s.visibleHeight >= Math.min(floor, headroom, sideCap) - 1e-9, `${preset} ${i}`);
-      assert.ok(s.visibleHeight >= plain[i].visibleHeight - 1e-9 || s.visibleHeight >= Math.min(headroom, sideCap) - 1e-9);
-      const half = s.scale * a.visibleWidth / 2, enemy = a.slot.x > width / 2;
+      assert.ok(s.visibleHeight >= plain[i].visibleHeight - 1e-9);
+      const half = s.scale * a.visibleWidth / 2;
       assert.ok(s.x - half >= 6 - 1e-8 && s.x + half <= width - 6 + 1e-8);
       assert.ok(enemy ? s.x - half >= width / 2 - 1e-8 : s.x + half <= width / 2 + 1e-8);
     });
     // Each side moves as one group: spacing between figures (and so their
     // overhead intents) is kept, never collapsed onto one x.
     sizes.forEach((s, i) => sizes.forEach((t, j) => {
-      if ((actors[i].slot.x > width / 2) === (actors[j].slot.x > width / 2))
+      if (actors[i].slot.side === actors[j].slot.side)
         assert.ok(Math.abs((s.x - t.x) - (actors[i].slot.x - actors[j].slot.x)) < 1e-9, `${preset} spacing ${i}/${j}`);
     }));
+  }
+});
+
+test('the floor never shrinks a figure below its plain fit (wide art keeps the plain fit)', () => {
+  for (const width of [360, 390]) for (const artWidth of [120, 300, 400]) {
+    const height = 445;
+    const plan = combatFormation({ width, height, friends: ['p'], enemies: ['e', 'e2'],
+      presentation: { formationPreset: 'straight', formationRows: 1, formationColumns: 2 } });
+    const actors = plan.slots.map((slot, i) => ({ slot, ratio: 1, leading: 66, visibleHeight: 180, visibleWidth: i ? artWidth : 120 }));
+    const plain = fitCombatSprites({ width, height, actors });
+    const sizes = fitCombatSprites({ width, height, actors, minHeight: height / 2 });
+    sizes.forEach((s, i) => {
+      assert.ok(s.visibleHeight >= plain[i].visibleHeight - 1e-9, `${width} ${artWidth} ${i}`);
+      if (s.visibleHeight === plain[i].visibleHeight) assert.equal(s.x, plain[i].x);
+    });
   }
 });
 
@@ -151,11 +165,16 @@ test('with no floor the fit is unchanged', () => {
   plan.slots.forEach((slot, i) => assert.equal(fitCombatSprites({ width: 844, height: 380, actors })[i].x, slot.x));
 });
 
-test('a side standing in more than one row keeps the unfloored fit', () => {
+test('a side standing in more than one row keeps its plain fit; the other side may still lift', () => {
   const width = 360, height = 445;
   const plan = combatFormation({ width, height, friends: ['p'], enemies: ['e', 'e2', 'e3'],
     presentation: { formationPreset: 'straight', formationRows: 2, formationColumns: 2 } });
   const actors = plan.slots.map(slot => ({ slot, ratio: 1, leading: 66, visibleHeight: 180, visibleWidth: 120 }));
-  assert.ok(new Set(plan.slots.filter(s => s.x > width / 2).map(s => s.ground)).size > 1);
-  assert.deepEqual(fitCombatSprites({ width, height, actors, minHeight: height / 2 }), fitCombatSprites({ width, height, actors }));
+  assert.ok(new Set(plan.slots.filter(s => s.side === 'enemy').map(s => s.row)).size > 1);
+  const plain = fitCombatSprites({ width, height, actors });
+  const sizes = fitCombatSprites({ width, height, actors, minHeight: height / 2 });
+  actors.forEach((a, i) => {
+    if (a.slot.side === 'enemy') assert.deepEqual(sizes[i], plain[i]);
+    else assert.ok(sizes[i].visibleHeight >= plain[i].visibleHeight);
+  });
 });
