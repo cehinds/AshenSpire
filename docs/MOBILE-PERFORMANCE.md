@@ -52,8 +52,12 @@ Auto, Full and Lite. Auto uses
 Lite for a coarse primary pointer and Full otherwise. An explicit choice wins.
 Lite removes expensive sprite filters and cloned target silhouettes, replacing
 the latter with the same relationship color on a ground ring. It disables ambient
-effects and shake, skips optional pose preloads, and loads enemy state art on
-demand. State badges, inspection, target previews and hit feedback remain.
+effects and shake and skips optional pose preloads. Pose animation, enemy state
+art and the idle bob still play in Lite (owner, 2026-10-04): a phone used to
+get frozen figures. Without preloads, a pose's first play on a phone may hold
+its previous frame until the new one loads. The Reaver's 3.36-second sequence
+stays off in Lite (below). State badges, inspection, target previews and hit feedback
+remain.
 
 Combat pacing also offers Auto: Fast with Lite, Normal with Full. Existing
 saved explicit pacing is preserved. Lite uses the normal short action feedback

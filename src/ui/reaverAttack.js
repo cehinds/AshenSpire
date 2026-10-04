@@ -96,7 +96,7 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
   const priorFigure = actorEl.querySelector(':scope > .class-sprite');
   if (!priorFigure) return null;
 
-  const image = hintImage(document.createElement('img'));
+  const image = hintImage(document.createElement('img'), { swapped: true });
   image.className = 'reaver-attack-sequence';
   image.alt = '';
   image.setAttribute('aria-hidden', 'true');

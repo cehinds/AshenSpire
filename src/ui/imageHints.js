@@ -16,7 +16,11 @@
 //
 //   `decoding="async"` is a decode hint. It says the browser may decode off the
 //   main thread and paint the image a frame or two later than its parent. It
-//   cannot cause an image not to appear. It is applied to everything.
+//   is applied to everything EXCEPT an image whose `src` is swapped to play
+//   frames: on a swap, WebKit (iOS Safari) paints that element blank until the
+//   new frame decodes, which reads as flicker. Those sites pass
+//   `{ swapped: true }` and get `decoding="sync"` so the old frame stays up
+//   until the new one is ready.
 //
 //   `loading="lazy"` is a FETCH hint, and it has a failure mode: an image that
 //   is display:none, translated off-screen, or inside a zero-size ancestor is
@@ -37,11 +41,13 @@ const hints = () => balance.ui.imageHints;
  * The hints an image should carry, as a plain object.
  * `offscreen: true` marks an image that legitimately starts below the fold in a
  * scrolling list — see the note above for why that is not the default.
+ * `swapped: true` marks an image that plays frames by swapping `src`.
  */
-export function imageHints({ offscreen = false } = {}) {
+export function imageHints({ offscreen = false, swapped = false } = {}) {
   const { decoding, lazy } = hints();
   const out = {};
-  if (decoding) out.decoding = decoding;
+  if (swapped) out.decoding = 'sync';
+  else if (decoding) out.decoding = decoding;
   if (offscreen && lazy) out.loading = 'lazy';
   return out;
 }
