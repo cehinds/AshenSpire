@@ -76,14 +76,14 @@ try {
   await page.locator('[data-local-service="shop"]').click();
   await page.locator("#leave-shop").waitFor();
   await shot("05-live-city-market");
-  const stock = await page.locator("#shop-cards").innerText();
+  const stock = await page.locator("#shop-relics").innerText();
   await page.locator("#leave-shop").click();
   await page.locator("[data-atlas-close]").click();
   await inspect();
   await page.locator('[data-local-point="crownfall/market"]').click();
   await page.locator('[data-local-service="shop"]').click();
   check(
-    stock === (await page.locator("#shop-cards").innerText()),
+    stock === (await page.locator("#shop-relics").innerText()),
     "Market stock survives leaving and returning",
   );
   await page.locator("#leave-shop").click();

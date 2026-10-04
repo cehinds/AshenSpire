@@ -893,6 +893,21 @@ dmg = floor(dmg); if dmg < 0 → 0
 
 (The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
 
+The combat health row shows ordinary Block as a blue shield beside HP. While
+that shield is positive, HP is blue; breaking it restores the normal red (or
+colorblind-safe health color). Block granted by a magical card is recorded as
+optional `wardBlock` provenance within the same Block total and shown as a
+purple Arcane Ward badge left of the shield, with a gold HP outline. Ordinary
+Block is spent first for display; Ward is clamped to the remaining Block after
+hits, caps and turn resets. Both badges sum to Block and absorb the same attack
+damage as before; Ward rating and its buildup meter are separate. Old saves
+without provenance show ordinary Block. Missing badges give their space to HP,
+with a stable row edge and a readable minimum width for low-HP enemies. The HP
+fraction always remains current HP / maximum HP. Solo playback and co-op
+snapshots carry the provenance with their damage and guard receipts.
+Narrow health lanes display current HP alone to prevent number collisions;
+the complete current/maximum value remains in the accessible label and tooltip.
+
 **Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
 
 ### 4.3 Card rules
@@ -1607,10 +1622,29 @@ The editor groups the complete inventory into stable nested sections:
   registry-derived, so adding a class cannot create an invisible default. Per-class values must
   still satisfy the selected creation mode's bounds and total-allocation rules; invalid
   combinations are explained and cannot be applied silently.
-- **Combat and actors:** a global A–C row grid and numbered columns 1–4 (player 1–2, enemy 3–4),
+- **Combat and actors:** up to six rows and three columns per side,
   with front/back meaning identified per side; formation spacing, player and
   enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
   data-owned combat presentation values that do not alter asset identity.
+  Default spawns start on the lowest row in the outermost column of each team,
+  placing player and enemy starts farthest apart. Fill each row from outside toward
+  the centre, then move upward. For two columns and three rows, player rows read
+  `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
+  The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
+  Measurements remain responsive percentages; reference anchors at 1641×526 are checked
+  against the exports. Explicit saved group edits take precedence.
+  Formation settings offer group controls for the entire
+  battlefield, either team, individual columns, and named custom sets of positions. Dragging or
+  nudging translates every anchor in the group together. Offsets are stored as percentages of
+  battlefield width/height. Grid snapping defaults on with a 50 CSS px adjustable step; the group's
+  first anchor snaps to an intersection while all member spacing remains fixed. Snapping can be disabled.
+  Edge distances and nudge steps use CSS pixels. Characters and tiles
+  share the transformed anchors, and group translations stop at the battlefield edges. Custom
+  members retain their side, row and local column when the roster changes. Settings edits
+  require Apply layout. These are presentation edits, not tactical
+  movement, and do not spend actions or change combat range rules.
+  Groups may also target a row or one position and apply character size multipliers with feet
+  fixed to their anchors. Combat has no in-battle positioning control.
 - **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
   tray, HUD and window dimensions; UI scale/layout thresholds; and other data-owned component
   geometry. Dependent constraints are enforced together (for example, resting < selected <
@@ -2394,6 +2428,8 @@ A shop has a **kind**, one of `market` (the usual shop), `blacksmith` and `maste
 
 **Settings, Advanced → Shops.** For each kind there is a `guaranteedMinimum` number, and for each offering an **enabled** bool, a **chance** number and a **weight** number (which offerings the guarantee adds first). These are generated from `shops.js` the way `advancedConfigRows` generates the balance rows, so adding an offering to the data adds its rows. They are `gameConfig.shops.<kind>.<offering>.enabled|chance|weight` and `gameConfig.shops.<kind>.guaranteedMinimum`. **Every other number an offering authors** (stock counts, prices, `perVisit`, refine ratios, slot limits, costs, `respecRefundPct`; a consumable's `hpPct` and `xp` are rows of the consumable itself, §14.3) gets its row the same way, as `gameConfig.shops.<kind>.<offering>.<key>` (or `gameConfig.shops.<kind>.<key>` for a kind-level number), generated from each numeric leaf that carries a `[NOTE]`; `validateContent` refuses a numeric offering leaf with no `[NOTE]`, by name. Like every `gameConfig.*` row they are **frozen into `run.advancedConfigSnapshot` when a run begins**. A disabled offering is never rolled and never guaranteed.
 
+**Merchant presentation (owner, 2026-10-03).** Direct Cards and loose Weapon Arts purchases are no longer exposed: neither category, shelf nor purchase control is rendered, including for existing saved visits. Books and equipment remain available through their existing offers. Legacy `cards` and `weaponArts` stock fields, generation draws and configuration snapshots remain compatible; opening a merchant does not reroll or mutate them. The stock-generation guarantee above still applies to stored offerings, while the merchant displays only the remaining purchase categories.
+
 **Where each kind appears.**
 - **Classic `merchant` node.** It rolls its kind from `gameConfig.shops.kindWeights` on `shopOffers`. The shipped weights are `market` 100, `blacksmith` 0 and `master` 0, so shipped seeds are unchanged; the owner raises the other two to let a classic merchant be a blacksmith or a master. A kind is rollable only once its screen has shipped. Step 4 ships `blacksmith` and `master` locked at weight 0: `validateContent` refuses a non-zero weight for a kind whose screen is not registered, and Settings shows no weight row for it. Steps 6 and 7 each unlock their own kind. A merchant that rolls `blacksmith` or `master` offers that kind's offerings only, not market shelves.
 - **Atlas services.** The atlas `shop` service is a `market`, and the atlas `smith` service is a `blacksmith`. It gains a persisted `serviceStates[pointId].stock`, which it lacks today.
@@ -2615,14 +2651,14 @@ These keys go in `balance.rewards.cardRewards`.
 | Key | Shipped default | Meaning |
 |---|---|---|
 | `afterCombat.normal` / `.elite` / `.boss` | `true` | Whether a won fight of that pool offers a card row. |
-| `chancePct.normal` / `.elite` / `.boss` | `100` | The chance, 0–100, that an eligible fight offers the card row. 100 rolls nothing. |
+| `chancePct.normal` / `.elite` / `.boss` | `10` | The chance, 0–100, that an eligible fight offers the card row. 100 rolls nothing. |
 | `onLevelUp` | `false` | When the fight raised the character level (§13.4i), the spoils add a **level card** row. |
 | `onLevelUpMaxPerFight` | `1` | How many level-card rows one fight can add, however many levels it gained. |
 
 - **Offer size.** It stays `rewards.cardChoices`, which already has a row. The Feral Eye relic still adds +1 at elites.
 - **Chance rolls.** They use a new stream, **`rewardRolls`**, appended to the end of `STREAM_NAMES`, so no existing stream moves. A roll that fails leaves no card row, and the menu says so in one line: "No card this time."
 - **Level card row.** Its cards come from the class reward pool at the door's own rarity odds, through `rollCardRewardIds` on `cardRewards`. It is a new `REWARD_KIND_ORDER` kind, `levelCard`, sitting after `card`. Its row key is `levelCard:<ordinal>` (`rowKey` gains the `levelCard` case), and it is taken and skipped like the card offer. Each level-card row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]`, the row-keyed map the class drafts already use (not the single `chosenCardId`, which stays the `card` row's), so two or more level-card rows save and restore unambiguously; `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name. A save written before this section has no level-card rows and needs no migration.
-- **Drafts.** Skill and class drafts (§13.4e and §13.4g) are unchanged, and when a draft is waiting it still takes the card row's seat. A waiting draft does **not** displace the level card: the level card is the level's own reward, the draft is the track's.
+- **October 3 owner defaults.** Solo combat rolls its card independently of skill/class drafts. Every non-class skill level queues a guaranteed card draft; when its schools have no eligible cards, it uses the class pool with the skill's rarity gate. Existing per-door draft limits still queue excess drafts. `balance.rewards.sourceBonuses` supplies independent chances: `combatFeatChancePct: 5`, `classFeatChancePct: 100`, `classCardChancePct: 25`. Each class level keeps its class-tree upgrade as well as the guaranteed feat and separate technique-card roll. Bonuses are checkpointed in `levelChoices`/`levelCards` with `source: combat|class`; class rows carry `skillId` and `claimOrdinal` and unlock only after their class level is claimed. `classRewardLevels` records already issued class-level bonuses, including levels claimed outside combat. Character-level reward switches do not remove class technique cards. LAN's existing reward UI has no skill/class/feat drafts; this extension applies to the solo reward door.
 - **Consumers.** `main.js onCombatEnd`, `tools/session.mjs` (the co-op reward scene) and `tools/runsim.mjs` read the schedule through one model function, `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`, so solo, co-op and the simulator share one rule. **Scope, stated:** co-op today reads the shipped balance for every `gameConfig.*` row (`tools/lan.mjs` builds its registries from `contentBundle`, with no host snapshot), so a LAN session plays the shipped schedule until the host's `advancedConfigSnapshot` is carried into the session. That carriage is its own follow-up for all `gameConfig` rows, not a §15 change.
 - A saved `pendingReward` written before this section reads as "card row as rolled".
 

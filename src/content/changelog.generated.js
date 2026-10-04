@@ -3,14 +3,164 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1570",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Grounded combat with a compact footer",
+    "detail": "Combatants stand on the painted floor, and the smaller bottom controls leave the illustrated hand lower on screen. The artwork stays proportional and adjacent atlas scenes cannot bleed into the backdrop.",
+    "build": "0.7.1.890",
+    "pullRequest": 1570,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1570"
+  },
+  {
     "id": "pr-1540",
     "date": "2026-10-03",
     "group": "2026-10-03",
     "summary": "Installer game versions and Stamina browser checks",
-    "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage.",
-    "build": "0.7.1.853",
+    "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage. Later integration retains the current shared-orb, resource-identity and built-tree probes.",
+    "build": "0.7.1.891",
     "pullRequest": 1540,
     "url": "https://github.com/cehinds/AshenSpire/pull/1540"
+  },
+  {
+    "id": "pr-1569",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Learn cards from books instead of buying loose cards",
+    "detail": "The merchant no longer offers Cards or Weapon Arts for direct purchase. Books, equipment, relics, supplies and services remain, including on saved visits.",
+    "build": "0.7.1.889",
+    "pullRequest": 1569,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1569"
+  },
+  {
+    "id": "pr-1567",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Illustrated combat keeps its breathing room",
+    "detail": "The transparent HP/relic HUD keeps combatants clear, card corners stay above the current footer, and potion minis and painted controls remain within their bounds. Embedded menu icons and build-failure diagnostics now work in every build mode.",
+    "build": "0.7.1.886",
+    "pullRequest": 1567,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1567"
+  },
+  {
+    "id": "pr-1565",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Illustrated cards and scenery join the main game",
+    "detail": "Cards use editable layered artwork, live centered text and stamina/mana banners, with individual card objects included in builds. Painted scenery and an enlarged transparent HP/relic HUD retain the current footer, Shield/Ward rules, merchant rows and turn confirmation controls.",
+    "build": "0.7.1.883",
+    "pullRequest": 1565,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1565"
+  },
+  {
+    "id": "pr-1563",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Browse every merchant shelf in clear, matching rows",
+    "detail": "Cards, equipment, relics, supplies, services and goods for sale now place their artwork, complete details and action together, following the book shelf layout. On phones, actions sit below the details. Card inspection, purchase reviews, holds and the selected footer action remain available.",
+    "build": "0.7.1.876",
+    "pullRequest": 1563,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1563"
+  },
+  {
+    "id": "pr-1558",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Remove the combat Positioning button",
+    "detail": "The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.",
+    "build": "0.7.1.874",
+    "pullRequest": 1558,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1558"
+  },
+  {
+    "id": "pr-1534",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Painted, editable combat footer",
+    "detail": "The stamina orb, draw cradle, End Turn plate, discarded cards and potion tray now assemble from separate painted components. Footer Atelier can move, resize and snap them together, and edit live text bindings, fonts and positions independently of the images. Solo and co-op keep their existing actions, with readable compact controls on phones and short landscape screens. The five new light images total about 9 KB.",
+    "build": "0.7.1.872",
+    "pullRequest": 1534,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1534"
+  },
+  {
+    "id": "pr-1557",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Exercise the small-player foot target on every platform",
+    "detail": "Separate the browser fixture's player stack from the grid-cell center and keep its sprite inside the measured small bounds, so text and artwork cannot bypass the minimum touch-target check. Gameplay is unchanged.",
+    "build": "0.7.1.871",
+    "pullRequest": 1557,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1557"
+  },
+  {
+    "id": "pr-1555",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep small-player touch checks reliable without artwork",
+    "detail": "Browser checks exercise a deliberately small player in their controlled overlap scene, preserving the foot anchor and verifying that removing its touch target is caught even in copied trees without artwork. Gameplay is unchanged.",
+    "build": "0.7.1.870",
+    "pullRequest": 1555,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1555"
+  },
+  {
+    "id": "pr-1552",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep positioning controls clear of combatants",
+    "detail": "Place the Positioning toggle on the player side in portrait and between the teams on short landscape screens. Keep the browser overlap check reliable across authored formation sizes, and make Quick Start's browser check target fighters without pressing their intent buttons.",
+    "build": "0.7.1.869",
+    "pullRequest": 1552,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1552"
+  },
+  {
+    "id": "pr-1550",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Small combatants stay reachable",
+    "detail": "The player keeps a 44 px touch target when scaled down. Motion and save checks choose an unobstructed target point outside nested intent controls, preserving normal card play and their existing assertions.",
+    "build": "0.7.1.862",
+    "pullRequest": 1550,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1550"
+  },
+  {
+    "id": "pr-1548",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Combat browser checks keep pace with the game",
+    "detail": "Checks recognize the shared Stamina artwork and catch invisible or covered SVG text. A controlled sprite-overlap case keeps intent buttons reachable, and the full-run driver plays affordable attacks and defensive cards through the normal controls. Gameplay is unchanged.",
+    "build": "0.7.1.860",
+    "pullRequest": 1548,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1548"
+  },
+  {
+    "id": "pr-1543",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Place and size your combat formations with a live workbench",
+    "detail": "Move whole rows, columns, teams or custom groups, snap to a 50 px grid, resize characters, test mixed classes and enemies in 1×1, 2×2 or 2×3 layouts, and export the positioning as JSON. The supplied 1×1 and 2×2 layouts retain their own offsets. Spawns fill from opposite bottom corners. Combat now rolls a card at 10% and a separate feat at 5%; skill levels guarantee a card draft, while class levels keep their tree upgrade and add a guaranteed feat plus an independent 25% technique-card chance.",
+    "build": "0.7.1.859",
+    "pullRequest": 1543,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1543"
+  },
+  {
+    "id": "pr-1544",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Specify formation positioning and reward defaults",
+    "detail": "Record the approved mirrored spawn order, authored layout profiles and separate combat, skill and class reward rolls before implementation.",
+    "build": "0.7.1.857",
+    "pullRequest": 1544,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1544"
+  },
+  {
+    "id": "pr-1541",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Shield and Arcane Ward sit beside your health",
+    "detail": "Ordinary Block has a blue shield and turns health blue until it breaks. Magical Block has a purple Arcane Ward badge to its left and adds a gold health outline. Both can appear together; when either disappears, health takes back its space. The two numbers share the existing Block total. Solo and co-op keep the same behavior, including saved fights. Narrow bars show current HP with the full value available in the tooltip.",
+    "build": "0.7.1.853",
+    "pullRequest": 1541,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1541"
   },
   {
     "id": "pr-1535",

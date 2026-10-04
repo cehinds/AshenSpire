@@ -139,7 +139,7 @@ export function wireRunHud(app, {
   const resHost = hud.querySelector('.resbars-host');
   if (resHost) {
     const plan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
-    resHost.appendChild(resourceBars(plan, { surface: 'main' }));
+    resHost.appendChild(resourceBars(plan.filter(bar=>bar.id==='hp'), { surface: 'main' }));
   }
 
   // WGH6: the relics, through the one tile renderer combat uses too.

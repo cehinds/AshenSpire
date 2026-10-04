@@ -15,7 +15,7 @@
 //   * no part is lost: the resource bars, Leave and the quick-settings cluster
 //     are always there, the fight label is there off the compact band (the
 //     compact band hides it by design), and exactly EXPECTED_RESOURCE_ROWS
-//     resource rows (HP with the default Mana ring) are shown;
+//     resource rows (HP by default, HP/Mana with the ring off) are shown;
 //   * every visible part of the HUD top lies inside the viewport on all four
 //     sides, and every part but the floating quick-settings cluster inside the
 //     topbar band;
@@ -53,7 +53,8 @@
 //                                               and solo-combat-<w>x<h>.png
 //   COOP_HUD_PORT=<n>                           serve on another port (default 8571)
 //
-// It serves the SOURCE tree (no build, no LFS).
+// It serves the SOURCE tree by default (no build, no LFS).
+//   --root <dir>  serve a built tree's AshenSpire.html instead (same shot fixtures).
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -72,8 +73,8 @@ export const VIEWPORTS = [
   { width: 1280, height: 800, singleRow: false },
 ];
 const TOLERANCE = 0.5; // px: sub-pixel rounding, never a real overlap
-// With the default Mana ring, only HP remains in the top bars. SP and Mana
-// are checked on the shared orb below. Disabling the ring adds the MP bar.
+// HP stays in the HUD; SP and enabled mana gems live in the footer orb.
+// Disabling the mana ring restores the Mana bar beside HP.
 export const EXPECTED_RESOURCE_ROWS = 1;
 // Compact band: a part must share at least this share of its own height with
 // the tallest part's row, so one sitting mostly on a second line is caught.
@@ -135,11 +136,12 @@ const MEASURE = `(() => {
     field: combat.querySelector(':scope > .field') ? rect(combat.querySelector(':scope > .field')) : null,
     hudTop: hudTop ? { ...rect(hudTop), display: getComputedStyle(hudTop).display } : null,
     parts, bars,
+    resources: [...(hudTop?.querySelectorAll('.resunit[data-res]') || [])].filter(shown).map(e => e.dataset.res),
   };
 })()`;
 
 /** Pure judge over one viewport's measurement → list of failure strings. */
-export function judge(g, label, { singleRow = false, resourceRows = EXPECTED_RESOURCE_ROWS } = {}) {
+export function judge(g, label, { singleRow = false, manaRing = true } = {}) {
   const bad = [];
   if (!g || !g.mounted) return [`${label}: co-op formation board did not mount`];
   if (!g.topbar || !g.hudTop) return [`${label}: no .topbar > .hud-top`];
@@ -148,7 +150,10 @@ export function judge(g, label, { singleRow = false, resourceRows = EXPECTED_RES
   if (!g.parts.some((p) => p.name === 'coop-leave')) bad.push(`${label}: Leave button missing from the HUD top`);
   if (!g.parts.some((p) => p.name === 'hud-quick-settings')) bad.push(`${label}: quick-settings cluster missing from the topbar`);
   if (!singleRow && !g.parts.some((p) => p.name === 'fight-label')) bad.push(`${label}: fight label missing from the HUD top`);
-  if ((g.bars || []).length !== resourceRows) bad.push(`${label}: ${(g.bars || []).length} resource rows shown, want ${resourceRows}`);
+  const expectedRows = EXPECTED_RESOURCE_ROWS + (manaRing ? 0 : 1);
+  if ((g.bars || []).length !== expectedRows) bad.push(`${label}: ${(g.bars || []).length} resource rows shown, want ${expectedRows} (${manaRing ? 'HP' : 'HP, Mana'})`);
+  const expectedResources = manaRing ? ['hp'] : ['hp', 'mana'];
+  if (JSON.stringify(g.resources) !== JSON.stringify(expectedResources)) bad.push(`${label}: HUD resources ${JSON.stringify(g.resources)}, want ${expectedResources.join('/')}`);
   const measured = [...g.parts, ...(g.bars || [])];
   // Resource rows are children of the host: check each row against the band
   // and its peers without counting its overlap with its own parent.
@@ -209,7 +214,7 @@ const BAR = `(() => {
   probe.remove();
   const shown = (e) => { const c = getComputedStyle(e); const r = e.getBoundingClientRect(); return c.display !== 'none' && c.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
   const roles = [['actions', '.energy-orb'], ['draw', '.pile.draw'], ['endTurn', '.end-turn'], ['discard', '.pile.spent'], ['potions', '.combat-potions']];
-  const controls = row ? [...row.children].filter((e) => !e.matches('.combat-potion-tray') && shown(e)).map((e) => {
+  const controls = row ? [...row.children].filter((e) => !e.matches('.combat-potion-tray, .footer-art-rails') && shown(e)).map((e) => {
     const r = e.getBoundingClientRect();
     const role = roles.find(([, sel]) => e.matches(sel));
     return { role: role ? role[0] : String(e.className || e.tagName), left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
@@ -324,13 +329,10 @@ export function selftest() {
       { name: 'coop-leave', left: 310, top: 40, right: 380, bottom: 76 },
       { name: 'fight-label', left: 8, top: 4, right: 300, bottom: 36 },
       { name: 'hud-quick-settings', floating: true, left: 346, top: 84, right: 388, bottom: 180 },
-    ], bars: [40, 52, 64].map((top) => ({ name: 'resline', left: 8, top, right: 300, bottom: top + 10, width: 292 })) };
+    ], resources: ['hp'], bars: [40].map((top) => ({ name: 'resline', left: 8, top, right: 300, bottom: top + 10, width: 292 })) };
   const without = (name) => ({ ...base, parts: base.parts.filter((p) => p.name !== name) });
   const cases = [
     ['clean layout', base, 0],
-    ['default ring leaves one HP row', { ...base, bars: base.bars.slice(0, 1) }, 0, { resourceRows: 1 }],
-    ['ring off leaves HP and MP rows', { ...base, bars: base.bars.slice(0, 2) }, 0, { resourceRows: 2 }],
-    ['ring off loses the MP row', { ...base, bars: base.bars.slice(0, 1) }, 1, { resourceRows: 2 }, /1 resource rows shown, want 2/],
     ['overlap', { ...base, parts: base.parts.map((p) => p.name === 'coop-leave' ? { ...p, left: 250 } : p) }, 1],
     ['overflow', { ...base, scrollWidth: 420 }, 1],
     ['clipped Leave', { ...base, parts: base.parts.map((p) => p.name === 'coop-leave' ? { ...p, left: 380, right: 450 } : p) }, 1],
@@ -338,8 +340,8 @@ export function selftest() {
     ['lost resource bars', without('resbars-host'), 1, {}, /resource bars missing/],
     ['lost fight label off the compact band', without('fight-label'), 1, {}, /fight label missing/],
     ['lost quick settings', without('hud-quick-settings'), 1, {}, /quick-settings cluster missing/],
-    ['lost resource row', { ...base, bars: base.bars.slice(0, 2) }, 1, {}, /2 resource rows shown/],
-    ['extra resource row', { ...base, bars: [...base.bars, { ...base.bars[0] }] }, 1, {}, /4 resource rows shown/],
+    ['lost resource row', { ...base, bars: [] }, 1, {}, /0 resource rows shown/],
+    ['extra resource row', { ...base, bars: [...base.bars, { ...base.bars[0] }] }, 1, {}, /2 resource rows shown/],
     ['quick settings run past the bottom of the screen', { ...base, parts: base.parts.map((p) => p.name === 'hud-quick-settings' ? { ...p, top: 780, bottom: 900 } : p) }, 1, {}, /hud-quick-settings clipped by the viewport .* tall/],
     ['part pushed above the top of the screen', { ...base, topbar: { ...base.topbar, top: -40 }, parts: base.parts.map((p) => p.name === 'fight-label' ? { ...p, top: -30, bottom: -2 } : p) }, 1, {}, /fight-label clipped by the viewport .* tall/],
     ['wrapped inline label beside Leave is not an overlap', { ...base, parts: [...without('fight-label').parts, { name: 'fight-label', left: 8, top: 10, right: 380, bottom: 38, boxes: [{ left: 8, top: 10, right: 380, bottom: 24 }, { left: 8, top: 24, right: 90, bottom: 38 }] }].map((p) => p.name === 'coop-leave' ? { ...p, top: 24, bottom: 40, left: 100 } : p) }, 0],
@@ -352,7 +354,7 @@ export function selftest() {
     { name: 'resbars-host', left: 8, top: 0, right: 780, bottom: 8 },
     { name: 'coop-leave', left: 788, top: 0, right: 836, bottom: 32 },
     { name: 'hud-quick-settings', floating: true, left: 796, top: 36, right: 840, bottom: 128 }], innerWidth: 844, innerHeight: 390, scrollWidth: 844,
-    bars: [8, 270, 530].map((left) => ({ name: 'resline', left, top: 12, right: left + 250, bottom: 20, width: 250 })),
+    bars: [8].map((left) => ({ name: 'resline', left, top: 12, right: left + 250, bottom: 20, width: 250 })),
     topbar: { left: 0, top: 0, right: 844, bottom: 33 } };
   const twoRows = { ...oneRow, bars: oneRow.bars.map((bar) => ({ ...bar, top: 0, bottom: 8 })), parts: [oneRow.parts[0], { ...oneRow.parts[1], left: 8, right: 56, top: 8, bottom: 40 }, oneRow.parts[2]], topbar: { left: 0, top: 0, right: 844, bottom: 41 } };
   cases.push(['compact band on one row', oneRow, 0, { singleRow: true }]);
@@ -369,22 +371,101 @@ export function selftest() {
   cases.push(['resource row below viewport', moveFirstBar({ top: 840, bottom: 850 }), 1, {}, /resline clipped by the viewport .* tall/]);
   cases.push(['resource row outside topbar', moveFirstBar({ top: 82, bottom: 92 }), 1, {}, /resline spills out of the topbar/]);
   cases.push(['resource row over Leave', moveFirstBar({ left: 320, right: 380 }), 1, {}, /coop-leave overlaps resline/]);
-  cases.push(['resource rows overlap', moveFirstBar({ top: 52, bottom: 62 }), 1, {}, /resline overlaps resline/]);
+  cases.push(['wrong resource at the top', { ...base, resources: ['stamina'] }, 1, {}, /HUD resources/]);
+  cases.push(['mana ring off restores Mana', { ...base, resources: ['hp', 'mana'], bars: [...base.bars, { ...base.bars[0], top: 52, bottom: 62 }] }, 0, { manaRing: false }]);
+  cases.push(['mana ring off loses Mana', base, 1, { manaRing: false }, /HUD resources/]);
+  cases.push(['resource rows overlap', { ...base, resources: ['hp', 'mana'], bars: [...base.bars, { ...base.bars[0] }] }, 1, { manaRing: false }, /resline overlaps resline/]);
   cases.push(['resource row over battlefield', { ...moveFirstBar({ top: 72, bottom: 82 }), field: { top: 80 } }, 1, {}, /resline reaches into the battlefield/]);
   // An optional fifth field names the failure the case must be caught BY, so a
   // case cannot pass on some other, accidental failure.
-  cases.push(['current HP-only HUD', { ...base, bars: base.bars.slice(0, 1) }, 0, { resourceRows: EXPECTED_RESOURCE_ROWS }]);
-  cases.push(['current HUD loses HP', { ...base, bars: [] }, 1, { resourceRows: EXPECTED_RESOURCE_ROWS }, /0 resource rows shown/]);
-  cases.push(['current HUD duplicates a resource', { ...base, bars: base.bars.slice(0, 2) }, 1, { resourceRows: EXPECTED_RESOURCE_ROWS }, /2 resource rows shown/]);
   const wrong = cases.filter(([, g, want, opts, why]) => {
-    const bad = judge(g, 'st', { resourceRows: 3, ...opts });
+    const bad = judge(g, 'st', opts);
     return (bad.length > 0 ? 1 : 0) !== want || (why && !bad.some((m) => why.test(m)));
   });
   for (const [name] of wrong) console.error(`  selftest: ${name} judged wrongly`);
   const bar = barSelftest();
-  const total = cases.length + bar.total, failed = wrong.length + bar.wrong;
+  const orb = orbSelftest();
+  const total = cases.length + bar.total + orb.total, failed = wrong.length + bar.wrong + orb.wrong;
   console.log(`coop-hud-top selftest: ${failed ? 'RED' : 'GREEN'} (${total - failed}/${total}; bottom bar ${bar.total - bar.wrong}/${bar.total})`);
   return failed ? 1 : 0;
+}
+
+// The host snapshot is the independent value source; neither the aria-label
+// nor the painted text is used to manufacture the expected resources.
+const ORB = `(() => {
+  const orb = document.querySelector('.combat.coop .energy-orb');
+  const seat = document.querySelector('.coop-seat.me')?.dataset.seat;
+  const player = window.__coopSnapshotForShot?.scene?.players.find(p => p.id === seat);
+  if (!orb || !player) return null;
+  const painted = orb.querySelector('[data-footer-binding="sp"]');
+  const box = painted?.getBoundingClientRect();
+  let visible = !!box && box.width > 0 && box.height > 0;
+  for (let node = painted; node; node = node.parentElement) {
+    const style = getComputedStyle(node);
+    if (style.display === 'none' || style.visibility !== 'visible' || Number(style.opacity) === 0) visible = false;
+  }
+  return {
+    painted: painted?.textContent, paintedVisible: visible,
+    value: orb.querySelector('.sp-v')?.textContent,
+    label: orb.getAttribute('aria-label'), ring: orb.dataset.manaRing,
+    gems: [...orb.querySelectorAll('[data-orb-part="diamond"], [data-orb-part="spent"]')].map(e => e.dataset.orbPart),
+    expected: { current: player.energy, maximum: player.energyMax, mana: player.mana, maxMana: player.maxMana },
+  };
+})()`;
+
+export function judgeOrb(g, { manaRing = true } = {}) {
+  if (!g?.expected) return ['orb: no active-seat orb or host snapshot'];
+  const bad = [];
+  const { current, maximum, mana, maxMana } = g.expected;
+  if (![current, maximum, mana, maxMana].every(Number.isFinite)) return ['orb: incomplete host resource values'];
+  if (g.value !== String(current)) bad.push(`orb: accessible SP value ${g.value}, want ${current}`);
+  if (g.painted !== String(current)) bad.push(`orb: painted SP text ${g.painted}, want ${current}`);
+  if (!g.paintedVisible) bad.push('orb: painted SP text is hidden or has no rendered box');
+  const label = `Stamina ${current} of ${maximum}. Mana ${mana} of ${maxMana}.`;
+  if (g.label !== label) bad.push(`orb: accessible label "${g.label}", want "${label}"`);
+  if (g.ring !== String(manaRing)) bad.push(`orb: mana-ring setting ${g.ring}, want ${manaRing}`);
+  const gems = manaRing ? [...Array(mana).fill('diamond'), ...Array(maxMana - mana).fill('spent')] : [];
+  if (JSON.stringify(g.gems) !== JSON.stringify(gems)) bad.push(`orb: gems ${JSON.stringify(g.gems)}, want ${JSON.stringify(gems)}`);
+  return bad;
+}
+
+function orbSelftest() {
+  const base = { value: '2', painted: '2', paintedVisible: true, label: 'Stamina 2 of 3. Mana 1 of 2.', ring: 'true', gems: ['diamond', 'spent'], expected: { current: 2, maximum: 3, mana: 1, maxMana: 2 } };
+  const cases = [
+    ['SP and mana match the host', base, {}, false],
+    ['stale painted SP text', { ...base, painted: '3' }, {}, true],
+    ['hidden painted SP text', { ...base, paintedVisible: false }, {}, true],
+    ['lost SP text', { ...base, value: '' }, {}, true],
+    ['old Actions label', { ...base, label: 'Actions 2 of undefined' }, {}, true],
+    ['missing spent mana', { ...base, gems: ['diamond'] }, {}, true],
+    ['wrong available mana', { ...base, gems: ['diamond', 'diamond'] }, {}, true],
+    ['disabled ring removes gems', { ...base, ring: 'false', gems: [] }, { manaRing: false }, false],
+    ['disabled ring leaves gems', { ...base, ring: 'false' }, { manaRing: false }, true],
+    ['disabled setting ignored', base, { manaRing: false }, true],
+    ['no snapshot', null, {}, true],
+  ];
+  const wrong = cases.filter(([, g, opts, want]) => !!judgeOrb(g, opts).length !== want);
+  for (const [name] of wrong) console.error(`  orb selftest: ${name} judged wrongly`);
+  return { total: cases.length, wrong: wrong.length };
+}
+
+async function orbProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, returnByValue: true }, sessionId)).result?.value;
+  const bad = [];
+  for (const manaRing of [true, false]) {
+    // shotSettings enters the existing ephemeral profile resolution, not a
+    // synthetic DOM patch or durable localStorage (which shot boots ignore).
+    const settings = encodeURIComponent(JSON.stringify({ manaRing }));
+    await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSettings=${settings}` }, sessionId);
+    let orb = null;
+    for (let t = 0; t < 90 && !orb; t++) { await wait(500); orb = await ev(ORB); }
+    await wait(1200);
+    orb = await ev(ORB);
+    const failures = [...judgeOrb(orb, { manaRing }), ...judge(await ev(MEASURE), `mana ring ${manaRing ? 'on' : 'off'}`, { manaRing })];
+    bad.push(...failures);
+    console.log(`  ${failures.length ? '✗' : '✓'} mana ring ${manaRing ? 'on' : 'off'}: SP ${orb?.value}, gems ${JSON.stringify(orb?.gems)}, label "${orb?.label}"`);
+  }
+  return bad;
 }
 
 // Runs in the page, a step at a time (seatSwitchProbe drives the keys).
@@ -527,14 +608,9 @@ const REPEAT_STEP = {
   press: `(() => { for (let i = 0; i < 3; i++) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', code: 'KeyF', bubbles: true, repeat: i > 0 }));
     return document.querySelectorAll('.combat-potion-menu').length; })()`,
   lists: `document.querySelectorAll('.combat-potion-menu').length`,
-  // The Stamina/Mana and Discard/Exhaust labels follow the active seat and paint.
+  // Discard/Exhaust stays a count-only control in co-op.
   labels: `(() => { const orb = document.querySelector('.combat.coop .energy-orb'); const spent = document.querySelector('.combat.coop .pile.spent');
-    const seat = window.__coopSnapshotForShot.scene.players.find(p => p.id === 'p1');
-    return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '',
-      painted: orb?.querySelector('text[data-orb-part=number]')?.textContent || '', ring: orb?.dataset.manaRing,
-      ready: orb?.querySelectorAll('[data-orb-part=diamond]').length, spentGems: orb?.querySelectorAll('[data-orb-part=spent]').length,
-      expected: { stamina: seat.stamina, maxStamina: seat.maxStamina, mana: seat.mana, maxMana: seat.maxMana },
-      spent: spent?.getAttribute('aria-label') || '' }; })()`,
+    return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '', spent: spent?.getAttribute('aria-label') || '' }; })()`,
 };
 
 async function repeatOpenProbe(cdp, sessionId, base) {
@@ -545,15 +621,9 @@ async function repeatOpenProbe(cdp, sessionId, base) {
   await ev(SEAT_STEP.ready);
   await wait(300);
   const labels = await ev(REPEAT_STEP.labels);
-  const seat = labels?.expected;
-  const labelBad = [];
-  const expectedLabel = seat && `Stamina ${seat.stamina} of ${seat.maxStamina}. Mana ${seat.mana} of ${seat.maxMana}.`;
-  if (!seat || labels.value !== String(seat.stamina) || labels.painted !== labels.value || labels.orb !== expectedLabel) {
-    labelBad.push(`labels: Stamina reads "${labels?.orb}" and paints ${labels?.painted}; want "${expectedLabel}"`);
-  }
-  if (!seat || labels.ring !== 'true' || labels.ready !== seat.mana || labels.spentGems !== seat.maxMana - seat.mana) {
-    labelBad.push(`labels: Mana ring does not show the active seat's available and spent mana`);
-  }
+  // Recheck the active seat's painted resources after the repeated-open
+  // fixture boot as well as the dedicated mana-ring on/off probes.
+  const labelBad = judgeOrb(await ev(ORB));
   if (/Open piles/.test(labels?.spent || '')) labelBad.push(`labels: co-op Discard/Exhaust promises "Open piles" (${labels.spent}); co-op has no pile viewer`);
   await ev(REPEAT_STEP.press);
   await wait(400);
@@ -642,25 +712,26 @@ async function main(args) {
   if (shotDir) mkdirSync(shotDir, { recursive: true });
   const browser = resolveBrowser(['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files/Microsoft/Edge/Application/msedge.exe']);
   if (!browser) { console.error('coop-hud-top HARNESS — no Chrome/Chromium (set CHROME)'); return 2; }
-  const served = await serve({ root: ROOT, port: PORT, open: false });
+  const rootAt = args.indexOf('--root');
+  const served = await serve({ root: rootAt >= 0 ? resolve(args[rootAt + 1]) : ROOT, port: PORT, open: false });
+  const page = rootAt >= 0 ? 'AshenSpire.html' : 'index.html';
+  const base = `http://localhost:${served.port}/${page}`;
   const launched = await launchBrowser({ prefix: 'coophud-', browser, timeoutMs: 20000 });
   const cdp = connectCdp(launched.wsUrl);
   const failures = [];
   let clean = 0;
   try {
     await cdp.ready;
-    const probes = VIEWPORTS.flatMap(vp => [true, false].map(manaRing => ({ ...vp, manaRing })));
-    for (const [index, vp] of probes.entries()) {
-      const label = `${vp.width}x${vp.height}-ring-${vp.manaRing ? 'on' : 'off'}`;
+    const cases = VIEWPORTS.flatMap(vp => [true, false].map(manaRing => ({ ...vp, manaRing })));
+    for (const [index, vp] of cases.entries()) {
+      const label = `${vp.width}x${vp.height}-${vp.manaRing ? 'ring' : 'bars'}`;
+      const shotSettings = encodeURIComponent(JSON.stringify({ manaRing: vp.manaRing }));
       const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
       await cdp.send('Page.enable', {}, sessionId);
       await cdp.send('Runtime.enable', {}, sessionId);
-      // Shot mode uses an ephemeral profile; its supported settings door
-      // applies before mounting both boards, independently of expectations.
-      const shotSettings = encodeURIComponent(JSON.stringify({ manaRing: vp.manaRing }));
       await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.width, height: vp.height, deviceScaleFactor: 1, mobile: vp.width < 600 }, sessionId);
-      await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/index.html?shot=coop&shotSettings=${shotSettings}` }, sessionId);
+      await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSettings=${shotSettings}` }, sessionId);
       let g = null;
       for (let t = 0; t < 90 && !(g && g.mounted); t++) {
         await wait(500);
@@ -673,7 +744,7 @@ async function main(args) {
         writeFileSync(resolve(shotDir, `coop-hud-top-${label}.png`), Buffer.from(data, 'base64'));
       }
       // The reference: solo combat at the same viewport, the same door.
-      await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/index.html?shot=combat&shotSettings=${shotSettings}` }, sessionId);
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, sessionId);
       let soloBar = null;
       for (let t = 0; t < 90 && !(soloBar && soloBar.mounted && soloBar.row && soloBar.geometry); t++) {
         await wait(500);
@@ -684,17 +755,18 @@ async function main(args) {
         const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
         writeFileSync(resolve(shotDir, `solo-combat-${label}.png`), Buffer.from(data, 'base64'));
       }
-      const bad = [...judge(g, label, { ...vp, resourceRows: vp.manaRing ? 1 : 2 }), ...judgeBar(coopBar, soloBar, label)];
+      const bad = [...judge(g, label, vp), ...judgeBar(coopBar, soloBar, label)];
       failures.push(...bad);
       if (!bad.length) clean++;
       console.log(`  ${bad.length ? '✗' : '✓'} ${label}: hud-top ${g?.hudTop?.display ?? '?'}, ${g?.parts?.length ?? 0} parts, ${g?.bars?.length ?? 0} bars; `
         + `bottom bar ${(coopBar?.controls || []).map((c) => c.role).join('/') || 'none'} (${coopBar?.arrangement ?? '?'})${bad.length ? '' : ', matches solo, no overlap/clip/overflow'}`);
       if (process.env.COOP_HUD_DEBUG) console.log(JSON.stringify({ g, coopBar, soloBar }, null, 1));
       if (index === 0) {
-        const seatBad = [...await seatSwitchProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
-          ...await repeatOpenProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
-          ...await liveSnapshotProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
-          ...await vowChoiceProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`)];
+        const seatBad = [...await orbProbe(cdp, sessionId, base),
+          ...await seatSwitchProbe(cdp, sessionId, base),
+          ...await repeatOpenProbe(cdp, sessionId, base),
+          ...await liveSnapshotProbe(cdp, sessionId, base),
+          ...await vowChoiceProbe(cdp, sessionId, base)];
         failures.push(...seatBad);
         if (seatBad.length && !bad.length) clean--;
       }

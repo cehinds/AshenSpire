@@ -175,13 +175,15 @@ const KINDS = {
     // among cards exactly as the card offer is.
     present: (r) => Array.isArray(r.levelCards) && r.levelCards.some((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0),
     rows: (r) => r.levelCards.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1 })),
+      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1,
+        ...(d.source ? { source: d.source, skillId: d.skillId, claimOrdinal: d.claimOrdinal || 0 } : {}) })),
     blocked: () => null,
   },
   levelChoice: {
     present: (r) => Array.isArray(r.levelChoices) && r.levelChoices.some((d) => d && Array.isArray(d.options) && d.options.length > 0),
     rows: (r) => r.levelChoices.filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
-      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, options: d.options.map((o) => ({ kind: o.kind, id: o.id })), choice: d.options.length > 1 })),
+      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, options: d.options.map((o) => ({ kind: o.kind, id: o.id })), choice: d.options.length > 1,
+        ...(d.source ? { source: d.source, skillId: d.skillId, claimOrdinal: d.claimOrdinal || 0 } : {}) })),
     blocked: () => null,
   },
   flask: {

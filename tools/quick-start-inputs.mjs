@@ -44,6 +44,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { pointerTargetExpression } from './pointer-target.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const BROWSERS = [
@@ -154,9 +155,15 @@ async function main() {
       const before = e.getBoundingClientRect();
       if (before.bottom > innerHeight || before.top < 0) e.scrollIntoView({ block: 'center' });
       const r = e.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      // Fighter centres may contain intent buttons; a card's centre can be
+      // covered by a tooltip or neighbouring card. Use a visible hit point.
+      const { x, y } = e.matches('.combatant, .hand .card') ? ${pointerTargetExpression(sel)}
+        : { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      const hit = document.elementFromPoint(x, y);
+      return { x, y, expected: e.textContent?.trim().slice(0, 100), hit: hit?.tagName + '.' + hit?.className, inside: !!hit && e.contains(hit) };
     })()`);
     if (!pt) throw new Error(`no element for ${label} (${sel})`);
+    console.log(`      click ${label}: ${JSON.stringify(pt)}`);
     spend(label);
     await clickAt(pt.x, pt.y);
   };
@@ -414,4 +421,3 @@ async function main() {
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
-

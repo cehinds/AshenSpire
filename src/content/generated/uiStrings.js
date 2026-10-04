@@ -3,6 +3,20 @@
 
 export const uiStrings = [
   {
+    "id": "combat.protection.block",
+    "extends": "",
+    "short": "Block",
+    "full": "Absorbs attack damage.",
+    "tip": "Block"
+  },
+  {
+    "id": "combat.protection.ward",
+    "extends": "",
+    "short": "Arcane Ward",
+    "full": "Block granted by magical guards. Absorbs attack damage after ordinary Block.",
+    "tip": "Arcane Ward"
+  },
+  {
     "id": "common.back",
     "extends": "",
     "short": "Back",
@@ -6331,6 +6345,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "formation.positioning.dragAnchors",
+    "extends": "",
+    "short": "Drag highlighted formation anchors",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.positioning.selectMembers",
+    "extends": "",
+    "short": "Select member positions first.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.positioning.groupLimit",
+    "extends": "",
+    "short": "Maximum of 32 groups reached.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "formation.layout.saveFailed",
     "extends": "",
     "short": "The layout could not be saved. Your preview is still available; try applying again.",
@@ -7168,6 +7203,13 @@ export const uiStrings = [
     "extends": "",
     "short": "Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.",
     "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.recovery.heading",
+    "extends": "",
+    "short": "Recovery preview",
+    "full": "Recovery preview",
     "tip": ""
   }
 ];

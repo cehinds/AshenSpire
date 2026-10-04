@@ -9,6 +9,7 @@ import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
+import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 
 let releaseActiveStage = null;
@@ -81,6 +82,7 @@ export function wireBattlefieldStage(field, model) {
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }
+      field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
       field.dispatchEvent(new Event('formationlayoutchange'));
     }
     // Writes first, then reads: resetting each sprite's zoom immediately before
@@ -101,7 +103,7 @@ export function wireBattlefieldStage(field, model) {
       const leadingHost = frame.querySelector('.combatant-leading');
       const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
-        * wireframeUi.formation.displayScale;
+        * wireframeUi.formation.displayScale * (slot.characterScale || 1);
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, multiplier, ...geometry, leadingHost,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
@@ -167,7 +169,8 @@ export function wireBattlefieldStage(field, model) {
       // Keep the 44 px target on the clickable frame, above neighbouring art.
       // It does not change the dimensions read by the sprite fitter.
       frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));
-      if (frame.classList.contains('enemy-target-hitbox')) {
+      frame.classList.toggle('player-target-hitbox', frame.classList.contains('player'));
+      if (frame.classList.contains('enemy-target-hitbox') || frame.classList.contains('player-target-hitbox')) {
         const frameRect = frame.getBoundingClientRect();
         frame.style.setProperty('--enemy-hit-x', `${(hostRect.left + hostRect.width / 2 - frameRect.left) / zoom}px`);
         frame.style.setProperty('--enemy-hit-y', `${(hostRect.bottom - frameRect.top) / zoom}px`);
@@ -188,13 +191,18 @@ export function wireBattlefieldStage(field, model) {
     }
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();
-    combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
-    combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
-    // WGS1: crop the scene's painted plate so its ground line meets the floor
-    // band (WGS7) and its sky fills the rest (WGS6). Feet are not moved. The
-    // fitter is the W4 parent's, shared with the quest dialogue.
+    combat.style.setProperty('--environment-top', '0px');
+    combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
+    // Keep the painting within its atlas cell, with the same ground line as
+    // the formation. Continuing behind cards must not move that line.
     const backdrop = combat.querySelector('.environment-backdrop');
-    if (backdrop) fitSceneBackdrop(backdrop, { width: backdrop.clientWidth, height: fieldRect.height / zoom, zoom });
+    if (backdrop) fitSceneBackdrop(backdrop, {
+      width: backdrop.clientWidth, height: rect.height / zoom, zoom,
+      windowTop: (fieldRect.top - rect.top) / zoom, windowHeight: fieldRect.height / zoom,
+      config: battlefieldBackdropConfig({ height: fieldRect.height / zoom,
+        fieldTop: 0, fieldHeight: fieldRect.height / zoom,
+        formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
+    });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };

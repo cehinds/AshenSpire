@@ -79,7 +79,7 @@ const PLANTS = [
   {
     name: 'opacity: 0 — in the DOM, in the viewport, in the layout, and NOT ON THE SCREEN',
     expect: /LETTERS ARE NOT/i,
-    plant: (root) => css(root, '.build-stamp { opacity: 0; }'),
+    plant: (root) => css(root, '.build-stamp { opacity: 0 !important; }'),
   },
   {
     // MY FIRST VERSION OF THIS PLANT WAS WRONG AND THE CORPUS SAID SO, which is
@@ -93,7 +93,7 @@ const PLANTS = [
     // invisible whatever is behind it.
     name: 'the glyphs painted in their own background — one colour, no ink',
     expect: /LETTERS ARE NOT/i,
-    plant: (root) => css(root, '.build-stamp { color: var(--bg); background: var(--bg); }'),
+    plant: (root) => css(root, '.build-stamp { color: var(--bg) !important; background: var(--bg) !important; }'),
   },
   {
     name: 'display: none at the narrow layout — an ordinary mobile edit',
@@ -103,7 +103,7 @@ const PLANTS = [
   {
     name: 'parked off-screen at left: -9999px',
     expect: /outside the/i,
-    plant: (root) => css(root, '.build-stamp { position: absolute; left: -9999px; }'),
+    plant: (root) => css(root, '.build-stamp { position: absolute !important; left: -9999px !important; }'),
   },
   {
     name: 'the required title placement deleted outright',

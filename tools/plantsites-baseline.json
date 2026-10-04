@@ -142,7 +142,7 @@
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
-      "digest": "af34f216bed34c71"
+      "digest": "c1a69c2b796ba05f"
     },
     "tools/combat-save.mjs": {
       "count": 3,
@@ -213,8 +213,8 @@
       "digest": "202b7aeba2b2cf9e"
     },
     "tools/hintstrip.mjs": {
-      "count": 12,
-      "digest": "4bb688218514e95d"
+      "count": 14,
+      "digest": "4111bef10d1ea5b9"
     },
     "tools/hudbars.mjs": {
       "count": 1,
@@ -222,7 +222,7 @@
     },
     "tools/hudparity.mjs": {
       "count": 18,
-      "digest": "8e95fe8e9f0ee98e"
+      "digest": "db596af6d92d5788"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
@@ -354,7 +354,7 @@
     },
     "tools/zoomplace.mjs": {
       "count": 1,
-      "digest": "561212b4fb805f6f"
+      "digest": "a9055e812d589711"
     }
   }
 }

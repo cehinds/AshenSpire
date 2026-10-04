@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="../../../">
+  <title>AshenSpire — merchant preview</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/ui.css">
+  <link rel="stylesheet" href="styles/kit.css">
+  <link rel="stylesheet" href="styles/responsive-type.css">
+  <link rel="stylesheet" href="styles/player-polish-icons.css">
+  <link rel="stylesheet" href="styles/player-polish.css">
+  <link rel="stylesheet" href="styles/illustrated-cards.css">
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+import { contentBundle } from './src/content/index.js';
+import { createRegistries } from './src/model/registries.js';
+import { configuredContentBundle } from './src/model/advancedConfig.js';
+import { createRunState } from './src/model/state.js';
+import { createRng } from './src/engine/rng.js';
+import { buildMarketStock } from './src/engine/shopKinds.js';
+import { mountShop } from './src/ui/screens/shop.js';
+
+// Component fixture uses the current layout mode at unscaled CSS pixels.
+const resize = () => { document.documentElement.dataset.layout = innerWidth <= contentBundle.balance.ui.uiScale.narrowMax ? 'narrow' : 'wide'; };
+resize();
+addEventListener('resize', resize);
+
+// Disposable production renderer/transactions. Never reads or writes saves.
+const params = new URLSearchParams(location.search);
+const settings = { shopSell: true };
+for (const offering of contentBundle.shops.market.offerings) settings[`gameConfig.shops.market.${offering.id}.chance`] = 100;
+const registries = createRegistries(configuredContentBundle(contentBundle, settings));
+const run = createRunState({ seed: 21, classId: 'reaver', registries });
+run.floor = 8;
+run.cinders = Number(params.get('cinders') ?? 999);
+run.flasks = [{ flaskId: 'crimsonFlask' }];
+run.consumables.shieldManual = 1;
+run.smithingStones = 12;
+run.loadout.storage.push('katana');
+run.shopStock = buildMarketStock(registries, createRng(21), run, { meta: { settings }, innInTown: true });
+run.shopStock.smith = { offered: true, services: ['upgrade', 'extract', 'install'] };
+let changes = 0;
+mountShop(document.getElementById('app'), {
+  registries, run, meta: { settings },
+  onChanged() { changes += 1; },
+  onLeave() { location.href = 'docs/preview/merchant/preview.html'; },
+});
+document.getElementById(`shop-cat-${params.get('category') || 'relics'}`)?.click();
+window.merchantPreview = { run, registries, changes: () => changes };
+</script>
+</body>
+</html>

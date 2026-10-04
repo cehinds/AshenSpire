@@ -28,6 +28,8 @@
 # cell containing one into an array, and the loader refuses it by name rather
 # than joining it back into a sentence nobody authored.
 id,extends,short,full,tip
+combat.protection.block,,Block,Absorbs attack damage.,Block
+combat.protection.ward,,Arcane Ward,Block granted by magical guards. Absorbs attack damage after ordinary Block.,Arcane Ward
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
 common.continue,,Continue,Move on from this screen.,Continue
@@ -976,6 +978,9 @@ equipment.tags.prompt,,Select a tag for details.,,
 equipment.tags.aria,,Equipment tags,,
 formation.move.confirm,,Move,,
 formation.layout.previewOnly,,Preview only — apply to save your layout.,,
+formation.positioning.dragAnchors,,Drag highlighted formation anchors,,
+formation.positioning.selectMembers,,Select member positions first.,,
+formation.positioning.groupLimit,,Maximum of 32 groups reached.,,
 formation.layout.saveFailed,,The layout could not be saved. Your preview is still available; try applying again.,,
 handDiscard.keepAllEndTurn,,Keep all & end turn,,
 handDiscard.discardEndTurn,,Discard {count} & end turn,,
@@ -1098,3 +1103,4 @@ book.read.complete,,Book read,,
 
 settings.manaRing,,Mana ring,,
 settings.manaRing.note,,Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.,,
+rest.recovery.heading,,Recovery preview,Recovery preview,

@@ -66,10 +66,12 @@ const rectOf = (o) => (o && typeof o.getBoundingClientRect === 'function' ? o.ge
 // whatever it is nested in — origin (0, 0), so only the zoom separates the spaces.
 export const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
 
-export function anchorLocalBox(layer, anchor) {
+export function anchorLocalBox(layer, anchor, { zoom } = {}) {
   const lr = rectOf(layer);
   const ar = rectOf(anchor);
-  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  // A native dialog may compensate for the body's zoom. Its measured effective
+  // zoom uses the same conversion without a second placement implementation.
+  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
   return {
     left: (ar.left - lr.left) / z,
     top: (ar.top - lr.top) / z,

@@ -66,6 +66,8 @@ import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
+import { combatHealthRow } from '../components/combatHealth.js';
+import { blockPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
@@ -616,7 +618,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
           ...(entity.ratings ? ['ar', 'dr', 'pr'].map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
-          { label: 'Block', value: v.block || 0 },
+          { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
         skillLabel: 'Active skills & stance',
         abilities,
@@ -648,7 +650,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         { label: 'HP', value: v.hp, max: entity.maxHp },
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
         ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
-        { label: 'Block', value: v.block || 0 },
+        { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
       intent: {
         name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
@@ -746,6 +748,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       hp: e.hp,
       mana: e.mana,
       block: e.block,
+      ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
       alive,
       statuses,
       stanceId: e.stanceId,
@@ -783,7 +786,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           disp.arcaneEvents.push(e);
           break;
         case 'damageDealt':
-          if (t) t.block = Math.max(0, t.block - e.blocked);
+          if (t) {
+            t.block = Math.max(0, t.block - e.blocked);
+            if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
+            reconcileWardBlock(t);
+          }
           break;
         case 'impactDealt':
           if (t && e.poiseMeter) t.poiseMeter = { ...e.poiseMeter };
@@ -798,7 +805,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (t) t.hp = Math.min(t.hp + e.amount, (getEntity(combat, e.targetId) || {}).maxHp || t.hp + e.amount);
           break;
         case 'blockGained':
-          if (t) t.block += e.amount;
+          if (t) {
+            t.block += e.amount;
+            if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
+            reconcileWardBlock(t);
+          }
           break;
         case 'manaSpent':
           if (disp.ents.player) disp.ents.player.mana = Math.max(0, disp.ents.player.mana - e.amount);
@@ -911,8 +922,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const host = $('.topbar .resbars-host');
     if (host) {
       host.innerHTML = '';
-      const mainPlan = combatVitals(resourceBarPlan(registries, 'main', pv, p, resDomains), readSettings());
-      host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
+      const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
+      host.appendChild(resourceBars(mainPlan.filter(bar=>bar.id==='hp'), { surface: 'main', tooltipExtra: poiseTip('player') }));
       host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
     }
     // WGH6: the same relic tile renderer the rooms use (components/relicRail.js);
@@ -1109,7 +1120,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
       if (tooltips) el.tabIndex = 0;
-      if (bar.id === 'hp') markUiComponent(el, UI.healthStatusBar, entity.kind);
+      if (bar.id === 'hp') {
+        markUiComponent(el, UI.healthStatusBar, entity.kind);
+        const next = el.nextSibling;
+        const row = combatHealthRow(el, blockPresentation(v), { tooltips, blockHelp: helpText('block') });
+        bars.insertBefore(row, next);
+      }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
     }
     // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
@@ -1158,7 +1174,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     // WCM0: each row names its kind; the configured kinds wait for selection.
     for (const row of wrap.children) {
-      markMeterRow(row, row.dataset.res === 'hp' ? 'hp' : row.classList.contains('procbar') ? 'buildup' : 'resource');
+      markMeterRow(row, row.dataset.meterRow === 'hp' || row.dataset.res === 'hp' ? 'hp' : row.classList.contains('procbar') ? 'buildup' : 'resource');
     }
     return wrap;
   }
@@ -1167,17 +1183,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     node.dataset.meterRow = kind;
     if (meterRowSelectedOnly(kind)) node.dataset.selectedOnly = 'true';
     return node;
-  }
-
-  // Block is a StatePill in the frost tone, filled: a number a player reads off
-  // the sprite at a glance.
-  function blockBadge(entity, { tooltips = true } = {}) {
-    const v = dv(entity);
-    if (v.block <= 0) return null;
-    const b = pill({ label: String(v.block), round: true, attrs: { class: 'block-badge solid lg' } });
-    markUiComponent(b, UI.blockBadge);
-    if (tooltips) attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>${esc(helpText('block'))}`);
-    return b;
   }
 
   function bindAbilityBadge(chip, entity, abilityId) {
@@ -1277,7 +1282,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
       sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation }),
-      blockBadge: blockBadge(p),
       name: markMeterRow(labelStack({ label: run.customization?.name || runClassIdentity(registries, run).name, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
@@ -1377,7 +1381,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         classNames: [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
         leading,
         sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
-        blockBadge: blockBadge(enemy),
         name: markMeterRow(nm, 'name'),
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
@@ -1896,7 +1899,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const tag = (ev.target && ev.target.tagName) || '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     // ANY veil owns input while it stands — not the menu overlay alone. This
     // line read `overlayIsOpen()`, which knew about one of six, so with the
     // draw pile open E ended the turn and the hand went 5 -> 0 under the panel
@@ -2322,6 +2325,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // stale copy of a number the row already shows.
   for (const { selector, title, message } of tooltipHelp.combatTargets) {
     const node = $(selector);
+    if (!node) continue;
     node.tabIndex = 0;
     attachTooltip(node, () => `<div class="tt-title">${esc(title)}</div>${esc(helpText(message, {
       className: runClassIdentity(registries, run).name, classDescription: registries.classes.get(run.class).description || '',

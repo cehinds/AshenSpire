@@ -51,7 +51,7 @@
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
-  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) 90%, #17130f 100%);
+  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) calc(var(--scene-paint-bottom, 100%) - 12%), #17130f var(--scene-paint-bottom, 100%));
 }
 
 /* A pale alpha-shaped edge plus dark separation reads on snow and charcoal.
@@ -1132,7 +1132,7 @@
   width: max-content; min-width: 0; scale: none; flex: none; pointer-events: auto;
   transition: none !important;
 }
-:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox::after {
+:root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox)::after {
   content: ''; position: absolute;
   left: var(--enemy-hit-x); top: var(--enemy-hit-y);
   width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));
@@ -1515,3 +1515,20 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
+
+/* Authoring guides in the Settings formation preview sit above the actors. */
+.position-guides { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2500; touch-action: none; pointer-events: auto; }
+.position-guides [data-position-anchor] { cursor: grab; }
+.formation-positioning label { display: grid; gap: 4px; margin-block: 6px; font-size: max(12px, calc(12px / var(--ui-zoom, 1))); }
+.formation-positioning select, .formation-positioning input { width: 100%; min-width: 0; padding: 6px; color: inherit; background: #21333d; border: 1px solid #55707c; border-radius: 4px; }
+.formation-positioning button { padding: 6px 9px; color: inherit; background: #21333d; border: 1px solid #55707c; border-radius: 4px; cursor: pointer; }
+.formation-positioning button:disabled { opacity: .45; cursor: default; }
+.position-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.position-nudges { display: flex; align-items: center; gap: 5px; margin-block: 8px; }
+.position-nudges label { max-width: 70px; margin-left: auto; }
+.formation-positioning output { display: block; margin-top: 10px; color: #ead38b; font-size: max(12px, calc(12px / var(--ui-zoom, 1))); line-height: 1.6; }
+.formation-positioning details { margin-top: 12px; }
+.formation-positioning .position-snap { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.formation-positioning .position-snap input { width: auto; }
+.formation-positioning textarea { box-sizing: border-box; width: 100%; font: 12px monospace; background: #0c171e; color: #d9e6eb; }
+.formation-positioning .formation-help { font-size: max(11px, calc(11px / var(--ui-zoom, 1))); line-height: 1.5; opacity: .8; }

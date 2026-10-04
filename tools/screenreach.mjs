@@ -72,7 +72,7 @@ import { serve } from './serve.mjs';
 // the copy: same serve.mjs, same browser, same hit-test.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  const selftestCode = await doorSelftest({
+  const corpus = {
     tool: 'screenreach.mjs',
     args: ['--only', '390x650'],
     timeoutMs: 600000,
@@ -144,13 +144,19 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+.*\.enemy-pose-stage/,
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+.*\.enemy-pose-stage/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
         file: 'styles/combat.css',
         append: '.enemy-target-hitbox::after { pointer-events: none !important; }',
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
+      },
+      {
+        name: 'a small player sprite loses its frame-level tap area',
+        file: 'styles/combat.css',
+        append: '.player-target-hitbox::after { pointer-events: none !important; }',
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
@@ -183,8 +189,9 @@ if (process.argv.includes('--selftest')) {
         expectRed: /equipment shortcut did not open Armoury/,
       },
     ],
-  });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 13 plants, 13 caught');
+  };
+  const selftestCode = await doorSelftest(corpus);
+  if (selftestCode === 0) console.log(`screenreach-selftest: OK — ${corpus.plants.length} plants, ${corpus.plants.length} caught`);
   process.exit(selftestCode);
 }
 
@@ -253,6 +260,74 @@ const SETTINGS_CYCLE = `(async () => {
   return true;
 })()`;
 
+// Keep the overlap regression independent of sprite proportions and formation
+// spacing: place the intent over a real neighbouring sprite. The
+// normal overhead layer must remain hittable; the frame-stacking plant below
+// must hide it. Both the clean and planted runs use this same fixture.
+const INTENT_OVERLAP = `(() => {
+  if (innerWidth !== 390 || innerHeight !== 650) return true;
+  // Missing art uses a wider fallback figure in copied trees. Pin the small
+  // player case below the probe's 24px patch size in both clean and bad runs.
+  const player = document.querySelector('.combatant.player .combatant-card > .sprite');
+  const playerBefore = player?.getBoundingClientRect();
+  if (!playerBefore || !Number.isFinite(playerBefore.width) || playerBefore.width <= 0)
+    throw new Error('screenreach: small-player fixture is missing its sprite');
+  player.style.transformOrigin = 'center bottom';
+  player.style.scale = String(Math.min(1, 16 / playerBefore.width));
+  // Artwork may overhang its host. Keep this deliberately small fixture's
+  // actual hit surface inside the measured 16px host.
+  player.style.overflow = 'clip';
+  const playerAfter = player.getBoundingClientRect();
+  if (playerAfter.width >= 24 || Math.abs(playerAfter.bottom - playerBefore.bottom) > 1
+      || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
+    throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
+  const frames = [...document.querySelectorAll('.combatant.enemy')];
+  const depth = frame => Number(frame.querySelector('.combatant-card > .sprite').style.zIndex);
+  const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
+  const high = frames.find(frame => depth(frame) > depth(low));
+  const intent = low?.querySelector('.intent');
+  const sprite = high?.querySelector('.combatant-card > .sprite');
+  if (!intent || !sprite) throw new Error('screenreach: intent overlap fixture is missing its two enemies');
+  const a = intent.getBoundingClientRect(), initial = sprite.getBoundingClientRect();
+  const intentScale = a.width / intent.offsetWidth, spriteScale = initial.width / sprite.offsetWidth;
+  // Authored formations can make this neighbour narrower than an XL badge.
+  // Grow only the fixture's artwork, retaining its normal stacking context.
+  sprite.style.transformOrigin = 'center bottom';
+  sprite.style.scale = String(Math.max(1, (a.width + 16) / initial.width, (a.height + 64) / initial.height));
+  const grown = sprite.getBoundingClientRect();
+  const field = sprite.closest('.field'), fieldBox = field.getBoundingClientRect(), zoom = fieldBox.width / field.clientWidth;
+  // A grid-cell centre can otherwise hit the player's name or artwork and
+  // bypass the foot-patch check. Move the whole stack into a separate side
+  // patch and reanchor the existing target; its size and stacking stay real.
+  const playerFrame = player.closest('.combatant'), playerStack = player.closest('.combatant-stack');
+  const playerFrameBox = playerFrame.getBoundingClientRect(), stackBox = playerStack.getBoundingClientRect();
+  const centreX = playerFrameBox.left + playerFrameBox.width / 2, centreY = playerFrameBox.top + playerFrameBox.height / 2;
+  const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
+  playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
+  const playerMoved = player.getBoundingClientRect();
+  playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerFrameBox.left) / zoom) + 'px');
+  playerFrame.style.setProperty('--enemy-hit-y', ((playerMoved.bottom - playerFrameBox.top) / zoom) + 'px');
+  if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
+      || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
+    throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
+  // Stage the pair in the clear centre so neither existing fighter's target
+  // becomes an accidental second obstruction in this controlled scene.
+  sprite.style.translate = ((fieldBox.left + fieldBox.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
+    + ((fieldBox.top + fieldBox.height / 2 - grown.top - grown.height / 2) / spriteScale) + 'px';
+  const b = sprite.getBoundingClientRect(), frameBox = high.getBoundingClientRect();
+  high.style.setProperty('--enemy-hit-x', ((b.left + b.width / 2 - frameBox.left) / zoom) + 'px');
+  high.style.setProperty('--enemy-hit-y', ((b.bottom - frameBox.top) / zoom) + 'px');
+  intent.style.translate = ((b.left + b.width / 2 - a.left - a.width / 2) / intentScale) + 'px '
+    + ((b.top + 8 - a.top) / intentScale) + 'px';
+  const moved = intent.getBoundingClientRect();
+  if (b.left > moved.left || b.right < moved.right || b.top > moved.top || b.bottom < moved.bottom)
+    throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
+  const centreHit = document.elementFromPoint(centreX, centreY);
+  if (centreHit && playerFrame.contains(centreHit))
+    throw new Error('screenreach: small-player frame centre still hits its own stack: ' + centreHit.className);
+  return true;
+})()`;
+
 // Every screen that can be reached without playing the game. `boss` holds a
 // splash deliberately covering the board, so its controls ARE covered by
 // design and it is listed with `overlay: true` rather than left out — a screen
@@ -265,6 +340,7 @@ const SCREENS = [
     overlay: 'the Armoury opened by the preserved equipment shortcut covers the map on purpose' },
   { name: 'combat', q: '?shot=combat', ready: `!!document.querySelector('.combat .hand .card')` },
   { name: 'combat-xl', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length` },
+  { name: 'combat-overlap', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length`, setup: INTENT_OVERLAP },
   { name: 'death', q: '?shot=death', ready: `!!document.querySelector('#app button')` },
   // EldenSpire#29 slice 1. Added the day the state existed. This file's own
   // boundary has said since it was written that customize/shop/rest/rewards
@@ -370,7 +446,7 @@ const PROBE = `(() => {
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
       const sr = sprite?.getBoundingClientRect();
-      const reach = c.matches('.enemy-target-hitbox') && sr
+      const reach = c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: sr.left + sr.width / 2 - 22, right: sr.left + sr.width / 2 + 22,
             top: sr.bottom - 22, bottom: sr.bottom + 22 },
           top => top === c || top === sprite || sprite.contains(top))
