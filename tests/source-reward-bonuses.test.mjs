@@ -122,6 +122,8 @@ test('class bonuses wait for the class claim, then feat and technique can both b
     assert.equal(app.querySelector('[data-kind="levelCard"]'), null);
     app.querySelector('.reward-level-up[data-track="class:reaver"]').click();
     assert.equal(run.skills['class:reaver'].level, 1);
+    assert.equal(app.querySelector('#reward-card-confirm'), null, 'the claim opens no chooser on its own');
+    app.querySelector('.reward-level-offer[data-kind="levelChoice"]').click();
     app.querySelectorAll('.reward-pick')[0].click();
     app.querySelector('#reward-card-confirm').click();
     assert.equal(run.feats.length, 1);
