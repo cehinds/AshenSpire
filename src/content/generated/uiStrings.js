@@ -5456,6 +5456,41 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.defaults.reset",
+    "extends": "",
+    "short": "Reset to defaults",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.choice",
+    "extends": "",
+    "short": "Which settings would you like to use?",
+    "full": "This build has default settings. Keep this device's saved local settings, or reset every setting to the current defaults. Saves and progress are not touched.",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.local",
+    "extends": "",
+    "short": "Keep local settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.use",
+    "extends": "",
+    "short": "Use defaults",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.failed",
+    "extends": "",
+    "short": "Your settings could not be saved. Your previous settings are still in use. Please try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "settings.row.useSprites",
     "extends": "",
     "short": "Character sprites",

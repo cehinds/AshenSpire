@@ -8,6 +8,44 @@
 
 export const SEED_KEY = 'settingsDefaultsSeed';
 
+/** Ask once per build when this device has actual preferences to keep.
+ * Navigation, onboarding and migration markers are not player preferences.
+ * The rows and promoted values come from the same table Reset uses.
+ */
+export function needsSettingsChoice(meta, build, rows, promoted = {}) {
+  if (meta?.settingsChoiceBuild === build) return false;
+  const settings = meta?.settings || {};
+  const valueTypes = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', 'toggle', undefined]);
+  return rows.some(row => valueTypes.has(row.type)
+    && settings[row.key] !== undefined
+    && !sameSetting(settings[row.key], Object.hasOwn(promoted, row.key) ? promoted[row.key] : row.def));
+}
+
+/** Keeping local values makes every already stored promoted value the
+ * player's. Missing values may still receive the current defaults.
+ */
+export function keepLocalSettings(settings, defaults) {
+  const local = { ...settings, [SEED_KEY]: {} };
+  return { [SEED_KEY]: {}, ...seedSettingsDefaults(local, defaults) };
+}
+
+/** Persist a startup choice and its acknowledgement together as a decision.
+ * If either write fails, restore the previous profile and live preferences.
+ * Storage may throw (quota/security) as well as return a refused-write result.
+ */
+export function commitSettingsChoice(meta, build, { apply, load, save, restore }) {
+  const before = structuredClone(meta);
+  try {
+    if (apply()?.ok === false) throw new Error('settings write refused');
+    if (save({ ...load(), settingsChoiceBuild: build })?.ok === false) throw new Error('acknowledgement refused');
+    return { ok: true };
+  } catch {
+    try { save(before); } catch { /* live settings still return to their prior values */ }
+    restore(before);
+    return { ok: false };
+  }
+}
+
 /**
  * sameSetting(a, b) → true when two stored values are the same setting value:
  * numbers within 1e-9 (float noise such as 0.1 + 0.2), anything else by ===.
