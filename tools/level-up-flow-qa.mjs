@@ -89,11 +89,13 @@ try {
     await shot('level-ready');
     // Enable guided flow and mount from the same paid ledger.
     await ev('qaSettings.guidedLevelUp=true;qaMount();true');
-    await wait(400);
-    check(await ev(`qaRun.level.level===2 && qaRun.level.xp===255 && !!document.querySelector('#reward-card-confirm') && !document.querySelector('.rp-layered-bar')`),name+' guided flow opens rewards before refill');
+    await wait(1500);
+    // Guided claims open nothing: each unlocked choice waits in the menu, lifted.
+    check(await ev(`qaRun.level.level>=2 && !document.querySelector('#reward-card-confirm') && document.querySelectorAll('.reward-kind.reward-level-offer').length>=1 && document.querySelectorAll('.reward-level-line').length===qaRun.level.level-1`),name+' guided flow claims levels without forcing a choice');
+    check(await ev(`(() => {const n=document.querySelector('.reward-level-offer');return getComputedStyle(n).transform!=='none'})()`),name+' the waiting level reward is lifted');
     await shot('level-choice');
-    await click('#reward-back'); await wait(400);
-    check(await ev(`qaRun.level.level===2 && !qaRun.pendingReward.states['levelChoice:0'] && !document.querySelector('#reward-continue').disabled`),name+' Back retains choice and permits exit');
+    await click('[data-key="levelChoice:0"]'); await click('#reward-back'); await wait(400);
+    check(await ev(`!qaRun.pendingReward.states['levelChoice:0'] && !!document.querySelector('[data-key="levelChoice:0"]') && !document.querySelector('#reward-continue').disabled`),name+' Back retains choice and permits exit');
     // Use the real footer control; its configured second-beat confirmation is resolved below.
     await click('#reward-continue', 1800);
     await wait(150);

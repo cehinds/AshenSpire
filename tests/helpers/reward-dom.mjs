@@ -24,6 +24,7 @@ export function rewardDom() {
     removeAttribute(key) { this.attributes.delete(key); }
     appendChild(child) { child.remove(); child.parentNode = this; this.children.push(child); return child; }
     append(...children) { children.forEach(child => this.appendChild(child)); }
+    replaceChildren(...children) { this.children.forEach(child => { child.parentNode = null; }); this.children = []; this.append(...children); }
     after(child) { const parent = this.parentNode; child.parentNode = parent; parent.children.splice(parent.children.indexOf(this) + 1, 0, child); }
     remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(x => x !== this); this.parentNode = null; }
     matches(selector) {

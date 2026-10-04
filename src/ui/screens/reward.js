@@ -116,24 +116,23 @@ export function mountRewards(app, {
   let xpAnimationDone = !progress || !rewards.xpBefore;
   let refill = null;
   const animatedTracks = new Set();
-  let pausedTrack = null;
   let guided = settings.guidedLevelUp !== false;
+  // A CLAIMED LEVEL IS A LINE, NOT A DOOR. Each claim this screen makes adds
+  // one line under the bars, and the reward it unlocked joins the menu lifted
+  // and blue; the player opens it when they choose to. `freshKeys` holds the
+  // rows to play their arrival on the next render only.
+  const levelLog = [];
+  const freshKeys = new Set();
   const unlocked = (row) => progressionRewardUnlocked(row, run);
   const refreshProgress = () => { progress = rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity }); };
-  function resumeXp() {
-    const track = pausedTrack;
-    pausedTrack = null;
-    if (track) refillClaim(track, renderMenu);
-    else renderMenu();
-  }
+  // Guided mode claims every banked level in turn, each with its refill, and
+  // opens nothing: the rewards those levels unlocked wait in the menu.
   function nextGuidedStep() {
-    if (!guided || !xpAnimationDone || refill || pausedTrack) return;
-    const waiting = plan.rows.find(row => isProgressionReward(row) && !states[row.key] && unlocked(row));
-    if (waiting) return renderChooser(waiting);
+    if (!guided || !xpAnimationDone || refill) return;
     if (onClaimLevel && pendingLevelCount(registries, run) > 0) return claimLevel();
     if (progress?.skills.some(row => row.gained > 0 && rewards.xpBefore?.tracks?.[row.id] && !animatedTracks.has(row.id))) {
       xpAnimationDone = false;
-      return renderMenu();
+      return refreshProgressView();
     }
     const skill = progress?.skills.find(row => pendingSkillLevelCount(registries, run, row.id) > 0);
     if (skill && onClaimSkill) claimSkill(skill.id);
@@ -299,8 +298,7 @@ export function mountRewards(app, {
     }
     if (CARD_CHOICE_KINDS.includes(row.kind)) recordSeen('card', [row.cardId]);
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
-    if (isProgressionReward(row) && pausedTrack) resumeXp();
-    else renderMenu(viaKind || row.key);
+    renderMenu(viaKind || row.key);
     return true;
   }
 
@@ -443,12 +441,13 @@ export function mountRewards(app, {
     claimedLevels += 1;
     persistProgress();
     refreshProgress();
-    const card = plan.rows.find((row) => characterLevelRow(row)
-      && unlocked(row) && !states[row.key]);
-    if (settings.guidedLevelUp !== false) {
-      pausedTrack = 'character';
-      card ? renderChooser(card) : renderLevelReward(claim);
-    } else refillClaim('character', () => card ? renderChooser(card) : renderLevelReward(claim));
+    // The row THIS claim unlocked, not the first one still waiting: earlier
+    // rewards stay pending now, so "first open row" would name an old one.
+    const open = plan.rows.filter((row) => characterLevelRow(row) && unlocked(row) && !states[row.key]);
+    const card = open.find((row) => row.requiredLevel === claim.after) || open[0];
+    levelLog.push(`Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned`);
+    if (card) freshKeys.add(card.key);
+    refillClaim('character', () => renderMenu(card?.key || null));
   }
 
   const draftTrackId = (row) => row.kind === 'classDraft' ? classSkillId(row.classId) : row.skillId;
@@ -462,12 +461,12 @@ export function mountRewards(app, {
     claimedSkills[skillId] = (claimedSkills[skillId] || 0) + 1;
     persistProgress();
     refreshProgress();
-    const draft = plan.rows.find((row) =>
-      draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
-    if (settings.guidedLevelUp !== false) {
-      pausedTrack = skillId;
-      draft ? renderChooser(draft) : renderSkillReward(skillId, claim);
-    } else refillClaim(skillId, () => draft ? renderChooser(draft) : renderSkillReward(skillId, claim));
+    const open = plan.rows.filter((row) => draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
+    const draft = open.find((row) => row.requiredLevel === claim.after || row.claimOrdinal === claimedSkills[skillId]) || open[0];
+    const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
+    levelLog.push(`${label} · Level ${claim.after}`);
+    if (draft) freshKeys.add(draft.key);
+    refillClaim(skillId, () => renderMenu(draft?.key || null));
   }
 
   function refillClaim(id, after) {
@@ -477,22 +476,7 @@ export function mountRewards(app, {
     if (!row?.xp || row.capped || reduced || seconds === 0) { after(); return; }
     refill = { id, after, phase: 'filling' };
     xpAnimationDone = false;
-    renderMenu();
-  }
-
-  function levelBackButton() {
-    const back = button({ label: t('common.back'), className: 'subtle', attrs: { 'data-back': '' } });
-    back.addEventListener('click', () => { guided = false; resumeXp(); });
-    return back;
-  }
-
-  function renderSkillReward(skillId, claim) {
-    const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
-    const done = button({ label: t('common.continue'), weight: 'primary', id: 'reward-skill-done' });
-    door({ eyebrow: t('reward.level.skill.eyebrow'), title: `${label} · Level ${claim.after}`,
-      body: el('p', { text: `Your ${label} skill is now level ${claim.after}.` }),
-      foot: modalFooter({ secondary: [levelBackButton()], primary: done, className: 'reward-foot', size: 'medium' }) });
-    done.addEventListener('click', resumeXp);
+    refreshProgressView();
   }
 
   function statAllocationSection() {
@@ -524,16 +508,6 @@ export function mountRewards(app, {
     return host;
   }
 
-  function renderLevelReward(claim) {
-    const done = button({ label: t('common.continue'), weight: 'primary', id: 'reward-level-done' });
-    const body = el('div', { class: 'reward-level-claim' }, [
-      el('p', { text: `Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned` }),
-      statAllocationSection(),
-    ]);
-    door({ eyebrow: t('reward.level.eyebrow'), title: `Level ${claim.after}`, body,
-      foot: modalFooter({ secondary: [levelBackButton()], primary: done, className: 'reward-foot', size: 'medium' }) });
-    done.addEventListener('click', resumeXp);
-  }
 
   async function playXpAnimation(host) {
     const active = () => host?.isConnected && app.querySelector('.reward-claim-layout') === host;
@@ -577,7 +551,7 @@ export function mountRewards(app, {
           : onClaimSkill && pendingSkillLevelCount(registries, run, bar.dataset.track) > 0;
         if (guided && ready) {
           xpAnimationDone = true;
-          renderMenu();
+          refreshProgressView();
           return;
         }
       }
@@ -586,14 +560,14 @@ export function mountRewards(app, {
     xpAnimationDone = true;
     if (pendingRefill) {
       pendingRefill.phase = 'settled';
-      renderMenu();
+      refreshProgressView();
       const settled = app.querySelector('.reward-claim-layout');
       const delay = settings.levelUpRefillPauseMs == null ? 200 : Number(settings.levelUpRefillPauseMs);
       await new Promise((resolve) => setTimeout(resolve, Math.max(0, Math.min(2000, Number.isFinite(delay) ? delay : 200))));
       if (!settled?.isConnected || refill !== pendingRefill) return;
       refill = null;
       pendingRefill.after();
-    } else renderMenu();
+    } else refreshProgressView();
   }
 
   // ---- THE DOOR: a decision modal OVER whatever stands beneath ---------------
@@ -602,14 +576,40 @@ export function mountRewards(app, {
   // rebuilt: kit head (Eyebrow + Title, no way out but a choice), a body, and
   // a foot on the button ladder. It lives inside `app`, so the next screen's
   // own mount clears it exactly as it cleared the old full-screen menu.
+  //
+  // ONE DOOR PER SCREEN, its CONTENTS swapped. The veil and the door fade in
+  // when they are created (kit.css door-in), so building a new pair on every
+  // render replayed that fade on each XP tick and level claim — the flash.
+  // A later view reuses this mount's open door and replaces its head, body
+  // and foot; only a door this mount did not open is replaced whole.
+  // `doorView` counts the views, so a view's own timers can tell the door
+  // they were bound to has moved on even though the element is the same.
+  let doorView = 0;
+  const doorOwner = {};
   function door({ eyebrow, title, body, foot, attrs = {}, status = null }) {
-    app.querySelector('.reward-veil')?.remove();
-    if (!app.firstElementChild) app.appendChild(el('div', { class: 'screen reward-backdrop' }));
+    doorView += 1;
     const head = modalHead({ eyebrow, title, closeLabel: t('reward.close'), extras: status });
     head.querySelector('.modal-close').hidden = true;
+    const content = [head, el('div', { class: 'modal-body reward-body' }, body), foot];
+    const open = app.querySelector('.reward-veil .reward-door');
+    if (open && open.rewardDoorOwner === doorOwner) {
+      for (const key of ['rewardDetail', 'victoryCompact']) {
+        open.removeAttribute(`data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`);
+        delete open.dataset[key];
+      }
+      const { dataset = {}, ...rest } = attrs;
+      Object.assign(open.dataset, { size: 'md' }, dataset);
+      for (const [key, value] of Object.entries(rest)) open.setAttribute(key, value);
+      open.setAttribute('aria-label', title);
+      open.replaceChildren(...content.filter(Boolean));
+      return open;
+    }
+    app.querySelector('.reward-veil')?.remove();
+    if (!app.firstElementChild) app.appendChild(el('div', { class: 'screen reward-backdrop' }));
     const modal = el('section', {
       class: 'modal reward-door', dataset: { size: 'md' }, role: 'dialog', 'aria-modal': 'true', 'aria-label': title, ...attrs,
-    }, [head, el('div', { class: 'modal-body reward-body' }, body), foot]);
+    }, content);
+    modal.rewardDoorOwner = doorOwner;
     const veil = el('div', { class: 'modal-veil reward-veil' }, modal);
     app.appendChild(veil);
     return modal;
@@ -636,8 +636,12 @@ export function mountRewards(app, {
       && (!characterLevelRow(row) || (Number.isInteger(row.requiredLevel) ? unlocked(row) : !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key])))).map((row) => {
       const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
       const { title, body } = rowBody(row);
+      // A level's reward waiting to be opened stands lifted and blue; the one
+      // a claim just unlocked plays its arrival once.
+      const offer = state === 'pending' && isProgressionReward(row)
+        ? ` reward-level-offer${freshKeys.has(row.key) ? ' reward-fresh' : ''}` : '';
       return `
-        <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
+        <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}${offer}"
              data-kind="${esc(row.kind)}" data-key="${esc(row.key)}" data-state="${esc(state)}"
              data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
           <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
@@ -661,14 +665,7 @@ export function mountRewards(app, {
         'data-confirm-ready': String(plan.rows.every(row => states[row.key] === 'taken' || states[row.key] === 'skipped')),
       },
     });
-    const levelsPending = Boolean((progress?.character && pendingLevelCount(registries, run) > 0)
-      || progress?.skills.some(row => pendingSkillLevelCount(registries, run, row.id) > 0)
-      || pending.some(isProgressionReward));
-    const foot = modalFooter({
-      note: levelsPending ? 'Unfinished levels and level rewards are saved for later victories and Character.' : cont.dataset.confirmReady === 'true' ? t('reward.hold.complete')
-        : mode === 'auto' && pending.length ? t('reward.hold.takesRest') : t('reward.hold.leavesRest'),
-      primary: cont, className: 'reward-foot', size: 'medium',
-    });
+    const foot = modalFooter({ note: holdNote(), primary: cont, className: 'reward-foot', size: 'medium' });
     const note = foot.querySelector('.modal-foot-note');
     note.id = 'reward-hold-copy';
     note.setAttribute('aria-live', 'polite');
@@ -677,22 +674,21 @@ export function mountRewards(app, {
     door({
       eyebrow: plan.rows.length ? t('reward.eyebrow.claim') : t('reward.eyebrow.spoils'),
       title: rewards.title || t('reward.title.victory'),
-      // No live region: the door is rebuilt each render, and the footer note
-      // already announces progress.
+      // No live region: the footer note already announces progress.
       status: plan.rows.length ? el('span', { class: 'as-status modal-head-status',
         text: t('reward.status.claimed', { claimed: claim.claimed, total: claim.total }) }) : null,
       body: el('div', { class: 'reward-claim-layout' }, [
         el('div', { class: 'class-row reward-menu', html: rowsHtml + notesHtml }),
         sideColumn(claim),
-        checkpoint?.source === 'character' ? statAllocationSection() : null,
+        checkpoint?.source === 'character' || levelLog.length ? statAllocationSection() : null,
       ]),
       foot,
     });
+    const freshRow = [...freshKeys].map((key) => app.querySelector(`.reward-kind[data-key="${key}"]`)).find(Boolean);
+    freshKeys.clear();
+    freshRow?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
 
-    for (const levelButton of app.querySelectorAll('.reward-level-up')) {
-      levelButton.addEventListener('click', () => levelButton.dataset.track === 'character'
-        ? claimLevel() : claimSkill(levelButton.dataset.track));
-    }
+    bindLevelButtons(app);
     if (refill) {
       app.querySelector('.reward-menu').inert = true;
     }
@@ -758,23 +754,74 @@ export function mountRewards(app, {
       onConfirm: finish,
     });
 
-    if (!xpAnimationDone && progress && (rewards.xpBefore || refill)) {
-      // Bind the pending animation to this render, before another mount can
-      // replace it. Looking up the host inside the timer captures a new run.
-      const host = app.querySelector('.reward-claim-layout');
-      setTimeout(() => {
-        if (host?.isConnected && app.querySelector('.reward-claim-layout') === host) playXpAnimation(host);
-      }, 0);
-    }
-
-    if (xpAnimationDone && !refill && guided) {
-      const menu = app.querySelector('.reward-claim-layout');
-      setTimeout(() => { if (menu?.isConnected) nextGuidedStep(); }, 250);
-    }
+    followUp(app.querySelector('.reward-claim-layout'));
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-key="${focusKind}"]`))
         || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
     }
+  }
+
+  // The menu's foot note: what Continue does from here.
+  function holdNote() {
+    const pending = plan.rows.filter((r) => !states[r.key] && !r.blockedBy);
+    const levelsPending = Boolean((progress?.character && pendingLevelCount(registries, run) > 0)
+      || progress?.skills.some(row => pendingSkillLevelCount(registries, run, row.id) > 0)
+      || pending.some(isProgressionReward));
+    if (levelsPending) return 'Unfinished levels and level rewards are saved for later victories and Character.';
+    if (plan.rows.every(row => states[row.key] === 'taken' || states[row.key] === 'skipped')) return t('reward.hold.complete');
+    return collectMode() === 'auto' && pending.length ? t('reward.hold.takesRest') : t('reward.hold.leavesRest');
+  }
+
+  function bindLevelButtons(root) {
+    for (const levelButton of root.querySelectorAll('.reward-level-up')) {
+      levelButton.addEventListener('click', () => levelButton.dataset.track === 'character'
+        ? claimLevel() : claimSkill(levelButton.dataset.track));
+    }
+  }
+
+  // What a drawn menu does next: the pending XP animation, else the next
+  // guided claim. Both are bound to THIS layout, so a later render or mount
+  // that replaces it strands the timer instead of being driven by it.
+  function followUp(host) {
+    if (!host) return;
+    if (!xpAnimationDone && progress && (rewards.xpBefore || refill)) {
+      setTimeout(() => {
+        if (host.isConnected && app.querySelector('.reward-claim-layout') === host) playXpAnimation(host);
+      }, 0);
+    } else if (xpAnimationDone && !refill && guided) {
+      setTimeout(() => { if (host.isConnected) nextGuidedStep(); }, 250);
+    }
+  }
+
+  // BAR-ONLY UPDATE. An XP tick, a refill and its settle change the bars and
+  // the Level up buttons, nothing else, so they redraw the progress panel in
+  // place; the menu, its focus and its tooltips stay where they are. With no
+  // menu on screen (a chooser or detail is open) there is nothing to patch.
+  function refreshProgressView() {
+    const layout = app.querySelector('.reward-claim-layout');
+    const panel = layout?.querySelector('.reward-progress');
+    const next = panel ? progressPanel() : null;
+    if (!next) { renderMenu(); return; }
+    panel.after(next);
+    panel.remove();
+    bindLevelButtons(next);
+    const menu = layout.querySelector('.reward-menu');
+    if (menu) menu.inert = !!refill;
+    const note = app.querySelector('#reward-hold-copy');
+    if (note) note.textContent = holdNote();
+    // The pressed Level up went with the old panel; keep the cursor on its row.
+    const focused = document.activeElement;
+    if (isEngaged() && (!focused || focused === document.body || !focused.isConnected)) {
+      focusFirst('.reward-level-up') || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue');
+    }
+    followUp(layout);
+  }
+
+  // The lines this screen's level claims wrote, newest last.
+  function levelLogPanel() {
+    if (!levelLog.length) return null;
+    return el('ol', { class: 'reward-level-log', 'aria-label': t('reward.level.eyebrow') },
+      levelLog.map((text) => el('li', { class: 'reward-level-line', text })));
   }
 
   // The W1t claim-status column: every row's state, then the one choice still
@@ -784,7 +831,7 @@ export function mountRewards(app, {
   // (a preview scene's stub run with no offer and no ledgers).
   function sideColumn(claim) {
     const progression = progressPanel();
-    const children = [progression, !progression && plan.rows.length ? claimStatusPanel(claim) : null].filter(Boolean);
+    const children = [progression, levelLogPanel(), !progression && plan.rows.length ? claimStatusPanel(claim) : null].filter(Boolean);
     return children.length ? el('div', { class: 'reward-side' }, children) : null;
   }
 
@@ -904,7 +951,7 @@ export function mountRewards(app, {
     app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.detail.back'))}</div>${esc(tFull('reward.detail.back'))}`);
-    back.addEventListener('click', () => { guided = false; resumeXp(); });
+    back.addEventListener('click', () => renderMenu(row.key));
     if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
   }
 
@@ -1063,7 +1110,7 @@ export function mountRewards(app, {
     });
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
-    back.addEventListener('click', () => { guided = false; resumeXp(); });
+    back.addEventListener('click', () => renderMenu(row.key));
     if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
   }
 
@@ -1105,7 +1152,8 @@ export function mountRewards(app, {
     more.addEventListener('click', () => showTooltipFor(more, fullCalculation(), tooltipPlacement));
     let ready = false;
     let shown = 0;
-    const active = () => modal.isConnected && app.querySelector('.reward-door') === modal;
+    const view = doorView;
+    const active = () => modal.isConnected && doorView === view && app.querySelector('.reward-door') === modal;
     const updateFormula = () => {
       const expression = victoryXpFormula(rows, shown, options.formulaTerms);
       formula.textContent = expression.shown;
@@ -1179,7 +1227,7 @@ export function mountRewards(app, {
     open.addEventListener('click', () => { if (ready) expandVictory(); });
     if (settings.victorySummaryMode === 'anywhere') {
       app.querySelector('.reward-veil')?.addEventListener('click', (event) => {
-        if (ready && event.target !== open && event.target !== more) expandVictory();
+        if (ready && active() && event.target !== open && event.target !== more) expandVictory();
       });
     }
   }

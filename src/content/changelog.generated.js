@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1590",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Victory stops flashing; level rewards wait for you",
+    "detail": "The victory window no longer fades out and back in as XP fills and levels are claimed: it opens once, and only the bars move. Claiming a level, by hand or with guided level-up, no longer forces its reward choice open. A line under the bars records each level, and the reward that level unlocked appears in the list raised and blue, rising into place once, to open whenever you choose.",
+    "build": "0.7.1.912",
+    "pullRequest": 1590,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1590"
+  },
+  {
     "id": "pr-1588",
     "date": "2026-10-04",
     "group": "2026-10-04",
