@@ -6,19 +6,45 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
 import { createServer } from 'node:http';
-import { download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
+import { download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, setAside, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
 import { buildManifest, canonicalBytes, checkManifest, commonSources, releaseDocsFromCache, releaseDocsFromZips, releaseManifest, serialize } from '../tools/art-manifest.mjs';
 import { planPacks, verifyPacks, writePacks } from '../tools/asset-pack.mjs';
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 const tmp = () => mkdtempSync(join(tmpdir(), 'fetch-art-'));
+
+test('discard waits for transient Windows handles without losing bytes or hiding a permanent refusal', () => {
+  const root = tmp();
+  try {
+    const dir = join(root, 'cache');
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'manifest'), 'preserved');
+    const pauses = [];
+    let attempts = 0;
+    const aside = setAside(dir, {
+      rename: (from, to) => { if (++attempts <= 2) throw Object.assign(new Error('busy'), { code: attempts === 1 ? 'EPERM' : 'EBUSY' }); renameSync(from, to); },
+      pause: attempt => pauses.push(attempt),
+    });
+    assert.equal(readFileSync(join(aside, 'manifest'), 'utf8'), 'preserved');
+    assert.equal(existsSync(dir), false);
+    assert.deepEqual(pauses, [0, 1]);
+    let refused = 0;
+    assert.throws(() => setAside(aside, {
+      rename: () => { refused++; throw Object.assign(new Error('denied'), { code: 'EACCES' }); },
+      pause: () => {},
+    }), /denied/);
+    assert.equal(refused, 21, 'bounded refusal is still an error');
+    assert.equal(readFileSync(join(aside, 'manifest'), 'utf8'), 'preserved');
+    assert.equal(setAside(join(root, 'missing')), null);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 test('crc32 matches the standard check value', () => {
   assert.equal(crc32(Buffer.from('123456789')), 0xcbf43926);
