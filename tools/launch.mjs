@@ -73,7 +73,8 @@ function version() {
 const args = process.argv.slice(2);
 // THE ART TIER, AND WHICH PACKS THE BUILD CARRIES. Light by default (owner,
 // 2026-09-26: "light only on dev/test"): the light and common packs, default
-// tier light. `--full-art` is the release/main shape: all three packs, default
+// tier light. `--full-art` is the test/release/main shape
+// (test joined 2026-10-04): all three packs, default
 // tier high, light kept as its fallback. `--light` says the default out loud.
 // The light single file is built either way: it is the one inline download
 // (owner answer 3), and it is always light. The full-art single file and the

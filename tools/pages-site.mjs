@@ -89,8 +89,8 @@ const DOWNLOAD_PATH = 'download/AshenSpire.html';
 // `--build-missing <workdir>`, each such build newer than the branch's last
 // committed one is rebuilt here: one reusable sparse worktree (art/ left out;
 // the bundle never reads it), `node tools/launch.mjs --build-only` at that
-// commit, in the art tier CI gives the branch (light on dev/test, --full-art on
-// release/main, as dev-preview.yml does). A rebuild that leaves the worktree
+// commit, in the art tier CI gives the branch (light on dev, --full-art on
+// test/release/main, as dev-preview.yml does). A rebuild that leaves the worktree
 // dirty moved the committed box: it is not the build that commit names, so it
 // is skipped and said to be, never published.
 //
@@ -107,7 +107,8 @@ let BUILD_MISSING = flag('--build-missing', null);
 // (docs/ART-REPO-PLAN.md step 4), and a failure there must not take down dev's
 // publication.
 const HEAD_REQUIRED = new Set(flag('--require-head', 'dev,test').split(',').map((x) => x.trim()).filter(Boolean));
-const FULL_ART_BRANCHES = new Set(['release', 'main']);
+// test joined release/main on full art (owner, 2026-10-04): art is linked from test on.
+const FULL_ART_BRANCHES = new Set(['test', 'release', 'main']);
 // A BRANCH'S ROLE IS READ FROM THE CONTRACT THAT GOVERNS IT, not typed here.
 // `.agentops/governance/git-ownership.json` already carries one note per ref and
 // is the thing that actually decides who may write to each; duplicating that
