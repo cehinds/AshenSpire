@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1578",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Compact armaments and level rewards you can finish later",
+    "detail": "Equipped positions show the item card beside its slot, name and status, with Inspect, Replace and Unequip actions. Inspect opens the full card, and equipping a reserve keeps the active position unchanged. Victory XP can pause at each level for its reward chooser, with a larger Level up button, Back and an Accessibility toggle. Leave whenever you want: unfinished levels and the original reward choices return on later victories and Character, including after saving. Class rewards wait for their original class.",
+    "build": "0.7.1.895",
+    "pullRequest": 1578,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1578"
+  },
+  {
     "id": "pr-1540",
     "date": "2026-10-03",
     "group": "2026-10-03",

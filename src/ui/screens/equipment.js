@@ -68,7 +68,7 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { t } from '../strings.js';
+import { t, tTip } from '../strings.js';
 import { consumableText } from '../../model/consumables.js';
 import { openBookLearning } from '../components/bookLearning.js';
 import { renderBookArt } from '../components/bookArt.js';
@@ -399,7 +399,7 @@ function buildArmoury(L, ui) {
   equipment.style.setProperty('--armament-thumb-width', compact.thumbnailWidthPx);
   equipment.style.setProperty('--armament-phone-thumb-width', compact.phoneThumbnailWidthPx);
   equipment.style.setProperty('--armament-inspection-width', compact.inspectionWidthPx);
-  equipment.append(el('div', { class: 'armoury-section-head' }, [titleS('Equipped positions'), pill({ label: String(itemCount) }), toggle]),
+  equipment.append(el('div', { class: 'armoury-section-head' }, [titleS(t('armoury.positions.title')), pill({ label: String(itemCount) }), toggle]),
     ui.armamentView === 'list'
       ? el('div', { class: `armament-list-workspace${ui.armamentListInspectionOpen ? ' is-inspecting' : ''}` }, [slots, ui.armamentListDetail(ordered)])
       : slots);
@@ -1003,8 +1003,9 @@ export function mountEquipment(host, {
       ? eq.armour.find(row => row.classId === run.class && row.id === pieceId)
       : eq.armaments.find(row => row.id === pieceId));
     const successMessage = piece
-      ? `${piece.name} equipped in ${slot.label} · ${setIndex + 1}.${previousName && previousId !== pieceId ? ` ${previousName} is available in inventory.` : ''}`
-      : `${previousName} unequipped from ${slot.label} · ${setIndex + 1}. It is available in inventory.`;
+      ? t('armoury.change.equipped', { name: piece.name, slot: `${slot.label} · ${setIndex + 1}` })
+        + (previousName && previousId !== pieceId ? ` ${t('armoury.change.stored', { name: previousName })}` : '')
+      : t('armoury.change.unequipped', { name: previousName, slot: `${slot.label} · ${setIndex + 1}` });
     if (piece) {
       const requirement = equipmentRequirementReceipt(registries, piece, run.attributes, run);
       if (!requirement.ok) {
@@ -1015,7 +1016,7 @@ export function mountEquipment(host, {
     }
     if (inCombat) {
       if (typeof onEquip !== 'function') {
-        notice = 'Combat equipment changes are unavailable on this screen.';
+        notice = t('armoury.change.combatUnavailable');
         draw();
         return false;
       }
@@ -1154,8 +1155,8 @@ export function mountEquipment(host, {
   function positionActions(slot, position, { inspect = false } = {}) {
     const actions = el('div', { class: 'armament-position-actions' });
     if (inspect && position.state === 'occupied') {
-      const inspectButton = button({ label: 'Inspect', className: 'armament-inspect',
-        attrs: { 'aria-label': `Inspect ${position.summary.name} in ${position.label}` } });
+      const inspectButton = button({ label: t('armoury.action.inspect'), className: 'armament-inspect',
+        attrs: { 'aria-label': t('armoury.action.inspectNamed', { name: position.summary.name, slot: position.label }) } });
       inspectButton.addEventListener('click', () => {
         armamentListSelection = { slotId: slot.id, index: position.index };
         draw();
@@ -1163,21 +1164,21 @@ export function mountEquipment(host, {
       });
       actions.append(inspectButton);
     }
-    const replace = button({ label: position.state === 'empty' ? 'Choose item' : 'Replace',
-      className: 'armament-replace', attrs: { 'aria-label': `Choose an item for ${position.label}` } });
+    const replace = button({ label: t(position.state === 'empty' ? 'armoury.action.choose' : 'armoury.action.replace'),
+      className: 'armament-replace', attrs: { 'aria-label': t('armoury.action.chooseFor', { slot: position.label }) } });
     replace.addEventListener('click', event => {
       event.preventDefault(); event.stopPropagation();
       activatePosition(slot, position, { openPicker: true });
     });
     actions.append(replace);
     if (position.state === 'occupied') {
-      const unequip = button({ label: 'Unequip', className: 'armament-unequip',
-        attrs: { 'aria-label': `Unequip ${position.summary.name} from ${position.label}` } });
+      const unequip = button({ label: t('armoury.action.unequip'), className: 'armament-unequip',
+        attrs: { 'aria-label': t('armoury.action.unequipNamed', { name: position.summary.name, slot: position.label }) } });
       const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class,
         setIndex: position.index, itemId: null, attributes: run.attributes });
       const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, null);
       const reason = !seal.ok ? seal.reason : !transition.ok ? transition.reason
-        : inCombat && !onEquip ? 'Combat equipment changes are unavailable on this screen.' : '';
+        : inCombat && !onEquip ? t('armoury.change.combatUnavailable') : '';
       if (reason) { unequip.disabled = true; unequip.title = reason; }
       else unequip.addEventListener('click', event => {
         event.preventDefault(); event.stopPropagation();
@@ -1187,8 +1188,8 @@ export function mountEquipment(host, {
       if (reason) actions.append(prose(reason, { class: 'armament-action-reason' }));
     }
     if (!position.active) {
-      const activate = button({ label: 'Make active', className: 'armament-activate',
-        attrs: { 'aria-label': `Make ${position.label} active` } });
+      const activate = button({ label: t('armoury.action.activate'), className: 'armament-activate',
+        attrs: { 'aria-label': t('armoury.action.activateNamed', { slot: position.label }) } });
       const seal = positionActivationSeal(slot, position);
       activate.disabled = !seal.ok;
       if (!seal.ok) activate.title = seal.reason;
@@ -1224,7 +1225,7 @@ export function mountEquipment(host, {
       }, [
         el('div', { class: 'armament-compact-heading' }, [
           el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
-          el('strong', { text: 'Empty' }),
+          el('strong', { text: tTip('piles.empty') }),
           pill({ label: position.active ? 'Active' : 'Reserve', attrs: { class: 'armament-equipped-badge' } }),
         ]), positionActions(slot, position),
       ]);
@@ -1255,7 +1256,7 @@ export function mountEquipment(host, {
     const selected = occupied.find(({ slot, position }) => slot.id === armamentListSelection?.slotId && position.index === armamentListSelection.index)
       || occupied.find(({ position }) => position.active) || occupied[0];
     const detail = el('aside', { class: 'armament-list-inspection', dataset: { component: 'armoury.armamentListInspection' } });
-    const back = button({ label: 'Back', className: 'armament-inspection-back' });
+    const back = button({ label: t('common.back'), className: 'armament-inspection-back' });
     back.addEventListener('click', () => {
       const previous = armamentListSelection;
       armamentListSelection = null;
@@ -1263,7 +1264,7 @@ export function mountEquipment(host, {
       if (previous) wrap.querySelector(`[data-slot-position="${CSS.escape(`${previous.slotId}:${previous.index}`)}"] .armament-inspect`)?.focus();
     });
     detail.append(el('div', { class: 'armament-inspection-heading' }, [
-      titleS(selected ? `Inspect · ${selected.position.code}` : 'Inspect', { tag: 'h3', tabindex: '-1' }), back,
+      titleS(selected ? t('armoury.inspect.title', { slot: selected.position.code }) : t('armoury.action.inspect'), { tag: 'h3', tabindex: '-1' }), back,
     ]));
     if (selected) detail.append(renderEquipmentInspection(registries, selected.position.summary.item, { interactive: false, surface: 'armoury' }));
     return detail;
@@ -1396,8 +1397,8 @@ export function mountEquipment(host, {
   }
 
   function destinationChoices(row) {
-    const section = el('section', { class: 'armament-destinations', 'aria-label': `Destination for ${row.name}` }, [
-      titleS('Choose a destination'), prose('Select a slot and position. Equipping a reserve does not make it active.'),
+    const section = el('section', { class: 'armament-destinations', 'aria-label': t('armoury.destination.for', { name: row.name }) }, [
+      titleS(t('armoury.destination.title')), prose(t('armoury.destination.hint')),
     ]);
     const choices = el('div', { class: 'armament-destination-options' });
     for (const slot of eq.slots.filter(candidate => fitsSlot(candidate, row.item))) {
@@ -1607,8 +1608,8 @@ export function mountEquipment(host, {
       const targetLabel = target ? `${target.slot.label} · ${target.setIndex + 1}` : '';
       const actionLabel = target
         ? (target.kind === 'unequip'
-          ? `Unequip from ${targetLabel}`
-          : `${target.kind === 'move' ? 'Move' : 'Equip'} to ${targetLabel}`)
+          ? t('armoury.action.unequipFrom', { slot: targetLabel })
+          : t(target.kind === 'move' ? 'armoury.action.moveTo' : 'armoury.action.equipTo', { slot: targetLabel }))
         : '';
       const face = inventoryFace(registries, row, {
         draggable,
@@ -1692,7 +1693,7 @@ export function mountEquipment(host, {
         comparison,
         facts: target ? selectionFacts(row, target, comparison, eligibility, actionLabel, roleLabels) : null,
         action: actionButton,
-        instruction: armament ? (target ? 'Review the destination and comparison, then use the named action.' : 'Choose a destination to equip this item.') : '',
+        instruction: armament ? t(target ? 'armoury.destination.review' : 'armoury.destination.choose') : '',
         holdDuration, registerHold, classModel: cardClass,
         comparisonConfig: armament ? { ...layout.comparison, presentation: cardClass.comparisonPresentation } : layout.comparison,
         onClassAction: armament ? null : (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
@@ -1769,7 +1770,7 @@ export function mountEquipment(host, {
       },
     });
     if (selectedSlot) {
-      const clear = button({ label: 'Show all items' });
+      const clear = button({ label: t('armoury.destination.showAll') });
       clear.addEventListener('click', () => { picking = null; draw(); });
       const index = picking.setIndex;
       const current = slotSummary(selectedSlot, index);
@@ -2364,7 +2365,7 @@ export function mountEquipment(host, {
     });
     // W1e footer: Back bottom-left (leaves, like the ✕ and Escape); the
     // selected item's action bottom-right when there is one.
-    const back = button({ label: picking ? 'Back to armaments' : t('common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
+    const back = button({ label: t(picking ? 'armoury.destination.back' : 'common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
     back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });
     const rendered = renderArmouryPanel(panelModel, wrap, { back });
     setFooterPrimary = rendered.setPrimary;

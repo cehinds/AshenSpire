@@ -68,8 +68,8 @@ async function main() {
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || 'page evaluation failed');
     return result.result.value;
   };
-  const until = async (expression, label) => {
-    const end = Date.now() + 8000;
+  const until = async (expression, label, timeoutMs = 8000) => {
+    const end = Date.now() + timeoutMs;
     while (Date.now() < end) {
       if (await evaluate(expression)) return;
       await wait(50);
@@ -79,7 +79,9 @@ async function main() {
   try {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 730, deviceScaleFactor: 1, mobile: false }, sessionId);
     await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=map` }, sessionId);
-    await until("document.readyState === 'complete'", 'page');
+    // A cold source-tree load includes the complete authored art catalogue.
+    // Keep interaction deadlines short, but allow that initial load to finish.
+    await until("document.readyState === 'complete'", 'page', 60000);
     await evaluate(`(async () => {
       const { trayModel } = await import('/src/ui/models/TrayModels.js');
       const { renderTray } = await import('/src/ui/components/trayComponents.js');
@@ -229,6 +231,7 @@ async function main() {
       links:Object.fromEntries([...document.querySelectorAll('.catalog-nav a')].map((link)=>[link.textContent.trim(),link.href])),
       titleLink:document.querySelector('.title-link')?.href,
       view:document.querySelector('#grid').dataset.view,
+      ids:[...document.querySelectorAll('#grid article')].map(card=>card.dataset.component).sort(),
       columns:[...document.querySelectorAll('#grid article')].filter((card,_,cards)=>Math.abs(card.getBoundingClientRect().top-cards[0].getBoundingClientRect().top)<2).length,
       min:getComputedStyle(document.documentElement).getPropertyValue('--catalog-card-min').trim(),
     }))()`);
@@ -240,13 +243,13 @@ async function main() {
       ids:[...document.querySelectorAll('#grid article')].map(card=>card.dataset.component),
       query:new URLSearchParams(location.search).get('q'),
     }))()`);
-    check(multiTermSearch.ids.includes('folding-tray') && multiTermSearch.ids.length < 10 && multiTermSearch.query === 'folding tray', 'multi-term search finds components across their catalog metadata and writes a shareable URL');
+    check(multiTermSearch.ids.includes('folding-tray') && !multiTermSearch.ids.includes('combatant-frame') && multiTermSearch.ids.length < catalogControls.ids.length && multiTermSearch.query === 'folding tray', `multi-term search finds tray components, excludes combatants, and writes a shareable URL (${JSON.stringify(multiTermSearch)})`);
     await evaluate(`(() => { document.querySelector('#search').value=''; const select=document.querySelector('#kind'); select.value='composite'; select.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
     check(await evaluate(`[...document.querySelectorAll('#grid article')].length>0 && [...document.querySelectorAll('#grid article')].every(card=>[...card.querySelectorAll('.chip')].some(chip=>chip.textContent==='composite'))`), 'component-kind filter isolates composite models');
     await evaluate(`(() => { const select=document.querySelector('#sort'); select.value='id-desc'; select.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
     check(await evaluate(`(() => { const ids=[...document.querySelectorAll('#grid article')].map(card=>card.dataset.component); return ids.every((id,index)=>index===0||ids[index-1].localeCompare(id)>=0); })()`), 'sort control orders filtered components by descending ID');
     await evaluate(`document.querySelector('#clear-filters').click(); true`);
-    check(await evaluate(`document.querySelectorAll('#grid article').length===88 && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores every component and removes discovery filters from the URL');
+    check(await evaluate(`JSON.stringify([...document.querySelectorAll('#grid article')].map(card=>card.dataset.component).sort())===${JSON.stringify(JSON.stringify(catalogControls.ids))} && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores the complete original component set and removes discovery filters from the URL');
     await evaluate(`document.body.focus(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'/',bubbles:true,cancelable:true})); true`);
     check(await evaluate(`document.activeElement===document.querySelector('#search')`), 'slash keyboard shortcut focuses component search');
     await evaluate(`document.querySelector('#density-less').click(); true`);
@@ -304,9 +307,10 @@ async function main() {
     await until("!!document.querySelector('[data-component=\"quick-menu-panel\"]')", 'mobile catalog');
     check(await evaluate(`document.documentElement.scrollWidth<=innerWidth && document.querySelector('.tools').getBoundingClientRect().right<=innerWidth+0.5`), 'catalog controls wrap without horizontal overflow at 390px');
     await evaluate(`document.querySelector('[data-component="quick-menu-panel"]').click(); true`);
-    await wait(250);
+    // Measure the settled drawer, not a frame partway through its slide-in.
+    await until(`Math.abs(new DOMMatrix(getComputedStyle(document.querySelector('#detail-drawer')).transform).m41) < 0.1`, 'mobile drawer slide-in');
     const mobileDrawer = await evaluate(`(() => { const rect=document.querySelector('#detail-drawer').getBoundingClientRect(); return { left:rect.left, right:rect.right, width:rect.width, viewport:innerWidth }; })()`);
-    check(mobileDrawer.left >= 0 && mobileDrawer.right <= mobileDrawer.viewport + 0.5, 'component detail drawer fits the 390px phone viewport');
+    check(mobileDrawer.left >= 0 && mobileDrawer.right <= mobileDrawer.viewport + 0.5, `component detail drawer fits the 390px phone viewport (${JSON.stringify(mobileDrawer)})`);
   } finally {
     cdp.close();
     await browser.close();

@@ -7218,5 +7218,180 @@ export const uiStrings = [
     "short": "Recovery preview",
     "full": "Recovery preview",
     "tip": ""
+  },
+  {
+    "id": "armoury.positions.title",
+    "extends": "",
+    "short": "Equipped positions",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.inspect",
+    "extends": "",
+    "short": "Inspect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.inspectNamed",
+    "extends": "",
+    "short": "Inspect {name} in {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.choose",
+    "extends": "",
+    "short": "Choose item",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.replace",
+    "extends": "",
+    "short": "Replace",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.chooseFor",
+    "extends": "",
+    "short": "Choose an item for {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.unequip",
+    "extends": "",
+    "short": "Unequip",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.unequipNamed",
+    "extends": "",
+    "short": "Unequip {name} from {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.activate",
+    "extends": "",
+    "short": "Make active",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.activateNamed",
+    "extends": "",
+    "short": "Make {slot} active",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.inspect.title",
+    "extends": "",
+    "short": "Inspect · {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.for",
+    "extends": "",
+    "short": "Destination for {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.title",
+    "extends": "",
+    "short": "Choose a destination",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.hint",
+    "extends": "",
+    "short": "Select a slot and position. Equipping a reserve does not make it active.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.review",
+    "extends": "",
+    "short": "Review the destination and comparison, then use the named action.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.choose",
+    "extends": "",
+    "short": "Choose a destination to equip this item.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.back",
+    "extends": "",
+    "short": "Back to armaments",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.showAll",
+    "extends": "",
+    "short": "Show all items",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.change.equipped",
+    "extends": "",
+    "short": "{name} equipped in {slot}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.change.stored",
+    "extends": "",
+    "short": "{name} is available in inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.change.unequipped",
+    "extends": "",
+    "short": "{name} unequipped from {slot}. It is available in inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.change.combatUnavailable",
+    "extends": "",
+    "short": "Combat equipment changes are unavailable on this screen.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.unequipFrom",
+    "extends": "",
+    "short": "Unequip from {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.moveTo",
+    "extends": "",
+    "short": "Move to {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.equipTo",
+    "extends": "",
+    "short": "Equip to {slot}",
+    "full": "",
+    "tip": ""
   }
 ];

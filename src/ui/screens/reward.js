@@ -481,7 +481,7 @@ export function mountRewards(app, {
   }
 
   function levelBackButton() {
-    const back = button({ label: 'Back', className: 'subtle', attrs: { 'data-back': '' } });
+    const back = button({ label: t('common.back'), className: 'subtle', attrs: { 'data-back': '' } });
     back.addEventListener('click', () => { guided = false; resumeXp(); });
     return back;
   }
@@ -829,7 +829,7 @@ export function mountRewards(app, {
       el('span', { class: 'rp-level', text: row.kind === 'character' ? `Level ${row.level}` : t('reward.progress.level', { level: row.level }) }),
       bar,
       next,
-      ready ? button({ label: t('reward.level.button'), className: 'reward-level-up', disabled: !!refill, attrs: { 'data-track': row.id, 'aria-label': `Level up ${label}` } }) : null,
+      ready ? button({ label: t('reward.level.button'), className: 'reward-level-up', disabled: !!refill, attrs: { 'data-track': row.id, 'aria-label': `${t('reward.level.button')} ${label}` } }) : null,
       row.kind !== 'character' && row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
       // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
       row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
