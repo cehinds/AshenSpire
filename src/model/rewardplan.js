@@ -182,7 +182,7 @@ const KINDS = {
   levelChoice: {
     present: (r) => Array.isArray(r.levelChoices) && r.levelChoices.some((d) => d && Array.isArray(d.options) && d.options.length > 0),
     rows: (r) => r.levelChoices.filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
-      .map((d, i) => ({ requiredLevel: d.requiredLevel, ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, options: d.options.map((o) => ({ kind: o.kind, id: o.id })), choice: d.options.length > 1,
+      .map((d, i) => ({ ...(d.classId ? { classId: d.classId } : {}), requiredLevel: d.requiredLevel, ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, options: d.options.map((o) => ({ kind: o.kind, id: o.id })), choice: d.options.length > 1,
         ...(d.source ? { source: d.source, skillId: d.skillId, claimOrdinal: d.claimOrdinal || 0 } : {}) })),
     blocked: () => null,
   },

@@ -37,38 +37,7 @@ cards fold automatically where the authored view asks for folded state.
 
 ## Armaments List
 
-List mode is a flat procedural list: one horizontal card for every visible
-occupied, empty, or locked equipment position. Empty positions are placed after
-occupied and locked positions automatically while preserving authored order
-within each state. Position labels, codes, group order, slot count, unlock
-state, and item assignment come from data.
-
-```text
-┌──────────┬──────────────┬────────────────────────────────────┐
-│ POSITION │ ITEM SPRITE  ║ ITEM SUMMARY                       │
-│ LABEL    │              ║ Category · Name · Combat           │
-│ RH1      │  contained   ║ tags · Weight · EQUIPPED / EQUIP   │
-└──────────┴──────────────┴────────────────────────────────────┘
-                         ↑
-                  Summary Divider
-
-Expanded beneath the summary:
-[lore] [effects] [combat bonuses] [value] [weight] [tag details]
-```
-
-Stable subcomponent names:
-
-1. Position Label Pane
-2. Item Sprite Pane
-3. Summary Divider
-4. Item Summary Pane
-5. Equipment State Action
-6. Expanded Detail Pane
-
-The Position Label Pane is deliberately narrow with bounded type. The Item
-Sprite Pane is constrained to a near-square or slightly-wide rectangle and
-scales its art up without clipping. The Summary Divider is the sprite pane's
-right boundary.
+List mode uses compact occupied rows with a complete scaled equipment-card thumbnail, authored position code, item name and Equipped/Reserve badge. Inspect and Replace stay grouped; Unequip sits at the right. Inspect is read-only: desktop shows the complete inspection beside the list; mobile switches to inspection with a Back control. Thumbnail and inspection widths are authored in `layout.equipment.compactList`. Empty and locked positions retain their model-driven states and refusal text. Make active remains a separate action, including for an empty reserve.
 
 ## Armaments Grid
 
@@ -100,39 +69,13 @@ DETAILS
 Column count is authored separately for desktop and phone. Tiles preserve the
 same occupied, empty, locked, selected, drag/drop, and refusal states as List.
 
-## Inventory comparison
+## Armament inspection, comparison and action
 
-Expanded Inventory cards contain item information and their action. Comparison
-receipts do not lengthen the card body in the shipped `tooltip` presentation:
-delayed pointer hover or keyboard/gamepad focus displays the complete receipt
-in the shared tooltip above the expanded card. The data-owned `inline`
-presentation instead keeps that receipt inside the expanded card.
+Armament inventory faces disclose details on the first tap and remain read-only on hold. The nested card inspector is disabled on those faces because the disclosure owns inspection. `layout.cardClasses.armamentItem` authors `holdAction: false` and inline comparison. Other Inventory classes retain `inventoryItem` capabilities.
 
-Comparison and action are deliberately separate. The Inventory item class owns
-Equip, Move, or Unequip through the shared hold-confirm system; comparison
-reading never consumes that hold. `Magic` is the primary displayed combat
-value; `Potency` remains the modifier that adds to Magic damage.
+An item without a selected destination never chooses a hand automatically. The picker names every compatible position, its occupant, active/reserve status and lock reason. Choosing a reserve does not activate it. Named Equip/Move/Unequip buttons are the mutation controls; successful changes name the item and destination. Mouse/pen drag remains available, while touch scroll is preserved.
 
-## Unified Inventory card action
-
-- `layout.cardClasses.inventoryItem.holdAction` explicitly opts the Inventory
-  item class into the reusable card action. Missing classes default to false.
-- With hold-confirm enabled, the folded face and expanded reveal are one large
-  action control. The progress wash covers the complete visible card—including
-  the title and expanded information—and releasing early cancels without
-  changing the loadout.
-- The visible Equip/Move/Unequip wording inside a hold-enabled expanded card is
-  a label, not a second nested button. The same card remains keyboard/gamepad
-  focusable.
-- With hold-confirm off, ordinary activation continues to fold/unfold the item
-  and the explicit in-card action remains the commit control.
-- The folded card is also the drag source. Crossing the shared movement slop
-  cancels a pending hold and transfers the gesture to drag/drop.
-- During the player's combat turn, Equip, Move, and Unequip remain available.
-  They dispatch the priced `changeEquipment` combat intent instead of mutating
-  the panel's loadout directly. The engine charges the same authored action cost
-  as a prepared-set swap and immediately updates cards, resource maxima, Poise,
-  events, and the persisted combat loadout.
+Existing requirements, storage capacity, grip restrictions and combat prices remain authoritative. Combat changes dispatch the priced engine callback. Inspect and choosing a destination never mutate equipment. Magic remains the primary combat value; Potency is its modifier.
 
 ## Tray and pane resizing
 

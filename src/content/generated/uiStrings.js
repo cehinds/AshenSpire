@@ -5925,6 +5925,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.row.guidedLevelUp",
+    "extends": "",
+    "short": "Pause XP for level-up rewards",
+    "full": "Pause at each level, open its reward choices, then resume leftover XP. Back keeps the reward for later. Turn off to follow the Click to level up preference.",
+    "tip": ""
+  },
+  {
     "id": "settings.row.reducedMotion",
     "extends": "",
     "short": "Reduced motion",

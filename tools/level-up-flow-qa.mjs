@@ -1,4 +1,4 @@
-// Real Chromium pointer/touch checks of the production deck editor.
+// Real Chromium interaction checks of production progression and Character UI.
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -113,4 +113,4 @@ try {
   }
   check(errors.length===0,'no browser exceptions or failed requests: '+errors.join('; '));
   writeFileSync(resolve(output,'validation.json'),JSON.stringify({checks,errors,boundary:'Production reward and Character components with real run state and save serialization; desktop and 390px browser viewports. Not physical-device acceptance or a full combat playthrough.'},null,2));
-} finally {await send('Browser.close').catch(()=>{});ws.close();await browser.close();await new Promise(yes=>server.server.close(yes));}
+} finally {await send('Browser.close').catch(()=>{});ws.close();server.server.closeAllConnections?.();server.server.close();await browser.close();}

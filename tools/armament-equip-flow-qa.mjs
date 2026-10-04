@@ -97,6 +97,12 @@ try {
     };
     const original = await ev('JSON.stringify(qaRun.loadout)');
     await shot('armaments');
+    check(await ev(`(() => {const empty=document.querySelector('[data-slot-position="rightHand:1"]'),locked=document.querySelector('[data-slot-position="rightHand:2"]');return empty.getBoundingClientRect().height<130&&locked.getBoundingClientRect().height<80&&!empty.textContent.includes('Select or drop')&&locked.textContent.includes('Win');})()`), name + ' empty and locked positions remain compact with visible unlock requirement');
+    check(await ev(`(() => {const row=document.querySelector('[data-slot-position="rightHand:0"]');const thumb=row.querySelector('.armament-card-thumbnail');const card=thumb.querySelector('.equipment-poker-card');const a=thumb.getBoundingClientRect(),b=card.getBoundingClientRect();return row.querySelector('.armament-inspect')&&row.querySelector('.armament-position-name').textContent==='Straight Sword'&&Math.abs(a.width-b.width)<1&&Math.abs(a.height-b.height)<2;})()`), name + ' compact row uses complete scaled card thumbnail and explicit controls');
+    await click('[data-slot-position="rightHand:0"] .armament-inspect');
+    check(await ev(`document.querySelector('.armament-list-inspection .equipment-poker-card')?.dataset.item==='straightSword'`) && await ev('JSON.stringify(qaRun.loadout)')===original, name + ' Inspect opens complete selected equipment card without mutation');
+    await shot('inspect');
+    if(phone){check(await ev(`document.querySelector('.armament-inspection-back').getBoundingClientRect().height>=48`),name+' inspection Back meets touch floor');await click('.armament-inspection-back');check(await ev(`document.querySelector('[data-slot-position="rightHand:0"] .armament-inspect').getBoundingClientRect().height>=48`),name+' inspection Back returns to compact list');}
     await click('[data-slot-position="leftHand:1"] .armament-activate');
     check(await ev(`qaRun.loadout.active.leftHand === 1 && qaRun.loadout.sets.leftHand[1] === null`), name + ' an empty reserve can explicitly become active');
     await click('[data-slot-position="leftHand:0"] .armament-activate');
@@ -155,7 +161,7 @@ try {
     writeFileSync(resolve(output, 'armament-equip-flow.png'), Buffer.from(illustrationImage.data, 'base64'));
     await send('Target.closeTarget', { targetId: illustration });
   }
-  writeFileSync(resolve(output, 'validation.json'), JSON.stringify({ checks, errors, boundary: 'Production Armoury mounted with real content and a deterministic run; desktop mouse and emulated mobile touch. Not a full playthrough or physical device check.' }, null, 2));
+  writeFileSync(resolve(output, 'validation.json'), JSON.stringify({ behavioralChecks: checks, browserHealthPassed: errors.length === 0, errors, boundary: 'Production Armoury mounted with real content and a deterministic run; desktop mouse and emulated mobile touch. Not a full playthrough or physical device check.' }, null, 2));
   if (errors.length) console.error('Browser health errors:', JSON.stringify(errors));
   check(errors.length === 0, 'no browser exceptions or failed HTTP responses: ' + errors.join('; '));
   console.log(`${checks} checks passed`);

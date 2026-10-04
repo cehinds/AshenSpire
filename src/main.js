@@ -1,4 +1,4 @@
-import { mergeProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
+import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
@@ -2916,8 +2916,10 @@ function beginPendingReward(rewards, { source, after }) {
     manual: settingOn(saves.loadMeta().settings, 'manualLevelUp') || settingOn(saves.loadMeta().settings, 'guidedLevelUp'),
     characterStart: rewards.characterRewardStart ?? run.level?.level ?? 1,
   });
-  run.pendingReward = pendingRewardCheckpoint(rewards, { source, after });
-  delete run.deferredProgression;
+  const { available, deferred } = partitionProgressionRewards(rewards, run);
+  run.pendingReward = pendingRewardCheckpoint(available, { source, after });
+  if (Object.keys(deferred).length) run.deferredProgression = deferred;
+  else delete run.deferredProgression;
   persist();
   return mountPendingReward();
 }
@@ -2968,7 +2970,7 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
     onPersist: persist,
     onDone: () => {
       const after = checkpoint.after;
-      const saved = unclaimedProgressionRewards(checkpoint);
+      const saved = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(checkpoint), run);
       if (Object.keys(saved).length) run.deferredProgression = saved;
       else delete run.deferredProgression;
       delete run.pendingReward;
@@ -2995,9 +2997,11 @@ function showCharacterProgression(returnTo) {
     skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
     classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
   }, run);
-  run.pendingReward = pendingRewardCheckpoint(rewards, { source: 'character', after: 'map' });
+  const { available, deferred } = partitionProgressionRewards(rewards, run);
+  run.pendingReward = pendingRewardCheckpoint(available, { source: 'character', after: 'map' });
   run.pendingReward.expanded = true;
-  delete run.deferredProgression;
+  if (Object.keys(deferred).length) run.deferredProgression = deferred;
+  else delete run.deferredProgression;
   persist();
   return mountPendingReward(run.pendingReward, returnTo);
 }

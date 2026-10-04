@@ -1,11 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeProgressionRewards, unclaimedProgressionRewards, progressionRewardUnlocked } from '../src/model/deferredProgression.js';
+import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards, progressionRewardUnlocked, deferredOtherClassRewardCount } from '../src/model/deferredProgression.js';
 import { pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
 import { rewardPlan } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { learnClassCard } from '../src/model/classLibraryState.js';
+import { equipClassCard } from '../src/model/classLibrary.js';
+import { classTreeRows } from '../src/model/classTree.js';
 
 const registries = createRegistries(contentBundle);
 const makeRun = () => createRunState({ seed: 123, classId: 'reaver', registries });
@@ -71,4 +75,62 @@ test('banked class bonuses are issued once and combat feats need no character le
   const rows = rewardPlan(next).rows;
   assert.equal(progressionRewardUnlocked(rows[0], run), false);
   assert.equal(progressionRewardUnlocked(rows[1], run), true);
+});
+
+test('deferred class rewards survive class changes, victory, Character, and actual save reload', () => {
+  let run = makeRun();
+  const saves = createSaveManager(createMemoryStorage());
+  const nodeId = classTreeRows(registries, 'reaver')[0].nodeId;
+  const initial = mergeProgressionRewards({}, {
+    classDrafts: [{ classId: 'reaver', level: 1, nodeIds: [nodeId] }],
+    levelChoices: [
+      { options: [{ kind: 'classNode', id: nodeId }, { kind: 'feat', id: 'fieldStudy' }] },
+      { source: 'class', skillId: 'class:reaver', claimOrdinal: 1, options: [{ kind: 'feat', id: 'weaponDrill' }] },
+    ],
+    levelCards: [{ source: 'class', skillId: 'class:reaver', claimOrdinal: 1, cardIds: ['strike'] }],
+  }, run);
+  run.deferredProgression = unclaimedProgressionRewards(pendingRewardCheckpoint(initial, { source: 'normal', after: 'map' }));
+  assert.equal(run.deferredProgression.levelChoices[0].classId, 'reaver', 'mixed character offers retain the class owning their tree choices');
+  const original = structuredClone(run.deferredProgression);
+  learnClassCard(registries, run, 'starseer');
+  equipClassCard(registries, run, 'starseer');
+  assert.equal(deferredOtherClassRewardCount(run), 4);
+  for (const source of ['normal', 'character']) {
+    const { available, deferred } = partitionProgressionRewards(mergeProgressionRewards(run.deferredProgression, { cinders: 7 }, run), run);
+    run.pendingReward = pendingRewardCheckpoint(available, { source, after: 'map' });
+    run.deferredProgression = deferred;
+    assert.equal(available.classDrafts, undefined, 'a different class never enters the active reward checkpoint');
+    saves.saveRun(run);
+    run = saves.loadRun(registries);
+    assert.ok(run, 'the real load door must accept the checkpoint without quarantine');
+    assert.deepEqual(saves.listArchives(), []);
+    run.deferredProgression = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(run.pendingReward), run);
+    delete run.pendingReward;
+    assert.deepEqual(run.deferredProgression, original, 'leaving another class screen cannot spend or reroll the saved offer');
+  }
+  equipClassCard(registries, run, 'reaver');
+  const restored = partitionProgressionRewards(run.deferredProgression, run);
+  assert.deepEqual(restored.available, original);
+  assert.deepEqual(restored.deferred, {});
+  run.pendingReward = pendingRewardCheckpoint(restored.available, { source: 'character', after: 'map' });
+  delete run.deferredProgression;
+  saves.saveRun(run);
+  assert.ok(saves.loadRun(registries), 'restored offers also pass the original class tree reference validator');
+});
+
+test('empty core retains class offers while character feats remain claimable', () => {
+  const run = makeRun();
+  const offers = mergeProgressionRewards({}, {
+    classDrafts: [{ classId: 'reaver', level: 1, nodeIds: [classTreeRows(registries, 'reaver')[0].nodeId] }],
+    levelChoices: [{ options: [{ kind: 'feat', id: 'fieldStudy' }] }],
+  }, run);
+  equipClassCard(registries, run, null);
+  const { available, deferred } = partitionProgressionRewards(offers, run);
+  assert.equal(available.levelChoices.length, 1);
+  assert.equal(available.classDrafts, undefined);
+  assert.equal(deferred.classDrafts.length, 1);
+  run.deferredProgression = deferred;
+  assert.equal(deferredOtherClassRewardCount(run), 1);
+  equipClassCard(registries, run, 'reaver');
+  assert.equal(partitionProgressionRewards(deferred, run).available.classDrafts.length, 1);
 });
