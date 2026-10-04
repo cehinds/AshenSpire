@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1589",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Recover from brief Windows art-cache locks",
+    "detail": "When an art cache needs replacing, briefly locked Windows files get a bounded retry before the game tooling reports a failure. A permanently refused rename still reports an error and leaves the existing files intact.",
+    "build": "0.7.1.908",
+    "pullRequest": 1589,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1589"
+  },
+  {
+    "id": "pr-1587",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Choose defaults or keep local settings",
+    "detail": "After an update, a device with changed preferences asks whether to keep its local settings or use the current defaults. Settings also has a visible Reset to defaults button, with confirmation and Undo. Saves and progress stay intact. If saving fails, previous settings remain in use and the choice shows a retry.",
+    "build": "0.7.1.906",
+    "pullRequest": 1587,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1587"
+  },
+  {
     "id": "pr-1585",
     "date": "2026-10-04",
     "group": "2026-10-04",

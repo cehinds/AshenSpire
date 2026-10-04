@@ -34,6 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
+- **Recover from brief Windows art-cache locks** ([#1589](https://github.com/cehinds/AshenSpire/pull/1589), `0.7.1.908`). When an art cache needs replacing, briefly locked Windows files get a bounded retry before the game tooling reports a failure. A permanently refused rename still reports an error and leaves the existing files intact.
+
+- **Choose defaults or keep local settings** ([#1587](https://github.com/cehinds/AshenSpire/pull/1587), `0.7.1.906`). After an update, a device with changed preferences asks whether to keep its local settings or use the current defaults. Settings also has a visible Reset to defaults button, with confirmation and Undo. Saves and progress stay intact. If saving fails, previous settings remain in use and the choice shows a retry.
+
 - **Reset every setting from one button** ([#1585](https://github.com/cehinds/AshenSpire/pull/1585), `0.7.1.904`). Settings → Display → Interface has a Reset all button. It asks first, then returns every setting to its default, with Undo for a few seconds. Reset all in the options menu now asks first too. Saves and progress are untouched.
 
 - **Painted signature starter cards for three more classes** ([#1582](https://github.com/cehinds/AshenSpire/pull/1582), `0.7.1.900`). Starstone Pebble, Urgent Heal, and Ambush now carry original paintings of the Observatory's starstone, the Furnace Chapel healing rite, and the frozen docks. The approved second Starstone pass and compact mobile artwork ship together in art release v11.

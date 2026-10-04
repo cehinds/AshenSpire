@@ -57,6 +57,15 @@ The workflows' own `on:` blocks and job `if:` conditions are the source of this
 table; a skipped job shows on the PR as *skipped*, not as missing.
 
 
+Settings: the header exposes **Reset to defaults** in both the title modal and
+in-run Settings. It confirms and uses the existing reset/Undo path, including
+promoted defaults and retired tuning keys. A device with non-default preferences
+gets **Keep local settings / Use defaults** once per build, after the startup
+gate and optional profile sync. Escape keeps local values. The acknowledgement
+is `meta.settingsChoiceBuild`; settings navigation and onboarding markers do not
+trigger the choice. Keeping local values releases promotion ownership of stored
+values while missing values receive defaults. Fresh profiles start on defaults.
+
 Settings: `src/ui/screens/settings.js` draws only the open Advanced topic and
 searches every section; `src/ui/buildChannel.js` decides whether the debug-only
 sections (tuning, layout, import/export, Defaults & sync) are shown — the

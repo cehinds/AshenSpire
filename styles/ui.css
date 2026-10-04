@@ -1017,6 +1017,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .settings-modal .modal-head h2 { font-size: 1.7rem; }
 .set-header-tools { display: flex; align-items: center; justify-content: flex-end; gap: .3rem; min-width: 0; }
 .set-header-tools.search-open { flex: 1; }
+:is(.settings-modal, [data-settings-host]) .set-reset-defaults { min-height: var(--tap-floor); white-space: normal; }
 .set-header-tools input[type='search'] { width: 100%; min-width: 0; min-height: var(--tap-floor); background: #201c15; color: #eee5d4; border: 1px solid var(--line); border-radius: var(--r-2); padding: .4rem .7rem; }
 .set-header-tools input[hidden] { display: none; }
 /* One quiet toolbar: equal targets, centered icons, and a single close face. */
@@ -1062,6 +1063,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-general-pickers { display: flex; gap: .5rem; }
 .set-general-pickers select { flex: 1 1 0; min-width: 0; }
 @media (max-width: 600px) {
+  .settings-modal .modal-head { flex-wrap: wrap; }
+  .settings-modal .modal-head-actions { flex-basis: 100%; }
+  [data-settings-host] > .set-inline-bar { flex-wrap: wrap; }
   .settings-modal .modal-head:has(.set-header-tools.search-open) .modal-head-id { display: none; }
   .settings-modal .modal-head:has(.set-header-tools.search-open) .set-header-tools { width: 100%; }
 }
