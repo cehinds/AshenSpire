@@ -34,6 +34,8 @@ function migratedIds() {
   const ids = new Set(JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/uistrings-migrated-1489.json'), 'utf8')).ids);
   // Keep the Reading Desk's new rows protected after its branch merges too.
   for (const id of JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/uistrings-migrated-1535.json'), 'utf8')).ids) ids.add(id);
+  // Compact Armoury rows must also stay protected after origin/dev includes #1578.
+  for (const id of JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/uistrings-migrated-1578.json'), 'utf8')).ids) ids.add(id);
   // Rows a branch adds after #1489 are swept too while they are under review.
   // A checkout without origin/dev (a tarball, a shallow clone) keeps the frozen list.
   try {
