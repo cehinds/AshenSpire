@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1575",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "See four merchant offers at once",
+    "detail": "Compact artwork, details and Buy controls fit above a fixed bottom category dock. Inspect opens the complete item or book, and the selected footer action follows mouse and keyboard selection. Warm brown panels and gold highlights match the approved shop preview.",
+    "build": "0.7.1.894",
+    "pullRequest": 1575,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1575"
+  },
+  {
     "id": "pr-1573",
     "date": "2026-10-03",
     "group": "2026-10-03",

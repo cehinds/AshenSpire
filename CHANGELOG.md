@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **See four merchant offers at once** ([#1575](https://github.com/cehinds/AshenSpire/pull/1575), `0.7.1.894`). Compact artwork, details and Buy controls fit above a fixed bottom category dock. Inspect opens the complete item or book, and the selected footer action follows mouse and keyboard selection. Warm brown panels and gold highlights match the approved shop preview.
+
 - **A clearer resource orb and more skyline** ([#1573](https://github.com/cehinds/AshenSpire/pull/1573), `0.7.1.892`). The stamina number sits centered above its SP label with clear separation, and the battlefield ground recedes to show more of the skyline while keeping combatants grounded.
 
 - **Grounded combat with a compact footer** ([#1570](https://github.com/cehinds/AshenSpire/pull/1570), `0.7.1.890`). Combatants stand on the painted floor, and the smaller bottom controls leave the illustrated hand lower on screen. The artwork stays proportional and adjacent atlas scenes cannot bleed into the backdrop.
