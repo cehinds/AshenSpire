@@ -7204,5 +7204,12 @@ export const uiStrings = [
     "short": "Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "rest.recovery.heading",
+    "extends": "",
+    "short": "Recovery preview",
+    "full": "Recovery preview",
+    "tip": ""
   }
 ];

@@ -1,3 +1,4 @@
+import { illustratedBackgroundHtml } from './illustratedBackground.js';
 import { mapFogDefs } from './mapFog.js';
 import { dungeonScene } from '../../model/legacyDungeon.js';
 import { assetUrl } from '../assetmap.js';
@@ -6,7 +7,7 @@ import { ENVIRONMENTS, ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from 
 
 export function combatBackdropHtml(run, previewSceneId = null) {
   const legacy = !previewSceneId && dungeonScene(run);
-  if (legacy) return `<div class="backdrop environment-backdrop" data-region="${legacy.region}" data-scene="${legacy.id}" aria-hidden="true"><svg viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" focusable="false"><image data-layer="floor" href="${assetUrl(legacy.floor)}" width="1536" height="1024"/><image data-layer="background" href="${assetUrl(legacy.background)}" width="1536" height="1024"/></svg></div>`;
+  if (legacy) return illustratedBackgroundHtml({region:legacy.region,scene:legacy.id,viewBox:[0,0,1536,1024],layers:[{id:'floor',href:legacy.floor,width:1536,height:1024},{id:'background',href:legacy.background,width:1536,height:1024}]});
   let { region, scene } = combatEnvironment(run);
   if (previewSceneId) {
     region = ENVIRONMENTS.find(r => r.scenes.some(s => s.id === previewSceneId));
@@ -17,11 +18,7 @@ export function combatBackdropHtml(run, previewSceneId = null) {
   const [x, y, w, h] = scene.box;
   // Keep the painting intact. Slice crops the viewport without stretching
   // architecture or terrain independently as the battlefield changes shape.
-  return `<div class="backdrop environment-backdrop" data-region="${region.id}" data-scene="${scene.id}" aria-hidden="true">
-    <svg viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="xMidYMid slice" focusable="false">
-      <image href="${assetUrl(region.atlas)}" width="${width}" height="${height}"/>
-    </svg>
-  </div>`;
+  return illustratedBackgroundHtml({region:region.id,scene:scene.id,viewBox:[x,y,w,h],layers:[{id:'painting',href:region.atlas,width,height}]});
 }
 let nextMapId = 0;
 

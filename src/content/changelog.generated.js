@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1565",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Illustrated cards and scenery join the main game",
+    "detail": "Cards use editable layered artwork, live centered text and stamina/mana banners, with individual card objects included in builds. Painted scenery and an enlarged transparent HP/relic HUD retain the current footer, Shield/Ward rules, merchant rows and turn confirmation controls.",
+    "build": "0.7.1.883",
+    "pullRequest": 1565,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1565"
+  },
+  {
     "id": "pr-1563",
     "date": "2026-10-03",
     "group": "2026-10-03",

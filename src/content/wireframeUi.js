@@ -1,9 +1,11 @@
+// Illustrated card ratio comes from card-layout.json; other layout values remain in uiConfig.
 // Compatibility shim: the legacy wireframeUi shape, composed from uiConfig.
 // Every number is authored in content/config/ui/ (see content/config/README.md)
 // and compiled by tools/config-build.mjs into src/config/generated/ui.js. Edit
 // the JSON, never this file: it only maps config paths onto the old keys, and
 // tests/ui-config.test.mjs holds it deep-equal (key order included) to the
 // pre-migration snapshot and refuses any numeric literal here except PERCENT.
+import { CARD_COMPONENTS } from './cardComponents.generated.js';
 import { uiConfig } from '../config/generated/ui.js';
 
 const PERCENT = 100;
@@ -27,7 +29,7 @@ const size = w4a.sizing;
 const place = w4a.positioning;
 
 export const wireframeUi = freeze({
-  card: { ratio: card.sizing.ratio, bands: card.sizing.bands },
+  card: { ratio: CARD_COMPONENTS.template.width / CARD_COMPONENTS.template.height, bands: card.sizing.bands },
   selection: { glowRem: selection.sizing.glowRem, revealDelayMs: selection.motion.revealDelayMs },
   inspect: { sizeRem: inspect.sizing.sizeRem, labelPx: inspect.sizing.labelPx, gapPx: inspect.positioning.gapPx },
   map: {

@@ -50,6 +50,8 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // regeneration would relabel every other drift as intended at the same time.
 //
 // Re-pointed so far:
+//   · Illustrated card template: minimumHandHeight([]) 145.6 -> 153.6.
+//     The approved 2:3 face makes the 80px minimum width 120px tall, plus 33.6 inset.
 //   · CombatLayout.minimumHandHeight([]) 161.6 -> 145.6, for #1146, which gave
 //     the playing card one authored shape and moved its ratio from 5/8 to 5/7.
 //     The hand's floor is minWidthRem * rem / card.ratio + the inset, lift and
