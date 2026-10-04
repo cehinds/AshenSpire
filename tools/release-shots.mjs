@@ -214,7 +214,7 @@ const SCREENS = [
   // state on `graveOfTheNameless` — three choices, the last one "Leave" — so the
   // photograph shows the adjacency the fix is about.
   { name: 'event', query: '?shot=event', landmark: '.ev-choice', state: 'event' },
-  { name: 'shop', query: '?shot=shop', landmark: '#shop-cards', state: 'shop' },
+  { name: 'shop', query: '?shot=shop', landmark: '#shop-relics', state: 'shop' },
   // The three profile-beat states (the census's handledBy rows, given doors so
   // tools/holdconfirm.mjs can watch them — same reasoning as the Shrine and the
   // event above: each state exists BECAUSE a fix or a watch needed the screen,

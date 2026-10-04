@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="styles/ui.css">
   <link rel="stylesheet" href="styles/kit.css">
   <link rel="stylesheet" href="styles/responsive-type.css">
+  <link rel="stylesheet" href="styles/player-polish-icons.css">
+  <link rel="stylesheet" href="styles/player-polish.css">
+  <link rel="stylesheet" href="styles/illustrated-cards.css">
 </head>
 <body>
 <main id="app"></main>
@@ -21,6 +24,11 @@ import { createRunState } from './src/model/state.js';
 import { createRng } from './src/engine/rng.js';
 import { buildMarketStock } from './src/engine/shopKinds.js';
 import { mountShop } from './src/ui/screens/shop.js';
+
+// Component fixture uses the current layout mode at unscaled CSS pixels.
+const resize = () => { document.documentElement.dataset.layout = innerWidth <= contentBundle.balance.ui.uiScale.narrowMax ? 'narrow' : 'wide'; };
+resize();
+addEventListener('resize', resize);
 
 // Disposable production renderer/transactions. Never reads or writes saves.
 const params = new URLSearchParams(location.search);
@@ -42,7 +50,7 @@ mountShop(document.getElementById('app'), {
   onChanged() { changes += 1; },
   onLeave() { location.href = 'docs/preview/merchant/preview.html'; },
 });
-document.getElementById(`shop-cat-${params.get('category') || 'cards'}`)?.click();
+document.getElementById(`shop-cat-${params.get('category') || 'relics'}`)?.click();
 window.merchantPreview = { run, registries, changes: () => changes };
 </script>
 </body>
