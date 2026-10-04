@@ -726,7 +726,7 @@ test('a refused Undo is rolled back; a restored profile is seeded like boot; a d
   assert.match(screen, /const now = \{ \[SEED_KEY\]: settings\[SEED_KEY\] \};[\s\S]*?if \(onChange\(restore\)\?\.ok === false\) \{[\s\S]*?onChange\(now\);/, 'Undo puts the state it replaced back when the save is refused');
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /onRestored: \(\) => \{[\s\S]*?seedPromotedDefaults\(meta, settings\);\s*applyRestoredSettings\(settings\);/, 'a restore runs the promotion step');
-  assert.match(main, /^seedPromotedDefaults\(activeMeta, activeSettings\);/m, 'boot runs the same step');
+  assert.match(main, /if \(!settingsChoicePending\) \{\s*seedPromotedDefaults\(activeMeta, activeSettings\);/, 'boot uses the same seeding step after allowing a device with preferences to choose first');
   const { validProfileName, normalizeProfileName } = await import('../src/model/settingsSync.js');
   for (const name of ['desk.', '.', '.hidden', 'a.']) assert.equal(validProfileName(name), false, name);
   assert.equal(normalizeProfileName('desk.'), null);
