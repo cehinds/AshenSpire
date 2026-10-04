@@ -8,9 +8,49 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Reset all sits last under Interface",
     "detail": "The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.",
-    "build": "0.7.1.908",
+    "build": "0.7.1.914",
     "pullRequest": 1592,
     "url": "https://github.com/cehinds/AshenSpire/pull/1592"
+  },
+  {
+    "id": "pr-1590",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Victory stops flashing; level rewards wait for you",
+    "detail": "The victory window no longer fades out and back in as XP fills and levels are claimed: it opens once, and only the bars move. Claiming a level, by hand or with guided level-up, no longer forces its reward choice open. A line under the bars records each level, and the reward that level unlocked appears in the list raised and blue, rising into place once, to open whenever you choose.",
+    "build": "0.7.1.912",
+    "pullRequest": 1590,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1590"
+  },
+  {
+    "id": "pr-1588",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Reusable artwork for every player screen",
+    "detail": "A portable art collection covers 24 player views in desktop and mobile layouts: new scene perspectives, enemy bodies and portraits, transparent props, and scalable boxes, menus and controls. PNG masters, WebP exports, an offline catalog and layer recipes are included for game integration. The live game presentation is unchanged.",
+    "build": "0.7.1.909",
+    "pullRequest": 1588,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1588"
+  },
+  {
+    "id": "pr-1589",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Recover from brief Windows art-cache locks",
+    "detail": "When an art cache needs replacing, briefly locked Windows files get a bounded retry before the game tooling reports a failure. A permanently refused rename still reports an error and leaves the existing files intact.",
+    "build": "0.7.1.908",
+    "pullRequest": 1589,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1589"
+  },
+  {
+    "id": "pr-1587",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Choose defaults or keep local settings",
+    "detail": "After an update, a device with changed preferences asks whether to keep its local settings or use the current defaults. Settings also has a visible Reset to defaults button, with confirmation and Undo. Saves and progress stay intact. If saving fails, previous settings remain in use and the choice shows a retry.",
+    "build": "0.7.1.906",
+    "pullRequest": 1587,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1587"
   },
   {
     "id": "pr-1585",

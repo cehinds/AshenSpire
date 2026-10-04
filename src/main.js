@@ -110,10 +110,12 @@ import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
-import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
+import { seedSettingsDefaults, seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoice } from './model/settingsDefaults.js';
+import { BUILD_VERSION } from './buildversion.js';
+import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
-import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, resetKeys, allResettableKeys, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -362,7 +364,13 @@ function seedPromotedDefaults(meta, settings) {
   meta.settings = settings;
   saves.saveMeta(meta);
 }
-seedPromotedDefaults(activeMeta, activeSettings);
+let settingsChoicePending = !shotState && saves.profileStatus().ok
+  && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
+// A device with preferences gets its choice before a new promotion moves them.
+if (!settingsChoicePending) {
+  seedPromotedDefaults(activeMeta, activeSettings);
+}
+let settingsChoiceChecked = !!shotState;
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
@@ -1649,6 +1657,46 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     artNotice: drawArtNotice,
   });
   if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
+  // Fullscreen-first stays first. Offer the choice only after the startup gate
+  // and profile sync have settled, before the player starts or resumes a run.
+  if (!settingsChoiceChecked && saves.profileStatus().ok) {
+    settingsChoiceChecked = true;
+    // Sync may have introduced or removed preferences while the gate was up.
+    const meta = saves.loadMeta();
+    settingsChoicePending = needsSettingsChoice(meta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
+    if (!settingsChoicePending && meta.settingsChoiceBuild !== BUILD_VERSION) {
+      try { saves.saveMeta({ ...meta, settingsChoiceBuild: BUILD_VERSION }); } catch { /* retry acknowledgement on the next boot */ }
+    }
+  }
+  if (settingsChoicePending) {
+    const choose = (apply) => {
+      const result = commitSettingsChoice(saves.loadMeta(), BUILD_VERSION, {
+        apply,
+        load: () => saves.loadMeta(),
+        save: meta => saves.saveMeta(meta),
+        restore: meta => { activeMeta = meta; applyRestoredSettings(meta.settings); },
+      });
+      if (result.ok) { settingsChoicePending = false; activeMeta = saves.loadMeta(); }
+      rebuildRegistries(activeSettings);
+      return result;
+    };
+    openSettingsDefaultsChoice({
+      returnFocusElement: document.activeElement,
+      onLocal: () => choose(() => {
+        const changes = keepLocalSettings(activeSettings, promotionFor(SETTINGS_DEFAULTS, promotionDebug()));
+        return persistSettingsChange(changes);
+      }),
+      onDefaults: () => choose(() => {
+        let saved = true;
+        resetKeys(activeSettings, changes => {
+          const result = persistSettingsChange(changes);
+          saved &&= result?.ok !== false;
+          return result;
+        }, allResettableKeys());
+        return { ok: saved };
+      }),
+    });
+  }
   // Forsaken Together needs the launcher's server behind the page.
   lanInfo().then((info) => {
     const btn = app.querySelector('#lan-play');

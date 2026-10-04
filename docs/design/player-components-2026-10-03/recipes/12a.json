@@ -1,0 +1,136 @@
+{
+  "id": "12a",
+  "name": "Settings, controls and profile",
+  "sourceModules": [
+    "src/ui/screens/settings.js",
+    "src/ui/screens/controls.js",
+    "src/ui/screens/profileArchive.js"
+  ],
+  "sharedAssets": [
+    "assets/reused/ui/components/panel-frame.svg",
+    "assets/reused/ui/components/panel-backed.svg",
+    "assets/reused/ui/components/button-neutral.svg",
+    "assets/reused/ui/components/button-primary-ready.svg",
+    "assets/reused/ui/components/button-disabled.svg",
+    "assets/reused/ui/components/focus-outline.svg",
+    "assets/reused/ui/components/divider-plain.svg",
+    "assets/reused/materials/soot-leather-material.png",
+    "assets/reused/ui/components/toggle-on.svg",
+    "assets/reused/ui/components/toggle-off.svg",
+    "assets/reused/ui/components/slider-track.svg",
+    "assets/reused/ui/components/slider-thumb.svg",
+    "assets/reused/ui/components/tab-marker.svg"
+  ],
+  "mobileComposition": "Readable searchable categories; one section open and touch targets independent of icon size.",
+  "family": "settings",
+  "reference": "references/12-preferences-and-run-setup.png",
+  "referenceFeature": "upper",
+  "visualParts": [
+    "Settings menu/categories",
+    "search field",
+    "descriptive setting rows",
+    "segmented selections",
+    "toggle/slider parts",
+    "profile receipt",
+    "keycaps/rebind counts",
+    "reset dialog"
+  ],
+  "liveFields": [
+    "actual preferences",
+    "text size",
+    "quality",
+    "reduced motion",
+    "bindings",
+    "archive/profile",
+    "reset confirmation"
+  ],
+  "artwork": {
+    "desktop": [
+      "assets/reused/scenes/spire-vista-desktop.png"
+    ],
+    "mobile": [
+      "assets/reused/scenes/spire-vista-mobile.png"
+    ]
+  },
+  "newPerspectiveOptions": {
+    "desktop": [],
+    "mobile": []
+  },
+  "components": [
+    "assets/components/settings-section.svg",
+    "assets/components/navigation-sidebar.svg",
+    "assets/components/navigation-row-selected.svg",
+    "assets/components/search-field.svg",
+    "assets/components/setting-row.svg",
+    "assets/components/filter-tab.svg",
+    "assets/components/keycap.svg",
+    "assets/components/confirmation-dialog.svg",
+    "assets/components/engraved-folio-frame.svg",
+    "assets/components/engraved-folio-backed.svg",
+    "assets/components/action-neutral.svg",
+    "assets/components/action-ready.svg",
+    "assets/components/action-selected.svg",
+    "assets/components/action-danger.svg",
+    "assets/components/action-disabled.svg",
+    "assets/components/focus-ring.svg",
+    "assets/components/mobile-action-tray.svg"
+  ],
+  "icons": [
+    "assets/reused/ui/icons/settings.svg",
+    "assets/reused/ui/icons/display.svg",
+    "assets/reused/ui/icons/audio.svg",
+    "assets/reused/ui/icons/controls.svg",
+    "assets/reused/ui/icons/accessibility.svg",
+    "assets/reused/ui/icons/motion.svg",
+    "assets/reused/ui/icons/contrast.svg",
+    "assets/reused/ui/icons/touch.svg",
+    "assets/reused/ui/icons/search.svg",
+    "assets/reused/ui/icons/reset.svg",
+    "assets/reused/ui/icons/profile.svg"
+  ],
+  "decorations": [],
+  "layout": {
+    "desktop": {
+      "referenceSize": [
+        1440,
+        900
+      ],
+      "regions": [
+        "context/rail",
+        "main stage or collection",
+        "selected inspector/comparison",
+        "bottom actions"
+      ]
+    },
+    "mobile": {
+      "referenceSize": [
+        390,
+        844
+      ],
+      "regions": [
+        "compact HUD",
+        "upper artwork or selected stage",
+        "one open detail tray",
+        "bottom safe-area actions"
+      ],
+      "note": "Readable searchable categories; one section open and touch targets independent of icon size."
+    },
+    "shortLandscape": "Fold context and inspector; allow stage pan and detail scrolling; keep actions reachable."
+  },
+  "layerOrder": [
+    "background",
+    "canonical objects or optional illustrations",
+    "optional decor",
+    "readability veil",
+    "panel material",
+    "frame or socket",
+    "live DOM labels and values",
+    "selection/focus/availability overlay"
+  ],
+  "constraints": [
+    "Use canonical game data for all live fields; the screenshot is a visual reference.",
+    "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
+    "Separate focus, persistent selection, disabled state and actual legal action."
+  ],
+  "unresolvedIconAliases": []
+}

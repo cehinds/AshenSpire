@@ -1,0 +1,10 @@
+{
+  "id": "spoils-mobile",
+  "group": "scenes",
+  "reference": "references/09-rest-and-rewards.png",
+  "prompt": "High quality separate production background for Ashen Spire, faithfully matching the referenced screenshot's painterly quiet grandeur: soot black, weathered umber, tangible ruined gothic stone, tarnished bronze, cold grey fog, restrained warm ember accents. Reconstruct as fresh full-resolution artwork, never screenshot crop. Absolutely NO text, lettering, logos, UI, borders, panels, cards, markers or glyphs. From the LOWER rewards scene only, separate portrait 9:16 composition: a devastated battlefield at warm grey sunset, distant shattered spires and ruined aqueducts high in the frame, tiny circling ravens, torn unmarked old standard and abandoned helmet at lower left edge. Middle and lower region remain shadowed and quietly detailed to support independently placed reward card and tray. No body, gore or foreground people.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-86d17a5d-e1fd-4907-9c68-ac381105436f.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": false,
+  "master": "masters/scenes/spoils-mobile.png"
+}

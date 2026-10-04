@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" role="img" aria-labelledby="motif-oath-title"><title id="motif-oath-title">Reference-derived visual motif motif oath; canonical binding remains explicit</title><defs>
+      <linearGradient id="motif-oath-metal" x1="0" y1="0" x2="0.6" y2="1"><stop stop-color="#514535"/><stop offset=".18" stop-color="#dcc18a"/><stop offset=".38" stop-color="#a88c53"/><stop offset=".64" stop-color="#554837"/><stop offset=".82" stop-color="#bd9c59"/><stop offset="1" stop-color="#534536"/></linearGradient>
+      <linearGradient id="motif-oath-soot" x2="0" y2="1"><stop stop-color="#242019"/><stop offset=".45" stop-color="#15130f"/><stop offset="1" stop-color="#0c0c0a"/></linearGradient>
+      <radialGradient id="motif-oath-light"><stop stop-color="#d6b667" stop-opacity=".26"/><stop offset="1" stop-color="#d6b667" stop-opacity="0"/></radialGradient>
+    </defs><g stroke="#d6bb7c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2v28M6 6v14l5-4M26 6v14l-5-4M12 12l4-5 4 5M9 26l7-5 7 5M4 10l2-5 3 5M23 10l3-5 2 5"/></g></svg>
