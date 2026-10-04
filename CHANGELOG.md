@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
-- **Test builds carry the full art** ([#1603](https://github.com/cehinds/AshenSpire/pull/1603), `0.7.1.920`). Test builds now link the high-resolution art pack, as release and main do, defaulting to high art with the light art as fallback. Dev builds stay light-only.
+- **Sharper art on phones; test builds carry the full art** ([#1603](https://github.com/cehinds/AshenSpire/pull/1603), `0.7.1.921`). The phone-sized art is redrawn from the full art at up to 480 px for fighters, poses and effects (animation frames were 160 px) and up to 720 px for backdrops, maps and cards (art release `hd-assets-v12`); the light single file grows to about 75 MB, under the new 100 MB cap. Test builds now link the high-resolution art pack, as release and main do; dev stays light-only.
 
 - **Bigger fighters on phones, more card text** ([#1600](https://github.com/cehinds/AshenSpire/pull/1600), `0.7.1.919`). On a narrow screen combatants now grow to half the battlefield's height wherever there is headroom above them, keeping their relative sizes and staying on their own side of the field. Card body text in the hand is 2pt smaller so more of each effect shows.
 
