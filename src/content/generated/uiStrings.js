@@ -5983,8 +5983,8 @@ export const uiStrings = [
   {
     "id": "settings.row.guidedLevelUp",
     "extends": "",
-    "short": "Pause XP for level-up rewards",
-    "full": "Pause at each level, open its reward choices, then resume leftover XP. Back keeps the reward for later. Turn off to follow the Click to level up preference.",
+    "short": "Claim levels automatically",
+    "full": "Claim each banked level in turn, refilling leftover XP. Each level's reward waits in the menu, highlighted, until you open it. Turn off to follow the Click to level up preference.",
     "tip": ""
   },
   {
