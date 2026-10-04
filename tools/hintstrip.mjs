@@ -384,7 +384,7 @@ if (process.argv.includes('--selftest')) {
         name: 'the DRAW artwork remains visible but both authored text layers lose their fill and stroke',
         edits: [{
           file: 'styles/combat.css',
-          append: "\n.combat-action-row > .pile.draw .footer-art-face text { fill: transparent !important; stroke: transparent !important; }\n",
+          append: "\n.combat-action-row > .pile.draw :is(.footer-art-face text,.footer-compact-label) { fill: transparent !important; stroke: transparent !important; color:transparent !important; -webkit-text-fill-color:transparent !important; text-shadow:none !important; -webkit-text-stroke-color:transparent !important; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -450,15 +450,15 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'the SVG Stamina number and label become transparent while their boxes remain',
-        edits: [{ file: 'styles/combat.css', append: '\n.stamina-orb svg text { fill: transparent !important; stroke: transparent !important; }\n' }],
+        edits: [{ file: 'styles/combat.css', append: '\n.stamina-orb svg text { fill: transparent !important; stroke: transparent !important; text-shadow:none !important; -webkit-text-fill-color:transparent !important; -webkit-text-stroke-color:transparent !important; }\n' }],
         expectRed: /BAD\s+H3 .*text.*paint/,
       },
       {
         name: 'a later opaque SVG rectangle covers the Stamina number and label',
         edits: [{
-          file: 'src/ui/components/staminaOrb.js',
-          find: "orb.querySelector('svg').innerHTML = html;",
-          replace: "orb.querySelector('svg').innerHTML = html + '<rect x=\"300\" y=\"280\" width=\"300\" height=\"350\" fill=\"black\"/>';",
+          file: 'src/ui/components/footerArt.js',
+          find: "node.dataset.measured = 'true';",
+          replace: "node.dataset.measured = 'true'; if (group === plan.groups.sp) node.insertAdjacentHTML('afterend', '<rect x=\"' + item.x + '\" y=\"' + item.y + '\" width=\"' + item.w + '\" height=\"' + item.h + '\" fill=\"black\"/>');",
         }],
         expectRed: /BAD\s+H3 .*text.*paint/,
       },
