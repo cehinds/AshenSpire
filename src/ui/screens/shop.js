@@ -1,6 +1,9 @@
 import { bindCardInspection } from '../components/cardInspection.js';
 import { wireCardShelf } from '../components/cardShelf.js';
 import { applySkillBookOfferTokens, renderSkillBookOffer } from '../components/skillBookOffer.js';
+import { arrangeMerchantOffer } from '../components/merchantOffer.js';
+import { renderBookArt } from '../components/bookArt.js';
+import { equipmentCardArt } from '../assets.js';
 // The wandering merchant. Stock is rolled once, saved with the run, and read
 // through the W1d workspace: a category rail beside (or above) one W1v pane of
 // offers, the selected offer's detail, and a footer whose right-hand action is
@@ -127,7 +130,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   let activeCategory = 'cards';
   const picks = {};
   let primaryDisarm = null;
-  let bookDisarms = [];
+  let offerDisarms = [];
   let layout = null;
   let shelves = null;
 
@@ -139,8 +142,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
   function render() {
     releaseFooter();
-    for (const disarm of bookDisarms) disarm?.();
-    bookDisarms = [];
+    for (const disarm of offerDisarms) disarm?.();
+    offerDisarms = [];
     if (layout) layout.release();
     if (shelves) shelves.release();
     // WHAT THIS VISIT LAID OUT (SPEC §14.2): a shelf whose offering did not
@@ -287,7 +290,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         el.classList.add('unaffordable');
       }
       addOffer('cards', {
-        ref: cardRefs[i], tile: wrap, name: def.name, desc: def.rarity || '',
+        ref: cardRefs[i], tile: wrap, name: def.name, desc: el.querySelector('.ctext')?.textContent || def.rarity || '',
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buy } },
       });
@@ -324,7 +327,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       card.addEventListener('click', () => openWeaponArt(item, card));
       card.addEventListener('cardinspectionselect', () => select('weaponArts', artRefs[i]));
       addOffer('weaponArts', {
-        ref: artRefs[i], tile: wrap, name: quote.def ? quote.def.name : item.id, desc: t('shop.weaponArt.eyebrow'),
+        ref: artRefs[i], tile: wrap, name: quote.def ? quote.def.name : item.id, desc: card.querySelector('.ctext')?.textContent || t('shop.weaponArt.eyebrow'),
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: !!quote.ok, run: () => openWeaponArt(item, card) },
       });
@@ -387,6 +390,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       const tile = bookOffer ? bookOffer.tile : shopItem(title, desc, cost, avail);
       addOffer(key, {
         ref, tile, name: title, desc, price: t('shop.price', { cost }), avail,
+        visual: plan.piece ? el('img', { src: equipmentCardArt(plan.piece), alt: '' }) : null,
         action: { kind: 'buy', label: t('shop.action.buy', { cost }), enabled: !!plan.ok, beat: { id: 'shopBuy', opts: buyItem(kind, title, cost, () => {
           try { commit(); } catch (error) { tile.querySelector('.cp-body').append(statusText(error.message, { class: 'shop-offer-avail' })); return; }
           sfx.play('buy');
@@ -397,7 +401,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       });
       if (bookOffer && plan.ok) {
         const action = offers[key][offers[key].length - 1].action;
-        bookDisarms.push(arm(bookOffer.buy, action.beat.id, { ...action.beat.opts, showHint: false }));
+        offerDisarms.push(arm(bookOffer.buy, action.beat.id, { ...action.beat.opts, showHint: false }));
       }
       row.appendChild(tile);
     };
@@ -695,6 +699,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         if (avail.available) sellAvailable++;
         addOffer('sell', {
           ref: consumableRefs[i], tile, name: plan.def.name, desc,
+          visual: plan.def.kind === 'skillBook' ? renderBookArt(plan.def) : null,
           price: t('shop.price.back', { price: plan.price }), avail,
           action: { kind: 'sell', label: t('shop.action.sell', { price: plan.price }), enabled: !!plan.ok, beat: { id: 'shopSell', opts: {
             ...sellReview({ kind: 'consumable', name: plan.def.name, price: plan.price }),
@@ -711,7 +716,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       });
       const goodRefs = offerRefs('sell', goods.map((row) => `${row.kind}-${row.def.id}`));
       goods.forEach((row, i) => {
-        const tile = shopItem(row.title, row.desc, row.price, offerAvailability(), { titleHtml: !!row.titleHtml, costWord: 'cinders back' });
+        const tile = shopItem(row.title, row.desc, row.price, offerAvailability(), { titleHtml: !!row.titleHtml, costWord: 'cinders back', card: renderCollectibleCard(registries, row.def, row.kind === 'flask' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card });
         sellAvailable++;
         addOffer('sell', {
           ref: goodRefs[i], tile, name: row.def.name, desc: row.desc,
@@ -734,6 +739,22 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         });
         sellRow.appendChild(tile);
       });
+    }
+
+    // All categories share the book shelf's image/details/action composition.
+    // Keep the selected-offer footer as the established keyboard/controller
+    // action, while each row also offers a direct, explicitly labelled action.
+    const categoryGlyphs = { armour: '◈', smithStones: '⚒', sigils: '✦', innRest: '☾', reviveTokens: '✧', questEvent: '◇', companions: '♟', services: '⚒' };
+    for (const [key, list] of Object.entries(offers)) {
+      if (key === 'skillBooks') continue;
+      for (const offer of list) {
+        offer.rowAction = arrangeMerchantOffer(offer, { fallback: categoryGlyphs[key] || '◇' });
+        const action = offer.action;
+        if (offer.rowAction && action?.enabled) {
+          if (action.beat) offerDisarms.push(arm(offer.rowAction, action.beat.id, { ...action.beat.opts, showHint: false }));
+          else offer.rowAction.addEventListener('click', action.run);
+        }
+      }
     }
 
     // Selection on the relic, flask and sell tiles: a tap or Enter selects;
@@ -826,12 +847,13 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       for (const offer of list) {
         const on = offer === selected;
         offer.tile.classList.toggle('is-selected', on && activeCategory !== 'skillBooks');
-        if (offer.tile.classList.contains('class-pick')) offer.tile.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (offer.tile.classList.contains('class-pick') && !offer.rowAction) offer.tile.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (offer.rowAction) offer.rowAction.hidden = !offer.action;
       }
 
       detailBox.replaceChildren();
       const inlineBooks = activeCategory === 'skillBooks';
-      detailBox.hidden = !selected || inlineBooks;
+      detailBox.hidden = true;
       if (selected && !inlineBooks) {
         // Optional rows collapse: an offer without a description or a price
         // draws no empty line for it.

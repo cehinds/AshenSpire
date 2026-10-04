@@ -67,13 +67,12 @@ than shaving the cards. The three numbers are authored at
 `src/ui/models/CardSizeModel.js` owns the arithmetic
 (`cardShelf`, `cardShelfColumnsAt`, `cardShelfTrackPx`),
 `styles/kit.css` draws it, and `src/ui/components/cardShelf.js` measures each
-shelf so a last row of two is not drawn wider than the four above it. Reuse
-surfaces: the merchant's six shelves, the card-removal grid, and the mount
-service deck list. A tile that holds no card — the SELL shelf's relics and
-flasks — keeps the OptionCard measure instead (`.shop-text-offer`). The
-merchant's offers column is sized from the same model
-(`ShopWorkspaceModel.shopOffersWidthPx`), so the column and the cards standing
-in it cannot disagree about how wide a shelf is.
+shelf so a last row of two is not drawn wider than the four above it. The
+card-removal grid and mount service deck list retain this card-grid layout.
+Merchant buy, sell and service shelves override the track layout with
+`merchant-offer`: full-width artwork/details/action rows sharing the book
+shelf's spacing tokens. Native card faces and inspection remain in the artwork
+column; complete descriptions and explicit actions sit alongside them.
 
 `skill-book-offer` is the market's full-width `[book | details | Buy]` row.
 `src/ui/components/skillBookOffer.js` renders live consumable copy and price;
@@ -135,6 +134,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
 | `skill-book-offer` | `consumablePurchasePlan`, shop `components.bookOffers` | `skillBookOffer.renderSkillBookOffer` | Market | Uniform book sprite, live details and native Buy control. |
+| `merchant-offer` | `ShopWorkspaceModel` offers + shared book-offer tokens | `merchantOffer.arrangeMerchantOffer` + `shop.mountShop` | Merchant buy, sell and service shelves | Equal full-width artwork/details/action rows, with native inspections, confirmations and holds. Actions stack below details on phones; selected action remains in the footer. |
 | `book-art` | `BOOK_ART_PRESETS`, `bookArtRecipe`, `bookArtLayers` | `bookArt.renderBookArt` | Market, Armoury, reading modal, Book Atelier | Painted cover, independently colored leather mask, trim and symbol; three covers, thirty symbol variations and ten authored recipes. |
 | `book-learning` | `skillBookReadPlan`, `bookLessons` | `bookLearning.openBookLearning` | Armoury, library preview | Searchable cross-class lesson choices, XP track selector for universal books, live card preview and atomic Read and learn. Cancelling preserves the book. |
 | `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark and family prompt over River Citadel; activation lights the city, holds for Settings > General > Display > Title screen > Lit city pause, then fades into the layered hall. Title mounts after the fade. |
