@@ -11,7 +11,7 @@
           "src": "assets/cards/starstone-pebble-1024.webp",
           "kind": "official",
           "width": 1024,
-          "height": 683,
+          "height": 1024,
           "renderedWidth": 302.21875
         },
         {
@@ -42,7 +42,7 @@
           "src": "assets-mobile/cards/starstone-pebble-1024.webp",
           "kind": "official",
           "width": 320,
-          "height": 213,
+          "height": 320,
           "renderedWidth": 302.21875
         },
         {
@@ -73,7 +73,7 @@
           "src": "assets/cards/starstone-pebble-1024.webp",
           "kind": "official",
           "width": 1024,
-          "height": 683,
+          "height": 1024,
           "renderedWidth": 302.21875
         },
         {
@@ -104,7 +104,7 @@
           "src": "assets-mobile/cards/starstone-pebble-1024.webp",
           "kind": "official",
           "width": 320,
-          "height": 213,
+          "height": 320,
           "renderedWidth": 302.21875
         },
         {

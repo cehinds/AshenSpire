@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
-- **Painted signature starter cards for three more classes** ([#1582](https://github.com/cehinds/AshenSpire/pull/1582), `0.7.1.899`). Starstone Pebble, Urgent Heal, and Ambush now carry original paintings of the Observatory's starstone, the Furnace Chapel healing rite, and the frozen docks. High-resolution and compact mobile artwork ship together in art release v10.
+- **Painted signature starter cards for three more classes** ([#1582](https://github.com/cehinds/AshenSpire/pull/1582), `0.7.1.900`). Starstone Pebble, Urgent Heal, and Ambush now carry original paintings of the Observatory's starstone, the Furnace Chapel healing rite, and the frozen docks. The approved second Starstone pass and compact mobile artwork ship together in art release v11.
+
+- **Keep armament checks accurate after merging** ([#1581](https://github.com/cehinds/AshenSpire/pull/1581), `0.7.1.898`). The checks retain the new armament text after promotion and exercise explicit equipment actions, read-only card holds, inline comparisons and fitted inspection cards. The compact armament and level-reward behavior is unchanged.
 
 - **Compact armaments and level rewards you can finish later** ([#1578](https://github.com/cehinds/AshenSpire/pull/1578), `0.7.1.897`). Equipped positions show the item card beside its slot, name and status, with Inspect, Replace and Unequip actions. Inspect opens the full card, and equipping a reserve keeps the active position unchanged. Victory XP can pause at each level for its reward chooser, with a larger Level up button, Back and an Accessibility toggle. Leave whenever you want: unfinished levels and the original reward choices return on later victories and Character, including after saving. Class rewards wait for their original class.
 

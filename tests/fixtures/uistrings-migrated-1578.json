@@ -1,7 +1,6 @@
 {
-  "_": "Compact Armoury and level-reward uiStrings IDs from PR #1578. Preserve the no-shadow sweep after origin/dev includes that merge.",
+  "_": "Compact Armament uiStrings ids added by PR #1578. Keep their no-shadow coverage after origin/dev contains the merged rows, including the distinct formation Move to allowance.",
   "ids": [
-    "settings.row.guidedLevelUp",
     "armoury.positions.title",
     "armoury.action.inspect",
     "armoury.action.inspectNamed",

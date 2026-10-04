@@ -2,20 +2,20 @@
   "_": "AUTHORED — the art release this tree pins (docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md §2). Schema 2: one tag, three zips (high, light, common), each with its sha256. tools/fetch-art.mjs downloads each zip, checks its sha256, then every file against art-manifest.json, and unpacks it into .art-cache/<tag>/<pack>/. The top-level zip and sha256 equal packs.high, for readers that predate schema 2. Bumped by hand in the PR that adopts a new release. Part of the build identity (tools/buildversion.mjs BUILD_IDENTITY_FILES).",
   "schema": 2,
   "repo": "cehinds/AshenSpire-art",
-  "tag": "hd-assets-v10",
-  "zip": "hd-assets-v10.zip",
-  "sha256": "efb0bf16d9c8031bd4f504866a9d9d89773ce6a74b0127c2c3cf0112135a054f",
+  "tag": "hd-assets-v11",
+  "zip": "hd-assets-v11.zip",
+  "sha256": "b56250b1de8b08cb2ac2d2d423964b82afc2947da1811324bf8e852900a9fd1f",
   "packs": {
     "high": {
-      "zip": "hd-assets-v10.zip",
-      "sha256": "efb0bf16d9c8031bd4f504866a9d9d89773ce6a74b0127c2c3cf0112135a054f"
+      "zip": "hd-assets-v11.zip",
+      "sha256": "b56250b1de8b08cb2ac2d2d423964b82afc2947da1811324bf8e852900a9fd1f"
     },
     "light": {
-      "zip": "light-assets-v10.zip",
-      "sha256": "d8f68d8718edef7a3efd73b2724207f613aa170ec002838758b5f8de5ead3a2b"
+      "zip": "light-assets-v11.zip",
+      "sha256": "9b7d49e9e20ba300752e7618c4900f6ab75590f1982d41945ecdc58d4d2ff308"
     },
     "common": {
-      "zip": "common-assets-v10.zip",
+      "zip": "common-assets-v11.zip",
       "sha256": "aac59d9e6f057d876033a823c4f6cc9e2616c01fca6797ec557fe4da58bc80e6"
     }
   }

@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-04",
     "group": "2026-10-04",
     "summary": "Painted signature starter cards for three more classes",
-    "detail": "Starstone Pebble, Urgent Heal, and Ambush now carry original paintings of the Observatory's starstone, the Furnace Chapel healing rite, and the frozen docks. High-resolution and compact mobile artwork ship together in art release v10.",
-    "build": "0.7.1.899",
+    "detail": "Starstone Pebble, Urgent Heal, and Ambush now carry original paintings of the Observatory's starstone, the Furnace Chapel healing rite, and the frozen docks. The approved second Starstone pass and compact mobile artwork ship together in art release v11.",
+    "build": "0.7.1.900",
     "pullRequest": 1582,
     "url": "https://github.com/cehinds/AshenSpire/pull/1582"
+  },
+  {
+    "id": "pr-1581",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Keep armament checks accurate after merging",
+    "detail": "The checks retain the new armament text after promotion and exercise explicit equipment actions, read-only card holds, inline comparisons and fitted inspection cards. The compact armament and level-reward behavior is unchanged.",
+    "build": "0.7.1.898",
+    "pullRequest": 1581,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1581"
   },
   {
     "id": "pr-1578",
