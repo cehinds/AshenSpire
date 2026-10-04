@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" role="img" aria-labelledby="host-crown-title"><title id="host-crown-title">Reference-derived visual motif host crown; canonical binding remains explicit</title><defs>
+      <linearGradient id="host-crown-metal" x1="0" y1="0" x2="0.6" y2="1"><stop stop-color="#514535"/><stop offset=".18" stop-color="#dcc18a"/><stop offset=".38" stop-color="#a88c53"/><stop offset=".64" stop-color="#554837"/><stop offset=".82" stop-color="#bd9c59"/><stop offset="1" stop-color="#534536"/></linearGradient>
+      <linearGradient id="host-crown-soot" x2="0" y2="1"><stop stop-color="#242019"/><stop offset=".45" stop-color="#15130f"/><stop offset="1" stop-color="#0c0c0a"/></linearGradient>
+      <radialGradient id="host-crown-light"><stop stop-color="#d6b667" stop-opacity=".26"/><stop offset="1" stop-color="#d6b667" stop-opacity="0"/></radialGradient>
+    </defs><g stroke="#d6bb7c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 7 6 6-11 6 11 7-6-3 17H6ZM7 29h18"/></g></svg>

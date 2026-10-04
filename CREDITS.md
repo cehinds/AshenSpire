@@ -1,5 +1,22 @@
 # Credits & Asset Licenses
 
+## Player component collection (2026-10-04)
+
+The owner's expanded desktop/mobile screenshot breakdown contains 27 new raster
+scene perspectives, static enemy illustrations, transparent decorations and a
+parchment material made with OpenAI's built-in Image Generation tool, plus 71
+original SVG frames, menu shells, controls and visual motifs authored directly.
+[Exact prompts and references](docs/design/player-components-2026-10-03/generation.json)
+and [asset hashes](docs/design/player-components-2026-10-03/manifest.json) identify
+the unchanged PNG masters and format-only WebP exports. The
+[collection guide](docs/design/player-components-2026-10-03/README.md) maps all
+twelve concept boards to 24 feature recipes for desktop and mobile.
+
+The 194 reused first-kit assets and eight additional canonical object copies
+retain their source credits and licenses; the three existing fonts retain the
+included OFL license. New artwork and vector geometry are first-party generated
+or authored work without a claimed third-party asset license. These art files
+do not register new game content, replace runtime assets or supply game rules.
 ## Additional artwork carried by art release v6 (2026-10-03)
 
 These existing art-repository additions accompany the painted-book release.

@@ -1,0 +1,10 @@
+{
+  "id": "chapel-rest-desktop",
+  "group": "scenes",
+  "reference": "references/09-rest-and-rewards.png",
+  "prompt": "Generate a separate wide landscape 16:9 Ashen Spire rest chapel environment background inspired ONLY by the TOP scene of reference. Painterly realistic quiet grandeur, soot/umber weathered gothic stone, cold grey mist, distant tall spire in warm ivory dusk light seen through broken chapel arch. Modest campfire and bedroll to left of center, a few candles and plain torn cloth at left arch; NO person or selectable hero baked into art. Clear dim stone lower third supports separate recovery choices. Preserve distinct fire, arch and distant spire, no UI, words, letters, numbers, cards, borders, logo, symbols or stats.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-a03515e9-1c04-40ba-ad78-96c7a6e99cd0.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": false,
+  "master": "masters/scenes/chapel-rest-desktop.png"
+}

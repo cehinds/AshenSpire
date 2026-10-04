@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "reviewedBoards": 12,
+  "featureViews": 24,
+  "responsiveRenditions": 48,
+  "method": "Visual review of every original board; reauthored text-free raster layers, original SVG geometry and unchanged canonical assets, not low-resolution screenshot crops.",
+  "boards": [
+    {
+      "reference": "references/01-arrival-and-identity.png",
+      "features": [
+        "01a",
+        "01b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/02-story-and-choices.png",
+      "features": [
+        "02a",
+        "02b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/03-world-and-routes.png",
+      "features": [
+        "03a",
+        "03b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/04-cities-and-dungeons.png",
+      "features": [
+        "04a",
+        "04b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/05-combat-and-threats.png",
+      "features": [
+        "05a",
+        "05b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/06-armoury-and-inventory.png",
+      "features": [
+        "06a",
+        "06b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/07-cards-and-relics.png",
+      "features": [
+        "07a",
+        "07b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/08-merchant-and-forge.png",
+      "features": [
+        "08a",
+        "08b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/09-rest-and-rewards.png",
+      "features": [
+        "09a",
+        "09b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/10-growth-and-discovery.png",
+      "features": [
+        "10a",
+        "10b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/11-company-and-history.png",
+      "features": [
+        "11a",
+        "11b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    },
+    {
+      "reference": "references/12-preferences-and-run-setup.png",
+      "features": [
+        "12a",
+        "12b"
+      ],
+      "reviewedDesktop": true,
+      "reviewedMobile": true
+    }
+  ],
+  "sharedFamilies": [
+    "world paintings",
+    "canonical characters and objects",
+    "enemy static cutouts and portraits",
+    "materials and transparent decorations",
+    "boxes and frames",
+    "navigation and menus",
+    "cards and costs",
+    "map/dungeon/progression sockets",
+    "meters/intents/statuses",
+    "controls and semantic states",
+    "live typography"
+  ],
+  "gameplay": "No rules extracted from illustrative text. All labels, amounts, graph geometry, discovery and availability stay live."
+}

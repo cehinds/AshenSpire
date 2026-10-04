@@ -1,0 +1,281 @@
+{
+  "mode": "built-in image_gen.imagegen",
+  "records": [
+    {
+      "id": "aftermath-desktop",
+      "group": "scenes",
+      "reference": "references/11-company-and-history.png",
+      "prompt": "Generate a separate high-quality text-free Ashen Spire backdrop based ONLY on the bottom run-results scene of the supplied screenshot. Quiet grandeur, realistic painted ruined gothic landscape, soot/umber, cold mist, restrained ember lights and warm ivory sunset, aged brass tones. Wide landscape 16:9. Broken stone overlook and abandoned pilgrim's pack lower left, long weathered travel cloak draped on a low rock, NO humanoid figure. Distant spire right of center and ruined aqueduct across smoky valley. Dim shadowed left quarter for history list, dim right quarter for result receipt, open middle sunset vista, no dramatic bright foreground. No UI, text, letters, numbers, markers, badges, frames, logo, bodies or gore.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-824c2ec0-d6cd-4f7e-80e4-b4a9483bfeb3.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/aftermath-desktop.png"
+    },
+    {
+      "id": "aftermath-mobile",
+      "group": "scenes",
+      "reference": "references/11-company-and-history.png",
+      "prompt": "Generate a separate high-quality text-free Ashen Spire backdrop based ONLY on the bottom run-results scene of supplied screenshot. Portrait 9:16 composition, painterly realistic quiet grandeur, soot/umber ruined gothic landscape, cold mist, small ember lights and warm ivory sunset. Broken stone overlook and abandoned pilgrim's pack at low left, travel cloak draped on a low rock, NO humanoid figure. Distant gothic spire and ruined aqueduct in upper half of smoky valley. Lower half dark quiet rubble for separate live result receipt. No UI, text, letters, numbers, markers, badges, frames, logo, bodies or gore.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-2c893c39-ec55-450a-a6fa-492afc439477.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/aftermath-mobile.png"
+    },
+    {
+      "id": "blight-hound-inspector",
+      "group": "enemies",
+      "canonical": "assets/enemy-poses/blightHound_idle.webp",
+      "reference": "references/05-combat-and-threats.png",
+      "prompt": "ONE high-quality square transparent enemy-inspector portrait for Ashen Spire. FIRST reference authoritative identity: Blight Hound with elongated snarling canine muzzle, ragged ears, dark patchy hide, jagged dorsal spines, green luminous blight sacs and restrained green drool. KEEP GREEN blight. SECOND screenshot painterly style only, do not change to fire wolf. Detailed head and upper shoulders viewed nearly FRONT with muzzle tilted slightly screen LEFT, recognizable ugly quadrupedal hound not humanoid/demon, realistic weathered brown/black texture with tiny sickly green glow. Entire silhouette centered with generous transparent margins, actual alpha background, no text, UI, frame, landscape, shadow plate, fire or extra animal.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-aea65247-cdc1-483c-9aac-3a8d940aad40.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/enemies/blight-hound-inspector.png"
+    },
+    {
+      "id": "blight-hound-three-quarter",
+      "group": "enemies",
+      "reference": "references/05-combat-and-threats.png",
+      "canonical": "assets/enemy-poses/blightHound_idle.webp",
+      "prompt": "Create ONE high-resolution full-body transparent enemy cutout of the Blight Hound. The FIRST reference is authoritative identity: a lean diseased quadrupedal dark brown/black hound, skeletal ribs and patchy coarse hide, jagged small bone/wood-like dorsal spines, sickly green luminous blight sacs and green drool, ragged ears, elongated snarling muzzle, four clawed feet, long sparse tail. KEEP GREEN blight, do not turn it into a molten/fire wolf from the second screenshot. SECOND reference is polished painterly rendering/style only. Three-quarter view facing screen LEFT, shoulders slightly towards camera, alert grounded idle stance all four paws visible, entire tail and muzzle contained with ample alpha margins. Realistic hand-painted texture, soot/umber, subtle warm edge light, no background, ground, shadow ellipse, flames, text, UI, border or extra animal. Actual transparent background.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-b5e6ccd8-72f6-46c0-84d0-ca71846438c9.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/enemies/blight-hound-three-quarter.png"
+    },
+    {
+      "id": "chapel-rest-desktop",
+      "group": "scenes",
+      "reference": "references/09-rest-and-rewards.png",
+      "prompt": "Generate a separate wide landscape 16:9 Ashen Spire rest chapel environment background inspired ONLY by the TOP scene of reference. Painterly realistic quiet grandeur, soot/umber weathered gothic stone, cold grey mist, distant tall spire in warm ivory dusk light seen through broken chapel arch. Modest campfire and bedroll to left of center, a few candles and plain torn cloth at left arch; NO person or selectable hero baked into art. Clear dim stone lower third supports separate recovery choices. Preserve distinct fire, arch and distant spire, no UI, words, letters, numbers, cards, borders, logo, symbols or stats.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-a03515e9-1c04-40ba-ad78-96c7a6e99cd0.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/chapel-rest-desktop.png"
+    },
+    {
+      "id": "chapel-rest-mobile",
+      "group": "scenes",
+      "reference": "references/09-rest-and-rewards.png",
+      "prompt": "Create a standalone high-resolution Ashen Spire game environment layer in the painterly realistic quiet-grandeur style of the supplied screenshot, soot/umber weathered stone, grey mist, aged brass, restrained amber braziers, intricate tactile ruin. No screenshot crop, no foreground people or enemies, NO UI, cards, frames, words, letters, numbers, logo, nodes or route lines. Use the TOP rest-site only. Separate portrait 9:16 view into an intimate ruined gothic chapel opening onto a foggy valley and tall distant spire at warm dusk. A modest campfire with a few candles and worn bedroll lies low in upper half, framed by broken stone arch left and pillar right. No traveller/person, no gear icons. Keep lower third subdued dark rock and unlit flagstones for a separate live recovery tray. Fire and spire both remain visible above tray.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-183efebb-469b-4411-9177-ac1550a345e8.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/chapel-rest-mobile.png"
+    },
+    {
+      "id": "charred-colossus-inspector",
+      "group": "enemies",
+      "canonical": "assets/enemy-poses/charredColossus_idle.webp",
+      "reference": "references/05-combat-and-threats.png",
+      "prompt": "ONE high-quality square transparent boss-inspector portrait for Ashen Spire. FIRST reference authoritative identity: Charred Colossus with massive rounded layered basalt shoulders, small rounded stone head sunk between them, simple bright pale eyes, molten amber-white fissures and core glow through upper chest. SECOND screenshot painterly quality reference only. Nearly FRONT head/shoulders/chest bust, fine charred rock plates and believable molten light, soot/umber black stone. Preserve small rounded head, no helmet/horns/crown, no new symbols, weapons or green magic. Entire upper silhouette within square with generous transparent margins, actual alpha background. No scene, UI, words, numeric stat, border, smoke veil, shadow plate or extra figure.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-67d275d1-a41b-434c-a413-cec4ad1dda36.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/enemies/charred-colossus-inspector.png"
+    },
+    {
+      "id": "charred-colossus-three-quarter",
+      "group": "enemies",
+      "reference": "references/05-combat-and-threats.png",
+      "canonical": "assets/enemy-poses/charredColossus_idle.webp",
+      "prompt": "Create ONE high-resolution full-body transparent cutout of the Charred Colossus. FIRST reference is authoritative identity: huge broad-shouldered humanoid golem made of rough black basalt/charred stone plates, small rounded head sunk between massive shoulders, simple bright pale eyes, molten amber-white core fissures through chest, broad blunt boulder fists, thick legs with enormous grounded stone feet. SECOND screenshot supplies painterly fidelity and theatre of light only. Three-quarter view facing screen LEFT, shoulders turned towards camera, heavy grounded alert idle stance, both fists low, full head and feet contained with ample transparent margins. Keep original small rounded head and orange-white cracks, no horns, crown, weapons or elaborate new helmet, no green magic. Fine weathered stone texture and ember glints. Actual transparent background; NO environment, ground slab, shadow ellipse, text, numbers, UI or other creature.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-10080a0b-8b05-43bb-a657-dad6693a07d9.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/enemies/charred-colossus-three-quarter.png"
+    },
+    {
+      "id": "crownfall-desktop",
+      "group": "scenes",
+      "reference": "references/04-cities-and-dungeons.png",
+      "prompt": "High-end Ashen Spire game production asset, the same quiet-grandeur painterly realism as the reference screenshot: soot black, weathered umber, aged oxidized brass, warm ivory, fog, small restrained ember lights; intricate tangible architecture and natural wear, never clean glossy fantasy. Reconstruct the requested isolated artwork at high resolution, not a screenshot crop. Absolutely no letters, words, numbers, interface, panels, icons, pins, paths, watermarks or border. No new lore symbols or recognizable NPC identities. Background layer from the TOP desktop city view only: panoramic high-angle ruined gothic refuge city on steep stone tiers, tall central cathedral and large broken arched viaducts, warm lantern-lit wooden market and inn buildings in lower foreground, distant smoky mountains, warm dusk and grey mist. No people in foreground. Architecture occupies the left two thirds; atmospheric dim quiet right third can support a separately overlaid service folio. Wide landscape 16:9 composition.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-74d9d475-9d67-4708-9de2-2af900eaa048.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/crownfall-desktop.png"
+    },
+    {
+      "id": "crownfall-mobile",
+      "group": "scenes",
+      "reference": "references/04-cities-and-dungeons.png",
+      "prompt": "High-end Ashen Spire game production asset, the same quiet-grandeur painterly realism as the reference screenshot: soot black, weathered umber, aged oxidized brass, warm ivory, fog, small restrained ember lights; intricate tangible architecture and natural wear, never clean glossy fantasy. Reconstruct the requested isolated artwork at high resolution, not a screenshot crop. Absolutely no letters, words, numbers, interface, panels, icons, pins, paths, watermarks or border. No new lore symbols or recognizable NPC identities. Background layer from the TOP mobile city view only: separate portrait 9:16 composition of ruined gothic refuge city, central tall cathedral upper middle, broken stone viaducts, warm lantern-lit small inn and market buildings across middle, lower third dim rocky foreground to sit above/beneath a separate live detail tray. Keep distinct inn, smithy, market architectural landmarks in view, no markers. No people in foreground.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-21ce475a-68a4-4fff-8892-e16056800e3d.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/crownfall-mobile.png"
+    },
+    {
+      "id": "crownfall-street-desktop",
+      "group": "scenes",
+      "reference": "references/04-cities-and-dungeons.png",
+      "prompt": "Standalone high-quality text-free Ashen Spire environment production painting, same realistic tactile quiet grandeur as the supplied board: worn gothic stone and rough dark wood, oxidized brass, soot/umber, cold fog beyond, small warm ivory/amber lights, restrained embers. NO foreground people, faces, creatures, UI, text, signage, letters, numbers, borders, logos, map pins, route lines or cards. New eye-level STREET perspective of the city shown in TOP screenshot, wide landscape 16:9. A small weathered inn with candle-lit windows on left, stone steps and covered market stalls to right, distant tall cathedral and broken aqueduct seen above rooftops through dusk mist. Clear dark cobbled path leads center toward city gate. More intimate scale than the original high-angle city overview. Dim calm right third leaves room for a separate service menu. Plain unmarked cloth banners and shop fronts.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-2e49c5e7-3682-4eb3-b00e-05f95943951a.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/crownfall-street-desktop.png"
+    },
+    {
+      "id": "crownfall-street-mobile",
+      "group": "scenes",
+      "reference": "references/04-cities-and-dungeons.png",
+      "prompt": "Standalone high-quality text-free Ashen Spire environment production painting, same realistic tactile quiet grandeur as the supplied board: worn gothic stone and rough dark wood, oxidized brass, soot/umber, cold fog beyond, small warm ivory/amber lights, restrained embers. NO foreground people, faces, creatures, UI, text, signage, letters, numbers, borders, logos, map pins, route lines or cards. Separate portrait 9:16 composition, new eye-level STREET perspective of city in TOP screenshot. Small weathered inn candle-lit windows left, covered market stalls right, tall gothic cathedral and broken aqueduct above rooftops upper center. Clear dark cobbled lane leads toward distant gate in mist. Lower third dim and quiet for separately overlaid live service tray. Plain unmarked shop fronts and cloth banners. More intimate street-level scale than high-angle overview.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-b9ecce4c-2216-4f91-bb58-c1eae3d8d6d1.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/crownfall-street-mobile.png"
+    },
+    {
+      "id": "fellowship-desktop",
+      "group": "scenes",
+      "reference": "references/11-company-and-history.png",
+      "prompt": "High quality separate production background for Ashen Spire, faithfully matching the referenced screenshot's painterly quiet grandeur: soot black, weathered umber, tangible ruined gothic stone, tarnished bronze, cold grey fog, restrained warm ember accents. Reconstruct as fresh full-resolution artwork, never screenshot crop. Absolutely NO text, lettering, logos, UI, borders, panels, cards, markers or glyphs. From the TOP co-op scene only, wide landscape 16:9 composition: four anonymous travel-worn cloaked figures seen strictly from behind, seated as a loose semicircle around a small campfire, lower edge foreground only; ruined arch and stone stair to left, misty valley and tall distant gothic spire at dusk. Faces and class-specific emblems are never visible, no fifth person. Center upper and middle area dark quiet sky/valley for four independently overlaid lobby cards; flame stays below the card area. Empty hands, no weapons raised. Figures are atmospheric decoration, not selectable player sprites.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-d533d0bb-fe2f-423d-8db7-6066996cd2fb.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/fellowship-desktop.png"
+    },
+    {
+      "id": "fellowship-mobile",
+      "group": "scenes",
+      "reference": "references/11-company-and-history.png",
+      "prompt": "High quality separate production background for Ashen Spire, faithfully matching the referenced screenshot's painterly quiet grandeur: soot black, weathered umber, tangible ruined gothic stone, tarnished bronze, cold grey fog, restrained warm ember accents. Reconstruct as fresh full-resolution artwork, never screenshot crop. Absolutely NO text, lettering, logos, UI, borders, panels, cards, markers or glyphs. From the TOP co-op camp scene only, separately composed portrait 9:16 landscape at dusk: ruined arch and stone stairs left, distant gothic spire upper center, misty valley, four anonymous cloaked travellers strictly seen from behind seated around a small campfire, confined to bottom quarter and left/right edges. No visible faces or class-specific emblems. Keep upper two thirds dim and quietly detailed for a stack of four live party rows, campfire low and small. Atmospheric travellers are decorative, not game sprites.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-d1b9d2a8-8439-4f29-8f8a-68c4cbfe3384.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/fellowship-mobile.png"
+    },
+    {
+      "id": "fieldcase-still-life",
+      "group": "decorations",
+      "reference": "references/06-armoury-and-inventory.png",
+      "prompt": "Create ONE transparent high-quality foreground still-life decoration for Ashen Spire, inspired by only the lower left tabletop objects of the reference. A low wide cluster of three old dark leather folio books with brass corner protectors, a closed weathered pilgrim's fieldcase, one dented small iron helmet without face or character, two short beeswax candles burning with restrained amber light, a folded blank parchment. Arrange all as one wide cohesive isolated cluster with complete silhouettes and ample alpha margins. Tactile realistic painterly soot/umber/brass/ivory materials, no writings, numbers, UI, item slots, inventory objects with implied stats, background, table edge, ground plane or shadow plate. Actual transparent background.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-aed1a10d-e09a-4131-94c7-c76aa6aa1130.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/decorations/fieldcase-still-life.png"
+    },
+    {
+      "id": "furnace-chapel-desktop",
+      "group": "scenes",
+      "reference": "references/04-cities-and-dungeons.png",
+      "prompt": "Create a high-quality isolated production background matching the supplied Ashen Spire screenshot's painterly realism, tangible ruined gothic architecture, soot black and umber stone, cold grey mist, tarnished brass, tiny warm ember accents, quiet grandeur. Reconstruct the artwork, no screenshot crop. NO interface, frames, cards, texts, letters, numerals, markers, route lines, UI symbols or logos. No foreground characters. Use only the bottom furnace chapel: a cavernous basalt gothic cathedral interior with high arches, heavy iron chains descending from vaults, dark stairways and platforms, glowing molten seams, restrained fire braziers and distant furnace light. Wide landscape 16:9. Frame architecture to sides; center remains dim and visually quiet for a live room graph overlay. No ground/floor combat atlas: one decorative dungeon-map background.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-fd2f73b2-07a1-4ead-9fdd-8b0fdf955264.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/furnace-chapel-desktop.png"
+    },
+    {
+      "id": "furnace-chapel-mobile",
+      "group": "scenes",
+      "reference": "references/04-cities-and-dungeons.png",
+      "prompt": "Create a high-quality isolated production background matching the supplied Ashen Spire screenshot's painterly realism, tangible ruined gothic architecture, soot black and umber stone, cold grey mist, tarnished brass, tiny warm ember accents, quiet grandeur. Reconstruct the artwork, no screenshot crop. NO interface, frames, cards, texts, letters, numerals, markers, route lines, UI symbols or logos. No foreground characters. Use only the bottom furnace chapel: separate portrait 9:16 cathedral interior with tall basalt arches, heavy iron chains descending at the sides, stairways and platforms framing an open dim center for a live room graph. Molten orange seams and braziers illuminate the periphery, no excessive flames across the middle. Lower quarter dim and quiet for a separate live room detail tray.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-37c46626-50d6-4ee8-81ce-b1be39931478.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/furnace-chapel-mobile.png"
+    },
+    {
+      "id": "hanging-lantern",
+      "group": "decorations",
+      "reference": "references/08-merchant-and-forge.png",
+      "prompt": "Create ONE isolated high-quality Ashen Spire hanging lantern foreground decoration matching the market lantern in the reference. Weathered blackened iron and oxidized brass lantern with small restrained amber candle flame behind imperfect smoky glass, ornate but functional gothic cage, thin short hanging chain above. Whole chain and lantern in frame with ample transparent margins; realistic painted texture and tiny warm glints, no giant glow bloom. Actual transparent background, no environment, ground, solid shadow, symbols, letters, words, UI, frame or border. This is a decorative prop, not a named relic redesign.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-f8d06151-8f9d-4d03-a60d-fbd22a4bcb93.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/decorations/hanging-lantern.png"
+    },
+    {
+      "id": "inn-interior",
+      "group": "scenes",
+      "reference": "references/04-cities-and-dungeons.png",
+      "prompt": "Standalone high-quality text-free Ashen Spire environment production painting, same realistic tactile quiet grandeur as the supplied board: worn gothic stone and rough dark wood, oxidized brass, soot/umber, cold fog beyond, small warm ivory/amber lights, restrained embers. NO foreground people, faces, creatures, UI, text, signage, letters, numbers, borders, logos, map pins, route lines or cards. ONE square new perspective of the tiny INN interior thumbnail in TOP city view only. An empty warm weathered medieval inn in a gothic refuge city: thick timber beams, rough stone fireplace on left, old bar shelves to rear, several worn tables and benches, a few beeswax candles in brass holders, plain unmarked cups, distant rain-grey window with silhouettes of ruins. Intimate painterly interior, quiet dark lower center for separate dialogue/service text. No person or named identity baked in. No large foreground object obstructing the center.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-218996a9-8ab5-4b30-9904-c70f0d5b996c.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/inn-interior.png"
+    },
+    {
+      "id": "ruined-courtyard-desktop",
+      "group": "scenes",
+      "reference": "references/05-combat-and-threats.png",
+      "prompt": "Create a standalone high-resolution Ashen Spire game environment layer in the painterly realistic quiet-grandeur style of the supplied screenshot, soot/umber weathered stone, grey mist, aged brass, restrained amber braziers, intricate tactile ruin. No screenshot crop, no foreground people or enemies, NO UI, cards, frames, words, letters, numbers, logo, nodes or route lines. Reference only the TOP tactical combat arena, wide landscape 16:9: eye-level slightly low camera across broad dark stone courtyard paving. Lower 45 percent clear continuous walkable wet flagstones, level horizon and contact ground across whole image, no holes or clutter where fighters stand. Towering ruined gothic arches at both edges, broken high aqueduct and distant spire in background center. Small braziers behind ground plane, banners plain unmarked. Provide this as one standalone concept backdrop, not atlas, no enemy or hero baked in.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-b652e680-4a35-474e-8288-65ef505238e2.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/ruined-courtyard-desktop.png"
+    },
+    {
+      "id": "ruined-courtyard-mobile",
+      "group": "scenes",
+      "reference": "references/05-combat-and-threats.png",
+      "prompt": "Create a standalone high-resolution Ashen Spire game environment layer in the painterly realistic quiet-grandeur style of the supplied screenshot, soot/umber weathered stone, grey mist, aged brass, restrained amber braziers, intricate tactile ruin. No screenshot crop, no foreground people or enemies, NO UI, cards, frames, words, letters, numbers, logo, nodes or route lines. Reference only the TOP tactical combat arena, separately composed portrait 9:16 view: eye-level slightly low camera looking across wide flat courtyard. Upper middle broken aqueduct and distant spire behind fog, tall ruined gothic pillars to left/right. Middle and lower 50 percent clear continuous dark wet flagstone contact floor with a level horizon for hero at lower left and foes upper right. No foreground occluders, rubble heaps or holes on fighter area. Small braziers far behind the floor, plain unmarked banners. One standalone concept backdrop, not atlas.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-89bba8fc-636e-4c21-a32b-e08c063649e0.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/ruined-courtyard-mobile.png"
+    },
+    {
+      "id": "spoils-desktop",
+      "group": "scenes",
+      "reference": "references/09-rest-and-rewards.png",
+      "prompt": "Create a high-quality isolated production background matching the supplied Ashen Spire screenshot's painterly realism, tangible ruined gothic architecture, soot black and umber stone, cold grey mist, tarnished brass, tiny warm ember accents, quiet grandeur. Reconstruct the artwork, no screenshot crop. NO interface, frames, cards, texts, letters, numerals, markers, route lines, UI symbols or logos. No foreground characters. Use only the lower rewards painting: wide landscape 16:9 devastated battlefield at warm grey sunset, distant shattered gothic spires and ruined aqueducts, tiny circling ravens, torn unmarked old cloth standard and abandoned helmet/shield at far lower left, embers amongst foreground rubble. Center three fifths stays dark and quietly detailed beneath separate selectable reward cards, right lower corner calm. No body or gore.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-de64eb66-841d-41b8-86f1-06be5942284d.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/spoils-desktop.png"
+    },
+    {
+      "id": "spoils-mobile",
+      "group": "scenes",
+      "reference": "references/09-rest-and-rewards.png",
+      "prompt": "High quality separate production background for Ashen Spire, faithfully matching the referenced screenshot's painterly quiet grandeur: soot black, weathered umber, tangible ruined gothic stone, tarnished bronze, cold grey fog, restrained warm ember accents. Reconstruct as fresh full-resolution artwork, never screenshot crop. Absolutely NO text, lettering, logos, UI, borders, panels, cards, markers or glyphs. From the LOWER rewards scene only, separate portrait 9:16 composition: a devastated battlefield at warm grey sunset, distant shattered spires and ruined aqueducts high in the frame, tiny circling ravens, torn unmarked old standard and abandoned helmet at lower left edge. Middle and lower region remain shadowed and quietly detailed to support independently placed reward card and tray. No body, gore or foreground people.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-86d17a5d-e1fd-4907-9c68-ac381105436f.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/scenes/spoils-mobile.png"
+    },
+    {
+      "id": "torn-standard",
+      "group": "decorations",
+      "reference": "references/04-cities-and-dungeons.png",
+      "prompt": "Create ONE isolated high-resolution reusable foreground decoration for Ashen Spire matching the left margin torn standard in this screenshot. Tall battered dark iron crossbar on slender spear-shaped pole, extremely weathered deep umber cloth hanging vertically in uneven ragged strips, muted brass edge stitching, folds and fraying, painted realistic tactile cloth and rusty metal, restrained amber edge light. Completely plain textile: NO words, letters, heraldic symbols, logos or emblems. Full pole and cloth contained with generous transparent margin, transparent background, no sky, ground, architecture, scenery, shadow plate or UI. Main cloth occupies middle of tall portrait asset, separate game background will show through genuine alpha holes between ragged strips.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-5307940b-2dc3-4530-9707-65434744ac13.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/decorations/torn-standard.png"
+    },
+    {
+      "id": "wandering-soldier-inspector",
+      "group": "enemies",
+      "canonical": "assets/enemy-poses/wanderingSoldier_idle.webp",
+      "reference": "references/05-combat-and-threats.png",
+      "prompt": "ONE high-quality square transparent enemy-inspector portrait for Ashen Spire. FIRST reference authoritative identity: Wandering Soldier in battered closed-visored silver/dark iron helmet, rust-red scarf, worn iron plate shoulders, tattered cloth; sword/shield are not required in portrait, do not invent weapons. SECOND screenshot supplies painterly fidelity only. Shoulder-up FRONT three-quarter portrait with visor facing slightly screen LEFT, small readable engraved and chipped metal details, muted soot/umber and aged brass reflections, restrained cold rim light, no face exposed or new glowing eyes. Center entire head/shoulders inside square with generous transparent margins, hard cutout shoulder edge clean, actual transparent background. No UI, text, border, scene, smoke veil, solid shadow or decorative medallion.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-f0733c20-2f77-486a-a9f9-53e15283c858.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/enemies/wandering-soldier-inspector.png"
+    },
+    {
+      "id": "wandering-soldier-three-quarter",
+      "group": "enemies",
+      "reference": "references/05-combat-and-threats.png",
+      "canonical": "assets/enemy-poses/wanderingSoldier_idle.webp",
+      "prompt": "Create ONE high-resolution full-body transparent cutout of the Wandering Soldier. The FIRST reference is the authoritative character identity: reproduce its battered silver/dark iron closed visor helmet, rust-red scarf and tattered red waist cloth, weathered plate and leather armour, slender one-handed straight sword lowered and broad worn dark shield on opposite arm. The SECOND reference supplies only the polished painterly game-art style and three-quarter stage view. Face towards screen LEFT with head and shoulders turned slightly towards camera, grounded alert idle stance, full boots and equipment entirely contained, ample transparent margins. Refine craft and resolution without redesigning helmet, armour, weapons or colors. Tactile painterly realism, quiet grandeur, muted soot/umber/brass light, subtle cold rim light. NO glowing magic, background, ground plate, shadow ellipse, text, card, UI or other character. Actual transparent alpha.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-c876ba7c-bd76-4123-b14b-8eacc3abcfa2.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": true,
+      "master": "masters/enemies/wandering-soldier-three-quarter.png"
+    },
+    {
+      "id": "weathered-parchment",
+      "group": "materials",
+      "reference": "references/10-growth-and-discovery.png",
+      "prompt": "Create one high quality text-free game UI material matching ONLY the parchment under the progression tree and compendium in the reference. Flat orthographic square sheet surface, warm ivory/umber weathered rag paper, subtle fibers, gently mottled ageing, tiny edge creases, restrained smoke staining. Quiet center remains smooth and readable for black live UI text. Fill entire square canvas with paper, no border, no torn alpha edges, no marks, writing, drawings, map, symbols, tree, objects, lighting casts or interface. This is a non-seamless cover texture.",
+      "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-db82a29a-d55b-49d2-9620-af31dc0a35f3.png",
+      "tool": "image_gen.imagegen",
+      "transparent_background": false,
+      "master": "masters/materials/weathered-parchment.png"
+    }
+  ]
+}

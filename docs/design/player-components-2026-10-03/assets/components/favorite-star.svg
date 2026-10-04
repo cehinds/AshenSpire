@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" role="img" aria-labelledby="favorite-star-title"><title id="favorite-star-title">Reference-derived visual motif favorite star; canonical binding remains explicit</title><defs>
+      <linearGradient id="favorite-star-metal" x1="0" y1="0" x2="0.6" y2="1"><stop stop-color="#514535"/><stop offset=".18" stop-color="#dcc18a"/><stop offset=".38" stop-color="#a88c53"/><stop offset=".64" stop-color="#554837"/><stop offset=".82" stop-color="#bd9c59"/><stop offset="1" stop-color="#534536"/></linearGradient>
+      <linearGradient id="favorite-star-soot" x2="0" y2="1"><stop stop-color="#242019"/><stop offset=".45" stop-color="#15130f"/><stop offset="1" stop-color="#0c0c0a"/></linearGradient>
+      <radialGradient id="favorite-star-light"><stop stop-color="#d6b667" stop-opacity=".26"/><stop offset="1" stop-color="#d6b667" stop-opacity="0"/></radialGradient>
+    </defs><g stroke="#d6bb7c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2 4 9 10 2-7 7 1 11-8-5-8 5 1-11-7-7 10-2Z"/></g></svg>

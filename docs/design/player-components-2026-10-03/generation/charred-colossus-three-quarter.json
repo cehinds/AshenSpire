@@ -1,0 +1,11 @@
+{
+  "id": "charred-colossus-three-quarter",
+  "group": "enemies",
+  "reference": "references/05-combat-and-threats.png",
+  "canonical": "assets/enemy-poses/charredColossus_idle.webp",
+  "prompt": "Create ONE high-resolution full-body transparent cutout of the Charred Colossus. FIRST reference is authoritative identity: huge broad-shouldered humanoid golem made of rough black basalt/charred stone plates, small rounded head sunk between massive shoulders, simple bright pale eyes, molten amber-white core fissures through chest, broad blunt boulder fists, thick legs with enormous grounded stone feet. SECOND screenshot supplies painterly fidelity and theatre of light only. Three-quarter view facing screen LEFT, shoulders turned towards camera, heavy grounded alert idle stance, both fists low, full head and feet contained with ample transparent margins. Keep original small rounded head and orange-white cracks, no horns, crown, weapons or elaborate new helmet, no green magic. Fine weathered stone texture and ember glints. Actual transparent background; NO environment, ground slab, shadow ellipse, text, numbers, UI or other creature.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-10080a0b-8b05-43bb-a657-dad6693a07d9.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "master": "masters/enemies/charred-colossus-three-quarter.png"
+}
