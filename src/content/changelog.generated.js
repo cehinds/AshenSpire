@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1597",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Keep fullscreen checks accurate beside Reset all",
+    "detail": "The fullscreen ordering probe now names button rows and expects Reset all after Fullscreen is intentionally hidden or moved off-screen. The regression checks retain their exact ordering and visibility assertions.",
+    "build": "0.7.1.914",
+    "pullRequest": 1597,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1597"
+  },
+  {
     "id": "pr-1594",
     "date": "2026-10-04",
     "group": "2026-10-04",
