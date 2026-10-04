@@ -102,13 +102,20 @@ let BUILD_MISSING = flag('--build-missing', null);
 // OLDER build is a named warning; a head build that fails to rebuild would
 // leave the branch with no /latest/ while the run stays green, and Pages
 // replaces the whole site, so the published alias would silently vanish.
-// test is listed with dev: both rebuild on the same light path (Codex, #1360).
-// release/main are not listed: their --full-art rebuilds wait on the art fetch
-// (docs/ART-REPO-PLAN.md step 4), and a failure there must not take down dev's
-// publication.
+// test is listed with dev (Codex, #1360). Since 2026-10-04 test's newer builds
+// rebuild --full-art, so a failed high-pack fetch there also stops the publish;
+// that is accepted: the high pack is the same release main's root build fetches
+// before this runs. release/main are not listed.
 const HEAD_REQUIRED = new Set(flag('--require-head', 'dev,test').split(',').map((x) => x.trim()).filter(Boolean));
-// test joined release/main on full art (owner, 2026-10-04): art is linked from test on.
-const FULL_ART_BRANCHES = new Set(['test', 'release', 'main']);
+const FULL_ART_BRANCHES = new Set(['release', 'main']);
+// test joined them on full art (owner, 2026-10-04), but only for commits whose
+// own dev-preview.yml gave test --full-art: an older test build was built light
+// and is rebuilt light, never with art it did not ship.
+function fullArtFor(branch, sha) {
+  if (FULL_ART_BRANCHES.has(branch)) return true;
+  if (branch !== 'test') return false;
+  try { return /== 'test' \|\|/.test(git(['show', `${sha}:.github/workflows/dev-preview.yml`], { stdio: ['ignore', 'pipe', 'ignore'] })); } catch { return false; }
+}
 // A BRANCH'S ROLE IS READ FROM THE CONTRACT THAT GOVERNS IT, not typed here.
 // `.agentops/governance/git-ownership.json` already carries one note per ref and
 // is the thing that actually decides who may write to each; duplicating that
@@ -429,7 +436,7 @@ function artifactsOf(b) {
     try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { hasMobile = false; }
     return committedEditions(html, hasMobile, () => committedArtifact(b.sha, MOBILE_ARTIFACT));
   }
-  const fullArt = FULL_ART_BRANCHES.has(b.branch);
+  const fullArt = fullArtFor(b.branch, b.sha);
   const seeded = MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha ? { dir: resolve(MAIN_BUILD) } : null;
   const r = seeded || rebuildAt(b.sha, fullArt);
   if (r.error) return r;
