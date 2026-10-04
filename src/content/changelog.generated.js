@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1600",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Bigger fighters on phones, more card text",
+    "detail": "On a narrow screen every combatant now stands at least half the battlefield's height, nudged inward so it stays on screen. Card body text in the hand is 2pt smaller so more of each effect shows.",
+    "build": "0.7.1.917",
+    "pullRequest": 1600,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1600"
+  },
+  {
     "id": "pr-1592",
     "date": "2026-10-04",
     "group": "2026-10-04",

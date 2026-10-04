@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
+- **Bigger fighters on phones, more card text** ([#1600](https://github.com/cehinds/AshenSpire/pull/1600), `0.7.1.917`). On a narrow screen every combatant now stands at least half the battlefield's height, nudged inward so it stays on screen. Card body text in the hand is 2pt smaller so more of each effect shows.
+
 - **Reset all sits last under Interface** ([#1592](https://github.com/cehinds/AshenSpire/pull/1592), `0.7.1.915`). The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.
 
 - **Keep settings ordering checks working after Reset all** ([#1594](https://github.com/cehinds/AshenSpire/pull/1594), `0.7.1.913`). The fullscreen ordering regression fixture now follows the reset row's current source location. Its intentional bad ordering and detection assertions remain unchanged.
