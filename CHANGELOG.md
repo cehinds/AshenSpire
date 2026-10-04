@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Remove the combat Positioning button** ([#1558](https://github.com/cehinds/AshenSpire/pull/1558), `0.7.1.873`). The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.
+- **Remove the combat Positioning button** ([#1558](https://github.com/cehinds/AshenSpire/pull/1558), `0.7.1.874`). The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.
 
 - **Painted, editable combat footer** ([#1534](https://github.com/cehinds/AshenSpire/pull/1534), `0.7.1.872`). The stamina orb, draw cradle, End Turn plate, discarded cards and potion tray now assemble from separate painted components. Footer Atelier can move, resize and snap them together, and edit live text bindings, fonts and positions independently of the images. Solo and co-op keep their existing actions, with readable compact controls on phones and short landscape screens. The five new light images total about 9 KB.
 
