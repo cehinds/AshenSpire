@@ -447,11 +447,11 @@ const READ = `(() => {
     return +o.toFixed(4);
   };
   const rows = [...panel.querySelectorAll('.set-row')].map((row) => {
-    const ctrl = row.querySelector('[data-key]');
+    const ctrl = row.querySelector('[data-key], [data-btn]');
     const b = row.getBoundingClientRect();
     const cs = getComputedStyle(row);
     return {
-      key: ctrl ? ctrl.dataset.key : null,
+      key: ctrl ? (ctrl.dataset.key ?? ctrl.dataset.btn) : null,
       effOpacity: effOpacity(row),
       // ALL FOUR SIDES ARE READ, because all four are judged. The right edge
       // was not read here until 2026-08-22, which is half of why D3 never
@@ -474,7 +474,7 @@ const READ = `(() => {
   visible.sort((a, b2) => (a.top - b2.top) || (a.left - b2.left));
   const fs = rows.filter((r) => r.key === ${JSON.stringify(WANT)});
   // THE CONTROLS THEMSELVES, COUNTED AS CONTROLS. \`rows\` is one entry per
-  // \`.set-row\`, and each row reports \`querySelector('[data-key]')\` — THE
+  // \`.set-row\`, and each row reports its first data-key or data-btn — THE
   // FIRST match. A regression that renders the Fullscreen toggle TWICE INSIDE
   // ONE ROW collapses to a single key there, so counting rows returns 1 while
   // two controls are on the screen. D2 promises exactly one CONTROL. Codex, at
@@ -1242,14 +1242,14 @@ function selftestPlants() {
     },
     {
       // 3 — CSS HIDES THE FIRST ROW. Array untouched, test 61 green, and the
-      // first control a player can see is the Accent colour. (It read Combat
+      // first control a player can see is Reset all. (It read Combat
       // pacing until that row moved to General > Combat; the row behind
       // Fullscreen in the Display panel is what this plant names, whatever it
       // happens to be called.)
       name: 'CSS hides the first row (test 61 stays green)',
       file: 'styles/ui.css',
       append: '.set-panel .set-row:first-child { display: none !important; }',
-      expectRed: /FINDING D1\/order .*first=accent want=fullscreen/,
+      expectRed: /FINDING D1\/order .*first=resetAllSettings want=fullscreen/,
     },
     {
       // 4 — THE DOM NEVER MOVES AND THE SCREEN REVERSES. This is the exact
@@ -1308,7 +1308,7 @@ function selftestPlants() {
       name: 'EDGE TOP — the Fullscreen row sits 4000px off the top of the viewport',
       file: 'styles/ui.css',
       append: '.set-panel .set-row:first-child { position: relative !important; top: -4000px !important; }',
-      expectRed: /FINDING D1\/order .*first=accent want=fullscreen[\s\S]*FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
+      expectRed: /FINDING D1\/order .*first=resetAllSettings want=fullscreen[\s\S]*FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
     },
     {
       name: 'EDGE BOTTOM — the Fullscreen row sits 4000px off the bottom of the viewport',
