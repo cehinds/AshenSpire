@@ -19,6 +19,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { potionContents, potionCountStringId } from '../models/PotionContentsModel.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { paintFooterArt } from './footerArt.js';
 import { t, tFull } from '../strings.js';
 import { staminaOrbHtml, paintStaminaOrb } from './staminaOrb.js';
 import { esc } from './tooltip.js';
@@ -44,7 +45,7 @@ export function pileButton(kind, label) {
  * `endTurnId` lets a screen keep the id its instruments address.
  */
 export function combatActionRowHtml({ endTurnId = null } = {}) {
-  return `<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
+  return `<div class="combat-action-row as-btnrow" data-footer-art="pending" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           ${staminaOrbHtml()}
           ${html(pileButton('draw', 'Draw'))}
           ${html(button({ label: t('combat.endTurn'), weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall', ...(endTurnId ? { id: endTurnId } : {}) }))}
@@ -84,6 +85,10 @@ export const POTIONS_TIP_HTML = `<div class="tt-title">${esc(t('potions.run.titl
  * row (combat.endTurn) the first render does, so a reword survives a rebind.
  */
 export function paintEndTurnKey(endTurn, key) {
+  if (endTurn?.closest?.('.combat-action-row')) {
+    paintFooterArt(endTurn.closest('.combat-action-row'), { endTurnKey: key });
+    return;
+  }
   if (!endTurn || endTurn.querySelector('.et-key')?.textContent === key) return;
   endTurn.replaceChildren(t('combat.endTurn'), keycap(key, { class: 'et-key' }));
 }
@@ -96,6 +101,7 @@ export function paintEndTurnKey(endTurn, key) {
  */
 export function paintCombatActionCounts(row, { energy, energyMax, mana, maxMana, settings, draw, discard, exhaust, browse = true }) {
   if (!row) return;
+  paintFooterArt(row, { sp: energy, draw, discard, exhaust });
   const orb = row.querySelector('.energy-orb');
   if (orb && energy != null) {
     paintStaminaOrb(orb, { stamina: energy, maxStamina: energyMax, mana, maxMana, settings });
@@ -112,7 +118,7 @@ export function paintCombatActionCounts(row, { energy, energyMax, mana, maxMana,
     // first refresh, on both boards.
     const [discardWord, exhaustWord] = [t('combat.discard'), t('combat.exhaust')];
     const spentHtml = `<span>${esc(discardWord)} ${discard}</span><small>${esc(exhaustWord)} ${exhaust}</small>`;
-    if (spent.innerHTML !== spentHtml) spent.innerHTML = spentHtml;
+    if (!row.dataset?.footerArt && spent.innerHTML !== spentHtml) spent.innerHTML = spentHtml;
     spent.setAttribute('aria-label', `${discardWord} ${discard}; ${exhaustWord} ${exhaust}${browse ? '. Open piles' : ''}`);
   }
 }

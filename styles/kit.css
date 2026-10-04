@@ -4857,6 +4857,55 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']> .pile {
   width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
+/* Footer Atelier art: live labels are SVG text, never baked into a bitmap.
+   Wide layouts honor the authored positions; compact controls keep readable
+   labels and the existing minimum hit targets and short-host rails. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] {
+  position: relative; isolation: isolate;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > :is(.pile,.end-turn,.combat-potions) {
+  position: relative; padding: 0; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none; overflow: visible;
+  color: #e7dcc0; text-shadow: 0 1px 3px #000;
+}
+.footer-art-face { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.footer-art-face text { paint-order: stroke; stroke: #100e0b; stroke-width: .6px; }
+@media (pointer: coarse) {
+  .footer-art-face [data-footer-binding='endTurnKey'] { display: none; }
+}
+.footer-sp-text { position: absolute; inset: 0; pointer-events: none; }
+.combat-action-row[data-footer-art] .stamina-orb > svg text { visibility: hidden; }
+.footer-compact-label { display: none; }
+.footer-art-rails { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] {
+  display: block; width: min(100%, calc(950px / var(--ui-zoom, 1))); height: 100%; margin-inline: auto;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+  position: absolute; left: var(--art-x); top: var(--art-y); width: var(--art-w); height: var(--art-h);
+  min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); max-height: none;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:focus-visible {
+  outline: 2px solid #e9c783; outline-offset: 3px;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:hover:not(:disabled) .footer-art-face {
+  filter: brightness(1.18);
+}
+.combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) .footer-art-face {
+  filter: drop-shadow(0 0 4px #83b885);
+}
+.combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) text { fill: #c2e9bc; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] .footer-art-rails,
+.combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: none; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
+  height: 100%; min-height: calc(44px / var(--ui-zoom, 1)); display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.combat-action-row[data-footer-compact='true'] button .footer-art-face { height: 58%; flex: 0 1 58%; }
+.combat-action-row[data-footer-compact='true'] .footer-compact-label {
+  display: block; font: 600 max(.72rem, calc(12px / var(--ui-zoom, 1)))/1.12 Georgia, serif;
+  white-space: pre-line; text-align: center;
+}
+.combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
+.combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */

@@ -3,6 +3,7 @@ import { staminaOrbModel } from '../models/StaminaOrbModel.js';
 import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { esc } from './tooltip.js';
+import { paintFooterOrb } from './footerArt.js';
 
 export function staminaOrbHtml() {
   return `<div class="energy-orb stamina-orb cell" role="status" tabindex="0" aria-label="${esc(t('combat.actions'))}"><svg viewBox="0 0 900 900" aria-hidden="true" focusable="false"></svg><span class="sp-v sr-only"></span></div>`;
@@ -18,6 +19,7 @@ export function paintStaminaOrb(orb, values) {
   orb.dataset.manaRing = String(model.ring);
   orb.setAttribute('aria-label', model.label);
   orb.querySelector('.sp-v').textContent = String(model.current);
+  if (paintFooterOrb(orb, model, urls)) return;
   const image = (id, x, y, size) => {
     const l = staminaOrb.layers[id];
     if (!l.visible) return '';

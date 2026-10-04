@@ -6366,13 +6366,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "formation.positioning.workbench",
-    "extends": "",
-    "short": "Positioning and sizing",
-    "full": "",
-    "tip": ""
-  },
-  {
     "id": "formation.layout.saveFailed",
     "extends": "",
     "short": "The layout could not be saved. Your preview is still available; try applying again.",
