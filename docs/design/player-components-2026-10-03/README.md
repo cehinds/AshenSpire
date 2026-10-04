@@ -46,7 +46,7 @@ The original SVG source is **build-collection.py**. Standalone SVG image files c
 - **CREDITS.md**, **SOURCE-CREDITS.md**, **fonts/OFL.txt**: provenance and retained source licenses.
 - **SHA256SUMS.txt**: the explicit owned package inventory and checksums.
 
-The ZIP beside this folder contains the complete catalog, references, PNG masters, game-facing components, recipes, fonts, licenses and verification helpers. It is portable; displaying the delivered assets does not require repository files or network access. Rebuilding inherited sources with **build-collection.py** requires the checked-in sibling first kit and canonical repository sources. Normal delivery verification works standalone.
+The ZIP beside this folder contains the complete catalog, references, PNG masters, game-facing components, recipes, fonts, licenses and verification helpers. It is portable; displaying the delivered assets does not require repository files or network access. Rebuilding inherited sources with **build-collection.py** requires the checked-in sibling first kit. The eight additional canonical copies came from source snapshot `fb82c00fd2cfd6122ddd94bf92a5a6678a34bf56`; now that runtime art is external, the helper retains those hash-verified delivered copies if the old repository paths are absent. It does not silently substitute newer external art. Normal delivery verification works standalone.
 
 ## Verification and rebuild
 

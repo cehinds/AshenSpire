@@ -22,6 +22,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 def adopt():
+    previous = json.loads((ROOT/'manifest.json').read_text(encoding='utf-8')) if (ROOT/'manifest.json').is_file() else {'assets':[]}
     source = json.loads((BASE / 'manifest.json').read_text(encoding='utf-8'))
     for a in source['assets']:
         dest = 'assets/reused/' + a['file']
@@ -48,8 +49,15 @@ def adopt():
              'assets/relics/starstoneShard.webp']
     for path in extra:
         p = REPO/path
-        if not p.is_file():raise ValueError('Missing canonical object '+path)
         dest = 'assets/canonical-extra/'+p.name
+        if not p.is_file():
+            # Runtime art now lives in the external art repository. Preserve the
+            # delivered historical source snapshot rather than silently rebind it.
+            record=next((a for a in previous['assets'] if a.get('source')==path and a.get('origin')=='unchanged-canonical-repository-copy'),None)
+            if not record or not (ROOT/dest).is_file() or sha(ROOT/dest)!=record['sha256']:
+                raise ValueError('Missing canonical source and verified snapshot '+path)
+            ASSETS.append(record)
+            continue
         (ROOT/dest).parent.mkdir(parents=True,exist_ok=True)
         shutil.copyfile(p,ROOT/dest)
         with Image.open(p) as im:w,h=im.size
@@ -206,6 +214,7 @@ def run():
     generated()
     json_save('manifest.json',{'schema':1,'purpose':'Reusable production art layers decomposed from all twelve concept boards',
                              'runtimeIntegrated':False,'assets':ASSETS,
+                             'canonicalSourceSnapshot':'fb82c00fd2cfd6122ddd94bf92a5a6678a34bf56',
                              'fonts':[{'file':'fonts/'+p.name,'sha256':sha(p)} for p in sorted((ROOT/'fonts').glob('*.woff2'))],
                              'recipes':'screen-recipes.json','coverage':'breakdown.json'})
     print('Artwork:',len(ASSETS),'new SVG:',len([a for a in ASSETS if a['kind']=='component']),

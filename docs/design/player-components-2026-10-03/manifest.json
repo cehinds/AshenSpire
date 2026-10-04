@@ -4662,5 +4662,6 @@
     }
   ],
   "recipes": "screen-recipes.json",
-  "coverage": "breakdown.json"
+  "coverage": "breakdown.json",
+  "canonicalSourceSnapshot": "fb82c00fd2cfd6122ddd94bf92a5a6678a34bf56"
 }
