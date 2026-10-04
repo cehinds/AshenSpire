@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1573",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "A clearer resource orb and more skyline",
+    "detail": "The stamina number sits centered above its SP label with clear separation, and the battlefield ground recedes to show more of the skyline while keeping combatants grounded.",
+    "build": "0.7.1.892",
+    "pullRequest": 1573,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1573"
+  },
+  {
     "id": "pr-1570",
     "date": "2026-10-03",
     "group": "2026-10-03",
