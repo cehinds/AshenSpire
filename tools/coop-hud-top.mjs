@@ -722,14 +722,16 @@ async function main(args) {
   let clean = 0;
   try {
     await cdp.ready;
-    for (const vp of VIEWPORTS) {
-      const label = `${vp.width}x${vp.height}`;
+    const cases = VIEWPORTS.flatMap(vp => [true, false].map(manaRing => ({ ...vp, manaRing })));
+    for (const [index, vp] of cases.entries()) {
+      const label = `${vp.width}x${vp.height}-${vp.manaRing ? 'ring' : 'bars'}`;
+      const shotSettings = encodeURIComponent(JSON.stringify({ manaRing: vp.manaRing }));
       const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
       await cdp.send('Page.enable', {}, sessionId);
       await cdp.send('Runtime.enable', {}, sessionId);
       await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.width, height: vp.height, deviceScaleFactor: 1, mobile: vp.width < 600 }, sessionId);
-      await cdp.send('Page.navigate', { url: `${base}?shot=coop` }, sessionId);
+      await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSettings=${shotSettings}` }, sessionId);
       let g = null;
       for (let t = 0; t < 90 && !(g && g.mounted); t++) {
         await wait(500);
@@ -742,7 +744,7 @@ async function main(args) {
         writeFileSync(resolve(shotDir, `coop-hud-top-${label}.png`), Buffer.from(data, 'base64'));
       }
       // The reference: solo combat at the same viewport, the same door.
-      await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, sessionId);
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, sessionId);
       let soloBar = null;
       for (let t = 0; t < 90 && !(soloBar && soloBar.mounted && soloBar.row && soloBar.geometry); t++) {
         await wait(500);
@@ -759,7 +761,7 @@ async function main(args) {
       console.log(`  ${bad.length ? '✗' : '✓'} ${label}: hud-top ${g?.hudTop?.display ?? '?'}, ${g?.parts?.length ?? 0} parts, ${g?.bars?.length ?? 0} bars; `
         + `bottom bar ${(coopBar?.controls || []).map((c) => c.role).join('/') || 'none'} (${coopBar?.arrangement ?? '?'})${bad.length ? '' : ', matches solo, no overlap/clip/overflow'}`);
       if (process.env.COOP_HUD_DEBUG) console.log(JSON.stringify({ g, coopBar, soloBar }, null, 1));
-      if (vp === VIEWPORTS[0]) {
+      if (index === 0) {
         const seatBad = [...await orbProbe(cdp, sessionId, base),
           ...await seatSwitchProbe(cdp, sessionId, base),
           ...await repeatOpenProbe(cdp, sessionId, base),
@@ -777,7 +779,7 @@ async function main(args) {
   }
   for (const f of failures) console.error(`  ${f}`);
   console.log(failures.length ? `  ${failures.length} failure(s)` : '  no overlap, clipping, lost part, two-row compact band, battlefield spill or horizontal overflow; the bottom bar is solo\'s');
-  console.log(`coop-hud-top: ${failures.length ? 'RED' : 'GREEN'} (${clean}/${VIEWPORTS.length})`);
+  console.log(`coop-hud-top: ${failures.length ? 'RED' : 'GREEN'} (${clean}/${VIEWPORTS.length * 2})`);
   return failures.length ? 1 : 0;
 }
 
