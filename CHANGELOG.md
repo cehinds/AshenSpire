@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
+- **More reusable scenes and foreground props** ([#1599](https://github.com/cehinds/AshenSpire/pull/1599), `0.7.1.916`). The player artwork collection adds five lore-grounded locations in separate desktop and mobile compositions, plus six transparent props including both Second Cairn sword states. Its 316 components include unchanged PNG masters, WebP exports, exact prompts and responsive layer recipes for game integration. Live game artwork bindings are unchanged.
+
 - **Reset all sits last under Interface** ([#1592](https://github.com/cehinds/AshenSpire/pull/1592), `0.7.1.915`). The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.
 
 - **Keep settings ordering checks working after Reset all** ([#1594](https://github.com/cehinds/AshenSpire/pull/1594), `0.7.1.913`). The fullscreen ordering regression fixture now follows the reset row's current source location. Its intentional bad ordering and detection assertions remain unchanged.
