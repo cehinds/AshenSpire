@@ -10,8 +10,10 @@ import { MARKET_ADDITIONS } from '../../model/marketStock.js';
 // saved stock and the existing purchase plans into plain facts and asks this
 // file how to present them.
 
-/** The rail, in order. `sell` exists only while the player's toggle is on. */
-export const SHOP_CATEGORIES = Object.freeze(['cards', 'armaments', 'weaponArts', 'relics', 'flasks', 'services', 'sell']);
+/** The rail, in order. Direct card purchases are retired; books teach cards.
+ * Legacy card stock remains serialized for save and seeded-stock compatibility.
+ * `sell` exists only while the player's toggle is on. */
+export const SHOP_CATEGORIES = Object.freeze(['armaments', 'relics', 'flasks', 'services', 'sell']);
 
 /**
  * The rail this visit shows. `offered` is the set of offering ids the visit

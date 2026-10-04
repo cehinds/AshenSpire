@@ -4,7 +4,18 @@ import {
   SHOP_CATEGORIES, shopCategories, shopCategoryStatus, offerRefs, resolveShopSelection,
   offerAvailability, shopFooterActions, shopWorkspaceLayout,
 } from '../src/ui/models/ShopWorkspaceModel.js';
+
 import { wireframeUi } from '../src/content/wireframeUi.js';
+
+test('the merchant never exposes direct card sales, including saved visits', () => {
+  for (const offered of [null, ['cards', 'weaponArts', 'armaments', 'skillBooks'], new Set(['cards', 'weaponArts'])]) {
+    const categories = shopCategories({ offered });
+    assert.ok(!categories.includes('cards'));
+    assert.ok(!categories.includes('weaponArts'));
+  }
+  assert.ok(shopCategories({ offered: ['skillBooks', 'armaments'] }).includes('skillBooks'));
+  assert.ok(shopCategories({ offered: ['skillBooks', 'armaments'] }).includes('armaments'));
+});
 
 test('the rail holds every shelf in order, and SELL only while its toggle is on', () => {
   assert.deepEqual([...shopCategories({ sellOn: true })], [...SHOP_CATEGORIES]);

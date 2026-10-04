@@ -73,6 +73,8 @@ Merchant buy, sell and service shelves override the track layout with
 `merchant-offer`: full-width artwork/details/action rows sharing the book
 shelf's spacing tokens. Native card faces and inspection remain in the artwork
 column; complete descriptions and explicit actions sit alongside them.
+Direct Cards and loose Weapon Arts purchases are absent from the merchant,
+including saved visits. Books, armaments, relics, supplies and services remain.
 
 `skill-book-offer` is the market's full-width `[book | details | Buy]` row.
 `src/ui/components/skillBookOffer.js` renders live consumable copy and price;

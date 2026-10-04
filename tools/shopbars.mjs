@@ -18,14 +18,14 @@
 // WHAT IT CHECKS, per shape (390x844 and 1200x730), through the real boot:
 //   S1 RAIL      exactly the declared categories are drawn, BY KEY, each
 //                item's label AND status with rects on the glass. No stray.
-//   S2 ARRIVAL   CARDS is the selected category — its shelf on the glass WITH
+//   S2 ARRIVAL   RELICS is the selected category — its shelf on the glass WITH
 //                AREA — and every other shelf has no painted box.
-//   S3 SWITCH    tapping RELICS shows relics and hides cards; tapping it
+//   S3 SWITCH    tapping ARMAMENTS shows armaments and hides relics; tapping it
 //                again keeps it. The rail never folds the pane away.
 //   S4 PLACE     buying a flask (select the tile, then the footer's Buy and
 //                its review beat) re-renders the screen; FLASKS must still be
 //                the selected category and its status count must move 2 -> 1.
-//                The shop that snaps back to CARDS on every purchase is the
+//                The shop that snaps back to RELICS on every purchase is the
 //                defect this sentence exists to catch.
 //   S5 SELL      the sell flow, driven whole through the second-beat control
 //                the machinery draws on the footer: cinders rise by EXACTLY
@@ -194,7 +194,7 @@ const SMITH_READ = `(() => {
 // The roster, a CONTRACT like creationbrief's: a category that stops being
 // drawn is red by name, a category that appears unnamed is red by name. The
 // Smith's services live on SERVICES, so no rail item is a roll any more.
-const CATEGORIES = ['cards', 'armaments', 'weaponArts', 'relics', 'flasks', 'services', 'sell'];
+const CATEGORIES = ['armaments', 'relics', 'flasks', 'services', 'sell'];
 
 const findings = [];
 let checks = 0;
@@ -219,15 +219,19 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // the same asymmetry creationbrief documents at its ON_GLASS.
 const READ = `(() => {
   const area = (el) => !!el && [...el.getClientRects()].some((r) => r.width > 0 && r.height > 0);
-  const items = [...document.querySelectorAll('.shop-rail [data-shop-category]')];
+  const items = [...document.querySelectorAll('.merchant-workspace [data-shop-category]')];
   const shelfOf = { cards: '#shop-cards', armaments: '#shop-armaments', weaponArts: '#shop-weapon-arts',
     relics: '#shop-relics', flasks: '#shop-flasks', services: '[data-shop-shelf="services"]', sell: '#shop-sell' };
-  const selected = items.find((el) => el.getAttribute('aria-selected') === 'true');
+  const selected = items.find((el) => el.getAttribute('aria-current') === 'true');
+  const selector = document.querySelector('#shop-cat-select');
+  const native = area(selector);
   return {
+    native,
+    retired: document.querySelectorAll('#shop-cat-cards, #shop-cards, #shop-cat-weaponArts, #shop-weapon-arts').length,
     bars: items.map((el) => ({
       key: el.dataset.shopCategory,
       label: ((el.childNodes[0] || {}).textContent || '').trim(),
-      labelOnGlass: area(el),
+      labelOnGlass: native ? [...selector.options].some(o => o.value === el.dataset.shopCategory && o.textContent.trim()) : area(el),
       valueOnGlass: area(el.querySelector('.as-status')),
       value: ((el.querySelector('.as-status') || {}).textContent || '').trim(),
     })),
@@ -290,7 +294,7 @@ async function main() {
     await cdp.send('Page.navigate', { url: `${base}?shot=shop${settingsQuery(vp.settings)}` }, S);
     // The first mount of the unbundled module route can pass 20 s on a
     // loaded machine (measured 21.4 s, 2026-09-14), so it gets a minute.
-    await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail', 60000);
+    await until(`!!document.querySelector('.merchant-workspace [data-shop-category]')`, 'shop rail', 60000);
     await wait(600);
     // W1 rule 11: a compact frame draws the kit's one [Category ▾] selector
     // above the pane and keeps the rail closed under it (kit/categoryNav.js).
@@ -306,46 +310,47 @@ async function main() {
     const drawn = arrival.bars.map((b) => b.key);
     const missing = CATEGORIES.filter((k) => !drawn.includes(k));
     const stray = drawn.filter((k) => !CATEGORIES.includes(k) && !ADDITIONS.includes(k));
-    const mute = arrival.bars.filter((b) => !b.labelOnGlass || !b.valueOnGlass || b.value === '' || b.label === '');
+    const mute = arrival.bars.filter((b) => !b.labelOnGlass || (!arrival.native && !b.valueOnGlass) || b.value === '' || b.label === '');
+    if (arrival.retired) stray.push('retired card sale controls');
     // With every addition forced out, each must be drawn, in the rail's order:
     // the shelves, then the additions, then services and sell.
     if (vp.settings) {
       for (const k of ADDITIONS) if (!drawn.includes(k)) missing.push(k);
     }
-    const expectedOrder = vp.settings ? [...CATEGORIES.slice(0, 5), ...ADDITIONS, ...CATEGORIES.slice(5)] : null;
+    const expectedOrder = vp.settings ? [...CATEGORIES.slice(0, 3), ...ADDITIONS, ...CATEGORIES.slice(3)] : null;
     const misordered = expectedOrder && !missing.length && drawn.join() !== expectedOrder.join();
     if (misordered) stray.push(`order ${drawn.join('>')} (want ${expectedOrder.join('>')})`);
     if (missing.length || stray.length || mute.length) {
       bad('S1', shape, `the rail is not the roster — missing: [${missing.join(', ')}] stray: [${stray.join(', ')}]`
         + `${mute.length ? ` · item(s) with label or status off the glass: ${mute.map((b) => b.key).join(', ')}` : ''}`);
     } else {
-      ok('S1', shape, `${drawn.length} categories by key${vp.settings ? ' (every addition out, in rail order)' : ''}, each label+status on the glass — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
+      ok('S1', shape, `${drawn.length} categories by key${vp.settings ? ' (every addition out, in rail order)' : ''}, each category label accessible and stock status populated — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
     }
 
-    // S2 — arrival: cards selected WITH AREA, every other shelf unpainted.
-    const openWrong = arrival.open !== 'cards';
-    const cardsArea = arrival.shelves.cards && arrival.shelves.cards.area;
-    const leaking = Object.entries(arrival.shelves).filter(([k, v]) => k !== 'cards' && v.area).map(([k]) => k);
-    if (openWrong || !cardsArea || leaking.length) {
-      bad('S2', shape, `arrival is not 'cards shown, the rest away' — selected=${arrival.open}, cards area=${!!cardsArea}`
+    // S2 — arrival: relics selected WITH AREA, every other shelf unpainted.
+    const openWrong = arrival.open !== 'relics';
+    const relicsArea = arrival.shelves.relics && arrival.shelves.relics.area;
+    const leaking = Object.entries(arrival.shelves).filter(([k, v]) => k !== 'relics' && v.area).map(([k]) => k);
+    if (openWrong || !relicsArea || leaking.length) {
+      bad('S2', shape, `arrival is not 'relics shown, the rest away' — selected=${arrival.open}, relics area=${!!relicsArea}`
         + `${leaking.length ? `, painted while not selected: ${leaking.join(', ')}` : ''}`);
     } else {
-      ok('S2', shape, 'CARDS is the selected category with its shelf painted; every other shelf is away');
+      ok('S2', shape, 'RELICS is the selected category with its shelf painted; every other shelf is away');
     }
 
     // S3 — the rail switches, and never folds the pane away.
-    await ev(`document.querySelector('#shop-cat-relics').click(); true`);
+    await ev(`document.querySelector('#shop-cat-armaments').click(); true`);
     await wait(250);
     const afterOpen = await ev(READ);
-    await ev(`document.querySelector('#shop-cat-relics').click(); true`);
+    await ev(`document.querySelector('#shop-cat-armaments').click(); true`);
     await wait(250);
     const afterAgain = await ev(READ);
-    if (afterOpen.open === 'relics' && afterOpen.shelves.relics.area && !afterOpen.shelves.cards.area
-      && afterAgain.open === 'relics' && afterAgain.shelves.relics.area) {
-      ok('S3', shape, 'RELICS shows on a tap (cards leaves the glass) and a second tap keeps it shown');
+    if (afterOpen.open === 'armaments' && afterOpen.shelves.armaments.area && !afterOpen.shelves.relics.area
+      && afterAgain.open === 'armaments' && afterAgain.shelves.armaments.area) {
+      ok('S3', shape, 'ARMAMENTS shows on a tap (relics leaves the glass) and a second tap keeps it shown');
     } else {
-      bad('S3', shape, `the rail did not switch and hold — first tap: selected=${afterOpen.open}, relics area=${afterOpen.shelves.relics.area}, `
-        + `cards area=${afterOpen.shelves.cards.area}; second tap: selected=${afterAgain.open}, relics area=${afterAgain.shelves.relics.area}`);
+      bad('S3', shape, `the rail did not switch and hold — first tap: selected=${afterOpen.open}, armaments area=${afterOpen.shelves.armaments.area}, `
+        + `relics area=${afterOpen.shelves.relics.area}; second tap: selected=${afterAgain.open}, armaments area=${afterAgain.shelves.armaments.area}`);
     }
 
     // S4 — the purchase keeps the player's place.

@@ -20,12 +20,15 @@ const open = async (query = '') => {
 };
 const category = async (key) => {
   if (await page.locator('#shop-cat-select').isVisible()) {
-    await page.locator('#shop-cat-select').click();
+    await page.locator('#shop-cat-select').selectOption(key);
+  } else {
+    await page.locator(`#shop-cat-${key}`).click();
   }
-  await page.locator(`#shop-cat-${key}`).click();
 };
 try {
   await open();
+  assert.equal(await page.locator('#shop-cat-cards, #shop-cards, #shop-cat-weaponArts, #shop-weapon-arts').count(), 0, 'no direct card sales, even when legacy stock exists');
+  assert.ok(await page.evaluate(() => merchantPreview.run.shopStock.cards.length > 0 && merchantPreview.run.shopStock.weaponArts.length > 0), 'fixture retains legacy card stock');
   const keys = await page.locator('[data-shop-category]').evaluateAll(nodes => nodes.map(node => node.dataset.shopCategory));
   const geometry = [];
   for (const width of [1440, 593, 390, 320]) {
@@ -52,16 +55,19 @@ try {
   }
   await page.setViewportSize({ width: 1440, height: 960 });
   await open();
-  const before = await page.evaluate(() => ({ cinders: merchantPreview.run.cinders, cards: merchantPreview.run.deck.length, cost: merchantPreview.run.shopStock.cards[1].cost, stock: merchantPreview.run.shopStock.cards.length }));
-  await page.locator('#shop-cards .merchant-offer-action').nth(1).click();
+  const legacyStock = await page.evaluate(() => JSON.stringify([merchantPreview.run.shopStock.cards, merchantPreview.run.shopStock.weaponArts]));
+  const before = await page.evaluate(() => ({ cinders: merchantPreview.run.cinders, relics: merchantPreview.run.relics.length, cost: merchantPreview.run.shopStock.relics[0].cost, stock: merchantPreview.run.shopStock.relics.length }));
+  await page.locator('#shop-relics .merchant-offer-action').first().click();
   await page.locator('.confirmation-modal').waitFor();
   assert.equal(await page.locator('.confirmation-modal').count(), 1);
   await page.locator('.confirmation-cancel').click();
   assert.equal(await page.evaluate(() => merchantPreview.run.cinders), before.cinders);
-  await page.locator('#shop-cards .merchant-offer-action').nth(1).focus();
+  await page.locator('#shop-relics .merchant-offer-action').first().focus();
   await page.keyboard.press('Enter');
   await page.locator('.confirmation-confirm').click();
-  assert.deepEqual(await page.evaluate(() => ({ cinders: merchantPreview.run.cinders, cards: merchantPreview.run.deck.length, stock: merchantPreview.run.shopStock.cards.length })), { cinders: before.cinders - before.cost, cards: before.cards + 1, stock: before.stock - 1 });
+  assert.deepEqual(await page.evaluate(() => ({ cinders: merchantPreview.run.cinders, relics: merchantPreview.run.relics.length, stock: merchantPreview.run.shopStock.relics.length })), { cinders: before.cinders - before.cost, relics: before.relics + 1, stock: before.stock - 1 });
+  assert.equal(await page.evaluate(() => JSON.stringify([merchantPreview.run.shopStock.cards, merchantPreview.run.shopStock.weaponArts])), legacyStock, 'legacy card stock is not rewritten or rerolled');
+  await open();
   await category('armaments');
   await page.locator('#shop-armaments .merchant-offer-action:enabled').first().click();
   assert.equal(await page.locator('[role="dialog"]:visible').count(), 1, 'one armament inspection');
@@ -80,7 +86,7 @@ try {
   await page.locator('#remove-opt .merchant-offer-action').click();
   await page.locator('#shop-remove .card').first().waitFor({ state: 'visible' });
   await open('?cinders=0');
-  assert.equal(await page.locator('#shop-cards .merchant-offer-action:enabled').count(), 0, 'unaffordable purchases disabled');
+  assert.equal(await page.locator('#shop-relics .merchant-offer-action:enabled').count(), 0, 'unaffordable purchases disabled');
   assert.equal(errors.length, 0, errors.join('\n'));
   writeFileSync(resolve(output, 'browser-results.json'), JSON.stringify({ passed: true, geometry, checks: ['all categories at four widths', 'uniform rows', '44px actions', 'cancel', 'keyboard purchase exactly once', 'stock and purse', 'armament inspection', 'book sale', 'smith focus', 'remove service', 'insufficient funds', 'no browser or request errors'] }, null, 2));
   console.log('merchant-offers-browser: PASS');
