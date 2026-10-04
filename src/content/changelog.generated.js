@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1570",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Grounded combat with a compact footer",
+    "detail": "Combatants stand on the painted floor, and the smaller bottom controls leave the illustrated hand lower on screen. The artwork stays proportional and adjacent atlas scenes cannot bleed into the backdrop.",
+    "build": "0.7.1.889",
+    "pullRequest": 1570,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1570"
+  },
+  {
     "id": "pr-1567",
     "date": "2026-10-03",
     "group": "2026-10-03",

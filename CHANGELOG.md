@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Grounded combat with a compact footer** ([#1570](https://github.com/cehinds/AshenSpire/pull/1570), `0.7.1.889`). Combatants stand on the painted floor, and the smaller bottom controls leave the illustrated hand lower on screen. The artwork stays proportional and adjacent atlas scenes cannot bleed into the backdrop.
+
 - **Illustrated combat keeps its breathing room** ([#1567](https://github.com/cehinds/AshenSpire/pull/1567), `0.7.1.886`). The transparent HP/relic HUD keeps combatants clear, card corners stay above the current footer, and potion minis and painted controls remain within their bounds. Embedded menu icons and build-failure diagnostics now work in every build mode.
 
 - **Illustrated cards and scenery join the main game** ([#1565](https://github.com/cehinds/AshenSpire/pull/1565), `0.7.1.883`). Cards use editable layered artwork, live centered text and stamina/mana banners, with individual card objects included in builds. Painted scenery and an enlarged transparent HP/relic HUD retain the current footer, Shield/Ward rules, merchant rows and turn confirmation controls.
