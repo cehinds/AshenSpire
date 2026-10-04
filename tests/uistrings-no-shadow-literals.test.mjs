@@ -7,8 +7,8 @@
 // row moved the text until the first repaint and then put it back. Fixing them
 // one thread at a time did not stop the seventh. This sweep does.
 //
-// For every row #1489 added (tests/fixtures/uistrings-migrated-1489.json, plus
-// any row the branch adds over origin/dev when git can say so), it takes the
+// For every frozen migration fixture (including #1489, #1535 and #1578), plus
+// any row the branch adds over origin/dev when git can say so, it takes the
 // short, full and tip text and looks for that same text as a string, template
 // or markup literal anywhere in src/ui. A hit is a control that can paint the
 // old words. It is either routed through t()/tFull()/tTip(), or it is listed in
@@ -30,10 +30,12 @@ import { uiStrings } from '../src/content/generated/uiStrings.js';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
+const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
+const permanentMigratedIds = () => new Set([1489, 1535, 1578].flatMap(frozenMigrationIds));
+
 function migratedIds() {
-  const ids = new Set(JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/uistrings-migrated-1489.json'), 'utf8')).ids);
-  // Keep the Reading Desk's new rows protected after its branch merges too.
-  for (const id of JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/uistrings-migrated-1535.json'), 'utf8')).ids) ids.add(id);
+  // Merged rows must remain protected when origin/dev advances or is absent.
+  const ids = permanentMigratedIds();
   // Rows a branch adds after #1489 are swept too while they are under review.
   // A checkout without origin/dev (a tarball, a shallow clone) keeps the frozen list.
   try {
@@ -108,8 +110,7 @@ const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((entry) 
 const reEscape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** text → the row ids and forms that author it. A {token} row contributes the text before its first token. */
-function migratedTexts() {
-  const ids = migratedIds();
+function migratedTexts(ids = migratedIds()) {
   const texts = new Map();
   for (const row of uiStrings) {
     if (!ids.has(row.id)) continue;
@@ -147,6 +148,15 @@ function sweep() {
 
 test('the sweep has rows to sweep', () => {
   assert.ok(migratedTexts().size > 100, 'the migrated-row list came back nearly empty');
+});
+
+test('all 25 compact Armament rows remain covered independently of origin/dev', () => {
+  const frozen = frozenMigrationIds(1578);
+  assert.equal(new Set(frozen).size, 25, 'retain every authored Armament row after promotion');
+  for (const id of frozen) assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
+  const permanent = migratedTexts(permanentMigratedIds());
+  assert.ok(permanent.get('Move to')?.includes('armoury.action.moveTo.short'),
+    'the semantic formation allowance must still be checked after the branch delta becomes empty');
 });
 
 test('no src/ui literal repaints a row #1489 moved into uiStrings.csv', () => {

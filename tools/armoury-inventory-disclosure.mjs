@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { wireframeUi } from '../src/content/wireframeUi.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const TAKE_SHOTS = process.argv.includes('--shots');
@@ -70,13 +71,13 @@ async function main() {
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || 'page evaluation failed');
     return result.result.value;
   };
-  const until = async (expression, label) => {
-    const deadline = Date.now() + 8000;
+  const until = async (expression, label, timeoutMs = 8000) => {
+    const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (await evaluate(expression)) return;
       await wait(50);
     }
-    throw new Error(`timed out waiting for ${label}`);
+    throw new Error(`timed out waiting for ${label}: ${JSON.stringify(await evaluate('({url:location.href,ready:document.readyState,text:document.body.innerText.slice(0,1200)})'))}`);
   };
   const screenshot = async (name) => {
     if (!TAKE_SHOTS) return;
@@ -94,7 +95,7 @@ async function main() {
       width: 1200, height: 730, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
     await cdp.send('Page.navigate', { url: appUrl }, sessionId);
-    await until("!!document.querySelector('#open-armoury')", 'map Armoury button');
+    await until("!!document.querySelector('#open-armoury')", 'map Armoury button', 60000);
     await evaluate("document.querySelector('#open-armoury').click()");
     await until("!!document.querySelector('.armoury')", 'Armoury');
 
@@ -125,7 +126,7 @@ async function main() {
       check(opened.categories.includes('Armour') && opened.categories.some(category => ['Weapon', 'Shield', 'Staff'].includes(category)) && opened.categories.includes('Relic'),
         `Inventory covers armour, armaments and relics (${opened.categories.join(', ')})`);
       const firstToggle = await evaluate(`(() => {
-        const face = document.querySelector('.armoury-inventory .disc-face');
+        const face = document.querySelector('.armoury-inventory [data-face="armament:straightSword"]');
         if (!face) return null;
         const rect = face.getBoundingClientRect();
         const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
@@ -134,25 +135,28 @@ async function main() {
         }));
         event('pointerdown'); event('pointerup'); event('click', MouseEvent);
         const reveal = document.querySelector('.armoury-inventory .disc-reveal:not([hidden])');
-        const model = reveal?.querySelector('.inventory-model');
+        const detail = reveal?.querySelector('.inventory-detail:not([hidden])');
+        const model = detail?.querySelector('.equipment-poker-inspection .equipment-poker-card');
         const revealRect = reveal?.getBoundingClientRect();
         const modelRect = model?.getBoundingClientRect();
         return {
           open: face.getAttribute('aria-expanded'),
           panels: document.querySelectorAll('.armoury-inventory .disc-face[aria-expanded="true"]').length,
           model: !!model,
-          information: !!document.querySelector('.armoury-inventory .inventory-information'),
-          comparisonAnchor: !!reveal?.querySelector('.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]'),
-          modelShare: revealRect?.width && modelRect?.width ? modelRect.width / revealRect.width : null,
+          information: !!detail?.querySelector('.inventory-information'),
+          destinations: detail?.querySelectorAll('.armament-destination').length || 0,
+          namedUnequip: /^Unequip from /i.test(detail?.querySelector('button[data-act=unequip]')?.textContent || ''),
+          fitted: !!modelRect && modelRect.width > 0 && modelRect.height > 0
+            && modelRect.left >= revealRect.left - 1 && modelRect.right <= revealRect.right + 1,
         };
       })()`);
       check(firstToggle?.open === 'true' && firstToggle.panels === 1 && firstToggle.model && firstToggle.information,
-        'an Inventory item opens one model-and-information panel');
-      check(firstToggle?.comparisonAnchor && firstToggle.modelShare <= 0.22,
-        `expanded equipment Inventory exposes comparison and a narrow model (${firstToggle?.modelShare == null ? 'absent' : `${Math.round(firstToggle.modelShare * 100)}%`})`);
+        'an armament opens one full card-and-information panel on first tap');
+      check(firstToggle?.destinations > 0 && firstToggle.namedUnequip && firstToggle.fitted,
+        `equipped armament fits its complete card, offers destinations and names its Unequip position (${JSON.stringify(firstToggle)})`);
       await screenshot('desktop-inventory-expanded');
       const closed = await evaluate(`(() => {
-        const face = document.querySelector('.armoury-inventory .disc-face');
+        const face = document.querySelector('.armoury-inventory [data-face="armament:straightSword"]');
         if (face) {
           const rect = face.getBoundingClientRect();
           const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
@@ -171,7 +175,7 @@ async function main() {
       const cards = [...document.querySelectorAll('.armoury-card-gallery > .card')];
       return { count: cards.length, page: document.querySelector('.armoury')?.dataset.view,
         noTray: !document.querySelector('.armoury .region-fold'),
-        shaped: cards.every(x => { const r=x.getBoundingClientRect(); return Math.abs(r.width/r.height-5/7)<0.03; }) };
+        shaped: cards.every(x => { const r=x.getBoundingClientRect(); return Math.abs(r.width/r.height-${wireframeUi.card.ratio})<0.03; }) };
     })()`);
     check(gallery.page === 'cards' && gallery.count > 0 && gallery.noTray, 'Cards tab exposes the deck without opening a tray');
     check(gallery.shaped, 'deck cards preserve their portrait proportions');
@@ -179,7 +183,7 @@ async function main() {
     await evaluate(`document.querySelector('[data-surface="armouryView"] [data-member="rack"]').click()`);
 
     await evaluate(`(() => {
-      document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action')?.click();
+      document.querySelector('[data-slot-position="rightHand:0"] .armament-replace')?.click();
     })()`);
     await until("!!document.querySelector('.armoury-inventory .ep-list .disc-face')", 'filtered Inventory item cards');
     const collapsedCards = await evaluate(`(() => ({
@@ -212,64 +216,51 @@ async function main() {
         open: face.getAttribute('aria-expanded'),
         actions: visible.length,
         actionInsideReveal: visible.length === 1 && !!visible[0].closest('.disc-reveal'),
-        instruction: document.querySelector('.armoury-inventory .inventory-detail')?.getAttribute('aria-label') || '',
-        focusable: document.querySelector('.armoury-inventory .inventory-detail')?.dataset.focusable || '',
-        role: document.querySelector('.armoury-inventory .inventory-detail')?.getAttribute('role') || '',
+        instruction: document.querySelector('.armoury-inventory .inventory-detail:not([hidden])')?.getAttribute('aria-label') || '',
+        focusable: document.querySelector('.armoury-inventory .inventory-detail:not([hidden])')?.dataset.focusable || '',
+        role: document.querySelector('.armoury-inventory .inventory-detail:not([hidden])')?.getAttribute('role') || '',
       };
     })()`);
     check(expandedCard.open === 'true' && expandedCard.actions === 1 && expandedCard.actionInsideReveal,
       `expanded item card reveals exactly one in-card action (${expandedCard.actions})`);
-    check(/press and hold.+preview comparison/i.test(expandedCard.instruction)
-      && !/hover or focus/i.test(expandedCard.instruction)
-      && /(press and hold|activate this card) to (equip|unequip)/i.test(expandedCard.instruction),
-    `an action-owning card distinguishes comparison access from its equipment action (${JSON.stringify(expandedCard.instruction)})`);
-    check(expandedCard.focusable === 'true' && expandedCard.role === 'button',
-      'the expanded whole-card action participates in the shared keyboard/gamepad focus cursor');
-    const wholeCardFill = await evaluate(`(async () => {
-      const source = document.querySelector('.armoury-inventory .inventory-detail');
+    check(/comparison shown in this card/i.test(expandedCard.instruction)
+      && !/press and hold|activate this card/i.test(expandedCard.instruction),
+    `the armament describes its inline comparison without advertising a whole-card action (${JSON.stringify(expandedCard.instruction)})`);
+    check(expandedCard.role !== 'button' && expandedCard.focusable !== 'true',
+      'read-only armament detail does not masquerade as a whole-card action');
+    const readOnlyHold = await evaluate(`(async () => {
+      const source = document.querySelector('.armoury-inventory .inventory-detail:not([hidden])');
       const reveal = source?.closest('.disc-reveal');
-      // W1n: the reveal stands in the detail column beside the collection, so
-      // the face is found in the list rather than among the reveal's siblings.
-      const face = [...(source?.closest('.ep-list')?.querySelectorAll('.disc-face') || [])]
-        .find((candidate) => candidate.dataset?.face === source?.dataset.inventoryItem)
-        ?.querySelector('.inventory-face');
       const rect = source?.getBoundingClientRect();
       if (!source || !rect) return null;
+      const before = document.querySelector('.armoury').textContent;
       const pointer = (type) => source.dispatchEvent(new PointerEvent(type, {
-        bubbles: true, cancelable: true, pointerId: 320, pointerType: 'touch', button: 0,
+        bubbles: true, cancelable: true, isPrimary: true, pointerId: 320, pointerType: 'touch', button: 0,
         clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
       }));
       pointer('pointerdown');
-      await new Promise((done) => setTimeout(done, 260));
-      const result = {
-        delegated: source.dataset.holdFeedback === 'delegated',
-        faceProgress: Number(face?.dataset.holdProgress || 0),
-        revealProgress: Number(reveal?.dataset.holdProgress || 0),
-        faceFill: getComputedStyle(face).backgroundImage,
-        revealFill: getComputedStyle(reveal).backgroundImage,
-        actionTag: source.querySelector('[data-act]')?.tagName || '',
-        actionButtons: source.querySelectorAll('button[data-act]').length,
-        comparisonPreview: source.dataset.comparisonPreview || '',
-        comparisonVisible: !!document.querySelector('#tooltip')
-          && getComputedStyle(document.querySelector('#tooltip')).display !== 'none',
-      };
+      await new Promise((done) => setTimeout(done, 1100));
       pointer('pointerup');
-      await new Promise((done) => setTimeout(done, 0));
-      result.comparisonAfterRelease = !!document.querySelector('#tooltip')
-        && getComputedStyle(document.querySelector('#tooltip')).display !== 'none';
-      return result;
+      const comparison = source.querySelector('[data-ui-component="equipment-comparison"][data-ui-variant="inline"]');
+      const action = source.querySelector('button[data-act]');
+      return {
+        unchanged: document.querySelector('.armoury').textContent === before,
+        sameReveal: source.isConnected && !reveal.hidden,
+        holdMs: source.dataset.holdMs || '',
+        holdProgress: Number(reveal.dataset.holdProgress || 0),
+        actionTag: action?.tagName || '',
+        actionButtons: source.querySelectorAll('button[data-act]').length,
+        focusableAction: !!action && action.tabIndex >= 0,
+        comparisonVisible: !!comparison && comparison.getBoundingClientRect().height > 0,
+      };
     })()`);
-    check(wholeCardFill?.delegated
-      && wholeCardFill.faceProgress > 0 && wholeCardFill.revealProgress > 0
-      && /linear-gradient/i.test(wholeCardFill.faceFill)
-      && /linear-gradient/i.test(wholeCardFill.revealFill),
-    `an expanded hold fills its title and reveal as one card (${JSON.stringify(wholeCardFill)})`);
-    check(wholeCardFill?.actionTag === 'SPAN' && wholeCardFill.actionButtons === 0,
-      `the expanded whole-card hold has one action surface, not a second button (${JSON.stringify(wholeCardFill)})`);
-    check(wholeCardFill?.comparisonPreview === 'open' && wholeCardFill.comparisonVisible
-      && !wholeCardFill.comparisonAfterRelease,
-    `a sustained hold previews comparison and early release closes it (${JSON.stringify(wholeCardFill)})`);
-    await evaluate(`document.querySelector('.armoury-inventory .inventory-detail')
+    check(readOnlyHold?.unchanged && readOnlyHold.sameReveal && !readOnlyHold.holdMs && readOnlyHold.holdProgress === 0,
+      `a sustained hold remains read-only without a mutation progress fill (${JSON.stringify(readOnlyHold)})`);
+    check(readOnlyHold?.actionTag === 'BUTTON' && readOnlyHold.actionButtons === 1 && readOnlyHold.focusableAction,
+      'one explicit keyboard-focusable button owns the equipment action');
+    check(readOnlyHold?.comparisonVisible,
+      'comparison remains visible inline after holding and releasing the detail');
+    await evaluate(`document.querySelector('.armoury-inventory .inventory-detail:not([hidden])')
       ?.dispatchEvent(new PointerEvent('pointerenter'))`);
     await wait(650);
     const comparisonTip = await evaluate(`(() => {
@@ -307,7 +298,7 @@ async function main() {
     check(afterRefold === 0, 'refolding the item hides its action again');
 
     // Separate Equipment and Inventory pages have no cross-page drop target.
-    // The Change -> Inventory -> item action path is exercised below, including
+    // The Replace -> Inventory -> explicit item action path is exercised below, including
     // the engine cost and atomic refusal receipts.
 
     if (TAKE_SHOTS) {
@@ -315,12 +306,12 @@ async function main() {
         width: 390, height: 844, deviceScaleFactor: 1, mobile: false,
       }, sessionId);
       await cdp.send('Page.navigate', { url: appUrl }, sessionId);
-      await until("!!document.querySelector('#open-armoury')", 'phone map Armoury button');
+      await until("!!document.querySelector('#open-armoury')", 'phone map Armoury button', 60000);
       await evaluate("document.querySelector('#open-armoury').click()");
       await evaluate(`document.querySelector('[data-surface="armouryView"] [data-member="hybrid"]').click()`);
       await until("!!document.querySelector('.armoury-inventory')", 'phone Inventory');
       await evaluate(`(() => {
-        const face = document.querySelector('.armoury-inventory .disc-face');
+        const face = document.querySelector('.armoury-inventory [data-face="armament:straightSword"]');
         if (face) {
           const rect = face.getBoundingClientRect();
           const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
@@ -338,8 +329,8 @@ async function main() {
         return {
           noHorizontalOverflow: panel ? panel.scrollWidth <= panel.clientWidth + 1 : false,
           revealVisible: !!rect && rect.width > 0 && rect.height > 0,
-          model: !!reveal?.querySelector('.inventory-model'),
-          information: !!reveal?.querySelector('.inventory-information'),
+          model: !!reveal?.querySelector('.inventory-detail:not([hidden]) .equipment-poker-inspection .equipment-poker-card'),
+          information: !!reveal?.querySelector('.inventory-detail:not([hidden]) .inventory-information'),
         };
       })()`);
       check(phone.noHorizontalOverflow, 'phone Armoury has no horizontal overflow');
@@ -386,9 +377,8 @@ async function main() {
     })()`);
     if (!SHIPPED) await until("!!document.querySelector('.armoury')", 'full-Inventory Armoury fixture');
     if (!SHIPPED) await evaluate(`(() => {
-      document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action')?.click();
-      const face = [...document.querySelectorAll('.ep-list .disc-face')]
-        .find((element) => element.querySelector('.ec-name')?.textContent === 'Straight Sword');
+      document.querySelector('[data-slot-position="rightHand:0"] .armament-replace')?.click();
+      const face = document.querySelector('.ep-list [data-face="armament:straightSword"]');
       if (face) {
         const rect = face.getBoundingClientRect();
         const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
@@ -399,35 +389,39 @@ async function main() {
       }
     })()`);
     const holdOffComparison = SHIPPED ? null : await evaluate(`(async () => {
-      const source = document.querySelector('.ep-list .inventory-detail');
+      const source = document.querySelector('.ep-list .disc-reveal:not([hidden]) .inventory-detail:not([hidden])');
       const action = source?.querySelector('button[data-act]');
       const rect = source?.getBoundingClientRect();
       if (!source || !rect) return null;
+      const fixture = window.__pr315Fixture;
+      const before = JSON.stringify(fixture.run.loadout);
+      const commitsBefore = fixture.commits;
       const pointer = (type) => source.dispatchEvent(new PointerEvent(type, {
-        bubbles: true, cancelable: true, pointerId: 322, pointerType: 'touch', button: 0,
+        bubbles: true, cancelable: true, isPrimary: true, pointerId: 322, pointerType: 'touch', button: 0,
         clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
       }));
       pointer('pointerdown');
-      await new Promise((done) => setTimeout(done, 210));
-      const tip = document.querySelector('#tooltip[data-tooltip-variant="equipment-comparison"]');
+      await new Promise((done) => setTimeout(done, 1100));
+      const comparison = source.querySelector('[data-ui-component="equipment-comparison"][data-ui-variant="inline"]');
+      pointer('pointerup');
+      await new Promise((done) => setTimeout(done, 0));
       const result = {
         actionButton: action?.tagName || '',
         holdMs: source.dataset.holdMs || '',
-        preview: source.dataset.comparisonPreview || '',
-        visible: !!tip && getComputedStyle(tip).display !== 'none',
+        unchanged: JSON.stringify(fixture.run.loadout) === before && fixture.commits === commitsBefore,
+        visible: !!comparison && comparison.getBoundingClientRect().height > 0,
       };
-      pointer('pointerup');
       return result;
     })()`);
-    if (holdOffComparison) {
-      check(holdOffComparison.actionButton === 'BUTTON' && holdOffComparison.holdMs === '160'
-        && holdOffComparison.preview === 'open' && holdOffComparison.visible,
-      `hold-confirm off keeps an explicit action button and a deliberate comparison hold (${JSON.stringify(holdOffComparison)})`);
+    if (!SHIPPED) {
+      check(holdOffComparison?.actionButton === 'BUTTON' && !holdOffComparison.holdMs
+        && holdOffComparison.unchanged && holdOffComparison.visible,
+      `hold-confirm off keeps an explicit action, inline comparison and read-only holds (${JSON.stringify(holdOffComparison)})`);
     }
     const refusal = SHIPPED ? null : await evaluate(`(() => {
       const fixture = window.__pr315Fixture;
       const before = JSON.stringify(fixture.run.loadout);
-      const action = document.querySelector('.ep-list [data-act=unequip]');
+      const action = document.querySelector('.ep-list .inventory-detail:not([hidden]) [data-act=unequip]');
       const commitsBefore = fixture.commits;
       action?.click();
       return {
@@ -454,6 +448,12 @@ async function main() {
       const registries = createRegistries(contentBundle);
       const run = createRunState({ seed: 0x316, classId: 'reaver', registries });
       run.loadout.storage = ['dagger'];
+      // This fixture exercises a legal combat replacement, so satisfy the authored
+      // candidate minima rather than depending on a class's changing starter stats.
+      const dagger = registries.equipment.armaments.find(piece => piece.id === 'dagger');
+      for (const [id, required] of Object.entries(dagger.requirements?.attributes || {})) {
+        run.attributes[id] = Math.max(run.attributes[id] || 0, required);
+      }
       const combat = createCombat({
         registries,
         rng: createRng(0x316),
@@ -496,21 +496,24 @@ async function main() {
         },
       });
       await new Promise((done) => setTimeout(done, 0));
-      const positionAction = document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action');
+      const positionAction = document.querySelector('[data-slot-position="rightHand:0"] .armament-replace');
       positionAction?.click();
-      const daggerItem = document.querySelector('.ep-list [data-item-id="dagger"]');
-      const daggerFace = daggerItem?.closest('.disc-face') || daggerItem?.querySelector('.disc-face') || daggerItem;
+      // The detail tree also renders item ids; click the disclosure owner itself.
+      const daggerFace = document.querySelector('.ep-list [data-face="armament:dagger"]');
       daggerFace?.click();
       await new Promise((done) => setTimeout(done, 0));
-      const action = document.querySelector('.ep-list .disc-reveal:not([hidden]) button[data-act]');
+      const action = document.querySelector('.ep-list .disc-reveal:not([hidden]) .inventory-detail:not([hidden]) button[data-act]');
       const actionLabel = action?.textContent?.trim() || '';
+      const readOnlySelection = JSON.stringify(combat.loadout) === before;
       action?.click();
       return {
         foundFace: !!daggerFace,
-        foundAction: !!action,
+        foundAction: !!action && !action.disabled,
+        refusal: action?.dataset.refusal || '',
         foundPositionAction: !!positionAction,
         itemIds: [...document.querySelectorAll('.ep-list [data-item-id]')].map((face) => face.dataset.itemId),
         actionLabel,
+        readOnlySelection,
         changed: JSON.stringify(combat.loadout) !== before,
         equipped: combat.loadout.sets.rightHand[0],
         storedOld: combat.loadout.storage.includes('straightSword'),
@@ -521,7 +524,7 @@ async function main() {
       };
     })()`);
     if (combatChange) {
-      check(combatChange.foundFace && (combatChange.foundAction || combatChange.changed),
+      check(combatChange.foundPositionAction && combatChange.foundFace && combatChange.foundAction && combatChange.readOnlySelection,
         `combat Armoury exposes a real Dagger action (${combatChange.foundAction ? JSON.stringify(combatChange.actionLabel) : 'selected-position card action'})`);
       check(combatChange.changed && combatChange.equipped === 'dagger' && combatChange.storedOld,
         `combat Armoury moves Dagger into RH1 and returns Straight Sword to storage (${JSON.stringify(combatChange)})`);
