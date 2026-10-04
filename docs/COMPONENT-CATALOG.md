@@ -67,13 +67,12 @@ than shaving the cards. The three numbers are authored at
 `src/ui/models/CardSizeModel.js` owns the arithmetic
 (`cardShelf`, `cardShelfColumnsAt`, `cardShelfTrackPx`),
 `styles/kit.css` draws it, and `src/ui/components/cardShelf.js` measures each
-shelf so a last row of two is not drawn wider than the four above it. Reuse
-surfaces: the merchant's six shelves, the card-removal grid, and the mount
-service deck list. A tile that holds no card — the SELL shelf's relics and
-flasks — keeps the OptionCard measure instead (`.shop-text-offer`). The
-merchant's offers column is sized from the same model
-(`ShopWorkspaceModel.shopOffersWidthPx`), so the column and the cards standing
-in it cannot disagree about how wide a shelf is.
+shelf so a last row of two is not drawn wider than the four above it. The
+card-removal grid and mount service deck list retain this card-grid layout.
+Merchant buy, sell and service shelves override the track layout with
+`merchant-offer`: full-width artwork/details/action rows sharing the book
+shelf's spacing tokens. Native card faces and inspection remain in the artwork
+column; complete descriptions and explicit actions sit alongside them.
 
 `skill-book-offer` is the market's full-width `[book | details | Buy]` row.
 `src/ui/components/skillBookOffer.js` renders live consumable copy and price;
@@ -135,6 +134,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
 | `skill-book-offer` | `consumablePurchasePlan`, shop `components.bookOffers` | `skillBookOffer.renderSkillBookOffer` | Market | Uniform book sprite, live details and native Buy control. |
+| `merchant-offer` | `ShopWorkspaceModel` offers + shared book-offer tokens | `merchantOffer.arrangeMerchantOffer` + `shop.mountShop` | Merchant buy, sell and service shelves | Equal full-width artwork/details/action rows, with native inspections, confirmations and holds. Actions stack below details on phones; selected action remains in the footer. |
 | `book-art` | `BOOK_ART_PRESETS`, `bookArtRecipe`, `bookArtLayers` | `bookArt.renderBookArt` | Market, Armoury, reading modal, Book Atelier | Painted cover, independently colored leather mask, trim and symbol; three covers, thirty symbol variations and ten authored recipes. |
 | `book-learning` | `skillBookReadPlan`, `bookLessons` | `bookLearning.openBookLearning` | Armoury, library preview | Searchable cross-class lesson choices, XP track selector for universal books, live card preview and atomic Read and learn. Cancelling preserves the book. |
 | `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark and family prompt over River Citadel; activation lights the city, holds for Settings > General > Display > Title screen > Lit city pause, then fades into the layered hall. Title mounts after the fade. |
@@ -245,7 +245,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `equipment-animation-reference` | `equipmentAnimationForLoadout + equipmentAnimations.json` | `paintedOutfits.createPaintedStage + assets.playerSprite` | Solo + co-op + Armoury + conversation + portrait | Derives a presentation set from class, armour, ordered hand weapon groups and optional grip. Named clips provide action and view references; missing bindings retain existing class art. Independent greatsword, sword/shield and unarmed profiles cover all four classes and 35 armor entries, preserving 32 appearances per family. Sword/shield records its authored right-sword/left-shield hands; reversed selectors share that canonical artwork without mirroring. Twin swords add 32 appearances across all 35 entries with a shared profile and optional per-hand item constraints. Only right Straight Sword / left Katana selects these paintings; reversed hands retain existing art. Empty-hand casting and buffs use magic references across all 35 armor entries; ordinary actions retain physical references. The magic gallery preserves all 16 configurable poses. |
 | `touch-flick-practice` | `TouchFlickModel` | `settingsRowHtml + mountFlickPractice` | Accessibility settings + combat hand | Configurable 32–160 CSS-pixel upward flick distance, synchronized field and slider, Reset and harmless practice. Touch, mouse, trackpad and pen share nearest legal target selection on release; selection and Information stay separate. |
 | `settings-choice-row` | settings `ROWS` record (`choices`, `legacyChoices`, `choiceDisabled`) | `settings.settingsRowHtml` | Settings rows | One Settings choice row: a segmented group (three choices or fewer) or a dropdown, from `settingsRowHtml`. A row may disable single choices with `choiceDisabled`: the option or segment is `disabled`/`aria-disabled`, a stored value is kept, and the row's live line says why (Art quality: Light and High in a single file). |
-| `card-shelf` | `CardSizeModel.cardShelf + cardShelfColumnsAt (content/config/ui/components/card.json -> sizing.shelf)` | `cardShelf.wireCardShelf + styles/kit.css .card-shelf` | Merchant shelves (cards, armaments, weapon arts, relics, flasks, sell), card-removal grid, mount service deck list | Row of resting cards: up to four across, every track the same width, floored at a legible minimum and capped at the card resting width. Too narrow for four, it drops a column rather than shaving the cards. |
+| `card-shelf` | `CardSizeModel.cardShelf + cardShelfColumnsAt (content/config/ui/components/card.json -> sizing.shelf)` | `cardShelf.wireCardShelf + styles/kit.css .card-shelf` | Card-removal grid and mount service deck list; merchant offer rows use a full-width override | Row of resting cards: up to four across, every track the same width, floored at a legible minimum and capped at the card resting width. Too narrow for four, it drops a column rather than shaving the cards. |
 | `modal-height-policy` | `measured body overflow` | `modalShell.bindModalDismiss` | All shared dialogs | Standard widths remain independent of height. Overflow promotes the dialog to the long viewport-bounded height; body scrolls while header and footer remain pinned. Promotion remains stable until close. |
 | `card-effect-layers` | `combatEffectPresentation.CARD_EFFECT_LAYERS` | `cardEffectLayers.mountCardEffectLayers / playCardEffectLayers` | Optional accepted card flight | Default OFF: Settings > General > Combat > Animation & effects > Show played card animation. Card flights are independent of caster effects. Payment receipts choose art; cancellation and accessibility preferences suppress playback. |
 | `combatant-effect-layers` | `combatEffectAnchors.COMBAT_EFFECT_ANCHORS / COMBATANT_EFFECT_PLANES` | `combatantEffectLayers.mountCombatantEffectLayers / playCombatantEffectLayers` | Solo + co-op caster effects + art gallery | Pose-specific weapon, shield and hand/staff origins across 16 outfits. Rear and front planes inherit pose scale, facing and movement. Target hit impacts and resource auras remain separate. |
