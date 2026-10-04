@@ -4,7 +4,7 @@ import { combatFormation } from '../models/CombatFormationModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
-import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
+import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
@@ -111,7 +111,9 @@ export function wireBattlefieldStage(field, model) {
         // Reading controls do not change the unselected fitting envelope.
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
     });
-    const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
+    const narrow = document.documentElement.dataset.layout === 'narrow';
+    const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
+      minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 });
     const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
       .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
     for (const actor of actors) {
