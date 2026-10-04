@@ -32,8 +32,13 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1 }, config 
   const span = count ? cardWidth + Math.max(0, count - 1) * step : 0;
   const start = Math.max(inset, (width - span) / 2);
   const middle = (count - 1) / 2;
+  // The rotated outside corners, not just the unrotated face, must clear
+  // the footer. Keep one physical pixel between the fan and that next band.
+  const angle = Math.abs(config.fanAngleDegrees) * Math.PI / 180;
+  const rotatedExtra = Math.max(0, (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2);
+  const bottomLimit = height - cardHeight - (count > 1 ? arc + rotatedExtra : 0) - 1 / zoom;
   return Object.freeze({ cardWidth, cardHeight, capacity, span, start, step, lift,
-    top: Math.max(inset + lift, (height - cardHeight - arc) / 2),
+    top: Math.max(0, Math.min(bottomLimit, Math.max(inset + lift, (height - cardHeight - arc) / 2))),
     cards: Array.from({ length: count }, (_, index) => ({
       x: start + index * step,
       angle: count > 1 ? (index - middle) / Math.max(1, middle) * config.fanAngleDegrees : 0,

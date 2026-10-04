@@ -113,6 +113,13 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
+import { coveragePass, authoredFooterInk, cssPixelCount } from './footer-paint.mjs';
+import { footerLayout } from '../src/content/footerLayout.js';
+import { footerLayoutModel } from '../src/ui/models/FooterLayoutModel.js';
+
+const footerGroups = footerLayoutModel(footerLayout).groups;
+const footerExpected = Object.fromEntries(Object.entries(footerGroups).map(([key, group]) =>
+  [key, group.items.filter(n => n.asset !== 'text').map(n => n.asset)]));
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -143,6 +150,17 @@ if (process.argv.includes('--selftest')) {
     // captures and can report text loss with no covering element.
     extraCopy: ['assets/ui/stamina-orb', 'assets-mobile/ui/stamina-orb', 'assets/ui/footer', 'assets-mobile/ui/footer', 'assets/fonts'],
     plants: [
+      {
+        name: 'painted footer artwork is hidden while its live text survives',
+        edits: [{ file: 'styles/kit.css', append: '.combat-action-row image[data-footer-asset] { opacity:0 !important; }' }],
+        expectRed: /BAD\s+H3 /,
+      },
+      {
+        name: 'painted footer artwork has a broken source while its live text survives',
+        edits: [{ file: 'src/ui/components/footerArt.js', find: 'href="${esc(assetUrl(footerAssets[n.asset]))}"', replace: 'href="data:image/png;base64,broken"' },
+          { file: 'src/ui/components/footerArt.js', find: "image.setAttribute('href', assetUrl(footerAssets[image.dataset.footerAsset]))", replace: "image.setAttribute('href', 'data:image/png;base64,broken')" }],
+        expectRed: /BAD\s+H3 /,
+      },
       {
         // Formation now puts the row in a grid track. Pinning that current
         // row over the topbar should still be caught by H2.
@@ -366,7 +384,7 @@ if (process.argv.includes('--selftest')) {
         name: 'the DRAW artwork remains visible but both authored text layers lose their fill and stroke',
         edits: [{
           file: 'styles/combat.css',
-          append: "\n.combat-action-row > .pile.draw .footer-art-face text { fill: transparent !important; stroke: transparent !important; }\n",
+          append: "\n.combat-action-row > .pile.draw :is(.footer-art-face text,.footer-compact-label) { fill: transparent !important; stroke: transparent !important; color:transparent !important; -webkit-text-fill-color:transparent !important; text-shadow:none !important; -webkit-text-stroke-color:transparent !important; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -432,15 +450,15 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'the SVG Stamina number and label become transparent while their boxes remain',
-        edits: [{ file: 'styles/combat.css', append: '\n.stamina-orb svg text { fill: transparent !important; stroke: transparent !important; }\n' }],
+        edits: [{ file: 'styles/combat.css', append: '\n.stamina-orb svg text { fill: transparent !important; stroke: transparent !important; text-shadow:none !important; -webkit-text-fill-color:transparent !important; -webkit-text-stroke-color:transparent !important; }\n' }],
         expectRed: /BAD\s+H3 .*text.*paint/,
       },
       {
         name: 'a later opaque SVG rectangle covers the Stamina number and label',
         edits: [{
-          file: 'src/ui/components/staminaOrb.js',
-          find: "orb.querySelector('svg').innerHTML = html;",
-          replace: "orb.querySelector('svg').innerHTML = html + '<rect x=\"300\" y=\"280\" width=\"300\" height=\"350\" fill=\"black\"/>';",
+          file: 'src/ui/components/footerArt.js',
+          find: "node.dataset.measured = 'true';",
+          replace: "node.dataset.measured = 'true'; if (group === plan.groups.sp) node.insertAdjacentHTML('afterend', '<rect x=\"' + item.x + '\" y=\"' + item.y + '\" width=\"' + item.w + '\" height=\"' + item.h + '\" fill=\"black\"/>');",
         }],
         expectRed: /BAD\s+H3 .*text.*paint/,
       },
@@ -796,14 +814,16 @@ const paintOfCaptures = (inSitu, inSituHidden, uncovered, uncoveredBg) => {
     if (need <= 12) continue; // not a pixel the control paints (4 levels per channel of noise allowed)
     ownPx++; const got = mag(A, B, o);
     owed += need; delivered += Math.min(got, need); }
-  return { own: n ? ownPx / n : 0, lost: owed ? 1 - delivered / owed : 0 }; };
+  return { own: n ? ownPx / n : 0, ownPixels: ownPx, lost: owed ? 1 - delivered / owed : 0 }; };
 const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-action-row'); if (!row) return [];
   const list = [...row.children].map((c, i) => ({ c, sel: '.combat-action-row > :nth-child(' + (i + 1) + ')', name: (c.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 24) || c.className }))
     .filter(t=>!t.c.matches('.footer-art-rails,.combat-potion-tray')).map(({c,...t})=>t);
   const keySelector='.combat-action-row [data-footer-binding="endTurnKey"], .combat-action-row .et-key';
   if (document.querySelector(keySelector)) list.push({ sel:keySelector, name:'END TURN key label' });
   return list.map((t) => { const el = document.querySelector(t.sel); const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
-    return { ...t, x: r.left, y: r.top, w: r.width, h: r.height, shown: cs.display !== 'none' && cs.visibility === 'visible' && r.width >= 1 && r.height >= 1 }; }); })()`;
+    const artRole = el.parentElement?.hasAttribute('data-footer-art')
+      ? el.matches('.pile.draw') ? 'draw' : el.matches('.pile.spent') ? 'discard' : el.matches('.end-turn') ? 'end' : el.matches('.combat-potions') ? 'potions' : null : null;
+    return { ...t, artRole, x: r.left, y: r.top, w: r.width, h: r.height, shown: cs.display !== 'none' && cs.visibility === 'visible' && r.width >= 1 && r.height >= 1 }; }); })()`;
 // Marks every element drawn above the control and returns their names (paint
 // order, topmost first, deduplicated). Two kinds: a SIBLING cover (any
 // element that is not an ancestor) is hidden whole for the uncovered
@@ -895,11 +915,17 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
       // #550). Read before the text's ancestors are made non-hit-testable,
       // which would drop that boundary from the stack.
       for (const [x, y] of pts) for (const n of (overAt(x, y) || [])) { if (n.contains(el)) { if (!above.has(n)) above.set(n, []); above.get(n).push([x, y]); } else if (!found.includes(n)) found.push(n); }
+      // Preserve the actual paint order BEFORE removing the text ancestors
+      // from hit testing. A positioned background below a z-indexed label
+      // becomes hittable after that removal, but is still below its text.
+      const textStacks = pts.map(([x,y]) => document.elementsFromPoint(x,y));
       for (const n of chain) n.style.setProperty('pointer-events', 'none', 'important');
       try {
-        for (const [x, y] of pts) {
+        for (const [point, [x, y]] of pts.entries()) {
           for (const n of document.elementsFromPoint(x, y)) {
             if (!(n === el || el.contains(n))) continue; // outside the control: judged above, by the paint stack
+            const stack = textStacks[point], textAt = stack.findIndex(node => chain.includes(node));
+            if (!chain.includes(n) && textAt >= 0 && stack.indexOf(n) > textAt) continue;
             // SVG uses painter order inside its viewport. A filtered image
             // before the text is its background, even though the filter forms
             // a CSS stacking context. Later SVG objects remain cover candidates.
@@ -992,7 +1018,7 @@ async function paintOfFrozen(ev, shot) {
     if (!t.shown) { out.push({ name: t.name }); continue; }
     const clip = { x: Math.floor(t.x), y: Math.floor(t.y), width: Math.ceil(t.w), height: Math.ceil(t.h), scale: 1 };
     const vis = (v) => ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.setProperty('visibility', ${JSON.stringify(v)}, 'important'); return 1; })()`);
-    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); return 1; })()`); await ev(TEXT_RESTORE); await ev(COVERS_RESTORE); };
+    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); document.getElementById('hintstrip-art-hide')?.remove(); return 1; })()`); await ev(TEXT_RESTORE); await ev(COVERS_RESTORE); };
     try {
       const inSitu = await shot(clip);
       await vis('hidden');
@@ -1024,6 +1050,17 @@ async function paintOfFrozen(ev, shot) {
       const uncovered = await shot(clip);
       await ev(TEXT_HIDE(t.sel));
       const uncoveredText = await shot(clip);
+      let artwork;
+      if (t.artRole) {
+        artwork = await ev(`(${authoredFooterInk.toString()})(${JSON.stringify(t.sel)}, ${JSON.stringify(footerExpected[t.artRole])}, ${JSON.stringify(clip)})`);
+        // Keep labels transparent in both captures: text alone cannot make
+        // a missing, broken or hidden painted component pass.
+        await ev(`(() => { const s=document.createElement('style'); s.id='hintstrip-art-hide'; s.textContent=${JSON.stringify(t.sel + ' image[data-footer-asset] { visibility:hidden !important; }')}; document.head.appendChild(s); return 1; })()`);
+        const noArt = await shot(clip);
+        await ev(`(() => { document.getElementById('hintstrip-art-hide')?.remove(); return 1; })()`);
+        const captureSize = decodePng(uncoveredText);
+        artwork.ownPixels = cssPixelCount(paintOfCaptures(uncoveredText, noArt, uncoveredText, noArt).ownPixels, captureSize.w, captureSize.h, clip);
+      }
       await ev(TEXT_RESTORE);
       await vis('hidden');
       const uncoveredBg = await shot(clip);
@@ -1033,7 +1070,7 @@ async function paintOfFrozen(ev, shot) {
       // in situ; text that contributes nothing even uncovered is wholly lost.
       const textRead = text ? paintOfCaptures(inSitu, inSituText, uncovered, uncoveredText) : null;
       if (process.env.HINTSTRIP_DUMP) { const d = process.env.HINTSTRIP_DUMP; mkdirSync(d, { recursive: true }); const tag = (t.name + '-' + clip.width + 'x' + clip.height).replace(/[^A-Za-z0-9]+/g, '_'); [['inSitu', inSitu], ['inSituHidden', inSituHidden], ['inSituText', inSituText], ['uncovered', uncovered], ['uncoveredText', uncoveredText], ['uncoveredBg', uncoveredBg]].forEach(([k, b]) => writeFileSync(join(d, tag + '-' + k + '.png'), b)); }
-      out.push({ name: t.name, covers, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg), ...(textRead ? { textLost: textRead.own > 0 ? textRead.lost : 1 } : {}) });
+      out.push({ name: t.name, covers, artwork, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg), ...(textRead ? { textLost: textRead.own > 0 ? textRead.lost : 1 } : {}) });
     } catch (e) { await restore().catch(() => {}); throw e; }
   }
   return out;
@@ -1106,8 +1143,8 @@ function judge(r, cell, wide, pointer) {
   const keyOut = !r.keyWithheld && r.key && r.endTurn ? !(inside(r.key.box, r.endTurn) && inside(r.key.textBox, r.endTurn)) : false;
   const keyCut = !r.keyWithheld && r.key ? r.key.textClipped : null;
   const paint = Array.isArray(r.paint) ? r.paint : [];
-  const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST || (p.textLost !== undefined && p.textLost > PAINT_LOST)));
-  const textOf = (p) => (p.textLost !== undefined ? `, its text ${(p.textLost * 100).toFixed(0)}% lost` : '');
+  const obscured = paint.filter((p) => p.own !== undefined && (!coveragePass(p, PAINT_FLOOR) || p.lost > PAINT_LOST || (p.textLost !== undefined && p.textLost > PAINT_LOST)));
+  const textOf = (p) => (p.artwork ? `, artwork ${p.artwork.ownPixels}/${p.artwork.expectedInk} source-ink pixels${p.artwork.decoded ? '' : ' (decode failed)'}` : '') + (p.textLost !== undefined ? `, its text ${(p.textLost * 100).toFixed(0)}% lost` : '');
   const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost${textOf(p)}${(p.covers && p.covers.length) ? ' (over it: ' + p.covers.join(', ') + ')' : ''}`).join('; ');
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
@@ -1134,7 +1171,7 @@ function judge(r, cell, wide, pointer) {
   } else if (obscured.length) {
     bad('H3', cell, `${obscured.length} control(s) painted over — `
       + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box against its background and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ${p.textLost !== undefined ? `, ${(p.textLost * 100).toFixed(0)}% of its text's paint does not` : ''} (drawn over it: ${(p.covers || []).join(', ') || 'nothing found by geometry'})`).join(', ')
-      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box and lose at most ${PAINT_LOST * 100}% of it, and of its text's paint; a layer over any part of the rail, pointer-events or not, or the control's own paint over its text, is measured here rather than by the hit-test)`);
+      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box, or of its decoded artwork's source-ink footprint with at least 16 artwork pixels, and lose at most ${PAINT_LOST * 100}% of its paint and text; transparent padding never substitutes for missing artwork)`);
   } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
       + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (box ${JSON.stringify(r.key.box)}, text ${JSON.stringify(r.key.textBox)} vs ${JSON.stringify(r.endTurn)})` : '')
