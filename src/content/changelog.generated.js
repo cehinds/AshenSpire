@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1594",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Keep settings ordering checks working after Reset all",
+    "detail": "The fullscreen ordering regression fixture now follows the reset row's current source location. Its intentional bad ordering and detection assertions remain unchanged.",
+    "build": "0.7.1.913",
+    "pullRequest": 1594,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1594"
+  },
+  {
     "id": "pr-1590",
     "date": "2026-10-04",
     "group": "2026-10-04",
