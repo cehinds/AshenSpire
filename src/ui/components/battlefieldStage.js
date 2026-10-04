@@ -9,6 +9,7 @@ import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
+import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 
 let releaseActiveStage = null;
@@ -192,12 +193,15 @@ export function wireBattlefieldStage(field, model) {
     const rect = combat.getBoundingClientRect();
     combat.style.setProperty('--environment-top', '0px');
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
-    // One painted scene extends behind the cards. Fit the whole atlas cell,
-    // rather than extending the field crop into an adjacent cell in the atlas.
+    // Keep the painting within its atlas cell, with the same ground line as
+    // the formation. Continuing behind cards must not move that line.
     const backdrop = combat.querySelector('.environment-backdrop');
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdrop.clientWidth, height: rect.height / zoom, zoom,
-      config: { ...wireframeUi.scene, floorFraction: .5 },
+      windowTop: (fieldRect.top - rect.top) / zoom, windowHeight: fieldRect.height / zoom,
+      config: battlefieldBackdropConfig({ height: fieldRect.height / zoom,
+        fieldTop: 0, fieldHeight: fieldRect.height / zoom,
+        formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };

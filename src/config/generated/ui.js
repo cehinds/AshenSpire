@@ -29,7 +29,7 @@
 // source content/config/ui/presentation/deckEditorCosts.json 04140679f73bb06a
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/equipmentAnimations.json 56d01ddfb62a6ab8
-// source content/config/ui/presentation/footerLayout.json c1a99fd974124b46
+// source content/config/ui/presentation/footerLayout.json 1b00c9e9df8ea872
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -47038,6 +47038,10 @@ export const uiConfig = deepFreeze({
       }
     },
     "footerLayout": {
+      "sizing": {
+        "maximumWidthPx": 600,
+        "minimumHeightPx": 92
+      },
       "components": {
         "layout": {
           "schema": "ashenspire.footer",

@@ -1,4 +1,8 @@
 {
+  "sizing": {
+    "maximumWidthPx": 600,
+    "minimumHeightPx": 92
+  },
   "components": {
     "layout": {
       "schema": "ashenspire.footer",
