@@ -447,6 +447,9 @@
 .sprite.act-move[data-action-motion="cast"] { animation-name: family-spell; }
 .sprite.act-move[data-action-motion="brace"] { animation-name: family-guard; }
 .sprite.act-move[data-action-motion="sidestep"] { animation-name: family-dodge; }
+/* The tilting families (sweep, impact, release) lean from the feet. With the
+   default centre pivot the feet slid sideways and the figure read as rocking. */
+.sprite:is(.act-attack, .act-move)[data-action-motion] { transform-origin: 50% 100%; }
 @keyframes family-slash {
   0%, 100% { transform: none; filter: none; }
   22% { transform: translateX(var(--action-recoil, -12px)) rotate(var(--action-windup-tilt, -8deg)); }
@@ -1401,9 +1404,9 @@
   border-radius: 50%; filter: none; animation: none; opacity: 0.9;
   transform: scale(1.04); background: transparent; box-shadow: none;
 }
-:root[data-performance='lite'] .backdrop::after,
-:root[data-performance='lite'] .sprite > img,
-:root[data-performance='lite'] .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: none; }
+/* Lite keeps the figures' idle bob (owner, 2026-10-04); only the backdrop's
+   ambient layer stops. */
+:root[data-performance='lite'] .backdrop::after { animation: none; }
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
