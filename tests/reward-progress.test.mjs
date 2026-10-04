@@ -565,3 +565,29 @@ test('guided multi-level sequence resumes surplus XP after each completed reward
     app.remove();
   } finally { Object.assign(globalThis, saved); }
 });
+
+test('each claim lifts the reward IT unlocked, not an older one still waiting', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = climber(); run.level = { level: 1, xp: 355, unspentPoints: 0 }; run.skills = {};
+    const rewards = { xpGains: { level: 355, tracks: {} }, levelChoices: [
+      { ordinal: 0, requiredLevel: 2, options: [{ kind: 'feat', id: 'fieldStudy' }] },
+      { ordinal: 1, requiredLevel: 3, options: [{ kind: 'feat', id: 'weaponDrill' }] },
+    ] };
+    mountRewards(app, { registries, run, rewards, checkpoint: { rewards, states: {} }, onDone() {},
+      onClaimLevel: () => claimBankedLevel(registries, run),
+      saves: { loadMeta: () => ({ settings: { guidedLevelUp: false, levelUpRefillSeconds: 0 } }) },
+    });
+    const fresh = () => app.querySelectorAll('.reward-kind.reward-fresh').map(row => row.dataset.key);
+    app.querySelector('.reward-level-up').click();
+    assert.deepEqual(fresh(), ['levelChoice:0']);
+    app.querySelector('.reward-level-up').click();
+    assert.equal(run.level.level, 3);
+    assert.deepEqual(fresh(), ['levelChoice:1'], 'the older pending reward does not replay its arrival');
+    assert.ok(app.querySelector('.reward-kind.reward-level-offer[data-key="levelChoice:0"]'), 'but it is still lifted');
+    app.remove();
+  } finally { Object.assign(globalThis, saved); }
+});

@@ -382,8 +382,7 @@ const DOORS = {
   veil: `.modal-veil`,
   gameover: `#to-title`,
   rewardVeil: `.reward-veil`,
-  levelDone: `#reward-level-done`,
-  skillDone: `#reward-skill-done`,
+  levelOffer: `.reward-menu .reward-level-offer`,
   chooserConfirm: `#reward-card-confirm:not([disabled])`,
   chooserPick: `.reward-row .reward-pick`,
   levelUp: `.reward-level-up:not([disabled])`,
@@ -406,16 +405,17 @@ function pickDoor(d) {
   if (d.gameover) return { done: 'gameover' };
   if (d.combat) return { done: 'combat' };
   if (d.rewardVeil) {
-    // A claimed level or skill's completion door first, then a chooser the
-    // claim opened (a level card or draft): its first offer, then Confirm.
-    if (d.levelDone) return { press: DOORS.levelDone };
-    if (d.skillDone) return { press: DOORS.skillDone };
+    // An open chooser (a level card or draft the walk opened from the menu):
+    // its first offer, then Confirm.
     if (d.chooserConfirm) return { press: DOORS.chooserConfirm };
     if (d.chooserPick) return { press: DOORS.chooserPick };
     // A detail view (no chooser) goes back to the menu.
     if (d.rewardBack) return { press: DOORS.rewardBack };
     // A level waiting to be claimed holds Continue (reward.js): claim it.
     if (d.levelUp) return { press: DOORS.levelUp };
+    // A claim opens nothing: the reward it unlocked waits in the menu, lifted.
+    // Open it, so the walk takes level rewards rather than deferring them.
+    if (d.levelOffer) return { press: DOORS.levelOffer };
     // The victory card's Continue opens the spoils once its XP has counted;
     // the spoils' Continue (a hold) collects and leaves.
     if (d.rewardExpand) return { press: DOORS.rewardExpand };
@@ -476,7 +476,7 @@ if (argv.includes('--selftest')) {
     ['a reward whose level button is still refilling: wait', D({ rewardVeil: true, veil: true }), 'wait'],
     ['the level chooser before a pick: the first offer', D({ rewardVeil: true, veil: true, chooserPick: true, rewardBack: true }), DOORS.chooserPick],
     ['the level chooser after a pick: Confirm, not Back', D({ rewardVeil: true, veil: true, chooserPick: true, chooserConfirm: true, rewardBack: true }), DOORS.chooserConfirm],
-    ['a claimed level\'s completion door', D({ rewardVeil: true, veil: true, levelDone: true }), DOORS.levelDone],
+    ['a claimed level\'s reward waiting in the menu: open it', D({ rewardVeil: true, veil: true, levelOffer: true, rewardContinue: true }), DOORS.levelOffer],
     ['the spoils with Continue enabled', D({ rewardVeil: true, veil: true, rewardContinue: true }), DOORS.rewardContinue],
     ['the map under no veil', D({ map: true }), 'map'],
   ];

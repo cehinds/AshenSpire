@@ -441,8 +441,10 @@ export function mountRewards(app, {
     claimedLevels += 1;
     persistProgress();
     refreshProgress();
-    const card = plan.rows.find((row) => characterLevelRow(row)
-      && unlocked(row) && !states[row.key]);
+    // The row THIS claim unlocked, not the first one still waiting: earlier
+    // rewards stay pending now, so "first open row" would name an old one.
+    const open = plan.rows.filter((row) => characterLevelRow(row) && unlocked(row) && !states[row.key]);
+    const card = open.find((row) => row.requiredLevel === claim.after) || open[0];
     levelLog.push(`Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned`);
     if (card) freshKeys.add(card.key);
     refillClaim('character', () => renderMenu(card?.key || null));
@@ -459,8 +461,8 @@ export function mountRewards(app, {
     claimedSkills[skillId] = (claimedSkills[skillId] || 0) + 1;
     persistProgress();
     refreshProgress();
-    const draft = plan.rows.find((row) =>
-      draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
+    const open = plan.rows.filter((row) => draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
+    const draft = open.find((row) => row.requiredLevel === claim.after || row.claimOrdinal === claimedSkills[skillId]) || open[0];
     const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
     levelLog.push(`${label} · Level ${claim.after}`);
     if (draft) freshKeys.add(draft.key);
@@ -807,13 +809,18 @@ export function mountRewards(app, {
     if (menu) menu.inert = !!refill;
     const note = app.querySelector('#reward-hold-copy');
     if (note) note.textContent = holdNote();
+    // The pressed Level up went with the old panel; keep the cursor on its row.
+    const focused = document.activeElement;
+    if (isEngaged() && (!focused || focused === document.body || !focused.isConnected)) {
+      focusFirst('.reward-level-up') || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue');
+    }
     followUp(layout);
   }
 
   // The lines this screen's level claims wrote, newest last.
   function levelLogPanel() {
     if (!levelLog.length) return null;
-    return el('ol', { class: 'reward-level-log', 'aria-label': t('reward.level.eyebrow'), 'aria-live': 'polite' },
+    return el('ol', { class: 'reward-level-log', 'aria-label': t('reward.level.eyebrow') },
       levelLog.map((text) => el('li', { class: 'reward-level-line', text })));
   }
 

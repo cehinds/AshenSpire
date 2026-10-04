@@ -1666,7 +1666,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 }
 .reward-door .reward-level-log { margin: .4rem 0 0; padding: 0; list-style: none; display: grid; gap: .25rem; }
 .reward-door .reward-level-line { color: #a7d9ff; font-variant-numeric: tabular-nums; }
-.reward-door .reward-stat-allocation { display: grid; gap: .5rem; width: 100%; border-top: 1px solid var(--line); padding-top: .8rem; }
+.reward-door .reward-stat-allocation { grid-column: 1 / -1; display: grid; gap: .5rem; width: 100%; border-top: 1px solid var(--line); padding-top: .8rem; }
 .reward-door .reward-stat-allocation h3 { margin: 0; font-size: 1rem; }
 .reward-door .reward-stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .6rem; }
 .reward-door .reward-stat-add { min-width: 2.5rem; }
