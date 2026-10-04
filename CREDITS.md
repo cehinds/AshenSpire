@@ -407,3 +407,13 @@ and verified by the normal game build.
 | `assets/ui-components/` | [Approved Armoury and Menu layers](https://github.com/cehinds/AshenSpire-art/tree/main/art/illustrated-card-components) | Original project-generated artwork and authored layers; no third-party license claimed. |
 
 The matching assets-mobile derivatives retain the same provenance and rights.
+
+## Signature starter card paintings (2026-10-03)
+
+Original Starstone Pebble, Urgent Heal, and Ambush illustrations generated with
+OpenAI's built-in image generator for AshenSpire. Exact prompts, unchanged PNG
+masters, export recipe and source/export hashes are preserved in
+[the art source package](https://github.com/cehinds/AshenSpire-art/tree/main/art/starter-card-paintings-2026-10-03).
+The 512px and 1024px WebPs under `assets/cards/` and their light twins share
+this provenance. No third-party artwork was downloaded and no third-party
+license is claimed.

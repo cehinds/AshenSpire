@@ -14,6 +14,9 @@ const CARD_ART = Object.freeze({
   bloodletting: 'bloodletting',
   ironResolve: 'iron-resolve',
   lastStand: 'last-stand',
+  starstonePebble: 'starstone-pebble',
+  urgentHeal: 'urgent-heal',
+  ambush: 'ambush',
 });
 
 export function playingCardArtwork(ref, { large = false } = {}) {
