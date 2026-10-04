@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Keep positioning tools off the combat screen** ([#1560](https://github.com/cehinds/AshenSpire/pull/1560), `0.7.1.873`). Remove the Positioning button and its combat panel while keeping saved formations applied.
+- **Keep positioning tools off the combat screen** ([#1560](https://github.com/cehinds/AshenSpire/pull/1560), `0.7.1.875`). Remove the Positioning button and its combat panel while keeping saved formations applied.
+
 - **Painted, editable combat footer** ([#1534](https://github.com/cehinds/AshenSpire/pull/1534), `0.7.1.872`). The stamina orb, draw cradle, End Turn plate, discarded cards and potion tray now assemble from separate painted components. Footer Atelier can move, resize and snap them together, and edit live text bindings, fonts and positions independently of the images. Solo and co-op keep their existing actions, with readable compact controls on phones and short landscape screens. The five new light images total about 9 KB.
 - **Exercise the small-player foot target on every platform** ([#1557](https://github.com/cehinds/AshenSpire/pull/1557), `0.7.1.871`). Separate the browser fixture's player stack from the grid-cell center and keep its sprite inside the measured small bounds, so text and artwork cannot bypass the minimum touch-target check. Gameplay is unchanged.
 - **Keep small-player touch checks reliable without artwork** ([#1555](https://github.com/cehinds/AshenSpire/pull/1555), `0.7.1.870`). Browser checks exercise a deliberately small player in their controlled overlap scene, preserving the foot anchor and verifying that removing its touch target is caught even in copied trees without artwork. Gameplay is unchanged.
