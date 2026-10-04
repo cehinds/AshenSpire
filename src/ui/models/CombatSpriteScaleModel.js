@@ -35,10 +35,24 @@ export function fitCombatSprites({ width, height, actors, minHeight = 0 }) {
     base = Math.min(base, maxHeight / ratio,
       maxWidth * a.visibleHeight / a.visibleWidth / ratio);
   }
-  const floored = minHeight > 0 && actors.length > 0;
+  // Only a side standing in one row can take the floor: a taller front figure
+  // would hang its overhead intent across the figures behind it.
+  const oneRow = side => {
+    const grounds = actors.filter(a => (a.slot.x > width / 2) === side).map(a => a.slot.fitGround ?? a.slot.ground);
+    return !grounds.length || Math.max(...grounds) - Math.min(...grounds) < 1;
+  };
+  const floored = minHeight > 0 && actors.length > 0 && oneRow(true) && oneRow(false);
   if (floored) base = Math.max(base, minHeight / Math.min(...actors.map(a => a.ratio * a.slot.depth)));
   const headroomOf = a => Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6);
-  const sideWidthOf = a => floored ? Math.max(1, width / 2 - 12)
+  // Floored figures keep their side's column spacing (so overhead intents
+  // never stack); the widest figure is what is left of the half after it.
+  const isEnemy = a => a.slot.x > width / 2;
+  const spreadOf = side => {
+    const xs = actors.filter(a => isEnemy(a) === side).map(a => a.slot.x);
+    return xs.length ? Math.max(...xs) - Math.min(...xs) : 0;
+  };
+  const spread = { true: spreadOf(true), false: spreadOf(false) };
+  const sideWidthOf = a => floored ? Math.max(1, width / 2 - 12 - spread[isEnemy(a)])
     : 2 * Math.max(1, Math.min(a.slot.x - 6, width - a.slot.x - 6));
   // A presentation multiplier (Settings: player / enemy sprite scale, the
   // formation's display scale) grows a figure AFTER the shared fit, so the
@@ -51,18 +65,27 @@ export function fitCombatSprites({ width, height, actors, minHeight = 0 }) {
     sideWidthOf(a) / (heightOf(a) * a.visibleWidth / a.visibleHeight));
   const growthRoom = Math.min(1, ...actors.filter(a => requestedOf(a) > 1)
     .map(a => Math.max(0, roomOf(a) - 1) / (requestedOf(a) - 1)));
-  return actors.map(a => {
+  const fits = actors.map(a => {
     const requested = requestedOf(a);
     const multiplier = requested <= 1 ? requested : 1 + (requested - 1) * growthRoom;
     const visibleHeight = floored
       ? Math.min(heightOf(a) * multiplier, headroomOf(a), sideWidthOf(a) * a.visibleHeight / a.visibleWidth)
       : heightOf(a) * multiplier;
     const scale = visibleHeight / a.visibleHeight;
-    if (!floored) return { id: a.slot.id, scale, visibleHeight, multiplier, x: a.slot.x };
-    // Keep the floored figure on screen and on its own side of centre.
-    const half = scale * a.visibleWidth / 2;
-    const enemy = a.slot.x > width / 2;
-    const lo = enemy ? width / 2 + half : half + 6, hi = enemy ? width - half - 6 : width / 2 - half;
-    return { id: a.slot.id, scale, visibleHeight, multiplier, x: Math.min(Math.max(a.slot.x, lo), hi) };
+    return { id: a.slot.id, scale, visibleHeight, multiplier, x: a.slot.x };
   });
+  if (!floored) return fits;
+  // Slide each side as one group, so it stays on screen and on its own half.
+  for (const side of [true, false]) {
+    let lo = -Infinity, hi = Infinity;
+    actors.forEach((a, i) => {
+      if (isEnemy(a) !== side) return;
+      const half = fits[i].scale * a.visibleWidth / 2;
+      lo = Math.max(lo, (side ? width / 2 : 6) + half - a.slot.x);
+      hi = Math.min(hi, (side ? width - 6 : width / 2) - half - a.slot.x);
+    });
+    const shift = Math.min(Math.max(0, lo), hi);
+    actors.forEach((a, i) => { if (isEnemy(a) === side) fits[i].x = a.slot.x + shift; });
+  }
+  return fits;
 }
