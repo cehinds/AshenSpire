@@ -604,7 +604,7 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   const stats = advancedSubgroups(rows, 'Stats');
   assert.deepEqual(stats.slice(0, 11).map(group => group.id), STATS_TOPICS.slice(0, 11));
   const topicOf = (key) => stats.find(group => group.rows.some(row => row.key === key))?.id;
-  assert.equal(topicOf('gameConfig.derivedStatRules.rules.energy.dexterity'), 'Actions');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.stamina.dexterity'), 'Stamina');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.draw.base'), 'Draw & hand', 'the Draw row sits beside the hand rules');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.intelligence'), 'Draw & hand');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base'), 'Draw & hand', 'each class opening hand too (owner, 2026-09-24)');
@@ -624,7 +624,7 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.pr.intelligence'), 'Power rating (PR)');
   // Every term of a trait is editable where the trait is — and since ruleset 7
   // every stat has the SAME editor: the same nine fields in the same order.
-  for (const id of ['energy', 'openingHand', 'draw', 'handSize', 'hp', 'stamina', 'mana', 'ar', 'dr', 'pr', 'ward', 'poise']) {
+  for (const id of ['openingHand', 'draw', 'handSize', 'hp', 'stamina', 'mana', 'ar', 'dr', 'pr', 'ward', 'poise']) {
     const own = rows.filter(row => row.derivedStatId === id && !row.statClass && row.statField !== 'attributeBaseline').map(row => row.key.split('.').at(-1));
     assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'perLevel', 'min', 'max'],
       `${id}: base, a weight per attribute, growth per level, bounds`);
@@ -691,22 +691,23 @@ test('a profile last on a merged tab opens on Stats', () => {
 test('the worked example recomputes from the edited values and shows the whole sum', async () => {
   // Ruleset 6: base + Σ floor(attribute × weight) + floor((level − 1) × per level).
   const settings = {
-    'gameConfig.derivedStatRules.rules.energy.base': 2,
-    'gameConfig.derivedStatRules.rules.energy.dexterity': 0,
-    'gameConfig.derivedStatRules.rules.energy.strength': 0.3,
+    'gameConfig.derivedStatRules.rules.stamina.base': 2,
+    'gameConfig.derivedStatRules.rules.stamina.dexterity': 0,
+    'gameConfig.derivedStatRules.rules.stamina.constitution': 0,
+    'gameConfig.derivedStatRules.rules.stamina.strength': 0.3,
     // The stock Actions rule also reads WIS, INT and level; zeroed so the sum
     // under test is exactly base + STR.
-    'gameConfig.derivedStatRules.rules.energy.wisdom': 0,
-    'gameConfig.derivedStatRules.rules.energy.intelligence': 0,
-    'gameConfig.derivedStatRules.rules.energy.perLevel': 0,
+    'gameConfig.derivedStatRules.rules.stamina.wisdom': 0,
+    'gameConfig.derivedStatRules.rules.stamina.intelligence': 0,
+    'gameConfig.derivedStatRules.rules.stamina.perLevel': 0,
   };
   const current = { strength: 11, dexterity: 2, constitution: 3, wisdom: 4, intelligence: 5 };
-  const actions = statsTopicPreview(settings, 'Actions', current);
+  const actions = statsTopicPreview(settings, 'Stamina', current);
   assert.equal(actions.subject.current, true);
   assert.equal(actions.examples[0].lines[0].total, 2 + Math.floor(11 * 0.3));
   assert.match(actions.examples[0].lines[0].expression, /^2 base \+ STR 11 × 0\.3 → 3$/);
-  assert.match(actions.examples[0].hint, /3 more STR would add 1 to Actions/, 'the next point that moves the floored term');
-  assert.match(statsTopicPreviewHtml(settings, 'Actions', current), /= 5<\/b>/);
+  assert.match(actions.examples[0].hint, /3 more STR would add 1 to Stamina/, 'the next point that moves the floored term');
+  assert.match(statsTopicPreviewHtml(settings, 'Stamina', current), /= 5<\/b>/);
 
   // Out of a run the example is a named class, and says so.
   const example = statsTopicPreview({ settingsStatsExampleClass: 'herald' }, 'HP');
@@ -754,18 +755,18 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.handRules.drawMode': 'fill',
   }, 'Draw & hand', { intelligence: 9 });
   const opening = hand.examples[0].lines[0];
-  // The shared opening-hand row counts the points above 1 (its
-  // `attributeBaseline`, #1294), and says so: 4 + floor((9 − 1) × 0.25) = 6.
-  assert.equal(opening.total, 4 + Math.floor((9 - 1) * 0.25));
-  assert.match(opening.expression, /^4 base \+ INT \(9 − 1\) × 0\.25 → 2/);
+  // The shared opening-hand row counts the points above 4 (its
+  // `attributeBaseline`), and says so: 4 + floor((9 − 4) × 0.25) = 5.
+  assert.equal(opening.total, 4 + Math.floor((9 - 4) * 0.25));
+  assert.match(opening.expression, /^4 base \+ INT \(9 − 4\) × 0\.25 → 1/);
   // The legacy Draw conversion (co-op and older fights) is gone: the Draw /
   // turn row IS the draw, so the topic shows the one hand example.
   assert.deepEqual(hand.examples.map(entry => entry.kind), ['hand']);
   assert.equal(hand.examples[0].lines[1].label, 'Each turn, at most', 'filling to capacity is a ceiling, not a promise');
-  // Fill's ceiling is the Hand size row: 7 base + floor((INT 9 − 1) × 0.2) = 8.
-  assert.equal(hand.examples[0].lines[1].total, 7 + Math.floor((9 - 1) * 0.2));
+  // Fill's ceiling is the separate flat Hand size row of 15.
+  assert.equal(hand.examples[0].lines[1].total, 15);
   assert.equal(hand.examples[0].lines[2].label, 'Hand size');
-  assert.match(hand.examples[0].lines[2].expression, /^7 base \+ INT \(9 − 1\) × 0\.2 → 1$/);
+  assert.match(hand.examples[0].lines[2].expression, /^15 base$/);
   assert.match(statsTopicPreview({ 'gameConfig.handRules.reshuffle': false }, 'Draw & hand').examples[0].lines[1].expression, /not reshuffled/);
   const fixed = statsTopicPreview({
     'gameConfig.handRules.drawMode': 'fixed',
@@ -775,10 +776,10 @@ test('the worked example recomputes from the edited values and shows the whole s
   assert.equal(fixed.examples[0].lines[1].total, 5, 'a fixed draw never shows more than capacity allows');
   assert.match(fixed.examples[0].lines[1].expression, /limited to capacity 5/);
   const replacing = statsTopicPreview({
-    'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
+    'gameConfig.handRules.retain': true, 'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
   }, 'Draw & hand');
   assert.match(replacing.examples[0].lines[1].label, /before replacements/, 'a replaced discard can draw past the base amount');
-  const deepSettings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 20, 'gameConfig.derivedStatRules.rules.openingHand.max': 30, 'gameConfig.derivedStatRules.rules.handSize.base': 20 };
+  const deepSettings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 20, 'gameConfig.derivedStatRules.rules.openingHand.max': 30, 'gameConfig.derivedStatRules.rules.handSize.base': 20, 'gameConfig.derivedStatRules.rules.handSize.max': 30 };
   const deep = statsTopicPreview(deepSettings, 'Draw & hand');
   assert.equal(deep.examples[0].lines[0].total, born('reaver', deepSettings).deck.length, 'an opening hand cannot exceed the starting deck');
   // `startingDeckSize` budgets only filler; bound cards ride on top, so the
@@ -895,7 +896,7 @@ test('the example shows what a run is born with at the edges', async () => {
   const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.stamina.perLevel': 0.125 }, 'Stamina', { constitution: 1 }, 9);
   assert.match(eighth.examples[0].lines[0].expression, /8 levels × 0\.125 → 1/);
   const drawGrowth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
-  // Stock Draw / turn at INT 1, level 9: 3 base (FINISH D22) + nothing above 4 + floor(8 × 0.125) = 4.
-  assert.equal(drawGrowth.examples[0].lines[1].total, 4);
-  assert.match(drawGrowth.examples[0].lines[1].expression, /^3 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
+  // Stock Draw / turn at INT 1, level 9: 4 base + nothing above 4 + floor(8 × 0.125) = 5.
+  assert.equal(drawGrowth.examples[0].lines[1].total, 5);
+  assert.match(drawGrowth.examples[0].lines[1].expression, /^4 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
 });

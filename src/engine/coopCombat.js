@@ -29,6 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
+import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { syncRelicProperties, syncClassProperties, syncLoadoutProperties, syncSigilProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
@@ -46,7 +47,7 @@ import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } fr
 import { refreshCombatRatings } from './combatRatings.js';
 import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
-import { turnDrawCount, endTurnCardFate } from './handRules.js';
+import { turnDrawCount, endTurnCardFate, returnUnplayedCards } from './handRules.js';
 import { orderedDrawPile } from '../model/deckRules.js';
 
 const QUEUE_GUARD = 10000;
@@ -167,7 +168,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
 // ---- player state -----------------------------------------------------------
 function addPlayerState(C, p, { initial = false } = {}) {
   const entity = createPlayerCombatEntity({
-    classId: p.classId, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
+    classId: p.classId, classUnequipped: p.classUnequipped === true, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
     maxMana: Number.isFinite(p.maxMana) ? p.maxMana : 0,
     mana: p.mana,
     maxStamina: p.maxStamina, stamina: p.stamina,
@@ -388,6 +389,7 @@ function startPlayerPhase(C) {
     e.counters.staminaSpentThisTurn = 0;
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
+    reconcileWardBlock(e);
     // Less what a Stagger took (plan phase 8): owed to this next turn only.
     e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
     e.pendingActionLoss = 0;
@@ -460,8 +462,8 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   const cost = isX ? p.energy : effectiveCost(C, def);
   const pools = F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass }));
   const manaCost = pools.mana;
-  const staminaCost = pools.stamina;
-  if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
+  const staminaCost = cost;
+  if (p.energy < cost) throw new Error(`Not enough stamina (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
   if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
@@ -519,7 +521,6 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
   p.mana -= manaCost;
   if (manaCost > 0) C.emit('manaSpent', { amount: manaCost });
-  p.stamina -= staminaCost;
   if (staminaCost > 0) C.emit('staminaSpent', { amount: staminaCost });
   p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + staminaCost;
 
@@ -643,19 +644,7 @@ function endOnePlayerTurn(C, P) {
     if (C.result) return;
   }
   S.decayAtTurnEnd(C, p);
-  // Stamina (framework contract: Mana and Stamina), per seat: an idle turn
-  // recovers, a spending turn does not — the same rule and door as the solo
-  // engine's end of turn, on this player's own pool and counter.
-  if (!C.foundation && Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
-    const next = C.registries.framework.staminaTurnEnd({
-      currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
-    });
-    if (next.currentStamina !== p.stamina) {
-      const amount = next.currentStamina - p.stamina;
-      p.stamina = next.currentStamina;
-      C.emit('staminaRecovered', { amount, reason: 'idle', playerId: P.id });
-    }
-  }
+  // Stamina refills with the next player turn.
   p.counters.staminaSpentThisTurn = 0;
   const keep = [], toDiscard = [], toExhaust = [];
   for (const card of C.piles.hand) {
@@ -668,10 +657,11 @@ function endOnePlayerTurn(C, P) {
   }
   // Kept cards past the seat's hand size go to the discard, as a solo fight's
   // overflow does (co-op has no turn-end discard prompt).
-  if (P.handRules && P.handRules.overflow === 'discard' && keep.length > C.handMax) toDiscard.push(...keep.splice(C.handMax));
+  const overflow = P.handRules && P.handRules.overflow === 'discard' ? keep.splice(C.handMax) : [];
   C.piles.hand = keep;
   for (const card of toExhaust) { C.piles.exhaust.push(card); C.emit('cardExhausted', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'ethereal' }); }
-  for (const card of toDiscard) { C.piles.discard.push(card); C.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' }); }
+  for (const card of overflow) { C.piles.discard.push(card); C.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' }); }
+  returnUnplayedCards(C, toDiscard);
   p.energy = 0;
   drainQueue(C);
 }
@@ -691,7 +681,10 @@ function maybeEndPlayerPhase(C) {
 function enemyPhase(C) {
   C.phase = 'enemy';
   C.emit('enemyTurnStart', { turn: C.turn });
-  for (const e of C.enemies) { if (e.alive && !S.getFlag(C, e, 'retainBlock')) e.block = 0; }
+  for (const e of C.enemies) {
+    if (e.alive && !S.getFlag(C, e, 'retainBlock')) e.block = 0;
+    reconcileWardBlock(e);
+  }
   setActive(C, firstLiving(C));
   drainQueue(C);
   if (C.result) return;

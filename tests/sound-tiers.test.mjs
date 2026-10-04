@@ -153,7 +153,7 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
 });
 
 test('co-op: the session digest, through coop.js, plays the opening, hits, hurt and pile cues once', () => {
-  assert.match(src('src/ui/screens/coop.js'), /lastSoundSeq = coopReceiptSounds\(sc, lastSoundSeq\);\n\s*spawnCombatFx\(sc, prevCombat\);/,
+  assert.match(src('src/ui/screens/coop.js'), /lastSoundSeq = coopReceiptSounds\(sc, lastSoundSeq(?:, seats)?\);\n\s*spawnCombatFx\(sc, prevCombat\);/,
     'renderCombat hears each scene through coopReceiptSounds');
   const reg = createRegistries(contentBundle);
   const host = createSession({ registries: reg, seedString: 'GUARD2' });
@@ -180,7 +180,8 @@ test('co-op: the session digest, through coop.js, plays the opening, hits, hurt 
   // refill and the next player turn stings. Each action is its own scene.
   const full = host.live.combat.players.get('p1');
   assert.ok(Number.isInteger(full.handMax) && full.handMax > 0, 'the seat has a hand limit');
-  for (let i = 0; full.piles.hand.length < full.handMax + 2; i++) full.piles.hand.push({ instanceId: `snd-full-${i}`, cardId: 'gorefireSlash', upgraded: false });
+  for (const card of full.piles.hand) card.cardId = 'urgentHeal';
+  for (let i = 0; full.piles.hand.length < full.handMax + 2; i++) full.piles.hand.push({ instanceId: `snd-full-${i}`, cardId: 'urgentHeal', upgraded: false });
   host.combatEndTurn('p1');
   const ended = host.snapshot().scene;
   assert.ok(ended.events.some((e) => e.type === 'cardDiscarded'), 'the digest carries cardDiscarded');
@@ -189,7 +190,7 @@ test('co-op: the session digest, through coop.js, plays the opening, hits, hurt 
   const round = host.snapshot().scene;
   assert.ok(round.events.some((e) => e.type === 'cardDrawn'), 'the digest carries cardDrawn');
   cues = played(() => { heard = coopReceiptSounds(round, heard); });
-  for (const id of ['playerHurt', 'cardDraw', 'turnStinger']) assert.ok(cues.includes(id), `${id} in ${cues}`);
+  for (const id of ['playerHurt', 'cardDraw', 'deckShuffle', 'turnStinger']) assert.ok(cues.includes(id), `${id} in ${cues}`);
   assert.deepEqual(played(() => { heard = coopReceiptSounds(round, heard); }), [], 'a re-render of the same scene is silent');
   // A client that just joined mid-fight replays no history.
   assert.deepEqual(played(() => coopReceiptSounds(round, 0)), [], 'joining on a later turn hears nothing old');

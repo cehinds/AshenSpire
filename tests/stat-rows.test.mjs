@@ -45,12 +45,15 @@ test('ruleset 7 carries twelve rows in ONE shape: base, five weights, perLevel, 
   }
 });
 
-test("the owner's budget: Mana and Stamina weights sum to 1; the combat ratings to 2", () => {
+test("the owner's budget: Mana weights sum to 1; Stamina scales from base 3; combat ratings sum to 2", () => {
   const sum = (id) => ATTRIBUTES.reduce((total, attr) => total + (table.rules[id][attr] || 0), 0);
   assert.equal(sum('mana'), 1);
   assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0.125, 0, 0.25, 0.5, 0.125]);
   assert.equal(table.rules.mana.base, 1);
-  assert.equal(sum('stamina'), 1);
+  assert.ok(Math.abs(sum('stamina') - 0.9) < 1e-9);
+  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 0.25, 0.25, 0.2, 0.2]);
+  assert.equal(table.rules.stamina.perLevel, 0.1);
+  assert.equal(table.rules.stamina.base, 3);
   for (const id of ['ar', 'dr', 'pr', 'ward', 'poise']) assert(Math.abs(sum(id) - 2) < 1e-9, `${id} sums to 2`);
 });
 
@@ -85,15 +88,11 @@ test('per-term floors: a 0.125 weight adds nothing until the attribute reaches 8
 });
 
 test('the preserved rows read what ruleset 6 read at every attribute 5 and at 12 in the lead stat', () => {
-  const legacyHand = Object.fromEntries(Object.entries({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })
-    .map(([group, id]) => [id, legacyHandRow(LEGACY_HAND_GROUPS[group])]));
-  // The Draw row's base rose from the retired `turn` group's 2 to 3 in FINISH
-  // D22 (2026-09-27); its Intelligence term still reads the group exactly.
-  const raisedBy = { draw: 1 };
-  for (const [id, legacy] of Object.entries(legacyHand)) {
-    for (const attrs of [at(3), at(5), at(8), at(12), at(5, { intelligence: 12 })]) {
-      assert.equal(statRowCount(resolvedRuleRow(table, id), attrs), statRowCount(legacy, attrs) + (raisedBy[id] || 0), `${id} at ${JSON.stringify(attrs)}`);
-    }
+  for (const attrs of [at(3), at(5), at(8), at(12), at(5, { intelligence: 12 })]) {
+    const draw = Math.min(10, 4 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5));
+    assert.equal(statRowCount(resolvedRuleRow(table, 'draw'), attrs), draw);
+    assert.equal(statRowCount(resolvedRuleRow(table, 'openingHand'), attrs), draw);
+    assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), 15);
   }
   for (const id of ['ar', 'dr', 'pr', 'ward']) {
     for (const attrs of [at(3), at(5), at(8), at(12)]) {

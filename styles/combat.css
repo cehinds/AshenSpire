@@ -51,7 +51,7 @@
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
-  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) 90%, #17130f 100%);
+  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) calc(var(--scene-paint-bottom, 100%) - 12%), #17130f var(--scene-paint-bottom, 100%));
 }
 
 /* A pale alpha-shaped edge plus dark separation reads on snow and charcoal.
@@ -614,11 +614,31 @@
 @keyframes pulse-gold { from { box-shadow: 0 0 6px rgba(201, 162, 39, 0.3); } to { box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); } }
 
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
-@keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: transform; }
+/* The figure image is a grandchild of .sprite (painted poses sit in
+   .pose-layer, enemy poses in .facing), so `.sprite > img` alone never
+   matched and nothing bobbed (tools/motion-probe.mjs IDLE). The bob rides on
+   that layer, so every frame in it (idle, attack, state, the crossfade's
+   previous frame) moves together and a pose swap never jumps it. It moves
+   the individual `translate` property, not `transform`, so it composes with
+   the inline transforms those layers already carry (the mirror on .facing,
+   the centring on .pose-layer) instead of replacing them (D42).
+   Exactly one carrier per figure, so nothing bobs twice: .facing (enemies,
+   the Classic figure, a rendered image or pose stage that falls back inside
+   it), a painted stage's own .pose-layer (never inside a .facing), and the
+   Rendered style's whole .rendered-stage. That stage holds the still
+   painting and, hidden until a guard/wounded/afflicted/defeated rest pose,
+   a nested painted stage; bobbing their common parent keeps one timeline
+   across that swap, so the nested stage's .pose-layer is not a carrier
+   (#1475 review). The Glyph style is a sigil panel, not a figure, and
+   stays put. */
+@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
+.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
 /* A fallen combatant holds still: the idle bob kept every dead sprite on the
-   compositor's per-frame list for the rest of the fight. */
-.combatant.dead .sprite > img { animation: none; }
+   compositor's per-frame list for the rest of the fight. A downed co-op
+   player is fallen too (its Classic figure bobbed on .facing). */
+.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage),
+.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -632,17 +652,17 @@
   animation: none;
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
-.combatant.enemy .sprite > img { animation-duration: 2.6s; }
+.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-duration: 2.6s; }
 /* WCF3: one glow over the whole selected assembly — intent, the delayed
    inspect control, art, name and lower stack — never one per child. */
 .combatant.context-selected > .combatant-stack {
   filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
-.combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
-.combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
-.combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
-.reduced-motion .combatant .sprite > img { animation: none; }
+.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -0.9s; }
+.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -1.7s; }
+.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -2.3s; }
+.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
 /* ---------- short-wide combat composition (#27) ---------------------------
@@ -1112,7 +1132,7 @@
   width: max-content; min-width: 0; scale: none; flex: none; pointer-events: auto;
   transition: none !important;
 }
-:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox::after {
+:root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox)::after {
   content: ''; position: absolute;
   left: var(--enemy-hit-x); top: var(--enemy-hit-y);
   width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));
@@ -1382,7 +1402,8 @@
   transform: scale(1.04); background: transparent; box-shadow: none;
 }
 :root[data-performance='lite'] .backdrop::after,
-:root[data-performance='lite'] .sprite > img { animation: none; }
+:root[data-performance='lite'] .sprite > img,
+:root[data-performance='lite'] .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: none; }
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
@@ -1494,3 +1515,20 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
+
+/* Authoring guides in the Settings formation preview sit above the actors. */
+.position-guides { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2500; touch-action: none; pointer-events: auto; }
+.position-guides [data-position-anchor] { cursor: grab; }
+.formation-positioning label { display: grid; gap: 4px; margin-block: 6px; font-size: max(12px, calc(12px / var(--ui-zoom, 1))); }
+.formation-positioning select, .formation-positioning input { width: 100%; min-width: 0; padding: 6px; color: inherit; background: #21333d; border: 1px solid #55707c; border-radius: 4px; }
+.formation-positioning button { padding: 6px 9px; color: inherit; background: #21333d; border: 1px solid #55707c; border-radius: 4px; cursor: pointer; }
+.formation-positioning button:disabled { opacity: .45; cursor: default; }
+.position-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.position-nudges { display: flex; align-items: center; gap: 5px; margin-block: 8px; }
+.position-nudges label { max-width: 70px; margin-left: auto; }
+.formation-positioning output { display: block; margin-top: 10px; color: #ead38b; font-size: max(12px, calc(12px / var(--ui-zoom, 1))); line-height: 1.6; }
+.formation-positioning details { margin-top: 12px; }
+.formation-positioning .position-snap { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.formation-positioning .position-snap input { width: auto; }
+.formation-positioning textarea { box-sizing: border-box; width: 100%; font: 12px monospace; background: #0c171e; color: #d9e6eb; }
+.formation-positioning .formation-help { font-size: max(11px, calc(11px / var(--ui-zoom, 1))); line-height: 1.5; opacity: .8; }

@@ -129,7 +129,7 @@ try {
             ['.hud-class', 'Class'], ['.hud-cinders', 'Currency'], ['.hud-act', 'region'], ['.hud-floor', 'current step'],
             ['.topbar [data-res=hp]', 'Health remaining', 'health-hover'], ['.topbar [data-res=mana]', 'Mana pays', 'mana-hover'], ['.topbar [data-res=stamina]', 'Stamina pays'],
             ['#combat-armoury', 'fixed weapon'], ['#combat-menu', 'Menu'], ['.turn-ribbon', 'Turn'],
-            ['.combatant.player [data-res=hp]', 'Health remaining'], ['.combatant.player .block-badge', 'Absorbs'],
+            ['.combatant.player [data-res=hp]', 'Health remaining'], ['.combatant.player .combat-health-badge', 'Absorbs'],
             ['.foundation-evade', 'charge'],
             ['.combatant.enemy [data-res=hp]', 'Health remaining'], ['.combatant.enemy .intent', 'Intent:', 'intent-hover'],
             ['.energy-orb', 'Actions'], ['.pile.draw', 'Draw pile'], ['.pile.spent', 'Discard'], ['.combat-potions', 'Potions'], ['.end-turn', 'End Turn'],

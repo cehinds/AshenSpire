@@ -100,12 +100,12 @@ export const terms = {
     },
     {
       "id": "term.action",
-      "canonicalText": "Action",
-      "pluralText": "Actions"
+      "canonicalText": "Stamina",
+      "pluralText": "Stamina"
     },
     {
       "id": "term.energy",
-      "canonicalText": "Energy"
+      "canonicalText": "Stamina"
     },
     {
       "id": "term.stamina",
@@ -357,11 +357,11 @@ export const terms = {
     },
     {
       "id": "term.tooltip.action",
-      "canonicalText": "Costs Actions to play."
+      "canonicalText": "Costs Stamina to play."
     },
     {
       "id": "term.tooltip.stamina",
-      "canonicalText": "Costs Stamina to play. Spend no Stamina for a full turn to recover 1."
+      "canonicalText": "Costs Stamina to play. Refills at the start of every turn."
     },
     {
       "id": "term.tooltip.mana",
@@ -377,7 +377,7 @@ export const terms = {
     },
     {
       "id": "term.tooltip.retain",
-      "canonicalText": "Not discarded at the end of your turn."
+      "canonicalText": "Stays in your hand at the end of your turn."
     },
     {
       "id": "term.tooltip.recall",

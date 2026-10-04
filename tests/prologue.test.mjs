@@ -1,6 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import { artRecord } from '../tools/art-source.mjs';
+
+// A shipped painting is an id art-manifest.json lists with a WebP in both tiers
+// (the art left this repository at docs/EXTERNAL-ASSETS-PLAN.md step 13; the
+// manifest records each tier's path, bytes, sha256 and pixel size). Returns the
+// high file's sha256, so distinct paintings can be compared without the bytes.
+function shippedWebp(id, why = id) {
+  const row = artRecord(id.replace(/^\.?\//, ''));
+  assert.ok(row && row.light && row.high, `${why}: ${id} is not in art-manifest.json`);
+  for (const tier of ['light', 'high']) {
+    assert.ok(row[tier].path.endsWith('.webp') && row[tier].width > 0 && row[tier].height > 0, `${why}: the ${tier} file is a WebP with a size`);
+  }
+  return row.high.sha256;
+}
 import { contentBundle } from '../src/content/index.js';
 import { prologueConfig, prologueRows, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueScenePreset, prologueBoxBackground, PROLOGUE_PREFIX, shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION, PROLOGUE_V1_SCENE_IDS, PROLOGUE_DEFAULTS, PROLOGUE_ART_IDS, PROLOGUE_LAYOUTS, PROLOGUE_TEXT_POSITIONS, PROLOGUE_SLOT_IDS, PROLOGUE_STAGE_FIELDS, prologueStaging, prologueFreeSlot, prologueSceneCopy, prologueSceneClear, prologueReorderChanges, prologueSlotPayload, prologueSlotChanges, prologueStagedOrder, PROLOGUE_MUSIC } from '../src/model/prologue.js';
 import { advancedConfigExport, parseAdvancedConfigFile, configuredContentBundle } from '../src/model/advancedConfig.js';
@@ -138,10 +152,7 @@ test('each class memory resolves to a distinct shipped desktop and mobile painti
     for(const classId of Object.keys(config.classes)) {
       const path=prologueArtwork('carry',layout,{classId});
       assert.ok(path.endsWith(`assets/prologue/carry-${classId}-${layout}.webp`));
-      const bytes=readFileSync(new URL(`../assets/prologue/carry-${classId}-${layout}.webp`,import.meta.url));
-      assert.equal(bytes.subarray(0,4).toString(),'RIFF');
-      assert.equal(bytes.subarray(8,12).toString(),'WEBP');
-      paintings.push(bytes.toString('base64'));
+      paintings.push(shippedWebp(`assets/prologue/carry-${classId}-${layout}.webp`));
     }
     assert.equal(new Set(paintings).size,4);
   }
@@ -149,7 +160,8 @@ test('each class memory resolves to a distinct shipped desktop and mobile painti
 });
 
 test('existing art-studio exports import into the game without accepting art URLs',()=>{
-  const preset=JSON.parse(readFileSync(new URL('../art/prologue-2026-09-19/sequence.json',import.meta.url),'utf8'));
+  // The art studio's export, kept as a fixture when art/ left for cehinds/AshenSpire-art (step 13).
+  const preset=JSON.parse(readFileSync(new URL('./fixtures/art-exports/prologue-2026-09-19/sequence.json',import.meta.url),'utf8'));
   preset.scenes[0].text='My opening';
   preset.scenes[0].url='https://untrusted.example/image';
   const changes=parseAdvancedConfigFile(JSON.stringify(preset),contentBundle);
@@ -187,7 +199,7 @@ test('tint follows the selected motif and destination follows the run',()=>{
     for (const layout of ['desktop','mobile']) {
       const path = prologueArtwork('step',layout,{destinationArt:art});
       assert.ok(path.endsWith(`assets/prologue/step-${art}-${layout}.webp`));
-      assert.equal(readFileSync(new URL(`../assets/prologue/step-${art}-${layout}.webp`,import.meta.url)).subarray(8,12).toString(),'WEBP');
+      shippedWebp(`assets/prologue/step-${art}-${layout}.webp`);
     }
   }
 });
@@ -381,8 +393,7 @@ test('a scene names its painting, and every offered painting is shipped for both
   for (const art of PROLOGUE_ART_IDS) {
     for (const layout of ['desktop', 'mobile']) {
       const path = prologueArtwork(art, layout, {classId: 'reaver'});
-      const bytes = readFileSync(new URL(`../${path.replace(/^\.?\//, '')}`, import.meta.url));
-      assert.equal(bytes.subarray(8, 12).toString(), 'WEBP', `${art} ${layout} is a shipped painting`);
+      shippedWebp(path, `${art} ${layout} is a shipped painting`);
     }
   }
 });

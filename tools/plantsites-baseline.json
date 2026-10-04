@@ -142,7 +142,7 @@
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
-      "digest": "af34f216bed34c71"
+      "digest": "c1a69c2b796ba05f"
     },
     "tools/combat-save.mjs": {
       "count": 3,
@@ -173,8 +173,8 @@
       "digest": "706f6319c868604e"
     },
     "tools/flask-action-contract.mjs": {
-      "count": 36,
-      "digest": "f20530f51a5fd9c4"
+      "count": 10,
+      "digest": "63c88aea3a42c684"
     },
     "tools/flask-intent-smoke.mjs": {
       "count": 3,
@@ -183,6 +183,10 @@
     "tools/flask-menu-cancel.mjs": {
       "count": 6,
       "digest": "fd574eb2f9dd3290"
+    },
+    "tools/flask-menu-probe.mjs": {
+      "count": 19,
+      "digest": "2460823b78c7ff3d"
     },
     "tools/flaskbox.mjs": {
       "count": 6,
@@ -209,8 +213,8 @@
       "digest": "202b7aeba2b2cf9e"
     },
     "tools/hintstrip.mjs": {
-      "count": 11,
-      "digest": "361298d7e07344a5"
+      "count": 14,
+      "digest": "4111bef10d1ea5b9"
     },
     "tools/hudbars.mjs": {
       "count": 1,
@@ -218,7 +222,7 @@
     },
     "tools/hudparity.mjs": {
       "count": 18,
-      "digest": "8e95fe8e9f0ee98e"
+      "digest": "db596af6d92d5788"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
@@ -227,6 +231,10 @@
     "tools/menufit.mjs": {
       "count": 1,
       "digest": "eeefabab3caca651"
+    },
+    "tools/motion-probe.mjs": {
+      "count": 18,
+      "digest": "1ff760852f3a4451"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
@@ -282,7 +290,7 @@
     },
     "tools/screenreach.mjs": {
       "count": 9,
-      "digest": "8c89c934bfef71af"
+      "digest": "8f9f23976ec7f119"
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,
@@ -326,7 +334,7 @@
     },
     "tools/text-geometry.mjs": {
       "count": 9,
-      "digest": "52448ef30ad89ec6"
+      "digest": "5401de8f2dfaf295"
     },
     "tools/title-new-slot.mjs": {
       "count": 4,
@@ -346,7 +354,7 @@
     },
     "tools/zoomplace.mjs": {
       "count": 1,
-      "digest": "561212b4fb805f6f"
+      "digest": "a9055e812d589711"
     }
   }
 }

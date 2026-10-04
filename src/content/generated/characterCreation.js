@@ -13,6 +13,12 @@ export const characterCreation = {
     "equipmentChoiceView": "grid",
     "equipmentAutoAdvance": false
   },
+  "quickStart": {
+    "classId": "reaver",
+    "keepsakeId": "none",
+    "attributeMode": "lean",
+    "skipOpening": true
+  },
   "equipmentSections": [
     {
       "id": "armour",

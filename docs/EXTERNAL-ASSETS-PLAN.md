@@ -1,5 +1,10 @@
 # Every asset outside the game file — plan
 
+Update, 2026-10-03: the game repository now tracks the simplified
+`assets-mobile/` light tier. The high-resolution `assets/` masters and the
+common fonts, music, and map tiles remain in AshenSpire-art. The step 13
+description below records the earlier external-only state.
+
 Status: **steps 2, 3a, 3b, 3c, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
@@ -31,7 +36,24 @@ see [Step 7 as built](#step-7-as-built));
 `fetch-art --pack` and `--agree`, `asset-pack --source cache`, the pin and
 manifest in `BUILD_IDENTITY_FILES`, and a fetch in every building workflow;
 the art repository is public since step 10a);
- the rest is plan (2026-09-27). The owner answered its
+**step 8a done (#1440)** (2026-10-02: the SPEC and FINISH wording,
+approved by the owner 2026-10-02);
+**step 12 built** (2026-10-02: every reader of `assets-mobile/`, `music/`,
+`map-detail/` and `assets/fonts/` reads the fetched packs through
+`tools/art-source.mjs` or asks `art-manifest.json`; CI fetches before it
+builds and refuses the trees with `ASHEN_ART_SOURCE=cache`; see
+[Step 12 as built](#step-12-as-built));
+**step 8e built** (2026-10-02: the flip —
+`launch.mjs` writes one tree, the pack-shaped game file and the light single
+file at `download/`; `--mobile` and the full-art single file retired; the
+`EDITION` stamp is the default tier; `/AshenSpire-mobile.html` redirects; see
+[Step 8e as built](#step-8e-as-built)); **step 13 built** (2026-10-03, the
+owner's go-ahead "go" the same day, which also covers ART-REPO-PLAN step 6:
+`assets/`, `assets-mobile/`, the score's MP3s and `music/manifest.json`,
+`map-detail/` and `art/` deleted from `dev` and ignored, history untouched;
+every reader reads the fetched packs or the manifest, `art-source` has no tree
+fallback, `art-manifest --write` reads the pinned release, `--agree` retired;
+see [Step 13 as built](#step-13-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -71,7 +93,9 @@ named.
   - `styles/kit.css` ("unchanged: fonts have twins") → fonts are one `common`
     record each and load through `ASSET_CSS` (step 3b);
   - `tools/serve.mjs` ("maps `/assets/…` to `assets-mobile/`") → it maps ids to
-    the fetch cache's light and common packs (step 12);
+    the fetch cache's light and common packs (step 12; as built it maps the
+    four moving trees' paths, and `/assets/…` moves with the high tier: see
+    [Step 12 as built](#step-12-as-built));
   - `tools/mobile-art.mjs --check` and the regenerate row → both move to the
     art repo's CI (steps 9 and 11).
 - **ART-REPO-PLAN step 6** (the delete) is folded into step 13 here. It still
@@ -79,7 +103,7 @@ named.
 - **FINISH.md D5** (owner, 2026-09-26): *"Pages with external art and a service
   worker, installable; **the 254 MB file stays a download**."* This plan keeps
   D5's first half: the Pages web edition, the service worker, installable. It
-  retires the 254 MB file at step 8e (owner answer 6, FINISH D24). FINISH §4's
+  retires the 254 MB file at step 8e (owner answer 6, FINISH D24). FINISH §8's
   line 107 (*"the single-file download stays available"*) still holds, for the
   **light** single file the owner kept (answer 3, D24).
 - **ART-REPO-PLAN Q1 ("Private") and its *Owner answer (2026-09-27)*, and
@@ -574,7 +598,11 @@ only ever served as build payloads", and listed `assets/` among them):
 - **`assets/` stays because pages other than builds load images from it:**
   main's source page at `/index-game.html`, `docs/component-catalog.html`,
   `items-preview.html`, `docs/low-poly-fighters/` and `pose-studio/`. It
-  leaves the base tree with step 13, when `assets/` leaves main.
+  leaves the base tree with step 13, when `assets/` leaves main. *(As built at
+  step 13: while main still tracks `assets/` the base tree serves it; once it
+  does not, `pages-site` writes `/assets/` from the object store, the light
+  object of every `assets/` id main's manifest lists, about 15 MB, so these
+  pages keep their images. See [Step 13 as built](#step-13-as-built).)*
 - **`art/` goes.** Its seven review sections leave the site, and the build
   index stops listing them, because page discovery reads the assembled tree.
   The plain links into `art/` from `docs/component-catalog.html`,
@@ -587,7 +615,9 @@ only ever served as build payloads", and listed `assets/` among them):
   (a Pages-only module, so it is not a build-identity input)
   names all three, and `--check` is red without it. **Before step 13 removes
   `assets/` from main, step 6b or 13 must take this file from the object store
-  instead**, or every branch loses its source and `--check` goes red.
+  instead**, or every branch loses its source and `--check` goes red. *(Done at
+  step 13: the object the store holds for that id, main's high record first,
+  else light, else any branch's; a tree only while one still carries it.)*
 
 | term | today | steady state after the plan |
 |---|---|---|
@@ -677,7 +707,10 @@ light single file, about 30 MB, self-contained, plays by double-click. The
     or on a low-memory device, and the build's default otherwise.
   - The choice stays in `LOCAL_ONLY_KEYS` (`src/model/settingsSync.js:86`).
   - This also retires `--mobile` and the `mobile/` pages. The 30 MB budget
-    (`mobileart-policy.mjs`) moves to the light single file.
+    (`mobileart-policy.mjs`) moves to the light single file. *(As built at 8e
+    it does not gate: the light single file measured 31.1 MB on dev, already
+    over it, and was never held to it. It is an owner question; see
+    [Step 8e as built](#step-8e-as-built).)*
 - **D5.** The 254 MB file that D5 kept ends at step 8e (answer 6, FINISH D24).
   The light single file stays.
 - The hosted build list keeps a single **Play** link. The *Download* link opens
@@ -733,8 +766,8 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | SPEC §7.5, fonts **TO BUILD** | "Cinzel/Inter … NOT bundled … self-hosting the woff2 under `assets/fonts/` is unfinished" | the interface faces are pack files loaded at runtime; system fallbacks stay. Replaces the bundling question (owner, 2026-09-27). | **yes** |
 | SPEC §11, non-goals | "bundled audio asset files" is a non-goal | still true in letter; reword to "audio ships as pack files; SFX stay synthesized" | **yes** |
 | SPEC §1, *Entry point* | "`index.html` opened directly or via any static server" | "via `node tools/serve.mjs`" once the media leaves the tree (ART-REPO-PLAN already names this) | **yes** |
-| FINISH.md D5 and §4 line 107 | "the 254 MB file stays a download"; "the single-file download stays available" | the 254 MB file is retired; the light single file stays a download, beside the install and the zip (owner answers 3 and 6; FINISH D24) | **yes** |
-| SPEC §7.1, the cold boot (*"It contains only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp"*) | the gate contains only those four, and a press reveals the title | unchanged for the gate itself: step 5 keeps the boot status line **outside** the gate (`boot-art-status`, a sibling in `#app`). Whether SPEC should name that line, the wait for the load before the title, and the title's art notice with Retry is a question for the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440), awaiting owner approval) | **yes** |
+| FINISH.md D5 and §8 line 107 | "the 254 MB file stays a download"; "the single-file download stays available" | the 254 MB file is retired; the light single file stays a download, beside the install and the zip (owner answers 3 and 6; FINISH D24) | **yes** |
+| SPEC §7.1, the cold boot (*"It contains only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp"*) | the gate contains only those four, and a press reveals the title | unchanged for the gate itself: step 5 keeps the boot status line **outside** the gate (`boot-art-status`, a sibling in `#app`). Whether SPEC should name that line, the wait for the load before the title, and the title's art notice with Retry was put to the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440)); the owner approved it on 2026-10-02 with §7.1 unchanged, so the line stays outside the gate and SPEC does not name it | **yes** |
 | SPEC §2 status row and §2.4 | the CSS backdrops bypass `assetUrl()` (open) | closed by `ASSET_CSS` | no (a status row) |
 | SPEC §8, the `release-shots` row | "the built bundle (`dist/AshenSpire.html`)" | `dist/` (HTML + packs) | no (wording) |
 | DEVELOPER.md, *Standalone build* (`:873-885`) | "single self-contained HTML … no external files" | the build tree, whose light single file is still self-contained; the pack HTML's double-click works when the folder stays together | no |
@@ -783,7 +816,7 @@ defence in depth, not a boundary (section 2).
 | 10a | **Owner: make `cehinds/AshenSpire-art` public** in its GitHub settings (owner answer 1). **Done 2026-10-02**, before step 11 landed. | — | — |
 | 11 | **Pin and fetch.** `art-release.json` schema 2; `fetch-art --pack`; `asset-pack.mjs` reads the cache (`--source cache`); the pin and manifest join `BUILD_IDENTITY_FILES`; every building workflow (dev-preview, tests, ci, pages-builds) fetches. They fetch the public release, every run including pull requests, and run `--agree`. Only a push or dispatch of a protected branch (dev, test, release, main) also gets the `ART_REPO_TOKEN` secret, which only raises the rate limit; that rule is defence in depth, not a security boundary (section 2: the owner's real fix is to delete the secret or move it into a GitHub Environment limited to those branches). `fetch-art` sends `ART_REPO_TOKEN` (else `GITHUB_TOKEN`) whenever one is set, and uses the public release URL with none or when the token cannot read the repository (it no longer refuses without a token; README.md and DEVELOPER.md follow). A failure names its cause. Needs step 10a (done 2026-10-02). The trees here are still present, and `fetch-art --agree` proves the cache and the trees agree byte for byte. | builds can read the release | all, with either source |
 | 12 | **Switch every reader** of `assets-mobile/`, `music/`, `map-detail/` and `assets/fonts/` to the manifest or the cache (section 6; ART-REPO-PLAN step 4's rows, extended). The PR records `git grep` output for each tree. | — | all |
-| 13 | **Delete** `assets-mobile/`, the MP3s, `map-detail/` and `assets/fonts/` from `dev` and add them to `.gitignore`, together with ART-REPO-PLAN step 6 for `assets/` and `art/`. **Needs its own owner go-ahead** (ART-REPO-PLAN Q3). Precondition: step 12's grep finds only fetch-aware code. History is untouched. | a smaller tree | all |
+| 13 | **Delete** `assets-mobile/`, the MP3s, `map-detail/` and `assets/fonts/` from `dev` and add them to `.gitignore`, together with ART-REPO-PLAN step 6 for `assets/` and `art/`. **Needs its own owner go-ahead** (ART-REPO-PLAN Q3). Precondition: step 12's grep finds only fetch-aware code. History is untouched. **Built 2026-10-03** (owner: "go"); see [Step 13 as built](#step-13-as-built). | a smaller tree | all |
 
 Steps 2–8e need no token and no art-repo change, so they can start now (step
 8e also needs 8a). ART-REPO-PLAN step 5 (the `art/` readers) is
@@ -1210,9 +1243,11 @@ the step 3a boot wait (2026-10-02):
 - **SPEC §7.1** says the gate "contains only" the wordmark, the ash, the
   prompt and the build stamp. Step 5 does not change SPEC (CONTRIBUTING rule
   1): the status line stays outside the gate. Whether SPEC should mention the
-  boot status, the title's wait for the load and the art notice belongs with
-  the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440),
-  awaiting owner approval; section 6, *Written rules*).
+  boot status, the title's wait for the load and the art notice was put to
+  the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440);
+  section 6, *Written rules*). The owner approved it on 2026-10-02 with §7.1
+  unchanged: the gate's contents stay as written, and SPEC does not name the
+  status line, the wait or the notice.
 - **The debug profile auto-load** (Settings → Advanced → Defaults & sync, on
   a dev or test page) used to make the cold boot wait up to 3 s before the
   gate; with the gate drawn at once that wait was a blank screen (review of
@@ -1222,8 +1257,8 @@ the step 3a boot wait (2026-10-02):
 - **Follow-up (not in this step):** run `tools/startup-gate.mjs` against
   `build/web` with the indexes held, so the gate's focus and first-press
   checks cover the wait between a press and the title (today it serves the
-  source tree, which pins no packs; review of #1471). Whether SPEC §7.1 should
-  bound or describe that wait is on the #1440 question list.
+  source tree, which pins no packs; review of #1471). SPEC §7.1 neither bounds
+  nor describes that wait (#1440, approved 2026-10-02 with §7.1 unchanged).
 - **`external-play --block-index`** (http only; Chromium cannot intercept a
   `file://` twin): every `packs/` request is held on the cold boot, and the
   gate must be drawn before the load settles with its line saying "Loading
@@ -1474,6 +1509,273 @@ Where the build settles §5 B (2026-10-02):
   faces, a title backdrop from its objects, then the shared import → map →
   combat → blocked-storage pass. Not exercised: a real OS save dialog, a
   phone, and Safari or Firefox.
+
+### Step 12 as built
+
+Where the build settles the step-12 row and section 6's step-12 rows (2026-10-02):
+
+- **One door.** `tools/art-source.mjs` is the only code that knows a moving
+  tree may still be on disk. `artDir(tree)` / `artPath(rel)` give
+  `.art-cache/<tag>/<pack>/<tree>` when `fetch-art` verified that pack against
+  the current pin and manifest (the cache holds the files at the trees' own
+  paths), else the tree here, with one note naming the fetch.
+  `ASHEN_ART_SOURCE=cache` refuses that fallback, `=trees` forces it silently.
+  In CI the refusal binds the checkout (`GITHUB_WORKSPACE`) only, so a tool's
+  temporary sandbox that copies the trees (`bundle.test`, the doorplant and
+  map sandboxes) still builds from its copy until step 8e gives them fixture
+  packs. `manifestIds()` answers "does this art id ship" from the committed
+  manifest, with no tree and no cache. `asset-pack --source` gains `auto` (the
+  default): each pack from its verified cache, else its tree, under the same
+  rule. `art-source.mjs` and the rest of the bundler's import graph
+  (`fetch-art`, `zip`, `art-manifest`, `asset-pack`, `asset-css`) join
+  `BUILD_IDENTITY_FILES`: they decide which bytes a build carries, so a change
+  to any of them is a new build; `tests/build-identity.test.mjs` walks the
+  graph from `bundle.mjs` and fails on a module that is not listed.
+- **Switched:** `bundle.mjs` (`--light`/`--mobile` payloads from the light
+  pack; the twin oracle is the manifest's light records, not the `assets/`
+  tree; every CSS url into `assets/fonts/` from the common pack in every
+  edition; the literal-reference check against the manifest's ids; the pack
+  shape through `asset-pack` `auto`), `launch.mjs` (`map-detail/` and `music/`
+  beside the single file from the common pack: the manifest and tracks only,
+  never `music/score/`), `serve.mjs` (see below), `credits-check` (the
+  manifest's id prefixes plus `asset-data/`; CREDITS gains rows for
+  `map-detail/` and `licenses/`), `tests/run-node.mjs` checks 49 and 79,
+  `content-expansion-equipment`, `rogue-parity`, `environment-art`,
+  `relic-art`, `map-detail` and `music-score` (ids against the manifest; the
+  score's manifest through `artPath`), doorplant's `COPY_SET` (the pin and the
+  manifest), and dev-preview's workbench (`assets/` from the light pack, the
+  fonts from the common pack).
+- **CI fetches first.** `.github/actions/fetch-art` (actions/cache keyed on
+  the pin and the manifest, then `fetch-art --recheck --refetch`) runs right
+  after setup-node in every job of `ci.yml`, `tests.yml`, `dev-preview.yml`,
+  `coop-hud.yml`, `map-camera.yml` and `tutorial-reach.yml`, and those
+  workflows set `ASHEN_ART_SOURCE=cache`. The step-11 fetch steps that ran
+  LAST are folded into it (the token stays on the same three jobs); `--agree`
+  still runs last. **Changed on purpose:** a failed fetch now fails the build
+  it feeds (dev-preview no longer uploads a standalone built without the
+  release), because after step 13 there is nothing else to build from.
+- **`serve.mjs` maps the four trees only** (a served checkout: a root with
+  `art-release.json`). ART-REPO-PLAN's row also had it map every `/assets/…`
+  id to the light pack by default, with `--hd` for high. That is the high
+  tier's move (ART-REPO-PLAN step 6, with step 13): served source plays the
+  `assets/` tree as before, because the browser gates that serve the source
+  (`hand-side-probe`, `shotguard-probe`, `startup-gate`, `map-two-axis-pan`)
+  measure those pixels and their baselines would need re-measuring.
+- **Left reading the trees until step 13, on purpose** (the step-13 PR
+  removes or moves each): `art-manifest.mjs --write`/`--check` (derives the
+  manifest from the trees; §2 *Step 11 as built*), `fetch-art --agree` (the
+  proof the two agree), `mobile-art.mjs` (regenerate, `--check`, `--selftest`)
+  and its writer `bow-animation-import.py` (they move to the art repository,
+  section 6), `buildversion`'s `INPUT_ROOTS` and `buildversion-selftest`'s
+  `COPY` (they leave in the PR that deletes the trees, §2 *Build identity*),
+  the authoring tools that write the trees (`map-detail-build`,
+  `environment-art-build`, `score/render.mjs`) and `music-score.test`'s read
+  of the score's source `music/score/` (authoring, which moves with `art/`),
+  and the sandboxes above. `pages-site` reads `map-detail/` and `music/` from
+  git at each listed build's commit and from main's tree, not from this
+  checkout; a build from after step 13 has none, and a pack build needs none.
+
+### Step 8e as built
+
+Where the build differs from, or settles, the 8e row, §4 and §5 (2026-10-02):
+
+- **One tree.** `tools/launch.mjs` runs `bundle.mjs [--light]` into `build/`
+  (the pack-shaped `AshenSpire.html`, `asset-base.json`, `packs/`, `objects/`)
+  and `bundle.mjs --single-file` into `build/download/AshenSpire.html`, then
+  copies that tree into `dist/` (plus `AshenSpire-<version>.html`). `--light`
+  (the default) carries light and common with default tier light; `--full-art`
+  carries high, light and common with default tier high. The light single file
+  is built on every branch. `build/web/` is gone: launch removes a left-over
+  one, the `music/` and `map-detail/` copies beside `build/` and `dist/`, the
+  mobile files, and version-stamped HTML of another build (a pack-shaped copy
+  would pin packs `dist/` no longer carries).
+- **The root alias is the light single file.** §4's tree names no root alias.
+  The root cannot carry `packs/` and `objects/` (they would sit in the tracked
+  tree), and about twenty tools serve the repository root and open
+  `/AshenSpire.html` or read its text (`combat-save`, `rebind-capture`,
+  `guard-float-parity`, `offline-play-qa`, …), so the root alias stays
+  self-contained: the conservative choice, recorded here. `dist/AshenSpire.html`
+  is the pack-shaped file, the double-click door ARCHITECTURE-MAP names.
+- **`bundle.mjs` flags.** No flag: the pack shape (default tier high).
+  `--light`: default tier light. `--single-file`: the light single file, the one
+  inline shape left (always light; default `--out build/download`).
+  `--external-art` is accepted and changes nothing, for one release. `--mobile`
+  exits 2 and names its retirement. `bundle.mjs` clears the `assets/`,
+  `map-detail/` and `music/` copies an earlier build left in `build/` or `dist/`
+  themselves too now (`inBuildOrDist` in `asset-pack.mjs`), since nothing reads
+  them beside those folders any more.
+- **After step 12.** 8e merged on top of step 12, so the light single file's
+  payloads (and every `assets/fonts/` url in its CSS) come from the fetched
+  light and common packs through `tools/art-source.mjs`, each cached byte
+  checked against `art-manifest.json` (`checkCachedBytes`), with the manifest's
+  light records as the twin oracle. Step 12's `launch.mjs` copies of
+  `map-detail/` and `music/` from the common pack into `build/` and `dist/` are
+  dropped here: the pack shape carries both as common ids, and launch now
+  deletes those folders as stale. The light single file carries neither: from
+  disk it keeps the low-detail map and the synthesized score (§3.9, SPEC §7.4),
+  as any `file://` page did before.
+- **No byte budget on the light single file.** §5 moves the mobile file's
+  30 MB budget to it, but it measured **31,123,831 B** on dev at this step
+  (the pack HTML **10,629,707 B**; the plan's "about 30 MB" and "about 9.5 MB"
+  are from ordinal 668), and it was never held to one (owner, 2026-09-26: the
+  single file is exempt). A refusal would stop every build, so `bundle.mjs`
+  writes it and `verify-shipped` prints its size against the 30 MB number as a
+  note. **Owner question:** hold the light single file to a budget (30 MB
+  needs the light art cut by ~1.2 MB; or a new number), or leave it unbudgeted?
+- **The `EDITION` stamp is the default tier**: `light` or `high` for the pack
+  file, `light` for the single file; `src/buildversion.js` rests at `high` (the
+  source tree serves `assets/`, the high tier), and About says "· light art" or
+  "· high art". `full` and `mobile` are refused by `stampSource`.
+- **`verify-shipped`**: check A (the art is inline) holds the light single file
+  and its two copies (`dist/download/`, the root alias); new check **P** holds
+  `build/AshenSpire.html` and `dist/AshenSpire.html` to the pack shape (an
+  `ASSET_PACKS` pin with a default tier it carries and the common pack, and
+  the light pack when the default is high, its fallback; the `EDITION` stamp
+  equal to that tier; no inlined media but the SVG masks; each pinned index,
+  its `.js` twin and the font sidecar beside it at their pins; `asset-base.json`
+  naming a base and a non-empty `objects/` beside it); E checks the edition of
+  each; B holds every copy to its build; C and C2 unchanged; the mobile budget
+  check D is retired. 12 checks; the selftest plants fifteen pack defects.
+- **`buildversion --check`**: row A rests at `high`; row E accepts `light` or
+  `high`; row **E2** now holds the light single file to this tree's digest, run
+  path and edition `light`, and every file `build/AshenSpire.html` pins to its
+  hash in `build/packs/`. `buildversion-selftest`'s mobile plant became a
+  "pinned pack missing" plant, plus a retired-`full`-edition plant and a
+  "single file says high" plant.
+- **Tests**: `bundle.test` builds the light single file in its parse-gate and
+  EOL sandboxes (`assets-mobile/` copied, the binary compared with its light
+  twin) and adds one pack-shape case on the real light and common trees (not a
+  small fixture pack: the packs are written from `art-manifest.json`, which a
+  fixture would have to replace, and the manifest is build identity), which
+  also checks `--mobile` is refused; `web-meta` reads `build/AshenSpire.html`
+  and `build/download/AshenSpire.html`; `mobile-art-distinct` adds that
+  byte-identical light ids name one object; `sfx-filename-convention` builds
+  its artifact with `--single-file`.
+- **CI**: `ci.yml`'s reproducible digests are the pack HTML, the light single
+  file and every file in `build/packs/`; `dev-preview.yml` copies the pack tree
+  from `build/` into `preview/` (not `download/`), and the standalone artifact
+  is the root alias, the light single file, on every branch (no mobile file);
+  its browser gates still build their own `build/web` by `--out`.
+  `pages-builds.yml` hands the generator main's pack tree from `build/` (or
+  `build/web/` for a main before this step) and the mobile file only if main
+  still builds one.
+- **Pages** (`pages-site.mjs`): a rebuild finds the pack-shaped HTML in
+  `build/web/` (before 8e) or `build/` (from 8e); a full-art rebuild's download
+  is its light single file (`AshenSpire.html`, whose `EDITION` is `light`)
+  where no mobile file exists. Once main's build is pack-shaped,
+  `/AshenSpire-mobile.html`, `/build/AshenSpire-mobile.html` and
+  `/dist/AshenSpire-mobile.html` are a one-line redirect page to the
+  `AshenSpire.html` beside each, and `--check` holds them to it byte for byte.
+- **Not done here:** `CLAUDE.md`'s *Never commit built HTML* line (the plan
+  asks for `packs/` and `objects/` to be named there) is left for the owner: an
+  agent does not edit `CLAUDE.md`; the `.gitignore` rules already cover them.
+  SPEC §3.2's `build/ · dist/` row still says "Today `build/`/`dist/` default to
+  single-file bundles … From step 8e that pack shape becomes the default"; it
+  is now history, and rewording SPEC is the owner's (CONTRIBUTING rule 1).
+
+### Step 13 as built
+
+Where the build settles the step-13 row, ART-REPO-PLAN step 6, and the
+readers step 12 left on purpose (2026-10-03; the owner's go-ahead "go" the
+same day):
+
+- **Deleted from `dev`, and ignored** (`.gitignore`: `/art/`, `/assets/`,
+  `/assets-mobile/`, `/map-detail/`, `/music/**/*.mp3`, `/music/manifest.json`).
+  At `origin/dev` before this step they were 17,566 tracked files, about
+  1,929 MB of blobs: `art/` 6,545 files, 1,676 MB; `assets/` 5,466 files,
+  206 MB (the high tier, its fonts and its 41 authoring-only
+  `equipment/components/` files); `assets-mobile/` 5,425 files, 15 MB;
+  `map-detail/` 116 files, 11.5 MB; and under `music/` the 13 MP3s and
+  `manifest.json`, 20.3 MB. History is untouched. **Kept:** `music/score/*.mjs`
+  (the score as code; `tests/music-score.test.mjs` imports it),
+  `music/README.md`, `music/PROMPTS.md`, `asset-data/`, the pin and the
+  manifest.
+- **The high tier joins the fetch.** `assets/` was ART-REPO-PLAN step 6's, and
+  its readers had not been switched (that plan's step 4 left "the `assets/`
+  (high-tier) readers" open). `tools/art-source.mjs` gains `HIGH_TREE`
+  (`assets` → the high pack), `PACK_TREES` (the four step-12 trees plus it,
+  `assets/fonts` first) and `packTreeOf()`; `treeOf()` still names the four
+  only, because `bundle.mjs` keeps them out of an art tier's sweep by it.
+  **CI fetches all three packs in every job** (`ART_PACKS: all`): the served
+  source's `/assets/` (the browser gates' pixels), the workbench's extra
+  folders and the art checks read the high files, as they read the `assets/`
+  tree before. The fetch action caches by pin, manifest and packs, so a warm
+  run downloads nothing.
+- **No fallback.** `art-source` reads a pack from its verified cache or fails
+  with the fetch it needs; step 12's tree fallback and its note are gone, and
+  `ASHEN_ART_SOURCE=cache` (CI still sets it) is the default behaviour.
+  `ASHEN_ART_SOURCE=trees` stays for a sandbox that copies the trees' files
+  under its own root on purpose: `copyPackTrees(toRoot, trees)` copies them
+  from the cache (`bundle.test`'s parse-gate and EOL sandboxes,
+  `sfx-filename-convention`), and `copySourceArt(toRoot)` gives a served source
+  sandbox its `assets/` (the high pack and the fonts: doorplant's
+  `extraCopy: ['assets']`, and `controlstrip`, `creationbrief`, `handlayout`,
+  `holdconfirm`, `inspecthold`, `overlapreader`, `rebind-capture`,
+  `tooltippersist`, `uprightsetting`).
+- **`tools/serve.mjs`** answers `/assets/` from the high pack too, and, when
+  only `light,common` is fetched (the fresh-clone fetch), with the light pack's
+  twin, so source play keeps its art.
+- **`art-manifest.json` comes from the release.** `art-manifest.mjs --write`
+  reads each pinned zip (`--from <dir>`, else downloaded), refuses one whose
+  sha256 is not the pin's, and writes the union of the three zips' own
+  manifests under the same header (`releaseManifest`; on `hd-assets-v2` it
+  reproduces the committed file byte for byte). `--check` holds the committed
+  file to its shape and bytes, and row for row (both ways) to every pack
+  fetched into `.art-cache/`. Re-pinning is: edit `art-release.json`,
+  `--write`, fetch. `buildManifest()` (trees → manifest) stays for fixtures.
+- **Retired:** `fetch-art --agree` (it exits 2 and says why; its CI steps in
+  `tests.yml` and `ci.yml` are gone, dev-preview's too, and `pages-builds.yml`
+  runs it only for a main that still has the trees); `tools/mobile-art.mjs`
+  and `tools/bow-animation-import.py` (the light tier's generator, which the
+  art repository has, and a bow-frame writer; their CI steps in `ci.yml` and
+  `dev-preview.yml` are gone); `tools/readiness-preview-build.mjs` and
+  dev-preview's copies of `art/` inspection pages (ART-REPO-PLAN's row: the
+  art repository publishes them).
+- **Build identity.** `INPUT_ROOTS` drops `assets` and `assets-mobile`: a
+  leftover, ignored copy on disk must not move the digest, and the pin and the
+  manifest name every art byte. Row D (containment) accepts a stylesheet
+  `url()` that is an art id the manifest lists. `buildversion-selftest`'s
+  `COPY` drops both trees.
+- **Checks read the manifest, not files.** Existence checks ask
+  `manifestIds()`; the "six distinct frames" checks (`combatEffects`,
+  `pose-studio/tests/model`) and the dagger export check compare the high
+  records' sha256 through the new `artRecord()`; `prologue` asks for WebP
+  records with a pixel size in both tiers; `world-atlas-data`,
+  `unarmed-animation-import`'s coverage check and `web-meta`'s share-image
+  source ask the manifest; `content-build --mutate`'s asset sweeps run on a
+  tree of placeholder files named by the manifest's ids (ART-REPO-PLAN's row).
+  **Fixtures:** the seven small art-studio JSON exports the animation and
+  prologue tests read (from `art/dagger-outfits-`, `twin-sword-reference-`,
+  `unarmed-reference-`, `unarmed-magic-` and `prologue-2026-09-19/`, 1.2 MB)
+  are kept byte for byte under `tests/fixtures/art-exports/`.
+- **Pages.** The share image is the store's object for main's manifest row
+  (high, else light; another branch's row next; a branch tree only while one
+  still carries the file), written after every build is published, and
+  `--check` compares it with what supplied it. Once main tracks no `assets/`,
+  `/assets/` is written from the store (the light object of each `assets/` id
+  main's manifest lists) for `/index-game.html`, `docs/component-catalog.html`,
+  `items-preview.html`, `docs/low-poly-fighters/` and `pose-studio/`, and
+  `--check` holds each file to its object. Older builds keep their shape.
+- **Authoring tools stop by name.** The tools that read `art/` or write the
+  shipped trees (`pose-ship`, `painted-outfits-ship`, `painted-items-ship`,
+  `readiness-poses-ship`, `combat-effects-ship`, `environment-art-build`,
+  `map-detail-build`, `card-effect-art-build`, the four art `*-check` tools,
+  the three `*-animation-browser` QA tools, `parchment` and
+  `reaver-attack-animation`) call `tools/art-authoring.mjs` first and exit 2,
+  naming what is missing and where the work happens. `tools/score/render.mjs`
+  needs `--out <dir>`; `editor/` lists and serves the high pack's files;
+  `pose-studio/package.mjs` copies them (its `art/` pages from
+  `ASHEN_ART_CHECKOUT`, else skipped); `palette-check.sh` runs its probe from a
+  staging copy whose `assets/` is the high pack.
+- **Not done here (follow-ups):** moving those authoring tools to
+  `cehinds/AshenSpire-art` (ART-REPO-PLAN step 5); `concept-cutout` and
+  `pose-cutout` still default `--out` to `assets/sprites`, now an ignored
+  folder; the `art/…` and `assets/…` paths CREDITS.md and the docs name are
+  files in the art repository now (CREDITS says so once, above its asset
+  rows). `content-build --mutate` fails at its M1 case on `dev` already
+  (`src/content/music.js` imports a module the mutation copy lacks), before it
+  reaches the asset cases this step changed; nothing runs it.
+
 
 ---
 

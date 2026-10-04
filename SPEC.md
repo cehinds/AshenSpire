@@ -28,7 +28,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 4 | Combat rules | **built** | No open M1 deviation: Warrior's Vow enters the stance the player chooses (DEVELOPER "M1 known deviations"; `tests/warriors-vow.test.mjs`). |
 | 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
-| 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and not bundled; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
+| 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
 | 8 | Testing | **built** | `tests/run-node.mjs`. |
 | 9 | Milestones M1–M4 | M1, M2 **built**; M3 **partly built**; M4 **partly built** | M3: 7 cards have no route in (`tools/contentreach.mjs`) and there is no balance gate (D1). M4: the feel, performance and asset-pass items are in FINISH §5, §7 and §10. |
 | 10 | Forward hooks | **seams built**, features **planned** | By design: v1 keeps them empty. |
@@ -71,7 +71,7 @@ on the prototype gate; both remain the contract for the work after 1.0, unchange
 | Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
 | Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
-| Entry point | `index.html` opened directly or via any static server |
+| Entry point | `index.html` served by `node tools/serve.mjs`, which serves the media. Opened from any static server, it still boots and plays; once EXTERNAL-ASSETS-PLAN step 13 moves the media trees to the art repository, such a page has placeholders (§2.4), synthesized audio, system fonts and the low-detail map. Only the built file opens by double-click: the source page loads ES modules, which a `file://` page cannot. |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
 A **run**: pick 1 of 4 classes → traverse a branching node map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from that class's 36-card reward pool + colorless cards → win by defeating the Act 3 boss, or die and see the "YOU PERISHED" screen with seed and stats.
@@ -185,7 +185,7 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
 | `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
 | `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only — no UI imports. |
-| `build/` · `dist/` | The single-file bundle emitted by `tools/bundle.mjs` and its shipped copy. Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
+| `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
 `engine`, `model` and `content`; `engine` may import `model` and `content`; `model` may import
@@ -322,9 +322,9 @@ owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's t
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
 | Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
 | Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
-| Opening hand (`openingHand`) | per class | per class | per class | — | per class | per class | — | 4–6 | #1294's class hand: base 3/4/4/5 and 0.5 on the primary (STR/DEX/WIS/INT) for Reaver/Rogue/Herald/Starseer, counted from 1 (§4.1). Shared fallback: 4 + 0.5 INT. |
-| Draw / turn (`draw`) | 3 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4 (`attributeBaseline: 4`); every fight, co-op included. Base 3 since FINISH D27 (2026-09-27; was 2, the retired hand rules `turn` group): the largest draw a retained hand of 7 is never capped at on creation — 5 was capped on 47–83% of turns in the simulator. A run born earlier keeps its snapshotted base. |
-| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 | — | 1–30 | Counted from INT 1 (`attributeBaseline: 1`): exactly the retired `capacity` group at every INT (it also replaced `balance.handMax`). |
+| Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; configurable per-class overrides remain available. |
+| Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards only reduce this when capacity is reached. |
+| Hand size (`handSize`) | 15 | — | — | — | — | — | — | 1–15 | Flat absolute capacity by default, independently configurable. |
 | AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |
 | PR (`pr`) | 0 | — | 0.25 | 0.5 | 0.5 | 0.75 | — | — | 〃 |
@@ -523,6 +523,15 @@ its mounts, and **seat** a run-owned card in an emptied or open mount.
 - **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
   and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
   per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
+- **Not in a Sealed or Draft run** (owner, 2026-10-02). A pool-built deck is never dealt the
+  equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`), and extracting one would
+  hand the run a free copy of what those modes exclude. `extractionRefusal` answers `poolDeck`
+  from the run's own Custom Climb rules every time, never from a stored field: `extractionPlan`
+  lists no candidate and carries that `refusal`, `commitExtraction` refuses it by name (a free
+  grant too) before touching the run, and every smith door — the Shrine, a merchant's rolled
+  smith, the blacksmith's `extractArt` — shows the service unavailable with the
+  `blacksmith.refuse.extract.poolDeck` sentence. Seating a card the run already owns is
+  unchanged.
 - **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
   the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
   and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
@@ -820,52 +829,35 @@ cards by the run's three hand rows of §3.5 — **Opening hand** (`openingHand`)
 (`draw`) and **Hand size** (`handSize`) — priced by the one row formula and snapshotted with the
 run. Advanced → Stats → Draw & hand edits those rows with the same fields as every other stat,
 beside the hand's behaviour options, which are not stat rows: retain, optional discard prompt,
-discard limit, replacement draws, overflow, reshuffle and draw mode (`content/handRules.js`).
-The opening hand is also bounded by the hand size. **Solo default (FINISH D27, decided 2026-09-27 under the
-owner's delegation): retain the hand; draw the Draw stat each turn, up to capacity.** Unplayed cards stay
-in hand at turn end (nothing is discarded), and each later turn draws a **fixed** number — the
-Draw / turn row, never past the hand size (a data row). Both other modes stay selectable: fill
-mode (with retain, the old retain-and-fill) draws up to the hand size, and retain off discards
-unplayed cards at turn end (the numbered sequence below). A run keeps the Draw row it was born
-with (its snapshot), so a saved run draws as it always did. Overflow defaults to **discard**: retained cards past
-the hand size are selected for discard at turn end. Opening counts are evaluated at combat start;
-later draws and the hand size at turn start. **Co-op reads the same rows**: each seat's opening
-hand, turn draw and hand size come from its own run's rows, it keeps unplayed cards under the
-shipped behaviour options and discards what is over its hand size at turn end. A seat or saved
-fight born before ruleset 7 keeps what it had: solo, its hand rules as saved (the retired
-single-stat groups, read exactly); co-op, a fresh hand of its derived draw capped at the retired
-fallback of 5.
+discard limit, replacement draws, overflow, reshuffle, shuffleHand and draw mode (`content/handRules.js`).
+The opening hand is also bounded by the hand size.
 
-**The opening hand is the class's (owner, 2026-09-24: "Class base 3–5, +1 from stats"; "start
-with 4-6 cards"; shipped in #1294 and carried into ruleset 7).** The `openingHand` row has a
-**per-class form** (`byClass`): each class states its own base and attribute weights, and the
-row's `min`, `max` and `attributeBaseline` are shared. `attributeBaseline: 1` counts only the
-attribute points above 1, so a weight of 0.5 is exactly #1294's floor(max(0, primary − 1) / 2)
-and the opening hand is clamp(base + floor(max(0, primary − 1) / 2), 4, 6):
+**Default (owner, 2026-10-03): draw the full turn amount, retaining tagged cards,
+up to an absolute hand limit of 15.** The opening and turn draw rows start at
+4 and use the existing Draw scaling: +1 per five Intelligence above 4, capped
+at 10 by default. The Hand size row is a separate flat 15; it does not grow
+with attributes. All three rows remain configurable, including per-class
+opening overrides. New runs snapshot those rows; existing runs keep theirs.
 
-| Class | Base | Primary (weight 0.5) | Standard preset (primary 3) | Primary 1 |
-|---|---|---|---|---|
-| Reaver | 3 | STR | 4 | 4 |
-| Rogue | 4 | DEX | 5 | 4 |
-| Herald | 4 | WIS | 5 | 4 |
-| Starseer | 5 | INT | 6 | 5 |
+At turn end, keep cards carrying Retain, resolve Ethereal and other explicit
+lifecycle rules, and shuffle ordinary unplayed cards directly into the draw
+pile (`shuffleHand: true`). Played cards and forced or chosen discards stay in
+the discard pile until its normal reshuffle. Retain does not change a played
+card's destination. The authored Herald and Starseer pools give Retain to
+selected healing, ward, setup and costly spells, including their upgrades.
+At the next turn draw `min(Draw / turn, max(0, Hand size - retained count))`:
+two retained cards plus a draw of four produces six cards; twelve retained
+cards draw only three under the default limit of fifteen. A full hand draws
+nothing and consumes no draw-pile cards. A depleted deck can supply fewer.
 
-A run snapshots its own class's row (the per-class form resolves at birth and never rides into
-a save or a fight); the shared base 4 and Intelligence weight 0.5 are the fallback for a fight
-with no class (a headless fixture). Advanced → Stats → Draw & hand edits each class's base and
-weights as its own row group (`gameConfig.derivedStatRules.rules.openingHand.byClass.<class>.
-<field>`), beside the shared Min, Max and "attribute points before bonuses". A run started
-between #1294 and ruleset 7 (ruleset 6) opens on #1294's class hand exactly, its own
-`handRules.startingByClass` tuning included; #1294's settings keys convert exactly onto the
-row on import, boot and restore, and a stored or imported opening-hand maximum of exactly 15
-(the retired default cap, with a minimum of 3 beside it) is dropped with a warning first.
-#1294's shared opening base and attribute (`gameConfig.handRules.starting.base|stat`) are
-**retired, not migrated** (#1318): nothing reads them, and each key (plain or
-`settings.`-prefixed) is dropped wherever a profile, run snapshot or imported file carries it —
-with one warning naming the per-class rows when its value was not a stock one (base 3 or 4,
-Intelligence). Copying one shared value onto every class would flatten the four openings into
-one. A run snapshot keeps its limits; both drops share one door (`withoutRetiredOpeningHand`,
-`model/statRows.js`) and say so in one warning.
+Solo and co-op use the same refresh rule and each seat's own piles and rows.
+The explicit Play in deck order option returns the unplayed cards to the
+bottom in deck order without consuming shuffle RNG. `retain: true` still
+keeps all ordinary unplayed cards; with `retain: false`, disabling `shuffleHand`
+restores discard cleanup, and `drawMode: 'fill'` remains available. Forced overflow discards
+remain discards even with shuffle enabled. A saved fight without shuffleHand
+keeps its prior discard behaviour; rule snapshots and the run's RNG counters
+preserve deterministic resume. Pre-ruleset-7 hand-group adapters remain intact.
 
 Optional discards are selected when ending a turn; cancel leaves the turn
 untouched. Turn-end effects resolve before eligible selected cards move to
@@ -875,7 +867,8 @@ Overflow either preserves existing cards or requires selection of excess cards
 at turn end. Draw effects stop at capacity without consuming the draw pile;
 reshuffling can be disabled. Rules and pending replacement draws survive saves.
 Settings changes apply next combat. Existing saved fights and LAN combat retain
-their previous rules; the numbered legacy sequence below describes those rules.
+their snapshotted rules. The numbered legacy sequence below is an illustrative
+baseline; saved stat rows and hand options override its draw and cleanup defaults.
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
 2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
@@ -899,6 +892,21 @@ dmg = floor(dmg); if dmg < 0 → 0
 ```
 
 (The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
+
+The combat health row shows ordinary Block as a blue shield beside HP. While
+that shield is positive, HP is blue; breaking it restores the normal red (or
+colorblind-safe health color). Block granted by a magical card is recorded as
+optional `wardBlock` provenance within the same Block total and shown as a
+purple Arcane Ward badge left of the shield, with a gold HP outline. Ordinary
+Block is spent first for display; Ward is clamped to the remaining Block after
+hits, caps and turn resets. Both badges sum to Block and absorb the same attack
+damage as before; Ward rating and its buildup meter are separate. Old saves
+without provenance show ordinary Block. Missing badges give their space to HP,
+with a stable row edge and a readable minimum width for low-HP enemies. The HP
+fraction always remains current HP / maximum HP. Solo playback and co-op
+snapshots carry the provenance with their damage and guard receipts.
+Narrow health lanes display current HP alone to prevent number collisions;
+the complete current/maximum value remains in the accessible label and tooltip.
 
 **Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
 
@@ -1506,31 +1514,20 @@ keeps the same state and focus contract without meaningful animation.
   screen coordinate. Which zone a slot fills is `model/zones.js`'s one map (§13.4b), and a slot row
   it does not name is refused at boot.
 
-  Inventory owns one logical item-card action surface in both folded and expanded forms. The
-  `armouryUi.layout.cardClasses.inventoryItem.holdAction` class capability opts action-capable
-  `inventory-item-card` and `inventory-detail-card` models into the shared `equipInventory`
-  action. When the universal hold-confirm setting has a positive duration, the whole folded face
-  and whole expanded reveal use the same `armHold` timing, progress fill, keyboard/gamepad path,
-  and mutation callback; an early release aborts, and pointer movement beyond
-  `HOLD_POINTER_SLOP` aborts the hold so scrolling or dragging can take ownership. A completed
-  hold commits once. When hold-confirm is off, ordinary immediate-action and disclosure behavior
-  remains. Selecting an equipment position opens this same Inventory, filters it to compatible
-  items, exposes the contextual Equip/Move/Unequip action, and accepts either that selection or a
-  drag to the selected position; a successful replacement clears the selection and folds the
-  Inventory back to its default state.
+  Armaments List uses compact occupied rows: a complete scaled equipment-card thumbnail, authored
+  position code, name and Equipped/Reserve badge, with Inspect/Replace grouped and Unequip at the
+  right. Sizing is authored in armouryUi.layout.equipment.compactList. Inspect displays the full
+  equipment inspection beside desktop rows or in a separate mobile view with Back.
 
-  Equipment comparison is information, not confirmation. The data-owned
-  `armouryUi.layout.comparison.presentation` is `tooltip` or `inline`. Tooltip mode presents the
-  full comparison after the configured `holdPreviewDelayMs` on a sustained pointer, keyboard, or
-  gamepad press, above its card when space permits, using `tooltipWidthRem` and
-  `tooltipMaxHeightRatio` to remain readable and viewport-safe; pointer hover and focus alone do
-  not reveal it. Inline mode embeds the same information in the expanded card. When the card also
-  owns a timed Equip/Move/Unequip action, the comparison preview observes that same hold lifecycle
-  and closes on release, cancellation, or commit without adding a competing gesture. When global
-  hold-confirm is off, the explicit action button owns the immediate change and the card retains a
-  read-only hold-to-compare gesture. The primary combat-power term shown to players is
-  **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
-  **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
+  Armament inventory faces use read-only first-tap disclosure and never equip on hold. The authored
+  armouryUi.layout.cardClasses.armamentItem has holdAction false and inline comparison. Other
+  Inventory classes retain the inventoryItem capability. An unassigned item requires an explicit
+  compatible destination; choices identify position, occupant, active/reserve and locked state.
+  Selecting a destination never equips or activates it. Equip/Move/Unequip use named buttons;
+  Make active is separate, including for empty reserves. Successful changes name the item and
+  destination. Requirements, grip and storage checks remain authoritative. Combat changes dispatch
+  priced engine intents; inspection never mutates a loadout. Mouse/pen drag remains available and
+  touch gestures scroll. Magic is the primary combat-power label; Potency remains its modifier.
 
   Equipment receipts are read models, never re-derived in a screen: the equipment receipt panel
   (`.armoury-equipment-receipts`, mounted in the Character view's Equipment cards card and in the
@@ -1614,10 +1611,29 @@ The editor groups the complete inventory into stable nested sections:
   registry-derived, so adding a class cannot create an invisible default. Per-class values must
   still satisfy the selected creation mode's bounds and total-allocation rules; invalid
   combinations are explained and cannot be applied silently.
-- **Combat and actors:** a global A–C row grid and numbered columns 1–4 (player 1–2, enemy 3–4),
+- **Combat and actors:** up to six rows and three columns per side,
   with front/back meaning identified per side; formation spacing, player and
   enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
   data-owned combat presentation values that do not alter asset identity.
+  Default spawns start on the lowest row in the outermost column of each team,
+  placing player and enemy starts farthest apart. Fill each row from outside toward
+  the centre, then move upward. For two columns and three rows, player rows read
+  `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
+  The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
+  Measurements remain responsive percentages; reference anchors at 1641×526 are checked
+  against the exports. Explicit saved group edits take precedence.
+  Formation settings offer group controls for the entire
+  battlefield, either team, individual columns, and named custom sets of positions. Dragging or
+  nudging translates every anchor in the group together. Offsets are stored as percentages of
+  battlefield width/height. Grid snapping defaults on with a 50 CSS px adjustable step; the group's
+  first anchor snaps to an intersection while all member spacing remains fixed. Snapping can be disabled.
+  Edge distances and nudge steps use CSS pixels. Characters and tiles
+  share the transformed anchors, and group translations stop at the battlefield edges. Custom
+  members retain their side, row and local column when the roster changes. Settings edits
+  require Apply layout. These are presentation edits, not tactical
+  movement, and do not spend actions or change combat range rules.
+  Groups may also target a row or one position and apply character size multipliers with feet
+  fixed to their anchors. Combat has no in-battle positioning control.
 - **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
   tray, HUD and window dimensions; UI scale/layout thresholds; and other data-owned component
   geometry. Dependent constraints are enforced together (for example, resting < selected <
@@ -1744,7 +1760,7 @@ together.
 - "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
 - Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
 
-  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks in `music/` (listed in `music/manifest.json`; each is written as notes in `music/score/<id>.mjs` and rendered offline by `tools/score/render.mjs`, so the score's source is code), and the two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the `music/` beside the page (`SHIPPED_MUSIC_FOLDER`, `content/music.js`; a `file://` page cannot fetch it and keeps the synth) — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
+  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks (listed in a music manifest; each is written as notes in a score module and rendered offline by `tools/score/render.mjs`, so the score's source is code). Today they are `music/*.mp3` with `music/manifest.json`, and the scores are `music/score/<id>.mjs`. From EXTERNAL-ASSETS-PLAN steps 9–13, the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and the scores and their render tool are authored there under `art/music/`. The two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the shipped tracks, read through the common pack's index in the web edition (EXTERNAL-ASSETS-PLAN step 3c) and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
 
 ### 7.5 Visual style
 
@@ -1759,11 +1775,13 @@ together.
 - Cards: DOM elements (not canvas) — rounded rect, rarity-coloured frame, cost orb top-left,
   type banner. Type presentation (geometry + banner colour per card type) is data:
   `balance.ui.cardTypes`.
-- **Fonts — TO BUILD, and the shipped state is the opposite of what this line used to
-  claim.** Cinzel (display) / Inter (body) are named in `font-family` **with system fallbacks
-  (Georgia / system-ui) and are NOT bundled**; `CREDITS.md` is the authoritative home and says
-  so. Self-hosting the `woff2` under `assets/fonts/` is unfinished work, not a shipped fact.
-  Falsify: `ls assets/fonts` and `grep -n "not bundled" CREDITS.md`.
+- **Fonts — TO BUILD.** Cinzel (display) / Inter (body) are named in `font-family` **with
+  system fallbacks (Georgia / system-ui)**, and the interface copies do not ship yet;
+  `CREDITS.md` is the authoritative home and says so. They will load at runtime as pack
+  files, like every other asset, through the pack loader (EXTERNAL-ASSETS-PLAN step 3b; owner,
+  2026-09-27, which replaces the question of bundling them). Wiring the interface faces
+  themselves is not yet a plan step: step 3b moves only the existing "AS Lore" faces. The
+  system fallbacks stay, for a page whose fonts do not load. Falsify: `grep -n "not bundled" CREDITS.md`.
 
 ---
 
@@ -1872,7 +1890,7 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 
 ## 11. Non-goals (v1)
 
-Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and bundled audio asset files (the score and SFX are synthesized at runtime — §7.4; the manifests accept real files).
+Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and audio bundled into the game file: the rendered score is loaded at runtime (pack files through the common index in the web edition, since EXTERNAL-ASSETS-PLAN step 3c; the `music/` folder beside the page in source and single-file builds), with the synth bed as its fallback, and SFX stay synthesized (§7.4; `SFX_MANIFEST` accepts real files).
 
 Three things this list once excluded have since shipped and are no longer non-goals: **multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player), a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4).
 
@@ -2089,6 +2107,8 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 ### 13.4i The character level is earned: XP, the point ledger, the level's own term (plan phase 6)
 
 - **The ledger is the run's:** `run.level = { xp, level, unspentPoints }` (schema 10; a save at ≤ 9 arrives at the level its cinder purchases reached — `1 + levelUps` — with no XP toward the next and nothing waiting; `validateRunShape` refuses a malformed ledger by name), written only by `model/levelup.js`. `xpToNext(registries, level)` is the one curve shape (`balance.level.xp`); `awardLevelXp(registries, run, amount, { pointsPerLevel })` climbs as many steps as the XP buys, each granting the dial's points to `unspentPoints` (`balance.levelUp.maxLevels` caps the climb, XP past it stays); `applyLevelUp(registries, run, attributeId)` assigns ONE waiting point — the attribute moves, `levelUps`/`levelPoints` record the assignment for the load door's allocation check exactly as before, the pools re-derive from the run's own snapshot with the deficit carried (levelling is not a rest). `levelUpPlan` offers the waiting points and nothing else (`blockedBy`: `points` | `cap` | null); the shrine's Level-up card assigns them (`rest.js`), the town's level-up service once phase 7 places it. Cinders buy no level: no code path spends `run.cinders` on one.
+
+- **Guided level rewards (owner, 2026-10-03):** Accessibility → Pause XP for level-up rewards (`guidedLevelUp`, default on) banks earned character and skill XP, pauses at each level, opens its reward chooser with Back, and resumes surplus XP after that choice. Back stops automatic prompting for the current reward screen; Continue can leave without advancing levels or selecting progression rewards. Unclaimed progression offers retain their originally rolled choices and absolute `requiredLevel` in optional `run.deferredProgression` (`levelCards`, `levelChoices`, `skillDrafts`, `classDrafts`); they return at later victories and through Character → Level up & rewards outside combat. Existing saves may omit the field. Class-specific offers wait for their original class to be equipped; switching classes cannot discard them or place a mismatched class draft into an active reward checkpoint. Deferring cannot grant, reroll, duplicate or auto-collect a progression reward. Turning the guide off follows the existing manual-level preference. Reduced motion skips the fill animation without changing the sequence or persistence.
 - **The awards are the run's owner's** (`main.js onCombatEnd`, `tools/session.mjs` per seat — the seat's ledger rides its member view, and assigning the points in co-op waits with the co-op class draft (§13.4g): the session pays, the co-op shrine does not yet offer — and `tools/runsim.mjs`): `combatLevelXp(registries, { victory, pool, kills })` — `xp.combatWin` for a won fight and `xp.kill.<pool>` per enemy felled (a kill is a kill, won or lost; an unknown pool pays the normal rate); `questLevelXp` names `xp.quest` for phase 10a's completion door. His level-value dial (`levelUpValue`) is read where the level is reached, so the points a level grants are decided then and wait for the shrine.
 - **The level's own term** rides the derived-stat rows (`content/derivedStats.js` `perLevel: { every, gain }`, optional per row, refused by name when malformed): `deriveStat` adds `floor((level − 1) / every) × gain` at the character level it is handed — HP +5, Mana +1 and Stamina +1 every five levels past the first, Hand +1 every ten, as shipped then (ruleset 6 restates the term as a decimal `perLevel`, and the owner's defaults of 2026-09-24 in §3.5 give HP 2 per level) — and every derivation of a run's pools (birth, the load door's integrity check, `reconcileRunLoadoutHp`, the stat projection) passes the run's level. The term is snapshotted with the row: a run born under it keeps it whatever the table says later, and a run born before it never gains it, so no old save is re-priced or refused.
 
@@ -2342,7 +2362,8 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
   - `applySkillUpgrades` and `reconcileSkillUpgrades`, so the standing upgrade rule of §13.4e reaches sideboard cards.
   Combat reads only `run.deck`.
 - **A class's own spells and Powers are limited to one copy in the deck** (owner ruling, 2026-09-26). The rule covers any card of a class, not colorless, whose type is `power` or that carries the `source:spell` tag (`deckRules.singleCopy`). The limit is the Settings row `classSpellPowerCopies`, default 1, and `deckCopyLimit(registries, cardId, settings)` answers it. The editor refuses to add a copy past the limit and names the card; further owned copies stay in the sideboard. The other copy rules are unchanged: Strike and Defend are unlimited, and weapon arts and techniques are limited to the copies owned and stack at the blacksmith (§14.4).
-- **Item-owned cards stay locked.** A card with `grantedBy` or `isItemOwned` (§13.4b) is shown in the deck list with a lock and its piece's name. The editor cannot remove it, and it counts toward the size rules. The Armoury, not the editor, decides these cards.
+- **Every deck card can be set aside** (owner revision, 2026-10-03), including item-owned cards. Its instance and ownership metadata stay in `sideboard`; equipment reconciliation must not re-mint an instance held there. The same excluded instance ids travel into combat and its snapshot, so a mid-fight equipment swap or reload cannot restore a card the player removed.
+- **Adding requires compatible equipped tags.** Unlimited Strike/Defend basics and the universal tags in `deckRules.equipmentEligibility.universalTags` are always available. Other cards with equipment-associated card-school tags require a matching worn piece; explicit weapon identity tags (`weaponTags`, shipped blade/bow/ranged) take precedence over secondary shared tags, so a bow cannot unlock blade skills through pierce/flourish. Cards with no equipment-associated school are universal. Item-lent instances additionally require their exact active source mount and card identity, because the mount remains item-owned. Extraction or installation updates a sideboarded mount to its current card before that entry suppresses the equipment deal; stale tile identities cannot restore a different card. Ineligible owned cards remain visible in the collection with “Equipment not found”; all editor addition paths refuse them. Existing copy limits still apply.
 - **The shop's Remove service** (today's `removeDeckCard`) still destroys a card and does not sideboard it. That is the paid, permanent removal it has always been.
 
 **Size rules.** `effectiveMin = deckMinUnlimited ? 0 : deckMinSize` and `effectiveMax = deckMaxUnlimited ? ∞ : deckMaxSize`. `deckEditRefusal(run, settings, draft)` returns `''` when `effectiveMin ≤ draft.length ≤ effectiveMax`. Otherwise it returns one sentence that names the count and the bound it breaks, for example "Your deck has 8 cards; it needs at least 10." **Done** is disabled with that sentence shown as visible text beside it (FINISH §6), never only as a colour. **Cancel** restores every field an editor session can change, exactly as it was when the editor opened: the deck and the sideboard instance for instance, plus `equipmentAttackSlotCount`, `removedAttackSlotIds`, `editMintCounter`, and, when the step-2 guard plan adds them, `equipmentGuardSlotCount` and `removedGuardSlotIds`. This goes through `beginDeckEdit` and `cancelDeckEdit`, so a cancelled edit leaves no slot allocation that disagrees with the restored instances and uses up no mint number. The bounds are checked **only when the editor confirms**. A reward, a purchase or an equipment swap may leave the deck outside them, and the next editor visit then shows the refusal until the deck is brought back inside. The editor's rule is independent of the Armoury floor of §13.4b (`deckMinimum`), which still governs leaving the Armoury. The two are separate settings so the owner can compare them, and FINISH's Owner decisions list records whether to fold them together.
@@ -2357,11 +2378,12 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
   - The co-op path (`coopCombat.js`) reads each seat's owner's setting when it builds that seat's pile, and carries it per seat.
 
 **UX.** The component is `DeckEditorModel` plus `mountDeckEditor`, with an entry in `docs/component-catalog.html`.
-- **Layout.** The collection pane is on the left (top on a portrait phone) and the deck pane is on the right (bottom).
+- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones switch between collection, inspection and deck views; Back returns to the pane that opened inspection. Collection offers All/In Deck and text search; the deck has its own search, List/Cards presentation and collapsible type groups. Ordered decks retain their exact sequence instead of type groups. Copy counts remain visible for single copies as well as grouped copies.
+- **Undo.** Undo reverses the last successful add, removal or reorder, restoring the same complete editing state as Cancel (including allocation and card mint counters). Failed and unchanged actions do not create history. Cancel still restores the state from when the editor opened; Done confirms the current valid state.
 - **Header.** It shows the live counter "N / min–max", which turns red and shows the refusal sentence when out of bounds. Beside it is a compact cost-curve histogram.
 - **Filters and sort.** Filter chips cover type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded. Sort chips cover cost, name, type and source.
-- **Every drag has two twins.** A tap on a collection tile adds the card, and a tap on a deck row removes it. Each row also carries explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
-- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes. A adds or removes the focused card. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
+- **Every drag has two twins.** A tap on a collection tile or deck row inspects the card without changing the run. The Reading Desk inspector carries an explicit Add to deck or Remove from deck action; rows also carry explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
+- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes. A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
 - **Target size.** Every target is at least 48 CSS px on a coarse pointer and at least 44 px otherwise, and text is at least 11 px at 360×640 (FINISH §8).
 
 *Falsify:*
@@ -2371,7 +2393,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 - Removing an equipped Strike retires its slot and sideboards it, and adding a Strike un-retires that slot first.
 - With no slot retired, adding a Strike raises `equipmentAttackSlotCount` by one, and the next `stampDeck` stamps it with the weapon's face without throwing.
 - A 9-card draft is refused under min 10 with a sentence naming 9 and 10, and is allowed with `deckMinUnlimited`.
-- A granted card cannot be removed.
+- A granted card can be removed; restamp, save/reload and combat equipment reconciliation leave it in the library until explicitly restored.
 - Cancel restores both piles exactly.
 - With `playInDeckOrder`, the opening hand is the first cards of `run.deck`, Innate first, and a reshuffle returns discards in deck order. With it off, a seeded opening hand is unchanged from before this section.
 - A fight saved in ordered mode resumes ordered after the setting is turned off.
@@ -2397,6 +2419,8 @@ A shop has a **kind**, one of `market` (the usual shop), `blacksmith` and `maste
 
 **Settings, Advanced → Shops.** For each kind there is a `guaranteedMinimum` number, and for each offering an **enabled** bool, a **chance** number and a **weight** number (which offerings the guarantee adds first). These are generated from `shops.js` the way `advancedConfigRows` generates the balance rows, so adding an offering to the data adds its rows. They are `gameConfig.shops.<kind>.<offering>.enabled|chance|weight` and `gameConfig.shops.<kind>.guaranteedMinimum`. **Every other number an offering authors** (stock counts, prices, `perVisit`, refine ratios, slot limits, costs, `respecRefundPct`; a consumable's `hpPct` and `xp` are rows of the consumable itself, §14.3) gets its row the same way, as `gameConfig.shops.<kind>.<offering>.<key>` (or `gameConfig.shops.<kind>.<key>` for a kind-level number), generated from each numeric leaf that carries a `[NOTE]`; `validateContent` refuses a numeric offering leaf with no `[NOTE]`, by name. Like every `gameConfig.*` row they are **frozen into `run.advancedConfigSnapshot` when a run begins**. A disabled offering is never rolled and never guaranteed.
 
+**Merchant presentation (owner, 2026-10-03).** Direct Cards and loose Weapon Arts purchases are no longer exposed: neither category, shelf nor purchase control is rendered, including for existing saved visits. Books and equipment remain available through their existing offers. Legacy `cards` and `weaponArts` stock fields, generation draws and configuration snapshots remain compatible; opening a merchant does not reroll or mutate them. The stock-generation guarantee above still applies to stored offerings, while the merchant displays only the remaining purchase categories.
+
 **Where each kind appears.**
 - **Classic `merchant` node.** It rolls its kind from `gameConfig.shops.kindWeights` on `shopOffers`. The shipped weights are `market` 100, `blacksmith` 0 and `master` 0, so shipped seeds are unchanged; the owner raises the other two to let a classic merchant be a blacksmith or a master. A kind is rollable only once its screen has shipped. Step 4 ships `blacksmith` and `master` locked at weight 0: `validateContent` refuses a non-zero weight for a kind whose screen is not registered, and Settings shows no weight row for it. Steps 6 and 7 each unlock their own kind. A merchant that rolls `blacksmith` or `master` offers that kind's offerings only, not market shelves.
 - **Atlas services.** The atlas `shop` service is a `market`, and the atlas `smith` service is a `blacksmith`. It gains a persisted `serviceStates[pointId].stock`, which it lacks today.
@@ -2407,6 +2431,8 @@ A shop has a **kind**, one of `market` (the usual shop), `blacksmith` and `maste
 All prices are in cinders unless stated otherwise, and all are data.
 
 ### 14.3 The market (usual shop)
+
+**Owner amendment, 2026-10-03:** [Class-book rewards contract](docs/CLASS-BOOK-REWARDS-CONTRACT.md) supersedes the class-book first-read-only rule below: repeat reads grant XP and independent configurable technique/feat rolls, defaulting to 25% and 5%.
 
 These offerings extend `buildShopStock`. The existing shelves become offerings with `chance: 100`, so a seed's existing shelves roll the same values. The **Conditional** column is each offering's authored `conditional` flag (§14.2). A conditional offering whose shelf comes up empty is not laid out, and it never counts toward the enablement minimum.
 
@@ -2438,7 +2464,8 @@ These offerings extend `buildShopStock`. The existing shelves become offerings w
 **Consumables** are **`run.consumables: { [consumableId]: count }`**, authored in `src/content/consumables.js` as `{ id, kind, name, blurb, cost, sellValue, ...}`. A count is a whole number of at least 1; a used-up entry is deleted, never kept at 0. `validateRunShape` refuses a non-object map or any other count by name, and the load door archives a save that owns an id this build does not know, as it does an unknown sigil.
 - **The numbers are Settings rows.** Every number a consumable row authors (`cost`, `sellValue`, `xp`, `hpPct`) carries a `[NOTE]` and gets a generated row, `gameConfig.consumables.<id>.<key>`, frozen into `run.advancedConfigSnapshot` like the Shops rows (§14.2); a companion's numbers (`cost`, `combats`) do the same as `gameConfig.companions.<id>.<key>`. This is where §14.2's `hpPct` lives: the item's number is its only home, and the market offering adds only its per-visit `stock`. `validateContent` refuses, by name, a count or price that is not a whole number (prices from 1, `hpPct` 1–100, `xp` and `combats` from 1) and a `sellValue` above `cost`; Settings refuses a `sellValue` row above its `cost` row by name.
 - **Buying.** A shelf offer is `{ id, cost }`, priced at the item's `cost` and scaled by a custom run's shop price multiplier like every other market price (§14.3 armour). Buying a consumable adds 1 to its count.
-- A **skill book** has `kind: 'skillBook'` and `{ skill, xp }`, where `skill` is a derived track id (§13.4d) other than a `class:` track, refused by name otherwise. Using it outside combat calls `awardSkillXp` for its track (§13.4d is the one writer) and removes one from the count. **The door is the Armoury's Inventory** (the same list as relics and potions): consumables are listed there, stacked by id, and a skill book's detail offers **Read**, which is absent in combat. Its `sellValue` is high by default, which makes it a store of trade value.
+- A **skill book** has `kind: 'skillBook'` and `{ skill, xp }`. **Owner amendment, 2026-10-02:** reading pays the XP **plus one immediate chosen lesson**, independently of XP level-ups. Opening/cancelling spends nothing; confirmation validates the still-owned book and choice, grants both rewards and consumes exactly one copy. A revision prevents a replay from spending another copy. The Armoury's Inventory offers **Read** only outside combat. A book may author `learnTags` (canonical tags, any matching tag), `learnClass` (a class id paired with its `class:<id>` XP track), or `learnAny: true` (`skill: '*'`, player-selected XP track). These scopes are mutually exclusive. Legacy books derive card schools from their skill's equipment tags without requiring that equipment to be held. Lessons draw from the union of all classes' authored card pools, never only the current class; equipment-only/internal cards stay excluded. Existing rarity unlocks apply at `max(track level, 1)` before reading, so common lessons are always available. A universal book can teach a skill card, a spell or an unlearned class; a spellbook uses the canonical `source:spell` tag. A class already learned is unavailable as a lesson. Learned cards enter the deck unless its configured own-class copy limit is reached; excess copies enter the sideboard, rechecked at confirmation. The lesson preview includes upgrades from the awarded XP. Books keep the existing configurable XP/cost/sell-value defaults; this change is not a balance tuning pass.
+- **Class cards (same owner amendment):** the starting class is already learned. Learning another class never auto-equips it. The Inventory may equip one learned card or leave the core slot empty, outside combat and after outstanding rewards are resolved. Class XP, pending drafts and tree picks survive removing and re-equipping a card; class-specific armour sets are retained with that class. `classCards` optionally stores each learned id's `{ coreTags, armour?, activeArmour? }`; `classUnequipped` optionally marks an empty core. Missing fields retain legacy behavior. `run.class` remains the last class identity for established stat/armour and reward-pool readers; `classUnequipped` controls the active core, whose projection is then `null` with no mounted class tags. Empty-core characters keep learned cards, character attributes, equipment and relics, but mount no class properties, receive no combat class XP and gain no class-tree choices. The player identity says **Classless**. Combat/save snapshots retain this state. Equipping a learned class preserves its progression; the pre-existing mirror event retains its separately authored reset behavior.
 - **Selling.** Any consumable can be sold at a market or master for its `sellValue`, through a new **Sell consumables** shelf beside the armament sale of §12.2 (on the market, in the same Sell pane, which the `shopSell` toggle already governs). That shelf uses the same plan/commit pair and the same stale-quote refusal. The price is never above the buy price, so buying and immediately selling can never turn a profit: the sale pays `min(sellValue, buy price)`, where the buy price is what the market would charge for one now (its `cost`, scaled by the run's shop price multiplier).
 - A **revive token** has `kind: 'revive'` and `{ hpPct }`. When the player would drop to 0 HP in combat, one token is spent and HP is set to `hpPct` of max: `max(1, floor(maxHp × hpPct / 100))`, and the player stays alive. With more than one revive kind held, the first in `consumables.js` order is spent. v1 is solo only: a co-op seat carries no consumables.
   - No death-prevention hook exists today. The step-5 PR adds one at the player's death point, and a new event, **`reviveSpent`**, in `EVENTS` (`model/schemas.js`).
@@ -2583,7 +2610,7 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 | Deck list collapsed to one row per card variant (id + upgrade + mods; for a locked card, also its owner) with a ×N count | Hearthstone, Arena, LoR | **Yes**, except while **Play in deck order** is on | Counts are the scan-friendly view; in ordered mode each copy is its own row so it can be placed. A Strike and a Strike+ stay two rows: merging them would hide the upgrade and make ＋/－ ambiguous, and the collection tiles use the same variant key. |
 | Live size counter "N / min–max", red when out of bounds, Done disabled with a sentence | Hearthstone (30/30), Snap (12/12), Arena (60+) | **Yes** | The invalid state must be explained, not just coloured (SPEC §7.5, FINISH §6). |
 | Copy limit shown on the collection tile ("2 owned, 1 in deck") and greyed when exhausted | Hearthstone, LoR, Arena | **Yes** | Weapon arts and techniques are limited to owned copies; basics show ∞. |
-| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the collection is small (≤ ~60 ids), so no search box in v1. |
+| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the Reading Desk also offers a text search over collection names and resolved rules. |
 | Mana/cost curve histogram | Hearthstone, Arena, LoR | **Yes, compact** | Cheap to derive; the one analytic players ask for. |
 | Undo / "revert to deck on entry" | Snap (discard changes), Arena | **Yes** — Cancel restores the entry deck | Editing is out of combat, so a whole-session revert is simple and safe. |
 | Deck edited mid-run only at rest or through removals | Slay the Spire, Monster Train, Inscryption | **As an option** (`Rest sites only`) | The owner wants to compare it with Free editing; roguelike tension comes from this restriction. |
@@ -2615,14 +2642,14 @@ These keys go in `balance.rewards.cardRewards`.
 | Key | Shipped default | Meaning |
 |---|---|---|
 | `afterCombat.normal` / `.elite` / `.boss` | `true` | Whether a won fight of that pool offers a card row. |
-| `chancePct.normal` / `.elite` / `.boss` | `100` | The chance, 0–100, that an eligible fight offers the card row. 100 rolls nothing. |
+| `chancePct.normal` / `.elite` / `.boss` | `10` | The chance, 0–100, that an eligible fight offers the card row. 100 rolls nothing. |
 | `onLevelUp` | `false` | When the fight raised the character level (§13.4i), the spoils add a **level card** row. |
 | `onLevelUpMaxPerFight` | `1` | How many level-card rows one fight can add, however many levels it gained. |
 
 - **Offer size.** It stays `rewards.cardChoices`, which already has a row. The Feral Eye relic still adds +1 at elites.
 - **Chance rolls.** They use a new stream, **`rewardRolls`**, appended to the end of `STREAM_NAMES`, so no existing stream moves. A roll that fails leaves no card row, and the menu says so in one line: "No card this time."
 - **Level card row.** Its cards come from the class reward pool at the door's own rarity odds, through `rollCardRewardIds` on `cardRewards`. It is a new `REWARD_KIND_ORDER` kind, `levelCard`, sitting after `card`. Its row key is `levelCard:<ordinal>` (`rowKey` gains the `levelCard` case), and it is taken and skipped like the card offer. Each level-card row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]`, the row-keyed map the class drafts already use (not the single `chosenCardId`, which stays the `card` row's), so two or more level-card rows save and restore unambiguously; `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name. A save written before this section has no level-card rows and needs no migration.
-- **Drafts.** Skill and class drafts (§13.4e and §13.4g) are unchanged, and when a draft is waiting it still takes the card row's seat. A waiting draft does **not** displace the level card: the level card is the level's own reward, the draft is the track's.
+- **October 3 owner defaults.** Solo combat rolls its card independently of skill/class drafts. Every non-class skill level queues a guaranteed card draft; when its schools have no eligible cards, it uses the class pool with the skill's rarity gate. Existing per-door draft limits still queue excess drafts. `balance.rewards.sourceBonuses` supplies independent chances: `combatFeatChancePct: 5`, `classFeatChancePct: 100`, `classCardChancePct: 25`. Each class level keeps its class-tree upgrade as well as the guaranteed feat and separate technique-card roll. Bonuses are checkpointed in `levelChoices`/`levelCards` with `source: combat|class`; class rows carry `skillId` and `claimOrdinal` and unlock only after their class level is claimed. `classRewardLevels` records already issued class-level bonuses, including levels claimed outside combat. Character-level reward switches do not remove class technique cards. LAN's existing reward UI has no skill/class/feat drafts; this extension applies to the solo reward door.
 - **Consumers.** `main.js onCombatEnd`, `tools/session.mjs` (the co-op reward scene) and `tools/runsim.mjs` read the schedule through one model function, `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`, so solo, co-op and the simulator share one rule. **Scope, stated:** co-op today reads the shipped balance for every `gameConfig.*` row (`tools/lan.mjs` builds its registries from `contentBundle`, with no host snapshot), so a LAN session plays the shipped schedule until the host's `advancedConfigSnapshot` is carried into the session. That carriage is its own follow-up for all `gameConfig` rows, not a §15 change.
 - A saved `pendingReward` written before this section reads as "card row as rolled".
 

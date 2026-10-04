@@ -181,6 +181,7 @@ export function moveEquipmentPool(holder, maxField, nextMax, carriedDeficit = un
     throw new Error(`moveEquipmentPool requires finite ${maxField}/${currentField}`);
   }
   const oldMax = holder[maxField];
+  const surplus = currentField === 'stamina' ? Math.max(0, holder[currentField] - oldMax) : 0;
   const observedDeficit = Math.max(0, oldMax - holder[currentField]);
   const priorDeficit = Number.isInteger(carriedDeficit) && carriedDeficit >= 0 ? carriedDeficit : observedDeficit;
   // A hidden deficit can be larger than a temporarily shrunken vessel. Account
@@ -188,7 +189,7 @@ export function moveEquipmentPool(holder, maxField, nextMax, carriedDeficit = un
   const representedDeficit = Math.min(priorDeficit, oldMax);
   const deficit = Math.max(0, priorDeficit + observedDeficit - representedDeficit);
   holder[maxField] = nextMax;
-  holder[currentField] = Math.max(0, nextMax - deficit);
+  holder[currentField] = Math.max(0, nextMax - deficit) + surplus;
   return deficit;
 }
 
@@ -2111,7 +2112,33 @@ export function reconcileGrantedCards(registries, run) {
   // the worn equipment's mounts; every other lent card is swept (an older
   // build may have left one) and none is appended.
   const poolDeck = isPoolDeckRun(run);
-  const desired = poolDeck ? playerInstalledGrants(run, desiredGrantInstances(registries, run)) : desiredGrantInstances(registries, run);
+  const currentGrants = desiredGrantInstances(registries, run);
+  const currentById = new Map(currentGrants.map((card) => [card.instanceId, card]));
+  // A sideboard entry represents the mount, just like its deck counterpart.
+  // Extraction/installation can replace the card under an unchanged mount id;
+  // adopt that new content before the sideboard suppresses the mount's deal.
+  // Unequipped sources keep their library entries, but smithing those carried
+  // items must still refresh a set-aside mount (or remove a deleted extra mount).
+  if (Array.isArray(run.sideboard)) {
+    const mountsByOwner = new Map();
+    run.sideboard = run.sideboard.flatMap((card) => {
+      if (!isItemOwned(card)) return [card];
+      let desired = currentById.get(currentInstanceId(card));
+      const owner = ownerItemRef(card);
+      if (!desired && owner && !card.kitRole) {
+        if (!mountsByOwner.has(owner)) {
+          const piece = resolveUpgradedEquipment(registries, owner, run.itemUpgradeLevels?.[owner] || 0);
+          mountsByOwner.set(owner, itemMountInstances(registries, run, piece));
+        }
+        desired = mountsByOwner.get(owner).find((mount) => mount.instanceId === card.instanceId);
+        if (!desired) return [];
+      }
+      return [desired ? adoptWanted(card, desired) : card];
+    });
+  }
+  const heldAside = new Set((run.sideboard || []).map((card) => currentInstanceId(card)));
+  const allDesired = currentGrants.filter((card) => !heldAside.has(card.instanceId));
+  const desired = poolDeck ? playerInstalledGrants(run, allDesired) : allDesired;
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
   // In place, not a reassignment: stampDeck captures its stamping list before
@@ -2130,6 +2157,11 @@ export function reconcileGrantedCards(registries, run) {
   run.deck.push(...kept);
   for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
   return run.deck;
+}
+
+/** A library grant is addable only while its exact mount still lends that card. */
+export function isCurrentEquipmentGrant(registries, run, card) {
+  return desiredGrantInstances(registries, run).some((desired) => desired.instanceId === card.instanceId && desired.cardId === card.cardId);
 }
 
 /**
@@ -2341,7 +2373,8 @@ export function reconcileGrantedCardsInCombat(registries, run, piles) {
   // Combat's swap hands in a synthetic run with an empty deck; the piles are
   // the deck here, and the Dodge Roll rule reads the deck for a legacy copy.
   const deck = run.deck && run.deck.length ? run.deck : [...piles.hand, ...piles.draw, ...piles.discard, ...piles.exhaust];
-  const allDesired = desiredGrantInstances(registries, { ...run, deck });
+  const heldAside = new Set(run.sideboardedEquipmentCardIds || (run.sideboard || []).map((card) => currentInstanceId(card)));
+  const allDesired = desiredGrantInstances(registries, { ...run, deck }).filter((card) => !heldAside.has(card.instanceId));
   const desired = poolDeck ? playerInstalledGrants(run, allDesired) : allDesired;
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();

@@ -24,8 +24,8 @@
     { "id": "term.intelligence", "canonicalText": "Intelligence", "shortText": "INT" },
     { "id": "term.wisdom", "canonicalText": "Wisdom", "shortText": "WIS" },
 
-    { "id": "term.action", "canonicalText": "Action", "pluralText": "Actions" },
-    { "id": "term.energy", "canonicalText": "Energy" },
+    { "id": "term.action", "canonicalText": "Stamina", "pluralText": "Stamina" },
+    { "id": "term.energy", "canonicalText": "Stamina" },
     { "id": "term.stamina", "canonicalText": "Stamina" },
     { "id": "term.mana", "canonicalText": "Mana" },
     { "id": "term.alternativeCost", "canonicalText": "Alternative Cost", "pluralText": "Alternative Costs" },
@@ -95,13 +95,13 @@
     { "id": "term.tooltip.intelligence", "canonicalText": "This card scales with Intelligence." },
     { "id": "term.tooltip.wisdom", "canonicalText": "This card scales with Wisdom." },
 
-    { "id": "term.tooltip.action", "canonicalText": "Costs Actions to play." },
-    { "id": "term.tooltip.stamina", "canonicalText": "Costs Stamina to play. Spend no Stamina for a full turn to recover 1." },
+    { "id": "term.tooltip.action", "canonicalText": "Costs Stamina to play." },
+    { "id": "term.tooltip.stamina", "canonicalText": "Costs Stamina to play. Refills at the start of every turn." },
     { "id": "term.tooltip.mana", "canonicalText": "Costs Mana to play. Mana refills at Rest Spots, not between turns." },
     { "id": "term.tooltip.alternativeCost", "canonicalText": "May be paid with a complete alternative option instead of its listed cost." },
 
     { "id": "term.tooltip.innate", "canonicalText": "Starts each combat on top of your draw pile." },
-    { "id": "term.tooltip.retain", "canonicalText": "Not discarded at the end of your turn." },
+    { "id": "term.tooltip.retain", "canonicalText": "Stays in your hand at the end of your turn." },
     { "id": "term.tooltip.recall", "canonicalText": "Returns to your hand after the named moment instead of being discarded." },
     { "id": "term.tooltip.recallAfterUse", "canonicalText": "Returns to your hand after being played. A forced discard is not a use." },
     { "id": "term.tooltip.recallAfterTurnDraw", "canonicalText": "Returns to your hand after your turn's draw." },

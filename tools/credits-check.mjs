@@ -6,9 +6,13 @@
 //   node tools/credits-check.mjs --selftest  prove each rule can still go red
 //
 // WHAT IT READS, AND NOTHING ELSE:
-//   · the asset directories — every child directory of assets/, asset-data/ and music/,
-//     plus the assets-mobile/ twin tree as one unit (it mirrors assets/ and is
-//     produced by tools/mobile-art.mjs, so one row covers it)
+//   · the asset directories — every id prefix art-manifest.json lists (step 12 of
+//     docs/EXTERNAL-ASSETS-PLAN.md: the manifest, not the trees, which leave this
+//     repository at step 13): `assets/<dir>` and `music/<dir>` one level down,
+//     `map-detail` and `licenses` whole, and `assets-mobile` as one unit while
+//     any id has a light record (the light tier mirrors the high one, so one row
+//     covers it); plus every child directory of asset-data/, the non-art files
+//     that stay here
 //   · CREDITS.md — a directory is covered only by an ATTRIBUTION ROW: a line of
 //     a Markdown table whose header has a Source column and a Rights (or
 //     License/Licence) column, whose first cell names the path followed by a
@@ -32,7 +36,8 @@
 // that says a fact is NOT recorded (e.g. "Provenance not recorded") passes: the
 // row exists and states the gap; closing the gap is the owner's call.
 //
-// Scope limit. Coverage is checked one level under assets/, asset-data/ and music/ only; a
+// Scope limit. Coverage is checked one level under assets/, asset-data/ and music/ only
+// (and map-detail/, licenses/ whole); a
 // row naming any subpath (`assets/animations/reaver/…`) covers the whole
 // directory, so a new sibling subdirectory under a covered directory is not
 // checked.
@@ -157,17 +162,28 @@ export function audit({ dirs, credits, readme, disclosure }) {
 
 /** The real tree's inputs. */
 export async function treeInputs(root = ROOT) {
-  const dirs = [];
-  for (const top of ['assets', 'asset-data', 'music']) {
-    const abs = resolve(root, top);
-    if (!existsSync(abs)) continue;
-    for (const e of readdirSync(abs, { withFileTypes: true })) if (e.isDirectory()) dirs.push(`${top}/${e.name}`);
+  return { ...(await textInputs(root)), dirs: assetDirs(root) };
+}
+
+/** The directories a CREDITS row must cover: art-manifest.json's id prefixes, and asset-data/'s children. */
+export function assetDirs(root = ROOT) {
+  const set = new Set();
+  const assets = JSON.parse(readFileSync(resolve(root, 'art-manifest.json'), 'utf8')).assets || {};
+  for (const [id, entry] of Object.entries(assets)) {
+    const parts = id.split('/');
+    if (parts[0] === 'assets' || parts[0] === 'music') {
+      if (parts.length > 2) set.add(`${parts[0]}/${parts[1]}`); // music/manifest.json is a file at the top
+    } else set.add(parts[0]);
+    if (entry && entry.light) set.add('assets-mobile');
   }
-  if (existsSync(resolve(root, 'assets-mobile'))) dirs.push('assets-mobile');
-  dirs.sort();
+  const data = resolve(root, 'asset-data');
+  if (existsSync(data)) for (const e of readdirSync(data, { withFileTypes: true })) if (e.isDirectory()) set.add(`asset-data/${e.name}`);
+  return [...set].sort();
+}
+
+async function textInputs(root) {
   const { disclosureAsText } = await import('../src/content/aiDisclosure.js');
   return {
-    dirs,
     credits: readFileSync(resolve(root, 'CREDITS.md'), 'utf8'),
     readme: readFileSync(resolve(root, 'README.md'), 'utf8'),
     disclosure: disclosureAsText(),

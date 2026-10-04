@@ -3474,7 +3474,7 @@
                 "__string": "Mana pays spell costs."
               },
               "stamina": {
-                "__string": "Stamina pays physical skill and Dodge costs."
+                "__string": "Stamina pays card and combat costs. It refills at the start of every turn."
               },
               "recovery": {
                 "__string": " Recovers {amount} per turn."
@@ -4784,7 +4784,8 @@
               "outerBorder",
               "slotOrder",
               "defaultView",
-              "gridColumns"
+              "gridColumns",
+              "compactList"
             ],
             "frozen": true,
             "values": {
@@ -4813,6 +4814,25 @@
               },
               "gridColumns": {
                 "__number": "3"
+              },
+              "compactList": {
+                "__keys": [
+                  "thumbnailWidthPx",
+                  "phoneThumbnailWidthPx",
+                  "inspectionWidthPx"
+                ],
+                "frozen": true,
+                "values": {
+                  "thumbnailWidthPx": {
+                    "__number": "82"
+                  },
+                  "phoneThumbnailWidthPx": {
+                    "__number": "68"
+                  },
+                  "inspectionWidthPx": {
+                    "__number": "264"
+                  }
+                }
               }
             }
           },
@@ -5053,7 +5073,8 @@
           },
           "cardClasses": {
             "__keys": [
-              "inventoryItem"
+              "inventoryItem",
+              "armamentItem"
             ],
             "frozen": true,
             "values": {
@@ -5065,6 +5086,21 @@
                 "values": {
                   "holdAction": {
                     "__boolean": false
+                  }
+                }
+              },
+              "armamentItem": {
+                "__keys": [
+                  "holdAction",
+                  "comparisonPresentation"
+                ],
+                "frozen": true,
+                "values": {
+                  "holdAction": {
+                    "__boolean": false
+                  },
+                  "comparisonPresentation": {
+                    "__string": "inline"
                   }
                 }
               }
@@ -5278,7 +5314,8 @@
               "outerBorder",
               "slotOrder",
               "defaultView",
-              "gridColumns"
+              "gridColumns",
+              "compactList"
             ],
             "frozen": true,
             "values": {
@@ -5307,6 +5344,25 @@
               },
               "gridColumns": {
                 "__number": "3"
+              },
+              "compactList": {
+                "__keys": [
+                  "thumbnailWidthPx",
+                  "phoneThumbnailWidthPx",
+                  "inspectionWidthPx"
+                ],
+                "frozen": true,
+                "values": {
+                  "thumbnailWidthPx": {
+                    "__number": "82"
+                  },
+                  "phoneThumbnailWidthPx": {
+                    "__number": "68"
+                  },
+                  "inspectionWidthPx": {
+                    "__number": "264"
+                  }
+                }
               }
             }
           },
@@ -5547,7 +5603,8 @@
           },
           "cardClasses": {
             "__keys": [
-              "inventoryItem"
+              "inventoryItem",
+              "armamentItem"
             ],
             "frozen": true,
             "values": {
@@ -5559,6 +5616,21 @@
                 "values": {
                   "holdAction": {
                     "__boolean": false
+                  }
+                }
+              },
+              "armamentItem": {
+                "__keys": [
+                  "holdAction",
+                  "comparisonPresentation"
+                ],
+                "frozen": true,
+                "values": {
+                  "holdAction": {
+                    "__boolean": false
+                  },
+                  "comparisonPresentation": {
+                    "__string": "inline"
                   }
                 }
               }
@@ -9135,7 +9207,7 @@
         }
       },
       "minimumHandHeight([])": {
-        "__number": "145.6"
+        "__number": "153.6"
       },
       "packCombatFooter([{\"width\":800,\"height\":600}])": {
         "__keys": [

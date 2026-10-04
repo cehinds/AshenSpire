@@ -61,11 +61,14 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptSounds } from '../fx.js';
+import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
+import { combatVitals } from '../models/StaminaOrbModel.js';
 import { resourceBars } from '../components/resbars.js';
+import { combatHealthRow } from '../components/combatHealth.js';
+import { blockPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
@@ -151,7 +154,7 @@ export function levelCardStrips(registries, offer, picks) {
 }
 
 /**
- * coopReceiptSounds(scene, lastSeq) → the receiptSeq now heard.
+ * coopReceiptSounds(scene, lastSeq, localSeats?) → the receiptSeq now heard.
  *
  * Plays a combat scene's receipts (tools/session.mjs combatScene digest)
  * through the same sound seams solo uses (fx.js playReceiptSounds: tiered
@@ -162,11 +165,19 @@ export function levelCardStrips(registries, offer, picks) {
  * scene the host marks `opening` (the one carrying the setup cues); joining
  * after any action, turn 1 included, replays no history.
  */
-export function coopReceiptSounds(scene, lastSeq = 0) {
-  if (!scene || scene.kind !== 'combat') return lastSeq;
-  const seq = Number(scene.receiptSeq) || 0;
+export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
+  // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
+  // it (session.mjs settleCombat): the card that ended the fight buzzes, as
+  // solo's does. Haptics only — the fight's end has never played their sound.
+  const final = scene && scene.kind !== 'combat' ? scene.combatReceipts : null;
+  if (!scene || (scene.kind !== 'combat' && !final)) return lastSeq;
+  const seq = Number((final || scene).receiptSeq) || 0;
   if (seq <= lastSeq) return lastSeq;
-  if (lastSeq > 0 || scene.opening === true) playReceiptSounds(scene.events || []);
+  // Haptics are personal: a seat this screen does not play (a LAN teammate)
+  // makes sound here, but does not buzz this device. No list = every seat.
+  const isLocalPlayer = Array.isArray(localSeats) && localSeats.length ? (id) => localSeats.includes(id) : undefined;
+  if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer }); }
+  else if (lastSeq > 0 || scene.opening === true) (hapticsOnly ? playReceiptHaptics : playReceiptSounds)(scene.events || [], { isLocalPlayer });
   return seq;
 }
 
@@ -435,7 +446,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       weightClass: player.weightClass || null,
     });
     return {
-      energy: pools.variable ? 1 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
+      energy: pools.variable ? 0 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
       // The same numbers as a live preview, so the card face and its tooltip
       // show what the host will charge (renderCard reads opts.preview).
       preview: { costIsX: !!pools.variable, cost: pools.action, manaCost: pools.mana || 0, staminaCost: pools.stamina || 0, tokens: {} },
@@ -654,6 +665,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
     }
+    if (snap.scene.kind !== 'combat') lastSoundSeq = coopReceiptSounds(snap.scene, lastSoundSeq, seats);
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;
@@ -701,6 +713,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const entity = { ...ent, kind: isEnemy ? 'enemy' : 'player' };
     const plan = resourceBarPlan(registries, 'model', entity, entity, resourceDomainTable);
     const bars = resourceBars(plan, { surface: 'model' });
+    const hp = bars.querySelector('.as-meter[data-res="hp"]');
+    if (hp) {
+      const next = hp.nextSibling;
+      const health = combatHealthRow(hp, blockPresentation(ent));
+      bars.insertBefore(health, next);
+    }
     wrap.classList.add('as-meters', 'tight');
     while (bars.firstChild) wrap.append(bars.firstChild);
     if (isEnemy) {
@@ -708,14 +726,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (arcane) wrap.appendChild(arcane);
     }
     return wrap;
-  }
-  function blockBadge(block) {
-    if (!block || block <= 0) return null;
-    const b = document.createElement('div');
-    b.className = 'block-badge';
-    b.textContent = block;
-    attachTooltip(b, () => `<div class="tt-title">Block ${block}</div>Absorbs attack damage.`);
-    return b;
   }
   function intentEl(intent) {
     return combatantIntent(intent, () => intentTooltip(intent, { victim: 'each hero' }));
@@ -727,7 +737,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'HP', value: entity.hp, max: entity.maxHp },
         { label: 'MP', value: entity.mana, max: entity.maxMana },
         { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
-        { label: 'Block', value: entity.block || 0 },
+        { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
       const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) : null;
@@ -769,6 +779,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     setPotionRevealTiming(row, resolveTooltipSettings(meta.settings));
     paintCombatActionCounts(row, {
       energy: meP ? meP.energy : null, energyMax: meP ? meP.energyMax : null,
+      mana: meP?.mana, maxMana: meP?.maxMana, settings: meta.settings || {},
       draw: meP?.drawCount ?? 0, discard: meP?.discardCount ?? 0, exhaust: meP?.exhaustCount ?? 0, browse: false,
     });
     const orb = row.querySelector('.energy-orb');
@@ -862,7 +873,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // from the host snapshot; a missing current/max pair produces no bar.
     const mainHost = app.querySelector('.topbar .resbars-host');
     if (mainHost && meP) {
-      const mainPlan = resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable);
+      const mainPlan = combatVitals(resourceBarPlan(registries, 'main', meP, meP, resourceDomainTable), meta.settings || {});
       mainHost.appendChild(resourceBars(mainPlan, { surface: 'main' }));
     }
 
@@ -882,7 +893,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
       for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
-      const bb = blockBadge(p.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,
       // first child), a "you" Pill, the energy Chip, and the seat's state as
@@ -891,7 +901,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const nm = statStrip([
         el('span', { class: 'coop-seat-player', style: { color: tintCss(m.tint) }, text: m.name || p.id }),
         p.id === me ? pill({ label: 'you', round: true, on: true }) : null,
-        chip({ key: '⚡', value: `${p.energy}/${p.energyMax}`, attrs: { 'aria-label': `Energy ${p.energy} of ${p.energyMax}` } }),
+        chip({ key: '◆', value: `${p.energy}/${p.energyMax}`, attrs: { class: 'stamina-budget', 'aria-label': `${t('combat.actions')} ${p.energy} of ${p.energyMax}` } }),
         pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
       ], { class: 'centered coop-seat-name' });
       const name = document.createElement('div');
@@ -938,7 +948,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, e));
-      const bb = blockBadge(e.block); if (bb) sprite.appendChild(bb);
       box.appendChild(sprite);
       const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = def.name; box.appendChild(nm);
       box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (
@@ -998,7 +1007,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const reason = affordable ? null
             : !manaAffordable ? `Need ${costs.mana} Mana; have ${meP.mana}`
               : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
-                : !energyAffordable ? 'Not enough Energy' : 'Turn already ended';
+                : !energyAffordable ? 'Not enough Stamina' : 'Turn already ended';
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
@@ -1022,7 +1031,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         line: throwing ? 'Click a hero seat to give it.' : 'Choose a highlighted hero.',
         attrs: { class: 'floating coop-arm', role: 'status' },
       });
-      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: 'Cancel', role: 'exit', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
+      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: t('common.cancel'), role: 'exit', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
       ahost.replaceWith(card);
     }
 
@@ -1068,7 +1077,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration,actor:anchor,localBox:anchorLocalBox});
       stage?.play(pose, duration, plan.aura);
     }
-    lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq);
+    lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq, seats);
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
@@ -1536,6 +1545,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }
       const latest = unique[unique.length - 1] || s;
       const combatFrames = unique.filter((frame) => frame.scene?.kind === 'combat');
+      // A FIGHT THAT ENDED WHILE ITS ENEMY TURN WAS PACED draws only the
+      // scene that replaced it, so the held combat frames are never rendered:
+      // their haptics (an enemy's hit on this seat, its next turn start)
+      // play here, before that scene. Their sound was never played on this
+      // path, and still is not.
+      if (latest.scene?.kind !== 'combat') {
+        for (const frame of combatFrames) lastSoundSeq = coopReceiptSounds(frame.scene, lastSoundSeq, seats, { hapticsOnly: true });
+      }
       snap = combatFrames.length === unique.length && combatFrames.length > 1
         ? {
             ...latest,

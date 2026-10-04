@@ -5,6 +5,8 @@ import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { formationTileOutline } from './formationGrid.js';
 import { esc } from './tooltip.js';
 import { UI_COMPONENTS, uiComponentAttrs } from './uiComponents.js';
+import { t } from '../strings.js';
+import { formationPositioningHtml, wireFormationPositioning } from './formationPositioning.js';
 
 const prefix = `${ADVANCED_CONFIG_PREFIX}presentation.`;
 
@@ -42,6 +44,7 @@ export function formationSettingsHtml(settings, rows) {
         <div class="formation-preview formation-grid" role="img" aria-label="Battlefield grid preview"></div>
         <p class="formation-dimensions" data-formation-summary></p>
         <p class="formation-preview-note">Preview changes before applying. Position labels stay upright.</p>
+        <details class="formation-group-settings"><summary>Move sections, columns &amp; custom groups</summary>${formationPositioningHtml()}</details>
       </div>
       <div class="formation-inspector">
         <h3>Layout &amp; grid</h3>
@@ -74,14 +77,16 @@ export function mountFormationSettings(container, settings, onChange, rows) {
   if (!host || host.dataset.mounted) return;
   host.dataset.mounted = 'true';
   const draft = presentationConfig(settings);
-  const editable = new Set([...rows.map(row => row.presentationKey), 'gridShape', 'showFormationGrid']);
+  const editable = new Set([...rows.map(row => row.presentationKey), 'gridShape', 'showFormationGrid', 'formationGroups']);
   const fields = new Map(rows.map(row => [row.presentationKey, row]));
   const preview = host.querySelector('.formation-preview');
   const status = host.querySelector('[data-formation-status]');
+  let groupEditor = null, currentPlan = { plan: null, width: 1, height: 1 };
   const draw = () => {
     const width = preview.clientWidth, height = preview.clientHeight;
     if (!width || !height) return;
     const plan = combatFormation({ width, height, friends: [], enemies: [], presentation: draft, preview: true });
+    currentPlan = { plan, width, height };
     preview.dataset.columns = String(draft.formationColumns);
     preview.dataset.rows = String(draft.formationRows);
     preview.dataset.preset = draft.formationPreset;
@@ -92,13 +97,14 @@ export function mountFormationSettings(container, settings, onChange, rows) {
       const tile = formationTileGeometry(cell, plan, draft);
       return `<div class="formation-grid-cell" data-cell="${cell.cell}" data-side="${cell.side}" style="left:${cell.x}px;top:${cell.ground}px;width:${tile.width}px;height:${tile.height}px;--tile-transform:${tile.transform}">${formationTileOutline()}<span>${cell.cell}</span></div>`;
     }).join('');
+    if (groupEditor) { preview.append(groupEditor.svg); groupEditor.draw(); }
     const summary = `${plan.columns} columns × ${plan.rows} ${plan.rows === 1 ? 'row' : 'rows'} per side / ${plan.columns * 2} × ${plan.rows} battlefield`;
     host.querySelector('[data-formation-summary]').textContent = summary;
     preview.setAttribute('aria-label', `${summary}. ${FORMATION_PRESETS.find(p => p.value === draft.formationPreset).label}. Positions A1 to ${'ABCDEF'[plan.rows - 1]}${plan.columns * 2}.`);
   };
   const update = () => {
     host.dataset.dirty = 'true';
-    status.textContent = 'Preview only — apply to save your layout.';
+    status.textContent = t('formation.layout.previewOnly');
     host.querySelectorAll('[data-preset]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.preset === draft.formationPreset)));
     draw();
   };
@@ -136,7 +142,7 @@ export function mountFormationSettings(container, settings, onChange, rows) {
   const apply = () => {
     const changes = Object.fromEntries([...editable].map(key => [`${prefix}${key}`, draft[key]]));
     if (onChange(changes)?.ok === false) {
-      status.textContent = 'The layout could not be saved. Your preview is still available; try applying again.';
+      status.textContent = t('formation.layout.saveFailed');
       return false;
     }
     Object.assign(settings, changes);
@@ -162,4 +168,14 @@ export function mountFormationSettings(container, settings, onChange, rows) {
   });
   cleanup.observe(document.body, { childList: true, subtree: true });
   draw();
+  groupEditor = wireFormationPositioning(host.querySelector('.formation-group-settings'), preview, {
+    read: () => draft.formationGroups,
+    write: value => { draft.formationGroups = value; update(); return { ok: true }; },
+    getPlan: () => currentPlan,
+    readPresentation: () => draft,
+    saveMessage: 'Preview updated. Use Apply layout to save.',
+  });
+  const groupDetails = host.querySelector('.formation-group-settings');
+  groupDetails.addEventListener('toggle', () => { groupEditor.svg.style.display = groupDetails.open ? 'block' : 'none'; });
+  groupEditor.svg.style.display = 'none';
 }

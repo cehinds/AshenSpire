@@ -17,6 +17,8 @@
 // install reuse the smith's mount-service modals with the blacksmith's
 // quote-checked commits.
 import { esc } from '../components/tooltip.js';
+import { servicePortrait } from '../components/servicePortrait.js';
+import { engravedIconHtml, engravedGlyphId } from '../components/engravedIcon.js';
 import { sfx } from '../sfx.js';
 import { modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
@@ -71,7 +73,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   function tile(glyph, title, desc, reason = '') {
     const node = el('div', { class: `class-pick shop-offer${reason ? ' locked' : ''}` });
-    node.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}</div>`;
+    node.innerHTML = `<div class="glyph">${engravedIconHtml(engravedGlyphId(glyph)) || glyph}</div><div class="cp-body"><h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}</div>`;
     if (reason) node.append(statusText(reason, { class: 'shop-offer-avail' }));
     return node;
   }
@@ -182,8 +184,13 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   function mountServiceTile(shelf, service) {
     const id = service === 'extract' ? 'extractArt' : 'installArt';
     const host = tile(GLYPH[id], t(`blacksmith.bar.${id}`), t(`settings.shops.offering.${id}`));
-    const control = button({ label: t('blacksmith.action.open'), weight: 'primary' });
-    control.addEventListener('click', () => openMountService(app, {
+    // Nothing to act on (or the run's rules refuse it, as extraction in a
+    // Sealed or Draft run): the control is disabled, as the Shrine and the
+    // merchant's smith lock theirs on `offer.available`, so the shelf's idle
+    // line is the whole answer and no dead-end modal opens.
+    const ready = readyCount(id) > 0;
+    const control = button({ label: t('blacksmith.action.open'), weight: 'primary', disabled: !ready, attrs: { dataset: { smithService: id } } });
+    if (ready) control.addEventListener('click', () => openMountService(app, {
       service, registries, run, meta, returnFocusElement: control, multiUse: true, place: 'merchant',
       quote: (chosen) => (service === 'extract'
         ? blacksmithExtractPlan(registries, run, chosen.itemRef, chosen.mountKey)
@@ -242,6 +249,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       </div>`;
     if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
     const root = app.querySelector('.shop-workspace');
+    root.prepend(servicePortrait('smith'));
     const frame = root.querySelector('.shop-frame');
     const railed = root.querySelector('.shop-railed');
     const paneHead = root.querySelector('.shop-pane-head');
@@ -254,7 +262,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       SHELVES[key](shelf);
       // A service with nothing to act on now says why, and stays on the rail.
       if (BLACKSMITH_SERVICES.includes(key) && !readyCount(key)) {
-        idle[key] = serviceIdleReason(key);
+        idle[key] = serviceIdleReason(key, run);
         shelf.prepend(statusText(idle[key], { class: 'shop-offer-avail bs-idle', role: 'status' }));
       }
     }

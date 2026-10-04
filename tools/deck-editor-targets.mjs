@@ -75,7 +75,7 @@ const MOUNT = (zoom) => `(async () => {
   const editor = mountDeckEditor(document.body, { registries, run, settings: { playInDeckOrder: true, deckMinSize: run.deck.length + 3 } });
   // One card out, so a limited tile and the refusal both exist.
   const plain = run.deck.find((c) => !c.equipmentRole && !c.grantedBy);
-  editor.root.querySelector('.deck-editor-row[data-instance-id="' + plain.instanceId + '"] .deck-editor-main').click();
+  editor.root.querySelector('.deck-editor-row[data-instance-id="' + plain.instanceId + '"] .deck-editor-step[data-action="remove"]').click();
   return true;
 })()`;
 
@@ -90,7 +90,7 @@ const MEASURE = `(() => {
   probe.remove();
   const glass = (n) => (reportsVisual ? n : n * zoom);
   const veil = document.querySelector('.deck-editor-veil');
-  const targets = [...veil.querySelectorAll('button')].map((b) => {
+  const targets = [...veil.querySelectorAll('button, input, summary')].filter(b => b.getClientRects().length).map((b) => {
     const r = b.getBoundingClientRect();
     return { label: (b.getAttribute('aria-label') || b.textContent || '').trim().slice(0, 40), w: glass(r.width), h: glass(r.height) };
   });

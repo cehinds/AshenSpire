@@ -292,7 +292,7 @@ function attributeTerms(row, attributes) {
 // nothing. The pin is therefore set on the fight itself, after the opening
 // draw (five cards, inside either cap): with no hand rules nothing recomputes
 // `handMax`, so every later draw reads the pinned value.
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 0, maxStamina = stamina, relicIds = [], flasks = [], handMax = null } = {}) {
+function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 3, maxStamina = stamina, relicIds = [], flasks = [], handMax = null } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
@@ -465,13 +465,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const inn = makeCombat({ stamina: 4, deck: ['warriorsVow', ...Array(9).fill('strike')], seed: 0xbeef });
     assert(inn.piles.hand.some((x) => x.cardId === 'warriorsVow'), 'Innate in opening hand');
 
-    const x = makeCombat({ stamina: 4, deck: ['stitchedArms', 'strike', 'strike', 'strike', 'strike'] });
+    const x = makeCombat({ stamina: 3, deck: ['stitchedArms', 'strike', 'strike', 'strike', 'strike'] });
     playFromHand(x, 'stitchedArms');
     eq(x.player.energy, 0, 'X-cost consumed all energy');
     eq(logOf(x, 'damageDealt').filter((e) => e.sourceId === 'player').length, 3, '3 energy → 3 hits');
 
     // X = 0 whiffs entirely (StS): playable, but zero hits.
-    const x0 = makeCombat({ stamina: 4, deck: ['stitchedArms', 'defend', 'defend', 'defend', 'strike'] });
+    const x0 = makeCombat({ stamina: 3, deck: ['stitchedArms', 'defend', 'defend', 'defend', 'strike'] });
     playFromHand(x0, 'defend');
     playFromHand(x0, 'defend');
     playFromHand(x0, 'defend');
@@ -3806,7 +3806,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     } catch (error) {
       unpaid = error.message;
     }
-    assert(/costs \d+ Energy/.test(unpaid), `an unpaid combat equipment change names its Energy price — got: ${unpaid}`);
+    assert(/costs \d+ Stamina/.test(unpaid), `an unpaid combat equipment change names its Stamina price — got: ${unpaid}`);
     eq(JSON.stringify(combat.loadout), beforeUnpaid, 'an unpaid combat equipment change leaves the loadout atomic');
     eq(combat.player.energy, 0, 'an unpaid combat equipment change spends nothing');
     combat.player.energy = combat.player.energyMax;
@@ -3954,7 +3954,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.player.maxMana, base.mana + 1, 'combat swap moves maximum Mana');
     eq(combat.player.maxMana - combat.player.mana, 1, 'combat swap carries Mana deficit');
     eq(combat.player.maxStamina, base.stamina + 1, 'combat swap moves maximum Stamina');
-    eq(combat.player.maxStamina - combat.player.stamina, 1, 'combat swap carries Stamina deficit');
+    eq(combat.player.maxStamina - combat.player.stamina, REG.balance.equipment.swapCost, 'combat opens with full Stamina and the swap pays its price');
     combat.player.mana = 0;
     combat.player.energy = REG.balance.equipment.swapCost;
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
@@ -3964,10 +3964,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.mana, 0, 'swapping back cannot refill spent Mana');
 
+    combat.player.stamina = REG.balance.equipment.swapCost;
     const deficitBeforeUnequip = {
       hp: combat.player.maxHp - combat.player.hp,
       mana: combat.player.maxMana - combat.player.mana,
-      stamina: combat.player.maxStamina - combat.player.stamina,
+      stamina: combat.player.maxStamina,
     };
     combat.player.energy = REG.balance.equipment.swapCost;
     const poolUnequipped = dispatch(combat, {
@@ -4063,9 +4064,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         swapCostRule: rule,
       });
       const before = combat.player.energy;
+      const maxBefore = combat.player.maxStamina;
       const { events } = dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex });
       const swapped = events.find((e) => e.type === 'armamentSwapped');
-      const spent = before - combat.player.energy;
+      const spent = before + combat.player.maxStamina - maxBefore - combat.player.energy;
       // The event must AGREE with the wallet, or one of the two is decoration.
       eq(swapped.cost, spent, `the event's cost is what the player actually paid (${swapped.cost} vs ${spent})`);
       return spent;
@@ -6377,10 +6379,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 51 + ⌊0.35⌋ +
     // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 59; Actions 3 (every weight floors to 0 at 1–3
-    // points); Draw is the ruleset-7 draw row, base 3 since FINISH D27
-    // (2026-09-27) and nothing from INT 1, below the row's baseline of 4. It
+    // points); Draw is the ruleset-7 draw row, base 4 since the hand refresh update
+    // (2026-10-03) and nothing from INT 1, below the row's baseline of 4. It
     // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '59/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '59/3/4', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,180,310,540,940,1640,2870,5030,8800,15390', 'default XP steps start at 100 and grow ×1.75');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
@@ -6390,8 +6392,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 35800, '35,800 XP reaches level 11 on the default ×1.75 curve');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
-    // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 3 (D27) + nothing from INT 1.
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/59/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
+    // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/59/3/4', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
@@ -7077,7 +7079,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // it joins Poise on the inheriting edge; Mana and Stamina state 0.2.
     eq(byHand.rules.hp.perLevel, 2, 'HP keeps its authored growth when only the fallback default changes');
     eq(byHand.rules.mana.perLevel, 0.2, 'Mana keeps its authored growth');
-    eq(byHand.rules.stamina.perLevel, 0.2, 'Stamina keeps its authored growth');
+    eq(byHand.rules.stamina.perLevel, 0.1, 'Stamina keeps its authored growth');
     eq(byHand.rules.energy.perLevel, 0.1, 'Actions keep their authored growth');
     eq(byHand.rules.draw.perLevel, 0.5, 'the Draw row, which states none, inherits the edited fallback default');
     eq(byHand.rules.poise.perLevel, 0.5, 'Poise inherits the edited fallback default');
@@ -7232,7 +7234,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'useSprites,animSpeed,performanceMode,screenShake,showPlayedCard',
+      'useSprites,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
       'every combat pacing, quality, shake, sprite and played-card switch is under one name');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
       'armamentsPresentation,armamentsPhonePlacement',
@@ -7872,13 +7874,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Since 2026-09-24 Mana reads CON at 0.25 and Stamina at 0.5 (the owner's
     // exported weights), so the face gains a Mana fact and Stamina's cadence
     // halves — derived, so the card followed the row with no prose edit.
-    eq(constitution.face.summary, '+4 HP per pt · +1 Mana per 4 pts · +1 Stamina per 2 pts · +1 Poise per pt',
+    eq(constitution.face.summary, '+4 HP per pt · +1 Mana per 4 pts · +1 Stamina / turn per 4 pts · +1 Poise per pt',
       'the face summary is derived from the rules that read the attribute');
     eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
       'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+4 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Mana \+1 every 4 points$/.test(line))
-      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 2 points$/.test(line))
+      && constitution.reveal.lines.some((line) => /^Stamina \/ turn \+1 every 4 points$/.test(line))
       && constitution.reveal.lines.some((line) => /^Poise \+1 every 1 point$/.test(line)),
     'multiple mechanical benefits are projected as separate bullets');
     // Since ruleset 7 AR is the `ar` row of the derived-stat table and there
@@ -9354,7 +9356,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // checked to hold still.
     const run = createRunState({ seed: 0x6a6a, classId: 'reaver', registries: REG });
     const rules = run.derivedStatRuleSnapshot.rules.rules;
-    eq(`${rules.hp.perLevel}/${rules.mana.perLevel}/${rules.stamina.perLevel}/${rules.energy.perLevel}/${rules.draw.perLevel}`, '2/0.2/0.2/0.1/0',
+    eq(`${rules.hp.perLevel}/${rules.mana.perLevel}/${rules.stamina.perLevel}/${rules.energy.perLevel}/${rules.draw.perLevel}`, '2/0.2/0.1/0.1/0',
       'every row carries its level term in the snapshot, as one decimal — the draw row\'s is the table default, 0');
     const levelTerm = (id, level) => Math.floor((level - 1) * rules[id].perLevel + 1e-9);
     const born = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn };
@@ -9366,7 +9368,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.level.level, 6); assert(got.thresholds > 0, 'the step to 6 moved a maximum');
     eq(run.maxHp, born.maxHp + levelTerm('hp', 6), 'level 6 adds the HP term'); eq(run.maxHp - run.hp, 7, 'the deficit is carried');
     eq(run.maxMana, born.maxMana + 1, 'and level 6 is where the fifths reach a whole point of Mana');
-    eq(run.maxStamina, born.maxStamina + 1);
+    eq(run.maxStamina, born.maxStamina, 'Stamina reaches its first level bonus at level 11');
     eq(run.energyMax, born.energyMax, 'Actions wait for level 11');
     awardLevelXp(REG, run, [6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
     eq(run.level.level, 11); eq(run.energyMax, born.energyMax + 1, 'level 11 acts once more'); eq(run.maxHp, born.maxHp + levelTerm('hp', 11));
@@ -9377,7 +9379,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const shown = statProjection(REG, run).derived.find((row) => row.id === 'hp');
     eq(shown.levelBonus, levelTerm('hp', 11)); assert(shown.formula.includes(`+ ${levelTerm('hp', 11)} level`), `the HP formula names the level term — ${shown.formula}`);
     eq(shown.value, run.maxHp, 'and equals the pool'); eq(Number(shown.formula.split('= ').pop()), shown.value);
-    const actionsShown = statProjection(REG, run).derived.find((row) => row.id === 'energy');
+    const actionsShown = statProjection(REG, run).derived.find((row) => row.id === 'stamina');
     assert(/\+ 1 level = /.test(actionsShown.formula), `the Actions formula names its one level Action — ${actionsShown.formula}`);
     eq(statProjection(REG, createRunState({ seed: 3, classId: 'reaver', registries: REG })).derived.find((row) => row.id === 'hp').formula.includes('level'), false, 'and at level 1 there is no term to show');
 
@@ -9663,7 +9665,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const said = (r) => (r.errors || []).map((e) => `${e.path}: ${e.msg ?? e.message}`);
     const withCards = (mut) => validateContent({ ...contentBundle, cards: contentBundle.cards.map(mut) });
     // THE COST RULE: a card that costs Mana costs the floors too, base and upgrade.
-    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, staminaCost: 0 } : c))).some((e) => /cards\.gorefireSlash\.staminaCost: .*at least 1 stamina/.test(e)), 'a Mana card with no stamina line is refused by name');
+    assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, staminaCost: 0 } : c)).ok, 'Mana needs only the primary stamina cost, never a second stamina line');
     assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, cost: 0 } : c))).some((e) => /cards\.gorefireSlash\.cost: .*at least 1 action/.test(e)), 'a Mana card with no action line is refused by name');
     assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', cost: 0 } } : c))).some((e) => /cards\.gorefireSlash\.upgrade\.cost/.test(e)), 'an upgrade that drops the action line under a Mana cost is refused by name');
     assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', manaCost: 0, cost: 0, staminaCost: 0 } } : c)).ok, 'an upgrade that drops the Mana line may drop the others too');
@@ -9678,13 +9680,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
-    eq(REG.cards.get('gorefireSlash').staminaCost, 1, 'the signature art costs stamina beside its Mana');
+    eq(REG.cards.get('gorefireSlash').cost, 1, 'the signature art costs stamina beside its Mana');
 
     // THE PLAYER'S METER: a fill applies the row's statuses and takes one
     // action off the next turn, once; the meter grows as an enemy's does.
     const c = createCombat({
       registries: REG, rng: createRng(7),
-      player: { classId: 'reaver', maxHp: 50, hp: 50, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'sp1', cardId: 'tSelfPoise', upgraded: false }], relicIds: [], flasks: [], poiseMax: 5 },
+      player: { classId: 'reaver', maxHp: 50, hp: 50, mana: 0, maxMana: 0, stamina: 3, maxStamina: 3, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'sp1', cardId: 'tSelfPoise', upgraded: false }], relicIds: [], flasks: [], poiseMax: 5 },
       enemyIds: ['tDummy'],
     });
     eq(c.player.poiseMeter.max, 5, 'the stamped max is the vessel');
@@ -9708,7 +9710,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const perHit = bal.poise.playerImpactPerHit;
     const hit = createCombat({
       registries: REG, rng: createRng(7),
-      player: { classId: 'reaver', maxHp: 90, hp: 90, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5, deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `hk${i}`, cardId: 'tKeep', upgraded: false })), relicIds: [], flasks: [], poiseMax: perHit * 2 },
+      player: { classId: 'reaver', maxHp: 90, hp: 90, mana: 0, maxMana: 0, stamina: 3, maxStamina: 3, energyMax: 3, drawPerTurn: 5, deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `hk${i}`, cardId: 'tKeep', upgraded: false })), relicIds: [], flasks: [], poiseMax: perHit * 2 },
       enemyIds: ['tHitter'],
     });
     assert(!hit.foundation, 'the fixture, like main.js, hands in no ruleset');
@@ -9788,7 +9790,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(derivedStatIdsFor(6).includes('handSize') || derivedStatIdsFor(6).includes('ar'), false, 'ruleset 6 requires no hand or rating row');
     eq(derivedStatIdsFor(7).includes('handSize') && derivedStatIdsFor(7).includes('ar'), true, 'ruleset 7 does');
     eq(rules.rules.mana.wisdom, 0.5, 'Wisdom leads Mana at half a point a point (1 before 2026-09-24)');
-    eq(rules.rules.stamina.constitution, 0.5, 'Constitution leads Stamina at half a point a point (1 before 2026-09-24)');
+    eq(rules.rules.stamina.constitution, 0.25, 'Constitution leads Stamina at half a point a point (1 before 2026-09-24)');
     eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '51/4', 'HP is 51 + 4 × CON (base 30 before the A3 retune, 2026-09-27)');
     const star = createRunState({ seed: 93, classId: 'starseer', registries: REG });
     // A pool carries its own flat base beside the attribute — a class or relic
@@ -9816,9 +9818,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const art = REG.cards.get('starstoneArc');
     assert(!REG.cards.get('starstonePebble').manaCost && !REG.cards.get('starstonePebble').staminaCost,
       'A2: the Starseer signature art costs actions only');
-    assert(star.maxStamina >= art.staminaCost && star.maxMana >= art.manaCost,
+    assert(star.maxStamina >= art.cost && star.maxMana >= art.manaCost,
       'a Starseer Mana spell is playable on the first floor');
-    assert(art.staminaCost === 1 && art.manaCost === 1,
+    assert(art.cost === 1 && art.manaCost === 1,
       'and stays at 1/1 until costs travel with the run rather than with the table');
 
     // THE POISE ROW, WHICH PHASE 8 LEFT IN BALANCE AND THIS PHASE MOVED.

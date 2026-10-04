@@ -42,9 +42,16 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { artPath, copySourceArt, packTreeOf, SANDBOX_ENV } from './art-source.mjs';
 
 const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
-const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools'];
+// art-release.json and art-manifest.json are build-identity inputs
+// (tools/buildversion.mjs BUILD_IDENTITY_FILES, assets step 11): a copy without
+// them cannot stamp a build, so every tool that stamps one would go red on the
+// clean copy before any plant is read. Since step 12 a tool also asks
+// art-manifest.json, not a tree, whether an art id ships (tools/art-source.mjs
+// manifestIds), so a copy without it cannot answer.
+const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools', 'art-release.json', 'art-manifest.json'];
 
 // LINE ENDINGS ARE NOT PART OF THE PLANT (2026-09-17). Plants are authored with
 // `\n`, because that is what the committed blobs carry and what Linux CI checks
@@ -108,6 +115,16 @@ function copyTree(extra = [], { includePng = false } = {}, realRoot = REAL_ROOT)
   // BUNDLE is where the known-bad has to enter, and planting into styles/
   // would be a plant the tool never reads.
   for (const entry of [...COPY_SET, ...extra]) {
+    // assets/ left this repository at docs/EXTERNAL-ASSETS-PLAN.md step 13: a
+    // tool that asks for it gets the fetched high pack's files (and the fonts)
+    // at that path, read in the copy with ASHEN_ART_SOURCE=trees (doorSelftest).
+    if (entry === 'assets') { copySourceArt(dir, { root: realRoot }); continue; }
+    // A narrower entry inside a pack's tree (motion-probe's assets/enemy-poses,
+    // …) is that directory of the fetched pack, copied to the same path.
+    if (packTreeOf(entry)) {
+      cpSync(artPath(entry, { root: realRoot }), join(dir, entry), { recursive: true });
+      continue;
+    }
     const from = join(realRoot, entry);
     if (!existsSync(from)) continue;
     cpSync(from, join(dir, entry), {
@@ -241,6 +258,7 @@ export async function doorSelftest({ tool, plants: corpus, args = [], timeoutMs 
   console.log(`                failed by some OTHER red · RED-NOT-EXIT = red printed, exit still 0 ·`);
   console.log(`                DRIFTED = the find-string is gone, so the plant never armed at all.`);
   const root = copyTree(extraCopy, { includePng }, realRoot);
+  if (extraCopy.some((entry) => entry === 'assets' || packTreeOf(entry))) env = { ...env, ...SANDBOX_ENV };
   let failed = 0;
   try {
     for (const p of plants) {

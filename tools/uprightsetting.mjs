@@ -62,6 +62,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { copySourceArt } from './art-source.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -243,7 +244,7 @@ const PLANTS = [
     // He had to ASK for a switch because the screen never said one existed.
     name: 'S3 the gate stops naming the way out',
     file: 'src/ui/components/upright.js',
-    from: '      <p class="upright-hint">${say.hint}</p>',
+    from: "      flavour(hint(), { class: 'upright-hint' }),",
     to: '',
     what: 'the one line on the gate that names the setting',
     expect: 'the refusal is back to a dead end the player has to guess their way out of',
@@ -254,9 +255,11 @@ const PLANTS = [
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'upset-kb-'));
-  for (const d of ['src', 'styles', 'assets', 'content']) {
+  for (const d of ['src', 'styles', 'content']) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
+  // assets/: the fetched high pack and the fonts (the tree left at docs/EXTERNAL-ASSETS-PLAN.md step 13).
+  copySourceArt(dir);
   cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
   return dir;
 }

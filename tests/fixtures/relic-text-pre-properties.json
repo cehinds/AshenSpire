@@ -41,7 +41,7 @@
   },
   "crackedLantern": {
     "name": "Cracked Lantern",
-    "text": "On your first turn each combat, gain 1 Energy."
+    "text": "On your first turn each combat, gain 1 Stamina."
   },
   "sacrificialKnife": {
     "name": "Sacrificial Knife",
@@ -93,7 +93,7 @@
   },
   "pearlOfSagacity": {
     "name": "Pearl of Sagacity",
-    "text": "Every 6th card you play each combat: gain 1 Energy."
+    "text": "Every 6th card you play each combat: gain 1 Stamina."
   },
   "blessedDew": {
     "name": "Blessed Dew",
@@ -101,7 +101,7 @@
   },
   "azureSigil": {
     "name": "Azure Sigil",
-    "text": "The first Skill you play each combat: gain 1 Energy."
+    "text": "The first Skill you play each combat: gain 1 Stamina."
   },
   "bloodstainedChalice": {
     "name": "Bloodstained Chalice",
@@ -113,7 +113,7 @@
   },
   "wyrmHeart": {
     "name": "Wyrm Heart",
-    "text": "Gain 1 extra Energy each turn. Shrines and chapels no longer offer Rest."
+    "text": "Gain 1 extra Stamina each turn. Shrines and chapels no longer offer Rest."
   },
   "ancestralHorn": {
     "name": "Ancestral Horn",
@@ -153,11 +153,11 @@
   },
   "ashOfRemembrance": {
     "name": "Ash of Remembrance",
-    "text": "Gain 1 extra Energy each turn. At the start of each combat, gain 1 Madness."
+    "text": "Gain 1 extra Stamina each turn. At the start of each combat, gain 1 Madness."
   },
   "cinderOfTheFallen": {
     "name": "Cinder of the Fallen",
-    "text": "Whenever an enemy dies, gain 1 Energy. At the start of each combat, gain 1 Madness."
+    "text": "Whenever an enemy dies, gain 1 Stamina. At the start of each combat, gain 1 Madness."
   },
   "crimsonCovenant": {
     "name": "Crimson Covenant",
@@ -197,7 +197,7 @@
   },
   "emberwickCharm": {
     "name": "Emberwick Charm",
-    "text": "The first time you lose HP each combat, gain 1 Energy."
+    "text": "The first time you lose HP each combat, gain 1 Stamina."
   },
   "carrionMorsel": {
     "name": "Carrion Morsel",

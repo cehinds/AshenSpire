@@ -113,6 +113,13 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
+import { coveragePass, authoredFooterInk, cssPixelCount } from './footer-paint.mjs';
+import { footerLayout } from '../src/content/footerLayout.js';
+import { footerLayoutModel } from '../src/ui/models/FooterLayoutModel.js';
+
+const footerGroups = footerLayoutModel(footerLayout).groups;
+const footerExpected = Object.fromEntries(Object.entries(footerGroups).map(([key, group]) =>
+  [key, group.items.filter(n => n.asset !== 'text').map(n => n.asset)]));
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -138,7 +145,22 @@ if (process.argv.includes('--selftest')) {
   const SELFTEST = {
     tool: 'hintstrip.mjs',
     timeoutMs: 900000,
+    // Pixel comparisons need the same footer/orb artwork and fonts as the real row.
+    // A source-only copy otherwise compares fallback/loading paint between
+    // captures and can report text loss with no covering element.
+    extraCopy: ['assets/ui/stamina-orb', 'assets-mobile/ui/stamina-orb', 'assets/ui/footer', 'assets-mobile/ui/footer', 'assets/fonts'],
     plants: [
+      {
+        name: 'painted footer artwork is hidden while its live text survives',
+        edits: [{ file: 'styles/kit.css', append: '.combat-action-row image[data-footer-asset] { opacity:0 !important; }' }],
+        expectRed: /BAD\s+H3 /,
+      },
+      {
+        name: 'painted footer artwork has a broken source while its live text survives',
+        edits: [{ file: 'src/ui/components/footerArt.js', find: 'href="${esc(assetUrl(footerAssets[n.asset]))}"', replace: 'href="data:image/png;base64,broken"' },
+          { file: 'src/ui/components/footerArt.js', find: "image.setAttribute('href', assetUrl(footerAssets[image.dataset.footerAsset]))", replace: "image.setAttribute('href', 'data:image/png;base64,broken')" }],
+        expectRed: /BAD\s+H3 /,
+      },
       {
         // Formation now puts the row in a grid track. Pinning that current
         // row over the topbar should still be caught by H2.
@@ -170,14 +192,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H1 /,
       },
       {
-        // THE SILENT CLIP. END TURN is squeezed to a width its key label cannot
-        // fit and told to hide the overflow, so a wide rebound label draws
-        // outside its control without a mark. H3 catches it ONLY under the wide
-        // label, which is why H4 is not a courtesy.
+        // Move the live SVG key beyond a clipped control. Enlarging the SVG's
+        // CSS width alone is inert with preserveAspectRatio + text fitting.
         name: 'END TURN clips its key label, so a wide rebound label disappears',
         edits: [{
           file: 'styles/kit.css',
-          append: ":root .combat[data-layout='formation'] .combat-action-row > .end-turn { width: 4rem !important; max-width: 4rem !important; justify-self: center !important; overflow: hidden !important; white-space: nowrap !important; }",
+          append: ":root .combat[data-layout='formation'] .combat-action-row > .end-turn { overflow: hidden !important; } .combat-action-row [data-footer-binding='endTurnKey'] { transform: translateX(1000px) !important; }",
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -199,7 +219,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet hides the DRAW pile and the row measures four controls where five are declared',
         edits: [{
           file: 'styles/combat.css',
-          append: '.combat-action-row > .pile.draw { display: none; }',
+          append: '.combat-action-row > .pile.draw { display: none !important; }',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -240,11 +260,11 @@ if (process.argv.includes('--selftest')) {
         // overflow:hidden keeps .et-key's box inside END TURN while most of
         // "Backspace" is gone — the clipping H4 exists to catch, said of the
         // label's scroll box. Red by name on H3 at the desk WIDE cell.
-        name: 'END TURN\'s key label is width-capped with overflow:hidden and the wide rebound label is cut off inside it',
+        name: 'END TURN loses authored text fitting and the rebound key overflows its control',
         edits: [{
-          file: 'styles/kit.css',
-          find: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }',
-          replace: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; max-width: 1rem; overflow: hidden; }',
+          file: 'src/ui/components/footerArt.js',
+          find: "if (node.getComputedTextLength() > item.w) node.setAttribute('textLength', String(item.w));",
+          replace: "if (node.dataset.footerBinding === 'endTurnKey') { node.removeAttribute('textLength'); node.setAttribute('font-size', '200'); }",
         }],
         expectRed: /BAD\s+H3 1200x730 WIDE/,
       },
@@ -337,10 +357,10 @@ if (process.argv.includes('--selftest')) {
         // pulled up over the count with a negative margin, an opaque
         // background and z-index: 1, which makes it a stacking context that
         // paints in z-order above the count's in-flow text (Codex, #550).
-        name: "the DRAW pile's label, a flex item given z-index: 1, paints an opaque block over its count",
+        name: "the DRAW artwork, a flex item given z-index: 1, paints an opaque block over its compact count",
         edits: [{
           file: 'styles/combat.css',
-          append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-k { z-index: 1; background: #000; color: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; text-align: center; }\n",
+          append: "\n.combat-action-row > .pile.draw > .footer-art-face { z-index: 1; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -348,30 +368,21 @@ if (process.argv.includes('--selftest')) {
         // AN INDIVIDUAL TRANSFORM ON THE LABEL: the same block over the count,
         // but a stacking context by `scale: 1` alone — the transform
         // shorthand stays "none" and the item has no z-index (Codex, #550).
-        name: "the DRAW pile's label, given scale: 1 and nothing else, paints an opaque block over its count",
+        name: "the DRAW artwork, given scale: 1 and nothing else, paints an opaque block over its compact count",
         edits: [{
           file: 'styles/combat.css',
-          append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-k { scale: 1; background: #000; color: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; text-align: center; }\n",
+          append: "\n.combat-action-row > .pile.draw > .footer-art-face { scale: 1; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
-        // AN IN-FLOW BOX OVER THE TEXT: the label pulled up over the count by a
-        // negative margin alone — positioned nowhere, no z-index, no transform,
-        // no stacking context; a later box in tree order that paints above the
-        // count's text where it overlaps it (Codex, #550).
-        name: "the DRAW pile's count, pulled over its label by a negative margin and nothing else, paints an opaque block over it",
+        // SVG labels now replace the old StatPair's two in-flow text boxes.
+        // A text-specific paint loss must still fail while the artwork remains
+        // visible and the control answers every pointer hit.
+        name: 'the DRAW artwork remains visible but both authored text layers lose their fill and stroke',
         edits: [{
           file: 'styles/combat.css',
-          // THIS ONE PULLS THE COUNT OVER THE LABEL, not the label over the count,
-      // and the reason is the whole point of the variant: with no stacking
-      // context the later box in TREE ORDER is the one that paints on top, and
-      // the StatPair's order is label (`.sp-k`) then value (`.sp-v`) — the
-      // reverse of the old markup, which counted first and labelled second.
-      // Pulling `.sp-k` up here went UNCAUGHT for exactly that reason: the
-      // count painted back over it and nothing was hidden. Measured, not
-      // reasoned: 3 of 4 caught before this line, 4 of 4 after.
-      append: "\n.combat-action-row > .pile.draw > .as-statpair > .sp-v { background: #000; color: #000; margin-top: -2.6rem; padding-top: 2.6rem; width: 100%; text-align: center; }\n",
+          append: "\n.combat-action-row > .pile.draw :is(.footer-art-face text,.footer-compact-label) { fill: transparent !important; stroke: transparent !important; color:transparent !important; -webkit-text-fill-color:transparent !important; text-shadow:none !important; -webkit-text-stroke-color:transparent !important; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -414,8 +425,12 @@ if (process.argv.includes('--selftest')) {
         name: 'the coarse-pointer rule stops withholding END TURN\'s key label and the phone draws a key it cannot press',
         edits: [{
           file: 'styles/kit.css',
-          find: '@media (pointer: coarse) { .as-slot > .as-keycap, .as-btn > .as-keycap, .as-keycap.float { display: none; } }',
-          replace: '@media (pointer: coarse) { .as-slot > .as-keycap, .as-keycap.float { display: none; } }',
+          find: ".combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: none; }",
+          replace: ".combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: block; }",
+        }, {
+          file: 'styles/kit.css',
+          find: ".footer-art-face [data-footer-binding='endTurnKey'] { display: none; }",
+          replace: ".footer-art-face [data-footer-binding='endTurnKey'] { display: block; }",
         }],
         expectRed: /BAD\s+H3 390x844/,
       },
@@ -427,10 +442,23 @@ if (process.argv.includes('--selftest')) {
         name: 'a stylesheet makes END TURN\'s key label visibility:hidden and the row still reads the binding',
         edits: [{
           file: 'styles/kit.css',
-          find: '.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }',
-          replace: '.as-btnrow > button.tall > .as-keycap { visibility: hidden; font-size: 0.9rem; }',
+          append: '.combat-action-row [data-footer-binding="endTurnKey"] { visibility: hidden !important; }',
         }],
         expectRed: /BAD\s+H3 1200x730/,
+      },
+      {
+        name: 'the SVG Stamina number and label become transparent while their boxes remain',
+        edits: [{ file: 'styles/combat.css', append: '\n.stamina-orb svg text { fill: transparent !important; stroke: transparent !important; text-shadow:none !important; -webkit-text-fill-color:transparent !important; -webkit-text-stroke-color:transparent !important; }\n' }],
+        expectRed: /BAD\s+H3 .*text.*paint/,
+      },
+      {
+        name: 'a later opaque SVG rectangle covers the Stamina number and label',
+        edits: [{
+          file: 'src/ui/components/footerArt.js',
+          find: "node.dataset.measured = 'true';",
+          replace: "node.dataset.measured = 'true'; if (group === plan.groups.sp) node.insertAdjacentHTML('afterend', '<rect x=\"' + item.x + '\" y=\"' + item.y + '\" width=\"' + item.w + '\" height=\"' + item.h + '\" fill=\"black\"/>');",
+        }],
+        expectRed: /BAD\s+H3 .*text.*paint/,
       },
       {
         // A DECLARED CELL STOPS BEING REACHED. The row never renders, and every
@@ -439,8 +467,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the row stops rendering and no H check may green on the empty population',
         edits: [{
           file: 'src/ui/components/combatActionRow.js',
-          find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
-          replace: '<div class="combat-action-row-planted-away as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
+          find: '<div class="combat-action-row as-btnrow" data-footer-art="pending" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
+          replace: '<div class="combat-action-row-planted-away as-btnrow" data-footer-art="pending" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
         }],
         expectRed: /BAD\s+H0 /,
       },
@@ -497,7 +525,7 @@ const WIDE_KEY = { action: 'endTurn', code: 'Backspace', label: 'Backspace' };
 // both Discard and Exhaust, and Potions occupies the rightmost slot. Weapon
 // Arts remains in the hand/Armoury rather than a sixth HUD control.
 const DECLARED_CONTROLS = Object.freeze([
-  'energy-orb', 'pile draw', 'end-turn', 'pile spent', 'combat-potions',
+  'energy-orb stamina-orb', 'pile draw', 'end-turn', 'pile spent', 'combat-potions',
 ]);
 
 // A control's IDENTITY is its class tokens minus the kit's layout modifiers.
@@ -529,6 +557,15 @@ const EXPECTED_CONTROLS = (() => {
   const named = [
     ...[...row[0].matchAll(/class(?:Name)?: '([^']+)'/g)].map((m) => identityOf(m[1])),
     ...[...row[0].matchAll(/pileButton\('([a-z]+)'/g)].map((m) => `pile ${m[1]}`),
+    // The orb is a shared HTML renderer now. Follow its actual source only
+    // when the row mounts it; removing the call or changing its identity
+    // must still disagree with the independently declared controls above.
+    ...(row[0].includes('${staminaOrbHtml()}') ? (() => {
+      const orbSource = readFileSync(join(ROOT, 'src/ui/components/staminaOrb.js'), 'utf8');
+      const orb = orbSource.match(/return `<div class="([^"]+)"/);
+      if (!orb) throw new Error('hintstrip: could not read the shared stamina orb template');
+      return [identityOf(orb[1])];
+    })() : []),
   ].filter(Boolean);
   const sameSet = (x) => x.split(/\s+/).sort().join(' ');
   const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));
@@ -621,12 +658,14 @@ const READ = (prop) => `(() => {
   const strip = document.querySelector('.combat-action-row');
   const hand = document.querySelector('.hand');
   const endTurn = strip ? strip.querySelector('.end-turn') : null;
-  const key = endTurn ? endTurn.querySelector('.et-key') : null;
+  const key = endTurn ? endTurn.querySelector('[data-footer-binding="endTurnKey"], .et-key') : null;
+  const controls=strip?[...strip.children].filter(c=>!c.matches('.footer-art-rails,.combat-potion-tray')):[];
   return {
     layout: document.documentElement.dataset.layout || null,
     // The pointer mode the STYLESHEET sees, so a cell asserts against what the
     // page rendered under and H0 can say whether the emulation took.
     coarse: window.matchMedia('(pointer: coarse)').matches,
+    keyWithheld: strip?.dataset.footerCompact==='true'||window.matchMedia('(pointer: coarse)').matches,
     vw: window.innerWidth / z, vh: window.innerHeight / z,
     present: !!strip,
     display: strip ? getComputedStyle(strip).display : null,
@@ -637,10 +676,10 @@ const READ = (prop) => `(() => {
     // RENDERED means the player can see it: display, visibility and a real
     // box. A pile hidden with visibility:hidden keeps its geometry and class
     // and would otherwise satisfy every check below.
-    chips: strip ? [...strip.children].filter((c) => rendered(c))
-      .map((c) => ({ text: c.textContent.replace(/\s+/g, ' ').trim(), cls: c.className, box: L(c) })) : [],
-    hiddenControls: strip ? [...strip.children].filter((c) => !rendered(c))
-      .map((c) => c.className + ' (' + hiddenWhy(c) + ')') : [],
+    chips: controls.filter((c) => rendered(c))
+      .map((c) => ({ text: c.textContent.replace(/\s+/g, ' ').trim(), cls: c.className, box: L(c) })),
+    hiddenControls: controls.filter((c) => !rendered(c))
+      .map((c) => c.className + ' (' + hiddenWhy(c) + ')'),
     // END TURN's key label, for H3 (inside its control) and H4 (the rebind took).
     endTurn: endTurn ? L(endTurn) : null,
     // The label goes through the same rendered() door as the controls: a
@@ -773,12 +812,16 @@ const paintOfCaptures = (inSitu, inSituHidden, uncovered, uncoveredBg) => {
     if (need <= 12) continue; // not a pixel the control paints (4 levels per channel of noise allowed)
     ownPx++; const got = mag(A, B, o);
     owed += need; delivered += Math.min(got, need); }
-  return { own: n ? ownPx / n : 0, lost: owed ? 1 - delivered / owed : 0 }; };
+  return { own: n ? ownPx / n : 0, ownPixels: ownPx, lost: owed ? 1 - delivered / owed : 0 }; };
 const PAINT_TARGETS = `(() => { const row = document.querySelector('.combat-action-row'); if (!row) return [];
-  const list = [...row.children].map((c, i) => ({ sel: '.combat-action-row > :nth-child(' + (i + 1) + ')', name: (c.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 24) || c.className }));
-  if (document.querySelector('.combat-action-row .et-key')) list.push({ sel: '.combat-action-row .et-key', name: 'END TURN key label' });
+  const list = [...row.children].map((c, i) => ({ c, sel: '.combat-action-row > :nth-child(' + (i + 1) + ')', name: (c.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 24) || c.className }))
+    .filter(t=>!t.c.matches('.footer-art-rails,.combat-potion-tray')).map(({c,...t})=>t);
+  const keySelector='.combat-action-row [data-footer-binding="endTurnKey"], .combat-action-row .et-key';
+  if (document.querySelector(keySelector)) list.push({ sel:keySelector, name:'END TURN key label' });
   return list.map((t) => { const el = document.querySelector(t.sel); const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
-    return { ...t, x: r.left, y: r.top, w: r.width, h: r.height, shown: cs.display !== 'none' && cs.visibility === 'visible' && r.width >= 1 && r.height >= 1 }; }); })()`;
+    const artRole = el.parentElement?.hasAttribute('data-footer-art')
+      ? el.matches('.pile.draw') ? 'draw' : el.matches('.pile.spent') ? 'discard' : el.matches('.end-turn') ? 'end' : el.matches('.combat-potions') ? 'potions' : null : null;
+    return { ...t, artRole, x: r.left, y: r.top, w: r.width, h: r.height, shown: cs.display !== 'none' && cs.visibility === 'visible' && r.width >= 1 && r.height >= 1 }; }); })()`;
 // Marks every element drawn above the control and returns their names (paint
 // order, topmost first, deduplicated). Two kinds: a SIBLING cover (any
 // element that is not an ancestor) is hidden whole for the uncovered
@@ -846,7 +889,7 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
     // the pile's label under its count, an inline ::after — is laid out
     // beside the text, not over it; a z-index:-1 glow or item paints below
     // the text; both stay in both capture pairs.
-    { const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let t; (t = walker.nextNode());) { if (!t.data.trim()) continue;
+    { const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let t; (t = walker.nextNode());) { if (!t.data.trim() || t.parentElement.closest('.sr-only')) continue;
       const rg = document.createRange(); rg.selectNodeContents(t);
       for (const b of rg.getClientRects()) if (b.width >= 1 && b.height >= 1 && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom) texts.push({ t, b }); } }
     const stacks = (cs) => cs.transform !== 'none' || (cs.translate || 'none') !== 'none' || (cs.rotate || 'none') !== 'none' || (cs.scale || 'none') !== 'none'
@@ -870,11 +913,23 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
       // #550). Read before the text's ancestors are made non-hit-testable,
       // which would drop that boundary from the stack.
       for (const [x, y] of pts) for (const n of (overAt(x, y) || [])) { if (n.contains(el)) { if (!above.has(n)) above.set(n, []); above.get(n).push([x, y]); } else if (!found.includes(n)) found.push(n); }
+      // Preserve the actual paint order BEFORE removing the text ancestors
+      // from hit testing. A positioned background below a z-indexed label
+      // becomes hittable after that removal, but is still below its text.
+      const textStacks = pts.map(([x,y]) => document.elementsFromPoint(x,y));
       for (const n of chain) n.style.setProperty('pointer-events', 'none', 'important');
       try {
-        for (const [x, y] of pts) {
+        for (const [point, [x, y]] of pts.entries()) {
           for (const n of document.elementsFromPoint(x, y)) {
             if (!(n === el || el.contains(n))) continue; // outside the control: judged above, by the paint stack
+            const stack = textStacks[point], textAt = stack.findIndex(node => chain.includes(node));
+            if (!chain.includes(n) && textAt >= 0 && stack.indexOf(n) > textAt) continue;
+            // SVG uses painter order inside its viewport. A filtered image
+            // before the text is its background, even though the filter forms
+            // a CSS stacking context. Later SVG objects remain cover candidates.
+            const textSvg = t.parentElement.ownerSVGElement;
+            if (textSvg && n.ownerSVGElement === textSvg && !n.contains(t)
+              && (n.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
             if (chain.includes(n)) { if (!ownPseudo.has(n)) ownPseudo.set(n, { t, pts: [] }); ownPseudo.get(n).pts.push([x, y]); }
             else if (!n.contains(t) && aboveText(n, null)) { if (!found.includes(n)) found.push(n); }
             // AN IN-FLOW DESCENDANT hit at a text point — positioned nowhere, no
@@ -913,7 +968,7 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
       if (hide.length) { n.setAttribute('data-hintstrip-cover-anc', hide.length === 2 ? 'both' : hide[0]); n.setAttribute('data-hintstrip-cover-own', hide.map((w) => '::' + w).join(' and ')); }
     }
   } finally { style.remove(); for (const [n, [v, p]] of prior) { if (v) n.style.setProperty('pointer-events', v, p); else n.style.removeProperty('pointer-events'); } }
-  const name = (n) => (String(n.className).split(' ')[0] || n.tagName.toLowerCase());
+  const name = (n) => ((n.getAttribute('class') || '').split(' ')[0] || n.tagName.toLowerCase());
   found.forEach((n, i) => n.setAttribute('data-hintstrip-cover', String(i)));
   inflow.forEach((n, i) => n.setAttribute('data-hintstrip-inflow', String(i)));
   return { text: texts.length, inflow: inflow.map(name), names: found.map((n) => (el.contains(n) ? 'its ' + name(n) + ' over its text' : name(n)))
@@ -934,13 +989,15 @@ const COVERS_RESTORE = `(() => {
 // captures with and without it differ in the text's paint alone — a
 // currentColor border is not the text and keeps its colour.
 const TEXT_PROPS = ['-webkit-text-fill-color', 'text-shadow', '-webkit-text-stroke-color'];
-const TEXT_HIDE = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const props = ${JSON.stringify(TEXT_PROPS)};
-  for (const n of [el, ...el.querySelectorAll('*')]) { n.setAttribute('data-hintstrip-text', JSON.stringify(props.map((p) => [n.style.getPropertyValue(p), n.style.getPropertyPriority(p)])));
-    n.style.setProperty(props[0], 'transparent', 'important'); n.style.setProperty(props[1], 'none', 'important'); n.style.setProperty(props[2], 'transparent', 'important'); }
+const TEXT_HIDE = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const base = ${JSON.stringify(TEXT_PROPS)};
+  for (const n of [el, ...el.querySelectorAll('*')]) {
+    const props = n instanceof SVGTextContentElement ? [...base, 'fill', 'stroke'] : base;
+    n.setAttribute('data-hintstrip-text', JSON.stringify(props.map((p) => [p, n.style.getPropertyValue(p), n.style.getPropertyPriority(p)])));
+    for (const p of props) n.style.setProperty(p, p === 'text-shadow' ? 'none' : 'transparent', 'important'); }
   return 1; })()`;
-const TEXT_RESTORE = `(() => { const props = ${JSON.stringify(TEXT_PROPS)};
+const TEXT_RESTORE = `(() => {
   for (const n of document.querySelectorAll('[data-hintstrip-text]')) { const prior = JSON.parse(n.getAttribute('data-hintstrip-text'));
-    props.forEach((p, i) => { const [v, pr] = prior[i]; if (v) n.style.setProperty(p, v, pr); else n.style.removeProperty(p); }); n.removeAttribute('data-hintstrip-text'); }
+    prior.forEach(([p, v, pr]) => { if (v) n.style.setProperty(p, v, pr); else n.style.removeProperty(p); }); n.removeAttribute('data-hintstrip-text'); }
   return 1; })()`;
 // ANIMATION IS FROZEN FOR THE READ (play-state paused, transitions off, in
 // place): END TURN's pulse moving between two captures is a change of the
@@ -959,7 +1016,7 @@ async function paintOfFrozen(ev, shot) {
     if (!t.shown) { out.push({ name: t.name }); continue; }
     const clip = { x: Math.floor(t.x), y: Math.floor(t.y), width: Math.ceil(t.w), height: Math.ceil(t.h), scale: 1 };
     const vis = (v) => ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.setProperty('visibility', ${JSON.stringify(v)}, 'important'); return 1; })()`);
-    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); return 1; })()`); await ev(TEXT_RESTORE); await ev(COVERS_RESTORE); };
+    const restore = async () => { await ev(`(() => { const el = document.querySelector(${JSON.stringify(t.sel)}); el.style.removeProperty('visibility'); document.getElementById('hintstrip-art-hide')?.remove(); return 1; })()`); await ev(TEXT_RESTORE); await ev(COVERS_RESTORE); };
     try {
       const inSitu = await shot(clip);
       await vis('hidden');
@@ -991,6 +1048,17 @@ async function paintOfFrozen(ev, shot) {
       const uncovered = await shot(clip);
       await ev(TEXT_HIDE(t.sel));
       const uncoveredText = await shot(clip);
+      let artwork;
+      if (t.artRole) {
+        artwork = await ev(`(${authoredFooterInk.toString()})(${JSON.stringify(t.sel)}, ${JSON.stringify(footerExpected[t.artRole])}, ${JSON.stringify(clip)})`);
+        // Keep labels transparent in both captures: text alone cannot make
+        // a missing, broken or hidden painted component pass.
+        await ev(`(() => { const s=document.createElement('style'); s.id='hintstrip-art-hide'; s.textContent=${JSON.stringify(t.sel + ' image[data-footer-asset] { visibility:hidden !important; }')}; document.head.appendChild(s); return 1; })()`);
+        const noArt = await shot(clip);
+        await ev(`(() => { document.getElementById('hintstrip-art-hide')?.remove(); return 1; })()`);
+        const captureSize = decodePng(uncoveredText);
+        artwork.ownPixels = cssPixelCount(paintOfCaptures(uncoveredText, noArt, uncoveredText, noArt).ownPixels, captureSize.w, captureSize.h, clip);
+      }
       await ev(TEXT_RESTORE);
       await vis('hidden');
       const uncoveredBg = await shot(clip);
@@ -1000,7 +1068,7 @@ async function paintOfFrozen(ev, shot) {
       // in situ; text that contributes nothing even uncovered is wholly lost.
       const textRead = text ? paintOfCaptures(inSitu, inSituText, uncovered, uncoveredText) : null;
       if (process.env.HINTSTRIP_DUMP) { const d = process.env.HINTSTRIP_DUMP; mkdirSync(d, { recursive: true }); const tag = (t.name + '-' + clip.width + 'x' + clip.height).replace(/[^A-Za-z0-9]+/g, '_'); [['inSitu', inSitu], ['inSituHidden', inSituHidden], ['inSituText', inSituText], ['uncovered', uncovered], ['uncoveredText', uncoveredText], ['uncoveredBg', uncoveredBg]].forEach(([k, b]) => writeFileSync(join(d, tag + '-' + k + '.png'), b)); }
-      out.push({ name: t.name, covers, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg), ...(textRead ? { textLost: textRead.own > 0 ? textRead.lost : 1 } : {}) });
+      out.push({ name: t.name, covers, artwork, ...paintOfCaptures(inSitu, inSituHidden, uncovered, uncoveredBg), ...(textRead ? { textLost: textRead.own > 0 ? textRead.lost : 1 } : {}) });
     } catch (e) { await restore().catch(() => {}); throw e; }
   }
   return out;
@@ -1070,36 +1138,38 @@ function judge(r, cell, wide, pointer) {
   // assertion is the opposite: a drawn label is a coarse-pointer rule that
   // stopped applying. Under a fine pointer the label must be drawn, inside
   // END TURN, whole.
-  const keyOut = !r.coarse && r.key && r.endTurn ? !(inside(r.key.box, r.endTurn) && inside(r.key.textBox, r.endTurn)) : false;
-  const keyCut = !r.coarse && r.key ? r.key.textClipped : null;
+  const keyOut = !r.keyWithheld && r.key && r.endTurn ? !(inside(r.key.box, r.endTurn) && inside(r.key.textBox, r.endTurn)) : false;
+  const keyCut = !r.keyWithheld && r.key ? r.key.textClipped : null;
   const paint = Array.isArray(r.paint) ? r.paint : [];
-  const obscured = paint.filter((p) => p.own !== undefined && (p.own < PAINT_FLOOR || p.lost > PAINT_LOST || (p.textLost !== undefined && p.textLost > PAINT_LOST)));
-  const textOf = (p) => (p.textLost !== undefined ? `, its text ${(p.textLost * 100).toFixed(0)}% lost` : '');
+  const obscured = paint.filter((p) => p.own !== undefined && (!coveragePass(p, PAINT_FLOOR) || p.lost > PAINT_LOST || (p.textLost !== undefined && p.textLost > PAINT_LOST)));
+  const textOf = (p) => (p.artwork ? `, artwork ${p.artwork.ownPixels}/${p.artwork.expectedInk} source-ink pixels${p.artwork.decoded ? '' : ' (decode failed)'}` : '') + (p.textLost !== undefined ? `, its text ${(p.textLost * 100).toFixed(0)}% lost` : '');
   const paintLine = paint.filter((p) => p.own !== undefined).map((p) => `${p.name} paints ${(p.own * 100).toFixed(0)}% of its box, ${(p.lost * 100).toFixed(0)}% lost${textOf(p)}${(p.covers && p.covers.length) ? ' (over it: ' + p.covers.join(', ') + ')' : ''}`).join('; ');
   const over = r.stripFlow.scrollW > r.stripFlow.clientW + 1 || r.stripFlow.scrollH > r.stripFlow.clientH + 1;
   // A control is matched by CONTAINING its declared classes (END TURN gains
   // `pulse` while it hints, the piles gain state classes), not by equality.
   const hasAll = (live, declared) => declared.split(/\s+/).every((k) => live.split(/\s+/).includes(k));
   const missing = EXPECTED_CONTROLS.filter((cls) => !r.chips.some((c) => hasAll(c.cls, cls)));
+  const extra = r.chips.filter(c=>!EXPECTED_CONTROLS.some(cls=>hasAll(c.cls,cls)));
   if (!r.chips.length) {
     bad('H3', cell, 'the row rendered with ZERO controls — nothing was measured for clipping');
   } else if (missing.length) {
     bad('H3', cell, `${missing.length} of the ${EXPECTED_CONTROLS.length} declared controls did not render: `
       + missing.map((m) => `"${m}"`).join(', ')
       + (r.hiddenControls.length ? ` (not rendered: ${r.hiddenControls.map((m) => `"${m}"`).join(', ')})` : ' (absent from the row)'));
+  } else if (extra.length) {
+    bad('H3',cell,`the row rendered undeclared controls: ${extra.map(c=>c.cls).join(', ')}`);
   } else if (!r.key) {
     bad('H3', cell, 'END TURN carries no key label (.et-key) — the label this gate measures the width of is gone');
-  } else if (r.coarse && r.key.rendered) {
-    bad('H3', cell, `END TURN draws its key label "${r.key.text}" under a COARSE pointer — styles/combat.css withholds it there `
-      + '(no key to press on a thumb); the @media (pointer: coarse) rule stopped applying');
-  } else if (!r.coarse && !r.key.rendered) {
+  } else if (r.keyWithheld && r.key.rendered) {
+    bad('H3', cell, `END TURN draws its key label "${r.key.text}" while its compact/coarse presentation promises to withhold it`);
+  } else if (!r.keyWithheld && !r.key.rendered) {
     bad('H3', cell, `END TURN's key label "${r.key.text}" is not rendered (${r.key.why}) — the binding the row promises is invisible to the player`);
   } else if (!paint.length) {
     bad('H3', cell, 'no paint-coverage reading reached the judge — the probe that photographs each control did not run, so nothing says a control is not painted over');
   } else if (obscured.length) {
     bad('H3', cell, `${obscured.length} control(s) painted over — `
       + obscured.map((p) => `"${p.name}" paints ${(p.own * 100).toFixed(0)}% of its box against its background and ${(p.lost * 100).toFixed(0)}% of that paint does not reach the eye in situ${p.textLost !== undefined ? `, ${(p.textLost * 100).toFixed(0)}% of its text's paint does not` : ''} (drawn over it: ${(p.covers || []).join(', ') || 'nothing found by geometry'})`).join(', ')
-      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box and lose at most ${PAINT_LOST * 100}% of it, and of its text's paint; a layer over any part of the rail, pointer-events or not, or the control's own paint over its text, is measured here rather than by the hit-test)`);
+      + ` (a control must paint at least ${PAINT_FLOOR * 100}% of its box, or of its decoded artwork's source-ink footprint with at least 16 artwork pixels, and lose at most ${PAINT_LOST * 100}% of its paint and text; transparent padding never substitutes for missing artwork)`);
   } else if (outside.length || keyOut || keyCut || over) {
     bad('H3', cell, `${outside.length} of ${r.chips.length} control(s) drawn outside the row`
       + (keyOut ? ` and END TURN's key label "${r.key.text}" is drawn outside END TURN (box ${JSON.stringify(r.key.box)}, text ${JSON.stringify(r.key.textBox)} vs ${JSON.stringify(r.endTurn)})` : '')
@@ -1109,7 +1179,7 @@ function judge(r, cell, wide, pointer) {
       + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
   } else {
     ok('H3', cell, `all ${EXPECTED_CONTROLS.length} declared controls rendered, whole and inside the row (${r.chips.map((c) => c.text).join(' / ')}), `
-      + (r.coarse ? `key label "${r.key.text}" withheld under the coarse pointer (${r.key.why}) as the stylesheet promises`
+      + (r.keyWithheld ? `key label "${r.key.text}" withheld by compact/coarse presentation (${r.key.why}) as the stylesheet promises`
         : `key label "${r.key.text}" inside END TURN`)
       + `; paint reaching the eye: ${paintLine}`
       + ` [${wide ? 'WIDE rebound label' : 'shipped labels'}]`);
@@ -1228,8 +1298,9 @@ async function main() {
     const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw'); return r.result.value; };
     const shot = async (clip) => Buffer.from((await cdp.send('Page.captureScreenshot', { format: 'png', clip }, S)).data, 'base64');
-    const until = async (x, w, ms = 20000) => { const t = Date.now();
-      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
+    const until = async (x, w, ms = 45000) => { const t = Date.now();
+      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); }
+      throw new Error('timeout ' + w + ': ' + JSON.stringify(await ev(`({ready:document.readyState,text:document.body.innerText.slice(0,900)})`))); };
 
     console.log(`\n  ${vp.tag}`);
     for (const text of TEXTS) {

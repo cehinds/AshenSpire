@@ -27,7 +27,12 @@ export const armouryUi = {
         "leftHand"
       ],
       "defaultView": "list",
-      "gridColumns": 3
+      "gridColumns": 3,
+      "compactList": {
+        "thumbnailWidthPx": 82,
+        "phoneThumbnailWidthPx": 68,
+        "inspectionWidthPx": 264
+      }
     },
     "inventorySplit": {
       "defaultArmamentsRatio": 0.6,
@@ -97,6 +102,10 @@ export const armouryUi = {
     "cardClasses": {
       "inventoryItem": {
         "holdAction": true
+      },
+      "armamentItem": {
+        "holdAction": false,
+        "comparisonPresentation": "inline"
       }
     },
     "viewModes": {

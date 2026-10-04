@@ -7,6 +7,7 @@ import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // Staggers get the loud treatment (they're the theme).
 
 import { sfx } from './sfx.js';
+import { haptic } from './haptics.js';
 import { hitTierFor } from '../content/sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
@@ -65,10 +66,12 @@ const rectOf = (o) => (o && typeof o.getBoundingClientRect === 'function' ? o.ge
 // whatever it is nested in — origin (0, 0), so only the zoom separates the spaces.
 export const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
 
-export function anchorLocalBox(layer, anchor) {
+export function anchorLocalBox(layer, anchor, { zoom } = {}) {
   const lr = rectOf(layer);
   const ar = rectOf(anchor);
-  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  // A native dialog may compensate for the body's zoom. Its measured effective
+  // zoom uses the same conversion without a second placement implementation.
+  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
   return {
     left: (ar.left - lr.left) / z,
     top: (ar.top - lr.top) / z,
@@ -584,6 +587,16 @@ export function playTimeline(events, ctx, done) {
   dbg.open = (dbg.open || 0) + 1;
 
   const beats = groupBeats(events);
+  // Beats whose cues have played. A skip (or the watchdog) jumps past the
+  // rest, and their haptics still play then, in one tick, so a skipped enemy
+  // hit or turn start still buzzes; their sounds are not replayed.
+  let cued = 0;
+  const cueBeat = (index) => { cued = Math.max(cued, index + 1); };
+  const flushHaptics = () => {
+    const rest = beats.slice(cued);
+    cued = beats.length;
+    for (const beat of rest) playBeatHaptics(beat.events);
+  };
   let flushed = false;
   let finished = false;
   let pendingTimer = null;
@@ -653,6 +666,7 @@ export function playTimeline(events, ctx, done) {
     dlog('fx', 'watchdog forced timeline completion', { open: dbg.open, finished: dbg.finished });
     cancelActorAnimation();
     try {
+      flushHaptics();
       if (ctx.onFlush) ctx.onFlush();
     } catch (e) {
       /* ignore */
@@ -672,6 +686,7 @@ export function playTimeline(events, ctx, done) {
   nextBeat = () => {
     if (finished) return;
     if (flushed) {
+      safe(flushHaptics);
       safe(() => ctx.onFlush && ctx.onFlush());
       finish();
       return;
@@ -680,9 +695,11 @@ export function playTimeline(events, ctx, done) {
       finish();
       return;
     }
+    const beatIndex = bi;
     const beat = beats[bi++];
 
     if (beat.banner) {
+      cueBeat(beatIndex);
       safe(() => playBeatCues(beat.events));
       safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
@@ -745,6 +762,7 @@ export function playTimeline(events, ctx, done) {
           return;
         }
         const applyBeat = () => {
+          cueBeat(beatIndex);
           safe(() => playBeatCues(beat.events));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
@@ -782,16 +800,59 @@ export function playHitSound(e) {
 }
 
 /**
+ * playerLostHp(e, isLocalPlayer?) → did this receipt cost a player HP? In
+ * co-op, `isLocalPlayer(seatId)` narrows it to the seats this screen plays.
+ */
+export function playerLostHp(e, isLocalPlayer) {
+  if (!e) return false;
+  let lost = false;
+  if (e.type === 'damageDealt') lost = hurtsPlayer(e) && guardHitFloatParts(e).residual > 0;
+  else if (e.type === 'hpLost') lost = hurtsPlayer(e) && e.cause !== 'attack' && (e.amount || 0) > 0;
+  if (!lost || typeof isLocalPlayer !== 'function') return lost;
+  // A co-op receipt that names no seat is nobody's here: every player entity
+  // is id 'player', so treating it as local would buzz every device.
+  const seat = e.targetPlayerId ?? e.playerId;
+  return seat != null && isLocalPlayer(seat);
+}
+
+/**
  * Once-per-beat cues: the turn stinger and the pile sounds. A five-card
  * refill or a whole-hand discard is ONE sound, not five, and adds no step to
  * the beat's pacing (these events have no visual of their own).
  */
-export function playBeatCues(events) {
+export function playBeatCues(events, { isLocalPlayer, stinger = true, turnBuzz = true } = {}) {
   const has = (type) => events.some((e) => e && e.type === type);
-  if (has('playerTurnStart')) sfx.play('turnStinger');
+  playBeatHaptics(events, { isLocalPlayer, turnBuzz });
+  if (stinger && has('playerTurnStart')) sfx.play('turnStinger');
   if (has('deckShuffled')) sfx.play('deckShuffle');
   if (has('cardDrawn')) sfx.play('cardDraw');
   if (has('cardDiscarded')) sfx.play('cardDiscard');
+}
+
+/**
+ * A beat's haptics alone (content/haptics.js): ONE damage buzz per beat that
+ * cost the player HP by any route — an attack's residual, or a direct hpLost
+ * (Guilt, Herald, Gorefire, Venom); an attack's own hpLost twin is skipped,
+ * so the damageDealt/hpLost pair is one hit, not two — then the turn start.
+ * playBeatCues plays it with the beat's sounds; a skipped timeline plays it
+ * alone for the beats it jumped past.
+ */
+export function playBeatHaptics(events, { isLocalPlayer, turnBuzz = true } = {}) {
+  if (events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
+  if (turnBuzz && events.some((e) => localTurnStart(e, isLocalPlayer))) haptic.play('turnStart');
+}
+
+/**
+ * localTurnStart(e, isLocalPlayer?) → is this the start of a turn this screen
+ * plays? Solo (no predicate) always is. In co-op the turn stinger is shared,
+ * but the buzz is personal: only a local seat's own playerTurnStart, so a
+ * downed seat spectating its teammates' turns stays still. A receipt naming
+ * no seat is nobody's, as in playerLostHp.
+ */
+export function localTurnStart(e, isLocalPlayer) {
+  if (!e || e.type !== 'playerTurnStart') return false;
+  if (typeof isLocalPlayer !== 'function') return true;
+  return e.playerId != null && isLocalPlayer(e.playerId);
 }
 
 /**
@@ -800,19 +861,26 @@ export function playBeatCues(events) {
  * paced: instant/reduced-motion playback, a fresh fight's setup (the opening
  * draw and turn start), and co-op receipts.
  */
-export function playEventCues(events) {
+export function playEventCues(events, opts = {}) {
   // ONE STINGER PER SHARED TURN. Co-op's startPlayerPhase emits a
   // playerTurnStart per living seat while the shared turn moves once, and
   // groupBeats gives each its own beat; a turn already stung in this list
   // does not sting again. The key is each receipt's `turn`, so the co-op
   // digest (tools/session.mjs) must keep that field: without it every start
   // reads as the same turn and a list with two turns stings once.
+  // The buzz keeps its own once-per-turn set, over this screen's seats only:
+  // the turn's first start may be a teammate's, which stings for everyone
+  // but buzzes nobody here, and a later local start must still buzz.
   const stung = new Set();
+  const buzzed = new Set();
   for (const beat of groupBeats(events || [])) {
     const starts = beat.events.filter((e) => e && e.type === 'playerTurnStart');
     const repeat = starts.length > 0 && starts.every((e) => stung.has(e.turn));
     for (const e of starts) stung.add(e.turn);
-    playBeatCues(repeat ? beat.events.filter((e) => !e || e.type !== 'playerTurnStart') : beat.events);
+    const mine = starts.filter((e) => localTurnStart(e, opts.isLocalPlayer));
+    const turnBuzz = mine.some((e) => !buzzed.has(e.turn));
+    for (const e of mine) buzzed.add(e.turn);
+    playBeatCues(beat.events, { ...opts, stinger: !repeat, turnBuzz });
   }
 }
 
@@ -821,9 +889,37 @@ export function playEventCues(events) {
  * attack (playHitSound) and the per-beat cues. Co-op plays its receipts
  * through this, since its floats are drawn by coop.js, not by visualFor.
  */
-export function playReceiptSounds(events) {
-  for (const e of events || []) if (e && e.type === 'damageDealt') playHitSound(e);
-  playEventCues(events);
+export function playReceiptSounds(events, opts = {}) {
+  const local = (seat) => typeof opts.isLocalPlayer !== 'function' || seat == null || opts.isLocalPlayer(seat);
+  for (const e of events || []) {
+    if (e && e.type === 'damageDealt') playHitSound(e);
+    // Co-op plays no 'cardPlay' sound or haptic at the tap (it only sends an
+    // intent); the card-play buzz follows the authoritative receipt, for a
+    // card this screen's own seat played.
+    if (e && e.type === 'cardPlayed' && local(e.playerId)) haptic.play('cardPlay');
+  }
+  playEventCues(events, opts);
+}
+
+/**
+ * The haptics alone of a batch of receipts, with no sound: card plays for
+ * this screen's seats, and one damage buzz per beat that cost a local seat
+ * HP, and a local seat's turn start once per turn. Co-op uses it for a
+ * fight's final receipts, which ride the reward or completion scene that
+ * replaces the combat scene (tools/session.mjs settleCombat), so the card
+ * that ends a fight still buzzes, and for combat frames a paced enemy turn
+ * held back behind that scene (coop.js paceEnemyTurn).
+ */
+export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
+  const local = (seat) => typeof isLocalPlayer !== 'function' || seat == null || isLocalPlayer(seat);
+  for (const e of events || []) if (e && e.type === 'cardPlayed' && local(e.playerId)) haptic.play('cardPlay');
+  const buzzed = new Set();
+  for (const beat of groupBeats(events || [])) {
+    const mine = beat.events.filter((e) => localTurnStart(e, isLocalPlayer));
+    const turnBuzz = mine.some((e) => !buzzed.has(e.turn));
+    for (const e of mine) buzzed.add(e.turn);
+    playBeatHaptics(beat.events, { isLocalPlayer, turnBuzz });
+  }
 }
 
 function visualFor(e, beatKind) {

@@ -1,3 +1,4 @@
+import { isProgressionReward, progressionRewardUnlocked } from '../../model/deferredProgression.js';
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
 //
 // Constantine, 2026-08-15: "the reward should start with an initial menu of
@@ -110,11 +111,33 @@ export function mountRewards(app, {
   // panel's whole claim is what this one moved, and a treasure room (or an
   // offer saved before the receipt existed) moved nothing, so it draws the
   // spoils alone rather than a heading with no gains under it.
-  let progress = rewards.xpGains ? rewardProgress(registries, run, rewards.xpGains) : null;
+  let progress = rewards.xpGains || onClaimLevel ? rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity }) : null;
   const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
   let xpAnimationDone = !progress || !rewards.xpBefore;
-  let xpAnimationStarted = false;
   let refill = null;
+  const animatedTracks = new Set();
+  let pausedTrack = null;
+  let guided = settings.guidedLevelUp !== false;
+  const unlocked = (row) => progressionRewardUnlocked(row, run);
+  const refreshProgress = () => { progress = rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity }); };
+  function resumeXp() {
+    const track = pausedTrack;
+    pausedTrack = null;
+    if (track) refillClaim(track, renderMenu);
+    else renderMenu();
+  }
+  function nextGuidedStep() {
+    if (!guided || !xpAnimationDone || refill || pausedTrack) return;
+    const waiting = plan.rows.find(row => isProgressionReward(row) && !states[row.key] && unlocked(row));
+    if (waiting) return renderChooser(waiting);
+    if (onClaimLevel && pendingLevelCount(registries, run) > 0) return claimLevel();
+    if (progress?.skills.some(row => row.gained > 0 && rewards.xpBefore?.tracks?.[row.id] && !animatedTracks.has(row.id))) {
+      xpAnimationDone = false;
+      return renderMenu();
+    }
+    const skill = progress?.skills.find(row => pendingSkillLevelCount(registries, run, row.id) > 0);
+    if (skill && onClaimSkill) claimSkill(skill.id);
+  }
   let claimedLevels = checkpoint?.levelClaims || 0;
   const claimedSkills = { ...(checkpoint?.skillClaims || {}) };
   const deferredLevelOffer = () => !!(onClaimLevel && progress?.character && (pendingLevelCount(registries, run) > 0 || claimedLevels > 0));
@@ -276,7 +299,8 @@ export function mountRewards(app, {
     }
     if (CARD_CHOICE_KINDS.includes(row.kind)) recordSeen('card', [row.cardId]);
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
-    renderMenu(viaKind || row.key);
+    if (isProgressionReward(row) && pausedTrack) resumeXp();
+    else renderMenu(viaKind || row.key);
     return true;
   }
 
@@ -325,12 +349,13 @@ export function mountRewards(app, {
         };
       }
       case 'levelCard': {
+        const title = row.source === 'class' ? 'Class technique' : t('reward.levelCard.title');
         if (state === 'taken') {
           const def = registries.cards.get(chosenDraftCardIds[row.key]);
-          return { title: t('reward.levelCard.title'), body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
+          return { title, body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
         }
         return {
-          title: t('reward.levelCard.title'),
+          title,
           body: row.choice ? t('reward.card.chooseOne', { count: row.cardIds.length }) : t('reward.card.offered'),
         };
       }
@@ -339,9 +364,9 @@ export function mountRewards(app, {
         const option = row.options.find((entry) => `${entry.kind}:${entry.id}` === chosen);
         const feat = option?.kind === 'feat' ? featById(option.id) : null;
         const node = option?.kind === 'classNode' ? (registries.nodes || []).find((entry) => entry.id === option.id) : null;
-        return { title: 'Level choice', body: state === 'taken'
+        return { title: row.source === 'combat' ? 'Combat feat' : row.source === 'class' ? 'Class level feat' : t('reward.level.choice.title'), body: state === 'taken'
           ? `${esc(feat?.name || node?.label || option?.id || '')} gained.`
-          : `Choose one of ${row.options.length} feats or class upgrades.` };
+          : `Choose one of ${row.options.length} ${row.source ? 'feats' : 'feats or class upgrades'}.` };
       }
       case 'flask': {
         const def = registries.flasks.get(row.flaskId);
@@ -417,15 +442,18 @@ export function mountRewards(app, {
     if (!claim) return;
     claimedLevels += 1;
     persistProgress();
-    progress = rewardProgress(registries, run, rewards.xpGains);
-    const card = plan.rows.find((row) => ['levelChoice', 'levelCard'].includes(row.kind)
-      && row.ordinal === claimedLevels - 1 && !states[row.key]);
-    refillClaim('character', () => card ? renderChooser(card) : renderLevelReward(claim));
+    refreshProgress();
+    const card = plan.rows.find((row) => characterLevelRow(row)
+      && unlocked(row) && !states[row.key]);
+    if (settings.guidedLevelUp !== false) {
+      pausedTrack = 'character';
+      card ? renderChooser(card) : renderLevelReward(claim);
+    } else refillClaim('character', () => card ? renderChooser(card) : renderLevelReward(claim));
   }
 
   const draftTrackId = (row) => row.kind === 'classDraft' ? classSkillId(row.classId) : row.skillId;
-  const draftUnlocked = (row) => !['skillDraft', 'classDraft'].includes(row.kind)
-    || !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
+  const characterLevelRow = (row) => ['levelChoice', 'levelCard'].includes(row.kind) && !row.source;
+  const draftUnlocked = (row) => Number.isInteger(row.requiredLevel) ? unlocked(row) : !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
 
   function claimSkill(skillId) {
     if (!xpAnimationDone || refill || !onClaimSkill || pendingSkillLevelCount(registries, run, skillId) < 1) return;
@@ -433,10 +461,13 @@ export function mountRewards(app, {
     if (!claim) return;
     claimedSkills[skillId] = (claimedSkills[skillId] || 0) + 1;
     persistProgress();
-    progress = rewardProgress(registries, run, rewards.xpGains);
-    const draft = plan.rows.find((row) => ['skillDraft', 'classDraft'].includes(row.kind)
-      && draftTrackId(row) === skillId && row.claimOrdinal === claimedSkills[skillId] && !states[row.key]);
-    refillClaim(skillId, () => draft ? renderChooser(draft) : renderSkillReward(skillId, claim));
+    refreshProgress();
+    const draft = plan.rows.find((row) =>
+      draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
+    if (settings.guidedLevelUp !== false) {
+      pausedTrack = skillId;
+      draft ? renderChooser(draft) : renderSkillReward(skillId, claim);
+    } else refillClaim(skillId, () => draft ? renderChooser(draft) : renderSkillReward(skillId, claim));
   }
 
   function refillClaim(id, after) {
@@ -446,22 +477,27 @@ export function mountRewards(app, {
     if (!row?.xp || row.capped || reduced || seconds === 0) { after(); return; }
     refill = { id, after, phase: 'filling' };
     xpAnimationDone = false;
-    xpAnimationStarted = false;
     renderMenu();
+  }
+
+  function levelBackButton() {
+    const back = button({ label: t('common.back'), className: 'subtle', attrs: { 'data-back': '' } });
+    back.addEventListener('click', () => { guided = false; resumeXp(); });
+    return back;
   }
 
   function renderSkillReward(skillId, claim) {
     const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
-    const done = button({ label: 'Continue', weight: 'primary', id: 'reward-skill-done' });
-    door({ eyebrow: 'Skill Level Up', title: `${label} · Level ${claim.after}`,
+    const done = button({ label: t('common.continue'), weight: 'primary', id: 'reward-skill-done' });
+    door({ eyebrow: t('reward.level.skill.eyebrow'), title: `${label} · Level ${claim.after}`,
       body: el('p', { text: `Your ${label} skill is now level ${claim.after}.` }),
-      foot: modalFooter({ primary: done, className: 'reward-foot', size: 'medium' }) });
-    done.addEventListener('click', renderMenu);
+      foot: modalFooter({ secondary: [levelBackButton()], primary: done, className: 'reward-foot', size: 'medium' }) });
+    done.addEventListener('click', resumeXp);
   }
 
   function statAllocationSection() {
-    if (settings.levelUpAllocateStats !== true || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
-    const host = el('section', { class: 'reward-stat-allocation', 'aria-label': 'Assign stats' });
+    if ((settings.levelUpAllocateStats !== true && checkpoint?.source !== 'character') || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
+    const host = el('section', { class: 'reward-stat-allocation', 'aria-label': t('reward.level.assignStats.aria') });
     const draw = () => {
       const points = run.level?.unspentPoints || 0;
       const attrs = levelUpPlan(registries, run).attributes;
@@ -489,14 +525,14 @@ export function mountRewards(app, {
   }
 
   function renderLevelReward(claim) {
-    const done = button({ label: 'Continue', weight: 'primary', id: 'reward-level-done' });
+    const done = button({ label: t('common.continue'), weight: 'primary', id: 'reward-level-done' });
     const body = el('div', { class: 'reward-level-claim' }, [
       el('p', { text: `Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned` }),
       statAllocationSection(),
     ]);
-    door({ eyebrow: 'Level Up', title: `Level ${claim.after}`, body,
-      foot: modalFooter({ primary: done, className: 'reward-foot', size: 'medium' }) });
-    done.addEventListener('click', () => renderMenu());
+    door({ eyebrow: t('reward.level.eyebrow'), title: `Level ${claim.after}`, body,
+      foot: modalFooter({ secondary: [levelBackButton()], primary: done, className: 'reward-foot', size: 'medium' }) });
+    done.addEventListener('click', resumeXp);
   }
 
   async function playXpAnimation(host) {
@@ -533,6 +569,17 @@ export function mountRewards(app, {
       } else {
         green.style.width = target;
         yellow.style.width = target;
+      }
+      if (!pendingRefill) {
+        animatedTracks.add(bar.dataset.track);
+        const ready = bar.dataset.track === 'character'
+          ? onClaimLevel && pendingLevelCount(registries, run) > 0
+          : onClaimSkill && pendingSkillLevelCount(registries, run, bar.dataset.track) > 0;
+        if (guided && ready) {
+          xpAnimationDone = true;
+          renderMenu();
+          return;
+        }
       }
     }
     if (!active()) return;
@@ -586,7 +633,7 @@ export function mountRewards(app, {
     // Level cards are claimed from the progression bar when it is present.
     // Older offers without an XP receipt still keep their normal reward row.
     const rowsHtml = plan.rows.filter((row) => draftUnlocked(row)
-      && (!['levelChoice', 'levelCard'].includes(row.kind) || !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key]))).map((row) => {
+      && (!characterLevelRow(row) || (Number.isInteger(row.requiredLevel) ? unlocked(row) : !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key])))).map((row) => {
       const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
       const { title, body } = rowBody(row);
       return `
@@ -614,17 +661,11 @@ export function mountRewards(app, {
         'data-confirm-ready': String(plan.rows.every(row => states[row.key] === 'taken' || states[row.key] === 'skipped')),
       },
     });
-    // A level waiting to be claimed holds Continue until the player claims it:
-    // a lasting refusal, so its reason is a visible line under the footer
-    // (D43), not only the title.
     const levelsPending = Boolean((progress?.character && pendingLevelCount(registries, run) > 0)
-      || progress?.skills.some((row) => pendingSkillLevelCount(registries, run, row.id) > 0));
-    if (levelsPending) {
-      cont.disabled = true;
-      cont.title = t('reward.continue.reason.levels');
-    }
+      || progress?.skills.some(row => pendingSkillLevelCount(registries, run, row.id) > 0)
+      || pending.some(isProgressionReward));
     const foot = modalFooter({
-      note: cont.dataset.confirmReady === 'true' ? t('reward.hold.complete')
+      note: levelsPending ? 'Unfinished levels and level rewards are saved for later victories and Character.' : cont.dataset.confirmReady === 'true' ? t('reward.hold.complete')
         : mode === 'auto' && pending.length ? t('reward.hold.takesRest') : t('reward.hold.leavesRest'),
       primary: cont, className: 'reward-foot', size: 'medium',
     });
@@ -643,6 +684,7 @@ export function mountRewards(app, {
       body: el('div', { class: 'reward-claim-layout' }, [
         el('div', { class: 'class-row reward-menu', html: rowsHtml + notesHtml }),
         sideColumn(claim),
+        checkpoint?.source === 'character' ? statAllocationSection() : null,
       ]),
       foot,
     });
@@ -653,10 +695,7 @@ export function mountRewards(app, {
     }
     if (refill) {
       app.querySelector('.reward-menu').inert = true;
-      cont.disabled = true;
     }
-    // A refill's hold clears by itself within a beat, so it shows no line.
-    reasonWhenDisabled(cont, () => (levelsPending && !refill ? t('reward.continue.reason.levels') : null))();
 
     for (const el of app.querySelectorAll('.reward-kind')) {
       const row = plan.rows.find((r) => r.key === el.dataset.key);
@@ -691,17 +730,16 @@ export function mountRewards(app, {
     }
 
     attachTooltip(cont, () => (mode === 'auto'
-      ? `<div class="tt-title">Continue</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
-      : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
+      ? `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Collects remaining battle loot. Unfinished level rewards are saved for later.')}`
+      : `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Leave with your chosen loot. Unfinished level rewards are saved for later.')}`));
     const finish = () => {
       // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
-      const { take: offered } = resolveContinue(plan, states, mode, pickFn);
+      const { take: offered } = resolveContinue({ rows: plan.rows.filter(row => !isProgressionReward(row)) }, states, mode, pickFn);
       // Level cards belong to a level claim, never to auto-collect on Continue.
-      const toTake = offered.filter((row) => draftUnlocked(row)
-        && (!['levelChoice', 'levelCard'].includes(row.kind) || !deferredLevelOffer() || row.ordinal < claimedLevels));
+      const toTake = offered.filter((row) => !isProgressionReward(row));
       for (const row of toTake) {
         if (apply[row.kind](row)) {
           states[row.key] = 'taken';
@@ -720,8 +758,7 @@ export function mountRewards(app, {
       onConfirm: finish,
     });
 
-    if (!xpAnimationStarted && progress && (rewards.xpBefore || refill)) {
-      xpAnimationStarted = true;
+    if (!xpAnimationDone && progress && (rewards.xpBefore || refill)) {
       // Bind the pending animation to this render, before another mount can
       // replace it. Looking up the host inside the timer captures a new run.
       const host = app.querySelector('.reward-claim-layout');
@@ -730,6 +767,10 @@ export function mountRewards(app, {
       }, 0);
     }
 
+    if (xpAnimationDone && !refill && guided) {
+      const menu = app.querySelector('.reward-claim-layout');
+      setTimeout(() => { if (menu?.isConnected) nextGuidedStep(); }, 250);
+    }
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-key="${focusKind}"]`))
         || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
@@ -764,14 +805,15 @@ export function mountRewards(app, {
       : !!onClaimSkill && pendingSkillLevelCount(registries, run, row.id) > 0);
     const target = row.fraction * 100;
     const before = row.kind === 'character' ? rewards.xpBefore?.character : rewards.xpBefore?.tracks?.[row.id];
-    const old = !refill && before && before.level === row.level && row.xpToNext
+    const old = (!refill || refill.id !== row.id) && before && before.level === row.level && row.xpToNext
       ? Math.max(0, Math.min(100, before.xp / row.xpToNext * 100)) : 0;
     const animate = refill ? refill.phase === 'filling' && refill.id === row.id
-      : !xpAnimationDone && row.gained > 0 && !!before;
+      : !xpAnimationDone && row.gained > 0 && !!before && !animatedTracks.has(row.id);
+    const waitingInitial = guided && (!refill || refill.id !== row.id) && row.gained > 0 && !!before && !animatedTracks.has(row.id);
     const under = el('span', { class: 'rp-under' });
     const over = el('span', { class: 'rp-over' });
-    under.style.width = `${animate ? old : target}%`;
-    over.style.width = `${animate ? old : target}%`;
+    under.style.width = `${animate || waitingInitial ? old : target}%`;
+    over.style.width = `${animate || waitingInitial ? old : target}%`;
     const bar = el('div', {
       class: `rp-bar rp-layered-bar${ready ? ' rp-bar-ready' : ''}`,
       role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(row.xpToNext || 0),
@@ -787,7 +829,7 @@ export function mountRewards(app, {
       el('span', { class: 'rp-level', text: row.kind === 'character' ? `Level ${row.level}` : t('reward.progress.level', { level: row.level }) }),
       bar,
       next,
-      ready ? button({ label: 'Level', className: 'reward-level-up', disabled: !!refill, attrs: { 'data-track': row.id, 'aria-label': `Level up ${label}` } }) : null,
+      ready ? button({ label: t('reward.level.button'), className: 'reward-level-up', disabled: !!refill, attrs: { 'data-track': row.id, 'aria-label': `${t('reward.level.button')} ${label}` } }) : null,
       row.kind !== 'character' && row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
       // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
       row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
@@ -862,7 +904,7 @@ export function mountRewards(app, {
     app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.detail.back'))}</div>${esc(tFull('reward.detail.back'))}`);
-    back.addEventListener('click', () => renderMenu(row.key));
+    back.addEventListener('click', () => { guided = false; resumeXp(); });
     if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
   }
 
@@ -884,12 +926,12 @@ export function mountRewards(app, {
     });
     door({
       eyebrow: row.kind === 'levelCard' || isLevelChoice ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
-      title: row.kind === 'levelCard' || isLevelChoice ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
+      title: row.source ? rowBody(row).title : row.kind === 'levelCard' || isLevelChoice ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
     const strip = app.querySelector('.reward-row');
-    if (row.kind === 'levelCard' || isLevelChoice) {
+    if (characterLevelRow(row)) {
       const stats = statAllocationSection();
       if (stats) strip.after(stats);
     }
@@ -1021,18 +1063,14 @@ export function mountRewards(app, {
     });
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
-    back.addEventListener('click', () => renderMenu(row.key));
+    back.addEventListener('click', () => { guided = false; resumeXp(); });
     if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
   }
 
   function expandVictory() {
     if (checkpoint) checkpoint.expanded = true;
     persistProgress();
-    const waitingCard = plan.rows.find((row) => ['levelChoice', 'levelCard'].includes(row.kind) && row.ordinal < claimedLevels && !states[row.key])
-      || plan.rows.find((row) => ['skillDraft', 'classDraft'].includes(row.kind)
-        && row.claimOrdinal > 0 && draftUnlocked(row) && !states[row.key]);
-    if (waitingCard) renderChooser(waitingCard);
-    else renderMenu();
+    renderMenu();
   }
 
   function renderCompactVictory() {
@@ -1045,16 +1083,16 @@ export function mountRewards(app, {
       ? savedRows : [{ kind: 'legacy', amount: total }];
     const options = victoryXpPresentation(settings, document.body.classList.contains('reduced-motion'));
     const timing = victoryXpTiming(rows.length, options);
-    const open = button({ label: 'Continue', weight: 'primary', id: 'reward-expand', className: 'reward-compact-continue', disabled: true });
+    const open = button({ label: t('common.continue'), weight: 'primary', id: 'reward-expand', className: 'reward-compact-continue', disabled: true });
     const formula = el('span', { class: 'reward-compact-formula' });
-    const more = el('button', { class: 'reward-compact-more', type: 'button', text: '+…', 'aria-label': 'Show full XP calculation' });
+    const more = el('button', { class: 'reward-compact-more', type: 'button', text: '+…', 'aria-label': t('reward.xp.more.aria') });
     more.hidden = true;
     const arithmetic = el('span', { class: 'reward-compact-arithmetic' }, [formula, more]);
-    const value = el('strong', { class: 'reward-compact-value', text: '0 XP', 'aria-live': 'polite' });
+    const value = el('strong', { class: 'reward-compact-value', text: t('reward.xp.zero'), 'aria-live': 'polite' });
     const summary = el('div', { class: 'reward-compact-summary' }, [
-      el('span', { class: 'reward-compact-heading', text: 'Total XP' }), arithmetic, value,
+      el('span', { class: 'reward-compact-heading', text: t('reward.xp.total') }), arithmetic, value,
     ]);
-    const list = el('ol', { class: 'reward-compact-list', 'aria-label': 'XP earned this fight' });
+    const list = el('ol', { class: 'reward-compact-list', 'aria-label': t('reward.xp.list.aria') });
     list.style.setProperty('--receipt-rows', String(options.visibleRows));
     const body = el('div', { class: 'reward-compact-xp' }, [summary, list]);
     const modal = door({ eyebrow: '', title: rewards.title || t('reward.title.victory'),

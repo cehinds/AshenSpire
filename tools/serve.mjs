@@ -4,6 +4,18 @@
 // src/main.js) and the optional music/ folder load correctly (file:// blocks
 // module + audio loading in most browsers). Used by tools/launch.mjs, or run
 // directly:  node tools/serve.mjs [--port N] [--no-open] [--root DIR]
+//
+// THE ART COMES FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md steps 12
+// and 13). Serving a checkout (a root with art-release.json), a request under
+// /assets/ (the high pack), /assets-mobile/ (light), or /assets/fonts/, /music/
+// or /map-detail/ (common) is answered from .art-cache/<tag>/<pack>/ through
+// tools/art-source.mjs: the trees left this repository at step 13. When the
+// high pack is not fetched (node tools/fetch-art.mjs --pack light,common, the
+// fresh-clone fetch), /assets/<id> is answered with the light pack's twin, so
+// the source still plays with art; `--pack all` (CI's) serves the high files
+// the browser gates measure. A pack that is not fetched at all answers 404 and
+// the game draws its placeholders (SPEC §2.4). Any other root (a build folder)
+// is served as it is on disk.
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -12,6 +24,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
+import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
+import { existsSync } from 'node:fs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -57,8 +71,10 @@ export function openBrowser(url) {
  * Bumps to the next port if the requested one is in use. `lan: true` attaches
  * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false } = {}) {
+export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false } = {}) {
   const rootResolved = resolve(root);
+  const checkout = existsSync(join(rootResolved, 'art-release.json'));
+  const notedMissing = new Set(); // one note per missing pack, not one per request
   let lanLayer = null; // attached after listen (needs the final port)
   const server = createServer(async (req, res) => {
     try {
@@ -97,6 +113,26 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
         res.writeHead(403);
         res.end('Forbidden');
         return;
+      }
+      const tree = checkout ? packTreeOf(rel) : null;
+      if (tree) {
+        try {
+          filePath = artPath(rel, { root: rootResolved });
+        } catch (err) {
+          // The high tier, unfetched: its light twin (same id, smaller file).
+          let twin = null;
+          if (tree === HIGH_TREE) {
+            try { twin = artPath(`assets-mobile/${rel.split(/[\\/]/g).join('/').slice(HIGH_TREE.length + 1)}`, { root: rootResolved }); } catch { /* the light pack is not fetched either */ }
+          }
+          if (!twin) {
+            if (!notedMissing.has(tree)) { notedMissing.add(tree); console.error(`serve: ${err.message}`); }
+            res.writeHead(404);
+            res.end('Not found');
+            return;
+          }
+          if (!notedMissing.has('high-as-light')) { notedMissing.add('high-as-light'); console.error(`serve: ${err.message} — answering /assets/ with the light pack's twins meanwhile`); }
+          filePath = twin;
+        }
       }
       let s;
       try {
@@ -179,16 +215,19 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
       }
     });
     server.listen(port, async () => {
+      // `port` 0 asks the OS for a free one; name the port it gave.
+      port = server.address().port;
       const url = `http://localhost:${port}/`;
-      console.log(`\n  ▸ Ashen Spire is live at ${url}`);
-      console.log(`    Serving ${rootResolved}`);
+      const log = quiet ? () => {} : (line) => console.log(line);
+      log(`\n  ▸ Ashen Spire is live at ${url}`);
+      log(`    Serving ${rootResolved}`);
       if (lan) {
         const { attachLan, lanAddress } = await import('./lan.mjs');
         lanLayer = attachLan(server, { port, root: rootResolved });
         server.on('close', () => lanLayer.close());
-        console.log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
+        log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
       }
-      console.log('    Press Ctrl+C to stop.\n');
+      log('    Press Ctrl+C to stop.\n');
       if (open) openBrowser(url);
       done({ server, url, port });
     });

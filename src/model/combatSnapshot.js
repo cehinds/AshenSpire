@@ -38,9 +38,11 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';
   if (!nonEmptyString(entity[defKey])) problems.push(`${path}.${defKey} must be a non-empty string`);
+  if (entity.classUnequipped !== undefined && typeof entity.classUnequipped !== 'boolean') problems.push(`${path}.classUnequipped must be a boolean`);
   for (const key of ['hp', 'maxHp', 'block']) {
     if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
   }
+  if (entity.wardBlock !== undefined && (!Number.isInteger(entity.wardBlock) || entity.wardBlock < 0 || entity.wardBlock > entity.block)) problems.push(`${path}.wardBlock must be a whole number between 0 and block`);
   if (finite(entity.maxHp) && entity.maxHp <= 0) problems.push(`${path}.maxHp must be positive`);
   if (finite(entity.hp) && finite(entity.maxHp) && (entity.hp < 0 || entity.hp > entity.maxHp)) {
     problems.push(`${path}.hp must be between 0 and maxHp`);
@@ -68,6 +70,7 @@ export function combatSnapshotProblems(snapshot) {
   if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
   if (!Number.isInteger(snapshot.turn) || snapshot.turn < 1) problems.push('turn must be a positive integer');
   try { retiredAttackSlots(snapshot.equipmentAttackSlotCount, snapshot.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
+  if (snapshot.sideboardedEquipmentCardIds !== undefined && (!Array.isArray(snapshot.sideboardedEquipmentCardIds) || snapshot.sideboardedEquipmentCardIds.some((id) => !nonEmptyString(id)) || new Set(snapshot.sideboardedEquipmentCardIds).size !== snapshot.sideboardedEquipmentCardIds.length)) problems.push('sideboardedEquipmentCardIds must contain unique non-empty instance ids');
   if (snapshot.poolDeck !== undefined && snapshot.poolDeck !== true) problems.push('poolDeck must be true when present');
   if (!PHASES.includes(snapshot.phase)) problems.push(`phase must be one of ${PHASES.join(', ')}`);
   if (!RESULTS.includes(snapshot.result)) problems.push("result must be null, 'victory', or 'defeat'");

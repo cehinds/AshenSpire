@@ -19,7 +19,7 @@ import { configuredContentBundle } from '../src/model/advancedConfig.js';
 
 const registries = createRegistries(contentBundle);
 const CLASSES = ['reaver', 'rogue', 'herald', 'starseer'];
-const PRIMARY = { reaver: 'strength', rogue: 'dexterity', herald: 'wisdom', starseer: 'intelligence' };
+const PRIMARY = { reaver: 'intelligence', rogue: 'intelligence', herald: 'intelligence', starseer: 'intelligence' };
 const chip = (reg, run, settings, id) => handResourceRows(reg, run, settings).find((row) => row.id === id);
 
 function dealt(reg, run, settings = {}) {
@@ -52,8 +52,8 @@ test('the primary stat card states the opening-hand effect, and no other card do
     const row = statRow(registries, run, 'openingHand');
     const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
     const primary = cards.find((card) => card.id === PRIMARY[classId]);
-    assert.ok(primary.face.summary.includes(`+1 Opening hand per 2 pts (max ${row.max})`), `${classId}: ${primary.face.summary}`);
-    assert.ok(primary.reveal.lines.some((line) => line.startsWith('Opening hand +1 every 2 points')), `${classId}: the fold says it too`);
+    assert.ok(primary.face.summary.includes(`+1 Opening hand per 5 pts (max ${row.max})`), `${classId}: ${primary.face.summary}`);
+    assert.ok(primary.reveal.lines.some((line) => line.startsWith('Opening hand +1 every 5 points')), `${classId}: the fold says it too`);
     for (const card of cards) {
       if (card.id !== PRIMARY[classId]) assert.ok(!/Opening hand/.test(`${card.face.summary} ${card.reveal.lines.join(' ')}`), `${classId} ${card.id}`);
     }
@@ -118,7 +118,7 @@ test('the class preview shows both the Hand and the Draw chip, and not Poise', (
   for (const classId of CLASSES) {
     const run = createRunState({ seed: 7, classId, registries });
     const rows = startingResourceRows(withHandResources(statProjection(registries, run).derived, handResourceRows(registries, run, {})));
-    assert.deepEqual(rows.map((row) => row.id), ['hp', 'mana', 'stamina', 'energy', 'openingHand', 'draw'], classId);
+    assert.deepEqual(rows.map((row) => row.id), ['hp', 'mana', 'stamina', 'openingHand', 'draw'], classId);
   }
   const customize = source('customize.js');
   assert.doesNotMatch(customize, /creationResources\([^)]*\)\.slice\(0, 5\)/, 'no fixed-count slice of the resource rows');

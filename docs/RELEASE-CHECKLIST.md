@@ -48,8 +48,8 @@ command yet, and G20 is read from docs/FINISH.md.
 | G6 | `node tools/balance.mjs --check` | Exit 0. docs/BALANCE.md matches a fresh run. | `tests/balance-doc.test.mjs` |
 | G7 | `node tools/verdict.mjs -- node tools/workflow-lint.mjs` | Exit 0. No workflow step is missing `run:`/`uses:` and no key is duplicated. | `ci.yml` |
 | G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` `parse-gate` (bundler parse gate) and the `ci.yml` `test` job on ubuntu only, on a push to `test` or `release`. `tests/run-node.mjs` does not run it (`NOT_SPAWNED`), so G1 does not cover it |
-| G9 | `node tools/verdict.mjs -- node tools/launch.mjs --build-only --full-art` | Exit 0. The standalone builds are regenerated from the RC source with the full art and the mobile file, as release/main CI builds them. Without `--full-art` launch builds the light dev/test tier, which is not a release build. | `ci.yml` |
-| G10 | `node tools/verdict.mjs -- node tools/verify-shipped.mjs` | Exit 0, run after G9. The root and `dist/` copies a player is handed carry art and equal the fresh `build/`. | `ci.yml` |
+| G9 | `node tools/verdict.mjs -- node tools/launch.mjs --build-only --full-art` | Exit 0. The build is regenerated from the RC source as release/main CI builds it: the pack-shaped game file with the high, light and common packs (default tier high) and the light single file (docs/EXTERNAL-ASSETS-PLAN.md step 8e). Without `--full-art` launch builds the light dev/test tier, which is not a release build. | `ci.yml` |
+| G10 | `node tools/verdict.mjs -- node tools/verify-shipped.mjs` | Exit 0, run after G9. The light single file and its root and `dist/download/` copies carry art, `dist/AshenSpire.html` carries its pinned packs, and each copy equals the fresh `build/`. | `ci.yml` |
 | G11 | `node tools/contrast-audit.mjs --gate` | Exit 0, **and** the tool's `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off`, **and** its `KNOWN_BELOW` ledger has no text rows (FINISH.md §9, *The palettes pass contrast*). Exit 0 alone only means no new or worsened failure at the profiles it gates. **RED:** since #1291 `cb-safe` is gated, but `KNOWN_BELOW` still holds 12 text rows (the reward Continue HOLD cue and the TAKEN chip and title in each gated profile), all from `opacity` rules in `styles/kit.css`. Green also needs a workflow to run `contrast-audit.mjs --gate` (FINISH.md §9 asks for it in CI); today only a `ci.yml` echo names it. | not yet: no workflow runs it |
 | G12 | `node tools/verdict.mjs -- node tools/about-changelog.mjs` | Exit 0. The in-game changelog is a faithful projection of CHANGELOG.md, in order. | `ci.yml` |
 
@@ -137,7 +137,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §8 | #1289 follow-up: a re-fit keeps the tray's selected-destination framing | G20 |
 | §8 | #1164: the card door stacks between 601 and 703 px | G20 |
 | §8 | Offline and installable web edition | G20 |
-| §8 | Pages serves the external-art edition, and the single-file download stays available | G20 |
+| §8 | Pages serves the external-art edition, and the light single-file download stays available | G20 |
 | §8 | One physical iPhone in Safari plays a run before release | G20 |
 | §8 | Background and resume keep the run | G20 |
 | §9 | The palettes pass contrast | G11 |
@@ -153,9 +153,12 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §11 | #1297 follow-up: C22 compares the semantic and Armoury catalogs separately | G20 |
 | §11 | `tools/ui-components.mjs` is green on `dev` and runs in the suite | G20 |
 | §11 | `tools/flask-action-contract.mjs` is green on `dev` and runs in the suite | G20 |
+| §11 | Every D-number in Owner decisions is unique | G1 |
+| §11 | `tools/measure-classes.mjs --check` (n=500) and `--selftest` are green on `dev` | G20 |
 | §11 | Map Potions onChange persistence/remount is covered by a test | G20 |
 | §11 | Map Potions list and mini-menu selections dispatch the chosen action is covered by a test | G20 |
 | §11 | A real-browser flask-menu behaviour test replaces flask-action-contract's source half | G20 |
+| §11 | `tools/uistrings.mjs --check` (the copy ratchet) is green on `dev` and runs in the suite | G20 |
 | §11 | DEVELOPER.md has no stale counts | G20 |
 | §12 | The receipts gate is green on `dev` | G3 |
 | §12 | `codex/` and squash merges land with a receipt | G20 |

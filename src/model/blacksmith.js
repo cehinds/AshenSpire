@@ -35,7 +35,7 @@
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, isItemOwned } from './loadout.js';
 import { smithingPlan, commitItemUpgrade, SMITHING_PURSES } from './smithing.js';
-import { extractionPlan, installPlan, commitExtraction, commitInstall } from './cardExtraction.js';
+import { extractionPlan, extractionRefusal, installPlan, commitExtraction, commitInstall } from './cardExtraction.js';
 import { deckRules } from '../content/deckRules.js';
 import { deckCopyLimit, ownedCopies } from './deckRules.js';
 
@@ -270,6 +270,7 @@ export function blacksmithExtractPlan(registries, run, itemRef, mountKey) {
   const mount = candidate?.mounts.find((row) => row.mountKey === mountKey) || null;
   let reason = '';
   if (!blacksmithOffers(run, 'extractArt')) reason = say('blacksmith.refuse.notOffered');
+  else if (plan.refusal) reason = say(`blacksmith.refuse.extract.${plan.refusal}`);
   else if (!mount) reason = say('blacksmith.refuse.noMount');
   else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run) });
   return { ok: !reason, reason, itemRef, mountKey, stones: plan.cost, cost: 0, revision: blacksmithRevision(run) };
@@ -404,7 +405,13 @@ export function serviceCandidates(registries, run, id, settings = {}) {
   }
 }
 
-/** The sentence a service with nothing to act on shows (uiStrings `blacksmith.idle.<id>`). */
-export function serviceIdleReason(id) {
-  return say(`blacksmith.idle.${id}`);
+/**
+ * The sentence a service with nothing to act on shows (uiStrings
+ * `blacksmith.idle.<id>`). Given the run, a service the run's own rules
+ * refuse outright says that instead: extraction in a Sealed or Draft run
+ * (`blacksmith.refuse.extract.poolDeck`, cardExtraction.js extractionRefusal).
+ */
+export function serviceIdleReason(id, run = null) {
+  const refusal = id === 'extractArt' && run ? extractionRefusal(run) : null;
+  return say(refusal ? `blacksmith.refuse.extract.${refusal}` : `blacksmith.idle.${id}`);
 }

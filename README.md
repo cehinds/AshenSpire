@@ -1,79 +1,152 @@
 # AshenSpire — Ashen Spire
 
-A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no framework, no build step. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**.
+A browser roguelike that combines card combat with equipment, attributes, skill training, and exploration.
 
-**[▶ Play AshenSpire](https://cehinds.github.io/AshenSpire/AshenSpire.html)** (stable, from `main`) · **[Every build, by branch](https://cehinds.github.io/AshenSpire/)** · **[Changelog](CHANGELOG.md)** · **[Developer guide](DEVELOPER.md)** · **[Spec](SPEC.md)**
+- Build a character as well as a deck: weapons shape your basic attacks, armour changes your defenses and weight class, and books can teach skills from other classes.
+- Play single-player or optional LAN co-op.
+- Choose from four starting classes and follow seeded regional routes in resumable runs with configurable rules.
+- Written in vanilla JavaScript ES modules, HTML, and CSS, with Node tooling for builds and local LAN play.
+- This README describes the current browser game's `dev`/`test` mechanics; a published `release` or `main` build can be older. The title screen and each branch's build list identify the version you are playing.
 
-> Single-player with optional LAN co-op. Four classes, three acts, 20 regular enemies, three elites, ten bosses. Seeded, resumable runs. Enemy moves and destinations: [enemy roster](docs/ENEMY-ROSTER.md).
+- **[Play / download builds](https://cehinds.github.io/AshenSpire/)**
+- **[Windows installer](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest)**
+- **[Art repository](https://github.com/cehinds/AshenSpire-art)**
+- **[Unity version: AshenedSpire](https://github.com/cehinds/AshenSpire-Unity)**
+- **[Changelog](CHANGELOG.md)**
 
-**This is a development preview** — not a release, tag, or production approval. Release status is governed separately and is currently **RED**.
+**This is a development preview**, not production approval. Release acceptance is tracked separately in [docs/FINISH.md](docs/FINISH.md).
 
-## Test the game now
+## Play and download
 
-- **Stable:** the [Play link](https://cehinds.github.io/AshenSpire/AshenSpire.html) above. It serves `main`'s build. A mobile edition exists only for builds that have one; `main`'s build had none at the time of writing (2026-09-27).
-- **Latest `dev` build** (the built HTML is not committed on `dev`; CI uploads it):
-  1. Sign in to GitHub and open the [dev preview workflow, filtered to `dev`](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev).
-  2. Click the newest run.
-  3. Under **Artifacts** at the bottom of the run summary, click **`dev-standalone-<commit>`** to download a zip.
-  4. Unzip it and open `AshenSpire-dev-preview.html` in a browser. One ~29 MB file, no install. Artifacts expire after 14 days.
+### Test
 
-  A pull request's run offers the same artifact for that PR's build. Once the Pages fix ([#1360](https://github.com/cehinds/AshenSpire/pull/1360)) lands, the newest `dev` build is also meant to be at [`…/dev/latest/`](https://cehinds.github.io/AshenSpire/dev/latest/); the artifact stays the path that always works.
-- **Run from source:** install [Node.js](https://nodejs.org) (22 is what CI uses; there is no `package.json` and nothing to `npm install`), clone, then `node tools/launch.mjs` — or `./run.sh` (macOS/Linux) / `run.bat` (Windows), which call it. It builds, serves on `http://localhost:8080` and opens your browser. Options include `--no-open`, `--port <n>`, `--build-only` (write the files, don't serve) and `--full-art` (the release/main art tier).
+Latest promoted game; full QA runs here.
 
-## Playable builds
+- [Play test](https://cehinds.github.io/AshenSpire/test/latest/)
+- [Download test HTML](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html)
+- [GitHub test build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Atest)
+- [Test build history / version](https://cehinds.github.io/AshenSpire/test/)
 
-| Branch | Role | Build | Play (newest artifact · Pages) | Changelog |
-|---|---|---|---|---|
-| `main` | stable — the Play link above | [![main build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fmain%2Fbuildordinal.json&query=%24.ordinal&label=main%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/main/) | [latest](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Amain) · [all](https://cehinds.github.io/AshenSpire/main/) | [log](https://github.com/cehinds/AshenSpire/blob/main/CHANGELOG.md) |
-| `release` | release candidate | [![release build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Frelease%2Fbuildordinal.json&query=%24.ordinal&label=release%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/release/) | [latest](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Arelease) · [all](https://cehinds.github.io/AshenSpire/release/) | [log](https://github.com/cehinds/AshenSpire/blob/release/CHANGELOG.md) |
-| `test` | QA | [![test build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Ftest%2Fbuildordinal.json&query=%24.ordinal&label=test%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/test/) | [latest](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Atest) · [all](https://cehinds.github.io/AshenSpire/test/) | [log](https://github.com/cehinds/AshenSpire/blob/test/CHANGELOG.md) |
-| `dev` | integration — unreviewed | [![dev build](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fcehinds%2FAshenSpire%2Fdev%2Fbuildordinal.json&query=%24.ordinal&label=dev%20build&color=8a4b1f&cacheSeconds=600)](https://cehinds.github.io/AshenSpire/dev/) | [latest](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev) · [Pages latest](https://cehinds.github.io/AshenSpire/dev/latest/) (once #1360 lands) · [all](https://cehinds.github.io/AshenSpire/dev/) | [log](https://github.com/cehinds/AshenSpire/blob/dev/CHANGELOG.md) |
+### Release
 
-- **Read each badge down its own column, not across.** The ordinal counts builds *within the current candidate* and restarts when the candidate advances, so the four numbers are not a ranking. Each branch's version is in its own `buildordinal.json` and on its title screen.
-- **The number is never typed here.** Each badge reads that branch's committed `buildordinal.json` — the same fact the title screen paints as `BUILD <version>.<ordinal> · src <digest>`.
-- **Where a build lives.** Every push to `dev`, `test`, `release` or `main` uploads that commit's build as the `<branch>-standalone-<commit>` artifact of the [dev preview workflow](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) (kept 14 days on `dev`, 30 on `test`, 90 on `release`/`main`); **latest** in the table opens that workflow. For a branch whose head no longer commits `AshenSpire.html` — `dev` since 2026-09-26, and each other branch once that change is promoted to it — the artifact is the dependable copy of a newer build. Until the Pages fix ([#1360](https://github.com/cehinds/AshenSpire/pull/1360)) lands, Pages serves only committed builds (`…/<branch>/<ordinal>/`, byte-identical to that commit's `AshenSpire.html`), has no `…/<branch>/latest/` for such a branch, and its section ends at the last committed build. Once it lands, Pages rebuilds those builds from each commit's own source, checks the digest, and serves them at `…/<branch>/latest/` and `…/<branch>/<ordinal>/`.
-- **Publication:** the site is assembled from git history by `node tools/pages-site.mjs` (`.github/workflows/pages-builds.yml`); nothing on it is hand-edited (once #1360 lands, builds a branch no longer commits are rebuilt from source). The workflow is meant to republish it on a push to `dev`; a push to `main` publishes nothing — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
-- **Art tiers and size:** `dev` and `test` build the **light** tier — one ~29 MB file whose art comes from the committed `assets-mobile/` twins. `release` and `main` build the **full** art (once `main` takes 0.7.x): `AshenSpire.html` (~255 MB at the time of writing) plus `AshenSpire-mobile.html`, the same build with images shrunk and held **under 30 MB** by `tools/verify-shipped.mjs`. Saves are compatible between them.
-- **High-res art** lives in the public repo `cehinds/AshenSpire-art`. `art-release.json` pins the release (`hd-assets-v2`: the high, light and common zips), and `node tools/fetch-art.mjs` downloads and verifies them (no token needed; `ART_REPO_TOKEN` only raises the rate limit). To play a light build with it, unpack the release and pick its folder in **Settings → Display → Art quality → Local high-res**; anything the folder lacks keeps the built-in art, and the choice stays on that device.
-- **Offline:** any single `.html` above plays by double-click from disk, no server. External music folders need http — see [dist/README.md](dist/README.md). `node tools/verify-shipped.mjs` checks that the local copies (`build/`, the root aliases, `dist/`) agree.
+Owner-selected release candidate.
 
-## What is this?
+- [Play release](https://cehinds.github.io/AshenSpire/release/latest/)
+- [Download release HTML](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html)
+- [GitHub release build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Arelease)
+- [Release build history / version](https://cehinds.github.io/AshenSpire/release/)
 
-- **A run:** pick a class → traverse a branching map across 3 acts → fight with a deck of cards → collect relics, flasks and cinders → beat the final boss or die trying. Seeded and reproducible.
-- **Four classes:** Reaver (strike damage), Rogue (defense and actions), Starseer (magic), Herald (balanced martial-support). Starting attributes and equipment are data-owned.
-- **Faithful StS mechanics:** 3 energy / draw 5, block that expires, telegraphed intents, exhaust/ethereal/retain, exact StS damage-order math.
-- **Elden Ring flavour with real mechanics:** Bleed as a build-up meter bursting for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and Poise/Stagger that skips enemy turns and opens damage windows.
-- **Equip load and Weight Class:** hands and armour weigh against a capacity from Constitution and Strength; the percentage lands you in Light, Medium or Heavy. Comparing a piece shows the load and class the swap would leave you at.
-- **Stamina and the Dodge Roll:** every fight opens with full Stamina; Mana carries between fights. Every deck carries exactly one Dodge Roll, whatever you hold. It checks Dexterity against a d20 and, on success, grants Block (not guaranteed avoidance), priced by Weight Class (Light 1 Stamina; Medium 1 + 1 action; Heavy 2 + 1 action). Afterwards, **Dodge succeeded** / **Dodge failed** beside your character shows the roll, check, difficulty and guard.
-- **One component kit, one run HUD built from it:** every screen draws from one kit — one meter, one swatch, one page door, one modal chrome with the same way out in the same corner. Map and Combat compose the same header, vitals, Quick Access, relic and potion components.
-- **One data-driven Armoury:** Character, Inventory and Hybrid are presentations of the same equipment owner, using the shared Folding Tray grammar. Authored attack slots rebind to the active weapon package — a lone weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows exact before/after counts.
-- **Re-arm during a fight:** equip, move or remove carried weapons and armour on your turn. Costs the same Energy as switching a prepared set; equipment cards, HP/MP/SP limits, Poise and positions update inside the current fight and persist after it. A change you cannot afford is refused without spending anything.
-- **Every card has an owner, and a smith can change it:** cards lent by equipment leave with the item and return with it — mid-fight and across a save. At a Shrine or a smith-rolled merchant, **Extract a Card** makes one yours for good and **Seat a Card** fills an open mount. An emptied mount shows a fallback (Dodge Roll for weapon-art mounts). No shipped weapon authors a card package yet, so the smith will say there is nothing to work on.
-- **The deck cap is a creation rule:** it governs the basic strikes and defends dealt at creation and nothing else. Equipment cards are dealt first, never capped; after creation the cap does not apply.
-- **Painted class figures, in the builder and in the fight:** the figure you pick is the one you fight as — animated when you attack, turned to face its target, tinted on the garment so the painting keeps its own light. Each of the twelve alternative armour sets has its own painted figure, falling back to the class figure when it has none. Made with AI image-generation models; disclosed in-game and in [CREDITS.md](CREDITS.md).
-- **The battlefield answers what you point at:** hover, focus or tap a status effect for what it does and how far its build-up or countdown has run. Hover or tap either fighter for HP, Poise and effects, with **I** for the full read. When a card is armed, a tap on a target is still a play.
-- **Quests that remember what you did:** event choices are written into your run's history, and a step your history has not earned stays out of the pool. Earn it and later maps may roll it at Unknown nodes; an answered step never returns. The Grave of the Nameless is the first chain.
-- **Forsaken Together — LAN co-op:** a party shares one map, votes on the fork and fights one shared combat, each seat playing its own deck, relics and flasks. A seat that drops out returns to a catch-up queue. Served by the launcher's Node server, so a `file://` build stays single-player.
-- **Character creation, one panel at a time:** six folded picks — class, kit, keepsake, sigil, tint, sprite — each opening the next, with your choices read back in words. Starting armour and stat points sit open as rows of their own. Mouse, keyboard and pad walk the same flow.
-- **Rewards you open before you collect:** post-fight spoils are a menu; nothing joins your run until you take it. A reward you have no room for says so and is the only row offering Skip. Settings → Advanced → Reward collection decides whether Continue sweeps up the rest.
-- **A merchant who buys back:** five collapsing bars — cards, relics, flasks, remove-a-card, Sell — one open at a time. He buys relics and flasks back at half his cheapest price; the Sell bar can be switched off in Settings.
-- **An in-game changelog:** Settings → Changelog reads the repository changelog as expandable rows, with build stamps linking back to the exact source.
-- **Responsive browser play:** portrait and short-wide landscape stay playable down to 340 CSS pixels high; smaller viewports show a recoverable short-screen warning instead of a clipped board. Fullscreen is one toggle, first under Settings → General → Display.
+### Main
 
-Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, mockups, art direction). Original brief: **[PROMPT.md](PROMPT.md)**.
+Owner-promoted stable channel.
 
-## Recent additions
+- [Play main](https://cehinds.github.io/AshenSpire/main/latest/)
+- [Download main HTML](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html)
+- [GitHub main build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Amain)
+- [Main build history / version](https://cehinds.github.io/AshenSpire/main/)
 
-From the last two weeks of [CHANGELOG.md](CHANGELOG.md), which names the PR and build behind each.
+### Dev
 
-- **Art quality** (#1339): Settings → Display → Art quality → *Local high-res* plays with full-resolution art from a folder on your device.
-- **A recorded score** (#1328): hosted builds play thirteen tracks — title, shop, rest, combat, elite, boss, victory and one map track per region — composed as code. A build opened from disk keeps the synthesized score.
-- **Settings** (#1277): Advanced opens one topic at a time, Find searches every section, every number has − · slider · field · +, and changed values show a dot and their own Reset.
-- **Dodge and Stamina** (#1309, #1284): a landed Dodge Roll gives real Block; each fight opens with full Stamina; bosses scale with the order you meet them in.
-- **Quest boards** (#1261): every town's inn lists its quests; taking and turning one in is a conversation with the Road Warden.
-- **Character creation** (#1238, #1273): choose **Standard** (your class's preset spread) or **Assign points** (every attribute at 1, three points to place); new players start on the owner's tuned defaults.
-- **Progression** (#1192, #1228): each class level buys a node in a class tree whose top tier names your subclass; the Armoury shows bars for your level and every skill you train.
-- **The opening** (#1211): after creation, six painted scenes lead to your starting place; Advanced → Opening sequence edits them.
+Integration source.
+
+- [Play dev](https://cehinds.github.io/AshenSpire/dev/latest/)
+- [Download dev HTML](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html)
+- [GitHub dev build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev)
+- [Dev build history / version](https://cehinds.github.io/AshenSpire/dev/)
+
+**Hosted availability, checked 2026-10-03:** the test/release/main game and HTML-download paths above returned 404 during the mechanics update. Their GitHub build downloads are available. Use the build zip until those hosted paths are published; a green source/build check alone does not prove a live Pages URL.
+
+The hosted links select the latest **published** build, which can lag the branch while publishing runs. For a **GitHub build zip**, sign in, open a successful run for the branch, and download its `<branch>-standalone-<commit>` artifact. Unzip and open `AshenSpire-<branch>-preview.html` (for example, `AshenSpire-test-preview.html`), the self-contained light-art game file. Artifacts are kept for 14 days on dev, 30 on test, and 90 on release/main. Older builds may have different download names; their build histories provide the matching links.
+
+Versions use `<major>.<minor>.<candidate>.<build>`. The build counter restarts when the candidate changes, so compare the full stamp, not just its last number. The source record is each branch's `buildordinal.json`; the build list and title screen identify the published artifact. See [versioning](docs/versioning.md).
+
+### Windows installer
+
+[Download an installer from the Windows installer workflow](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest). Sign in to GitHub, open a successful run on the branch you want, and download `windows-installer-<commit>` under **Artifacts**. Unzip and run `AshenSpire-Setup-<version>.exe`.
+
+The installer runs for your Windows user without an administrator prompt and creates Start menu and optional desktop shortcuts. Its **Choose game and high-quality art versions** button opens separate selectors for both. Select a game branch (**test**, **release**, **main**, or **dev**) and an available exact build version to open its GitHub installer download, then run that installer. The artwork selectors browse the art repository's branches and published versions. It shows your installed art version, the art required by this game, and the latest published art version. Choose the compatible high-resolution pack for installation, or **Download this art separately** to save a verified release zip without installing it. Other art versions remain separate downloads until a game build pins them; the standard light art works without the optional pack. The installer discloses that the artwork is completely AI-generated with OpenAI ChatGPT under human direction, with credited licenses retained for fonts and other third-party assets. See the [installer guide](desktop/windows/README.md) for install, upgrade, and uninstall behavior. Installer artifacts are separate from the browser HTML downloads.
+
+### Art and the Unity version
+
+- **[AshenSpire-art](https://github.com/cehinds/AshenSpire-art)** holds the high-resolution masters, fonts, recorded music, map tiles, and authoring sources. This repository carries the simplified `assets-mobile/` light tier. [Art releases](https://github.com/cehinds/AshenSpire-art/releases) provide the matching high, light, and common packs; `art-release.json` pins the compatible release.
+- **[AshenedSpire — Unity adaptation](https://github.com/cehinds/AshenSpire-Unity)** is a separate mobile-first native C# project. Its [playable channels and downloads](https://cehinds.github.io/AshenSpire-Unity/) and [milestone status](https://github.com/cehinds/AshenSpire-Unity/blob/dev/docs/Unity-Milestones.md) have their own version and parity evidence; the browser build number does not describe the Unity build.
+
+### Local and offline play
+
+Install Node.js 22, clone this repository, and fetch the shared assets with `node tools/fetch-art.mjs --pack common`. The local light tier is already present; `node tools/fetch-art.mjs --pack light` is optional when checking the release copy. Then run `node tools/launch.mjs`, `run.bat` on Windows, or `./run.sh` on macOS/Linux. There is no root `package.json` and no root `npm install` step. The launcher builds the game, serves it at `http://localhost:8080`, and opens your browser. Options include `--no-open`, `--port <n>`, `--build-only`, and `--full-art` (fetch the high pack too for that build).
+
+New builds provide a web game with external art packs and a self-contained light-art HTML download. The download plays by double-click with no server; local builds put it at `AshenSpire.html` and `dist/download/AshenSpire.html`. The web edition at `dist/AshenSpire.html` also opens from disk while its `packs/` and `objects/` remain beside it. Hosted builds can be cached with **Download & saves → Make available offline**, or downloaded as a folder zip. Recorded music plays over HTTP; disk builds use synthesized music. LAN co-op requires the launcher's Node server. Details: [dist/README.md](dist/README.md).
+
+Test/dev use light art; release/main web builds default to high art with a light fallback. Settings → Display → Art quality offers Auto, Light, High, and a local high-resolution folder. Auto chooses light on a phone. There is one game page and one light-art download, rather than separate full-art and mobile HTML editions.
+
+## How the game works now
+
+### Character and journey
+
+Choose **Reaver**, **Rogue**, **Starseer**, or **Herald**, then choose starting gear, attributes, keepsake, and appearance. Standard uses the class preset; Assign points starts every attribute at 1 and lets you place three points. **Quick start** begins with the recommended Reaver setup and skips character creation and the opening for that climb.
+
+The seeded climb visits the Hollow Weald, Pale Marches, and Cinder Reach in a run-specific order. Region determines the scenery and encounter pool; the tier at which you meet it determines difficulty. Fight, explore Unknown nodes, visit services, gather cinders and equipment, and reach the final boss. World Journey also provides an authored atlas, towns, quest boards, and legacy dungeons. Event history and quest progress determine which follow-up encounters can appear. Custom Climb supports alternative rules, including Sealed and Draft starting decks and Endless play.
+
+| Class | Starting identity |
+|---|---|
+| Reaver | Close combat, stance changes, Bleed, and heavy impact |
+| Rogue | Fast setups, poison, and attacks that exploit openings |
+| Starseer | Spell sequences, magical damage, and resource planning |
+| Herald | Martial support, healing, and oath/blight synergies |
+
+### Combat: cards and three resources
+
+Enemy intents show what is coming. Cards spend **Stamina (SP)** and may also cost **Mana** or HP. Stamina is the turn budget: every class starts with 3 base SP, plus growth from Dexterity, Constitution, Wisdom, Intelligence and level, and it refills each turn. The emerald orb shows SP; sapphire diamonds around its rim show mana. Turn Mana ring off in Combat settings to restore the top MP bar. Mana carries between fights and is restored through effects, flasks, and suitable rest services. Recovery rules are configurable.
+
+The default **keeps Retain cards and shuffles other unplayed cards back into the draw pile**. Opening and turn draws start at four, with Intelligence increasing the draw as usual. Each turn draws that full amount in addition to retained cards, stopping at a separate default capacity of fifteen: two retained cards plus four drawn gives six; twelve retained cards plus four drawn stops at fifteen. Many Herald and Starseer spells carry Retain. Ethereal, Exhaust, and Power rules still govern individual cards, and played cards leave the hand normally. Settings can change the stat formulas, retention, draw, discard, and deck-order behavior.
+
+Select a card to preview its legal targets. Its circular **(i)** button opens the full card details and play action; a stationary hold can play it. A targeted card then asks for its target. Keyboard and gamepad controls are supported, and unavailable actions show their reason.
+
+### Ratings, defense, and Dodge Roll
+
+The current solo rules use **Attack Rating (AR)**, **Defense Rating (DR)**, and **Potency Rating (PR)** alongside HP, Mana, Stamina, **Poise**, and **Ward**. Attributes, equipment, relics, and statuses contribute to them. Physical attack damage uses AR, physical defensive Block uses DR, and magical damage, Block, and healing use PR. Poise and Ward also resist physical and magical damage and configured hostile status buildup.
+
+Hits that damage HP can build physical impact against Poise or magical impact against Ward. Breaking Poise causes **Stagger**; breaking Ward causes **Disruption**. Under these solo defaults an enemy loses its next move, while the player starts the next turn with reduced Stamina. Block that absorbs the entire hit prevents its automatic impact. Bleed, Venom, Frost, Crimson Blight, and other effects have their own buildup, duration, or trigger rules; inspect them in combat for the current values.
+
+Equipment weight versus carrying capacity determines **Light, Medium, or Heavy** weight class. In a Standard deck, Dodge Roll is an equipment-independent card. It checks Dexterity against a d20 and grants Block on success; it does not guarantee avoidance. Light and Medium cost 1 Stamina; Heavy costs 2 Stamina. The combat result shows the check and guard gained.
+
+### Equipment and deck construction
+
+The Armoury owns your right/left hands, prepared sets, armour, inventory, and card sources. Basic attack slots take their face from the equipped weapon package; dual wield divides those slots between the hands without automatically growing the deck. Equipment can also lend guards, techniques, and weapon arts. Lent cards follow their item when it is equipped or removed, while cards you learn or acquire are owned independently.
+
+You can change carried equipment on your turn in combat, paying the configured swap cost in Stamina. Card sources, ratings, maximum resources, and weight class update with the change. Equipment ownership and requirements still apply.
+
+The **Deck editor** moves owned cards between the active deck and a sideboard outside combat. Defaults allow editing freely outside combat, require at least ten active cards, and impose no maximum size. Basic Strike/Defend slots are unlimited; other cards use owned-copy limits, with a default single active copy for the current class's spells and Powers. Cross-class book lessons are exempt from that own-class limit. Item-owned cards are managed through equipment. Deck bounds, copy limits, editing locations, and ordered draw are configurable. Excess limited copies go to the sideboard rather than disappearing.
+
+**Sealed and Draft** preserve the dealt card pool: changing gear still changes relevant weapon bonuses but does not insert the equipment's normal lent cards, weapon arts, or Dodge Roll. These modes also refuse extraction of equipment cards at a smith; seating an owned card remains available.
+
+### Progression, books, and rewards
+
+Character XP earns levels and attribute points; leveling is not bought with cinders. Weapon, focus, armour-weight, dual-wield, and class tracks have their own XP. Claim a ready Level action, keep any surplus XP toward the next step, and choose the offered skill or class reward when available. Class progression unlocks talent tiers and subclass choices. Combat rewards show progression separately from ordinary card drops; card chances, choice counts, XP curves, and per-fight level limits are configurable.
+
+Read books outside combat from the Armoury's inventory. **Manuals** give track XP and a matching card choice, including cross-class cards; **spellbooks** teach matching spells; **Universal Tomes** let you choose a track and lesson. **Class books** give class XP on every read and learn a reusable class card on the first read. They independently roll a matching combat card (default 25%) and feat (default 5%), with both chances configurable. Learned class cards can be equipped, switched, or removed outside combat; stored class progress is preserved.
+
+Post-fight rewards are collected through a menu. A reward joins the run when taken, and collection settings control what Continue gathers automatically. Drops can include relics, flasks, equipment, crafting materials, and sigils. A legendary sigil is attuned for its own property effects rather than treated as an ordinary card.
+
+### Markets, smiths, masters, and recovery
+
+- **Markets** sell cards, relics, utility flasks, armaments, weapon arts, and additional rolled shelves such as armour, Smithing Stones, sigils, books, revive tokens, or companions. They also offer removal and buy back eligible items.
+- **Blacksmiths** upgrade equipment and its affected cards, refine stones, work with sigil slots, and extract, install, or upgrade weapon arts. A service appears only when the visit offers it and the item meets its requirements.
+- **Wise masters** train their listed skills, offer matching lessons and books, appraise progress, and respec skill XP into a training pool for redistribution. Default classic merchant nodes remain markets; Advanced → Shops can change the weights for smith/master visits.
+
+Rest is a location service: camps, shrines, chapels, and inns have different recovery and editing options. Refillable Crimson/HP and Azure/Mana flasks share an allocation pool that can be redistributed at suitable grace services; growth items can increase it. Utility flasks are separate consumables. Drinking outside combat is an optional setting. Revive tokens and hired companions provide their authored effects when owned.
+
+### Co-op, saves, and configurable rules
+
+**Forsaken Together** shares a LAN map, route votes, and combat while each player keeps their own deck, relics, and flasks. A disconnected seat can return through catch-up. Modern LAN seats use the same selective Retain and hand-shuffle defaults with their own stat rows; legacy seats can keep older rules. Solo rating settings, configurable hand behavior, and some progression reward doors are not universally shared by the LAN path; the [spec](SPEC.md) records those boundaries.
+
+Runs are seeded, autosaved, and resumable. The profile stores settings, unlocks, and history separately. Many game-rule settings are snapshotted into a run, so older saves can retain older mechanics or numbers; settings that apply live say so in their descriptions. Advanced settings expose the stat formulas, hand and deck rules, recovery, rewards, shops, and progression. For exact behavior, use the in-game descriptions, [SPEC.md](SPEC.md), and [developer guide](DEVELOPER.md).
+
+The broader typed-damage, deterministic-Evade, stance, and equipment redesign in [Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) is an implementation contract, not a claim that the entire future ruleset is playable in this browser build. See [scope reconciliation](docs/SPEC-RECONCILE.md) for implementation boundaries.
+
+## Recent changes
+
+See [CHANGELOG.md](CHANGELOG.md) for PRs and exact build receipts. Recent player-facing changes include Quick start, cross-class book lessons and reusable class cards, painted class books with configurable card/feat bonuses, the Deck editor and sideboard, the three shop systems, Poise/Ward combat ratings, phone haptics, and the Windows installer with optional high-resolution art.
 
 ## Screenshots
 
@@ -149,8 +222,8 @@ Design rule: adding a new card touches exactly **one** file in `src/content/`.
 |---|---|---|
 | **M1** | Combat vertical slice — Reaver, 24 cards, Act 1 enemies + elite + boss, full combat UI | **shipped** |
 | **M2** | The run — map generation, rewards, relics, flasks, shops, events, save/continue, seeds | **shipped** |
-| **M3** | Content — Rogue, Starseer & Herald, Acts 2–3, full relic/event pools, balance pass | **core shipped**: 4 classes, 3 acts, 63 relics, 25 events, 40 cards per class + 35 colorless, first balance pass ([BALANCE.md](docs/BALANCE.md)). Deeper pools (~50) and win-rate tuning await M4 telemetry |
-| **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | **shipped**: fx, customization, run-history + win-rate telemetry, shortcuts (1–9 / E / Esc), first-run tutorial, sfx hooks, walkthroughs + perf notes, placeholder art tuned across all acts. Since then: painted art, a recorded score for hosted builds (#1328), and high-res art in its own release (#1353) |
+| **M3** | Content — four classes, regional encounters, relics, events, and balance | **core implemented**; content reachability and release acceptance remain tracked in [FINISH](docs/FINISH.md). [BALANCE](docs/BALANCE.md) records measurements; it is not a release approval. |
+| **M4** | Polish — feedback, controls, accessibility, art, audio, and performance | **partly complete**: responsive play, painted art, recorded/synthesized music, gamepad/keyboard controls, tutorial, history, and phone haptics are implemented. Remaining release evidence is tracked in [FINISH](docs/FINISH.md). |
 
 Acceptance criteria per milestone: [SPEC.md §9](SPEC.md).
 

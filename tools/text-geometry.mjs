@@ -77,9 +77,11 @@ if (process.argv.includes('--selftest')) {
         // both copy plants died patching the old sentence. Same intent at the
         // current copy: plant the overclaiming promise, expect the gate red.
         name: 'the Text size help copy promises a completed non-text sweep',
-        file: 'src/ui/screens/settings.js',
-        find: "    note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },",
-        replace: "    note: 'Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.' },",
+        // Since #1489 the row's words are content/source/uiStrings.csv's
+        // settings.row.textSize (its `full` form), not a literal in settings.js.
+        file: 'content/source/uiStrings.csv',
+        find: "settings.row.textSize,,Text size,Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.,",
+        replace: "settings.row.textSize,,Text size,Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.,",
         expectRed: /text size setting overclaims non-text stability/,
       },
       {
@@ -123,8 +125,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the shipped Settings copy restores the broad non-text promise',
         file: 'AshenSpire.html',
-        find: "note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },",
-        replace: "    note: 'Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.' },",
+        find: '"full": "Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size."',
+        replace: '"full": "Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size."',
         expectRed: /text size setting overclaims non-text stability/,
       },
     ],
@@ -330,7 +332,10 @@ async function main() {
     // which inlines both — in artifact mode.
     const kit = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/kit.css'), 'utf8'));
     const assets = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
-    const settings = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/screens/settings.js'), 'utf8');
+    // The Text size row's note is the `full` form of settings.row.textSize in
+    // content/source/uiStrings.csv (#1489 moved it out of settings.js); the
+    // artifact carries the same sentence in its generated table.
+    const settings = selectedArtifact ?? readFileSync(resolve(ROOT, 'content/source/uiStrings.csv'), 'utf8');
     if (!kit.includes('.modal-foot-actions button { min-height: var(--tap-floor); }')) failures.push(`${ownershipKind} ownership seam missing: .modal-foot-actions button { min-height: var(--tap-floor); }`);
     for (const seam of [
       'min-height: var(--tap-floor); height: auto; padding: 0 1.6rem;',
@@ -351,7 +356,7 @@ async function main() {
     // at the music-parity step before reaching this gate. It pins the CURRENT
     // shipped copy now, with the same shape as before: the exact honest note,
     // and a refusal of the overclaiming promise however the rest is worded.
-    const honestTextSizeNote = "note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.'";
+    const honestTextSizeNote = "Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.";
     if (!settings.includes(honestTextSizeNote)
       || /Scale interface text without resizing controls or artwork/.test(settings)) {
       failures.push('text size setting overclaims non-text stability: state only what the setting does, and never promise untouched controls or artwork');

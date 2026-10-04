@@ -10,6 +10,7 @@ import { retiredAttackSlots } from './cardRemoval.js';
 //
 // Headless: no document/window/localStorage/timers.
 
+import { bindTurnStamina } from './turnStamina.js';
 import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { journeyProblems } from './worldAtlas.js';
@@ -32,6 +33,7 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
+import { classLibraryProblems } from './classLibraryState.js';
 import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
@@ -186,6 +188,8 @@ export function createRunState({
     // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
     // written only by model/skills.js awardSkillXp. Empty until a hit lands.
     skills: {},
+    // Last claimed class level whose separate feat/technique offer was issued.
+    classRewardLevels: {},
     // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
     coreTags: [],
     feats: [],
@@ -679,6 +683,7 @@ export const RUN_SHAPE = [
   { key: 'lastMountReceipt', type: 'object', optional: true },
   { key: 'mountTransactions', type: 'number', optional: true },
   { key: 'pendingReward', type: 'object', optional: true },
+  { key: 'deferredProgression', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
   { key: 'damageBySchoolAdd', type: 'object' },
@@ -854,6 +859,12 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
+  if (run.classRewardLevels !== undefined) {
+    if (!run.classRewardLevels || typeof run.classRewardLevels !== 'object' || Array.isArray(run.classRewardLevels)) problems.push('classRewardLevels must be an object');
+    else for (const [id, level] of Object.entries(run.classRewardLevels)) {
+      if (!id || !Number.isInteger(level) || level < 0) problems.push(`classRewardLevels.${id} must be a non-negative integer`);
+    }
+  }
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
@@ -895,6 +906,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  problems.push(...classLibraryProblems(run));
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
     if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
   });
@@ -1024,6 +1036,17 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       seenClaims.add(rewardId);
     }
   }
+  if (run.deferredProgression !== undefined) {
+    const saved = run.deferredProgression;
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) problems.push('deferredProgression must be an object');
+    else {
+      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'classDrafts'];
+      if (Object.keys(saved).some(key => !fields.includes(key))) problems.push('deferredProgression contains a non-progression reward');
+      const pendingReward = { schemaVersion: 1, source: 'deferred', after: 'map', rewards: saved, states: {} };
+      problems.push(...validateRunShape({ ...run, deferredProgression: undefined, pendingReward })
+        .filter(problem => problem.startsWith('pendingReward')).map(problem => problem.replace('pendingReward', 'deferredProgression')));
+    }
+  }
   if (run.pendingReward !== undefined) {
     const pending = run.pendingReward;
     if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
@@ -1066,6 +1089,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
         });
       }
+      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'classDrafts']) {
+        for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
+          if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
+        }
+      }
       if (pending.rewards?.levelCards !== undefined) {
         // SPEC §15.1: absent on an offer written before the schedule.
         const rows = pending.rewards.levelCards;
@@ -1093,6 +1121,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
             if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
           }
         });
+      }
+      for (const key of ['levelChoices', 'levelCards']) {
+        for (const [i, row] of (Array.isArray(pending.rewards?.[key]) ? pending.rewards[key] : []).entries()) {
+          if (!row || row.source === undefined) continue;
+          const path = `pendingReward.rewards.${key}[${i}]`;
+          if (!['combat', 'class'].includes(row.source) || (key === 'levelCards' && row.source !== 'class')) problems.push(`${path}.source is invalid`);
+          if (row.source === 'class' && (typeof row.skillId !== 'string' || !row.skillId.startsWith('class:') || !Number.isInteger(row.claimOrdinal) || row.claimOrdinal < 0)) problems.push(`${path} must name a class track and claim ordinal`);
+        }
       }
       if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
         problems.push('pendingReward.rewards.cardMissed must be a boolean');
@@ -1471,19 +1507,20 @@ export function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
+export function createPlayerCombatEntity({ classId, classUnequipped = false, maxHp, hp, maxMana, mana, maxStamina, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
     id: 'player',
     kind: 'player',
     classId,
+    ...(classUnequipped ? { classUnequipped: true } : {}),
     hp: hp != null ? hp : maxHp,
     maxHp,
     mana: mana != null ? mana : maxMana,
     maxMana,
-    stamina: stamina != null ? stamina : maxStamina,
-    maxStamina,
+    stamina: stamina ?? maxStamina ?? energyMax,
+    maxStamina: maxStamina ?? energyMax,
     block: 0,
     energy: 0,
     energyMax,
@@ -1504,7 +1541,7 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
     alive: true,
   };
   stampPlayerPoiseMax(entity, poiseMax);
-  return entity;
+  return bindTurnStamina(entity);
 }
 
 /**

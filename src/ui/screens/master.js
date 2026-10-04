@@ -19,6 +19,7 @@
 // `shopOffers` stream) is persisted with the stock, so a reload shows the
 // same cards (balance.skill.draftSize of them) and never rolls the track again.
 import { esc } from '../components/tooltip.js';
+import { engravedIconHtml, engravedGlyphId } from '../components/engravedIcon.js';
 import { sfx } from '../sfx.js';
 import { modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
@@ -70,7 +71,7 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
 
   function tile(glyph, title, desc, reason = '') {
     const node = el('div', { class: `class-pick shop-offer${reason ? ' locked' : ''}` });
-    node.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}</div>`;
+    node.innerHTML = `<div class="glyph">${engravedIconHtml(engravedGlyphId(glyph)) || glyph}</div><div class="cp-body"><h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}</div>`;
     if (reason) node.append(statusText(reason, { class: 'shop-offer-avail' }));
     return node;
   }
@@ -138,13 +139,18 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
       }
     },
     lesson(shelf) {
+      const lessonTracks = masterServiceCandidates(registries, run, 'lesson', { flatRarity });
       for (const skillId of master()?.skills || []) {
         const entry = stock.lessons?.[skillId] || null;
         const host = tile(GLYPH.lesson, trackLabel(registries, skillId), entry ? (entry.cardIds.length ? cardNames(entry.cardIds) : '') : t('master.lesson.unasked', { count: registries.balance.skill.draftSize }));
         if (!entry) {
-          // Asking rolls the track's cards once, kept with the stock.
-          const ask = button({ label: t('master.action.askLesson'), id: `master-ask-${slug(skillId)}`, weight: 'primary', disabled: !rng });
-          if (rng) ask.addEventListener('click', () => act(host, () => rollMasterLesson(registries, rng, run, skillId, { flatRarity }), 'shrine'));
+          // Asking rolls the track's cards once, kept with the stock. A track
+          // whose lesson pool is empty has nothing to roll (the model counts
+          // it idle), so its Ask is drawn disabled rather than spending the
+          // visit's roll on an empty lesson.
+          const canAsk = !!rng && lessonTracks.includes(skillId);
+          const ask = button({ label: t('master.action.askLesson'), id: `master-ask-${slug(skillId)}`, weight: 'primary', disabled: !canAsk });
+          if (canAsk) ask.addEventListener('click', () => act(host, () => rollMasterLesson(registries, rng, run, skillId, { flatRarity }), 'shrine'));
           host.append(ask);
         } else if (!entry.cardIds.length || entry.taken) {
           host.append(statusText(lessonPlan(registries, run, skillId, entry.cardIds[0] || '', { priceMult }).reason, { class: 'shop-offer-avail' }));

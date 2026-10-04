@@ -1,3 +1,4 @@
+import { assetUrl } from '../assetmap.js';
 // Reusable Map/Combat HUD Views. Structure is rendered from immutable
 // Presentation Models; this module owns DOM, not domain projection or commands.
 //
@@ -80,18 +81,12 @@ export function buildMetadataTrailHtml(model) {
   ]));
 }
 
-// One baseline with three negotiating tracks: class, Cinders, Act/Floor.
-export function runHeaderStripHtml(model) {
-  return `<div class="hud-info-row as-band-row thirds" ${uiComponentAttrs(model.component, model.variant)}>
-    ${part(model, UI.identityCluster, identityClusterHtml)}
-    ${part(model, UI.cindersCounter, cindersCounterHtml)}
-    ${part(model, UI.buildMetadataTrail, buildMetadataTrailHtml)}
-  </div>`;
-}
+// The floating header contains only HP and the relic rail.
+export function runHeaderStripHtml() { return ''; }
 
 export function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);
-  return `<section class="hud-vitals-panel grow" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
+  return `<section class="hud-vitals-panel grow" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health">
     <div class="resbars-host" ${uiComponentAttrs(meter.component, meter.variant)}></div>
   </section>`;
 }
@@ -107,11 +102,16 @@ export function vitalsPanelHtml(model) {
 // options bag that silently accepts a pair nobody draws is how the pair comes
 // back by accident.
 export function quickAccessPanelHtml(model) {
-  const button = (control, extra = {}) => html(iconButton({
-    glyph: control.properties.glyph, label: control.accessibility.label, id: control.properties.id,
-    className: 'topbar-btn',
-    attrs: { ...attrsOf(uiComponentAttrs(control.component, control.variant)), title: control.accessibility.hint, ...extra },
-  }));
+  const button = (control, extra = {}) => {
+    const node=iconButton({glyph:control.properties.glyph,label:control.accessibility.label,id:control.properties.id,className:'topbar-btn',attrs:{...attrsOf(uiComponentAttrs(control.component,control.variant)),title:control.accessibility.hint,...extra}});
+    const icon=control.component===UI.armouryControl?{href:'assets/ui-components/armoury.webp',trim:[166,23,922,1192]}:control.component===UI.quickMenuControl?{href:'assets/ui-components/menu.webp',trim:[128,307,997,662]}:null;
+    if(icon){
+      const [x,y,w,h]=icon.trim;
+      node.classList.add('illustrated-hud-button');
+      node.innerHTML=`<span class="illustrated-hud-icon" aria-hidden="true" style="width:${Math.min(1,w/h)*100}%;height:${Math.min(1,h/w)*100}%"><img alt="" src="${esc(assetUrl(icon.href))}" style="width:${1254/w*100}%;height:${1254/h*100}%;left:${-x/w*100}%;top:${-y/h*100}%"></span>`;
+    }
+    return html(node);
+  };
   return `<section class="hud-control-grid as-cluster stack" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
     <div class="hud-actions as-cluster">
       ${part(model, UI.deckEditorControl, (deck) => button(deck))}

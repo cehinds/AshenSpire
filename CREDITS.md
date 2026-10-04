@@ -17,6 +17,44 @@ retain their source credits and licenses; the three existing fonts retain the
 included OFL license. New artwork and vector geometry are first-party generated
 or authored work without a claimed third-party asset license. These art files
 do not register new game content, replace runtime assets or supply game rules.
+## Additional artwork carried by art release v6 (2026-10-03)
+
+These existing art-repository additions accompany the painted-book release.
+Their generation batches are recorded in the [art repository credits](https://github.com/cehinds/AshenSpire-art/blob/main/CREDITS.md).
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/cards/` | Seven original OpenAI-generated card paintings and 56 project-authored SVG motifs, recorded in the art repository's 2026-10-03 additions | First-party generated and authored artwork; no third-party asset license claimed. |
+| `assets/events/` | Original OpenAI-generated event paintings from the art repository's 2026-10-02 production batch | First-party generated artwork; no third-party asset license claimed. |
+| `assets/portraits/` | Original OpenAI-generated Road Warden paintings from the art repository's 2026-10-02 production batch | First-party generated artwork; no third-party asset license claimed. |
+
+## Skill-book shop assets (2026-10-02)
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/shop/` | Original OpenAI image generation from the owner's approved shop preview, plus original Codex-authored vector layers; [masters and prompts](https://github.com/cehinds/AshenSpire-art/tree/main/art/manual-shop-2026-10-02) | First-party generated paintings and project-authored SVG artwork; no third-party license claimed. |
+| `assets-mobile/shop/` | Canonical mobile exports of the same original shop artwork | Same provenance and rights as the masters. |
+
+The original three transparent book paintings and one blank brass button frame were generated
+with the built-in OpenAI image generation tool from the owner's approved
+shop preview. No third-party artwork or third-party license is claimed.
+PNG masters, the approved source, exact prompts and export instructions are
+retained in [the external source package](https://github.com/cehinds/AshenSpire-art/tree/main/art/manual-shop-2026-10-02).
+Runtime WebPs resolve from the art packs as `assets/shop/`, with light twins as
+`assets-mobile/shop/`; the renderer resolves them through the normal asset map.
+The modular edition adds three blank charcoal cover paintings, thirty editable
+SVG symbols, three trim overlays and a front-cover color mask. Its painted
+masters, prompts and editable vectors are retained in the linked layers kit.
+The old baked book WebPs were retired from runtime packs; their original
+masters remain available in the art package.
+
+The painted revision in `assets/shop/painted/` adds three neutral leather
+bindings and eleven separate painted emblems, including the feat emblem.
+They were generated with the built-in OpenAI image generator using the original
+approved Shield Manual as reference. [PNG masters, exact prompts and exporter](https://github.com/cehinds/AshenSpire-art/tree/main/art/manual-shop-2026-10-02/painted-v2)
+are retained in the art repository. These first-party generated layers have no
+third-party source or license claim. Full-binding recoloring preserves their
+painted shading, brass fittings and parchment.
 
 ## Player polish asset kit (2026-10-02)
 
@@ -164,13 +202,26 @@ row in the table below — no game-code changes.
 | Painted equipment turnaround sheets (`docs/low-poly-fighters/*.png`) | the eight reference sheets on the *Low-Poly Fighters — Painted Poses* page (`docs/low-poly-fighters/index.html`) — every equipment piece per class in five orthographic views (top, right, bottom, left, back), two sheets per class: the garments and the kit (hands, feet, weapon) | **AI-generated** painted sheets supplied by the owner (owner statement, 2026-09-05), delivered as `{knight,monk,rogue,wizard}-{wearables,equipment}-turnaround.png` and renamed on commit to the names the page reads. Reference only — nothing loads them at runtime; the shipped per-piece equipment art is the `assets/equipment/*.webp` row above. The painted **pose** sheets that page also shows are covered by the *Pose sprites* row. | AshenSpire (AI-generated) | CC0 |
 | Unicode emoji glyphs (⚔ 🩸 💎 ☄ …) | card/relic/status/enemy icons, sigils | Unicode standard; rendered by the player's OS/browser emoji font | Unicode / OS vendor | Not embedded — system-rendered |
 | Cinzel (display), Inter (body) | interface typography | referenced by `font-family` with robust system fallbacks (Georgia / system-ui); the interface copies are **not bundled** in v1 (the card-lore row below bundles separate "AS Lore" copies used only for lore) | Google Fonts | SIL OFL (when self-hosted) |
-| Card lore faces (`assets/fonts/*.woff2`): IM Fell English, EB Garamond, Cormorant Garamond, Crimson Pro, Spectral, Libre Baskerville, Cinzel, Inter — Latin subset, regular and italic | the lore line and lore modal, chosen under Advanced → Text & lore; bundled under their own "AS Lore" family names so they do not change the interface fonts; they reach the page through `@font-face` url()s in `styles/kit.css`, which the bundler inlines, like the act backdrops, rather than through `src/ui/assets.js`. The copyright notices and full licence are `asset-data/fonts/OFL.txt`, repeated in a header comment in `styles/kit.css` so they ship inside every build | [Fontsource](https://fontsource.org) packages of the Google Fonts releases (`cdn.jsdelivr.net/npm/@fontsource/<family>/files/…-latin-*.woff2`) | Google Fonts / each face's designers | SIL OFL 1.1 |
+| Card lore faces (`assets/fonts/*.woff2`): IM Fell English, EB Garamond, Cormorant Garamond, Crimson Pro, Spectral, Libre Baskerville, Cinzel, Inter — Latin subset, regular and italic | the lore line and lore modal, chosen under Advanced → Text & lore; bundled under their own "AS Lore" family names so they do not change the interface fonts; they reach the page through `@font-face` rules in `styles/kit.css`, rather than through `src/ui/assets.js`. Since EXTERNAL-ASSETS-PLAN step 8e the game file loads them at runtime from the `common` pack (an `ASSET_CSS` slot each, or the font sidecar under `file://`), and only the light single file still inlines them, like the act backdrops. The copyright notices and full licence are `asset-data/fonts/OFL.txt`, which travels in the `common` pack beside the faces as `licenses/OFL.txt` and is repeated in a header comment in `styles/kit.css` so it ships inside every build | [Fontsource](https://fontsource.org) packages of the Google Fonts releases (`cdn.jsdelivr.net/npm/@fontsource/<family>/files/…-latin-*.woff2`) | Google Fonts / each face's designers | SIL OFL 1.1 |
 
-> When real art lands: download from a **Planned source** above, place it under
-> `assets/`, reference it from `src/ui/assets.js`, and add a row here (source URL,
-> author, license). Self-host the Cinzel/Inter `woff2` under `assets/fonts/` with
-> an `@font-face` block and a row here — the fallbacks keep the game readable
-> until then.
+> **Where these files are (2026-10-03, docs/EXTERNAL-ASSETS-PLAN.md step 13).**
+> The art trees named in this file left this repository: `assets/` (as
+> `hd/assets/`), `assets-mobile/` (generated there as `light/assets/`), the
+> fonts, `music/` renders and `map-detail/` (under `common/`), and `art/` live
+> in [`cehinds/AshenSpire-art`](https://github.com/cehinds/AshenSpire-art), and
+> builds read its pinned release (`art-release.json`, `art-manifest.json`). The
+> runtime ids (`assets/…`, `music/…`, `map-detail/…`) and every row below are
+> unchanged; older commits here still carry the files. `music/score/` (the
+> score as code) stays here.
+
+> When real art lands: add it to `cehinds/AshenSpire-art` (its `hd/assets/`,
+> which the release ships under `assets/`), reference it from
+> `src/ui/assets.js`, bump the pin here, and add a row here (source URL,
+> author, license). The Cinzel/Inter interface faces, when they ship, load at
+> runtime as pack files through the pack loader like every other asset
+> (SPEC §7, *Fonts*; docs/EXTERNAL-ASSETS-PLAN.md) — not from a self-hosted
+> `assets/fonts/` folder, which step 13 retires — with a row here. The system
+> fallbacks keep the game readable until then.
 
 ## Remaining asset directories (2026-09-24)
 
@@ -191,7 +242,9 @@ says so where a fact is not recorded.
 | `assets/map/parchment_act{1,2,3}.svg` | Procedural parchment plates generated by this repository's `tools/parchment.mjs` | Project-owned procedural artwork, CC0 |
 | `assets/defeated-poses/`: 49 grounded defeated frames, and their `manifest.json` (tracked as `asset-data/defeated-poses/manifest.json`) | AI-generated from the project's approved enemy idle and painted outfit art; the prompt is in `art/defeated-poses/generation.json`, the 49 source sheets are in `art/defeated-poses/sheets/`, and `art/defeated-poses/build.mjs` exports them (added 2026-09-08). The record does not name the image-generation tool | Project-owned AI-generated artwork; no third-party asset license claimed |
 | `assets/ui/flasks/flask-{crimson,azure}.webp` | Added by the owner on 2026-08-12 as PNGs and converted to WebP on 2026-09-10. The commits record no source or generator | **Provenance not recorded. The owner must confirm it before release** |
-| `assets-mobile/` | Downscaled twin of `assets/`, produced by `tools/mobile-art.mjs` for the mobile build | Each file has the same source and rights as its `assets/` original |
+| `assets-mobile/` | Downscaled twin of `assets/`, produced by `tools/mobile-art.mjs` (in `cehinds/AshenSpire-art` since step 13): the light tier (the light pack and the light single file) | Each file has the same source and rights as its `assets/` original |
+| `map-detail/`: the world map's detail tiles (the common art pack) | Cut from the world-map artwork (`art/environments/worlds/`, see the square-world detail remaster below) by `tools/map-detail-build.mjs` | Same source and rights as that artwork: project-owned AI artwork, CC0-1.0 |
+| `licenses/OFL.txt` (the common art pack) | The common pack's copy of `asset-data/fonts/OFL.txt`, shipped beside the fonts it covers | SIL Open Font License 1.1: the notices and licence text the fonts' licence requires to be distributed with them |
 | `asset-data/classes/` | Class-art working documents, JSON manifests and scripts written in this repository (the successor contract, look reference, crop receipts and their checkers). The directory holds no image, audio or font files | Project-owned; MIT with the code ([LICENSE](LICENSE)) |
 | `assets/relics/`: twelve 256px painted relic illustrations | AI-generated with built-in OpenAI imagegen; sources, exact prompts and export manifests in `art/relic-icons-pack-01/`, `-02/` and `-03/` (see *Painted relic illustrations* above) | Project-owned AI-generated artwork; no third-party artwork used and no third-party license claimed |
 | `assets/enemies-unity/`: twelve painted enemy frames, and their `provenance.json` (tracked as `asset-data/enemies-unity/provenance.json`) | Unchanged AI-generated frames from the [AshenSpire-Unity](https://github.com/cehinds/AshenSpire-Unity/tree/130d7c5/Unity/Assets/AshenSpire/Resources/Art) fork, which generated them with its built-in image-generation tool; extraction manifest in `asset-data/enemies-unity/provenance.json` (see *Painted enemy sprites from the Unity fork* above) | Project-owned AI-generated artwork |
@@ -334,6 +387,50 @@ and all 35 catalog armor entries. Left-hand bow selectors share the painted
 right-facing choreography. No third-party artwork was downloaded and no
 third-party license is claimed.
 
+## Painted combat footer (2026-10-03)
+
+The blank button plate, draw cradle, discarded-card cradle, potion tray and
+joining rail were generated with OpenAI image generation from the approved
+project-owned SP/mana style reference. Source PNGs, prompts, alpha crop receipts,
+and deterministic WebP export are retained in `AshenSpire-art/art/footer-atelier/`.
+Art PR #10 released these in `hd-assets-v8`, including transparent light twins.
+The game draws all labels and live values separately; no third-party artwork
+was downloaded and no third-party asset licence is claimed.
+
 ## Rendered music score (2026-09-26)
 
 The recorded score is written as code. Each track is a list of notes in `music/score/<id>.mjs`, rendered offline by `node tools/score/render.mjs` on the synthesizer in `tools/score/synth.mjs` into `music/<context>/<id>.mp3`. Every instrument (strings, cello, wordless choir, organ, harp, bells, bowed metal, drones, taiko, frame drum) is synthesized from oscillators and noise: no samples, soundfonts or licensed music, and no AI music model. The two earlier AI-model recordings were removed on the owner's instruction (2026-09-26). No third-party asset licence is claimed.
+
+## Recovered Reading Desk references (2026-10-03)
+
+The existing project illustrations, card outline symbols and title-city backdrop
+were recovered unchanged from the prior deck editor work. They are staged in
+`docs/design/deck-editor/` as design references. The game resolves their matching
+runtime card art from [AshenSpire-art hd-assets-v6](https://github.com/cehinds/AshenSpire-art/releases/tag/hd-assets-v6), with source and rights recorded in that release's CREDITS.md. Source paths,
+source chat IDs and SHA-256 digests are retained in `provenance.json` there.
+No new artwork or third-party license is claimed. The published v7 pack is pinned
+and verified by the normal game build.
+
+### Stamina orb and mana harness
+
+`assets/ui/stamina-orb/`: original OpenAI imagegen artwork directed and approved by the project owner. Modular weathered metal harness, emerald stamina orb, green sigil, sapphire mana gem and dim spent gem. PNG masters, prompts and approved layout live in cehinds/AshenSpire-art under `art/ui/stamina-orb/`; high and light runtime images ship in `hd-assets-v7`.
+
+## Approved illustrated card and scene components (art release v9)
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/player-polish/` | [Approved paintings and authored SVG kit](https://github.com/cehinds/AshenSpire-art/tree/main/art/player-polish-runtime), imported from the owner-approved JavaScript prototype | First-party OpenAI-generated paintings and project-authored SVGs; no third-party license claimed. |
+| `assets/card-components/` | [Editable Card Studio masters and export hashes](https://github.com/cehinds/AshenSpire-art/tree/main/art/illustrated-card-components) | Original project-generated artwork and authored layers; lossless runtime derivatives; no third-party license claimed. |
+| `assets/ui-components/` | [Approved Armoury and Menu layers](https://github.com/cehinds/AshenSpire-art/tree/main/art/illustrated-card-components) | Original project-generated artwork and authored layers; no third-party license claimed. |
+
+The matching assets-mobile derivatives retain the same provenance and rights.
+
+## Signature starter card paintings (2026-10-03)
+
+Original Starstone Pebble, Urgent Heal, and Ambush illustrations generated with
+OpenAI's built-in image generator for AshenSpire. Exact prompts, unchanged PNG
+masters, export recipe and source/export hashes are preserved in
+[the art source package](https://github.com/cehinds/AshenSpire-art/tree/main/art/starter-card-paintings-2026-10-03).
+The 512px and 1024px WebPs under `assets/cards/` and their light twins share
+this provenance. No third-party artwork was downloaded and no third-party
+license is claimed.

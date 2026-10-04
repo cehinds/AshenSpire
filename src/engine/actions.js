@@ -43,6 +43,7 @@ import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
+import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -148,6 +149,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   const dmg = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
+  reconcileWardBlock(target);
   const hpLoss = dmg - blocked;
   const components = receipt?.components;
   const hpShares = components && dmg > 0 ? allocateInteger(hpLoss, components.map((c) => c.amount)) : [];
@@ -162,13 +164,14 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     // it (engine/skillXp.js): which hand, which piece. Absent when no card did.
     ...(carrier && carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}),
     blockRemaining: target.block,
+    ...wardBlockReceipt(target),
     ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
       tags: receipt.tags } : {}),
     isAttack: true,
   });
   if (hpLoss > 0) {
     if (ctx.ratingsRules) applyRatingImpact(ctx, source, target, carrier);
-    ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack' });
+    ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
     applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target);
@@ -245,9 +248,12 @@ export function gainBlock(ctx, entity, base, card = null) {
   if (cap != null && entity.block + amt > cap) {
     amt = Math.max(0, cap - entity.block);
   }
+  reconcileWardBlock(entity);
   entity.block += amt;
+  if (amt > 0 && card && isMagicalAttack(ctx, card)) entity.wardBlock = (entity.wardBlock || 0) + amt;
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
+    ...wardBlockReceipt(entity),
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
     // The card that raised it, when one did (engine/skillXp.js pays its piece's
     // group), and in co-op the seat that played it — a guard cast on an ally
@@ -258,13 +264,20 @@ export function gainBlock(ctx, entity, base, card = null) {
   return amt;
 }
 
+// Every player entity is id 'player', so in co-op an hpLost receipt names the
+// seat it cost, as damageDealt does; readers (triggers, haptics) cannot tell an
+// ally from the owner by targetId alone. Solo stamps nothing.
+function seatOf(ctx, target) {
+  return ctx.playerIdForEntity && target.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(target) } : {};
+}
+
 /** loseHp — direct HP loss: ignores ALL attack modifiers AND block (SPEC §4.2). */
 export function applyLoseHp(ctx, target, amount, cause = 'effect') {
   if (!target || !target.alive) return 0;
   const n = Math.max(0, Math.floor(amount));
   if (n === 0) return 0;
   target.hp -= n;
-  ctx.emit('hpLost', { targetId: target.id, amount: n, cause });
+  ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: n, cause });
   afterHpChange(ctx, target);
   return n;
 }
@@ -756,7 +769,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'restoreStamina': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        const amount = Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1)));
+        const amount = Math.max(0, Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1))));
         t.stamina += amount; ctx.emit('staminaRecovered', { targetId: t.id, amount, reason: 'effect' });
       }
       break;

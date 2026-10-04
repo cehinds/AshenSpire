@@ -194,7 +194,7 @@ test('banked XP lights the bar; Level advances one level and opens its card choo
     });
     assert.ok(app.querySelector('.reward-level-ready .rp-bar-ready'));
     const claim = app.querySelector('.reward-level-up');
-    assert.equal(claim.textContent, 'Level');
+    assert.equal(claim.textContent, 'Level up');
     assert.equal(app.querySelector('[data-kind="levelCard"]'), null, 'the level choice lives beside the XP bar');
     claim.click();
     assert.equal(run.level.level, 4);
@@ -230,7 +230,7 @@ test('each ready skill bar claims one level and opens its own draft', () => {
     });
     const button = app.querySelector('.reward-level-up[data-track="item:blade"]');
     assert.ok(button, 'the active skill has a Level button');
-    assert.equal(button.textContent, 'Level');
+    assert.equal(button.textContent, 'Level up');
     button.click();
     assert.equal(run.skills['item:blade'].level, before + 1);
     assert.equal(pendingSkillLevelCount(registries, run, 'item:blade'), 0);
@@ -412,7 +412,7 @@ test('each manual claim refills from residual XP until the final partial step, f
         onClaimSkill: (id) => claimBankedSkillLevel(registries, run, id),
         rewards: { xpGains: { level: 0, tracks: {} } },
         saves: { loadMeta: () => ({ settings: {
-          levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0,
+          guidedLevelUp: false, levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0,
           victoryXpCharacterWeight: 0, victoryXpSkillWeight: 0, victoryXpClassWeight: 0,
         } }) },
       });
@@ -425,7 +425,7 @@ test('each manual claim refills from residual XP until the final partial step, f
         assert.equal(bar.querySelector('.rp-under').style.width, '0%');
         assert.equal(bar.querySelector('.rp-over').style.width, '0%');
         assert.equal(app.querySelector('.reward-level-up'), null, 'no second claim during the refill');
-        assert.equal(app.querySelector('#reward-continue').disabled, true);
+        assert.equal(app.querySelector('#reward-continue').disabled, false, 'leaving is allowed during a refill');
         const doneSelector = track === 'character' ? '#reward-level-done' : '#reward-skill-done';
         const deadline = Date.now() + 2000;
         while (!app.querySelector(doneSelector) && Date.now() < deadline) {
@@ -454,7 +454,7 @@ test('a refill scheduled before a reward remount cannot change the replacement s
     const first = climber();
     first.level = { level: 1, xp: 355, unspentPoints: 0 };
     first.skills = {};
-    const saves = { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0 } }) };
+    const saves = { loadMeta: () => ({ settings: { guidedLevelUp: false, levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0 } }) };
     mountRewards(app, {
       registries, run: first, rewards: { title: 'First reward', xpGains: { level: 0, tracks: {} } }, saves,
       onDone() {}, onClaimLevel: () => claimBankedLevel(registries, first),
@@ -494,4 +494,63 @@ test('a door with no progression and no offer draws no side column at all', () =
   } finally {
     Object.assign(globalThis, saved);
   }
+});
+
+
+test('guided levels show the choice before refilling; Back keeps the choice and stops automatic claims', async () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = climber(); run.level = { level: 1, xp: 355, unspentPoints: 0 }; run.skills = {};
+    const rewards = { xpGains: { level: 355, tracks: {} }, levelChoices: [
+      { ordinal: 0, requiredLevel: 2, options: [{ kind: 'feat', id: 'fieldStudy' }] },
+      { ordinal: 1, requiredLevel: 3, options: [{ kind: 'feat', id: 'weaponDrill' }] },
+    ] };
+    const checkpoint = { rewards, states: {} };
+    mountRewards(app, { registries, run, rewards, checkpoint, onDone() {},
+      onClaimLevel: () => claimBankedLevel(registries, run),
+      saves: { loadMeta: () => ({ settings: { guidedLevelUp: true, levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0 } }) },
+    });
+    await new Promise(resolve => setTimeout(resolve, 300));
+    assert.equal(run.level.level, 2);
+    assert.equal(run.level.xp, 255);
+    assert.ok(app.querySelector('#reward-card-confirm'), 'level choice is displayed before refill');
+    assert.equal(app.querySelector('.rp-layered-bar'), null, 'XP does not refill behind the modal');
+    app.querySelector('#reward-back').click();
+    assert.ok(app.querySelector('.rp-layered-bar[data-animate="1"]'), 'leftover XP resumes after Back');
+    assert.equal(app.querySelector('#reward-continue').disabled, false);
+    await new Promise(resolve => setTimeout(resolve, 350));
+    assert.equal(run.level.level, 2, 'Back stops the guided sequence');
+    assert.equal(checkpoint.states['levelChoice:0'], undefined, 'Back never spends or skips a reward');
+    assert.ok(app.querySelector('[data-key="levelChoice:0"]'), 'unclaimed reward remains accessible');
+    app.remove();
+  } finally { Object.assign(globalThis, saved); }
+});
+
+test('guided multi-level sequence resumes surplus XP after each completed reward', async () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = climber(); run.level = { level: 1, xp: 355, unspentPoints: 0 }; run.skills = {};
+    mountRewards(app, { registries, run, rewards: { xpGains: { level: 355, tracks: {} } }, onDone() {},
+      onClaimLevel: () => claimBankedLevel(registries, run),
+      saves: { loadMeta: () => ({ settings: { guidedLevelUp: true, levelUpRefillSeconds: 0, levelUpRefillPauseMs: 0 } }) },
+    });
+    for (const level of [2, 3]) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      assert.equal(run.level.level, level);
+      assert.ok(app.querySelector('#reward-level-done'));
+      app.querySelector('#reward-level-done').click();
+    }
+    await new Promise(resolve => setTimeout(resolve, 300));
+    assert.equal(run.level.xp, 75);
+    assert.equal(run.level.level, 3);
+    assert.equal(app.querySelector('.reward-level-up'), null);
+    assert.equal(app.querySelector('#reward-continue').disabled, false);
+    app.remove();
+  } finally { Object.assign(globalThis, saved); }
 });

@@ -6,6 +6,7 @@ import {
   prologueConfig, prologueRows, prologueSequence, prologueSettingKey,
   prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_STAGE_FIELDS,
 } from '../../model/prologue.js';
+import { t, tTip } from '../strings.js';
 
 const STAGE_BY_KEY = new Map(PROLOGUE_STAGE_FIELDS.map(field => [field.key, field]));
 const SCENE_GROUPS = [
@@ -62,7 +63,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   let actorObserver = null;
   const rows = rowIndex();
   const door = openModal({
-    size: 'xl', className: 'prologue-scene-editor', title: 'Opening scene editor',
+    size: 'xl', className: 'prologue-scene-editor', title: t('prologueEditor.title'),
     bodyClassName: 'pse-body', onClose: () => { clearTimeout(refreshTimer); actorObserver?.disconnect(); cleanup?.(); },
   });
   const host = door.body;
@@ -88,7 +89,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   const stepLabel = element('label', 'pse-arrange-step');
   stepLabel.append(element('span', '', 'Spacing'));
   const stepInput = element('input'); stepInput.type = 'number'; stepInput.min = '2'; stepInput.max = '25'; stepInput.step = '1';
-  stepInput.setAttribute('aria-label', 'Grid spacing percent');
+  stepInput.setAttribute('aria-label', t('prologueEditor.grid.aria'));
   stepLabel.append(stepInput, element('span', '', '%'));
   const projectButton = element('button', 'pse-project-save', 'Save first-step defaults');
   projectButton.type = 'button'; projectButton.hidden = true;
@@ -97,7 +98,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   arrangeBar.append(gridLabel, snapLabel, stepLabel, projectButton, projectStatus);
   const viewport = element('div', 'pse-viewport');
   const transformBox = element('div', 'pse-transform-box');
-  transformBox.setAttribute('aria-label', 'Drag to move traveller; drag a corner to resize');
+  transformBox.setAttribute('aria-label', t('prologueEditor.traveller.aria'));
   const dimensions = element('span', 'pse-transform-dimensions');
   transformBox.append(dimensions);
   for (const corner of ['nw', 'ne', 'sw', 'se']) {
@@ -115,7 +116,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   mode.append(modeSummary, modeButton);
   const tabs = element('div', 'pse-tabs');
   tabs.setAttribute('role', 'tablist');
-  tabs.setAttribute('aria-label', 'Scene editor controls');
+  tabs.setAttribute('aria-label', t('prologueEditor.tabs.aria'));
   const fields = element('div', 'pse-fields');
   inspector.append(mode, tabs, fields);
   workspace.append(visual, inspector);
@@ -128,7 +129,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     if (value === undefined) delete settings[key]; else settings[key] = value;
     if (onChange({ [key]: value })?.ok === false) {
       if (had) settings[key] = old; else delete settings[key];
-      modeSummary.textContent = 'Could not save this change. Your previous value is still in use.';
+      modeSummary.textContent = t('prologueEditor.saveFailed');
       return false;
     }
     return true;
@@ -137,14 +138,14 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   fetch('/__editor/prologue-defaults').then(response => response.ok ? response.json() : null).then(result => {
     projectWriteEnabled = result?.projectDefaults === true;
     projectButton.hidden = !projectWriteEnabled || selected !== 'step';
-    if (projectWriteEnabled) visualNote.textContent = 'Live preview · save first-step edits to project JSON when ready';
+    if (projectWriteEnabled) visualNote.textContent = t('prologueEditor.liveNote');
   }).catch(() => {});
   projectButton.addEventListener('click', async () => {
     const changes = Object.fromEntries(Object.entries(settings).filter(([key]) =>
       key.startsWith('gameConfig.prologue.scenes.step.')
       || ['editorGrid', 'editorSnap', 'editorGridStep'].some(name => key === prologueSettingKey(['presentation', name]))));
-    if (!Object.keys(changes).length) { projectStatus.textContent = 'Already using project defaults.'; return; }
-    projectButton.disabled = true; projectStatus.textContent = 'Saving project JSON…';
+    if (!Object.keys(changes).length) { projectStatus.textContent = t('prologueEditor.project.unchanged'); return; }
+    projectButton.disabled = true; projectStatus.textContent = t('prologueEditor.project.saving');
     try {
       const response = await fetch('/__editor/prologue-defaults', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes }),
@@ -342,7 +343,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
       if (saved(key, next)) {
         if (key === prologueSettingKey(['scenes', selected, 'name'])) sceneInput.selectedOptions[0].textContent = String(next);
         const follow = input.closest('.pse-field')?.querySelector('.pse-follow');
-        if (follow) { follow.disabled = false; follow.textContent = 'Use opening style'; }
+        if (follow) { follow.disabled = false; follow.textContent = t('prologueEditor.followStyle'); }
         schedulePreview();
       }
     };
@@ -361,9 +362,9 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     title.htmlFor = `pse-${key.replace(/[^a-z0-9]/gi, '-')}`;
     head.append(title);
     if (reset) {
-      const follow = element('button', 'pse-follow', settings[key] === undefined ? 'Following opening style' : 'Use opening style');
+      const follow = element('button', 'pse-follow', t(settings[key] === undefined ? 'prologueEditor.followingStyle' : 'prologueEditor.followStyle'));
       follow.type = 'button'; follow.disabled = settings[key] === undefined;
-      follow.title = 'Remove this scene’s override for this setting';
+      follow.title = tTip('prologueEditor.followStyle');
       follow.addEventListener('click', event => {
         event.preventDefault();
         if (saved(key, undefined)) { drawFields(); schedulePreview(); }
@@ -477,7 +478,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
         widthLabel.htmlFor = 'pse-traveller-width';
         const widthInput = element('input'); widthInput.type = 'number'; widthInput.id = 'pse-traveller-width';
         widthInput.min = '2'; widthInput.max = '100'; widthInput.step = '.1'; widthInput.dataset.pseWidthVw = 'true';
-        const widthRow = { label: 'Traveller width', min: 2, max: 100, step: .1 };
+        const widthRow = { label: t('prologueEditor.travellerWidth'), min: 2, max: 100, step: .1 };
         widthInput.addEventListener('input', () => {
           const actor = viewport.querySelector('.prologue-actor');
           const stage = actor?.closest('.prologue-stage');

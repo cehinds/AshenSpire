@@ -36,6 +36,7 @@
 
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { pointerTargetExpression } from './pointer-target.mjs';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
@@ -182,7 +183,7 @@ try {
     throw new Error(`timeout waiting for ${waitingFor}`);
   };
   const click = async (selector) => {
-    const point = await ev(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return null; const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+    const point = await ev(pointerTargetExpression(selector));
     if (!point) throw new Error(`missing ${selector}`);
     await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
     await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);

@@ -23,7 +23,7 @@
 //
 // WHAT THE DIGEST COVERS, and it is a closed set stated in one place:
 //
-//     index.html · styles/** · src/** · assets/** · assets-mobile/** · asset-data/**
+//     index.html · styles/** · src/** · asset-data/**
 //     tools/bundle.mjs · tools/buildversion.mjs · tools/dirorder.mjs
 //
 // `buildordinal.json` is deliberately OUTSIDE that set — see INPUT_ROOTS for
@@ -98,24 +98,27 @@ export const RUN_PATH_BUNDLE = 'standalone file';
 export const RUN_PATH_SERVE = 'source tree';
 
 /**
- * The edition's anchors and its two values. Unlike the four above, the source
- * holds a real value rather than a placeholder — the served tree IS the full
- * art — so row A checks that the value at rest is `full`, never `mobile`.
+ * The edition's anchors and its two values. Since step 8e
+ * (docs/EXTERNAL-ASSETS-PLAN.md) the edition is the build's DEFAULT TIER:
+ * `high` (release/main, and the source tree, which serves assets/ from the
+ * fetched high pack, tools/serve.mjs) or `light` (dev/test, and always the light single file). Unlike
+ * the four above, the source holds a real value rather than a placeholder —
+ * the served tree IS the high tier — so row A checks that the value at rest is
+ * `high`. `full` and `mobile`, the two single files' editions before the flip,
+ * are retired with them (owner answers 2 and 6).
  */
 export const EDITION_MARKER_START = '/* BUILD_EDITION_START */';
 export const EDITION_MARKER_END = '/* BUILD_EDITION_END */';
-export const EDITION_FULL = 'full';
-export const EDITION_MOBILE = 'mobile';
-/**
- * The light art tier (tools/bundle.mjs --light): the default single file on
- * dev/test since 2026-09-26, carrying the assets-mobile/ payloads under the
- * ordinary AshenSpire.html name. A light build is the only single file its run
- * writes, so row E accepts it at BUNDLE and row E2 has no mobile file to hold.
- */
+export const EDITION_HIGH = 'high';
+/** The light art tier: dev/test builds, and the light single file whatever the branch. */
 export const EDITION_LIGHT = 'light';
-const BUNDLE_EDITIONS = Object.freeze([EDITION_FULL, EDITION_LIGHT]);
-/** The mobile single file, beside the full one. Both are checked by rows E and E2. */
-export const MOBILE_BUNDLE = 'build/AshenSpire-mobile.html';
+const BUNDLE_EDITIONS = Object.freeze([EDITION_HIGH, EDITION_LIGHT]);
+/**
+ * The light single file (tools/bundle.mjs --single-file), beside the pack-shaped
+ * HTML: the one inline download kept (owner answer 3). Row E2 holds it to this
+ * tree's stamp and the pack HTML's pinned packs to what is on disk.
+ */
+export const SINGLE_FILE_BUNDLE = 'build/download/AshenSpire.html';
 
 /** Where the ORDERING half lives. Outside the digest roots, and see below. */
 export const ORDINAL_HOME = 'buildordinal.json';
@@ -165,7 +168,13 @@ export const DIGEST_CHARS = 10;
 // manifests, the class-art packet, the OFL text; docs/ART-REPO-PLAN.md step 4).
 // It stays a root so the digest and row B sweep the same files they did before
 // the move, including the successor packet CONTRACT_COLUMN_SITES names.
-export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data']);
+//
+// assets/ and assets-mobile/ LEFT AT docs/EXTERNAL-ASSETS-PLAN.md STEP 13 (with
+// the trees): the art is the pinned release now, and the digest sees it through
+// art-release.json and art-manifest.json (BUILD_IDENTITY_FILES), which name every
+// byte a build can carry. A leftover, ignored copy of either tree on someone's
+// disk must not move the digest, so neither is a root any more.
+export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'asset-data']);
 
 /**
  * The closed executable seam that turns INPUT_ROOTS into the shipped bundle.
@@ -175,11 +184,28 @@ export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets
  */
 export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/bundle.mjs',
+  'tools/card-components.mjs',
   'tools/assetmime.mjs',
   'tools/buildversion.mjs',
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
   'tools/head-meta.mjs',
+  // THE REST OF THE BUNDLER'S IMPORT GRAPH (docs/EXTERNAL-ASSETS-PLAN.md step
+  // 12): every tools/ module tools/bundle.mjs reaches decides which bytes a
+  // build carries, so a change to any of them is a new build.
+  // tests/build-identity.test.mjs walks that graph and fails on one not here.
+  //   art-source   where the light pack and the fonts are read from (the
+  //                verified cache; the trees left at step 13)
+  //   fetch-art    what "verified" means for a cached pack; zip.mjs beneath it
+  //   art-manifest the records a pack is checked against, and canonical bytes
+  //   asset-pack   the pack shape: objects/, the indexes, the font sidecar
+  //   asset-css    the ASSET_CSS template and the inlined masks
+  'tools/art-source.mjs',
+  'tools/fetch-art.mjs',
+  'tools/zip.mjs',
+  'tools/art-manifest.mjs',
+  'tools/asset-pack.mjs',
+  'tools/asset-css.mjs',
   // The art release this tree pins and the manifest every pack is checked
   // against (docs/EXTERNAL-ASSETS-PLAN.md §2 *Build identity*, step 11). Not
   // executable, but they decide which media a build is made from once it reads
@@ -439,7 +465,7 @@ export function stampSource(text, digest, { ordinal = null, built = null, runPat
     out = between(out, RUN_MARKER_START, RUN_MARKER_END, 'BUILD_RUNPATH', `export const RUN_PATH = '${runPath}';`);
   }
   if (edition !== null) {
-    if (edition !== EDITION_FULL && edition !== EDITION_MOBILE && edition !== EDITION_LIGHT) throw new Error(`unknown edition '${edition}' — a bundle is '${EDITION_FULL}', '${EDITION_MOBILE}' or '${EDITION_LIGHT}'`);
+    if (!BUNDLE_EDITIONS.includes(edition)) throw new Error(`unknown edition '${edition}' — a bundle is '${EDITION_HIGH}' or '${EDITION_LIGHT}' (its default tier)`);
     out = between(out, EDITION_MARKER_START, EDITION_MARKER_END, 'BUILD_EDITION', `export const EDITION = '${edition}';`);
   }
   return out;
@@ -775,12 +801,12 @@ export function check(root = REPO_ROOT) {
       { what: 'ORDINAL', got: slice(ORD_MARKER_START, ORD_MARKER_END), want: /^\s*export const ORDINAL = 'UNBUMPED';\s*$/ },
       { what: 'BUILT', got: slice(DATE_MARKER_START, DATE_MARKER_END), want: /^\s*export const BUILT = 'UNDATED';\s*$/ },
       { what: 'RUN_PATH', got: slice(RUN_MARKER_START, RUN_MARKER_END), want: /^\s*export const RUN_PATH = 'UNPLACED';\s*$/ },
-      { what: 'EDITION', got: slice(EDITION_MARKER_START, EDITION_MARKER_END), want: /^\s*export const EDITION = 'full';\s*$/ },
+      { what: 'EDITION', got: slice(EDITION_MARKER_START, EDITION_MARKER_END), want: /^\s*export const EDITION = 'high';\s*$/ },
     ];
     const bad = held.filter((h) => h.got === null || !h.want.test(h.got));
     add(bad.length === 0, 'A ONE HOME',
       bad.length === 0
-        ? `${VERSION_MODULE} holds all four placeholders and rests at edition 'full'; the digest, the ordinal, the build date, the run path and the edition are injected, never committed`
+        ? `${VERSION_MODULE} holds all four placeholders and rests at edition 'high'; the digest, the ordinal, the build date, the run path and the edition are injected, never committed`
         : `${VERSION_MODULE} does not hold a placeholder — a value typed into source is a version ASSERTED, not derived:`
           + bad.map((h) => `\n      ${h.what}: ${h.got === null ? 'its marker pair is missing' : h.got.trim().slice(0, 100)}`).join(''));
   }
@@ -933,10 +959,17 @@ export function check(root = REPO_ROOT) {
       ? `title and the startup gate each derive directly; the run HUD carries no stamp`
       : `the named version-consumer chain is broken:\n      ${consumerFailures.join('\n      ')}`);
 
-  // D — THE CONTAINMENT CLAIM. The digest's four roots must be a superset of
+  // D — THE CONTAINMENT CLAIM. The digest's roots must be a superset of
   //     what the bundler reads, or a real source change can move the build
-  //     without moving the string.
+  //     without moving the string. An art id art-manifest.json lists (a
+  //     stylesheet's `url(../assets/…)`) is contained too: since
+  //     docs/EXTERNAL-ASSETS-PLAN.md step 13 its bytes are the pinned release's,
+  //     and the pin and the manifest (BUILD_IDENTITY_FILES) name every one of
+  //     them, so a changed file is a changed manifest is a new digest.
   const outside = [];
+  let artIds = new Set();
+  try { artIds = new Set(Object.keys(JSON.parse(src('art-manifest.json')).assets || {})); } catch { /* every art url is then reported outside */ }
+  const contained = (rel) => insideRoots(rel) || artIds.has(rel);
   const index = src('index.html');
   // The quote that opens an href closes it (an inline data: icon carries the
   // other quote inside it). Only a NON-stylesheet link with a data:/http(s):
@@ -957,12 +990,11 @@ export function check(root = REPO_ROOT) {
       for (const m of css.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)) {
         if (/^(data:|https?:|\/\/)/i.test(m[2])) continue;
         const t = relative(root, resolve(dirname(resolve(root, h)), m[2].split(/[?#]/)[0])).split('\\').join('/');
-        if (!insideRoots(t)) outside.push(`${h} → url(${m[2]})`);
+        if (!contained(t)) outside.push(`${h} → url(${m[2]})`);
       }
     }
   }
   let bundleText = null;
-  let bundleEdition = null; // set by row E, read by row E2
   try { bundleText = src(BUNDLE); } catch { /* reported */ }
   if (bundleText == null) {
     outside.push(`${BUNDLE} is missing — the module list cannot be bound to the sweep; ${BUILD_FIRST}`);
@@ -974,7 +1006,7 @@ export function check(root = REPO_ROOT) {
   }
   add(outside.length === 0, 'D CONTAINMENT',
     outside.length === 0
-      ? `every stylesheet, css asset and bundled module resolves inside ${INPUT_ROOTS.join(', ')}`
+      ? `every stylesheet, css asset and bundled module resolves inside ${INPUT_ROOTS.join(', ')}, or is an art id art-manifest.json pins`
       : `the build reads outside the digest's roots — the version can miss a real change:\n      ${outside.join('\n      ')}`);
 
   // E — THE SHIPPED BUNDLE CARRIES THIS SOURCE'S VERSION. Narrower than
@@ -1003,43 +1035,68 @@ export function check(root = REPO_ROOT) {
     else if (places[0] !== RUN_PATH_BUNDLE) problems.push(`${BUNDLE} says it was drawn by '${places[0]}' — a bundle is a '${RUN_PATH_BUNDLE}', and a page that misnames its own run path sends every bug report to the wrong artifact`);
     const editions = [...bundleText.matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
     if (editions.length !== 1) problems.push(`${BUNDLE} carries ${editions.length} EDITION literals, expected exactly 1`);
-    else if (!BUNDLE_EDITIONS.includes(editions[0])) problems.push(`${BUNDLE} calls itself the '${editions[0]}' edition — the single file is '${EDITION_FULL}' or, on dev/test, '${EDITION_LIGHT}'`);
-    else bundleEdition = editions[0];
+    else if (!BUNDLE_EDITIONS.includes(editions[0])) problems.push(`${BUNDLE} calls itself the '${editions[0]}' edition — the edition is the build's default tier, '${EDITION_HIGH}' or, on dev/test, '${EDITION_LIGHT}'`);
     add(problems.length === 0, 'E SHIPPED STAMP',
       problems.length === 0
         ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest, names its run path '${RUN_PATH_BUNDLE}' and its edition '${editions[0]}'`
         : problems.join('\n      '));
   }
 
-  // E2 — THE MOBILE SINGLE FILE IS THE SAME SOURCE, AND SAYS WHICH EDITION IT IS.
-  //      Two files with one stamp is the point of the mobile edition, and it is
-  //      also the way it goes wrong: a mobile file rebuilt from an older tree
-  //      carries an older digest under the same name, and nothing on the site
-  //      would notice. So the mobile bundle is held to the same digest, the same
-  //      run path, and the edition literal that tells the two apart.
-  let mobileText = null;
-  try { mobileText = src(MOBILE_BUNDLE); } catch { /* reported */ }
-  if (bundleEdition === EDITION_LIGHT) {
-    // A LIGHT RUN WRITES NO MOBILE FILE: the light single file already carries
-    // the phone-sized art, so there is no second edition to hold to this tree.
-    // Any AshenSpire-mobile.html on disk is left over from a --full-art build.
-    add(true, 'E2 MOBILE STAMP', `${BUNDLE} is the '${EDITION_LIGHT}' edition — a light build ships no separate mobile file (n/a, stated)`);
-  } else if (mobileText == null) {
-    add(false, 'E2 MOBILE STAMP', `${MOBILE_BUNDLE} is missing — the mobile single file has not been built (node tools/launch.mjs --build-only)`);
-  } else {
-    const want = sourceDigest(root).digest;
-    const found = [...mobileText.matchAll(/const SOURCE = '([^']*)'/g)].map((m) => m[1]);
-    const places = [...mobileText.matchAll(/const RUN_PATH = '([^']*)'/g)].map((m) => m[1]);
-    const editions = [...mobileText.matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
+  // E2 — THE LIGHT SINGLE FILE IS THE SAME SOURCE, AND THE PACKS ARE THERE.
+  //      Step 8e retired the mobile file this row used to hold (owner answer
+  //      2). Two files still leave one build: the pack-shaped HTML above and
+  //      the light single file under download/ (owner answer 3). A single file
+  //      rebuilt from an older tree would carry an older digest under the
+  //      download's name, and nothing on the site would notice; so it is held
+  //      to the same digest, the same run path, and edition 'light'. And the
+  //      pack HTML is only the game with the packs it pins beside it, so each
+  //      pinned index (and the font sidecar) must be in build/packs/ and hash
+  //      to its pin.
+  {
     const problems = [];
-    if (found.length !== 1) problems.push(`${MOBILE_BUNDLE} carries ${found.length} SOURCE literals, expected exactly 1`);
-    else if (found[0] !== want) problems.push(`${MOBILE_BUNDLE} carries SOURCE '${found[0]}', this tree derives '${want}' — the mobile file is not this source`);
-    if (places.length !== 1 || places[0] !== RUN_PATH_BUNDLE) problems.push(`${MOBILE_BUNDLE} does not name its run path '${RUN_PATH_BUNDLE}' exactly once`);
-    if (editions.length !== 1) problems.push(`${MOBILE_BUNDLE} carries ${editions.length} EDITION literals, expected exactly 1`);
-    else if (editions[0] !== EDITION_MOBILE) problems.push(`${MOBILE_BUNDLE} calls itself the '${editions[0]}' edition — it must say '${EDITION_MOBILE}', or a phone cannot tell which file it was handed`);
-    add(problems.length === 0, 'E2 MOBILE STAMP',
+    let singleText = null;
+    try { singleText = src(SINGLE_FILE_BUNDLE); } catch { /* reported */ }
+    const want = sourceDigest(root).digest;
+    if (singleText == null) {
+      problems.push(`${SINGLE_FILE_BUNDLE} is missing — the light single file has not been built (node tools/launch.mjs --build-only)`);
+    } else {
+      const found = [...singleText.matchAll(/const SOURCE = '([^']*)'/g)].map((m) => m[1]);
+      const places = [...singleText.matchAll(/const RUN_PATH = '([^']*)'/g)].map((m) => m[1]);
+      const editions = [...singleText.matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
+      if (found.length !== 1) problems.push(`${SINGLE_FILE_BUNDLE} carries ${found.length} SOURCE literals, expected exactly 1`);
+      else if (found[0] !== want) problems.push(`${SINGLE_FILE_BUNDLE} carries SOURCE '${found[0]}', this tree derives '${want}' — the light single file is not this source`);
+      if (places.length !== 1 || places[0] !== RUN_PATH_BUNDLE) problems.push(`${SINGLE_FILE_BUNDLE} does not name its run path '${RUN_PATH_BUNDLE}' exactly once`);
+      if (editions.length !== 1) problems.push(`${SINGLE_FILE_BUNDLE} carries ${editions.length} EDITION literals, expected exactly 1`);
+      else if (editions[0] !== EDITION_LIGHT) problems.push(`${SINGLE_FILE_BUNDLE} calls itself the '${editions[0]}' edition — the light single file must say '${EDITION_LIGHT}'`);
+    }
+    let pinned = 0;
+    if (bundleText != null) {
+      const m = /const ASSET_PACKS = (\{.*?\});\n/.exec(bundleText);
+      let pin = null;
+      try { pin = m ? JSON.parse(m[1]) : null; } catch { pin = null; }
+      if (!pin || !pin.packs || !Object.keys(pin.packs).length) {
+        problems.push(`${BUNDLE} pins no packs — since step 8e it is the pack-shaped game file, and a build with nothing pinned is not one`);
+      } else {
+        const files = Object.values(pin.packs).map((p) => [p.index, p.sha256]);
+        if (pin.fonts) files.push([pin.fonts.file, pin.fonts.sha256]);
+        for (const [rel, sha] of files) {
+          const abs = resolve(root, 'build', String(rel));
+          if (!existsSync(abs)) { problems.push(`${BUNDLE} pins build/${rel}, which is not on disk`); continue; }
+          let text = readFileSync(abs, 'utf8');
+          // The font sidecar's pin covers the JSON string it hands the loader.
+          if (pin.fonts && rel === pin.fonts.file) {
+            const sm = /^__ashenFonts\((.*)\);\n$/s.exec(text);
+            try { text = sm ? JSON.parse(`[${sm[1]}]`)[1] : null; } catch { text = null; }
+          }
+          const got = text == null ? null : createHash('sha256').update(text, 'utf8').digest('hex');
+          if (got !== sha) problems.push(`build/${rel} does not hash to the pin ${BUNDLE} carries (${String(sha).slice(0, 12)})`);
+          else pinned += 1;
+        }
+      }
+    }
+    add(problems.length === 0, 'E2 SINGLE FILE AND PACKS',
       problems.length === 0
-        ? `${MOBILE_BUNDLE} carries the same SOURCE '${want}' and names its edition '${EDITION_MOBILE}'`
+        ? `${SINGLE_FILE_BUNDLE} carries the same SOURCE '${want}' and names its edition '${EDITION_LIGHT}'; the ${pinned} pack file(s) ${BUNDLE} pins are in build/packs/ and hash to their pins`
         : problems.join('\n      '));
   }
 
@@ -1146,11 +1203,42 @@ export function check(root = REPO_ROOT) {
   // `fatal: not a git repository`, and a row that already resolves that to
   // UNKNOWN in its own words does not also need git shouting between the rows.
   const g = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  // UNREAD IS NOT ABSENT. `null` means the commit's tree has no record — the
+  // pre-scheme n/a. A record the tree NAMES but git cannot hand over (its blob
+  // missing from a partial, shallow or damaged clone) is a different fact, and
+  // it comes back as { unreadable } so the row can say UNKNOWN instead of
+  // mistaking it for a parent from before the scheme. So is a record git hands
+  // over that is not JSON (a conflict-marked or truncated file): it comes back
+  // as { unparsable }, never as null. `--full-tree` makes the path read from
+  // the top of the repository, as `<rev>:<path>` does.
+  // git's own reason rides along: the first line of `e.message` is only
+  // "Command failed: git …"; the `fatal: …` line on stderr says whether the
+  // object is missing or the path is wrong.
+  const why = (e) => {
+    const said = String(e && e.stderr || '').split('\n').map((l) => l.trim()).find(Boolean);
+    const head = String(e && e.message || e).split('\n')[0];
+    return said ? `${head}: ${said}` : head;
+  };
   const at = (rev) => {
+    let text;
     try {
-      const raw = JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`));
+      text = g('show', `${rev}:${ORDINAL_HOME}`);
+    } catch (shown) {
+      let listed;
+      try {
+        listed = g('ls-tree', '--full-tree', '--name-only', rev, '--', ORDINAL_HOME).trim();
+      } catch (e) {
+        // THE TREE ITSELF COULD NOT BE LISTED (its tree object missing or
+        // damaged). Whether it names the record at all is then unknown, so this
+        // is a third fact, kept apart from "named but unreadable" (#1519 review).
+        return { uninspected: why(e) };
+      }
+      return listed ? { unreadable: why(shown) } : null;
+    }
+    try {
+      const raw = JSON.parse(text);
       return { ordinal: Number(raw.ordinal), release: raw.release ?? null, digest: raw.digest ?? null };
-    } catch { return null; }
+    } catch (e) { return { unparsable: String(e && e.message || e).split('\n')[0] }; }
   };
   try {
     const parents = g('rev-list', '--parents', '-n', '1', 'HEAD').trim().split(/\s+/);
@@ -1160,6 +1248,38 @@ export function check(root = REPO_ROOT) {
     } else {
       const before = at(parent);
       const now = at('HEAD');
+      const blind = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.uninspected);
+      if (blind) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${blind[0]}'s tree could not be inspected (${blind[1].uninspected}), so whether it records ${ORDINAL_HOME} at all is not known;`
+          + ` an unlisted tree is not one without a record, so this is not the pre-scheme n/a;`
+          + ` fetch the missing history (git fetch --unshallow, or a full clone) rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      const unread = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.unreadable);
+      if (unread) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${unread[0]}'s tree names ${ORDINAL_HOME} but git could not read it (${unread[1].unreadable}).`
+          + ` A record git cannot show is not one that is absent, so this is not the pre-scheme n/a;`
+          + ` fetch the missing history (git fetch --unshallow, or a full clone) rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      // A RECORD THAT IS NOT JSON. At the parent, nothing about its build can be
+      // established, so it is UNKNOWN — not the pre-scheme n/a it used to pass
+      // as. At HEAD it is this change's own record, broken, so it is red.
+      if (now && now.unparsable) {
+        add(false, 'H ORDINAL INCREASES',
+          `HEAD's ${ORDINAL_HOME} is not valid JSON (${now.unparsable}) — a build with no readable number;`
+          + ` restore the record and rebuild (node tools/launch.mjs --build-only).`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      if (before && before.unparsable) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${parent.slice(0, 7)}'s ${ORDINAL_HOME} is not valid JSON (${before.unparsable}), so the parent's build cannot be read;`
+          + ` a record that cannot be parsed is not one that is absent, so this is not the pre-scheme n/a.`
+          + ` Merge a base whose record parses rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
       // THE ORDINAL AND RELEASE COUNT TOO, not only the digest. A hand-edit (or a
       // bad hand-merge) of the record that leaves the digest alone used to be
       // caught by row F against the committed bundle; CI now rebuilds from the

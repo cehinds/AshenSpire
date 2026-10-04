@@ -10,7 +10,9 @@
 
 import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
 import { mountDialogue } from './dialogue.js';
+import { scenePainting } from '../components/scenePainting.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
+import { eventArtAsset } from '../../content/eventArt.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
 // The fail-closed level rule goes through the framework's adopted door
@@ -23,6 +25,7 @@ import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
+import { assetUrl } from '../assetmap.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
 
 export function mountEvent(app, opts) {
@@ -34,6 +37,7 @@ export function mountEvent(app, opts) {
   // with its speaker, and its responses commit through the same door below.
   if (questChainForEvent(registries.questChains, eventId)) return mountDialogue(app, opts);
   const def = registries.events.get(eventId);
+  const eventArt = eventArtAsset(def);
   // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
   // says, or which choices deserve one — it names the action and hands over the
   // commit. `secondbeat.js` rules; `holdconfirm.js` performs. That is the whole
@@ -68,12 +72,13 @@ export function mountEvent(app, opts) {
   if (hud) app.insertAdjacentHTML('afterbegin', runHudHtml({ registries, run, meta, place: 'event', headerClass: 'map-header room-header' }));
   const screen = el('div', { class: 'screen event-screen room-screen' });
   app.appendChild(screen);
+  screen.appendChild(scenePainting('event'));
   const door = mountChoiceBody(screen, {
     className: 'event-door',
     eyebrow: 'Event',
     title: def.name,
     choices: el('div', { class: 'choice-body-narrative event-narrative' }, [
-      artWell({ glyph: def.art || '❖' }),
+      artWell(eventArt ? { src: assetUrl(eventArt), alt: '' } : { glyph: def.art || '❖' }),
       prose(def.text),
     ]),
     consequences: el('div', { class: 'choice-body-responses event-responses' },

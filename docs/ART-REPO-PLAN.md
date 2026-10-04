@@ -1,8 +1,9 @@
 # Moving high-res art out of this repository — plan
 
-Status: **steps 1–3 done, step 4 in progress** (see [Status](#status)). This is
-step 5 of the LFS / art-tier work (2026-09-26). `art/` and `assets/` are still
-tracked here; steps 5–7 each need their own owner go-ahead.
+Status: **steps 1–4 and 6 done; step 5 partly** (see [Status](#status)). This is
+step 5 of the LFS / art-tier work (2026-09-26). `art/` and `assets/` left this
+repository on 2026-10-03 with [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md)
+step 13 (the owner's go-ahead for step 6, "go"); step 7 still needs its own.
 
 **Extended by [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md)** (owner, 2026-09-27: "all assets shouldn't be bundled but
 should be like the art"). The light tier, the fonts, the music and the map
@@ -128,7 +129,7 @@ This repository keeps:
 | `tools/screenshot.mjs` | by hand | reads `assets/sprites/class-sprites.manifest.json` | reads it from its new home: `asset-data/sprites/class-sprites.manifest.json` (#1367) |
 | `styles/kit.css` | every build | `../assets/fonts/*` | *(superseded)* fonts are one `common` record each and load at runtime through `ASSET_CSS` (EXTERNAL-ASSETS-PLAN step 3b) |
 | README (`npx serve .`, `python -m http.server`) and DEVELOPER ("any static server works") | local dev | a plain static server serves `/assets/…` from disk | the docs name `node tools/serve.mjs` as the way to run from source, because a plain server cannot remap `/assets/…`; the built `AshenSpire.html` still needs no server |
-| `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | *(superseded)* maps every id to the fetch cache's light and common packs by default, and to the kept non-art files for those that are not assets; `--hd` serves the high pack (EXTERNAL-ASSETS-PLAN step 12) |
+| `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | *(superseded)* maps every id to the fetch cache's light and common packs by default, and to the kept non-art files for those that are not assets; `--hd` serves the high pack. **As built at EXTERNAL-ASSETS-PLAN step 12:** it maps `/assets-mobile/`, `/assets/fonts/`, `/music/` and `/map-detail/` to the cache; `/assets/…` (the high tier) moves with step 6 here |
 | `pose-studio/package.mjs`, `editor/server.mjs` | by hand | four `assets/*` trees; `editor` walks all of `assets/` | read the fetched cache (and `art/` below) |
 
 ### Readers of `art/` (source art)
@@ -174,7 +175,9 @@ Each step is one reviewed PR, or one owner action.
 5. **PR here — readers stop needing `art/`:** move or repoint every reader in the
    second table. Delete nothing that still has a reader.
 6. **PR here — delete** (folded into [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md) step 13, which still needs this step's own go-ahead): remove `art/` and the art under `assets/` from the `dev`
-   tree and add them to `.gitignore`.
+   tree and add them to `.gitignore`. **Done 2026-10-03** (owner: "go"), with
+   every reader switched in the same PR; see EXTERNAL-ASSETS-PLAN.md,
+   *Step 13 as built*, which also lists what step 5 still owes.
    - **Precondition:** `git grep -nE "['\"\`/](art|assets)/"` outside `assets-mobile`
      and the manifest finds only fetch-aware code, or ids resolved through
      `src/ui/assetmap.js`.
@@ -216,6 +219,7 @@ Each step is one reviewed PR, or one owner action.
 
 - Steps 1–3 are done (2026-09-26). The owner created `cehinds/AshenSpire-art` (private for now; the owner decided on 2026-09-27 to make it public, not yet done). [AshenSpire-art#1](https://github.com/cehinds/AshenSpire-art/pull/1) imported `hd/assets/` (5,201 files) and `art/`, and its release workflow published `hd-assets-v1`: zip sha256 `c03e4024…88a4`, the same bytes as a local pack of that commit.
 - Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. #1367 moved the 23 non-art files to `asset-data/` and switched every reader of them (tools, tests, `src/framework/data/assets.js`, the ship tools that write those manifests, the art pages that fetch `enemy-poses/manifest.json`, CREDITS and the docs). Still to do: switch the `assets/` (high-tier) readers. Both files joined `BUILD_IDENTITY_FILES` at [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md) step 11, which also pins `hd-assets-v2` (three zips, schema 2) and fetches each pack into `.art-cache/<tag>/<pack>/`.
+- **Step 6 is done (2026-10-03)** as [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md) step 13: `art/` and `assets/` are deleted from `dev` and ignored, and the `assets/` (high-tier) readers this step's row left open read the fetched high pack (`tools/art-source.mjs`, `HIGH_TREE`) or ask `art-manifest.json`. Of step 5, the tests' `art/` reads are switched (the small studio exports they need are fixtures under `tests/fixtures/art-exports/`) and dev-preview no longer copies `art/`; the ship, build and check tools that read `art/` stop by name here (`tools/art-authoring.mjs`) and still have to **move to AshenSpire-art**.
 - Releases are automatic: the art repo publishes the next `hd-assets-v<N>` on every merge to `main` that changes the pack ([AshenSpire-art#2](https://github.com/cehinds/AshenSpire-art/pull/2)).
 
 ## Owner answer (2026-09-27)

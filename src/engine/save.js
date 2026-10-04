@@ -107,6 +107,13 @@ function hydrateMissingEquipmentProfiles(registries, snapshot) {
  */
 function classTreeReferenceProblems(run, registries) {
   const problems = coreTagsTreeProblems(registries, run.class, run.coreTags, 'coreTags');
+  for (const [id, card] of Object.entries(run.classCards || {})) {
+    if (!registries.classes.has(id)) problems.push(`classCards.${id} is an unknown class`);
+    else problems.push(...coreTagsTreeProblems(registries, id, card.coreTags, `classCards.${id}.coreTags`));
+    for (const armourId of card.armour || []) {
+      if (armourId && !(registries.equipment?.armour || []).some((row) => row.classId === id && row.id === armourId)) problems.push(`classCards.${id}.armour names unknown armour '${armourId}'`);
+    }
+  }
   const snapshot = run.combatEntered && run.combatEntered.snapshot;
   if (snapshot) problems.push(...coreTagsTreeProblems(registries, run.class, snapshot.coreTags, 'combatEntered.snapshot.coreTags'));
   for (const draft of (run.pendingReward && run.pendingReward.rewards && run.pendingReward.rewards.classDrafts) || []) {
@@ -203,7 +210,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // decides; the snapshot's flag was cross-checked against it at the door.
   const poolDeck = isPoolDeckMode(run);
   const lentBefore = poolDeck ? COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId) : [];
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts, sideboard: run.sideboard, sideboardedEquipmentCardIds: snapshot.sideboardedEquipmentCardIds, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
   const lentAfter = new Set(COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId));
   const swept = lentBefore.filter((id) => !lentAfter.has(id));
   if (swept.length) {

@@ -146,7 +146,7 @@ const KINDS = {
     rows: (r) => {
       const seen = {};
       return r.classDrafts.filter((d) => d && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
-        .map((d) => ({ classId: d.classId, ordinal: (seen[d.classId] = (seen[d.classId] || 0) + 1) - 1, level: d.level, nodeIds: d.nodeIds.slice(), claimOrdinal: d.claimOrdinal || 0, choice: d.nodeIds.length > 1 }));
+        .map((d) => ({ classId: d.classId, ordinal: (seen[d.classId] = (seen[d.classId] || 0) + 1) - 1, level: d.level, nodeIds: d.nodeIds.slice(), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.nodeIds.length > 1 }));
     },
     blocked: () => null,
   },
@@ -158,7 +158,7 @@ const KINDS = {
     rows: (r) => {
       const seen = {};
       return r.skillDrafts.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
     },
     blocked: () => null,
   },
@@ -175,13 +175,15 @@ const KINDS = {
     // among cards exactly as the card offer is.
     present: (r) => Array.isArray(r.levelCards) && r.levelCards.some((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0),
     rows: (r) => r.levelCards.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1 })),
+      .map((d, i) => ({ requiredLevel: d.requiredLevel, ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1,
+        ...(d.source ? { source: d.source, skillId: d.skillId, claimOrdinal: d.claimOrdinal || 0 } : {}) })),
     blocked: () => null,
   },
   levelChoice: {
     present: (r) => Array.isArray(r.levelChoices) && r.levelChoices.some((d) => d && Array.isArray(d.options) && d.options.length > 0),
     rows: (r) => r.levelChoices.filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
-      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, options: d.options.map((o) => ({ kind: o.kind, id: o.id })), choice: d.options.length > 1 })),
+      .map((d, i) => ({ ...(d.classId ? { classId: d.classId } : {}), requiredLevel: d.requiredLevel, ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, options: d.options.map((o) => ({ kind: o.kind, id: o.id })), choice: d.options.length > 1,
+        ...(d.source ? { source: d.source, skillId: d.skillId, claimOrdinal: d.claimOrdinal || 0 } : {}) })),
     blocked: () => null,
   },
   flask: {

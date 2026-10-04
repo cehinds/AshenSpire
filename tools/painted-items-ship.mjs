@@ -1,6 +1,8 @@
 // Rebuild inventory-size WebP assets from the preserved painted PNG masters.
 import { createRequire } from 'node:module';
 import { ARMAMENTS } from '../src/content/equipment.js';
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const sharp = createRequire(import.meta.url)('sharp');
 for (const item of ARMAMENTS) {
   const source = `art/painted-items-2026-09-07/${item.id}.png`;

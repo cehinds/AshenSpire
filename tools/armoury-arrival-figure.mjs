@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { wireframeUi } from '../src/content/wireframeUi.js';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 function connectCdp(wsUrl) {
@@ -133,9 +134,10 @@ try {
         gate(reading.figure?.area > 0 && reading.figureVisible?.area >= reading.figure.area * .95, `${width}: character figure is visible without clipping`);
       }
       if (tab === 'cards') {
-        const reading = await ev(`(()=>{const cards=[...document.querySelectorAll('.armoury-card-gallery > .card')];const first=cards[0];const r=first?.getBoundingClientRect();const body=document.querySelector('.armoury-shell-body').getBoundingClientRect();return {count:cards.length,ratio:r?.width/r?.height,visible:r?.top>=body.top && r?.bottom<=body.bottom,text:first?parseFloat(getComputedStyle(first.querySelector('.ctext')).fontSize)*parseFloat(getComputedStyle(document.body).zoom || '1'):0};})()`);
+        const reading = await ev(`(()=>{const cards=[...document.querySelectorAll('.armoury-card-gallery > .card')];const first=cards[0];const r=first?.getBoundingClientRect();const body=document.querySelector('.armoury-shell-body').getBoundingClientRect();const rules=first?.querySelector('[data-card-binding="rules"], .ctext');return {count:cards.length,ratio:r?.width/r?.height,visible:r?.top>=body.top && r?.bottom<=body.bottom,rulesPresent:!!rules,text:rules?parseFloat(getComputedStyle(rules).fontSize)*parseFloat(getComputedStyle(document.body).zoom || '1'):0};})()`);
         gate(reading.count > 5, `${width}: deck gallery contains the class and equipment cards`);
-        gate(Math.abs(reading.ratio - 5/7) < .02 && reading.visible, `${width}: first card keeps its profile and is fully visible`);
+        gate(Math.abs(reading.ratio - wireframeUi.card.ratio) < .02 && reading.visible, `${width}: first card keeps its profile and is fully visible`);
+        gate(reading.rulesPresent, `${width}: card has a live rules text layer`);
         gate(reading.text >= 14.9, `${width}: card body text has a 15px reading floor`);
       }
     }

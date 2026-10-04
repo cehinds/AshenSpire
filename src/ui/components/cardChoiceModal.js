@@ -5,6 +5,7 @@
 // stance the player is already in (`option.active`) is shown but disabled and
 // marked, since re-entering it does nothing (#1449 review, Codex P2).
 import { openModal, button, el } from '../kit/index.js';
+import { t } from '../strings.js';
 
 /**
  * openCardChoiceModal({ plan, cardName, opener, onChoose, onClosed }) → the
@@ -14,14 +15,14 @@ import { openModal, button, el } from '../kit/index.js';
  */
 export function openCardChoiceModal({ plan, cardName = 'Card', opener = document.activeElement, onChoose, onClosed = null }) {
   let chosen = null;
-  const cancel = button({ label: 'Cancel', role: 'exit', attrs: { 'data-focusable': 'true' } });
+  const cancel = button({ label: t('common.cancel'), role: 'exit', attrs: { 'data-focusable': 'true' } });
   const shell = openModal({
     size: 'sm',
     className: 'card-choice',
     opener,
     eyebrow: cardName,
     title: plan.kind === 'stance' ? 'Choose a stance' : 'Choose',
-    closeLabel: `Cancel ${cardName}`,
+    closeLabel: `${t('common.cancel')} ${cardName}`,
     bodyClassName: 'as-pane card-choice-body',
     body: (host) => {
       for (const option of plan.options) {
@@ -31,7 +32,7 @@ export function openCardChoiceModal({ plan, cardName = 'Card', opener = document
           className: 'card-choice-option',
           disabled: !!option.active,
           attrs: { 'data-focusable': 'true', 'data-choice': option.id, 'aria-describedby': `card-choice-${option.id}`,
-            ...(option.active ? { 'data-active': 'true', 'aria-disabled': 'true', title: 'You are already in this stance' } : {}) },
+            ...(option.active ? { 'data-active': 'true', 'aria-disabled': 'true', title: t('cardChoice.stance.active') } : {}) },
         });
         pick.addEventListener('click', () => { if (option.active) return; chosen = option.id; shell.close(); });
         host.appendChild(el('div', { class: 'card-choice-row' }, [

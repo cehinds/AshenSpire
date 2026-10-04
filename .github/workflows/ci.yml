@@ -181,7 +181,37 @@ permissions:
 # forced onto Node 24. Both were bumped to @v5 (Node 24) in one commit that did
 # nothing else, so if a run breaks on the bump the diff says why.
 
+# STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
+# assets-mobile/, the fonts, music/, map-detail/ and art/) left this repository
+# at step 13; every reader reads the fetched art packs through
+# tools/art-source.mjs, which fails (naming the fetch) for a pack that is not
+# fetched. Each job that builds, serves or tests the checkout fetches with
+# ./.github/actions/fetch-art right after setup-node, and fetches ALL THREE
+# packs: the high pack is what /assets/ serves from source (tools/serve.mjs) and
+# what the art checks read, as the assets/ tree was before step 13.
+# ASHEN_ART_SOURCE=cache is the default behaviour now, kept as a name.
+env:
+  ASHEN_ART_SOURCE: cache
+  ART_PACKS: all
+
 jobs:
+  # ---------------------------------------------------------------------------
+  # LEAN CHECKOUTS (owner rule D38: a job over 20 minutes is refactored, never
+  # given more time). Run 37055409943 (`test`, f15a2250b) cancelled three jobs
+  # at 20 minutes, and all three spent the 20 minutes INSIDE actions/checkout:
+  # the parse gate's depth-1 `git fetch` took 19m45s, and Windows reproducible
+  # 0/12 and 2/12 never left it. No job's own work took more than 12.2 minutes.
+  # The tree at a dev tip is 2.28 GB, 1.56 GB of it source PNGs under art/ and
+  # docs/ that no step of these four jobs opens (an strace of every step,
+  # in the PR that added this block), and the D38 splits took a run from 15 jobs to 35, each fetching
+  # it at once — checkout grew from 0.6-7.8 min to 0.6-20. So `test`,
+  # `test-selftests`, `parse-gate` and `reproducible` check out with
+  # `filter: blob:none` (full history is ~10 MB of commits and trees; a blob a
+  # step reads from history is fetched on demand) and a sparse tree that leaves
+  # out art/**/*.png and docs/**/*.png (~0.72 GB left). Every step still runs,
+  # on the same runners. tests/doorplant-shard.test.mjs pins these four jobs'
+  # checkout options; a job added later is not covered until it is named there.
+  # ---------------------------------------------------------------------------
   # ---------------------------------------------------------------------------
   # The engine suite and the guards' own self-tests, on all three platforms.
   # These assert nothing about byte-identity, so they are the legs least likely
@@ -214,8 +244,20 @@ jobs:
           # that read a build moved to `reproducible`, which builds first.
           lfs: false
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       # #12 — THE CI DOOR PROVES ITSELF BEFORE IT JUDGES ANYTHING ELSE.
       # Every checker step below is wrapped in tools/verdict.mjs, which refuses a
@@ -273,11 +315,10 @@ jobs:
       - name: Music-only parity can fail (11 plants)
         run: node tools/verdict.mjs -- node tools/music-toggle-parity.mjs --selftest
 
-      - name: The mobile art twin tree mirrors assets/ at the policy's sizes and fits its budget
-        run: node tools/verdict.mjs -- node tools/mobile-art.mjs --check
-
-      - name: That twin-tree gate catches its own known-bads (9 plants)
-        run: node tools/verdict.mjs -- node tools/mobile-art.mjs --selftest
+      # The light twin tree's gate (tools/mobile-art.mjs --check, --selftest)
+      # left with assets-mobile/ at docs/EXTERNAL-ASSETS-PLAN.md step 13: the
+      # art repository generates and checks the light tier, and a fetch here
+      # verifies every light file against art-manifest.json.
 
       - name: Every asset directory has a CREDITS row and README Legal agrees with the AI disclosure
         run: node tools/verdict.mjs -- node tools/credits-check.mjs
@@ -333,8 +374,20 @@ jobs:
         with:
           lfs: false
           fetch-depth: 0 # the same history the `test` job's checkout has
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Every tool check still catches its own known-bad corpus
         run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
@@ -357,8 +410,20 @@ jobs:
         with:
           lfs: false # default depth, as tests.yml's parse-gate: the corpus reads no history,
           # and a full-history fetch cost this job 3 of its 16 minutes (run 36981774214)
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Parse gate — the bundler's own known-bad corpus
         # NOTHING RAN THIS FILE, and that is the defect it was written to prevent
@@ -438,18 +503,41 @@ jobs:
         with:
           lfs: false # the build is made here from source; nothing reads LFS
           fetch-depth: 0
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
 
-      - name: Build the standalone and refresh root + dist/
-        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+      - name: Build the game and refresh root + dist/
+        # Light art on dev/test (owner, 2026-09-26); release/main default to high.
+        # The pack-shaped game and the light single file (step 8e).
         env:
           NODE_OPTIONS: --max-old-space-size=6144
           ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
-      - name: Root + dist carry their art, and ARE the build
+      - name: The light single file carries its art, the pack HTML its packs, and every copy IS the build
         run: node tools/verdict.mjs -- node tools/verify-shipped.mjs
 
       - name: The rebuild changed nothing committed — the ordinal on the box is the one committed
@@ -494,7 +582,11 @@ jobs:
         # diff caught. Each runner hashes what it built; `reproducible-agree`
         # requires all three to be identical.
         shell: bash
-        run: node -e "const c=require('crypto'),f=require('fs');for(const p of ['build/AshenSpire.html','build/AshenSpire-mobile.html'].filter((p)=>f.existsSync(p)))console.log(c.createHash('sha256').update(f.readFileSync(p)).digest('hex')+'  '+p)" > build-digest-${{ matrix.os }}.txt
+        # Since step 8e (docs/EXTERNAL-ASSETS-PLAN.md) that is the pack-shaped
+        # HTML, the light single file AND each pack index (with its .js twin and
+        # the font sidecar): the objects are named by their bytes and listed by
+        # the indexes, so the indexes agreeing is the objects agreeing.
+        run: node -e "const c=require('crypto'),f=require('fs');const packs=f.existsSync('build/packs')?f.readdirSync('build/packs').sort().map((n)=>'build/packs/'+n):[];for(const p of ['build/AshenSpire.html','build/download/AshenSpire.html',...packs].filter((p)=>f.existsSync(p)))console.log(c.createHash('sha256').update(f.readFileSync(p)).digest('hex')+'  '+p)" > build-digest-${{ matrix.os }}.txt
 
       - uses: actions/upload-artifact@v4
         if: matrix.digest
@@ -502,41 +594,6 @@ jobs:
           name: build-digest-${{ matrix.os }}
           path: build-digest-${{ matrix.os }}.txt
           retention-days: 7
-
-      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
-      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
-      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
-      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The art
-      # repository is public (step 10a), so every run fetches, with or without a
-      # token, and runs the agreement check. A failure names its cause (token
-      # refused, repository unreadable, rate limit, network) on the step and as an
-      # annotation.
-      # ONE RUNNER PER OS (the `digest` legs), so Windows' twelve shards (and the
-      # two each on Linux and macOS) do not download the release once per shard.
-      # LAST, so a failed fetch never costs the runner its digest record or
-      # another step's verdict.
-      - name: Fetch the art packs this build's tier uses
-        if: ${{ matrix.digest && !cancelled() }}
-        env:
-          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
-          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
-          # Only a push or dispatch of a protected branch (dev, test, release, main)
-          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
-          # it; but anyone who can push a branch can edit this workflow to read any
-          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
-          # move it into a GitHub Environment limited to dev, test, release and main
-          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
-          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
-          ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
-        shell: bash # $ART_PACKS is an env var; Windows' default shell would not expand it
-        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
-
-      - name: The fetched packs and the trees agree byte for byte on this OS
-        if: ${{ matrix.digest && !cancelled() }}
-        env:
-          ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
-        shell: bash
-        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   reproducible-agree:
     name: the three runners built the same bytes
@@ -585,6 +642,10 @@ jobs:
         with:
           lfs: false # serves the source tree; reads no LFS object
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Fullscreen is first and visible through both Settings doors
         run: node tools/verdict.mjs -- node tools/displayfirst.mjs
@@ -606,6 +667,10 @@ jobs:
         with:
           lfs: false # the standalone about-changelog opens is built below
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (about-changelog opens build/AshenSpire.html)
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
@@ -680,6 +745,10 @@ jobs:
         with:
           lfs: false # the standalone is built below
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (the same build browser-guard makes)
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
@@ -711,6 +780,68 @@ jobs:
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 
+      - name: A whole run in the browser — title, class, map, a fight, the boss, death, title, a new run, 0 console errors
+        # FINISH §3 "A browser full run". Serves the source tree (the art packs
+        # fetched above); about 4 minutes measured locally.
+        run: node tools/verdict.mjs -- node tools/full-run-probe.mjs --check
+
+  # ---------------------------------------------------------------------------
+  # The flask-menu probe, and its plants sharded two ways: their own jobs by the
+  # owner's 20-minute rule (D38). The probe serves the SOURCE tree, so no build.
+  # ---------------------------------------------------------------------------
+  browser-flask-menu:
+    name: every flask menu in a real browser
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the probe serves the source tree
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+
+      - name: Every flask menu offers the shared plan, and a map Potions choice does and saves what was chosen
+        # FINISH §11 (#1447 review, D36): combat's Potions list, the map Potions
+        # list and minis, and the run HUD's room-rail menus opened in Chromium
+        # and compared to flaskActionPlan for the Crimson and Azure flasks and
+        # the carried potions; every map Potions choice driven for what it does;
+        # a Potions action and a "Use flasks outside combat" change saved and
+        # kept across the remount, and the world atlas left mounted by it.
+        # About 2 minutes on the machine it was written on.
+        run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs
+
+  browser-flask-menu-plants:
+    name: flask-menu known-bads in a real browser (${{ matrix.shard }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # tests/doorplant-shard.test.mjs requires every shard of the count here.
+        shard: ['0/2', '1/2']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the probe serves the source tree
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+
+      - name: ...and that probe can fail (its plants, this leg's half)
+        # Inverted expectation: each plant is copied into its own tree and the
+        # one probe it breaks is run from there (`--only`), then each probe runs
+        # clean. The whole corpus took about 10 minutes unsharded (19 plants) on the machine it
+        # was written on; each leg runs the plants at index i mod 2, so the two
+        # legs together run every plant, each once.
+        run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs --selftest --shard ${{ matrix.shard }}
+
   # ---------------------------------------------------------------------------
   # about-changelog's known-bad corpus, sharded two ways by the owner's 20-minute
   # rule (2026-10-02). Its own checkout, build and browser per leg.
@@ -730,6 +861,10 @@ jobs:
         with:
           lfs: false # the standalone is built below
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (the same build browser-guard makes)
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
@@ -762,6 +897,10 @@ jobs:
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       - name: Mobile Shrine, combat receipts, Settings lifecycle, and Armoury shortcut
@@ -785,6 +924,10 @@ jobs:
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       # No menu paints two scrollbars on one axis. Kept to the shape
@@ -950,6 +1093,10 @@ jobs:
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
 
       - name: …and that gate can fail — its known-bads, each through the real door
@@ -990,6 +1137,10 @@ jobs:
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
       - name: The startup gate can fail by the same rendered door (its plants at index i mod 4)
         # This took 41-46 minutes as one step, one browser boot per plant, run
@@ -999,21 +1150,52 @@ jobs:
         # every plant, each once.
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest --shard ${{ matrix.shard }}
 
+  # FINISH §5 "The idle animation plays" and §9 "Reduced motion is proven in a
+  # browser". Its own job so its bound is its own: one probe run is about a
+  # minute and the seven-plant selftest about ten (measured locally), inside
+  # the 20 below.
+  browser-motion:
+    name: idle animation and reduced motion in a real browser (${{ matrix.shard }})
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # SHARDED, NOT GIVEN MORE TIME (owner rule D38, 2026-10-02): each leg runs
+    # the --selftest plants at index i mod 3 plus its own clean edge
+    # (tools/doorplant.mjs SHARDS); the probe itself runs once, on leg 0/3.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['0/3', '1/3', '2/3']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # figures are fetched from the pinned art packs below
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+      - name: Every combatant idles, and reduced motion leaves nothing over 0.01 s in one turn
+        if: matrix.shard == '0/3'
+        run: node tools/verdict.mjs -- node tools/motion-probe.mjs
+      - name: …and that gate can fail (its known-bads, this leg's shard)
+        run: node tools/verdict.mjs -- node tools/motion-probe.mjs --selftest --shard ${{ matrix.shard }}
+
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
   # ---------------------------------------------------------------------------
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, display-first]
+    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
           echo "upstream results: test=${{ needs.test.result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
-          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }}"
+          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
           echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
-          echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} display-first=${{ needs['display-first'].result }}"
+          echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
@@ -1026,7 +1208,8 @@ jobs:
           echo "    (the count is printed by the suite itself in the \`test\` job, not asserted here)"
           echo "  · a rebuild changes nothing committed (buildordinal.json is this source's), on each runner"
           echo "  · the three runners build byte-identical standalones (reproducible-agree)"
-          echo "  · root AshenSpire.html and dist/AshenSpire.html carry their inlined art and ARE that build"
+          echo "  · the light single file (root AshenSpire.html, download/) carries its inlined art,"
+          echo "    dist/AshenSpire.html its pinned packs, and each IS that build"
           echo "  · no version-stamped build artifact is tracked in dist/"
           echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
           echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"
@@ -1053,6 +1236,10 @@ jobs:
           echo "    not furniture, and a card dipping into them touching nothing is not measured."
           echo "  · every legal left/right armament slot reaches the correct rendered side"
           echo "    of the viewer-facing figure, with all five same-door known-bads caught"
+          echo "  · on seed MOTION1 every living combatant's visible figure is moved by a running"
+          echo "    idle animation, at boot and after one turn; and one full turn under Reduced"
+          echo "    motion (setting+OS, setting, OS) shows no animation over 0.01 s and no script"
+          echo "    flipbook, with sixteen same-door known-bads caught (browser-motion, in 3 shards)"
           # WAS: "...and it is the only rendered claim in this file that is about the
           # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
           # Armoury step below — a second browser-driven rendered-layout claim in this
@@ -1101,16 +1288,27 @@ jobs:
           # PASS over this rather than let it stand, on her own test: a MISSING boundary
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Eight jobs open a browser."
+          # CORRECTED 2026-10-03 (#1520): "NOTHING HERE PLAYS IT" went false when the
+          # full-run probe was wired into browser-guard-stamp. One step now plays one
+          # bounded run; the line says exactly how far it goes and no further.
+          echo "  · that the game is playable in general. ONE step plays it, bounded:"
+          echo "    browser-guard-stamp's full run (tools/full-run-probe.mjs; push and dispatch,"
+          echo "    not pull_request). One class, one seed, 1440x900: from the title it plays the"
+          echo "    first fight with trusted presses, resolves later fights through window.__combat,"
+          echo "    walks to the act-1 boss and LOSES to it, returns to the title and begins a second"
+          echo "    run, with 0 console errors. It never WINS a run, never reaches act 2, and judges"
+          echo "    no balance, art or screen content. Nine jobs open a browser."
           echo "    browser-guard owns focused checks like hand-side placement, browser-guard-stamp"
-          echo "    the build stamp and cold boot, browser-guard-changelog the changelog's known-bads;"
+          echo "    the build stamp, cold boot and that full run, browser-guard-changelog the"
+          echo "    changelog's known-bads;"
           echo "    browser-layout-guard owns phone reach, browser-layout-hintstrip the hint strip and"
           echo "    Armoury, browser-hintstrip-plants the hint strip's known-bads. display-first owns"
           echo "    Settings through BOTH the cold Startup -> Title door and the in-run door. It sends"
           echo "    a complete CDP Enter down/up through Startup, then the Settings controls are DOM"
           echo "    clicks. browser-startup-plants runs the cold-boot known-bad corpus, in shards."
-          echo "    These gates inspect focused rectangles or alpha-weighted rendered pixels;"
-          echo "    none fights, wins, loses, or finishes a run, or proves general playability."
+          echo "    browser-motion samples idle and reduced motion over one seeded combat turn."
+          echo "    These gates inspect focused rectangles, alpha-weighted rendered pixels or"
+          echo "    animation state; apart from the full run above, none wins, loses, or finishes a run."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that

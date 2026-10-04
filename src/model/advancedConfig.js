@@ -1,3 +1,5 @@
+import { formationGroups } from './formationGroups.js';
+import { suppliedFormationPositioning } from '../content/formationPositioningPresets.js';
 import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
 import { presetGearProblems } from './attributes.js';
 import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
@@ -54,10 +56,10 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   ...FORMATION_DEFAULTS,
   playerSpriteScale: 1,
   enemySpriteScale: 2,
-  playerSpawnRow: 'C',
-  enemySpawnRow: 'C',
-  playerSpawnColumn: '2',
-  enemySpawnColumn: '3',
+  playerSpawnRow: 'F',
+  enemySpawnRow: 'F',
+  playerSpawnColumn: '1',
+  enemySpawnColumn: '6',
   showFormationGrid: false,
   movementEnabled: false, movementNeedsSelection: true, movementCostsAction: true,
   tileActivation: 'hold', moveActivation: 'hold', selectionColor: '#59bd75',
@@ -99,6 +101,9 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
 const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
+  'rewards.sourceBonuses.combatFeatChancePct': PERCENT,
+  'rewards.sourceBonuses.classFeatChancePct': PERCENT,
+  'rewards.sourceBonuses.classCardChancePct': PERCENT,
   'level.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
   'skill.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
   'skill.class.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
@@ -527,7 +532,7 @@ const BALANCE_LABELS = Object.freeze({
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
-  'stagger.player.actionLoss': 'Actions you lose when your meter fills',
+  'stagger.player.actionLoss': 'Stamina you lose when your meter fills',
   'stagger.player.statuses.vulnerable': 'Vulnerable stacks when your meter fills',
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
   'mana.minActionCost': 'Least action cost of a mana card',
@@ -713,6 +718,8 @@ const PRESENTATION_ROWS = Object.freeze([
 
 function presentationRows() {
   return [
+    { cat: 'Advanced', advancedGroup: 'Interface', type: 'text', presentationKey: 'formationGroups',
+      key: `${ADVANCED_CONFIG_PREFIX}presentation.formationGroups`, def: '[]', maxLength: 20000, label: 'Formation groups', note: 'Saved group offsets and member positions.' },
     { cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.formationPreset`, presentationKey: 'formationPreset',
       def: FORMATION_DEFAULTS.formationPreset, choices: FORMATION_PRESETS.map(p => p.value),
@@ -765,7 +772,7 @@ function presentationRows() {
     ...['player', 'enemy'].map((side) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnRow`,
-      presentationKey: `${side}SpawnRow`, def: 'C', choices: [...FORMATION_ROWS],
+      presentationKey: `${side}SpawnRow`, def: PRESENTATION_DEFAULTS[`${side}SpawnRow`], choices: [...FORMATION_ROWS],
       choiceLabels: Object.fromEntries([...FORMATION_ROWS].map(row => [row, `Row ${row}`])),
       legacyChoices: side === 'player'
         ? { front: 'A', middle: 'B', back: 'C' }
@@ -777,7 +784,7 @@ function presentationRows() {
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnColumn`,
       presentationKey: `${side}SpawnColumn`,
-      def: side === 'player' ? '2' : '3',
+      def: PRESENTATION_DEFAULTS[`${side}SpawnColumn`],
       choices: side === 'player' ? ['1', '2', '3'] : ['2', '3', '4', '5', '6'],
       legacyChoices: side === 'player'
         ? { left: '1', center: '2', right: '2' }
@@ -1315,7 +1322,9 @@ export function presentationConfig(settings = {}) {
   for (const row of presentationRows()) {
     if (!(row.key in settings)) continue;
     const raw = settings[row.key];
-    if (row.type === 'choice') {
+    if (row.presentationKey === 'formationGroups') {
+      values.formationGroups = JSON.stringify(formationGroups(raw));
+    } else if (row.type === 'choice') {
       const normalized = row.legacyChoices?.[raw] ?? raw;
       if (row.choices.includes(normalized)) values[row.presentationKey] = normalized;
     } else if (row.type === 'color') {
@@ -1326,6 +1335,9 @@ export function presentationConfig(settings = {}) {
       const number = Number(raw);
       if (Number.isFinite(number)) values[row.presentationKey] = Math.min(row.max, Math.max(row.min, row.integer ? Math.round(number) : number));
     }
+  }
+  if (!(`${ADVANCED_CONFIG_PREFIX}presentation.formationGroups` in settings)) {
+    values.formationGroups = suppliedFormationPositioning(`${values.formationColumns}x${values.formationRows}`)?.formationGroups || '[]';
   }
   return values;
 }

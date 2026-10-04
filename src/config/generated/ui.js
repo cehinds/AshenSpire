@@ -17,7 +17,7 @@
 // source content/config/ui/components/tooltip.json 2f6625d2c80ff482
 // source content/config/ui/components/workspace.json 0cf6a3c4756f2b16
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
-// source content/config/ui/presentation/armouryLayout.json 8a2d0c421a66ce7b
+// source content/config/ui/presentation/armouryLayout.json 88a13051246d1820
 // source content/config/ui/presentation/classArtAnchors.json feef8a503a056875
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
 // source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
@@ -26,8 +26,10 @@
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
 // source content/config/ui/presentation/combatFormationModel.json 7b45c4e60eafd36a
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
+// source content/config/ui/presentation/deckEditorCosts.json 04140679f73bb06a
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/equipmentAnimations.json 56d01ddfb62a6ab8
+// source content/config/ui/presentation/footerLayout.json 2defbcda60c2d7aa
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -35,7 +37,7 @@
 // source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
 // source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
 // source content/config/ui/presentation/startupGate.json a9fb421fb8ef4096
-// source content/config/ui/presentation/tooltipHelp.json f3968b1f1adea5e0
+// source content/config/ui/presentation/tooltipHelp.json 0d41173b062e9a88
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
@@ -45,7 +47,7 @@
 // source content/config/ui/screens/armoury.json b44124e6a29150d9
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
 // source content/config/ui/screens/prologue.json 6a3d3195bb99b94a
-// source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
+// source content/config/ui/screens/shop.json bb7b7e8ad52a0bdb
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
 
@@ -1260,6 +1262,19 @@ export const uiConfig = deepFreeze({
       },
       "positioning": {
         "gapRem": 1
+      },
+      "components": {
+        "bookOffers": {
+          "artWidth": 11,
+          "actionWidth": 11,
+          "minHeight": 14,
+          "gap": 1.4,
+          "padding": 1.4,
+          "compactArtWidth": 5.2,
+          "compactActionWidth": 7.2,
+          "compactGap": 0.8,
+          "compactPadding": 0.8
+        }
       }
     },
     "smith": {
@@ -1621,7 +1636,12 @@ export const uiConfig = deepFreeze({
               "leftHand"
             ],
             "defaultView": "list",
-            "gridColumns": 3
+            "gridColumns": 3,
+            "compactList": {
+              "thumbnailWidthPx": 82,
+              "phoneThumbnailWidthPx": 68,
+              "inspectionWidthPx": 264
+            }
           },
           "inventorySplit": {
             "defaultArmamentsRatio": 0.6,
@@ -1691,6 +1711,10 @@ export const uiConfig = deepFreeze({
           "cardClasses": {
             "inventoryItem": {
               "holdAction": false
+            },
+            "armamentItem": {
+              "holdAction": false,
+              "comparisonPresentation": "inline"
             }
           },
           "viewModes": {
@@ -3133,6 +3157,28 @@ export const uiConfig = deepFreeze({
           "zealotry",
           "emberTide",
           "harbingerOfBlight"
+        ]
+      }
+    },
+    "deckEditorCosts": {
+      "components": {
+        "resourceGroups": [
+          {
+            "id": "mana",
+            "label": "MP",
+            "resources": [
+              "mana"
+            ],
+            "art": "assets/ui/stamina-orb/diamond.webp"
+          },
+          {
+            "id": "stamina",
+            "label": "SP",
+            "resources": [
+              "stamina"
+            ],
+            "art": "assets/ui/stamina-orb/orb.webp"
+          }
         ]
       }
     },
@@ -47000,6 +47046,510 @@ export const uiConfig = deepFreeze({
         }
       }
     },
+    "footerLayout": {
+      "sizing": {
+        "maximumWidthPx": 600,
+        "minimumHeightPx": 92
+      },
+      "components": {
+        "layout": {
+          "schema": "ashenspire.footer",
+          "version": 1,
+          "width": 1200,
+          "height": 420,
+          "items": [
+            {
+              "id": "rail-a",
+              "asset": "connector",
+              "name": "Joining rail",
+              "x": 184,
+              "y": 191,
+              "w": 116,
+              "h": 14,
+              "group": "",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "rail-b",
+              "asset": "connector",
+              "name": "Joining rail",
+              "x": 390,
+              "y": 191,
+              "w": 88,
+              "h": 14,
+              "group": "",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "rail-c",
+              "asset": "connector",
+              "name": "Joining rail",
+              "x": 722,
+              "y": 191,
+              "w": 88,
+              "h": 14,
+              "group": "",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "rail-d",
+              "asset": "connector",
+              "name": "Joining rail",
+              "x": 900,
+              "y": 191,
+              "w": 88,
+              "h": 14,
+              "group": "",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "sp-orb",
+              "asset": "orb",
+              "name": "Stamina inner orb",
+              "x": 56,
+              "y": 133,
+              "w": 128,
+              "h": 128,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "sp-frame",
+              "asset": "frame",
+              "name": "Circular harness",
+              "x": 24,
+              "y": 101,
+              "w": 192,
+              "h": 192,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "sp-sigil",
+              "asset": "sigil",
+              "name": "Action sigil",
+              "x": 102,
+              "y": 151,
+              "w": 36,
+              "h": 28,
+              "group": "sp",
+              "visible": false,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "sp-number",
+              "asset": "text",
+              "name": "3",
+              "x": 64,
+              "y": 145,
+              "w": 112,
+              "h": 72,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{value}",
+              "fontSize": 56,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "sp"
+            },
+            {
+              "id": "sp-label",
+              "asset": "text",
+              "name": "SP",
+              "x": 92,
+              "y": 220,
+              "w": 56,
+              "h": 22,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{value}",
+              "fontSize": 18,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "spLabel"
+            },
+            {
+              "id": "draw-art",
+              "asset": "draw",
+              "name": "Draw cradle",
+              "x": 293,
+              "y": 120,
+              "w": 112,
+              "h": 145,
+              "group": "draw",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "draw-count",
+              "asset": "text",
+              "name": "18",
+              "x": 309,
+              "y": 266,
+              "w": 80,
+              "h": 26,
+              "group": "draw",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{value}",
+              "fontSize": 26,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "draw"
+            },
+            {
+              "id": "draw-label",
+              "asset": "text",
+              "name": "DRAW",
+              "x": 289,
+              "y": 300,
+              "w": 120,
+              "h": 22,
+              "group": "draw",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{value}",
+              "fontSize": 17,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "drawLabel"
+            },
+            {
+              "id": "end-plate",
+              "asset": "plate",
+              "name": "Button plate",
+              "x": 460,
+              "y": 154,
+              "w": 280,
+              "h": 87,
+              "group": "end",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "end-label",
+              "asset": "text",
+              "name": "END TURN",
+              "x": 490,
+              "y": 173,
+              "w": 220,
+              "h": 35,
+              "group": "end",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{value}",
+              "fontSize": 27,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "endTurn"
+            },
+            {
+              "id": "end-key",
+              "asset": "text",
+              "name": "SPACE",
+              "x": 530,
+              "y": 212,
+              "w": 140,
+              "h": 16,
+              "group": "end",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{value}",
+              "fontSize": 12,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "endTurnKey"
+            },
+            {
+              "id": "discard-art",
+              "asset": "spent-cards",
+              "name": "Discard / exhaust cradle",
+              "x": 798,
+              "y": 126,
+              "w": 116,
+              "h": 140,
+              "group": "discard",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "discard-count",
+              "asset": "text",
+              "name": "DISCARD  4",
+              "x": 776,
+              "y": 278,
+              "w": 160,
+              "h": 24,
+              "group": "discard",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{label}  {value}",
+              "fontSize": 18,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "discard"
+            },
+            {
+              "id": "exhaust-count",
+              "asset": "text",
+              "name": "EXHAUST  0",
+              "x": 776,
+              "y": 307,
+              "w": 160,
+              "h": 20,
+              "group": "discard",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{label}  {value}",
+              "fontSize": 14,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "exhaust"
+            },
+            {
+              "id": "potion-art",
+              "asset": "potions",
+              "name": "Potion tray",
+              "x": 973,
+              "y": 140,
+              "w": 192,
+              "h": 127,
+              "group": "potions",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "potion-label",
+              "asset": "text",
+              "name": "POTIONS",
+              "x": 991,
+              "y": 290,
+              "w": 156,
+              "h": 26,
+              "group": "potions",
+              "visible": true,
+              "locked": false,
+              "opacity": 1,
+              "text": "{value}",
+              "fontSize": 18,
+              "color": "#e7dcc0",
+              "fontFamily": "serif",
+              "fontWeight": 400,
+              "fontStyle": "normal",
+              "textAlign": "center",
+              "binding": "potions"
+            },
+            {
+              "id": "mana-0",
+              "asset": "diamond",
+              "name": "Mana 1",
+              "x": 109,
+              "y": 93,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-1",
+              "asset": "diamond",
+              "name": "Mana 2",
+              "x": 65.00000000000003,
+              "y": 104.78976446696939,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-2",
+              "asset": "diamond",
+              "name": "Mana 3",
+              "x": 32.78976446696939,
+              "y": 137,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-3",
+              "asset": "diamond",
+              "name": "Mana 4",
+              "x": 21,
+              "y": 181,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-4",
+              "asset": "diamond",
+              "name": "Mana 5",
+              "x": 32.7897644669694,
+              "y": 225,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-5",
+              "asset": "diamond",
+              "name": "Mana 6",
+              "x": 64.99999999999996,
+              "y": 257.2102355330306,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-6",
+              "asset": "diamond",
+              "name": "Mana 7",
+              "x": 108.99999999999999,
+              "y": 269,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-7",
+              "asset": "diamond",
+              "name": "Mana 8",
+              "x": 153,
+              "y": 257.2102355330306,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-8",
+              "asset": "spent",
+              "name": "Mana 9",
+              "x": 185.21023553303058,
+              "y": 225.00000000000006,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-9",
+              "asset": "spent",
+              "name": "Mana 10",
+              "x": 197,
+              "y": 181.00000000000003,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-10",
+              "asset": "spent",
+              "name": "Mana 11",
+              "x": 185.21023553303064,
+              "y": 137.00000000000006,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            },
+            {
+              "id": "mana-11",
+              "asset": "spent",
+              "name": "Mana 12",
+              "x": 152.99999999999997,
+              "y": 104.78976446696939,
+              "w": 22,
+              "h": 32,
+              "group": "sp",
+              "visible": true,
+              "locked": false,
+              "opacity": 1
+            }
+          ]
+        }
+      }
+    },
     "localMapPresentation": {
       "sizing": {
         "defaults": {
@@ -47580,7 +48130,7 @@ export const uiConfig = deepFreeze({
             "enemyTurn": "Enemies are resolving their moves. Your next turn follows.",
             "hp": "Health remaining. Reaching zero defeats this combatant.",
             "mana": "Mana pays spell costs.",
-            "stamina": "Stamina pays physical skill and Dodge costs.",
+            "stamina": "Stamina pays card and combat costs. It refills at the start of every turn.",
             "recovery": " Recovers {amount} per turn.",
             "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
             "playerPoise": "Your Stagger threshold — your Constitution, armament, armour and relics steady it. Enemy impact fills it.",

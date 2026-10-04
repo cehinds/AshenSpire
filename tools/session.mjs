@@ -558,8 +558,11 @@ export function createSession({ registries, seedString, endless = false, restore
     // to infer a target later from HP or block deltas.
     const emit = combat.emit;
     combat.emit = (type, payload = {}) => emit(type,
+      // The engine names the seat an HP change hit (targetPlayerId) when it
+      // can; the active seat is only the fallback, since an enemy's move or a
+      // status can hurt a seat that is not the active one.
       (type === 'damageDealt' || type === 'hpLost' || type === 'healed') && payload.targetId === 'player'
-        ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
+        ? { ...payload, playerId: payload.playerId ?? payload.targetPlayerId ?? combat.playerKey }
         : ['statusApplied', 'statusExpired'].includes(type) && payload.targetId === 'player'
           ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
         : payload);
@@ -619,7 +622,10 @@ export function createSession({ registries, seedString, endless = false, restore
     // Setup events are skipped, except the opening's sound cues (the first
     // draw, any shuffle, the first turn start), which ride the fight's first
     // scene once so a co-op client hears the opening as solo does.
-    live = { combat, pool, evCursor: combat.eventLog.length, opening: combat.eventLog.filter((e) => OPENING_CUE_EVENTS.includes(e.type)) };
+    // A setup HP loss (Warden Horn, Crimson Covenant) rides it too, so the
+    // hurt seat's device buzzes as solo's does; it plays no sound.
+    live = { combat, pool, evCursor: combat.eventLog.length, opening: combat.eventLog.filter((e) => OPENING_CUE_EVENTS.includes(e.type)
+      || (e.type === 'hpLost' && e.cause !== 'attack' && e.targetPlayerId != null)) };
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
   }
@@ -663,6 +669,7 @@ export function createSession({ registries, seedString, endless = false, restore
       headcount: connectedMembers().length,
       enemies: c.enemies.map((e) => ({
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
+        ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
         alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
         // WHAT IT HAS ALREADY DONE. The engine records every move that
         // RESOLVED on `performedMoves` (coopCombat.js, beside combat.js's own
@@ -681,6 +688,7 @@ export function createSession({ registries, seedString, endless = false, restore
       })),
       players: [...c.players.values()].map((P) => ({
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
+        ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
         mana: P.entity.mana, maxMana: P.entity.maxMana,
         stamina: P.entity.stamina, maxStamina: P.entity.maxStamina,
         attributeMode: P.attributeMode, attributes: { ...P.attributes },
@@ -744,6 +752,11 @@ export function createSession({ registries, seedString, endless = false, restore
     const c = live.combat;
     if (!c.result) { session.scene = combatScene(); return { ok: true }; }
     const pool = live.pool;
+    // THE FIGHT'S LAST RECEIPTS. The card or wound that ended it never reaches
+    // a combat scene, so its digest rides the scene that replaces combat, for
+    // the client to play its haptics (coop.js coopReceiptSounds).
+    const last = combatScene();
+    const combatReceipts = { receiptSeq: last.receiptSeq, events: last.events };
     const outcome = coopOutcome(c);
     // The levels each seat's award bought, for its level card (SPEC §15.1).
     const levelUpsBy = {};
@@ -754,7 +767,7 @@ export function createSession({ registries, seedString, endless = false, restore
       const P = c.players.get(m.id);
       if (P) {
         m.run.mana = P.entity.mana;
-        m.run.stamina = P.entity.stamina;
+        m.run.stamina = Math.min(P.entity.stamina, m.run.maxStamina);
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
         m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
         // The seat's skill receipt, keyed by its own id (plan phase 4a).
@@ -786,13 +799,14 @@ export function createSession({ registries, seedString, endless = false, restore
       // defeat forfeits the queue with the seat (Codex on #557).
       if (!fighterLives) {
         for (const m of livingMembers()) { m.run.hp = 0; m.alive = false; m.catchup.length = 0; }
-        session.scene = { kind: 'complete', victory: false };
+        session.scene = { kind: 'complete', victory: false, combatReceipts };
         return { ok: true, result: 'defeat' };
       }
     }
     // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
     for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = registries.balance.coop.reviveHp;
     grantRewards(pool, levelUpsBy);
+    session.scene.combatReceipts = combatReceipts;
     if (pool === 'boss') session.scene.afterReward = 'advanceAct';
     return { ok: true, result: c.result };
   }

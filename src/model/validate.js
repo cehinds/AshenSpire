@@ -21,6 +21,7 @@ import { consumableTableProblems, companionTableProblems } from './consumables.j
 import { shopsTableProblems, masterTableProblems } from './shopKinds.js';
 import { marketAdditionTableProblems, blacksmithTableProblems } from './marketStock.js';
 import { resolveFloorPlan } from './floorplan.js';
+import { speakerPortraitAsset } from '../content/speakerArt.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
 import { viewRefusals, geometryRefusals } from './mapview.js';
@@ -412,7 +413,8 @@ function collectContentProblems(bundle, errors = []) {
       if (speakerIds.has(row.id)) err(`speakers.${row.id}`, 'duplicate speaker id');
       speakerIds.add(row.id);
       if (typeof row.name !== 'string' || !row.name.trim()) err(`speakers.${row.id}.name`, 'a speaker needs a name for its caption and name plate');
-      if (row.portraitKey !== '' && row.portraitKey !== undefined && row.portraitKey !== null && !enemyIds.has(row.portraitKey)) {
+      if (row.portraitKey !== '' && row.portraitKey !== undefined && row.portraitKey !== null
+        && !enemyIds.has(row.portraitKey) && !speakerPortraitAsset(row.portraitKey)) {
         err(`speakers.${row.id}.portraitKey`, `unknown portrait key '${row.portraitKey}': no shipped art answers to it (leave it blank for the name plate)`);
       }
     });
@@ -718,6 +720,16 @@ function collectContentProblems(bundle, errors = []) {
       }
       if (typeof s.onLevelUp !== 'boolean') err(`${root}.onLevelUp`, `must be true or false, got ${JSON.stringify(s.onLevelUp)}`);
       if (!(Number.isInteger(s.onLevelUpMaxPerFight) && s.onLevelUpMaxPerFight >= 0)) err(`${root}.onLevelUpMaxPerFight`, `must be a non-negative integer, got ${JSON.stringify(s.onLevelUpMaxPerFight)}`);
+    }
+  }
+
+  if (b.balance?.rewards?.sourceBonuses !== undefined) {
+    const bonuses = b.balance.rewards.sourceBonuses;
+    const keys = ['combatFeatChancePct', 'classFeatChancePct', 'classCardChancePct'];
+    if (!bonuses || typeof bonuses !== 'object' || Array.isArray(bonuses)) err('balance.rewards.sourceBonuses', 'must be an object');
+    else {
+      for (const key of Object.keys(bonuses)) if (!keys.includes(key)) err(`balance.rewards.sourceBonuses.${key}`, 'Unknown field');
+      for (const key of keys) if (!Number.isInteger(bonuses[key]) || bonuses[key] < 0 || bonuses[key] > 100) err(`balance.rewards.sourceBonuses.${key}`, 'must be an integer percent 0–100');
     }
   }
 
@@ -2909,6 +2921,11 @@ export function deckRulesTableProblems(table, cards, err, nodes) {
   const nodeIds = new Set((Array.isArray(nodes) ? nodes : []).map((n) => n && n.id));
   if (Array.isArray(single.types)) single.types.forEach((v, i) => { if (!CARD_TYPES.includes(v)) at(`singleCopy.types[${i}]`, `names no card type: '${v}' (one of ${CARD_TYPES.join(', ')})`); });
   if (Array.isArray(single.tags) && nodeIds.size) single.tags.forEach((v, i) => { if (!nodeIds.has(v)) at(`singleCopy.tags[${i}]`, `names no tag node: '${v}'`); });
+  for (const key of ['universalTags', 'weaponTags']) {
+    const values = table.equipmentEligibility?.[key];
+    if (!Array.isArray(values) || values.some((value) => typeof value !== 'string' || !value)) at(`equipmentEligibility.${key}`, 'must be a list of tag ids');
+    else values.forEach((value, index) => { if (nodeIds.size && !nodeIds.has(value)) at(`equipmentEligibility.${key}[${index}]`, `names no tag node: '${value}'`); });
+  }
   const ids = new Set((Array.isArray(cards) ? cards : []).map((c) => c && c.id));
   if (!Array.isArray(table.unlimitedCardIds)) at('unlimitedCardIds', 'must be a list of card ids');
   else table.unlimitedCardIds.forEach((id, i) => { if (ids.size && !ids.has(id)) at(`unlimitedCardIds[${i}]`, `names no card: '${id}'`); });

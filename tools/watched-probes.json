@@ -331,7 +331,7 @@
    "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/components/armouryComponents.js (the procedural locked position card the ladder produces) · src/ui/screens/equipment.js (.armoury-position-card.is-locked)",
    "anchors": [
     "fitsSlot",
-    "armoury-position-card is-locked"
+    "armoury-position-card armament-vacant-row is-locked"
    ],
    "screen": "the Armoury › the slot ladder",
    "reach": [
@@ -483,9 +483,9 @@
   {
    "id": "A9",
    "by": "Bjorn",
-   "read": "src/ui/components/refusal.js · src/ui/components/armouryComponents.js · src/ui/screens/equipment.js (.armoury-position-card.is-locked) · the locked position card's own tooltip",
+   "read": "src/ui/components/refusal.js · src/ui/components/armouryComponents.js · src/ui/screens/equipment.js (.armoury-position-card.is-locked) · the locked position row's visible authored unlock requirement",
    "anchors": [
-    "armoury-position-card is-locked"
+    "armoury-position-card armament-vacant-row is-locked"
    ],
    "screen": "the Armoury › a locked slot, touched",
    "reach": [
@@ -507,10 +507,10 @@
    "expect": {
     "present": {
      "the locked position card": ".armoury-position-card.is-locked",
-     "a refusal that says why": "#tooltip"
+     "a refusal that says why": ".armoury-position-card.is-locked .armament-unlock-requirement"
     },
     "measure": {
-     "says": "(document.getElementById('tooltip')||{}).innerText"
+     "says": "(document.querySelector('.armoury-position-card.is-locked .armament-unlock-requirement')||{}).innerText"
     },
     "wrong": [
      {
@@ -1376,7 +1376,7 @@
   {
    "id": "S4",
    "by": "Bjorn",
-   "read": "src/ui/screens/combat.js (endTurnBeat = arm($('.end-turn'), 'endTurn', …), the .et-key kbd) · src/ui/components/holdbeat.js (beat-hold, data-hold-action — they LEFT holdconfirm.js)",
+   "read": "src/ui/screens/combat.js (endTurnBeat = arm($('.end-turn'), 'endTurn', …)) · src/ui/components/combatActionRow.js (paintEndTurnKey, the .et-key kbd — it LEFT combat.js's renderControls in #1489) · src/ui/components/holdbeat.js (beat-hold, data-hold-action — they LEFT holdconfirm.js)",
    "anchors": [
     "endTurnBeat",
     "et-key",

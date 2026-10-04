@@ -14,6 +14,7 @@ import { basename, dirname, join, parse, relative, resolve, sep } from 'node:pat
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { copySourceArt } from './art-source.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SHOT_DIR = process.env.QA18_EVIDENCE_DIR
@@ -39,7 +40,7 @@ const browserPath = [
 // allowance; timeout remains a named fatal result rather than a catch.
 const SELFTEST_CHILD_TIMEOUT_MS = 360000;
 const SELFTEST_CONTROL_TIMEOUT_MS = 30000;
-const SELFTEST_COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools', 'assets'];
+const SELFTEST_COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools'];
 const SELFTEST_FINAL = /^rebind-capture: \d+\/\d+ checks passed(?: against shipped AshenSpire\.html| against source); \d+ failed$/m;
 const activeSelftestRuns = new Set();
 const activeSelftestRoots = new Set();
@@ -842,6 +843,8 @@ function copySelftestTree(privateRoot) {
       filter: (src) => !/tools[\\/](results|shots)([\\/]|$)/.test(src) && !/\.py$/.test(src),
     });
   }
+  // assets/: the fetched high pack and the fonts (the tree left at docs/EXTERNAL-ASSETS-PLAN.md step 13).
+  copySourceArt(root);
   return root;
 }
 

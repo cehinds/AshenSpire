@@ -36,6 +36,7 @@ import { serve } from './serve.mjs';
 // The orientation gate's one number, read from its single home. See THE FIRST
 // VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
 import { balance } from '../src/content/balance.js';
+import { SETTINGS_DEFAULTS } from '../src/content/settingsDefaults.js';
 
 // Derived here, above --selftest, because BOTH readers need it and two reads of
 // one number is the defect this derivation exists to remove.
@@ -67,6 +68,7 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'tutorial-reach.mjs',
+    extraCopy: ['art-release.json'], // Required by the source server's build identity.
     // DERIVED, not typed — this named the viewport as a literal '800x450' until
     // 2026-08-16. When the gate moved 432 -> 465 the first viewport moved with
     // it and this string did not, so `--only` would have matched NO viewport and
@@ -690,6 +692,73 @@ async function main() {
     ok(rest.settled, `resize: board and spotlight come to rest after the re-flex (${rest.ms} ms)`);
     ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, 'resize: both buttons still on-screen and hit-testable');
     ok(spotOn.cover > 0.5, `resize: spotlight still lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);
+
+    // THE HAND MOVES BY ITSELF, TOO. hand.js re-fans from its own deferred
+    // ResizeObserver layout, which can land after the tutorial's 220 ms
+    // re-place without moving the step's target at all (Enemy intent, End
+    // Turn). A settle loop that watched only the target never re-placed, and
+    // the bubble sat on a card — the keep-clear rule (D45) undone by a resize.
+    // This makes that move deterministic: on the Enemy intent step, the
+    // first re-place after the resize, once the target has held its box for
+    // a few frames, is followed by the hand sliding a card under where the
+    // bubble now stands. The target does not move; only the keep-clear set
+    // does. At rest, no card may be covered.
+    console.log('\n  resize, then the hand re-fans on its own (target still): bubble keeps off every card');
+    await boardWithTutorial({ w: 1920, h: 1080 });
+    await clickSel('.tut-next', 'tutorial Next from Energy');
+    const onIntent = await evalIn(`(document.querySelector('.tut-title') || {}).textContent || ''`);
+    ok(onIntent === 'Enemy intent', `refan: on the Enemy intent step (${onIntent || 'none'})`);
+    await evalIn(`(() => {
+      window.__refan = null;
+      const veil = document.querySelector('.tut-veil');
+      addEventListener('resize', () => {
+        // Wait for the re-place, then for the target to hold its box for a
+        // few frames (under the settle loop's SETTLE_STILL_MS of credited
+        // time, so the loop is still watching), so nothing but the hand moves.
+        const intent = () => { const r = document.querySelector('.enemy-row .intent').getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(Math.round).join(','); };
+        const mo = new MutationObserver(() => {
+          mo.disconnect();
+          let last = intent(), held = 0, t0 = performance.now();
+          const watch = () => {
+            const k = intent();
+            if (k !== last) { last = k; held = 0; t0 = performance.now(); } else held += 1;
+            if (held < 6 || performance.now() - t0 < 150) return requestAnimationFrame(watch);
+            const hand = document.querySelector('.hand');
+            const card = hand && hand.querySelector('.card');
+            if (!card) { window.__refan = { moved: false }; return; }
+            const b = veil.querySelector('.tut-bubble').getBoundingClientRect();
+            const c = card.getBoundingClientRect();
+            // The card's top-left onto the bubble's centre: a real overlap,
+            // with the rest of the screen left for a clear placement.
+            const dx = b.left + b.width / 2 - c.left;
+            const dy = b.top + b.height / 2 - c.top;
+            // translate is read in the hand's local (pre --ui-zoom) space, so
+            // measure one probe move and scale the real one by it.
+            hand.style.translate = '100px 100px';
+            const p = card.getBoundingClientRect();
+            const sx = (p.left - c.left) / 100, sy = (p.top - c.top) / 100;
+            hand.style.translate = Math.round(dx / sx) + 'px ' + Math.round(dy / sy) + 'px';
+            const m = card.getBoundingClientRect();
+            window.__refan = { moved: true, card: [m.left, m.top].map(Math.round), onto: [b.left + b.width / 2, b.top + b.height / 2].map(Math.round) };
+          };
+          requestAnimationFrame(watch);
+        });
+        mo.observe(veil, { attributes: true, subtree: true, attributeFilter: ['style'] });
+      }, { once: true });
+    })()`);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1000, deviceScaleFactor: 1, mobile: false }, S);
+    let refanned = false;
+    try { refanned = await until(`!!(window.__refan && window.__refan.moved)`, 'the hand re-fan after the re-place'); } catch { /* reported below */ }
+    ok(refanned, `refan: the hand moved after the bubble's re-place (${JSON.stringify(await evalIn('window.__refan'))})`);
+    const refanRest = refanned ? await evalIn(SETTLED) : { settled: false, ms: 0 };
+    ok(refanRest.settled, `refan: board and spotlight come to rest (${refanRest.ms} ms)`);
+    const covered = await evalIn(`(() => {
+      const b = document.querySelector('.tut-bubble').getBoundingClientRect();
+      const hit = [...document.querySelectorAll('.hand .card')].map((n, k) => [k, n.getBoundingClientRect()])
+        .filter(([, r]) => b.left < r.right && r.left < b.right && b.top < r.bottom && r.top < b.bottom).map(([k]) => k);
+      return { cards: hit, bubble: [b.left, b.top, b.right, b.bottom].map(Math.round) };
+    })()`);
+    ok(!covered.cards.length, `refan: the bubble covers no hand card after the hand moved on its own — ${JSON.stringify(covered)}`);
   }
 
   // End-to-end on the REAL first-run path, through the title screen with real
@@ -708,13 +777,25 @@ async function main() {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, S);
     await cdp.send('Page.navigate', { url: base }, S);
     await until(`document.readyState === 'complete'`, 'the page');
-    await evalIn(`(() => { localStorage.clear(); return 1; })()`);
+    ok(await evalIn(`(() => { localStorage.clear(); return localStorage.length === 0; })()`),
+      'first-run: durable storage is empty before boot');
     await cdp.send('Page.navigate', { url: base }, S);
     await passStartupGate();
+    // Promoted defaults legitimately save a settings-only profile during boot.
+    // Freshness means no prior play or completed tutorial, not no profile file.
     ok(
-      await evalIn(`localStorage.getItem('sote_meta_v1') === null`),
-      'first-run: a genuinely new player — no meta in durable storage at all'
+      await evalIn(`(() => {
+        const meta = JSON.parse(localStorage.getItem('sote_meta_v1') || 'null');
+        const noRun = !Object.keys(localStorage).some(key => /^sote_run_v1(?:_s\\d+)?$/.test(key));
+        return noRun && (!meta || (meta.settings.seenTutorial !== true &&
+          meta.results.length === 0 && meta.discoveredArmaments.length === 0 && meta.discoveryReceipts.length === 0));
+      })()`),
+      'first-run: a genuinely new player — no saved run, results, discoveries or completed tutorial'
     );
+    ok(await evalIn(`(() => {
+      const meta = JSON.parse(localStorage.getItem('sote_meta_v1') || 'null');
+      return Object.entries(${JSON.stringify(SETTINGS_DEFAULTS.values)}).every(([key, value]) => meta?.settings?.[key] === value);
+    })()`), 'first-run: every promoted default is applied to the fresh profile');
     await wait(400);
     // History kept short: this path once measured #cz-start laid out below the
     // fold at 1920x1080, scrolled past it and went green for a week — a tool

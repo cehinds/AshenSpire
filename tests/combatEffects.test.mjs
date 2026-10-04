@@ -6,9 +6,8 @@ test('co-op stance receipt identifies the actor for its visual effect',()=>{cons
 import { COMBAT_EFFECT_ART } from '../src/content/combatEffectArt.js';
 import { combatEffectPresentation } from '../src/content/combatEffectPresentation.js';
 import { combatEffectForEvent } from '../src/model/combatEffectEvents.js';
-import { readFileSync } from 'node:fs';
+import { artRecord } from '../tools/art-source.mjs';
 import {playCombatEffect,playCombatEffectPlan} from '../src/ui/combatEffectSprites.js';
-import { createHash } from 'node:crypto';
 
 test('Reduce flashes suppresses painted releases, casts and reactions before creating animation nodes',()=>{
  const previous=globalThis.document;
@@ -24,7 +23,9 @@ test('every shipped effect has six distinct painted frames',()=>{
  assert.equal(Object.keys(COMBAT_EFFECT_ART).length,56);
  for(const [kind,frames]of Object.entries(COMBAT_EFFECT_ART)){
   assert.equal(frames.length,6,kind);
-  const hashes=frames.map(file=>createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'));
+  // The high record's sha256 in art-manifest.json (the art left this repository at
+  // docs/EXTERNAL-ASSETS-PLAN.md step 13; the manifest names each file's bytes).
+  const hashes=frames.map(file=>artRecord(file)?.high?.sha256??assert.fail(`${file} is not in art-manifest.json`));
   assert.equal(new Set(hashes).size,6,kind+' must not repeat artwork');
  }
 });

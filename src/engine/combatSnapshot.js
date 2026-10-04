@@ -4,6 +4,7 @@
 // RNG, queues, buffers, and runtime methods stay outside persisted data; this
 // service validates the versioned model and reconnects those dependencies.
 
+import { bindTurnStamina } from '../model/turnStamina.js';
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
 import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
@@ -52,6 +53,7 @@ export function serializeCombatSnapshot(combat) {
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
+    ...(combat.sideboardedEquipmentCardIds?.length ? { sideboardedEquipmentCardIds: combat.sideboardedEquipmentCardIds } : {}),
     ...(combat.poolDeck ? { poolDeck: true } : {}),
     itemUpgradeLevels: combat.itemUpgradeLevels,
     itemMounts: combat.itemMounts,
@@ -146,6 +148,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
+    sideboardedEquipmentCardIds: saved.sideboardedEquipmentCardIds || [],
     // The run's own rule backs the snapshot's flag (model/cardRemoval.js), and
     // when the caller knows the run the two must agree, never be OR-ed.
     ...(restoredPoolDeck(saved.poolDeck, fallbackPoolDeck) ? { poolDeck: true } : {}),
@@ -168,7 +171,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     drawPerTurn: saved.drawPerTurn,
     // Absent on a fight saved before ruleset 7, whose rows read no level.
     ...(Number.isInteger(saved.characterLevel) ? { characterLevel: saved.characterLevel } : {}),
-    player: saved.player,
+    player: bindTurnStamina({ ...saved.player, stamina: saved.player.energy, maxStamina: saved.player.energyMax ?? saved.player.maxStamina }),
     enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
@@ -257,7 +260,7 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   run.itemUpgradeLevels = structuredClone(combat.itemUpgradeLevels || {});
   delete run.armamentLevels;
   for (const field of ['hp', 'mana', 'stamina']) {
-    run[field] = combat.player[field];
+    run[field] = field === 'stamina' ? Math.min(combat.player.stamina, combat.player.maxStamina) : combat.player[field];
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
     run[maxField] = combat.player[maxField];
   }

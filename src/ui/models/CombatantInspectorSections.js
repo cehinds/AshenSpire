@@ -6,6 +6,8 @@
 // share wording. The preview carries the name and the pool meters (HP, MP,
 // Poise) beside the sprite.
 
+import { t } from '../strings.js';
+
 export const INSPECTOR_SECTION_ORDER = Object.freeze(['summary', 'state', 'history', 'abilities', 'traits', 'lore']);
 
 // The side preview's meters, in stack order (owner follow-up: restore the
@@ -32,7 +34,7 @@ export function projectCombatantInspector(subject, text = (id) => id) {
   if (!subject?.name) throw new Error('combatant inspector requires a named subject');
   const resources = subject.resources || [];
   const hp = resources.find((r) => r.label === 'HP') || null;
-  const block = resources.find((r) => r.label === 'Block');
+  const block = resources.find((r) => r.label === t('combat.protection.block'));
   const summary = [
     hp && { label: text('inspector.summary.hp'), value: `${hp.value} / ${hp.max}` },
     subject.intent && { label: text('inspector.summary.intent'), value: subject.intent.name, detail: subject.intent.detail || '' },
@@ -42,7 +44,7 @@ export function projectCombatantInspector(subject, text = (id) => id) {
   // subject that lists its effects as abilities shows them there instead.
   const state = [
     ...resources
-      .filter((r) => r.label !== 'HP' && r.label !== 'Block' && (r.max == null ? r.value > 0 : r.max > 0))
+    .filter((r) => r.label !== 'HP' && r.label !== t('combat.protection.block') && (r.max == null ? r.value > 0 : r.max > 0))
       .map((r) => ({ label: r.label, value: r.max == null ? String(r.value) : `${r.value} / ${r.max}` })),
     ...(subject.abilities ? [] : (subject.statuses || []).map((s) => ({ label: s.name, detail: s.detail || '' }))),
   ];

@@ -32,7 +32,7 @@ import { commitCombatSnapshot, restoreCombatSnapshot, serializeCombatSnapshot } 
 import { dispatch } from '../src/engine/combat.js';
 import { isPoolDeckRun, dealtAttackSlotCount, POOL_DECK_RULE } from '../src/model/cardRemoval.js';
 import { stampDeck } from '../src/model/loadout.js';
-import { extractionPlan, commitExtraction, commitInstall } from '../src/model/cardExtraction.js';
+import { commitExtraction, commitInstall, mountRows, ownedMountItems } from '../src/model/cardExtraction.js';
 
 const registries = createRegistries(contentBundle);
 const SEED = 5;
@@ -256,10 +256,12 @@ function installedKatanaArt() {
   const { run } = fx;
   run.loadout.sets.rightHand[1] = 'katana';
   run.deck.push({ instanceId: 'bought:1', cardId: 'katanaDrawCut', upgraded: false });
-  const item = extractionPlan(registries, run).candidates.find((c) => c.itemRef === 'armament/katana');
-  const mount = item.mounts.find((m) => m.cardId === 'katanaDrawCut');
-  commitExtraction(registries, run, item.itemRef, mount.mountKey, undefined, { free: true });
-  commitInstall(registries, run, item.itemRef, mount.mountKey, 'bought:1', undefined, { free: true });
+  const mount = mountRows(registries, run, ownedMountItems(registries, run).find((i) => i.itemRef === 'armament/katana')).find((m) => m.cardId === 'katanaDrawCut');
+  // A pool run cannot extract (owner ruling, 2026-10-02; pool-deck-extraction.test.mjs),
+  // so the emptied mount is one a save from before that rule carries.
+  assert.throws(() => commitExtraction(registries, run, 'armament/katana', mount.mountKey, undefined, { free: true }), /Sealed or Draft/);
+  run.itemMounts = { 'armament/katana': { [mount.mountKey]: { card: null, extractions: 1 } } };
+  commitInstall(registries, run, 'armament/katana', mount.mountKey, 'bought:1', undefined, { free: true });
   return { ...fx, mountKey: mount.mountKey };
 }
 const kitOf = (deck) => deck.filter((c) => c && c.kitRole).map((c) => c.instanceId);
@@ -515,7 +517,13 @@ test('main.js newRun writes the dealt deck\'s quota after the deal, and startCli
   const showDraft = src.indexOf("if (deckMode === 'draft') return showDraft();");
   assert.ok(sealed > 0 && draft > sealed, 'the deal this test mirrors moved');
   assert.ok(quota > draft && quota < showDraft, 'the quota must follow the deal and precede the draft and the first persist');
-  const climb = src.slice(src.indexOf('function startClimb()'), src.indexOf('function showPrologue()'));
+  // Matched up to the open paren, so a parameter list (Quick start's
+  // `{ skipOpening }`, #1518) does not empty the slice; a missing anchor fails
+  // by name instead of slicing from -1.
+  const climbAt = src.indexOf('function startClimb(');
+  const climbEnd = src.indexOf('function showPrologue()');
+  assert.ok(climbAt > 0 && climbEnd > climbAt, 'startClimb or showPrologue moved: re-anchor this mirror');
+  const climb = src.slice(climbAt, climbEnd);
   const stamp = climb.indexOf('if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });');
   assert.ok(stamp > 0 && stamp < climb.indexOf('persist();'), 'startClimb must stamp a dealt deck before its first persist');
   const body = src.slice(src.indexOf('function sealedDeckIds'), src.indexOf('function draftBaseIds'));

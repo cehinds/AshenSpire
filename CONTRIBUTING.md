@@ -3,7 +3,7 @@
 ## Ground rules
 
 1. **[SPEC.md](SPEC.md) is the source of truth.** Formulas, orderings, and state shapes marked contractual there don't change in a feature PR — change the spec first, in its own PR, then implement.
-2. **No FromSoftware assets or proper nouns.** Every new asset gets a line in [CREDITS.md](CREDITS.md) with source URL + license (CC0 / CC-BY / OFL only), and enters through its established path: runtime art under `assets/` resolves through `assetUrl()` (`src/ui/assetmap.js`) and is listed in `art-manifest.json` (`node tools/art-manifest.mjs --write`); sound effects are `assets/sfx/<id>.ogg` (or `SFX_MANIFEST` in `src/content/sfx.js`); music lives under `music/` and loads through `music/manifest.json`; fonts under `assets/fonts/` are referenced from CSS (`styles/kit.css`).
+2. **No FromSoftware assets or proper nouns.** Every new asset gets a line in [CREDITS.md](CREDITS.md) with source URL + license (CC0 / CC-BY / OFL only), and enters through its established path. Since docs/EXTERNAL-ASSETS-PLAN.md step 13 every asset file — the art (`assets/…` ids, both tiers), sound effects (`assets/sfx/<id>.ogg`), the score's renders (`music/…`, loaded through `music/manifest.json`), the map tiles and the fonts (`assets/fonts/`, referenced from `styles/kit.css`) — enters through a PR to [`cehinds/AshenSpire-art`](https://github.com/cehinds/AshenSpire-art) and its release, then a PR here that bumps `art-release.json` and rewrites `art-manifest.json` (`node tools/art-manifest.mjs --write`). Game code names an asset by its id and resolves it through `assetUrl()` (`src/ui/assetmap.js`), or `SFX_MANIFEST` in `src/content/sfx.js` for a sound. The score's source, `music/score/*.mjs`, stays here.
 3. **Engine stays headless.** Nothing under `src/engine/` may reference `document`, `window`, `localStorage`, or timers. If a change can't be tested headlessly (`node tests/run-node.mjs`, or `tests/index.html` in a browser), it doesn't belong in the engine.
 4. **Content is data.** A new card, relic, **status**, enemy, or event is a data object in one `src/content/` file, validated against its schema (spec §3.14). If you find yourself writing imperative per-entity code, extend the effect/formula/trigger DSL instead (spec §3.4–3.7) — or, as a last resort, use the budgeted `scripts.js` escape hatch (<5% of content, justified in a comment).
 5. **Tests green before merge.** `node tests/run-node.mjs` exits 0 (DEVELOPER.md, *Run & test*; `tests/index.html` runs the engine suite in a browser). New mechanics ship with new assertions.
@@ -107,9 +107,10 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
 
 ### Builds are built by CI, not committed
 
-Owner's rule, 2026-09-26. The standalone HTML (`AshenSpire.html`,
-`AshenSpire-mobile.html` and their `build/` and `dist/` copies) is never
-committed: a pull request carries source, `buildordinal.json`, the
+Owner's rule, 2026-09-26. The built HTML (the root `AshenSpire.html`, and
+every HTML under `build/` and `dist/`, with the `packs/` and `objects/` the
+pack-shaped build writes beside it; docs/EXTERNAL-ASSETS-PLAN.md step 8e) is
+never committed: a pull request carries source, `buildordinal.json`, the
 regenerated `src/content/changelog.generated.js` and its CHANGELOG receipt,
 and regenerated source modules when their authoritative data changes. Built
 HTML remains ignored. CI builds every pull request into `dev` and every

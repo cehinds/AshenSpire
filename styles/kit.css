@@ -346,6 +346,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18);
 }
 .as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.cz-keepsake .og img { display: block; width: 3rem; height: 3rem; object-fit: contain; }
 .as-option .relic-art { width: 3rem; height: 3rem; }
 .tray-icon > .relic-art { width: 100%; height: 100%; }
 .as-option .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
@@ -791,8 +792,7 @@ input[type="range"] { min-height: var(--tap-floor); }
    its landmarks so a landmark that changes moves the box with it. Below the
    band there is ONE budget of rows that tags and text share: one tag row
    leaves three lines of text, two leave two. Both full is the only case that
-   truncates, and a truncated face carries the chevron (hover: the full text;
-   click: the detail door). */
+   truncates; selecting the face reveals its Information button for full text. */
 :root {
   --card-w: 14rem;
   --card-name-h: 2.6rem;      /* FIXED. two lines' worth of room, one line of type */
@@ -908,6 +908,11 @@ input[type="range"] { min-height: var(--tap-floor); }
   background: #0f0c09; border: 1px solid var(--line); border-radius: var(--r-2);
   font-size: 2.9rem; line-height: 1; color: var(--parchment);
 }
+.card .art .playing-card-art { width: 100%; height: 100%; object-fit: cover; object-position: center 42%; }
+.card[data-wireframe="WC1"] .art .playing-card-art { position: absolute; inset: 0; }
+.card .art:has(.playing-card-art) .card-art-glyph { display: none; }
+.card .art .ctags { z-index: 1; }
+.card-inspection-modal .card .art .playing-card-art { object-fit: contain; }
 /* TypeBand — the type's own tint, full card width, fixed landmark. */
 .card .ctype, .as-typeband {
   --track: 0.22em;
@@ -1005,28 +1010,6 @@ input[type="range"] { min-height: var(--tap-floor); }
 [data-identity-part="artwork"][data-artwork-anchor] :is(img, video) { object-fit: contain; }
 [data-identity-part="artwork"][data-artwork-anchor="center"] :is(img, video) { object-position: center; }
 [data-identity-part="artwork"][data-artwork-anchor="bottom"] :is(img, video) { object-position: center bottom; }
-/* Truncated is never a dead end: the chevron says there is more. */
-
-/* Truncated is never a dead end: the chevron says there is more. On a face
-   with inspection bound (cardInspection.js) the chevron IS the control — a
-   tap-floor box drawn in the same corner, the glyph where it always sat —
-   and the drawn-only mark yields to it; a face without inspection keeps the
-   mark alone. */
-
-.card[data-truncated="true"]::after { content: '›'; position: absolute; bottom: 0.3rem; right: 0.5rem; color: var(--muted); font-size: 1.3rem; line-height: 1; }
-.card.card-inspection-target[data-truncated="true"]::after { content: none; }
-.card-inspection-target > .card-more-button { display: none; }
-.card-inspection-target[data-truncated="true"] > .card-more-button {
-  display: flex; align-items: flex-end; justify-content: flex-end;
-  position: absolute; right: 0; bottom: 0; z-index: 7;
-  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
-  margin: 0; padding: 0 0.5rem 0.3rem 0; border: 0; border-radius: 0; background: transparent;
-  color: var(--muted); font: inherit; font-size: 1.3rem; line-height: 1; cursor: pointer;
-}
-.card-inspection-target[data-truncated="true"] > .card-more-button:hover,
-.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { color: var(--gold); background: transparent; }
-.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
-
 /* ═══ COMBATANT — one shape, three statures ════════════════════════════════ */
 /* Stature is DERIVED from the encounter pool (normal → normal, elite → large,
    boss → huge). Only the sprite well scales; nameplate, bars and meters stay
@@ -1233,12 +1216,94 @@ input[type="range"] { min-height: var(--tap-floor); }
    above) and takes a row of its own. `.shop-collectible-offer` is the tile
    that DOES hold a face and is deliberately not exempt. */
 .card-shelf > .shop-text-offer { flex: 1 1 26rem; max-width: 40rem; }
+/* Skill books carry their own details and purchase action. The shelf's shared
+   grid track sizes every offer to its tallest row, including wrapped copy. */
+.shop-workspace[data-shop-content='skillBooks'] .shop-pane > .shop-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.shop-workspace[data-shop-content='skillBooks'] .shop-offers { container-type: inline-size; }
+.shop-offers > #shop-skillBooks:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: var(--book-gap);
+  align-content: start;
+  align-items: stretch;
+}
+#shop-skillBooks > .shop-book-offer {
+  display: grid;
+  grid-template-columns: var(--book-art-width) minmax(0, 1fr) var(--book-action-width);
+  align-items: center;
+  gap: var(--book-gap);
+  width: 100%;
+  max-width: none;
+  min-height: var(--book-min-height);
+  padding: var(--book-padding);
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: linear-gradient(120deg, var(--panel), var(--bg));
+  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 8%);
+}
+.shop-book-art { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
+.shop-book-details { min-width: 0; border-left: 1px solid var(--line); padding-left: var(--book-gap); }
+.shop-book-details > .shop-book-name { color: var(--gold); font-size: 1.8rem; line-height: 1.25; margin: 0 0 0.7rem; overflow-wrap: anywhere; }
+[data-book-id='bladeManual'] .shop-book-name { color: var(--green, #76b881); }
+.shop-book-details > p { color: var(--ink-dim); font-size: 1.3rem; line-height: 1.45; margin: 0; }
+.shop-book-details > .shop-book-usage { margin-top: 0.5rem; }
+.shop-book-actions { display: grid; gap: 0.65rem; min-width: 0; text-align: center; }
+.shop-book-buy.as-btn {
+  width: 100%; min-width: 0; min-height: 4.4rem; padding: 0.8rem 0.5rem;
+  color: #f8dfa4; border: 0; border-radius: 0.5rem;
+  background: var(--book-buy-art) center / 100% 100% no-repeat;
+  font-family: var(--font-display, Georgia, serif); font-size: 1.7rem;
+  text-transform: none; letter-spacing: 0.02em; text-shadow: 0 1px 2px #211407;
+  box-shadow: none;
+}
+.shop-book-buy.as-btn.beat-hold,
+.shop-book-buy.as-btn.beat-hold:is(:hover, :focus, :active) {
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 52%) 0 8px, rgb(0 0 0 / 58%) 8px 16px), var(--book-buy-art);
+  background-size: calc(var(--hold, 0) * 100%) 100%, 100% 100%;
+  background-position: left center, center;
+  background-repeat: no-repeat;
+}
+.shop-book-buy.as-btn:hover:not(:disabled) { filter: brightness(1.18); }
+.shop-book-buy.as-btn:disabled { opacity: 0.5; filter: grayscale(0.65); cursor: not-allowed; }
+.shop-book-price { color: var(--gold); font-size: 1.1rem; line-height: 1.4; font-variant-numeric: tabular-nums; text-transform: uppercase; overflow-wrap: anywhere; }
+.shop-book-details .shop-offer-avail { margin-top: 0.6rem; }
+@container (max-width: 460px) {
+  #shop-skillBooks > .shop-book-offer {
+    grid-template-columns: var(--book-compact-art-width) minmax(0, 1fr) var(--book-compact-action-width);
+    gap: var(--book-compact-gap); padding: var(--book-compact-padding);
+  }
+  .shop-book-details { padding-left: var(--book-compact-gap); }
+  .shop-book-details > .shop-book-name { font-size: 1.5rem; }
+  .shop-book-details > p { font-size: 1.2rem; }
+}
+/* The game's UI zoom can shrink an entire desktop composition on a phone.
+   Keep these text-led offers readable and their native Buy targets tappable. */
+@media (max-width: 600px) {
+  #shop-skillBooks > .shop-book-offer {
+    grid-template-columns:
+      max(var(--book-compact-art-width), calc(var(--book-compact-art-width) / var(--ui-zoom, 1)))
+      minmax(0, 1fr)
+      max(var(--book-compact-action-width), calc(var(--book-compact-action-width) / var(--ui-zoom, 1)));
+  }
+  .shop-book-details > .shop-book-name { font-size: max(1.5rem, calc(1.5rem / var(--ui-zoom, 1))); }
+  .shop-book-details > p { font-size: max(1.2rem, calc(1.2rem / var(--ui-zoom, 1))); }
+  .shop-book-price { font-size: max(1.1rem, calc(1.1rem / var(--ui-zoom, 1))); }
+  .shop-book-buy.as-btn {
+    min-height: max(4.4rem, calc(44px / var(--ui-zoom, 1)));
+    font-size: max(1.7rem, calc(1.7rem / var(--ui-zoom, 1)));
+  }
+}
 /* THE PLAYING CARD IS A FIXED BOX and `flex-shrink: 0`, so on a shelf it would
    have overflowed its track rather than fitting in it. `--card-w` is the box's
    one width input and the height is computed from its landmarks, not from the
    width — so a narrower card is the same card with its text clamped by the
-   budget that already clamps it (`.ctext` line-clamp, and the chevron that
-   says so), never a cut-off one. */
+   budget that already clamps it (`.ctext` line-clamp); Information opens the
+   full text. */
 .card-shelf .card { --card-w: 100%; width: 100%; flex-shrink: 1; }
 /* `[data-small]` scales the card by transform: on a shelf the TRACK is what
    makes it small, and a transform on top of that only opens a gap. Hover and
@@ -1564,7 +1629,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-level-ready { --level-ready-blue: #75bfff; }
 .reward-door .rp-bar-ready { --meter-tone: var(--level-ready-blue); }
 .reward-door .rp-bar-ready .m-track { background: color-mix(in srgb, var(--level-ready-blue) 18%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--level-ready-blue) 48%, var(--line)); }
-.reward-door .reward-level-up { grid-area: next; box-sizing: border-box; height: 1.6rem; min-height: 0; padding: 0 .5rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-size: .75rem; line-height: 1; font-weight: 700; }
+.reward-door .reward-level-up { grid-area: next; box-sizing: border-box; height: auto; min-height: 44px; padding: .65rem 1rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-size: .95rem; line-height: 1; font-weight: 700; }
 .reward-door .reward-level-up:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--level-ready-blue) 43%, var(--panel)); border-color: #a7d9ff; }
 .reward-door .rp-layered-bar { position: relative; height: 1.6rem; overflow: hidden; border-radius: 999px; background: #2b2821; box-shadow: inset 0 0 0 1px var(--line); }
 .reward-door .rp-layered-bar .rp-under, .reward-door .rp-layered-bar .rp-over { position: absolute; inset: 0 auto 0 0; border-radius: inherit; }
@@ -2835,6 +2900,10 @@ body.pad-mode .as-keycap.float { display: none; }
 /* A painted face (a flask) sits in the round well the way a glyph does. */
 .icon-tray .as-pip > .flask-identity { display: grid; place-items: center; width: 78%; height: 78%; }
 .icon-tray .as-pip > .flask-identity :is(.flask-art, .flask-art-image) { display: grid; place-items: center; width: 100%; height: 100%; object-fit: contain; }
+.combat-potion-tray .potion-mini > span:not(.as-pill) { display: grid; place-items: center; width: 78%; height: 78%; }
+.combat-potion-tray .potion-mini .flask-identity,
+.combat-potion-tray .potion-mini .flask-identity :is(.flask-art,.flask-art-image) { width: 100%; height: 100%; object-fit: contain; }
+.combat-potion-tray .potion-mini > .as-pill { right: 0; bottom: 0; }
 /* The +N tile: a round tile that opens the host's full list (WCF2), or a
    disclosure whose popover holds the rest. */
 .icon-tray > .status-overflow-more {
@@ -4792,6 +4861,61 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']> .pile {
   width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
+/* Footer Atelier art: live labels are SVG text, never baked into a bitmap.
+   Wide layouts honor the authored positions; compact controls keep readable
+   labels and the existing minimum hit targets and short-host rails. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] {
+  position: relative; isolation: isolate;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > :is(.pile,.end-turn,.combat-potions) {
+  position: relative; padding: 0; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none; overflow: visible;
+  color: #e7dcc0; text-shadow: 0 1px 3px #000;
+}
+.footer-art-face { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.footer-art-face text { paint-order: stroke; stroke: #100e0b; stroke-width: .6px; }
+@media (pointer: coarse) {
+  .footer-art-face [data-footer-binding='endTurnKey'] { display: none; }
+}
+.footer-sp-text { position: absolute; inset: 0; pointer-events: none; }
+.combat-action-row[data-footer-art] .stamina-orb > svg text { visibility: hidden; }
+.footer-compact-label { display: none; }
+.footer-art-rails { position: absolute; inset: 0; height: 100%; pointer-events: none; z-index: -1; }
+.combat-action-row .footer-art-rails > .footer-art-face { height: 100%; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] {
+  display: block; width: var(--footer-art-width, 100%); height: 100%; margin-inline: auto;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+  position: absolute; left: var(--art-x); top: var(--art-y); width: var(--art-w); height: var(--art-h);
+  min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); max-height: none;
+}
+/* The authored plate can be shorter than the primary action's physical target. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] > .end-turn {
+  min-width: calc(48px / var(--ui-zoom, 1)); min-height: calc(48px / var(--ui-zoom, 1));
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:focus-visible {
+  outline: 2px solid #e9c783; outline-offset: 3px;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:hover:not(:disabled) .footer-art-face {
+  filter: brightness(1.18);
+}
+.combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) .footer-art-face {
+  filter: drop-shadow(0 0 4px #83b885);
+}
+.combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) text { fill: #c2e9bc; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] .footer-art-rails,
+.combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: none; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
+  height: 100%; min-height: calc(44px / var(--ui-zoom, 1)); display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.combat-action-row[data-footer-compact='true'] button .footer-art-face { height: 58%; flex: 0 1 58%; }
+.combat-action-row[data-footer-compact='true'] .footer-compact-label {
+  display: block; font: 600 max(.72rem, calc(12px / var(--ui-zoom, 1)))/1.12 Georgia, serif;
+  white-space: pre-line; text-align: center;
+}
+.combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
+.combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
+.combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
@@ -5025,20 +5149,6 @@ button[data-button-size] {
   transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
   transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
 }
-/* The next card's hit lane covers this card's lower corner in a tight fan.
-   Keep the reading chevron above the face, fully inside the hand's clip. */
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-more-button {
-  pointer-events: auto; z-index: 21;
-  left: 0; right: auto;
-  top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));
-  bottom: auto;
-  align-items: center; justify-content: center; padding: 0;
-  border: 1px solid var(--line); border-radius: var(--r-2);
-  background: var(--panel);
-}
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-truncated='true'] .cname {
-  box-sizing: border-box; width: 100%; padding-left: var(--tap-floor);
-}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
   transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));
 }
@@ -5209,6 +5319,8 @@ button[data-button-size] {
 /* The shared sprite functions stamp combat's fixed sizes inline; the stage
    adapter places the figure by transform from the layer's origin. */
 .dialogue-portrait-art > .dialogue-figure { position: absolute !important; left: 0; top: 0; margin: 0; transform-origin: 0 0; flex: none; }
+.speaker-portrait-still { width: 512px; height: 512px; }
+.speaker-portrait-image { display: block; width: 100%; height: 100%; object-fit: contain; }
 .dialogue-portrait[data-figure-fit='pending'] > .dialogue-portrait-art { visibility: hidden; }
 /* Painted player figures face right as authored (combat does the same). */
 .dialogue-portrait .class-sprite > .facing { transform: none; }
@@ -5552,4 +5664,147 @@ button[data-button-size] {
   max-height: var(--tap-floor);
   padding: 0;
   align-self: center;
+}
+
+/* Book lessons use live card faces and a searchable, keyboard-operable list. */
+.book-learning-veil { z-index: 13000; }
+.book-learning-panel { width: min(90rem, 96vw); max-height: 94dvh; display: flex; flex-direction: column; }
+.book-learning-body { overflow: auto; min-height: 0; display: grid; gap: 1rem; padding: 1.4rem; }
+.book-learning-body > p { margin: 0; }
+.book-learning-body input, .book-learning-body select { width: 100%; min-height: 44px; padding: .8rem 1rem; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-2); }
+.book-learning-body select:disabled { opacity: 1; color: var(--ink-dim); }
+.book-learning-rarity { color: var(--ink-dim); font-size: 1.2rem; }
+.book-lesson-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr); gap: 1.4rem; }
+.book-lesson-list { display: grid; align-content: start; gap: .6rem; max-height: 42dvh; overflow: auto; }
+.book-lesson-option.as-btn { min-height: 44px; width: 100%; text-align: left; white-space: normal; }
+.book-lesson-option[aria-pressed='true'] { outline: 2px solid var(--gold); outline-offset: -2px; }
+.book-lesson-detail { display: grid; justify-items: center; align-content: start; gap: 1rem; }
+.book-lesson-detail > p { width: 100%; }
+.book-learning-status { color: var(--gold); }
+@media (max-width: 600px) {
+  .book-learning-panel { font-size: 14px; }
+  .book-lesson-columns { grid-template-columns: minmax(0, 1fr); }
+  .book-lesson-list { max-height: 25dvh; }
+  .book-learning-rarity { font-size: 12px; }
+}
+.book-art { display: inline-block; position: relative; isolation: isolate; width: 100%; aspect-ratio: 1; flex-shrink: 0; }
+.book-art > svg { display: block; width: 100%; height: 100%; pointer-events: none; }
+.book-reading-art { float: right; width: 5.5rem; margin: -0.5rem 0 0.5rem 0.5rem; }
+.inventory-face .book-art { width: 4rem; }
+.inventory-model .book-art { width: min(100%, 15rem); }
+
+/* Unified turn Stamina uses the former action diamond, in green. */
+.card .card-cost-rail > .cost.stamina-cost,
+.card.playing-poker-card .cost.stamina-cost { color: #88e183; border-color: #529b58; background: #14271b; }
+.stamina-budget,
+.combat-action-row .energy-orb,
+.combat-action-row .energy-orb :is(.sp-k, .sp-v) { color: #88e183; }
+
+/* Approved SP Atelier assembly. Keep the shared footer's measured footprint. */
+:root .combat:is(.coop,:not(.coop)) .combat-action-row > .energy-orb.stamina-orb {
+  padding: 0; border: 0; background: transparent; box-shadow: none; position: relative;
+  overflow: visible; display: block;
+}
+:root .combat .stamina-orb > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+:root .combat .stamina-orb > .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+:root .combat .stamina-orb:focus-visible { outline: 2px solid #96cbaa; outline-offset: 2px; }
+
+/* Approved compact defense HUD: Ward, shield, then an elastic HP trough.
+   The wrapper keeps the resource plan's total max-HP-scaled width. */
+:root .combat .combatant .combat-health-row {
+  --health-red: #ad403a; --health-blue: #348fcb; --ward-purple: #9a63d9; --ward-gold: #d8b354;
+  --health-row-h: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1))));
+  display: flex; align-items: center; align-self: center; gap: 2.85%; min-width: calc(112px / var(--ui-zoom, 1)); max-width: 100%;
+  min-height: var(--health-row-h); flex: none;
+}
+:root .combat .combatant .combat-health-row > .combat-health-meter {
+  position: relative; flex: 1 1 0; min-width: 0; --meter-tone: var(--health-red) !important;
+  container-type: inline-size; container-name: combat-health;
+}
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-protected='true'] { --meter-tone: var(--health-blue) !important; }
+:root .combat .combatant .combat-health-meter .m-track { height: var(--health-row-h); border-radius: 5px; background: #0d1412; }
+:root .combat .combatant .combat-health-meter[data-warded='true'] .m-track {
+  outline: max(1px, calc(2px / var(--ui-zoom, 1))) solid var(--ward-gold); outline-offset: 1px;
+  box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #d8b35466;
+}
+:root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; }
+:root .combat .combatant .combat-health-badge {
+  position: relative; flex: 0 0 max(14.285%, calc(26px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
+  color: #fff1d6; font: 500 var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))/1 var(--font-body);
+  font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
+}
+:root .combat .combatant .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
+:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #61abe0, var(--health-blue), #194a6b); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
+:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 3px #348fcb55); }
+:root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); }
+:root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
+:root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #9a63d966); }
+:root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+:root .combat .combatant .combat-health-badge { min-width: max-content; }
+:root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
+@container combat-health (max-width: 4em) {
+  :root .combat .combatant .combat-health-meter .m-value { font-size: 0 !important; }
+  :root .combat .combatant .combat-health-meter .m-value::after {
+    content: attr(data-current-hp); font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)));
+  }
+}
+@media (max-width: 600px) {
+  :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
+  :root .combat .combatant .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
+}
+
+.character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
+
+.reward-door .reward-progress-row.reward-level-ready .reward-level-up { grid-area: auto; grid-column: 1 / -1; width: 100%; min-width: 120px; min-height: max(44px, var(--tap-floor, 44px)); margin-top: .4rem; font-size: max(14px, .95rem); }
+.reward-door .reward-progress-row.reward-level-ready .rp-next { visibility: hidden; }
+/* Merchant offers use one readable image/details/action row on every shelf.
+   The native card remains inspectable; its intrinsic card geometry is preserved. */
+.merchant-workspace .shop-pane > .shop-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.merchant-workspace .shop-detail[hidden] { display: none; }
+.merchant-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: var(--book-gap);
+  align-content: start;
+}
+:root .shop-workspace .shop-shelf .merchant-offer {
+  display: grid;
+  grid-template-columns: minmax(0, var(--card-w-glance, 16rem)) minmax(0, 1fr) var(--book-action-width);
+  align-items: center;
+  align-self: stretch;
+  gap: var(--book-gap);
+  min-height: var(--book-min-height);
+  width: 100%;
+  max-width: none;
+  padding: var(--book-padding);
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: linear-gradient(120deg, var(--panel), var(--bg));
+}
+.merchant-offer-media { min-width: 0; display: grid; place-items: center; }
+.merchant-offer-media > img { width: 100%; max-height: 16rem; object-fit: contain; }
+.merchant-offer-media > .book-art { width: 100%; }
+.merchant-offer-media .card, .merchant-offer-media .equipment-poker-card { max-width: 100%; }
+.merchant-offer-media > .shop-inspect-card { width: 100%; padding: 0; border: 0; background: none; }
+.merchant-offer-glyph { display: grid; place-items: center; width: 100%; min-height: 10rem; font-size: 4rem; color: var(--gold); }
+:root .merchant-offer > .merchant-offer-details { min-width: 0; margin: 0; width: auto; text-align: left; border-left: 1px solid var(--line); padding-left: var(--book-gap); }
+:root .merchant-offer-details .shop-offer-avail { position: static; text-align: left; }
+.merchant-offer-details > h3 { margin: 0 0 .7rem; color: var(--gold); font-size: 1.8rem; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+.merchant-offer-details > p { margin: 0; color: var(--ink-dim); font-size: 1.3rem; line-height: 1.5; overflow-wrap: anywhere; }
+.merchant-offer-actions { display: grid; gap: .8rem; justify-items: stretch; align-content: center; min-width: 0; }
+.merchant-offer-action.as-btn { width: 100%; min-width: 0; min-height: 44px; white-space: normal; }
+.merchant-offer-price.as-status { color: var(--gold); text-align: center; white-space: normal; overflow-wrap: anywhere; }
+.merchant-workspace .shop-services .class-row { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
+@media (max-width: 600px) {
+  :root .shop-workspace .shop-shelf .merchant-offer { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: var(--book-compact-gap); padding: var(--book-compact-padding); }
+  .merchant-offer-actions { grid-column: 2; grid-template-columns: minmax(0, 1fr); }
+  .merchant-offer-media { grid-row: 1 / span 2; }
+  .merchant-offer-details { padding-left: var(--book-compact-gap); }
+  .merchant-offer-details > h3 { font-size: 1.5rem; }
+  .merchant-offer-details > p { font-size: 1.2rem; }
 }

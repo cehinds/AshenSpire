@@ -8,11 +8,8 @@
 //   #980 handed the first tap to the action (`actionOwnsTouch` on the Smith
 //        and the merchant) to fix a three-tap count — buying the count by
 //        spending the selecting beat.
-//   #987 gave a truncated card's chevron a private door straight to the
-//        inspect modal, so one gesture meant two things depending on whether
-//        a card's text happened to fit its face.
-//
-// Both are cheap to re-introduce and expensive to notice, so each has a line.
+// The owner removed the extra truncated-text chevron on 2026-10-02;
+// Information is the shared inspection control.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
@@ -32,21 +29,14 @@ ok(/if \(!actionOwnsTouch && touchTaps === 1 && !touchSelectionSafe\)/.test(insp
 ok(!/touchTaps === 2/.test(code),
   'the second tap is never reserved for the information button (the three-tap shape)');
 
-// ---- the chevron begins the beats, it does not spend them -------------------
-const more = inspection.slice(inspection.indexOf("more.addEventListener('click'"));
-ok(/select\(\); revealInfo\(\);/.test(more.slice(0, 400)),
-  'the chevron selects and reveals the `i`');
-ok(!/open\(more\)/.test(code),
-  'the chevron never opens the inspect door itself — the `i` is the one door');
-
 // ---- reading a card spends the beat rather than zeroing it ------------------
 // The tap count moved to ./cardSelection.js, so these now check the CALL
 // rather than the assignment. Same two facts: reading a card never resets its
-// count, and both doors spend exactly one selecting beat.
+// count, and Information spends exactly one selecting beat.
 ok(!/touchTaps = 0|touchedIdentity = null/.test(code),
-  'neither the `i` nor the chevron resets the tap count under a lit card');
-ok((code.match(/spendSelectingBeat\(identity, douse\)/g) || []).length === 2,
-  'both the `i` and the chevron spend exactly one selecting beat');
+  'the `i` never resets the tap count under a lit card');
+ok((code.match(/spendSelectingBeat\(identity, douse\)/g) || []).length === 1,
+  'the `i` spends exactly one selecting beat');
 ok(/countBeat\(identity, douse\)/.test(code),
   'and the face counts its taps through the same store');
 
@@ -111,33 +101,12 @@ console.log(`PASS ${checks}/${checks}; every card owes two beats and the selecti
     'the stamp lands before the kept children are re-appended, or the kept ones are stamped too and deleted next time');
 }
 
-// ONE TRACK PER IN-FLOW CHILD, OR EVERY BAND ON EVERY CARD IS MISALIGNED.
-//
-// A level that withholds a region must give its grid track back, so the paint
-// recomputes `--card-bands` from the children it actually drew. That list is a
-// POSITIONAL MIRROR of the emit order — name, art, body, metadata — and the
-// cost rail and the tag strip are deliberately absent from it because both are
-// absolutely positioned and take no track. A future edit that adds a fifth
-// in-flow child, or reorders the emits, shifts every band on every playing
-// card with nothing to say so: `card-one-shape.mjs` states in its own boundary
-// that it asks about the card's OUTER shape and not its face bands, and the
-// presentation-level gate covers `cardFields`, not tracks.
-//
-// So the mirror is pinned here: four entries, in the emitted order, and the
-// rail's own offset derived from the same list rather than from the root
-// property (which is head/total for the AUTHORED four and drifts as soon as a
-// band is withheld).
+// Illustrated cards have a single host box; their JSON owns composited planes.
 {
-  const card = read('src/ui/components/card.js');
-  const paint = card.slice(card.indexOf('const paint = ('));
-  const block = paint.slice(paint.indexOf('const drawn = ['), paint.indexOf('el.dataset.level'));
-  const order = [...block.matchAll(/\/\/ \.([a-z-]+)/g)].map((m) => m[1]);
-  assert.deepEqual(order.slice(0, 4), ['cname', 'art', 'cd-body', 'card-metadata'],
-    'the drawn-children list must mirror the emit order of the four in-flow grid children');
-  assert.doesNotMatch(block, /card-cost-rail|ctags/,
-    'the cost rail and the tag strip are absolutely positioned and take no track: counting them misaligns every band');
-  assert.match(block, /minmax\(0, \$\{b\}fr\)/,
-    'bands must be shrinkable: a bare `fr` carries an implicit auto minimum and lets content take the budget back');
-  assert.match(block, /--card-band-head/,
-    'the cost rail hangs under the head band, so its offset is derived from the same recomputed list');
+  const layout = JSON.parse(read('src/content/card-layout.json'));
+  assert.deepEqual(layout.layers.slice(0, 3).map(l => l.id), ['base', 'art', 'panel']);
+  assert.equal(layout.layers.find(l => l.id === 'art').clip, true);
+  assert.ok(layout.layers.find(l => l.id === 'flag').x < 0, 'the cost flag extends beyond the base');
+  assert.equal(layout.layers.find(l => l.bind === 'rules').maxLines, 2);
+  assert.match(read('styles/illustrated-cards.css'), /overflow:visible/, 'the host preserves the projecting flag');
 }

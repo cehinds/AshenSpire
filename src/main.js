@@ -1,3 +1,4 @@
+import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
@@ -10,6 +11,7 @@ import { bootArtStatusModel } from './ui/models/BootArtStatusModel.js';
 import { whenNoOverlay } from './ui/whenNoOverlay.js';
 import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
+import { quickStartRunConfig } from './model/characterCreation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
@@ -54,6 +56,7 @@ import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRul
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
 import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
+import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
@@ -72,7 +75,6 @@ import {
   rollEncounter,
   rollRuneReward,
   rollCombatCardOffer,
-  rollSkillDraftIds,
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
@@ -136,6 +138,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
+import { createHaptics, haptic } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -363,6 +366,11 @@ seedPromotedDefaults(activeMeta, activeSettings);
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
+// Haptics have their own seam (ui/haptics.js), played by the call sites that
+// mean card play, damage taken and turn start; a moment with a pattern in
+// content/haptics.js vibrates unless Settings → Audio → Haptics is off (read
+// live, per cue). Not fed from sfx ids: equipment swaps share the card sound.
+haptic.sink = createHaptics({ getSettings: () => activeSettings });
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
 initInput({ getSettings: () => activeSettings });
@@ -1075,7 +1083,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1165,11 +1173,14 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
-  startClimb();
+  startClimb({ skipOpening });
 }
 
 // After the deck is finalized (incl. any draft), generate the map and go.
-function startClimb() {
+// `skipOpening` is the Title's Quick start (characterCreation.quickStart): the
+// player asked to be in the climb now, so this climb does not queue the opening.
+// It records nothing as seen — the next ordinary climb still plays it.
+function startClimb({ skipOpening = false } = {}) {
   // A dealt deck (Sealed, Draft, with any picks) was never stamped: give its
   // cards their equipment faces now, as the load door and every later restamp
   // do, so the first fight plays the same cards a reload would. A pool deck is
@@ -1177,7 +1188,7 @@ function startClimb() {
   if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
-  if ((!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
+  if (!skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
     run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
   }
   persist();
@@ -1609,6 +1620,14 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     registries,
     onContinue: (slot) => resumeRun(slot),
     onNew: (slot) => showCustomize(slot),
+    // FINISH §6: authored defaults, a fresh seed, the first empty slot. A full
+    // set of slots falls back to slot 1, where startRunInSlot asks before it
+    // replaces the save there, as Begin does.
+    onQuickStart: () => {
+      rebuildRegistries(saves.loadMeta().settings || {});
+      const empty = slots.find((s) => !s.summary);
+      startRunInSlot({ ...quickStartRunConfig(registries), seedString: randomSeedString() }, empty ? empty.slot : 1);
+    },
     // A delete returns to the door it came from, with the slot now empty.
     onDelete: (slot, from = null) => {
       saves.clearRun(slot);
@@ -1773,6 +1792,7 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo) : null,
+    onProgression: () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
   });
 }
 
@@ -2078,19 +2098,36 @@ function showDraft() {
  * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
  * the map's own reads — grep `meta.settings` in ui/screens/map.js and
  * model/mapknowledge.js and mapboard.js, and they are the keys below.
+ *
+ * AND "Use flasks outside combat", which the map's Potions control
+ * (components/runPotions.js) and the run HUD's flask icons read at mount. A
+ * change here replaces `activeMeta`, so without the redraw the map kept
+ * refusing Drink after the player had turned it on, and its own redraw after a
+ * Potions action re-read the meta it was mounted with
+ * (tools/flask-menu-probe.mjs, persistence).
  */
 const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
+// Only where a flask surface reads it: the world atlas is a `.mapscreen` too but
+// has no Potions control, and a remount drops its selected destination
+// (#1474 review).
+const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
-  if (!MAP_REMOUNT_KEYS.some((k) => k in changed)) return;
-  if (!app.querySelector('.mapscreen')) return;
-  showMap();
+  const screen = app.querySelector('.mapscreen');
+  if (!screen) return;
+  const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);
+  const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');
+  // The flask key only changes what the Potions control offers, so the redraw
+  // keeps the destination the player had selected (#1474 review).
+  const selectedId = !mapKey && flaskKey ? screen.querySelector('.map-node.selected')?.dataset.node || null : null;
+  if (mapKey || flaskKey) showMap({ selectedId });
 }
 
-function showMap() {
+function showMap(opts) {
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
-  if (run.legacyDungeon) return showLegacyDungeon();
+  if (run.legacyDungeon) return showLegacyDungeon({ selectedId });
   if (run.journey) return mountWorldAtlas(app, {
     run, registries,
     serviceContext: {
@@ -2111,6 +2148,7 @@ function showMap() {
     registries,
     run,
     meta: activeMeta,
+    selectedId,
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
@@ -2395,11 +2433,13 @@ function combatMods(pool, encounter = null) {
   return { hpMult, damageMult, enemyStatuses, playerStatuses };
 }
 
-function showLegacyDungeon() {
+function showLegacyDungeon(opts) {
+  // A flask-only redraw hands back the selected node, as on the act map.
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   if (run.pendingReward) return mountPendingReward();
   if (run.legacyDungeon.activeRest) return showRest();
   if (run.legacyDungeon.pending) return showDungeonDialogue();
-  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow,
+  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow, selectedId,
     onTravel: id => { if (travelDungeon(run, id)) { persist(); enterDungeonLocation(); } },
     onInspect: enterDungeonLocation, onLeave: leaveLegacyDungeon });
 }
@@ -2642,7 +2682,7 @@ async function onCombatEnd(result, combat, enc) {
     tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
   };
   const pendingBefore = pendingLevelCount(registries, run);
-  const manualLevelUp = settingOn(saves.loadMeta().settings, 'manualLevelUp');
+  const manualLevelUp = settingOn(saves.loadMeta().settings, 'manualLevelUp') || settingOn(saves.loadMeta().settings, 'guidedLevelUp');
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
@@ -2744,7 +2784,7 @@ async function onCombatEnd(result, combat, enc) {
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelsEarned),
+      ...rollCardRows('boss', levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       ...sigilOffer('boss'),
       armamentId: bossArmament,
@@ -2753,13 +2793,12 @@ async function onCombatEnd(result, combat, enc) {
       xpReceipt,
       xpBefore,
       levelChoices,
+      characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
     };
-    return beginPendingReward(bossRewards, { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
+    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
   }
 
-  // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
-  // a level the fight bought is offered as a pick from the track's own
-  // schools, and while one is on the table the class-card offer is not.
+  // Skill and class level rewards are independent of the combat card roll.
   const drafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
   const classDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
   const rewards = {
@@ -2767,7 +2806,7 @@ async function onCombatEnd(result, combat, enc) {
     cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
     classDrafts,
     skillDrafts: drafts,
-    ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelsEarned),
+    ...rollCardRows(enc.pool, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
     // SPEC §15.4: a legendary sigil, on its own `sigils` stream (0 ships: none).
@@ -2781,22 +2820,29 @@ async function onCombatEnd(result, combat, enc) {
     xpReceipt,
     xpBefore,
     levelChoices,
+    characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
   };
-  beginPendingReward(rewards, { source: enc.pool, after: 'map' });
+  beginPendingReward(withSourceBonuses(rewards), { source: enc.pool, after: 'map' });
+
+  function withSourceBonuses(offer) {
+    return runSourceRewardOffer(registries, rng, run, offer, {
+      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, flatRarity: chaosRewardsOn(),
+    });
+  }
 }
 
 /**
- * The spoils' card rows (SPEC §15.1): the card offer — unless a draft holds
- * its seat, the schedule turns it off for this pool, or its chance misses —
+ * The spoils' card rows (SPEC §15.1): the independent combat card offer,
+ * unless the schedule turns it off for this pool or its chance misses,
  * and a level card per level this fight bought when `onLevelUp` is on. The
  * decision is engine/encounters.js rollCombatCardOffer's; this hands it the
  * run's facts and returns the offer fields (`cardIds`, and `cardMissed` /
  * `levelCards` only when they say something, so the shipped schedule writes
  * the offer it wrote before).
  */
-function rollCardRows(pool, draftWaiting, levelUps) {
+function rollCardRows(pool, levelUps) {
   return rollCombatCardOffer(registries, rng, {
-    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: !!draftWaiting,
+    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: false,
     levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
   }).rewards;
 }
@@ -2807,11 +2853,11 @@ function rollLevelChoices(levelsEarned) {
   const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
   if (!offerFeats && !offerClassTree) return [];
   const out = [];
-  const firstRewardLevel = run.level.level - (settingOn(settings, 'manualLevelUp') ? 0 : levelsEarned);
+  const firstRewardLevel = run.level.level - (settingOn(settings, 'manualLevelUp') || settingOn(settings, 'guidedLevelUp') ? 0 : levelsEarned);
   for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
     const options = [];
     if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
-    if (offerClassTree) {
+    if (offerClassTree && !run.classUnequipped) {
       const level = Math.max(run.skills?.[classSkillId(run.class)]?.level || 0, firstRewardLevel + ordinal + 1);
       options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
         .map((id) => ({ kind: 'classNode', id })));
@@ -2838,7 +2884,7 @@ function rollSkillDrafts(pool, includeBanked = false) {
     const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
     for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
       const level = row.level + banked;
-      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
+      const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
       if (cardIds.length) out.push({ skillId: track.id, level, cardIds, claimOrdinal: i < queued ? 0 : i - queued + 1 });
     }
   }
@@ -2854,6 +2900,7 @@ function rollSkillDrafts(pool, includeBanked = false) {
  * draftable keeps its draft.
  */
 function rollClassDrafts(includeBanked = false) {
+  if (run.classUnequipped) return [];
   const row = run.skills && run.skills[classSkillId(run.class)];
   if (!row) return [];
   const banked = includeBanked ? pendingSkillLevelCount(registries, run, classSkillId(run.class)) : 0;
@@ -2865,7 +2912,14 @@ function rollClassDrafts(includeBanked = false) {
 
 function beginPendingReward(rewards, { source, after }) {
   rewards = configuredRewardOffer(rewards, source);
-  run.pendingReward = pendingRewardCheckpoint(rewards, { source, after });
+  rewards = mergeProgressionRewards(run.deferredProgression, rewards, run, {
+    manual: settingOn(saves.loadMeta().settings, 'manualLevelUp') || settingOn(saves.loadMeta().settings, 'guidedLevelUp'),
+    characterStart: rewards.characterRewardStart ?? run.level?.level ?? 1,
+  });
+  const { available, deferred } = partitionProgressionRewards(rewards, run);
+  run.pendingReward = pendingRewardCheckpoint(available, { source, after });
+  if (Object.keys(deferred).length) run.deferredProgression = deferred;
+  else delete run.deferredProgression;
   persist();
   return mountPendingReward();
 }
@@ -2883,9 +2937,16 @@ function configuredRewardOffer(rewards, source) {
   return rewardOfferForSource(rewards, source, (key) => settingOn(settings, key));
 }
 
-function mountPendingReward() {
-  const checkpoint = run.pendingReward;
+function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
   if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
+  // Older pending saves used per-door claim counters. Convert those offers once
+  // to absolute levels before they can be deferred to a different victory.
+  const baseRun = { ...run, skills: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) =>
+    [id, { ...row, level: Math.max(0, row.level - (checkpoint.skillClaims?.[id] || 0)) }])) };
+  checkpoint.rewards = mergeProgressionRewards({}, checkpoint.rewards, baseRun, {
+    manual: pendingLevelCount(registries, run) > 0 || (checkpoint.levelClaims || 0) > 0,
+    characterStart: Math.max(1, (run.level?.level || 1) - (checkpoint.levelClaims || 0)),
+  });
   return mountRewards(app, {
     registries,
     run,
@@ -2897,13 +2958,27 @@ function mountPendingReward() {
       pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
-    onClaimSkill: (skillId) => claimBankedSkillLevel(registries, run, skillId),
+    onClaimSkill: (skillId) => {
+      const claim = claimBankedSkillLevel(registries, run, skillId);
+      if (claim && skillId === classSkillId(run.class)) {
+        run.classRewardLevels = { ...run.classRewardLevels, [run.class]: claim.after };
+      }
+      return claim;
+    },
     onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
     onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,
     onDone: () => {
       const after = checkpoint.after;
+      const saved = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(checkpoint), run);
+      if (Object.keys(saved).length) run.deferredProgression = saved;
+      else delete run.deferredProgression;
       delete run.pendingReward;
+      if (returnTo) {
+        persist();
+        app.querySelector('.reward-veil')?.remove();
+        return returnTo();
+      }
       rewardDoneCount++;
       if (after === 'advanceAct') advanceAct();
       else {
@@ -2912,6 +2987,23 @@ function mountPendingReward() {
       }
     },
   });
+}
+
+function showCharacterProgression(returnTo) {
+  if (run.pendingReward) return mountPendingReward();
+  const settings = saves.loadMeta().settings || {};
+  const rewards = mergeProgressionRewards(run.deferredProgression, {
+    title: 'Level up & rewards', xpGains: { level: 0, tracks: {} },
+    skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
+    classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
+  }, run);
+  const { available, deferred } = partitionProgressionRewards(rewards, run);
+  run.pendingReward = pendingRewardCheckpoint(available, { source: 'character', after: 'map' });
+  run.pendingReward.expanded = true;
+  if (Object.keys(deferred).length) run.deferredProgression = deferred;
+  else delete run.deferredProgression;
+  persist();
+  return mountPendingReward(run.pendingReward, returnTo);
 }
 
 // Custom Climb helpers used across nodes.
@@ -3242,8 +3334,8 @@ function coopStubMount(snapshot, myId, myIds = null) {
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
   const party = [
-    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 3, maxStamina: 3, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
   const snapshot = {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
@@ -3260,8 +3352,8 @@ function coopCombatShot() {
         { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 }, performedMoves: [] },
       ],
       players: [
-        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, exhaustCount: 1, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
-        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, exhaustCount: 0, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
+        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 3, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, exhaustCount: 1, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
+        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, exhaustCount: 0, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
       ],
     },
     party,
@@ -3419,6 +3511,21 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // THE FLASKS, read-only, same species: the live run's flask ledger and
+  // carried potions beside the slot's saved copy, and the stored "Use flasks
+  // outside combat" setting. tools/flask-menu-probe.mjs proves a map Potions
+  // action and a setting change are SAVED, which a shot boot's memory storage
+  // hides from any localStorage read. Shot boots only; a player never has it.
+  window.__flasks = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    const charges = (r) => (r && r.flaskCharges ? { hp: r.flaskCharges.hpCurrent, mana: r.flaskCharges.manaCurrent } : null);
+    const carried = (r) => (r ? (r.flasks || []).map((f) => f.flaskId) : null);
+    return {
+      charges: charges(run), savedCharges: charges(saved),
+      carried: carried(run), savedCarried: carried(saved),
+      savedOutsideCombat: ((saves.loadMeta() || {}).settings || {}).useRestorativeFlasksOutsideCombat ?? null,
+    };
+  };
   // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
   // proves WHEN an armament becomes owned (meta.found) and stored (the run's
   // loadout) around the reward menu, and a shot boot runs on MEMORY storage
@@ -3587,6 +3694,15 @@ if (shotState === 'combat-test') {
   const posedPools = ['shotMaxHp', 'shotMana', 'shotMaxMana', 'shotMaxStamina']
     .some((k) => shotParams.has(k));
   if (posedPools && shotState === 'map') showMap();
+  // `?shotCarried=<flaskId,...>` — CARRY POTIONS ON THE MAP. The map pose
+  // carries none, so its Potions minis and the run HUD's carried icons had
+  // nothing to open; tools/flask-menu-probe.mjs compares their menus with the
+  // shared plan. Unknown ids are skipped; the map is redrawn, as above.
+  const shotCarried = shotState === 'map' ? shotParams.get('shotCarried') : null;
+  if (shotCarried) {
+    run.flasks = shotCarried.split(',').filter((id) => registries.flasks.has(id)).map((flaskId) => ({ flaskId }));
+    showMap();
+  }
   // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
   //
   // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map
@@ -3733,6 +3849,12 @@ if (shotState === 'combat-test') {
     // so the grid photographs identically every run — gives the twenty-card
     // deck the bug was reproduced on.
     run.floor = 8;
+    // An isolated wounded arrival exercises the real recovery preview and
+    // commitment; it never touches the player's durable saves.
+    if (shotParams.get('shotRestState') === 'wounded') {
+      run.hp = Math.max(1, Math.floor(run.maxHp * .6));
+      run.mana = 0;
+    }
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     // `?shotSmithingStones=0|1` — stand on both sides of the Smith affordability
     // edge without writing durable storage. The accepted values are deliberately
@@ -3784,6 +3906,12 @@ if (shotState === 'combat-test') {
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
+    if (new URLSearchParams(location.search).has('shotLibrary')) {
+      const books = registries.consumables.all().filter((row) => row.kind === 'skillBook');
+      run.consumables = Object.fromEntries(books.map((book) => [book.id, 1]));
+      run.shopStock.offerings = ['skillBooks'];
+      run.shopStock.skillBooks = books.map((book) => ({ id: book.id, cost: book.cost }));
+    }
     showShop();
   } else if (shotState === 'blacksmith') {
     // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the atlas

@@ -10,8 +10,9 @@
 //                                                 its pack is read from its name when
 //                                                 --pack is not given
 //   node tools/fetch-art.mjs --recheck            hash a reused cache's files again
-//   node tools/fetch-art.mjs --agree [--pack …]   prove the verified caches and the trees in
-//                                                 this repository agree byte for byte
+//   node tools/fetch-art.mjs --recheck --refetch  … and download a pack whose cache fails it
+//   node tools/fetch-art.mjs --agree              retired at step 13 (the trees it compared
+//                                                 with are gone): exits 2 and says so
 //   node tools/fetch-art.mjs --print-dir [--pack <p>]   print the cache directory and exit
 //
 // WHY (docs/ART-REPO-PLAN.md step 4; docs/EXTERNAL-ASSETS-PLAN.md §2, step 11).
@@ -52,12 +53,13 @@
 // cache is unpacked beside its final name and published in one rename, so runs
 // at the same time never see each other's half-written files.
 //
-// THE TREES ARE STILL HERE (step 11). assets/, assets-mobile/, the fonts, music/
-// and map-detail/ stay in this repository until step 13, and the builds still
-// read them. --agree is the proof that the two sources are one: every file each
-// verified cache holds equals the tree's file byte for byte (text compared in
-// its LF form, as the manifest records it), every shippable tree file is in the
-// cache, and the release's rows equal the rows derived from the trees.
+// THE TREES ARE GONE (step 13). assets/, assets-mobile/, the fonts, music/ and
+// map-detail/ left this repository at docs/EXTERNAL-ASSETS-PLAN.md step 13
+// (art/ with them, ART-REPO-PLAN step 6): this cache is the only place a
+// checkout has them. Step 11's --agree, the proof that the cache and the trees
+// were the same bytes, was retired with the trees (it now exits 2 and says so).
+// A new pin's manifest is written from the release itself:
+// node tools/art-manifest.mjs --write.
 //
 // THE TOKEN. None is needed: cehinds/AshenSpire-art is public (owner answer 1,
 // step 10a), so the zip is downloaded from the release's public URL. When
@@ -72,10 +74,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isDeepStrictEqual } from 'node:util';
 import { readZip } from './zip.mjs';
-import { MIME, runtimeAsset } from './assetmime.mjs';
-import { LIGHT_DIR, buildManifest, canonicalBytes, commonSources } from './art-manifest.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const PIN_PATH = 'art-release.json';
@@ -447,6 +446,22 @@ export function recheck(dir, manifest, pack = 'high', pin = null) {
     const buf = readFileSync(file);
     if (buf.length !== want.bytes || sha256(buf) !== want.sha256) problems.push(`${id}: the cached file changed`);
   }
+  // Nothing rides along unlisted: tools copy these directories whole (launch's
+  // music/ and map-detail/, the previews' fonts), so a file the manifest does
+  // not name for this pack — a stale track, an added music/score/ file — would
+  // ship. Only the cached manifest and the .verified marker are exempt; a
+  // dot-named file anywhere else is an extra like any other.
+  const listed = new Set([MANIFEST_PATH, VERIFIED]);
+  for (const rec of Object.values(manifest.assets || {})) {
+    const common = commonOf(rec);
+    const want = common || (rec && rec[pack]);
+    if (want && typeof want.path === 'string') listed.add(want.path);
+  }
+  if (existsSync(dir)) {
+    for (const rel of filesUnder(dir)) {
+      if (!listed.has(rel)) problems.push(`${rel}: in the cache, but ${MANIFEST_PATH} lists no ${pack} file there`);
+    }
+  }
   return problems;
 }
 
@@ -592,24 +607,30 @@ export async function download(pin, pack, { api = GITHUB.api, web = GITHUB.web, 
  * fetchArt({ root, from, recheck, pack }) → the verified cache directory of one
  * pack. `get` replaces the download (the tests use it; nothing else should).
  */
-export async function fetchArt({ root = ROOT, from = null, recheck: again = false, pack = 'high', get = download } = {}) {
+export async function fetchArt({ root = ROOT, from = null, recheck: again = false, refetch = false, pack = 'high', get = download } = {}) {
   const pin = readPin(root);
   packsOf(pin, pack); // refuses a pack the pin does not name
   const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
   const dir = packDirFor(pin, pack, root);
   const mark = markerFor(pin, manifest, pack);
+  let rejected = null;
   if (!from && markOf(dir) === mark) {
     if (!again) return { dir, pack, reused: true };
     const problems = recheck(dir, manifest, pack, pin);
     if (!problems.length) return { dir, pack, reused: true };
     discard(dir);
-    throw Object.assign(new Error(`the ${pack} cache no longer matches the manifest; it was removed — run again to re-download`), { problems });
+    // --refetch (CI's restored cache, .github/actions/fetch-art): a cache that
+    // fails its recheck is removed and the pack downloaded and verified again in
+    // the same run. A cache key cannot be overwritten, so throwing here would
+    // restore the same broken cache on every rerun until someone cleared it.
+    if (!refetch) throw Object.assign(new Error(`the ${pack} cache no longer matches the manifest; it was removed — run again to re-download`), { problems });
+    rejected = problems;
   }
   const zipBuf = from ? readFileSync(from) : await get(pin, pack);
   const { problems, entries } = verifyRelease(zipBuf, pin, manifest, pack);
   if (problems.length) throw Object.assign(new Error(`${pin.packs[pack].zip} (${pin.tag}, ${pack}) failed verification`), { problems });
   unpack(entries, dir, mark);
-  return { dir, pack, reused: false, count: entries.size - (entries.has(MANIFEST_PATH) ? 1 : 0) };
+  return { dir, pack, reused: false, rejected, count: entries.size - (entries.has(MANIFEST_PATH) ? 1 : 0) };
 }
 
 /**
@@ -651,80 +672,6 @@ function filesUnder(dir, base = dir, out = []) {
   return out;
 }
 
-/**
- * agree({ root, packs }) → { problems, checks }. The step-11 proof that the
- * fetched release and the trees here are the same files:
- *   · each pack's cache is verified against the current pin and manifest;
- *   · each pack's rows in the release equal the rows derived from the trees
- *     now (tools/art-manifest.mjs buildManifest), so neither side has an id
- *     the other lacks, and no record differs;
- *   · every file in the cache equals its tree file byte for byte (text in its
- *     LF form, the bytes the manifest records), and nothing else is cached;
- *   · every shippable file of assets-mobile/ is in the light cache, and its
- *     font twins equal the common pack's fonts.
- */
-export function agree({ root = ROOT, packs = null } = {}) {
-  const pin = readPin(root);
-  const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
-  const fresh = buildManifest(root).assets;
-  const sources = new Map(commonSources(root).map((c) => [c.id, c.source]));
-  const problems = [];
-  let checks = 0;
-  const dirs = {};
-  const listedBy = {};
-  for (const pack of packsOf(pin, packs)) {
-    const dir = packDirFor(pin, pack, root);
-    if (markOf(dir) !== markerFor(pin, manifest, pack)) {
-      problems.push(`${pack}: ${posix(relative(root, dir))} is not a verified cache of ${pin.packs[pack].zip} — node tools/fetch-art.mjs --pack ${pack}`);
-      continue;
-    }
-    dirs[pack] = dir;
-    let theirs = {};
-    try { theirs = JSON.parse(readFileSync(join(dir, MANIFEST_PATH), 'utf8')).assets || {}; }
-    catch (e) { problems.push(`${pack}: the cached ${MANIFEST_PATH} cannot be read (${e.message})`); continue; }
-    const ids = Object.keys(fresh).filter((id) => inPack(fresh[id], pack));
-    const idSet = new Set(ids);
-    const listed = new Set();
-    listedBy[pack] = listed;
-    for (const id of ids) {
-      checks += 1;
-      if (!isDeepStrictEqual(theirs[id], fresh[id])) problems.push(`${pack}: ${id}: ${has(theirs, id) ? "the release's row differs from the one the trees give" : 'in the trees, not in the release'}`);
-      const rec = fresh[id][pack];
-      if (!rec) { problems.push(`${pack}: ${id}: the trees have no ${pack} file`); continue; }
-      listed.add(rec.path);
-      const source = pack === 'common' ? sources.get(id) : resolve(root, rec.path);
-      const file = join(dir, rec.path);
-      if (!existsSync(file)) { problems.push(`${pack}: ${id}: ${rec.path} is in the trees, not in the cache`); continue; }
-      checks += 1;
-      if (!canonicalBytes(source).equals(readFileSync(file))) problems.push(`${pack}: ${id}: ${posix(relative(root, source))} and the cache's ${rec.path} differ`);
-    }
-    for (const id of Object.keys(theirs)) if (!idSet.has(id)) problems.push(`${pack}: ${id}: in the release, not in the trees`);
-    for (const f of filesUnder(dir)) {
-      if (f === MANIFEST_PATH || f === VERIFIED || listed.has(f)) continue;
-      problems.push(`${pack}: ${f}: in the cache, not in the trees`);
-    }
-  }
-  // The light tree beyond its manifest rows: every shippable file is either a
-  // light record (above) or a font twin, which the common pack carries once.
-  if (dirs.light || dirs.common) {
-    const lightRoot = resolve(root, LIGHT_DIR);
-    const walkTree = (d) => (existsSync(d) ? filesUnder(d) : []);
-    for (const rel of walkTree(lightRoot)) {
-      if (!runtimeAsset(rel) || !MIME[extname(rel).toLowerCase()]) continue;
-      if (rel.startsWith('fonts/')) {
-        if (!dirs.common) continue;
-        checks += 1;
-        const cached = join(dirs.common, 'assets', rel);
-        if (!existsSync(cached)) problems.push(`common: ${LIGHT_DIR}/${rel}: a font twin the common pack does not carry`);
-        else if (!canonicalBytes(join(lightRoot, rel)).equals(readFileSync(cached))) problems.push(`common: ${LIGHT_DIR}/${rel} differs from the common pack's assets/${rel}`);
-      } else if (dirs.light && !listedBy.light.has(`${LIGHT_DIR}/${rel}`)) {
-        problems.push(`light: ${LIGHT_DIR}/${rel}: in the light tree, not in the release`);
-      }
-    }
-  }
-  return { problems, checks };
-}
-
 /** --flag value, or null; a flag with no value is an error. */
 function valueOf(args, flag, what) {
   const at = args.indexOf(flag);
@@ -763,9 +710,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       }
       console.log(relative(process.cwd(), dir) || '.');
     } else if (args.includes('--agree')) {
-      const { problems, checks } = agree({ packs: packArg });
-      if (problems.length) throw Object.assign(new Error(`the fetched release and the trees disagree (${problems.length} problem(s))`), { problems });
-      console.log(`fetch-art agree: OK — ${checks} checks passed`);
+      // RETIRED at docs/EXTERNAL-ASSETS-PLAN.md step 13: it proved the fetched
+      // release and the trees here were the same files, and the trees are gone.
+      // The fetch itself is the proof now (every file against the manifest).
+      console.error('fetch-art: --agree was retired at docs/EXTERNAL-ASSETS-PLAN.md step 13 — the trees it compared the release with left this repository; a fetch (or --recheck) verifies every file against art-manifest.json');
+      process.exit(2);
     } else {
       const pin = readPin();
       let packs;
@@ -777,8 +726,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       let failed = null;
       for (const pack of packs) {
         try {
-          const r = await fetchArt({ pack, from: fromArg ? resolve(fromArg) : null, recheck: args.includes('--recheck') });
+          const r = await fetchArt({ pack, from: fromArg ? resolve(fromArg) : null, recheck: args.includes('--recheck'), refetch: args.includes('--refetch') });
           const rel = relative(ROOT, r.dir);
+          if (r.rejected) console.warn(`fetch-art: ${pack}: the cache failed its recheck (${r.rejected[0]}${r.rejected.length > 1 ? `, and ${r.rejected.length - 1} more` : ''}); removed and fetched again`);
           console.log(r.reused ? `fetch-art: OK — ${pack}: ${rel} already verified` : `fetch-art: OK — ${pack}: ${r.count} files verified into ${rel}`);
         } catch (e) {
           // One pack's failure does not hide the next one's cause.

@@ -41,14 +41,15 @@ try {
 // above: engine.test.js also runs in tests/index.html, where there is no `fs`,
 // and an import of `node:fs` in that file would take the browser harness down
 // entirely. Test 49 asks this whether a path the game CONSTRUCTS resolves to a
-// real file; in the browser it is null and the test skips loudly.
+// real file; in the browser it is null and the test skips loudly. Since step
+// 12 (docs/EXTERNAL-ASSETS-PLAN.md) "real" means an id art-manifest.json
+// lists — what the pinned packs carry — not a file in a tree here, which
+// leaves the repository at step 13.
 let assetExists = null;
 try {
-  const { existsSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  assetExists = (rel) => existsSync(resolve(root, rel));
+  const { manifestIds } = await import('../tools/art-source.mjs');
+  const shipped = manifestIds();
+  assetExists = (rel) => shipped.has(rel);
 } catch {
   console.warn('  (no filesystem — test 49 will skip)');
 }
@@ -1014,6 +1015,45 @@ if (CORE) {
     if (flaskTreeOk) zoomPassed++;
     else zoomExtra++;
   }
+
+  // 98/99 — the copy ratchet (tools/uistrings.mjs, DEVELOPER.md "the
+  // ratchet"). It sat red on dev from 2026-09-17 to 2026-10-02 because
+  // nothing ran it: 24 files drifted from tools/uistrings-baseline.json, about
+  // 230 sentences landing in code instead of content/source/uiStrings.csv.
+  // 98 is the check's planted corpus; 99 is the tree against the baseline.
+  const runUiStrings = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/uistrings.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const copySelf = runUiStrings(['--selftest']);
+    const copySelfV = copySelf.out.match(/^uistrings --selftest: (?:OK|RED)[^\n]*/m)?.[0] || '';
+    const copySelfOk = copySelf.code === 0 && /: OK — /.test(copySelfV);
+    console.log(
+      `${copySelfOk ? 'PASS' : 'FAIL'}  98. the copy ratchet still catches its own known-bad corpus` +
+        ` — ${copySelfV || `uistrings --selftest (exit ${copySelf.code}) printed no verdict`}`
+    );
+    if (copySelfOk) zoomPassed++;
+    else zoomExtra++;
+  }
+
+  if (CORE) {
+    const copyTree = runUiStrings(['--check']);
+    const copyTreeV = copyTree.out.match(/^uistrings: (?:OK|RED)[^\n]*/m)?.[0] || '';
+    const copyTreeOk = copyTree.code === 0 && /^uistrings: OK — /.test(copyTreeV);
+    const copyRows = [...copyTree.out.matchAll(/^ {2}((?:GREW|SHRANK|NOT A REPO KEY)[^\n]*)$/gm)].map((m) => m[1]).join('; ');
+    console.log(
+      `${copyTreeOk ? 'PASS' : 'FAIL'}  99. no file holds more or fewer hardcoded sentences than the copy baseline records` +
+        ` — ${copyTreeV || `uistrings --check (exit ${copyTree.code}) printed no verdict`}` +
+        `${copyRows ? ` (${copyRows})` : ''}` +
+        ` (\`node tools/uistrings.mjs --check\` names each file)`
+    );
+    if (copyTreeOk) zoomPassed++;
+    else zoomExtra++;
+  }
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.
@@ -1041,10 +1081,9 @@ if (CORE) {
 // last frame. And registration lives entirely in these numbers: a frame whose
 // floor line is not below its crop top would place the figure off its feet.
 if (CORE) {
-  const { existsSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  // Each frame is an art-manifest.json id (step 12), not a file in a tree here.
+  const { manifestIds } = await import('../tools/art-source.mjs');
+  const shipped = manifestIds();
   const { POSE_FRAMES, POSE_STRIP, POSE_DIR, POSE_CANVAS } = await import('../src/content/poseSprites.js');
   const classes = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_')[0]))];
   const tints = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_').at(-1)))];
@@ -1054,7 +1093,7 @@ if (CORE) {
       for (const pose of POSE_STRIP) {
         const row = POSE_FRAMES.get(`${c}_${pose}_${t}`);
         if (!row) { bad.push(`${c}/${pose}/${t}: no row`); continue; }
-        if (!existsSync(resolve(root, POSE_DIR + row.f))) bad.push(`${c}/${pose}/${t}: ${row.f} missing`);
+        if (!shipped.has(POSE_DIR + row.f)) bad.push(`${c}/${pose}/${t}: ${row.f} missing from art-manifest.json`);
         if (!(row.g > row.y)) bad.push(`${c}/${pose}/${t}: floor ${row.g} is not below the crop top ${row.y}`);
         if (row.x + row.w > POSE_CANVAS.width + 1 || row.y + row.h > POSE_CANVAS.height + 1) {
           bad.push(`${c}/${pose}/${t}: crop runs off the ${POSE_CANVAS.width}x${POSE_CANVAS.height} canvas`);

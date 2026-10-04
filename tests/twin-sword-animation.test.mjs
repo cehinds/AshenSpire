@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { manifestIds } from '../tools/art-source.mjs';
 import { EQUIPMENT_ANIMATIONS, selectEquipmentAnimation, equipmentAnimationForLoadout, validateEquipmentAnimations, animationClip, animationView } from '../src/model/equipmentAnimation.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -7,8 +8,11 @@ import { createRunState } from '../src/model/state.js';
 import { gripOf } from '../src/model/loadout.js';
 import { fileURLToPath } from 'node:url';
 
-const manifest = JSON.parse(readFileSync(fileURLToPath(new URL('../art/twin-sword-reference-2026-09-19/manifest.json', import.meta.url)), 'utf8'));
-const attack = JSON.parse(readFileSync(fileURLToPath(new URL('../art/twin-sword-reference-2026-09-19/attack-sequence.json', import.meta.url)), 'utf8'));
+// The art studio's export files, kept as fixtures when art/ left for
+// cehinds/AshenSpire-art (docs/EXTERNAL-ASSETS-PLAN.md step 13); a frame ships
+// when art-manifest.json lists it.
+const manifest = JSON.parse(readFileSync(fileURLToPath(new URL('./fixtures/art-exports/twin-sword-reference-2026-09-19/manifest.json', import.meta.url)), 'utf8'));
+const attack = JSON.parse(readFileSync(fileURLToPath(new URL('./fixtures/art-exports/twin-sword-reference-2026-09-19/attack-sequence.json', import.meta.url)), 'utf8'));
 assert.equal(manifest.groups.length, 32);
 assert.deepEqual(manifest.coverage.missingAppearances, []);
 const registries = createRegistries(contentBundle);
@@ -29,7 +33,7 @@ for (const row of rows) {
   assert.match(animationView(animation, 'conversation'), /CONVERSATION.webp$/);
   assert.match(animationView(animation, 'portrait'), /PORTRAIT.webp$/);
   assert.deepEqual(Object.keys(animation.frames), manifest.poses);
-  for (const frame of Object.values(animation.frames)) assert.ok(existsSync(new URL('../' + frame.file, import.meta.url)));
+  for (const frame of Object.values(animation.frames)) assert.ok(manifestIds().has(frame.file), frame.file);
   const loadout = createRunState({ seed: 896, classId: row.classId, registries }).loadout;
   loadout.sets.armor[loadout.active.armor || 0] = row.id;
   for (const [slot, id] of [['rightHand', 'straightSword'], ['leftHand', 'katana']]) loadout.sets[slot][loadout.active[slot] || 0] = id;
