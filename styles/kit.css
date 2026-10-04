@@ -4880,7 +4880,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .footer-sp-text { position: absolute; inset: 0; pointer-events: none; }
 .combat-action-row[data-footer-art] .stamina-orb > svg text { visibility: hidden; }
 .footer-compact-label { display: none; }
-.footer-art-rails { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+.footer-art-rails { position: absolute; inset: 0; height: 100%; pointer-events: none; z-index: -1; }
 .combat-action-row .footer-art-rails > .footer-art-face { height: 100%; }
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] {
   display: block; width: min(100%, calc(950px / var(--ui-zoom, 1))); height: 100%; margin-inline: auto;

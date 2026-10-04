@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1567",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Illustrated combat keeps its breathing room",
+    "detail": "The transparent HP/relic HUD keeps combatants clear, card corners stay above the current footer, and potion minis and painted controls remain within their bounds. Embedded menu icons and build-failure diagnostics now work in every build mode.",
+    "build": "0.7.1.886",
+    "pullRequest": 1567,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1567"
+  },
+  {
     "id": "pr-1565",
     "date": "2026-10-03",
     "group": "2026-10-03",

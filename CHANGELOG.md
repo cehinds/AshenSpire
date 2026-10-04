@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Illustrated combat keeps its breathing room** ([#1567](https://github.com/cehinds/AshenSpire/pull/1567), `0.7.1.886`). The transparent HP/relic HUD keeps combatants clear, card corners stay above the current footer, and potion minis and painted controls remain within their bounds. Embedded menu icons and build-failure diagnostics now work in every build mode.
+
 - **Illustrated cards and scenery join the main game** ([#1565](https://github.com/cehinds/AshenSpire/pull/1565), `0.7.1.883`). Cards use editable layered artwork, live centered text and stamina/mana banners, with individual card objects included in builds. Painted scenery and an enlarged transparent HP/relic HUD retain the current footer, Shield/Ward rules, merchant rows and turn confirmation controls.
 
 - **Browse every merchant shelf in clear, matching rows** ([#1563](https://github.com/cehinds/AshenSpire/pull/1563), `0.7.1.876`). Cards, equipment, relics, supplies, services and goods for sale now place their artwork, complete details and action together, following the book shelf layout. On phones, actions sit below the details. Card inspection, purchase reviews, holds and the selected footer action remain available.
