@@ -6746,7 +6746,7 @@ export const uiStrings = [
   {
     "id": "reward.level.button",
     "extends": "",
-    "short": "Level",
+    "short": "Level up",
     "full": "",
     "tip": ""
   },

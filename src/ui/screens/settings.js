@@ -621,6 +621,8 @@ const ROWS = [
   { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
     min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: t('settings.row.touchFlickDistance'),
     note: tFull('settings.row.touchFlickDistance') },
+  { cat: 'Accessibility', key: 'guidedLevelUp', def: true, label: 'Pause XP for level-up rewards',
+    note: 'Pause at each level, open its reward choices, then resume leftover XP. Back keeps the reward for later. Turn off to use the Level up buttons manually.' },
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: t('settings.row.reducedMotion'),
     note: tFull('settings.row.reducedMotion') },
   // ON by default. Measured, not assumed: at the old default eight text targets

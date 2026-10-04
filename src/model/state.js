@@ -683,6 +683,7 @@ export const RUN_SHAPE = [
   { key: 'lastMountReceipt', type: 'object', optional: true },
   { key: 'mountTransactions', type: 'number', optional: true },
   { key: 'pendingReward', type: 'object', optional: true },
+  { key: 'deferredProgression', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
   { key: 'damageBySchoolAdd', type: 'object' },
@@ -1035,6 +1036,17 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       seenClaims.add(rewardId);
     }
   }
+  if (run.deferredProgression !== undefined) {
+    const saved = run.deferredProgression;
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) problems.push('deferredProgression must be an object');
+    else {
+      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'classDrafts'];
+      if (Object.keys(saved).some(key => !fields.includes(key))) problems.push('deferredProgression contains a non-progression reward');
+      const pendingReward = { schemaVersion: 1, source: 'deferred', after: 'map', rewards: saved, states: {} };
+      problems.push(...validateRunShape({ ...run, deferredProgression: undefined, pendingReward })
+        .filter(problem => problem.startsWith('pendingReward')).map(problem => problem.replace('pendingReward', 'deferredProgression')));
+    }
+  }
   if (run.pendingReward !== undefined) {
     const pending = run.pendingReward;
     if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
@@ -1076,6 +1088,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
           if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
         });
+      }
+      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'classDrafts']) {
+        for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
+          if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
+        }
       }
       if (pending.rewards?.levelCards !== undefined) {
         // SPEC §15.1: absent on an offer written before the schedule.

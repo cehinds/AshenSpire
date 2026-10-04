@@ -1,3 +1,5 @@
+import { deferredProgressionCount } from '../../model/deferredProgression.js';
+import { pendingLevelCount } from '../../model/levelup.js';
 import { swapOnError } from '../artFallback.js';
 import { characterLevel } from '../../model/levelup.js';
 import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
@@ -24,7 +26,7 @@ import { paintedPresentation } from '../paintedOutfits.js';
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, figureSpec,
+  canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, gripRefusal, fitsSlot, cardMods, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces,
   loadoutLeaveRefusal,
 } from '../../model/loadout.js';
@@ -394,7 +396,7 @@ function buildArmoury(L, ui) {
   toggle.setAttribute('aria-label', `Show Armaments as ${ui.armamentView === 'list' ? 'grid' : 'list'}`);
   toggle.addEventListener('click', ui.toggleArmamentView);
   equipment.append(el('div', { class: 'armoury-section-head' }, [titleS('Equipped gear'), pill({ label: String(itemCount) }), toggle]),
-    prose('Select an item to inspect it. Choose Change to see compatible gear.', { class: 'armoury-help' }), slots);
+    prose('Select an item to inspect it. Choose Replace to see compatible gear, or Unequip to return it to inventory.', { class: 'armoury-help' }), slots);
   if (ui.viewMode.pane === 'inventory') ui.left.appendChild(equipment);
   if (ui.viewMode.pane === 'both') ui.right.appendChild(equipment);
 }
@@ -546,7 +548,9 @@ function inventoryFace(registries, row, {
     // (content/config/ui/components/card.json, behavior.fields.surfaces).
     el.replaceChildren((['Potion', 'Relic'].includes(row.category)
       ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, surface: 'armoury' })
-      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, surface: 'armoury' })).card);
+      // The surrounding disclosure already owns read-only inspection. A nested
+      // card inspector consumes the first touch before that disclosure opens.
+      : renderEquipmentCard(registries, row.item, { interactive: false, inspection: false, owned: row.count, surface: 'armoury' })).card);
     if (trail) el.append(trail);
     el.classList.add('poker-inventory-face');
   }
@@ -705,7 +709,7 @@ function inventoryReveal(registries, row, {
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
   // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
-  onEditDeck = null,
+  onEditDeck = null, onProgression = null,
   handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -812,6 +816,7 @@ export function mountEquipment(host, {
     ? storedArmamentView : layout.equipment.defaultView;
   let armamentGridSelection = null;
   let picking = null; // { slotId, setIndex }
+  let selectedInventoryKey = null;
   let notice = ''; // a refusal to show in place, cleared on the next draw
   // ONE HOME for the breakpoint question. `draw()` stamps it onto
   // `panel.dataset.responsive` and the pane observer below asks it again to tell
@@ -969,6 +974,7 @@ export function mountEquipment(host, {
   };
   const clearInventorySelection = () => {
     picking = null;
+    selectedInventoryKey = null;
     view = 'rack';
     // A replacement flow always gives the equipment pane back after commit,
     // even in the Inventory view whose arrival preset normally opens this
@@ -982,9 +988,15 @@ export function mountEquipment(host, {
   /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
   function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
     const hadSelection = !!picking;
+    const slot = eq.slots.find(candidate => candidate.id === slotId);
+    const previousId = run.loadout.sets[slotId]?.[setIndex];
+    const previousName = previousId ? pieceById(slot, previousId)?.name || previousId : '';
     const piece = pieceId && (eq.slots.find(slot => slot.id === slotId)?.kinds.includes('armor')
       ? eq.armour.find(row => row.classId === run.class && row.id === pieceId)
       : eq.armaments.find(row => row.id === pieceId));
+    const successMessage = piece
+      ? `${piece.name} equipped in ${slot.label} · ${setIndex + 1}.${previousName && previousId !== pieceId ? ` ${previousName} is available in inventory.` : ''}`
+      : `${previousName} unequipped from ${slot.label} · ${setIndex + 1}. It is available in inventory.`;
     if (piece) {
       const requirement = equipmentRequirementReceipt(registries, piece, run.attributes, run);
       if (!requirement.ok) {
@@ -1006,6 +1018,7 @@ export function mountEquipment(host, {
         return false;
       }
       if (hadSelection) clearInventorySelection();
+      notice = successMessage;
       sfx.play('cardPlay');
       commit(hadSelection ? foldSettings() : null);
       return true;
@@ -1020,6 +1033,7 @@ export function mountEquipment(host, {
       return false;
     }
     if (hadSelection) clearInventorySelection();
+    notice = successMessage;
     sfx.play('cardPlay');
     commit(hadSelection ? foldSettings() : null);
     return true;
@@ -1055,18 +1069,28 @@ export function mountEquipment(host, {
       const index = (run.loadout.sets[slot.id] || []).findIndex((id) => id === row.id);
       if (index >= 0) return { slot, setIndex: index, pieceId: null, equipped: true, kind: 'unequip' };
     }
-    const slot = slots[0];
-    return {
-      slot,
-      setIndex: run.loadout.active[slot.id] || 0,
-      pieceId: row.id,
-      equipped: false,
-      kind: 'equip',
-    };
+    // A compatible hand is not a player's choice. Inventory items without a
+    // current position first ask for a destination; only that choice arms equip.
+    return null;
+  }
+
+  function positionActivationSeal(slot, position) {
+    const seal = canSwap(registries, slot.id, { inCombat });
+    if (!seal.ok) return seal;
+    const trial = structuredClone(run.loadout);
+    trial.active[slot.id] = position.index;
+    const reason = gripRefusal(registries, trial, run.class, slot.id, position.index, trial.sets[slot.id][position.index]);
+    return reason ? { ok: false, reason } : seal;
   }
 
   function activatePosition(slot, position, { openPicker = false } = {}) {
-    const rule = canSwap(registries, slot.id, { inCombat });
+    if (openPicker) {
+      openInventoryForSelection(slot.id, position.index);
+      selectedInventoryKey = null;
+      draw();
+      return;
+    }
+    const rule = positionActivationSeal(slot, position);
     if (!position.active) {
       if (!rule.ok) { notice = rule.reason; draw(); return; }
       if (onSwap) {
@@ -1119,6 +1143,44 @@ export function mountEquipment(host, {
   /** The position's code (R1, L2…) as the card's badge, so a row of cards reads as a rack. */
   const positionBadge = (position) => pill({ label: position.code, attrs: { class: 'armoury-position-code' } });
 
+  function positionActions(slot, position) {
+    const actions = el('div', { class: 'armament-position-actions' });
+    const replace = button({ label: position.state === 'empty' ? 'Choose item' : 'Replace',
+      className: 'armament-replace', attrs: { 'aria-label': `Choose an item for ${position.label}` } });
+    replace.addEventListener('click', event => {
+      event.preventDefault(); event.stopPropagation();
+      activatePosition(slot, position, { openPicker: true });
+    });
+    actions.append(replace);
+    if (position.state === 'occupied') {
+      const unequip = button({ label: 'Unequip', className: 'armament-unequip',
+        attrs: { 'aria-label': `Unequip ${position.summary.name} from ${position.label}` } });
+      const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class,
+        setIndex: position.index, itemId: null, attributes: run.attributes });
+      const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, null);
+      const reason = !seal.ok ? seal.reason : !transition.ok ? transition.reason
+        : inCombat && !onEquip ? 'Combat equipment changes are unavailable on this screen.' : '';
+      if (reason) { unequip.disabled = true; unequip.title = reason; }
+      else unequip.addEventListener('click', event => {
+        event.preventDefault(); event.stopPropagation();
+        applyEquipmentChange(slot.id, position.index, null, `Unequipped ${position.summary.name} from ${position.label}`);
+      });
+      actions.append(unequip);
+      if (reason) actions.append(prose(reason, { class: 'armament-action-reason' }));
+    }
+    if (!position.active) {
+      const activate = button({ label: 'Make active', className: 'armament-activate',
+        attrs: { 'aria-label': `Make ${position.label} active` } });
+      const seal = positionActivationSeal(slot, position);
+      activate.disabled = !seal.ok;
+      if (!seal.ok) activate.title = seal.reason;
+      activate.addEventListener('click', () => activatePosition(slot, position));
+      actions.append(activate);
+      if (!seal.ok) actions.append(prose(seal.reason, { class: 'armament-action-reason' }));
+    }
+    return actions;
+  }
+
   // A POSITION IS AN OPTIONCARD: art, name, the combat bonus as its description,
   // the category and weight as its meta, tags as Tags, the act (Equip /
   // Equipped) trailing. Locked and empty are the same card in other states.
@@ -1145,17 +1207,12 @@ export function mountEquipment(host, {
       card.addEventListener('click', () => activatePosition(slot, position, { openPicker: true }));
       attachPositionDropTarget(card, slot, position);
       attachTooltip(card, () => `<div class="tt-title">${esc(position.label)}: Empty</div><p>Select this position, then choose an item from Inventory, or drag a compatible item here.</p>`);
-      return card;
+      return el('div', { class: 'armament-position-group', dataset: { slotPosition: `${slot.id}:${position.index}` } }, [card, positionActions(slot, position)]);
     }
 
     const card = el('details', {
       class: `armoury-position-card is-occupied${position.active ? ' is-active' : ''}${selected ? ' is-selected' : ''}`,
       dataset: { component: 'armoury.equipmentPositionCard', slotPosition: `${slot.id}:${position.index}`, positionState: position.action },
-    });
-    const action = button({
-      label: position.action === 'equipped' ? 'Change' : 'Equip',
-      weight: position.action === 'equipped' ? 'secondary' : 'primary',
-      className: `armoury-position-action ${position.action}`,
     });
     const head = optionCard({
       tag: 'summary',
@@ -1164,22 +1221,20 @@ export function mountEquipment(host, {
       description: position.summary.bonus,
       meta: `${position.summary.category} · ${position.summary.weight}`,
       body: el('span', { class: 'tags armoury-position-tags' }, (position.summary.tags.length ? position.summary.tags : ['untagged']).map((tag) => tagChip({ label: tag }))),
-      trail: action, arrow: false, selected: !!selected,
+      trail: pill({ label: position.active ? 'Active' : 'Reserve' }), arrow: false, selected: !!selected,
       className: 'armoury-position-summary',
     });
     // The name stands in a <strong> the tools read (`.armoury-position-values strong`).
     const nameSlot = head.querySelector('.on');
     nameSlot.replaceChildren(el('strong', { text: position.summary.name }), positionBadge(position));
     head.querySelector('.ob').classList.add('armoury-position-values');
-    action.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      activatePosition(slot, position, { openPicker: position.action === 'equipped' });
-    });
+    // Controls outside <summary> do not accidentally toggle item disclosure.
+    const group = el('div', { class: 'armament-position-group', dataset: { slotPosition: `${slot.id}:${position.index}` } });
     card.append(head, armamentDetail(slot, position.summary));
+    group.append(card, positionActions(slot, position));
     attachPositionDropTarget(card, slot, position);
     attachTooltip(head, () => `<div class="tt-title">${esc(`${position.label}: ${position.summary.name}`)}</div><p>${esc(position.summary.bonus)} · ${esc(position.summary.weight)}. Click to show or hide full item details.</p>`);
-    return card;
+    return group;
   }
 
   function toggleArmamentView() {
@@ -1235,6 +1290,7 @@ export function mountEquipment(host, {
     if (!selected) detail.appendChild(flavour('No equipment positions are available.', { class: 'ep-hint' }));
     else if (selected.position.state === 'occupied') detail.appendChild(armamentDetail(selected.slot, selected.position.summary));
     else detail.appendChild(flavour(`${selected.position.label} is ${selected.position.state}.`, { class: 'ep-hint' }));
+    if (selected && selected.position.state !== 'locked') detail.append(positionActions(selected.slot, selected.position));
     return detail;
   }
 
@@ -1255,7 +1311,7 @@ export function mountEquipment(host, {
     const occupantName = target.kind === 'unequip' ? row.name
       : (occupantId && occupantId !== row.id ? (pieceById(target.slot, occupantId)?.name || occupantId) : null);
     const compared = inventoryComparison({
-      candidate: comparison, target: { kind: target.kind, slotLabel: target.slot.label }, occupantName, roleLabels,
+      candidate: comparison, target: { kind: target.kind, slotLabel: `${target.slot.label} · ${target.setIndex + 1}` }, occupantName, roleLabels,
     });
     const facts = el('section', { class: 'armoury-selection-facts', dataset: { component: 'armoury.selectionFacts' } });
     if (compared) {
@@ -1296,13 +1352,44 @@ export function mountEquipment(host, {
       attrs: { dataset: { focusable: 'true', footAct: plan.kind } },
     });
     if (plan.blocked) {
+      node.disabled = true;
       node.classList.add('locked');
       node.setAttribute('aria-disabled', 'true');
       refuses(node, () => plan.reason);
       return node;
     }
-    registerHold(armHold(node, { ms: plan.holdMs, id: 'equipInventory', onConfirm: plan.act }));
+    if (plan.explicit) node.addEventListener('click', plan.act);
+    else registerHold(armHold(node, { ms: plan.holdMs, id: 'equipInventory', onConfirm: plan.act }));
     return node;
+  }
+
+  function destinationChoices(row) {
+    const section = el('section', { class: 'armament-destinations', 'aria-label': `Destination for ${row.name}` }, [
+      titleS('Choose a destination'), prose('Select a slot and position. Equipping a reserve does not make it active.'),
+    ]);
+    const choices = el('div', { class: 'armament-destination-options' });
+    for (const slot of eq.slots.filter(candidate => fitsSlot(candidate, row.item))) {
+      for (const position of slotPositions(slot).filter(candidate => candidate.modelState !== 'hidden')) {
+        const chosen = picking?.slotId === slot.id && picking?.setIndex === position.index;
+        const label = `${slot.label} · ${position.index + 1}`;
+        const choice = button({ label, className: `armament-destination${chosen ? ' selected' : ''}`,
+          disabled: position.state === 'locked', attrs: {
+            'aria-pressed': String(chosen), 'aria-label': `${label}, ${position.active ? 'active' : 'reserve'}, ${position.summary.name}`,
+            dataset: { destinationSlot: slot.id, destinationIndex: String(position.index) },
+          } });
+        choice.append(el('span', { class: 'armament-destination-occupant', text: position.state === 'locked'
+          ? position.rung?.hint || 'Locked position' : `${position.active ? 'Active' : 'Reserve'} · ${position.summary.name}` }));
+        choice.addEventListener('click', () => {
+          openInventoryForSelection(slot.id, position.index);
+          selectedInventoryKey = row.key;
+          draw();
+          wrap.querySelector('.armoury-foot-action')?.focus({ preventScroll: true });
+        });
+        choices.append(choice);
+      }
+    }
+    section.append(choices);
+    return section;
   }
 
   // SPEC §15.4: the Armoury's Sigils panel. One row per owned legendary, in
@@ -1458,7 +1545,9 @@ export function mountEquipment(host, {
       // an HTML DragEvent from a disclosure button. Moving beyond the hold's
       // own slop cancels that hold and becomes a drag; a tap remains a tap.
       element.addEventListener('pointerdown', (event) => {
-        if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
+        // Touch swipes scroll the inventory. Equip uses its explicit button;
+        // mouse/pen users retain drag and drop between named positions.
+        if (event.pointerType === 'touch' || !event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
         detachPointerTracking();
         pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY, dragging: false, drop: null };
         try { element.setPointerCapture(event.pointerId); } catch { /* capture is a progressive enhancement */ }
@@ -1480,16 +1569,19 @@ export function mountEquipment(host, {
     }
     const entries = rows.map((row) => {
       const target = inventoryTarget(row);
-      const draggable = !!target;
+      const armament = row.item && ['Armour', 'Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category);
+      const cardClass = armament ? { ...inventoryItemClass, holdAction: false } : inventoryItemClass;
+      const draggable = !!armament;
+      const targetLabel = target ? `${target.slot.label} · ${target.setIndex + 1}` : '';
       const actionLabel = target
         ? (target.kind === 'unequip'
-          ? 'Unequip'
-          : `${target.kind === 'move' ? 'Move' : 'Equip'} to ${target.slot.label}`)
+          ? `Unequip from ${targetLabel}`
+          : `${target.kind === 'move' ? 'Move' : 'Equip'} to ${targetLabel}`)
         : '';
       const face = inventoryFace(registries, row, {
         draggable,
         actionLabel: selectedSlot ? actionLabel : '',
-        classModel: inventoryItemClass,
+        classModel: cardClass,
       });
       if (draggable) draggableRows.set(row.key, row);
       let actionButton = null;
@@ -1508,7 +1600,7 @@ export function mountEquipment(host, {
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );
-        const wholeCardHold = inventoryItemClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
+        const wholeCardHold = cardClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
         // The act is a kit Button — danger for an unequip, primary for an equip.
         // When the whole card is the hold target the act is a lit StatePill that
         // names it, not a second control.
@@ -1520,12 +1612,15 @@ export function mountEquipment(host, {
           actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
           actionButton.addEventListener('click', (event) => event.stopPropagation());
         }
-        if (!seal.ok) sealChip(actionButton, seal.reason);
+        if (!seal.ok) { actionButton.disabled = true; sealChip(actionButton, seal.reason); }
         else if (!transition.ok) {
+          actionButton.disabled = true;
           actionButton.classList.add('locked');
           refuses(actionButton, () => transition.reason);
         } else if (wholeCardHold) {
           faceActions.set(row.key, act);
+        } else if (armament) {
+          actionButton.addEventListener('click', act);
         } else {
           const disarm = armHold(actionButton, {
             ms: inventoryItemClass.holdAction ? holdDuration : 0,
@@ -1539,7 +1634,7 @@ export function mountEquipment(host, {
         eligibility = inventoryEligibility({ target, seal, transition, requirement: comparison?.requirement });
         const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
         // The footer runs the same act, through the same hold, as the card.
-        if (plan) footerPlans.set(row.key, { ...plan, act, holdMs: inventoryItemClass.holdAction ? holdDuration : 0 });
+        if (plan) footerPlans.set(row.key, { ...plan, act, explicit: !!armament, holdMs: cardClass.holdAction ? holdDuration : 0 });
       } else if (row.classCard && !inCombat) {
         const equipped = !run.classUnequipped && run.class === row.id;
         const label = equipped ? 'Unequip class' : 'Equip class';
@@ -1561,6 +1656,16 @@ export function mountEquipment(host, {
         actionButton.addEventListener('click', (event) => { event.stopPropagation(); act(); });
         footerPlans.set(row.key, { label, kind: 'read', act, holdMs: 0 });
       }
+      const revealed = inventoryReveal(registries, row, {
+        comparison,
+        facts: target ? selectionFacts(row, target, comparison, eligibility, actionLabel, roleLabels) : null,
+        action: actionButton,
+        instruction: armament ? (target ? 'Review the destination and comparison, then use the named action.' : 'Choose a destination to equip this item.') : '',
+        holdDuration, registerHold, classModel: cardClass,
+        comparisonConfig: armament ? { ...layout.comparison, presentation: 'inline' } : layout.comparison,
+        onClassAction: armament ? null : (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
+      });
+      if (armament) revealed.prepend(destinationChoices(row));
       return {
         key: row.key,
         kind: 'item',
@@ -1570,22 +1675,10 @@ export function mountEquipment(host, {
           node: face,
           compact: true,
           className: 'inventoryItem',
-          classModel: inventoryItemClass,
+          classModel: cardClass,
         },
         reveal: {
-          node: inventoryReveal(registries, row, {
-            comparison,
-            facts: target ? selectionFacts(row, target, comparison, eligibility, actionLabel, roleLabels) : null,
-            action: actionButton,
-            instruction: selectedSlot
-              ? `${target?.kind === 'unequip' ? 'Unequip from' : 'Equip or drag to'} ${selectedSlot.label}.`
-              : (target ? 'Drag this item onto a compatible equipment position.' : ''),
-            holdDuration,
-            registerHold,
-            classModel: inventoryItemClass,
-            comparisonConfig: layout.comparison,
-            onClassAction: (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
-          }),
+          node: revealed,
           sense: `${row.name}. ${row.category}. ${row.count} owned.`,
         },
       };
@@ -1595,6 +1688,7 @@ export function mountEquipment(host, {
       layout: 'column',
       revealHost: detail,
       onReveal: (key) => {
+        selectedInventoryKey = key;
         prompt.hidden = !!key;
         // Phone rows collapse the detail track until an item is chosen (kit.css).
         box.dataset.detailOpen = key ? 'true' : 'false';
@@ -1645,7 +1739,10 @@ export function mountEquipment(host, {
     if (selectedSlot) {
       const clear = button({ label: 'Show all items' });
       clear.addEventListener('click', () => { picking = null; draw(); });
-      box.prepend(el('div', { class: 'armoury-selection-context', role: 'status' }, [prose(`Choose an item for ${selectedSlot.label}.`), clear]));
+      const index = picking.setIndex;
+      const current = slotSummary(selectedSlot, index);
+      box.prepend(el('div', { class: 'armoury-selection-context', role: 'status' }, [
+        prose(`${selectedSlot.label} · ${index + 1} — ${index === run.loadout.active[selectedSlot.id] ? 'Active' : 'Reserve'} · ${current.name}`), clear]));
     }
     box.dataset.inventoryCount = String(inventoryItemCount(rows));
     if (!entries.length) {
@@ -1785,6 +1882,14 @@ export function mountEquipment(host, {
     // is the model's, spelled once there; the plate is only where it lands.
     if (progress.pointsLabel) {
       badgePlate(node, statusText(progress.pointsLabel, { class: 'character-level-points' }), 'the waiting attribute points');
+    }
+    if (onProgression && !inCombat) {
+      const waiting = deferredProgressionCount(run);
+      const ready = pendingLevelCount(registries, run) > 0;
+      const action = button({ label: ready ? 'Level up & rewards' : waiting ? `Level rewards · ${waiting} waiting` : 'Level up & stats',
+        weight: ready || waiting ? 'primary' : 'secondary', className: 'character-level-action' });
+      action.addEventListener('click', () => { close(); onProgression(); });
+      node.append(action);
     }
     return node;
   }
@@ -2225,8 +2330,8 @@ export function mountEquipment(host, {
     });
     // W1e footer: Back bottom-left (leaves, like the ✕ and Escape); the
     // selected item's action bottom-right when there is one.
-    const back = button({ label: t('common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
-    back.addEventListener('click', leave);
+    const back = button({ label: picking ? 'Back to armaments' : t('common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
+    back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });
     const rendered = renderArmouryPanel(panelModel, wrap, { back });
     setFooterPrimary = rendered.setPrimary;
     armouryNav = rendered.nav;
@@ -2310,6 +2415,7 @@ export function mountEquipment(host, {
       // The rail already names this view; the W1n body carries no second title,
       // and its instruction lives in the empty detail column.
       inventory.append(inventoryBlock());
+      if (selectedInventoryKey) inventoryDisclosure?.open(selectedInventoryKey);
       // SPEC §15.4: the Sigils panel sits below the item collection.
       const sigils = sigilsPanel();
       if (sigils) inventory.append(sigils);
