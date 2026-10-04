@@ -48,7 +48,7 @@ export function allocateSceneBands({ width, height, zoom = 1, rem = 16 } = {}, l
 // yields height to the battlefield, but only down to one minimum-width card
 // with its lift, arc and insets. Card faces, text and targets keep their
 // minimums. A host that still cannot fit is reported, not squeezed.
-export function allocateCombatBands({ width, height, zoom = 1, rem = 16 }, config = wireframeUi) {
+export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerArtPx = 0 }, config = wireframeUi) {
   // The stacked plan is the shared W4 plan: the battlefield is the scene band
   // and the hand is the context band.
   const minimumBattlefield = config.formation.minimumSpritePx / zoom + config.formation.detailReserveRem * rem;
@@ -57,7 +57,7 @@ export function allocateCombatBands({ width, height, zoom = 1, rem = 16 }, confi
   const [hudBand, sceneBand, contextBand, footerBand] = config.combat.bands;
   const plan = allocateSceneBands({ width, height, zoom, rem },
     { sizing: { bands: { hud: hudBand, scene: sceneBand, context: contextBand, footer: footerBand } } },
-    { sizing: { minimums: { footerPx: config.combat.footerMinimumPx } } },
+    { sizing: { minimums: { footerPx: Math.max(config.combat.footerMinimumPx, footerArtPx) } } },
     { contextPx: config.hand.minimumHeightPx, scenePx: minimumBattlefield, label: 'combat' });
   const [, , handShare, footerShare] = plan.shares;
   const { hud, context: hand, footer } = plan;

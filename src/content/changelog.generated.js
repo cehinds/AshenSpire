@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1558",
+    "id": "pr-1534",
     "date": "2026-10-03",
     "group": "2026-10-03",
-    "summary": "Remove the combat Positioning button",
-    "detail": "The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.",
-    "build": "0.7.1.873",
-    "pullRequest": 1558,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1558"
+    "summary": "Painted, editable combat footer",
+    "detail": "The stamina orb, draw cradle, End Turn plate, discarded cards and potion tray now assemble from separate painted components. Footer Atelier can move, resize and snap them together, and edit live text bindings, fonts and positions independently of the images. Solo and co-op keep their existing actions, with readable compact controls on phones and short landscape screens. The five new light images total about 9 KB.",
+    "build": "0.7.1.872",
+    "pullRequest": 1534,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1534"
   },
   {
     "id": "pr-1557",
