@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Remove the combat Positioning button** ([#1558](https://github.com/cehinds/AshenSpire/pull/1558), `0.7.1.874`). The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.
+- **Remove the combat Positioning button** ([#1558](https://github.com/cehinds/AshenSpire/pull/1558), `0.7.1.873`). The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.
 
 - **Exercise the small-player foot target on every platform** ([#1557](https://github.com/cehinds/AshenSpire/pull/1557), `0.7.1.871`). Separate the browser fixture's player stack from the grid-cell center and keep its sprite inside the measured small bounds, so text and artwork cannot bypass the minimum touch-target check. Gameplay is unchanged.
 
