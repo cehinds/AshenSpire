@@ -85,6 +85,7 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'shopbars.mjs',
+    extraCopy: ['assets'], // Browser fixtures need the same verified art and fonts as the real boot.
     plants: [
       {
         // THE RECORDED ANSWER'S EXACT WORD IS "ABSENT". A toggled-off feature
@@ -288,7 +289,9 @@ async function main() {
     const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw'); return r.result.value; };
     const until = async (x, w, ms = 20000) => { const t = Date.now();
-      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
+      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); }
+      const state = await ev(`JSON.stringify({url:location.href,ready:document.readyState,text:document.body?.innerText.slice(0,600)})`).catch(error => error.message);
+      throw new Error('timeout ' + w + ' — ' + state); };
     console.log(`\n  ${shape}`);
 
     await cdp.send('Page.navigate', { url: `${base}?shot=shop${settingsQuery(vp.settings)}` }, S);
