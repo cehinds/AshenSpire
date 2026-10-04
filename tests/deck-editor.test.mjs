@@ -549,7 +549,7 @@ test('Reading Desk: search accepts hotkey characters without mutating or closing
 
 test('Reading Desk: inspector uses one native artwork image across card selection', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  const { playingCardArt } = await import('../src/ui/cardArtwork.js');
+  const { illustratedArtwork } = await import('../src/ui/components/illustratedCard.js');
   withDom(() => {
     const run = freshRun();
     const editor = mountDeckEditor(document.body, { registries: REG, run });
@@ -559,10 +559,10 @@ test('Reading Desk: inspector uses one native artwork image across card selectio
         editor.root.querySelector(`[data-focus-key="tile:${tile.key}"]`).click();
         editor.root.querySelector(`[data-focus-key="inspect:collection:${tile.key}"]`).click();
         const face = editor.root.querySelector('.deck-editor-reading .card');
-        const images = face.querySelectorAll('.art img');
+        const images = face.querySelectorAll('[data-component="art"] img');
         assert.equal(images.length, 1, tile.name);
         assert.ok(images[0].classList.contains('playing-card-art'));
-        assert.equal(images[0].getAttribute('data-card-art'), playingCardArt(tile.ref, { large: true }).kind);
+        assert.equal(images[0].getAttribute('data-card-art'), illustratedArtwork(tile.ref, face.dataset.cardId, { large: true }).kind);
         assert.equal(face.querySelector('.deck-editor-art'), null, 'no second Reading Desk artwork overlay');
       }
     } finally { editor.close(); }

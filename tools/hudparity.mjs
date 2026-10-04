@@ -1042,7 +1042,7 @@ async function selftest() {
       // the current seam where content is mounted into it.
       name: 'the map hand-writes its own .hpbar again (the pre-E9 shape)',
       file: 'src/ui/components/runHud.js',
-      find: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
+      find: "    resHost.appendChild(resourceBars(plan.filter(bar=>bar.id==='hp'), { surface: 'main' }));",
       replace: "    resHost.innerHTML = '<div class=\"bar hpbar\"><div class=\"fill\" style=\"width:50%\"></div><div class=\"label\">HP</div></div>';",
       expectRed: /FINDING P6\/one-renderer .*\.topbar \.hpbar count/,
     },
@@ -1082,8 +1082,8 @@ async function selftest() {
       // to print this literal doubled HUD inside its own green P1 line.
       name: 'the map mounts the shared resource HUD twice',
       file: 'src/ui/components/runHud.js',
-      find: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
-      replace: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));\n    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
+      find: "    resHost.appendChild(resourceBars(plan.filter(bar=>bar.id==='hp'), { surface: 'main' }));",
+      replace: "    resHost.appendChild(resourceBars(plan.filter(bar=>bar.id==='hp'), { surface: 'main' }));\n    resHost.appendChild(resourceBars(plan.filter(bar=>bar.id==='hp'), { surface: 'main' }));",
       expectRed: /FINDING P1\/rows .*duplicates map=/,
     },
     {

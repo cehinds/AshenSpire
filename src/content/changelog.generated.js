@@ -3,6 +3,86 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1573",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "A clearer resource orb and more skyline",
+    "detail": "The stamina number sits centered above its SP label with clear separation, and the battlefield ground recedes to show more of the skyline while keeping combatants grounded.",
+    "build": "0.7.1.892",
+    "pullRequest": 1573,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1573"
+  },
+  {
+    "id": "pr-1570",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Grounded combat with a compact footer",
+    "detail": "Combatants stand on the painted floor, and the smaller bottom controls leave the illustrated hand lower on screen. The artwork stays proportional and adjacent atlas scenes cannot bleed into the backdrop.",
+    "build": "0.7.1.890",
+    "pullRequest": 1570,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1570"
+  },
+  {
+    "id": "pr-1569",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Learn cards from books instead of buying loose cards",
+    "detail": "The merchant no longer offers Cards or Weapon Arts for direct purchase. Books, equipment, relics, supplies and services remain, including on saved visits.",
+    "build": "0.7.1.889",
+    "pullRequest": 1569,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1569"
+  },
+  {
+    "id": "pr-1567",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Illustrated combat keeps its breathing room",
+    "detail": "The transparent HP/relic HUD keeps combatants clear, card corners stay above the current footer, and potion minis and painted controls remain within their bounds. Embedded menu icons and build-failure diagnostics now work in every build mode.",
+    "build": "0.7.1.886",
+    "pullRequest": 1567,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1567"
+  },
+  {
+    "id": "pr-1565",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Illustrated cards and scenery join the main game",
+    "detail": "Cards use editable layered artwork, live centered text and stamina/mana banners, with individual card objects included in builds. Painted scenery and an enlarged transparent HP/relic HUD retain the current footer, Shield/Ward rules, merchant rows and turn confirmation controls.",
+    "build": "0.7.1.883",
+    "pullRequest": 1565,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1565"
+  },
+  {
+    "id": "pr-1563",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Browse every merchant shelf in clear, matching rows",
+    "detail": "Cards, equipment, relics, supplies, services and goods for sale now place their artwork, complete details and action together, following the book shelf layout. On phones, actions sit below the details. Card inspection, purchase reviews, holds and the selected footer action remain available.",
+    "build": "0.7.1.876",
+    "pullRequest": 1563,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1563"
+  },
+  {
+    "id": "pr-1558",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Remove the combat Positioning button",
+    "detail": "The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.",
+    "build": "0.7.1.874",
+    "pullRequest": 1558,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1558"
+  },
+  {
+    "id": "pr-1534",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Painted, editable combat footer",
+    "detail": "The stamina orb, draw cradle, End Turn plate, discarded cards and potion tray now assemble from separate painted components. Footer Atelier can move, resize and snap them together, and edit live text bindings, fonts and positions independently of the images. Solo and co-op keep their existing actions, with readable compact controls on phones and short landscape screens. The five new light images total about 9 KB.",
+    "build": "0.7.1.872",
+    "pullRequest": 1534,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1534"
+  },
+  {
     "id": "pr-1557",
     "date": "2026-10-03",
     "group": "2026-10-03",

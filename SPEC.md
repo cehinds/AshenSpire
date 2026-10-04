@@ -1631,26 +1631,20 @@ The editor groups the complete inventory into stable nested sections:
   the centre, then move upward. For two columns and three rows, player rows read
   `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
   The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
-  The combat sizing workbench loads the matching layout when switching grid dimensions,
-  retains each layout's draft edits for the modal session, and offers **Load supplied positioning**
-  to restore its authored offsets. Measurements remain responsive percentages; reference
-  anchors at 1641×526 are checked against the exports. Explicit saved group edits take precedence.
-  Formation settings and the combat **Positioning** toggle share group controls for the entire
+  Measurements remain responsive percentages; reference anchors at 1641×526 are checked
+  against the exports. Explicit saved group edits take precedence.
+  Formation settings offer group controls for the entire
   battlefield, either team, individual columns, and named custom sets of positions. Dragging or
   nudging translates every anchor in the group together. Offsets are stored as percentages of
   battlefield width/height. Grid snapping defaults on with a 50 CSS px adjustable step; the group's
   first anchor snaps to an intersection while all member spacing remains fixed. Snapping can be disabled.
   Edge distances and nudge steps use CSS pixels. Characters and tiles
   share the transformed anchors, and group translations stop at the battlefield edges. Custom
-  members retain their side, row and local column when the roster changes. Combat edits save to
-  the profile; Settings edits require Apply layout. These are presentation edits, not tactical
+  members retain their side, row and local column when the roster changes. Settings edits
+  require Apply layout. These are presentation edits, not tactical
   movement, and do not spend actions or change combat range rules.
   Groups may also target a row or one position and apply character size multipliers with feet
-  fixed to their anchors. The compact panel is draggable and resizable; its expanded, draggable,
-  resizable modal tests 1×1, 2×2 and 2×3 grids (columns × rows per side), variable spawn counts,
-  mixed or selected class/enemy references, and formation width/depth. Reference spawning is
-  isolated from combat state. Apply saves only presentation settings. JSON output/download includes
-  presentation settings, groups, scale multipliers, snapping, measured anchors and the test roster.
+  fixed to their anchors. Combat has no in-battle positioning control.
 - **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
   tray, HUD and window dimensions; UI scale/layout thresholds; and other data-owned component
   geometry. Dependent constraints are enforced together (for example, resting < selected <
@@ -2433,6 +2427,8 @@ A shop has a **kind**, one of `market` (the usual shop), `blacksmith` and `maste
 - The **stock** of each new offering (stones, sigils, books…) rolls on `shopOffers` after the offering roll. The stock of today's shelves still rolls on `shop` exactly as `buildShopStock` does now. The rolled offering list and each offering's stock persist on the visit exactly as `run.shopStock` and `serviceStates[pointId].stock` do today, so a reload neither rerolls a shelf nor restores sold stock (§12.2).
 
 **Settings, Advanced → Shops.** For each kind there is a `guaranteedMinimum` number, and for each offering an **enabled** bool, a **chance** number and a **weight** number (which offerings the guarantee adds first). These are generated from `shops.js` the way `advancedConfigRows` generates the balance rows, so adding an offering to the data adds its rows. They are `gameConfig.shops.<kind>.<offering>.enabled|chance|weight` and `gameConfig.shops.<kind>.guaranteedMinimum`. **Every other number an offering authors** (stock counts, prices, `perVisit`, refine ratios, slot limits, costs, `respecRefundPct`; a consumable's `hpPct` and `xp` are rows of the consumable itself, §14.3) gets its row the same way, as `gameConfig.shops.<kind>.<offering>.<key>` (or `gameConfig.shops.<kind>.<key>` for a kind-level number), generated from each numeric leaf that carries a `[NOTE]`; `validateContent` refuses a numeric offering leaf with no `[NOTE]`, by name. Like every `gameConfig.*` row they are **frozen into `run.advancedConfigSnapshot` when a run begins**. A disabled offering is never rolled and never guaranteed.
+
+**Merchant presentation (owner, 2026-10-03).** Direct Cards and loose Weapon Arts purchases are no longer exposed: neither category, shelf nor purchase control is rendered, including for existing saved visits. Books and equipment remain available through their existing offers. Legacy `cards` and `weaponArts` stock fields, generation draws and configuration snapshots remain compatible; opening a merchant does not reroll or mutate them. The stock-generation guarantee above still applies to stored offerings, while the merchant displays only the remaining purchase categories.
 
 **Where each kind appears.**
 - **Classic `merchant` node.** It rolls its kind from `gameConfig.shops.kindWeights` on `shopOffers`. The shipped weights are `market` 100, `blacksmith` 0 and `master` 0, so shipped seeds are unchanged; the owner raises the other two to let a classic merchant be a blacksmith or a master. A kind is rollable only once its screen has shipped. Step 4 ships `blacksmith` and `master` locked at weight 0: `validateContent` refuses a non-zero weight for a kind whose screen is not registered, and Settings shows no weight row for it. Steps 6 and 7 each unlock their own kind. A merchant that rolls `blacksmith` or `master` offers that kind's offerings only, not market shelves.

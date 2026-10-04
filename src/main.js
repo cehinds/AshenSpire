@@ -3845,6 +3845,12 @@ if (shotState === 'combat-test') {
     // so the grid photographs identically every run — gives the twenty-card
     // deck the bug was reproduced on.
     run.floor = 8;
+    // An isolated wounded arrival exercises the real recovery preview and
+    // commitment; it never touches the player's durable saves.
+    if (shotParams.get('shotRestState') === 'wounded') {
+      run.hp = Math.max(1, Math.floor(run.maxHp * .6));
+      run.mana = 0;
+    }
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     // `?shotSmithingStones=0|1` — stand on both sides of the Smith affordability
     // edge without writing durable storage. The accepted values are deliberately

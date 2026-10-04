@@ -17,6 +17,8 @@
 // install reuse the smith's mount-service modals with the blacksmith's
 // quote-checked commits.
 import { esc } from '../components/tooltip.js';
+import { servicePortrait } from '../components/servicePortrait.js';
+import { engravedIconHtml, engravedGlyphId } from '../components/engravedIcon.js';
 import { sfx } from '../sfx.js';
 import { modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
@@ -71,7 +73,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   function tile(glyph, title, desc, reason = '') {
     const node = el('div', { class: `class-pick shop-offer${reason ? ' locked' : ''}` });
-    node.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}</div>`;
+    node.innerHTML = `<div class="glyph">${engravedIconHtml(engravedGlyphId(glyph)) || glyph}</div><div class="cp-body"><h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}</div>`;
     if (reason) node.append(statusText(reason, { class: 'shop-offer-avail' }));
     return node;
   }
@@ -247,6 +249,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       </div>`;
     if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
     const root = app.querySelector('.shop-workspace');
+    root.prepend(servicePortrait('smith'));
     const frame = root.querySelector('.shop-frame');
     const railed = root.querySelector('.shop-railed');
     const paneHead = root.querySelector('.shop-pane-head');

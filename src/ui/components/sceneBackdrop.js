@@ -44,6 +44,12 @@ export function fitSceneBackdrop(backdrop, { width, height, zoom = 1, windowTop 
     : sceneLayers({ width, height, scene, config: chosen });
   const viewBox = framed ? layers.frame.viewBox : layers.skyline.viewBox;
   if (viewBox) art.setAttribute('viewBox', viewBox.join(' '));
+  // A window-fitted atlas cell can end before the full frame. Fade into the
+  // board at that edge instead of exposing the next cell or a hard seam.
+  const paintBottom = viewBox && scene?.box
+    ? Math.max(0, Math.min(height, (scene.box[1] + scene.box[3] - viewBox[1]) * height / viewBox[3]))
+    : height;
+  backdrop.style.setProperty('--scene-paint-bottom', `${paintBottom}px`);
   backdrop.dataset.sceneFit = layers.aligned ? 'floor' : 'cover';
   backdrop.dataset.skyline = layers.skyline.visible ? 'on' : 'off';
   backdrop.dataset.floor = layers.floor.visible ? 'on' : 'off';

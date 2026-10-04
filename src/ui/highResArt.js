@@ -20,6 +20,7 @@
 // nothing on another.
 
 import { setHighResSource, assetUrl, ASSET_MAP, builtInSource } from './assetmap.js';
+import { refreshEngravedIcons } from './components/engravedIcon.js';
 
 export const ART_QUALITY_KEY = 'artQuality';
 // The built-in tier (docs/EXTERNAL-ASSETS-PLAN.md §5, step 8c): Auto picks
@@ -201,6 +202,9 @@ export function currentArtUrl(url) {
 export function refreshMountedArt(root = globalThis.document) {
   if (!root || typeof root.querySelectorAll !== 'function') return 0;
   let moved = 0;
+  // Engravings inherit semantic colours through a mask. Their explicit asset
+  // ids follow the same high/light resolver as mounted paintings.
+  refreshEngravedIcons(root);
   for (const el of root.querySelectorAll('img[src], image')) {
     const attr = artAttr(el);
     if (!attr) continue;

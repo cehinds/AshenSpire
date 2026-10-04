@@ -1,5 +1,3 @@
-import { wireCombatPositioning } from '../components/formationPositioning.js';
-import { openFormationWorkbench } from '../components/formationWorkbench.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -172,8 +170,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
       </div>
-      <div class="combat-position-tools"><button type="button" class="as-btn combat-position-toggle" data-position-toggle aria-pressed="false">Positioning</button>
-      <aside class="combat-position-panel" data-position-panel hidden></aside></div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
           ${html(iconButton({ glyph: '‹', label: 'Previous card', className: 'hand-page hand-prev', attrs: { 'data-focusable': '', hidden: '', 'aria-controls': 'combat-hand' } }))}
@@ -212,8 +208,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const resDomains = resourceDomains(registries);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   const combatLayout = wireCombatLayout(combatEl);
-  wireCombatPositioning(combatEl, { readSettings, onSettingsChange,
-    onExpand: () => openFormationWorkbench({ registries, readSettings, onSettingsChange, combatRoot: combatEl }) });
   let playerRest = 'idle';
   let readinessOrder = [];
   let visualPlans = new Map();
@@ -928,8 +922,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const host = $('.topbar .resbars-host');
     if (host) {
       host.innerHTML = '';
-      const mainPlan = combatVitals(resourceBarPlan(registries, 'main', pv, p, resDomains), readSettings());
-      host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
+      const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
+      host.appendChild(resourceBars(mainPlan.filter(bar=>bar.id==='hp'), { surface: 'main', tooltipExtra: poiseTip('player') }));
       host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
     }
     // WGH6: the same relic tile renderer the rooms use (components/relicRail.js);
@@ -1905,7 +1899,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const tag = (ev.target && ev.target.tagName) || '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || $('.field').dataset.positionEditing === 'true') return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     // ANY veil owns input while it stands — not the menu overlay alone. This
     // line read `overlayIsOpen()`, which knew about one of six, so with the
     // draw pile open E ended the turn and the hand went 5 -> 0 under the panel
@@ -2331,6 +2325,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // stale copy of a number the row already shows.
   for (const { selector, title, message } of tooltipHelp.combatTargets) {
     const node = $(selector);
+    if (!node) continue;
     node.tabIndex = 0;
     attachTooltip(node, () => `<div class="tt-title">${esc(title)}</div>${esc(helpText(message, {
       className: runClassIdentity(registries, run).name, classDescription: registries.classes.get(run.class).description || '',

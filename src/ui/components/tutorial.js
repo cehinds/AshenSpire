@@ -40,9 +40,10 @@ const STEPS = [
     text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent stamina and most Block are lost at your next turn.` },
 ];
 
-// What the bubble keeps off (place() below): the cards the player is being
-// taught to play. A selector, so it follows the hand wherever the layout puts it.
-const KEEP_CLEAR = '.hand .card';
+// Cards and their targets must remain clickable while the tutorial coaches
+// through play. A taller footer can otherwise move the bubble onto the player,
+// preventing the first self-targeted skill from being confirmed.
+const KEEP_CLEAR = '.hand .card, .combatant';
 
 export function mountTutorial(root, { onDone }) {
   const steps = STEPS.filter((s) => root.querySelector(s.sel));
@@ -128,7 +129,15 @@ export function mountTutorial(root, { onDone }) {
       at(box.left - b.width - GAP, midY),
       at(box.left, overHand),
       at(box.left + box.width - b.width, overHand),
+      at((view.width - b.width) / 2, MARGIN),
+      at(MARGIN, MARGIN),
+      at(view.width - b.width - MARGIN, MARGIN),
     ];
+    // Authored footer positions need not leave the same gaps as the default
+    // layout. Try the edges of the protected controls before falling back.
+    const xs = [MARGIN, view.width - b.width - MARGIN, ...clear.flatMap(k => [k.left - b.width - GAP, k.left + k.width + GAP])];
+    const ys = [MARGIN, view.height - b.height - MARGIN, ...clear.flatMap(k => [k.top - b.height - GAP, k.top + k.height + GAP])];
+    for (const y of ys) for (const x of xs) candidates.push(at(x, y));
     const pick = candidates.find((c) => !clear.some((k) => overlaps(c, k))) || candidates[0];
     bubble.style.left = `${pick.left}px`;
     bubble.style.top = `${pick.top}px`;

@@ -1,8 +1,6 @@
 import { FORMATION_GROUPS_KEY, formationGroups, formationGroupOptions, formationGroupContains, formationMember, snapFormationTranslation, FORMATION_SNAP_STEP, positioningConfiguration } from '../../model/formationGroups.js';
 import { esc } from './tooltip.js';
-import { presentationConfig } from '../../model/advancedConfig.js';
 import { t } from '../strings.js';
-import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 let positioningId = 0;
 
 export function formationPositioningHtml() {
@@ -167,59 +165,4 @@ export function wireFormationPositioning(host, surface, { read, write, getPlan, 
   svg.addEventListener('pointercancel', () => { drag = null; draw(); });
   draw();
   return { draw, svg, release: () => svg.remove() };
-}
-
-export function combatPositioningBindings({ readSettings, onSettingsChange }) {
-  const readPresentation = () => presentationConfig(readSettings());
-  return {
-    read: () => readPresentation().formationGroups,
-    write: value => onSettingsChange({ [FORMATION_GROUPS_KEY]: value }),
-    readPresentation,
-  };
-}
-
-export function wireCombatPositioning(root, { readSettings, onSettingsChange, onExpand }) {
-  const field = root.querySelector('.field'), toggle = root.querySelector('[data-position-toggle]'), panel = root.querySelector('[data-position-panel]');
-  let editor = null;
-  toggle.addEventListener('click', () => {
-    const open = panel.hidden;
-    panel.hidden = !open; toggle.setAttribute('aria-pressed', String(open));
-    field.dataset.positionEditing = String(open);
-    if (!open) { editor?.release(); editor = null; return; }
-    panel.innerHTML = `<header class="position-panel-heading"><button type="button" data-position-drag>Drag panel</button><button type="button" data-position-expand>Expand positioning &amp; sizing</button></header>` + formationPositioningHtml();
-    wirePositionWindow(panel.querySelector('[data-position-drag]'), panel.parentElement);
-    panel.querySelector('[data-position-expand]').addEventListener('click', () => onExpand?.());
-    editor = wireFormationPositioning(panel, field, {
-      ...combatPositioningBindings({ readSettings, onSettingsChange }),
-      getPlan: () => field.formationPlan || { plan: null, columns: 2, width: 1, height: 1 },
-    });
-  });
-  field.addEventListener('formationlayoutchange', () => editor?.draw());
-}
-
-export function wirePositionWindow(handle, target) {
-  let windowDrag, dragZoom = 1;
-  handle.addEventListener('pointerdown', event => {
-    if (event.button !== 0) return;
-    const rect = target.getBoundingClientRect(), parent = target.offsetParent?.getBoundingClientRect() || {left:0,top:0};
-    const zoom = rect.width / target.offsetWidth || 1;
-    const origin = anchorLocalBox(parent, rect, {zoom});
-    const start = anchorLocalBox(VIEWPORT_ORIGIN, {left:event.clientX,top:event.clientY,width:0,height:0}, {zoom});
-    windowDrag = { origin, start };
-    dragZoom = zoom;
-    target.style.margin = '0'; target.style.right = 'auto'; target.style.bottom = 'auto';
-    target.style.left = `${origin.left}px`; target.style.top = `${origin.top}px`;
-    handle.setPointerCapture(event.pointerId); event.preventDefault();
-  });
-  handle.addEventListener('pointermove', event => {
-    if (!windowDrag) return;
-    const parent = target.offsetParent;
-    const view = anchorLocalBox(VIEWPORT_ORIGIN, {left:0,top:0,width:window.innerWidth,height:window.innerHeight}, {zoom:dragZoom});
-    const point = anchorLocalBox(VIEWPORT_ORIGIN, {left:event.clientX,top:event.clientY,width:0,height:0}, {zoom:dragZoom});
-    const grip = anchorLocalBox(VIEWPORT_ORIGIN, {left:0,top:0,width:0,height:48}, {zoom:dragZoom});
-    const width = parent?.clientWidth || view.width, height = parent?.clientHeight || view.height;
-    target.style.left = `${Math.max(0, Math.min(width-target.offsetWidth,windowDrag.origin.left+point.left-windowDrag.start.left))}px`;
-    target.style.top = `${Math.max(0, Math.min(height-grip.height,windowDrag.origin.top+point.top-windowDrag.start.top))}px`;
-  });
-  for (const name of ['pointerup','pointercancel']) handle.addEventListener(name, () => { windowDrag = null; });
 }

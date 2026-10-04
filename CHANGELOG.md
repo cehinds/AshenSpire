@@ -34,6 +34,22 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **A clearer resource orb and more skyline** ([#1573](https://github.com/cehinds/AshenSpire/pull/1573), `0.7.1.892`). The stamina number sits centered above its SP label with clear separation, and the battlefield ground recedes to show more of the skyline while keeping combatants grounded.
+
+- **Grounded combat with a compact footer** ([#1570](https://github.com/cehinds/AshenSpire/pull/1570), `0.7.1.890`). Combatants stand on the painted floor, and the smaller bottom controls leave the illustrated hand lower on screen. The artwork stays proportional and adjacent atlas scenes cannot bleed into the backdrop.
+
+- **Learn cards from books instead of buying loose cards** ([#1569](https://github.com/cehinds/AshenSpire/pull/1569), `0.7.1.889`). The merchant no longer offers Cards or Weapon Arts for direct purchase. Books, equipment, relics, supplies and services remain, including on saved visits.
+
+- **Illustrated combat keeps its breathing room** ([#1567](https://github.com/cehinds/AshenSpire/pull/1567), `0.7.1.886`). The transparent HP/relic HUD keeps combatants clear, card corners stay above the current footer, and potion minis and painted controls remain within their bounds. Embedded menu icons and build-failure diagnostics now work in every build mode.
+
+- **Illustrated cards and scenery join the main game** ([#1565](https://github.com/cehinds/AshenSpire/pull/1565), `0.7.1.883`). Cards use editable layered artwork, live centered text and stamina/mana banners, with individual card objects included in builds. Painted scenery and an enlarged transparent HP/relic HUD retain the current footer, Shield/Ward rules, merchant rows and turn confirmation controls.
+
+- **Browse every merchant shelf in clear, matching rows** ([#1563](https://github.com/cehinds/AshenSpire/pull/1563), `0.7.1.876`). Cards, equipment, relics, supplies, services and goods for sale now place their artwork, complete details and action together, following the book shelf layout. On phones, actions sit below the details. Card inspection, purchase reviews, holds and the selected footer action remain available.
+
+- **Remove the combat Positioning button** ([#1558](https://github.com/cehinds/AshenSpire/pull/1558), `0.7.1.874`). The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.
+
+- **Painted, editable combat footer** ([#1534](https://github.com/cehinds/AshenSpire/pull/1534), `0.7.1.872`). The stamina orb, draw cradle, End Turn plate, discarded cards and potion tray now assemble from separate painted components. Footer Atelier can move, resize and snap them together, and edit live text bindings, fonts and positions independently of the images. Solo and co-op keep their existing actions, with readable compact controls on phones and short landscape screens. The five new light images total about 9 KB.
+
 - **Exercise the small-player foot target on every platform** ([#1557](https://github.com/cehinds/AshenSpire/pull/1557), `0.7.1.871`). Separate the browser fixture's player stack from the grid-cell center and keep its sprite inside the measured small bounds, so text and artwork cannot bypass the minimum touch-target check. Gameplay is unchanged.
 
 - **Keep small-player touch checks reliable without artwork** ([#1555](https://github.com/cehinds/AshenSpire/pull/1555), `0.7.1.870`). Browser checks exercise a deliberately small player in their controlled overlap scene, preserving the foot anchor and verifying that removing its touch target is caught even in copied trees without artwork. Gameplay is unchanged.

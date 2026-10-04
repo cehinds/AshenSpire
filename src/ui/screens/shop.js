@@ -1,6 +1,9 @@
 import { bindCardInspection } from '../components/cardInspection.js';
 import { wireCardShelf } from '../components/cardShelf.js';
 import { applySkillBookOfferTokens, renderSkillBookOffer } from '../components/skillBookOffer.js';
+import { arrangeMerchantOffer } from '../components/merchantOffer.js';
+import { renderBookArt } from '../components/bookArt.js';
+import { equipmentCardArt } from '../assets.js';
 // The wandering merchant. Stock is rolled once, saved with the run, and read
 // through the W1d workspace: a category rail beside (or above) one W1v pane of
 // offers, the selected offer's detail, and a footer whose right-hand action is
@@ -8,19 +11,19 @@ import { applySkillBookOfferTokens, renderSkillBookOffer } from '../components/s
 // transactions revalidate through armamentTrading.js.
 
 import { renderCard } from '../components/card.js';
+import { servicePortrait } from '../components/servicePortrait.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { unusedInstanceId, ownedCopies as ownedCopiesOf } from '../../model/deckRules.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { canRemoveDeckCard, removeDeckCard } from '../../model/cardRemoval.js';
 import { carriedIds } from '../../model/loadout.js';
 import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale } from '../../model/armamentTrading.js';
 import { openModal, modalHead, modalFooter } from '../components/modalShell.js';
-import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
+import { button, statusText, el, railItem } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t } from '../strings.js';
 import { purchaseReview, burnReview, sellReview } from '../models/ConfirmationReviewModel.js';
@@ -68,7 +71,7 @@ function sellPriceFor(balance, kind, def) {
 
 // The rail label for each category key (the shelves' existing rows).
 const RAIL_LABEL = {
-  cards: 'shop.bar.cards', armaments: 'shop.bar.armaments', weaponArts: 'shop.bar.weaponArts',
+  armaments: 'shop.bar.armaments',
   relics: 'shop.bar.relics', flasks: 'shop.bar.flasks', services: 'shop.bar.services', sell: 'shop.bar.sell',
   // The market additions (SPEC §14.3), keyed by their offering ids.
   armour: 'shop.bar.armour', smithStones: 'shop.bar.smithStones', sigils: 'shop.bar.sigils', innRest: 'shop.bar.innRest',
@@ -124,10 +127,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   // re-renders the screen; the player stays on the shelf he was on, and the
   // selection moves to the offer now standing where the bought one stood
   // (ShopWorkspaceModel.resolveShopSelection), never back to the first shelf.
-  let activeCategory = 'cards';
+  let activeCategory = 'relics';
   const picks = {};
   let primaryDisarm = null;
-  let bookDisarms = [];
+  let offerDisarms = [];
   let layout = null;
   let shelves = null;
 
@@ -139,8 +142,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
   function render() {
     releaseFooter();
-    for (const disarm of bookDisarms) disarm?.();
-    bookDisarms = [];
+    for (const disarm of offerDisarms) disarm?.();
+    offerDisarms = [];
     if (layout) layout.release();
     if (shelves) shelves.release();
     // WHAT THIS VISIT LAID OUT (SPEC §14.2): a shelf whose offering did not
@@ -172,16 +175,14 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // answer: no rail item and no #shop-sell node at all.
     app.innerHTML = `
       ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' }) : ''}
-      <div class="screen room-screen shop-workspace" data-wireframe="W1d">
+      <div class="screen room-screen shop-workspace merchant-workspace" data-wireframe="W1d">
         <div class="shop-frame">
           <div class="as-railed shop-railed">
             <div class="as-pane shop-pane" data-wireframe="W1v" id="shop-pane">
               <div class="as-pane-head shop-pane-head"></div>
               <div class="shop-body">
                 <div class="shop-offers">
-                  <div class="card-shelf shop-shelf" id="shop-cards" data-shop-shelf="cards"></div>
                   <div class="card-shelf shop-shelf" id="shop-armaments" data-shop-shelf="armaments"></div>
-                  <div class="card-shelf shop-shelf" id="shop-weapon-arts" data-shop-shelf="weaponArts"></div>
                   <div class="card-shelf shop-shelf" id="shop-relics" data-shop-shelf="relics"></div>
                   <div class="card-shelf shop-shelf" id="shop-flasks" data-shop-shelf="flasks"></div>
                   ${ADDITION_SHELVES.filter((key) => categories.includes(key)).map((key) => `<div class="card-shelf shop-shelf" id="shop-${key}" data-shop-shelf="${key}"></div>`).join('')}
@@ -208,6 +209,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
 
     const root = app.querySelector('.shop-workspace');
+    root.prepend(servicePortrait('merchant'));
     applySkillBookOfferTokens(root);
     const frame = root.querySelector('.shop-frame');
     const railed = root.querySelector('.shop-railed');
@@ -216,7 +218,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     const detailBox = root.querySelector('.shop-detail');
     frame.prepend(modalHead({
       title: t('shop.title'), closeLabel: t('shop.leave'), onClose: onLeave, showMenuButton: false,
-      extras: hud ? null : statusText(t('shop.purse', { cinders: run.cinders }), { class: 'modal-head-status' }),
+      extras: app.querySelector('.hud-cinders') ? null : statusText(t('shop.purse', { cinders: run.cinders }), { class: 'modal-head-status' }),
     }));
 
     // ---- the offers, one list per category: what each tile is, what it
@@ -232,69 +234,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       offer.tile.classList.add('shop-offer');
       offers[key].push(offer);
     };
-    const availLine = (avail) => statusText(avail.reason
-      || t(avail.because === 'capacity' ? 'shop.avail.full' : avail.because === 'cinders' ? 'shop.avail.cinders' : 'shop.avail.locked'),
-    { class: 'shop-offer-avail' });
-
-    const cardsRow = app.querySelector('#shop-cards');
-    // WCI3: an offer's metadata band ends with how many the deck already holds.
-    const ownedCopies = (cardId) => ownedCopiesOf(run, cardId);
-    const cardRefs = offerRefs('cards', stock.cards.map((item) => item.id));
-    stock.cards.forEach((item, i) => {
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px';
-      const el = renderCard(registries, { cardId: item.id, upgraded: false }, { small: true, owned: ownedCopies(item.id) });
-      const tag = document.createElement('span');
-      tag.className = 'mini';
-      tag.textContent = `${item.cost} cinders`;
-      tag.style.color = run.cinders >= item.cost ? 'var(--gold)' : 'var(--muted)';
-      // THE CARD IS A FIXED BOX (kit CARD: fixed name, fixed ArtWell, fixed
-      // band, one shared row budget below it). Appending the hold hint INTO it
-      // — which is what `arm` does with no host — put the word inside that
-      // budget, where the card's own bottom edge clipped it: photographed at
-      // 390x844 as half a line of letters under every price. The hint's host
-      // is the wrap that already holds the card and its price, so the word
-      // stands outside the box it describes. Both children are in place first,
-      // so HOLD reads last, after the cost.
-      wrap.appendChild(el);
-      wrap.appendChild(tag);
-      const def = registries.cards.get(item.id);
-      const avail = offerAvailability({ price: item.cost, cinders: run.cinders });
-      if (!avail.available) wrap.appendChild(availLine(avail));
-      const buy = {
-        ...purchaseReview({ kind: 'card', name: def.name, cost: item.cost, cinders: run.cinders }),
-        onConfirm: () => {
-          run.cinders -= item.cost;
-          run.deck.push({ instanceId: unusedInstanceId(run, 's', item.id), cardId: item.id, upgraded: false });
-          stock.cards.splice(i, 1);
-          sfx.play('buy');
-          onChanged();
-          render();
-        },
-      };
-      if (run.cinders >= item.cost) {
-        // ROUTED THROUGH THE MACHINERY EVEN THOUGH IT OWES NO BEAT, and that is
-        // the falsifier for Law 0 on this control rather than a formality:
-        // change `shopBuy`'s characteristics in model/secondbeat.js — say the
-        // day a purse can strand a run — and a purchase starts asking, with
-        // ZERO commits outside that table. An action wired with a bare
-        // `addEventListener` can only ever be changed by editing this line.
-        // The card keeps its own beat (select, then act on it) and the W1v
-        // footer is a second door to the same `shopBuy`, the way the burn
-        // grid's button is to `shopRemove`.
-        arm(el, 'shopBuy', { hintHost: wrap, ...buy });
-      } else {
-        el.classList.add('unaffordable');
-      }
-      addOffer('cards', {
-        ref: cardRefs[i], tile: wrap, name: def.name, desc: def.rarity || '',
-        price: t('shop.price', { cost: item.cost }), avail,
-        action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buy } },
-      });
-      el.addEventListener('cardinspectionselect', () => select('cards', cardRefs[i]));
-      cardsRow.appendChild(wrap);
-    });
-
     const armamentsRow = app.querySelector('#shop-armaments');
     const armamentItems = (stock.armaments || []).map((item) => ({ item, plan: armamentPurchasePlan(registries, run, item) })).filter(({ plan }) => plan.def);
     const armamentRefs = offerRefs('armaments', armamentItems.map(({ item }) => item.id));
@@ -308,29 +247,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       armamentsRow.appendChild(tile);
     });
     if (!armamentItems.length) armamentsRow.appendChild(statusText('No armaments for sale on this visit.'));
-
-    const artsRow = app.querySelector('#shop-weapon-arts');
-    const artRefs = offerRefs('weaponArts', (stock.weaponArts || []).map((item) => item.id));
-    (stock.weaponArts || []).forEach((item, i) => {
-      const card = renderCard(registries, { cardId: item.id, upgraded: false }, { small: true, owned: ownedCopies(item.id) });
-      card.setAttribute('role', 'button');
-      card.tabIndex = 0;
-      card.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); }
-      });
-      const quote = armamentPurchasePlan(registries, run, item, 'weaponArt');
-      const avail = offerAvailability({ reason: quote.ok ? null : quote.reason });
-      const wrap = el('div', {}, [card, statusText(`${item.cost} cinders · loose card`), avail.available ? null : availLine(avail)]);
-      card.addEventListener('click', () => openWeaponArt(item, card));
-      card.addEventListener('cardinspectionselect', () => select('weaponArts', artRefs[i]));
-      addOffer('weaponArts', {
-        ref: artRefs[i], tile: wrap, name: quote.def ? quote.def.name : item.id, desc: t('shop.weaponArt.eyebrow'),
-        price: t('shop.price', { cost: item.cost }), avail,
-        action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: !!quote.ok, run: () => openWeaponArt(item, card) },
-      });
-      artsRow.appendChild(wrap);
-    });
-    if (!(stock.weaponArts || []).length) artsRow.appendChild(statusText('No mountable weapon arts for sale on this visit.'));
 
     const relicsRow = app.querySelector('#shop-relics');
     const relicRefs = offerRefs('relics', stock.relics.map((item) => item.id));
@@ -387,6 +303,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       const tile = bookOffer ? bookOffer.tile : shopItem(title, desc, cost, avail);
       addOffer(key, {
         ref, tile, name: title, desc, price: t('shop.price', { cost }), avail,
+        visual: plan.piece ? el('img', { src: equipmentCardArt(plan.piece), alt: '' }) : null,
         action: { kind: 'buy', label: t('shop.action.buy', { cost }), enabled: !!plan.ok, beat: { id: 'shopBuy', opts: buyItem(kind, title, cost, () => {
           try { commit(); } catch (error) { tile.querySelector('.cp-body').append(statusText(error.message, { class: 'shop-offer-avail' })); return; }
           sfx.play('buy');
@@ -397,7 +314,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       });
       if (bookOffer && plan.ok) {
         const action = offers[key][offers[key].length - 1].action;
-        bookDisarms.push(arm(bookOffer.buy, action.beat.id, { ...action.beat.opts, showHint: false }));
+        offerDisarms.push(arm(bookOffer.buy, action.beat.id, { ...action.beat.opts, showHint: false }));
       }
       row.appendChild(tile);
     };
@@ -695,6 +612,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         if (avail.available) sellAvailable++;
         addOffer('sell', {
           ref: consumableRefs[i], tile, name: plan.def.name, desc,
+          visual: plan.def.kind === 'skillBook' ? renderBookArt(plan.def) : null,
           price: t('shop.price.back', { price: plan.price }), avail,
           action: { kind: 'sell', label: t('shop.action.sell', { price: plan.price }), enabled: !!plan.ok, beat: { id: 'shopSell', opts: {
             ...sellReview({ kind: 'consumable', name: plan.def.name, price: plan.price }),
@@ -711,7 +629,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       });
       const goodRefs = offerRefs('sell', goods.map((row) => `${row.kind}-${row.def.id}`));
       goods.forEach((row, i) => {
-        const tile = shopItem(row.title, row.desc, row.price, offerAvailability(), { titleHtml: !!row.titleHtml, costWord: 'cinders back' });
+        const tile = shopItem(row.title, row.desc, row.price, offerAvailability(), { titleHtml: !!row.titleHtml, costWord: 'cinders back', card: renderCollectibleCard(registries, row.def, row.kind === 'flask' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card });
         sellAvailable++;
         addOffer('sell', {
           ref: goodRefs[i], tile, name: row.def.name, desc: row.desc,
@@ -734,6 +652,22 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         });
         sellRow.appendChild(tile);
       });
+    }
+
+    // All categories share the book shelf's image/details/action composition.
+    // Keep the selected-offer footer as the established keyboard/controller
+    // action, while each row also offers a direct, explicitly labelled action.
+    const categoryGlyphs = { armour: '◈', smithStones: '⚒', sigils: '✦', innRest: '☾', reviveTokens: '✧', questEvent: '◇', companions: '♟', services: '⚒' };
+    for (const [key, list] of Object.entries(offers)) {
+      if (key === 'skillBooks') continue;
+      for (const offer of list) {
+        offer.rowAction = arrangeMerchantOffer(offer, { fallback: categoryGlyphs[key] || '◇' });
+        const action = offer.action;
+        if (offer.rowAction && action?.enabled) {
+          if (action.beat) offerDisarms.push(arm(offer.rowAction, action.beat.id, { ...action.beat.opts, showHint: false }));
+          else offer.rowAction.addEventListener('click', action.run);
+        }
+      }
     }
 
     // Selection on the relic, flask and sell tiles: a tap or Enter selects;
@@ -773,16 +707,20 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       item.addEventListener('click', () => showCategory(key));
       return item;
     });
-    // The kit's W1 category navigation: the rail beside the pane on wide
-    // frames, one [Category ▾] selector above it on compact ones (rule 11: no
-    // horizontal strip). `data-shop-rail` mirrors the nav's own decision so
-    // the frame's grid and the nav can never disagree.
-    const nav = categoryNav({
-      items: railItems, ariaLabel: t('shop.rail.aria'), railAttrs: { class: 'shop-rail' }, toggleId: 'shop-cat-select',
-      onChange: ({ mode }) => { root.dataset.shopRail = mode === 'rail' ? 'side' : 'top'; },
-    });
-    railed.prepend(nav.rail);
-    nav.attach(railed);
+    // The artwork presents stock as drawers. Keep one live pane and move it
+    // after the selected drawer; the same stock and selection power mobile.
+    root.dataset.shopRail = 'drawers';
+    const shopPane = root.querySelector('.shop-pane');
+    const categorySelect = el('select', { id: 'shop-cat-select', 'aria-label': t('shop.rail.aria'), class: 'shop-category-select' });
+    for (const item of railItems) {
+      item.removeAttribute('role');
+      item.removeAttribute('aria-selected');
+      item.setAttribute('tabindex', '0');
+      railed.append(item);
+      categorySelect.append(el('option', { value: item.dataset.shopCategory, text: t(RAIL_LABEL[item.dataset.shopCategory]) }));
+    }
+    categorySelect.addEventListener('change', () => showCategory(categorySelect.value));
+    railed.before(categorySelect);
     const footHost = document.createElement('div');
     footHost.className = 'shop-foot-host';
     frame.appendChild(footHost);
@@ -808,8 +746,14 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       for (const item of railItems) {
         const on = item.dataset.shopCategory === activeCategory;
         item.classList.toggle('on', on);
-        item.setAttribute('aria-selected', on ? 'true' : 'false');
+        item.setAttribute('aria-expanded', on ? 'true' : 'false');
         if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+      }
+      categorySelect.value = activeCategory;
+      const drawer = railItems.find(item => item.dataset.shopCategory === activeCategory);
+      if (drawer && drawer.nextSibling !== shopPane) {
+        shopPane.remove();
+        drawer.after(shopPane);
       }
       for (const shelf of offersBox.querySelectorAll('[data-shop-shelf]')) shelf.hidden = shelf.dataset.shopShelf !== activeCategory;
       // The shelf that just appeared had no box to measure while it was
@@ -826,12 +770,13 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       for (const offer of list) {
         const on = offer === selected;
         offer.tile.classList.toggle('is-selected', on && activeCategory !== 'skillBooks');
-        if (offer.tile.classList.contains('class-pick')) offer.tile.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (offer.tile.classList.contains('class-pick') && !offer.rowAction) offer.tile.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (offer.rowAction) offer.rowAction.hidden = !offer.action;
       }
 
       detailBox.replaceChildren();
       const inlineBooks = activeCategory === 'skillBooks';
-      detailBox.hidden = !selected || inlineBooks;
+      detailBox.hidden = true;
       if (selected && !inlineBooks) {
         // Optional rows collapse: an offer without a description or a price
         // draws no empty line for it.
@@ -875,18 +820,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
   function buyItem(kind, name, cost, onConfirm) {
     return { ...purchaseReview({ kind, name, cost, cinders: run.cinders }), onConfirm };
-  }
-
-  function openWeaponArt(item, card) {
-    const quote = armamentPurchasePlan(registries, run, item, 'weaponArt');
-    const buy = button({ label: `Buy · ${quote.cost} cinders`, weight: 'primary', disabled: !quote.ok });
-    const message = statusText(quote.reason || 'Adds a loose card to your deck. A smith can seat it in a compatible open mount.');
-    const shell = openModal({ title: quote.def.name, eyebrow: t('shop.weaponArt.eyebrow'), bodyClassName: 'as-pane', opener: card, body: (host) => host.append(renderCard(registries, { cardId: item.id, upgraded: false }, { small: true }), message), primary: buy });
-    buy.addEventListener('click', () => {
-      try { commitArmamentPurchase(registries, run, quote); }
-      catch (error) { message.textContent = error.message; buy.disabled = true; return; }
-      finishTrade(shell);
-    });
   }
 
   function armamentOffer(def, inspect, summary) {
@@ -963,9 +896,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
   render();
 
-  // Smart default (keyboard/gamepad): land on the first purchasable card, else
+  // Smart default (keyboard/gamepad): land on the available purchase action, else
   // the Leave button.
-  if (isEngaged()) setTimeout(() => focusFirst('#shop-cards .card') || focusFirst('#leave-shop'), 0);
+  if (isEngaged()) setTimeout(() => focusFirst('#shop-primary:not([disabled])') || focusFirst('#leave-shop'), 0);
 }
 
 /**

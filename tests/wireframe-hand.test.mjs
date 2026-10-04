@@ -32,6 +32,18 @@ test('excess cards overflow horizontally with the same face size',()=>{
 });
 test('a roomy desktop hand uses the available height for larger readable cards', () => {
  const plan = handLayout({width:1876,height:300,count:3,rem:16});
- assert.ok(plan.cardWidth >= 180);
+ assert.ok(plan.cardHeight >= 250, 'roomy hands keep a legible face height at the authored 2:3 ratio');
  assert.ok(plan.top + plan.cardHeight <= 300);
+});
+
+test('rotated fan corners clear the footer at phone and desktop scales', () => {
+ for (const height of [185,208,234,300]) for (const zoom of [.67,.9,1,1.5]) {
+  const p=handLayout({width:390/zoom,height:height/zoom,count:5,rem:16/zoom,zoom});
+  for (const card of p.cards) {
+   const radians=Math.abs(card.angle)*Math.PI/180;
+   const extent=(Math.sin(radians)*p.cardWidth+Math.cos(radians)*p.cardHeight)/2;
+   const bottom=p.top+card.y+p.cardHeight/2+extent;
+   assert.ok(bottom*zoom <= height-1+1e-7, `${height}/${zoom}: ${bottom*zoom}`);
+  }
+ }
 });

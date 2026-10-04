@@ -6366,13 +6366,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "formation.positioning.workbench",
-    "extends": "",
-    "short": "Positioning and sizing",
-    "full": "",
-    "tip": ""
-  },
-  {
     "id": "formation.layout.saveFailed",
     "extends": "",
     "short": "The layout could not be saved. Your preview is still available; try applying again.",
@@ -7210,6 +7203,13 @@ export const uiStrings = [
     "extends": "",
     "short": "Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.",
     "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.recovery.heading",
+    "extends": "",
+    "short": "Recovery preview",
+    "full": "Recovery preview",
     "tip": ""
   }
 ];

@@ -661,7 +661,7 @@ const OPEN_TITLE = `(async () => {
 })()`;
 
 const OPEN_INRUN = `(async () => {
-  const m = [...document.querySelectorAll('button')].find((x) => /^\\s*(menu|☰)\\s*$/i.test(x.textContent) || x.id === 'menu' || /(^|\\s)menu(\\s|$)/i.test(x.className));
+  const m = document.querySelector('#combat-menu') || [...document.querySelectorAll('button')].find((x) => /^\\s*(menu|☰)\\s*$/i.test(x.textContent) || x.id === 'menu' || /(^|\\s)menu(\\s|$)/i.test(x.className));
   if (!m) return { err: 'no menu button in combat' };
   m.click(); await new Promise((r) => setTimeout(r, 550));
   // QuickNav includes the row's icon in its text, so use the public menu-act
