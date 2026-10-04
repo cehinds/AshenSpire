@@ -324,10 +324,6 @@ const ROWS = [
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },
-  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
-  // to miss. Both doors ask first through confirmResetAll.
-  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
-    note: tFull('settings.row.resetAllSettings') },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
   // ---- cat: 'Combat' -----------------------------------------------------
@@ -591,6 +587,11 @@ const ROWS = [
   { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
     choices: ['off', 'mirror', 'switcher'], label: t('settings.row.quickNav'),
     note: tFull('settings.row.quickNav') },
+  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
+  // to miss. Both doors ask first through confirmResetAll. Last in Interface on
+  // purpose: tools/displayfirst.mjs plants expect fullscreen then accent first.
+  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
+    note: tFull('settings.row.resetAllSettings') },
 
   { cat: 'Combat', key: 'armamentsPresentation', type: 'choice', def: 'radial',
     choices: ['radial', 'fixed'], label: t('settings.row.armamentsPresentation'),
