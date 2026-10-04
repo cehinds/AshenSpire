@@ -44,6 +44,7 @@ export function normalizeArmouryLayout(source = {}) {
   const shell = { ...DEFAULTS.shell, ...(raw.shell || {}) };
   const character = { ...DEFAULTS.character, ...(raw.character || {}) };
   const equipment = { ...DEFAULTS.equipment, ...(raw.equipment || {}) };
+  const compactList = { ...DEFAULTS.equipment.compactList, ...(equipment.compactList || {}) };
   const inventorySplit = { ...DEFAULTS.inventorySplit, ...(raw.inventorySplit || {}) };
   const trays = { ...DEFAULTS.trays, ...(raw.trays || {}) };
   const combatPower = { ...DEFAULTS.combatPower, ...(raw.combatPower || {}) };
@@ -51,6 +52,7 @@ export function normalizeArmouryLayout(source = {}) {
   const comparison = { ...DEFAULTS.comparison, ...(raw.comparison || {}) };
   const cardClasses = { ...DEFAULTS.cardClasses, ...(raw.cardClasses || {}) };
   const inventoryItemClass = { ...DEFAULTS.cardClasses.inventoryItem, ...(cardClasses.inventoryItem || {}) };
+  const armamentItemClass = { ...DEFAULTS.cardClasses.armamentItem, ...(cardClasses.armamentItem || {}) };
   const viewModes = { ...DEFAULTS.viewModes, ...(raw.viewModes || {}) };
   const responsive = { ...DEFAULTS.responsive, ...(raw.responsive || {}) };
   const phone = { ...DEFAULTS.responsive.phone, ...(responsive.phone || {}) };
@@ -127,6 +129,9 @@ export function normalizeArmouryLayout(source = {}) {
   if (typeof inventoryItemClass.holdAction !== 'boolean') {
     throw new Error('armouryUi.layout.cardClasses.inventoryItem.holdAction must be true or false');
   }
+  if (armamentItemClass.holdAction !== false || armamentItemClass.comparisonPresentation !== 'inline') {
+    throw new Error('armouryUi.layout.cardClasses.armamentItem must keep read-only disclosure and inline comparison');
+  }
   if (!Number.isInteger(Number(phone.cardsGridColumns)) || Number(phone.cardsGridColumns) < 1 || Number(phone.cardsGridColumns) > LIMITS.maxGridColumns) {
     throw new Error('armouryUi.layout.responsive.phone.cardsGridColumns must be an integer from 1 to 8');
   }
@@ -158,6 +163,11 @@ export function normalizeArmouryLayout(source = {}) {
       slotOrder: Object.freeze([...equipment.slotOrder]),
       defaultView: String(equipment.defaultView),
       gridColumns: Number(equipment.gridColumns),
+      compactList: Object.freeze({
+        thumbnailWidthPx: positive(Number(compactList.thumbnailWidthPx), 'equipment.compactList.thumbnailWidthPx'),
+        phoneThumbnailWidthPx: positive(Number(compactList.phoneThumbnailWidthPx), 'equipment.compactList.phoneThumbnailWidthPx'),
+        inspectionWidthPx: positive(Number(compactList.inspectionWidthPx), 'equipment.compactList.inspectionWidthPx'),
+      }),
     }),
     inventorySplit: Object.freeze({
       defaultArmamentsRatio: ratio(Number(inventorySplit.defaultArmamentsRatio), 'inventorySplit.defaultArmamentsRatio'),
@@ -193,6 +203,7 @@ export function normalizeArmouryLayout(source = {}) {
     }),
     cardClasses: Object.freeze({
       inventoryItem: Object.freeze({ holdAction: inventoryItemClass.holdAction === true }),
+      armamentItem: Object.freeze({ holdAction: false, comparisonPresentation: armamentItemClass.comparisonPresentation }),
     }),
     viewModes: Object.freeze(Object.fromEntries(Object.entries(viewModes).map(([id, mode]) => [id, Object.freeze({
       label: String(mode.label || id),

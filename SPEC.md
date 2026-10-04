@@ -1514,31 +1514,20 @@ keeps the same state and focus contract without meaningful animation.
   screen coordinate. Which zone a slot fills is `model/zones.js`'s one map (§13.4b), and a slot row
   it does not name is refused at boot.
 
-  Inventory owns one logical item-card action surface in both folded and expanded forms. The
-  `armouryUi.layout.cardClasses.inventoryItem.holdAction` class capability opts action-capable
-  `inventory-item-card` and `inventory-detail-card` models into the shared `equipInventory`
-  action. When the universal hold-confirm setting has a positive duration, the whole folded face
-  and whole expanded reveal use the same `armHold` timing, progress fill, keyboard/gamepad path,
-  and mutation callback; an early release aborts, and pointer movement beyond
-  `HOLD_POINTER_SLOP` aborts the hold so scrolling or dragging can take ownership. A completed
-  hold commits once. When hold-confirm is off, ordinary immediate-action and disclosure behavior
-  remains. Selecting an equipment position opens this same Inventory, filters it to compatible
-  items, exposes the contextual Equip/Move/Unequip action, and accepts either that selection or a
-  drag to the selected position; a successful replacement clears the selection and folds the
-  Inventory back to its default state.
+  Armaments List uses compact occupied rows: a complete scaled equipment-card thumbnail, authored
+  position code, name and Equipped/Reserve badge, with Inspect/Replace grouped and Unequip at the
+  right. Sizing is authored in armouryUi.layout.equipment.compactList. Inspect displays the full
+  equipment inspection beside desktop rows or in a separate mobile view with Back.
 
-  Equipment comparison is information, not confirmation. The data-owned
-  `armouryUi.layout.comparison.presentation` is `tooltip` or `inline`. Tooltip mode presents the
-  full comparison after the configured `holdPreviewDelayMs` on a sustained pointer, keyboard, or
-  gamepad press, above its card when space permits, using `tooltipWidthRem` and
-  `tooltipMaxHeightRatio` to remain readable and viewport-safe; pointer hover and focus alone do
-  not reveal it. Inline mode embeds the same information in the expanded card. When the card also
-  owns a timed Equip/Move/Unequip action, the comparison preview observes that same hold lifecycle
-  and closes on release, cancellation, or commit without adding a competing gesture. When global
-  hold-confirm is off, the explicit action button owns the immediate change and the card retains a
-  read-only hold-to-compare gesture. The primary combat-power term shown to players is
-  **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
-  **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
+  Armament inventory faces use read-only first-tap disclosure and never equip on hold. The authored
+  armouryUi.layout.cardClasses.armamentItem has holdAction false and inline comparison. Other
+  Inventory classes retain the inventoryItem capability. An unassigned item requires an explicit
+  compatible destination; choices identify position, occupant, active/reserve and locked state.
+  Selecting a destination never equips or activates it. Equip/Move/Unequip use named buttons;
+  Make active is separate, including for empty reserves. Successful changes name the item and
+  destination. Requirements, grip and storage checks remain authoritative. Combat changes dispatch
+  priced engine intents; inspection never mutates a loadout. Mouse/pen drag remains available and
+  touch gestures scroll. Magic is the primary combat-power label; Potency remains its modifier.
 
   Equipment receipts are read models, never re-derived in a screen: the equipment receipt panel
   (`.armoury-equipment-receipts`, mounted in the Character view's Equipment cards card and in the
@@ -2118,6 +2107,8 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 ### 13.4i The character level is earned: XP, the point ledger, the level's own term (plan phase 6)
 
 - **The ledger is the run's:** `run.level = { xp, level, unspentPoints }` (schema 10; a save at ≤ 9 arrives at the level its cinder purchases reached — `1 + levelUps` — with no XP toward the next and nothing waiting; `validateRunShape` refuses a malformed ledger by name), written only by `model/levelup.js`. `xpToNext(registries, level)` is the one curve shape (`balance.level.xp`); `awardLevelXp(registries, run, amount, { pointsPerLevel })` climbs as many steps as the XP buys, each granting the dial's points to `unspentPoints` (`balance.levelUp.maxLevels` caps the climb, XP past it stays); `applyLevelUp(registries, run, attributeId)` assigns ONE waiting point — the attribute moves, `levelUps`/`levelPoints` record the assignment for the load door's allocation check exactly as before, the pools re-derive from the run's own snapshot with the deficit carried (levelling is not a rest). `levelUpPlan` offers the waiting points and nothing else (`blockedBy`: `points` | `cap` | null); the shrine's Level-up card assigns them (`rest.js`), the town's level-up service once phase 7 places it. Cinders buy no level: no code path spends `run.cinders` on one.
+
+- **Guided level rewards (owner, 2026-10-03):** Accessibility → Pause XP for level-up rewards (`guidedLevelUp`, default on) banks earned character and skill XP, pauses at each level, opens its reward chooser with Back, and resumes surplus XP after that choice. Back stops automatic prompting for the current reward screen; Continue can leave without advancing levels or selecting progression rewards. Unclaimed progression offers retain their originally rolled choices and absolute `requiredLevel` in optional `run.deferredProgression` (`levelCards`, `levelChoices`, `skillDrafts`, `classDrafts`); they return at later victories and through Character → Level up & rewards outside combat. Existing saves may omit the field. Class-specific offers wait for their original class to be equipped; switching classes cannot discard them or place a mismatched class draft into an active reward checkpoint. Deferring cannot grant, reroll, duplicate or auto-collect a progression reward. Turning the guide off follows the existing manual-level preference. Reduced motion skips the fill animation without changing the sequence or persistence.
 - **The awards are the run's owner's** (`main.js onCombatEnd`, `tools/session.mjs` per seat — the seat's ledger rides its member view, and assigning the points in co-op waits with the co-op class draft (§13.4g): the session pays, the co-op shrine does not yet offer — and `tools/runsim.mjs`): `combatLevelXp(registries, { victory, pool, kills })` — `xp.combatWin` for a won fight and `xp.kill.<pool>` per enemy felled (a kill is a kill, won or lost; an unknown pool pays the normal rate); `questLevelXp` names `xp.quest` for phase 10a's completion door. His level-value dial (`levelUpValue`) is read where the level is reached, so the points a level grants are decided then and wait for the shrine.
 - **The level's own term** rides the derived-stat rows (`content/derivedStats.js` `perLevel: { every, gain }`, optional per row, refused by name when malformed): `deriveStat` adds `floor((level − 1) / every) × gain` at the character level it is handed — HP +5, Mana +1 and Stamina +1 every five levels past the first, Hand +1 every ten, as shipped then (ruleset 6 restates the term as a decimal `perLevel`, and the owner's defaults of 2026-09-24 in §3.5 give HP 2 per level) — and every derivation of a run's pools (birth, the load door's integrity check, `reconcileRunLoadoutHp`, the stat projection) passes the run's level. The term is snapshotted with the row: a run born under it keeps it whatever the table says later, and a run born before it never gains it, so no old save is re-priced or refused.
 

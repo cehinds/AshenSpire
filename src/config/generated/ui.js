@@ -17,7 +17,7 @@
 // source content/config/ui/components/tooltip.json 2f6625d2c80ff482
 // source content/config/ui/components/workspace.json 0cf6a3c4756f2b16
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
-// source content/config/ui/presentation/armouryLayout.json 8a2d0c421a66ce7b
+// source content/config/ui/presentation/armouryLayout.json 88a13051246d1820
 // source content/config/ui/presentation/classArtAnchors.json feef8a503a056875
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
 // source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
@@ -1636,7 +1636,12 @@ export const uiConfig = deepFreeze({
               "leftHand"
             ],
             "defaultView": "list",
-            "gridColumns": 3
+            "gridColumns": 3,
+            "compactList": {
+              "thumbnailWidthPx": 82,
+              "phoneThumbnailWidthPx": 68,
+              "inspectionWidthPx": 264
+            }
           },
           "inventorySplit": {
             "defaultArmamentsRatio": 0.6,
@@ -1706,6 +1711,10 @@ export const uiConfig = deepFreeze({
           "cardClasses": {
             "inventoryItem": {
               "holdAction": false
+            },
+            "armamentItem": {
+              "holdAction": false,
+              "comparisonPresentation": "inline"
             }
           },
           "viewModes": {
