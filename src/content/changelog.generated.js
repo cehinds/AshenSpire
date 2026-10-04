@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1589",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Recover from brief Windows art-cache locks",
+    "detail": "When an art cache needs replacing, briefly locked Windows files get a bounded retry before the game tooling reports a failure. A permanently refused rename still reports an error and leaves the existing files intact.",
+    "build": "0.7.1.908",
+    "pullRequest": 1589,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1589"
+  },
+  {
     "id": "pr-1587",
     "date": "2026-10-04",
     "group": "2026-10-04",
