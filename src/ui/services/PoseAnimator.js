@@ -24,7 +24,6 @@ import { assetUrl } from '../assetmap.js';
 import { reducedMotionRequested } from '../motion.js';
 import { hintImage } from '../imageHints.js';
 import { preloadPoses } from './posePreloads.js';
-import { liteRendering } from '../performance.js';
 
 const key = (classId, pose, tint) => `${classId}_${pose}_${tint}`;
 
@@ -97,7 +96,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
   layer.style.top = `${PCT - (idle.g / figureH) * PCT}%`;
   layer.style.transform = `translateX(${-(idle.rx / cw) * PCT}%)`;
 
-  const img = hintImage(document.createElement('img'));
+  const img = hintImage(document.createElement('img'), { swapped: true });
   img.className = 'pose-frame';
   img.alt = classId;
   img.draggable = false;
@@ -144,7 +143,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     setPose,
     /** Hold `pose` for ms, then return to idle. Reduced motion holds nothing. */
     play(pose, ms = POSE_MOTION.defaultPlayMs) {
-      if (reducedMotionRequested() || liteRendering()) return false;
+      if (reducedMotionRequested()) return false;
       // Decide what would be shown BEFORE cancelling the hold already running. A
       // pose this build does not carry used to clear the settle timer and then
       // bail, which left whatever was on screen — a lunge, mid-swing — frozen
