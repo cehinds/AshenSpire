@@ -314,7 +314,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              data-level="${level.level}" data-xp="${level.xp}" data-xp-to-next="${level.xpToNext}">
           <div class="glyph">✦</div>
           <div class="cp-body">
-            <h3>Level up</h3>
+            <h3>${esc(t('reward.level.button'))}</h3>
             <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
           </div>
         </div>` : ''}
@@ -518,7 +518,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         hand: runHandRules(registries, run, meta?.settings || {}),
       }).map((card) => [card.id, card]));
       const spec = {
-        title: 'Level up',
+        title: t('reward.level.button'),
         modal: true,
         remaining: budget.points - count,
         note: budget.points === 1

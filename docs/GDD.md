@@ -396,15 +396,7 @@ composer supports the authored body/armour plus left- and right-hand layers;
 adding a visually attached foot, back, or other socket also requires an explicit
 asset-composer/configuration extension rather than an inferred screen position.
 
-List mode renders one complete horizontal position card:
-
-```text
-┌──────────────┬──────────────┬────────────────────────────────┐
-│ Position     │ Item sprite  │ Category · Name · Combat       │
-│ label + code │ contained    │ Tags · Weight · Equipment state│
-└──────────────┴──────────────┴────────────────────────────────┘
-                     expanded details: lore · effects · bonuses
-```
+List mode uses compact occupied rows with a complete scaled equipment-card thumbnail, authored position code, item name and Equipped/Reserve badge. Inspect and Replace stay grouped; Unequip sits at the right. Inspect is read-only: desktop shows the complete inspection beside the list; mobile switches to inspection with a Back control. Thumbnail and inspection widths are authored in `layout.equipment.compactList`. Empty and locked positions retain their model-driven states and refusal text. Make active remains a separate action, including for an empty reserve.
 
 Grid mode groups compact position/sprite/name tiles and shows one shared detail
 area for the selected position. Occupied, empty, locked, selected, drop-target,
@@ -412,21 +404,7 @@ and refusal states remain equivalent between List and Grid.
 
 ### 11.4 Inventory card action and comparison
 
-- Folded and expanded item presentations are one disclosure card, not two
-  independent action buttons.
-- The Inventory item class explicitly opts into the shared action capability.
-  With hold-confirm enabled, Equip/Move/Unequip progress fills the complete
-  visible card, including title and reveal. Early release aborts without a
-  loadout change.
-- With hold-confirm disabled, tapping continues to disclose item information
-  and the explicit action inside the expanded card performs the mutation.
-- The folded card is the drag source; sufficient pointer movement cancels a
-  pending hold and becomes drag/drop.
-- Comparison is independent of action. The shipped presentation opens a wide,
-  viewport-contained receipt after the configured hover delay or on focus; a
-  data option may render the same receipt inline instead.
-- `Magic` is the primary magic-damage value. `Potency` is a modifier to Magic,
-  never a replacement label for it.
+Armaments use read-only first-tap disclosure and hold, explicit compatible destination selection, inline comparison and named Equip/Move/Unequip buttons. Selecting an item or a reserve never changes the loadout or active set. A separate Make active action controls prepared sets. Requirements, storage refusals and priced combat callbacks are preserved. Other inventory classes retain their authored hold capability. Mouse/pen drag remains available; touch gestures scroll. Magic is the primary magic-damage value; Potency is a modifier.
 
 ### 11.5 Folding trays and resizable panes
 

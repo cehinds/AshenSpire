@@ -1629,7 +1629,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-level-ready { --level-ready-blue: #75bfff; }
 .reward-door .rp-bar-ready { --meter-tone: var(--level-ready-blue); }
 .reward-door .rp-bar-ready .m-track { background: color-mix(in srgb, var(--level-ready-blue) 18%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--level-ready-blue) 48%, var(--line)); }
-.reward-door .reward-level-up { grid-area: next; box-sizing: border-box; height: 1.6rem; min-height: 0; padding: 0 .5rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-size: .75rem; line-height: 1; font-weight: 700; }
+.reward-door .reward-level-up { grid-area: next; box-sizing: border-box; height: auto; min-height: 44px; padding: .65rem 1rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-size: .95rem; line-height: 1; font-weight: 700; }
 .reward-door .reward-level-up:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--level-ready-blue) 43%, var(--panel)); border-color: #a7d9ff; }
 .reward-door .rp-layered-bar { position: relative; height: 1.6rem; overflow: hidden; border-radius: 999px; background: #2b2821; box-shadow: inset 0 0 0 1px var(--line); }
 .reward-door .rp-layered-bar .rp-under, .reward-door .rp-layered-bar .rp-over { position: absolute; inset: 0 auto 0 0; border-radius: inherit; }
@@ -5753,6 +5753,10 @@ button[data-button-size] {
   :root .combat .combatant .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
 }
 
+.character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
+
+.reward-door .reward-progress-row.reward-level-ready .reward-level-up { grid-area: auto; grid-column: 1 / -1; width: 100%; min-width: 120px; min-height: max(44px, var(--tap-floor, 44px)); margin-top: .4rem; font-size: max(14px, .95rem); }
+.reward-door .reward-progress-row.reward-level-ready .rp-next { visibility: hidden; }
 /* Merchant offers use one readable image/details/action row on every shelf.
    The native card remains inspectable; its intrinsic card geometry is preserved. */
 .merchant-workspace .shop-pane > .shop-body {

@@ -710,18 +710,13 @@ model IDs remain in [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
   count, labels, short codes, lock state, and socket identity. Renderers iterate
   those records; they must not branch on Right Hand, Left Hand, Armour, or a
   fixed number of positions.
-- `layout.cardClasses.inventoryItem.holdAction` is the class capability switch.
-  When true and the shared hold-confirm setting is active, the folded face and
-  expanded reveal are one action surface and one progress presentation. When
-  hold-confirm is off, a tap still discloses details and the explicit in-card
-  action remains available. Do not add a second nested action button to the
-  hold-enabled presentation.
-- `layout.comparison.presentation` chooses `tooltip` or `inline`.
-  `holdPreviewDelayMs`, `tooltipWidthRem`, and `tooltipMaxHeightRatio` configure
-  the shared tooltip. Hover/focus alone never opens comparison. A timed whole-card
-  Equip/Move/Unequip hold also previews comparison through the same lifecycle;
-  with hold-confirm off, the explicit action button commits and the card keeps a
-  separate read-only hold-to-compare gesture.
+- `layout.equipment.compactList` owns occupied-row thumbnail and full-inspection widths. Scale the
+  complete equipment card for a thumbnail; do not crop its text. Inspect is read-only, beside the
+  list on desktop and a separate mobile view with Back.
+- `layout.cardClasses.armamentItem` owns read-only armament disclosure (`holdAction: false`)
+  and inline comparison. First touch opens details; Equip/Move/Unequip require a named button
+  and an explicit destination. Make active is separate from selecting or replacing a position.
+  Other inventory classes retain `inventoryItem.holdAction` and the shared hold lifecycle.
 - In combat, never mutate `run.loadout` from the Armoury. Prepared-set changes
   dispatch `swapArmament`; item replace/move/unequip actions dispatch
   `changeEquipment`. Both are player-turn-only, pay the authored equipment

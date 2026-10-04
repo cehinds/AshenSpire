@@ -1,3 +1,4 @@
+import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
@@ -1791,6 +1792,7 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo) : null,
+    onProgression: () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
   });
 }
 
@@ -2680,7 +2682,7 @@ async function onCombatEnd(result, combat, enc) {
     tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
   };
   const pendingBefore = pendingLevelCount(registries, run);
-  const manualLevelUp = settingOn(saves.loadMeta().settings, 'manualLevelUp');
+  const manualLevelUp = settingOn(saves.loadMeta().settings, 'manualLevelUp') || settingOn(saves.loadMeta().settings, 'guidedLevelUp');
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
@@ -2791,6 +2793,7 @@ async function onCombatEnd(result, combat, enc) {
       xpReceipt,
       xpBefore,
       levelChoices,
+      characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
     };
     return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
   }
@@ -2817,6 +2820,7 @@ async function onCombatEnd(result, combat, enc) {
     xpReceipt,
     xpBefore,
     levelChoices,
+    characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
   };
   beginPendingReward(withSourceBonuses(rewards), { source: enc.pool, after: 'map' });
 
@@ -2849,7 +2853,7 @@ function rollLevelChoices(levelsEarned) {
   const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
   if (!offerFeats && !offerClassTree) return [];
   const out = [];
-  const firstRewardLevel = run.level.level - (settingOn(settings, 'manualLevelUp') ? 0 : levelsEarned);
+  const firstRewardLevel = run.level.level - (settingOn(settings, 'manualLevelUp') || settingOn(settings, 'guidedLevelUp') ? 0 : levelsEarned);
   for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
     const options = [];
     if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
@@ -2908,7 +2912,14 @@ function rollClassDrafts(includeBanked = false) {
 
 function beginPendingReward(rewards, { source, after }) {
   rewards = configuredRewardOffer(rewards, source);
-  run.pendingReward = pendingRewardCheckpoint(rewards, { source, after });
+  rewards = mergeProgressionRewards(run.deferredProgression, rewards, run, {
+    manual: settingOn(saves.loadMeta().settings, 'manualLevelUp') || settingOn(saves.loadMeta().settings, 'guidedLevelUp'),
+    characterStart: rewards.characterRewardStart ?? run.level?.level ?? 1,
+  });
+  const { available, deferred } = partitionProgressionRewards(rewards, run);
+  run.pendingReward = pendingRewardCheckpoint(available, { source, after });
+  if (Object.keys(deferred).length) run.deferredProgression = deferred;
+  else delete run.deferredProgression;
   persist();
   return mountPendingReward();
 }
@@ -2926,9 +2937,16 @@ function configuredRewardOffer(rewards, source) {
   return rewardOfferForSource(rewards, source, (key) => settingOn(settings, key));
 }
 
-function mountPendingReward() {
-  const checkpoint = run.pendingReward;
+function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
   if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
+  // Older pending saves used per-door claim counters. Convert those offers once
+  // to absolute levels before they can be deferred to a different victory.
+  const baseRun = { ...run, skills: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) =>
+    [id, { ...row, level: Math.max(0, row.level - (checkpoint.skillClaims?.[id] || 0)) }])) };
+  checkpoint.rewards = mergeProgressionRewards({}, checkpoint.rewards, baseRun, {
+    manual: pendingLevelCount(registries, run) > 0 || (checkpoint.levelClaims || 0) > 0,
+    characterStart: Math.max(1, (run.level?.level || 1) - (checkpoint.levelClaims || 0)),
+  });
   return mountRewards(app, {
     registries,
     run,
@@ -2952,7 +2970,15 @@ function mountPendingReward() {
     onPersist: persist,
     onDone: () => {
       const after = checkpoint.after;
+      const saved = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(checkpoint), run);
+      if (Object.keys(saved).length) run.deferredProgression = saved;
+      else delete run.deferredProgression;
       delete run.pendingReward;
+      if (returnTo) {
+        persist();
+        app.querySelector('.reward-veil')?.remove();
+        return returnTo();
+      }
       rewardDoneCount++;
       if (after === 'advanceAct') advanceAct();
       else {
@@ -2961,6 +2987,23 @@ function mountPendingReward() {
       }
     },
   });
+}
+
+function showCharacterProgression(returnTo) {
+  if (run.pendingReward) return mountPendingReward();
+  const settings = saves.loadMeta().settings || {};
+  const rewards = mergeProgressionRewards(run.deferredProgression, {
+    title: 'Level up & rewards', xpGains: { level: 0, tracks: {} },
+    skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
+    classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
+  }, run);
+  const { available, deferred } = partitionProgressionRewards(rewards, run);
+  run.pendingReward = pendingRewardCheckpoint(available, { source: 'character', after: 'map' });
+  run.pendingReward.expanded = true;
+  if (Object.keys(deferred).length) run.deferredProgression = deferred;
+  else delete run.deferredProgression;
+  persist();
+  return mountPendingReward(run.pendingReward, returnTo);
 }
 
 // Custom Climb helpers used across nodes.

@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-04
+
+- **Compact armaments and level rewards you can finish later** ([#1578](https://github.com/cehinds/AshenSpire/pull/1578), `0.7.1.897`). Equipped positions show the item card beside its slot, name and status, with Inspect, Replace and Unequip actions. Inspect opens the full card, and equipping a reserve keeps the active position unchanged. Victory XP can pause at each level for its reward chooser, with a larger Level up button, Back and an Accessibility toggle. Leave whenever you want: unfinished levels and the original reward choices return on later victories and Character, including after saving. Class rewards wait for their original class.
+
 ## 2026-10-03
 
 - **See four merchant offers at once** ([#1575](https://github.com/cehinds/AshenSpire/pull/1575), `0.7.1.895`). Compact artwork, details and Buy controls fit above a fixed bottom category dock. Inspect opens the complete item or book, and the selected footer action follows mouse and keyboard selection. Warm brown panels and gold highlights match the approved shop preview.
