@@ -6,8 +6,8 @@ import { ENEMY_STATE_POSES, enemyPresentation, enemyAuraFilter } from './enemySt
 export function createEnemyPoseStage(host, facing, idle, id, entity) {
   host.classList.add('enemy-pose-stage');
   const frames = new Map();
-  const ids = new Map(); // pose → asset id; resolved when loaded, so a Lite frame
-                         // loaded later follows the Art quality chosen since
+  const ids = new Map(); // pose → asset id; draw() reloads a frame whose src was
+                         // cleared, so it follows the Art quality chosen since
   let presentation = enemyPresentation(entity), current = presentation.rest, timer;
   function draw() {
     const selected = frames.get(current);

@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
-- **Smoother map and animated fighters on phones** ([#1605](https://github.com/cehinds/AshenSpire/pull/1605), `0.7.1.921`). Choosing a destination on the map no longer slows the game while its panel is open. On touch screens, fighters animate again (attack poses, enemy attack art and the idle sway) instead of standing frozen, and animated sprites and weapon effects no longer blink between frames. Attacks lean from the feet instead of rocking the whole figure side to side.
+- **Smoother map and animated fighters on phones** ([#1605](https://github.com/cehinds/AshenSpire/pull/1605), `0.7.1.923`). Choosing a destination on the map no longer slows the game while its panel is open. On touch screens, fighters animate again (attack poses, enemy attack art and the idle sway) instead of standing frozen, and animated sprites and weapon effects no longer blink between frames. Attacks lean from the feet instead of rocking the whole figure side to side.
 
 - **Bigger fighters on phones, more card text** ([#1600](https://github.com/cehinds/AshenSpire/pull/1600), `0.7.1.919`). On a narrow screen combatants now grow to half the battlefield's height wherever there is headroom above them, keeping their relative sizes and staying on their own side of the field. Card body text in the hand is 2pt smaller so more of each effect shows.
 

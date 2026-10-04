@@ -322,6 +322,13 @@ g.map-node.tooltip-selected, g.map-node[data-tip-open="true"] { outline: none; }
   animation: none;
   filter: drop-shadow(0 0 5px var(--gold));
 }
+/* A selected shrine-lane node shows the selection glow and stops pulsing,
+   like any other selected node; the shrine rules above would otherwise win. */
+.map-node.selected.shrine-lane > circle:not(.node-halo),
+.reduced-motion .map-node.selected.shrine-lane > circle:not(.node-halo) {
+  animation: none; opacity: 1;
+  filter: drop-shadow(0 0 5px var(--parchment));
+}
 
 /* Fog controls node knowledge; regional terrain uses the same discovered set.
    These fallback washes also support the legacy parchment loader. SVG geometry

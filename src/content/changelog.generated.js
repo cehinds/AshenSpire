@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Smoother map and animated fighters on phones",
     "detail": "Choosing a destination on the map no longer slows the game while its panel is open. On touch screens, fighters animate again (attack poses, enemy attack art and the idle sway) instead of standing frozen, and animated sprites and weapon effects no longer blink between frames. Attacks lean from the feet instead of rocking the whole figure side to side.",
-    "build": "0.7.1.921",
+    "build": "0.7.1.923",
     "pullRequest": 1605,
     "url": "https://github.com/cehinds/AshenSpire/pull/1605"
   },
