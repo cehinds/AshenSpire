@@ -324,10 +324,6 @@ const ROWS = [
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },
-  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
-  // to miss. Both doors ask first through confirmResetAll.
-  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
-    note: tFull('settings.row.resetAllSettings') },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
   // ---- cat: 'Combat' -----------------------------------------------------
@@ -533,6 +529,11 @@ const ROWS = [
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: t('settings.row.uiScale'), applied: appliedHtml,
     note: tFull('settings.row.uiScale') },
+  // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
+  // to miss. Both doors ask first through confirmResetAll. Last in Interface on
+  // purpose: tools/displayfirst.mjs plants expect fullscreen then accent first.
+  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
+    note: tFull('settings.row.resetAllSettings') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: t('settings.row.cardMotif'),
     note: tFull('settings.row.cardMotif') },
