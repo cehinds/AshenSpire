@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-04",
     "summary": "Reset all sits last under Interface",
     "detail": "The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.",
-    "build": "0.7.1.914",
+    "build": "0.7.1.915",
     "pullRequest": 1592,
     "url": "https://github.com/cehinds/AshenSpire/pull/1592"
+  },
+  {
+    "id": "pr-1594",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Keep settings ordering checks working after Reset all",
+    "detail": "The fullscreen ordering regression fixture now follows the reset row's current source location. Its intentional bad ordering and detection assertions remain unchanged.",
+    "build": "0.7.1.913",
+    "pullRequest": 1594,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1594"
   },
   {
     "id": "pr-1590",
