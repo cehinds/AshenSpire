@@ -333,9 +333,19 @@ function markOf(dir) {
  * takes a cache out of reach in one rename. Deleting it is separate (sweep),
  * so a delete Windows refuses never reads as a failed rename.
  */
-function setAside(dir) {
+const pauseCacheRename = attempt => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.min(10 * (attempt + 1), 200));
+
+export function setAside(dir, { rename = renameSync, pause = pauseCacheRename } = {}) {
   const gone = beside(dir, 'discard');
-  try { renameSync(dir, gone); return gone; } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
+  for (let attempt = 0; ; attempt += 1) {
+    try { rename(dir, gone); return gone; } catch (e) {
+      if (e.code === 'ENOENT') return null;
+      // Recheck's discard needs the same bounded handle-release window as
+      // publishing: a just-read manifest can still be held by a Windows indexer.
+      if (!['EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
+      pause(attempt);
+    }
+  }
 }
 
 /**
@@ -385,18 +395,14 @@ export function unpack(entries, dir, mark) {
     // right marker; --from relies on this). Only a cache another run
     // published between our discard and our rename is kept, and only when
     // its marker matches: it was unpacked from a verified release too.
-    const pause = (attempt) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.min(10 * (attempt + 1), 200));
     for (let attempt = 0; ; attempt += 1) {
       // EPERM/EBUSY/EACCES: Windows refuses to rename a directory another
       // process holds a file open in (a sibling's marker read, an indexer).
-      try { setAside(dir); } catch (e) {
-        if (!['EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
-        pause(attempt); continue; // the old cache is still there: never accept its marker
-      }
+      setAside(dir); // handles a busy old cache once; never accept its marker
       try { renameSync(stage, dir); return; } catch (e) {
         if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
         if (markOf(dir) === mark) return; // published by another run since our discard
-        pause(attempt);
+        pauseCacheRename(attempt);
       }
     }
   } finally {
