@@ -175,7 +175,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // answer: no rail item and no #shop-sell node at all.
     app.innerHTML = `
       ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' }) : ''}
-      <div class="screen room-screen shop-workspace" data-wireframe="W1d">
+      <div class="screen room-screen shop-workspace merchant-workspace" data-wireframe="W1d">
         <div class="shop-frame">
           <div class="as-railed shop-railed">
             <div class="as-pane shop-pane" data-wireframe="W1v" id="shop-pane">

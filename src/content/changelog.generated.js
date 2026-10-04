@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1563",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Browse every merchant shelf in clear, matching rows",
+    "detail": "Cards, equipment, relics, supplies, services and goods for sale now place their artwork, complete details and action together, following the book shelf layout. On phones, actions sit below the details. Card inspection, purchase reviews, holds and the selected footer action remain available.",
+    "build": "0.7.1.876",
+    "pullRequest": 1563,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1563"
+  },
+  {
     "id": "pr-1558",
     "date": "2026-10-03",
     "group": "2026-10-03",
