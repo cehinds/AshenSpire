@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
-- **Reset every setting from one button** ([#1585](https://github.com/cehinds/AshenSpire/pull/1585), `0.7.1.902`). Settings → Display → Interface has a Reset all button. It asks first, then returns every setting to its default, with Undo for a few seconds. Reset all in the options menu now asks first too. Saves and progress are untouched.
+- **Reset every setting from one button** ([#1585](https://github.com/cehinds/AshenSpire/pull/1585), `0.7.1.904`). Settings → Display → Interface has a Reset all button. It asks first, then returns every setting to its default, with Undo for a few seconds. Reset all in the options menu now asks first too. Saves and progress are untouched.
 
 - **Painted signature starter cards for three more classes** ([#1582](https://github.com/cehinds/AshenSpire/pull/1582), `0.7.1.900`). Starstone Pebble, Urgent Heal, and Ambush now carry original paintings of the Observatory's starstone, the Furnace Chapel healing rite, and the frozen docks. The approved second Starstone pass and compact mobile artwork ship together in art release v11.
 

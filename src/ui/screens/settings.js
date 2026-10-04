@@ -326,7 +326,7 @@ const ROWS = [
     note: tFull('settings.row.fullscreen') },
   // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
   // to miss. Both doors ask first through confirmResetAll.
-  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: 'Reset all…', label: t('settings.row.resetAllSettings'),
+  { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
     note: tFull('settings.row.resetAllSettings') },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
@@ -1555,15 +1555,16 @@ export function allResettableKeys() {
   return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
 }
 
-/** confirmResetAll(onConfirm) — the danger confirmation both Reset-all doors open. */
-export function confirmResetAll(onConfirm) {
+/** confirmResetAll(onConfirm, returnFocusElement) — the danger confirmation both Reset-all doors open. */
+export function confirmResetAll(onConfirm, returnFocusElement = document.activeElement) {
   return openConfirmationModal({
     title: t('settings.resetAll.title'),
     message: tFull('settings.resetAll.title'),
-    confirmLabel: 'Reset all',
+    confirmLabel: t('settings.resetAll.confirm'),
     cancelLabel: t('common.cancel'),
     tone: 'danger',
     onConfirm,
+    returnFocusElement,
   });
 }
 
@@ -3237,7 +3238,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         resetKeys(settings, onChange, keys, label);
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       };
-      if (button.dataset.resetConfig === 'all') confirmResetAll(run); else run();
+      // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
+      if (button.dataset.resetConfig === 'all') confirmResetAll(run, headerTools.querySelector('.set-options summary')); else run();
     };
   });
 
@@ -3500,7 +3502,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     btn.addEventListener('click', () => confirmResetAll(() => {
       resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
       renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
-    }));
+      container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
+    }, btn));
   });
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {

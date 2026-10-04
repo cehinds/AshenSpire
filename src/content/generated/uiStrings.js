@@ -5449,6 +5449,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.resetAll.confirm",
+    "extends": "",
+    "short": "Reset all",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "settings.row.useSprites",
     "extends": "",
     "short": "Character sprites",
