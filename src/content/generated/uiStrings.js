@@ -5981,13 +5981,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "settings.row.guidedLevelUp",
-    "extends": "",
-    "short": "Claim levels automatically",
-    "full": "Claim each banked level in turn, refilling leftover XP. Each level's reward waits in the menu, highlighted, until you open it. Turn off to follow the Click to level up preference.",
-    "tip": ""
-  },
-  {
     "id": "settings.row.reducedMotion",
     "extends": "",
     "short": "Reduced motion",

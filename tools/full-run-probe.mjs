@@ -383,6 +383,7 @@ const DOORS = {
   gameover: `#to-title`,
   rewardVeil: `.reward-veil`,
   levelOffer: `.reward-menu .reward-level-offer`,
+  levelContinue: `#reward-level-continue`,
   chooserConfirm: `#reward-card-confirm:not([disabled])`,
   chooserPick: `.reward-row .reward-pick`,
   levelUp: `.reward-level-up:not([disabled])`,
@@ -413,9 +414,10 @@ function pickDoor(d) {
     if (d.rewardBack) return { press: DOORS.rewardBack };
     // A level waiting to be claimed holds Continue (reward.js): claim it.
     if (d.levelUp) return { press: DOORS.levelUp };
-    // A claim opens nothing: the reward it unlocked waits in the menu, lifted.
-    // Open it, so the walk takes level rewards rather than deferring them.
+    // A claim opens its level popup (SPEC §13.4o): take each blue reward it
+    // lists (or one still lifted in the list), then Continue refills the rest.
     if (d.levelOffer) return { press: DOORS.levelOffer };
+    if (d.levelContinue) return { press: DOORS.levelContinue };
     // The victory card's Continue opens the spoils once its XP has counted;
     // the spoils' Continue (a hold) collects and leaves.
     if (d.rewardExpand) return { press: DOORS.rewardExpand };
@@ -477,6 +479,7 @@ if (argv.includes('--selftest')) {
     ['the level chooser before a pick: the first offer', D({ rewardVeil: true, veil: true, chooserPick: true, rewardBack: true }), DOORS.chooserPick],
     ['the level chooser after a pick: Confirm, not Back', D({ rewardVeil: true, veil: true, chooserPick: true, chooserConfirm: true, rewardBack: true }), DOORS.chooserConfirm],
     ['a claimed level\'s reward waiting in the menu: open it', D({ rewardVeil: true, veil: true, levelOffer: true, rewardContinue: true }), DOORS.levelOffer],
+    ['a level popup with its rewards taken: Continue', D({ rewardVeil: true, veil: true, levelContinue: true }), DOORS.levelContinue],
     ['the spoils with Continue enabled', D({ rewardVeil: true, veil: true, rewardContinue: true }), DOORS.rewardContinue],
     ['the map under no veil', D({ map: true }), 'map'],
   ];

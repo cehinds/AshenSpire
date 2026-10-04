@@ -1640,7 +1640,6 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(5rem, 1fr) auto; grid-template-areas: 'level bar next'; gap: .6rem; white-space: nowrap; }
 .reward-door .reward-progress-row[data-kind='character'] .rp-level { color: var(--parchment); }
 .reward-door .reward-progress-row[data-kind='character'] .rp-next { position: relative; z-index: 1; transition: transform .35s ease; }
-.reward-door .reward-progress-row[data-kind='character'].reward-level-ready .rp-next { transform: translateX(-2rem); }
 .reward-door .reward-progress-row[data-kind='character'] .reward-level-up { position: relative; z-index: 2; grid-area: next; }
 /* A LEVEL'S REWARD WAITS, IT IS NOT FORCED. A claim no longer opens its
    chooser; the reward it unlocked joins the menu in the Level up blue and
@@ -1664,6 +1663,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
   60% { opacity: 1; transform: translateY(-4px); }
   to { transform: translateY(-2px); }
 }
+.reward-door .reward-level-summary { margin: 0 0 .6rem; color: #a7d9ff; font-variant-numeric: tabular-nums; }
+.reward-door .reward-level-rewards { margin-bottom: .6rem; }
 .reward-door .reward-level-log { margin: .4rem 0 0; padding: 0; list-style: none; display: grid; gap: .25rem; }
 .reward-door .reward-level-line { color: #a7d9ff; font-variant-numeric: tabular-nums; }
 .reward-door .reward-stat-allocation { grid-column: 1 / -1; display: grid; gap: .5rem; width: 100%; border-top: 1px solid var(--line); padding-top: .8rem; }
@@ -5779,7 +5780,13 @@ button[data-button-size] {
 
 .character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
 
-.reward-door .reward-progress-row.reward-level-ready .reward-level-up { grid-area: auto; grid-column: 1 / -1; width: 100%; min-width: 120px; min-height: max(44px, var(--tap-floor, 44px)); margin-top: .4rem; font-size: max(14px, .95rem); }
+/* The bar's layers (fills, its XP text) stay inside the bar's own stacking
+   context, so nothing in it can rise over the Level up that covers it. */
+.reward-door .rp-layered-bar { isolation: isolate; }
+/* LEVEL UP COVERS ITS BAR (SPEC §13.4o): the waiting bar's own cell holds the
+   button over it, so the press sits exactly where the fill stopped. One bar
+   carries it at a time; the rest wait their turn. */
+.reward-door .reward-progress-row.reward-level-ready .reward-level-up { grid-area: bar; justify-self: stretch; align-self: center; position: relative; z-index: 2; width: 100%; min-width: max-content; min-height: max(44px, var(--tap-floor, 44px)); margin: 0; font-size: max(14px, .95rem); }
 .reward-door .reward-progress-row.reward-level-ready .rp-next { visibility: hidden; }
 /* Merchant offers use one readable image/details/action row on every shelf.
    The native card remains inspectable; its intrinsic card geometry is preserved. */
