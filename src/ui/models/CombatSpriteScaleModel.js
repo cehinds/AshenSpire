@@ -5,6 +5,7 @@ import { uiConfig } from '../../config/generated/ui.js';
 // about 50 px) left the player a 50 px thumbnail under an empty sky; the
 // screen-edge clamp below still keeps every figure on screen.
 const ART_WIDTH_ALLOWANCE = uiConfig.presentation.combatFormationModel.sizing.artWidthAllowance;
+export const NARROW_MIN_HEIGHT_FRACTION = uiConfig.presentation.combatFormationModel.sizing.narrowMinHeightFraction;
 // Presentation ratios only; encounter pools still own enemy classification.
 const BOSS_SCALE = Object.freeze({ ashheartDragon: 3 });
 export function combatSpriteRatio(stature, enemyId) {
@@ -15,7 +16,9 @@ export function combatSpriteRatio(stature, enemyId) {
 
 // Fit once for the formation. Fitting each actor independently cancels stature
 // on cramped screens. Depth is applied to every actor in the same row.
-export function fitCombatSprites({ width, height, actors }) {
+// minHeight: a floor on every figure's visible height (narrow layout, owner
+// 2026-10-04). It overrides the width clamps but never the headroom above.
+export function fitCombatSprites({ width, height, actors, minHeight = 0 }) {
   // Newly mounted artwork may not have a layout box yet. It must not poison
   // the shared fit with 0/0; the stage retries on image load / resize.
   actors = actors.filter(a => Number.isFinite(a.visibleHeight) && a.visibleHeight > 0
@@ -46,9 +49,12 @@ export function fitCombatSprites({ width, height, actors }) {
   return actors.map(a => {
     const requested = requestedOf(a);
     const multiplier = requested <= 1 ? requested : 1 + (requested - 1) * growthRoom;
-    const visibleHeight = heightOf(a) * multiplier;
+    const headroom = Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6);
+    const visibleHeight = Math.max(heightOf(a) * multiplier, Math.min(minHeight, headroom));
     const scale = visibleHeight / a.visibleHeight;
-    return { id: a.slot.id, scale, visibleHeight, multiplier,
-      x: a.slot.x };
+    // A floored figure can outgrow its cell; slide it inward to stay on screen.
+    const half = Math.min(width / 2 - 6, scale * a.visibleWidth / 2);
+    const x = minHeight > 0 ? Math.min(Math.max(a.slot.x, half + 6), width - half - 6) : a.slot.x;
+    return { id: a.slot.id, scale, visibleHeight, multiplier, x };
   });
 }

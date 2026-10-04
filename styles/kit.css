@@ -4840,7 +4840,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); min-height: 0;
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext {
-  font-size: max(calc(12px / var(--ui-zoom, 1)), .8rem); line-height: 1.25;
+  font-size: calc(max(calc(12px / var(--ui-zoom, 1)), .8rem) - 2pt); line-height: 1.25;
 }
 :root .combat[data-layout='formation'] .hand .card > .card-cost-rail {
   top: calc(10% + .25rem); left: .35rem; right: auto; bottom: auto;

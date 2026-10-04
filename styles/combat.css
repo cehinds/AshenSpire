@@ -1039,7 +1039,7 @@
   font-size:16px; line-height:16px; white-space:normal; overflow-wrap:anywhere;
   display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
 }
-:root .combat:not(.coop) .hand .card .ctext { font-size:16px; line-height:20px; }
+:root .combat:not(.coop) .hand .card .ctext { font-size:calc(16px - 2pt); line-height:calc(20px - 2pt); }
 :root .combat:not(.coop) .hand .card .card-costs {
   display:flex; align-items:center; gap:4px; position:absolute; top:-10px; left:-6px; right:22px;
 }

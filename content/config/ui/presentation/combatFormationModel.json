@@ -8,6 +8,7 @@
     },
     "figureReference": 150,
     "artWidthAllowance": 1.8,
+    "narrowMinHeightFraction": 0.5,
     "ceiling": {
       "heightFraction": 0.52,
       "widthFraction": 0.16

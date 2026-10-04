@@ -115,3 +115,27 @@ test('a phone cell no longer boxes the figure into a thumbnail', () => {
   const [player] = fitCombatSprites({ width: 360, height: 400, actors });
   assert.ok(player.visibleHeight >= 80, `player figure ${player.visibleHeight}px`);
 });
+
+test('the narrow-layout floor lifts every figure to the requested height, within headroom', () => {
+  const width = 360, height = 445;
+  const plan = combatFormation({ width, height, friends: ['p'], enemies: ['e'] });
+  const actors = plan.slots.map(slot => ({ slot, ratio: 1, leading: 66, visibleHeight: 180, visibleWidth: 120 }));
+  const floor = height * 0.5;
+  const sizes = fitCombatSprites({ width, height, actors, minHeight: floor });
+  sizes.forEach((s, i) => {
+    const headroom = (actors[i].slot.fitGround ?? actors[i].slot.ground) - actors[i].leading - 6;
+    assert.ok(s.visibleHeight >= Math.min(floor, headroom) - 1e-9);
+    assert.ok(s.visibleHeight <= Math.max(headroom, fitCombatSprites({ width, height, actors })[i].visibleHeight) + 1e-9);
+  });
+});
+
+test('a floored figure slides inward to stay on screen', () => {
+  const width = 360, height = 445;
+  const plan = combatFormation({ width, height, friends: ['p'], enemies: ['e'], presentation: { formationPreset: 'straight' } });
+  const actors = plan.slots.map(slot => ({ slot, ratio: 1, leading: 66, visibleHeight: 180, visibleWidth: 120 }));
+  for (const s of fitCombatSprites({ width, height, actors, minHeight: height * 0.5 })) {
+    const half = s.scale * 120 / 2;
+    assert.ok(s.visibleHeight >= height * 0.5 - 1e-9);
+    assert.ok(s.x - half >= 6 - 1e-8 && s.x + half <= width - 6 + 1e-8);
+  }
+});
