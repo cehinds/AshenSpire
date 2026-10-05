@@ -574,6 +574,8 @@ build/windows-installer/
 /docs/design/player-polish-asset-kit-2026-10-02.zip.sha256
 /docs/design/player-components-2026-10-03.zip
 /docs/design/player-components-2026-10-03.zip.sha256
+/docs/design/board-fidelity-2026-10-04.zip
+/docs/design/board-fidelity-2026-10-04.zip.sha256
 
 # Generated per-card release objects.
 /build/cards/

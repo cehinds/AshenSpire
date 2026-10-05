@@ -1,0 +1,31 @@
+{
+  "id": "reward-lingering-flame",
+  "name": "reward-lingering-flame",
+  "family": "reward",
+  "sourceBoard": "09-rest-and-rewards.png",
+  "sourceRegion": [
+    0.492,
+    0.692,
+    0.085,
+    0.065
+  ],
+  "prompt": "Use case: precise-object-edit. Image1 is authoritative AshenSpire reference. Reconstruct ONLY the painting inside LINGERING FLAME, the rightmost bottom desktop reward card (approx x712..835,y751..827 in1448x1086). Standalone landscape4:3 highresolution ability illustration, no text/UI/frame/numbers/watermark. Faithful motif and crop: a single upraised weathered dark leather/metal gauntleted hand and wrist emerging diagonally from lower-left into the center, palm toward viewer and fingers slightly curled upward around a twisting orange flame; bright looping flames rise and curl towardupperright against a nearly black smoky brown background. The hand and fire fill the painting. No face/person body, no sword, no castle/landscape borrowed from surrounding screenshot. Deep charcoalblack, burnt orange and gold flame highlights, realistic painterly material detail. Match the reference's winding flame silhouette and dark negative space; not a giant explosion.",
+  "tool": "built-in image_gen",
+  "mode": "precise-object-edit",
+  "referenceRoles": [
+    {
+      "path": "docs/design/player-polish-2026-10-01/09-rest-and-rewards.png",
+      "role": "authoritative illustration composition and style"
+    }
+  ],
+  "review": "Viewed returned full-resolution painting; correct subject and source composition, no baked UI.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-a42d7703-ac47-453b-a6d3-7362fa7af88e.png",
+  "file": "masters/abilities/reward-lingering-flame.png",
+  "sha256": "3f7ba65d690067cb7ad893194f49ac3dd016b5072298aff059e208940564bb22",
+  "bytes": 2124451,
+  "width": 1448,
+  "height": 1086,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true
+}

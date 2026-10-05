@@ -1,0 +1,31 @@
+{
+  "id": "rest-steel-resolve",
+  "name": "rest-steel-resolve",
+  "family": "reward",
+  "sourceBoard": "09-rest-and-rewards.png",
+  "sourceRegion": [
+    0.557,
+    0.422,
+    0.082,
+    0.058
+  ],
+  "prompt": "Use case: precise-object-edit. Image1 is authoritative. Reconstruct only the illustration inside STEEL RESOLVE in the small SELECTED CARD panel of the top desktop Rest feature (approx x806..927,y460..521 on1448x1086). Standalone highresolution landscape4:3 ability painting, no title/card border/cost/words/UI. Closely match reference: a hooded traveler in battered dark plate and layered gray-brown cape, seen close from rear three-quarter view, turned toward the right, broad armored shoulder at center, sword hilt visible behind shoulder, a distant ruined gothic tower rising at right against a cool smokygray sky with soft warmrimlight. Upper body silhouette nearly fills image; steady contemplative stance, weathered material and painterly realistic details. Distinguish from Steadfast: NO shield prominently facingcamera. Distinguish from Pilgrim'sResolve: no large backpack or standingstaff/banner. Preserve originalboardpose/crop/palette rather than making newconcept.",
+  "tool": "built-in image_gen",
+  "mode": "precise-object-edit",
+  "referenceRoles": [
+    {
+      "path": "docs/design/player-polish-2026-10-01/09-rest-and-rewards.png",
+      "role": "authoritative illustration composition and style"
+    }
+  ],
+  "review": "Viewed returned full-resolution painting; correct subject and source composition, no baked UI.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-9a19b021-b4d1-4398-aa3a-bd7a6e823322.png",
+  "file": "masters/abilities/rest-steel-resolve.png",
+  "sha256": "2001562447fdd084afee8fdbd69f5003402cf6e9a1cc9eeea967765473bd5a65",
+  "bytes": 2558621,
+  "width": 1448,
+  "height": 1086,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true
+}

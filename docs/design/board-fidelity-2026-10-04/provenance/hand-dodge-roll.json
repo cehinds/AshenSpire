@@ -1,0 +1,74 @@
+{
+  "id": "hand-dodge-roll",
+  "name": "Dodge Roll",
+  "tool": "built-in image_gen.imagegen",
+  "toolMode": "edit",
+  "transparentBackground": false,
+  "sourceBoard": {
+    "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+    "approximateArtWindowBounds": [
+      635,
+      469,
+      714,
+      518
+    ],
+    "coordinateConvention": "[left,top,right,bottom] pixels, approximately on the1448Ã—1086 original; selected miniature only, no UI copying"
+  },
+  "refs": [
+    {
+      "path": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-fe3aeddf-1bd0-4559-ba04-8cabb2f257e8.png",
+      "role": "edit target; preserve central ability subject and all light/composition"
+    },
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+      "role": "designated small art window reference; do not borrow battlefield architecture outside it"
+    }
+  ],
+  "prompt": "Use case: precise-object-edit. Edit the supplied Dodge Roll ability painting. The second reference is the original board05; its designated Dodge Roll small card artwork is the target. Remove ONLY the background battlefield/castle ruins, towers, arches and architecture borrowed from the surrounding screenshot, replacing them with abstract painted deep slate-blue smoke, icy wind and shadow. Preserve the entire existing low crouched rolling hooded warrior, pose, bent limbs, cloak, icy-blue wind sweep and compact silhouette, palette, light source, brushwork and camera. Maintain the exact1448Ã—1086 landscape4:3 canvas. No scene architecture, horizon, new objects, characters, text, signature, card frame, labels, UI or crop. The whole image is the high-resolution ability painting.",
+  "previousVersionRecord": "provenance/versions/hand-dodge-roll-original.json",
+  "previousVersion": {
+    "id": "hand-dodge-roll",
+    "name": "Dodge Roll",
+    "tool": "built-in image_gen.imagegen",
+    "toolMode": "generate",
+    "transparentBackground": false,
+    "sourceBoard": {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+      "approximateArtWindowBounds": [
+        635,
+        469,
+        714,
+        518
+      ],
+      "coordinateConvention": "[left,top,right,bottom] pixels, approximately on the1448Ã—1086 original; selected miniature only, no UI copying"
+    },
+    "refs": [
+      {
+        "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+        "role": "composition, subject, palette and light source reference; ONLY designated ability art window"
+      }
+    ],
+    "prompt": "Use case: stylized-concept. Asset type: ONE standalone AshenSpire ability illustration matching a specific existing board05 card artwork, NOT a complete card, screenshot or UI mockup. Source image is a COMPOSITION/COLOR reference. Extract and faithfully paint ONLY the named small art-window subject described below at high resolution. Fill the entire output image with that painting: no card frame, name, cost medallion, numbers, text, labels, bottom parchment, borders, UI, extra figure, invented item lore or new composition. Match the board's richly painted gloomy charcoal brushwork and explosive localized light. Output landscape 4:3 aspect ratio, width1536 height1152. The reference board has another aspect ratio; do NOT follow its outer aspect ratio. Keep important silhouettes visible on a compact horizontal card-art window.\nNamed reference artwork: Dodge Roll.\nPrecise target: Upper desktop combat hand, fourth card art window. One low-crouched rolling hooded warrior, compact black/dark-grey silhouette low across the middle, hood and head at left of center, bent limbs and swept cloak forming a dynamic curled roll toward the right. Icy pale-blue wind/radial streaks surround the crouched body against deep slate-blue gloom. The crouched silhouette and blue movement sweep must match the small reference; no upright running hero, sword attack or foreground UI.",
+    "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-fe3aeddf-1bd0-4559-ba04-8cabb2f257e8.png",
+    "status": "superseded",
+    "reason": "Borrowed battlefield ruins outside the designated small art window; background-only cleanup needed.",
+    "sha256": "28902209b08e1ab2a14f0fa6f54560e813db8110ec1d7837091f4c7a416a90d3",
+    "bytes": 2799411,
+    "width": 1448,
+    "height": 1086,
+    "imageMode": "RGB"
+  },
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-3c745965-b1f3-4df9-9da8-6c42b28e6ae2.png",
+  "file": "masters/abilities/hand-dodge-roll.png",
+  "sha256": "eafe761de38ba8a2ac9cdcc719e45928184c1d753106366493bb2595d8ba656e",
+  "bytes": 2724267,
+  "width": 1448,
+  "height": 1086,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "aspectRatio": 1.3333333333333333,
+  "acceptedAfterVisualReview": true,
+  "reviewNotes": "Visually compared with designated board05 art window for subject, silhouette, composition, color/light, absence of UI/text; standalone4:3 painting."
+}

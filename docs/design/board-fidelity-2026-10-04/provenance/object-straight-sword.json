@@ -1,0 +1,39 @@
+{
+  "id": "object-straight-sword",
+  "name": "Straight Sword",
+  "tool": "built-in image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": true,
+  "sourceBoard": {
+    "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/06-armoury-and-inventory.png",
+    "approximateArtWindowBounds": [
+      258,
+      699,
+      337,
+      770
+    ],
+    "coordinateConvention": "[left,top,right,bottom] approximate pixels on1448×1086 original; specific lower inventory object icon only"
+  },
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/06-armoury-and-inventory.png",
+      "role": "exact designated weapon icon shape/pose/material reference; no black UI backing or other board imagery"
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: ONE standalone reusable transparent AshenSpire weapon object cutout matching the designated board06 inventory ICON. The provided full board is only a visual reference; use ONLY the named icon at given coordinates. Create the individual painted weapon high-resolution, not a sheet or screenshot. Preserve its visible shape, diagonal pose, proportions, materials and subtle cool/warm studio highlights from the board. Hand-painted tactile dark fantasy item art, weathered steel, dark leather/wood and modest aged brass. Full object entirely visible, generous transparent margin around every endpoint on a square canvas1254×1254. Background genuinely transparent alpha: remove the black UI square/card behind the object, and leave all pixels outside the weapon silhouette empty. NO painted background, smoke, glow/halo, shadows outside silhouette, floor, scenery, borders, labels, letters, text, numbers, stats, game rules, UI, person or hand. Exactly one weapon, no extra objects.\nNamed target: Straight Sword.\nPrecise visual request: One straight sword from lower inventory grid, first row left. Long slender double-edged straight steel blade with a central fuller, pointed tip, modest dark-aged brass straight crossguard, short brown leather-wrapped grip and plain small pommel. Full weapon diagonal from lower-left grip to upper-right point at about45degrees, matching reference icon. No elaborate sun ornament, no curved blade, no scabbard, no runes.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-cbfd0e76-848a-4c1c-aa59-994c095af820.png",
+  "file": "masters/objects/object-straight-sword.png",
+  "sha256": "aaf768cb921331e676fc103197543e73d3a8d780eb7d7176603c6b3d2dc7b913",
+  "bytes": 497518,
+  "width": 1254,
+  "height": 1254,
+  "imageMode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "acceptedAfterVisualReview": true,
+  "reviewNotes": "Viewed original generated PNG and compared designated board06 inventory icon: isolated full weapon, matching diagonal pose/material family and characteristic shape, true transparent alpha; high-resolution painted reconstruction, no UI backing or labels."
+}
