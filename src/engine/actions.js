@@ -175,7 +175,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
   // A critical hit multiplies the finished blow, before Block takes its share.
   const dmg = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
-  if (carrier && carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: dmg });
+  if (dmg > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: dmg });
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
   reconcileWardBlock(target);

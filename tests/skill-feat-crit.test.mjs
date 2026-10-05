@@ -73,6 +73,7 @@ test('in a fight a Blade hit can crit for 1.5×, and a run without the feat draw
   assert.ok(critted > 0, 'some Blade hits crit');
   const plain = play(false, 7);
   assert.equal(plain.crits.length, 0, 'no feat, no crit');
+  assert.equal(plain.combat.rng.getCounters().combatProcs || 0, 0, 'and not one combatProcs draw');
   assert.equal(plain.combat.player.critRules, undefined);
 });
 
@@ -80,4 +81,18 @@ test('the feat pick is a keyed choice row', () => {
   const [row] = rewardPlan({ skillFeats: [{ skillId: BLADE, level: 2, claimOrdinal: 0, featIds: ['bladeCritical'] }] }).rows;
   assert.equal(row.key, `skillFeat:${BLADE}:0`);
   assert.deepEqual(row.options, [{ kind: 'skillFeat', id: 'bladeCritical' }]);
+});
+
+test('a saved fight refuses malformed crit rules by name', async () => {
+  const { combatSnapshotProblems } = await import('../src/model/combatSnapshot.js');
+  const run = createRunState({ seed: 5, classId: 'reaver', registries });
+  run.skillFeats = ['bladeCritical'];
+  const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'] });
+  const { serializeCombatSnapshot } = await import('../src/engine/combatSnapshot.js');
+  const snap = serializeCombatSnapshot(combat);
+  assert.deepEqual(snap.player.critRules, critRulesFor(['bladeCritical']), 'the rules ride the save');
+  assert.deepEqual(combatSnapshotProblems(snap).filter((p) => /critRules/.test(p)), []);
+  for (const bad of [[{ tags: 'blade' }], [{ tags: ['blade'], multiplier: 1e9 }], [{ tags: ['blade'], cap: 2 }], 'x']) {
+    assert.ok(combatSnapshotProblems({ ...snap, player: { ...snap.player, critRules: bad } }).some((p) => /critRules/.test(p)), `refused: ${JSON.stringify(bad)}`);
+  }
 });

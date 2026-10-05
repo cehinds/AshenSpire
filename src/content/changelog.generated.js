@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Blade feats and critical hits",
     "detail": "Every second level of a skill that has its own feats lets you take one. Blade's first feat is Critical Edge, from level 2. It gives your Blade attacks a chance to land a critical hit for 1.5× damage: 5%, plus Dexterity × 0.1%, Wisdom × 0.2% and Intelligence × 0.1%, up to 50%. Other skills' feats come later.",
-    "build": "0.7.1.961",
+    "build": "0.7.1.963",
     "pullRequest": 1629,
     "url": "https://github.com/cehinds/AshenSpire/pull/1629"
   },

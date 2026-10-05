@@ -3017,9 +3017,18 @@ function rollSkillFeats(includeBanked = false) {
       ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
         .filter((entry) => skillLevelQueuesSkillFeat(registries, track.id, entry.level)),
     ];
-    for (const entry of entries.slice(0, perDoor)) {
-      const featIds = skillFeatOptions(run, track.id, entry.level);
-      if (featIds.length) out.push({ skillId: track.id, ...entry, featIds });
+    // One door never offers a feat twice (two rows could otherwise share the
+    // only one, and the second could never land), and a pick with no feat
+    // open does not use up the door's slot.
+    const offered = new Set();
+    let rows = 0;
+    for (const entry of entries) {
+      if (rows >= perDoor) break;
+      const featIds = skillFeatOptions(run, track.id, entry.level).filter((id) => !offered.has(id));
+      if (!featIds.length) continue;
+      featIds.forEach((id) => offered.add(id));
+      out.push({ skillId: track.id, ...entry, featIds });
+      rows += 1;
     }
   }
   return out;
