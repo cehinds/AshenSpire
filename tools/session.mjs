@@ -778,7 +778,7 @@ export function createSession({ registries, seedString, endless = false, restore
         applySkillXp(registries, m.run, skillXpReceipt(c, m.id));
         // The class track (plan phase 5b), paid per seat by the session, which knows the pool.
         awardClassXp(registries, m.run, { victory: c.result === 'victory', pool: live && live.pool });
-        stampSkillBonuses(registries, m.run); // the party deck's faces read the new levels
+        stampSkillBonuses(registries, m.run); // the saved seat reads the new levels; cards a later reward adds are stamped at the next fight
         // The character level (plan phase 6), per seat: the party's kills are
         // every seat's. No settings dial here — the server is authoritative
         // and reads the authored points per level.

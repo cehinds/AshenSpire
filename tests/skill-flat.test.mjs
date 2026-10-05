@@ -1,6 +1,6 @@
 // tests/skill-flat.test.mjs — SPEC §13.4o: every `balance.skill.flatEvery`
 // levels of a card-school track adds 1 to the primary number of every card of
-// its schools. Derived (stamped as `skillBonus`), stacking across tracks,
+// its schools. Derived (stamped as `skillBonus`) from the best track,
 // applied in resolveCard beside the rank, and carried into combat.
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -79,5 +79,30 @@ test('a card earns the flat of its best track, not a sum, and never past the cap
 
 test('co-op seats stamp the bonus before their fight', () => {
   const session = readFileSync(new URL('../tools/session.mjs', import.meta.url), 'utf8');
-  assert.match(session, /function memberAsPlayer\(m\) \{\s*\/\/[^\n]*\n[^\n]*\n\s*stampSkillBonuses\(registries, m\.run\);/);
+  assert.match(session, /function memberAsPlayer\(m\) \{[\s\S]{0,400}?stampSkillBonuses\(registries, m\.run\);[\s\S]{0,40}?return \{/);
+});
+
+test('the level popup counts the cards a claim actually raised', async () => {
+  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { bankSkillXp, claimBankedSkillLevel } = await import('../src/model/skills.js');
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = createRunState({ seed: 4, classId: 'reaver', registries });
+    toLevel(run, 4);
+    run.deck = [{ instanceId: 'r', cardId: 'rend', upgraded: false }, { instanceId: 'd', cardId: 'defend', upgraded: false }];
+    bankSkillXp(registries, run, BLADE, xpToNext(registries, 'weapon', 4));
+    mountRewards(app, { registries, run, onDone() {}, onPersist: () => stampSkillBonuses(registries, run),
+      onClaimSkill: (id) => claimBankedSkillLevel(registries, run, id),
+      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
+      rewards: { xpGains: { level: 0, tracks: { [BLADE]: 1 } } } });
+    app.querySelector(`.reward-level-up[data-track="${BLADE}"]`).click();
+    const summary = app.querySelector('.reward-level-summary').textContent;
+    const expected = run.deck.filter((c) => skillBonusFor(registries, run, c) > 0).length;
+    assert.ok(expected >= 1);
+    assert.match(summary, new RegExp(`${expected} cards? gains? \\+1\\.`));
+  } finally { Object.assign(globalThis, saved); }
 });
