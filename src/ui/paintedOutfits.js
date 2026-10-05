@@ -124,7 +124,8 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   let transition = null, auraState = '';
   let resources = [], active = false;
   let reactionTimer, reactionQueue = [];
-  const clear = () => { timers.forEach(clearTimeout); timers = []; };
+  let playSteps = [];
+  const clear = () => { timers.forEach(clearTimeout); timers = []; playSteps = []; };
   // The aura's only animation is its own fade, started below; keep that handle
   // rather than asking `aura.getAnimations()`, which flushes pending style and
   // so restyled the half-mounted fight on every settle.
@@ -254,8 +255,32 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
       resources = aura;
       const duration = Math.max(TIME.minPlayMs, ms);
       setPose(sequence[0]);
-      sequence.slice(1).forEach((p, i) => timers.push(setTimeout(() => setPose(p), duration * (!animationClip(animation, pose) && sequence.length === TIME.fourStepSequenceLength ? TIME.fourStepOffsets[i] : (i + 1) / sequence.length))));
-      timers.push(setTimeout(() => animation ? settle() : changeRest(current), duration));
+      // Each step is kept with its due time so hold() can push the rest back.
+      playSteps = [];
+      const step = (fn, delay) => {
+        const entry = { fn, due: Date.now() + delay };
+        entry.id = setTimeout(() => { playSteps = playSteps.filter((x) => x !== entry); fn(); }, delay);
+        timers.push(entry.id);
+        playSteps.push(entry);
+      };
+      sequence.slice(1).forEach((p, i) => step(() => setPose(p), duration * (!animationClip(animation, pose) && sequence.length === TIME.fourStepSequenceLength ? TIME.fourStepOffsets[i] : (i + 1) / sequence.length)));
+      step(() => animation ? settle() : changeRest(current), duration);
+      return true;
+    },
+    // Hit-stop (SPEC §7.4): freeze the playing sequence on its current frame
+    // for `ms`, then carry on; every remaining frame and the settle move back.
+    hold(ms) {
+      if (!(ms > 0) || !playSteps.length) return false;
+      const now = Date.now();
+      const pending = playSteps;
+      playSteps = [];
+      for (const entry of pending) {
+        clearTimeout(entry.id);
+        const next = { fn: entry.fn, due: entry.due + ms };
+        next.id = setTimeout(() => { playSteps = playSteps.filter((x) => x !== next); entry.fn(); }, Math.max(0, next.due - now));
+        timers.push(next.id);
+        playSteps.push(next);
+      }
       return true;
     },
   });

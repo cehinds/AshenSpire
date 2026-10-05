@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Every hit you feel",
     "detail": "Every hit that costs HP now shakes the screen a little, more the harder it lands, where before only hits of 15 or more shook. A hit of 6 or more also freezes the attacker and its target for a split second at the moment of impact. The damage number and sound still come at once. Screen shake and Reduced motion in Settings turn these off, and Instant speed has no freeze.",
-    "build": "0.7.1.999",
+    "build": "0.7.1.1001",
     "pullRequest": 1648,
     "url": "https://github.com/cehinds/AshenSpire/pull/1648"
   },

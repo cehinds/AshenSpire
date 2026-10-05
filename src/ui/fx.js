@@ -436,10 +436,29 @@ function banner(layer, text, cls = '') {
   setTimeout(() => el.remove(), 320);
 }
 
+// Hit-stop (SPEC §7.4). `hitStop` is set by playTimeline only while the hit
+// that earned the hold runs its visual, so that visual starts its target's
+// recoil held and lengthens it by the same amount (never cut short).
+let hitStop = 0;
+function hold(el, ms) {
+  if (!el || !(ms > 0)) return;
+  el.classList.add('hit-stop');
+  setTimeout(() => el.classList.remove('hit-stop'), ms);
+}
+
+// A smaller hit does not cut a bigger shake short: while one plays, only a
+// shake at least as big restarts it.
+const SHAKE_MS = 200;
+let shakeUntil = 0;
+let shakeNow = 0;
 function shake(combatEl, px = SHAKE_MAX_PX) {
   if (!combatEl || !(px > 0)) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
   if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
+  const now = Date.now();
+  if (now < shakeUntil && px < shakeNow) return;
+  shakeUntil = now + SHAKE_MS;
+  shakeNow = px;
   combatEl.style.setProperty('--shake-px', `${px}px`);
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
@@ -783,18 +802,19 @@ export function playTimeline(events, ctx, done) {
     const windup = actorAnimation
       ? actorAnimation.impactMs
       : (actorEl ? Math.round(speed.lungeMs * 0.55) : 0);
-    // Hit-stop (SPEC §7.4): the beat's biggest HP hit decides whether the two
-    // figures hold at impact. Only their animations pause; the visuals below
-    // (numbers, sound, haptics) still fire at impact, and the hold is added to
-    // the recovery so the beat ends after the swing does.
-    const hardest = beat.events.reduce((m, e) => (e.type === 'damageDealt' ? Math.max(m, guardHitFloatParts(e).residual || 0) : m), 0);
+    // Hit-stop (SPEC §7.4): the beat's hardest HP hit, at its own step, holds
+    // the attacker on its current frame and the target at the start of its
+    // recoil (hitStop, below). Its number, sound and haptic still fire then;
+    // the hold lengthens that hit's step and the swing's recovery.
+    let hardestEvent = null;
+    let hardest = 0;
+    for (const e of beat.events) {
+      const residual = e.type === 'damageDealt' ? guardHitFloatParts(e).residual || 0 : 0;
+      if (residual > hardest) { hardest = residual; hardestEvent = e; }
+    }
     const holdMs = beat.kind === 'attack' ? hitStopMsFor(hardest) : 0;
+    const visualEvents = beat.events.filter((e) => !lead.has(e) && visualFor(e, beat.kind));
     schedule(() => {
-      if (holdMs > 0) {
-        const held = [actorEl, ...beat.events.filter((e) => e.type === 'damageDealt').map((e) => ctx.anchorFor(e.targetId))].filter(Boolean);
-        for (const el of held) el.classList.add('hit-stop');
-        setTimeout(() => { for (const el of held) el.classList.remove('hit-stop'); }, holdMs);
-      }
       let vi = 0;
       const stepV = () => {
         if (finished) return;
@@ -803,9 +823,16 @@ export function playTimeline(events, ctx, done) {
           return;
         }
         if (vi < visuals.length) {
+          const held = holdMs > 0 && visualEvents[vi] === hardestEvent;
           const v = visuals[vi++];
+          if (held) {
+            safe(() => actorEl && hold(actorEl, holdMs));
+            safe(() => activeActorAnimation?.hold?.(holdMs));
+            hitStop = holdMs;
+          }
           safe(() => v(ctx));
-          schedule(stepV, speed.stepMs);
+          hitStop = 0;
+          schedule(stepV, speed.stepMs + (held ? holdMs : 0));
           return;
         }
         const applyBeat = () => {
@@ -1004,11 +1031,15 @@ function baseVisualFor(e, beatKind) {
         // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
-        flash(anchor, 'hitflash', heavy ? 380 : 220);
+        // A held hit (hit-stop) starts the recoil held and runs it that much
+        // longer, so the whole recoil still plays.
+        const held = hitStop;
+        flash(anchor, 'hitflash', (heavy ? 380 : 220) + held);
         // An animated figure recoils in its own art as well as in CSS, and holds
         // it as long as the flash it belongs to.
-        playPoseOn(anchor, 'hit', heavy ? 380 : 220);
-        if (heavy) flash(anchor, 'hit-heavy', 380);
+        playPoseOn(anchor, 'hit', (heavy ? 380 : 220) + held);
+        if (heavy) flash(anchor, 'hit-heavy', 380 + held);
+        hold(anchor, held);
         // Every HP hit shakes, by the HP it cost (SPEC §7.4).
         shake(ctx.combatEl, shakePxFor(parts.residual));
       };

@@ -316,7 +316,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
       if (plan.pose) stage?.play(plan.pose, totalMs, plan.aura);
     }
-    return { totalMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * 0.55), cancel: () => {
+    return { totalMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * 0.55), hold: (ms) => { stage?.hold?.(ms); }, cancel: () => {
       actorEl.classList.remove(actionClass);
       if (enemyAttack) actorEl.classList.remove('enemy-attack-pose');
       for (const [name, value, priority] of original) {

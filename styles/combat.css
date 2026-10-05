@@ -393,9 +393,11 @@
 .fx-banner.blood { color: var(--ember); }
 .fx-banner.turn { font-size: 2.4rem; color: var(--parchment); text-shadow: 0 0 24px rgba(230, 220, 195, 0.5); }
 .combat.shake { animation: shake 200ms; }
-/* Hit-stop (SPEC §7.4, content/combatFeel.js): the attacker and its target hold
-   their animations at impact for a beat; ui/fx.js removes the class. */
-.hit-stop, .hit-stop * { animation-play-state: paused !important; }
+/* Hit-stop (SPEC §7.4, content/combatFeel.js): the attacker's lunge and the
+   target's recoil (animations on the figure's own host) hold for a beat; ui/fx.js
+   removes the class. Not descendants: the idle bob keeps its clock. Painted frame
+   sequences hold through their own hold(ms). */
+.hit-stop { animation-play-state: paused !important; }
 
 /* ---------- paced playback: one actor at a time (SPEC §7.4) ---------- */
 /* Attack lunge: enemies step left toward the player, the player steps right. */

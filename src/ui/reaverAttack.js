@@ -135,6 +135,12 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
   return {
     impactMs: timing.impactMs,
     totalMs: timing.totalMs,
+    // Hit-stop (SPEC §7.4): stay on the current frame for `ms` more.
+    hold(ms) {
+      if (cancelled || !(ms > 0) || frameIndex >= REAVER_ATTACK_SEQUENCE.length - 1) return;
+      clearTimeout(timer);
+      timer = setTimeout(advance, timing.frameMs + ms);
+    },
     cancel() {
       if (cancelled) return;
       cancelled = true;

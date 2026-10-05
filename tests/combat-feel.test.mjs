@@ -57,7 +57,12 @@ test('fx shakes every HP hit by its HP and holds the figures on paced playback o
   assert.match(fx, /combatEl\.style\.setProperty\('--shake-px', `\$\{px\}px`\)/, 'the amplitude reaches the CSS');
   assert.match(fx, /document\.body\.classList\.contains\('no-shake'\) \|\| reducedMotionRequested\(\)\) return;/, 'the setting and reduced motion drop the shake');
   assert.match(fx, /const holdMs = beat\.kind === 'attack' \? hitStopMsFor\(hardest\) : 0;/);
+  assert.match(fx, /const held = holdMs > 0 && visualEvents\[vi\] === hardestEvent;/, 'the hold lands on the hardest hit\'s own step');
+  assert.match(fx, /activeActorAnimation\?\.hold\?\.\(holdMs\)/, 'a painted swing is held by its own sequence');
+  assert.match(fx, /schedule\(stepV, speed\.stepMs \+ \(held \? holdMs : 0\)\)/, 'the hold lengthens that hit\'s step');
+  assert.match(fx, /flash\(anchor, 'hitflash', \(heavy \? 380 : 220\) \+ held\)/, 'the recoil runs the hold longer, so it is never cut short');
   assert.match(fx, /actorAnimation\.totalMs \+ holdMs/, 'the hold lengthens the recovery, so the beat ends after the swing');
+  assert.match(fx, /if \(now < shakeUntil && px < shakeNow\) return;/, 'a smaller hit does not cut a bigger shake short');
   // Instant has no paced timeline: playTimeline falls back to animateEvents,
   // which has no actor swing and no hit-stop.
   assert.equal(ANIM_SPEEDS.instant, null);
@@ -67,6 +72,14 @@ test('fx shakes every HP hit by its HP and holds the figures on paced playback o
 
 test('the CSS pauses a held figure and scales the shake by --shake-px', () => {
   const css = src('styles/combat.css');
-  assert.match(css, /\.hit-stop, \.hit-stop \* \{ animation-play-state: paused !important; \}/);
+  assert.match(css, /^\.hit-stop \{ animation-play-state: paused !important; \}$/m);
+  assert.doesNotMatch(css, /\.hit-stop \*/, 'descendants (the idle bob) keep their clock');
   assert.match(css, /@keyframes shake \{.*var\(--shake-px, 4px\)/);
+});
+
+test('a painted sequence holds: its remaining frames move back by the hold', async () => {
+  // reaverAttack's handle and the painted stage both expose hold(ms).
+  assert.match(src('src/ui/reaverAttack.js'), /hold\(ms\) \{[\s\S]{0,200}timer = setTimeout\(advance, timing\.frameMs \+ ms\);/);
+  assert.match(src('src/ui/paintedOutfits.js'), /hold\(ms\) \{[\s\S]{0,600}due: entry\.due \+ ms/);
+  assert.match(src('src/ui/screens/combat.js'), /hold: \(ms\) => \{ stage\?\.hold\?\.\(ms\); \}/);
 });
