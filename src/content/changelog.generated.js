@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1645",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Behind the scenes: two automatic checks look for their faults in the right place again",
+    "detail": "Nothing you play changes. The faster map and fight entry (#1641) moved code that two browser checks use to plant deliberate faults. One check plants a black box over the Stamina number, and the plant broke the whole action row instead of covering the number. The other plants an idle bob on the fighters' pictures instead of on their layer, and since #1641 that fault shows a different symptom. Both plants now go in where the code lives now, and each check fails again for the fault it is aimed at.",
+    "build": "0.7.1.998",
+    "pullRequest": 1645,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1645"
+  },
+  {
     "id": "pr-1646",
     "date": "2026-10-05",
     "group": "2026-10-05",
