@@ -332,6 +332,34 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.skillAttribute.title",
+    "extends": "",
+    "short": "{skill} · level {level}: raise an attribute",
+    "full": "A level's attribute pick: one attribute linked to the skill rises by 1.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.body",
+    "extends": "",
+    "short": "Raise one of {attributes} by 1.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.raised",
+    "extends": "",
+    "short": "{attribute} +1 (now {value}).",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.spent",
+    "extends": "",
+    "short": "This pick can't land: it was spent, or that attribute is no longer offered. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.skillRankUp.title",
     "extends": "",
     "short": "{skill} · level {level}: raise a card",

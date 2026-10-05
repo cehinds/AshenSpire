@@ -394,6 +394,16 @@ export const balance = {
     // Every this-many levels of a card-school track adds 1 to the primary
     // number of every card of its schools (SPEC §13.4o): +1 at 5, +2 at 10.
     flatEvery: 5,
+    // Every this-many levels a track with a linked attribute set offers +1 to
+    // one attribute of that set (SPEC §13.4o): Blade STR/DEX, Shield
+    // STR/DEX/CON/WIS, Magic DEX/CON/WIS/INT; other tracks are authored with
+    // the content (phase C).
+    attributeEvery: 4,
+    linkedAttributes: {
+      'item:blade': ['strength', 'dexterity'],
+      'item:shield': ['strength', 'dexterity', 'constitution', 'wisdom'],
+      'item:magic-focus': ['dexterity', 'constitution', 'wisdom', 'intelligence'],
+    },
     // The class card's leaning (plan phase 5a, proposal §4): skill XP in the
     // weapon groups the card names (its item-type tags) is multiplied by
     // this, through the `favored` property the card carries.
@@ -401,6 +411,7 @@ export const balance = {
     [NOTE]: {
       draftSize: 'How many cards a skill draft lays out for you to take one of.',
       draftsPerCombat: 'The most drafts one track may hand out at a single reward door. The rest queue for later doors.',
+      attributeEvery: 'Every this many levels of a skill with linked attributes lets you raise one of them by 1.',
       flatEvery: 'Every this many levels of a weapon, focus or dual-wield skill adds 1 to the main number of every card of that skill.',
       rankMax: 'A card\'s highest rank. Each rank past 1 adds 1 to its main number; a skill draft offers ranks up to the skill\'s level.',
       favoredXpMult: 'Multiplies skill XP in the weapon groups your class card leans toward.',

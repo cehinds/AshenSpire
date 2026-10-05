@@ -632,6 +632,8 @@ export const RUN_SHAPE = [
   // that build had one possible level value (attributes.js).
   { key: 'levelUps', type: 'number', optional: true },
   { key: 'levelPoints', type: 'number', optional: true },
+  // Attribute points a skill level's pick granted (SPEC §13.4o), absent at 0.
+  { key: 'skillAttributePoints', type: 'number', optional: true },
   // Plan phase 6. Required at schema 10; a preXpLevels save (≤ 9) is filled
   // at the migration door from its bought levels, with nothing waiting.
   { key: 'level', type: 'object' },
@@ -848,7 +850,15 @@ function pendingDraftRows(pending) {
   const rankUps = (Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : [])
     .filter((d) => d && typeof d.skillId === 'string' && d.skillId)
     .map((d) => ({ key: `skillRankUp:${d.skillId}:${(seen[`r:${d.skillId}`] = (seen[`r:${d.skillId}`] || 0) + 1) - 1}`, rankUp: true }));
-  return [...cls, ...skill, ...rankUps, ...level, ...choices];
+  // An attribute pick (SPEC §13.4o) chooses among its offered attributes,
+  // `attribute:<id>`, its pick kept in chosenDraftCardIds as a level choice's is.
+  const attrs = (Array.isArray(rewards.skillAttributes) ? rewards.skillAttributes : [])
+    .filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.attributeIds) && d.attributeIds.length > 0)
+    .map((d) => {
+      const ids = d.attributeIds.map((id) => `attribute:${id}`);
+      return { key: `skillAttribute:${d.skillId}:${(seen[`a:${d.skillId}`] = (seen[`a:${d.skillId}`] || 0) + 1) - 1}`, cardIds: ids, ids };
+    });
+  return [...cls, ...skill, ...rankUps, ...attrs, ...level, ...choices];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -985,7 +995,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   // ALLOCATION check that reads it lives at the load door
   // (attributes.js:grantedAttributePoints); this is the shape check, and a
   // fractional or negative value would silently shift the expected total there.
-  for (const key of ['levelUps', 'levelPoints']) {
+  for (const key of ['levelUps', 'levelPoints', 'skillAttributePoints']) {
     if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
       problems.push(`${key} must be a non-negative integer`);
     }
@@ -1050,7 +1060,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     const saved = run.deferredProgression;
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) problems.push('deferredProgression must be an object');
     else {
-      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'classDrafts'];
+      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'classDrafts'];
       if (Object.keys(saved).some(key => !fields.includes(key))) problems.push('deferredProgression contains a non-progression reward');
       const pendingReward = { schemaVersion: 1, source: 'deferred', after: 'map', rewards: saved, states: {} };
       problems.push(...validateRunShape({ ...run, deferredProgression: undefined, pendingReward })
@@ -1128,7 +1138,18 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       for (const { key } of pendingDraftRows(pending).filter((d) => d.rankUp)) {
         if (pending.states?.[key] === 'taken' && !(pending.chosenRankUps && pending.chosenRankUps[key])) problems.push(`pendingReward ${key} Taken state requires its chosen card`);
       }
-      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'classDrafts']) {
+      if (pending.rewards?.skillAttributes !== undefined) {
+        const picks = pending.rewards.skillAttributes;
+        if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillAttributes must be an array');
+        else picks.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillAttributes[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, attributeIds }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.attributeIds) || !d.attributeIds.length || d.attributeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.attributeIds must be a non-empty array of attribute ids`);
+        });
+      }
+      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'classDrafts']) {
         for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
           if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
         }

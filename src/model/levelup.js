@@ -28,6 +28,7 @@ import { reconcileRunLoadoutHp } from './loadout.js';
 import { note } from './healLedger.js';
 import { enemyCombatPower } from './combatPower.js';
 import { xpStepCost } from './xpCurve.js';
+import { linkedAttributes, spendAttributePick } from './skills.js';
 
 /** The authored tables, or the shape of them, so a bundle without them fails
  *  soft in tools rather than throwing on a missing key. Bad data is caught at
@@ -415,4 +416,34 @@ export function applyLevelUp(registries, run, attributeId) {
     why: `one earned point assigned at level ${run.level.level} (${run.levelPoints} assigned in total, ${run.level.unspentPoints} waiting); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
   });
   return { ...plan, attributeId, points: run.level.unspentPoints, level: run.level.level };
+}
+
+/**
+ * applySkillAttribute(registries, run, skillId, attributeId) → the attribute's
+ * new value, or null (nothing written) when the track has no pick queued or
+ * the attribute is not in its linked set (SPEC §13.4o, every 4th level). The
+ * point is recorded in `run.skillAttributePoints`, which the load door adds to
+ * the levelled points it judges the allocation against, and the pools are
+ * re-derived exactly as a levelled point re-derives them. `offered` (the saved
+ * offer's own list) is honoured when given, so an offer rolled before the
+ * linked set changed still lands what it promised.
+ */
+export function applySkillAttribute(registries, run, skillId, attributeId, { offered = null } = {}) {
+  const allowed = Array.isArray(offered) && offered.length ? offered : linkedAttributes(registries, skillId);
+  if (!allowed.includes(attributeId) || !orderedAttributes(registries).some((attr) => attr.id === attributeId)) return null;
+  if (!run.attributes || !Number.isFinite(run.attributes[attributeId])) return null;
+  if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) return null;
+  if (!spendAttributePick(run, skillId)) return null;
+  run.attributes[attributeId] += 1;
+  run.skillAttributePoints = (Number.isInteger(run.skillAttributePoints) ? run.skillAttributePoints : 0) + 1;
+  rederivePools(registries, run, `skill point on ${attributeId}`);
+  note(run, {
+    kind: 'write',
+    site: 'levelup.js:applySkillAttribute',
+    field: `attributes.${attributeId}`,
+    was: run.attributes[attributeId] - 1,
+    now: run.attributes[attributeId],
+    why: `a ${skillId} level's attribute pick (${run.skillAttributePoints} skill points in total); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
+  });
+  return run.attributes[attributeId];
 }

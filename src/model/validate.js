@@ -804,12 +804,27 @@ function collectContentProblems(bundle, errors = []) {
     };
     if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
     else {
-      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'rankMax', 'flatEvery', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'rankMax', 'flatEvery', 'attributeEvery', 'linkedAttributes', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
       // The class card's leaning (plan phase 5a): a multiplier of 1 or more.
       if (!(Number.isFinite(skill.favoredXpMult) && skill.favoredXpMult >= 1)) err('balance.skill.favoredXpMult', `must be a number ≥ 1, got ${JSON.stringify(skill.favoredXpMult)}`);
       // The draft rows (plan phase 4b), each present and refused by name.
-      for (const key of ['draftSize', 'draftsPerCombat', 'rankMax', 'flatEvery']) {
+      for (const key of ['draftSize', 'draftsPerCombat', 'rankMax', 'flatEvery', 'attributeEvery']) {
         if (!Number.isInteger(skill[key]) || skill[key] < 1) err(`balance.skill.${key}`, `must be a positive integer, got ${JSON.stringify(skill[key])}`);
+      }
+      // The every-4th-level pick's sets (SPEC §13.4o): a known track to known attributes.
+      const linked = skill.linkedAttributes;
+      if (!linked || typeof linked !== 'object' || Array.isArray(linked)) err('balance.skill.linkedAttributes', 'must be an object { <trackId>: [attributeId, …] }');
+      else {
+        const known = new Set((bundle.attributes || []).map((row) => row && row.id));
+        // A track key is an item-type node of the tree, or dual-wield: a
+        // misspelt key would otherwise never queue a pick, silently.
+        const tracks = new Set([...(Array.isArray(bundle.nodes) ? bundle.nodes : []).filter((n) => n && n.parentId === 'itemType' && n.id !== 'item:armor').map((n) => n.id), 'dualWield']);
+        for (const [trackId, set] of Object.entries(linked)) {
+          if (!tracks.has(trackId)) err(`balance.skill.linkedAttributes.${trackId}`, `'${trackId}' is not a weapon, focus or dual-wield track`);
+          if (!Array.isArray(set) || !set.length || set.some((id) => !known.has(id)) || new Set(set).size !== set.length) {
+            err(`balance.skill.linkedAttributes.${trackId}`, `must be a non-empty list of distinct attribute ids (${[...known].join(', ')})`);
+          }
+        }
       }
       // A save refuses a rank above state.js MAX_CARD_RANK (99), so no setting may roll one.
       if (Number.isInteger(skill.rankMax) && skill.rankMax > 99) err('balance.skill.rankMax', `must be at most 99, got ${skill.rankMax}`);

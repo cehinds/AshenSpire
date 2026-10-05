@@ -145,6 +145,11 @@ function pendingRewardReferenceProblems(pending, registries) {
   for (const up of Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : []) {
     if (!up || !rankUpKind(skillKindOf(registries, up.skillId))) problems.push(`rank-up track '${up && up.skillId}' is not a card-school track`);
   }
+  // An attribute pick (SPEC §13.4o) belongs to a known track and names known attributes.
+  for (const pick of Array.isArray(rewards.skillAttributes) ? rewards.skillAttributes : []) {
+    if (!pick || !skillKindOf(registries, pick.skillId)) problems.push(`attribute pick track '${pick && pick.skillId}' is unknown`);
+    for (const id of (pick && pick.attributeIds) || []) if (!registries.attributes.ids().includes(id)) problems.push(`attribute pick attribute '${id}' is unknown`);
+  }
   for (const draft of rewards.skillDrafts || []) {
     if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);
     for (const cardId of (draft && draft.cardIds) || []) {
