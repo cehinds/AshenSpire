@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Reference components follow the original boards",
     "detail": "The design kit now separates the five card styles and their ability paintings, adds the missing menu forms and icons, and supplies matching class portraits and inventory weapons. Source comparisons show the differences, and Iron Guard remains a labelled candidate. This prepares reusable artwork; the live game presentation is unchanged.",
-    "build": "0.7.1.947",
+    "build": "0.7.1.949",
     "pullRequest": 1618,
     "url": "https://github.com/cehinds/AshenSpire/pull/1618"
+  },
+  {
+    "id": "pr-1617",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Level 5 no longer upgrades every card",
+    "detail": "Reaching level 5 in a skill used to upgrade every card of that skill at once. Card ranks replace that: each level lets you raise one card of your choice, and new cards from drafts, master lessons and books arrive plain. Cards you already upgraded stay upgraded. The old setting for this is retired, and a settings file that still has it loads with a warning.",
+    "build": "0.7.1.948",
+    "pullRequest": 1617,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1617"
   },
   {
     "id": "pr-1615",

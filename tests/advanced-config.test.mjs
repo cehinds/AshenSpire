@@ -860,3 +860,20 @@ test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 
   assert.match(importWarnings.join(' '), /old limit of 15 cards was left out/);
   assert.equal(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle)[`${ROW}max`], 5);
 });
+
+// THE SKILL-LEVEL CARD UPGRADE IS RETIRED (SPEC §13.4o): `balance.skill.upgradeAt`
+// has no row, so a profile drops it and a file carrying it still imports whole.
+test('a stored or exported balance.skill.upgradeAt is dropped with a warning, never refused', () => {
+  const KEY = 'gameConfig.balance.skill.upgradeAt';
+  assert.ok(!advancedConfigRows(contentBundle).some((row) => row.key === KEY), 'the retired key has no row');
+  const profile = { [KEY]: 3, [CINDER]: 2 };
+  const warnings = [];
+  normalizeAdvancedSettings(profile, contentBundle, warnings);
+  assert.deepEqual(profile, { [CINDER]: 2 });
+  assert.match(warnings.join(' '), /card upgrade setting is retired/);
+  const importWarnings = [];
+  const imported = parseAdvancedConfigFile(v1File({ [KEY]: 3, [`settings.${KEY}`]: 3, [CINDER]: 2 }), contentBundle, {}, [], importWarnings);
+  assert.equal(imported[CINDER], 2, 'the rest of the file lands');
+  assert.ok(!Object.hasOwn(imported, KEY));
+  assert.match(importWarnings.join(' '), /card upgrade setting is retired/);
+});
