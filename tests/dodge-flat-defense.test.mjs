@@ -76,6 +76,7 @@ test('with no DR bonus the Dodge Roll grants exactly 3 Block, 3 Poise and 3 Ward
   assert.deepEqual([preview.tokens.block, preview.tokens.gainPoise, preview.tokens.gainWard], [3, 3, 3], 'the face shows what the play grants');
   const cues = events.map((e) => combatEffectForEvent(e)).filter((cue) => cue?.kind === 'dodge');
   assert.deepEqual(cues, [{ kind: 'dodge', targetId: p.id }], 'the dodge visual still plays, once per play');
+  assert.equal(combatEffectForEvent({ type: 'meterGuardGained', meter: 'poise', amount: 3, targetId: p.id }), null, 'a guard from any other card is not a dodge');
   play(combat);
   assert.deepEqual([p.block, p.poiseGuard, p.wardGuard], [6, 6, 6], 'a second play stacks, like Block');
 });

@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Dodge Roll is a sure defence: Block, Poise and Ward",
     "detail": "The Dodge Roll no longer rolls. It always gives you 3 Block, 3 Poise and 3 Ward, each plus your DR. Poise and Ward soak up impact before your Poise or Ward bar fills, and they fade at the start of your next turn, like Block. Its Stamina cost still depends on your equipment weight. Evasive Guard still rolls to evade.",
-    "build": "0.7.1.975",
+    "build": "0.7.1.977",
     "pullRequest": 1638,
     "url": "https://github.com/cehinds/AshenSpire/pull/1638"
   },

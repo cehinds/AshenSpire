@@ -294,6 +294,9 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
   if (amt > 0) entity[key] = (entity[key] || 0) + amt;
   ctx.emit('meterGuardGained', {
     targetId: entity.id, meter, amount: amt, total: entity[key] || 0,
+    // The weight-priced Dodge Roll's guard is the dodge visual's cue
+    // (model/combatEffectEvents.js); any other gainPoise card is not a dodge.
+    ...(card?.cardId && ctx.registries.cards.has(card.cardId) && ctx.registries.cards.get(card.cardId).weightClassPriced ? { dodge: true } : {}),
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
   });
   return amt;

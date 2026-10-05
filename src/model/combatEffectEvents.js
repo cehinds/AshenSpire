@@ -38,7 +38,7 @@ export function combatEffectForEvent(event={}){
  else if(event.type==='procResisted' && event.blocked>0)kind='resist';
  else if(event.type==='dodgeRolled' && event.success){kind='dodge';targetId=event.sourceId;}
  // The Dodge Roll card no longer rolls (2026-10-05): its Poise guard is the dodge visual's cue.
- else if(event.type==='meterGuardGained' && event.meter==='poise' && event.amount>0)kind='dodge';
+ else if(event.type==='meterGuardGained' && event.dodge && event.meter==='poise' && event.amount>0)kind='dodge';
  else if(event.type==='damageDealt' && event.blocked>0)kind=event.barrierVisual?(event.blockRemaining===0?'barrierBreak':'barrierHit'):(event.defenseVisual||'physicalGuard');
  return kind&&targetId?{kind,targetId}:null;
 }
