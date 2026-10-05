@@ -332,6 +332,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.skillFeat.title",
+    "extends": "",
+    "short": "{skill} · level {level}: a skill feat",
+    "full": "A level's feat: one of the skill's own feats joins you for the rest of the run.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillFeat.taken",
+    "extends": "",
+    "short": "{name} is yours.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillFeat.spent",
+    "extends": "",
+    "short": "This feat can't land: it was spent, or you already have it. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.skillAttribute.title",
     "extends": "",
     "short": "{skill} · level {level}: raise an attribute",
