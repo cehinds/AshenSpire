@@ -54,3 +54,9 @@ jobs:
 
       - name: Quick start reaches the first card play within its input budget
         run: node tools/verdict.mjs -- node tools/quick-start-inputs.mjs --only quick
+
+      # docs/FINISH.md §5: click to impact ≤ 400 ms at Normal pacing. The same
+      # browser, art and source server; the probe takes Quick start on a pinned
+      # seed and times real clicks to the first damage number (about a minute).
+      - name: Click to impact stays within 400 ms at Normal pacing
+        run: node tools/verdict.mjs -- node tools/click-impact-probe.mjs

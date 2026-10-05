@@ -21,10 +21,15 @@ const STEP_MS = 80;
 // classic fast-float behavior — also forced by reducedMotion).
 // ---------------------------------------------------------------------------
 
+// impactCapMs: the latest an actor's swing may land after its beat starts.
+// An authored clip whose impact frame falls later is played faster as a whole
+// (model/equipmentAnimation.js animationTiming), so the hit, its number and its
+// sound arrive while the click is still fresh (FINISH §5: click to impact
+// ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 export const ANIM_SPEEDS = {
-  slow: { beatMs: 700, stepMs: 140, lungeMs: 340 },
-  normal: { beatMs: 400, stepMs: 90, lungeMs: 260 },
-  fast: { beatMs: 180, stepMs: 45, lungeMs: 160 },
+  slow: { beatMs: 700, stepMs: 140, lungeMs: 340, impactCapMs: 420 },
+  normal: { beatMs: 400, stepMs: 90, lungeMs: 260, impactCapMs: 240 },
+  fast: { beatMs: 180, stepMs: 45, lungeMs: 160, impactCapMs: 140 },
   instant: null,
 };
 
@@ -525,25 +530,33 @@ export function animateEvents(events, ctx, done) {
 // Turn boundaries become banner beats. Click skips to the end state.
 // ---------------------------------------------------------------------------
 
-function groupBeats(events) {
+// A loose run of events with no actor, banner or draw — the cost a card pays
+// (energySpent, staminaSpent, manaSpent) is emitted just before its
+// cardPlayed — is not a beat of its own: as one it cost a whole inter-beat
+// breath (~500 ms at Normal) before the swing began. It rides the next actor's
+// beat as `lead` events, whose visuals play as that actor starts to move.
+const isLoose = (beat) => !beat.actorId && !beat.banner && !beat.kind && beat.events.length > 0;
+export function groupBeats(events) {
   const beats = [];
   let cur = { actorId: null, banner: null, kind: null, events: [] };
   const push = () => {
     if (cur.events.length || cur.banner || cur.actorId) beats.push(cur);
   };
+  const startActor = (actorId, kind, e) => {
+    const lead = isLoose(cur) ? cur.events : [];
+    if (!lead.length) push();
+    cur = { actorId, banner: null, kind, events: [...lead, e], ...(lead.length ? { lead } : {}) };
+  };
   for (const e of events) {
     switch (e.type) {
       case 'cardPlayed':
-        push();
-        cur = { actorId: 'player', banner: null, kind: e.cardType === 'attack' ? 'attack' : 'act', events: [e] };
+        startActor('player', e.cardType === 'attack' ? 'attack' : 'act', e);
         break;
       case 'flaskUsed':
-        push();
-        cur = { actorId: 'player', banner: null, kind: 'act', events: [e] };
+        startActor('player', 'act', e);
         break;
       case 'enemyMoveStarted':
-        push();
-        cur = { actorId: e.sourceId, banner: null, kind: e.kind === 'attack' ? 'attack' : 'act', events: [e] };
+        startActor(e.sourceId, e.kind === 'attack' ? 'attack' : 'act', e);
         break;
       case 'enemyTurnStart':
         push();
@@ -744,9 +757,15 @@ export function playTimeline(events, ctx, done) {
       }
     }
     const actorStartedAt = Date.now();
+    // The cost the actor paid (lead events) shows as it starts to move.
+    const lead = new Set(beat.lead || []);
+    for (const e of lead) {
+      const v = visualFor(e, beat.kind);
+      if (v) safe(() => v(ctx));
+    }
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
-    const visuals = beat.events.map((e) => visualFor(e, beat.kind)).filter(Boolean);
+    const visuals = beat.events.filter((e) => !lead.has(e)).map((e) => visualFor(e, beat.kind)).filter(Boolean);
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
