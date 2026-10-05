@@ -553,7 +553,8 @@ export function resolveCard(registries, instanceOrRef) {
   if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
   const rank = cardRank(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1) return base;
+  const skillBonus = cardSkillBonus(instanceOrRef);
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -563,7 +564,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -606,10 +607,11 @@ export function resolveCard(registries, instanceOrRef) {
       registries.attributes.ids(),
     );
   }
-  // THE RANK (SPEC §13.4o) lands last, on the finished face: each rank past 1
-  // adds 1 to the card's primary number, so the play, the preview and the
-  // card face all read the same ranked value.
-  if (rank > 1) result = applyCardRank(result, rank);
+  // THE RANK AND THE SKILL BONUS (SPEC §13.4o) land last, on the finished
+  // face: each rank past 1, and each point of the every-5th-level skill
+  // bonus, adds 1 to the card's primary number, so the play, the preview and
+  // the card face all read the same value.
+  if (rank > 1 || skillBonus > 0) result = applyCardRank(result, rank, skillBonus);
   cache.set(key, result);
   return result;
 }
@@ -621,6 +623,16 @@ export function resolveCard(registries, instanceOrRef) {
 export function cardRank(instance) {
   const rank = instance && instance.rank;
   return Number.isInteger(rank) && rank >= 1 ? rank : 1;
+}
+
+/**
+ * cardSkillBonus(instance) → the every-5th-level skill bonus the instance
+ * carries (SPEC §13.4o), 0 when absent. Derived, never chosen: `skills.js
+ * stampSkillBonuses` writes it from the run's skill levels.
+ */
+export function cardSkillBonus(instance) {
+  const bonus = instance && instance.skillBonus;
+  return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
 }
 
 /**
@@ -660,12 +672,14 @@ export function rankBonus(effect, steps) {
 }
 
 /**
- * applyCardRank(card, rank) → the face at that rank. Each step past rank 1 adds
- * 1 to the primary number: odd ranks by rule, even ranks until a skill's
- * rank-step pool is authored (SPEC §13.4o, content phase C).
+ * applyCardRank(card, rank, skillBonus) → the face at that rank. Each step past
+ * rank 1 adds 1 to the primary number: odd ranks by rule, even ranks until a
+ * skill's rank-step pool is authored (SPEC §13.4o, content phase C). Each
+ * point of `skillBonus` (the every-5th-level flat) adds 1 more, split across
+ * hits the same way.
  */
-export function applyCardRank(card, rank) {
-  const steps = Math.max(0, cardRank({ rank }) - 1);
+export function applyCardRank(card, rank, skillBonus = 0) {
+  const steps = Math.max(0, cardRank({ rank }) - 1) + cardSkillBonus({ skillBonus });
   const index = primaryEffectIndex(card);
   const effects = (card.effects || []).map((effect, i) => {
     if (i !== index || !steps) return effect;
