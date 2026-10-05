@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Reference components follow the original boards",
     "detail": "The design kit now separates the five card styles and their ability paintings, adds the missing menu forms and icons, and supplies matching class portraits and inventory weapons. Source comparisons show the differences, and Iron Guard remains a labelled candidate. This prepares reusable artwork; the live game presentation is unchanged.",
-    "build": "0.7.1.951",
+    "build": "0.7.1.955",
     "pullRequest": 1618,
     "url": "https://github.com/cehinds/AshenSpire/pull/1618"
+  },
+  {
+    "id": "pr-1622",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Skill card bonus: fairer and shown everywhere",
+    "detail": "A card now gets the every-fifth-level bonus from its best skill only, so a card that counts for two of your skills no longer gets both. Card offers show the bonus a card will have once you take it. In co-op, each player's skill levels now reach their cards, and the cards show their rank and bonus.",
+    "build": "0.7.1.954",
+    "pullRequest": 1622,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1622"
   },
   {
     "id": "pr-1620",
