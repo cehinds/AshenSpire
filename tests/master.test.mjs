@@ -426,6 +426,7 @@ test('a respec withdraws the attribute points the track\'s picks granted, and on
   run.attributes.wisdom += 1;
   run.skillAttributePoints = 3;
   run.skillAttributeGrants = { [skillId]: ['strength', 'strength'], other: ['wisdom'] };
+  assert.equal(respecPlan(OUT, run, skillId).attributePoints, 2, 'the quote names the points it takes back, for the tile to say');
   commitRespec(OUT, run, respecPlan(OUT, run, skillId));
   assert.equal(run.attributes.strength, before.strength, 'both points the track granted went back');
   assert.equal(run.attributes.wisdom, before.wisdom + 1, 'another track\'s point stays');

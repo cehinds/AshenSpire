@@ -462,8 +462,11 @@ export function applySkillAttribute(registries, run, skillId, attributeId, { off
 export function withdrawSkillAttributes(registries, run, skillId) {
   const granted = run.skillAttributeGrants && Array.isArray(run.skillAttributeGrants[skillId]) ? run.skillAttributeGrants[skillId] : [];
   if (!granted.length) return [];
-  for (const id of granted) if (Number.isFinite(run.attributes?.[id])) run.attributes[id] -= 1;
-  run.skillAttributePoints = Math.max(0, (run.skillAttributePoints || 0) - granted.length);
+  // Only a point actually taken off an attribute leaves the count, so a record
+  // naming an unknown id cannot unbalance the load door's allocation check.
+  let taken = 0;
+  for (const id of granted) if (Number.isFinite(run.attributes?.[id])) { run.attributes[id] -= 1; taken += 1; }
+  run.skillAttributePoints = Math.max(0, (run.skillAttributePoints || 0) - taken);
   const rest = { ...run.skillAttributeGrants };
   delete rest[skillId];
   if (Object.keys(rest).length) run.skillAttributeGrants = rest; else delete run.skillAttributeGrants;

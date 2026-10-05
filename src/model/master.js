@@ -246,7 +246,9 @@ export function respecPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   if (!reason && !cost) reason = say('master.refuse.notOffered');
   else if (!reason && level < 2) reason = say('master.refuse.respecLevel', { skill: trackLabel(registries, skillId), level });
   else if (!reason && !affordable(run, price)) reason = say('shop.refuse.cinders');
-  return { ok: !reason, reason, skillId, level, cost: price, refund, revision: masterRevision(run) };
+  // The attribute points the respec would withdraw (FINISH D13a), for the tile to say.
+  const attributePoints = Array.isArray(run.skillAttributeGrants?.[skillId]) ? run.skillAttributeGrants[skillId].length : 0;
+  return { ok: !reason, reason, skillId, level, cost: price, refund, attributePoints, revision: masterRevision(run) };
 }
 
 // A deferred draft or rank-up of the respecced track that waits for a level
@@ -268,8 +270,8 @@ function dropDeferredAboveLevelOne(run, skillId) {
 /**
  * The respec, atomic: the track back to level 1 with xp 0, its queued drafts
  * and rank-ups down by the levels lost (floored at 0), the refund into the
- * training pool.
- * Cards already drafted and upgrades already applied stay.
+ * training pool, and the attribute points its picks granted withdrawn (FINISH
+ * D13a). Cards already drafted and upgrades already applied stay.
  */
 export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = respecPlan(registries, run, quote.skillId, { priceMult });
@@ -278,7 +280,8 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   const row = run.skills[plan.skillId];
   // Queued rank-ups (SPEC §13.4o) fall by the same levels; ranks already raised stay.
   const rankUps = row.pendingRankUps === undefined ? {} : { pendingRankUps: Math.max(0, row.pendingRankUps - (plan.level - 1)) };
-  // Queued attribute picks fall by the picks the lost levels queued; points spent stay.
+  // Queued attribute picks fall by the picks the lost levels queued; the points
+  // they granted are withdrawn below.
   const lostPicks = Array.from({ length: plan.level - 1 }, (_, i) => i + 2).filter((level) => levelQueuesAttributePick(registries, plan.skillId, level)).length;
   const picks = row.pendingAttributePicks === undefined ? {} : { pendingAttributePicks: Math.max(0, row.pendingAttributePicks - lostPicks) };
   // Queued feat picks fall the same way; feats taken stay (FINISH D13).

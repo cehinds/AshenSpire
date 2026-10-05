@@ -3398,6 +3398,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "master.respec.attributes",
+    "extends": "",
+    "short": "takes back {points} attribute point(s)",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "master.lesson.unasked",
     "extends": "",
     "short": "Ask for a lesson to see its {count} card(s).",

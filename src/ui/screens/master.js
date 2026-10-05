@@ -133,7 +133,9 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
     respec(shelf) {
       for (const skillId of master()?.skills || []) {
         const plan = respecPlan(registries, run, skillId, { priceMult });
-        const host = tile(GLYPH.respec, trackLabel(registries, skillId), `${levelLine(skillId)} · ${t('master.respec.line', { refund: plan.refund })}`);
+        // A respec takes back the attribute points the track's picks granted (FINISH D13a): said before the press.
+        const withdrawn = plan.attributePoints ? ` · ${t('master.respec.attributes', { points: plan.attributePoints })}` : '';
+        const host = tile(GLYPH.respec, trackLabel(registries, skillId), `${levelLine(skillId)} · ${t('master.respec.line', { refund: plan.refund })}${withdrawn}`);
         actionButton(host, { id: `master-respec-${slug(skillId)}`, label: t('master.action.respec', { cost: plan.cost }), plan, commit: () => commitRespec(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
