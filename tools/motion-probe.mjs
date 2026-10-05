@@ -212,7 +212,8 @@ if (argv.includes('--selftest')) {
       {
         // This PR's first shape: the bob on the idle images themselves. A
         // figure is more than its idle image, so the bob does not follow it:
-        // the enemy's hit-state image stands still after the strike, and the
+        // after the strike the enemy settles into a rest pose drawn by its
+        // state image (img.enemy-pose-state), which stands still, and the
         // painted player's outgoing cross-fade frame runs a second idle
         // timeline beside the incoming one in the Rendered style.
         // (Until #1641 the pose swap also cancelled every animation on its
