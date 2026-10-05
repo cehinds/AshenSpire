@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1632",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Skill bonuses add up, and a respec takes back its attribute points",
+    "detail": "A card that belongs to several of your skills now gets the every-fifth-level bonus from each of them, not just the best one: a Shield Bash with Blade 5, Shield 10 and Dual Wield 5 gains +4. Retraining a skill at a master now also removes the attribute points that skill's every-fourth-level choices gave you; points from other skills stay.",
+    "build": "0.7.1.965",
+    "pullRequest": 1632,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1632"
+  },
+  {
     "id": "pr-1629",
     "date": "2026-10-05",
     "group": "2026-10-05",
