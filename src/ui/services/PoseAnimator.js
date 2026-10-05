@@ -111,6 +111,7 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     .filter(p => p !== 'idle').map(p => assetUrl(POSE_DIR + poseFrame(classId, p, tint).f)));
 
   let timer = null;
+  let due = 0;
   let current = 'idle';
   const throwable = ATTACK_SEQUENCE.filter((p) => poseFrame(classId, p, tint));
   const resolve = (pose) => {
@@ -152,7 +153,15 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
       if (!poseFrame(classId, target, tint)) return false;
       if (timer) { clearTimeout(timer); timer = null; }
       setPose(target);
-      timer = setTimeout(settle, Math.max(POSE_MOTION.minimumPlayMs, ms));
+      const duration = Math.max(POSE_MOTION.minimumPlayMs, ms);
+      due = Date.now() + duration;
+      timer = setTimeout(settle, duration);
+      return true;
+    },
+    hold(ms) {
+      if (!timer || !(ms > 0)) return false;
+      clearTimeout(timer); due += ms;
+      timer = setTimeout(settle, Math.max(0, due - Date.now()));
       return true;
     },
     settle,

@@ -3,15 +3,17 @@ import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
 // Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
-// skips to end-state; shake ≤4 px only for hits ≥15; Bleed bursts and
+// skips to end-state; every HP hit shakes ≤4 px by the HP it cost, and a
+// big hit holds the two figures briefly (content/combatFeel.js); Bleed bursts and
 // Staggers get the loud treatment (they're the theme).
 
 import { sfx } from './sfx.js';
 import { haptic } from './haptics.js';
 import { hitTierFor } from '../content/sfx.js';
+import { shakePxFor, hitStopMsFor, SHAKE_MAX_PX } from '../content/combatFeel.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
-import { playPoseOn } from './services/PoseAnimator.js';
+import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
 
 const STEP_MS = 80;
@@ -434,10 +436,50 @@ function banner(layer, text, cls = '') {
   setTimeout(() => el.remove(), 320);
 }
 
-function shake(combatEl) {
-  if (!combatEl) return;
+// Hit-stop (SPEC §7.4). `hitStop` is set by playTimeline only while the hit
+// that earned the hold runs its visual, so that visual starts its target's
+// recoil held and lengthens it by the same amount (never cut short).
+let hitStop = 0;
+const heldFigures = new Map();
+function hold(el, ms) {
+  if (!el || !(ms > 0)) return;
+  const swing = flashTimers.get(el)?.get('act-attack');
+  if (swing) {
+    clearTimeout(swing.id); swing.due += ms;
+    swing.id = setTimeout(() => {
+      el.classList.remove('act-attack'); flashTimers.get(el)?.delete('act-attack');
+    }, Math.max(0, swing.due - Date.now()));
+  }
+  clearTimeout(heldFigures.get(el));
+  el.classList.add('hit-stop');
+  heldFigures.set(el, setTimeout(() => {
+    el.classList.remove('hit-stop');
+    heldFigures.delete(el);
+  }, ms));
+}
+
+function clearHeldFigures() {
+  for (const [el, timer] of heldFigures) {
+    clearTimeout(timer);
+    el.classList.remove('hit-stop');
+    stageFor(el)?.settle?.();
+  }
+  heldFigures.clear();
+}
+
+// A smaller hit does not cut a bigger shake short: while one plays, only a
+// shake at least as big restarts it.
+const SHAKE_MS = 200;
+const shakeStates = new WeakMap();
+function shake(combatEl, px = SHAKE_MAX_PX) {
+  if (!combatEl || !(px > 0)) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
   if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
+  const now = Date.now();
+  const { shakeUntil = 0, shakeNow = 0 } = shakeStates.get(combatEl) || {};
+  if (now < shakeUntil && px < shakeNow) return;
+  shakeStates.set(combatEl, { shakeUntil: now + SHAKE_MS, shakeNow: px });
+  combatEl.style.setProperty('--shake-px', `${px}px`);
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
   combatEl.classList.add('shake');
@@ -445,23 +487,25 @@ function shake(combatEl) {
 
 // Add a short-lived CSS class (restarting its animation if already present).
 const flashTimers = new WeakMap();
-function flash(el, cls, ms = 300) {
+function flash(el, cls, ms = 300, pauseMs = 0) {
   if (!el) return;
   // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
   // numbers and HUD updates (which carry the actual info) are unaffected.
   if (document.body.classList.contains('reduce-flashes')) return;
   const timers = flashTimers.get(el) || new Map();
   flashTimers.set(el, timers);
-  clearTimeout(timers.get(cls));
+  clearTimeout(timers.get(cls)?.id);
   if (cls === 'hitflash') {
-    clearTimeout(timers.get('hit-heavy')); timers.delete('hit-heavy');
+    clearTimeout(timers.get('hit-heavy')?.id); timers.delete('hit-heavy');
     el.classList.remove('hit-heavy');
     el.style.setProperty('--hurt-duration', `${ms}ms`);
   }
   el.classList.remove(cls);
   void el.offsetWidth;
   el.classList.add(cls);
-  timers.set(cls, setTimeout(() => { el.classList.remove(cls); timers.delete(cls); }, ms));
+  const entry = { due: Date.now() + ms + pauseMs };
+  entry.id = setTimeout(() => { el.classList.remove(cls); timers.delete(cls); }, ms + pauseMs);
+  timers.set(cls, entry);
 }
 
 // Radial flare over an anchor (stance entries, big procs).
@@ -613,10 +657,11 @@ export function playTimeline(events, ctx, done) {
   // hit or turn start still buzzes; their sounds are not replayed.
   let cued = 0;
   const cueBeat = (index) => { cued = Math.max(cued, index + 1); };
+  const damageCued = new Set();
   const flushHaptics = () => {
     const rest = beats.slice(cued);
     cued = beats.length;
-    for (const beat of rest) playBeatHaptics(beat.events);
+    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { damageBuzz: !damageCued.has(cued - rest.length + i) });
   };
   let flushed = false;
   let finished = false;
@@ -646,6 +691,7 @@ export function playTimeline(events, ctx, done) {
   const skip = () => {
     if (finished) return;
     flushed = true;
+    clearHeldFigures();
     clearCombatEffects(ctx.layer);
     cancelActorAnimation();
     clearTimeout(pendingTimer);
@@ -664,6 +710,7 @@ export function playTimeline(events, ctx, done) {
   const finish = () => {
     if (finished) return;
     finished = true;
+    clearHeldFigures();
     clearCombatEffects(ctx.layer);
     clearTimeout(pendingTimer);
     clearSkipRelease();
@@ -780,6 +827,10 @@ export function playTimeline(events, ctx, done) {
     const windup = actorAnimation
       ? actorAnimation.impactMs
       : (actorEl ? Math.round(speed.lungeMs * 0.55) : 0);
+    // Every qualifying hit holds at its own visual, including multi-hit and
+    // multi-target attacks. Recovery includes only the holds actually played.
+    let heldMs = 0;
+    const visualEvents = beat.events.filter((e) => !lead.has(e) && visualFor(e, beat.kind));
     schedule(() => {
       let vi = 0;
       const stepV = () => {
@@ -789,14 +840,32 @@ export function playTimeline(events, ctx, done) {
           return;
         }
         if (vi < visuals.length) {
+          const event = visualEvents[vi];
+          const holdMs = beat.kind === 'attack' && event.type === 'damageDealt'
+            ? hitStopMsFor(guardHitFloatParts(event).residual || 0) : 0;
+          const held = holdMs > 0;
           const v = visuals[vi++];
+          if (held) {
+            safe(() => actorEl && hold(actorEl, holdMs));
+            safe(() => {
+              if (activeActorAnimation?.hold) activeActorAnimation.hold(holdMs);
+              else stageFor(actorEl)?.hold?.(holdMs);
+            });
+            heldMs += holdMs;
+            hitStop = holdMs;
+          }
           safe(() => v(ctx));
-          schedule(stepV, speed.stepMs);
+          if (!damageCued.has(beatIndex) && playerLostHp(event)) {
+            damageCued.add(beatIndex);
+            safe(() => haptic.play('damageTaken'));
+          }
+          hitStop = 0;
+          schedule(stepV, speed.stepMs + (held ? holdMs : 0));
           return;
         }
         const applyBeat = () => {
           cueBeat(beatIndex);
-          safe(() => playBeatCues(beat.events));
+          safe(() => playBeatCues(beat.events, { damageBuzz: !damageCued.has(beatIndex) }));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
@@ -805,7 +874,7 @@ export function playTimeline(events, ctx, done) {
           schedule(nextBeat, speed.beatMs);
         };
         const recovery = actorAnimation
-          ? Math.max(0, actorAnimation.totalMs - (Date.now() - actorStartedAt))
+          ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt))
           : 0;
         if (recovery > 0) schedule(applyBeat, recovery);
         else applyBeat();
@@ -853,9 +922,9 @@ export function playerLostHp(e, isLocalPlayer) {
  * refill or a whole-hand discard is ONE sound, not five, and adds no step to
  * the beat's pacing (these events have no visual of their own).
  */
-export function playBeatCues(events, { isLocalPlayer, stinger = true, turnBuzz = true } = {}) {
+export function playBeatCues(events, { isLocalPlayer, stinger = true, turnBuzz = true, damageBuzz = true } = {}) {
   const has = (type) => events.some((e) => e && e.type === type);
-  playBeatHaptics(events, { isLocalPlayer, turnBuzz });
+  playBeatHaptics(events, { isLocalPlayer, turnBuzz, damageBuzz });
   if (stinger && has('playerTurnStart')) sfx.play('turnStinger');
   if (has('deckShuffled')) sfx.play('deckShuffle');
   if (has('cardDrawn')) sfx.play('cardDraw');
@@ -870,8 +939,8 @@ export function playBeatCues(events, { isLocalPlayer, stinger = true, turnBuzz =
  * playBeatCues plays it with the beat's sounds; a skipped timeline plays it
  * alone for the beats it jumped past.
  */
-export function playBeatHaptics(events, { isLocalPlayer, turnBuzz = true } = {}) {
-  if (events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
+export function playBeatHaptics(events, { isLocalPlayer, turnBuzz = true, damageBuzz = true } = {}) {
+  if (damageBuzz && events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
   if (turnBuzz && events.some((e) => localTurnStart(e, isLocalPlayer))) haptic.play('turnStart');
 }
 
@@ -990,14 +1059,18 @@ function baseVisualFor(e, beatKind) {
         // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
-        flash(anchor, 'hitflash', heavy ? 380 : 220);
+        // A held hit (hit-stop) starts the recoil held and runs it that much
+        // longer, so the whole recoil still plays.
+        const held = hitStop;
+        flash(anchor, 'hitflash', heavy ? 380 : 220, held);
         // An animated figure recoils in its own art as well as in CSS, and holds
         // it as long as the flash it belongs to.
         playPoseOn(anchor, 'hit', heavy ? 380 : 220);
-        if (heavy) {
-          flash(anchor, 'hit-heavy', 380);
-          shake(ctx.combatEl);
-        }
+        if (held) stageFor(anchor)?.hold?.(held);
+        if (heavy) flash(anchor, 'hit-heavy', 380 + held);
+        hold(anchor, held);
+        // Every HP hit shakes, by the HP it cost (SPEC §7.4).
+        shake(ctx.combatEl, shakePxFor(parts.residual));
       };
     case 'blockGained':
       return e.amount > 0

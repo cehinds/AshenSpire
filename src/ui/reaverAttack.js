@@ -121,20 +121,31 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
 
   let frameIndex = 0;
   let timer = null;
+  let due = 0;
   let cancelled = false;
+  const schedule = (ms) => {
+    due = Date.now() + ms;
+    timer = setTimeout(advance, ms);
+  };
   const advance = () => {
     if (cancelled) return;
     frameIndex += 1;
     if (frameIndex >= REAVER_ATTACK_SEQUENCE.length) return;
     image.src = frameUrl(REAVER_ATTACK_SEQUENCE[frameIndex]);
     image.dataset.frameId = `P${String(frameIndex + 1).padStart(2, '0')}`;
-    timer = setTimeout(advance, timing.frameMs);
+    schedule(timing.frameMs);
   };
-  timer = setTimeout(advance, timing.frameMs);
+  schedule(timing.frameMs);
 
   return {
     impactMs: timing.impactMs,
     totalMs: timing.totalMs,
+    // Hit-stop (SPEC §7.4): stay on the current frame for `ms` more.
+    hold(ms) {
+      if (cancelled || !(ms > 0) || frameIndex >= REAVER_ATTACK_SEQUENCE.length - 1) return;
+      clearTimeout(timer);
+      schedule(Math.max(0, due - Date.now()) + ms);
+    },
     cancel() {
       if (cancelled) return;
       cancelled = true;
