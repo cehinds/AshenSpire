@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-05",
     "group": "2026-10-05",
     "summary": "Braced Shield: +3 Block on every Shield card",
-    "detail": "At Shield level 2 you can take the Braced Shield feat. Every Shield card you own, Defend included, then gains +3 on its Block, and the card shows the new number. Each card gains it once per play; a card whose Block only works in a stance gains nothing.",
-    "build": "0.7.1.971",
+    "detail": "At Shield level 2 you can take the Braced Shield feat. Every Shield card you own, Defend included, then gains +3 on its Block, and the card shows the new number. Each card gains it once per play; a card whose Block only works in a stance gains nothing, and an upgraded card that gains a Block gets the +3 there.",
+    "build": "0.7.1.973",
     "pullRequest": 1635,
     "url": "https://github.com/cehinds/AshenSpire/pull/1635"
   },
