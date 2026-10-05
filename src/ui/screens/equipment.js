@@ -68,7 +68,7 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { t, tTip } from '../strings.js';
+import { t, tFull, tTip } from '../strings.js';
 import { consumableText } from '../../model/consumables.js';
 import { openBookLearning } from '../components/bookLearning.js';
 import { renderBookArt } from '../components/bookArt.js';
@@ -715,7 +715,7 @@ function inventoryReveal(registries, row, {
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
   // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
-  onEditDeck = null, onProgression = null,
+  onEditDeck = null, onProgression = null, onCharacterSheet = null,
   handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -1925,6 +1925,14 @@ export function mountEquipment(host, {
       node.append(action);
       const otherClassRewards = deferredOtherClassRewardCount(run);
       if (otherClassRewards) node.append(prose(`${otherClassRewards} saved reward${otherClassRewards === 1 ? '' : 's'} await the original class. Equip that class to claim them.`, { class: 'character-level-waiting' }));
+    }
+    // The Character sheet (screens/characterSheet.js): every level of the
+    // character and of each skill, and what it grants. Read-only, so it stays
+    // over the Armoury rather than closing it.
+    if (onCharacterSheet) {
+      const sheet = button({ label: t('characterSheet.open'), className: 'character-sheet-action', attrs: { title: tFull('characterSheet.open') } });
+      sheet.addEventListener('click', () => onCharacterSheet(sheet));
+      node.append(sheet);
     }
     return node;
   }
