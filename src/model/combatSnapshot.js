@@ -61,6 +61,7 @@ function cardProblems(card, path) {
   if (!nonEmptyString(card.cardId)) problems.push(`${path}.cardId must be a non-empty string`);
   if (typeof card.upgraded !== 'boolean') problems.push(`${path}.upgraded must be boolean`);
   if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1)) problems.push(`${path}.rank must be a whole number of at least 1`);
+  if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1)) problems.push(`${path}.skillBonus must be a whole number of at least 1`);
   return problems;
 }
 
