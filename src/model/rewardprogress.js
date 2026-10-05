@@ -147,10 +147,12 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
       capped, // SPEC §13.4o: skills stop at 10, the class track at 20
     }));
   }
-  // Paid-this-fight first (the biggest gain leading), then the deepest track,
-  // then alphabetically — a stable order, so the panel does not shuffle
-  // between two renders of the same door.
-  rows.sort((a, b) => (b.gained - a.gained) || (b.level - a.level) || (b.xp - a.xp) || a.label.localeCompare(b.label));
+  // The class track leads, so the panel reads top to bottom in the order the
+  // bars fill and level up (character, class, then skills). Then paid-this-
+  // fight first (the biggest gain leading), then the deepest track, then
+  // alphabetically — a stable order, so the panel does not shuffle between
+  // two renders of the same door.
+  rows.sort((a, b) => ((a.kind === 'class' ? 0 : 1) - (b.kind === 'class' ? 0 : 1)) || (b.gained - a.gained) || (b.level - a.level) || (b.xp - a.xp) || a.label.localeCompare(b.label));
   const shown = Math.max(0, Math.floor(maxSkills));
   return { rows: rows.slice(0, shown), hidden: Math.max(0, rows.length - shown) };
 }
