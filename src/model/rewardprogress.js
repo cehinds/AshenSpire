@@ -111,9 +111,9 @@ export function characterProgress(registries, run, gained = 0, discarded = 0) {
 
 /**
  * skillProgress(registries, run, trackGains, { maxSkills }) → { rows, hidden }
- * The tracks worth a line, best first: what this fight paid, then what the run
- * has climbed furthest. `hidden` is how many candidate tracks the ceiling left
- * out — his "+Y (other skills)".
+ * The tracks worth a line: the class track first, then best first — what this
+ * fight paid, then what the run has climbed furthest. `hidden` is how many
+ * candidate tracks the ceiling left out — his "+Y (other skills)".
  */
 export function skillProgress(registries, run, trackGains = {}, { maxSkills = MAX_SKILL_ROWS } = {}) {
   let tracks = [];

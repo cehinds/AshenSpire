@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "XP bars read top to bottom in the order they fill",
     "detail": "After a fight, your class bar now sits directly under your character level, with skills below it, so the bars fill and offer Level up from top to bottom.",
-    "build": "0.7.1.965",
+    "build": "0.7.1.968",
     "pullRequest": 1631,
     "url": "https://github.com/cehinds/AshenSpire/pull/1631"
   },
