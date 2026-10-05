@@ -242,11 +242,11 @@
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
-/* A card's rank (SPEC §13.4o), in the level-up blue, inside the card's bottom
-   left corner — over the frame, so it takes no room in any row and never
-   meets the NEW badge above the card. */
+/* A card's rank (SPEC §13.4o), in the level-up blue, in the top right of the
+   card's art pane — over the art, so it takes no room in any row, never meets
+   the NEW badge above the card, and covers no text. */
 .card .card-rank {
-  position: absolute; left: 4px; bottom: 4px; box-sizing: border-box;
+  position: absolute; right: 9%; top: 17%; box-sizing: border-box;
   display: inline-flex; align-items: center;
   padding: 1px 5px; border-radius: var(--r-3); border: 1px solid #75bfff;
   background: rgba(14, 24, 34, 0.92); color: #cfe9ff;
