@@ -453,10 +453,16 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'a later opaque SVG rectangle covers the Stamina number and label',
+        // THE SITE IS WHERE THE WORD IS WRITTEN, inside paintFooterArt's
+        // group/item loop. #1641 moved `node.dataset.measured = 'true'` into
+        // capLongWords (one measuring frame for all words), where neither
+        // `group` nor `item` exists: the old find-string still matched, so the
+        // plant armed, but threw a ReferenceError in that frame and the row
+        // came up with ZERO controls (H3/H5 red, not this text-paint red).
         edits: [{
           file: 'src/ui/components/footerArt.js',
-          find: "node.dataset.measured = 'true';",
-          replace: "node.dataset.measured = 'true'; if (group === plan.groups.sp) node.insertAdjacentHTML('afterend', '<rect x=\"' + item.x + '\" y=\"' + item.y + '\" width=\"' + item.w + '\" height=\"' + item.h + '\" fill=\"black\"/>');",
+          find: 'pendingCaps.set(node, item.w);',
+          replace: "pendingCaps.set(node, item.w); if (group === plan.groups.sp) node.insertAdjacentHTML('afterend', '<rect x=\"' + item.x + '\" y=\"' + item.y + '\" width=\"' + item.w + '\" height=\"' + item.h + '\" fill=\"black\"/>');",
         }],
         expectRed: /BAD\s+H3 .*text.*paint/,
       },
