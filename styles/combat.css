@@ -393,6 +393,9 @@
 .fx-banner.blood { color: var(--ember); }
 .fx-banner.turn { font-size: 2.4rem; color: var(--parchment); text-shadow: 0 0 24px rgba(230, 220, 195, 0.5); }
 .combat.shake { animation: shake 200ms; }
+/* Hit-stop (SPEC §7.4, content/combatFeel.js): the attacker and its target hold
+   their animations at impact for a beat; ui/fx.js removes the class. */
+.hit-stop, .hit-stop * { animation-play-state: paused !important; }
 
 /* ---------- paced playback: one actor at a time (SPEC §7.4) ---------- */
 /* Attack lunge: enemies step left toward the player, the player steps right. */
@@ -492,7 +495,7 @@
 /* ---------- ability / relic / status fx ---------- */
 /* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
    knocked right (struck from the player's side), the player left. A heavy hit
-   (≥15, the same threshold as screen shake) recoils further with a tilt. */
+   (≥15, the top screen-shake step) recoils further with a tilt. */
 .sprite.hitflash > :first-child { animation: hitflash var(--hurt-duration, 220ms) linear; }
 .enemy .sprite.hitflash > :first-child { animation-name: hit-enemy; }
 .player .sprite.hitflash > :first-child { animation-name: hit-player; }
@@ -613,7 +616,8 @@
   100% { opacity: 0; transform: translateY(-48px) scale(1); }
 }
 @keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
-@keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-4px, 2px); } 75% { transform: translate(3px, 3px); } }
+/* --shake-px is the hit's amplitude (ui/fx.js shake, content/combatFeel.js); 4px is the old fixed shake. */
+@keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(var(--shake-px, 4px), calc(var(--shake-px, 4px) * -0.75)); } 50% { transform: translate(calc(var(--shake-px, 4px) * -1), calc(var(--shake-px, 4px) * 0.5)); } 75% { transform: translate(calc(var(--shake-px, 4px) * 0.75), calc(var(--shake-px, 4px) * 0.75)); } }
 @keyframes pulse-gold { from { box-shadow: 0 0 6px rgba(201, 162, 39, 0.3); } to { box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); } }
 
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */

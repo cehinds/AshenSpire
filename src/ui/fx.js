@@ -3,12 +3,14 @@ import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
 // Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
-// skips to end-state; shake ≤4 px only for hits ≥15; Bleed bursts and
+// skips to end-state; every HP hit shakes ≤4 px by the HP it cost, and a
+// big hit holds the two figures briefly (content/combatFeel.js); Bleed bursts and
 // Staggers get the loud treatment (they're the theme).
 
 import { sfx } from './sfx.js';
 import { haptic } from './haptics.js';
 import { hitTierFor } from '../content/sfx.js';
+import { shakePxFor, hitStopMsFor, SHAKE_MAX_PX } from '../content/combatFeel.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn } from './services/PoseAnimator.js';
@@ -434,10 +436,11 @@ function banner(layer, text, cls = '') {
   setTimeout(() => el.remove(), 320);
 }
 
-function shake(combatEl) {
-  if (!combatEl) return;
+function shake(combatEl, px = SHAKE_MAX_PX) {
+  if (!combatEl || !(px > 0)) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
   if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
+  combatEl.style.setProperty('--shake-px', `${px}px`);
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
   combatEl.classList.add('shake');
@@ -780,7 +783,18 @@ export function playTimeline(events, ctx, done) {
     const windup = actorAnimation
       ? actorAnimation.impactMs
       : (actorEl ? Math.round(speed.lungeMs * 0.55) : 0);
+    // Hit-stop (SPEC §7.4): the beat's biggest HP hit decides whether the two
+    // figures hold at impact. Only their animations pause; the visuals below
+    // (numbers, sound, haptics) still fire at impact, and the hold is added to
+    // the recovery so the beat ends after the swing does.
+    const hardest = beat.events.reduce((m, e) => (e.type === 'damageDealt' ? Math.max(m, guardHitFloatParts(e).residual || 0) : m), 0);
+    const holdMs = beat.kind === 'attack' ? hitStopMsFor(hardest) : 0;
     schedule(() => {
+      if (holdMs > 0) {
+        const held = [actorEl, ...beat.events.filter((e) => e.type === 'damageDealt').map((e) => ctx.anchorFor(e.targetId))].filter(Boolean);
+        for (const el of held) el.classList.add('hit-stop');
+        setTimeout(() => { for (const el of held) el.classList.remove('hit-stop'); }, holdMs);
+      }
       let vi = 0;
       const stepV = () => {
         if (finished) return;
@@ -805,7 +819,7 @@ export function playTimeline(events, ctx, done) {
           schedule(nextBeat, speed.beatMs);
         };
         const recovery = actorAnimation
-          ? Math.max(0, actorAnimation.totalMs - (Date.now() - actorStartedAt))
+          ? Math.max(0, actorAnimation.totalMs + holdMs - (Date.now() - actorStartedAt))
           : 0;
         if (recovery > 0) schedule(applyBeat, recovery);
         else applyBeat();
@@ -994,10 +1008,9 @@ function baseVisualFor(e, beatKind) {
         // An animated figure recoils in its own art as well as in CSS, and holds
         // it as long as the flash it belongs to.
         playPoseOn(anchor, 'hit', heavy ? 380 : 220);
-        if (heavy) {
-          flash(anchor, 'hit-heavy', 380);
-          shake(ctx.combatEl);
-        }
+        if (heavy) flash(anchor, 'hit-heavy', 380);
+        // Every HP hit shakes, by the HP it cost (SPEC §7.4).
+        shake(ctx.combatEl, shakePxFor(parts.residual));
       };
     case 'blockGained':
       return e.amount > 0
