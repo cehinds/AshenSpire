@@ -416,7 +416,56 @@ const PROBE = `(() => {
     }
     return null;
   };
-  const covered = [], scrolledOut = [];
+  const covered = [], scrolledOut = [], combatantDiagnostics = [];
+  // Failure-only observations: no DOM writes and no part of the verdict.
+  // A frame-centre obstruction need not be what blocks its foot target.
+  const diagnoseCombatant = (frame) => {
+    if (!frame.matches('.combatant[data-ui-component="combatant-frame"]') || combatantDiagnostics.length >= 4) return;
+    const round = value => Math.round(value * 100) / 100;
+    const rect = element => {
+      if (!element) return null;
+      const r = element.getBoundingClientRect();
+      return { left: round(r.left), top: round(r.top), right: round(r.right), bottom: round(r.bottom),
+        width: round(r.width), height: round(r.height) };
+    };
+    const owner = element => element ? { name: name(element), tag: element.tagName,
+      classes: typeof element.className === 'string' ? element.className : '',
+      entity: element.closest('.combatant')?.dataset.eid || null,
+      ownFrame: element === frame, ownSprite: element === sprite || !!sprite?.contains(element) } : null;
+    const chain = element => {
+      const ancestors = [];
+      for (let p = element; p && ancestors.length < 8; p = p.parentElement) {
+        const cs = getComputedStyle(p);
+        ancestors.push({ node: owner(p), rect: rect(p), position: cs.position, zIndex: cs.zIndex,
+          transform: cs.transform, translate: cs.translate, scale: cs.scale, filter: cs.filter,
+          opacity: cs.opacity, isolation: cs.isolation, zoom: cs.zoom, willChange: cs.willChange,
+          pointerEvents: cs.pointerEvents, overflowX: cs.overflowX, overflowY: cs.overflowY });
+      }
+      return ancestors;
+    };
+    const sprite = frame.querySelector('.combatant-card > .sprite');
+    const sr = sprite?.getBoundingClientRect(), fr = frame.getBoundingClientRect();
+    const cs = getComputedStyle(frame), target = getComputedStyle(frame, '::after');
+    const points = [];
+    if (sr) for (const dy of [-22, -11, 0, 11, 22]) for (const dx of [-22, -11, 0, 11, 22]) {
+      const x = sr.left + sr.width / 2 + dx, y = sr.bottom + dy;
+      points.push({ dx, dy, x: round(x), y: round(y), hit: owner(document.elementFromPoint(x, y)) });
+    }
+    const centreHit = document.elementFromPoint(fr.left + fr.width / 2, fr.top + fr.height / 2);
+    const nearby = [...frame.closest('.field').querySelectorAll('.overhead-control,.nm,.meters')]
+      .filter(element => {
+        const r = element.getBoundingClientRect();
+        return sr && r.width > 0 && r.height > 0 && r.right >= sr.left + sr.width / 2 - 22
+          && r.left <= sr.left + sr.width / 2 + 22 && r.bottom >= sr.bottom - 22 && r.top <= sr.bottom + 22;
+      }).slice(0, 12).map(element => ({ node: owner(element), rect: rect(element), zIndex: getComputedStyle(element).zIndex }));
+    combatantDiagnostics.push({ entity: frame.dataset.eid, frame: rect(frame), sprite: rect(sprite),
+      formationX: frame.dataset.formationX, groundY: frame.dataset.groundY,
+      uiZoom: cs.getPropertyValue('--ui-zoom').trim(),
+      target: { x: cs.getPropertyValue('--enemy-hit-x').trim(), y: cs.getPropertyValue('--enemy-hit-y').trim(),
+        left: target.left, top: target.top, width: target.width, height: target.height,
+        transform: target.transform, zIndex: target.zIndex, pointerEvents: target.pointerEvents, content: target.content },
+      points, nearby, frameAncestors: chain(frame), spriteAncestors: chain(sprite), centreHitAncestors: chain(centreHit) });
+  };
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
     return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
@@ -515,9 +564,11 @@ const PROBE = `(() => {
       const dir = [offLeft && 'left', offRight && 'right', offTop && 'above', offBottom && 'below'].filter(Boolean).join('+');
       covered.push(name(c) + '  <-  UNREACHABLE: ' + dir + ' of its scrollport, which cannot scroll that way'
         + ' (travel ' + Math.round(travelX) + 'x' + Math.round(travelY) + ', at ' + Math.round(port.scrollLeft) + ',' + Math.round(port.scrollTop) + ')');
+      diagnoseCombatant(c);
       continue;
     }
     covered.push(name(c) + '  <-  ' + name(hit));
+    diagnoseCombatant(c);
   }
   const visual = [];
   // The shared class-pick narrow composition expects one cp-body text
@@ -559,7 +610,7 @@ const PROBE = `(() => {
     if (!window.__armouryShortcutOpened) visual.push('equipment shortcut did not open Armoury');
   }
   return { z, local: app.clientWidth + 'x' + app.clientHeight, total: all.length,
-           covered, scrolledOut: scrolledOut.length, visual };
+           covered, scrolledOut: scrolledOut.length, visual, combatantDiagnostics };
 })()`;
 
 function connectCdp(wsUrl) {
@@ -637,6 +688,7 @@ async function main() {
       const tail = sc.overlay ? `  (overlay screen: ${sc.overlay})` : '';
       console.log(`    ${sc.name.padEnd(8)} zoom ${String(r.z).padEnd(5)} local ${r.local.padEnd(10)} ${String(r.total).padStart(3)} controls · ${r.scrolledOut} scrolled-out (fine) · ${r.covered.length} COVERED${tail}`);
       for (const c of r.covered) console.log(`               ✗ ${c}`);
+      for (const diagnostic of r.combatantDiagnostics) console.log(`               combatant-diagnostic ${JSON.stringify(diagnostic)}`);
       if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered[0]}`);
       for (const finding of r.visual) console.log(`               ✗ ${finding}`);
       if (r.visual.length) fails.push(`${shape} ${sc.name}: ${r.visual[0]}`);
