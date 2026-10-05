@@ -140,6 +140,7 @@ export const UI_COMPONENTS = Object.freeze({
   mountServicePreview: 'mount-service-preview',
   // SPEC §14.1: the deck editor, and the Quick Access door that opens it.
   deckEditor: 'deck-editor',
+  characterSheet: 'character-sheet',
   deckEditorControl: 'deck-editor-control',
   shopSmithCard: 'shop-smith-card',
   resourceStrip: 'resource-strip',
