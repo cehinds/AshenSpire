@@ -804,11 +804,11 @@ function collectContentProblems(bundle, errors = []) {
     };
     if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
     else {
-      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'upgradeAt', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'upgradeAt', 'rankMax', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
       // The class card's leaning (plan phase 5a): a multiplier of 1 or more.
       if (!(Number.isFinite(skill.favoredXpMult) && skill.favoredXpMult >= 1)) err('balance.skill.favoredXpMult', `must be a number ≥ 1, got ${JSON.stringify(skill.favoredXpMult)}`);
       // The draft rows (plan phase 4b), each present and refused by name.
-      for (const key of ['draftSize', 'draftsPerCombat', 'upgradeAt']) {
+      for (const key of ['draftSize', 'draftsPerCombat', 'upgradeAt', 'rankMax']) {
         if (!Number.isInteger(skill[key]) || skill[key] < 1) err(`balance.skill.${key}`, `must be a positive integer, got ${JSON.stringify(skill[key])}`);
       }
       if (!skill.rarityUnlock || typeof skill.rarityUnlock !== 'object' || Array.isArray(skill.rarityUnlock)) {

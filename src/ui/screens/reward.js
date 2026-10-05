@@ -241,7 +241,8 @@ export function mountRewards(app, {
     },
     skillDraft(row) {
       if (!spendSkillDraft(run, row.skillId)) return false;
-      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
+      const rank = draftRank(row, row.cardId);
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)), ...(rank > 1 ? { rank } : {}) });
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },
@@ -458,6 +459,12 @@ export function mountRewards(app, {
   }
 
   const draftTrackId = (row) => row.kind === 'classDraft' ? classSkillId(row.classId) : row.skillId;
+  // The rank a drafted card was rolled at (SPEC §13.4o): the offer carries one
+  // per card, in the order of its cards; an older offer without them is rank 1.
+  const draftRank = (row, cardId) => {
+    const rank = Array.isArray(row.ranks) ? row.ranks[(row.cardIds || []).indexOf(cardId)] : 1;
+    return Number.isInteger(rank) && rank > 1 ? rank : 1;
+  };
   const characterLevelRow = (row) => ['levelChoice', 'levelCard'].includes(row.kind) && !row.source;
   const draftUnlocked = (row) => Number.isInteger(row.requiredLevel) ? unlocked(row) : !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
 
@@ -1106,7 +1113,8 @@ export function mountRewards(app, {
       // purpose is taking the card being read. Choosing from inside the door
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
-      const el = renderCard(registries, { cardId, upgraded: row.kind === 'skillDraft' && skillUpgradesCards(registries, skillLevel(run, row.skillId)) }, {
+      const rank = row.kind === 'skillDraft' ? draftRank(row, cardId) : 1;
+      const el = renderCard(registries, { cardId, upgraded: row.kind === 'skillDraft' && skillUpgradesCards(registries, skillLevel(run, row.skillId)), ...(rank > 1 ? { rank } : {}) }, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',

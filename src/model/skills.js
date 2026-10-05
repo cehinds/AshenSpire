@@ -192,6 +192,24 @@ export function claimBankedSkillLevel(registries, run, skillId) {
 
 // ---- drafts, rarity and auto-upgrade (plan phase 4b) ------------------------
 
+/**
+ * rollDraftRank(registries, rng, level) → the rank a drafted card arrives at
+ * (SPEC §13.4o): 1 to min(level, balance.skill.rankMax), each rank r weighted
+ * r, so a high rank comes up more often the higher the track — rank 5 is a
+ * third of a level-5 draft, rank 1 a fifteenth. On the `cardRewards` stream,
+ * so a seeded run rolls the same ranks.
+ */
+export function rollDraftRank(registries, rng, level) {
+  const max = Math.max(1, Math.min(Number.isInteger(level) ? level : 1, draftRows(registries).rankMax || 1));
+  if (max === 1 || !rng) return 1;
+  let pick = rng.int('cardRewards', 1, (max * (max + 1)) / 2);
+  for (let rank = 1; rank <= max; rank += 1) {
+    if (pick <= rank) return rank;
+    pick -= rank;
+  }
+  return max;
+}
+
 function draftRows(registries) {
   return (((registries || {}).balance || {}).skill) || {};
 }

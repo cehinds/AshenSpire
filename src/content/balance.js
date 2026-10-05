@@ -389,6 +389,9 @@ export const balance = {
     draftSize: 3,
     draftsPerCombat: 1,
     upgradeAt: 5,
+    // A card's highest rank (SPEC §13.4o). A draft offers ranks 1 to the
+    // track's level, never past this, the higher ones likelier.
+    rankMax: 10,
     // The class card's leaning (plan phase 5a, proposal §4): skill XP in the
     // weapon groups the card names (its item-type tags) is multiplied by
     // this, through the `favored` property the card carries.
@@ -397,6 +400,7 @@ export const balance = {
       draftSize: 'How many cards a skill draft lays out for you to take one of.',
       draftsPerCombat: 'The most drafts one track may hand out at a single reward door. The rest queue for later doors.',
       upgradeAt: 'The track level at which every card of that track\'s schools in your deck is upgraded.',
+      rankMax: 'A card\'s highest rank. Each rank past 1 adds 1 to its main number; a skill draft offers ranks up to the skill\'s level.',
       favoredXpMult: 'Multiplies skill XP in the weapon groups your class card leans toward.',
     },
   },

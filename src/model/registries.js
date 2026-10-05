@@ -552,7 +552,8 @@ export function resolveCard(registries, instanceOrRef) {
   const sourceArmamentId = instanceOrRef.sourceArmamentId || '';
   if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0) return base;
+  const rank = cardRank(instanceOrRef);
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -562,7 +563,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -605,8 +606,51 @@ export function resolveCard(registries, instanceOrRef) {
       registries.attributes.ids(),
     );
   }
+  // THE RANK (SPEC §13.4o) lands last, on the finished face: each rank past 1
+  // adds 1 to the card's primary number, so the play, the preview and the
+  // card face all read the same ranked value.
+  if (rank > 1) result = applyCardRank(result, rank);
   cache.set(key, result);
   return result;
+}
+
+/**
+ * cardRank(instance) → the instance's rank (SPEC §13.4o), 1 when absent. A
+ * rank is a whole number from 1 up; validateRunShape refuses anything else.
+ */
+export function cardRank(instance) {
+  const rank = instance && instance.rank;
+  return Number.isInteger(rank) && rank >= 1 ? rank : 1;
+}
+
+/**
+ * primaryEffectIndex(card) → the index of the card's PRIMARY NUMBER (SPEC
+ * §13.4o): its first unconditional effect with a numeric amount (damage on an
+ * attack, Block on a defend, HP on a heal), else its first unconditional
+ * status with numeric stacks; -1 when the card has neither (a formula-valued
+ * card ranks without a number to move).
+ */
+export function primaryEffectIndex(card) {
+  const effects = (card && card.effects) || [];
+  const amount = effects.findIndex((effect) => effect && !effect.if && typeof effect.amount === 'number');
+  if (amount !== -1) return amount;
+  return effects.findIndex((effect) => effect && !effect.if && effect.op === 'applyStatus' && typeof effect.stacks === 'number');
+}
+
+/**
+ * applyCardRank(card, rank) → the face at that rank. Each step past rank 1 adds
+ * 1 to the primary number: odd ranks by rule, even ranks until a skill's
+ * rank-step pool is authored (SPEC §13.4o, content phase C) — a step never
+ * passes without a visible gain.
+ */
+export function applyCardRank(card, rank) {
+  const steps = Math.max(0, cardRank({ rank }) - 1);
+  const index = primaryEffectIndex(card);
+  const effects = (card.effects || []).map((effect, i) => {
+    if (i !== index || !steps) return effect;
+    return typeof effect.amount === 'number' ? { ...effect, amount: effect.amount + steps } : { ...effect, stacks: effect.stacks + steps };
+  });
+  return deepFreeze({ ...card, effects, rank: cardRank({ rank }) });
 }
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */

@@ -229,12 +229,15 @@ export function renderCard(registries, ref, opts = {}) {
       artworkKind:artwork?.kind,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
+    // A ranked card (SPEC §13.4o) wears its rank on the bottom edge; the
+    // number it adds is already in the face's text.
+    if(model.rank>1){const badge=document.createElement('span');badge.className='card-rank';badge.textContent=`R${model.rank}`;badge.title=`Rank ${model.rank}`;el.appendChild(badge);}
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
     for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
     scheduleCardFits([el]);
-    el.setAttribute?.('aria-label',model.name);
+    el.setAttribute?.('aria-label',model.rank>1?`${model.name}, rank ${model.rank}`:model.name);
     const image = el.querySelector?.('.playing-card-art');
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
