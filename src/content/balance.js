@@ -399,6 +399,9 @@ export const balance = {
     // STR/DEX/CON/WIS, Magic DEX/CON/WIS/INT; other tracks are authored with
     // the content (phase C).
     attributeEvery: 4,
+    // Every this-many levels a track that authors skill feats offers one
+    // (SPEC §13.4o, content/skillFeats.js).
+    featEvery: 2,
     linkedAttributes: {
       'item:blade': ['strength', 'dexterity'],
       'item:shield': ['strength', 'dexterity', 'constitution', 'wisdom'],
@@ -411,6 +414,7 @@ export const balance = {
     [NOTE]: {
       draftSize: 'How many cards a skill draft lays out for you to take one of.',
       draftsPerCombat: 'The most drafts one track may hand out at a single reward door. The rest queue for later doors.',
+      featEvery: 'Every this many levels of a skill with its own feats lets you take one.',
       attributeEvery: 'Every this many levels of a skill with linked attributes lets you raise one of them by 1.',
       flatEvery: 'Every this many levels of a weapon, focus or dual-wield skill adds 1 to the main number of every card of that skill.',
       rankMax: 'A card\'s highest rank. Each rank past 1 adds 1 to its main number; a skill draft offers ranks up to the skill\'s level.',

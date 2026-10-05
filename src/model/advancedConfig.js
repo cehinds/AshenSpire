@@ -121,6 +121,7 @@ const BALANCE_DOMAINS = Object.freeze({
   'skill.rankMax': Object.freeze({ integer: true, step: 1, min: 1, max: 99 }),
   'skill.flatEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
   'skill.attributeEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
+  'skill.featEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,

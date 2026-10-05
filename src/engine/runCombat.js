@@ -23,7 +23,7 @@ import { isPoolDeckMode } from '../model/cardRemoval.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 import { resolveEnemyLevel } from '../model/levels.js';
-import { stampSkillBonuses } from '../model/skills.js';
+import { stampSkillBonuses, critRulesFor } from '../model/skills.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
@@ -60,6 +60,7 @@ export function runCombatPlayer(run) {
     // is the one its character sheet shows (plan phase 9).
     derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
     skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
+    critRules: critRulesFor(run.skillFeats), // the skill feats' critical hits (SPEC §13.4o)
     coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
     maxHp: run.maxHp,
     hp: run.hp,
