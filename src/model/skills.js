@@ -116,20 +116,17 @@ export function skillLevel(run, skillId) {
  * each step queues one draft (`pendingDrafts`, which phase 4b spends). A
  * non-positive or non-finite amount writes nothing.
  *
- * `schools` (optional, SPEC §14.5): the card schools the standing upgrade
- * reads instead of the held pieces' — the wise master's training passes the
- * track's loadout-independent schools, so training a track the player is not
- * holding still upgrades its owned cards. Omitted, `skillSchools` is read
- * exactly as before.
+ * A level no longer upgrades cards: the `upgradeAt` standing rule is retired
+ * for card ranks (SPEC §13.4o), which a level's rank-up raises one at a time.
  */
-export function awardSkillXp(registries, run, skillId, amount, { schools } = {}) {
+export function awardSkillXp(registries, run, skillId, amount) {
   const kind = skillKindOf(registries, skillId);
   if (!kind) throw new Error(`awardSkillXp: '${skillId}' is not a skill track`);
   if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
   const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  if (gain <= 0) return { skillId, before, after: before, levelUps: 0, upgraded: [], gained: 0 };
+  if (gain <= 0) return { skillId, before, after: before, levelUps: 0, gained: 0 };
   row.xp += gain;
   let cost = xpToNext(registries, kind, row.level);
   while (belowCap(registries, kind, row.level) && row.xp >= cost) {
@@ -139,13 +136,7 @@ export function awardSkillXp(registries, run, skillId, amount, { schools } = {})
     queueRankUp(kind, row);
     cost = xpToNext(registries, kind, row.level);
   }
-  // The auto-upgrade threshold (plan phase 4b) is a STANDING RULE, applied at
-  // every write of a track at or past it — not only the crossing — so a card
-  // that joined the deck later, and a ledger written before the rule existed,
-  // are upgraded at the next award. Idempotent, so the cost of re-asking is
-  // one pass over the deck.
-  const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId, { schools }) : [];
-  return { skillId, before, after: row.level, levelUps: row.level - before, upgraded, gained: gain };
+  return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain };
 }
 
 /** Count the levels already paid for by a track, without advancing its ledger. */
@@ -173,7 +164,7 @@ export function bankSkillXp(registries, run, skillId, amount) {
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
   row.xp += gain;
-  return { skillId, before, after: before, levelUps: 0, pendingLevelUps: pendingSkillLevelCount(registries, run, skillId), upgraded: [], gained: gain };
+  return { skillId, before, after: before, levelUps: 0, pendingLevelUps: pendingSkillLevelCount(registries, run, skillId), gained: gain };
 }
 
 /** Claim exactly one paid-for skill level, retaining excess XP and queuing its reward. */
@@ -188,11 +179,10 @@ export function claimBankedSkillLevel(registries, run, skillId) {
   row.level += 1;
   row.pendingDrafts += 1;
   queueRankUp(kind, row);
-  const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
-  return { skillId, before, after: row.level, levelUps: 1, upgraded, gained: 0 };
+  return { skillId, before, after: row.level, levelUps: 1, gained: 0 };
 }
 
-// ---- drafts, rarity and auto-upgrade (plan phase 4b) ------------------------
+// ---- drafts and rarity (plan phase 4b) ---------------------------------------
 
 /**
  * rollDraftRank(registries, rng, level) → the rank a drafted card arrives at
@@ -256,57 +246,6 @@ export function rarityUnlockedAt(registries, level) {
   return Object.keys(unlock).filter((rarity) => Number.isInteger(unlock[rarity]) && level >= unlock[rarity]);
 }
 
-/** Whether a track at `level` has reached the auto-upgrade threshold. */
-export function skillUpgradesCards(registries, level) {
-  const at = draftRows(registries).upgradeAt;
-  return Number.isInteger(at) && at > 0 && level >= at;
-}
-
-/**
- * applySkillUpgrades(registries, run, skillId) → the instance ids upgraded:
- * every ORDINARY deck card carrying one of the track's schools gains
- * `upgraded: true` (proposal §6.1: "skill thresholds auto-upgrade cards
- * tagged with that group"; the shrine keeps the untagged ones). An
- * equipment-bound basic (`sourceArmamentId`) and an item-owned card (a kit,
- * package or weapon-art card) are the piece's: their upgrade is the smith's
- * tier, and stampDeck re-derives it on every restamp, so a flag written here
- * would be gone by the reward door. Idempotent; a card already upgraded is
- * not counted. `schools` (optional, SPEC §14.5) replaces the held pieces'
- * schools; omitted, `skillSchools` is read as always.
- */
-export function applySkillUpgrades(registries, run, skillId, { schools: given } = {}) {
-  const schools = new Set(Array.isArray(given) ? given : skillSchools(registries, run.loadout, skillId));
-  if (!schools.size || !Array.isArray(run.deck)) return [];
-  const cards = registries && registries.cards;
-  const out = [];
-  // Owned means deck ∪ sideboard (SPEC §14.1): a card set aside by the deck
-  // editor keeps the standing rule and comes back upgraded.
-  for (const inst of [...run.deck, ...(Array.isArray(run.sideboard) ? run.sideboard : [])]) {
-    if (!inst || inst.upgraded || inst.sourceArmamentId || ITEM_OWNED_ROLES.includes(inst.equipmentRole)) continue;
-    const def = cards && cards.has(inst.cardId) ? cards.get(inst.cardId) : null;
-    if (!def || !(def.tags || []).some((t) => schools.has(t))) continue;
-    inst.upgraded = true;
-    out.push(inst.instanceId);
-  }
-  return out;
-}
-
-/**
- * reconcileSkillUpgrades(registries, run) → { [skillId]: instanceIds }, the
- * standing rule asked of every track at or past the threshold — the load
- * door's call, for a ledger written before the rule existed (a schema-8 save
- * carries no version for it, and none is needed: the rule is idempotent).
- */
-export function reconcileSkillUpgrades(registries, run) {
-  const out = {};
-  for (const [skillId, row] of Object.entries((run && run.skills) || {})) {
-    if (!row || !skillUpgradesCards(registries, row.level) || !skillKindOf(registries, skillId)) continue;
-    const ids = applySkillUpgrades(registries, run, skillId);
-    if (ids.length) out[skillId] = ids;
-  }
-  return out;
-}
-
 /**
  * spendSkillDraft(run, skillId) → true when a queued draft was spent. The
  * reward door's one write to the ledger's draft count.
@@ -342,7 +281,7 @@ function queueRankUp(kind, row) {
  * then sideboard) a rank-up of that track may raise: an ordinary card of the
  * track's schools whose rank is below both the track's level and
  * balance.skill.rankMax. An equipment-bound basic or an item-owned card is the
- * piece's, as for the threshold upgrade, and is not offered.
+ * piece's (its upgrade is the smith's tier) and is not offered.
  */
 export function rankUpCandidates(registries, run, skillId) {
   const schools = new Set(skillSchools(registries, run && run.loadout, skillId));

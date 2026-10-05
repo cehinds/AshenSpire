@@ -65,7 +65,7 @@ import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
-import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
+import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
@@ -230,9 +230,8 @@ export function mountRewards(app, {
       chosenDraftCardIds[row.key] = row.choiceId;
       return true;
     },
-    // A skill draft (plan phase 4b): the card joins the deck — upgraded when
-    // the track has reached balance.skill.upgradeAt — and the track's queued
-    // draft is spent, the one write the door makes to the ledger.
+    // A skill draft (plan phase 4b): the card joins the deck at its rolled
+    // rank (SPEC §13.4o) and the track's queued draft is spent.
     // A class draft (plan phase 5b): the node joins the core card's tags and
     // the class track's queued draft is spent; a pick the tree no longer
     // allows (or a draft the ledger no longer holds) lands nothing.
@@ -245,7 +244,7 @@ export function mountRewards(app, {
     skillDraft(row) {
       if (!spendSkillDraft(run, row.skillId)) return false;
       const rank = draftRank(row, row.cardId);
-      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)), ...(rank > 1 ? { rank } : {}) });
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false, ...(rank > 1 ? { rank } : {}) });
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },
@@ -1175,7 +1174,7 @@ export function mountRewards(app, {
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
       const rank = row.kind === 'skillDraft' ? draftRank(row, cardId) : 1;
-      const el = renderCard(registries, { cardId, upgraded: row.kind === 'skillDraft' && skillUpgradesCards(registries, skillLevel(run, row.skillId)), ...(rank > 1 ? { rank } : {}) }, {
+      const el = renderCard(registries, { cardId, ...(rank > 1 ? { rank } : {}) }, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',

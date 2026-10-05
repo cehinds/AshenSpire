@@ -99,9 +99,9 @@ test('universal book chooses an XP track and can teach a card or a class', () =>
   }
 });
 
-test('book XP upgrades existing and new matching ordinary cards without a held focus', () => {
+test('book XP past level 5 upgrades no card: the threshold is retired for card ranks (SPEC §13.4o)', () => {
   const run = fresh(); run.consumables = { spellbook: 1 };
-  run.skills['item:magic-focus'] = { level: reg.balance.skill.upgradeAt, xp: 0, pendingDrafts: 0 };
+  run.skills['item:magic-focus'] = { level: 5, xp: 0, pendingDrafts: 0 };
   const schools = bookTags(reg, { skill: 'item:magic-focus' });
   const plan = skillBookReadPlan(reg, run, 'spellbook');
   const choice = plan.lessons.find((row) => reg.cards.get(row.id).tags.some((tag) => schools.includes(tag)));
@@ -111,9 +111,9 @@ test('book XP upgrades existing and new matching ordinary cards without a held f
   const bound = { instanceId: 'book-review-bound', cardId: choice.id, upgraded: false, sourceArmamentId: 'test-focus' };
   run.deck.push(ordinary, bound); run.sideboard = [aside];
   read(run, 'spellbook', choice);
-  assert.equal(ordinary.upgraded, true);
-  assert.equal(aside.upgraded, true);
-  assert.equal(run.deck.at(-1).upgraded, true);
+  assert.equal(ordinary.upgraded, false);
+  assert.equal(aside.upgraded, false);
+  assert.equal(run.deck.at(-1).upgraded, false, 'the lesson card joins plain');
   assert.equal(bound.upgraded, false, 'equipment-owned upgrades remain governed by the smith');
 });
 
@@ -217,15 +217,15 @@ test('book commit rechecks live copy limits and keeps excess lessons in the side
   }
 });
 
-test('lesson preview matches the awarded upgrade and leaves the live run untouched', () => {
+test('lesson preview matches the card as it joins and leaves the live run untouched', () => {
   const run = fresh(); run.consumables = { spellbook: 1 };
-  run.skills['item:magic-focus'] = { level: reg.balance.skill.upgradeAt, xp: 0, pendingDrafts: 0 };
+  run.skills['item:magic-focus'] = { level: 5, xp: 0, pendingDrafts: 0 };
   const plan = skillBookReadPlan(reg, run, 'spellbook');
   const schools = bookTags(reg, { skill: plan.skillId });
   const choice = plan.lessons.find((row) => reg.cards.get(row.id).tags.some((tag) => schools.includes(tag)));
   const before = structuredClone(run);
   const preview = bookLessonCard(reg, run, plan.def, plan.skillId, choice.id);
-  assert.equal(preview.upgraded, true);
+  assert.equal(preview.upgraded, false);
   assert.deepEqual(run, before);
   const receipt = read(run, 'spellbook', choice);
   const actual = run[receipt.destination].at(-1);

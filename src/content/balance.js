@@ -378,8 +378,8 @@ export const balance = {
     // `draftSize` cards of the track's schools; at most `draftsPerCombat`
     // drafts per track per reward door, the rest queue; a rarity is drafted
     // from the level its row names (the game has no legendary relic or card, so the
-    // proposal's fourth row has no seat); at `upgradeAt` every deck card of
-    // the track's schools is upgraded, the shrine keeping the rest.
+    // proposal's fourth row has no seat). A level no longer upgrades the
+    // deck: card ranks replaced that threshold (SPEC §13.4o).
     rarityUnlock: {
       common: 1, uncommon: 4, rare: 7,
       [NOTE]: {
@@ -388,7 +388,6 @@ export const balance = {
     },
     draftSize: 3,
     draftsPerCombat: 1,
-    upgradeAt: 5,
     // A card's highest rank (SPEC §13.4o). A draft offers ranks 1 to the
     // track's level, never past this, the higher ones likelier.
     rankMax: 10,
@@ -399,7 +398,6 @@ export const balance = {
     [NOTE]: {
       draftSize: 'How many cards a skill draft lays out for you to take one of.',
       draftsPerCombat: 'The most drafts one track may hand out at a single reward door. The rest queue for later doors.',
-      upgradeAt: 'The track level at which every card of that track\'s schools in your deck is upgraded.',
       rankMax: 'A card\'s highest rank. Each rank past 1 adds 1 to its main number; a skill draft offers ranks up to the skill\'s level.',
       favoredXpMult: 'Multiplies skill XP in the weapon groups your class card leans toward.',
     },
