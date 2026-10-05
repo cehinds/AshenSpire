@@ -61,7 +61,7 @@ import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
-import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
+import { levelUpPlan, pendingLevelCount, applySkillAttribute } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
@@ -76,7 +76,7 @@ import { reasonWhenDisabled } from '../components/refusal.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', skillRankUp: '⇧', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', skillRankUp: '⇧', skillAttribute: '▲', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -248,6 +248,14 @@ export function mountRewards(app, {
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },
+    // An attribute pick (SPEC §13.4o): +1 to the chosen linked attribute, the
+    // track's queued pick spent and the pools re-derived; refused, nothing lands.
+    skillAttribute(row) {
+      const id = String(row.choiceId || '').replace(/^attribute:/, '');
+      if (applySkillAttribute(registries, run, row.skillId, id, { offered: row.attributeIds }) == null) return false;
+      chosenDraftCardIds[row.key] = row.choiceId;
+      return true;
+    },
     // A rank-up (SPEC §13.4o): the chosen owned card rises one rank and the
     // track's queued rank-up is spent; a card no longer eligible lands nothing.
     skillRankUp(row) {
@@ -282,7 +290,10 @@ export function mountRewards(app, {
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
     const raised = row.kind === 'skillRankUp' ? ownedInstance(row.instanceId) : null;
-    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' ? {
+    // An attribute pick moves attributes and every derived pool: the whole run
+    // is the record a refused save puts back.
+    const runBefore = row.kind === 'skillAttribute' ? structuredClone(run) : null;
+    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' ? {
       deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       feats: [...(run.feats || [])],
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
@@ -309,6 +320,16 @@ export function mountRewards(app, {
         run.feats = cardBefore.feats;
         for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
         Object.assign(chosenDraftNodeIds, cardBefore.chosenNode);
+        if (runBefore) {
+          // The run comes back whole, but its pending reward stays the very
+          // object this door's checkpoint is (main.js mountPendingReward):
+          // restoring a clone there would leave every later save writing a
+          // copy the door no longer updates. The checkpoint is restored below.
+          const pending = run.pendingReward;
+          for (const key of Object.keys(run)) if (!Object.hasOwn(runBefore, key)) delete run[key];
+          Object.assign(run, runBefore);
+          if (pending !== undefined) run.pendingReward = pending;
+        }
         if (cardBefore.rankUp) {
           const { inst, rank, chosen } = cardBefore.rankUp;
           if (rank === undefined) delete inst.rank; else inst.rank = rank;
@@ -329,6 +350,8 @@ export function mountRewards(app, {
     return true;
   }
 
+  // An attribute's display name, from the content table.
+  const attributeLabel = (id) => levelUpPlan(registries, run).attributes.find((attr) => attr.id === id)?.label || id;
   // An owned card instance by id, in the deck or set aside.
   const ownedInstance = (instanceId) => [...run.deck, ...(run.sideboard || [])].find((inst) => inst && inst.instanceId === instanceId) || null;
   const instanceRank = (inst) => (Number.isInteger(inst?.rank) && inst.rank > 1 ? inst.rank : 1);
@@ -337,6 +360,17 @@ export function mountRewards(app, {
   function rowBody(row) {
     const state = states[row.key];
     switch (row.kind) {
+      case 'skillAttribute': {
+        const skill = skillTracks(registries).find((track) => track.id === row.skillId);
+        const label = esc((skill && skill.label) || row.skillId);
+        const title = t('reward.skillAttribute.title', { skill: label, level: row.level });
+        const name = (id) => esc(attributeLabel(id));
+        if (state === 'taken') {
+          const id = String(chosenDraftCardIds[row.key] || '').replace(/^attribute:/, '');
+          return { title, body: t('reward.skillAttribute.raised', { attribute: name(id), value: run.attributes?.[id] ?? '' }) };
+        }
+        return { title, body: t('reward.skillAttribute.body', { attributes: row.attributeIds.map(name).join(', ') }) };
+      }
       case 'skillRankUp': {
         const skill = skillTracks(registries).find((track) => track.id === row.skillId);
         const label = esc((skill && skill.label) || row.skillId);
@@ -851,12 +885,12 @@ export function mountRewards(app, {
           return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
         }
         if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
-        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
+        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
         return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
       });
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
-        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp') return renderChooser(row);
+        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute') return renderChooser(row);
         if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
       });
@@ -1066,7 +1100,7 @@ export function mountRewards(app, {
     // with the node's glyph, name and its rule's sentence, the numbers read
     // through the node's bindings — the same selection path as a card.
     const isNodeRow = row.kind === 'classDraft';
-    const isLevelChoice = row.kind === 'levelChoice';
+    const isLevelChoice = row.kind === 'levelChoice' || row.kind === 'skillAttribute';
     // A rank-up (SPEC §13.4o) chooses among the run's OWN cards, each shown
     // at the rank it would rise to; its pick is an instance id.
     const isRankUp = row.kind === 'skillRankUp';
@@ -1078,8 +1112,8 @@ export function mountRewards(app, {
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     door({
-      eyebrow: row.kind === 'levelCard' || isLevelChoice ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRankUp ? rowBody(row).title : t('reward.card.eyebrow'),
-      title: row.source ? rowBody(row).title : row.kind === 'levelCard' || isLevelChoice ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
+      eyebrow: row.kind === 'levelCard' || row.kind === 'levelChoice' ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRankUp || row.kind === 'skillAttribute' ? rowBody(row).title : t('reward.card.eyebrow'),
+      title: row.source ? rowBody(row).title : row.kind === 'levelCard' || row.kind === 'levelChoice' ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
@@ -1118,16 +1152,18 @@ export function mountRewards(app, {
     for (const option of isLevelChoice ? row.options : []) {
       const choiceId = `${option.kind}:${option.id}`;
       const feat = option.kind === 'feat' ? featById(option.id) : null;
+      // An attribute pick's option (SPEC §13.4o): the attribute, now and after.
+      const attribute = option.kind === 'attribute' ? { name: attributeLabel(option.id), now: run.attributes?.[option.id] ?? 0 } : null;
       const node = option.kind === 'classNode' ? (registries.nodes || []).find((entry) => entry.id === option.id) : null;
       const rule = node && registries.propertyRules?.has(node.id) ? registries.propertyRules.get(node.id) : null;
       const tokens = node ? nodeTokens(registries, node.id) : {};
       const sentence = String(rule?.textTemplate || '').replace(/\{(\w+)\}/g, (m, tok) => tokens[tok] !== undefined ? String(tokens[tok]) : m);
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
         'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId } }, [
-        el('div', { class: 'glyph', text: feat ? '✦' : node?.glyph || '☉' }),
+        el('div', { class: 'glyph', text: attribute ? '▲' : feat ? '✦' : node?.glyph || '☉' }),
         el('div', { class: 'cp-body' }, [
-          el('h3', { text: feat?.name || node?.label || option.id }),
-          el('p', { text: feat?.description || sentence || node?.blurb || '' }),
+          el('h3', { text: attribute?.name || feat?.name || node?.label || option.id }),
+          el('p', { text: attribute ? `${attribute.now} → ${attribute.now + 1}` : feat?.description || sentence || node?.blurb || '' }),
         ]),
       ]);
       tile.classList.toggle('reward-selected', choiceId === selectedCardId);
@@ -1229,7 +1265,7 @@ export function mountRewards(app, {
         // offer older than its ledger) returns false and must not leave the
         // chooser armed but dead: say so and hand the button back.
         if (!take({ ...row, [pickField]: selectedCardId }, row.key)) {
-          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : 'reward.card.alreadyTaken');
+          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : row.kind === 'skillAttribute' ? 'reward.skillAttribute.spent' : 'reward.card.alreadyTaken');
           message.hidden = false;
           confirming = false;
           confirmButton.disabled = false;
