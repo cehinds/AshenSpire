@@ -41,10 +41,17 @@ export function wireBattlefieldStage(field, model) {
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
-    // The turn ribbon sits at the top of the field (player-polish.css). Its
-    // box, in the same screen px as the plan, is a second ceiling for every
-    // figure whose art or overhead stack shares its columns (below).
-    const ribbonRect = field.querySelector(':scope > .turn-ribbon')?.getBoundingClientRect();
+    // The turn ribbon hangs from the HUD band's bottom edge (player-polish.css
+    // reads --turn-ribbon-top), so it never sits under a band taller than its
+    // row. Its box, in the same screen px as the plan, is a second ceiling for
+    // every figure whose art or overhead stack shares its columns (below).
+    const ribbonEl = field.querySelector(':scope > .turn-ribbon');
+    if (ribbonEl) {
+      field.style.setProperty('--turn-ribbon-top', `${ceiling}px`);
+      // A ribbon that changes size (its text, a short screen's font) refits.
+      resizeObserver.observe(ribbonEl);
+    }
+    const ribbonRect = ribbonEl?.getBoundingClientRect();
     const ribbon = ribbonRect?.width > 0 && ribbonRect.height > 0 ? { left: ribbonRect.left - fieldRect.left,
       right: ribbonRect.right - fieldRect.left, bottom: ribbonRect.bottom - fieldRect.top } : null;
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
@@ -157,7 +164,7 @@ export function wireBattlefieldStage(field, model) {
     // its fighters to a ribbon none of them stands under.
     if (ribbon) {
       const crosses = (centre, width) => centre - width / 2 < ribbon.right && centre + width / 2 > ribbon.left;
-      const ribbonLeading = actor => actor.leadingHeight * zoom + Math.max(ceiling * zoom, ribbon.bottom) + 14;
+      const ribbonLeading = actor => actor.leadingHeight * zoom + ribbon.bottom + 14;
       for (let pass = 0; pass < actors.length; pass++) {
         const moved = actors.filter(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);

@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "The turn banner no longer covers fighters",
     "detail": "The Player Turn / Enemy Turn banner now sits at the top of the battlefield, just under the top bar, on every screen. On phones it used to sit a quarter of the way down and could hide an enemy's intent. Any fighter standing under the banner is now drawn below it, with its intent.",
-    "build": "0.7.1.975",
+    "build": "0.7.1.977",
     "pullRequest": 1639,
     "url": "https://github.com/cehinds/AshenSpire/pull/1639"
   },

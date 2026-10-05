@@ -384,10 +384,11 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root .combat[data-layout='formation'] > .hand-area { margin:0; padding:0; }
 :root .combat[data-layout='formation'] .environment-backdrop::before { background:linear-gradient(180deg,#08070610 25%,transparent calc(var(--scene-paint-bottom, 100%) - 16%),#17130f var(--scene-paint-bottom, 100%)); }
 :root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 2px 2px #100b08a0); }
-/* The turn ribbon sits flush under the HUD band on every layout. The stage
-   (components/battlefieldStage.js) fits every figure and intent that shares
-   its columns below its bottom edge, so it never covers one. */
-.combat .turn-ribbon { top:0; background:#16120bbc; }
+/* The turn ribbon sits flush under the HUD band on every layout: the stage
+   (components/battlefieldStage.js) sets --turn-ribbon-top to the band's
+   overhang into the field, and fits every figure and intent that shares the
+   ribbon's columns below its bottom edge, so it never covers one. */
+.combat .turn-ribbon { top:var(--turn-ribbon-top, 0px); background:#16120bbc; }
 
 /* Merchant drawers expand in place. Mobile uses the same categories in one select. */
 :root[data-layout='wide']:not([data-composition='short-wide']) .shop-workspace:not(.master-workspace) .shop-frame { width:52%; }
