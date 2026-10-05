@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1641",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Map picks and entering a fight respond faster",
+    "detail": "After you tap a map node, the map glides to it smoothly instead of stuttering, and entering the fight takes about a quarter less time before it appears, most noticeably on phones. Nothing about the map or the fight changes.",
+    "build": "0.7.1.982",
+    "pullRequest": 1641,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1641"
+  },
+  {
     "id": "pr-1638",
     "date": "2026-10-05",
     "group": "2026-10-05",
