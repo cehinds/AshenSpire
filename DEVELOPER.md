@@ -97,14 +97,14 @@ pack-shaped game file `AshenSpire.html` (~10 MB of code, no media) with
 file** at `download/AshenSpire.html` (~31 MB, every byte inline, held to no
 byte budget); `dist/` also gets the version-stamped `AshenSpire-<version>.html`,
 and the root alias `AshenSpire.html` is the light single file. **By default
-the pack-shaped file's tier is light** (owner, 2026-09-26: dev/test builds are
-light only): the light and common packs, edition `light`. The light art, in
+the pack-shaped file's tier is light** (owner, 2026-09-26: dev builds are
+light only; test joined full art 2026-10-04): the light and common packs, edition `light`. The light art, in
 the packs and in the single file, comes from the light pack of the fetched art
 release (`.art-cache/<tag>/light/`; run `node tools/fetch-art.mjs --pack
 light,common` first — see *The art release* below). `--full-art` builds
-the release/main shape: the high, light and common packs, default tier and
-edition `high`, falling back to light. CI passes `--full-art` only for
-`release` and `main`. The light single file is built either way and always
+the test/release/main shape: the high, light and common packs, default tier and
+edition `high`, falling back to light. CI passes `--full-art` for `test`,
+`release` and `main` (owner, 2026-10-04: art is linked from test on). The light single file is built either way and always
 says `light`. The full-art single file (~255 MB) and the separate mobile file
 are retired, and `bundle.mjs --mobile` is refused by name. **The art is not in
 this repository** (docs/EXTERNAL-ASSETS-PLAN.md step 13): `assets/`,

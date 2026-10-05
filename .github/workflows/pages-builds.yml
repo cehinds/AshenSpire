@@ -18,7 +18,7 @@
 # dev commits no built HTML (test, release and main follow on promotion), so git
 # names each build (buildordinal.json) but no longer holds it. The assemble step
 # passes --build-missing: tools/pages-site.mjs rebuilds each such build from its
-# own commit's source (light art on dev/test, --full-art on release/main — the
+# own commit's source (light art on dev, --full-art on test/release/main — the
 # tiers dev-preview.yml builds), refuses one whose rebuild moves the committed
 # box, and serves the rest at /<branch>/<ordinal>/ and /<branch>/latest/.
 # Builds that are still committed are read from git as before, fetching only
