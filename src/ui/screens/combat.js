@@ -23,7 +23,6 @@ import { runHandRules } from '../../model/handRules.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
-import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
@@ -167,7 +166,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         ${formationGridHtml()}
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
-        <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
       </div>
       <div class="hand-area">
@@ -286,7 +284,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     },
   };
 
-  let lastDodge = [...(combat.eventLog || [])].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id) || null;
   function playFamilyAnimation(actorEl, stage, plan, speed, enemyAttack = false) {
     const tempo = Number.isFinite(plan.tempo) ? Math.min(2, Math.max(0.25, plan.tempo)) : 1;
     const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
@@ -1224,7 +1221,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1264,22 +1261,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const chip = pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade' } });
       bindAbilityBadge(chip, p, 'evade');
       trailing.push(chip);
-    }
-    if (lastDodge) {
-      const receipt = dodgeReceipt(lastDodge);
-      const outcome = button({ label: receipt.outcome, className: 'dodge-receipt', attrs: {
-        'data-focusable': 'true', 'aria-label': receipt.outcome + '. View last Dodge result',
-      } });
-      outcome.addEventListener('click', (event) => {
-        event.stopPropagation();
-        openModal({ title: 'Last Dodge result', size: 'sm', opener: outcome, bodyClassName: 'as-pane', body: (host) => {
-          const text = document.createElement('p');
-          text.className = 'as-prose';
-          text.textContent = receipt.detail;
-          host.appendChild(text);
-        } });
-      });
-      trailing.push(outcome);
     }
     const slots = {
       role: 'player',
@@ -2076,12 +2057,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // it (and fires onEnd on victory/defeat). A render throw here once froze
     // the game permanently on the killing blow.
     try {
-      // Skipping or reducing motion must never erase the last result.
-      const rolled = [...events].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id);
-      if (rolled) {
-        lastDodge = rolled;
-        $('.dodge-announcement').textContent = dodgeReceipt(rolled).detail;
-      }
       recentArcaneEvents = events.filter((event) => (
         event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
       ));

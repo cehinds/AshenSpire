@@ -1220,9 +1220,9 @@ of each of your turns while in hand, solo and in co-op, through the card's
 
 ## Dodge outcome presentation
 
-Since 2026-10-05 only Evasive Guard rolls; the Dodge Roll card grants a flat Block, Poise and Ward (SPEC §12.1) and emits no dodgeRolled. The engine emits dodgeRolled once per resolved roll. The combat screen retains its last player receipt before animation playback, so skipping playback cannot discard the explanation. The shared dodgeReceipt formatter labels temporaryGuard as base guard; ordinary blockGained events remain responsible for the applied Block amount. The persistent result uses the standard modal shell and focus return; a live region announces new outcomes.
+Since 2026-10-05 only Evasive Guard rolls; the Dodge Roll card grants a flat Block, Poise and Ward (SPEC §12.1) and emits no dodgeRolled. The engine emits dodgeRolled once per resolved roll, into the event log only: the owner removed the dodge-result widget (the "Dodge succeeded / failed" receipt button, its result dialog, float and live announcement) the same day, along with `src/ui/components/dodgeReceipt.js` and the browser drive `tools/dodge-outcome.mjs` that asserted it. A success shows through its blockGained float and the dodge visual (`model/combatEffectEvents.js`).
 
-Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption. Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.
+Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption.
 
 ### Every-weapon card preview
 Open `weapon-cards-preview.html` through the local server to browse every canonical

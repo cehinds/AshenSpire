@@ -1905,7 +1905,7 @@ Three things this list once excluded have since shipped and are no longer non-go
 
 The `dodgeRoll` opcode is unchanged and is now carried by Evasive Guard alone: roll the framework die on the deterministic `misc` stream; compare Dexterity and Weight Class against the framework difficulty; on success grant the framework's temporary guard through ordinary Block. Dodge is not guaranteed avoidance, invulnerability, or cancellation of an enemy's next attack.
 
-Every resolved `dodgeRolled` receipt must visibly and accessibly report success or failure, the check and difficulty, and the resulting guard. A failed roll must not look like an ignored input. Cost previews, disabled reasons, tooltips, and playback must agree with the engine. Verify Light, Medium, and Heavy costs; sufficient and insufficient resources; success and failure; repeated plays; and ordinary Block/status interactions without introducing a second damage rule.
+**No dodge-result widget** (owner, 2026-10-05): the combat screen shows no "Dodge succeeded / failed" receipt, float, result dialog or live announcement for a `dodgeRolled` event. Evasive Guard keeps its roll; a success shows through its Block gain and the dodge visual, and `dodgeRolled` stays in the event log. Cost previews, disabled reasons, tooltips, and playback must agree with the engine. Verify Light, Medium, and Heavy costs; sufficient and insufficient resources; success and failure; repeated plays; and ordinary Block/status interactions without introducing a second damage rule.
 
 ### 12.2 Trader armaments, weapon arts, and transactions
 
