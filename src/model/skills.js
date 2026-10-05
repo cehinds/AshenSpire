@@ -85,6 +85,20 @@ export function xpToNext(registries, kind, level) {
   return xpStepCost(curveFor(registries, kind), step, { exponentialEpsilon: 0 });
 }
 
+/**
+ * skillMaxLevel(registries, kind) → the level a track stops at
+ * (`balance.skill.xp.maxLevel`, the class track's `balance.skill.class.xp.maxLevel`),
+ * or null for no ceiling. XP past it stays on the ledger.
+ */
+export function skillMaxLevel(registries, kind) {
+  const cap = curveFor(registries, kind).maxLevel;
+  return Number.isInteger(cap) && cap > 0 ? cap : null;
+}
+const belowCap = (registries, kind, level) => {
+  const cap = skillMaxLevel(registries, kind);
+  return cap == null || level < cap;
+};
+
 /** A fresh ledger: no track has been touched. */
 export const emptySkills = () => ({});
 
@@ -118,7 +132,7 @@ export function awardSkillXp(registries, run, skillId, amount, { schools } = {})
   if (gain <= 0) return { skillId, before, after: before, levelUps: 0, upgraded: [], gained: 0 };
   row.xp += gain;
   let cost = xpToNext(registries, kind, row.level);
-  while (row.xp >= cost) {
+  while (belowCap(registries, kind, row.level) && row.xp >= cost) {
     row.xp -= cost;
     row.level += 1;
     row.pendingDrafts += 1;
@@ -141,7 +155,7 @@ export function pendingSkillLevelCount(registries, run, skillId) {
   let xp = row.xp;
   let level = row.level;
   let count = 0;
-  while (xp >= xpToNext(registries, kind, level)) {
+  while (belowCap(registries, kind, level) && xp >= xpToNext(registries, kind, level)) {
     xp -= xpToNext(registries, kind, level);
     level += 1;
     count += 1;
@@ -165,7 +179,7 @@ export function bankSkillXp(registries, run, skillId, amount) {
 export function claimBankedSkillLevel(registries, run, skillId) {
   const kind = skillKindOf(registries, skillId);
   const row = run && run.skills && run.skills[skillId];
-  if (!kind || !row) return null;
+  if (!kind || !row || !belowCap(registries, kind, row.level)) return null;
   const cost = xpToNext(registries, kind, row.level);
   if (row.xp < cost) return null;
   const before = row.level;

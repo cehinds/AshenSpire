@@ -825,14 +825,17 @@ function collectContentProblems(bundle, errors = []) {
         for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) if (!nonNeg(skill.xp[key])) err(`balance.skill.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.xp[key])}`);
         for (const key of ['impactPerXp', 'buildupPerXp']) if (!(Number.isFinite(skill.xp[key]) && skill.xp[key] > 0)) err(`balance.skill.xp.${key}`, `must be a positive number, got ${JSON.stringify(skill.xp[key])}`);
         if (!(Number.isFinite(skill.xp.killMult) && skill.xp.killMult >= 1)) err('balance.skill.xp.killMult', `must be a number ≥ 1, got ${JSON.stringify(skill.xp.killMult)}`);
-        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
+        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler', 'maxLevel', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
+        // SPEC §13.4o: the level a track stops at; absent or null is no ceiling.
+        if (skill.xp.maxLevel != null && !posInt(skill.xp.maxLevel)) err('balance.skill.xp.maxLevel', `must be null or a positive integer level, got ${JSON.stringify(skill.xp.maxLevel)}`);
       }
       if (!skill.class || typeof skill.class !== 'object') err('balance.skill.class', 'must be an object { xp }');
       else {
         for (const key of Object.keys(skill.class)) if (!['xp', 'tierAt'].includes(key)) err(`balance.skill.class.${key}`, 'Unknown field');
         curve(skill.class.xp, 'balance.skill.class.xp');
         if (skill.class.xp && typeof skill.class.xp === 'object') {
-          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler', 'maxLevel', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+          if (skill.class.xp.maxLevel != null && !posInt(skill.class.xp.maxLevel)) err('balance.skill.class.xp.maxLevel', `must be null or a positive integer level, got ${JSON.stringify(skill.class.xp.maxLevel)}`);
           // The class XP sources (plan phase 5b), each present and non-negative.
           for (const key of ['perWin', 'bossKill', 'perQuest']) if (!nonNeg(skill.class.xp[key])) err(`balance.skill.class.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.class.xp[key])}`);
         }

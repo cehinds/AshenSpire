@@ -56,9 +56,9 @@ try {
       const { pendingRewardCheckpoint } = await import('/src/model/rewardSourcePolicy.js');
       const registries = createRegistries(contentBundle);
       window.qaRun = createRunState({seed:7,classId:'reaver',registries});
-      qaRun.level = {level:1,xp:355,unspentPoints:0}; qaRun.skills = {};
+      qaRun.level = {level:1,xp:555,unspentPoints:0}; qaRun.skills = {};
       window.qaSettings = {levelUpRefillSeconds:.08,levelUpRefillPauseMs:0,victoryXpSeconds:.1,rewardCollect:'auto',rewardContinueHoldMs:0};
-      window.qaOffer = mergeProgressionRewards({}, {title:'VICTORY',xpGains:{level:355,tracks:{}},levelChoices:[
+      window.qaOffer = mergeProgressionRewards({}, {title:'VICTORY',xpGains:{level:555,tracks:{}},levelChoices:[
         {ordinal:0,options:[{kind:'feat',id:'fieldStudy'},{kind:'feat',id:'weaponDrill'}]},
         {ordinal:1,options:[{kind:'feat',id:'vitalRenewal'}]}
       ]},qaRun);
