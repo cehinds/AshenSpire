@@ -3,6 +3,7 @@
 // its schools. Derived (stamped as `skillBonus`), stacking across tracks,
 // applied in resolveCard beside the rank, and carried into combat.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard, primaryEffectIndex } from '../src/model/registries.js';
@@ -58,4 +59,25 @@ test('a malformed skillBonus is refused on load', () => {
     run.deck[0].skillBonus = bad;
     assert.ok(validateRunShape(run).some((p) => /deck\[0\]\.skillBonus/.test(p)), `skillBonus ${JSON.stringify(bad)} is refused`);
   }
+});
+
+test('a card earns the flat of its best track, not a sum, and never past the cap', async () => {
+  const { MAX_SKILL_BONUS } = await import('../src/model/skills.js');
+  const run = createRunState({ seed: 4, classId: 'reaver', registries });
+  const levels = (id, kind, n) => awardSkillXp(registries, run, id, Array.from({ length: n }, (_, l) => xpToNext(registries, kind, l)).reduce((a, b) => a + b, 0));
+  levels(BLADE, 'weapon', 5);
+  levels('item:shield', 'weapon', 10);
+  levels('dualWield', 'dual', 5);
+  stampSkillBonuses(registries, run);
+  const bash = run.deck.find((c) => c.cardId === 'shieldBash');
+  assert.ok(bash, 'the reaver deals Shield Bash');
+  assert.equal(bash.skillBonus, 2, 'blade +1, shield +2, dual +1: the best is +2, not +4');
+  const flood = { ...run, skills: { [BLADE]: { xp: 0, level: 1000, pendingDrafts: 0 } } };
+  const capped = { ...registries, balance: { ...registries.balance, skill: { ...registries.balance.skill, flatEvery: 1 } } };
+  assert.equal(skillBonusFor(capped, flood, { cardId: 'rend' }), MAX_SKILL_BONUS, 'no setting stamps what a save refuses');
+});
+
+test('co-op seats stamp the bonus before their fight', () => {
+  const session = readFileSync(new URL('../tools/session.mjs', import.meta.url), 'utf8');
+  assert.match(session, /function memberAsPlayer\(m\) \{\s*\/\/[^\n]*\n[^\n]*\n\s*stampSkillBonuses\(registries, m\.run\);/);
 });

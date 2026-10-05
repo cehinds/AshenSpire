@@ -3098,7 +3098,8 @@ export function stampDeck(registries, run, cards, {
     n += 1;
   }
   // A full restamp also refreshes the derived skill bonus (SPEC §13.4o): a
-  // swapped hand changes which schools a track's levels reach.
+  // swapped hand changes which schools a track's levels reach. A fight's own
+  // pile restamps (cards != null) keep the bonus its cards started with.
   if (cards == null) stampSkillBonuses(registries, run);
   return n;
 }

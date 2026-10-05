@@ -65,7 +65,7 @@ import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
-import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank, rankUpKind } from '../../model/skills.js';
+import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank, rankUpKind, skillSchools, skillBonusFor } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
@@ -515,7 +515,7 @@ export function mountRewards(app, {
     // since the number lands on the card faces rather than as a row to take.
     const every = registries.balance.skill.flatEvery;
     const flat = Number.isInteger(every) && every > 0 && claim.after % every === 0 && rankUpKind(skillTracks(registries).find((track) => track.id === skillId)?.kind)
-      ? ` Every ${label} card gains +1.` : '';
+      && skillSchools(registries, run.loadout, skillId).length ? ` Your ${label} cards gain +1.` : '';
     openLevelView(skillId, `${label} · Level ${claim.after}`, `Your ${label} skill is now level ${claim.after}.${flat}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
   }
 
@@ -1179,7 +1179,10 @@ export function mountRewards(app, {
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
       const rank = row.kind === 'skillDraft' ? draftRank(row, cardId) : 1;
-      const el = renderCard(registries, { cardId, ...(rank > 1 ? { rank } : {}) }, {
+      // The face shows what the card will be once taken: its rank and the
+      // skill bonus it would be stamped with (SPEC §13.4o).
+      const skillBonus = skillBonusFor(registries, run, { cardId });
+      const el = renderCard(registries, { cardId, ...(rank > 1 ? { rank } : {}), ...(skillBonus > 0 ? { skillBonus } : {}) }, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',

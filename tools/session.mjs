@@ -21,6 +21,7 @@ import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
+import { stampSkillBonuses } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { awardClassXp } from '../src/model/classTree.js';
 import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
@@ -495,6 +496,9 @@ export function createSession({ registries, seedString, endless = false, restore
   let combatReceiptSeq = 0; // stable wire identity; resync reuses session.scene
 
   function memberAsPlayer(m) {
+    // The derived skill bonus (SPEC §13.4o): a seat levels through applySkillXp,
+    // never through the solo save door, so its fight stamps it here.
+    stampSkillBonuses(registries, m.run);
     return {
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
@@ -700,7 +704,7 @@ export function createSession({ registries, seedString, endless = false, restore
         // so a live meter the host fills was invisible to every co-op player
         // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
-        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
+        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded, ...(c2.rank > 1 ? { rank: c2.rank } : {}), ...(c2.skillBonus > 0 ? { skillBonus: c2.skillBonus } : {}) })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
@@ -774,6 +778,7 @@ export function createSession({ registries, seedString, endless = false, restore
         applySkillXp(registries, m.run, skillXpReceipt(c, m.id));
         // The class track (plan phase 5b), paid per seat by the session, which knows the pool.
         awardClassXp(registries, m.run, { victory: c.result === 'victory', pool: live && live.pool });
+        stampSkillBonuses(registries, m.run); // the party deck's faces read the new levels
         // The character level (plan phase 6), per seat: the party's kills are
         // every seat's. No settings dial here — the server is authoritative
         // and reads the authored points per level.
@@ -1448,6 +1453,8 @@ export function createSession({ registries, seedString, endless = false, restore
         instanceId: c.instanceId,
         cardId: c.cardId,
         upgraded: c.upgraded,
+        ...(c.rank > 1 ? { rank: c.rank } : {}),
+        ...(c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
         ...(c.equipmentRole ? { equipmentRole: c.equipmentRole } : {}),
         ...(c.profileId ? { profileId: c.profileId } : {}),
         ...(Array.isArray(c.mods) ? { mods: [...c.mods] } : {}),
