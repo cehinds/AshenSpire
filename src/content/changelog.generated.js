@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Character sheet: every level and what it brings",
     "detail": "In the Armoury's Character view, the new Character sheet button lists every character level from 1 to 20 and every level of each skill and your class, with the XP each costs and what it grants: attribute points, feat and class-tree choices, more HP, Mana and Stamina, a bigger deck minimum, card drafts and their top rank, rank-ups, uncommon and rare cards unlocking, class-tree tiers opening, skill feats, linked attributes and +1 card power. It opens on the level you're at.",
-    "build": "0.7.1.982",
+    "build": "0.7.1.984",
     "pullRequest": 1640,
     "url": "https://github.com/cehinds/AshenSpire/pull/1640"
+  },
+  {
+    "id": "pr-1639",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "The turn banner no longer covers fighters",
+    "detail": "The Player Turn / Enemy Turn banner now sits at the top of the battlefield, just under the top bar, on every screen. On phones it used to sit a quarter of the way down and could hide an enemy's intent. Any fighter standing under the banner is now drawn below it, with its intent.",
+    "build": "0.7.1.982",
+    "pullRequest": 1639,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1639"
   },
   {
     "id": "pr-1638",

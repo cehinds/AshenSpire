@@ -41,6 +41,19 @@ export function wireBattlefieldStage(field, model) {
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
+    // The turn ribbon hangs from the HUD band's bottom edge (player-polish.css
+    // reads --turn-ribbon-top), so it never sits under a band taller than its
+    // row. Its box, in the same screen px as the plan, is a second ceiling for
+    // every figure whose art or overhead stack shares its columns (below).
+    const ribbonEl = field.querySelector(':scope > .turn-ribbon');
+    if (ribbonEl) {
+      field.style.setProperty('--turn-ribbon-top', `${ceiling}px`);
+      // A ribbon that changes size (its text, a short screen's font) refits.
+      resizeObserver.observe(ribbonEl);
+    }
+    const ribbonRect = ribbonEl?.getBoundingClientRect();
+    const ribbon = ribbonRect?.width > 0 && ribbonRect.height > 0 ? { left: ribbonRect.left - fieldRect.left,
+      right: ribbonRect.right - fieldRect.left, bottom: ribbonRect.bottom - fieldRect.top } : null;
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
     const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}') };
@@ -120,25 +133,51 @@ export function wireBattlefieldStage(field, model) {
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
     });
     const narrow = document.documentElement.dataset.layout === 'narrow';
-    const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
-      minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 });
-    const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
-      .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
-    const growthFor = (actor, fitted) => {
-      const requestedGrowth = actor.frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, actor.slot.row)] : 1;
-      return Math.min(requestedGrowth, Math.max(1,
-        (actor.slot.ground - actor.leading - 6) / fitted.visibleHeight),
-        // Selection must not make the player tower over a foe already capped
-        // by the available headroom on a short screen.
-        actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
+    const fitFormation = () => {
+      const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
+        minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 });
+      const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
+        .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
+      const growthFor = (actor, fitted) => {
+        const requestedGrowth = actor.frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, actor.slot.row)] : 1;
+        return Math.min(requestedGrowth, Math.max(1,
+          (actor.slot.ground - actor.leading - 6) / fitted.visibleHeight),
+          // Selection must not make the player tower over a foe already capped
+          // by the available headroom on a short screen.
+          actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
+      };
+      const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width,
+        controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
+          const fitted = sizes.find(size => size.id === actor.slot.id);
+          const bottom = actor.slot.ground - fitted.visibleHeight * growthFor(actor, fitted) - 14;
+          return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: actor.slot.x,
+            width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
+        }) }) : [];
+      return { sizes, growthFor, overheads };
     };
-    const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width,
-      controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
-        const fitted = sizes.find(size => size.id === actor.slot.id);
-        const bottom = actor.slot.ground - fitted.visibleHeight * growthFor(actor, fitted) - 14;
-        return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: actor.slot.x,
-          width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
-      }) }) : [];
+    let { sizes, growthFor, overheads } = fitFormation();
+    // The turn ribbon never covers a figure. A figure whose art or overhead
+    // stack shares the ribbon's columns is fitted below it, with the same 14 px
+    // gap the HUD band gets, and the formation is fitted again (until no other
+    // figure moves under it; the set only grows, so this ends). Figures clear
+    // of its columns keep their room, so a short landscape phone does not lose
+    // its fighters to a ribbon none of them stands under.
+    if (ribbon) {
+      const crosses = (centre, width) => centre - width / 2 < ribbon.right && centre + width / 2 > ribbon.left;
+      const ribbonLeading = actor => actor.leadingHeight * zoom + ribbon.bottom + 14;
+      for (let pass = 0; pass < actors.length; pass++) {
+        const moved = actors.filter(actor => {
+          const fitted = sizes.find(size => size.id === actor.slot.id);
+          if (!fitted || ribbonLeading(actor) <= actor.leading) return false;
+          const artWidth = fitted.visibleHeight * growthFor(actor, fitted) * actor.visibleWidth / actor.visibleHeight;
+          const overheadX = overheads.find(overhead => overhead.id === actor.slot.id)?.x ?? fitted.x;
+          return crosses(fitted.x, artWidth) || crosses(overheadX, actor.leadingWidth * zoom);
+        });
+        if (!moved.length) break;
+        for (const actor of moved) actor.leading = ribbonLeading(actor);
+        ({ sizes, growthFor, overheads } = fitFormation());
+      }
+    }
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
       // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
