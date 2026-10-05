@@ -115,3 +115,13 @@ test('the reward door raises the chosen card and spends the rank-up', async () =
     assert.equal(app.querySelector('.reward-kind[data-kind="skillRankUp"]').dataset.state, 'taken');
   } finally { Object.assign(globalThis, saved); }
 });
+
+test('a taken rank-up must name its card, and its track must be a card-school track', async () => {
+  const { rewardClaimStatus } = await import('../src/model/rewardplan.js');
+  const run = bladeRun(3);
+  const key = `skillRankUp:${BLADE}:0`;
+  run.pendingReward = { schemaVersion: 1, source: 'normal', after: 'map', rewards: { skillRankUps: [{ skillId: BLADE, level: 3 }] }, states: { [key]: 'taken' } };
+  assert.ok(validateRunShape(run).some((p) => p.includes(`${key} Taken state requires its chosen card`)));
+  const status = rewardClaimStatus(rewardPlan({ skillRankUps: [{ skillId: BLADE, level: 3 }], cardIds: ['rend', 'stomp'] }), {});
+  assert.equal(status.requiredChoice.kind, 'card', 'a rank-up names no count, so the card offer is the choice the summary counts');
+});

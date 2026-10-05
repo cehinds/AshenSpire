@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Level-ups raise a card",
     "detail": "From level 2, every weapon, focus or dual-wield skill level also lets you raise one of your own cards of that skill by one rank, beside that level's card draft. Open the reward to see your cards at the rank each would reach, then pick one. A card's rank never passes the skill's level, so if no card can rise yet, the reward waits.",
-    "build": "0.7.1.944",
+    "build": "0.7.1.946",
     "pullRequest": 1615,
     "url": "https://github.com/cehinds/AshenSpire/pull/1615"
   },

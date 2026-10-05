@@ -353,7 +353,8 @@ export function rewardClaimStatus(plan, states = {}) {
   const count = (state) => rows.filter((row) => row.state === state).length;
   // The first choice still waiting, in row order: a skill draft before the
   // card offer, as the menu lists them.
-  const choice = plan.rows.find((row) => row.choice && !states[row.key]);
+  // A rank-up's cards are the run's own, not the offer's, so it names no count.
+  const choice = plan.rows.find((row) => row.choice && !states[row.key] && pickIds(row).length > 0);
   return Object.freeze({
     total: rows.length,
     claimed: count('taken'),

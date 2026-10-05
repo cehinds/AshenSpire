@@ -44,7 +44,7 @@ import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
-import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
+import { skillKindOf, rankUpKind, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
@@ -140,6 +140,10 @@ function pendingRewardReferenceProblems(pending, registries) {
     for (const cardId of (row && row.cardIds) || []) {
       if (!registries.cards.has(cardId)) problems.push(`level card '${cardId}' is unknown`);
     }
+  }
+  // A rank-up (SPEC §13.4o) belongs to a card-school track.
+  for (const up of Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : []) {
+    if (!up || !rankUpKind(skillKindOf(registries, up.skillId))) problems.push(`rank-up track '${up && up.skillId}' is not a card-school track`);
   }
   for (const draft of rewards.skillDrafts || []) {
     if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);

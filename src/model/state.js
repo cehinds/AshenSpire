@@ -1125,6 +1125,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           }
         }
       }
+      for (const { key } of pendingDraftRows(pending).filter((d) => d.rankUp)) {
+        if (pending.states?.[key] === 'taken' && !(pending.chosenRankUps && pending.chosenRankUps[key])) problems.push(`pendingReward ${key} Taken state requires its chosen card`);
+      }
       for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'classDrafts']) {
         for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
           if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
