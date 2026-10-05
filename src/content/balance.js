@@ -339,13 +339,14 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: {
-      base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 5, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
+      base: 100, linear: false, multScaler: 1.3, growth: 1.995, roundTo: 5, maxLevel: 10, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
       [NOTE]: {
         base: 'Weapon, armour, focus and dual-wield tracks: XP for the first step and the base used for later increases.',
         linear: 'Use base + skill level × base × scaler. Off: use base × exponential growth^skill level.',
         multScaler: 'Linear XP increase per step as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
         growth: 'Exponential growth per step, used only when the linear curve is off.',
         roundTo: 'Those tracks: every step cost is rounded to a multiple of this.',
+        maxLevel: 'The highest level those tracks reach (SPEC §13.4o: 10, about 100,000 XP); XP past it stays banked.',
         perHit: 'Skill XP for a hit or block a track\'s card lands on a live target.',
         perWinEquipped: 'Skill XP each equipped track earns for a won fight.',
         killMult: 'Multiplies that win award for the one track that landed the killing blow.',
@@ -359,13 +360,14 @@ export const balance = {
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 5, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
+      xp: { base: 400, linear: false, multScaler: 1.3, growth: 1.224, roundTo: 5, maxLevel: 20, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
       [NOTE]: {
           'xp.base': 'The class track: what its first level step costs.',
           'xp.linear': 'Use base + class skill level × base × scaler. Off: use exponential growth.',
           'xp.multScaler': 'Linear increase per class skill step as a multiple of the base. Default 1.3.',
           'xp.growth': 'Exponential class-step growth, used only when the linear curve is off.',
         'xp.roundTo': 'The class track: every step cost is rounded to a multiple of this.',
+        'xp.maxLevel': 'The highest class level (SPEC §13.4o: 20, about 100,000 XP); XP past it stays banked.',
         'xp.perWin': 'Class XP for a won fight.',
         'xp.bossKill': 'Class XP for killing an act boss, on top of the win.',
         'xp.perQuest': 'Class XP for a completed quest.',
@@ -685,7 +687,7 @@ export const balance = {
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 10,
+      base: 200, linear: false, multScaler: 1.3, growth: 1.303, roundTo: 10,
       [NOTE]: {
         base: 'Character XP for the first step and the base used for later increases.',
         linear: 'Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).',
@@ -725,9 +727,10 @@ export const balance = {
   },
   levelUp: {
     // What a level GRANTS: attribute points, waiting on the ledger until the
-    // player assigns them at a shrine. `maxLevels` null is no ceiling.
+    // player assigns them at a shrine. `maxLevels` is the character's ceiling
+    // (SPEC §13.4o: 20, about 100,000 XP); null is no ceiling.
     pointsPerLevel: 1,
-    maxLevels: null,
+    maxLevels: 20,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
     // ladder in his own words: "i don't want a dial for hte level up, I want to
     // be able to enter the value myself and maybe a slider with it that is
@@ -747,6 +750,7 @@ export const balance = {
     pointsPerLevelMin: 1,
     pointsPerLevelMax: 20,
     [NOTE]: {
+      maxLevels: 'The highest character level (SPEC §13.4o: 20, about 100,000 XP); XP past it stays banked.',
       pointsPerLevelMin: { text: 'The lowest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
       pointsPerLevelMax: { text: 'The highest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
     },

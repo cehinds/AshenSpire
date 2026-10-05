@@ -40,7 +40,7 @@
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, WeaponCardPackageModel } from './loadout.js';
 import { eligibleWeaponArts } from './armamentTrading.js';
-import { awardSkillXp, skillTracks, skillKindOf, skillLevel, xpToNext, rarityUnlockedAt, skillUpgradesCards, DUAL_WIELD_SKILL } from './skills.js';
+import { awardSkillXp, skillTracks, skillKindOf, skillLevel, skillMaxLevel, xpToNext, rarityUnlockedAt, skillUpgradesCards, DUAL_WIELD_SKILL } from './skills.js';
 import { unusedInstanceId } from './deckRules.js';
 import { cardRewardRarityWeights } from './rewardOdds.js';
 
@@ -182,6 +182,13 @@ function teachingRefusal(registries, run, id, skillId) {
   return '';
 }
 
+// A track at its ceiling (SPEC §13.4o) buys nothing more: no level is past it.
+function cappedRefusal(registries, run, skillId) {
+  const kind = skillKindOf(registries, skillId);
+  const cap = kind ? skillMaxLevel(registries, kind) : null;
+  return cap != null && skillLevel(run, skillId) >= cap ? say('master.refuse.capped', { skill: trackLabel(registries, skillId) }) : '';
+}
+
 // ---------------------------------------------------------------------------
 // Training
 // ---------------------------------------------------------------------------
@@ -190,7 +197,7 @@ export function trainingPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   const row = masterOffering(registries, 'training')?.training || null;
   const cost = row ? cinders(row.cinders, priceMult) : 0;
   const left = run.shopStock?.training?.left ?? 0;
-  let reason = teachingRefusal(registries, run, 'training', skillId);
+  let reason = teachingRefusal(registries, run, 'training', skillId) || cappedRefusal(registries, run, skillId);
   if (!reason && !row) reason = say('master.refuse.notOffered');
   else if (!reason && !(left > 0)) reason = say('master.refuse.trainingSpent');
   else if (!reason && !affordable(run, cost)) reason = say('shop.refuse.cinders');
@@ -267,6 +274,7 @@ export function redistributePlan(registries, run, skillId, amount) {
   let reason = '';
   if (!masterOffers(run, 'redistribute')) reason = say('master.refuse.notOffered');
   else if (!skillKindOf(registries, skillId)) reason = say('master.refuse.unknownTrack', { skill: String(skillId) });
+  else if (cappedRefusal(registries, run, skillId)) reason = cappedRefusal(registries, run, skillId);
   else if (!have) reason = say('master.refuse.poolEmpty');
   else if (!(Number.isSafeInteger(amount) && amount >= 1 && amount <= have)) reason = say('master.refuse.amount', { amount: String(amount), pool: have });
   return { ok: !reason, reason, skillId, amount, pool: have, cost: 0, revision: masterRevision(run) };
