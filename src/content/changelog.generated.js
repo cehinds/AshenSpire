@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Every fourth skill level raises an attribute",
     "detail": "At levels 4 and 8 of Blade, Shield or Magic, you choose one linked attribute to raise by 1. Blade offers Strength or Dexterity. Shield offers Strength, Dexterity, Constitution or Wisdom. Magic offers Dexterity, Constitution, Wisdom or Intelligence. The choice sits beside that level's card draft and shows each attribute's value now and after.",
-    "build": "0.7.1.958",
+    "build": "0.7.1.957",
     "pullRequest": 1625,
     "url": "https://github.com/cehinds/AshenSpire/pull/1625"
+  },
+  {
+    "id": "pr-1618",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Reference components follow the original boards",
+    "detail": "The design kit now separates the five card styles and their ability paintings, adds the missing menu forms and icons, and supplies matching class portraits and inventory weapons. Source comparisons show the differences, and Iron Guard remains a labelled candidate. This prepares reusable artwork; the live game presentation is unchanged.",
+    "build": "0.7.1.955",
+    "pullRequest": 1618,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1618"
   },
   {
     "id": "pr-1622",

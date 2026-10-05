@@ -1,0 +1,41 @@
+{
+  "id": "deck-iron-guard",
+  "name": "Iron Guard",
+  "family": "deck",
+  "sourceBoard": "07-cards-and-relics.png",
+  "sourceRegion": [
+    0.36256906077348067,
+    0.1878453038674033,
+    0.05939226519337017,
+    0.08011049723756906
+  ],
+  "sourceRegionPixels": [
+    525,
+    204,
+    86,
+    87
+  ],
+  "sourceRegionFormat": "x,y,width,height",
+  "prompt": "Use case: stylized-concept. Create an original standalone square painted fantasy deck illustration based on the already inspected Ashen Spire board07 Iron Guard composition. A front-facing medieval guardian with a closed bronze and steel visor stands calmly behind a large worn rectangular kite shield occupying the lower-right foreground. Helmet near upper center, dark weathered armor, tall pale ruined gothic arches and smoky grey sky behind. Tight bust crop, muted brown-grey metal and charcoal cloak, tiny warm highlights. Cinematic painterly realism, weathered materials, atmospheric rough brushwork. Defensive equipment portrait only, no wounds or blood. Entire square is the painting; no border, lettering, badge, game UI, watermark, blue magic or glowing shield sun. Produce high-resolution square 1:1 art readable in a small deck painting window.",
+  "tool": "built-in image_gen",
+  "mode": "stylized-concept",
+  "status": "needs-review",
+  "boardProvidedToTool": false,
+  "generationMethod": "descriptor-guided original candidate after referenced generations were rejected at output moderation",
+  "referenceRoles": [
+    {
+      "path": "docs/design/player-polish-2026-10-01/07-cards-and-relics.png",
+      "role": "visually inspected composition and style reference; not supplied to the successful tool call"
+    }
+  ],
+  "review": "Viewed full output: front-facing closed-visor guardian and worn shield, muted bronze-grey palette and gothic arches are usable. Bust crop is tighter and more frontal than tiny board07 reference. Descriptor-guided candidate only; not accepted as source-matched. Needs review. Referenced calls rejected with output moderation category other, request IDs dd946f42-f153-44c0-9d4f-15d8014a675c and 3dc9fbb3-4150-45a3-9e25-2294f08d3bfb.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fd17-adea-7be2-b6d6-991a56c3160e\\exec-6750afb5-6d00-4c22-9f7b-1b93d2a839f1.png",
+  "file": "masters/abilities/deck-iron-guard.png",
+  "sha256": "9ff11d1544058c0f6192745ef6bd6e4153c9209832799b2feb93f3c61d8038ea",
+  "bytes": 2738655,
+  "width": 1254,
+  "height": 1254,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true
+}
