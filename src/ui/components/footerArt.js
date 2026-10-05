@@ -61,6 +61,9 @@ function capLongWords() {
   pendingCaps.clear();
   const long = list.filter(([node, w]) => node.getComputedTextLength() > w);
   for (const [node, w] of long) node.setAttribute('textLength', String(w));
+  // Marked only once measured: a word dropped here because it was detached is
+  // measured again by the next paint that finds it.
+  for (const [node] of list) node.dataset.measured = 'true';
 }
 function scheduleCaps() {
   if (!pendingCaps.size || capFrame) return;
@@ -80,7 +83,6 @@ export function paintFooterArt(row, values = {}) {
     if (node && (node.textContent !== value || !node.dataset.measured)) {
       node.textContent = value;
       node.removeAttribute('textLength');
-      node.dataset.measured = 'true';
       pendingCaps.set(node, item.w);
     }
   }
