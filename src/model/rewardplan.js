@@ -158,7 +158,7 @@ const KINDS = {
     rows: (r) => {
       const seen = {};
       return r.skillDrafts.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), ...(Array.isArray(d.ranks) ? { ranks: d.ranks.slice() } : {}), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
     },
     blocked: () => null,
   },
