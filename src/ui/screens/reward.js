@@ -65,7 +65,7 @@ import { levelUpPlan, pendingLevelCount, applySkillAttribute } from '../../model
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
-import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank, skillBonusFor, skillFeatById, takeSkillFeat } from '../../model/skills.js';
+import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank, skillBonusFor, passiveBlockFor, skillFeatById, takeSkillFeat } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
@@ -1236,9 +1236,10 @@ export function mountRewards(app, {
       // is one commit and one place the receipt is written.
       const rank = row.kind === 'skillDraft' ? draftRank(row, cardId) : 1;
       // The face shows what the card will be once taken: its rank and the
-      // skill bonus it would be stamped with (SPEC §13.4o).
+      // skill bonus and passive Block it would be stamped with (SPEC §13.4o).
       const skillBonus = skillBonusFor(registries, run, { cardId });
-      const el = renderCard(registries, { cardId, ...(rank > 1 ? { rank } : {}), ...(skillBonus > 0 ? { skillBonus } : {}) }, {
+      const passiveBlock = passiveBlockFor(registries, run, { cardId });
+      const el = renderCard(registries, { cardId, ...(rank > 1 ? { rank } : {}), ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) }, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',

@@ -73,6 +73,7 @@ function cardProblems(card, path) {
   if (typeof card.upgraded !== 'boolean') problems.push(`${path}.upgraded must be boolean`);
   if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1)) problems.push(`${path}.rank must be a whole number of at least 1`);
   if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_SKILL_BONUS)) problems.push(`${path}.skillBonus must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
+  if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_SKILL_BONUS)) problems.push(`${path}.passiveBlock must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
   return problems;
 }
 

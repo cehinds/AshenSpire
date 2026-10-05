@@ -22,7 +22,7 @@ test('Blade levels 2 and 4 queue feat picks; the crit feat opens at 2 and is tak
   const run = createRunState({ seed: 5, classId: 'reaver', registries });
   toLevel(run, 4);
   assert.equal(run.skills[BLADE].pendingSkillFeats, 2);
-  assert.equal(run.skills['item:shield']?.pendingSkillFeats, undefined, 'a track with no authored feat queues none');
+  assert.equal(run.skills['item:shield']?.pendingSkillFeats, undefined, 'a track with no levels queues none');
   assert.deepEqual(skillFeatOptions(run, BLADE, 1), []);
   assert.deepEqual(skillFeatOptions(run, BLADE, 2), ['bladeCritical']);
   assert.ok(takeSkillFeat(run, BLADE, 'bladeCritical'));
