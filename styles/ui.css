@@ -242,23 +242,24 @@
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
+/* A card's rank (SPEC §13.4o), in the level-up blue, inside the card's bottom
+   left corner — over the frame, so it takes no room in any row and never
+   meets the NEW badge above the card. */
+.card .card-rank {
+  position: absolute; left: 4px; bottom: 4px; box-sizing: border-box;
+  display: inline-flex; align-items: center;
+  padding: 1px 5px; border-radius: var(--r-3); border: 1px solid #75bfff;
+  background: rgba(14, 24, 34, 0.92); color: #cfe9ff;
+  font-size: 0.72rem; line-height: 1.2; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap;
+  pointer-events: none; z-index: 2;
+}
+
 /* The card chooser's NEW badge belongs to the status stack above the card,
    never to the title band. The reward row owns the stack's shared dimensions
    in kit.css; fallbacks keep this component safe in an isolated render. The
    height scales with text, while the gap remains a small piece of box
    geometry. pointer-events: none — the badge marks the card, the CARD takes
    the tap. */
-/* A card's rank (SPEC §13.4o), in the level-up blue, above the card's top
-   left corner — the same row the NEW badge sits in, clear of the face. */
-.card .card-rank {
-  position: absolute; top: calc(-1 * (var(--reward-new-badge-height, calc(1.08rem + 6px)) + var(--reward-status-gap, 6px)));
-  left: 0; box-sizing: border-box; height: var(--reward-new-badge-height, calc(1.08rem + 6px));
-  display: inline-flex; align-items: center;
-  padding: 2px 8px; border-radius: var(--r-3); border: 1px solid #75bfff;
-  background: rgba(14, 24, 34, 0.92); color: #cfe9ff;
-  font-size: 0.9rem; line-height: 1.2; font-weight: 700; letter-spacing: 0.06em; white-space: nowrap;
-  pointer-events: none; z-index: 2;
-}
 .card .card-badge-new {
   position: absolute;
   top: calc(-1 * (var(--reward-new-badge-height, calc(1.08rem + 6px)) + var(--reward-status-gap, 6px)));

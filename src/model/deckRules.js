@@ -171,9 +171,9 @@ export function moveToSideboard(registries, run, instanceId) {
     run.removedAttackSlotIds = [...retired];
   }
   run.deck.splice(index, 1);
-  // A pristine plain basic has nothing to keep; an upgraded or modded one is
-  // kept like any owned card and comes back before a fresh one is minted.
-  const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length);
+  // A pristine plain basic has nothing to keep; an upgraded, modded or ranked
+  // one is kept like any owned card and comes back before a fresh one is minted.
+  const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length) && !(card.rank > 1);
   if (!card.equipmentRole && !card.grantedBy && deckRules.unlimitedCardIds.includes(card.cardId) && pristine) return true;
   sideboard(run).push(card);
   return true;
@@ -209,15 +209,15 @@ export function isEquippedRun(run) { return !!(run && run.loadout); }
 
 /**
  * isSetAsideBasic(card) → true for a sideboarded basic worth keeping apart
- * from a fresh one: a PLAIN basic (a run with no equipment) that is upgraded
- * or carries mods of its own. An equipped run's attack and guard basics never
+ * from a fresh one: a PLAIN basic (a run with no equipment) that is upgraded,
+ * ranked (SPEC §13.4o) or carries mods of its own. An equipped run's attack and guard basics never
  * are: stampDeck derives their face, mods and upgrade from the source piece
  * (loadout.js, "equipment-bound basics derive their upgrade from the source
  * piece"), so every copy of a role is the same card once it is back.
  */
 export function isSetAsideBasic(card) {
   if (!card || card.equipmentRole || !isUnlimitedBasic(card)) return false;
-  return !!card.upgraded || (Array.isArray(card.mods) && card.mods.length > 0);
+  return !!card.upgraded || (Array.isArray(card.mods) && card.mods.length > 0) || card.rank > 1;
 }
 
 /**

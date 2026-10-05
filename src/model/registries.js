@@ -624,31 +624,53 @@ export function cardRank(instance) {
 }
 
 /**
- * primaryEffectIndex(card) → the index of the card's PRIMARY NUMBER (SPEC
- * §13.4o): its first unconditional effect with a numeric amount (damage on an
- * attack, Block on a defend, HP on a heal), else its first unconditional
- * status with numeric stacks; -1 when the card has neither (a formula-valued
- * card ranks without a number to move).
+ * The ops a rank may move, best first (SPEC §13.4o): a card's PRIMARY NUMBER is
+ * what it is for — damage, then Block, then healing, then a status it applies,
+ * then poise damage. Costs (loseHp) and tempo (draw, energy, mana, discard)
+ * are never primary, so a rank cannot raise a price or snowball a turn.
+ */
+const RANKED_OPS = ['damage', 'block', 'heal', 'applyStatus', 'poiseDamage'];
+// An X-hit card (hits = energy spent) splits its rank as if it hit this often.
+const RANK_FORMULA_HITS = 3;
+
+/**
+ * primaryEffectIndex(card) → the index of the card's PRIMARY NUMBER: its first
+ * unconditional effect of the best RANKED_OPS op present, with a numeric
+ * amount (stacks for a status); -1 when it has none (the rank moves nothing).
  */
 export function primaryEffectIndex(card) {
   const effects = (card && card.effects) || [];
-  const amount = effects.findIndex((effect) => effect && !effect.if && typeof effect.amount === 'number');
-  if (amount !== -1) return amount;
-  return effects.findIndex((effect) => effect && !effect.if && effect.op === 'applyStatus' && typeof effect.stacks === 'number');
+  const numeric = (effect) => (effect.op === 'applyStatus' ? typeof effect.stacks === 'number' : typeof effect.amount === 'number');
+  for (const op of RANKED_OPS) {
+    const index = effects.findIndex((effect) => effect && !effect.if && effect.op === op && numeric(effect));
+    if (index !== -1) return index;
+  }
+  return -1;
+}
+
+/**
+ * rankBonus(effect, steps) → what `steps` rank steps add to the primary number.
+ * One per step; a multi-hit effect splits that across its hits, rounded up, so
+ * the total stays near one per step and a step never passes without a gain.
+ */
+export function rankBonus(effect, steps) {
+  if (!steps) return 0;
+  const hits = typeof effect.hits === 'number' ? effect.hits : effect.hits != null ? RANK_FORMULA_HITS : 1;
+  return Math.ceil(steps / Math.max(1, hits));
 }
 
 /**
  * applyCardRank(card, rank) → the face at that rank. Each step past rank 1 adds
  * 1 to the primary number: odd ranks by rule, even ranks until a skill's
- * rank-step pool is authored (SPEC §13.4o, content phase C) — a step never
- * passes without a visible gain.
+ * rank-step pool is authored (SPEC §13.4o, content phase C).
  */
 export function applyCardRank(card, rank) {
   const steps = Math.max(0, cardRank({ rank }) - 1);
   const index = primaryEffectIndex(card);
   const effects = (card.effects || []).map((effect, i) => {
     if (i !== index || !steps) return effect;
-    return typeof effect.amount === 'number' ? { ...effect, amount: effect.amount + steps } : { ...effect, stacks: effect.stacks + steps };
+    const bonus = rankBonus(effect, steps);
+    return effect.op === 'applyStatus' ? { ...effect, stacks: effect.stacks + bonus } : { ...effect, amount: effect.amount + bonus };
   });
   return deepFreeze({ ...card, effects, rank: cardRank({ rank }) });
 }

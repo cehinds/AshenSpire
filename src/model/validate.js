@@ -811,6 +811,8 @@ function collectContentProblems(bundle, errors = []) {
       for (const key of ['draftSize', 'draftsPerCombat', 'upgradeAt', 'rankMax']) {
         if (!Number.isInteger(skill[key]) || skill[key] < 1) err(`balance.skill.${key}`, `must be a positive integer, got ${JSON.stringify(skill[key])}`);
       }
+      // A save refuses a rank above state.js MAX_CARD_RANK (99), so no setting may roll one.
+      if (Number.isInteger(skill.rankMax) && skill.rankMax > 99) err('balance.skill.rankMax', `must be at most 99, got ${skill.rankMax}`);
       if (!skill.rarityUnlock || typeof skill.rarityUnlock !== 'object' || Array.isArray(skill.rarityUnlock)) {
         err('balance.skill.rarityUnlock', 'must be an object { <rarity>: level }');
       } else {
