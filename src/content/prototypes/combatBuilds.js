@@ -64,7 +64,11 @@ export function prototypeBundle(pressure = 1) {
   const enemy = (id, s) => ({ ...contentBundle.enemies[0], id: `prototype_${id}`, name: s.name, hp: [s.hp, s.hp], poiseMax: s.poise,
     moves: { strike: { intent: 'attack', damage: Math.round(s.damage * pressure), weight: 1 } }, phases: [], firstMove: 'strike' });
   return {
+    // The foundation prototype keeps the dodge as an Evade (combatRules.dodge):
+    // the shipped Dodge Roll is a flat Block, Poise and Ward since 2026-10-05,
+    // so the prototype restores the dodgeRoll opcode its Evade is keyed on.
     ...contentBundle, cards: [...contentBundle.cards.map((c) => c.id === 'dodgeRoll' ? { ...c,
+      effects: [{ op: 'dodgeRoll', target: 'self' }],
       keywords: [...new Set([...(c.keywords || []), 'retain'])],
       textTemplate: 'Retain. Evade the next incoming hit this turn. Once per turn. Stamina cost depends on equipment weight.' } : c), ...prototypeCards],
     equipment: { ...contentBundle.equipment, cardExposure: [...contentBundle.equipment.cardExposure,

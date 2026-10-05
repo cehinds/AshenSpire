@@ -131,6 +131,6 @@
 
     { "id": "term.desc.unarmedStrike", "canonicalText": "A last resort, still yours. Strikes with bare hands; scales with Strength and grants no attack-rating bonus." },
     { "id": "term.desc.evasiveGuard", "canonicalText": "Guard by not being there. Scales with Dexterity." },
-    { "id": "term.desc.dodgeRoll", "canonicalText": "Roll clear of the next blow. On success, gain Temporary Guard against the next damage tick." }
+    { "id": "term.desc.dodgeRoll", "canonicalText": "Gain Block, Poise and Ward, each 3 plus your DR." }
   ]
 }
