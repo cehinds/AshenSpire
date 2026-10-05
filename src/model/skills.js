@@ -16,6 +16,7 @@
 import { mechanics } from '../framework/data/mechanics.js';
 import { activeIn, HAND_SLOT_IDS } from './zones.js';
 import { xpStepCost } from './xpCurve.js';
+import { skillFeats } from '../content/skillFeats.js';
 
 // The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
 // because loadout.js would close an import cycle through validate.js).
@@ -135,6 +136,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
     row.pendingDrafts += 1;
     queueRankUp(kind, row);
     queueAttributePick(registries, skillId, row);
+    queueSkillFeat(registries, skillId, row);
     cost = xpToNext(registries, kind, row.level);
   }
   return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain };
@@ -181,6 +183,7 @@ export function claimBankedSkillLevel(registries, run, skillId) {
   row.pendingDrafts += 1;
   queueRankUp(kind, row);
   queueAttributePick(registries, skillId, row);
+  queueSkillFeat(registries, skillId, row);
   return { skillId, before, after: row.level, levelUps: 1, gained: 0 };
 }
 
@@ -399,6 +402,48 @@ export function spendAttributePick(run, skillId) {
   return true;
 }
 
+// ---- the every-2nd-level skill feat (SPEC §13.4o) ----------------------------
+
+/** A skill feat by id, or null. */
+export const skillFeatById = (id) => skillFeats.find((feat) => feat.id === id) || null;
+/** The feats a track authors (content/skillFeats.js), in authored order. */
+export const trackSkillFeats = (skillId) => skillFeats.filter((feat) => feat.skillId === skillId);
+
+/** Whether reaching `level` on this track queues a feat pick: every featEvery levels of a track that authors any. */
+export function levelQueuesSkillFeat(registries, skillId, level) {
+  const every = draftRows(registries).featEvery;
+  return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && trackSkillFeats(skillId).length > 0;
+}
+
+function queueSkillFeat(registries, skillId, row) {
+  if (levelQueuesSkillFeat(registries, skillId, row.level)) row.pendingSkillFeats = (row.pendingSkillFeats || 0) + 1;
+}
+
+/** skillFeatOptions(run, skillId, level) → the track's feats open at `level` the run has not taken. */
+export function skillFeatOptions(run, skillId, level) {
+  const taken = new Set(Array.isArray(run && run.skillFeats) ? run.skillFeats : []);
+  return trackSkillFeats(skillId).filter((feat) => feat.minLevel <= level && !taken.has(feat.id)).map((feat) => feat.id);
+}
+
+/**
+ * takeSkillFeat(run, skillId, featId) → true when the feat joined the run: it
+ * is the track's, not yet taken, and a pick was queued (which it spends).
+ */
+export function takeSkillFeat(run, skillId, featId) {
+  const feat = skillFeatById(featId);
+  const row = run && run.skills && run.skills[skillId];
+  if (!feat || feat.skillId !== skillId || !row || !(row.pendingSkillFeats > 0)) return false;
+  if (Array.isArray(run.skillFeats) && run.skillFeats.includes(featId)) return false;
+  row.pendingSkillFeats -= 1;
+  run.skillFeats = [...(Array.isArray(run.skillFeats) ? run.skillFeats : []), featId];
+  return true;
+}
+
+/** critRulesFor(featIds) → the crit rules the run's skill feats grant, for the fight. */
+export function critRulesFor(featIds) {
+  return (Array.isArray(featIds) ? featIds : []).map(skillFeatById).filter((feat) => feat && feat.crit).map((feat) => structuredClone(feat.crit));
+}
+
 /**
  * skillsProblems(skills) → the shape's refusals, by name. Registry-free, as
  * the save door must be: a track id the registries no longer know is a stale
@@ -414,10 +459,10 @@ export function skillsProblems(skills) {
       if (!Number.isInteger(row[key]) || row[key] < 0) problems.push(`skills.${id}.${key} must be a non-negative integer`);
     }
     // The queued rank-ups (SPEC §13.4o), absent on a ledger written before them.
-    for (const key of ['pendingRankUps', 'pendingAttributePicks']) {
+    for (const key of ['pendingRankUps', 'pendingAttributePicks', 'pendingSkillFeats']) {
       if (row[key] !== undefined && !(Number.isInteger(row[key]) && row[key] >= 0)) problems.push(`skills.${id}.${key} must be a non-negative integer`);
     }
-    for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps', 'pendingAttributePicks'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
+    for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps', 'pendingAttributePicks', 'pendingSkillFeats'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
   }
   return problems;
 }
