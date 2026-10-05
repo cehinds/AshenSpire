@@ -211,6 +211,9 @@ export function createCombat({
       poiseMax,
       damageBySchoolAdd: player.damageBySchoolAdd || {},
       itemUpgradeLevels: player.itemUpgradeLevels || {},
+      // The skill feats' critical-hit rules (SPEC §13.4o), carried on the
+      // player so a saved fight keeps the rules it was born with.
+      ...(Array.isArray(player.critRules) && player.critRules.length ? { critRules: structuredClone(player.critRules) } : {}),
     }),
     enemies: [],
     // The SAME object the run holds, not a copy: equipment changed mid-fight is

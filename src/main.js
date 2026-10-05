@@ -54,7 +54,7 @@ import { createRng, seedToString, seedFromString, seedProblem } from './engine/r
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
-import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
+import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
 import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
@@ -2838,6 +2838,8 @@ async function onCombatEnd(result, combat, enc) {
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
       skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
+      skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
+      skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
       ...rollCardRows('boss', levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       ...sigilOffer('boss'),
@@ -2861,6 +2863,8 @@ async function onCombatEnd(result, combat, enc) {
     classDrafts,
     skillDrafts: drafts,
     skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
+    skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
+    skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
     ...rollCardRows(enc.pool, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
@@ -2974,6 +2978,63 @@ function rollSkillRankUps(includeBanked = false) {
 }
 
 /**
+ * The attribute picks the ledger has queued (SPEC §13.4o, every 4th level of a
+ * track with a linked attribute set), offered beside that level's draft on the
+ * same terms; banked levels count when the door claims them.
+ */
+function rollSkillAttributes(includeBanked = false) {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const out = [];
+  for (const track of skillTracks(registries)) {
+    const row = run.skills && run.skills[track.id];
+    const attributeIds = skillLinkedAttributes(registries, track.id);
+    if (!row || !attributeIds.length) continue;
+    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    const entries = [
+      ...Array.from({ length: row.pendingAttributePicks || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
+      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
+        .filter((entry) => skillLevelQueuesAttributePick(registries, track.id, entry.level)),
+    ];
+    for (const entry of entries.slice(0, perDoor)) out.push({ skillId: track.id, ...entry, attributeIds });
+  }
+  return out;
+}
+
+/**
+ * The skill-feat picks the ledger has queued (SPEC §13.4o, every 2nd level of
+ * a track that authors feats), offered with the track's untaken feats open at
+ * that level; a level with none open waits in the ledger.
+ */
+function rollSkillFeats(includeBanked = false) {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const out = [];
+  for (const track of skillTracks(registries)) {
+    const row = run.skills && run.skills[track.id];
+    if (!row) continue;
+    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    const entries = [
+      ...Array.from({ length: row.pendingSkillFeats || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
+      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
+        .filter((entry) => skillLevelQueuesSkillFeat(registries, track.id, entry.level)),
+    ];
+    // One door never offers a feat twice (two rows could otherwise share the
+    // only one, and the second could never land), and a pick with no feat
+    // open does not use up the door's slot.
+    const offered = new Set();
+    let rows = 0;
+    for (const entry of entries) {
+      if (rows >= perDoor) break;
+      const featIds = skillFeatOptions(run, track.id, entry.level).filter((id) => !offered.has(id));
+      if (!featIds.length) continue;
+      featIds.forEach((id) => offered.add(id));
+      out.push({ skillId: track.id, ...entry, featIds });
+      rows += 1;
+    }
+  }
+  return out;
+}
+
+/**
  * The class draft the ledger has queued (plan phase 5b): a pick from the
  * class tree per class level climbed, ONE per door — a second roll at the
  * same door would read the same picks and could offer the first row's node
@@ -3078,6 +3139,8 @@ function showCharacterProgression(returnTo) {
     title: 'Level up & rewards', xpGains: { level: 0, tracks: {} },
     skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
     skillRankUps: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(true) : [],
+    skillAttributes: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(true) : [],
+    skillFeats: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(true) : [],
     classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
   }, run);
   const { available, deferred } = partitionProgressionRewards(rewards, run);

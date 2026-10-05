@@ -8,9 +8,49 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "The Windows installer link downloads the installer",
     "detail": "The README's Windows installer link now downloads the latest test installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The release and main installers have their own direct links.",
-    "build": "0.7.1.951",
+    "build": "0.7.1.964",
     "pullRequest": 1623,
     "url": "https://github.com/cehinds/AshenSpire/pull/1623"
+  },
+  {
+    "id": "pr-1629",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Blade feats and critical hits",
+    "detail": "Every second level of a skill that has its own feats lets you take one. Blade's first feat is Critical Edge, from level 2. It gives your Blade attacks a chance to land a critical hit for 1.5× damage: 5%, plus Dexterity × 0.1%, Wisdom × 0.2% and Intelligence × 0.1%, up to 50%. Other skills' feats come later.",
+    "build": "0.7.1.963",
+    "pullRequest": 1629,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1629"
+  },
+  {
+    "id": "pr-1625",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Every fourth skill level raises an attribute",
+    "detail": "At levels 4 and 8 of Blade, Shield or Magic, you choose one linked attribute to raise by 1. Blade offers Strength or Dexterity. Shield offers Strength, Dexterity, Constitution or Wisdom. Magic offers Dexterity, Constitution, Wisdom or Intelligence. The choice sits beside that level's card draft and shows each attribute's value now and after.",
+    "build": "0.7.1.959",
+    "pullRequest": 1625,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1625"
+  },
+  {
+    "id": "pr-1618",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Reference components follow the original boards",
+    "detail": "The design kit now separates the five card styles and their ability paintings, adds the missing menu forms and icons, and supplies matching class portraits and inventory weapons. Source comparisons show the differences, and Iron Guard remains a labelled candidate. This prepares reusable artwork; the live game presentation is unchanged.",
+    "build": "0.7.1.955",
+    "pullRequest": 1618,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1618"
+  },
+  {
+    "id": "pr-1622",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Skill card bonus: fairer and shown everywhere",
+    "detail": "A card now gets the every-fifth-level bonus from its best skill only, so a card that counts for two of your skills no longer gets both. Card offers show the bonus a card will have once you take it. In co-op, each player's skill levels now reach their cards, and the cards show their rank and bonus.",
+    "build": "0.7.1.954",
+    "pullRequest": 1622,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1622"
   },
   {
     "id": "pr-1620",

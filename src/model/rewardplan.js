@@ -30,7 +30,7 @@
  * follow in his order (flask IS the potion seat in this game).
  */
 // `sigil` (SPEC §15.4) is a dropped legendary sigil, after the relic.
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'skillRankUp', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'skillRankUp', 'skillAttribute', 'skillFeat', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
 
 // ---- the card reward schedule (SPEC §15.1) ----------------------------------
 
@@ -102,7 +102,7 @@ export function cardRewardPlan(balance, { pool, levelsGained = 0, draftWaiting =
  * of a state goes through the key, so the saved `states` of a pre-draft
  * offer (keyed by kind) still read.
  */
-export const rowKey = (kind, row = {}) => (kind === 'skillDraft' || kind === 'skillRankUp' ? `${kind}:${row.skillId}:${row.ordinal || 0}`
+export const rowKey = (kind, row = {}) => (kind === 'skillDraft' || kind === 'skillRankUp' || kind === 'skillAttribute' || kind === 'skillFeat' ? `${kind}:${row.skillId}:${row.ordinal || 0}`
   : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}`
   : kind === 'levelCard' || kind === 'levelChoice' ? `${kind}:${row.ordinal || 0}` : kind);
 
@@ -172,6 +172,28 @@ const KINDS = {
       const seen = {};
       return r.skillRankUps.filter((d) => d && typeof d.skillId === 'string' && d.skillId)
         .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: true }));
+    },
+    blocked: () => null,
+  },
+  skillAttribute: {
+    // A skill level's attribute pick (SPEC §13.4o, every 4th level): +1 to one
+    // attribute of the track's linked set, a choice among `attributeIds`.
+    present: (r) => Array.isArray(r.skillAttributes) && r.skillAttributes.some((d) => d && typeof d.skillId === 'string' && Array.isArray(d.attributeIds) && d.attributeIds.length > 0),
+    rows: (r) => {
+      const seen = {};
+      return r.skillAttributes.filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.attributeIds) && d.attributeIds.length > 0)
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, attributeIds: d.attributeIds.slice(), options: d.attributeIds.map((id) => ({ kind: 'attribute', id })), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: true }));
+    },
+    blocked: () => null,
+  },
+  skillFeat: {
+    // A skill level's feat pick (SPEC §13.4o, every 2nd level): one of the
+    // track's own feats (content/skillFeats.js), a choice among `featIds`.
+    present: (r) => Array.isArray(r.skillFeats) && r.skillFeats.some((d) => d && typeof d.skillId === 'string' && Array.isArray(d.featIds) && d.featIds.length > 0),
+    rows: (r) => {
+      const seen = {};
+      return r.skillFeats.filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.featIds) && d.featIds.length > 0)
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, featIds: d.featIds.slice(), options: d.featIds.map((id) => ({ kind: 'skillFeat', id })), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: true }));
     },
     blocked: () => null,
   },

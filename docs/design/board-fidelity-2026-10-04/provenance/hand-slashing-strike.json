@@ -1,0 +1,37 @@
+{
+  "id": "hand-slashing-strike",
+  "name": "Slashing Strike",
+  "tool": "built-in image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": false,
+  "sourceBoard": {
+    "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+    "approximateArtWindowBounds": [
+      308,
+      466,
+      391,
+      526
+    ],
+    "coordinateConvention": "[left,top,right,bottom] pixels, approximately on the1448×1086 original; selected miniature only, no UI copying"
+  },
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+      "role": "composition, subject, palette and light source reference; ONLY designated ability art window"
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: ONE standalone AshenSpire ability illustration matching a specific existing board05 card artwork, NOT a complete card, screenshot or UI mockup. Source image is a COMPOSITION/COLOR reference. Extract and faithfully paint ONLY the named small art-window subject described below at high resolution. Fill the entire output image with that painting: no card frame, name, cost medallion, numbers, text, labels, bottom parchment, borders, UI, extra figure, invented item lore or new composition. Match the board's richly painted gloomy charcoal brushwork and explosive localized light. Output landscape 4:3 aspect ratio, width1536 height1152. The reference board has another aspect ratio; do NOT follow its outer aspect ratio. Keep important silhouettes visible on a compact horizontal card-art window.\nNamed reference artwork: Slashing Strike.\nPrecise target: Upper desktop combat hand, first card art window. Bright diagonal sword slash rising from bottom-left to upper-right, hot white-orange core and ember-red curling streaks against near-black smoky background. The slash is the subject, not a warrior. Preserve its energetic diagonal sweep and orange/red left-bottom glow. No figure or shield.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-eef46ba3-ee1e-4214-8f17-48bf3a446f3e.png",
+  "file": "masters/abilities/hand-slashing-strike.png",
+  "sha256": "82608120b827158c565dec466690411c457542b485a6e453894c865ae766a4c3",
+  "bytes": 2811256,
+  "width": 1448,
+  "height": 1086,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "aspectRatio": 1.3333333333333333,
+  "acceptedAfterVisualReview": true,
+  "reviewNotes": "Visually compared with designated board05 art window for subject, silhouette, composition, color/light, absence of UI/text; standalone4:3 painting."
+}

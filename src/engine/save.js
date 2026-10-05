@@ -44,7 +44,7 @@ import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
-import { skillKindOf, rankUpKind } from '../model/skills.js';
+import { skillKindOf, rankUpKind, skillFeatById } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
@@ -144,6 +144,15 @@ function pendingRewardReferenceProblems(pending, registries) {
   // A rank-up (SPEC §13.4o) belongs to a card-school track.
   for (const up of Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : []) {
     if (!up || !rankUpKind(skillKindOf(registries, up.skillId))) problems.push(`rank-up track '${up && up.skillId}' is not a card-school track`);
+  }
+  // A feat pick (SPEC §13.4o) names feats of its own track.
+  for (const pick of Array.isArray(rewards.skillFeats) ? rewards.skillFeats : []) {
+    for (const id of (pick && pick.featIds) || []) if (skillFeatById(id)?.skillId !== pick.skillId) problems.push(`skill feat '${id}' is not a feat of '${pick && pick.skillId}'`);
+  }
+  // An attribute pick (SPEC §13.4o) belongs to a known track and names known attributes.
+  for (const pick of Array.isArray(rewards.skillAttributes) ? rewards.skillAttributes : []) {
+    if (!pick || !skillKindOf(registries, pick.skillId)) problems.push(`attribute pick track '${pick && pick.skillId}' is unknown`);
+    for (const id of (pick && pick.attributeIds) || []) if (!registries.attributes.ids().includes(id)) problems.push(`attribute pick attribute '${id}' is unknown`);
   }
   for (const draft of rewards.skillDrafts || []) {
     if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);

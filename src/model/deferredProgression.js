@@ -1,6 +1,6 @@
 import { rewardPlan } from './rewardplan.js';
 
-const FIELDS = { levelCard: 'levelCards', levelChoice: 'levelChoices', skillDraft: 'skillDrafts', skillRankUp: 'skillRankUps', classDraft: 'classDrafts' };
+const FIELDS = { levelCard: 'levelCards', levelChoice: 'levelChoices', skillDraft: 'skillDrafts', skillRankUp: 'skillRankUps', skillAttribute: 'skillAttributes', skillFeat: 'skillFeats', classDraft: 'classDrafts' };
 export const isProgressionReward = (row) => Object.hasOwn(FIELDS, row.kind);
 export const progressionTrack = (row) => row.kind === 'classDraft' ? `class:${row.classId}` : row.skillId || 'character';
 export const progressionRewardClass = (row) => row.classId || (row.skillId?.startsWith('class:') ? row.skillId.slice(6) : null);
@@ -18,7 +18,7 @@ export function mergeProgressionRewards(saved = {}, incoming = {}, run, { manual
   for (const [kind, field] of Object.entries(FIELDS)) {
     const old = structuredClone(saved[field] || []);
     const reservedDrafts = {};
-    if (kind === 'skillDraft' || kind === 'skillRankUp' || kind === 'classDraft') for (const row of old) {
+    if (kind === 'skillDraft' || kind === 'skillRankUp' || kind === 'skillAttribute' || kind === 'skillFeat' || kind === 'classDraft') for (const row of old) {
       const track = progressionTrack({ ...row, kind });
       reservedDrafts[track] = (reservedDrafts[track] || 0) + 1;
     }

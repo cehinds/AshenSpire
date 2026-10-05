@@ -9,7 +9,7 @@ import { combatRatingProblems, ratingIds } from './combatRatings.js';
 // runtime methods detached for storage and reattached after loading.
 
 import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
-import { skillsProblems } from './skills.js';
+import { skillsProblems, MAX_SKILL_BONUS } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
 import { restoreDerivedStatRuleSnapshot, storedStatRowProblems } from './derivedStats.js';
 
@@ -51,7 +51,18 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.ratings !== undefined && (!record(entity.ratings) || ['ar', 'dr', 'pr', 'poise', 'ward'].some(id => !Number.isFinite(entity.ratings[id]) || entity.ratings[id] < 0))) problems.push(`${path}.ratings must contain finite non-negative ratings`);
   if (entity.wardMeter !== undefined && (!record(entity.wardMeter) || !Number.isInteger(entity.wardMeter.max) || entity.wardMeter.max <= 0 || !Number.isFinite(entity.wardMeter.value) || entity.wardMeter.value < 0 || entity.wardMeter.value >= entity.wardMeter.max)) problems.push(`${path}.wardMeter is invalid`);
   if (typeof entity.alive !== 'boolean') problems.push(`${path}.alive must be boolean`);
+  // A skill feat's critical-hit rules (SPEC §13.4o): refused by name, never
+  // left to throw mid-play or to multiply a blow without bound.
+  if (entity.critRules !== undefined && !critRulesOk(entity.critRules)) problems.push(`${path}.critRules must be a list of { tags, base, weights, divisor, cap ≤ 1, multiplier 1–10 }`);
   return problems;
+}
+
+function critRulesOk(rules) {
+  const num = (v, lo, hi) => v === undefined || (Number.isFinite(v) && v >= lo && v <= hi);
+  return Array.isArray(rules) && rules.every((rule) => record(rule)
+    && Array.isArray(rule.tags) && rule.tags.length > 0 && rule.tags.every(nonEmptyString)
+    && num(rule.base, 0, 1) && num(rule.cap, 0, 1) && num(rule.divisor, 1e-9, Infinity) && num(rule.multiplier, 1, 10)
+    && (rule.weights === undefined || (record(rule.weights) && Object.values(rule.weights).every((w) => Number.isFinite(w)))));
 }
 
 function cardProblems(card, path) {
@@ -61,7 +72,7 @@ function cardProblems(card, path) {
   if (!nonEmptyString(card.cardId)) problems.push(`${path}.cardId must be a non-empty string`);
   if (typeof card.upgraded !== 'boolean') problems.push(`${path}.upgraded must be boolean`);
   if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1)) problems.push(`${path}.rank must be a whole number of at least 1`);
-  if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1)) problems.push(`${path}.skillBonus must be a whole number of at least 1`);
+  if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_SKILL_BONUS)) problems.push(`${path}.skillBonus must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
   return problems;
 }
 
