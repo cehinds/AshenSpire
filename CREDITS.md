@@ -425,6 +425,16 @@ and verified by the normal game build.
 
 The matching assets-mobile derivatives retain the same provenance and rights.
 
+## Board fidelity correction components (2026-10-04)
+
+`docs/design/board-fidelity-2026-10-04/` contains original OpenAI-generated
+ability paintings and transparent class/equipment illustrations, plus native
+project-authored card skins, menus and icons, reconstructed from the project's
+original October 1 boards. Exact prompts, unchanged PNG masters and export
+hashes are retained in the package. Existing fonts retain their OFL license.
+This is design-source material; no external runtime art release is changed.
+See the package's CREDITS.md and COVERAGE.md for provenance and review limits.
+
 ## Signature starter card paintings (2026-10-03)
 
 Original Starstone Pebble, Urgent Heal, and Ambush illustrations generated with

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1618",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Reference components follow the original boards",
+    "detail": "The design kit now separates the five card styles and their ability paintings, adds the missing menu forms and icons, and supplies matching class portraits and inventory weapons. Source comparisons show the differences, and Iron Guard remains a labelled candidate. This prepares reusable artwork; the live game presentation is unchanged.",
+    "build": "0.7.1.955",
+    "pullRequest": 1618,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1618"
+  },
+  {
     "id": "pr-1622",
     "date": "2026-10-05",
     "group": "2026-10-05",
