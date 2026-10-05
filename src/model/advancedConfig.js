@@ -188,6 +188,13 @@ function withoutRetiredCinderKey(entries) {
 
 const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was left out: Cinders pay the authored table. Use Rewards → Cinder gain multiplier to scale them.';
 
+// The skill-level card upgrade (`balance.skill.upgradeAt`) is retired for card
+// ranks (SPEC §13.4o): its leaf is gone, so a stored value is dropped from the
+// profile and skipped on import with a warning, never refused as unknown.
+const RETIRED_UPGRADE_AT_KEY = `${ADVANCED_CONFIG_PREFIX}balance.skill.upgradeAt`;
+const RETIRED_UPGRADE_AT_KEYS = Object.freeze([RETIRED_UPGRADE_AT_KEY, `settings.${RETIRED_UPGRADE_AT_KEY}`]);
+const RETIRED_UPGRADE_AT_WARNING = 'The skill-level card upgrade setting is retired and was left out: levels raise card ranks instead.';
+
 /**
  * bringRunSnapshotForward(run, save, warnings) → `warnings`, with the retired
  * Cinder warning pushed once when the run's `advancedConfigSnapshot` held the
@@ -223,7 +230,7 @@ export function bringRunSnapshotForward(run, save, warnings = []) {
 export function hasLegacyAdvancedSettings(settings = {}) {
   // An unmarked profile holding a `draw` or `poise` row is one of them
   // (model/statRows.js hasLegacyStatSettings).
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || Object.hasOwn(settings || {}, RETIRED_UPGRADE_AT_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
 }
 
 /**
@@ -250,6 +257,10 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (Object.hasOwn(settings, LEGACY_CINDER_KEY)) {
     delete settings[LEGACY_CINDER_KEY];
     if (Array.isArray(warnings)) warnings.push(LEGACY_CINDER_WARNING);
+  }
+  if (Object.hasOwn(settings, RETIRED_UPGRADE_AT_KEY)) {
+    delete settings[RETIRED_UPGRADE_AT_KEY];
+    if (Array.isArray(warnings)) warnings.push(RETIRED_UPGRADE_AT_WARNING);
   }
   // #1294's retired 3–15 opening-hand limits and the retired shared opening
   // base and attribute go first (#1318), so they are never converted into the
@@ -327,6 +338,9 @@ export function bringProfileForward(meta, bundle, save, warnings = null) {
 const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.(energy|draw|hp|stamina|mana|poise)\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
 function withoutRetired(entries, warnings) {
+  const upgradeAt = entries.filter(([key]) => !RETIRED_UPGRADE_AT_KEYS.includes(key));
+  if (upgradeAt.length !== entries.length) warnings.push(RETIRED_UPGRADE_AT_WARNING);
+  entries = upgradeAt;
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
     warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');

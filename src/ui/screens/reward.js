@@ -65,7 +65,7 @@ import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
-import { skillTracks, skillLevel, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
+import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';

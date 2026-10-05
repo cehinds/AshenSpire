@@ -13,8 +13,8 @@
 // quote commits once. A refusal changes nothing.
 //
 //   training     training.cinders for training.xp on one of his tracks,
-//                through awardSkillXp with the track's loadout-independent
-//                schools; training.perVisit sessions per visit (`training.left`)
+//                through awardSkillXp; training.perVisit sessions per visit
+//                (`training.left`)
 //   respec       one of his tracks at level ≥ 2 back to level 1 with xp 0; a
 //                share of the XP spent above level 1 goes to run.trainingPool
 //   lesson       one skill draft for one of his tracks, rolled once per track

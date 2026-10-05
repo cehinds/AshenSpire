@@ -281,7 +281,7 @@ function queueRankUp(kind, row) {
  * then sideboard) a rank-up of that track may raise: an ordinary card of the
  * track's schools whose rank is below both the track's level and
  * balance.skill.rankMax. An equipment-bound basic or an item-owned card is the
- * piece's, as for the threshold upgrade, and is not offered.
+ * piece's (its upgrade is the smith's tier) and is not offered.
  */
 export function rankUpCandidates(registries, run, skillId) {
   const schools = new Set(skillSchools(registries, run && run.loadout, skillId));

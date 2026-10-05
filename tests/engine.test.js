@@ -8872,7 +8872,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 1 }, { owner: entB }), false, 'and not the active seat\'s');
   });
 
-  test('86. skill drafts: the level buys a pick from the track\'s own schools, rarity opens by level, the threshold upgrades the deck (plan phase 4b)', () => {
+  test('86. skill drafts: the level buys a pick from the track\'s own schools, rarity opens by level, and a level no longer upgrades the deck (plan phase 4b, §13.4o)', () => {
     const c = REG.balance.skill;
     // THE SCHOOLS ARE DERIVED from what the hands hold — a straight sword's
     // tagging rows, not a second table; armour and class tracks draft nothing.
