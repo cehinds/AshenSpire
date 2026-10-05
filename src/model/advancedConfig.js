@@ -107,9 +107,15 @@ const BALANCE_DOMAINS = Object.freeze({
   'level.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
   'skill.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
   'skill.class.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
-  'level.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
-  'skill.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
-  'skill.class.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
+  // Three decimals: the owner's curves (SPEC §13.4o) are 1.303, 1.995 and 1.224,
+  // and a coarser step would show and store a different curve from the one in force.
+  'level.xp.growth': Object.freeze({ integer: false, step: 0.001, min: 1, max: 5 }),
+  'skill.xp.growth': Object.freeze({ integer: false, step: 0.001, min: 1, max: 5 }),
+  'skill.class.xp.growth': Object.freeze({ integer: false, step: 0.001, min: 1, max: 5 }),
+  // The level caps (SPEC §13.4o) must be positive levels, as validate.js requires.
+  'levelUp.maxLevels': Object.freeze({ integer: true, step: 1, min: 1, max: 200 }),
+  'skill.xp.maxLevel': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
+  'skill.class.xp.maxLevel': Object.freeze({ integer: true, step: 1, min: 1, max: 200 }),
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,

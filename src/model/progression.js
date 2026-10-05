@@ -19,7 +19,7 @@
 // so the plural rule lived in two files and a reworded tooltip would have
 // silently disagreed with the badge under it.
 import { characterLevel, levelUpPlan } from './levelup.js';
-import { classSkillId, skillLevel, skillTracks, xpToNext as skillXpToNext } from './skills.js';
+import { classSkillId, skillLevel, skillMaxLevel, skillTracks, xpToNext as skillXpToNext } from './skills.js';
 
 // How many tracks the fold summary names before it counts the rest. One home,
 // because the sentence says the number twice ("the first three · +2 more").
@@ -116,7 +116,11 @@ export function skillProgressRows(registries, run, { includeUntouched = false } 
     const own = track.id === ownId;
     const touched = level > 0 || xp > 0 || pendingDrafts > 0;
     if (!includeUntouched && !own && !touched) return;
-    const cost = skillXpToNext(registries, track.kind, level);
+    // A track at its ceiling (SPEC §13.4o) has no next level: a full bar, no
+    // step past the cap.
+    const cap = skillMaxLevel(registries, track.kind);
+    const capped = cap != null && level >= cap;
+    const cost = capped ? null : skillXpToNext(registries, track.kind, level);
     const draftsLabel = pendingDrafts ? plural(pendingDrafts, 'draft') : '';
     rows.push({
       id: track.id,
@@ -125,14 +129,15 @@ export function skillProgressRows(registries, run, { includeUntouched = false } 
       level,
       xp,
       xpToNext: cost,
-      remaining: Math.max(0, cost - xp),
-      pct: fillPct(xp, cost),
+      capped,
+      remaining: capped ? 0 : Math.max(0, cost - xp),
+      pct: capped ? 100 : fillPct(xp, cost),
       pendingDrafts,
       draftsLabel,
       own,
       order,
-      value: `${xp} / ${cost} XP`,
-      sense: `${track.label} — level ${level}, ${Math.max(0, cost - xp)} XP to level ${level + 1}.`
+      value: capped ? `Level ${level} · max` : `${xp} / ${cost} XP`,
+      sense: (capped ? `${track.label} — level ${level}, the highest it goes.` : `${track.label} — level ${level}, ${Math.max(0, cost - xp)} XP to level ${level + 1}.`)
         + (pendingDrafts ? ` ${draftsLabel} waiting at the next reward.` : ''),
     });
   });

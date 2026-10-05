@@ -143,3 +143,28 @@ test('SPEC §13.4o caps: a skill stops at 10 and the class track at 20, banking 
   for (let i = 0; i < 10; i++) assert.ok(claimBankedSkillLevel(registries, banked, 'item:blade'));
   assert.equal(claimBankedSkillLevel(registries, banked, 'item:blade'), null, 'level 10 claims no eleventh');
 });
+
+test('SPEC §13.4o caps read as capped everywhere: reward bar, Character row, Settings rows', async () => {
+  const { rewardProgress } = await import('../src/model/rewardprogress.js');
+  const { skillProgressRows } = await import('../src/model/progression.js');
+  const { awardSkillXp } = await import('../src/model/skills.js');
+  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  const run = { class: 'reaver', skills: {}, deck: [], level: { level: 1, xp: 0, unspentPoints: 0 }, trainingPool: 50, cinders: 999 };
+  awardSkillXp(registries, run, 'item:blade', 200_000);
+  const bar = rewardProgress(registries, run, { level: 0, tracks: { 'item:blade': 1 } }).skills.find((row) => row.id === 'item:blade');
+  assert.equal(bar.capped, true);
+  assert.equal(bar.fraction, 1);
+  assert.equal(bar.xpToNext, null, 'no step past the cap is priced');
+  const row = skillProgressRows(registries, run).find((entry) => entry.id === 'item:blade');
+  assert.equal(row.capped, true);
+  assert.equal(row.pct, 100);
+  assert.equal(row.value, 'Level 10 · max');
+  const { contentBundle } = await import('../src/content/index.js');
+  const rows = Object.fromEntries(advancedConfigRows(contentBundle).map((r) => [r.key, r]));
+  for (const key of ['levelUp.maxLevels', 'skill.xp.maxLevel', 'skill.class.xp.maxLevel']) {
+    const found = Object.entries(rows).find(([k]) => k.endsWith(`balance.${key}`));
+    if (found) assert.ok(found[1].min >= 1, `${key} cannot be set to 0, which validation refuses`);
+  }
+  const growth = Object.entries(rows).find(([k]) => k.endsWith('balance.skill.xp.growth'));
+  if (growth) assert.equal(growth[1].step, 0.001, 'the growth row can hold 1.995');
+});

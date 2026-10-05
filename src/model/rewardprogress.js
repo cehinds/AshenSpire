@@ -141,7 +141,7 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
       label: track.label || track.id,
       level,
       xp,
-      xpToNext: next,
+      xpToNext: capped ? null : next,
       fraction: capped ? 1 : ratio(xp, next),
       gained,
       capped, // SPEC §13.4o: skills stop at 10, the class track at 20

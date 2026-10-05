@@ -4036,8 +4036,9 @@ if (shotState === 'combat-test') {
       run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 2) + 18, level: 2, pendingDrafts: 0 };
     }
     if (pose === 'refill') {
-      run.level.xp = 355;
-      run.skills['item:blade'] = { xp: 355, level: 0, pendingDrafts: 0 };
+      // Two banked levels on each track, so the refill pose shows a second Level up.
+      run.level.xp = levelXpToNext(registries, 1) + levelXpToNext(registries, 2) + 95;
+      run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 0) + skillXpToNext(registries, 'weapon', 1) + 55, level: 0, pendingDrafts: 0 };
     }
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
