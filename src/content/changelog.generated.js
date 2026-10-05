@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-05",
     "group": "2026-10-05",
     "summary": "Character sheet: every level and what it brings",
-    "detail": "In the Armoury's Character view, the new Character sheet button lists every character level from 1 to 20 and every level of each skill and your class, with the XP each costs and what it grants: attribute points, more HP, Mana and Stamina, a bigger deck minimum, card drafts and their top rank, rank-ups, uncommon and rare cards unlocking, class-tree tiers opening, skill feats, linked attributes and +1 card power. It opens on the level you're at.",
-    "build": "0.7.1.975",
+    "detail": "In the Armoury's Character view, the new Character sheet button lists every character level from 1 to 20 and every level of each skill and your class, with the XP each costs and what it grants: attribute points, feat and class-tree choices, more HP, Mana and Stamina, a bigger deck minimum, card drafts and their top rank, rank-ups, uncommon and rare cards unlocking, class-tree tiers opening, skill feats, linked attributes and +1 card power. It opens on the level you're at.",
+    "build": "0.7.1.977",
     "pullRequest": 1640,
     "url": "https://github.com/cehinds/AshenSpire/pull/1640"
   },

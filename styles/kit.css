@@ -5786,7 +5786,7 @@ button[data-button-size] {
    row is gold and marked, a milestone (a level that pays more than the
    every-level draft) carries a gold rule so the eye finds it in a column. */
 .character-sheet .character-sheet-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
-.character-sheet .cs-pane { display: flex; flex-direction: column; gap: .75rem; min-width: 0; min-height: 0; overflow: auto; padding: var(--modal-inset, 1rem); }
+.character-sheet .cs-pane { position: relative; display: flex; flex-direction: column; gap: .75rem; min-width: 0; min-height: 0; overflow: auto; padding: var(--modal-inset, 1rem); }
 .character-sheet .cs-skills { display: grid; grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); min-height: 0; overflow: hidden; flex: 1 1 auto; }
 .character-sheet .cs-rail .cs-rail-item { white-space: normal; flex: 0 0 auto; }
 .character-sheet .cs-rail .cs-rail-item:not(.touched):not(.own):not(.on) { opacity: .7; }

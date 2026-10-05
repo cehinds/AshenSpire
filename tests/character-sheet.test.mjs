@@ -14,7 +14,7 @@ import {
 import { deckMinimum } from '../src/model/loadout.js';
 import { deriveStat } from '../src/model/derivedStats.js';
 import { characterSheetModel, characterLadder, rowState } from '../src/ui/models/CharacterSheetModel.js';
-import { grantText } from '../src/ui/screens/characterSheet.js';
+import { cadenceLine, grantText } from '../src/ui/screens/characterSheet.js';
 
 const registries = createRegistries(contentBundle);
 const freshRun = () => createRunState({ seed: 4242, classId: 'reaver', registries });
@@ -64,7 +64,11 @@ test('pool growth is the run\'s own snapshot: the grants sum to what deriveStat 
 test('the level offers follow the player\'s reward settings', () => {
   const run = freshRun();
   const on = characterLadder(registries, run, { statPoints: true, feats: true, classTree: true, levelCards: true, pointsPerLevel: 3 });
-  assert.deepEqual(kinds(on.rows[1]).filter((k) => ['points', 'featChoice', 'classNodeChoice', 'levelCard'].includes(k)), ['points', 'featChoice', 'classNodeChoice', 'levelCard']);
+  assert.deepEqual(kinds(on.rows[1]).filter((k) => ['points', 'featChoice', 'classNodeChoice', 'featOrNodeChoice', 'levelCard'].includes(k)), ['points', 'featOrNodeChoice', 'levelCard'],
+    'feats and class nodes share ONE level choice (main.js rollLevelChoices)');
+  assert.ok(kinds(characterLadder(registries, run, { feats: false, classTree: true }).rows[1]).includes('classNodeChoice'));
+  const unequipped = characterLadder(registries, { ...run, classUnequipped: true }, { feats: true, classTree: true });
+  assert.ok(kinds(unequipped.rows[1]).includes('featChoice') && !kinds(unequipped.rows[1]).some((k) => /Node/.test(k)), 'no class equipped, no node offered');
   assert.equal(on.rows[1].grants[0].amount, 3, 'the Level-up value dial replaces the authored points');
   const off = characterLadder(registries, run, { statPoints: false, feats: false, classTree: false, levelCards: false });
   assert.ok(!kinds(off.rows[1]).some((k) => ['points', 'featChoice', 'classNodeChoice', 'levelCard'].includes(k)));
@@ -134,4 +138,24 @@ test('the model is frozen and every grant has words', () => {
     const text = grantText(grant);
     assert.ok(text && text !== grant.kind && !/\{\w+\}/.test(text), `${grant.kind} reads "${text}"`);
   }
+});
+
+test('a class level also pays the source bonuses: a feat choice and a chance at a class card', () => {
+  const cls = characterSheetModel(registries, freshRun()).tracks[0];
+  const bonus = registries.balance.rewards.sourceBonuses;
+  for (const row of cls.rows) {
+    assert.equal((row.grants.find((g) => g.kind === 'classFeat') || {}).pct, bonus.classFeatChancePct);
+    assert.equal((row.grants.find((g) => g.kind === 'classCard') || {}).pct, bonus.classCardChancePct);
+  }
+});
+
+test('the cadence line promises only what that track pays', () => {
+  const sheet = characterSheetModel(registries, freshRun());
+  const line = (id) => cadenceLine(registries, sheet.tracks.find((t) => t.id === id));
+  assert.match(line('item:blade'), /rank-up/);
+  assert.match(line('item:blade'), /linked attribute/);
+  assert.match(line('item:blade'), /card power/);
+  const armour = line('armour:heavy');
+  assert.doesNotMatch(armour, /rank-up|card power|skill feat|linked attribute/, armour);
+  assert.match(line(classSkillId('reaver')), /class-tree pick/);
 });

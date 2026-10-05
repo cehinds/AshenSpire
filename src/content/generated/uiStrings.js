@@ -7570,20 +7570,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "characterSheet.skills.cadence",
-    "extends": "",
-    "short": "Every level: a card draft and a rank-up. Every {feat} levels: a skill feat. Every {attribute} levels: +1 to a linked attribute. Every {flat} levels: +1 card power.",
-    "full": "",
-    "tip": ""
-  },
-  {
-    "id": "characterSheet.skills.cadenceClass",
-    "extends": "",
-    "short": "Every level: a class-tree pick from the tiers open. New tiers open at the levels marked.",
-    "full": "",
-    "tip": ""
-  },
-  {
     "id": "characterSheet.skills.level",
     "extends": "",
     "short": "Level {n} / {max}",
@@ -7769,6 +7755,104 @@ export const uiStrings = [
     "id": "characterSheet.grant.flat",
     "extends": "",
     "short": "+1 card power (total +{total})",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featOrNodeChoice",
+    "extends": "",
+    "short": "Feat or class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classFeatChance",
+    "extends": "",
+    "short": "Feat choice ({pct}% chance)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classCard",
+    "extends": "",
+    "short": "Class card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classCardChance",
+    "extends": "",
+    "short": "Class card ({pct}% chance)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.draft",
+    "extends": "",
+    "short": "Every level: a card draft.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.rankUp",
+    "extends": "",
+    "short": "From level {from}: a rank-up each level.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.feat",
+    "extends": "",
+    "short": "Every {n} levels: a skill feat.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.attribute",
+    "extends": "",
+    "short": "Every {n} levels: +1 to a linked attribute.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.flat",
+    "extends": "",
+    "short": "Every {n} levels: +1 card power.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classPick",
+    "extends": "",
+    "short": "Every level: a class-tree pick from the tiers open.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classFeat",
+    "extends": "",
+    "short": "Every level: a feat choice.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classFeatChance",
+    "extends": "",
+    "short": "Every level: a {pct}% chance at a feat choice.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classCardChance",
+    "extends": "",
+    "short": "Every level: a {pct}% chance at a class card.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classTier",
+    "extends": "",
+    "short": "New tiers open at the levels marked.",
     "full": "",
     "tip": ""
   }

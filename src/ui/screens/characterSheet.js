@@ -13,7 +13,7 @@
 
 import { el, meter, openModal, pill, prose, rail, railItem, statusText, titleS } from '../kit/index.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
-import { characterSheetModel, DEFAULT_LEVEL_OFFERS } from '../models/CharacterSheetModel.js';
+import { characterSheetModel, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
 import { levelProgress, skillProgressRows } from '../../model/progression.js';
 import { t } from '../strings.js';
 
@@ -27,6 +27,9 @@ export function grantText(grant) {
     case 'deckMinimum': return t('characterSheet.grant.deckMinimum', { n: grant.amount });
     case 'featChoice': return t('characterSheet.grant.featChoice');
     case 'classNodeChoice': return t('characterSheet.grant.classNodeChoice');
+    case 'featOrNodeChoice': return t('characterSheet.grant.featOrNodeChoice');
+    case 'classFeat': return grant.pct >= 100 ? t('characterSheet.grant.featChoice') : t('characterSheet.grant.classFeatChance', { pct: grant.pct });
+    case 'classCard': return grant.pct >= 100 ? t('characterSheet.grant.classCard') : t('characterSheet.grant.classCardChance', { pct: grant.pct });
     case 'levelCard': return t('characterSheet.grant.levelCard');
     case 'cardDraft': return t('characterSheet.grant.cardDraft', { rank: grant.rank });
     case 'classNodeDraft': return t('characterSheet.grant.classNodeDraft');
@@ -44,7 +47,7 @@ export function grantText(grant) {
 
 // The grants every level of a ladder repeats: shown once in the cadence line,
 // muted on each row, so a milestone's own reward is what the eye lands on.
-const ROUTINE = new Set(['points', 'cardDraft', 'classNodeDraft', 'rankUp', 'featChoice']);
+const ROUTINE = new Set(['points', 'featChoice', 'classNodeChoice', 'featOrNodeChoice', ...EVERY_LEVEL_GRANTS]);
 
 function ladderRow(row) {
   const grants = row.grants.length
@@ -82,10 +85,28 @@ function characterPane(registries, run, sheet) {
   ]);
 }
 
-function cadenceLine(registries, track) {
+// The track's cadence, read off its own ladder: a clause only for a reward
+// some level of THIS track pays, at the first level that pays it, so armour
+// never promises a rank-up and a track with no feats never promises one.
+export function cadenceLine(registries, track) {
   const s = (registries.balance && registries.balance.skill) || {};
-  if (track.kind === 'class') return t('characterSheet.skills.cadenceClass');
-  return t('characterSheet.skills.cadence', { feat: s.featEvery, attribute: s.attributeEvery, flat: s.flatEvery });
+  const first = (kind) => { const row = track.rows.find((r) => r.grants.some((g) => g.kind === kind)); return row ? row.level : null; };
+  const parts = [];
+  if (track.kind === 'class') {
+    parts.push(t('characterSheet.cadence.classPick'));
+    const feat = track.rows[0] && track.rows[0].grants.find((g) => g.kind === 'classFeat');
+    if (feat) parts.push(feat.pct >= 100 ? t('characterSheet.cadence.classFeat') : t('characterSheet.cadence.classFeatChance', { pct: feat.pct }));
+    const card = track.rows[0] && track.rows[0].grants.find((g) => g.kind === 'classCard');
+    if (card) parts.push(t('characterSheet.cadence.classCardChance', { pct: card.pct }));
+    if (first('classTier') != null) parts.push(t('characterSheet.cadence.classTier'));
+    return parts.join(' ');
+  }
+  parts.push(t('characterSheet.cadence.draft'));
+  if (first('rankUp') != null) parts.push(t('characterSheet.cadence.rankUp', { from: first('rankUp') }));
+  if (first('feat') != null) parts.push(t('characterSheet.cadence.feat', { n: s.featEvery }));
+  if (first('attribute') != null) parts.push(t('characterSheet.cadence.attribute', { n: s.attributeEvery }));
+  if (first('flat') != null) parts.push(t('characterSheet.cadence.flat', { n: s.flatEvery }));
+  return parts.join(' ');
 }
 
 function trackPane(registries, run, track) {
@@ -100,6 +121,8 @@ function trackPane(registries, run, track) {
   ]);
 }
 
+const bodyHostOf = (state) => state.host || null;
+
 function skillsPane(registries, run, sheet, state) {
   const selected = sheet.tracks.find((tr) => tr.id === state.track) || sheet.tracks[0];
   if (!selected) return el('div', { class: 'cs-pane' }, prose(t('characterSheet.skills.none')));
@@ -108,7 +131,11 @@ function skillsPane(registries, run, sheet, state) {
     const item = railItem({ label: t('characterSheet.skills.railItem', { label: tr.label, n: tr.level, max: tr.maxLevel }),
       current: tr.id === selected.id, member: tr.id,
       className: `cs-rail-item${tr.touched ? ' touched' : ''}${tr.id === sheet.ownTrackId ? ' own' : ''}` });
-    item.addEventListener('click', () => state.show('skills', tr.id));
+    item.addEventListener('click', () => {
+      state.show('skills', tr.id);
+      // The redraw replaced the rail: keep the keyboard on the item just chosen.
+      bodyHostOf(state)?.querySelector('.cs-rail .as-railitem.on')?.focus({ preventScroll: true });
+    });
     return item;
   });
   return el('div', { class: 'cs-skills' }, [
@@ -130,9 +157,11 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     if (!bodyHost) return;
     bodyHost.replaceChildren(state.tab === 'skills' ? skillsPane(registries, run, sheet, state) : characterPane(registries, run, sheet));
     bodyHost.dataset.tab = state.tab;
-    // Open on where the player stands, not on level 1.
+    // Open on where the player stands, not on level 1 — scrolling the ladder's
+    // own pane only, never the page behind the modal.
     const here = bodyHost.querySelector('.cs-ladder .cs-row[data-state="current"]');
-    if (here && typeof here.scrollIntoView === 'function') here.scrollIntoView({ block: 'center' });
+    const pane = here && here.closest('.cs-pane');
+    if (pane) pane.scrollTop = Math.max(0, here.offsetTop - (pane.clientHeight - here.offsetHeight) / 2);
   };
   state.show = (nextTab, nextTrack = state.track) => { state.tab = nextTab; state.track = nextTrack; render(); };
   const shell = openModal({
@@ -145,7 +174,7 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     onTab: (id) => state.show(id),
     showMenuButton: false, // a read-only page has no menu to offer
     closeLabel: t('characterSheet.close'),
-    body: (host) => { bodyHost = host; },
+    body: (host) => { bodyHost = host; state.host = host; },
     bodyClassName: 'character-sheet-body',
     ...(opener ? { opener } : {}),
     onClose,

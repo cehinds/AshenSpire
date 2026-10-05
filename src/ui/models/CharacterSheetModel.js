@@ -28,6 +28,9 @@ import { orderedAttributes } from '../../model/attributes.js';
 /** The derived pools a character level can move, in the order the sheet lists them. */
 export const LEVEL_STATS = Object.freeze(['hp', 'stamina', 'mana', 'draw', 'handSize']);
 
+/** The grants a skill ladder pays at (nearly) every level: a row with only these is not a milestone. */
+export const EVERY_LEVEL_GRANTS = Object.freeze(['cardDraft', 'classNodeDraft', 'classFeat', 'classCard', 'rankUp']);
+
 /** Which level rewards are switched on (Settings → Advanced → Rewards); the shipped defaults. */
 export const DEFAULT_LEVEL_OFFERS = Object.freeze({
   statPoints: true, feats: true, classTree: false, levelCards: false, pointsPerLevel: null,
@@ -86,8 +89,12 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
       }
       const floor = floorAt(level);
       if (floor > floorAt(level - 1)) grants.push({ kind: 'deckMinimum', amount: floor });
-      if (o.feats) grants.push({ kind: 'featChoice' });
-      if (o.classTree) grants.push({ kind: 'classNodeChoice' });
+      // One level choice (main.js rollLevelChoices): feats and class-tree
+      // nodes share a single pick, and no class equipped offers no node.
+      const nodes = o.classTree && !(run && run.classUnequipped);
+      if (o.feats && nodes) grants.push({ kind: 'featOrNodeChoice' });
+      else if (o.feats) grants.push({ kind: 'featChoice' });
+      else if (nodes) grants.push({ kind: 'classNodeChoice' });
       if (o.levelCards) grants.push({ kind: 'levelCard' });
     }
     rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), grants: Object.freeze(grants) }));
@@ -139,8 +146,14 @@ export function trackLadder(registries, run, track) {
     const stepXp = skillXpToNext(registries, track.kind, level - 1);
     total += stepXp;
     const grants = [];
-    if (track.kind === 'class') grants.push({ kind: 'classNodeDraft' });
-    else grants.push({ kind: 'cardDraft', rank: Math.min(level, rankMax) });
+    if (track.kind === 'class') {
+      grants.push({ kind: 'classNodeDraft' });
+      // The class level's source bonuses (engine/sourceRewardBonuses.js):
+      // a feat choice and a class-pool card, each at its authored chance.
+      const bonus = (balanceOf(registries).rewards || {}).sourceBonuses || {};
+      if (bonus.classFeatChancePct > 0) grants.push({ kind: 'classFeat', pct: Math.min(100, bonus.classFeatChancePct) });
+      if (bonus.classCardChancePct > 0) grants.push({ kind: 'classCard', pct: Math.min(100, bonus.classCardChancePct) });
+    } else grants.push({ kind: 'cardDraft', rank: Math.min(level, rankMax) });
     if (track.kind !== 'class') {
       for (const rarity of Object.keys(unlock)) {
         if (unlock[rarity] === level && level > 1) grants.push({ kind: 'rarity', rarity });
@@ -158,7 +171,7 @@ export function trackLadder(registries, run, track) {
     if (rankUpKind(track.kind) && Number.isInteger(every) && every > 0 && level % every === 0) {
       grants.push({ kind: 'flat', total: level / every });
     }
-    const milestone = grants.some((g) => !['cardDraft', 'classNodeDraft', 'rankUp'].includes(g.kind));
+    const milestone = grants.some((g) => !EVERY_LEVEL_GRANTS.includes(g.kind));
     rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), milestone, grants: Object.freeze(grants.map(Object.freeze)) }));
   }
   return Object.freeze({
