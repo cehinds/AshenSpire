@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Every fourth skill level raises an attribute",
     "detail": "At levels 4 and 8 of Blade, Shield or Magic, you choose one linked attribute to raise by 1. Blade offers Strength or Dexterity. Shield offers Strength, Dexterity, Constitution or Wisdom. Magic offers Dexterity, Constitution, Wisdom or Intelligence. The choice sits beside that level's card draft and shows each attribute's value now and after.",
-    "build": "0.7.1.957",
+    "build": "0.7.1.959",
     "pullRequest": 1625,
     "url": "https://github.com/cehinds/AshenSpire/pull/1625"
   },
