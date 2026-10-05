@@ -16,6 +16,7 @@ import { note } from './healLedger.js';
 import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
 import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
+import { stampSkillBonuses } from './skills.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
@@ -3096,6 +3097,9 @@ export function stampDeck(registries, run, cards, {
     else delete inst.mods;
     n += 1;
   }
+  // A full restamp also refreshes the derived skill bonus (SPEC §13.4o): a
+  // swapped hand changes which schools a track's levels reach.
+  if (cards == null) stampSkillBonuses(registries, run);
   return n;
 }
 

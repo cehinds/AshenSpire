@@ -23,6 +23,7 @@ import { isPoolDeckMode } from '../model/cardRemoval.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 import { resolveEnemyLevel } from '../model/levels.js';
+import { stampSkillBonuses } from '../model/skills.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
@@ -109,6 +110,9 @@ export function createRunCombat({
   registries, rng, run, enemyIds, encounter = null, settings = {},
   hpMult = 1, enemyDamageMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
 }) {
+  // The every-5th-level skill bonus is derived (SPEC §13.4o): stamped fresh
+  // here so the fight's copies carry the levels and hands it starts with.
+  stampSkillBonuses(registries, run);
   return createCombat({
     // ONE ROW FORMAT, READ FROM THE RUN (ruleset 7). The rating rows and the
     // three hand rows are this run's own — its snapshot's (its class's opening

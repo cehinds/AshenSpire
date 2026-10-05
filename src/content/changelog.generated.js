@@ -11,6 +11,18 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.921",
     "pullRequest": 1603,
     "url": "https://github.com/cehinds/AshenSpire/pull/1603"
+  },
+  {
+    "id": "pr-1620",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Every fifth skill level strengthens that skill's cards",
+    "detail": "At levels 5 and 10 of a weapon, focus or dual-wield skill, every card of that skill gains +1 to its main number, its damage, Block, healing or the status it applies. The bonus shows on the card and adds to its rank. A card of two skills gets both bonuses. The level-up window tells you when it happens.",
+    "build": "0.7.1.950",
+    "pullRequest": 1620,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1620"
+  },
+  {
     "id": "pr-1617",
     "date": "2026-10-05",
     "group": "2026-10-05",

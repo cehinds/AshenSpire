@@ -1261,6 +1261,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`${pile}[${i}].ratingCap must be a finite non-negative number`);
       // A card's rank (SPEC §13.4o): absent is rank 1.
       if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1 && card.rank <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].rank must be a whole number from 1 to ${MAX_CARD_RANK}`);
+      // The derived every-5th-level skill bonus (SPEC §13.4o), absent at 0.
+      if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].skillBonus must be a whole number from 1 to ${MAX_CARD_RANK}`);
       // A set-aside attack basic's slot is retired; any other would make the
       // next restamp disagree with the allocation.
       if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined
