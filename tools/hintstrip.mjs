@@ -263,8 +263,8 @@ if (process.argv.includes('--selftest')) {
         name: 'END TURN loses authored text fitting and the rebound key overflows its control',
         edits: [{
           file: 'src/ui/components/footerArt.js',
-          find: "if (node.getComputedTextLength() > item.w) node.setAttribute('textLength', String(item.w));",
-          replace: "if (node.dataset.footerBinding === 'endTurnKey') { node.removeAttribute('textLength'); node.setAttribute('font-size', '200'); }",
+          find: "for (const [node, w] of long) node.setAttribute('textLength', String(w));",
+          replace: "for (const [node] of list) if (node.dataset.footerBinding === 'endTurnKey') { node.removeAttribute('textLength'); node.setAttribute('font-size', '200'); }",
         }],
         expectRed: /BAD\s+H3 1200x730 WIDE/,
       },

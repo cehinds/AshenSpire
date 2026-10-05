@@ -40,20 +40,42 @@ export function mountMapDetail(port, surface, source) {
       if (!protectedKeys.has(key)) cache.delete(key);
     }
   };
+  // THE TILES ON THE BOARD, BY KEY, AND TOUCHED ONLY WHEN THE SET CHANGES.
+  // update() runs on every scroll and every viewBox change, so on every frame
+  // of a camera glide (a node pick, a tray opening). It used to rebuild every
+  // tile <image> each time. Each insertion re-ran the board's `:has()` rules
+  // (styles/map.css, `svg:has(.map-terrain)` and friends), which restyled the
+  // whole screen, then laid the board out and decoded the tiles again: a full
+  // restyle per frame, which is what made a pick on a phone stutter. A tile
+  // that stays visible now keeps its node; only tiles that enter or leave the
+  // visible set are added or removed.
+  const drawn = new Map();
+  let drawnSize = '';
+  const setData = (name, value) => { if (port.dataset[name] !== value) port.dataset[name] = value; };
   function paint() {
     if (disposed || !desired.length || desired.some(t => !cache.has(t.key) && !failed.has(t.key))) return;
     const width = Number(base.getAttribute('width')), height = Number(base.getAttribute('height'));
-    const nodes = desired.filter(t=>cache.has(t.key)).map(t => {
-      const image = document.createElementNS(ns, 'image');
-      image.setAttribute('href', cache.get(t.key)); image.setAttribute('x', t.x*width); image.setAttribute('y', t.y*height);
-      image.setAttribute('width', t.width*width); image.setAttribute('height', t.height*height);
-      image.setAttribute('preserveAspectRatio','none'); image.dataset.tile=t.key;
-      return image;
-    });
-    tiles.replaceChildren(...nodes);
-    port.dataset.detailLevel = String(level.edge);
-    port.dataset.detailState = nodes.length === desired.length ? 'ready' : 'fallback';
-    port.dataset.detailTiles = String(nodes.length); evict();
+    // The base image's size places every tile; if it changed, place them again.
+    if (drawnSize !== `${width}x${height}`) { drawnSize = `${width}x${height}`; for (const image of drawn.values()) image.remove(); drawn.clear(); }
+    const shown = desired.filter(t=>cache.has(t.key));
+    const keep = new Set(shown.map(t => t.key));
+    for (const [key, image] of drawn) if (!keep.has(key)) { image.remove(); drawn.delete(key); }
+    for (const t of shown) {
+      const href = cache.get(t.key);
+      let image = drawn.get(t.key);
+      if (!image) {
+        image = document.createElementNS(ns, 'image');
+        image.setAttribute('x', t.x*width); image.setAttribute('y', t.y*height);
+        image.setAttribute('width', t.width*width); image.setAttribute('height', t.height*height);
+        image.setAttribute('preserveAspectRatio','none'); image.dataset.tile=t.key;
+        drawn.set(t.key, image);
+      }
+      if (image.getAttribute('href') !== href) image.setAttribute('href', href);
+      if (image.parentNode !== tiles) tiles.append(image);
+    }
+    setData('detailLevel', String(level.edge));
+    setData('detailState', shown.length === desired.length ? 'ready' : 'fallback');
+    setData('detailTiles', String(shown.length)); evict();
   }
   async function load(tile) {
     // The source this load resolved against (see sourceChanged below): a
@@ -94,10 +116,15 @@ export function mountMapDetail(port, surface, source) {
     if (!rect.width || !rect.height) return;
     // Keep engraving fine even when the underlying world is many screens wide.
     const matrix = base.getScreenCTM();
-    if (matrix) for (const pattern of svg.querySelectorAll('.map-paper-pattern')) pattern.setAttribute('patternTransform', `scale(${1/Math.hypot(matrix.a,matrix.b)})`);
+    // Written only when the scale moved: a pattern attribute invalidates every
+    // shape the pattern fills, and a glide does not change the zoom.
+    if (matrix) {
+      const scale = `scale(${1/Math.hypot(matrix.a,matrix.b)})`;
+      for (const pattern of svg.querySelectorAll('.map-paper-pattern')) if (pattern.getAttribute('patternTransform') !== scale) pattern.setAttribute('patternTransform', scale);
+    }
     level = detailLevel(art.levels,rect.width,rect.height,devicePixelRatio,level);
     desired = visibleTiles(level,{x0:(view.left-rect.left)/rect.width,y0:(view.top-rect.top)/rect.height,x1:(view.right-rect.left)/rect.width,y1:(view.bottom-rect.top)/rect.height});
-    port.dataset.detailRequested = String(level.edge);
+    setData('detailRequested', String(level.edge));
     // Only the small visible set is requested, even at Fit. `cache` only
     // records which tiles have loaded (policy.cacheTiles bounds it); the
     // browser's image cache holds the bytes, so evicting frees none.

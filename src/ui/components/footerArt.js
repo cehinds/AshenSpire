@@ -45,6 +45,28 @@ export function installFooterArt(row) {
   }
   row.insertAdjacentHTML('afterbegin', `<div class="footer-art-rails">${svg(plan.rails, b)}</div>`);
 }
+// A word longer than its authored box is squeezed into it (textLength). That
+// takes a measurement, and a measurement after a write is a synchronous style
+// and layout pass. Measured where it was written, the first render of a fight
+// paid one per word, and again for each painter (End Turn's key, then the
+// counts), each a restyle of the whole half-built screen. So the words are
+// written now and measured once, together, at the next animation frame, before
+// that frame paints: a render from an event or a timer never shows a word
+// uncapped.
+const pendingCaps = new Map();
+let capFrame = 0;
+function capLongWords() {
+  capFrame = 0;
+  const list = [...pendingCaps].filter(([node]) => node.isConnected);
+  pendingCaps.clear();
+  const long = list.filter(([node, w]) => node.getComputedTextLength() > w);
+  for (const [node, w] of long) node.setAttribute('textLength', String(w));
+}
+function scheduleCaps() {
+  if (!pendingCaps.size || capFrame) return;
+  if (typeof requestAnimationFrame !== 'function') { capLongWords(); return; }
+  capFrame = requestAnimationFrame(capLongWords);
+}
 export function paintFooterArt(row, values = {}) {
   if (!row?.dataset?.footerArt) return;
   installFooterArt(row);
@@ -58,10 +80,11 @@ export function paintFooterArt(row, values = {}) {
     if (node && (node.textContent !== value || !node.dataset.measured)) {
       node.textContent = value;
       node.removeAttribute('textLength');
-      if (node.getComputedTextLength() > item.w) node.setAttribute('textLength', String(item.w));
       node.dataset.measured = 'true';
+      pendingCaps.set(node, item.w);
     }
   }
+  scheduleCaps();
   row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn);
   row.querySelector('.combat-potions')?.setAttribute('aria-label', next.potions);
   // The authored face remains separate from these readable narrow-host labels.
