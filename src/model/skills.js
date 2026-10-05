@@ -354,14 +354,17 @@ function trackSchools(registries, run) {
 /**
  * passiveBlockFor(registries, run, inst) → the Block the run's passive tags
  * add to a card (SPEC §13.4o "Passive tag effects"): the sum of `passive.block`
- * over the taken skill feats whose tags the card's meet, for a card with an
- * unconditional Block to land on (`registries.js passiveBlockIndex`). Each
- * feat is taken once; a table row that grants a passive again (content C)
- * adds again. Capped at MAX_SKILL_BONUS.
+ * over the taken skill feats whose tags the card's meet. It is stamped by tags
+ * alone: where it lands is the RESOLVED face's business (`registries.js
+ * applyPassiveBlock`, the first unconditional Block after upgrade, mods and
+ * school), so a card that gains a Block on upgrade (Enter Bulwark+) gains it
+ * too, and one with none is unchanged. Each feat is taken once; a table row
+ * that grants a passive again (content C) adds again. Capped at
+ * MAX_SKILL_BONUS.
  */
 export function passiveBlockFor(registries, run, inst) {
   const def = inst && registries.cards.has(inst.cardId) ? registries.cards.get(inst.cardId) : null;
-  if (!def || !(def.effects || []).some((effect) => effect && !effect.if && effect.op === 'block' && typeof effect.amount === 'number')) return 0;
+  if (!def) return 0;
   const tags = def.tags || [];
   let bonus = 0;
   for (const feat of (Array.isArray(run && run.skillFeats) ? run.skillFeats : []).map(skillFeatById)) {

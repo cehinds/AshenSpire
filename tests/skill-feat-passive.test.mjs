@@ -32,10 +32,13 @@ test('Braced Shield opens at Shield 2 and stamps +3 on guard cards with an uncon
   const { passiveBlock, ...plainDefend } = defend;
   assert.deepEqual(blocks(resolveCard(registries, defend)), blocks(resolveCard(registries, plainDefend)).map((n) => n + 3), 'the kit Defend\'s face reads +3');
   assert.deepEqual(blocks(resolveCard(registries, { cardId: 'defend', passiveBlock: 3 })), [8], 'a plain Defend 5 → 8 on the face');
-  assert.equal(run.deck.find((c) => c.cardId === 'shieldBash').passiveBlock, undefined, 'a guard card with no Block carries nothing');
+  const bash = run.deck.find((c) => c.cardId === 'shieldBash');
+  assert.deepEqual(resolveCard(registries, bash).effects, resolveCard(registries, { ...bash, passiveBlock: undefined }).effects, 'a guard card with no Block is unchanged');
   assert.equal(run.deck.find((c) => c.cardId === 'strike').passiveBlock, undefined, 'a card without the tag carries nothing');
   assert.deepEqual(blocks(resolveCard(registries, { cardId: 'bracingStance', passiveBlock: 3 })), [9, 3], 'once per card: the first unconditional Block only');
-  assert.equal(passiveBlockFor(registries, run, { cardId: 'ironResolve' }), 0, 'a card whose every Block is conditional has none to raise');
+  assert.deepEqual(blocks(resolveCard(registries, { cardId: 'ironResolve', passiveBlock: 3 })), [5, 9], 'a card whose every Block is conditional has none to raise');
+  assert.equal(passiveBlockFor(registries, run, { cardId: 'enterBulwark' }), 3, 'stamped by tags');
+  assert.deepEqual(blocks(resolveCard(registries, { cardId: 'enterBulwark', upgraded: true, passiveBlock: 3 })), [6], 'Enter Bulwark+ gains its upgrade Block +3');
   const back = deserializeRun(serializeRun(run));
   assert.deepEqual(validateRunShape(back).filter((p) => /passiveBlock/.test(p)), []);
   for (const bad of [0, 1.5, 100, '3']) {
