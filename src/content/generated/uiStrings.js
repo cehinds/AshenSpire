@@ -3468,6 +3468,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "master.refuse.capped",
+    "extends": "",
+    "short": "{skill} is at its highest level.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "master.refuse.amount",
     "extends": "",
     "short": "Spend a whole amount from 1 to {pool} XP, not {amount}.",

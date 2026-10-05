@@ -18,7 +18,15 @@ import { mountRewards } from '../src/ui/screens/reward.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../src/model/victoryXpPresentation.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
-const registries = createRegistries(contentBundle);
+// These tests drive the reward door's flow, not the curve: they pin the
+// October 2 curves (base 100, ×1.75 for the character, skills and class) their
+// XP amounts were written against, so SPEC §13.4o's curves cannot move them.
+const oldCurve = (xp) => ({ ...xp, base: 100, growth: 1.75 });
+const { balance } = contentBundle;
+const registries = createRegistries({ ...contentBundle, balance: { ...balance,
+  level: { ...balance.level, xp: oldCurve(balance.level.xp) },
+  skill: { ...balance.skill, xp: oldCurve(balance.skill.xp), class: { ...balance.skill.class, xp: oldCurve(balance.skill.class.xp) } },
+} });
 
 const climber = () => ({
   class: 'reaver',

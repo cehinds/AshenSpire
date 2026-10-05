@@ -437,17 +437,25 @@ test('FINISH: respecRefundPct 80 clamps to 75, and 40 to 50', () => {
   assert.equal(respecRefundPct(at(66)), 66);
 });
 
+test('SPEC §13.4o: a track at its ceiling is refused by redistribute and training alike', () => {
+  const { run } = masterRun(OUT);
+  run.trainingPool = 50;
+  run.skills['item:blade'] = { xp: 0, level: 10, pendingDrafts: 0 };
+  assert.match(redistributePlan(OUT, run, 'item:blade', 10).reason, /highest level/);
+  assert.equal(redistributePlan(OUT, run, 'item:blade', 10).ok, false);
+});
+
 test('FINISH: redistribute spends the pool on any track through the one writer, from 1 to the pool, free', () => {
   const { run } = masterRun(OUT);
-  run.trainingPool = 250;
+  run.trainingPool = 450;
   const cinders = run.cinders;
-  const quote = redistributePlan(OUT, run, 'class:reaver', 240);
+  const quote = redistributePlan(OUT, run, 'class:reaver', 440);
   assert.equal(quote.ok, true, quote.reason);
   commitRedistribute(OUT, run, quote);
   assert.equal(run.trainingPool, 10);
   assert.equal(run.cinders, cinders, 'it is free');
   assert.equal(run.skills['class:reaver'].level, 1, 'levelled through awardSkillXp');
-  assert.equal(run.skills['class:reaver'].xp, 240 - xpToNext(OUT, 'class', 0));
+  assert.equal(run.skills['class:reaver'].xp, 440 - xpToNext(OUT, 'class', 0));
   for (const amount of [0, 11, 1.5, -1]) assert.equal(redistributePlan(OUT, run, 'item:blade', amount).ok, false, `amount ${amount}`);
   assert.equal(redistributePlan(OUT, run, 'item:spear', 5).ok, false, 'an unknown track');
   assert.throws(() => commitRedistribute(OUT, run, quote), 'stale');

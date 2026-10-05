@@ -31,7 +31,7 @@
 // player's ceiling is a lie, not a degradation (Copilot, #1232).
 
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from './levelup.js';
-import { skillTracks, skillLevel, xpToNext as skillXpToNext } from './skills.js';
+import { skillTracks, skillLevel, skillMaxLevel, xpToNext as skillXpToNext } from './skills.js';
 
 /** Every active track has a visible bar and can claim its own level. */
 export const MAX_SKILL_ROWS = Infinity;
@@ -132,16 +132,19 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     let next = null;
     try { next = skillXpToNext(registries, track.kind, level); } catch { next = null; }
     if (!(Number.isFinite(next) && next > 0)) continue; // no curve, no row
+    let cap = null;
+    try { cap = skillMaxLevel(registries, track.kind); } catch { cap = null; }
+    const capped = cap != null && level >= cap;
     rows.push(Object.freeze({
       kind: track.kind,
       id: track.id,
       label: track.label || track.id,
       level,
       xp,
-      xpToNext: next,
-      fraction: ratio(xp, next),
+      xpToNext: capped ? null : next,
+      fraction: capped ? 1 : ratio(xp, next),
       gained,
-      capped: false, // skill tracks have no authored ceiling
+      capped, // SPEC §13.4o: skills stop at 10, the class track at 20
     }));
   }
   // Paid-this-fight first (the biggest gain leading), then the deepest track,

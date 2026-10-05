@@ -25,7 +25,12 @@ const CAP = 'gameConfig.balance.level.maxLevelsPerFight';
 
 const REG = createRegistries(contentBundle);
 const configured = (settings) => createRegistries(configuredContentBundle(contentBundle, settings));
-const withCap = (cap) => configured({ [CAP]: cap });
+// The cap tests measure the cap, not the curve: they pin the October 2 curve
+// (base 100, ×1.75) their XP amounts were written against, so a later owner
+// curve (SPEC §13.4o) cannot move what they prove.
+const OLD_CURVE = { 'gameConfig.balance.level.xp.base': 100, 'gameConfig.balance.level.xp.growth': 1.75 };
+const oldLevel = { ...contentBundle.balance.level, xp: { ...contentBundle.balance.level.xp, base: 100, growth: 1.75 } };
+const withCap = (cap) => configured({ ...OLD_CURVE, [CAP]: cap });
 const fight = (pace, pool) => pace.fights.find((row) => row.pool === pool);
 const from = (line, level) => line.from.find((row) => row.level === level);
 // What play pays: the configured registries a new run is born from, a fresh
@@ -72,7 +77,7 @@ test('§15.2 falsify: the levels-gained figure is what awardLevelXp actually awa
 });
 
 test('§15.2 falsify: with maxLevelsPerFight 1, a large boss award gains exactly one level and leaves xp < xpToNext', () => {
-  const settings = { [CAP]: 1, 'gameConfig.balance.xp.kill.boss': 1000, 'gameConfig.balance.xp.killLevelMultiplier': 0.4 };
+  const settings = { ...OLD_CURVE, [CAP]: 1, 'gameConfig.balance.xp.kill.boss': 1000, 'gameConfig.balance.xp.killLevelMultiplier': 0.4 };
   const { award, run, reg } = playAward(settings, 'boss', 1);
   assert.equal(award.levelUps, 1);
   assert.equal(run.level.level, 2);
@@ -105,7 +110,7 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
   awardLevelXp(reg, small, 5);
   assert.equal(small.level.xp, 5);
   // The run's level ceiling (balance.levelUp.maxLevels) still banks its XP, as before.
-  const ceiling = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance, levelUp: { ...contentBundle.balance.levelUp, maxLevels: 2 } } });
+  const ceiling = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance, level: oldLevel, levelUp: { ...contentBundle.balance.levelUp, maxLevels: 2 } } });
   const banked = { level: emptyLevel() };
   awardLevelXp(ceiling, banked, 215);
   assert.equal(banked.level.level, 2);
@@ -114,7 +119,7 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
   // a boss award at the same step. The per-award discard still applies, so the
   // capped award leaves xp ≤ xpToNext − 1 rather than banking 195.
   const both = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance,
-    level: { ...contentBundle.balance.level, maxLevelsPerFight: 2 },
+    level: { ...oldLevel, maxLevelsPerFight: 2 },
     levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
   const twice = { level: emptyLevel() };
   const award = awardLevelXp(both, twice, 705);
@@ -124,7 +129,7 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
   assert.ok(award.discarded > 0);
   // The ceiling alone, short of the per-award allowance, still banks.
   const early = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance,
-    level: { ...contentBundle.balance.level, maxLevelsPerFight: 5 },
+    level: { ...oldLevel, maxLevelsPerFight: 5 },
     levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
   const bank = { level: emptyLevel() };
   assert.equal(awardLevelXp(early, bank, 345).discarded, 0);
@@ -140,8 +145,9 @@ test('§15.2: the preview lists the XP to reach each of levels 2–20, from the 
     total += row.step;
     assert.equal(row.total, total, `the running total to level ${row.level}`);
   }
-  // The shipped curve (owner, 2026-10-02): base 100, ×1.75 a step, to the nearest 10.
-  assert.deepEqual(pace.curve.slice(0, 8).map((row) => row.step), [100, 180, 310, 540, 940, 1640, 2870, 5030]);
+  // The shipped curve (SPEC §13.4o, 2026-10-04): base 200, ×1.303 a step, to the nearest 10 — 100,160 XP to level 20.
+  assert.deepEqual(pace.curve.slice(0, 8).map((row) => row.step), [200, 260, 340, 440, 580, 750, 980, 1280]);
+  assert.equal(pace.curve.at(-1).total, 100160);
   // A curve setting moves it.
   const steeper = levelPacePreview({ 'gameConfig.balance.level.xp.base': 50 });
   assert.equal(steeper.curve[0].step, 50);
