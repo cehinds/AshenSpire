@@ -33,7 +33,7 @@ permissions:
 # art packs, so the job fetches them right after setup-node.
 env:
   ASHEN_ART_SOURCE: cache
-  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
 
 jobs:
   count:

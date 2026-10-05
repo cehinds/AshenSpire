@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1603",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Sharper art on phones; test builds carry the full art",
+    "detail": "The phone-sized art is redrawn from the full art at up to 480 px for fighters, poses and effects (animation frames were 160 px) and up to 720 px for backdrops, maps and cards (art release hd-assets-v12); the light single file grows to about 75 MB, under the new 100 MB cap. Test builds now link the high-resolution art pack, as release and main do; dev stays light-only.",
+    "build": "0.7.1.964",
+    "pullRequest": 1603,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1603"
+  },
+  {
     "id": "pr-1629",
     "date": "2026-10-05",
     "group": "2026-10-05",
