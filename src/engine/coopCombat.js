@@ -189,6 +189,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     upgraded: !!c.upgraded,
     ...(Number.isInteger(c.rank) && c.rank > 1 ? { rank: c.rank } : {}),
     ...(Number.isInteger(c.skillBonus) && c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
+    ...(Number.isInteger(c.passiveBlock) && c.passiveBlock > 0 ? { passiveBlock: c.passiveBlock } : {}),
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}), // equipment numbers
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
@@ -503,7 +504,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     ratingValue: inst.ratingValue,
     ratingCap: inst.ratingCap,
     equipmentRole: inst.equipmentRole,
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
     // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier

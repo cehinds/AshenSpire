@@ -554,7 +554,8 @@ export function resolveCard(registries, instanceOrRef) {
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0) return base;
+  const passiveBlock = cardPassiveBlock(instanceOrRef);
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -564,7 +565,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}|b${passiveBlock}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -612,6 +613,8 @@ export function resolveCard(registries, instanceOrRef) {
   // bonus, adds 1 to the card's primary number, so the play, the preview and
   // the card face all read the same value.
   if (rank > 1 || skillBonus > 0) result = applyCardRank(result, rank, skillBonus);
+  // A passive tag's Block (SPEC §13.4o) lands on the finished face too.
+  if (passiveBlock > 0) result = applyPassiveBlock(result, passiveBlock);
   cache.set(key, result);
   return result;
 }
@@ -633,6 +636,33 @@ export function cardRank(instance) {
 export function cardSkillBonus(instance) {
   const bonus = instance && instance.skillBonus;
   return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
+}
+
+/**
+ * cardPassiveBlock(instance) → the Block the run's passive tags add to the
+ * instance (SPEC §13.4o), 0 when absent. Derived, never chosen: `skills.js
+ * stampSkillBonuses` writes it from the run's skill feats.
+ */
+export function cardPassiveBlock(instance) {
+  const bonus = instance && instance.passiveBlock;
+  return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
+}
+
+/**
+ * passiveBlockIndex(card) → the effect a passive Block lands on: the card's
+ * first unconditional Block with a numeric amount, or -1. Once per card, so a
+ * card with two Blocks gains it once.
+ */
+export function passiveBlockIndex(card) {
+  return ((card && card.effects) || []).findIndex((effect) => effect && !effect.if && effect.op === 'block' && typeof effect.amount === 'number');
+}
+
+/** applyPassiveBlock(card, amount) → the face with `amount` added to that Block. */
+export function applyPassiveBlock(card, amount) {
+  const index = passiveBlockIndex(card);
+  if (index === -1 || !amount) return card;
+  const effects = card.effects.map((effect, i) => (i === index ? { ...effect, amount: effect.amount + amount } : effect));
+  return deepFreeze({ ...card, effects });
 }
 
 /**

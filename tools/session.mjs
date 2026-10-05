@@ -704,7 +704,7 @@ export function createSession({ registries, seedString, endless = false, restore
         // so a live meter the host fills was invisible to every co-op player
         // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
-        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded, ...(c2.rank > 1 ? { rank: c2.rank } : {}), ...(c2.skillBonus > 0 ? { skillBonus: c2.skillBonus } : {}) })),
+        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded, ...(c2.rank > 1 ? { rank: c2.rank } : {}), ...(c2.skillBonus > 0 ? { skillBonus: c2.skillBonus } : {}), ...(c2.passiveBlock > 0 ? { passiveBlock: c2.passiveBlock } : {}) })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
@@ -1455,6 +1455,7 @@ export function createSession({ registries, seedString, endless = false, restore
         upgraded: c.upgraded,
         ...(c.rank > 1 ? { rank: c.rank } : {}),
         ...(c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
+        ...(c.passiveBlock > 0 ? { passiveBlock: c.passiveBlock } : {}),
         ...(c.equipmentRole ? { equipmentRole: c.equipmentRole } : {}),
         ...(c.profileId ? { profileId: c.profileId } : {}),
         ...(Array.isArray(c.mods) ? { mods: [...c.mods] } : {}),

@@ -352,11 +352,32 @@ function trackSchools(registries, run) {
 }
 
 /**
+ * passiveBlockFor(registries, run, inst) → the Block the run's passive tags
+ * add to a card (SPEC §13.4o "Passive tag effects"): the sum of `passive.block`
+ * over the taken skill feats whose tags the card's meet, for a card with an
+ * unconditional Block to land on (`registries.js passiveBlockIndex`). Each
+ * feat is taken once; a table row that grants a passive again (content C)
+ * adds again. Capped at MAX_SKILL_BONUS.
+ */
+export function passiveBlockFor(registries, run, inst) {
+  const def = inst && registries.cards.has(inst.cardId) ? registries.cards.get(inst.cardId) : null;
+  if (!def || !(def.effects || []).some((effect) => effect && !effect.if && effect.op === 'block' && typeof effect.amount === 'number')) return 0;
+  const tags = def.tags || [];
+  let bonus = 0;
+  for (const feat of (Array.isArray(run && run.skillFeats) ? run.skillFeats : []).map(skillFeatById)) {
+    const passive = feat && feat.passive;
+    if (passive && Number.isInteger(passive.block) && passive.tags.some((tag) => tags.includes(tag))) bonus += passive.block;
+  }
+  return Math.min(bonus, MAX_SKILL_BONUS);
+}
+
+/**
  * stampSkillBonuses(registries, run) → how many cards changed: writes each
- * owned card's `skillBonus` (deck, then sideboard), deleting it at 0. The
- * bonus is DERIVED — from skill levels and the held pieces' schools — so it
- * is stamped at every door that can move either: each save, each combat
- * start and each full restamp, the way equipment numbers are.
+ * owned card's `skillBonus` and `passiveBlock` (deck, then sideboard),
+ * deleting each at 0. Both are DERIVED — from skill levels, the held pieces'
+ * schools and the feats taken — so they are stamped at every door that can
+ * move them: each save, each combat start and each full restamp, the way
+ * equipment numbers are.
  */
 export function stampSkillBonuses(registries, run) {
   if (!run || !Array.isArray(run.deck)) return 0;
@@ -365,8 +386,10 @@ export function stampSkillBonuses(registries, run) {
   for (const inst of [...run.deck, ...(Array.isArray(run.sideboard) ? run.sideboard : [])]) {
     if (!inst) continue;
     const bonus = schoolsByTrack.length ? skillBonusFor(registries, run, inst, schoolsByTrack) : 0;
-    if ((inst.skillBonus || 0) === bonus) continue;
+    const block = passiveBlockFor(registries, run, inst);
+    if ((inst.skillBonus || 0) === bonus && (inst.passiveBlock || 0) === block) continue;
     if (bonus) inst.skillBonus = bonus; else delete inst.skillBonus;
+    if (block) inst.passiveBlock = block; else delete inst.passiveBlock;
     changed += 1;
   }
   return changed;
