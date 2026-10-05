@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Every hit you feel",
     "detail": "Every hit that costs HP now shakes the screen a little, more the harder it lands, where before only hits of 15 or more shook. A hit of 6 or more also freezes the attacker and its target for a split second at the moment of impact. The damage number and sound still come at once. Screen shake and Reduced motion in Settings turn these off, and Instant speed has no freeze.",
-    "build": "0.7.1.1001",
+    "build": "0.7.1.1003",
     "pullRequest": 1648,
     "url": "https://github.com/cehinds/AshenSpire/pull/1648"
+  },
+  {
+    "id": "pr-1645",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Behind the scenes: two automatic checks look for their faults in the right place again",
+    "detail": "Nothing you play changes. The faster map and fight entry (#1641) moved code that two browser checks use to plant deliberate faults. One check plants a black box over the Stamina number, and the plant broke the whole action row instead of covering the number. The other plants an idle bob on the fighters' pictures instead of on their layer, and since #1641 that fault shows a different symptom. Both plants now go in where the code lives now, and each check fails again for the fault it is aimed at.",
+    "build": "0.7.1.998",
+    "pullRequest": 1645,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1645"
   },
   {
     "id": "pr-1646",

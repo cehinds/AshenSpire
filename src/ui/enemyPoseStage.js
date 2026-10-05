@@ -9,6 +9,7 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
   const ids = new Map(); // pose → asset id; draw() reloads a frame whose src was
                          // cleared, so it follows the Art quality chosen since
   let presentation = enemyPresentation(entity), current = presentation.rest, timer;
+  let due = 0;
   function draw() {
     const selected = frames.get(current);
     if (selected && !selected.getAttribute('src') && ids.get(current)) selected.src = assetUrl(ids.get(current));
@@ -44,6 +45,12 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
   return {
     dispose() { clearTimeout(timer); timer = null; },
     enemy: true, poses: ['idle', 'attack', ...ENEMY_STATE_POSES, 'defeated'], setState, settle,
+    hold(ms) {
+      if (!timer || !(ms > 0)) return false;
+      clearTimeout(timer); due += ms;
+      timer = setTimeout(settle, Math.max(0, due - Date.now()));
+      return true;
+    },
     play(pose, ms = 300) {
       if (presentation.rest === 'defeated' && pose !== 'defeated') return false;
       clearTimeout(timer);
@@ -54,6 +61,7 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
       }
       current = pose === 'hit' ? 'hurt' : pose;
       draw();
+      due = Date.now() + Math.max(0, ms);
       timer = setTimeout(settle, Math.max(0, ms));
       return true;
     },

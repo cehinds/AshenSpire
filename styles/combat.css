@@ -499,6 +499,8 @@
    knocked right (struck from the player's side), the player left. A heavy hit
    (≥15, the top screen-shake step) recoils further with a tilt. */
 .sprite.hitflash > :first-child { animation: hitflash var(--hurt-duration, 220ms) linear; }
+/* Pause the recoil layer alone; its idle-bob descendants keep their clocks. */
+.sprite.hitflash.hit-stop > :first-child { animation-play-state: paused !important; }
 .enemy .sprite.hitflash > :first-child { animation-name: hit-enemy; }
 .player .sprite.hitflash > :first-child { animation-name: hit-player; }
 .enemy .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-enemy-heavy; }
