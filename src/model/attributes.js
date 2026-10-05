@@ -71,8 +71,11 @@ function tables(source) {
  * is the dangerous one).
  */
 export function grantedAttributePoints(run) {
-  if (run && Number.isInteger(run.levelPoints)) return Math.max(0, run.levelPoints);
-  return run && Number.isInteger(run.levelUps) ? Math.max(0, run.levelUps) : 0;
+  // A skill level's attribute pick (SPEC §13.4o) is recorded beside the
+  // levelled points, at the moment it is granted, the same way.
+  const skill = run && Number.isInteger(run.skillAttributePoints) ? Math.max(0, run.skillAttributePoints) : 0;
+  if (run && Number.isInteger(run.levelPoints)) return Math.max(0, run.levelPoints) + skill;
+  return (run && Number.isInteger(run.levelUps) ? Math.max(0, run.levelUps) : 0) + skill;
 }
 
 export function orderedAttributes(source) {

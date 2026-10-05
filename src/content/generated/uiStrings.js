@@ -332,6 +332,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.skillAttribute.title",
+    "extends": "",
+    "short": "{skill} · level {level}: raise an attribute",
+    "full": "A level's attribute pick: one attribute linked to the skill rises by 1.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.body",
+    "extends": "",
+    "short": "Raise one of {attributes} by 1.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.raised",
+    "extends": "",
+    "short": "{attribute} rose to {value}.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.skillRankUp.title",
     "extends": "",
     "short": "{skill} · level {level}: raise a card",

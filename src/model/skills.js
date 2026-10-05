@@ -134,6 +134,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
     row.level += 1;
     row.pendingDrafts += 1;
     queueRankUp(kind, row);
+    queueAttributePick(registries, skillId, row);
     cost = xpToNext(registries, kind, row.level);
   }
   return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain };
@@ -179,6 +180,7 @@ export function claimBankedSkillLevel(registries, run, skillId) {
   row.level += 1;
   row.pendingDrafts += 1;
   queueRankUp(kind, row);
+  queueAttributePick(registries, skillId, row);
   return { skillId, before, after: row.level, levelUps: 1, gained: 0 };
 }
 
@@ -367,6 +369,36 @@ export function stampSkillBonuses(registries, run) {
   return changed;
 }
 
+// ---- the every-4th-level attribute pick (SPEC §13.4o) ------------------------
+
+/**
+ * linkedAttributes(registries, skillId) → the attribute ids a track's pick
+ * offers (`balance.skill.linkedAttributes`, data: Blade STR/DEX, Shield
+ * STR/DEX/CON/WIS, Magic DEX/CON/WIS/INT); [] for a track with none authored.
+ */
+export function linkedAttributes(registries, skillId) {
+  const table = draftRows(registries).linkedAttributes || {};
+  return Array.isArray(table[skillId]) ? table[skillId].slice() : [];
+}
+
+/** Whether reaching `level` on this track queues an attribute pick. */
+export function levelQueuesAttributePick(registries, skillId, level) {
+  const every = draftRows(registries).attributeEvery;
+  return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && linkedAttributes(registries, skillId).length > 0;
+}
+
+function queueAttributePick(registries, skillId, row) {
+  if (levelQueuesAttributePick(registries, skillId, row.level)) row.pendingAttributePicks = (row.pendingAttributePicks || 0) + 1;
+}
+
+/** spendAttributePick(run, skillId) → true when a queued pick was spent. */
+export function spendAttributePick(run, skillId) {
+  const row = run && run.skills && run.skills[skillId];
+  if (!row || !(row.pendingAttributePicks > 0)) return false;
+  row.pendingAttributePicks -= 1;
+  return true;
+}
+
 /**
  * skillsProblems(skills) → the shape's refusals, by name. Registry-free, as
  * the save door must be: a track id the registries no longer know is a stale
@@ -382,8 +414,10 @@ export function skillsProblems(skills) {
       if (!Number.isInteger(row[key]) || row[key] < 0) problems.push(`skills.${id}.${key} must be a non-negative integer`);
     }
     // The queued rank-ups (SPEC §13.4o), absent on a ledger written before them.
-    if (row.pendingRankUps !== undefined && !(Number.isInteger(row.pendingRankUps) && row.pendingRankUps >= 0)) problems.push(`skills.${id}.pendingRankUps must be a non-negative integer`);
-    for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
+    for (const key of ['pendingRankUps', 'pendingAttributePicks']) {
+      if (row[key] !== undefined && !(Number.isInteger(row[key]) && row[key] >= 0)) problems.push(`skills.${id}.${key} must be a non-negative integer`);
+    }
+    for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps', 'pendingAttributePicks'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
   }
   return problems;
 }
