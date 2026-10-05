@@ -529,11 +529,11 @@ jobs:
           packs: ${{ env.ART_PACKS }}
 
       - name: Build the game and refresh root + dist/
-        # Light art on dev/test (owner, 2026-09-26); release/main default to high.
+        # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main default to high.
         # The pack-shaped game and the light single file (step 8e).
         env:
           NODE_OPTIONS: --max-old-space-size=6144
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
@@ -673,9 +673,9 @@ jobs:
           packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (about-changelog opens build/AshenSpire.html)
-        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main keep the full art.
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
@@ -751,9 +751,9 @@ jobs:
           packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (the same build browser-guard makes)
-        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main keep the full art.
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
@@ -867,9 +867,9 @@ jobs:
           packs: ${{ env.ART_PACKS }}
 
       - name: Build the standalone (the same build browser-guard makes)
-        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main keep the full art.
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 

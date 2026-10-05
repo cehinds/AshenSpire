@@ -45,12 +45,12 @@ env:
   # A dispatch from `feature/x` carries a slash; the preview job's first step
   # rewrites CHANNEL without it before anything names a file or an artifact.
   CHANNEL: ${{ github.base_ref || github.ref_name }}
-  # The pack-shaped build's tier flag for bundle.mjs: light on dev/test
-  # (owner, 2026-09-26), high (no flag) on release/main.
-  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
+  # The pack-shaped build's tier flag for bundle.mjs: light on dev
+  # (owner, 2026-09-26; test joins full art 2026-10-04), high (no flag) on test/release/main.
+  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
   # The art packs this workflow fetches (docs/EXTERNAL-ASSETS-PLAN.md §2,
   # tools/fetch-art.mjs --pack): all three on every branch since step 13. The
-  # build carries only its tier's (light and common on dev/test), but the
+  # build carries only its tier's (light and common on dev), but the
   # workbench copies the high pack's folders the light one lacks.
   ART_PACKS: all
 
@@ -99,12 +99,12 @@ jobs:
 
       - name: Build the game (the pack shape and the light single file)
         id: build
-        # Light art on dev/test (owner, 2026-09-26); release/main default to high.
+        # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main default to high.
         # Either way launch.mjs writes the pack-shaped game into build/ and dist/
         # and the light single file to build/download/ and the root alias
         # (docs/EXTERNAL-ASSETS-PLAN.md step 8e).
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         run: node tools/launch.mjs --build-only $ART_TIER
 
       # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
@@ -251,7 +251,7 @@ jobs:
           # The root used to be the single file, so opening the preview on a
           # phone meant 57.6 MB before the first frame. The `build` step's
           # launch.mjs already wrote the pack-shaped game to build/ with this
-          # job's tier (light on dev/test, high on release/main): AshenSpire.html
+          # job's tier (light on dev, high on test/release/main): AshenSpire.html
           # plus asset-base.json, packs/ and objects/ (docs/EXTERNAL-ASSETS-PLAN.md
           # steps 3a and 8e); its map tiles and score are common-pack objects
           # since step 3c, so no map-detail/ or music/ folder comes with it. It is
@@ -265,7 +265,7 @@ jobs:
           # `assets/…` BY PATH (assetUrl() in source mode). They get this tier's
           # art in preview/workbench/assets/, copied from the FETCHED RELEASE
           # (the art trees left this repository at step 13): the light pack's
-          # assets-mobile/ on dev/test, the high pack's assets/ on release/main,
+          # assets-mobile/ on dev, the high pack's assets/ on release/main,
           # with the common pack's fonts beside either. tools/art-source.mjs
           # names each cache directory, and fails (naming the fetch) for a pack
           # that is not fetched. preview/AshenSpire.html must not get a tree: an
@@ -292,7 +292,7 @@ jobs:
           cp tools/serve-preview.mjs "$W/serve-preview.mjs"
           cp -r styles "$W/styles"
           # --update=none: the copy above already placed this tier's art under
-          # workbench/assets/ (the light twins on dev/test); these copies only
+          # workbench/assets/ (the light twins on dev); these copies only
           # add the files it does not ship, and never overwrite its art.
           cp -r --update=none "$HIGH_DIR/environments" "$W/assets/"
           mkdir -p "$W/docs/preview"
