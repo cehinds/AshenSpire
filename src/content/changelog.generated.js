@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1613",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Cards come in ranks",
+    "detail": "A card from a skill draft can now arrive at a higher rank, up to that skill's level, and higher ranks are likelier as the skill grows. Each rank above 1 adds 1 to the card's main number, its damage, Block or healing. A ranked card shows a small blue R badge with its rank above its corner.",
+    "build": "0.7.1.938",
+    "pullRequest": 1613,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1613"
+  },
+  {
     "id": "pr-1612",
     "date": "2026-10-05",
     "group": "2026-10-05",
