@@ -9,7 +9,7 @@ A browser roguelike that combines card combat with equipment, attributes, skill 
 - This README describes the current browser game's `dev`/`test` mechanics; a published `release` or `main` build can be older. The title screen and each branch's build list identify the version you are playing.
 
 - **[Play / download builds](https://cehinds.github.io/AshenSpire/)**
-- **[Windows installer](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest)**
+- **[Windows installer](https://github.com/cehinds/AshenSpire/releases/download/installer-test/AshenSpire-Setup.exe)**
 - **[Art repository](https://github.com/cehinds/AshenSpire-art)**
 - **[Unity version: AshenedSpire](https://github.com/cehinds/AshenSpire-Unity)**
 - **[Changelog](CHANGELOG.md)**
@@ -62,7 +62,7 @@ Versions use `<major>.<minor>.<candidate>.<build>`. The build counter restarts w
 
 ### Windows installer
 
-[Download an installer from the Windows installer workflow](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest). Sign in to GitHub, open a successful run on the branch you want, and download `windows-installer-<commit>` under **Artifacts**. Unzip and run `AshenSpire-Setup-<version>.exe`.
+[Download the Windows installer](https://github.com/cehinds/AshenSpire/releases/download/installer-test/AshenSpire-Setup.exe) (the latest `test` build) and run `AshenSpire-Setup.exe`. The `release` and `main` installers are at the same address with `installer-release` or `installer-main` in place of `installer-test`; the [installer releases](https://github.com/cehinds/AshenSpire/releases) list each one's version and commit. Earlier builds stay on the [Windows installer workflow](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest) as `windows-installer-<commit>` artifacts (sign in to GitHub to download them).
 
 The installer runs for your Windows user without an administrator prompt and creates Start menu and optional desktop shortcuts. Its **Choose game and high-quality art versions** button opens separate selectors for both. Select a game branch (**test**, **release**, **main**, or **dev**) and an available exact build version to open its GitHub installer download, then run that installer. The artwork selectors browse the art repository's branches and published versions. It shows your installed art version, the art required by this game, and the latest published art version. Choose the compatible high-resolution pack for installation, or **Download this art separately** to save a verified release zip without installing it. Other art versions remain separate downloads until a game build pins them; the standard light art works without the optional pack. The installer discloses that the artwork is completely AI-generated with OpenAI ChatGPT under human direction, with credited licenses retained for fonts and other third-party assets. See the [installer guide](desktop/windows/README.md) for install, upgrade, and uninstall behavior. Installer artifacts are separate from the browser HTML downloads.
 
