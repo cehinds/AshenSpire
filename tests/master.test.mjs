@@ -6,8 +6,8 @@
 // 100) × spent) (60% of 500 XP spent adds 300); level 1 is refused;
 // respecRefundPct 80 clamps to 75; a master with 2 skills, or with an armour
 // or `class:` track, is refused by name; training and redistribute level a
-// track through the one writer, and training an unheld track across its
-// upgrade threshold upgrades its owned cards; a master holding `dualWield`
+// track through the one writer (the upgrade threshold that training once
+// crossed is retired for card ranks, SPEC §13.4o); a master holding `dualWield`
 // stocks one-handed armaments and their arts; a lesson rolls through
 // rollSkillDraftIds from the master's schools and adds one card, a level-0
 // track still draws commons, and a lesson whose roll is empty is refused
@@ -353,29 +353,20 @@ test('FINISH: training levels a master track through the one writer, takes one s
   assert.equal(JSON.stringify(run), before, 'a refusal changes nothing');
 });
 
-test('FINISH: training an unheld track across its upgrade threshold upgrades the owned cards of that track\'s schools', () => {
+test('training a track across level 5 upgrades no card: the threshold is retired for card ranks (SPEC §13.4o)', () => {
   const focusMaster = shippedShops.masters.find((m) => m.skills.includes('item:magic-focus'));
   assert.ok(focusMaster, 'a shipped master teaches the focus track');
   const registries = createRegistries({ ...contentBundle, shops: { ...registriesWith(ALL_OUT).shops, masters: [focusMaster] } });
   const { run } = masterRun(registries);
-  assert.equal(skillSchools(registries, run.loadout, 'item:magic-focus').length, 0, 'the reaver holds no focus');
-  const schools = masterSchools(registries, 'item:magic-focus');
-  assert.ok(schools.includes('ritual'));
   run.deck.push({ instanceId: 'test:ember', cardId: 'emberVigil', upgraded: false });
   run.sideboard.push({ instanceId: 'test:mote', cardId: 'ashenMote', upgraded: false });
   const xp = offeringOf(registries, 'training').training.xp;
-  const upgradeAt = registries.balance.skill.upgradeAt;
-  track(run, 'item:magic-focus', { level: upgradeAt - 1, xp: xpToNext(registries, 'focus', upgradeAt - 1) - xp });
+  track(run, 'item:magic-focus', { level: 4, xp: xpToNext(registries, 'focus', 4) - xp });
   commitTraining(registries, run, trainingPlan(registries, run, 'item:magic-focus'));
-  assert.equal(run.skills['item:magic-focus'].level, upgradeAt);
-  assert.equal(run.deck.find((c) => c.instanceId === 'test:ember').upgraded, true, 'the deck card is upgraded');
-  assert.equal(run.sideboard.find((c) => c.instanceId === 'test:mote').upgraded, true, 'and the sideboard one');
-  // awardSkillXp without the input still reads the held pieces, as before.
-  const other = createRunState({ seed: 21, classId: 'reaver', registries });
-  other.deck.push({ instanceId: 'test:ember', cardId: 'emberVigil', upgraded: false });
-  track(other, 'item:magic-focus', { level: upgradeAt - 1, xp: 0 });
-  awardSkillXp(registries, other, 'item:magic-focus', xpToNext(registries, 'focus', upgradeAt - 1));
-  assert.equal(other.deck.find((c) => c.instanceId === 'test:ember').upgraded, false);
+  assert.equal(run.skills['item:magic-focus'].level, 5);
+  assert.equal(run.deck.find((c) => c.instanceId === 'test:ember').upgraded, false, 'the deck card stays as it was');
+  assert.equal(run.sideboard.find((c) => c.instanceId === 'test:mote').upgraded, false, 'and the sideboard one');
+  assert.equal(run.skills['item:magic-focus'].pendingRankUps, 1, 'the level queued a rank-up instead');
 });
 
 // ---------------------------------------------------------------------------

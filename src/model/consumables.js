@@ -19,10 +19,10 @@
 //     companion one fight closer to leaving (engine/runCombat.js runCombatEnd);
 //   · the content door's checks and the Settings rows for every number.
 import { NOTE } from '../content/balance.js';
-import { awardSkillXp, skillTracks, skillUpgradesCards } from './skills.js';
+import { awardSkillXp, skillTracks } from './skills.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
-import { bookTracks, bookLessons, bookTags } from './bookLearning.js';
+import { bookTracks, bookLessons } from './bookLearning.js';
 import { learnClassCard, learnedClassIds } from './classLibraryState.js';
 import { classBookBonuses } from './bookBonusRewards.js';
 import { chooseFeat } from './feats.js';
@@ -117,16 +117,14 @@ export function commitSkillBookRead(registries, run, quote, { inCombat = false, 
   // Re-read the live deck and settings before any mutation. Extra owned
   // copies remain available in the sideboard under the deck editor's rules.
   const destination = plan.choice.kind === 'card' && run.deck.filter((card) => card.cardId === plan.choice.id).length >= deckCopyLimit(registries, plan.choice.id, settings, run.class) ? 'sideboard' : 'deck';
-  const schools = bookTags(registries, { skill: plan.skillId });
   const bonuses = classBookBonuses(registries, run, plan.def);
-  const receipt = awardSkillXp(registries, run, plan.skillId, plan.def.xp, { schools });
+  const receipt = awardSkillXp(registries, run, plan.skillId, plan.def.xp);
   const classLearned = plan.choice.kind === 'class' && !learnedClassIds(run).includes(plan.choice.id);
   if (plan.choice.kind === 'class') {
     if (classLearned) learnClassCard(registries, run, plan.choice.id);
   }
   else {
-    const upgraded = skillUpgradesCards(registries, receipt.after) && (registries.cards.get(plan.choice.id).tags || []).some((tag) => schools.includes(tag));
-    (run[destination] ||= []).push({ instanceId: unusedInstanceId(run, 'book', plan.choice.id), cardId: plan.choice.id, upgraded });
+    (run[destination] ||= []).push({ instanceId: unusedInstanceId(run, 'book', plan.choice.id), cardId: plan.choice.id, upgraded: false });
   }
   if (bonuses.card) {
     const id = bonuses.card.id;
