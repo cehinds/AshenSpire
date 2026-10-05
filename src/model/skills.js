@@ -136,6 +136,7 @@ export function awardSkillXp(registries, run, skillId, amount, { schools } = {})
     row.xp -= cost;
     row.level += 1;
     row.pendingDrafts += 1;
+    queueRankUp(kind, row);
     cost = xpToNext(registries, kind, row.level);
   }
   // The auto-upgrade threshold (plan phase 4b) is a STANDING RULE, applied at
@@ -186,6 +187,7 @@ export function claimBankedSkillLevel(registries, run, skillId) {
   row.xp -= cost;
   row.level += 1;
   row.pendingDrafts += 1;
+  queueRankUp(kind, row);
   const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
   return { skillId, before, after: row.level, levelUps: 1, upgraded, gained: 0 };
 }
@@ -316,6 +318,60 @@ export function spendSkillDraft(run, skillId) {
   return true;
 }
 
+// ---- the rank-up (SPEC §13.4o B2b) ------------------------------------------
+
+// The tracks whose levels raise a card: the ones that draft from card schools.
+const RANK_UP_KINDS = Object.freeze(['weapon', 'focus', 'dual']);
+/** Whether a track of this kind queues a rank-up at each level. */
+export const rankUpKind = (kind) => RANK_UP_KINDS.includes(kind);
+
+/**
+ * Whether reaching `level` on a track of this kind queues a rank-up: every
+ * level of a card-school track from 2 on — a card's rank never passes its
+ * track's level, so at level 1 there is nothing a rank-up could raise.
+ */
+export const levelQueuesRankUp = (kind, level) => rankUpKind(kind) && level >= 2;
+
+// Each level of a card-school track queues one rank-up beside its draft.
+function queueRankUp(kind, row) {
+  if (levelQueuesRankUp(kind, row.level)) row.pendingRankUps = (row.pendingRankUps || 0) + 1;
+}
+
+/**
+ * rankUpCandidates(registries, run, skillId) → the owned card instances (deck,
+ * then sideboard) a rank-up of that track may raise: an ordinary card of the
+ * track's schools whose rank is below both the track's level and
+ * balance.skill.rankMax. An equipment-bound basic or an item-owned card is the
+ * piece's, as for the threshold upgrade, and is not offered.
+ */
+export function rankUpCandidates(registries, run, skillId) {
+  const schools = new Set(skillSchools(registries, run && run.loadout, skillId));
+  const ceiling = Math.min(skillLevel(run, skillId), draftRows(registries).rankMax || 1);
+  if (!schools.size || ceiling < 2) return [];
+  const cards = registries && registries.cards;
+  return [...((run && run.deck) || []), ...(Array.isArray(run && run.sideboard) ? run.sideboard : [])].filter((inst) => {
+    if (!inst || inst.sourceArmamentId || ITEM_OWNED_ROLES.includes(inst.equipmentRole)) return false;
+    const def = cards && cards.has(inst.cardId) ? cards.get(inst.cardId) : null;
+    if (!def || !(def.tags || []).some((t) => schools.has(t))) return false;
+    return (Number.isInteger(inst.rank) && inst.rank >= 1 ? inst.rank : 1) < ceiling;
+  });
+}
+
+/**
+ * raiseCardRank(registries, run, skillId, instanceId) → the instance raised by
+ * one rank, spending one queued rank-up; null (and nothing written) when the
+ * ledger holds none or the card is not a candidate.
+ */
+export function raiseCardRank(registries, run, skillId, instanceId) {
+  const row = run && run.skills && run.skills[skillId];
+  if (!row || !(row.pendingRankUps > 0)) return null;
+  const inst = rankUpCandidates(registries, run, skillId).find((card) => card.instanceId === instanceId);
+  if (!inst) return null;
+  row.pendingRankUps -= 1;
+  inst.rank = (Number.isInteger(inst.rank) && inst.rank >= 1 ? inst.rank : 1) + 1;
+  return inst;
+}
+
 /**
  * skillsProblems(skills) → the shape's refusals, by name. Registry-free, as
  * the save door must be: a track id the registries no longer know is a stale
@@ -330,7 +386,9 @@ export function skillsProblems(skills) {
     for (const key of ['xp', 'level', 'pendingDrafts']) {
       if (!Number.isInteger(row[key]) || row[key] < 0) problems.push(`skills.${id}.${key} must be a non-negative integer`);
     }
-    for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
+    // The queued rank-ups (SPEC §13.4o), absent on a ledger written before them.
+    if (row.pendingRankUps !== undefined && !(Number.isInteger(row.pendingRankUps) && row.pendingRankUps >= 0)) problems.push(`skills.${id}.pendingRankUps must be a non-negative integer`);
+    for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
   }
   return problems;
 }

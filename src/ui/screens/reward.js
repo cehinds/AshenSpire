@@ -65,7 +65,7 @@ import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
-import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId, pendingSkillLevelCount } from '../../model/skills.js';
+import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
@@ -76,7 +76,7 @@ import { reasonWhenDisabled } from '../components/refusal.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', skillRankUp: '⇧', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -159,6 +159,8 @@ export function mountRewards(app, {
   const chosenDraftCardIds = { ...(checkpoint?.chosenDraftCardIds || {}) };
   // The class drafts' picks (plan phase 5b), keyed by row key: tree nodes.
   const chosenDraftNodeIds = { ...(checkpoint?.chosenDraftNodeIds || {}) };
+  // The rank-ups' picks (SPEC §13.4o), keyed by row key: the owned card raised.
+  const chosenRankUps = { ...(checkpoint?.chosenRankUps || {}) };
   const pendingByKey = {}; // a chooser's unconfirmed selection, per row, so Back keeps it
 
   function persistProgress() {
@@ -167,6 +169,7 @@ export function mountRewards(app, {
       checkpoint.chosenCardId = chosenCardId;
       checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
       checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
+      if (Object.keys(chosenRankUps).length || checkpoint.chosenRankUps !== undefined) checkpoint.chosenRankUps = { ...chosenRankUps };
       if (claimedLevels || checkpoint.levelClaims !== undefined) checkpoint.levelClaims = claimedLevels;
       if (Object.keys(claimedSkills).length || checkpoint.skillClaims !== undefined) checkpoint.skillClaims = { ...claimedSkills };
     }
@@ -246,6 +249,14 @@ export function mountRewards(app, {
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },
+    // A rank-up (SPEC §13.4o): the chosen owned card rises one rank and the
+    // track's queued rank-up is spent; a card no longer eligible lands nothing.
+    skillRankUp(row) {
+      const inst = raiseCardRank(registries, run, row.skillId, row.instanceId);
+      if (!inst) return false;
+      chosenRankUps[row.key] = inst.instanceId;
+      return true;
+    },
     flask(row) {
       run.flasks.push({ flaskId: row.flaskId });
       recordSeen('flask', [row.flaskId]);
@@ -271,11 +282,13 @@ export function mountRewards(app, {
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
-    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' ? {
+    const raised = row.kind === 'skillRankUp' ? ownedInstance(row.instanceId) : null;
+    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' ? {
       deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       feats: [...(run.feats || [])],
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
-      skills: row.kind === 'skillDraft' || row.kind === 'classDraft' ? structuredClone(run.skills || {}) : null,
+      skills: row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? structuredClone(run.skills || {}) : null,
+      rankUp: raised ? { inst: raised, rank: raised.rank, chosen: { ...chosenRankUps } } : null,
       coreTags: row.kind === 'classDraft' || row.kind === 'levelChoice' ? [...(run.coreTags || [])] : null,
       checkpoint: checkpoint ? structuredClone(checkpoint) : null,
     } : null;
@@ -297,6 +310,12 @@ export function mountRewards(app, {
         run.feats = cardBefore.feats;
         for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
         Object.assign(chosenDraftNodeIds, cardBefore.chosenNode);
+        if (cardBefore.rankUp) {
+          const { inst, rank, chosen } = cardBefore.rankUp;
+          if (rank === undefined) delete inst.rank; else inst.rank = rank;
+          for (const key of Object.keys(chosenRankUps)) delete chosenRankUps[key];
+          Object.assign(chosenRankUps, chosen);
+        }
         delete states[row.key];
         if (checkpoint) {
           for (const key of Object.keys(checkpoint)) delete checkpoint[key];
@@ -311,10 +330,25 @@ export function mountRewards(app, {
     return true;
   }
 
+  // An owned card instance by id, in the deck or set aside.
+  const ownedInstance = (instanceId) => [...run.deck, ...(run.sideboard || [])].find((inst) => inst && inst.instanceId === instanceId) || null;
+  const instanceRank = (inst) => (Number.isInteger(inst?.rank) && inst.rank > 1 ? inst.rank : 1);
+
   // ---- row copy: what a kind says in each state ----------------------------
   function rowBody(row) {
     const state = states[row.key];
     switch (row.kind) {
+      case 'skillRankUp': {
+        const skill = skillTracks(registries).find((track) => track.id === row.skillId);
+        const label = esc((skill && skill.label) || row.skillId);
+        const title = t('reward.skillRankUp.title', { skill: label, level: row.level });
+        if (state === 'taken') {
+          const inst = ownedInstance(chosenRankUps[row.key]);
+          const def = inst && registries.cards.get(inst.cardId);
+          return { title, body: t('reward.skillRankUp.raised', { name: esc((def && def.name) || chosenRankUps[row.key] || ''), rank: instanceRank(inst) }) };
+        }
+        return { title, body: rankUpCandidates(registries, run, row.skillId).length ? t('reward.skillRankUp.body', { skill: label }) : t('reward.skillRankUp.none', { skill: label }) };
+      }
       case 'classDraft': {
         const cls = registries.classes.get(row.classId);
         const title = t('reward.classDraft.title', { class: esc((cls && cls.name) || row.classId), level: row.level });
@@ -810,12 +844,12 @@ export function mountRewards(app, {
           return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
         }
         if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
-        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
+        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
         return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
       });
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
-        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice') return renderChooser(row);
+        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp') return renderChooser(row);
         if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
       });
@@ -1026,14 +1060,18 @@ export function mountRewards(app, {
     // through the node's bindings — the same selection path as a card.
     const isNodeRow = row.kind === 'classDraft';
     const isLevelChoice = row.kind === 'levelChoice';
-    const ids = isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : row.cardIds;
-    const pickField = isNodeRow ? 'nodeId' : isLevelChoice ? 'choiceId' : 'cardId';
+    // A rank-up (SPEC §13.4o) chooses among the run's OWN cards, each shown
+    // at the rank it would rise to; its pick is an instance id.
+    const isRankUp = row.kind === 'skillRankUp';
+    const rankUpCards = isRankUp ? rankUpCandidates(registries, run, row.skillId) : [];
+    const ids = isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : isRankUp ? rankUpCards.map((inst) => inst.instanceId) : row.cardIds;
+    const pickField = isNodeRow ? 'nodeId' : isLevelChoice ? 'choiceId' : isRankUp ? 'instanceId' : 'cardId';
     const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     door({
-      eyebrow: row.kind === 'levelCard' || isLevelChoice ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
+      eyebrow: row.kind === 'levelCard' || isLevelChoice ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRankUp ? rowBody(row).title : t('reward.card.eyebrow'),
       title: row.source ? rowBody(row).title : row.kind === 'levelCard' || isLevelChoice ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
@@ -1104,7 +1142,30 @@ export function mountRewards(app, {
       tile.addEventListener('click', () => selectCard(nodeId));
       strip.appendChild(tile);
     }
-    for (const cardId of isNodeRow || isLevelChoice ? [] : ids) {
+    for (const inst of rankUpCards) {
+      const next = instanceRank(inst) + 1;
+      const face = renderCard(registries, { ...inst, rank: next }, {
+        owned: ownedCopies(run, inst.cardId),
+        actionOwnsTouch: true,
+        surface: 'reward',
+        availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },
+        commands: { choose: () => { selectCard(inst.instanceId); confirmButton.click(); } },
+      });
+      face.dataset.cardId = inst.cardId;
+      face.dataset.pickId = inst.instanceId;
+      face.classList.add('reward-pick');
+      face.setAttribute('role', 'radio');
+      face.setAttribute('aria-checked', String(inst.instanceId === selectedCardId));
+      face.classList.toggle('reward-selected', inst.instanceId === selectedCardId);
+      face.classList.toggle('is-chosen', inst.instanceId === selectedCardId);
+      face.addEventListener('click', () => selectCard(inst.instanceId));
+      strip.appendChild(face);
+    }
+    if (isRankUp && !rankUpCards.length) {
+      const skill = skillTracks(registries).find((track) => track.id === row.skillId);
+      strip.appendChild(el('p', { class: 'reward-rank-none', text: t('reward.skillRankUp.none', { skill: (skill && skill.label) || row.skillId }) }));
+    }
+    for (const cardId of isNodeRow || isLevelChoice || isRankUp ? [] : ids) {
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
@@ -1158,7 +1219,7 @@ export function mountRewards(app, {
         // offer older than its ledger) returns false and must not leave the
         // chooser armed but dead: say so and hand the button back.
         if (!take({ ...row, [pickField]: selectedCardId }, row.key)) {
-          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : 'reward.card.alreadyTaken');
+          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : 'reward.card.alreadyTaken');
           message.hidden = false;
           confirming = false;
           confirmButton.disabled = false;

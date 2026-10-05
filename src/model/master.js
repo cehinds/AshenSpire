@@ -250,7 +250,8 @@ export function respecPlan(registries, run, skillId, { priceMult = 1 } = {}) {
 
 /**
  * The respec, atomic: the track back to level 1 with xp 0, its queued drafts
- * down by the levels lost (floored at 0), the refund into the training pool.
+ * and rank-ups down by the levels lost (floored at 0), the refund into the
+ * training pool.
  * Cards already drafted and upgrades already applied stay.
  */
 export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
@@ -258,7 +259,9 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan, ['skillId', 'level', 'refund']);
   const row = run.skills[plan.skillId];
-  run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)) } };
+  // Queued rank-ups (SPEC §13.4o) fall by the same levels; ranks already raised stay.
+  const rankUps = row.pendingRankUps === undefined ? {} : { pendingRankUps: Math.max(0, row.pendingRankUps - (plan.level - 1)) };
+  run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)), ...rankUps } };
   run.trainingPool = pool(run) + plan.refund;
   run.cinders -= plan.cost;
   bump(run, plan);

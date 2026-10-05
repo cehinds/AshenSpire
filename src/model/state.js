@@ -843,7 +843,12 @@ function pendingDraftRows(pending) {
       const ids = d.options.map((option) => `${option.kind}:${option.id}`);
       return { key: `levelChoice:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: ids, ids };
     });
-  return [...cls, ...skill, ...level, ...choices];
+  // A rank-up (SPEC §13.4o) picks an owned card, not one the offer names: its
+  // row has a key and no ids, and its pick lives in chosenRankUps.
+  const rankUps = (Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : [])
+    .filter((d) => d && typeof d.skillId === 'string' && d.skillId)
+    .map((d) => ({ key: `skillRankUp:${d.skillId}:${(seen[`r:${d.skillId}`] = (seen[`r:${d.skillId}`] || 0) + 1) - 1}`, rankUp: true }));
+  return [...cls, ...skill, ...rankUps, ...level, ...choices];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -1045,7 +1050,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     const saved = run.deferredProgression;
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) problems.push('deferredProgression must be an object');
     else {
-      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'classDrafts'];
+      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'classDrafts'];
       if (Object.keys(saved).some(key => !fields.includes(key))) problems.push('deferredProgression contains a non-progression reward');
       const pendingReward = { schemaVersion: 1, source: 'deferred', after: 'map', rewards: saved, states: {} };
       problems.push(...validateRunShape({ ...run, deferredProgression: undefined, pendingReward })
@@ -1097,7 +1102,30 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
             || d.ranks.some((r) => !Number.isInteger(r) || r < 1 || r > MAX_CARD_RANK))) problems.push(`${p}.ranks must hold one rank from 1 to ${MAX_CARD_RANK} per card id`);
         });
       }
-      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'classDrafts']) {
+      if (pending.rewards?.skillRankUps !== undefined) {
+        const ups = pending.rewards.skillRankUps;
+        if (!Array.isArray(ups)) problems.push('pendingReward.rewards.skillRankUps must be an array');
+        else ups.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillRankUps[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (d.claimOrdinal !== undefined && (!Number.isInteger(d.claimOrdinal) || d.claimOrdinal < 0)) problems.push(`${p}.claimOrdinal must be a non-negative integer`);
+        });
+      }
+      if (pending.chosenRankUps !== undefined) {
+        const chosen = pending.chosenRankUps;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenRankUps must be an object keyed by rank-up row');
+        else {
+          const keys = new Set(pendingDraftRows(pending).filter((d) => d.rankUp).map((d) => d.key));
+          for (const [key, instanceId] of Object.entries(chosen)) {
+            if (!keys.has(key)) problems.push(`pendingReward.chosenRankUps.${key} must name a rank-up the offer carries`);
+            if (typeof instanceId !== 'string' || !instanceId) problems.push(`pendingReward.chosenRankUps.${key} must be a card instance id`);
+            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenRankUps.${key} requires the rank-up's Taken state`);
+          }
+        }
+      }
+      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'classDrafts']) {
         for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
           if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
         }

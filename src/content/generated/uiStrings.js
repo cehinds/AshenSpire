@@ -332,6 +332,41 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.skillRankUp.title",
+    "extends": "",
+    "short": "{skill} · level {level}: raise a card",
+    "full": "A level's rank-up: one of your own cards of the skill's schools rises one rank.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.body",
+    "extends": "",
+    "short": "Raise one of your {skill} cards by one rank.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.none",
+    "extends": "",
+    "short": "No {skill} card can rise yet. A card's rank stays at or below the skill's level; this waits for one.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.raised",
+    "extends": "",
+    "short": "{name} rose to rank {rank}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.spent",
+    "extends": "",
+    "short": "This rank-up can't land: it was spent, or that card can no longer rise. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.classDraft.title",
     "extends": "",
     "short": "{class} · level {level}",
