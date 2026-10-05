@@ -11,6 +11,104 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.921",
     "pullRequest": 1603,
     "url": "https://github.com/cehinds/AshenSpire/pull/1603"
+    "id": "pr-1617",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Level 5 no longer upgrades every card",
+    "detail": "Reaching level 5 in a skill used to upgrade every card of that skill at once. Card ranks replace that: each level lets you raise one card of your choice, and new cards from drafts, master lessons and books arrive plain. Cards you already upgraded stay upgraded. The old setting for this is retired, and a settings file that still has it loads with a warning.",
+    "build": "0.7.1.948",
+    "pullRequest": 1617,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1617"
+  },
+  {
+    "id": "pr-1615",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Level-ups raise a card",
+    "detail": "From level 2, every weapon, focus or dual-wield skill level also lets you raise one of your own cards of that skill by one rank, beside that level's card draft. Open the reward to see your cards at the rank each would reach, then pick one. A card's rank never passes the skill's level, so if no card can rise yet, the reward waits.",
+    "build": "0.7.1.946",
+    "pullRequest": 1615,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1615"
+  },
+  {
+    "id": "pr-1613",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Cards come in ranks",
+    "detail": "A card from a skill draft can now arrive at a higher rank, up to that skill's level, and higher ranks are likelier as the skill grows. Each rank above 1 adds 1 to what the card is for: its damage, then Block, healing or the status it applies. A rank never raises a card's HP cost, draw or energy, and a multi-hit card shares the gain across its hits. A ranked card shows a small blue R badge with its rank in the top right of its picture.",
+    "build": "0.7.1.942",
+    "pullRequest": 1613,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1613"
+  },
+  {
+    "id": "pr-1612",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Levelling slows down, with a ceiling on every track",
+    "detail": "Every track now takes about 100,000 XP to reach its top level. Your character starts at 200 XP a level and stops at level 20; skills start at 100 XP and stop at level 10; classes start at 400 XP and stop at level 20. XP earned past a ceiling is kept, but claims no more levels.",
+    "build": "0.7.1.936",
+    "pullRequest": 1612,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1612"
+  },
+  {
+    "id": "pr-1606",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Phone fighters no longer stack",
+    "detail": "Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. A side standing in more than one row, or whose art is too wide to grow, keeps its previous size; it is never made smaller.",
+    "build": "0.7.1.932",
+    "pullRequest": 1606,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1606"
+  },
+  {
+    "id": "pr-1609",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Level up waits for you, over the bar that filled",
+    "detail": "When a bar reaches a level after a fight, it stops and a blue Level up button covers it. Nothing levels up until you press it. Pressing it opens a popup with that level's rewards in blue; choose one, or come back to it later. Continue fills the rest of the XP, and the next bar takes its turn: character first, then class, then skills. The guided level-up setting is gone, because every level now works this way.",
+    "build": "0.7.1.930",
+    "pullRequest": 1609,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1609"
+  },
+  {
+    "id": "pr-1607",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Clear enemy intents on short phones",
+    "detail": "Enemy intent labels and Inspect controls stay distinct when enlarged fighters move inward to fit the battlefield. Their full control boxes keep six pixels of space in the same row, with room for wider intent text and Inspect, while fighter size and targeting stay intact.",
+    "build": "0.7.1.928",
+    "pullRequest": 1607,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1607"
+  },
+  {
+    "id": "pr-1602",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Level-up rewards planned",
+    "detail": "The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.",
+    "build": "0.7.1.924",
+    "pullRequest": 1602,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1602"
+  },
+  {
+    "id": "pr-1605",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Smoother map and animated fighters on phones",
+    "detail": "Choosing a destination on the map no longer slows the game while its panel is open. On touch screens, fighters animate again (attack poses, enemy attack art and the idle sway) instead of standing frozen, and animated sprites and weapon effects no longer blink between frames. Attacks lean from the feet instead of rocking the whole figure side to side.",
+    "build": "0.7.1.923",
+    "pullRequest": 1605,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1605"
+  },
+  {
+    "id": "pr-1599",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "More reusable scenes and foreground props",
+    "detail": "The player artwork collection adds five lore-grounded locations in separate desktop and mobile compositions, plus six transparent props including both Second Cairn sword states. Its 316 components include unchanged PNG masters, WebP exports, exact prompts and responsive layer recipes for game integration. Live game artwork bindings are unchanged.",
+    "build": "0.7.1.921",
+    "pullRequest": 1599,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1599"
   },
   {
     "id": "pr-1600",

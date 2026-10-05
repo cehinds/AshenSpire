@@ -41,6 +41,11 @@ import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
 import { sigilInventoryProblems, attunedSigilProblems } from './sigils.js';
 
+// The structural ceiling on a card's rank (SPEC §13.4o). The configured
+// balance.skill.rankMax (validated to stay at or under it) caps what a draft
+// rolls; this bound only refuses a save no setting could have produced.
+export const MAX_CARD_RANK = 99;
+
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
@@ -838,7 +843,12 @@ function pendingDraftRows(pending) {
       const ids = d.options.map((option) => `${option.kind}:${option.id}`);
       return { key: `levelChoice:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: ids, ids };
     });
-  return [...cls, ...skill, ...level, ...choices];
+  // A rank-up (SPEC §13.4o) picks an owned card, not one the offer names: its
+  // row has a key and no ids, and its pick lives in chosenRankUps.
+  const rankUps = (Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : [])
+    .filter((d) => d && typeof d.skillId === 'string' && d.skillId)
+    .map((d) => ({ key: `skillRankUp:${d.skillId}:${(seen[`r:${d.skillId}`] = (seen[`r:${d.skillId}`] || 0) + 1) - 1}`, rankUp: true }));
+  return [...cls, ...skill, ...rankUps, ...level, ...choices];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -1040,7 +1050,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     const saved = run.deferredProgression;
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) problems.push('deferredProgression must be an object');
     else {
-      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'classDrafts'];
+      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'classDrafts'];
       if (Object.keys(saved).some(key => !fields.includes(key))) problems.push('deferredProgression contains a non-progression reward');
       const pendingReward = { schemaVersion: 1, source: 'deferred', after: 'map', rewards: saved, states: {} };
       problems.push(...validateRunShape({ ...run, deferredProgression: undefined, pendingReward })
@@ -1087,9 +1097,38 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
           if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
           if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+          // Each offered card's rank (SPEC §13.4o), one per card id when present.
+          if (d.ranks !== undefined && (!Array.isArray(d.ranks) || d.ranks.length !== (Array.isArray(d.cardIds) ? d.cardIds.length : -1)
+            || d.ranks.some((r) => !Number.isInteger(r) || r < 1 || r > MAX_CARD_RANK))) problems.push(`${p}.ranks must hold one rank from 1 to ${MAX_CARD_RANK} per card id`);
         });
       }
-      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'classDrafts']) {
+      if (pending.rewards?.skillRankUps !== undefined) {
+        const ups = pending.rewards.skillRankUps;
+        if (!Array.isArray(ups)) problems.push('pendingReward.rewards.skillRankUps must be an array');
+        else ups.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillRankUps[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (d.claimOrdinal !== undefined && (!Number.isInteger(d.claimOrdinal) || d.claimOrdinal < 0)) problems.push(`${p}.claimOrdinal must be a non-negative integer`);
+        });
+      }
+      if (pending.chosenRankUps !== undefined) {
+        const chosen = pending.chosenRankUps;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenRankUps must be an object keyed by rank-up row');
+        else {
+          const keys = new Set(pendingDraftRows(pending).filter((d) => d.rankUp).map((d) => d.key));
+          for (const [key, instanceId] of Object.entries(chosen)) {
+            if (!keys.has(key)) problems.push(`pendingReward.chosenRankUps.${key} must name a rank-up the offer carries`);
+            if (typeof instanceId !== 'string' || !instanceId) problems.push(`pendingReward.chosenRankUps.${key} must be a card instance id`);
+            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenRankUps.${key} requires the rank-up's Taken state`);
+          }
+        }
+      }
+      for (const { key } of pendingDraftRows(pending).filter((d) => d.rankUp)) {
+        if (pending.states?.[key] === 'taken' && !(pending.chosenRankUps && pending.chosenRankUps[key])) problems.push(`pendingReward ${key} Taken state requires its chosen card`);
+      }
+      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'classDrafts']) {
         for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
           if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
         }
@@ -1220,6 +1259,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`${pile}[${i}].ratingId '${card.ratingId}' is unknown`);
       if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`${pile}[${i}].ratingValue must be a finite non-negative number`);
       if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`${pile}[${i}].ratingCap must be a finite non-negative number`);
+      // A card's rank (SPEC §13.4o): absent is rank 1.
+      if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1 && card.rank <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].rank must be a whole number from 1 to ${MAX_CARD_RANK}`);
       // A set-aside attack basic's slot is retired; any other would make the
       // next restamp disagree with the allocation.
       if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined

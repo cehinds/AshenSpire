@@ -163,6 +163,8 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     rarity: def.rarity,
     classId: def.class,
     upgraded: !!ref.upgraded,
+    // SPEC §13.4o: the rank the face was resolved at (1 when unranked).
+    rank: Number.isInteger(def.rank) && def.rank > 1 ? def.rank : 1,
     type: freeze({
       id: def.type,
       label: (typeRow && typeRow.label) || def.type.toUpperCase(),

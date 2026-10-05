@@ -13,8 +13,8 @@
 // quote commits once. A refusal changes nothing.
 //
 //   training     training.cinders for training.xp on one of his tracks,
-//                through awardSkillXp with the track's loadout-independent
-//                schools; training.perVisit sessions per visit (`training.left`)
+//                through awardSkillXp; training.perVisit sessions per visit
+//                (`training.left`)
 //   respec       one of his tracks at level ≥ 2 back to level 1 with xp 0; a
 //                share of the XP spent above level 1 goes to run.trainingPool
 //   lesson       one skill draft for one of his tracks, rolled once per track
@@ -40,7 +40,7 @@
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, WeaponCardPackageModel } from './loadout.js';
 import { eligibleWeaponArts } from './armamentTrading.js';
-import { awardSkillXp, skillTracks, skillKindOf, skillLevel, xpToNext, rarityUnlockedAt, skillUpgradesCards, DUAL_WIELD_SKILL } from './skills.js';
+import { awardSkillXp, skillTracks, skillKindOf, skillLevel, skillMaxLevel, xpToNext, rarityUnlockedAt, DUAL_WIELD_SKILL } from './skills.js';
 import { unusedInstanceId } from './deckRules.js';
 import { cardRewardRarityWeights } from './rewardOdds.js';
 
@@ -182,6 +182,13 @@ function teachingRefusal(registries, run, id, skillId) {
   return '';
 }
 
+// A track at its ceiling (SPEC §13.4o) buys nothing more: no level is past it.
+function cappedRefusal(registries, run, skillId) {
+  const kind = skillKindOf(registries, skillId);
+  const cap = kind ? skillMaxLevel(registries, kind) : null;
+  return cap != null && skillLevel(run, skillId) >= cap ? say('master.refuse.capped', { skill: trackLabel(registries, skillId) }) : '';
+}
+
 // ---------------------------------------------------------------------------
 // Training
 // ---------------------------------------------------------------------------
@@ -190,21 +197,21 @@ export function trainingPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   const row = masterOffering(registries, 'training')?.training || null;
   const cost = row ? cinders(row.cinders, priceMult) : 0;
   const left = run.shopStock?.training?.left ?? 0;
-  let reason = teachingRefusal(registries, run, 'training', skillId);
+  let reason = teachingRefusal(registries, run, 'training', skillId) || cappedRefusal(registries, run, skillId);
   if (!reason && !row) reason = say('master.refuse.notOffered');
   else if (!reason && !(left > 0)) reason = say('master.refuse.trainingSpent');
   else if (!reason && !affordable(run, cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, skillId, cost, xp: row?.xp ?? 0, left, revision: masterRevision(run) };
 }
 
-/** One session: the cost spent, one session taken, the XP paid through awardSkillXp with the track's master schools. */
+/** One session: the cost spent, one session taken, the XP paid through awardSkillXp. */
 export function commitTraining(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = trainingPlan(registries, run, quote.skillId, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan, ['skillId', 'xp']);
   run.cinders -= plan.cost;
   run.shopStock.training = { left: plan.left - 1 };
-  const receipt = awardSkillXp(registries, run, plan.skillId, plan.xp, { schools: masterSchools(registries, plan.skillId) });
+  const receipt = awardSkillXp(registries, run, plan.skillId, plan.xp);
   bump(run, plan);
   return { ...receipt, spent: plan.cost };
 }
@@ -241,9 +248,26 @@ export function respecPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   return { ok: !reason, reason, skillId, level, cost: price, refund, revision: masterRevision(run) };
 }
 
+// A deferred draft or rank-up of the respecced track that waits for a level
+// above 1 would stay locked, and hold back one re-offer per door, until the
+// track climbs back there. The ledger re-offers what it still queues, so the
+// stale rows go.
+function dropDeferredAboveLevelOne(run, skillId) {
+  const saved = run.deferredProgression;
+  if (!saved) return;
+  for (const field of ['skillDrafts', 'skillRankUps']) {
+    if (!Array.isArray(saved[field])) continue;
+    const kept = saved[field].filter((row) => !(row && row.skillId === skillId && Number.isInteger(row.requiredLevel) && row.requiredLevel > 1));
+    if (kept.length) saved[field] = kept.map((row, ordinal) => ({ ...row, ordinal }));
+    else delete saved[field];
+  }
+  if (!Object.keys(saved).length) delete run.deferredProgression;
+}
+
 /**
  * The respec, atomic: the track back to level 1 with xp 0, its queued drafts
- * down by the levels lost (floored at 0), the refund into the training pool.
+ * and rank-ups down by the levels lost (floored at 0), the refund into the
+ * training pool.
  * Cards already drafted and upgrades already applied stay.
  */
 export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
@@ -251,7 +275,10 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan, ['skillId', 'level', 'refund']);
   const row = run.skills[plan.skillId];
-  run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)) } };
+  // Queued rank-ups (SPEC §13.4o) fall by the same levels; ranks already raised stay.
+  const rankUps = row.pendingRankUps === undefined ? {} : { pendingRankUps: Math.max(0, row.pendingRankUps - (plan.level - 1)) };
+  run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)), ...rankUps } };
+  dropDeferredAboveLevelOne(run, plan.skillId);
   run.trainingPool = pool(run) + plan.refund;
   run.cinders -= plan.cost;
   bump(run, plan);
@@ -267,6 +294,7 @@ export function redistributePlan(registries, run, skillId, amount) {
   let reason = '';
   if (!masterOffers(run, 'redistribute')) reason = say('master.refuse.notOffered');
   else if (!skillKindOf(registries, skillId)) reason = say('master.refuse.unknownTrack', { skill: String(skillId) });
+  else if (cappedRefusal(registries, run, skillId)) reason = cappedRefusal(registries, run, skillId);
   else if (!have) reason = say('master.refuse.poolEmpty');
   else if (!(Number.isSafeInteger(amount) && amount >= 1 && amount <= have)) reason = say('master.refuse.amount', { amount: String(amount), pool: have });
   return { ok: !reason, reason, skillId, amount, pool: have, cost: 0, revision: masterRevision(run) };
@@ -321,7 +349,7 @@ export function lessonPlan(registries, run, skillId, cardId, { priceMult = 1 } =
   else if (!reason && entry.taken) reason = say('master.refuse.lessonTaken', { skill: trackLabel(registries, skillId) });
   else if (!reason && !entry.cardIds.includes(cardId)) reason = say('master.refuse.lessonCard');
   else if (!reason && !affordable(run, cost)) reason = say('shop.refuse.cinders');
-  return { ok: !reason, reason, skillId, cardId, cost, upgraded: skillUpgradesCards(registries, skillLevel(run, skillId)), revision: masterRevision(run) };
+  return { ok: !reason, reason, skillId, cardId, cost, revision: masterRevision(run) };
 }
 
 /** The card joins run.deck as the reward door's draft does; the track's lesson is taken. No queued draft is spent. */
@@ -329,7 +357,7 @@ export function commitLesson(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = lessonPlan(registries, run, quote.skillId, quote.cardId, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan, ['skillId', 'cardId']);
-  const instance = { instanceId: unusedInstanceId(run, 'r', plan.cardId), cardId: plan.cardId, upgraded: plan.upgraded };
+  const instance = { instanceId: unusedInstanceId(run, 'r', plan.cardId), cardId: plan.cardId, upgraded: false };
   run.cinders -= plan.cost;
   run.deck.push(instance);
   run.shopStock.lessons = { ...run.shopStock.lessons, [plan.skillId]: { ...run.shopStock.lessons[plan.skillId], taken: true } };

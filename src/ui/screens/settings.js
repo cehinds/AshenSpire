@@ -471,8 +471,6 @@ const ROWS = [
     label: t('settings.row.victoryXpSkillWeight'), note: tFull('settings.row.victoryXpSkillWeight') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpAllocateStats', def: false, label: t('settings.row.levelUpAllocateStats'),
     note: tFull('settings.row.levelUpAllocateStats') },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'manualLevelUp', def: true, label: t('settings.row.manualLevelUp'),
-    note: tFull('settings.row.manualLevelUp') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelStatPoints', def: true, label: t('settings.row.rewardLevelStatPoints'),
     note: tFull('settings.row.rewardLevelStatPoints') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelFeats', def: true, label: t('settings.row.rewardLevelFeats'),
@@ -627,8 +625,6 @@ const ROWS = [
   { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
     min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: t('settings.row.touchFlickDistance'),
     note: tFull('settings.row.touchFlickDistance') },
-  { cat: 'Accessibility', key: 'guidedLevelUp', def: true, label: t('settings.row.guidedLevelUp'),
-    note: tFull('settings.row.guidedLevelUp') },
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: t('settings.row.reducedMotion'),
     note: tFull('settings.row.reducedMotion') },
   // ON by default. Measured, not assumed: at the old default eight text targets

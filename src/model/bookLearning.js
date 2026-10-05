@@ -1,13 +1,10 @@
 // Books teach across class pools. Reading is atomic: cancel spends nothing;
 // confirming rechecks the selected lesson and awards XP and one lesson together.
-import { skillTracks, skillLevel, rarityUnlockedAt, awardSkillXp, skillUpgradesCards } from './skills.js';
+import { skillTracks, skillLevel, rarityUnlockedAt } from './skills.js';
 
-/** The lesson preview includes the XP this reading will grant, without mutation. */
+/** The lesson preview: the card as it joins, plain — a level no longer upgrades cards (SPEC §13.4o). */
 export function bookLessonCard(registries, run, def, skillId, cardId) {
-  const projected = { skills: { [skillId]: { xp: 0, level: 0, pendingDrafts: 0, ...run.skills?.[skillId] } }, deck: [] };
-  const schools = bookTags(registries, { skill: skillId });
-  const receipt = awardSkillXp(registries, projected, skillId, def.xp, { schools });
-  return { cardId, upgraded: skillUpgradesCards(registries, receipt.after) && (registries.cards.get(cardId).tags || []).some((tag) => schools.includes(tag)) };
+  return { cardId, upgraded: false };
 }
 
 export function bookTracks(registries, def) {

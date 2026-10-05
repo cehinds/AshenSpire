@@ -82,7 +82,7 @@ import {
 } from '../src/model/loadout.js';
 import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
 import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
-import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, applySkillUpgrades, skillUpgradesCards, spendSkillDraft, reconcileSkillUpgrades } from '../src/model/skills.js';
+import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, spendSkillDraft } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
 import { classCard, runClassIdentity } from '../src/model/classCard.js';
 import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp, coreTagsTreeProblems, staleCoreTags } from '../src/model/classTree.js';
@@ -6383,13 +6383,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (2026-10-03) and nothing from INT 1, below the row's baseline of 4. It
     // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '59/3/4', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,180,310,540,940,1640,2870,5030,8800,15390', 'default XP steps start at 100 and grow ×1.75');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '200,260,340,440,580,750,980,1280,1660,2170', 'default XP steps start at 200 and grow ×1.303 (SPEC §13.4o)');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 35800, '35,800 XP reaches level 11 on the default ×1.75 curve');
+    eq(Array.from({ length: 19 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, step) => sum + step, 0), 100160, '100,160 XP reaches level 20, the cap, on the default curve');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
@@ -8717,16 +8717,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(tracks.find((t) => t.id === 'item:magic-focus').kind, 'focus');
     eq(tracks.find((t) => t.id === 'item:blade').kind, 'weapon');
     assert(tracks.every((t) => SKILL_KINDS.includes(t.kind)), 'every track has a kind');
-    // Skill and class tracks share the owner's exponential curve (2026-10-02:
-    // base 100, ×1.75 per step); the linear option stays for tuning.
+    // Skill and class tracks are exponential (SPEC §13.4o, 2026-10-04): a skill
+    // base 100 ×1.995 to level 10, the class base 400 ×1.224 to level 20, each
+    // about 100,000 XP to its top; the linear option stays for tuning.
     const c = REG.balance.skill.xp;
     eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
     eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
     const steps = (kind) => Array.from({ length: 10 }, (_, n) => xpToNext(REG, kind, n));
-    assert(steps('class').every((cost, n) => cost >= steps('weapon')[n]), 'the class curve is never cheaper at any step');
-    eq(steps('class').reduce((a, b) => a + b), steps('weapon').reduce((a, b) => a + b), 'class and weapon curves share the default costs');
+    eq(steps('weapon').reduce((a, b) => a + b), 100275, 'a weapon skill reaches its cap of 10 at about 100,000 XP');
+    eq(Array.from({ length: 20 }, (_, n) => xpToNext(REG, 'class', n)).reduce((a, b) => a + b), 99940, 'the class reaches its cap of 20 at about 100,000 XP');
+    assert(steps('class')[0] > steps('weapon')[0], 'the class\'s first step costs more than a skill\'s');
     const armourSteps = Array.from({ length: 10 }, (_, n) => xpToNext(REG, 'armour', n));
-    eq(armourSteps.slice(0, 5).join(','), '100,175,305,535,940', 'armour starts at 100 and each step costs 1.75 times the last');
+    eq(armourSteps.slice(0, 5).join(','), '100,200,400,795,1585', 'armour starts at 100 and each step costs about 1.995 times the last');
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');
@@ -8870,7 +8872,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 1 }, { owner: entB }), false, 'and not the active seat\'s');
   });
 
-  test('86. skill drafts: the level buys a pick from the track\'s own schools, rarity opens by level, the threshold upgrades the deck (plan phase 4b)', () => {
+  test('86. skill drafts: the level buys a pick from the track\'s own schools, rarity opens by level, and a level no longer upgrades the deck (plan phase 4b, §13.4o)', () => {
     const c = REG.balance.skill;
     // THE SCHOOLS ARE DERIVED from what the hands hold — a straight sword's
     // tagging rows, not a second table; armour and class tracks draft nothing.
@@ -8921,37 +8923,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(resolveContinue(plan, {}, 'auto', (n) => 2 % n).take.find((r) => r.key === 'skillDraft:item:blade:0').cardId, low[2], 'the pick is the injected one');
     assert(unseenIds(offer, { cards: new Set([low[0]]) }).cards.includes(low[1]) && !unseenIds(offer, { cards: new Set([low[0]]) }).cards.includes(low[0]), 'NEW reads the drafts\' cards');
     assert(REWARD_KIND_ORDER.indexOf('skillDraft') < REWARD_KIND_ORDER.indexOf('card'), 'the draft sits where the class card sat');
-    // THE THRESHOLD UPGRADES THE DECK — the ORDINARY cards of the track's
-    // schools; an equipment-bound basic and an item-owned card are the piece's
-    // (the smith's tier, re-derived by every restamp) and are left alone.
-    const before = reaver.deck.filter((x) => x.upgraded).length; eq(before, 0);
-    const toThreshold = Array.from({ length: c.upgradeAt }, (_, lvl) => xpToNext(REG, 'weapon', lvl)).reduce((a, b) => a + b, 0);
-    const award = awardSkillXp(REG, reaver, 'item:blade', toThreshold);
-    eq(award.after, c.upgradeAt, 'the award reached the threshold');
-    const isBlade = (x) => (REG.cards.get(x.cardId).tags || []).some((t) => ['blade', 'basic'].includes(t));
-    const ordinary = (x) => !x.sourceArmamentId && !['granted', 'weaponArt'].includes(x.equipmentRole);
-    const bladeCards = reaver.deck.filter((x) => isBlade(x) && ordinary(x));
-    assert(bladeCards.length > 0 && bladeCards.every((x) => x.upgraded), 'every ordinary blade-school card in the deck is upgraded');
-    assert(reaver.deck.filter((x) => isBlade(x) && !ordinary(x)).length > 0, 'the deck holds equipment-bound blade cards too');
-    assert(reaver.deck.filter((x) => isBlade(x) && !ordinary(x)).every((x) => !x.upgraded), "and they are the piece's — untouched");
-    assert(reaver.deck.filter((x) => x.cardId === 'defend').every((x) => !x.upgraded), 'a guard-only card is not');
-    eq(award.upgraded.length, bladeCards.length, 'the award names what it upgraded');
-    eq(awardSkillXp(REG, reaver, 'item:blade', xpToNext(REG, 'weapon', c.upgradeAt)).upgraded.length, 0, 'the next level upgrades nothing again');
-    eq(applySkillUpgrades(REG, reaver, 'item:blade').length, 0, 'idempotent');
-    // Restamping (as onCombatEnd does after the award) leaves the ordinary
-    // upgrade in place: the rule wrote only what the restamp does not own.
-    stampDeck(REG, reaver);
-    assert(reaver.deck.filter((x) => isBlade(x) && ordinary(x)).every((x) => x.upgraded), 'the restamp keeps the ordinary upgrades');
-    // A STANDING RULE, not a crossing: a blade card that joins the deck later
-    // is upgraded at the next award, and a ledger written before the rule
-    // existed is reconciled at the load door.
-    reaver.deck.push({ instanceId: 'late', cardId: 'crimsonCleave', upgraded: false });
-    eq(awardSkillXp(REG, reaver, 'item:blade', 1).upgraded.join(','), 'late', 'a later card is upgraded at the next award');
-    reaver.deck.push({ instanceId: 'later', cardId: 'serratedBlade', upgraded: false });
-    eq(JSON.stringify(reconcileSkillUpgrades(REG, reaver)), JSON.stringify({ 'item:blade': ['later'] }), 'the load door asks the rule of every track past the threshold');
-    assert(skillUpgradesCards(REG, c.upgradeAt) && !skillUpgradesCards(REG, c.upgradeAt - 1));
-    eq(reaver.skills['item:blade'].pendingDrafts, c.upgradeAt + 1, 'each level queued a draft');
-    assert(spendSkillDraft(reaver, 'item:blade')); eq(reaver.skills['item:blade'].pendingDrafts, c.upgradeAt);
+    // A LEVEL NO LONGER UPGRADES THE DECK (SPEC §13.4o): the `upgradeAt`
+    // standing rule is retired for card ranks, raised one at a time by a
+    // level's rank-up. Five blade levels leave every deck card as it was.
+    const before = reaver.deck.map((x) => !!x.upgraded).join(',');
+    const toFive = Array.from({ length: 5 }, (_, lvl) => xpToNext(REG, 'weapon', lvl)).reduce((a, b) => a + b, 0);
+    const award = awardSkillXp(REG, reaver, 'item:blade', toFive);
+    eq(award.after, 5, 'the award climbed five levels');
+    eq(reaver.deck.map((x) => !!x.upgraded).join(','), before, 'and upgraded nothing');
+    assert(!('upgraded' in award), 'the receipt names no upgrades');
+    eq(awardSkillXp(REG, reaver, 'item:blade', xpToNext(REG, 'weapon', 5)).after, 6);
+    eq(reaver.skills['item:blade'].pendingDrafts, 6, 'each level queued a draft');
+    assert(spendSkillDraft(reaver, 'item:blade')); eq(reaver.skills['item:blade'].pendingDrafts, 5);
     assert(!spendSkillDraft(reaver, 'item:shield'), 'a track with no draft queued spends nothing');
     // TWO DRAFTS FOR ONE TRACK (draftsPerCombat > 1) are two rows with two keys.
     const twin = rewardPlan({ skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: low }, { skillId: 'item:blade', level: 1, cardIds: ['quickCut'] }] }, { flaskSlotsFree: 1 });
@@ -8973,7 +8956,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const withSkill = (skill) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, ...skill } } });
     assert(said(withSkill({ rarityUnlock: { ...c.rarityUnlock, legendary: 10 } })).some((e) => /rarityUnlock\.legendary/.test(e)), 'a rarity the game has not got is refused by name');
     assert(said(withSkill({ draftSize: 0 })).some((e) => /balance\.skill\.draftSize/.test(e)), 'a zero draft is refused by name');
-    assert(said(withSkill({ upgradeAt: 2.5 })).some((e) => /balance\.skill\.upgradeAt/.test(e)));
+    assert(said(withSkill({ upgradeAt: 5 })).some((e) => /balance\.skill\.upgradeAt: Unknown field/.test(e)), 'the retired threshold is an unknown field');
   });
 
   test('87. the class card: a derived core-zone card, its kit dealt at creation, its favored leaning a property the fight mounts (plan phase 5a)', () => {

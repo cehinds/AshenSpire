@@ -24,9 +24,9 @@ for (const [growth, expectedSkill, expectedCharacter] of [[1.025, 100, 105], [1.
     assert.equal(skillXpToNext(registries, 'class', 1), expectedSkill, 'the saved class threshold retains its original rounding');
     assert.equal(characterXpToNext(registries, 2), expectedCharacter, 'character exponential curves retain their existing epsilon');
     const linear = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot({})));
-    // Skill and class default to the owner's ×1.75 curve (2026-10-02).
-    assert.equal(skillXpToNext(linear, 'weapon', 1), 175);
-    assert.equal(skillXpToNext(linear, 'class', 1), 175);
+    // Skill and class default to SPEC §13.4o's curves (2026-10-04): ×1.995 from 100, ×1.224 from 400.
+    assert.equal(skillXpToNext(linear, 'weapon', 1), 200);
+    assert.equal(skillXpToNext(linear, 'class', 1), 490);
   });
 }
 
@@ -35,9 +35,9 @@ test('new snapshots use the authored curve while legacy XP edits preserve their 
   const old = { schemaVersion: 1, overrides: { [xpKey]: 100, 'gameConfig.balance.level.xp.growth': 1.2 } };
   const currentBundle = configuredContentBundle(contentBundle, current);
   assert.equal(current.xpCurveVersion, 1);
-  // The authored character curve is exponential ×1.75 (owner, 2026-10-02).
+  // The authored character curve is exponential ×1.303 from 200 (SPEC §13.4o, 2026-10-04).
   assert.equal(currentBundle.balance.level.xp.linear, false);
-  assert.equal(currentBundle.balance.level.xp.growth, 1.75);
+  assert.equal(currentBundle.balance.level.xp.growth, 1.303);
   const edited = updatedXpSnapshot(old, { [xpKey]: 200 });
   assert.equal(Object.hasOwn(edited, 'xpCurveVersion'), false);
   const legacy = configuredContentBundle(contentBundle, edited);

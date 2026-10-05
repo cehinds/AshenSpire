@@ -332,6 +332,41 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.skillRankUp.title",
+    "extends": "",
+    "short": "{skill} · level {level}: raise a card",
+    "full": "A level's rank-up: one of your own cards of the skill's schools rises one rank.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.body",
+    "extends": "",
+    "short": "Raise one of your {skill} cards by one rank.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.none",
+    "extends": "",
+    "short": "No {skill} card can rise yet. A card's rank stays at or below the skill's level; this waits for one.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.raised",
+    "extends": "",
+    "short": "{name} rose to rank {rank}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.spent",
+    "extends": "",
+    "short": "This rank-up can't land: it was spent, or that card can no longer rise. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.classDraft.title",
     "extends": "",
     "short": "{class} · level {level}",
@@ -3468,6 +3503,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "master.refuse.capped",
+    "extends": "",
+    "short": "{skill} is at its highest level.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "master.refuse.amount",
     "extends": "",
     "short": "Spend a whole amount from 1 to {pool} XP, not {amount}.",
@@ -5645,13 +5687,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "settings.row.manualLevelUp",
-    "extends": "",
-    "short": "Click to level up",
-    "full": "When XP fills a character or skill bar, wait for its Level button before advancing. Off: earned levels advance automatically.",
-    "tip": ""
-  },
-  {
     "id": "settings.row.rewardLevelStatPoints",
     "extends": "",
     "short": "Level Up · Stat points",
@@ -5978,13 +6013,6 @@ export const uiStrings = [
     "extends": "",
     "short": "Card flick distance",
     "full": "Upward travel in screen pixels. Shorter needs less movement; longer helps avoid accidental plays. Release with an upward flick.",
-    "tip": ""
-  },
-  {
-    "id": "settings.row.guidedLevelUp",
-    "extends": "",
-    "short": "Claim levels automatically",
-    "full": "Claim each banked level in turn, refilling leftover XP. Each level's reward waits in the menu, highlighted, until you open it. Turn off to follow the Click to level up preference.",
     "tip": ""
   },
   {

@@ -2922,573 +2922,6 @@
       "transformed": false
     },
     {
-      "id": "aftermath-desktop",
-      "file": "assets/scenes/aftermath-desktop.webp",
-      "master": "masters/scenes/aftermath-desktop.png",
-      "kind": "scenes",
-      "width": 1672,
-      "height": 941,
-      "alphaRange": null,
-      "sha256": "bca69ee004e94c98f6e051a95a32121644eb35a34ab1fa476f2bb90ee54c9b4c",
-      "masterSha256": "9aea39b7eace76acc506f5e5c548a0b66cd0bf5323327bdccff91e8886aef3ba",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/aftermath-desktop.json"
-    },
-    {
-      "id": "aftermath-mobile",
-      "file": "assets/scenes/aftermath-mobile.webp",
-      "master": "masters/scenes/aftermath-mobile.png",
-      "kind": "scenes",
-      "width": 941,
-      "height": 1672,
-      "alphaRange": null,
-      "sha256": "e171130d4fc17ae4f8c8208ec76a61537c7a37cea54cb94d4da9e4273fe46b57",
-      "masterSha256": "94d4f4a11ec784c90233a6e9a2d2f562466f1fb112cc01510a102643c1face0d",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/aftermath-mobile.json"
-    },
-    {
-      "id": "blight-hound-inspector",
-      "file": "assets/enemies/blight-hound-inspector.webp",
-      "master": "masters/enemies/blight-hound-inspector.png",
-      "kind": "enemies",
-      "width": 1254,
-      "height": 1254,
-      "alphaRange": [
-        0,
-        255
-      ],
-      "sha256": "a12fd7d9f2d4f1fa0aa9ea3b4cac2147c04e220effc27379ad72189c81544f7c",
-      "masterSha256": "a40b6b4d5e2f8660369cffa059f955776c9de1a46b52659b9145ac50f68caf33",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/blight-hound-inspector.json"
-    },
-    {
-      "id": "blight-hound-three-quarter",
-      "file": "assets/enemies/blight-hound-three-quarter.webp",
-      "master": "masters/enemies/blight-hound-three-quarter.png",
-      "kind": "enemies",
-      "width": 1536,
-      "height": 1024,
-      "alphaRange": [
-        0,
-        254
-      ],
-      "sha256": "c4ed78cccc293f4cc17979c240ee51ef86be66772cdf2995ce10c7c4572c460e",
-      "masterSha256": "9fc4c8956646e3b822a57f0f9406c530071d2018009e7bf05eede1e7e01807e7",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/blight-hound-three-quarter.json"
-    },
-    {
-      "id": "chapel-rest-desktop",
-      "file": "assets/scenes/chapel-rest-desktop.webp",
-      "master": "masters/scenes/chapel-rest-desktop.png",
-      "kind": "scenes",
-      "width": 1672,
-      "height": 941,
-      "alphaRange": null,
-      "sha256": "c9ca548404a596d4b0e36b9c0fbc147b7ba9554b6baf640b910d66909c77a14a",
-      "masterSha256": "753d983d7d15b9057c38a8b6ecb24c767b2cdc0781fdcb946542be5667e13253",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/chapel-rest-desktop.json"
-    },
-    {
-      "id": "chapel-rest-mobile",
-      "file": "assets/scenes/chapel-rest-mobile.webp",
-      "master": "masters/scenes/chapel-rest-mobile.png",
-      "kind": "scenes",
-      "width": 941,
-      "height": 1672,
-      "alphaRange": null,
-      "sha256": "76718de5b7a64119f52e8674e9c6e3c445b5bfef99c311fcc791ba218fb8b98b",
-      "masterSha256": "f943fd907653c5d26bcaf98b1185127960929c74608be001981dfc209f6faf07",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/chapel-rest-mobile.json"
-    },
-    {
-      "id": "charred-colossus-inspector",
-      "file": "assets/enemies/charred-colossus-inspector.webp",
-      "master": "masters/enemies/charred-colossus-inspector.png",
-      "kind": "enemies",
-      "width": 1254,
-      "height": 1254,
-      "alphaRange": [
-        0,
-        255
-      ],
-      "sha256": "61ea6d7690827abed06051dcfea20d18ebd98fa09bdea1541f6ca5685664376e",
-      "masterSha256": "b7ccdd0fc053bfb7b51b5c5bdeabe67e4a2cf28297d47a2cb22bb8dd37f9e05d",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/charred-colossus-inspector.json"
-    },
-    {
-      "id": "charred-colossus-three-quarter",
-      "file": "assets/enemies/charred-colossus-three-quarter.webp",
-      "master": "masters/enemies/charred-colossus-three-quarter.png",
-      "kind": "enemies",
-      "width": 1244,
-      "height": 1265,
-      "alphaRange": [
-        0,
-        255
-      ],
-      "sha256": "48313856d542e995f31eaa1b5b617654094b944605800fc95644ab5d77574b99",
-      "masterSha256": "947949a92d58d228a9a2b60e3248073e1f0e9e5d7fd1ab1985787457075b0cd5",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/charred-colossus-three-quarter.json"
-    },
-    {
-      "id": "crownfall-desktop",
-      "file": "assets/scenes/crownfall-desktop.webp",
-      "master": "masters/scenes/crownfall-desktop.png",
-      "kind": "scenes",
-      "width": 1672,
-      "height": 941,
-      "alphaRange": null,
-      "sha256": "395074f1b26bd1cffd7d601b4aa480b5e79cce69e6dffe9d4ceb1027d7353d54",
-      "masterSha256": "59252dfe0eba5e1aef0b0f2d18a00a6d0362e22572c2bc78548fdd939eb157e6",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/crownfall-desktop.json"
-    },
-    {
-      "id": "crownfall-mobile",
-      "file": "assets/scenes/crownfall-mobile.webp",
-      "master": "masters/scenes/crownfall-mobile.png",
-      "kind": "scenes",
-      "width": 941,
-      "height": 1672,
-      "alphaRange": null,
-      "sha256": "fcf198f8f530e56c0a6850a2816784b3b86ffc2890c93ffc5f84e38cf666af7a",
-      "masterSha256": "db8f80344edf099a9bf9b6c0299849550cef6c43119ad058bda536cfb1dae167",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/crownfall-mobile.json"
-    },
-    {
-      "id": "crownfall-street-desktop",
-      "file": "assets/scenes/crownfall-street-desktop.webp",
-      "master": "masters/scenes/crownfall-street-desktop.png",
-      "kind": "scenes",
-      "width": 1672,
-      "height": 941,
-      "alphaRange": null,
-      "sha256": "126eed85da8411364b383373f04d017a1899e51070ff53d6b18c629060ac4f2e",
-      "masterSha256": "ec6e29cd38cc5b5efd5dd7e079c63ac93a81558983bcf4b0e1d6d239db7cb037",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/crownfall-street-desktop.json"
-    },
-    {
-      "id": "crownfall-street-mobile",
-      "file": "assets/scenes/crownfall-street-mobile.webp",
-      "master": "masters/scenes/crownfall-street-mobile.png",
-      "kind": "scenes",
-      "width": 941,
-      "height": 1672,
-      "alphaRange": null,
-      "sha256": "411f5e8ffd3e5a461ec0b3af73f0ab9f951233d110793b857289326794afd9a2",
-      "masterSha256": "f49315381f70b80efeda1e58d6c6597f36673c38c769ad682ebffdfd18862f57",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/crownfall-street-mobile.json"
-    },
-    {
-      "id": "fellowship-desktop",
-      "file": "assets/scenes/fellowship-desktop.webp",
-      "master": "masters/scenes/fellowship-desktop.png",
-      "kind": "scenes",
-      "width": 1672,
-      "height": 941,
-      "alphaRange": null,
-      "sha256": "a5c0bbd9f6076e8a4abb1142a5d5ccccf5345914ca038c711deb8c60f76b1948",
-      "masterSha256": "8b7707f8606c2ee3ff94f839ad7531bb4ccc3eef1f8c7c4a45ff36e1297290cf",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/fellowship-desktop.json"
-    },
-    {
-      "id": "fellowship-mobile",
-      "file": "assets/scenes/fellowship-mobile.webp",
-      "master": "masters/scenes/fellowship-mobile.png",
-      "kind": "scenes",
-      "width": 941,
-      "height": 1672,
-      "alphaRange": null,
-      "sha256": "826d07909302b685ec8a93a2f15893151142c78b40be371874387c11569e5678",
-      "masterSha256": "f17c8ac5cf6e3f94025673b3c658e7514cc94c9c71d35ed04bb3a89407de84fd",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/fellowship-mobile.json"
-    },
-    {
-      "id": "fieldcase-still-life",
-      "file": "assets/decorations/fieldcase-still-life.webp",
-      "master": "masters/decorations/fieldcase-still-life.png",
-      "kind": "decorations",
-      "width": 1774,
-      "height": 887,
-      "alphaRange": [
-        0,
-        255
-      ],
-      "sha256": "4d204e17a55e2db102484a06101813bf88bb6fc9d8fa049201aa8cb44147ce9c",
-      "masterSha256": "9e42150f680b9fe5cc0e2411d84783d649ec1e6ace46340b2f8905c42934aad4",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/fieldcase-still-life.json"
-    },
-    {
-      "id": "furnace-chapel-desktop",
-      "file": "assets/scenes/furnace-chapel-desktop.webp",
-      "master": "masters/scenes/furnace-chapel-desktop.png",
-      "kind": "scenes",
-      "width": 1672,
-      "height": 941,
-      "alphaRange": null,
-      "sha256": "3bcfec54be28b1936c4889aa1c52cbe2ea3ac60ceadd1643a618a45c46b22e35",
-      "masterSha256": "0685dff45b32525bcb4ed7be24767834cfc7126bea3a8bb5e2b67d12353df4db",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/furnace-chapel-desktop.json"
-    },
-    {
-      "id": "furnace-chapel-mobile",
-      "file": "assets/scenes/furnace-chapel-mobile.webp",
-      "master": "masters/scenes/furnace-chapel-mobile.png",
-      "kind": "scenes",
-      "width": 941,
-      "height": 1672,
-      "alphaRange": null,
-      "sha256": "b0b11a9b91cdaee3731c478a3ae7c7b3068000dc291c51100493309677ffaa48",
-      "masterSha256": "9c15dfade26d8c8f0ba9a120d0d65685edfb213a9c877bfaa9950081cd4af1f6",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/furnace-chapel-mobile.json"
-    },
-    {
-      "id": "hanging-lantern",
-      "file": "assets/decorations/hanging-lantern.webp",
-      "master": "masters/decorations/hanging-lantern.png",
-      "kind": "decorations",
-      "width": 1024,
-      "height": 1536,
-      "alphaRange": [
-        0,
-        254
-      ],
-      "sha256": "19f35dfeab188da677e71ef353536910ee395eec77a86d74fd8437092992b5d6",
-      "masterSha256": "c22bfd4920c65d7f4789802c373059decbcc72323255124e8087a720392cba4c",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/hanging-lantern.json"
-    },
-    {
-      "id": "inn-interior",
-      "file": "assets/scenes/inn-interior.webp",
-      "master": "masters/scenes/inn-interior.png",
-      "kind": "scenes",
-      "width": 1254,
-      "height": 1254,
-      "alphaRange": null,
-      "sha256": "a64800865075d9c8e7e0f1ed4d2840ad0177bfc994dfa1e868946b38bf12cc34",
-      "masterSha256": "5afe43eb2af656b8633d92efc4f07c7b599461bc86bb384716d016edd0f28e70",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/inn-interior.json"
-    },
-    {
-      "id": "ruined-courtyard-desktop",
-      "file": "assets/scenes/ruined-courtyard-desktop.webp",
-      "master": "masters/scenes/ruined-courtyard-desktop.png",
-      "kind": "scenes",
-      "width": 1672,
-      "height": 941,
-      "alphaRange": null,
-      "sha256": "d03d005e8ec2cf45008247dd2a92b6248c58af9bb3232fbd6e95b3ba9e70ae97",
-      "masterSha256": "a5f59c5c551f65f62e012c4361ee0212b66097430cf915f690d7f806af3dfe72",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/ruined-courtyard-desktop.json"
-    },
-    {
-      "id": "ruined-courtyard-mobile",
-      "file": "assets/scenes/ruined-courtyard-mobile.webp",
-      "master": "masters/scenes/ruined-courtyard-mobile.png",
-      "kind": "scenes",
-      "width": 941,
-      "height": 1672,
-      "alphaRange": null,
-      "sha256": "7163c65a7eab5c5c79aa8e99148db828c96a3b1e2978d30bff8a0ae8e964ee31",
-      "masterSha256": "ed4a0c6455b2ad4f7c25e72b121c0bd8ddc16173b77ee78750684b10a9e0e18b",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/ruined-courtyard-mobile.json"
-    },
-    {
-      "id": "spoils-desktop",
-      "file": "assets/scenes/spoils-desktop.webp",
-      "master": "masters/scenes/spoils-desktop.png",
-      "kind": "scenes",
-      "width": 1672,
-      "height": 941,
-      "alphaRange": null,
-      "sha256": "6974aba3e5f2c4461562e137e517312a7f88b3a6cda34fdedeee45b27da8c79d",
-      "masterSha256": "a6df729828b522be3cb50be3188b83062841fa4c9531a63cf9a9fec69ba4134c",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/spoils-desktop.json"
-    },
-    {
-      "id": "spoils-mobile",
-      "file": "assets/scenes/spoils-mobile.webp",
-      "master": "masters/scenes/spoils-mobile.png",
-      "kind": "scenes",
-      "width": 941,
-      "height": 1672,
-      "alphaRange": null,
-      "sha256": "192e4fe26ac4aea5eb149c10853a62314bb89f762549d2b9b9e87438796915d0",
-      "masterSha256": "f1d7816f66f5928a4d71b9b633076b4e3f4316d1dd34491efb5abd0bedfe6346",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/spoils-mobile.json"
-    },
-    {
-      "id": "torn-standard",
-      "file": "assets/decorations/torn-standard.webp",
-      "master": "masters/decorations/torn-standard.png",
-      "kind": "decorations",
-      "width": 1024,
-      "height": 1536,
-      "alphaRange": [
-        0,
-        254
-      ],
-      "sha256": "1a46367af840a31ae7c47161083e64c7d84289a0961237a176868ad9d9c5cfa5",
-      "masterSha256": "59b64e0b669ea6be3b9b3c24c278c922217188aab3d540569f8ab77f9f20ded1",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/torn-standard.json"
-    },
-    {
-      "id": "wandering-soldier-inspector",
-      "file": "assets/enemies/wandering-soldier-inspector.webp",
-      "master": "masters/enemies/wandering-soldier-inspector.png",
-      "kind": "enemies",
-      "width": 1254,
-      "height": 1254,
-      "alphaRange": [
-        0,
-        255
-      ],
-      "sha256": "45ab67a39e5be37def351816ce5c59259d2f65e2476bcd002aa8a32142be77db",
-      "masterSha256": "81017c4bbd3d255b7edb0dcf1b52fea64ab79abe86b48754d8ca8a67e38a7bdb",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/wandering-soldier-inspector.json"
-    },
-    {
-      "id": "wandering-soldier-three-quarter",
-      "file": "assets/enemies/wandering-soldier-three-quarter.webp",
-      "master": "masters/enemies/wandering-soldier-three-quarter.png",
-      "kind": "enemies",
-      "width": 1241,
-      "height": 1268,
-      "alphaRange": [
-        0,
-        255
-      ],
-      "sha256": "786c16781820e21381bcb77c94e995af931f2fcfd288b67589d85487701db2f5",
-      "masterSha256": "a5f6d6640357011f3779e9c22d0454ad9a6e74fcd1d7b52d0b1f7114a85ec005",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": true,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/wandering-soldier-three-quarter.json"
-    },
-    {
-      "id": "weathered-parchment",
-      "file": "assets/materials/weathered-parchment.webp",
-      "master": "masters/materials/weathered-parchment.png",
-      "kind": "materials",
-      "width": 1254,
-      "height": 1254,
-      "alphaRange": null,
-      "sha256": "9a9b8282e629f043761f454a9a1ca2e4ab504a83d185502af70a765cf047c324",
-      "masterSha256": "e4d7eac489cec0c5289f497200097b1a050534242626bace9b2a3c4adc3988f7",
-      "origin": "built-in-image-generation",
-      "export": {
-        "format": "WebP",
-        "quality": 92,
-        "lossless": false,
-        "resized": false,
-        "cropped": false
-      },
-      "generation": "generation/weathered-parchment.json"
-    },
-    {
       "id": "engraved-folio-frame",
       "file": "assets/components/engraved-folio-frame.svg",
       "kind": "component",
@@ -4645,8 +4078,914 @@
       "transparentExterior": true,
       "opaqueCenter": false,
       "sha256": "700fb5b859430be9836a5037287f89e095f9ce8e13f6933501deb3c417d1728e"
+    },
+    {
+      "id": "aftermath-desktop",
+      "file": "assets/scenes/aftermath-desktop.webp",
+      "master": "masters/scenes/aftermath-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "bca69ee004e94c98f6e051a95a32121644eb35a34ab1fa476f2bb90ee54c9b4c",
+      "masterSha256": "9aea39b7eace76acc506f5e5c548a0b66cd0bf5323327bdccff91e8886aef3ba",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/aftermath-desktop.json"
+    },
+    {
+      "id": "aftermath-mobile",
+      "file": "assets/scenes/aftermath-mobile.webp",
+      "master": "masters/scenes/aftermath-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "e171130d4fc17ae4f8c8208ec76a61537c7a37cea54cb94d4da9e4273fe46b57",
+      "masterSha256": "94d4f4a11ec784c90233a6e9a2d2f562466f1fb112cc01510a102643c1face0d",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/aftermath-mobile.json"
+    },
+    {
+      "id": "blight-hound-inspector",
+      "file": "assets/enemies/blight-hound-inspector.webp",
+      "master": "masters/enemies/blight-hound-inspector.png",
+      "kind": "enemies",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "a12fd7d9f2d4f1fa0aa9ea3b4cac2147c04e220effc27379ad72189c81544f7c",
+      "masterSha256": "a40b6b4d5e2f8660369cffa059f955776c9de1a46b52659b9145ac50f68caf33",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/blight-hound-inspector.json"
+    },
+    {
+      "id": "blight-hound-three-quarter",
+      "file": "assets/enemies/blight-hound-three-quarter.webp",
+      "master": "masters/enemies/blight-hound-three-quarter.png",
+      "kind": "enemies",
+      "width": 1536,
+      "height": 1024,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "c4ed78cccc293f4cc17979c240ee51ef86be66772cdf2995ce10c7c4572c460e",
+      "masterSha256": "9fc4c8956646e3b822a57f0f9406c530071d2018009e7bf05eede1e7e01807e7",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/blight-hound-three-quarter.json"
+    },
+    {
+      "id": "caldera-rim-desktop",
+      "file": "assets/scenes/caldera-rim-desktop.webp",
+      "master": "masters/scenes/caldera-rim-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "af10200be8b0a905c1b9bbb79809decae07e4dd703786f6e8ea80ffd948b6946",
+      "masterSha256": "6b879947c4241326bf7497fca7f9114124d516a6a957e13990a8de1a10ad283d",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/caldera-rim-desktop.json"
+    },
+    {
+      "id": "caldera-rim-mobile",
+      "file": "assets/scenes/caldera-rim-mobile.webp",
+      "master": "masters/scenes/caldera-rim-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "ea93c0c9e9ce567e52760eba9d7e696d524f17faa893d3d282b2001d6ee85b55",
+      "masterSha256": "be03551e9bb8b7056d2816366a406f3a490a957f29e6bffe4982e2d37f3ae26f",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/caldera-rim-mobile.json"
+    },
+    {
+      "id": "caravan-medicine-strongbox",
+      "file": "assets/decorations/caravan-medicine-strongbox.webp",
+      "master": "masters/decorations/caravan-medicine-strongbox.png",
+      "kind": "decorations",
+      "width": 1536,
+      "height": 1024,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "cfcc81324055cab74083aa3431f887602ed14fc655f2030dc213c4e906847ca3",
+      "masterSha256": "3c009835246169af533d0f5a52f901baa71fda810121a520c0e2ab0b104ee193",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/caravan-medicine-strongbox.json"
+    },
+    {
+      "id": "chapel-rest-desktop",
+      "file": "assets/scenes/chapel-rest-desktop.webp",
+      "master": "masters/scenes/chapel-rest-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "c9ca548404a596d4b0e36b9c0fbc147b7ba9554b6baf640b910d66909c77a14a",
+      "masterSha256": "753d983d7d15b9057c38a8b6ecb24c767b2cdc0781fdcb946542be5667e13253",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/chapel-rest-desktop.json"
+    },
+    {
+      "id": "chapel-rest-mobile",
+      "file": "assets/scenes/chapel-rest-mobile.webp",
+      "master": "masters/scenes/chapel-rest-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "76718de5b7a64119f52e8674e9c6e3c445b5bfef99c311fcc791ba218fb8b98b",
+      "masterSha256": "f943fd907653c5d26bcaf98b1185127960929c74608be001981dfc209f6faf07",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/chapel-rest-mobile.json"
+    },
+    {
+      "id": "charred-colossus-inspector",
+      "file": "assets/enemies/charred-colossus-inspector.webp",
+      "master": "masters/enemies/charred-colossus-inspector.png",
+      "kind": "enemies",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "61ea6d7690827abed06051dcfea20d18ebd98fa09bdea1541f6ca5685664376e",
+      "masterSha256": "b7ccdd0fc053bfb7b51b5c5bdeabe67e4a2cf28297d47a2cb22bb8dd37f9e05d",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/charred-colossus-inspector.json"
+    },
+    {
+      "id": "charred-colossus-three-quarter",
+      "file": "assets/enemies/charred-colossus-three-quarter.webp",
+      "master": "masters/enemies/charred-colossus-three-quarter.png",
+      "kind": "enemies",
+      "width": 1244,
+      "height": 1265,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "48313856d542e995f31eaa1b5b617654094b944605800fc95644ab5d77574b99",
+      "masterSha256": "947949a92d58d228a9a2b60e3248073e1f0e9e5d7fd1ab1985787457075b0cd5",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/charred-colossus-three-quarter.json"
+    },
+    {
+      "id": "crownfall-desktop",
+      "file": "assets/scenes/crownfall-desktop.webp",
+      "master": "masters/scenes/crownfall-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "395074f1b26bd1cffd7d601b4aa480b5e79cce69e6dffe9d4ceb1027d7353d54",
+      "masterSha256": "59252dfe0eba5e1aef0b0f2d18a00a6d0362e22572c2bc78548fdd939eb157e6",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/crownfall-desktop.json"
+    },
+    {
+      "id": "crownfall-mobile",
+      "file": "assets/scenes/crownfall-mobile.webp",
+      "master": "masters/scenes/crownfall-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "fcf198f8f530e56c0a6850a2816784b3b86ffc2890c93ffc5f84e38cf666af7a",
+      "masterSha256": "db8f80344edf099a9bf9b6c0299849550cef6c43119ad058bda536cfb1dae167",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/crownfall-mobile.json"
+    },
+    {
+      "id": "crownfall-street-desktop",
+      "file": "assets/scenes/crownfall-street-desktop.webp",
+      "master": "masters/scenes/crownfall-street-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "126eed85da8411364b383373f04d017a1899e51070ff53d6b18c629060ac4f2e",
+      "masterSha256": "ec6e29cd38cc5b5efd5dd7e079c63ac93a81558983bcf4b0e1d6d239db7cb037",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/crownfall-street-desktop.json"
+    },
+    {
+      "id": "crownfall-street-mobile",
+      "file": "assets/scenes/crownfall-street-mobile.webp",
+      "master": "masters/scenes/crownfall-street-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "411f5e8ffd3e5a461ec0b3af73f0ab9f951233d110793b857289326794afd9a2",
+      "masterSha256": "f49315381f70b80efeda1e58d6c6597f36673c38c769ad682ebffdfd18862f57",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/crownfall-street-mobile.json"
+    },
+    {
+      "id": "drowned-hamlet-desktop",
+      "file": "assets/scenes/drowned-hamlet-desktop.webp",
+      "master": "masters/scenes/drowned-hamlet-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "fa305394b82b4261afb8af6c8775749c38bab9b19069b93778f33e1608db0557",
+      "masterSha256": "95115cb77bcc6c4484a39a7de27a504dae1817cda0dfc4e128e4a3ba05516ec1",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/drowned-hamlet-desktop.json"
+    },
+    {
+      "id": "drowned-hamlet-mobile",
+      "file": "assets/scenes/drowned-hamlet-mobile.webp",
+      "master": "masters/scenes/drowned-hamlet-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "f9ec9871e14ab0aed756e17e5415f5ea81680ac3400b7db8d5477471fa7d13c4",
+      "masterSha256": "40b370deaf57b0e632d6d853f752a8d1fb7a55e6f09407863afb1476f9ef9ffc",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/drowned-hamlet-mobile.json"
+    },
+    {
+      "id": "drowned-orchard-desktop",
+      "file": "assets/scenes/drowned-orchard-desktop.webp",
+      "master": "masters/scenes/drowned-orchard-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "d40ba70e8b4932724c209e581b002c921abe3d12b9f08ba1abf930f99e6329a1",
+      "masterSha256": "a9edf12379c41c5134978b8dd0f274e0897bf3f211412bdfcbf9b4a5ed083ecb",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/drowned-orchard-desktop.json"
+    },
+    {
+      "id": "drowned-orchard-mobile",
+      "file": "assets/scenes/drowned-orchard-mobile.webp",
+      "master": "masters/scenes/drowned-orchard-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "1604da212415c75f8ac846269f641519edb4a2b712096f688288342e60f5ba3e",
+      "masterSha256": "9b0e75703f8b35cdff952c899f3e4d894ae2b154a6d51dfc60ad990fe10d17d2",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/drowned-orchard-mobile.json"
+    },
+    {
+      "id": "fellowship-desktop",
+      "file": "assets/scenes/fellowship-desktop.webp",
+      "master": "masters/scenes/fellowship-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "a5c0bbd9f6076e8a4abb1142a5d5ccccf5345914ca038c711deb8c60f76b1948",
+      "masterSha256": "8b7707f8606c2ee3ff94f839ad7531bb4ccc3eef1f8c7c4a45ff36e1297290cf",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/fellowship-desktop.json"
+    },
+    {
+      "id": "fellowship-mobile",
+      "file": "assets/scenes/fellowship-mobile.webp",
+      "master": "masters/scenes/fellowship-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "826d07909302b685ec8a93a2f15893151142c78b40be371874387c11569e5678",
+      "masterSha256": "f17c8ac5cf6e3f94025673b3c658e7514cc94c9c71d35ed04bb3a89407de84fd",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/fellowship-mobile.json"
+    },
+    {
+      "id": "fieldcase-still-life",
+      "file": "assets/decorations/fieldcase-still-life.webp",
+      "master": "masters/decorations/fieldcase-still-life.png",
+      "kind": "decorations",
+      "width": 1774,
+      "height": 887,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "4d204e17a55e2db102484a06101813bf88bb6fc9d8fa049201aa8cb44147ce9c",
+      "masterSha256": "9e42150f680b9fe5cc0e2411d84783d649ec1e6ace46340b2f8905c42934aad4",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/fieldcase-still-life.json"
+    },
+    {
+      "id": "frozen-camp-desktop",
+      "file": "assets/scenes/frozen-camp-desktop.webp",
+      "master": "masters/scenes/frozen-camp-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "13ec2bb2adec9a8fc89a1af16cf2828ea44a641e20f3b0f3a20fe9b94631e3b7",
+      "masterSha256": "ae11eed00032bffc9689b7941fb9d9d19f75e5bd4dd28de11d942aaa9361a874",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/frozen-camp-desktop.json"
+    },
+    {
+      "id": "frozen-camp-mobile",
+      "file": "assets/scenes/frozen-camp-mobile.webp",
+      "master": "masters/scenes/frozen-camp-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "f4ba217ae1a6a7c93b198c664d022f4487884a44a409d90afa21e73e4da644c3",
+      "masterSha256": "02e51679d0c7cb222c4065f26dbfd2e22d98ea3223829014e530cf00f6f66c52",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/frozen-camp-mobile.json"
+    },
+    {
+      "id": "furnace-chapel-desktop",
+      "file": "assets/scenes/furnace-chapel-desktop.webp",
+      "master": "masters/scenes/furnace-chapel-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "3bcfec54be28b1936c4889aa1c52cbe2ea3ac60ceadd1643a618a45c46b22e35",
+      "masterSha256": "0685dff45b32525bcb4ed7be24767834cfc7126bea3a8bb5e2b67d12353df4db",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/furnace-chapel-desktop.json"
+    },
+    {
+      "id": "furnace-chapel-mobile",
+      "file": "assets/scenes/furnace-chapel-mobile.webp",
+      "master": "masters/scenes/furnace-chapel-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "b0b11a9b91cdaee3731c478a3ae7c7b3068000dc291c51100493309677ffaa48",
+      "masterSha256": "9c15dfade26d8c8f0ba9a120d0d65685edfb213a9c877bfaa9950081cd4af1f6",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/furnace-chapel-mobile.json"
+    },
+    {
+      "id": "hanging-chain-hooks",
+      "file": "assets/decorations/hanging-chain-hooks.webp",
+      "master": "masters/decorations/hanging-chain-hooks.png",
+      "kind": "decorations",
+      "width": 1024,
+      "height": 1536,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "7fb8eee7036203dd2f0ef499e8f5c8d6be8c76fbf64e16a8394c3b484fe5d49b",
+      "masterSha256": "02cc644ce333c3668422e87752db6fe8d9144420cf4257950725d7dc47ef174b",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/hanging-chain-hooks.json"
+    },
+    {
+      "id": "hanging-lantern",
+      "file": "assets/decorations/hanging-lantern.webp",
+      "master": "masters/decorations/hanging-lantern.png",
+      "kind": "decorations",
+      "width": 1024,
+      "height": 1536,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "19f35dfeab188da677e71ef353536910ee395eec77a86d74fd8437092992b5d6",
+      "masterSha256": "c22bfd4920c65d7f4789802c373059decbcc72323255124e8087a720392cba4c",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/hanging-lantern.json"
+    },
+    {
+      "id": "inn-interior",
+      "file": "assets/scenes/inn-interior.webp",
+      "master": "masters/scenes/inn-interior.png",
+      "kind": "scenes",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": null,
+      "sha256": "a64800865075d9c8e7e0f1ed4d2840ad0177bfc994dfa1e868946b38bf12cc34",
+      "masterSha256": "5afe43eb2af656b8633d92efc4f07c7b599461bc86bb384716d016edd0f28e70",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/inn-interior.json"
+    },
+    {
+      "id": "old-aqueduct-desktop",
+      "file": "assets/scenes/old-aqueduct-desktop.webp",
+      "master": "masters/scenes/old-aqueduct-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "3bfaf35d810fb42cad36b9eec5ccab59ae1e2f01826bcb22e933b8dc69c4d94e",
+      "masterSha256": "788fce29601ed7a9cf2586f5d3577babdcf53b1b2f847fd465b4bb202aa32363",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/old-aqueduct-desktop.json"
+    },
+    {
+      "id": "old-aqueduct-mobile",
+      "file": "assets/scenes/old-aqueduct-mobile.webp",
+      "master": "masters/scenes/old-aqueduct-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "242ad9d709cac224e9ed3895f93a3e8ff3b37071c9764a8790de5cc74d658f90",
+      "masterSha256": "930a0a268599c46e0d43c3e996eafebfa4b861e4ef70ac9aec2cec1bb965d584",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/old-aqueduct-mobile.json"
+    },
+    {
+      "id": "open-codex-stand",
+      "file": "assets/decorations/open-codex-stand.webp",
+      "master": "masters/decorations/open-codex-stand.png",
+      "kind": "decorations",
+      "width": 1536,
+      "height": 1024,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "cfdb0ef5af91cca1433a71b681a0012a501d84eb7ee9907fb7e2bf1fb7b6df6c",
+      "masterSha256": "86ff17344b938cc50f78796be48f313c362e2464a419640760776711959731f2",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/open-codex-stand.json"
+    },
+    {
+      "id": "road-signal-beacon",
+      "file": "assets/decorations/road-signal-beacon.webp",
+      "master": "masters/decorations/road-signal-beacon.png",
+      "kind": "decorations",
+      "width": 1024,
+      "height": 1536,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "3a28f82d00573278d272983d295a268f1ee2f916bca4c36ff8ae9c76c8719125",
+      "masterSha256": "a99d0430835eec07004a9436a8bcb7b4ba98a89ed4e583c55af0ada9f4b1259c",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/road-signal-beacon.json"
+    },
+    {
+      "id": "ruined-courtyard-desktop",
+      "file": "assets/scenes/ruined-courtyard-desktop.webp",
+      "master": "masters/scenes/ruined-courtyard-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "d03d005e8ec2cf45008247dd2a92b6248c58af9bb3232fbd6e95b3ba9e70ae97",
+      "masterSha256": "a5f59c5c551f65f62e012c4361ee0212b66097430cf915f690d7f806af3dfe72",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/ruined-courtyard-desktop.json"
+    },
+    {
+      "id": "ruined-courtyard-mobile",
+      "file": "assets/scenes/ruined-courtyard-mobile.webp",
+      "master": "masters/scenes/ruined-courtyard-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "7163c65a7eab5c5c79aa8e99148db828c96a3b1e2978d30bff8a0ae8e964ee31",
+      "masterSha256": "ed4a0c6455b2ad4f7c25e72b121c0bd8ddc16173b77ee78750684b10a9e0e18b",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/ruined-courtyard-mobile.json"
+    },
+    {
+      "id": "second-cairn-fallen",
+      "file": "assets/decorations/second-cairn-fallen.webp",
+      "master": "masters/decorations/second-cairn-fallen.png",
+      "kind": "decorations",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "2b820c0af02c063b91e67a70919d8c8ebff538a9f598d73770b7188fddb5daae",
+      "masterSha256": "32434141cc0576ce058e9f9549e1ebba3c97965c7b2a1c3c0069dc862a65ba22",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/second-cairn-fallen.json"
+    },
+    {
+      "id": "second-cairn-raised",
+      "file": "assets/decorations/second-cairn-raised.webp",
+      "master": "masters/decorations/second-cairn-raised.png",
+      "kind": "decorations",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "9d257faf44adc211b97bbf114e67bf5e5fbfcc708d2639d4e44ec9c062d8ee9f",
+      "masterSha256": "6a2c3cecad5f49803aeee6510782b2934e7b89d475d65e5999d1f5d81324d2eb",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/second-cairn-raised.json"
+    },
+    {
+      "id": "spoils-desktop",
+      "file": "assets/scenes/spoils-desktop.webp",
+      "master": "masters/scenes/spoils-desktop.png",
+      "kind": "scenes",
+      "width": 1672,
+      "height": 941,
+      "alphaRange": null,
+      "sha256": "6974aba3e5f2c4461562e137e517312a7f88b3a6cda34fdedeee45b27da8c79d",
+      "masterSha256": "a6df729828b522be3cb50be3188b83062841fa4c9531a63cf9a9fec69ba4134c",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/spoils-desktop.json"
+    },
+    {
+      "id": "spoils-mobile",
+      "file": "assets/scenes/spoils-mobile.webp",
+      "master": "masters/scenes/spoils-mobile.png",
+      "kind": "scenes",
+      "width": 941,
+      "height": 1672,
+      "alphaRange": null,
+      "sha256": "192e4fe26ac4aea5eb149c10853a62314bb89f762549d2b9b9e87438796915d0",
+      "masterSha256": "f1d7816f66f5928a4d71b9b633076b4e3f4316d1dd34491efb5abd0bedfe6346",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/spoils-mobile.json"
+    },
+    {
+      "id": "torn-standard",
+      "file": "assets/decorations/torn-standard.webp",
+      "master": "masters/decorations/torn-standard.png",
+      "kind": "decorations",
+      "width": 1024,
+      "height": 1536,
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "1a46367af840a31ae7c47161083e64c7d84289a0961237a176868ad9d9c5cfa5",
+      "masterSha256": "59b64e0b669ea6be3b9b3c24c278c922217188aab3d540569f8ab77f9f20ded1",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/torn-standard.json"
+    },
+    {
+      "id": "wandering-soldier-inspector",
+      "file": "assets/enemies/wandering-soldier-inspector.webp",
+      "master": "masters/enemies/wandering-soldier-inspector.png",
+      "kind": "enemies",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "45ab67a39e5be37def351816ce5c59259d2f65e2476bcd002aa8a32142be77db",
+      "masterSha256": "81017c4bbd3d255b7edb0dcf1b52fea64ab79abe86b48754d8ca8a67e38a7bdb",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/wandering-soldier-inspector.json"
+    },
+    {
+      "id": "wandering-soldier-three-quarter",
+      "file": "assets/enemies/wandering-soldier-three-quarter.webp",
+      "master": "masters/enemies/wandering-soldier-three-quarter.png",
+      "kind": "enemies",
+      "width": 1241,
+      "height": 1268,
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "786c16781820e21381bcb77c94e995af931f2fcfd288b67589d85487701db2f5",
+      "masterSha256": "a5f6d6640357011f3779e9c22d0454ad9a6e74fcd1d7b52d0b1f7114a85ec005",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": true,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/wandering-soldier-three-quarter.json"
+    },
+    {
+      "id": "weathered-parchment",
+      "file": "assets/materials/weathered-parchment.webp",
+      "master": "masters/materials/weathered-parchment.png",
+      "kind": "materials",
+      "width": 1254,
+      "height": 1254,
+      "alphaRange": null,
+      "sha256": "9a9b8282e629f043761f454a9a1ca2e4ab504a83d185502af70a765cf047c324",
+      "masterSha256": "e4d7eac489cec0c5289f497200097b1a050534242626bace9b2a3c4adc3988f7",
+      "origin": "built-in-image-generation",
+      "export": {
+        "format": "WebP",
+        "quality": 92,
+        "lossless": false,
+        "resized": false,
+        "cropped": false
+      },
+      "generation": "generation/weathered-parchment.json"
     }
   ],
+  "canonicalSourceSnapshot": "fb82c00fd2cfd6122ddd94bf92a5a6678a34bf56",
   "fonts": [
     {
       "file": "fonts/cinzel-400-normal.woff2",
@@ -4662,6 +5001,5 @@
     }
   ],
   "recipes": "screen-recipes.json",
-  "coverage": "breakdown.json",
-  "canonicalSourceSnapshot": "fb82c00fd2cfd6122ddd94bf92a5a6678a34bf56"
+  "coverage": "breakdown.json"
 }

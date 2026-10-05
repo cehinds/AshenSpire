@@ -44,7 +44,8 @@ const TECHNIQUE_TAG_PREFIX = 'technique:';
  */
 export function deckVariantKey(card) {
   const mods = Array.isArray(card.mods) ? card.mods.join(',') : '';
-  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}${card.grantedBy ? `~${card.grantedBy}` : ''}`;
+  const rank = Number.isInteger(card.rank) && card.rank > 1 ? `~r${card.rank}` : '';
+  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}${card.grantedBy ? `~${card.grantedBy}` : ''}${rank}`;
 }
 
 function costBucket(cost) {

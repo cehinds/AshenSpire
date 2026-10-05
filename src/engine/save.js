@@ -44,7 +44,7 @@ import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
-import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
+import { skillKindOf, rankUpKind } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
@@ -140,6 +140,10 @@ function pendingRewardReferenceProblems(pending, registries) {
     for (const cardId of (row && row.cardIds) || []) {
       if (!registries.cards.has(cardId)) problems.push(`level card '${cardId}' is unknown`);
     }
+  }
+  // A rank-up (SPEC §13.4o) belongs to a card-school track.
+  for (const up of Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : []) {
+    if (!up || !rankUpKind(skillKindOf(registries, up.skillId))) problems.push(`rank-up track '${up && up.skillId}' is not a card-school track`);
   }
   for (const draft of rewards.skillDrafts || []) {
     if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);
@@ -806,21 +810,9 @@ export function createSaveManager(storage) {
           why: `the slot table gained ${[...new Set([...slotsAdded, ...snapshotSlotsAdded])].join(', ')} after this save was written; each has its empty cells now, as a fresh run does${snapshotSlotsAdded.length ? ' — in the saved fight\'s loadout too' : ''}`,
         });
       }
-      // The skill threshold's standing rule (plan phase 4b, model/skills.js):
-      // a ledger written before the rule existed may stand past `upgradeAt`
-      // with its cards untouched; the rule is idempotent, so the load door
-      // asks it once and says what it did.
-      const skillUpgrades = reconcileSkillUpgrades(registries, run);
-      if (Object.keys(skillUpgrades).length) {
-        note(run, {
-          kind: 'heal',
-          site: 'save.js:loadRun',
-          field: 'deck.upgraded',
-          was: undefined,
-          now: skillUpgrades,
-          why: `the tracks ${Object.keys(skillUpgrades).join(', ')} stand at or past balance.skill.upgradeAt; the cards of their schools are upgraded, as the rule upgrades them at every award`,
-        });
-      }
+      // The skill threshold's standing upgrade is retired (SPEC §13.4o card
+      // ranks): the load door no longer asks it, and the upgrades it already
+      // wrote stay as the save holds them.
       const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);
       if (armamentLocationChanges.length) {
         note(run, {

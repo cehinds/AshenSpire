@@ -6,8 +6,8 @@
 // 100) × spent) (60% of 500 XP spent adds 300); level 1 is refused;
 // respecRefundPct 80 clamps to 75; a master with 2 skills, or with an armour
 // or `class:` track, is refused by name; training and redistribute level a
-// track through the one writer, and training an unheld track across its
-// upgrade threshold upgrades its owned cards; a master holding `dualWield`
+// track through the one writer (the upgrade threshold that training once
+// crossed is retired for card ranks, SPEC §13.4o); a master holding `dualWield`
 // stocks one-handed armaments and their arts; a lesson rolls through
 // rollSkillDraftIds from the master's schools and adds one card, a level-0
 // track still draws commons, and a lesson whose roll is empty is refused
@@ -353,29 +353,20 @@ test('FINISH: training levels a master track through the one writer, takes one s
   assert.equal(JSON.stringify(run), before, 'a refusal changes nothing');
 });
 
-test('FINISH: training an unheld track across its upgrade threshold upgrades the owned cards of that track\'s schools', () => {
+test('training a track across level 5 upgrades no card: the threshold is retired for card ranks (SPEC §13.4o)', () => {
   const focusMaster = shippedShops.masters.find((m) => m.skills.includes('item:magic-focus'));
   assert.ok(focusMaster, 'a shipped master teaches the focus track');
   const registries = createRegistries({ ...contentBundle, shops: { ...registriesWith(ALL_OUT).shops, masters: [focusMaster] } });
   const { run } = masterRun(registries);
-  assert.equal(skillSchools(registries, run.loadout, 'item:magic-focus').length, 0, 'the reaver holds no focus');
-  const schools = masterSchools(registries, 'item:magic-focus');
-  assert.ok(schools.includes('ritual'));
   run.deck.push({ instanceId: 'test:ember', cardId: 'emberVigil', upgraded: false });
   run.sideboard.push({ instanceId: 'test:mote', cardId: 'ashenMote', upgraded: false });
   const xp = offeringOf(registries, 'training').training.xp;
-  const upgradeAt = registries.balance.skill.upgradeAt;
-  track(run, 'item:magic-focus', { level: upgradeAt - 1, xp: xpToNext(registries, 'focus', upgradeAt - 1) - xp });
+  track(run, 'item:magic-focus', { level: 4, xp: xpToNext(registries, 'focus', 4) - xp });
   commitTraining(registries, run, trainingPlan(registries, run, 'item:magic-focus'));
-  assert.equal(run.skills['item:magic-focus'].level, upgradeAt);
-  assert.equal(run.deck.find((c) => c.instanceId === 'test:ember').upgraded, true, 'the deck card is upgraded');
-  assert.equal(run.sideboard.find((c) => c.instanceId === 'test:mote').upgraded, true, 'and the sideboard one');
-  // awardSkillXp without the input still reads the held pieces, as before.
-  const other = createRunState({ seed: 21, classId: 'reaver', registries });
-  other.deck.push({ instanceId: 'test:ember', cardId: 'emberVigil', upgraded: false });
-  track(other, 'item:magic-focus', { level: upgradeAt - 1, xp: 0 });
-  awardSkillXp(registries, other, 'item:magic-focus', xpToNext(registries, 'focus', upgradeAt - 1));
-  assert.equal(other.deck.find((c) => c.instanceId === 'test:ember').upgraded, false);
+  assert.equal(run.skills['item:magic-focus'].level, 5);
+  assert.equal(run.deck.find((c) => c.instanceId === 'test:ember').upgraded, false, 'the deck card stays as it was');
+  assert.equal(run.sideboard.find((c) => c.instanceId === 'test:mote').upgraded, false, 'and the sideboard one');
+  assert.equal(run.skills['item:magic-focus'].pendingRankUps, 1, 'the level queued a rank-up instead');
 });
 
 // ---------------------------------------------------------------------------
@@ -410,6 +401,22 @@ test('FINISH: a level-4 track respecs to level 1 with xp 0, and the pool gains f
   assert.equal(respecPlan(OUT, r, id).refund, Math.floor((60 * spent) / 100));
 });
 
+test('a respec lowers queued rank-ups by the levels lost and drops the track\'s deferred rows waiting above level 1 (SPEC §13.4o)', () => {
+  const { run } = masterRun(OUT);
+  const skillId = masterOf(OUT, run).skills[0];
+  track(run, skillId, { level: 5, xp: 0, pendingDrafts: 4, pendingRankUps: 4 });
+  run.deferredProgression = {
+    skillRankUps: [{ skillId, level: 5, requiredLevel: 5, claimOrdinal: 0, ordinal: 0 }],
+    skillDrafts: [{ skillId, level: 5, cardIds: ['rend'], requiredLevel: 5, ordinal: 0 }, { skillId: 'other', level: 2, cardIds: ['rend'], requiredLevel: 2, ordinal: 1 }],
+  };
+  const quote = respecPlan(OUT, run, skillId);
+  assert.equal(quote.ok, true, quote.reason);
+  commitRespec(OUT, run, quote);
+  assert.equal(run.skills[skillId].pendingRankUps, 0, 'four queued, four levels lost');
+  assert.equal(run.deferredProgression.skillRankUps, undefined, 'the rank-up locked at level 5 goes; the ledger re-offers what it still queues');
+  assert.deepEqual(run.deferredProgression.skillDrafts.map((row) => [row.skillId, row.ordinal]), [['other', 0]], 'another track\'s rows stay, renumbered');
+});
+
 test('FINISH: a level-1 track is refused by name; a respec refuses a stale quote and changes nothing', () => {
   const { run } = masterRun(OUT);
   const skillId = masterOf(OUT, run).skills[0];
@@ -437,17 +444,25 @@ test('FINISH: respecRefundPct 80 clamps to 75, and 40 to 50', () => {
   assert.equal(respecRefundPct(at(66)), 66);
 });
 
+test('SPEC §13.4o: a track at its ceiling is refused by redistribute and training alike', () => {
+  const { run } = masterRun(OUT);
+  run.trainingPool = 50;
+  run.skills['item:blade'] = { xp: 0, level: 10, pendingDrafts: 0 };
+  assert.match(redistributePlan(OUT, run, 'item:blade', 10).reason, /highest level/);
+  assert.equal(redistributePlan(OUT, run, 'item:blade', 10).ok, false);
+});
+
 test('FINISH: redistribute spends the pool on any track through the one writer, from 1 to the pool, free', () => {
   const { run } = masterRun(OUT);
-  run.trainingPool = 250;
+  run.trainingPool = 450;
   const cinders = run.cinders;
-  const quote = redistributePlan(OUT, run, 'class:reaver', 240);
+  const quote = redistributePlan(OUT, run, 'class:reaver', 440);
   assert.equal(quote.ok, true, quote.reason);
   commitRedistribute(OUT, run, quote);
   assert.equal(run.trainingPool, 10);
   assert.equal(run.cinders, cinders, 'it is free');
   assert.equal(run.skills['class:reaver'].level, 1, 'levelled through awardSkillXp');
-  assert.equal(run.skills['class:reaver'].xp, 240 - xpToNext(OUT, 'class', 0));
+  assert.equal(run.skills['class:reaver'].xp, 440 - xpToNext(OUT, 'class', 0));
   for (const amount of [0, 11, 1.5, -1]) assert.equal(redistributePlan(OUT, run, 'item:blade', amount).ok, false, `amount ${amount}`);
   assert.equal(redistributePlan(OUT, run, 'item:spear', 5).ok, false, 'an unknown track');
   assert.throws(() => commitRedistribute(OUT, run, quote), 'stale');

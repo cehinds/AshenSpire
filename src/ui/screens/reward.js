@@ -65,7 +65,7 @@ import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
-import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId, pendingSkillLevelCount } from '../../model/skills.js';
+import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
@@ -76,7 +76,7 @@ import { reasonWhenDisabled } from '../components/refusal.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', skillRankUp: '⇧', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -116,26 +116,34 @@ export function mountRewards(app, {
   let xpAnimationDone = !progress || !rewards.xpBefore;
   let refill = null;
   const animatedTracks = new Set();
-  let guided = settings.guidedLevelUp !== false;
-  // A CLAIMED LEVEL IS A LINE, NOT A DOOR. Each claim this screen makes adds
-  // one line under the bars, and the reward it unlocked joins the menu lifted
-  // and blue; the player opens it when they choose to. `freshKeys` holds the
-  // rows to play their arrival on the next render only.
+  // EVERY LEVEL WAITS FOR ITS PRESS (SPEC §13.4o). A bar's fill stops at a
+  // level and its leftover XP is held; one Level up covers that bar, and
+  // pressing it claims the level and opens `levelView`, the popup listing
+  // what this level unlocked. Continue there refills the leftover. Each
+  // claim also writes a line under the bars, and its rewards stay lifted in
+  // the list until accepted; `freshKeys` plays their arrival once.
   const levelLog = [];
   const freshKeys = new Set();
+  let levelView = null;
   const unlocked = (row) => progressionRewardUnlocked(row, run);
   const refreshProgress = () => { progress = rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity }); };
-  // Guided mode claims every banked level in turn, each with its refill, and
-  // opens nothing: the rewards those levels unlocked wait in the menu.
-  function nextGuidedStep() {
-    if (!guided || !xpAnimationDone || refill) return;
-    if (onClaimLevel && pendingLevelCount(registries, run) > 0) return claimLevel();
-    if (progress?.skills.some(row => row.gained > 0 && rewards.xpBefore?.tracks?.[row.id] && !animatedTracks.has(row.id))) {
+  // THE BARS TAKE TURNS: the character, then the class, then each skill.
+  // The one whose level is waiting carries the only Level up; a track whose
+  // fill has not played yet waits for it.
+  const filledTrack = (row) => !(row.gained > 0 && rewards.xpBefore?.tracks?.[row.id]) || animatedTracks.has(row.id);
+  function readyTrack() {
+    if (!xpAnimationDone || refill) return null;
+    if (onClaimLevel && progress?.character && pendingLevelCount(registries, run) > 0) return 'character';
+    const order = [...(progress?.skills || [])].sort((a, b) => (a.kind === 'class' ? 0 : 1) - (b.kind === 'class' ? 0 : 1));
+    return order.find((row) => onClaimSkill && filledTrack(row) && pendingSkillLevelCount(registries, run, row.id) > 0)?.id || null;
+  }
+  // With no level waiting, the bars that have not filled yet take their turn.
+  function continueBars() {
+    if (!xpAnimationDone || refill || readyTrack()) return;
+    if (progress?.skills.some((row) => !filledTrack(row))) {
       xpAnimationDone = false;
-      return refreshProgressView();
+      refreshProgressView();
     }
-    const skill = progress?.skills.find(row => pendingSkillLevelCount(registries, run, row.id) > 0);
-    if (skill && onClaimSkill) claimSkill(skill.id);
   }
   let claimedLevels = checkpoint?.levelClaims || 0;
   const claimedSkills = { ...(checkpoint?.skillClaims || {}) };
@@ -151,6 +159,8 @@ export function mountRewards(app, {
   const chosenDraftCardIds = { ...(checkpoint?.chosenDraftCardIds || {}) };
   // The class drafts' picks (plan phase 5b), keyed by row key: tree nodes.
   const chosenDraftNodeIds = { ...(checkpoint?.chosenDraftNodeIds || {}) };
+  // The rank-ups' picks (SPEC §13.4o), keyed by row key: the owned card raised.
+  const chosenRankUps = { ...(checkpoint?.chosenRankUps || {}) };
   const pendingByKey = {}; // a chooser's unconfirmed selection, per row, so Back keeps it
 
   function persistProgress() {
@@ -159,6 +169,7 @@ export function mountRewards(app, {
       checkpoint.chosenCardId = chosenCardId;
       checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
       checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
+      if (Object.keys(chosenRankUps).length || checkpoint.chosenRankUps !== undefined) checkpoint.chosenRankUps = { ...chosenRankUps };
       if (claimedLevels || checkpoint.levelClaims !== undefined) checkpoint.levelClaims = claimedLevels;
       if (Object.keys(claimedSkills).length || checkpoint.skillClaims !== undefined) checkpoint.skillClaims = { ...claimedSkills };
     }
@@ -219,9 +230,8 @@ export function mountRewards(app, {
       chosenDraftCardIds[row.key] = row.choiceId;
       return true;
     },
-    // A skill draft (plan phase 4b): the card joins the deck — upgraded when
-    // the track has reached balance.skill.upgradeAt — and the track's queued
-    // draft is spent, the one write the door makes to the ledger.
+    // A skill draft (plan phase 4b): the card joins the deck at its rolled
+    // rank (SPEC §13.4o) and the track's queued draft is spent.
     // A class draft (plan phase 5b): the node joins the core card's tags and
     // the class track's queued draft is spent; a pick the tree no longer
     // allows (or a draft the ledger no longer holds) lands nothing.
@@ -233,8 +243,17 @@ export function mountRewards(app, {
     },
     skillDraft(row) {
       if (!spendSkillDraft(run, row.skillId)) return false;
-      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
+      const rank = draftRank(row, row.cardId);
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false, ...(rank > 1 ? { rank } : {}) });
       chosenDraftCardIds[row.key] = row.cardId;
+      return true;
+    },
+    // A rank-up (SPEC §13.4o): the chosen owned card rises one rank and the
+    // track's queued rank-up is spent; a card no longer eligible lands nothing.
+    skillRankUp(row) {
+      const inst = raiseCardRank(registries, run, row.skillId, row.instanceId);
+      if (!inst) return false;
+      chosenRankUps[row.key] = inst.instanceId;
       return true;
     },
     flask(row) {
@@ -262,11 +281,13 @@ export function mountRewards(app, {
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
-    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' ? {
+    const raised = row.kind === 'skillRankUp' ? ownedInstance(row.instanceId) : null;
+    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' ? {
       deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       feats: [...(run.feats || [])],
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
-      skills: row.kind === 'skillDraft' || row.kind === 'classDraft' ? structuredClone(run.skills || {}) : null,
+      skills: row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? structuredClone(run.skills || {}) : null,
+      rankUp: raised ? { inst: raised, rank: raised.rank, chosen: { ...chosenRankUps } } : null,
       coreTags: row.kind === 'classDraft' || row.kind === 'levelChoice' ? [...(run.coreTags || [])] : null,
       checkpoint: checkpoint ? structuredClone(checkpoint) : null,
     } : null;
@@ -288,6 +309,12 @@ export function mountRewards(app, {
         run.feats = cardBefore.feats;
         for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
         Object.assign(chosenDraftNodeIds, cardBefore.chosenNode);
+        if (cardBefore.rankUp) {
+          const { inst, rank, chosen } = cardBefore.rankUp;
+          if (rank === undefined) delete inst.rank; else inst.rank = rank;
+          for (const key of Object.keys(chosenRankUps)) delete chosenRankUps[key];
+          Object.assign(chosenRankUps, chosen);
+        }
         delete states[row.key];
         if (checkpoint) {
           for (const key of Object.keys(checkpoint)) delete checkpoint[key];
@@ -298,14 +325,29 @@ export function mountRewards(app, {
     }
     if (CARD_CHOICE_KINDS.includes(row.kind)) recordSeen('card', [row.cardId]);
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
-    renderMenu(viaKind || row.key);
+    backTo(viaKind || row.key);
     return true;
   }
+
+  // An owned card instance by id, in the deck or set aside.
+  const ownedInstance = (instanceId) => [...run.deck, ...(run.sideboard || [])].find((inst) => inst && inst.instanceId === instanceId) || null;
+  const instanceRank = (inst) => (Number.isInteger(inst?.rank) && inst.rank > 1 ? inst.rank : 1);
 
   // ---- row copy: what a kind says in each state ----------------------------
   function rowBody(row) {
     const state = states[row.key];
     switch (row.kind) {
+      case 'skillRankUp': {
+        const skill = skillTracks(registries).find((track) => track.id === row.skillId);
+        const label = esc((skill && skill.label) || row.skillId);
+        const title = t('reward.skillRankUp.title', { skill: label, level: row.level });
+        if (state === 'taken') {
+          const inst = ownedInstance(chosenRankUps[row.key]);
+          const def = inst && registries.cards.get(inst.cardId);
+          return { title, body: t('reward.skillRankUp.raised', { name: esc((def && def.name) || chosenRankUps[row.key] || ''), rank: instanceRank(inst) }) };
+        }
+        return { title, body: rankUpCandidates(registries, run, row.skillId).length ? t('reward.skillRankUp.body', { skill: label }) : t('reward.skillRankUp.none', { skill: label }) };
+      }
       case 'classDraft': {
         const cls = registries.classes.get(row.classId);
         const title = t('reward.classDraft.title', { class: esc((cls && cls.name) || row.classId), level: row.level });
@@ -444,13 +486,18 @@ export function mountRewards(app, {
     // The row THIS claim unlocked, not the first one still waiting: earlier
     // rewards stay pending now, so "first open row" would name an old one.
     const open = plan.rows.filter((row) => characterLevelRow(row) && unlocked(row) && !states[row.key]);
-    const card = open.find((row) => row.requiredLevel === claim.after) || open[0];
-    levelLog.push(`Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned`);
-    if (card) freshKeys.add(card.key);
-    refillClaim('character', () => renderMenu(card?.key || null));
+    const mine = open.filter((row) => row.requiredLevel === claim.after);
+    const line = `Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned`;
+    openLevelView('character', `Level ${claim.after}`, line, line, mine.length ? mine : open.slice(0, 1));
   }
 
   const draftTrackId = (row) => row.kind === 'classDraft' ? classSkillId(row.classId) : row.skillId;
+  // The rank a drafted card was rolled at (SPEC §13.4o): the offer carries one
+  // per card, in the order of its cards; an older offer without them is rank 1.
+  const draftRank = (row, cardId) => {
+    const rank = Array.isArray(row.ranks) ? row.ranks[(row.cardIds || []).indexOf(cardId)] : 1;
+    return Number.isInteger(rank) && rank > 1 ? rank : 1;
+  };
   const characterLevelRow = (row) => ['levelChoice', 'levelCard'].includes(row.kind) && !row.source;
   const draftUnlocked = (row) => Number.isInteger(row.requiredLevel) ? unlocked(row) : !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
 
@@ -462,12 +509,47 @@ export function mountRewards(app, {
     persistProgress();
     refreshProgress();
     const open = plan.rows.filter((row) => draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
-    const draft = open.find((row) => row.requiredLevel === claim.after || row.claimOrdinal === claimedSkills[skillId]) || open[0];
+    const mine = open.filter((row) => row.requiredLevel === claim.after || row.claimOrdinal === claimedSkills[skillId]);
     const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
-    levelLog.push(`${label} · Level ${claim.after}`);
-    if (draft) freshKeys.add(draft.key);
-    refillClaim(skillId, () => renderMenu(draft?.key || null));
+    openLevelView(skillId, `${label} · Level ${claim.after}`, `Your ${label} skill is now level ${claim.after}.`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
   }
+
+  // THE LEVEL POPUP. What this claim unlocked, as the list's own blue rows:
+  // opening one goes to its chooser, and Back or a confirmed pick comes back
+  // here. Continue closes it and refills the leftover XP;
+  // anything not taken stays lifted in the list, and later in Character.
+  function openLevelView(track, title, line, logLine, rows) {
+    levelLog.push(logLine);
+    for (const row of rows) freshKeys.add(row.key);
+    levelView = { track, title, line, keys: rows.map((row) => row.key) };
+    renderLevelView();
+  }
+  function renderLevelView() {
+    const view = levelView;
+    const rows = view.keys.map((key) => plan.rows.find((row) => row.key === key)).filter(Boolean);
+    const done = button({ label: t('common.continue'), weight: 'primary', id: 'reward-level-continue' });
+    door({
+      eyebrow: t('reward.level.eyebrow'), title: view.title,
+      attrs: { dataset: { size: 'md', rewardLevel: view.track } },
+      body: el('div', { class: 'reward-level-claim' }, [
+        el('p', { class: 'reward-level-summary', text: view.line }),
+        rows.length ? el('div', { class: 'class-row reward-menu reward-level-rewards', html: rows.map(rowHtml).join('') }) : null,
+        statAllocationSection(),
+      ]),
+      foot: modalFooter({ primary: done, className: 'reward-foot', size: 'medium' }),
+    });
+    freshKeys.clear();
+    bindRows(app);
+    done.addEventListener('click', closeLevelView);
+    if (isEngaged()) setTimeout(() => focusFirst('.reward-level-rewards .reward-kind:not(.locked)') || focusFirst('#reward-level-continue'), 0);
+  }
+  function closeLevelView() {
+    const { track } = levelView;
+    levelView = null;
+    refillClaim(track, () => renderMenu());
+  }
+  // Where a chooser or detail returns: the level popup that opened it, else the list.
+  const backTo = (key) => (levelView ? renderLevelView() : renderMenu(key));
 
   function refillClaim(id, after) {
     const row = id === 'character' ? progress?.character : progress?.skills.find((entry) => entry.id === id);
@@ -512,7 +594,11 @@ export function mountRewards(app, {
   async function playXpAnimation(host) {
     const active = () => host?.isConnected && app.querySelector('.reward-claim-layout') === host;
     const pendingRefill = refill;
-    const bars = [...app.querySelectorAll('.reward-claim-layout .rp-layered-bar[data-animate="1"]')];
+    // Fill in turn order — the character, the class, then the skills — so the
+    // first bar to stop at a level is the one whose turn it is.
+    const turn = (bar) => (bar.dataset.kind === 'character' ? 0 : bar.dataset.kind === 'class' ? 1 : 2);
+    const bars = [...app.querySelectorAll('.reward-claim-layout .rp-layered-bar[data-animate="1"]')]
+      .map((bar, index) => ({ bar, index })).sort((a, b) => turn(a.bar) - turn(b.bar) || a.index - b.index).map(({ bar }) => bar);
     const requested = Number(pendingRefill ? settings.levelUpRefillSeconds : settings.victoryXpSeconds);
     const total = document.body.classList.contains('reduced-motion') ? 0
       : Math.max(0, Math.min(12000, (Number.isFinite(requested) ? requested : pendingRefill ? 0.8 : 3) * 1000));
@@ -549,7 +635,7 @@ export function mountRewards(app, {
         const ready = bar.dataset.track === 'character'
           ? onClaimLevel && pendingLevelCount(registries, run) > 0
           : onClaimSkill && pendingSkillLevelCount(registries, run, bar.dataset.track) > 0;
-        if (guided && ready) {
+        if (ready) {
           xpAnimationDone = true;
           refreshProgressView();
           return;
@@ -593,7 +679,7 @@ export function mountRewards(app, {
     const content = [head, el('div', { class: 'modal-body reward-body' }, body), foot];
     const open = app.querySelector('.reward-veil .reward-door');
     if (open && open.rewardDoorOwner === doorOwner) {
-      for (const key of ['rewardDetail', 'victoryCompact']) {
+      for (const key of ['rewardDetail', 'victoryCompact', 'rewardLevel']) {
         open.removeAttribute(`data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`);
         delete open.dataset[key];
       }
@@ -633,29 +719,7 @@ export function mountRewards(app, {
     // Level cards are claimed from the progression bar when it is present.
     // Older offers without an XP receipt still keep their normal reward row.
     const rowsHtml = plan.rows.filter((row) => draftUnlocked(row)
-      && (!characterLevelRow(row) || (Number.isInteger(row.requiredLevel) ? unlocked(row) : !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key])))).map((row) => {
-      const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
-      const { title, body } = rowBody(row);
-      // A level's reward waiting to be opened stands lifted and blue; the one
-      // a claim just unlocked plays its arrival once.
-      const offer = state === 'pending' && isProgressionReward(row)
-        ? ` reward-level-offer${freshKeys.has(row.key) ? ' reward-fresh' : ''}` : '';
-      return `
-        <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}${offer}"
-             data-kind="${esc(row.kind)}" data-key="${esc(row.key)}" data-state="${esc(state)}"
-             data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
-          <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
-          <div class="cp-body">
-            <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ` <span class="chip reward-new">${esc(t('reward.card.new'))}</span>` : ''}</h3>
-            <p>${body}</p>
-            ${state === 'taken' ? `<span class="chip">${esc(t('reward.state.taken'))}</span>`
-              : state === 'blocked' ? `<span class="chip">${esc(t('reward.state.blocked'))}</span>`
-              : state === 'skipped' ? `<span class="chip">${esc(t('reward.state.skipped'))}</span>`
-              : ''}
-          </div>
-          ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.key)}" data-focusable="true" aria-label="${esc(t('reward.skip.aria', { kind: title }))}">${esc(t('reward.skip'))}</button>` : ''}
-        </div>`;
-    }).join('');
+      && (!characterLevelRow(row) || (Number.isInteger(row.requiredLevel) ? unlocked(row) : !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key])))).map(rowHtml).join('');
     // The button is the verb; the FootNote says what the verb does here (the
     // E11 dial: auto-collect takes the rest, manual leaves it) and how to press.
     const cont = button({
@@ -693,28 +757,7 @@ export function mountRewards(app, {
       app.querySelector('.reward-menu').inert = true;
     }
 
-    for (const el of app.querySelectorAll('.reward-kind')) {
-      const row = plan.rows.find((r) => r.key === el.dataset.key);
-      const state = el.dataset.state;
-      // Law 3 clause 4: a real tooltip, for hover AND the pad/keyboard focus
-      // cursor. The blocked row's tooltip carries the REASON (blockedBy), so
-      // the label switches on the model's token, never on a re-derivation.
-      attachTooltip(el, () => {
-        if (state === 'blocked') {
-          const blocked = row.blockedBy === 'storage' ? 'reward.blocked.storage' : 'reward.blocked.slots';
-          return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
-        }
-        if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
-        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
-        return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
-      });
-      if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
-      el.addEventListener('click', (ev) => {
-        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice') return renderChooser(row);
-        if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
-        take(row);
-      });
-    }
+    bindRows(app);
     for (const btn of app.querySelectorAll('[data-skip]')) {
       attachTooltip(btn, () => `<div class="tt-title">${esc(tTip('reward.skip'))}</div>${esc(tFull('reward.skip'))}`);
       btn.addEventListener('click', (ev) => {
@@ -761,6 +804,57 @@ export function mountRewards(app, {
     }
   }
 
+  // ONE ROW, two screens: the victory list and a level's popup draw a
+  // reward the same way, so a level's reward reads the same in both.
+  function rowHtml(row) {
+    const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
+    const { title, body } = rowBody(row);
+    // A level's reward waiting to be opened stands lifted and blue; the one
+    // a claim just unlocked plays its arrival once.
+    const offer = state === 'pending' && isProgressionReward(row)
+      ? ` reward-level-offer${freshKeys.has(row.key) ? ' reward-fresh' : ''}` : '';
+    return `
+      <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}${offer}"
+           data-kind="${esc(row.kind)}" data-key="${esc(row.key)}" data-state="${esc(state)}"
+           data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
+        <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
+        <div class="cp-body">
+          <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ` <span class="chip reward-new">${esc(t('reward.card.new'))}</span>` : ''}</h3>
+          <p>${body}</p>
+          ${state === 'taken' ? `<span class="chip">${esc(t('reward.state.taken'))}</span>`
+            : state === 'blocked' ? `<span class="chip">${esc(t('reward.state.blocked'))}</span>`
+            : state === 'skipped' ? `<span class="chip">${esc(t('reward.state.skipped'))}</span>`
+            : ''}
+        </div>
+        ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.key)}" data-focusable="true" aria-label="${esc(t('reward.skip.aria', { kind: title }))}">${esc(t('reward.skip'))}</button>` : ''}
+      </div>`;
+  }
+
+  function bindRows(root) {
+    for (const el of root.querySelectorAll('.reward-kind')) {
+      const row = plan.rows.find((r) => r.key === el.dataset.key);
+      const state = el.dataset.state;
+      // Law 3 clause 4: a real tooltip, for hover AND the pad/keyboard focus
+      // cursor. The blocked row's tooltip carries the REASON (blockedBy), so
+      // the label switches on the model's token, never on a re-derivation.
+      attachTooltip(el, () => {
+        if (state === 'blocked') {
+          const blocked = row.blockedBy === 'storage' ? 'reward.blocked.storage' : 'reward.blocked.slots';
+          return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
+        }
+        if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
+        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
+        return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
+      });
+      if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
+      el.addEventListener('click', (ev) => {
+        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp') return renderChooser(row);
+        if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
+        take(row);
+      });
+    }
+  }
+
   // The menu's foot note: what Continue does from here.
   function holdNote() {
     const pending = plan.rows.filter((r) => !states[r.key] && !r.blockedBy);
@@ -780,7 +874,7 @@ export function mountRewards(app, {
   }
 
   // What a drawn menu does next: the pending XP animation, else the next
-  // guided claim. Both are bound to THIS layout, so a later render or mount
+  // bar's turn to fill. Both are bound to THIS layout, so a later render or mount
   // that replaces it strands the timer instead of being driven by it.
   function followUp(host) {
     if (!host) return;
@@ -788,8 +882,8 @@ export function mountRewards(app, {
       setTimeout(() => {
         if (host.isConnected && app.querySelector('.reward-claim-layout') === host) playXpAnimation(host);
       }, 0);
-    } else if (xpAnimationDone && !refill && guided) {
-      setTimeout(() => { if (host.isConnected) nextGuidedStep(); }, 250);
+    } else if (xpAnimationDone && !refill) {
+      setTimeout(() => { if (host.isConnected && app.querySelector('.reward-claim-layout') === host) continueBars(); }, 250);
     }
   }
 
@@ -847,16 +941,16 @@ export function mountRewards(app, {
       class: 'rp-next',
       text: row.capped ? t('reward.progress.capped') : row.kind === 'character' ? `Level ${row.level + 1}` : t('reward.progress.next', { level: row.level + 1 }),
     });
-    const ready = xpAnimationDone && (row.kind === 'character'
-      ? pendingLevelCount(registries, run) > 0
-      : !!onClaimSkill && pendingSkillLevelCount(registries, run, row.id) > 0);
+    // Only the bar whose turn it is turns blue and carries Level up; another
+    // with a level waiting keeps its normal look until its turn comes.
+    const ready = readyTrack() === row.id;
     const target = row.fraction * 100;
     const before = row.kind === 'character' ? rewards.xpBefore?.character : rewards.xpBefore?.tracks?.[row.id];
     const old = (!refill || refill.id !== row.id) && before && before.level === row.level && row.xpToNext
       ? Math.max(0, Math.min(100, before.xp / row.xpToNext * 100)) : 0;
     const animate = refill ? refill.phase === 'filling' && refill.id === row.id
       : !xpAnimationDone && row.gained > 0 && !!before && !animatedTracks.has(row.id);
-    const waitingInitial = guided && (!refill || refill.id !== row.id) && row.gained > 0 && !!before && !animatedTracks.has(row.id);
+    const waitingInitial = (!refill || refill.id !== row.id) && row.gained > 0 && !!before && !animatedTracks.has(row.id);
     const under = el('span', { class: 'rp-under' });
     const over = el('span', { class: 'rp-over' });
     under.style.width = `${animate || waitingInitial ? old : target}%`;
@@ -876,7 +970,7 @@ export function mountRewards(app, {
       el('span', { class: 'rp-level', text: row.kind === 'character' ? `Level ${row.level}` : t('reward.progress.level', { level: row.level }) }),
       bar,
       next,
-      ready ? button({ label: t('reward.level.button'), className: 'reward-level-up', disabled: !!refill, attrs: { 'data-track': row.id, 'aria-label': `${t('reward.level.button')} ${label}` } }) : null,
+      ready ? button({ label: t('reward.level.button'), className: 'reward-level-up', attrs: { 'data-track': row.id, 'aria-label': `${t('reward.level.button')} ${label}` } }) : null,
       row.kind !== 'character' && row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
       // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
       row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
@@ -951,7 +1045,7 @@ export function mountRewards(app, {
     app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.detail.back'))}</div>${esc(tFull('reward.detail.back'))}`);
-    back.addEventListener('click', () => renderMenu(row.key));
+    back.addEventListener('click', () => backTo(row.key));
     if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
   }
 
@@ -965,14 +1059,18 @@ export function mountRewards(app, {
     // through the node's bindings — the same selection path as a card.
     const isNodeRow = row.kind === 'classDraft';
     const isLevelChoice = row.kind === 'levelChoice';
-    const ids = isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : row.cardIds;
-    const pickField = isNodeRow ? 'nodeId' : isLevelChoice ? 'choiceId' : 'cardId';
+    // A rank-up (SPEC §13.4o) chooses among the run's OWN cards, each shown
+    // at the rank it would rise to; its pick is an instance id.
+    const isRankUp = row.kind === 'skillRankUp';
+    const rankUpCards = isRankUp ? rankUpCandidates(registries, run, row.skillId) : [];
+    const ids = isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : isRankUp ? rankUpCards.map((inst) => inst.instanceId) : row.cardIds;
+    const pickField = isNodeRow ? 'nodeId' : isLevelChoice ? 'choiceId' : isRankUp ? 'instanceId' : 'cardId';
     const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     door({
-      eyebrow: row.kind === 'levelCard' || isLevelChoice ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
+      eyebrow: row.kind === 'levelCard' || isLevelChoice ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRankUp ? rowBody(row).title : t('reward.card.eyebrow'),
       title: row.source ? rowBody(row).title : row.kind === 'levelCard' || isLevelChoice ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
@@ -1043,7 +1141,30 @@ export function mountRewards(app, {
       tile.addEventListener('click', () => selectCard(nodeId));
       strip.appendChild(tile);
     }
-    for (const cardId of isNodeRow || isLevelChoice ? [] : ids) {
+    for (const inst of rankUpCards) {
+      const next = instanceRank(inst) + 1;
+      const face = renderCard(registries, { ...inst, rank: next }, {
+        owned: ownedCopies(run, inst.cardId),
+        actionOwnsTouch: true,
+        surface: 'reward',
+        availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },
+        commands: { choose: () => { selectCard(inst.instanceId); confirmButton.click(); } },
+      });
+      face.dataset.cardId = inst.cardId;
+      face.dataset.pickId = inst.instanceId;
+      face.classList.add('reward-pick');
+      face.setAttribute('role', 'radio');
+      face.setAttribute('aria-checked', String(inst.instanceId === selectedCardId));
+      face.classList.toggle('reward-selected', inst.instanceId === selectedCardId);
+      face.classList.toggle('is-chosen', inst.instanceId === selectedCardId);
+      face.addEventListener('click', () => selectCard(inst.instanceId));
+      strip.appendChild(face);
+    }
+    if (isRankUp && !rankUpCards.length) {
+      const skill = skillTracks(registries).find((track) => track.id === row.skillId);
+      strip.appendChild(el('p', { class: 'reward-rank-none', text: t('reward.skillRankUp.none', { skill: (skill && skill.label) || row.skillId }) }));
+    }
+    for (const cardId of isNodeRow || isLevelChoice || isRankUp ? [] : ids) {
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
@@ -1052,7 +1173,8 @@ export function mountRewards(app, {
       // purpose is taking the card being read. Choosing from inside the door
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
-      const el = renderCard(registries, { cardId, upgraded: row.kind === 'skillDraft' && skillUpgradesCards(registries, skillLevel(run, row.skillId)) }, {
+      const rank = row.kind === 'skillDraft' ? draftRank(row, cardId) : 1;
+      const el = renderCard(registries, { cardId, ...(rank > 1 ? { rank } : {}) }, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
@@ -1096,7 +1218,7 @@ export function mountRewards(app, {
         // offer older than its ledger) returns false and must not leave the
         // chooser armed but dead: say so and hand the button back.
         if (!take({ ...row, [pickField]: selectedCardId }, row.key)) {
-          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : 'reward.card.alreadyTaken');
+          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : 'reward.card.alreadyTaken');
           message.hidden = false;
           confirming = false;
           confirmButton.disabled = false;
@@ -1110,7 +1232,7 @@ export function mountRewards(app, {
     });
     const back = app.querySelector('#reward-back');
     attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.chooser.back'))}</div>${esc(tFull('reward.chooser.back'))}`);
-    back.addEventListener('click', () => renderMenu(row.key));
+    back.addEventListener('click', () => backTo(row.key));
     if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
   }
 

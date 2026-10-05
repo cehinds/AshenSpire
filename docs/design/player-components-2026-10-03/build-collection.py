@@ -38,7 +38,10 @@ def adopt():
     shutil.copyfile(BASE / 'fonts/OFL.txt', ROOT / 'fonts/OFL.txt')
     shutil.copyfile(BASE / 'canonical-map.json', ROOT / 'source-canonical-map.json')
     shutil.copyfile(BASE / 'generation.json', ROOT / 'source-generation.json')
-    save('SOURCE-CREDITS.md', (REPO / 'CREDITS.md').read_text(encoding='utf-8').replace('\r\n', '\n'))
+    # Preserve the owned canonical-source attribution snapshot on rebuilds.
+    # Later runtime/art releases are outside this reference package's sources.
+    if not (ROOT / 'SOURCE-CREDITS.md').is_file():
+        save('SOURCE-CREDITS.md', (REPO / 'CREDITS.md').read_text(encoding='utf-8').replace('\r\n', '\n'))
     (ROOT / 'references').mkdir(exist_ok=True)
     for p in sorted(BOARDS.glob('*.png')):
         shutil.copyfile(p, ROOT / 'references' / p.name)

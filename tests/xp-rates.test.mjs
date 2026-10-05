@@ -13,15 +13,19 @@ import { levelPacePreview } from '../src/ui/models/LevelPacePreviewModel.js';
 
 const registries = createRegistries(contentBundle);
 
-test('the current build starts at 100 XP and each further step costs ×1.75', () => {
-  assert.equal(characterXpToNext(registries, 1), 100);
-  assert.deepEqual([1, 2, 3, 4].map((level) => characterXpToNext(registries, level)), [100, 180, 310, 540]);
-  assert.equal(characterXpToNext(registries, 10), 15390);
-  assert.equal(skillXpToNext(registries, 'weapon', 0), 100);
-  assert.equal(skillXpToNext(registries, 'class', 0), 100);
-  // Skill and class tracks use the owner's ×1.75 curve (2026-10-02).
-  assert.equal(skillXpToNext(registries, 'weapon', 3), 535);
-  assert.equal(skillXpToNext(registries, 'class', 1), 175);
+test('the current build follows SPEC §13.4o: every track\'s top level costs about 100,000 XP', () => {
+  // Character base 200 ×1.303 to level 20; skill base 100 ×1.995 to 10; class base 400 ×1.224 to 20.
+  assert.deepEqual([1, 2, 3, 4].map((level) => characterXpToNext(registries, level)), [200, 260, 340, 440]);
+  assert.equal(characterXpToNext(registries, 19), 23440);
+  assert.equal([...Array(19)].reduce((sum, _, i) => sum + characterXpToNext(registries, i + 1), 0), 100160);
+  assert.equal(registries.balance.levelUp.maxLevels, 20);
+  assert.deepEqual([0, 1, 2, 3].map((level) => skillXpToNext(registries, 'weapon', level)), [100, 200, 400, 795]);
+  assert.equal(skillXpToNext(registries, 'weapon', 9), 50060);
+  assert.equal([...Array(10)].reduce((sum, _, i) => sum + skillXpToNext(registries, 'weapon', i), 0), 100275);
+  assert.equal(registries.balance.skill.xp.maxLevel, 10);
+  assert.deepEqual([0, 1, 2].map((level) => skillXpToNext(registries, 'class', level)), [400, 490, 600]);
+  assert.equal([...Array(20)].reduce((sum, _, i) => sum + skillXpToNext(registries, 'class', i), 0), 99940);
+  assert.equal(registries.balance.skill.class.xp.maxLevel, 20);
   assert.equal(registries.balance.skill.xp.perHit, 5);
   assert.equal(registries.balance.skill.xp.perWinEquipped, 5);
   assert.equal(registries.balance.skill.class.xp.perWin, 5);
@@ -123,4 +127,44 @@ test('the preview responds to the same settings as character and skill awards', 
   assert.equal(preview.skillText.includes('10 XP'), true);
   assert.equal(preview.skillText.includes('150 XP'), true);
   assert.equal(skillXpToNext(updated, 'weapon', 0), 150);
+});
+
+test('SPEC §13.4o caps: a skill stops at 10 and the class track at 20, banking the XP past the cap', async () => {
+  const { awardSkillXp, bankSkillXp, claimBankedSkillLevel, pendingSkillLevelCount, skillMaxLevel } = await import('../src/model/skills.js');
+  assert.equal(skillMaxLevel(registries, 'weapon'), 10);
+  assert.equal(skillMaxLevel(registries, 'class'), 20);
+  const run = { skills: {}, deck: [] };
+  awardSkillXp(registries, run, 'item:blade', 1_000_000);
+  assert.equal(run.skills['item:blade'].level, 10, 'the award climbs no further than the cap');
+  assert.equal(run.skills['item:blade'].xp, 1_000_000 - 100275, 'the XP past it stays on the ledger');
+  const banked = { skills: {}, deck: [] };
+  bankSkillXp(registries, banked, 'item:blade', 1_000_000);
+  assert.equal(pendingSkillLevelCount(registries, banked, 'item:blade'), 10, 'only ten levels are ever waiting');
+  for (let i = 0; i < 10; i++) assert.ok(claimBankedSkillLevel(registries, banked, 'item:blade'));
+  assert.equal(claimBankedSkillLevel(registries, banked, 'item:blade'), null, 'level 10 claims no eleventh');
+});
+
+test('SPEC §13.4o caps read as capped everywhere: reward bar, Character row, Settings rows', async () => {
+  const { rewardProgress } = await import('../src/model/rewardprogress.js');
+  const { skillProgressRows } = await import('../src/model/progression.js');
+  const { awardSkillXp } = await import('../src/model/skills.js');
+  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  const run = { class: 'reaver', skills: {}, deck: [], level: { level: 1, xp: 0, unspentPoints: 0 }, trainingPool: 50, cinders: 999 };
+  awardSkillXp(registries, run, 'item:blade', 200_000);
+  const bar = rewardProgress(registries, run, { level: 0, tracks: { 'item:blade': 1 } }).skills.find((row) => row.id === 'item:blade');
+  assert.equal(bar.capped, true);
+  assert.equal(bar.fraction, 1);
+  assert.equal(bar.xpToNext, null, 'no step past the cap is priced');
+  const row = skillProgressRows(registries, run).find((entry) => entry.id === 'item:blade');
+  assert.equal(row.capped, true);
+  assert.equal(row.pct, 100);
+  assert.equal(row.value, 'Level 10 · max');
+  const { contentBundle } = await import('../src/content/index.js');
+  const rows = Object.fromEntries(advancedConfigRows(contentBundle).map((r) => [r.key, r]));
+  for (const key of ['levelUp.maxLevels', 'skill.xp.maxLevel', 'skill.class.xp.maxLevel']) {
+    const found = Object.entries(rows).find(([k]) => k.endsWith(`balance.${key}`));
+    if (found) assert.ok(found[1].min >= 1, `${key} cannot be set to 0, which validation refuses`);
+  }
+  const growth = Object.entries(rows).find(([k]) => k.endsWith('balance.skill.xp.growth'));
+  if (growth) assert.equal(growth[1].step, 0.001, 'the growth row can hold 1.995');
 });

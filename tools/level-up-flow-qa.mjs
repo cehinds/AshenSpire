@@ -56,9 +56,9 @@ try {
       const { pendingRewardCheckpoint } = await import('/src/model/rewardSourcePolicy.js');
       const registries = createRegistries(contentBundle);
       window.qaRun = createRunState({seed:7,classId:'reaver',registries});
-      qaRun.level = {level:1,xp:355,unspentPoints:0}; qaRun.skills = {};
-      window.qaSettings = {guidedLevelUp:false,levelUpRefillSeconds:.08,levelUpRefillPauseMs:0,victoryXpSeconds:.1,rewardCollect:'auto',rewardContinueHoldMs:0};
-      window.qaOffer = mergeProgressionRewards({}, {title:'VICTORY',xpGains:{level:355,tracks:{}},levelChoices:[
+      qaRun.level = {level:1,xp:555,unspentPoints:0}; qaRun.skills = {};
+      window.qaSettings = {levelUpRefillSeconds:.08,levelUpRefillPauseMs:0,victoryXpSeconds:.1,rewardCollect:'auto',rewardContinueHoldMs:0};
+      window.qaOffer = mergeProgressionRewards({}, {title:'VICTORY',xpGains:{level:555,tracks:{}},levelChoices:[
         {ordinal:0,options:[{kind:'feat',id:'fieldStudy'},{kind:'feat',id:'weaponDrill'}]},
         {ordinal:1,options:[{kind:'feat',id:'vitalRenewal'}]}
       ]},qaRun);
@@ -87,22 +87,26 @@ try {
     check(await ev(`document.querySelector('.reward-level-up').getBoundingClientRect().height>=44`),name+' level-up target is at least 44px');
     check(await ev(`!document.querySelector('#reward-continue').disabled`),name+' exit available with unclaimed levels');
     await shot('level-ready');
-    // Enable guided flow and mount from the same paid ledger.
-    await ev('qaSettings.guidedLevelUp=true;qaMount();true');
-    await wait(1500);
-    // Guided claims open nothing: each unlocked choice waits in the menu, lifted.
-    check(await ev(`qaRun.level.level>=2 && !document.querySelector('#reward-card-confirm') && document.querySelectorAll('.reward-kind.reward-level-offer').length>=1 && document.querySelectorAll('.reward-level-line').length===qaRun.level.level-1`),name+' guided flow claims levels without forcing a choice');
-    check(await ev(`(() => {const n=document.querySelector('.reward-level-offer');return getComputedStyle(n).transform!=='none'})()`),name+' the waiting level reward is lifted');
+    // SPEC §13.4o: Level up covers the bar that stopped, and nothing is claimed without it.
+    check(await ev(`(() => {const b=document.querySelector('.reward-level-up').getBoundingClientRect(),r=document.querySelector('.rp-layered-bar[data-track="character"]').getBoundingClientRect(),cx=r.x+r.width/2,cy=r.y+r.height/2;return cx>=b.left&&cx<=b.right&&cy>=b.top&&cy<=b.bottom})()`),name+' Level up covers its bar');
+    check(await ev(`qaRun.level.level===1`),name+' no level is claimed without a press');
+    await click('.reward-level-up'); await wait(150);
+    check(await ev(`document.querySelector('.reward-door')?.dataset.rewardLevel==='character' && qaRun.level.level===2 && !document.querySelector('.rp-layered-bar')`),name+' the press opens the level popup and holds the leftover XP');
+    check(await ev(`(() => {const n=document.querySelector('.reward-level-rewards .reward-level-offer');return !!n && getComputedStyle(n).transform!=='none'})()`),name+' the level reward is blue and lifted in the popup');
+    await shot('level-popup');
+    await click('.reward-level-rewards [data-key="levelChoice:0"]'); await click('#reward-back'); await wait(150);
+    check(await ev(`!!document.querySelector('#reward-level-continue')`),name+' Back from the chooser returns to the level popup');
+    await click('#reward-level-continue'); await wait(600);
+    check(await ev(`!document.querySelector('#reward-level-continue') && !!document.querySelector('.reward-level-up')`),name+' Continue refills the leftover and the next level waits for its press');
+    check(await ev(`!qaRun.pendingReward.states['levelChoice:0'] && !!document.querySelector('.reward-menu .reward-level-offer[data-key="levelChoice:0"]') && !document.querySelector('#reward-continue').disabled`),name+' the untaken reward stays lifted in the list and exit is allowed');
     await shot('level-choice');
-    await click('[data-key="levelChoice:0"]'); await click('#reward-back'); await wait(400);
-    check(await ev(`!qaRun.pendingReward.states['levelChoice:0'] && !!document.querySelector('[data-key="levelChoice:0"]') && !document.querySelector('#reward-continue').disabled`),name+' Back retains choice and permits exit');
     // Use the real footer control; its configured second-beat confirmation is resolved below.
     await click('#reward-continue', 1800);
     await wait(150);
     if (await ev(`!!document.querySelector('#reward-continue')`)) await click('#reward-continue', 1800);
     await wait(150);
     check(await ev(`!qaRun.pendingReward && qaRun.deferredProgression.levelChoices.length===2`),name+' exit retains both original level choices even in auto collect');
-    await ev('qaReload();qaSettings.guidedLevelUp=false;qaNextVictory();true');
+    await ev('qaReload();qaNextVictory();true');
     check(await ev(`document.querySelector('[data-key="levelChoice:0"]')!==null && qaRun.pendingReward.rewards.levelChoices.length===2`),name+' saved choices reappear on the next victory');
     await click('[data-key="levelChoice:0"]'); await shot('saved-choice'); await click('#reward-back');
     // Character screen owns a visible out-of-combat entry into the same progression flow.

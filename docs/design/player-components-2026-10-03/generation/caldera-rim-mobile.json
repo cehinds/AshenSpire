@@ -1,0 +1,44 @@
+{
+  "id": "caldera-rim-mobile",
+  "tool": "image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": false,
+  "refs": [
+    {
+      "path": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-25b0f275-2ceb-4687-89fb-feb34207ff40.png",
+      "role": "place design and painted style reference; independently recompose in portrait, do not merely crop",
+      "packageReference": "masters/scenes/caldera-rim-desktop.png",
+      "referenceScope": "delivered package reference"
+    }
+  ],
+  "sourceLore": [
+    {
+      "path": "src/content/surveyQuestLore.js",
+      "keys": [
+        "survey:emberhold"
+      ],
+      "details": "Cart rut ends at fresh stone split; warm grit and moved route marker."
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: text-free painted environment layer for AshenSpire, not a screenshot. Style: polished hand-painted dark fantasy environment illustration matching the weathered stone, iron, aged brass and restrained ember warmth of the supplied style reference. Detailed tactile brushwork, atmospheric depth, natural silhouettes, no photographic look. Do not reproduce the reference architecture literally. No people, foreground characters, NPC identities, text, lettering, UI, borders, labels, numbers, stat values, map coordinates, logos or game symbols.\nPrimary request: Independently compose a tall phone painting of Caldera Rim. Worn cart wheel-ruts enter in middle foreground and clearly terminate at a fresh jagged fracture across the road, warm loose grit beside it. Include one plain weathered route marker set back safely on the shoulder, not at the edge. Distant volcanic stone ridges rise behind; faint restrained amber heat deep in the crack, no erupting volcano or sea of lava. Let the lower foreground dark rock remain relatively quiet for future DOM text. Preserve the desktop's materials and place identity with mobile-readable fracture/rut/marker.\nOrientation: tall portrait. Full-frame opaque background.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-3d28af93-7dc9-4ebc-a68e-f50d0d0daaf8.png",
+  "file": "masters/scenes/caldera-rim-mobile.png",
+  "sha256": "be03551e9bb8b7056d2816366a406f3a490a957f29e6bffe4982e2d37f3ae26f",
+  "bytes": 2912083,
+  "width": 941,
+  "height": 1672,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "group": "scenes",
+  "master": "masters/scenes/caldera-rim-mobile.png",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-3d28af93-7dc9-4ebc-a68e-f50d0d0daaf8.png",
+  "transparent_background": false,
+  "stagingMasterRelativePath": "masters/caldera-rim-mobile.png",
+  "sourceRecordTool": "built-in image_gen.imagegen",
+  "sourceRecordSha256": "97249ce34689a378deb2b303f91a2e11913ea801ea5b4e28958736ff55a70eeb",
+  "sourceMasterSha256": "be03551e9bb8b7056d2816366a406f3a490a957f29e6bffe4982e2d37f3ae26f",
+  "reference": "masters/scenes/caldera-rim-desktop.png",
+  "sourcePromptSha256": "08114ef8b6fb5a0b8b2e0aad7ca806e07deba6cb8ce6d6bacb990cebb69315ed"
+}
