@@ -5645,13 +5645,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "settings.row.manualLevelUp",
-    "extends": "",
-    "short": "Click to level up",
-    "full": "When XP fills a character or skill bar, wait for its Level button before advancing. Off: earned levels advance automatically.",
-    "tip": ""
-  },
-  {
     "id": "settings.row.rewardLevelStatPoints",
     "extends": "",
     "short": "Level Up · Stat points",
@@ -5978,13 +5971,6 @@ export const uiStrings = [
     "extends": "",
     "short": "Card flick distance",
     "full": "Upward travel in screen pixels. Shorter needs less movement; longer helps avoid accidental plays. Release with an upward flick.",
-    "tip": ""
-  },
-  {
-    "id": "settings.row.guidedLevelUp",
-    "extends": "",
-    "short": "Claim levels automatically",
-    "full": "Claim each banked level in turn, refilling leftover XP. Each level's reward waits in the menu, highlighted, until you open it. Turn off to follow the Click to level up preference.",
     "tip": ""
   },
   {

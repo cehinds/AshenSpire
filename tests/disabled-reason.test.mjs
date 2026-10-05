@@ -148,7 +148,7 @@ test('reward menu: unclaimed levels keep Continue available and explain that rew
     mountRewards(app, {
       registries: REG, run, rewards, checkpoint,
       onDone() { run.deferredProgression = unclaimedProgressionRewards(checkpoint); exited = true; app.remove(); },
-      saves: { loadMeta: () => ({ settings: { guidedLevelUp: false, rewardCollect: 'auto', levelUpRefillSeconds: 0 } }) },
+      saves: { loadMeta: () => ({ settings: { rewardCollect: 'auto', levelUpRefillSeconds: 0 } }) },
     });
     const cont = app.querySelector('#reward-continue');
     try {
