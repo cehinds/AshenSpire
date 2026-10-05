@@ -30,7 +30,7 @@
  * follow in his order (flask IS the potion seat in this game).
  */
 // `sigil` (SPEC §15.4) is a dropped legendary sigil, after the relic.
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'skillRankUp', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
 
 // ---- the card reward schedule (SPEC §15.1) ----------------------------------
 
@@ -102,7 +102,7 @@ export function cardRewardPlan(balance, { pool, levelsGained = 0, draftWaiting =
  * of a state goes through the key, so the saved `states` of a pre-draft
  * offer (keyed by kind) still read.
  */
-export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}`
+export const rowKey = (kind, row = {}) => (kind === 'skillDraft' || kind === 'skillRankUp' ? `${kind}:${row.skillId}:${row.ordinal || 0}`
   : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}`
   : kind === 'levelCard' || kind === 'levelChoice' ? `${kind}:${row.ordinal || 0}` : kind);
 
@@ -159,6 +159,19 @@ const KINDS = {
       const seen = {};
       return r.skillDrafts.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
         .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), ...(Array.isArray(d.ranks) ? { ranks: d.ranks.slice() } : {}), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
+    },
+    blocked: () => null,
+  },
+  skillRankUp: {
+    // A skill level's rank-up (SPEC §13.4o): raise one owned card of the
+    // track's schools by one rank. One row per rank-up the offer carries,
+    // keyed by track and ordinal as a draft is; the cards it chooses among
+    // are the run's own, read when the row is opened, never stored here.
+    present: (r) => Array.isArray(r.skillRankUps) && r.skillRankUps.some((d) => d && typeof d.skillId === 'string' && d.skillId),
+    rows: (r) => {
+      const seen = {};
+      return r.skillRankUps.filter((d) => d && typeof d.skillId === 'string' && d.skillId)
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: true }));
     },
     blocked: () => null,
   },
@@ -340,7 +353,8 @@ export function rewardClaimStatus(plan, states = {}) {
   const count = (state) => rows.filter((row) => row.state === state).length;
   // The first choice still waiting, in row order: a skill draft before the
   // card offer, as the menu lists them.
-  const choice = plan.rows.find((row) => row.choice && !states[row.key]);
+  // A rank-up's cards are the run's own, not the offer's, so it names no count.
+  const choice = plan.rows.find((row) => row.choice && !states[row.key] && pickIds(row).length > 0);
   return Object.freeze({
     total: rows.length,
     claimed: count('taken'),

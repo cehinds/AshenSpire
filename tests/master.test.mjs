@@ -410,6 +410,22 @@ test('FINISH: a level-4 track respecs to level 1 with xp 0, and the pool gains f
   assert.equal(respecPlan(OUT, r, id).refund, Math.floor((60 * spent) / 100));
 });
 
+test('a respec lowers queued rank-ups by the levels lost and drops the track\'s deferred rows waiting above level 1 (SPEC §13.4o)', () => {
+  const { run } = masterRun(OUT);
+  const skillId = masterOf(OUT, run).skills[0];
+  track(run, skillId, { level: 5, xp: 0, pendingDrafts: 4, pendingRankUps: 4 });
+  run.deferredProgression = {
+    skillRankUps: [{ skillId, level: 5, requiredLevel: 5, claimOrdinal: 0, ordinal: 0 }],
+    skillDrafts: [{ skillId, level: 5, cardIds: ['rend'], requiredLevel: 5, ordinal: 0 }, { skillId: 'other', level: 2, cardIds: ['rend'], requiredLevel: 2, ordinal: 1 }],
+  };
+  const quote = respecPlan(OUT, run, skillId);
+  assert.equal(quote.ok, true, quote.reason);
+  commitRespec(OUT, run, quote);
+  assert.equal(run.skills[skillId].pendingRankUps, 0, 'four queued, four levels lost');
+  assert.equal(run.deferredProgression.skillRankUps, undefined, 'the rank-up locked at level 5 goes; the ledger re-offers what it still queues');
+  assert.deepEqual(run.deferredProgression.skillDrafts.map((row) => [row.skillId, row.ordinal]), [['other', 0]], 'another track\'s rows stay, renumbered');
+});
+
 test('FINISH: a level-1 track is refused by name; a respec refuses a stale quote and changes nothing', () => {
   const { run } = masterRun(OUT);
   const skillId = masterOf(OUT, run).skills[0];

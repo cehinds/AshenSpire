@@ -54,7 +54,7 @@ import { createRng, seedToString, seedFromString, seedProblem } from './engine/r
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
-import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, xpToNext as skillXpToNext } from './model/skills.js';
+import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
 import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
@@ -2834,6 +2834,7 @@ async function onCombatEnd(result, combat, enc) {
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
+      skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
       ...rollCardRows('boss', levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       ...sigilOffer('boss'),
@@ -2856,6 +2857,7 @@ async function onCombatEnd(result, combat, enc) {
     cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
     classDrafts,
     skillDrafts: drafts,
+    skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
     ...rollCardRows(enc.pool, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
@@ -2939,6 +2941,31 @@ function rollSkillDrafts(pool, includeBanked = false) {
       // the offer, its save and its reload all show the same card.
       if (cardIds.length) out.push({ skillId: track.id, level, cardIds, ranks: cardIds.map(() => rollDraftRank(registries, rng, level)), claimOrdinal: i < queued ? 0 : i - queued + 1 });
     }
+  }
+  return out;
+}
+
+/**
+ * The rank-ups the ledger has queued (SPEC §13.4o): one per level of a
+ * card-school track, offered beside that level's draft and on the same
+ * terms (`draftsPerCombat` per door, banked levels counted when the door
+ * claims them). No roll: the cards it chooses among are the run's own.
+ */
+function rollSkillRankUps(includeBanked = false) {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const out = [];
+  for (const track of skillTracks(registries)) {
+    const row = run.skills && run.skills[track.id];
+    if (!row) continue;
+    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    // The queued ones stand now; a banked level adds one when its claim
+    // reaches a level that queues one (from 2 on), keyed by that claim.
+    const entries = [
+      ...Array.from({ length: row.pendingRankUps || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
+      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
+        .filter((entry) => skillLevelQueuesRankUp(track.kind, entry.level)),
+    ];
+    for (const entry of entries.slice(0, perDoor)) out.push({ skillId: track.id, ...entry });
   }
   return out;
 }
@@ -3047,6 +3074,7 @@ function showCharacterProgression(returnTo) {
   const rewards = mergeProgressionRewards(run.deferredProgression, {
     title: 'Level up & rewards', xpGains: { level: 0, tracks: {} },
     skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
+    skillRankUps: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(true) : [],
     classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
   }, run);
   const { available, deferred } = partitionProgressionRewards(rewards, run);
