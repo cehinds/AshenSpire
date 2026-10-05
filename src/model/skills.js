@@ -320,12 +320,12 @@ export function raiseCardRank(registries, run, skillId, instanceId) {
 
 /**
  * skillBonusFor(registries, run, inst) → the flat a card earns from the run's
- * skill levels: floor(level / balance.skill.flatEvery) of the BEST card-school
- * track whose schools (the held pieces') the card's tags meet — one track's,
- * not a sum, so a card in two hands' schools, or the dual-wield union, does not
- * double it (owner to confirm, 2026-10-05). Every owned card counts,
- * equipment-bound and item-owned ones too: the flat is not an upgrade. Capped
- * at MAX_SKILL_BONUS, so no setting can stamp a value a save refuses.
+ * skill levels: the SUM, over every card-school track whose schools (the held
+ * pieces') the card's tags meet, of floor(level / balance.skill.flatEvery) —
+ * a card of several tracks earns each (owner ruling, 2026-10-05). Every owned
+ * card counts, equipment-bound and item-owned ones too: the flat is not an
+ * upgrade. Capped at MAX_SKILL_BONUS, so no setting can stamp a value a save
+ * refuses.
  */
 export const MAX_SKILL_BONUS = 99;
 export function skillBonusFor(registries, run, inst, schoolsByTrack = trackSchools(registries, run)) {
@@ -333,7 +333,7 @@ export function skillBonusFor(registries, run, inst, schoolsByTrack = trackSchoo
   if (!def) return 0;
   const tags = def.tags || [];
   let bonus = 0;
-  for (const { flat, schools } of schoolsByTrack) if (flat > bonus && tags.some((tag) => schools.has(tag))) bonus = flat;
+  for (const { flat, schools } of schoolsByTrack) if (tags.some((tag) => schools.has(tag))) bonus += flat;
   return Math.min(bonus, MAX_SKILL_BONUS);
 }
 

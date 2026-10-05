@@ -533,6 +533,7 @@ master.purse,,"{cinders} cinders · training pool {pool} XP · {left} session(s)
 master.track.line,,"Level {level} · {xp} / {next} XP",,
 master.offer.line,,"{text} {cost} cinders.",,
 master.respec.line,,"refund {refund} XP",,
+master.respec.attributes,,"takes back {points} attribute point(s)",,
 master.lesson.unasked,,Ask for a lesson to see its {count} card(s).,,
 master.appraisal.draws,,"A lesson could draw: {names}",,
 master.appraisal.drawsNone,,A lesson could draw nothing now.,,

@@ -567,7 +567,7 @@ export function mountRewards(app, {
     const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
     // Every flatEvery levels a skill's cards may gain +1 (SPEC §13.4o): said here,
     // since the number lands on the card faces rather than as a row to take —
-    // and only for the cards it actually raised (a card keeps its best track's).
+    // and only for the cards it actually raised (a card sums its tracks' flats).
     const raised = owned().filter((inst) => skillBonusFor(registries, run, inst) > (bonusBefore.get(inst) || 0)).length;
     const flat = raised ? ` ${raised} card${raised === 1 ? '' : 's'} gain${raised === 1 ? 's' : ''} +1.` : '';
     openLevelView(skillId, `${label} · Level ${claim.after}`, `Your ${label} skill is now level ${claim.after}.${flat}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));

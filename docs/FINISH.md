@@ -262,7 +262,7 @@ Proposals from SPEC §14, awaiting the owner's ruling:
 
 - **D12 — Deck floors.** The editor's `deckMinSize` (default 10) and the Armoury's `deckMinimum` (8, rising with level, §13.4b) are separate rules. *Proposal:* keep both while the owner compares **Free** and **Rest sites only**, then fold them into one.
 - **D13 — What a respec withdraws.** §14.5 keeps the cards drafted, the ranks raised, and any deck upgrades a save holds from the retired `upgradeAt` rule, and the cinder price is the only check. *Proposal:* keep them for v1, and revisit after a playtest shows whether respec is being exploited.
-- **D13a — Respec and attribute picks.** A respec keeps attribute points a skill's every-4th-level pick granted (§13.4o B4), and re-training the track queues the pick again, so each respec and re-train adds a permanent +1; unlike a drafted card it never dilutes the deck. *Proposal:* a respec withdraws the attribute points its lost levels granted (owner to decide).
+- **D13a — Respec and attribute picks.** A respec keeps attribute points a skill's every-4th-level pick granted (§13.4o B4), and re-training the track queues the pick again, so each respec and re-train adds a permanent +1; unlike a drafted card it never dilutes the deck. **Resolved (owner, 2026-10-05):** a respec withdraws the attribute points the track's picks granted (`run.skillAttributeGrants`, `levelup.js withdrawSkillAttributes`).
 - **D14 — "Stack copies ... using components to upgrade".** §14.4 reads this as stones plus cinders buying one more copy of an owned card, with upgrading a separate service. *Proposal:* the owner confirms, or asks for N copies to merge into one upgraded copy.
 
 ## Waves

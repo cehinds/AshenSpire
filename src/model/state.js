@@ -634,6 +634,8 @@ export const RUN_SHAPE = [
   { key: 'levelPoints', type: 'number', optional: true },
   // Attribute points a skill level's pick granted (SPEC §13.4o), absent at 0.
   { key: 'skillAttributePoints', type: 'number', optional: true },
+  // Which track's pick granted which attribute point (SPEC §13.4o, D13a).
+  { key: 'skillAttributeGrants', type: 'object', optional: true },
   // The skill feats taken (SPEC §13.4o), absent until the first.
   { key: 'skillFeats', type: 'array', optional: true },
   // Plan phase 6. Required at schema 10; a preXpLevels save (≤ 9) is filled
@@ -999,6 +1001,13 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
     }
+  }
+  // A respec withdraws what the record names (FINISH D13a), so it may never
+  // name more points than the run holds.
+  if (run.skillAttributeGrants !== undefined && run.skillAttributeGrants !== null && typeof run.skillAttributeGrants === 'object') {
+    const lists = Object.values(run.skillAttributeGrants);
+    if (lists.some((list) => !Array.isArray(list) || list.some((id) => typeof id !== 'string' || !id))) problems.push('skillAttributeGrants must map track ids to lists of attribute ids');
+    else if (lists.reduce((n, list) => n + list.length, 0) > (Number.isInteger(run.skillAttributePoints) ? run.skillAttributePoints : 0)) problems.push('skillAttributeGrants must not name more points than skillAttributePoints');
   }
   // A level count is a whole number of purchases and can never be negative. The
   // ALLOCATION check that reads it lives at the load door

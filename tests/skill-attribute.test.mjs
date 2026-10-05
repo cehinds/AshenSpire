@@ -37,12 +37,15 @@ test('a pick raises a linked attribute, spends the queue, and the save still loa
   assert.equal(applySkillAttribute(registries, run, BLADE, 'strength'), before.strength + 1);
   assert.equal(run.skills[BLADE].pendingAttributePicks, 0);
   assert.equal(run.skillAttributePoints, 1);
+  assert.deepEqual(run.skillAttributeGrants, { [BLADE]: ['strength'] }, 'the grant is recorded by track, for a respec to withdraw');
   assert.equal(grantedAttributePoints(run), (run.levelPoints || 0) + 1);
   assert.equal(applySkillAttribute(registries, run, BLADE, 'strength'), null, 'an empty queue raises nothing');
   assert.ok(run.maxHp >= maxHp, 'the pools were re-derived');
   const back = deserializeRun(serializeRun(run));
   assert.equal(back.attributes.strength, before.strength + 1, 'the allocation check accepts the granted point');
   assert.deepEqual(validateRunShape(back).filter((p) => /skillAttribute|pendingAttribute/.test(p)), []);
+  assert.ok(validateRunShape({ ...back, skillAttributeGrants: { [BLADE]: ['strength', 'dexterity'] } }).some((p) => /skillAttributeGrants/.test(p)), 'a record naming more points than the run holds is refused');
+  assert.ok(validateRunShape({ ...back, skillAttributeGrants: { [BLADE]: [3] } }).some((p) => /skillAttributeGrants/.test(p)), 'a record must name attribute ids');
 });
 
 test('picks are keyed choice rows that defer without multiplying', () => {
