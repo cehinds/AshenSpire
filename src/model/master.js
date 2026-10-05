@@ -42,6 +42,7 @@ import { carriedIds, WeaponCardPackageModel } from './loadout.js';
 import { eligibleWeaponArts } from './armamentTrading.js';
 import { awardSkillXp, skillTracks, skillKindOf, skillLevel, skillMaxLevel, xpToNext, rarityUnlockedAt, levelQueuesAttributePick, levelQueuesSkillFeat, DUAL_WIELD_SKILL } from './skills.js';
 import { unusedInstanceId } from './deckRules.js';
+import { withdrawSkillAttributes } from './levelup.js';
 import { cardRewardRarityWeights } from './rewardOdds.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
@@ -285,6 +286,8 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   const feats = row.pendingSkillFeats === undefined ? {} : { pendingSkillFeats: Math.max(0, row.pendingSkillFeats - lostFeats) };
   run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)), ...rankUps, ...picks, ...feats } };
   dropDeferredAboveLevelOne(run, plan.skillId);
+  // The attribute points the track's picks granted go with its levels (FINISH D13a).
+  withdrawSkillAttributes(registries, run, plan.skillId);
   run.trainingPool = pool(run) + plan.refund;
   run.cinders -= plan.cost;
   bump(run, plan);

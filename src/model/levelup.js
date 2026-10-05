@@ -436,6 +436,9 @@ export function applySkillAttribute(registries, run, skillId, attributeId, { off
   if (!spendAttributePick(run, skillId)) return null;
   run.attributes[attributeId] += 1;
   run.skillAttributePoints = (Number.isInteger(run.skillAttributePoints) ? run.skillAttributePoints : 0) + 1;
+  // Which track granted which point, so a respec can take its own back.
+  const grants = run.skillAttributeGrants && typeof run.skillAttributeGrants === 'object' ? run.skillAttributeGrants : {};
+  run.skillAttributeGrants = { ...grants, [skillId]: [...(grants[skillId] || []), attributeId] };
   rederivePools(registries, run, `skill point on ${attributeId}`);
   note(run, {
     kind: 'write',
@@ -446,4 +449,32 @@ export function applySkillAttribute(registries, run, skillId, attributeId, { off
     why: `a ${skillId} level's attribute pick (${run.skillAttributePoints} skill points in total); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
   });
   return run.attributes[attributeId];
+}
+
+/**
+ * withdrawSkillAttributes(registries, run, skillId) → the attribute ids taken
+ * back: every point the track's picks granted (owner ruling, 2026-10-05: a
+ * respec withdraws them, FINISH D13a). The points leave the attributes and
+ * `skillAttributePoints` together, so the load door's allocation check still
+ * balances, and the pools are re-derived once. A save from before the record
+ * existed has nothing to name and keeps its points.
+ */
+export function withdrawSkillAttributes(registries, run, skillId) {
+  const granted = run.skillAttributeGrants && Array.isArray(run.skillAttributeGrants[skillId]) ? run.skillAttributeGrants[skillId] : [];
+  if (!granted.length) return [];
+  for (const id of granted) if (Number.isFinite(run.attributes?.[id])) run.attributes[id] -= 1;
+  run.skillAttributePoints = Math.max(0, (run.skillAttributePoints || 0) - granted.length);
+  const rest = { ...run.skillAttributeGrants };
+  delete rest[skillId];
+  if (Object.keys(rest).length) run.skillAttributeGrants = rest; else delete run.skillAttributeGrants;
+  rederivePools(registries, run, `respec withdrew ${granted.length} ${skillId} point(s)`);
+  note(run, {
+    kind: 'write',
+    site: 'levelup.js:withdrawSkillAttributes',
+    field: 'attributes',
+    was: undefined,
+    now: granted,
+    why: `a respec of ${skillId} withdrew the attribute points its picks granted (${run.skillAttributePoints} skill points remain)`,
+  });
+  return granted;
 }
