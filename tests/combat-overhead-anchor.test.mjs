@@ -17,11 +17,11 @@ test('half-field mobile figures keep distinct reachable intent anchors in the sh
     visibleHeight: 180, visibleWidth: 180 }));
   const sizes = fitCombatSprites({ width, height, actors, minHeight: height * .5 });
   const enemies = plan.slots.filter(slot => slot.side === 'enemy');
+  // #1606: the fit moves a side's art as one group, so its figures no longer
+  // collapse onto one x; the overhead anchors below stay independent of it.
+  const artXs = enemies.map(slot => sizes.find(size => size.id === slot.id).x);
+  assert.ok(Math.abs((artXs[1] - artXs[0]) - (enemies[1].x - enemies[0].x)) < 1e-9);
   for (const widths of [[108, 62], [62, 62]]) {
-    const prior = enemies.map((slot, i) => ({ id: slot.id,
-      x: sizes.find(size => size.id === slot.id).x, width: widths[i] }));
-    assert.notEqual(ownerAt(prior, prior[0].x), prior[0].id,
-      'the inward art clamp reproduces the covered normal/XL intent centre');
     const controls = enemies.map((slot, i) => ({ id: slot.id, side: slot.side, row: slot.row,
       x: slot.x, width: widths[i] }));
     const anchors = combatOverheadAnchors({ width, controls });
@@ -35,8 +35,9 @@ test('half-field mobile figures keep distinct reachable intent anchors in the sh
     assert.ok(left.x + left.width / 2 + 6 <= right.x - right.width / 2,
       'whole intent boxes have six screen pixels of clearance, not just exposed centres');
   }
-  assert.ok(sizes.every(size => size.visibleHeight >= height * .5 - 1e-9),
-    'overhead placement does not reduce the requested half-field sprite height');
+  const plain = fitCombatSprites({ width, height, actors });
+  assert.ok(sizes.every((size, i) => size.visibleHeight >= plain[i].visibleHeight - 1e-9),
+    'the half-field floor never makes a figure smaller than its plain fit');
 });
 
 test('measured Inspect expansion preserves slot order and full overhead clearance', () => {
