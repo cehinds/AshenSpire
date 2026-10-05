@@ -223,7 +223,9 @@ export function renderCard(registries, ref, opts = {}) {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     el.innerHTML = illustratedCardHtml(model,{
-      rules:at==='glance'&&model.id==='dodgeRoll'?'Roll to evade. On success, gain Block. Cost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens).replace(/\. (?=[A-Z])/g,'.\n'),
+      // A weight-priced card (the Dodge Roll) keeps its live numbers at glance
+      // size and folds its per-class price table into one clause.
+      rules:at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens).replace(/\. (?=[A-Z])/g,'.\n'),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,

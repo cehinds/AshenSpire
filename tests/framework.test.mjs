@@ -1103,32 +1103,32 @@ test('one empty hand composes the Dodge Roll beside the armed hand\'s technique,
   eq(run.deck.filter((c) => c.equipmentRole === 'technique').every((c) => c.cardId === 'dodgeRoll'), true, 'every unarmed technique slot is the Dodge Roll');
 });
 
-test('the dodge roll lands as Block through the framework check, priced by the class, and idle turns recover stamina', () => {
+test('the dodge roll (Evasive Guard) lands as Block through the framework check, and idle turns recover stamina', () => {
   const enemyId = contentBundle.enemies[0].id;
   const rng = createRng(0xd0d6e);
   const combat = createCombat({
     registries: LEGACY_REG, rng,
     player: {
       classId: 'reaver', maxHp: 60, hp: 60, mana: 0, maxMana: 0, maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 5,
-      deck: [{ instanceId: 'd1', cardId: 'dodgeRoll', upgraded: false }, { instanceId: 'd2', cardId: 'dodgeRoll', upgraded: false }],
+      deck: [{ instanceId: 'd1', cardId: 'evasiveGuard', upgraded: false }, { instanceId: 'd2', cardId: 'evasiveGuard', upgraded: false }],
       relicIds: [], flasks: [],
     },
     enemyIds: [enemyId],
   });
   eq(playerWeightClass(combat).weightClass.id, 'light', 'a fixture with no loadout stands Light');
   const p = combat.player;
-  const inHand = combat.piles.hand.find((c) => c.cardId === 'dodgeRoll');
+  const inHand = combat.piles.hand.find((c) => c.cardId === 'evasiveGuard');
   eq(!!inHand, true, 'a dodge is in hand');
   const before = { block: p.block, stamina: p.stamina, energy: p.energy };
   const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: inHand.instanceId });
   const rolled = events.find((e) => e.type === 'dodgeRolled');
   eq(!!rolled, true, 'the dodge emits its receipt');
   eq(rolled.weightClass, 'light', 'the receipt names the class');
-  eq(p.stamina, before.stamina - 1, 'Light: one stamina spent');
+  eq(p.stamina, before.stamina - 1, 'its authored cost: one stamina spent');
   eq(p.energy, p.stamina, 'the legacy field reads the same stamina pool');
   // d20 + DEX mod (10 → 0) + Light evasion 3 > difficulty 10 ⇒ roll ≥ 8 succeeds; guard 3 + 0 + 3 = 6
   eq(rolled.success, rolled.roll >= 8, 'success is the framework check');
-  eq(p.block - before.block, rolled.success ? 6 : 0, 'temporary guard lands as Block only on success');
+  eq(p.block - before.block, 1 + (rolled.success ? 6 : 0), 'its own 1 Block, and the temporary guard lands as Block only on success');
   // The turn spent stamina, so its end recovers nothing …
   const staminaAfterPlay = p.stamina;
   dispatch(combat, { type: 'endTurn' });
@@ -1182,7 +1182,7 @@ test('grant and weapon-art authoring is validated by name', () => {
 
 // Real card dispatch with an isolated RNG override controls only Dodge's die;
 // shuffles and enemy plans still use the ordinary seeded streams.
-function dodgeCombatFixture(weight, rolls = [20, 1]) {
+function dodgeCombatFixture(weight, rolls = [20, 1], cardId = 'evasiveGuard') {
   const rng = createRng(0xd0d6e);
   const originalInt = rng.int.bind(rng);
   let draws = 0;
@@ -1198,7 +1198,7 @@ function dodgeCombatFixture(weight, rolls = [20, 1]) {
     player: {
       classId: 'reaver', maxHp: 100, hp: 100, mana: 0, maxMana: 0,
       maxStamina: 9, stamina: 9, energyMax: 9, drawPerTurn: 5,
-      deck: ['d1', 'd2'].map((instanceId) => ({ instanceId, cardId: 'dodgeRoll', upgraded: false })),
+      deck: ['d1', 'd2'].map((instanceId) => ({ instanceId, cardId, upgraded: false })),
       relicIds: [], flasks: [],
     },
     enemyIds: [contentBundle.enemies[0].id],
@@ -1213,20 +1213,23 @@ function dodgeCombatFixture(weight, rolls = [20, 1]) {
   return { combat, draws: () => draws };
 }
 
+// Since the owner's 2026-10-05 ruling only Evasive Guard rolls (its authored
+// 1 Block, then the dodge); the Dodge Roll card is a flat 3 Block, 3 Poise
+// and 3 Ward priced by the Weight Class (tests/dodge-flat-defense.test.mjs).
 for (const [weight, energyCost, staminaCost, guard] of [
   ['light', 1, 1, 6], ['medium', 1, 1, 4], ['heavy', 2, 2, 3],
 ]) {
-  test(`Dodge ${weight}: repeated success/failure spends the live costs once and preserves ordinary Block`, () => {
+  test(`Evasive Guard ${weight}: repeated success/failure spends its authored cost once and preserves ordinary Block`, () => {
     const { combat, draws } = dodgeCombatFixture(weight);
     const p = combat.player;
     p.block = 2;
-    p.energy = energyCost * 2; // Light must remain playable at zero Energy.
-    p.stamina = staminaCost * 2;
+    p.energy = 2;
+    p.stamina = 2;
     const first = combat.piles.hand[0].instanceId;
     const success = dispatch(combat, { type: 'playCard', cardInstanceId: first }).events.filter((e) => e.type === 'dodgeRolled');
     eq(success.length, 1, 'one receipt per play');
     eq([success[0].success, success[0].temporaryGuard, success[0].weightClass], [true, guard, weight], 'successful roll receipt');
-    eq([p.energy, p.stamina, p.block], [energyCost, staminaCost, 2 + guard], 'success pays once and adds to existing Block');
+    eq([p.energy, p.stamina, p.block], [1, 1, 2 + 1 + guard], 'success pays once and adds to existing Block');
     eq(combat.piles.discard.filter((c) => c.instanceId === first).length, 1, 'played card reaches discard once');
     assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: first }), /not in hand/);
     eq(draws(), 1, 'stale repeated activation does not reroll');
@@ -1234,22 +1237,38 @@ for (const [weight, energyCost, staminaCost, guard] of [
     const failure = dispatch(combat, { type: 'playCard', cardInstanceId: second }).events.filter((e) => e.type === 'dodgeRolled');
     eq(failure.length, 1, 'failed roll also emits exactly one receipt');
     eq([failure[0].success, failure[0].temporaryGuard], [false, 0], 'failed roll reports no guard');
-    eq([p.energy, p.stamina, p.block, draws()], [0, 0, 2 + guard, 2], 'failure still pays once without removing prior Block');
+    eq([p.energy, p.stamina, p.block, draws()], [0, 0, 2 + 1 + guard + 1, 2], 'failure still pays once without removing prior Block');
     const hp = p.hp;
     const damage = actionsHome.applyAttackDamage(combat, combat.enemies[0], p, 20, []);
     eq(p.block, 0, 'incoming attack consumes Dodge Block');
-    eq(p.hp, hp - Math.max(0, damage - (2 + guard)), 'damage beyond Block reaches HP; Dodge does not cancel the attack');
+    eq(p.hp, hp - Math.max(0, damage - (2 + 1 + guard + 1)), 'damage beyond Block reaches HP; Dodge does not cancel the attack');
   });
 
-  test(`Dodge ${weight}: resource refusals preserve cards, pools, guard and RNG`, () => {
+  test(`Dodge Roll ${weight}: spends the live Weight Class cost once per play and grants its flat defence without a roll`, () => {
+    const { combat, draws } = dodgeCombatFixture(weight, [], 'dodgeRoll');
+    const p = combat.player;
+    p.block = 2;
+    p.energy = energyCost * 2; // Light must remain playable at zero Energy.
+    p.stamina = staminaCost * 2;
+    const first = combat.piles.hand[0].instanceId;
+    const events = dispatch(combat, { type: 'playCard', cardInstanceId: first }).events;
+    eq(events.filter((e) => e.type === 'dodgeRolled').length, 0, 'no roll');
+    eq([p.energy, p.stamina, p.block, p.poiseGuard, p.wardGuard], [energyCost, staminaCost, 5, 3, 3], 'pays the class price once; 3 Block, 3 Poise, 3 Ward');
+    assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: first }), /not in hand/);
+    const second = combat.piles.hand[0].instanceId;
+    dispatch(combat, { type: 'playCard', cardInstanceId: second });
+    eq([p.energy, p.stamina, p.block, p.poiseGuard, p.wardGuard, draws()], [0, 0, 8, 6, 6, 0], 'a second play pays again and stacks; nothing is rolled');
+  });
+
+  test(`Dodge Roll ${weight}: resource refusals preserve cards, pools, guard and RNG`, () => {
     for (const lacking of energyCost ? ['energy', 'stamina'] : ['stamina']) {
-      const { combat, draws } = dodgeCombatFixture(weight);
+      const { combat, draws } = dodgeCombatFixture(weight, [], 'dodgeRoll');
       const p = combat.player;
       p.energy = energyCost;
       p.stamina = staminaCost;
       p[lacking] -= 1;
       p.block = 2;
-      const state = () => JSON.stringify({ energy: p.energy, stamina: p.stamina, hp: p.hp, block: p.block, piles: combat.piles });
+      const state = () => JSON.stringify({ energy: p.energy, stamina: p.stamina, hp: p.hp, block: p.block, poiseGuard: p.poiseGuard, wardGuard: p.wardGuard, piles: combat.piles });
       const before = state();
       const id = combat.piles.hand[0].instanceId;
       assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: id }), /Not enough stamina/);

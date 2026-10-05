@@ -481,7 +481,7 @@ export const terms = {
     },
     {
       "id": "term.desc.dodgeRoll",
-      "canonicalText": "Roll clear of the next blow. On success, gain Temporary Guard against the next damage tick."
+      "canonicalText": "Gain Block, Poise and Ward, each 3 plus your DR."
     }
   ]
 };
