@@ -7533,5 +7533,243 @@ export const uiStrings = [
     "short": "Equip to {slot}",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "characterSheet.open",
+    "extends": "",
+    "short": "Character sheet",
+    "full": "Every character and skill level, and what each one grants.",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.close",
+    "extends": "",
+    "short": "Close character sheet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.tab.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.tab.skills",
+    "extends": "",
+    "short": "Skills",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.character.cadence",
+    "extends": "",
+    "short": "Levels 1–{max}. Each level is claimed with Level up; its rewards are below.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.cadence",
+    "extends": "",
+    "short": "Every level: a card draft and a rank-up. Every {feat} levels: a skill feat. Every {attribute} levels: +1 to a linked attribute. Every {flat} levels: +1 card power.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.cadenceClass",
+    "extends": "",
+    "short": "Every level: a class-tree pick from the tiers open. New tiers open at the levels marked.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.level",
+    "extends": "",
+    "short": "Level {n} / {max}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.railItem",
+    "extends": "",
+    "short": "{label} · {n}/{max}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.none",
+    "extends": "",
+    "short": "No skill tracks.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.start",
+    "extends": "",
+    "short": "Starting level",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.here",
+    "extends": "",
+    "short": "You are here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.step",
+    "extends": "",
+    "short": "+{n} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.total",
+    "extends": "",
+    "short": "{n} total",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.stat.hp",
+    "extends": "",
+    "short": "Max HP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.stat.stamina",
+    "extends": "",
+    "short": "Stamina",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.stat.mana",
+    "extends": "",
+    "short": "Mana",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.stat.draw",
+    "extends": "",
+    "short": "Draw",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.stat.handSize",
+    "extends": "",
+    "short": "Hand size",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.points",
+    "extends": "",
+    "short": "Attribute points +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat",
+    "extends": "",
+    "short": "{stat} +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.deckMinimum",
+    "extends": "",
+    "short": "Deck minimum {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featChoice",
+    "extends": "",
+    "short": "Feat choice",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classNodeChoice",
+    "extends": "",
+    "short": "Class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.levelCard",
+    "extends": "",
+    "short": "Level card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.cardDraft",
+    "extends": "",
+    "short": "Card draft, rank ≤ {rank}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classNodeDraft",
+    "extends": "",
+    "short": "Class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.rarity",
+    "extends": "",
+    "short": "{rarity} cards unlock",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.rankUp",
+    "extends": "",
+    "short": "Rank up a card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classTier",
+    "extends": "",
+    "short": "Tier {tier} opens: {nodes}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.feat",
+    "extends": "",
+    "short": "Skill feat: {options}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featNone",
+    "extends": "",
+    "short": "Skill feat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.attribute",
+    "extends": "",
+    "short": "+1 {options}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.flat",
+    "extends": "",
+    "short": "+1 card power (total +{total})",
+    "full": "",
+    "tip": ""
   }
 ];

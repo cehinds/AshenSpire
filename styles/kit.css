@@ -5779,6 +5779,45 @@ button[data-button-size] {
 }
 
 .character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
+.character-sheet-action { min-height: 44px; width: 100%; margin-top: .4rem; }
+
+/* THE CHARACTER SHEET (screens/characterSheet.js): a read-only map of every
+   level. A ladder row is level · XP · grants; reached rows dim, the current
+   row is gold and marked, a milestone (a level that pays more than the
+   every-level draft) carries a gold rule so the eye finds it in a column. */
+.character-sheet .character-sheet-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
+.character-sheet .cs-pane { display: flex; flex-direction: column; gap: .75rem; min-width: 0; min-height: 0; overflow: auto; padding: var(--modal-inset, 1rem); }
+.character-sheet .cs-skills { display: grid; grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); min-height: 0; overflow: hidden; flex: 1 1 auto; }
+.character-sheet .cs-rail .cs-rail-item { white-space: normal; flex: 0 0 auto; }
+.character-sheet .cs-rail .cs-rail-item:not(.touched):not(.own):not(.on) { opacity: .7; }
+.character-sheet .cs-cadence { margin: 0; color: var(--ink-dim); }
+.character-sheet .cs-track-title { margin: 0; }
+.character-sheet .cs-ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
+.character-sheet .cs-row {
+  display: grid; grid-template-columns: 3rem minmax(6.5rem, 8.5rem) minmax(0, 1fr) auto; align-items: center; gap: .4rem .75rem;
+  padding: .5rem .75rem; border: 1px solid var(--line); border-radius: var(--r-sm, 4px); min-height: 44px;
+}
+.character-sheet .cs-row.milestone { border-left: 3px solid var(--gold); }
+.character-sheet .cs-row[data-state="reached"] { opacity: .62; }
+.character-sheet .cs-row[data-state="current"] { border-color: var(--gold); background: rgba(var(--accent-rgb), .1); }
+.character-sheet .cs-row[data-state="next"] { border-style: dashed; border-color: var(--gold); }
+.character-sheet .cs-level { font: 600 1.5rem/1 var(--font-display, serif); color: var(--parchment); text-align: center; }
+.character-sheet .cs-row[data-state="current"] .cs-level { color: var(--gold); }
+.character-sheet .cs-xp { display: flex; flex-direction: column; gap: .1rem; font-variant-numeric: tabular-nums; }
+.character-sheet .cs-total { color: var(--ink-dim); font-size: .85em; }
+.character-sheet .cs-grants { display: flex; flex-wrap: wrap; gap: .3rem; min-width: 0; }
+.character-sheet .cs-grant.routine { opacity: .75; }
+.character-sheet .cs-here { color: var(--gold); white-space: nowrap; }
+@media (max-width: 760px) {
+  /* A phone stacks the rail above the ladder as a scrolling strip, and a row
+     puts its grants under the level and XP rather than squeezing a column. */
+  .character-sheet .cs-skills { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .character-sheet .cs-rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .character-sheet .cs-rail .cs-rail-item { width: auto; white-space: nowrap; }
+  .character-sheet .cs-row { grid-template-columns: 2.5rem minmax(0, 1fr) auto; }
+  .character-sheet .cs-here { grid-row: 1; grid-column: 3; }
+  .character-sheet .cs-grants { grid-column: 1 / -1; }
+}
 
 /* The bar's layers (fills, its XP text) stay inside the bar's own stacking
    context, so nothing in it can rise over the Level up that covers it. */

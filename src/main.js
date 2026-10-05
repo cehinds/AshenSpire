@@ -115,6 +115,7 @@ import { BUILD_VERSION } from './buildversion.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
+import { openCharacterSheet } from './ui/screens/characterSheet.js';
 import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, resetKeys, allResettableKeys, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
@@ -1844,6 +1845,25 @@ function showArmoury(request = '', returnTo = showMap) {
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo) : null,
     onProgression: () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
+    onCharacterSheet: (opener) => showCharacterSheet(opener),
+  });
+}
+
+// The Character sheet (screens/characterSheet.js): read-only, over whatever
+// opened it. Which character-level rewards it lists are the player's own
+// Settings → Advanced → Rewards answers, the ones the level door reads.
+function showCharacterSheet(opener) {
+  if (!run) return null;
+  const settings = saves.loadMeta().settings || {};
+  return openCharacterSheet({
+    registries, run, opener,
+    offers: {
+      statPoints: settingOn(settings, 'rewardLevelStatPoints'),
+      feats: settingOn(settings, 'rewardLevelFeats'),
+      classTree: settingOn(settings, 'rewardLevelClassTree'),
+      levelCards: settingOn(settings, 'rewardLevelCards'),
+      pointsPerLevel: resolveLevelUpValue(settings),
+    },
   });
 }
 
