@@ -116,6 +116,10 @@ const BALANCE_DOMAINS = Object.freeze({
   'levelUp.maxLevels': Object.freeze({ integer: true, step: 1, min: 1, max: 200 }),
   'skill.xp.maxLevel': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
   'skill.class.xp.maxLevel': Object.freeze({ integer: true, step: 1, min: 1, max: 200 }),
+  // Card ranks and the every-Nth-level flat (SPEC §13.4o): validate.js wants a
+  // positive whole number, and a save refuses a rank past 99.
+  'skill.rankMax': Object.freeze({ integer: true, step: 1, min: 1, max: 99 }),
+  'skill.flatEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,
