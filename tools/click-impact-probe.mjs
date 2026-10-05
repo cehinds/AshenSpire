@@ -216,7 +216,8 @@ async function main() {
       })()`);
       if (sample != null) { samples.push(sample); console.log(`    play ${samples.length}: ${sample} ms`); }
     }
-    if (!samples.length) { console.error('click-impact-probe: no play was measured'); process.exitCode = 2; return; }
+    // A median over fewer than three plays says too little to judge.
+    if (samples.length < 3) { console.error(`click-impact-probe: only ${samples.length} play(s) measured; need 3`); process.exitCode = 2; return; }
     const m = median(samples);
     const okay = m <= BUDGET_MS;
     console.log(`  ${okay ? '✓' : '✗'} median click-to-impact ${m} ms over ${samples.length} plays (budget ${BUDGET_MS} ms; samples ${samples.join(', ')})`);

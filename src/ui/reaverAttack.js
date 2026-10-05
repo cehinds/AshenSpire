@@ -80,8 +80,16 @@ export function isReaverAttackEligible({ classId, figure, customization, sprites
 }
 
 export function reaverAttackTiming(speed) {
-  const scale = Math.max(uiConfig.presentation.reaverAttack.motion.minimumSpeedScale, Number(speed?.lungeMs || NORMAL_LUNGE_MS) / NORMAL_LUNGE_MS);
-  const frameMs = Math.max(1, Math.round(REAVER_ATTACK.frameMs * scale));
+  let scale = Math.max(uiConfig.presentation.reaverAttack.motion.minimumSpeedScale, Number(speed?.lungeMs || NORMAL_LUNGE_MS) / NORMAL_LUNGE_MS);
+  // The pace's impact cap (ui/fx.js ANIM_SPEEDS impactCapMs) applies here as it
+  // does to every authored clip (model/equipmentAnimation.js animationTiming):
+  // a swing whose impact frame lands later plays faster as a whole.
+  const cap = Number(speed?.impactCapMs);
+  const impactAt = REAVER_ATTACK.frameMs * scale * REAVER_ATTACK.impactFrameIndex;
+  const capped = cap > 0 && impactAt > cap;
+  if (capped) scale *= cap / impactAt;
+  // Floored when capped, so many short frames cannot round past the cap.
+  const frameMs = Math.max(1, (capped ? Math.floor : Math.round)(REAVER_ATTACK.frameMs * scale));
   return Object.freeze({
     frameMs,
     impactMs: REAVER_ATTACK.impactFrameIndex * frameMs,

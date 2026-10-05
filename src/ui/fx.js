@@ -758,11 +758,17 @@ export function playTimeline(events, ctx, done) {
     }
     const actorStartedAt = Date.now();
     // The cost the actor paid (lead events) shows as it starts to move.
+    // A screen that can update its read-outs without touching the fighters
+    // (ctx.onLeadApplied: the MP bar, say) applies them then too, not after the
+    // swing; the rest of the beat applies after its visuals as before, so each
+    // event's display update runs exactly once.
     const lead = new Set(beat.lead || []);
     for (const e of lead) {
       const v = visualFor(e, beat.kind);
       if (v) safe(() => v(ctx));
     }
+    const leadApplied = lead.size > 0 && typeof ctx.onLeadApplied === 'function';
+    if (leadApplied) safe(() => ctx.onLeadApplied({ ...beat, events: beat.lead }));
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     const visuals = beat.events.filter((e) => !lead.has(e)).map((e) => visualFor(e, beat.kind)).filter(Boolean);
@@ -795,7 +801,7 @@ export function playTimeline(events, ctx, done) {
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
           cancelActorAnimation();
-          safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
+          safe(() => ctx.onBeatApplied && ctx.onBeatApplied(leadApplied ? { ...beat, events: beat.events.filter((e) => !lead.has(e)) } : beat));
           schedule(nextBeat, speed.beatMs);
         };
         const recovery = actorAnimation

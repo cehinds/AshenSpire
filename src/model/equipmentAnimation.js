@@ -143,8 +143,10 @@ export function animationTiming(component, roleOrPose, speed) {
   // still shows and the swing still lands on its authored frame.
   const cap = Number(speed?.impactCapMs);
   const impactAt = clip.frameMs * scale * clip.impactIndex;
-  if (cap > 0 && impactAt > cap) scale *= cap / impactAt;
-  const frameMs = Math.max(1, Math.round(clip.frameMs * scale));
+  const capped = cap > 0 && impactAt > cap;
+  if (capped) scale *= cap / impactAt;
+  // Floored when capped, so many short frames cannot round past the cap.
+  const frameMs = Math.max(1, (capped ? Math.floor : Math.round)(clip.frameMs * scale));
   return { totalMs: frameMs * clip.frames.length, impactMs: frameMs * clip.impactIndex };
 }
 

@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Cards hit as you click",
     "detail": "At Normal speed, an attack's damage now appears about a third of a second after you click, down from about 1.3 seconds. The pause before your swing is gone, and long attack animations play faster so the blow lands sooner, every frame still shown. Enemy attacks land sooner too, so enemy turns are shorter. Slow and Fast speeds keep their own, longer and shorter, timings.",
-    "build": "0.7.1.988",
+    "build": "0.7.1.990",
     "pullRequest": 1644,
     "url": "https://github.com/cehinds/AshenSpire/pull/1644"
   },

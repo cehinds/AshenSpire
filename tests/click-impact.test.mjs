@@ -9,6 +9,7 @@
 //      plays faster as a whole, so its impact lands at the cap.
 
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { groupBeats, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { EQUIPMENT_ANIMATIONS, animationTiming, resolvedAnimationSet } from '../src/model/equipmentAnimation.js';
@@ -63,7 +64,7 @@ test('an authored clip whose impact lands late is played faster, impact at the c
       const timing = animationTiming(set, 'attack', speed);
       if (!timing) continue;
       const uncapped = animationTiming(set, 'attack', { ...speed, impactCapMs: undefined });
-      assert.ok(timing.impactMs <= speed.impactCapMs + 10,
+      assert.ok(timing.impactMs <= speed.impactCapMs,
         `${pace}: impact ${timing.impactMs} ms is at most the cap ${speed.impactCapMs} ms (rounding aside)`);
       if (uncapped.impactMs > speed.impactCapMs) {
         late += 1;
@@ -76,4 +77,23 @@ test('an authored clip whose impact lands late is played faster, impact at the c
     }
   }
   assert.ok(late > 0, 'the shipped sets include a clip the cap actually compresses');
+});
+
+test('the painted Reaver swing obeys the same cap, and an uncapped call is unchanged', async () => {
+  const { reaverAttackTiming } = await import('../src/ui/reaverAttack.js');
+  for (const pace of ['slow', 'normal', 'fast']) {
+    const speed = ANIM_SPEEDS[pace];
+    const capped = reaverAttackTiming(speed);
+    assert.ok(capped.impactMs <= speed.impactCapMs, `${pace}: Reaver impact ${capped.impactMs} ms within the cap`);
+  }
+  const bare = reaverAttackTiming({ lungeMs: ANIM_SPEEDS.normal.lungeMs });
+  assert.ok(bare.impactMs > ANIM_SPEEDS.normal.impactCapMs, 'without a cap the authored sequence keeps its own timing');
+});
+
+test('a screen with onLeadApplied gets the lead\'s display at the swing, and the rest after, each once', () => {
+  // Drive the shipped timeline headlessly with a stand-in window and DOM.
+  const src = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(leadApplied\) safe\(\(\) => ctx\.onLeadApplied\(\{ \.\.\.beat, events: beat\.lead \}\)\)/);
+  assert.match(src, /ctx\.onBeatApplied\(leadApplied \? \{ \.\.\.beat, events: beat\.events\.filter\(\(e\) => !lead\.has\(e\)\) \} : beat\)/,
+    'the rest of the beat excludes the lead only when the lead was already applied');
 });

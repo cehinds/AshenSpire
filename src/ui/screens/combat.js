@@ -2069,6 +2069,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       events,
       {
         ...fxCtx,
+        // The cost a card paid (fx.js groupBeats `lead`) shows as the swing
+        // starts: the snapshot and the top bar only, never the fighters'
+        // stage, which would cut the swing short.
+        onLeadApplied: (beat) => {
+          applyVisualEvents(beat.events);
+          applyBeatToDisp(beat);
+          renderTopbar();
+        },
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
