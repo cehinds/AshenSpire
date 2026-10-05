@@ -43,28 +43,46 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
 
 // Keep type within authored bounds. Measure unclamped text, then restore the
 // visible line budget so long descriptions stop shrinking at the readable floor.
-export function fitIllustratedCardText(card){
-  const face=card.querySelector('.illustrated-card-face');
-  if(!face?.clientWidth)return;
-  const scale=face.clientWidth/Number(face.dataset.designWidth);
-  for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
-    const lines=Number(text.dataset.maxLines)||1;
-    const low=Number(text.dataset.minFont)*scale;
-    const high=Math.max(low,Number(text.dataset.maxFont)*scale);
-    const boxHeight=text.parentElement.clientHeight;
-    text.style.webkitLineClamp='unset';
-    const fits=size=>{
-      text.style.fontSize=size+'px';
-      return text.scrollHeight<=Math.min(boxHeight,size*1.25*lines)+1 && text.scrollWidth<=text.clientWidth+1;
-    };
-    let result=high;
-    if(!fits(high)){
-      let lo=low,hi=high;
-      for(let i=0;i<7;i++){const mid=(lo+hi)/2;if(fits(mid))lo=mid;else hi=mid;}
-      result=lo;
+// THE WHOLE HAND IN STEP. Each probe writes a font size and reads the text's
+// box, and a read after a write is a synchronous layout. One text at a time
+// that was up to eight layouts per text, per card: about ninety on the first
+// frame of a fight. Every text now takes the same probe of its own search in
+// the same pass (write all sizes, then read all boxes), so a batch costs the
+// search's nine passes however many cards it holds. Each text's search, and so
+// its result, is unchanged: probes of different texts never share a box.
+export function fitIllustratedCards(cards){
+  const faces=[];
+  for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
+  const widths=faces.map(face=>face.clientWidth);
+  const texts=[];
+  faces.forEach((face,i)=>{
+    if(!widths[i])return;
+    const scale=widths[i]/Number(face.dataset.designWidth);
+    for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
+      const lines=Number(text.dataset.maxLines)||1;
+      const low=Number(text.dataset.minFont)*scale;
+      texts.push({text,scale,lines,low,high:Math.max(low,Number(text.dataset.maxFont)*scale),boxHeight:0});
     }
-    text.style.fontSize=result+'px';
-    text.style.webkitLineClamp=String(lines);
-    text.dataset.fittedFont=String(result/scale);
+  });
+  if(!texts.length)return;
+  for(const t of texts)t.boxHeight=t.text.parentElement.clientHeight;
+  // One probe for every text still searching: all writes, then all reads.
+  const probe=(list,sizeOf)=>{
+    for(const t of list){t.text.style.webkitLineClamp='unset';t.text.style.fontSize=sizeOf(t)+'px';}
+    return list.map(t=>{const size=sizeOf(t);return t.text.scrollHeight<=Math.min(t.boxHeight,size*1.25*t.lines)+1 && t.text.scrollWidth<=t.text.clientWidth+1;});
+  };
+  const atHigh=probe(texts,t=>t.high);
+  const searching=[];
+  texts.forEach((t,i)=>{if(atHigh[i])t.result=t.high;else{t.lo=t.low;t.hi=t.high;searching.push(t);}});
+  for(let i=0;i<7&&searching.length;i++){
+    const mid=t=>(t.lo+t.hi)/2;
+    const ok=probe(searching,mid);
+    searching.forEach((t,j)=>{const m=mid(t);if(ok[j])t.lo=m;else t.hi=m;});
+  }
+  for(const t of searching)t.result=t.lo;
+  for(const t of texts){
+    t.text.style.fontSize=t.result+'px';
+    t.text.style.webkitLineClamp=String(t.lines);
+    t.text.dataset.fittedFont=String(t.result/t.scale);
   }
 }

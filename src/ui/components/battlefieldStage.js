@@ -1,5 +1,5 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { combatOverheadAnchors } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
@@ -36,6 +36,10 @@ export function wireBattlefieldStage(field, model) {
     if (!field.isConnected) return;
     const combat = field.closest('.combat');
     combat.dataset.layout = 'formation';
+    // No combatants yet (the wiring's own call, before the first render): there
+    // is nothing to fit, so do not force a layout of the half-built screen.
+    const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
+    if (!frames.length) return;
     const fieldRect = field.getBoundingClientRect();
     const zoom = fieldRect.width / field.clientWidth || 1;
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
@@ -54,8 +58,11 @@ export function wireBattlefieldStage(field, model) {
     const ribbonRect = ribbonEl?.getBoundingClientRect();
     const ribbon = ribbonRect?.width > 0 && ribbonRect.height > 0 ? { left: ribbonRect.left - fieldRect.left,
       right: ribbonRect.right - fieldRect.left, bottom: ribbonRect.bottom - fieldRect.top } : null;
-    const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
-    if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
+    if (fieldRect.width <= 0 || fieldRect.height <= 0) return;
+    // The page zoom, read once before the writes below. anchorLocalBox reads it
+    // as computed style when not handed it, and per tile and per combatant, each
+    // after a style write, that was a style flush apiece (36 tiles).
+    const pageZoom = uiZoom();
     const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}') };
     const dimensions = formationDimensions(presentation, Math.max(frames.filter(f => f.classList.contains('player')).length, frames.filter(f => f.classList.contains('enemy')).length));
     if (isFormationCell(field.dataset.playerCell, dimensions)) {
@@ -85,7 +92,7 @@ export function wireBattlefieldStage(field, model) {
         const localTile = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: cell.x - geometry.width / 2, top: cell.ground,
           width: geometry.width, height: geometry.height,
-        });
+        }, { zoom: pageZoom });
         tile.style.left = `${localTile.left}px`;
         tile.style.top = `${localTile.top}px`;
         tile.style.width = `${localTile.width}px`;
@@ -178,6 +185,7 @@ export function wireBattlefieldStage(field, model) {
         ({ sizes, growthFor, overheads } = fitFormation());
       }
     }
+    const placed = [];
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
       // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
@@ -197,7 +205,7 @@ export function wireBattlefieldStage(field, model) {
       // Transparent canvas above the figure is not part of the card's layout.
       // Keep the image and its feet in place while the card starts at the ink.
       sprite.style.marginTop = `${(visibleHeight - paintedHeight) / scale}px`;
-      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - visibleHeight, width: nameWidth, height: visibleHeight });
+      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - visibleHeight, width: nameWidth, height: visibleHeight }, { zoom: pageZoom });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
       // Keep depth on the artwork. A z-index on the whole frame traps its
@@ -228,23 +236,36 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
       frame.dataset.spriteVisibleHeight = String(visibleHeight);
-      // WCO2: the guard badge lives inside this zoomed host. Publish the zoom
-      // and the visible artwork's box (local px, relative to the host) so the
-      // badge can counter-zoom and anchor to the art rather than inheriting
-      // the sprite's scale (which left it a few px tall on phones).
-      const hostRect = sprite.getBoundingClientRect();
       // Keep the 44 px target on the clickable frame, above neighbouring art.
       // It does not change the dimensions read by the sprite fitter.
       frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));
       frame.classList.toggle('player-target-hitbox', frame.classList.contains('player'));
-      if (frame.classList.contains('enemy-target-hitbox') || frame.classList.contains('player-target-hitbox')) {
-        const frameRect = frame.getBoundingClientRect();
+      placed.push({ frame, sprite, scale });
+    }
+    // WCO2: the guard badge lives inside this zoomed host. Publish the zoom
+    // and the visible artwork's box (local px, relative to the host) so the
+    // badge can counter-zoom and anchor to the art rather than inheriting
+    // the sprite's scale (which left it a few px tall on phones).
+    //
+    // READ EVERY BOX, THEN WRITE EVERY VARIABLE. Reading one combatant's boxes
+    // straight after writing the previous one's forced a synchronous layout per
+    // box: three per combatant on every refresh, and the click that enters a
+    // fight runs several refreshes before its first paint. What is written
+    // below places only the absolutely positioned badge and the hit target's
+    // ::after, never a box read here, so one layout serves every read.
+    const boxes = placed.map(({ frame, sprite }) => ({
+      hostRect: sprite.getBoundingClientRect(),
+      frameRect: frame.classList.contains('enemy-target-hitbox') || frame.classList.contains('player-target-hitbox') ? frame.getBoundingClientRect() : null,
+      // The drawn frame, not its wrapper: an enemy's pose stage is narrower
+      // than the frame it paints, which overhangs the host.
+      artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
+    }));
+    placed.forEach(({ frame, sprite, scale }, i) => {
+      const { hostRect, frameRect, artRect } = boxes[i];
+      if (frameRect) {
         frame.style.setProperty('--enemy-hit-x', `${(hostRect.left + hostRect.width / 2 - frameRect.left) / zoom}px`);
         frame.style.setProperty('--enemy-hit-y', `${(hostRect.bottom - frameRect.top) / zoom}px`);
       }
-      // The drawn frame, not its wrapper: an enemy's pose stage is narrower
-      // than the frame it paints, which overhangs the host.
-      const artRect = (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect();
       sprite.style.setProperty('--sprite-zoom', String(scale / zoom));
       sprite.style.setProperty('--art-left', `${(artRect.left - hostRect.left) / zoom}px`);
       sprite.style.setProperty('--art-right', `${(artRect.right - hostRect.left) / zoom}px`);
@@ -255,16 +276,20 @@ export function wireBattlefieldStage(field, model) {
       const outline = targetOutline({ scale });
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
-    }
+    });
     for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();
-    combat.style.setProperty('--environment-top', '0px');
-    combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
     // Keep the painting within its atlas cell, with the same ground line as
     // the formation. Continuing behind cards must not move that line.
     const backdrop = combat.querySelector('.environment-backdrop');
+    // Its width is read BEFORE the two variables below are written: they are
+    // set on the fight's root, so a read after them restyled the whole screen
+    // once more. The width is the root's (inset: 0), never the height written.
+    const backdropWidth = backdrop ? backdrop.clientWidth : 0;
+    combat.style.setProperty('--environment-top', '0px');
+    combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
     if (backdrop) fitSceneBackdrop(backdrop, {
-      width: backdrop.clientWidth, height: rect.height / zoom, zoom,
+      width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: (fieldRect.top - rect.top) / zoom, windowHeight: fieldRect.height / zoom,
       config: battlefieldBackdropConfig({ height: fieldRect.height / zoom,
         fieldTop: 0, fieldHeight: fieldRect.height / zoom,
@@ -300,11 +325,21 @@ export function wireBattlefieldStage(field, model) {
     resizeObserver.disconnect();
     layoutObserver.disconnect();
     window.removeEventListener('resize', schedule);
+    document.fonts?.removeEventListener?.('loadingdone', fontsLoaded);
     detachObserver.disconnect();
     if (releaseActiveStage === release) releaseActiveStage = null;
   };
   detachObserver.observe(document.body, { childList: true, subtree: true });
-  document.fonts?.ready?.then(() => { if (field.isConnected) refresh(); });
+  // A late web font can resize the overhead stacks, so refit when a font load
+  // finishes. Not `document.fonts.ready`: reading that getter flushes style and
+  // layout of the half-built screen, and with the fonts already in it settled
+  // straight after the mount and ran a second full fit (every combatant's boxes
+  // measured again) before the fight's first paint. The fit at mount already
+  // used whatever fonts were loaded; only a load still to finish needs a refit.
+  // (The field's ResizeObserver still delivers its first observation and refits
+  // once after mount, as before.)
+  const fontsLoaded = () => { if (field.isConnected) schedule(); };
+  document.fonts?.addEventListener?.('loadingdone', fontsLoaded);
   releaseActiveStage = release;
   refresh();
   return Object.freeze({ refresh, release });
