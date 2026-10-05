@@ -311,6 +311,59 @@ export function raiseCardRank(registries, run, skillId, instanceId) {
   return inst;
 }
 
+// ---- the every-5th-level flat (SPEC §13.4o) ----------------------------------
+
+/**
+ * skillBonusFor(registries, run, inst) → the flat a card earns from the run's
+ * skill levels: for every card-school track whose schools the card carries,
+ * floor(level / balance.skill.flatEvery). Everything stacks (owner, 2026-10-04),
+ * so a card of two tracks' schools earns both. Every owned card counts,
+ * equipment-bound and item-owned ones too: the flat is not an upgrade.
+ */
+export function skillBonusFor(registries, run, inst, schoolsByTrack = trackSchools(registries, run)) {
+  const def = inst && registries.cards.has(inst.cardId) ? registries.cards.get(inst.cardId) : null;
+  if (!def) return 0;
+  const tags = def.tags || [];
+  let bonus = 0;
+  for (const { flat, schools } of schoolsByTrack) if (tags.some((tag) => schools.has(tag))) bonus += flat;
+  return bonus;
+}
+
+// The tracks that earn a flat now, with their schools: read once per stamp.
+function trackSchools(registries, run) {
+  const every = draftRows(registries).flatEvery;
+  if (!Number.isInteger(every) || every < 1) return [];
+  const out = [];
+  for (const [skillId, row] of Object.entries((run && run.skills) || {})) {
+    const flat = row && Number.isInteger(row.level) ? Math.floor(row.level / every) : 0;
+    if (!flat || !rankUpKind(skillKindOf(registries, skillId))) continue;
+    const schools = new Set(skillSchools(registries, run.loadout, skillId));
+    if (schools.size) out.push({ flat, schools });
+  }
+  return out;
+}
+
+/**
+ * stampSkillBonuses(registries, run) → how many cards changed: writes each
+ * owned card's `skillBonus` (deck, then sideboard), deleting it at 0. The
+ * bonus is DERIVED — from skill levels and the held pieces' schools — so it
+ * is stamped at every door that can move either: each save, each combat
+ * start and each full restamp, the way equipment numbers are.
+ */
+export function stampSkillBonuses(registries, run) {
+  if (!run || !Array.isArray(run.deck)) return 0;
+  const schoolsByTrack = trackSchools(registries, run);
+  let changed = 0;
+  for (const inst of [...run.deck, ...(Array.isArray(run.sideboard) ? run.sideboard : [])]) {
+    if (!inst) continue;
+    const bonus = schoolsByTrack.length ? skillBonusFor(registries, run, inst, schoolsByTrack) : 0;
+    if ((inst.skillBonus || 0) === bonus) continue;
+    if (bonus) inst.skillBonus = bonus; else delete inst.skillBonus;
+    changed += 1;
+  }
+  return changed;
+}
+
 /**
  * skillsProblems(skills) → the shape's refusals, by name. Registry-free, as
  * the save door must be: a track id the registries no longer know is a stale

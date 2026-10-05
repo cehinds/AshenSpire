@@ -54,7 +54,7 @@ import { createRng, seedToString, seedFromString, seedProblem } from './engine/r
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
-import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, xpToNext as skillXpToNext } from './model/skills.js';
+import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
 import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
@@ -1021,6 +1021,9 @@ let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback incr
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
+  // The derived skill bonus is restamped at every save, so a level, a new card
+  // or a swapped hand shows on the faces the next screen draws (SPEC §13.4o).
+  stampSkillBonuses(registries, run);
   saves.saveRun(run, rng, activeSlot);
   sendLanStatus();
 }

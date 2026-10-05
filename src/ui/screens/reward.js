@@ -65,7 +65,7 @@ import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
-import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
+import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank, rankUpKind } from '../../model/skills.js';
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
@@ -511,7 +511,12 @@ export function mountRewards(app, {
     const open = plan.rows.filter((row) => draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
     const mine = open.filter((row) => row.requiredLevel === claim.after || row.claimOrdinal === claimedSkills[skillId]);
     const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
-    openLevelView(skillId, `${label} · Level ${claim.after}`, `Your ${label} skill is now level ${claim.after}.`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
+    // Every flatEvery levels the skill's cards gain +1 (SPEC §13.4o): said here,
+    // since the number lands on the card faces rather than as a row to take.
+    const every = registries.balance.skill.flatEvery;
+    const flat = Number.isInteger(every) && every > 0 && claim.after % every === 0 && rankUpKind(skillTracks(registries).find((track) => track.id === skillId)?.kind)
+      ? ` Every ${label} card gains +1.` : '';
+    openLevelView(skillId, `${label} · Level ${claim.after}`, `Your ${label} skill is now level ${claim.after}.${flat}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
   }
 
   // THE LEVEL POPUP. What this claim unlocked, as the list's own blue rows:
