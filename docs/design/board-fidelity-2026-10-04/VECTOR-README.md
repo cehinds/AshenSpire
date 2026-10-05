@@ -1,0 +1,31 @@
+# Board-specific native UI assets
+
+These 146 editable SVGs follow the October 1 concept boards: 79 component skins and 67 icons. They supplement the existing component collection; they are not installed in the game. The original images remain the visual authority. Flat SVG backing colors are fallbacks for the painted material layers; native vectors supply rails, wells, badges, dividers and state geometry rather than replacing illustration.
+
+`vector-manifest.json` records each SVG's dimensions, source board, approximate pixel and normalized region anchors, fixed slice insets, minimum dimensions, art wells and live text boxes. Source rectangles were visually inspected, not extracted as measured responsive specifications. Board dimensions are read directly from each PNG header. No concept labels, costs, damage numbers, deck limits or ownership rules are baked into a skin.
+
+The five card families stay distinct:
+
+| Family | Reference | Native size | Geometry |
+| --- | --- | --- | --- |
+| Combat hand | 05 | 160×232 | Black body, slender brass rim, circular upper-left cost, title above illustration, muted red attack or blue skill band |
+| Deck tile | 07 | 180×250 | Tall portrait well, parchment footer, blue iron hexagonal cost |
+| Custom draft | 12 | 210×330 desktop; 320×208 mobile featured; 160×88 mobile thumbnail | Blue circular cost, upper illustration, black title/body, fine gold dividers; mobile is explicitly recomposed |
+| Rest/reward | 09 | 210×266 | Parchment top title strip, diamond cost, landscape art, narrow dark type band, black body and restrained corner details |
+| Smith inspector | 08 | 180×304 | Tiny mount tile beside title, cyan art rim, black body, divider and small corner curls |
+
+Place art into the manifest well, using `cover` or an intentional authored crop. Hand, draft, reward and smith frames have transparent illustration wells; deck art sits beneath its unfilled upper frame. Other panel/slot artwork can be placed above the black backing and below live copy. Do not stretch card families or nine-slice their cost badges. Card corners, illustration ratios, and cost shapes are part of their identity.
+
+The other assets cover normal/selected/green/red/disabled buttons, filter tabs, navigation rows, desktop and mobile inventory slots, class portrait rows/tiles, inspection panels, service windows, menu backings, mobile detail trays, toggles, search fields, choice rows, reward accordions, history rows, party readiness states, progression nodes, map nodes, route connectors, dungeon rooms, service pins, intent badges, poise squares, resource tracks/fills and an energy circle. Values, icons, selected states and labels remain live. Red action skins are for exit/destructive states; the red End Turn in board 05 is a concept error and does not override the game color contract.
+
+For parchment areas use the already authored `assets/materials/weathered-parchment.webp`, cited in `textureLayers`, replacing the native grain fallback with a clipped texture layer behind live dark copy. Package adoption copies the exact material bytes; CREDITS documents their source in the prior collection. The prior generation receipt is not copied into this package. Progression parchment has a restrained irregular native outline, recorded as `textureLayers[].clipPath`; clip the unchanged raster layer to that path and keep the torn profile proportional rather than nine-slicing it. The material is slightly warmer than board07's pale gray cream. The title and copy fonts reference local OFL Cinzel/Cormorant files under `fonts/` through `vector-theme.css`. Their source licenses remain intact.
+
+The native 32px icon files use simple silhouettes and strokes seen in the boards. They are independent of painted card/skill illustrations. Monochrome icons use `currentColor` when inlined; external `<img>` instances retain the SVG's ivory default. HP, mana and stamina icons retain explicit resource colors. Wrap a 16–24px icon in a separate 44px input target where interactive; the SVG's drawing size is not a touch target.
+
+Prefer external SVG images for skins. Every file namespaces its definition IDs by asset name, but two inline copies of the same asset still need unique instance prefixes. `svg-utils.cjs` supplies `namespaceSvg(source, instancePrefix)` for this. Labels and input semantics belong to the containing HTML; mark decorative skin/icon images `aria-hidden="true"` and give the actual control its live accessible name.
+
+`vector-recipes.json` describes desktop/mobile sizes and layer ordering. `build-vectors.cjs` reproduces the native asset inventory and hashes. `render-vector-review.cjs` renders static Sharp review sheets and checks SVG dimensions, IDs in each file and two namespaced inline copies, absent baked text/scripts, transparent card illustration apertures and valid slice insets. Use `ASHENSPIRE_SHARP_MODULE` to point to the bundled Sharp module if it is not available on Node's normal path.
+
+Review sheets compare original board crops with blank geometry and filled examples using the separately authored paintings. Those previews add illustrative copy as independent text layers; their values are not shipped SVG content. `render-filled-comparisons.cjs` creates the five-family, mobile draft and parchment comparisons. Native skins use subtle charcoal grain, worn brass gradients, parchment grain fallback, and small edge marks/corner curls. Original hand-card crops clip part of the cost badge, and reward crops include their cast shadow; these approximate source rectangles are evidence of treatment, not exact silhouette extraction. Native SVG source, alpha rendering and static comparisons were inspected; no local browser or runtime verification is claimed. Earlier local preview access was blocked by app URL policy and no alternate browser, server or CDP workaround was used.
+
+The icon library also includes four distinct class seals, elite horns, city service silhouettes, triple-slash progression, host crown, ledger/document, bleed and flask state glyphs, rarity/favourite marks and menu indicators. render-menu-comparison.cjs assembles class choice, settings, forge receipt and lobby states with actual portrait cutouts and paintings. Review costs reproduce the source examples only as separate illustrative copy; all runtime values remain unbound.

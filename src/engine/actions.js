@@ -137,6 +137,32 @@ export function attackTagsFor(action, effect, registries) {
 }
 
 /**
+ * critChance(rules, attributes, tags) → { chance, multiplier } for an attack of
+ * these tags (SPEC §13.4o): every matching rule adds base + Σ weight ×
+ * attribute / divisor, the sum is capped at the highest matching cap, and the
+ * multiplier is the highest matching one. No match is { chance: 0 }.
+ */
+export function critChance(rules, attributes, tags) {
+  const tagSet = new Set(Array.isArray(tags) ? tags : []);
+  const matching = (Array.isArray(rules) ? rules : []).filter((rule) => rule && (rule.tags || []).some((tag) => tagSet.has(tag)));
+  if (!matching.length) return { chance: 0, multiplier: 1 };
+  const sum = matching.reduce((total, rule) => total + (rule.base || 0) + Object.entries(rule.weights || {})
+    .reduce((n, [id, w]) => n + w * (Number(attributes && attributes[id]) || 0), 0) / (rule.divisor || 100), 0);
+  const cap = Math.max(...matching.map((rule) => (Number.isFinite(rule.cap) ? rule.cap : 1)));
+  return { chance: Math.max(0, Math.min(cap, sum)), multiplier: Math.max(...matching.map((rule) => rule.multiplier || 1)) };
+}
+
+// The roll: only the player's attacks, only with a crit rule that matches, on
+// the combatProcs stream (nothing is drawn without a rule, so a run with no
+// such feat draws exactly what it always drew).
+function rollCrit(ctx, source, tags) {
+  if (!source || source.kind !== 'player' || !Array.isArray(source.critRules) || !source.critRules.length) return 0;
+  const { chance, multiplier } = critChance(source.critRules, ctx.attributes, tags);
+  if (!(chance > 0) || !(multiplier > 1)) return 0;
+  return ctx.rng.float('combatProcs') < chance ? multiplier : 0;
+}
+
+/**
  * applyAttackDamage(ctx, source, target, base) — full attack resolution:
  * §4.2 math, block absorption first, then HP. Emits damageDealt (+ hpLost if
  * HP was touched), handles deaths and phase checks. Returns final damage.
@@ -146,7 +172,10 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
   const ratedBase = base + cardRatingBonus(ctx, source, carrier, 'damage', base);
   const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
-  const dmg = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
+  const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
+  // A critical hit multiplies the finished blow, before Block takes its share.
+  const dmg = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
+  if (dmg > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: dmg });
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
   reconcileWardBlock(target);
@@ -646,6 +675,9 @@ function runOpcode(ctx, action, eff) {
           }
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
           const hpBefore = t.hp;
+          // A skill feat's critical hit (SPEC §13.4o), rolled per hit and target.
+          const crit = rollCrit(ctx, action.source, attackTags);
+          if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
           // OUTSIDE the foundation ruleset (the shipped game creates its combats
           // without one), an enemy blow that draws blood rocks the player by

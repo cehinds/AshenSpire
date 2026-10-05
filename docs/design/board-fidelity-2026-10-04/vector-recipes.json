@@ -1,0 +1,415 @@
+{
+  "schemaVersion": 1,
+  "boundary": "Reference compositions only. All names, text, costs, fill ratios and control states bind to canonical runtime models. Illustrations are independent raster layers.",
+  "coordinates": "Boxes in vector-manifest.json are SVG viewBox units. Percentage CSS boxes are [x/width,y/height,w/width,h/height] times100. Keep icon drawing size separate from the44px input target.",
+  "layerRules": {
+    "handDraftRewardSmith": [
+      "illustration clipped to art well",
+      "SVG skin",
+      "optional clipped parchment over fallback header/footer",
+      "live cost/title/type/body"
+    ],
+    "deckTile": [
+      "portrait illustration clipped to art well",
+      "SVG skin",
+      "clipped parchment replacing flat footer",
+      "live hexagonal cost and footer copy"
+    ],
+    "panelInventoryHistoryLobby": [
+      "SVG backing",
+      "illustration in manifest art/portrait box",
+      "live icons and text",
+      "focus ring on actual HTML control"
+    ],
+    "resource": [
+      "resource-track",
+      "resource-fill clipped to live ratio",
+      "live value centered above fill"
+    ],
+    "inlineSvg": "Use svg-utils.namespaceSvg with a unique prefix per inline instance. External SVG images are independently scoped."
+  },
+  "surfaces": [
+    {
+      "id": "combat-hand",
+      "board": "05",
+      "desktop": {
+        "skin": "hand-card-attack-normal",
+        "size": [
+          112,
+          162
+        ],
+        "focusedSize": [
+          138,
+          200
+        ],
+        "composition": "Five readable cards along lower battlefield, separate energy circle and action."
+      },
+      "mobile": {
+        "skin": "hand-card-attack-normal",
+        "size": [
+          108,
+          157
+        ],
+        "focusedSize": [
+          144,
+          209
+        ],
+        "composition": "Small fan around one raised focused card; keep cost/body copy live, keep action below fan."
+      },
+      "alternates": [
+        "hand-card-skill-normal",
+        "hand-card-attack-selected",
+        "hand-card-skill-selected"
+      ]
+    },
+    {
+      "id": "deck",
+      "board": "07",
+      "desktop": {
+        "skin": "deck-tile-normal",
+        "size": [
+          126,
+          175
+        ],
+        "composition": "Four-column tile grid, separate large inspector and navigation rail."
+      },
+      "mobile": {
+        "skin": "deck-tile-normal",
+        "size": [
+          142,
+          197
+        ],
+        "composition": "Two-column grid above inspection-row-mobile and full-width primary action."
+      },
+      "alternates": [
+        "deck-tile-selected",
+        "inspection-panel",
+        "inspection-row-mobile",
+        "filter-tab-normal",
+        "filter-tab-selected"
+      ]
+    },
+    {
+      "id": "custom-draft",
+      "board": "12",
+      "desktop": {
+        "skin": "draft-card-normal",
+        "size": [
+          185,
+          291
+        ],
+        "composition": "Three portrait choices beside run setup. Selected choice uses draft-card-selected."
+      },
+      "mobile": {
+        "skin": "draft-card-mobile-selected",
+        "size": [
+          304,
+          198
+        ],
+        "alternativeSkin": "draft-thumbnail-mobile-normal",
+        "alternativeSize": [
+          142,
+          78
+        ],
+        "composition": "Wide featured art/copy card, two landscape thumbnails, live pager and confirmation below."
+      }
+    },
+    {
+      "id": "rest-reward",
+      "board": "09",
+      "desktop": {
+        "skin": "reward-card-normal",
+        "size": [
+          164,
+          208
+        ],
+        "composition": "Landscape-art choices with parchment top titles. Recovery and reward receipts stay separate."
+      },
+      "mobile": {
+        "skin": "reward-card-selected",
+        "size": [
+          190,
+          241
+        ],
+        "composition": "One card in a horizontal carousel, reward accordions below with independent live collected states."
+      },
+      "alternates": [
+        "reward-card-selected",
+        "reward-accordion",
+        "choice-row-selected",
+        "choice-row-normal"
+      ]
+    },
+    {
+      "id": "smith",
+      "board": "08",
+      "desktop": {
+        "skin": "smith-inspector-card-normal",
+        "size": [
+          144,
+          243
+        ],
+        "composition": "Equipment and mount slots at left, tall card in middle, receipt/action column at right."
+      },
+      "mobile": {
+        "skin": "smith-inspector-card-normal",
+        "size": [
+          142,
+          240
+        ],
+        "composition": "One expanded service, then mount/card read and receipt. Show canonical unavailable reason in live copy."
+      },
+      "alternates": [
+        "service-window",
+        "button-green",
+        "button-disabled",
+        "forge-service-tab-normal",
+        "forge-service-tab-selected"
+      ]
+    },
+    {
+      "id": "inventory",
+      "board": "06",
+      "desktop": {
+        "skin": "inventory-slot-desktop-normal",
+        "size": [
+          144,
+          120
+        ],
+        "composition": "Grid with side-by-side equipped/selected detail and one swap receipt."
+      },
+      "mobile": {
+        "skin": "inventory-slot-normal",
+        "size": [
+          104,
+          104
+        ],
+        "composition": "Three-column grid, one details tray and live swap receipt beneath."
+      },
+      "alternates": [
+        "inventory-slot-selected",
+        "mobile-detail-tray",
+        "top-navigation-tab-normal",
+        "top-navigation-tab-selected",
+        "inventory-slot-desktop-selected"
+      ]
+    },
+    {
+      "id": "preferences",
+      "board": "12",
+      "desktop": {
+        "skin": "menu-backing",
+        "size": [
+          680,
+          560
+        ],
+        "composition": "Category navigation at left, controls and comparison images at right. Dividers redrawn at row bounds."
+      },
+      "mobile": {
+        "skin": "navigation-row-normal",
+        "size": [
+          310,
+          44
+        ],
+        "composition": "Stacked categories and one expanded section. Settings values remain live, toggles keep separate accessible labels."
+      },
+      "alternates": [
+        "navigation-row-selected",
+        "search-field",
+        "toggle-off",
+        "toggle-on",
+        "button-red"
+      ]
+    },
+    {
+      "id": "progression",
+      "board": "10",
+      "desktop": {
+        "skin": "parchment-progression-backing",
+        "size": [
+          540,
+          630
+        ],
+        "composition": "Three branches with circular nodes and thin elbow connectors over the existing parchment material."
+      },
+      "mobile": {
+        "skin": "progression-node-normal",
+        "size": [
+          56,
+          56
+        ],
+        "composition": "One vertical branch, separate focused ability inspector and bottom branch tabs. Node icons are real authored ability artwork."
+      },
+      "alternates": [
+        "progression-node-selected",
+        "progression-node-locked",
+        "progression-node-completed",
+        "progression-connector"
+      ]
+    },
+    {
+      "id": "maps-and-dungeons",
+      "board": "03/04",
+      "desktop": {
+        "skin": "map-node-normal",
+        "size": [
+          46,
+          46
+        ],
+        "composition": "Scene-relative nodes and thin connectors, one selected destination read at the side."
+      },
+      "mobile": {
+        "skin": "map-node-selected",
+        "size": [
+          46,
+          46
+        ],
+        "composition": "Pan/zoom map retains minimum node target; selected destination read moves to a bottom tray."
+      },
+      "alternates": [
+        "route-connector",
+        "dungeon-connection",
+        "dungeon-room-normal",
+        "dungeon-room-current",
+        "service-pin"
+      ]
+    },
+    {
+      "id": "company",
+      "board": "11",
+      "desktop": {
+        "skin": "lobby-portrait-ready",
+        "size": [
+          190,
+          199
+        ],
+        "composition": "Four portrait panels and separate route vote below."
+      },
+      "mobile": {
+        "skin": "lobby-ready",
+        "size": [
+          310,
+          70
+        ],
+        "composition": "Four compact portrait/name/status rows; route vote occupies its own region."
+      },
+      "alternates": [
+        "lobby-portrait-not-ready",
+        "lobby-portrait-reconnecting",
+        "lobby-not-ready",
+        "lobby-reconnecting"
+      ]
+    },
+    {
+      "id": "history-and-dialogue",
+      "board": "02/11",
+      "desktop": {
+        "skin": "history-row",
+        "size": [
+          390,
+          72
+        ],
+        "composition": "Thumbnail, live name/run summary and outcome. Choice rows belong to a separate dialogue panel."
+      },
+      "mobile": {
+        "skin": "choice-row-normal",
+        "size": [
+          310,
+          70
+        ],
+        "composition": "One portrait/text read followed by stacked choices. Outcomes and history values come from actual run records."
+      },
+      "alternates": [
+        "choice-row-selected",
+        "history-row"
+      ]
+    },
+    {
+      "id": "class-choice",
+      "board": "01",
+      "desktop": {
+        "skin": "class-choice-row-normal",
+        "size": [
+          350,
+          120
+        ],
+        "composition": "Four portrait and class-copy rows; art is a separately authored class cutout."
+      },
+      "mobile": {
+        "skin": "class-choice-tile-normal",
+        "size": [
+          92,
+          106
+        ],
+        "composition": "Compact class portraits in a horizontal row with separate live class details below."
+      },
+      "alternates": [
+        "class-choice-row-selected",
+        "class-choice-tile-selected"
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "id": "weathered-parchment",
+      "file": "assets/materials/weathered-parchment.webp",
+      "source": "../player-components-2026-10-03/assets/materials/weathered-parchment.webp",
+      "provenance": "../player-components-2026-10-03/generation/weathered-parchment.json",
+      "use": "Deck footers, reward headers and progression backing. Clip as material; never invent illustration."
+    }
+  ],
+  "illustrationBindings": {
+    "desktopTemplate": "assets/abilities/{id}.webp",
+    "mobileTemplate": "assets/mobile/abilities/{id}.webp",
+    "masterTemplate": "masters/abilities/{id}.png",
+    "receiptTemplate": "provenance/{id}.json",
+    "draft": [
+      "draft-kindle",
+      "draft-steadfast-strike",
+      "draft-pilgrims-resolve"
+    ],
+    "reward": [
+      "reward-ashen-strike",
+      "reward-steadfast",
+      "reward-lingering-flame"
+    ],
+    "rest": [
+      "rest-steel-resolve"
+    ],
+    "smith": [
+      "forge-guides-strike"
+    ],
+    "progression": [
+      "progression-surging-strikes"
+    ],
+    "hand": [
+      "hand-slashing-strike",
+      "hand-gorefire-slash",
+      "hand-shield-defend",
+      "hand-dodge-roll",
+      "hand-shield-bash",
+      "hand-defend",
+      "hand-righteous-strike",
+      "hand-consecrate",
+      "hand-suns-aegis"
+    ],
+    "deckConfirmed": [
+      "deck-forward-cut",
+      "deck-shield-wall",
+      "deck-dodge-roll",
+      "deck-crushing-blow",
+      "deck-rally",
+      "deck-execution",
+      "deck-gorefire-slash"
+    ],
+    "boundary": "Separate authored paintings supplied by asset agents. Package adoption records final bytes; SVG geometry is not an ability-art placeholder.",
+    "portraits": [
+      "portrait-reaver",
+      "portrait-rogue",
+      "portrait-starseer",
+      "portrait-herald"
+    ],
+    "portraitTemplate": "assets/portraits/{id}.webp",
+    "mobilePortraitTemplate": "assets/mobile/portraits/{id}.webp"
+  }
+}

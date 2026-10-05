@@ -40,7 +40,7 @@
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, WeaponCardPackageModel } from './loadout.js';
 import { eligibleWeaponArts } from './armamentTrading.js';
-import { awardSkillXp, skillTracks, skillKindOf, skillLevel, skillMaxLevel, xpToNext, rarityUnlockedAt, DUAL_WIELD_SKILL } from './skills.js';
+import { awardSkillXp, skillTracks, skillKindOf, skillLevel, skillMaxLevel, xpToNext, rarityUnlockedAt, levelQueuesAttributePick, levelQueuesSkillFeat, DUAL_WIELD_SKILL } from './skills.js';
 import { unusedInstanceId } from './deckRules.js';
 import { cardRewardRarityWeights } from './rewardOdds.js';
 
@@ -255,7 +255,7 @@ export function respecPlan(registries, run, skillId, { priceMult = 1 } = {}) {
 function dropDeferredAboveLevelOne(run, skillId) {
   const saved = run.deferredProgression;
   if (!saved) return;
-  for (const field of ['skillDrafts', 'skillRankUps']) {
+  for (const field of ['skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats']) {
     if (!Array.isArray(saved[field])) continue;
     const kept = saved[field].filter((row) => !(row && row.skillId === skillId && Number.isInteger(row.requiredLevel) && row.requiredLevel > 1));
     if (kept.length) saved[field] = kept.map((row, ordinal) => ({ ...row, ordinal }));
@@ -277,7 +277,13 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   const row = run.skills[plan.skillId];
   // Queued rank-ups (SPEC §13.4o) fall by the same levels; ranks already raised stay.
   const rankUps = row.pendingRankUps === undefined ? {} : { pendingRankUps: Math.max(0, row.pendingRankUps - (plan.level - 1)) };
-  run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)), ...rankUps } };
+  // Queued attribute picks fall by the picks the lost levels queued; points spent stay.
+  const lostPicks = Array.from({ length: plan.level - 1 }, (_, i) => i + 2).filter((level) => levelQueuesAttributePick(registries, plan.skillId, level)).length;
+  const picks = row.pendingAttributePicks === undefined ? {} : { pendingAttributePicks: Math.max(0, row.pendingAttributePicks - lostPicks) };
+  // Queued feat picks fall the same way; feats taken stay (FINISH D13).
+  const lostFeats = Array.from({ length: plan.level - 1 }, (_, i) => i + 2).filter((level) => levelQueuesSkillFeat(registries, plan.skillId, level)).length;
+  const feats = row.pendingSkillFeats === undefined ? {} : { pendingSkillFeats: Math.max(0, row.pendingSkillFeats - lostFeats) };
+  run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)), ...rankUps, ...picks, ...feats } };
   dropDeferredAboveLevelOne(run, plan.skillId);
   run.trainingPool = pool(run) + plan.refund;
   run.cinders -= plan.cost;

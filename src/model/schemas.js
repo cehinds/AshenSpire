@@ -102,6 +102,8 @@ export const TARGETS = Object.freeze([
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
+  // A skill feat's critical hit landed (SPEC §13.4o).
+  'critHit',
   'combatStart',
   'combatEnd',
   'playerTurnStart',

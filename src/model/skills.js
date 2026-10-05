@@ -16,6 +16,7 @@
 import { mechanics } from '../framework/data/mechanics.js';
 import { activeIn, HAND_SLOT_IDS } from './zones.js';
 import { xpStepCost } from './xpCurve.js';
+import { skillFeats } from '../content/skillFeats.js';
 
 // The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
 // because loadout.js would close an import cycle through validate.js).
@@ -134,6 +135,8 @@ export function awardSkillXp(registries, run, skillId, amount) {
     row.level += 1;
     row.pendingDrafts += 1;
     queueRankUp(kind, row);
+    queueAttributePick(registries, skillId, row);
+    queueSkillFeat(registries, skillId, row);
     cost = xpToNext(registries, kind, row.level);
   }
   return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain };
@@ -179,6 +182,8 @@ export function claimBankedSkillLevel(registries, run, skillId) {
   row.level += 1;
   row.pendingDrafts += 1;
   queueRankUp(kind, row);
+  queueAttributePick(registries, skillId, row);
+  queueSkillFeat(registries, skillId, row);
   return { skillId, before, after: row.level, levelUps: 1, gained: 0 };
 }
 
@@ -315,18 +320,21 @@ export function raiseCardRank(registries, run, skillId, instanceId) {
 
 /**
  * skillBonusFor(registries, run, inst) → the flat a card earns from the run's
- * skill levels: for every card-school track whose schools the card carries,
- * floor(level / balance.skill.flatEvery). Everything stacks (owner, 2026-10-04),
- * so a card of two tracks' schools earns both. Every owned card counts,
- * equipment-bound and item-owned ones too: the flat is not an upgrade.
+ * skill levels: floor(level / balance.skill.flatEvery) of the BEST card-school
+ * track whose schools (the held pieces') the card's tags meet — one track's,
+ * not a sum, so a card in two hands' schools, or the dual-wield union, does not
+ * double it (owner to confirm, 2026-10-05). Every owned card counts,
+ * equipment-bound and item-owned ones too: the flat is not an upgrade. Capped
+ * at MAX_SKILL_BONUS, so no setting can stamp a value a save refuses.
  */
+export const MAX_SKILL_BONUS = 99;
 export function skillBonusFor(registries, run, inst, schoolsByTrack = trackSchools(registries, run)) {
   const def = inst && registries.cards.has(inst.cardId) ? registries.cards.get(inst.cardId) : null;
   if (!def) return 0;
   const tags = def.tags || [];
   let bonus = 0;
-  for (const { flat, schools } of schoolsByTrack) if (tags.some((tag) => schools.has(tag))) bonus += flat;
-  return bonus;
+  for (const { flat, schools } of schoolsByTrack) if (flat > bonus && tags.some((tag) => schools.has(tag))) bonus = flat;
+  return Math.min(bonus, MAX_SKILL_BONUS);
 }
 
 // The tracks that earn a flat now, with their schools: read once per stamp.
@@ -364,6 +372,78 @@ export function stampSkillBonuses(registries, run) {
   return changed;
 }
 
+// ---- the every-4th-level attribute pick (SPEC §13.4o) ------------------------
+
+/**
+ * linkedAttributes(registries, skillId) → the attribute ids a track's pick
+ * offers (`balance.skill.linkedAttributes`, data: Blade STR/DEX, Shield
+ * STR/DEX/CON/WIS, Magic DEX/CON/WIS/INT); [] for a track with none authored.
+ */
+export function linkedAttributes(registries, skillId) {
+  const table = draftRows(registries).linkedAttributes || {};
+  return Array.isArray(table[skillId]) ? table[skillId].slice() : [];
+}
+
+/** Whether reaching `level` on this track queues an attribute pick. */
+export function levelQueuesAttributePick(registries, skillId, level) {
+  const every = draftRows(registries).attributeEvery;
+  return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && linkedAttributes(registries, skillId).length > 0;
+}
+
+function queueAttributePick(registries, skillId, row) {
+  if (levelQueuesAttributePick(registries, skillId, row.level)) row.pendingAttributePicks = (row.pendingAttributePicks || 0) + 1;
+}
+
+/** spendAttributePick(run, skillId) → true when a queued pick was spent. */
+export function spendAttributePick(run, skillId) {
+  const row = run && run.skills && run.skills[skillId];
+  if (!row || !(row.pendingAttributePicks > 0)) return false;
+  row.pendingAttributePicks -= 1;
+  return true;
+}
+
+// ---- the every-2nd-level skill feat (SPEC §13.4o) ----------------------------
+
+/** A skill feat by id, or null. */
+export const skillFeatById = (id) => skillFeats.find((feat) => feat.id === id) || null;
+/** The feats a track authors (content/skillFeats.js), in authored order. */
+export const trackSkillFeats = (skillId) => skillFeats.filter((feat) => feat.skillId === skillId);
+
+/** Whether reaching `level` on this track queues a feat pick: every featEvery levels of a track that authors any. */
+export function levelQueuesSkillFeat(registries, skillId, level) {
+  const every = draftRows(registries).featEvery;
+  return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && trackSkillFeats(skillId).length > 0;
+}
+
+function queueSkillFeat(registries, skillId, row) {
+  if (levelQueuesSkillFeat(registries, skillId, row.level)) row.pendingSkillFeats = (row.pendingSkillFeats || 0) + 1;
+}
+
+/** skillFeatOptions(run, skillId, level) → the track's feats open at `level` the run has not taken. */
+export function skillFeatOptions(run, skillId, level) {
+  const taken = new Set(Array.isArray(run && run.skillFeats) ? run.skillFeats : []);
+  return trackSkillFeats(skillId).filter((feat) => feat.minLevel <= level && !taken.has(feat.id)).map((feat) => feat.id);
+}
+
+/**
+ * takeSkillFeat(run, skillId, featId) → true when the feat joined the run: it
+ * is the track's, not yet taken, and a pick was queued (which it spends).
+ */
+export function takeSkillFeat(run, skillId, featId) {
+  const feat = skillFeatById(featId);
+  const row = run && run.skills && run.skills[skillId];
+  if (!feat || feat.skillId !== skillId || !row || !(row.pendingSkillFeats > 0)) return false;
+  if (Array.isArray(run.skillFeats) && run.skillFeats.includes(featId)) return false;
+  row.pendingSkillFeats -= 1;
+  run.skillFeats = [...(Array.isArray(run.skillFeats) ? run.skillFeats : []), featId];
+  return true;
+}
+
+/** critRulesFor(featIds) → the crit rules the run's skill feats grant, for the fight. */
+export function critRulesFor(featIds) {
+  return (Array.isArray(featIds) ? featIds : []).map(skillFeatById).filter((feat) => feat && feat.crit).map((feat) => structuredClone(feat.crit));
+}
+
 /**
  * skillsProblems(skills) → the shape's refusals, by name. Registry-free, as
  * the save door must be: a track id the registries no longer know is a stale
@@ -379,8 +459,10 @@ export function skillsProblems(skills) {
       if (!Number.isInteger(row[key]) || row[key] < 0) problems.push(`skills.${id}.${key} must be a non-negative integer`);
     }
     // The queued rank-ups (SPEC §13.4o), absent on a ledger written before them.
-    if (row.pendingRankUps !== undefined && !(Number.isInteger(row.pendingRankUps) && row.pendingRankUps >= 0)) problems.push(`skills.${id}.pendingRankUps must be a non-negative integer`);
-    for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
+    for (const key of ['pendingRankUps', 'pendingAttributePicks', 'pendingSkillFeats']) {
+      if (row[key] !== undefined && !(Number.isInteger(row[key]) && row[key] >= 0)) problems.push(`skills.${id}.${key} must be a non-negative integer`);
+    }
+    for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps', 'pendingAttributePicks', 'pendingSkillFeats'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
   }
   return problems;
 }
