@@ -73,7 +73,7 @@ import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { mountRelicRail } from '../components/relicRail.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -618,6 +618,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           { label: 'MP', value: v.mana, max: entity.maxMana },
           { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
+          // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
+          ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
+          ...(entity.wardGuard > 0 ? [{ label: t('combat.protection.wardGuard'), tipId: 'wardGuard', value: entity.wardGuard }] : []),
           ...(entity.ratings ? ['ar', 'dr', 'pr'].map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
           { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
@@ -1082,6 +1085,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function poiseTip(kind, entity = null) {
     return (bar) => {
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
+      if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
       if (combat.ratingsRules) {
         const descriptions = { ar: 'Added to physical attack-card damage.', dr: 'Added to physical defensive-skill Block.', pr: 'Added to magical card damage, Block and healing, including power effects.' };
@@ -2336,7 +2340,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function inspectorResources(rows, kind, entity) {
-    return rows.map(row => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));
+    return rows.map(({ tipId, ...row }) => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: tipId || ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));
   }
   attachTooltip($('.energy-orb'), () => actionsTipHtml(dv(combat.player).energy ?? combat.player.energy, combat.player.energyMax));
   attachTooltip($('.pile.draw'), () => drawTipHtml(combat.piles.draw.length));

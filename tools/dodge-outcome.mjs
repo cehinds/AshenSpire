@@ -152,16 +152,18 @@ for (const width of [1440,390]) for (const reduced of [false,true]) for (const s
     await page.until('!!window.__combat && !!window.__renderCombatForShot','combat fixture');
     await page.evaluate(`(() => {
       const c=window.__combat;
-      c.piles.hand=[{instanceId:'qa-dodge',cardId:'dodgeRoll',upgraded:false}];
+      c.piles.hand=[{instanceId:'qa-dodge',cardId:'evasiveGuard',upgraded:false}];
       c.player.energy=3;c.player.maxStamina=10;c.player.stamina=10;
       const int=c.rng.int.bind(c.rng);
       c.rng.int=(stream,min,max)=>stream==='misc'?${success?20:1}:int(stream,min,max);
       window.__dodgeBefore={stamina:c.player.stamina,energy:c.player.energy,mana:c.player.mana,eventCount:c.eventLog.length,discard:c.piles.discard.length};
       window.__renderCombatForShot();
     })()`);
-    const card='.hand [data-card-id="dodgeRoll"]';
+    // Evasive Guard is the card that rolls since 2026-10-05 (the Dodge Roll
+    // card is a flat Block, Poise and Ward; SPEC §12.1).
+    const card='.hand [data-card-id="evasiveGuard"]';
     await trustedClick(page,shape,card);
-    if (await page.evaluate('!document.querySelector(".dodge-receipt") && !!document.querySelector(".hand [data-card-id=dodgeRoll]")')) await trustedClick(page,shape,card);
+    if (await page.evaluate('!document.querySelector(".dodge-receipt") && !!document.querySelector(".hand [data-card-id=evasiveGuard]")')) await trustedClick(page,shape,card);
     await page.until('!!document.querySelector(".dodge-receipt")','Dodge receipt',8000);
     await wait(1500);
     const state=await page.evaluate(`(() => {

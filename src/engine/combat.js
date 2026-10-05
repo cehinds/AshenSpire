@@ -19,7 +19,7 @@ import * as A from './actions.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice, returnUnplayedCards } from './handRules.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
-import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './combatRatings.js';
+import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -419,6 +419,9 @@ function startPlayerTurn(combat) {
     if (cap != null) p.block = Math.min(p.block, cap);
   }
   reconcileWardBlock(p);
+  // Poise and Ward guards (gainPoise / gainWard) expire with Block; no
+  // retainBlock-style modifier keeps them.
+  clearMeterGuards(p);
 
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
@@ -503,6 +506,7 @@ function enemyPhase(combat) {
     if (!e.alive) continue;
     if (!S.getFlag(combat, e, 'retainBlock')) e.block = 0;
     reconcileWardBlock(e);
+    clearMeterGuards(e);
   }
   drainQueue(combat);
   if (combat.result) return;
@@ -1302,6 +1306,11 @@ export function previewCard(combat, cardInstanceId, targetId) {
       }
       case 'block': {
         entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary), action.card);
+        break;
+      }
+      case 'gainPoise':
+      case 'gainWard': {
+        entry.value = A.computeMeterGuardGain(combat, p, evalPreview(combat, action, eff.amount, primary), action.card);
         break;
       }
       case 'applyStatus': {
