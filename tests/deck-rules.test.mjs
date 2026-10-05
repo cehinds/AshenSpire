@@ -306,14 +306,15 @@ test(`the sideboard rides the save: a fresh run carries it, and schema 10 loads 
   assert.deepEqual(run.sideboard, []);
 });
 
-test('the skill threshold upgrades a sideboarded card, and it comes back upgraded', async () => {
-  const { applySkillUpgrades } = await import('../src/model/skills.js');
+test('a rank-up reaches a sideboarded card, and it comes back ranked (SPEC §13.4o)', async () => {
+  const { awardSkillXp, xpToNext, raiseCardRank } = await import('../src/model/skills.js');
   const run = freshRun();
   const slash = run.deck.find((c) => c.cardId === 'gorefireSlash');
+  awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1));
   moveToSideboard(REG, run, slash.instanceId);
-  assert.ok(applySkillUpgrades(REG, run, 'item:blade').includes(slash.instanceId));
+  assert.equal(raiseCardRank(REG, run, 'item:blade', slash.instanceId)?.rank, 2);
   moveFromSideboard(REG, run, slash.instanceId);
-  assert.equal(run.deck.find((c) => c.instanceId === slash.instanceId).upgraded, true);
+  assert.equal(run.deck.find((c) => c.instanceId === slash.instanceId).rank, 2);
 });
 
 test('a sideboarded art is installable, and installing takes it from the sideboard', async () => {
