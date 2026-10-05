@@ -44,7 +44,7 @@ import { cardKind } from '../model/tree.js';
 import { gripOf, gripTags } from '../model/loadout.js';
 import { attachSkillXp } from './skillXp.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } from '../model/state.js';
-import { refreshCombatRatings } from './combatRatings.js';
+import { refreshCombatRatings, clearMeterGuards } from './combatRatings.js';
 import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
 import { turnDrawCount, endTurnCardFate, returnUnplayedCards } from './handRules.js';
@@ -393,6 +393,7 @@ function startPlayerPhase(C) {
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     reconcileWardBlock(e);
+    clearMeterGuards(e);
     // Less what a Stagger took (plan phase 8): owed to this next turn only.
     e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
     e.pendingActionLoss = 0;
@@ -687,6 +688,7 @@ function enemyPhase(C) {
   for (const e of C.enemies) {
     if (e.alive && !S.getFlag(C, e, 'retainBlock')) e.block = 0;
     reconcileWardBlock(e);
+    clearMeterGuards(e);
   }
   setActive(C, firstLiving(C));
   drainQueue(C);

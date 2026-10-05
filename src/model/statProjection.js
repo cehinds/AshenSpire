@@ -184,12 +184,13 @@ export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
     bonuses: capacityBonus,
     weights: { mainHandWeight: hands, offHandWeight: 0, armorWeight: armour, otherCountedWeight: 0 },
   });
-  // The class is CONSUMED the moment the composed deck holds a dodge roll
-  // (the unarmed package's Evasive Guard / Dodge Roll, or any card authored
-  // with the opcode): the roll's check and the pure dodge's price read it.
+  // The class is CONSUMED the moment the composed deck holds a dodge (the
+  // unarmed package's Evasive Guard, any card authored with the dodgeRoll
+  // opcode, or the weight-priced Dodge Roll): the roll's check and the Dodge
+  // Roll's price read it.
   const active = (run.deck || []).some((card) => {
     const def = card && registries.cards.has(card.cardId) ? registries.cards.get(card.cardId) : null;
-    return !!def && (def.effects || []).some((eff) => eff.op === 'dodgeRoll');
+    return !!def && (def.weightClassPriced === true || (def.effects || []).some((eff) => eff.op === 'dodgeRoll'));
   });
   return {
     id: 'equipLoad',

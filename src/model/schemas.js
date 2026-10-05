@@ -43,6 +43,10 @@ import { DISCLOSURE_TIERS } from './disclosure.js';
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
   'block',
+  // A Poise / Ward guard (the Dodge Roll): absorbs physical / magical impact
+  // before the matching meter fills, until the owner's next turn.
+  'gainPoise',
+  'gainWard',
   'dodgeRoll',
   'applyStatus',
   'removeStatus',
@@ -483,6 +487,10 @@ export const EFFECT_SPECS = Object.freeze({
   // two carriers — card chips for display, effect tags for combat).
   damage: { allowed: ['hits', 'tags', 'attack'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
+  // `amount` plus the card's Block rating bonus (engine/actions.js
+  // computeMeterGuardGain), held as entity.poiseGuard / entity.wardGuard.
+  gainPoise: { allowed: [], required: ['amount'], refs: {} },
+  gainWard: { allowed: [], required: ['amount'], refs: {} },
   // The dodge roll (framework contract: Weight Class and Dodge Roll): a
   // target and nothing else — the check, the die and the guard are the
   // framework's, and the price is the Weight Class's.
@@ -736,6 +744,9 @@ export const SCHEMAS = Object.freeze({
     cost: costNode,
     manaCost: opt(int),
     staminaCost: opt(int),
+    // The Weight Class's dodge cost prices this card, not its authored cost
+    // (mechanics.json dodgeStaminaCost; framework importer.js isPureDodge).
+    weightClassPriced: opt(bool),
     type: en(...CARD_TYPES),
     attack: opt(any),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),

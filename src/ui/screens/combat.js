@@ -23,7 +23,6 @@ import { runHandRules } from '../../model/handRules.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
-import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
@@ -73,7 +72,7 @@ import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { mountRelicRail } from '../components/relicRail.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -167,7 +166,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         ${formationGridHtml()}
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
-        <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
         <div class="enemy-row"></div>
       </div>
       <div class="hand-area">
@@ -286,7 +284,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     },
   };
 
-  let lastDodge = [...(combat.eventLog || [])].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id) || null;
   function playFamilyAnimation(actorEl, stage, plan, speed, enemyAttack = false) {
     const tempo = Number.isFinite(plan.tempo) ? Math.min(2, Math.max(0.25, plan.tempo)) : 1;
     const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
@@ -618,6 +615,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           { label: 'MP', value: v.mana, max: entity.maxMana },
           { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
+          // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
+          ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
+          ...(entity.wardGuard > 0 ? [{ label: t('combat.protection.wardGuard'), tipId: 'wardGuard', value: entity.wardGuard }] : []),
           ...(entity.ratings ? ['ar', 'dr', 'pr'].map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
           { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
@@ -1082,6 +1082,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function poiseTip(kind, entity = null) {
     return (bar) => {
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
+      if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
       if (combat.ratingsRules) {
         const descriptions = { ar: 'Added to physical attack-card damage.', dr: 'Added to physical defensive-skill Block.', pr: 'Added to magical card damage, Block and healing, including power effects.' };
@@ -1220,7 +1221,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1260,22 +1261,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const chip = pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade' } });
       bindAbilityBadge(chip, p, 'evade');
       trailing.push(chip);
-    }
-    if (lastDodge) {
-      const receipt = dodgeReceipt(lastDodge);
-      const outcome = button({ label: receipt.outcome, className: 'dodge-receipt', attrs: {
-        'data-focusable': 'true', 'aria-label': receipt.outcome + '. View last Dodge result',
-      } });
-      outcome.addEventListener('click', (event) => {
-        event.stopPropagation();
-        openModal({ title: 'Last Dodge result', size: 'sm', opener: outcome, bodyClassName: 'as-pane', body: (host) => {
-          const text = document.createElement('p');
-          text.className = 'as-prose';
-          text.textContent = receipt.detail;
-          host.appendChild(text);
-        } });
-      });
-      trailing.push(outcome);
     }
     const slots = {
       role: 'player',
@@ -2072,12 +2057,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // it (and fires onEnd on victory/defeat). A render throw here once froze
     // the game permanently on the killing blow.
     try {
-      // Skipping or reducing motion must never erase the last result.
-      const rolled = [...events].reverse().find((event) => event.type === 'dodgeRolled' && event.sourceId === combat.player.id);
-      if (rolled) {
-        lastDodge = rolled;
-        $('.dodge-announcement').textContent = dodgeReceipt(rolled).detail;
-      }
       recentArcaneEvents = events.filter((event) => (
         event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
       ));
@@ -2336,7 +2315,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function inspectorResources(rows, kind, entity) {
-    return rows.map(row => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));
+    return rows.map(({ tipId, ...row }) => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: tipId || ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));
   }
   attachTooltip($('.energy-orb'), () => actionsTipHtml(dv(combat.player).energy ?? combat.player.energy, combat.player.energyMax));
   attachTooltip($('.pile.draw'), () => drawTipHtml(combat.piles.draw.length));
