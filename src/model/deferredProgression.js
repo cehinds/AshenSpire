@@ -1,6 +1,6 @@
 import { rewardPlan } from './rewardplan.js';
 
-const FIELDS = { levelCard: 'levelCards', levelChoice: 'levelChoices', skillDraft: 'skillDrafts', classDraft: 'classDrafts' };
+const FIELDS = { levelCard: 'levelCards', levelChoice: 'levelChoices', skillDraft: 'skillDrafts', skillRankUp: 'skillRankUps', classDraft: 'classDrafts' };
 export const isProgressionReward = (row) => Object.hasOwn(FIELDS, row.kind);
 export const progressionTrack = (row) => row.kind === 'classDraft' ? `class:${row.classId}` : row.skillId || 'character';
 export const progressionRewardClass = (row) => row.classId || (row.skillId?.startsWith('class:') ? row.skillId.slice(6) : null);
@@ -11,14 +11,14 @@ export function progressionRewardUnlocked(row, run) {
 }
 
 // Offers keep their original choices and absolute unlock level across victories.
-// Skill drafts are re-offered by the combat ledger; reserve each existing draft
+// Skill drafts and rank-ups are re-offered by the combat ledger; reserve each existing draft
 // before accepting freshly rolled offers so leaving cannot multiply rewards.
 export function mergeProgressionRewards(saved = {}, incoming = {}, run, { manual = true, characterStart = run.level?.level || 1 } = {}) {
   const result = { ...incoming };
   for (const [kind, field] of Object.entries(FIELDS)) {
     const old = structuredClone(saved[field] || []);
     const reservedDrafts = {};
-    if (kind === 'skillDraft' || kind === 'classDraft') for (const row of old) {
+    if (kind === 'skillDraft' || kind === 'skillRankUp' || kind === 'classDraft') for (const row of old) {
       const track = progressionTrack({ ...row, kind });
       reservedDrafts[track] = (reservedDrafts[track] || 0) + 1;
     }

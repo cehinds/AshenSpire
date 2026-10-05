@@ -248,9 +248,26 @@ export function respecPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   return { ok: !reason, reason, skillId, level, cost: price, refund, revision: masterRevision(run) };
 }
 
+// A deferred draft or rank-up of the respecced track that waits for a level
+// above 1 would stay locked, and hold back one re-offer per door, until the
+// track climbs back there. The ledger re-offers what it still queues, so the
+// stale rows go.
+function dropDeferredAboveLevelOne(run, skillId) {
+  const saved = run.deferredProgression;
+  if (!saved) return;
+  for (const field of ['skillDrafts', 'skillRankUps']) {
+    if (!Array.isArray(saved[field])) continue;
+    const kept = saved[field].filter((row) => !(row && row.skillId === skillId && Number.isInteger(row.requiredLevel) && row.requiredLevel > 1));
+    if (kept.length) saved[field] = kept.map((row, ordinal) => ({ ...row, ordinal }));
+    else delete saved[field];
+  }
+  if (!Object.keys(saved).length) delete run.deferredProgression;
+}
+
 /**
  * The respec, atomic: the track back to level 1 with xp 0, its queued drafts
- * down by the levels lost (floored at 0), the refund into the training pool.
+ * and rank-ups down by the levels lost (floored at 0), the refund into the
+ * training pool.
  * Cards already drafted and upgrades already applied stay.
  */
 export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
@@ -258,7 +275,10 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan, ['skillId', 'level', 'refund']);
   const row = run.skills[plan.skillId];
-  run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)) } };
+  // Queued rank-ups (SPEC §13.4o) fall by the same levels; ranks already raised stay.
+  const rankUps = row.pendingRankUps === undefined ? {} : { pendingRankUps: Math.max(0, row.pendingRankUps - (plan.level - 1)) };
+  run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)), ...rankUps } };
+  dropDeferredAboveLevelOne(run, plan.skillId);
   run.trainingPool = pool(run) + plan.refund;
   run.cinders -= plan.cost;
   bump(run, plan);
