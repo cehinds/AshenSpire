@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-04
 
+- **Clear enemy intents on short phones** ([#1607](https://github.com/cehinds/AshenSpire/pull/1607), `0.7.1.928`). Enemy intent labels and Inspect controls stay distinct when enlarged fighters move inward to fit the battlefield. Their full control boxes keep six pixels of space in the same row, with room for wider intent text and Inspect, while fighter size and targeting stay intact.
+
 - **Level-up rewards planned** ([#1602](https://github.com/cehinds/AshenSpire/pull/1602), `0.7.1.924`). The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.
 
 
