@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Character sheet: every level and what it brings",
     "detail": "In the Armoury's Character view, the new Character sheet button lists every character level from 1 to 20 and every level of each skill and your class, with the XP each costs and what it grants: attribute points, feat and class-tree choices, more HP, Mana and Stamina, a bigger deck minimum, card drafts and their top rank, rank-ups, uncommon and rare cards unlocking, class-tree tiers opening, skill feats, linked attributes and +1 card power. It opens on the level you're at.",
-    "build": "0.7.1.984",
+    "build": "0.7.1.986",
     "pullRequest": 1640,
     "url": "https://github.com/cehinds/AshenSpire/pull/1640"
+  },
+  {
+    "id": "pr-1641",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Map picks and entering a fight respond faster",
+    "detail": "After you tap a map node, the map glides to it smoothly instead of stuttering, and entering the fight takes about a quarter less time before it appears, most noticeably on phones. Nothing about the map or the fight changes.",
+    "build": "0.7.1.984",
+    "pullRequest": 1641,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1641"
   },
   {
     "id": "pr-1639",
