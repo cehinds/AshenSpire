@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-05",
     "summary": "Levelling slows down, with a ceiling on every track",
     "detail": "Every track now takes about 100,000 XP to reach its top level. Your character starts at 200 XP a level and stops at level 20; skills start at 100 XP and stop at level 10; classes start at 400 XP and stop at level 20. XP earned past a ceiling is kept, but claims no more levels.",
-    "build": "0.7.1.932",
+    "build": "0.7.1.934",
     "pullRequest": 1612,
     "url": "https://github.com/cehinds/AshenSpire/pull/1612"
+  },
+  {
+    "id": "pr-1606",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Phone fighters no longer stack",
+    "detail": "Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. A side standing in more than one row, or whose art is too wide to grow, keeps its previous size; it is never made smaller.",
+    "build": "0.7.1.932",
+    "pullRequest": 1606,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1606"
   },
   {
     "id": "pr-1609",
