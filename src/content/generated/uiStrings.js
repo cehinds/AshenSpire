@@ -7551,14 +7551,14 @@ export const uiStrings = [
   {
     "id": "characterSheet.tab.character",
     "extends": "",
-    "short": "Character",
+    "short": "Character levels",
     "full": "",
     "tip": ""
   },
   {
     "id": "characterSheet.tab.skills",
     "extends": "",
-    "short": "Skills",
+    "short": "Skill ladders",
     "full": "",
     "tip": ""
   },
@@ -7572,7 +7572,7 @@ export const uiStrings = [
   {
     "id": "characterSheet.skills.level",
     "extends": "",
-    "short": "Level {n} / {max}",
+    "short": "Skill level {n} / {max}",
     "full": "",
     "tip": ""
   },
@@ -7619,41 +7619,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "characterSheet.stat.hp",
-    "extends": "",
-    "short": "Max HP",
-    "full": "",
-    "tip": ""
-  },
-  {
-    "id": "characterSheet.stat.stamina",
-    "extends": "",
-    "short": "Stamina",
-    "full": "",
-    "tip": ""
-  },
-  {
-    "id": "characterSheet.stat.mana",
-    "extends": "",
-    "short": "Mana",
-    "full": "",
-    "tip": ""
-  },
-  {
-    "id": "characterSheet.stat.draw",
-    "extends": "",
-    "short": "Draw",
-    "full": "",
-    "tip": ""
-  },
-  {
-    "id": "characterSheet.stat.handSize",
-    "extends": "",
-    "short": "Hand size",
-    "full": "",
-    "tip": ""
-  },
-  {
     "id": "characterSheet.grant.points",
     "extends": "",
     "short": "Attribute points +{n}",
@@ -7661,9 +7626,37 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "characterSheet.grant.stat",
+    "id": "characterSheet.grant.stat.hp",
     "extends": "",
-    "short": "{stat} +{n}",
+    "short": "Max HP +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.stamina",
+    "extends": "",
+    "short": "Stamina +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.mana",
+    "extends": "",
+    "short": "Mana +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.draw",
+    "extends": "",
+    "short": "Draw +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.handSize",
+    "extends": "",
+    "short": "Hand size +{n}",
     "full": "",
     "tip": ""
   },
@@ -7726,7 +7719,7 @@ export const uiStrings = [
   {
     "id": "characterSheet.grant.classTier",
     "extends": "",
-    "short": "Tier {tier} opens: {nodes}",
+    "short": "Class tree tier {tier} opens: {nodes}",
     "full": "",
     "tip": ""
   },
