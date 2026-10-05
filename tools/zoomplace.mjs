@@ -74,7 +74,7 @@ if (process.argv.includes('--selftest')) {
         // away from it, which is the sentence in fx.js's own header.
         name: 'the anchor conversion forgets --ui-zoom (visual px handed back as local px)',
         file: 'src/ui/fx.js',
-        find: "  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;\n  return {\n    left: (ar.left - lr.left) / z,",
+        find: "  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : uiZoom();\n  return {\n    left: (ar.left - lr.left) / z,",
         replace: "  const z = 1; // planted: the pre-fix conversion, visual px pretending to be local\n  return {\n    left: (ar.left - lr.left) / z,",
         // AT THE MAX CLAMP, 2560x1440 (--ui-zoom 1.70), NOT at a phone shape.
         // I aimed this at 390x844 first and it went GREEN: zoom there is ~0.9,

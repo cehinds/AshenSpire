@@ -228,12 +228,16 @@ export function disposeCombatPotionTray(tray) {
 
 export function renderCombatPotionTray(tray, rows, open) {
   if (!tray) return;
-  placePotionTray(tray);
+  // A new observer reports its first size after this frame's layout and before
+  // its paint, and places the tray then. Placing it here as well read the row's
+  // offsets in the middle of the mount: a forced layout of the half-built
+  // screen. A tray already observed is placed now, as a repaint may move the
+  // control without resizing the row.
   if (!trayObservers.has(tray) && typeof ResizeObserver !== 'undefined') {
     const observer = new ResizeObserver(() => placePotionTray(tray));
     observer.observe(tray.parentElement);
     trayObservers.set(tray, observer);
-  }
+  } else placePotionTray(tray);
   const shown = rows.filter((row) => row.def);
   const key = JSON.stringify(shown.map(({ entry }) => [entry.key, entry.count]));
   if (tray.dataset.renderKey === key) return;

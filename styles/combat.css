@@ -1154,7 +1154,7 @@
 :root .combat[data-layout='formation'] .combatant .meters { gap: calc(3px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant .meters .bar { height: calc(10px / var(--ui-zoom,1)); min-height: 0; }
 :root .combat[data-layout='formation'] .combatant .meters .bar .label { font-size: calc(10px / var(--ui-zoom,1)); line-height: 1; }
-:root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.foundation-evade,.dodge-receipt) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.foundation-evade) { pointer-events: auto; }
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
 .combat-ability-badge:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }

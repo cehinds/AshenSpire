@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1641",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Map picks and entering a fight respond faster",
+    "detail": "After you tap a map node, the map glides to it smoothly instead of stuttering, and entering the fight takes about a quarter less time before it appears, most noticeably on phones. Nothing about the map or the fight changes.",
+    "build": "0.7.1.984",
+    "pullRequest": 1641,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1641"
+  },
+  {
+    "id": "pr-1639",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "The turn banner no longer covers fighters",
+    "detail": "The Player Turn / Enemy Turn banner now sits at the top of the battlefield, just under the top bar, on every screen. On phones it used to sit a quarter of the way down and could hide an enemy's intent. Any fighter standing under the banner is now drawn below it, with its intent.",
+    "build": "0.7.1.982",
+    "pullRequest": 1639,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1639"
+  },
+  {
+    "id": "pr-1638",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Dodge Roll is a sure defence: Block, Poise and Ward",
+    "detail": "The Dodge Roll no longer rolls. It always gives you 3 Block, 3 Poise and 3 Ward, each plus your DR. Poise and Ward soak up impact before your Poise or Ward bar fills, and they fade at the start of your next turn, like Block. Its Stamina cost still depends on your equipment weight. Evasive Guard still rolls to evade, and the \"Dodge succeeded / failed\" result button, its pop-up and its floating text are gone: a successful roll shows as its Block and the dodge animation.",
+    "build": "0.7.1.980",
+    "pullRequest": 1638,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1638"
+  },
+  {
     "id": "pr-1635",
     "date": "2026-10-05",
     "group": "2026-10-05",

@@ -1,4 +1,4 @@
-import { illustratedCardHtml, illustratedArtwork, fitIllustratedCardText } from './illustratedCard.js';
+import { illustratedCardHtml, illustratedArtwork, fitIllustratedCards } from './illustratedCard.js';
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
 import { cardActions } from '../../services/cardActions.js';
 import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
@@ -223,7 +223,9 @@ export function renderCard(registries, ref, opts = {}) {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     el.innerHTML = illustratedCardHtml(model,{
-      rules:at==='glance'&&model.id==='dodgeRoll'?'Roll to evade. On success, gain Block. Cost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens).replace(/\. (?=[A-Z])/g,'.\n'),
+      // A weight-priced card (the Dodge Roll) keeps its live numbers at glance
+      // size and folds its per-class price table into one clause.
+      rules:at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens).replace(/\. (?=[A-Z])/g,'.\n'),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
@@ -350,7 +352,7 @@ export function fitCardFace(el) { fitCardFaces([el]); }
 // Every phase reads the whole batch before the next phase writes. The number
 // of forced layouts is bounded by fitting stages, not by cards times tags.
 function fitCardFaces(cards) {
-  for(const card of cards)if(card?.isConnected && card.classList.contains('illustrated-card'))fitIllustratedCardText(card);
+  fitIllustratedCards(cards.filter(card => card?.isConnected && card.classList.contains('illustrated-card')));
   const rows = cards.filter(el => el?.isConnected && !el.classList.contains('illustrated-card')).map(el => {
     const name = el.querySelector('.cname'), tags = el.querySelector('.ctags');
     return { el, name, tags, chips: [...(tags?.querySelectorAll('.ctag') || [])], more: null, hidden: 0, tagRows: 0 };

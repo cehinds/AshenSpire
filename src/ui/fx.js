@@ -13,7 +13,6 @@ import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
-import { dodgeReceipt } from './components/dodgeReceipt.js';
 
 const STEP_MS = 80;
 
@@ -66,12 +65,21 @@ const rectOf = (o) => (o && typeof o.getBoundingClientRect === 'function' ? o.ge
 // whatever it is nested in — origin (0, 0), so only the zoom separates the spaces.
 export const VIEWPORT_ORIGIN = { left: 0, top: 0, width: 0, height: 0 };
 
+/**
+ * The page's `--ui-zoom`. Reading it is a computed-style read, which flushes
+ * any pending style change: a loop that writes styles and converts a box per
+ * item reads it once, before its writes, and passes it as `zoom`.
+ */
+export function uiZoom() {
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+}
+
 export function anchorLocalBox(layer, anchor, { zoom } = {}) {
   const lr = rectOf(layer);
   const ar = rectOf(anchor);
   // A native dialog may compensate for the body's zoom. Its measured effective
   // zoom uses the same conversion without a second placement implementation.
-  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : uiZoom();
   return {
     left: (ar.left - lr.left) / z,
     top: (ar.top - lr.top) / z,
@@ -934,9 +942,6 @@ function visualFor(e, beatKind) {
 
 function baseVisualFor(e, beatKind) {
   switch (e.type) {
-    case 'dodgeRolled':
-      // The following blockGained event owns the numeric gain.
-      return (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.sourceId), dodgeReceipt(e).outcome, 'small');
     case 'damageDealt':
       // One event owns both visible channels: unsigned guard consumed, then
       // only the HP residual as damage. Paired results sit side-by-side without
@@ -1036,10 +1041,18 @@ function baseVisualFor(e, beatKind) {
     case 'meterFilled':
       return null; // poise fills speak through enemyStaggered below
     case 'ratingImpact':
-      return e.breaks ? (ctx) => {
+      if (e.breaks) return (ctx) => {
         banner(ctx.layer, e.label.toUpperCase());
         flash(ctx.anchorFor(e.targetId), 'wobble', 600);
-      } : null;
+      };
+      // A Poise / Ward guard (the Dodge Roll) took some of the impact.
+      return e.guarded > 0
+        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, 'blk small')
+        : null;
+    case 'meterGuardGained':
+      return e.amount > 0
+        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, 'blk small')
+        : null;
     case 'enemyStaggered':
       return (ctx) => {
         sfx.play('stagger');

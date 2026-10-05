@@ -214,7 +214,7 @@
     },
     "tools/hintstrip.mjs": {
       "count": 14,
-      "digest": "4111bef10d1ea5b9"
+      "digest": "15eedf660e9da69f"
     },
     "tools/hudbars.mjs": {
       "count": 1,
@@ -354,7 +354,7 @@
     },
     "tools/zoomplace.mjs": {
       "count": 1,
-      "digest": "a9055e812d589711"
+      "digest": "d669b78a46340f8e"
     }
   }
 }
