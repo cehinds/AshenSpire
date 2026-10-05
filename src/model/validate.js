@@ -81,6 +81,8 @@ import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 export const TOKENIZABLE_OPS = Object.freeze([
   'damage',
   'block',
+  'gainPoise',
+  'gainWard',
   'heal',
   'loseHp',
   'applyStatus',
@@ -98,6 +100,8 @@ export const TOKENIZABLE_OPS = Object.freeze([
 export const REQUIRED_TOKEN_OPS = Object.freeze([
   'damage',
   'block',
+  'gainPoise',
+  'gainWard',
   'heal',
   'loseHp',
   'applyStatus',

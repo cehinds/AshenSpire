@@ -17,6 +17,20 @@ export const uiStrings = [
     "tip": "Arcane Ward"
   },
   {
+    "id": "combat.protection.poiseGuard",
+    "extends": "",
+    "short": "Poise guard",
+    "full": "Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.",
+    "tip": "Poise guard"
+  },
+  {
+    "id": "combat.protection.wardGuard",
+    "extends": "",
+    "short": "Ward guard",
+    "full": "Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.",
+    "tip": "Ward guard"
+  },
+  {
     "id": "common.back",
     "extends": "",
     "short": "Back",

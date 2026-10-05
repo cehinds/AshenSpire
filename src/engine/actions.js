@@ -37,7 +37,7 @@ import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
-import { cardRatingBonus, applyRatingImpact } from './combatRatings.js';
+import { cardRatingBonus, applyRatingImpact, absorbMeterGuard } from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
@@ -269,6 +269,39 @@ export function computeBlockGain(ctx, entity, base, card = null) {
   return amt < 0 ? 0 : amt;
 }
 
+/**
+ * computeMeterGuardGain(ctx, entity, base, card) → the Poise or Ward guard a
+ * gainPoise / gainWard effect grants: its base plus the same rating bonus the
+ * card's Block reads (cardRatingBonus 'block' — DR on a physical skill, PR on
+ * a magical card), floored, min 0. No Dexterity, Frail or block modifiers: a
+ * guard is not Block. Pure; the preview reads it too.
+ */
+export function computeMeterGuardGain(ctx, entity, base, card = null) {
+  const amt = Math.floor(base + cardRatingBonus(ctx, entity, card, 'block', base));
+  return amt < 0 ? 0 : amt;
+}
+
+/**
+ * gainMeterGuard — adds to entity.poiseGuard or entity.wardGuard. The guard
+ * absorbs physical (Poise) or magical (Ward) impact before the matching meter
+ * fills (combatRatings.js absorbMeterGuard) and clears at the start of its
+ * owner's turn, with Block.
+ */
+export function gainMeterGuard(ctx, entity, meter, base, card = null) {
+  if (!entity.alive) return 0;
+  const amt = computeMeterGuardGain(ctx, entity, base, card);
+  const key = meter + 'Guard';
+  if (amt > 0) entity[key] = (entity[key] || 0) + amt;
+  ctx.emit('meterGuardGained', {
+    targetId: entity.id, meter, amount: amt, total: entity[key] || 0,
+    // The weight-priced Dodge Roll's guard is the dodge visual's cue
+    // (model/combatEffectEvents.js); any other gainPoise card is not a dodge.
+    ...(card?.cardId && ctx.registries.cards.has(card.cardId) && ctx.registries.cards.get(card.cardId).weightClassPriced ? { dodge: true } : {}),
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
+  });
+  return amt;
+}
+
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
@@ -418,7 +451,9 @@ export function dealPoiseDamage(ctx, entity, amount) {
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
-  const n = Math.max(0, Math.floor(amount));
+  // A Poise guard (gainPoise) takes the impact before the meter does.
+  const n = Math.max(0, Math.floor(amount)) - absorbMeterGuard(entity, 'poise', amount);
+  if (n <= 0) return;
   if (ctx.foundation && isEnemy && entity.impactProtectedUntil >= ctx.turn) {
     entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value + n);
     return;
@@ -709,6 +744,14 @@ function runOpcode(ctx, action, eff) {
     case 'block': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card);
+      }
+      break;
+    }
+    case 'gainPoise':
+    case 'gainWard': {
+      const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
       }
       break;
     }
