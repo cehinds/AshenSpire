@@ -83,3 +83,36 @@ test('the reward door raises the chosen attribute', async () => {
     assert.equal(app.querySelector('.reward-kind[data-kind="skillAttribute"]').dataset.state, 'taken');
   } finally { Object.assign(globalThis, saved); }
 });
+
+test('a refused save rolls the pick back and keeps the run\'s pending reward as the door\'s checkpoint', async () => {
+  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { pendingRewardCheckpoint } = await import('../src/model/rewardSourcePolicy.js');
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = createRunState({ seed: 3, classId: 'reaver', registries });
+    toLevel(run, BLADE, 'weapon', 4);
+    const rewards = { xpGains: { level: 0, tracks: {} }, cardIds: ['rend'], skillAttributes: [{ skillId: BLADE, level: 4, claimOrdinal: 0, attributeIds: ['strength', 'dexterity'] }] };
+    run.pendingReward = pendingRewardCheckpoint(rewards, { source: 'elite', after: 'map' });
+    const checkpoint = run.pendingReward;
+    checkpoint.expanded = true;
+    const str = run.attributes.strength;
+    let refuse = false;
+    mountRewards(app, { registries, run, rewards, checkpoint, onDone() {}, onPersist: () => (refuse ? false : true),
+      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) } });
+    app.querySelector('.reward-kind[data-kind="skillAttribute"]').click();
+    [...app.querySelectorAll('.reward-row .reward-pick')].find((n) => n.dataset.pickId === 'attribute:strength').click();
+    refuse = true;
+    app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.attributes.strength, str, 'the refused pick is rolled back');
+    assert.equal(run.skills[BLADE].pendingAttributePicks, 1, 'and the pick is still queued');
+    assert.equal(run.pendingReward, checkpoint, 'the run still points at the door\'s checkpoint');
+    refuse = false;
+    app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.attributes.strength, str + 1, 'the retry lands');
+    assert.equal(run.pendingReward.states[`skillAttribute:${BLADE}:0`], 'taken', 'and the saved checkpoint records it');
+  } finally { Object.assign(globalThis, saved); }
+});

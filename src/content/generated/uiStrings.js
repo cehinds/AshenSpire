@@ -348,7 +348,14 @@ export const uiStrings = [
   {
     "id": "reward.skillAttribute.raised",
     "extends": "",
-    "short": "{attribute} rose to {value}.",
+    "short": "{attribute} +1 (now {value}).",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.spent",
+    "extends": "",
+    "short": "This pick can't land: it was spent, or that attribute is no longer offered. Go Back; the row stays as it is.",
     "full": "",
     "tip": ""
   },

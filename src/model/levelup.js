@@ -424,10 +424,13 @@ export function applyLevelUp(registries, run, attributeId) {
  * the attribute is not in its linked set (SPEC §13.4o, every 4th level). The
  * point is recorded in `run.skillAttributePoints`, which the load door adds to
  * the levelled points it judges the allocation against, and the pools are
- * re-derived exactly as a levelled point re-derives them.
+ * re-derived exactly as a levelled point re-derives them. `offered` (the saved
+ * offer's own list) is honoured when given, so an offer rolled before the
+ * linked set changed still lands what it promised.
  */
-export function applySkillAttribute(registries, run, skillId, attributeId) {
-  if (!linkedAttributes(registries, skillId).includes(attributeId)) return null;
+export function applySkillAttribute(registries, run, skillId, attributeId, { offered = null } = {}) {
+  const allowed = Array.isArray(offered) && offered.length ? offered : linkedAttributes(registries, skillId);
+  if (!allowed.includes(attributeId) || !orderedAttributes(registries).some((attr) => attr.id === attributeId)) return null;
   if (!run.attributes || !Number.isFinite(run.attributes[attributeId])) return null;
   if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) return null;
   if (!spendAttributePick(run, skillId)) return null;

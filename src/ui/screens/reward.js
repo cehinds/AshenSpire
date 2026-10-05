@@ -252,7 +252,7 @@ export function mountRewards(app, {
     // track's queued pick spent and the pools re-derived; refused, nothing lands.
     skillAttribute(row) {
       const id = String(row.choiceId || '').replace(/^attribute:/, '');
-      if (applySkillAttribute(registries, run, row.skillId, id) == null) return false;
+      if (applySkillAttribute(registries, run, row.skillId, id, { offered: row.attributeIds }) == null) return false;
       chosenDraftCardIds[row.key] = row.choiceId;
       return true;
     },
@@ -321,8 +321,14 @@ export function mountRewards(app, {
         for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
         Object.assign(chosenDraftNodeIds, cardBefore.chosenNode);
         if (runBefore) {
+          // The run comes back whole, but its pending reward stays the very
+          // object this door's checkpoint is (main.js mountPendingReward):
+          // restoring a clone there would leave every later save writing a
+          // copy the door no longer updates. The checkpoint is restored below.
+          const pending = run.pendingReward;
           for (const key of Object.keys(run)) if (!Object.hasOwn(runBefore, key)) delete run[key];
           Object.assign(run, runBefore);
+          if (pending !== undefined) run.pendingReward = pending;
         }
         if (cardBefore.rankUp) {
           const { inst, rank, chosen } = cardBefore.rankUp;
@@ -1107,7 +1113,7 @@ export function mountRewards(app, {
     });
     door({
       eyebrow: row.kind === 'levelCard' || row.kind === 'levelChoice' ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRankUp || row.kind === 'skillAttribute' ? rowBody(row).title : t('reward.card.eyebrow'),
-      title: row.source ? rowBody(row).title : row.kind === 'levelCard' || isLevelChoice ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
+      title: row.source ? rowBody(row).title : row.kind === 'levelCard' || row.kind === 'levelChoice' ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
@@ -1259,7 +1265,7 @@ export function mountRewards(app, {
         // offer older than its ledger) returns false and must not leave the
         // chooser armed but dead: say so and hand the button back.
         if (!take({ ...row, [pickField]: selectedCardId }, row.key)) {
-          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : 'reward.card.alreadyTaken');
+          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : row.kind === 'skillAttribute' ? 'reward.skillAttribute.spent' : 'reward.card.alreadyTaken');
           message.hidden = false;
           confirming = false;
           confirmButton.disabled = false;

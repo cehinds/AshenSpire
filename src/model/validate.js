@@ -816,7 +816,11 @@ function collectContentProblems(bundle, errors = []) {
       if (!linked || typeof linked !== 'object' || Array.isArray(linked)) err('balance.skill.linkedAttributes', 'must be an object { <trackId>: [attributeId, …] }');
       else {
         const known = new Set((bundle.attributes || []).map((row) => row && row.id));
+        // A track key is an item-type node of the tree, or dual-wield: a
+        // misspelt key would otherwise never queue a pick, silently.
+        const tracks = new Set([...(Array.isArray(bundle.nodes) ? bundle.nodes : []).filter((n) => n && n.parentId === 'itemType' && n.id !== 'item:armor').map((n) => n.id), 'dualWield']);
         for (const [trackId, set] of Object.entries(linked)) {
+          if (!tracks.has(trackId)) err(`balance.skill.linkedAttributes.${trackId}`, `'${trackId}' is not a weapon, focus or dual-wield track`);
           if (!Array.isArray(set) || !set.length || set.some((id) => !known.has(id)) || new Set(set).size !== set.length) {
             err(`balance.skill.linkedAttributes.${trackId}`, `must be a non-empty list of distinct attribute ids (${[...known].join(', ')})`);
           }
