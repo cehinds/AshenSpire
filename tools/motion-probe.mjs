@@ -210,14 +210,20 @@ if (argv.includes('--selftest')) {
         expectRed: /RED IDLE \w+#\d+ — .*no idle animation on it or its layers/,
       },
       {
-        // This PR's first shape: the bob on the idle images themselves. The
-        // painted player's pose swap cancels every animation on its frame
-        // (paintedOutfits.js), so the name stays and nothing runs.
+        // This PR's first shape: the bob on the idle images themselves. A
+        // figure is more than its idle image, so the bob does not follow it:
+        // the enemy's hit-state image stands still after the strike, and the
+        // painted player's outgoing cross-fade frame runs a second idle
+        // timeline beside the incoming one in the Rendered style.
+        // (Until #1641 the pose swap also cancelled every animation on its
+        // frames via getAnimations(), and this plant was named by "named on
+        // ... but not running". The swap now cancels only its own cross-fade
+        // by handle, so that symptom is gone; the defect is not.)
         name: 'the idle bob sits on the figure images instead of their layer',
         file: 'styles/combat.css',
         find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle',
         replace: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
-        expectRed: /RED IDLE player#\d+ — .*named on .* but not running/,
+        expectRed: /RED IDLE-AFTER enemy#\d+ — .*img\.enemy-pose-state: no idle animation on it or its layers[\s\S]*RED IDLE-rendered-ONE-TIMELINE — a second idle timeline inside \.rendered-stage: img\.pose-frame/,
       },
       {
         name: 'the Reduced motion setting stops shortening CSS animations',
