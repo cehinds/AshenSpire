@@ -1,0 +1,39 @@
+{
+  "id": "object-spear",
+  "name": "Spear",
+  "tool": "built-in image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": true,
+  "sourceBoard": {
+    "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/06-armoury-and-inventory.png",
+    "approximateArtWindowBounds": [
+      510,
+      700,
+      583,
+      771
+    ],
+    "coordinateConvention": "[left,top,right,bottom] approximate pixels on1448×1086 original; specific lower inventory object icon only"
+  },
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/06-armoury-and-inventory.png",
+      "role": "exact designated weapon icon shape/pose/material reference; no black UI backing or other board imagery"
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: ONE standalone reusable transparent AshenSpire weapon object cutout matching the designated board06 inventory ICON. The provided full board is only a visual reference; use ONLY the named icon at given coordinates. Create the individual painted weapon high-resolution, not a sheet or screenshot. Preserve its visible shape, diagonal pose, proportions, materials and subtle cool/warm studio highlights from the board. Hand-painted tactile dark fantasy item art, weathered steel, dark leather/wood and modest aged brass. Full object entirely visible, generous transparent margin around every endpoint on a square canvas1254×1254. Background genuinely transparent alpha: remove the black UI square/card behind the object, and leave all pixels outside the weapon silhouette empty. NO painted background, smoke, glow/halo, shadows outside silhouette, floor, scenery, borders, labels, letters, text, numbers, stats, game rules, UI, person or hand. Exactly one weapon, no extra objects.\nNamed target: Spear.\nPrecise visual request: One spear from lower inventory grid, first row right. Very slender long straight brown wooden shaft with restrained worn metal fittings; narrow elongated leaf-shaped silver steel spearhead at upper-right, tiny short butt fitting at lower-left. Entire shaft visible diagonally lower-left to upper-right about45degrees, matching the reference's slim economical silhouette. Not a halberd, trident, flag, axe, pike with side blades or magical staff.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-cc96e05a-fcce-49d6-a05b-c87394c63857.png",
+  "file": "masters/objects/object-spear.png",
+  "sha256": "d616223ce0a03a6a4818e6636c6c80f5b68695ff48ae767d7d7d8818870dec7c",
+  "bytes": 250101,
+  "width": 1254,
+  "height": 1254,
+  "imageMode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "acceptedAfterVisualReview": true,
+  "reviewNotes": "Viewed original generated PNG and compared designated board06 inventory icon: isolated full weapon, matching diagonal pose/material family and characteristic shape, true transparent alpha; high-resolution painted reconstruction, no UI backing or labels."
+}

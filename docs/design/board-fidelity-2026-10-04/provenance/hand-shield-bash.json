@@ -1,0 +1,37 @@
+{
+  "id": "hand-shield-bash",
+  "name": "Shield Bash",
+  "tool": "built-in image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": false,
+  "sourceBoard": {
+    "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+    "approximateArtWindowBounds": [
+      332,
+      902,
+      414,
+      960
+    ],
+    "coordinateConvention": "[left,top,right,bottom] pixels, approximately on the1448×1086 original; selected miniature only, no UI copying"
+  },
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+      "role": "composition, subject, palette and light source reference; ONLY designated ability art window"
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: ONE standalone AshenSpire ability illustration matching a specific existing board05 card artwork, NOT a complete card, screenshot or UI mockup. Source image is a COMPOSITION/COLOR reference. Extract and faithfully paint ONLY the named small art-window subject described below at high resolution. Fill the entire output image with that painting: no card frame, name, cost medallion, numbers, text, labels, bottom parchment, borders, UI, extra figure, invented item lore or new composition. Match the board's richly painted gloomy charcoal brushwork and explosive localized light. Output landscape 4:3 aspect ratio, width1536 height1152. The reference board has another aspect ratio; do NOT follow its outer aspect ratio. Keep important silhouettes visible on a compact horizontal card-art window.\nNamed reference artwork: Shield Bash.\nPrecise target: Lower desktop boss hand, first card art window. A close-up diagonal dark metal flanged mace and small dark shield/impact silhouette meet in an orange-white impact burst, the weapon shaft runs from lower-left toward upper-right central collision. Match the reference's compact heavy dark shape, hot golden sparks and ember-orange radial burst on deep brown/black background. This is the board's visible impact motif even though card caption says Shield Bash. No armoured full-body figure or blue wind.\nBackground fidelity constraint: ONLY the designated tiny ability-art window is reference. Exclude architecture, battlefield scenery, castle towers, arches, walls, roads and horizon from the surrounding screenshot. Background is abstract painted smoke/shadow and the described localized radiance; no additional scenery.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-aee0bbb7-fead-482c-b2ca-5dcec9084e78.png",
+  "file": "masters/abilities/hand-shield-bash.png",
+  "sha256": "a7e5c4a31dd352934d0a56d9260d551d7a3d54cbabb0871f3a4fb77cb558f330",
+  "bytes": 2788394,
+  "width": 1448,
+  "height": 1086,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "aspectRatio": 1.3333333333333333,
+  "acceptedAfterVisualReview": true,
+  "reviewNotes": "Visually compared with designated board05 art window for subject, silhouette, composition, color/light, absence of UI/text; standalone4:3 painting."
+}
