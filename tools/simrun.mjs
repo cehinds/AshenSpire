@@ -18,7 +18,7 @@
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
-import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId } from '../src/model/skills.js';
+import { skillTracks, spendSkillDraft, classSkillId } from '../src/model/skills.js';
 import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
@@ -114,7 +114,7 @@ export function createRunLoop(REG, config) {
         const ids = rollSkillDraftIds(REG, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool });
         if (!ids.length) break;
         spendSkillDraft(run, track.id);
-        run.deck.push({ instanceId: run._id(), cardId: ids[0], upgraded: skillUpgradesCards(REG, row.level) });
+        run.deck.push({ instanceId: run._id(), cardId: ids[0], upgraded: false });
         drafts += 1;
       }
     }

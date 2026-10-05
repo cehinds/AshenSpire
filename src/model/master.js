@@ -13,8 +13,8 @@
 // quote commits once. A refusal changes nothing.
 //
 //   training     training.cinders for training.xp on one of his tracks,
-//                through awardSkillXp with the track's loadout-independent
-//                schools; training.perVisit sessions per visit (`training.left`)
+//                through awardSkillXp; training.perVisit sessions per visit
+//                (`training.left`)
 //   respec       one of his tracks at level ≥ 2 back to level 1 with xp 0; a
 //                share of the XP spent above level 1 goes to run.trainingPool
 //   lesson       one skill draft for one of his tracks, rolled once per track
@@ -40,7 +40,7 @@
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, WeaponCardPackageModel } from './loadout.js';
 import { eligibleWeaponArts } from './armamentTrading.js';
-import { awardSkillXp, skillTracks, skillKindOf, skillLevel, skillMaxLevel, xpToNext, rarityUnlockedAt, skillUpgradesCards, DUAL_WIELD_SKILL } from './skills.js';
+import { awardSkillXp, skillTracks, skillKindOf, skillLevel, skillMaxLevel, xpToNext, rarityUnlockedAt, DUAL_WIELD_SKILL } from './skills.js';
 import { unusedInstanceId } from './deckRules.js';
 import { cardRewardRarityWeights } from './rewardOdds.js';
 
@@ -204,14 +204,14 @@ export function trainingPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   return { ok: !reason, reason, skillId, cost, xp: row?.xp ?? 0, left, revision: masterRevision(run) };
 }
 
-/** One session: the cost spent, one session taken, the XP paid through awardSkillXp with the track's master schools. */
+/** One session: the cost spent, one session taken, the XP paid through awardSkillXp. */
 export function commitTraining(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = trainingPlan(registries, run, quote.skillId, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan, ['skillId', 'xp']);
   run.cinders -= plan.cost;
   run.shopStock.training = { left: plan.left - 1 };
-  const receipt = awardSkillXp(registries, run, plan.skillId, plan.xp, { schools: masterSchools(registries, plan.skillId) });
+  const receipt = awardSkillXp(registries, run, plan.skillId, plan.xp);
   bump(run, plan);
   return { ...receipt, spent: plan.cost };
 }
@@ -349,7 +349,7 @@ export function lessonPlan(registries, run, skillId, cardId, { priceMult = 1 } =
   else if (!reason && entry.taken) reason = say('master.refuse.lessonTaken', { skill: trackLabel(registries, skillId) });
   else if (!reason && !entry.cardIds.includes(cardId)) reason = say('master.refuse.lessonCard');
   else if (!reason && !affordable(run, cost)) reason = say('shop.refuse.cinders');
-  return { ok: !reason, reason, skillId, cardId, cost, upgraded: skillUpgradesCards(registries, skillLevel(run, skillId)), revision: masterRevision(run) };
+  return { ok: !reason, reason, skillId, cardId, cost, revision: masterRevision(run) };
 }
 
 /** The card joins run.deck as the reward door's draft does; the track's lesson is taken. No queued draft is spent. */
@@ -357,7 +357,7 @@ export function commitLesson(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = lessonPlan(registries, run, quote.skillId, quote.cardId, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan, ['skillId', 'cardId']);
-  const instance = { instanceId: unusedInstanceId(run, 'r', plan.cardId), cardId: plan.cardId, upgraded: plan.upgraded };
+  const instance = { instanceId: unusedInstanceId(run, 'r', plan.cardId), cardId: plan.cardId, upgraded: false };
   run.cinders -= plan.cost;
   run.deck.push(instance);
   run.shopStock.lessons = { ...run.shopStock.lessons, [plan.skillId]: { ...run.shopStock.lessons[plan.skillId], taken: true } };
