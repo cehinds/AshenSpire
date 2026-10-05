@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1646",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Plans: one break bar, harder-hitting hits, class levels that last",
+    "detail": "The design rules now say that each fighter will have a single break bar, Poise: Ward will stay as a defence, and Arcane Exposure's payoff will come from a Stagger caused by magic. Every hit will shake the screen by how hard it lands, with a brief freeze on big hits. And your class level will carry over between runs: each level unlocks one new thing: new cards on every other level, and between them armour, shields or foci, a relic, a feat option or a weapon in turn, and a class starts with about three-fifths of its cards. Nothing in the game changes yet; these land in later builds.",
+    "build": "0.7.1.997",
+    "pullRequest": 1646,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1646"
+  },
+  {
+    "id": "pr-1644",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Cards hit as you click",
+    "detail": "At Normal speed, an attack's damage now appears about a third of a second after you click, down from about 1.3 seconds. The pause before your swing is gone, and long attack animations play faster so the blow lands sooner, every frame still shown. Enemy attacks land sooner too, so enemy turns are shorter. Slow and Fast speeds keep their own, longer and shorter, timings.",
+    "build": "0.7.1.990",
+    "pullRequest": 1644,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1644"
+  },
+  {
     "id": "pr-1640",
     "date": "2026-10-05",
     "group": "2026-10-05",

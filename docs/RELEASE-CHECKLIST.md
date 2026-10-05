@@ -116,6 +116,8 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §3 | A headless full run in CI | G14 |
 | §3 | A browser full run | G15 |
 | §3 | Save/resume holds in the browser | G18 |
+| §2 | One break meter: Ward and Arcane Exposure fold into Poise | G20 |
+| §2 | Class mastery: the class level persists and each level unlocks one thing | G20 |
 | §4 | A1: the simulators play by the live rules | G6 |
 | §4 | A2–A4: bring the classes into the target band | G16 |
 | §4 | The Mana-aware A/B balance run | G17 |
@@ -123,6 +125,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §5 | Click to impact ≤ 400 ms at Normal pacing | G20 |
 | §5 | The idle animation plays | G20 |
 | §5 | Hit sound tiers | G20 |
+| §5 | Every HP hit shakes the screen, scaled by damage, and big hits stop | G20 |
 | §5 | Haptics | G20 |
 | §6 | A quick start gives the first card play in 6 inputs or fewer | G20 |
 | §6 | The tutorial reachability probe runs in CI | G20 |
