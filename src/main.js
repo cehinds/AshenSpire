@@ -1,4 +1,4 @@
-import { rollAbilityOffer } from './model/abilityOffers.js';
+import { rollPendingAbilityOffers } from './model/abilityOffers.js';
 import { isAbilitySkill } from './model/abilityGrades.js';
 import { expandedProgression } from './model/classMilestones.js';
 import { claimClassMilestoneReward, rollClassMilestoneRewards } from './model/classMilestoneOffers.js';
@@ -3020,13 +3020,12 @@ function rollSkillDrafts(pool, includeBanked = false) {
     if (!row) continue;
     const queued = row.pendingDrafts || 0;
     const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    if (expandedProgression(run) && isAbilitySkill(track.id)) {
+      out.push(...rollPendingAbilityOffers(registries,rng,run,{skillId:track.id,banked,limit:perDoor}));
+      continue;
+    }
     for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
       const level = i < queued ? Math.max(1,row.level - queued + i + 1) : row.level + i - queued + 1;
-      if (expandedProgression(run) && isAbilitySkill(track.id)) {
-        const offer = rollAbilityOffer(registries,rng,run,{skillId:track.id,level,gradeLevel:row.level + banked,offerId:`ability:${track.id}:${level}`});
-        if (offer) out.push({...offer,claimOrdinal:i < queued ? 0 : i - queued + 1});
-        continue;
-      }
       const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
       // Each offered card arrives at its own rank (SPEC §13.4o), rolled now so
       // the offer, its save and its reload all show the same card.

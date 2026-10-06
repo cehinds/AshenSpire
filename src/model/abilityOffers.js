@@ -1,3 +1,4 @@
+import {abilityDraftId,pendingAbilityDraftLevels} from './abilityDraftReceipts.js';
 import { abilityKindForSkill, abilityRankAt, applyAbilityGrade } from './abilityGrades.js';
 import { activeIn, HAND_SLOT_IDS } from './zones.js';
 
@@ -61,4 +62,15 @@ export function rollAbilityOffer(registries, rng, run, { skillId, level, gradeLe
     rngBefore: before, rngAfter: rng.getCounters(), copyOptions: cardIds.map((id, i) => owned.has(`${id}:${abilityRanks[i]}`)) };
   run.abilityOffers[offerId] = structuredClone(offer);
   return offer;
+}
+
+// Enumerate receipt identities, rather than reconstructing the oldest level
+// from a count after the player has claimed offers in a different order.
+export function rollPendingAbilityOffers(registries,rng,run,{skillId,banked=0,limit=registries.balance.skill.draftsPerCombat}={}) {
+  const current=run.skills?.[skillId]?.level || 0,out=[];
+  for(const level of pendingAbilityDraftLevels(run,skillId,{banked}).slice(0,limit)){
+    const offer=rollAbilityOffer(registries,rng,run,{skillId,level,gradeLevel:current+banked,offerId:abilityDraftId(skillId,level)});
+    if(offer)out.push({...offer,requiredLevel:level,claimOrdinal:Math.max(0,level-current)});
+  }
+  return out;
 }

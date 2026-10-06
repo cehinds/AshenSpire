@@ -1,3 +1,4 @@
+import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
@@ -905,6 +906,7 @@ export function levelProblems(level) {
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
   problems.push(...classMilestoneProblems(run));
+  problems.push(...abilityDraftClaimProblems(run));
   if (run.classRewardLevels !== undefined) {
     if (!run.classRewardLevels || typeof run.classRewardLevels !== 'object' || Array.isArray(run.classRewardLevels)) problems.push('classRewardLevels must be an object');
     else for (const [id, level] of Object.entries(run.classRewardLevels)) {

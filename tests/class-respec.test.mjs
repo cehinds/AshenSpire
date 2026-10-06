@@ -188,6 +188,25 @@ test('earned offer snapshots and class provenance survive repeated rebuilds and 
   run.class='herald';assert.deepEqual(validateRunShape(run),[],'respec provenance belongs to its earned class after equipping another class');
 });
 
+test('unchanged earned graded cards remain owned in the sideboard when the final build cannot use them',()=>{
+  const {run,reg}=built(12),grant=Object.values(run.classMilestones).flatMap(row=>Object.values(row.grants)).find(grant=>grant.selection?.instanceId);
+  const card=run.deck.find(card=>card.instanceId===grant.selection.instanceId),independent=structuredClone(run.deck.filter(row=>row.instanceId!==card.instanceId));
+  const replacement=reg.masterySource.classes.get(run.class).cardPool.find(id=>id!==card.cardId);
+  const defs=new Map([card.cardId,replacement].map(id=>{const original=reg.masterySource.cards.get(id);return [id,{...original,abilityKind:'maneuver',tags:['source:unarmed'],gradeProfiles:Array.from({length:6},(_,rank)=>({rank,actionCost:1,manaCost:0,effects:original.effects})),requirements:{attributes:{strength:99}}}];}));
+  const cards={...reg.masterySource.cards,get:id=>defs.get(id)||reg.masterySource.cards.get(id),all:()=>reg.masterySource.cards.all().map(row=>defs.get(row.id)||row)};
+  const fixture={...reg,cards,masterySource:{...reg.masterySource,cards}};
+  card.abilityRank=2;grant.selection.abilityRank=2;grant.selection.choiceId=card.cardId+'@2';
+  const offer=run.classMilestoneOffers[grant.id];offer.abilityRanks=offer.options.map(id=>id===card.cardId?2:null);offer.choiceIds=offer.options.map((id,index)=>Number.isInteger(offer.abilityRanks[index])?id+'@'+offer.abilityRanks[index]:id);
+  const draft=createClassRespecDraft(fixture,run),preview=previewClassRespec(fixture,run,draft);
+  assert.equal(preview.ok,true,preview.problems.join(' '));assert.equal(preview.candidate.sideboard.find(row=>row.instanceId===card.instanceId).abilityRank,2);
+  assert.equal(preview.candidate.deck.some(row=>row.instanceId===card.instanceId),false);
+  const owned=[...preview.candidate.deck,...preview.candidate.sideboard];
+  for(const original of independent)assert.ok(owned.some(row=>row.instanceId===original.instanceId&&row.cardId===original.cardId),'every independent card keeps its owned identity');
+  const selections=structuredClone(draft.selections);selections[grant.id]={id:replacement,abilityRank:2};
+  assert.equal(previewClassRespec(fixture,run,draft,{selections}).ok,false,'a replacement still needs the final build requirements');
+  assert.equal(applyClassRespec(fixture,run,preview,{saveCandidate:()=>true}).ok,true);assert.deepEqual(validateRunShape(run),[]);
+});
+
 test('resource-modifying relic exchanges use the saved birth rules and never restore drained pools',()=>{
   const {run,reg}=built(12),draft=createClassRespecDraft(reg,run),slot=draft.slots.find(row=>row.kind==='relic');
   const options=classRespecOptions(reg,run,draft,slot),replacement=options.find(option=>!run.relics.includes(option.id));

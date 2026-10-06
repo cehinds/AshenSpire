@@ -1,4 +1,5 @@
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
+import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
 import { masteryUnlockName } from '../../model/classMasteryRun.js';
 import { isProgressionReward, progressionRewardUnlocked } from '../../model/deferredProgression.js';
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
@@ -247,9 +248,15 @@ export function mountRewards(app, {
     },
     skillDraft(row) {
       if (row.choiceIds && (!row.choiceIds.includes(row.choiceId) || row.cardIds[row.choiceIds.indexOf(row.choiceId)] !== row.cardId)) return false;
-      if (!spendSkillDraft(run, row.skillId)) return false;
-      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false, ...draftInstance(row, row.cardId) });
-      chosenDraftCardIds[row.key] = row.choiceId || row.cardId;
+      const choice = row.choiceId || row.cardId;
+      const ability = row.offerId && run.progressionRulesVersion === 1 ? abilityDraftChoice(run.abilityOffers?.[row.offerId], choice) : null;
+      if (!spendSkillDraft(run, row.skillId, row.offerId, choice)) return false;
+      if (ability) {
+        run.deck.push({ instanceId: unusedInstanceId(run, 'r', ability.cardId), cardId: ability.cardId, upgraded: false, abilityRank: ability.abilityRank, abilityOfferId: row.offerId });
+      } else {
+        run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false, ...draftInstance(row, row.cardId) });
+      }
+      chosenDraftCardIds[row.key] = choice;
       return true;
     },
     // A skill feat (SPEC §13.4o): the chosen feat of the track joins the run

@@ -1,3 +1,6 @@
+import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
+import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
+import {isAbilitySkill} from '../src/model/abilityGrades.js';
 import {createClassRespecDraft,classRespecView,previewClassRespec,applyClassRespec,classRespecAvailability} from '../src/model/classRespec.js';
 import { openRunClassMastery, registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { initialClassTreeChoices, pickInitialClassTreeNode } from '../src/model/classTree.js';
@@ -26,7 +29,7 @@ import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
-import { stampSkillBonuses } from '../src/model/skills.js';
+import { stampSkillBonuses,skillTracks,spendSkillDraft } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { awardClassXp } from '../src/model/classTree.js';
 import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
@@ -898,8 +901,10 @@ export function createSession({ registries, seedString, endless = false, restore
     const relicId = pool === 'elite' || pool === 'boss'
       ? rollRelicReward(registriesForClassMastery(registries, m.run), m.rng, m.run.relics, pool === 'boss' ? { rarities: ['boss'] } : {})
       : null;
+    const skillDrafts=m.run.progressionRulesVersion===1?skillTracks(registries).filter(track=>isAbilitySkill(track.id)).flatMap(track=>rollPendingAbilityOffers(registriesForClassMastery(registries,m.run),m.rng,m.run,{skillId:track.id})):[];
     return {
       pool, cardIds, cinders, flaskId, relicId,
+      ...(skillDrafts.length?{skillDrafts}:{}),
       ...(plan.cardMissed ? { cardMissed: true } : {}),
       ...(levelCards.length ? { levelCards } : {}),
     };
@@ -942,6 +947,21 @@ export function createSession({ registries, seedString, endless = false, restore
     }
   }
 
+  function takeAbilityDraft(m,offer,offerId,choiceId) {
+    const row=(offer.skillDrafts || []).find(row=>row.offerId===offerId),choice=row&&abilityDraftChoice(m.run.abilityOffers?.[offerId],choiceId);
+    if(!choice || !spendSkillDraft(m.run,row.skillId,offerId,choiceId))return {ok:false,error:'This earned ability offer is unavailable or already claimed.'};
+    m.run.deck.push({instanceId:`m${m.index}c${m.cardSeq++}`,cardId:choice.cardId,upgraded:false,abilityRank:choice.abilityRank,abilityOfferId:offerId});
+    offer.skillDrafts=offer.skillDrafts.filter(row=>row.offerId!==offerId);
+    return {ok:true};
+  }
+  function chooseAbilityDraft(memberId,offerId,choiceId,{catchup=false}={}) {
+    const member=members.get(memberId);
+    if(!member?.connected||!member.alive)return {ok:false,error:'This seat is unavailable.'};
+    if(catchup){const item=member.catchup?.[0];return item?.type==='reward'?takeAbilityDraft(member,item.offer,offerId,choiceId):{ok:false,error:'This seat has no catch-up reward open.'};}
+    const offer=session.scene.offers?.[memberId];
+    if(session.scene.kind!=='reward' || !member?.connected || !member.alive || session.scene.chosen[memberId] || !offer)return {ok:false,error:'This seat has no ability reward open.'};
+    return takeAbilityDraft(member,offer,offerId,choiceId);
+  }
   // A present member takes their card/relic pick (or skips with null).
   function chooseReward(memberId, { cardId = null, takeRelic = false, flask = false, levelCardIds = null } = {}) {
     if (session.scene.kind !== 'reward') return { ok: false, error: 'no reward open' };
@@ -1631,7 +1651,7 @@ export function createSession({ registries, seedString, endless = false, restore
     start, chooseNode, chooseMasteryNode, resolveNode,
     previewMemberClassRespec,applyMemberClassRespec,cancelMemberClassRespec,
     combatPlay, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat,
-    chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
+    chooseReward, chooseAbilityDraft, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },

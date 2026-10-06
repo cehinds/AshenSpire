@@ -1,4 +1,5 @@
 import {mountClassRespec,closeClassRespec,isClassRespecOpen} from '../components/classRespec.js';
+import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
 import { mountInitialClassMastery } from '../components/classMastery.js';
 import { registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -1285,6 +1286,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (reason) attachTooltip(card, () => esc(reason));
     return card;
   }
+  function abilityDraftStrips(offer,{catchup=false}={}) {
+    return (offer.skillDrafts || []).flatMap(row=>{
+      const grid=el('div',{class:'reward-row'});
+      for(const choiceId of row.choiceIds || row.cardIds){
+        const pick=abilityDraftChoice(row,choiceId);if(!pick)continue;
+        const card=renderCard(registries,{cardId:pick.cardId,abilityRank:pick.abilityRank,upgraded:false},{});
+        card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',`Choose ${registries.cards.get(pick.cardId).name}, rank ${pick.abilityRank}`);
+        const take=()=>send({t:'chooseAbilityDraft',offerId:row.offerId,choiceId:pick.choiceId,catchup});
+        card.addEventListener('click',take);card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();take();}});grid.appendChild(card);
+      }
+      return [subtitle(`${row.skillId==='combatManeuvers'?'Combat Maneuvers':'Spellcraft'} · Level ${row.level}`),grid];
+    });
+  }
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
@@ -1309,6 +1323,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // Ordinary and refined stones (SPEC §15.3) on the one line, each when paid.
       note: smithingStoneNote(stone, t),
       children: [
+        ...abilityDraftStrips(offer),
         ...levelStrips,
         ...(levelStrips.length ? [el('p', { class: 'reward-note', dataset: { note: 'levelCardAuto' }, text: t('reward.note.levelCardAuto') })] : []),
         ...(offer.cardIds.length ? [subtitle(t('reward.card.eyebrow')), grid] : []),
@@ -1485,6 +1500,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       title, eyebrow: debt,
       note: ['Claim what you would have earned while away.', stoneNote].filter(Boolean).join(' '),
       children: [
+        ...(item.type==='reward'?abilityDraftStrips(item.offer,{catchup:true}):[]),
         ...levelStrips,
         grid,
         item.type === 'reward' && item.offer.cardMissed ? el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') }) : null,

@@ -1,3 +1,4 @@
+import {spendAbilityDraft} from './abilityDraftReceipts.js';
 import { progressionFeats, progressionFeatUnlocks } from '../content/progression/feats.js';
 import { progressionUnlocks } from '../content/progression/unlocks.js';
 import { isAbilitySkill, SPELLCRAFT_SKILL, MANEUVERS_SKILL } from './abilityGrades.js';
@@ -280,7 +281,8 @@ export function rarityUnlockedAt(registries, level) {
  * spendSkillDraft(run, skillId) → true when a queued draft was spent. The
  * reward door's one write to the ledger's draft count.
  */
-export function spendSkillDraft(run, skillId) {
+export function spendSkillDraft(run, skillId, offerId = null, choiceId = null) {
+  if(expandedProgression(run) && isAbilitySkill(skillId))return spendAbilityDraft(run,skillId,offerId,choiceId);
   const row = run && run.skills && run.skills[skillId];
   if (!row || !(row.pendingDrafts > 0)) return false;
   row.pendingDrafts -= 1;
@@ -322,6 +324,7 @@ export function rankUpCandidates(registries, run, skillId) {
     if (!inst || inst.sourceArmamentId || ITEM_OWNED_ROLES.includes(inst.equipmentRole)) return false;
     const def = cards && cards.has(inst.cardId) ? cards.get(inst.cardId) : null;
     if (!def || !(def.tags || []).some((t) => schools.has(t))) return false;
+    if(Number.isInteger(inst.abilityRank)||(run.progressionRulesVersion===1&&def.gradeProfiles&&!inst.legacyAbility))return false;
     return (Number.isInteger(inst.rank) && inst.rank >= 1 ? inst.rank : 1) < ceiling;
   });
 }

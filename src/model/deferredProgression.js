@@ -16,7 +16,8 @@ export function progressionRewardUnlocked(row, run) {
 export function mergeProgressionRewards(saved = {}, incoming = {}, run, { manual = true, characterStart = run.level?.level || 1 } = {}) {
   const result = { ...incoming };
   for (const [kind, field] of Object.entries(FIELDS)) {
-    const old = structuredClone(saved[field] || []);
+    const claimedAbility=row=>kind==='skillDraft'&&row.offerId&&run.abilityDraftClaims?.[row.skillId]?.[row.offerId];
+    const old = structuredClone(saved[field] || []).filter(row=>!claimedAbility(row));
     const reservedDrafts = {};
     if (kind === 'skillDraft' || kind === 'skillRankUp' || kind === 'skillAttribute' || kind === 'skillFeat' || kind === 'classDraft') for (const row of old) {
       const track = progressionTrack({ ...row, kind });
@@ -24,6 +25,7 @@ export function mergeProgressionRewards(saved = {}, incoming = {}, run, { manual
     }
     const fresh = (incoming[field] || []).flatMap((raw, i) => {
       const row = { ...structuredClone(raw), kind };
+      if(claimedAbility(row))return [];
       if (kind === 'classMilestone' && old.some(savedRow => savedRow.receiptId === row.receiptId)) return [];
       if (kind === 'levelChoice' && !row.classId && row.options?.some(option => option.kind === 'classNode')) row.classId = run.class;
       const track = progressionTrack(row);

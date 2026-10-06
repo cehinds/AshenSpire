@@ -184,7 +184,9 @@ export function previewClassRespec(registries,run,draft,{selections = draft.sele
   for(const slot of draft.slots){
     const choice=selected[slot.receiptId];if(slot.state==='spent'||!choice)continue;
     const options=classRespecOptions(registries,run,draft,slot,{attributes:candidate.attributes,loadout:candidate.loadout});
-    if(!options.some(option=>option.id===choice.id&&(option.abilityRank??null)===(choice.abilityRank??null)))problems.push(`The proposed build cannot receive ${choice.id}.`);
+    const eligible=options.some(option=>option.id===choice.id&&(option.abilityRank??null)===(choice.abilityRank??null));
+    const retainedCard=slot.kind==='cards'&&slot.state==='taken'&&slot.before?.id===choice.id&&(slot.before.abilityRank??null)===(choice.abilityRank??null);
+    if(!eligible&&!retainedCard)problems.push(`The proposed build cannot receive ${choice.id}.`);
     if(used[slot.kind]?.has(choice.id))problems.push('Two earned slots cannot select the same feat, relic or equipment.');used[slot.kind]?.add(choice.id);
     const grant=classRewardGrants(run).find(grant=>grant.id===slot.receiptId),record=grantIn(candidate,slot.receiptId);
     if (!Object.hasOwn(record,'originalSelection')) record.originalSelection=copy(grant.selection || null);
@@ -195,7 +197,7 @@ export function previewClassRespec(registries,run,draft,{selections = draft.sele
       const inst={...(previous || {}),instanceId,cardId:choice.id,upgraded:previous?.upgraded || false,rewardReceiptId:slot.receiptId};
       if(Number.isInteger(choice.abilityRank)){inst.abilityRank=choice.abilityRank;delete inst.rank;}
       else delete inst.abilityRank;
-      ((run.sideboard || []).some(card=>card.instanceId===instanceId)?candidate.sideboard:candidate.deck).push(inst);
+      ((!eligible||(run.sideboard || []).some(card=>card.instanceId===instanceId))?candidate.sideboard:candidate.deck).push(inst);
       selection.instanceId=instanceId;
       if(previous&&(previous.upgraded||previous.mods?.length||previous.smithingLevel))transfers.push({from:previous.cardId,to:choice.id,instanceId,upgraded:previous.upgraded,mods:copy(previous.mods || [])});
     }else if(slot.kind==='relic'){

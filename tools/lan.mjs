@@ -243,6 +243,7 @@ export function attachLan(server, { port, root }) {
       case 'chooseDiscard': g.combatChooseDiscard(id, msg.cardInstanceIds); break;
       case 'endTurn': g.combatEndTurn(id); break;
       case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
+      case 'chooseAbilityDraft': g.chooseAbilityDraft(id,msg.offerId,msg.choiceId,{catchup:msg.catchup===true}); break;
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
       case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
       case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;
