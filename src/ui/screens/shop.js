@@ -1,3 +1,4 @@
+import { removeOwnedRelic } from '../../model/classRewardProvenance.js';
 import { bindCardInspection } from '../components/cardInspection.js';
 import { wireCardShelf } from '../components/cardShelf.js';
 import { applySkillBookOfferTokens, renderSkillBookOffer } from '../components/skillBookOffer.js';
@@ -639,7 +640,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
             ...sellReview({ kind: row.kind, name: row.def.name, price: row.price }),
             onConfirm: () => {
               if (row.kind === 'relic') {
-                run.relics.splice(row.at, 1);
+                removeOwnedRelic(run,row.def.id,{reason:'sold'});
                 syncFlaskGrowth(registries, run); // a sold growth source unbinds the same way a bought one binds
               } else {
                 run.flasks.splice(row.at, 1);

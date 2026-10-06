@@ -11,7 +11,7 @@
 // Meter, its cadence line and its ladder. Every number is the model's
 // (models/CharacterSheetModel.js); every word is a uiStrings row.
 
-import { el, meter, openModal, pill, prose, rail, railItem, statusText, titleS } from '../kit/index.js';
+import { el, meter, openModal, button, pill, prose, rail, railItem, statusText, titleS } from '../kit/index.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { characterSheetModel, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
 import { levelProgress, skillProgressRows } from '../../model/progression.js';
@@ -150,7 +150,7 @@ function skillsPane(registries, run, sheet, state) {
  * → the modal shell. `offers` names which character-level rewards the
  * player's settings switch on (CharacterSheetModel DEFAULT_LEVEL_OFFERS).
  */
-export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null } = {}) {
+export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, onRespec = null } = {}) {
   const sheet = characterSheetModel(registries, run, { offers });
   let bodyHost = null;
   const state = { tab, track, show: null };
@@ -165,6 +165,7 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     if (pane) pane.scrollTop = Math.max(0, here.offsetTop - (pane.clientHeight - here.offsetHeight) / 2);
   };
   state.show = (nextTab, nextTrack = state.track) => { state.tab = nextTab; state.track = nextTrack; render(); };
+  const respecAction=onRespec?button({label:'Respec class',weight:'primary'}):null;
   const shell = openModal({
     size: 'xl',
     className: 'character-sheet',
@@ -179,7 +180,9 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     bodyClassName: 'character-sheet-body',
     ...(opener ? { opener } : {}),
     onClose,
+    ...(respecAction ? {primary:respecAction} : {}),
   });
+  respecAction?.addEventListener('click',()=>{shell.close();onRespec();});
   markUiComponent(shell.panel, UI.characterSheet);
   render();
   return shell;

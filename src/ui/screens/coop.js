@@ -1,3 +1,4 @@
+import {mountClassRespec,closeClassRespec,isClassRespecOpen} from '../components/classRespec.js';
 import { mountInitialClassMastery } from '../components/classMastery.js';
 import { registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -539,6 +540,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
   };
   const keyHandler = (ev) => {
+    if(isClassRespecOpen())return; // the reviewed class form owns Tab and Escape
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (cardChoiceShell) return; // the stance chooser owns the keyboard (see send)
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
@@ -574,6 +576,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // then flows through the global focus system like solo play.
   let padPrev = [];
   const padTimer = setInterval(() => {
+    if(isClassRespecOpen())return;
     if (seats.length < 2 || !navigator.getGamepads) return;
     const pads = navigator.getGamepads();
     for (let p = 0; p < pads.length; p++) {
@@ -590,6 +593,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    closeClassRespec();
     app.removeEventListener('click', dismissCombatant);
     app.removeEventListener('cardinspectionselect', inspectCard);
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
@@ -645,6 +649,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); }); };
 
   function render() {
+    closeClassRespec({silent:true});
     if (!snap) return;
     posePresentations = new Map([...app.querySelectorAll('.coop-seat')].map(node => [node.dataset.seat, stageFor(node)?.presentation]));
     clearCombatEffects(app.querySelector('.fx-layer'));
@@ -1214,6 +1219,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     mapBoard.recenter();
     renderPartyBar();
     wireLeave();
+    if(member?.classRespecAvailable){const action=button({label:'Respec class'});action.addEventListener('click',()=>send({t:'classRespecPreview',as:me}));app.querySelector('.mh-actions').prepend(action);}
+    if(member?.classRespec)mountClassRespec({registries,view:member.classRespec,
+      onPreview:input=>send({t:'classRespecPreview',as:me,draftId:member.classRespec.draftId,...input}),
+      onApply:()=>{send({t:'classRespecApply',as:me,draftId:member.classRespec.draftId});return {ok:false};},
+      onCancel:()=>send({t:'classRespecCancel',as:me,draftId:member.classRespec.draftId})});
   }
 
   // Compact party read-out in the map header (names + HP + presence): the

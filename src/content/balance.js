@@ -182,7 +182,7 @@ export const balance = {
     classSkills: { reaver: ['combatManeuvers','item:blade','item:shield','armour:heavy'], starseer: ['item:magic-focus','item:blade','armour:light','armour:medium'], rogue: ['combatManeuvers','item:blade','dualWield','armour:light'], herald: ['item:magic-focus','item:blade','item:shield','armour:medium'] },
     classAttributes: { reaver: ['strength','constitution','dexterity'], starseer: ['intelligence','wisdom','dexterity'], rogue: ['dexterity','strength','wisdom'], herald: ['wisdom','constitution','intelligence'] },
     lessons: { 'item:magic-focus': ['cometFragment','crystalBarrier','scholarsInsight','ashenMote','emberVigil','readTheAsh','cinderSigil','starstoneArc','blightTouch','penance'], combatManeuvers: ['crimsonCleave','shieldBash','quickstep','guardCounter','riposte','rend','quickCut','backstep','stomp','lowBlow'] },
-    respec: { enabled: false, cost: null },
+    respec: { enabled: true, cost: null },
     [NOTE]: {
       version: 'The progression contract version saved for new characters, preserving the rules chosen at creation.',
       ...Object.fromEntries(progressionGearRequirements.map((row,index)=>[`gearRequirements.${index}.level`, `${row.ref} — the minimum ${row.classId} class level for this gear option; existing discovery and attribute requirements also apply.`])),

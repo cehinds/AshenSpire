@@ -1800,3 +1800,15 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 @media (pointer: coarse) {
  .armoury .armament-position-actions > button, .armoury .armament-destination, .armoury .armoury-foot-action, .armoury .armament-inspection-back { min-height: max(var(--tap-floor, 48px), calc(48px / var(--ui-zoom, 1))); }
 }
+
+/* Class rebuild uses the shared Modal and controls at every viewport. */
+.class-respec-body { display:grid; align-content:start; gap:var(--space-md,16px); padding:16px; }
+.class-respec-body fieldset { border:1px solid var(--line,#5b5144); padding:12px; display:grid; gap:12px; min-width:0; }
+.class-respec-body label { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.class-respec-body select { min-width:0; max-width:60%; padding:8px; background:#211b15; color:var(--ink,#d7cdb7); border:1px solid var(--line,#5b5144); border-radius:6px; }
+.class-respec-tree { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+.class-respec-tree legend { grid-column:1/-1; }
+.class-respec-tree label { justify-content:flex-start; }
+.class-respec-changes { margin:0; padding-left:24px; display:grid; gap:8px; }
+.class-respec-problems { color:var(--danger,#f0a08c); }
+@media(max-width:600px) { .class-respec-slots label { align-items:stretch; flex-direction:column; } .class-respec-slots select { max-width:100%; width:100%; } }

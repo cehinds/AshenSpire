@@ -51,6 +51,20 @@ export function classMilestoneProblems(run) {
     if (!validateOffer(id,offer,offer?.options)) continue;
     if (!Object.hasOwn(rules.classSkills,offer.classId) || !rules.cadence[offer.rewardKind]?.includes(offer.level) || offer.receiptId !== id || id !== milestoneReceiptId(offer.classId,offer.level,offer.rewardKind) || offer.skillId !== `class:${offer.classId}` || offer.requiredLevel !== offer.level) problems.push(`classMilestoneOffers.${id} breaks its earned cadence`);
   }
+  if(run.classRespecReceipts!==undefined && !Array.isArray(run.classRespecReceipts))return [...problems,'classRespecReceipts must be an array'];
+  const respecIds=new Set();
+  for(const receipt of run.classRespecReceipts || []){
+    if(!object(receipt) || typeof receipt.id!=='string' || respecIds.has(receipt.id) || !Object.hasOwn(rules.classSkills,receipt.classId) || !Number.isInteger(receipt.level) || receipt.level<0 || receipt.level>(run.skills?.[`class:${receipt.classId}`]?.level || 0) || !Array.isArray(receipt.changes) || !Array.isArray(receipt.treeBefore) || !Array.isArray(receipt.treeAfter) || !Array.isArray(receipt.spent) || !Array.isArray(receipt.transfers)){problems.push('classRespecReceipts lacks its funded rebuild provenance');continue;}
+    respecIds.add(receipt.id);
+    const selections=new Set();
+    for(const change of receipt.changes){
+      const grant=Object.values(run.classMilestones || {}).find(row=>row.classId===receipt.classId && row.grants?.[change?.kind]?.id===change?.receiptId)?.grants?.[change?.kind];
+      const offer=run.classMilestoneOffers?.[change?.receiptId];
+      const rank=change?.abilityRank;
+      if(!object(change) || !grant || typeof change.after!=='string' || !change.after || selections.has(change.receiptId) || (rank!==null && (!Number.isInteger(rank)||rank<0||rank>5)) || (change.kind==='cards' && !grant.originalSelection && !(offer?.abilityRanks || [null]).includes(rank)))problems.push(`classRespecReceipts.${receipt.id} has an unfunded selection`);
+      selections.add(change?.receiptId);
+    }
+  }
   const instances = new Set();
   for (const [id, row] of Object.entries(run.classMilestones || {})) {
     if (!object(row) || !Object.hasOwn(rules.classSkills,row.classId) || id !== `class:${row.classId}:${row.level}` || !Number.isInteger(row.level) || row.level < 1 || row.level > 20 || row.level > (run.skills?.[`class:${row.classId}`]?.level || 0) || typeof row.veteran !== 'boolean' || row.skillXpPaid !== !row.veteran || !object(row.grants)) { problems.push(`classMilestones.${id} is invalid or unfunded`); continue; }
@@ -60,8 +74,14 @@ export function classMilestoneProblems(run) {
       if (!object(grant) || !expected.includes(kind) || grant.id !== milestoneReceiptId(row.classId,row.level,kind) || !['pending','taken','spent'].includes(grant.state)) { problems.push(`classMilestones.${id}.${kind} is invalid`); continue; }
       if (grant.state === 'taken') {
         const offer = run.classMilestoneOffers?.[grant.id];
-        const choiceIndex = (offer?.choiceIds || offer?.options || []).indexOf(grant.selection?.choiceId || grant.selection?.id);
-        if (!object(grant.selection) || choiceIndex < 0 || grant.selection.id !== offer.options[choiceIndex] || grant.selection.abilityRank !== (offer.abilityRanks?.[choiceIndex] ?? null) || offer.classId !== row.classId || offer.level !== row.level || offer.rewardKind !== kind) problems.push(`classMilestones.${id}.${kind} lacks its earned selection`);
+        const origin = Object.hasOwn(grant,'originalSelection') ? grant.originalSelection : grant.selection;
+        const choiceIndex = (offer?.choiceIds || offer?.options || []).indexOf(origin?.choiceId || origin?.id);
+        if (grant.respecReceiptId) {
+          const receipt = (run.classRespecReceipts || []).find(receipt => receipt.id === grant.respecReceiptId && receipt.classId === row.classId && receipt.level <= (run.skills?.[`class:${receipt.classId}`]?.level || 0));
+          const change = receipt?.changes?.find(row => row.receiptId === grant.id && row.kind === kind);
+          if (!change || !object(grant.selection) || grant.selection.id !== change.after || grant.selection.abilityRank !== change.abilityRank || (origin && origin.abilityRank !== grant.selection.abilityRank)) problems.push(`classMilestones.${id}.${kind} lacks its respec provenance`);
+        }
+        if ((!grant.respecReceiptId || origin) && (!object(origin) || choiceIndex < 0 || origin.id !== offer.options[choiceIndex] || origin.abilityRank !== (offer.abilityRanks?.[choiceIndex] ?? null) || offer.classId !== row.classId || offer.level !== row.level || offer.rewardKind !== kind)) problems.push(`classMilestones.${id}.${kind} lacks its earned selection`);
         if (grant.selection?.instanceId) {
           if (instances.has(grant.selection.instanceId)) problems.push(`classMilestones.${id}.${kind} duplicates an instance`);
           instances.add(grant.selection.instanceId);

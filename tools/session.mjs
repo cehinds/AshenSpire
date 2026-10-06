@@ -1,3 +1,4 @@
+import {createClassRespecDraft,classRespecView,previewClassRespec,applyClassRespec,classRespecAvailability} from '../src/model/classRespec.js';
 import { openRunClassMastery, registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { initialClassTreeChoices, pickInitialClassTreeNode } from '../src/model/classTree.js';
 import { normalizeMasteryProfile, masteryProfileProblems } from '../src/model/classMasteryProfile.js';
@@ -131,6 +132,8 @@ export function createSession({ registries, seedString, endless = false, restore
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   // Each member's open shrine visit (engine/locations.js), by member id.
   const shrineVisits = new Map();
+  const respecForms = new Map();
+  let respecSeq = 0;
   function restView(visit) {
     if (!visit) return null;
     if (visit.restDenied) return { denied: registries.relics.get(visit.restDenied).name, heal: 0, mana: 0 };
@@ -1455,8 +1458,35 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- snapshot (authoritative state to broadcast) -------------------------
+  function previewMemberClassRespec(memberId,input = null) {
+    const member=members.get(memberId);
+    if(!member || !member.connected || !member.alive || session.scene.kind!=='map')return {ok:false,error:'Respec is available for a present seat between encounters.'};
+    const reg=registriesForClassMastery(registries,member.run);
+    let form=respecForms.get(memberId);
+    if(!input){const draft=createClassRespecDraft(reg,member.run);if(!draft.ok)return draft;form={id:`class-respec-${++respecSeq}`,draft,input:{selections:draft.selections,treeNodes:draft.treeNodes}};respecForms.set(memberId,form);}
+    else {if(!form || input.draftId!==form.id)return {ok:false,error:'Reopen this seat’s respec form.'};if(!input.selections || typeof input.selections!=='object' || Array.isArray(input.selections) || !Array.isArray(input.treeNodes) || input.treeNodes.some(id=>typeof id!=='string'))return {ok:false,error:'The seat submitted malformed respec choices.'};form.input={selections:input.selections,treeNodes:input.treeNodes};}
+    form.view={...classRespecView(reg,member.run,form.draft,form.input),draftId:form.id};
+    return {ok:true,view:form.view};
+  }
+  function applyMemberClassRespec(memberId,draftId,{saveSession}={}) {
+    const member=members.get(memberId),form=respecForms.get(memberId);
+    if(!member || !member.connected || !member.alive || session.scene.kind!=='map' || !form || draftId!==form.id)return {ok:false,error:'Reopen this seat’s respec form between encounters.'};
+    const reg=registriesForClassMastery(registries,member.run),preview=previewClassRespec(reg,member.run,form.draft,form.input);
+    const result=applyClassRespec(reg,member.run,preview,{saveCandidate:candidate=>{
+      if(typeof saveSession!=='function')return false;
+      const saved=serialize();if(!saved)return false;
+      const next=structuredClone(saved);next.members.find(row=>row.id===memberId).run=candidate;
+      return saveSession(next);
+    }});
+    if(result.ok)respecForms.delete(memberId);
+    else {form.view={...classRespecView(reg,member.run,form.draft,form.input),draftId:form.id};form.view.preview.ok=false;form.view.preview.problems=[result.reason];}
+    return result;
+  }
+  function cancelMemberClassRespec(memberId,draftId){const form=respecForms.get(memberId);if(!form || form.id!==draftId)return {ok:false};respecForms.delete(memberId);return {ok:true};}
   function memberView(m) {
     return {
+      classRespecAvailable: session.scene.kind==='map' && classRespecAvailability(registriesForClassMastery(registries,m.run),m.run).ok,
+      ...(respecForms.get(m.id)?.view ? {classRespec:structuredClone(respecForms.get(m.id).view)} : {}),
       skills: structuredClone(m.run.skills),
       coreTags: [...m.run.coreTags],
       ...(m.run.classMasteryState ? { classMasteryState: structuredClone(m.run.classMasteryState) } : {}),
@@ -1599,6 +1629,7 @@ export function createSession({ registries, seedString, endless = false, restore
     refusedMembers: () => refused.map((r) => ({ id: r.id, name: r.name, index: r.index, reason: r.reason })),
     addMember, setConnected, setConnectedMany, connectedMembers, livingMembers,
     start, chooseNode, chooseMasteryNode, resolveNode,
+    previewMemberClassRespec,applyMemberClassRespec,cancelMemberClassRespec,
     combatPlay, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,

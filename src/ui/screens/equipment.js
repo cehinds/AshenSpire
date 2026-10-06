@@ -715,7 +715,7 @@ function inventoryReveal(registries, row, {
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
   // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
-  onEditDeck = null, onProgression = null, onCharacterSheet = null,
+  onEditDeck = null, onProgression = null, onCharacterSheet = null, onClassRespec = null,
   handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -1929,6 +1929,10 @@ export function mountEquipment(host, {
     // The Character sheet (screens/characterSheet.js): every level of the
     // character and of each skill, and what it grants. Read-only, so it stays
     // over the Armoury rather than closing it.
+    if (onClassRespec && !inCombat) {
+      const action = button({label:'Respec class',className:'character-respec-action'});
+      action.addEventListener('click',()=>{close();onClassRespec();});node.append(action);
+    }
     if (onCharacterSheet) {
       const sheet = button({ label: t('characterSheet.open'), className: 'character-sheet-action', attrs: { title: tFull('characterSheet.open') } });
       sheet.addEventListener('click', () => onCharacterSheet(sheet));
