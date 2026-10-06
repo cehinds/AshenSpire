@@ -85,7 +85,7 @@ test('with DR the Dodge Roll grants 3 + DR of each, and the guards absorb impact
   const combat = fight({ ratings: true });
   const p = combat.player;
   const dr = p.ratings.dr;
-  assert.equal(dr, 18, 'fixture DR');
+  assert.equal(dr, 10, 'DEX 10 gives DR 10 at +1 per point');
   const { preview } = play(combat);
   assert.deepEqual([p.block, p.poiseGuard, p.wardGuard], [3 + dr, 3 + dr, 3 + dr]);
   assert.deepEqual([preview.tokens.block, preview.tokens.gainPoise, preview.tokens.gainWard], [3 + dr, 3 + dr, 3 + dr]);

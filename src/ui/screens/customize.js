@@ -101,6 +101,8 @@ function showNode(node, on) {
 export function mountCustomize(app, {
   registries, meta = {}, defaultSeedString, onBack, onStart, onSettings = null, onQuit = null, catalog = false, shotPose = null, slot = null,
 }) {
+  // A new screen must never inherit another card's selection or spent tap.
+  clearSelection();
   // THE HAND A NEW CHARACTER IS PROMISED IS THE HAND ITS FIRST FIGHT DEALS
   // (Codex, #1294): the legacy derived `draw` row gives way to the Hand and
   // Draw chips read from the run's own hand rows (its class's opening hand),
@@ -114,7 +116,6 @@ export function mountCustomize(app, {
   // whose `i` had been read kept its first beat for the life of the page, and
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
-  clearSelection();
   const defaults = quickStartRunConfig(registries);
   const firstClass = registries.classes.get(defaults.classId);
   const creationLayout = registries.characterCreation.layout || {};
@@ -199,7 +200,7 @@ export function mountCustomize(app, {
         el('div', { class: 'cc-primary-footer' }, [
           el('div', { id: 'cz-derived', class: 'cc-derived', 'aria-label': 'Derived resources' }),
           buttonRow({ size: 'long', className: 'end cc-primary-continue-row', buttons: [
-            button({ label: 'Continue', weight: 'primary', className: 'cc-primary-continue' }),
+            button({ label: t('common.continue'), weight: 'primary', className: 'cc-primary-continue' }),
           ] }),
         ]),
       ]),
@@ -260,7 +261,7 @@ export function mountCustomize(app, {
     categories, current: categories[0],
     labels: Object.fromEntries(categories.map((id) => [id, t(`creation.category.${id}`)])),
   }).flatMap((entry) => entry.id === 'character'
-    ? [{ ...entry, label: 'Primary Attributes' }, { id: 'keepsake', label: 'Keepsake' }]
+    ? [{ ...entry, label: t('creation.primaryAttributes') }, { id: 'keepsake', label: t('creation.section.keepsake') }]
     : [entry]).map((entry) => {
     const item = railItem({ label: entry.label, member: entry.id, id: `cz-tab-${entry.id}`, className: 'cz-tab', attrs: { 'aria-controls': 'cz-pane' } });
     item.replaceChildren(el('span', { class: 'rail-label', text: entry.label }), el('span', { class: 'cz-tab-value as-status' }));
@@ -288,13 +289,13 @@ export function mountCustomize(app, {
     head.insertBefore(viewTools, head.querySelector('.modal-head-actions'));
     headTools.classList.add('cz-header-menu');
     headTools.setAttribute('popover', 'auto');
-    const menu = el('button', { type: 'button', class: 'as-btn cz-menu-button', text: '\u2630', 'aria-label': 'Game menu', 'aria-haspopup': 'true', 'aria-expanded': 'false' });
+    const menu = el('button', { type: 'button', class: 'as-btn cz-menu-button', text: '\u2630', 'aria-label': t('creation.menu.title'), 'aria-haspopup': 'true', 'aria-expanded': 'false' });
     const navigation = el('div', { class: 'cz-menu-navigation' });
     const menuActions = [
-      { label: 'Continue', action: () => menu.focus() },
-      ...(onSettings ? [{ label: 'Settings', action: onSettings }] : []),
-      { label: 'Main menu', action: onBack },
-      ...(onQuit ? [{ label: 'Quit game', action: onQuit }] : []),
+      { label: t('common.continue'), action: () => menu.focus() },
+      ...(onSettings ? [{ label: t('settings.title'), action: onSettings }] : []),
+      { label: t('creation.menu.main'), action: onBack },
+      ...(onQuit ? [{ label: t('creation.menu.quit'), action: onQuit }] : []),
     ];
     for (const { label, action } of menuActions) {
       const item = el('button', { type: 'button', class: 'as-btn', text: label });
@@ -696,7 +697,7 @@ export function mountCustomize(app, {
     // (review, #1217). This button is that path, and it is a revision: the
     // committed numbers are on the steppers and Cancel puts them back.
     const editPoints = el('button', {
-      type: 'button', class: 'as-btn cc-mode-edit', text: 'Edit stats',
+      type: 'button', class: 'as-btn cc-mode-edit', text: t('creation.editStats'),
       'aria-label': 'Edit your stat allocation',
     });
     editPoints.addEventListener('click', () => openPointBuy({ fresh: false }));
@@ -1216,7 +1217,7 @@ export function mountCustomize(app, {
       .filter(entry => entry.id !== 'poise')
       .map(entry => ({
         id: entry.id,
-        label: entry.id === 'handSize' ? 'Size' : creationDerivedLabel(entry),
+        label: entry.id === 'handSize' ? t('creation.handCapacity.short') : creationDerivedLabel(entry),
         inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.faceLabel,
         value: entry.value,
         explanation: entry.formula,

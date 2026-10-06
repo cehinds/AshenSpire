@@ -4721,6 +4721,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.primaryAttributes",
+    "extends": "",
+    "short": "Primary Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.editStats",
+    "extends": "",
+    "short": "Edit stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.handCapacity.short",
+    "extends": "",
+    "short": "Size",
+    "full": "The maximum number of cards you can hold.",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.title",
+    "extends": "",
+    "short": "Game menu",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.main",
+    "extends": "",
+    "short": "Main menu",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.quit",
+    "extends": "",
+    "short": "Quit game",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "creation.categories",
     "extends": "",
     "short": "Creation steps",

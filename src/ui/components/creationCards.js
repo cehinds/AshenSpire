@@ -123,7 +123,7 @@ export function resourceStrip(rows, poise, { compact = false } = {}) {
   const known = new Set(groups.flat());
   if (compact) {
     groups.pop();
-    labels.handSize = 'Hand';
+    labels.handSize = t('statsPreview.hand.title');
     const capacity = entries.get('handSize');
     if (capacity) entries.set('handSize', { ...capacity,
       formula: [capacity.formula, entries.get('openingHand')?.formula].filter(Boolean).join(' · ') });
