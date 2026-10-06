@@ -5519,7 +5519,7 @@ button[data-button-size] {
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-preview-host,
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-divider { display: none; }
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
-.customize .cz-railed .cz-class.unfolded { display:block; height:auto; min-height:0; padding-block:1.2rem; }
+.customize .cz-railed .cz-class.unfolded { display:block; grid-column:1 / -1; height:auto; min-height:0; padding-block:1.2rem; }
 .customize .cz-class.unfolded > :is(.og, .ob) { display:none; }
 .customize .cz-class.unfolded > .cc-class-unfold { min-height: 0; display: grid; grid-template-columns: clamp(11rem, 16vw, 15rem) minmax(0, 1fr); gap:1rem; align-items:center; }
 .customize .cc-unfold-portrait { display:flex; align-items:center; justify-content:flex-start; gap:.6rem; min-width:0; }
