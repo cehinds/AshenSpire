@@ -15,7 +15,7 @@ export const characterCreation = {
   },
   "quickStart": {
     "classId": "reaver",
-    "keepsakeId": "none",
+    "keepsakeId": "oldCinder",
     "attributeMode": "lean",
     "skipOpening": true
   },

@@ -354,7 +354,7 @@ custom art does not require a second card implementation.
 | Component ID | Model / input | Renderer | Reuse |
 |---|---|---|---|
 | `character-disclosure` | disclosure entries | `disclosure.mountDisclosure` | Character Creation + catalog |
-| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` | Class preview + catalog |
+| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` + `classUnfold` | Class preview + catalog; unfolded cards place the icon beside a compact contained sprite, with class name, description, mastery, resources and relic alongside. |
 | `class-resource-grid` | `statProjection.derived[]` | `creationCards.classResourceGrid` | Class preview + catalog |
 | `class-choice-card` | class row + selected/locked state | `creationCards.classChoiceCard` | Class selection + catalog |
 | `view-mode-toggle` | view-mode state | `creationCards.viewModeToggle` | Class/Equipment + catalog |

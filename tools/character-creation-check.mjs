@@ -9,7 +9,7 @@
 // points (`assign`, every stat at its baseline with a pool to place). So it
 // died at its first wait and checked nothing. What it reads now:
 //
-//   * the rail's four categories, and every class on the Class stage;
+//   * the rail's five choices, and every class on the Class stage;
 //   * the mode select offers exactly the configured creation modes;
 //   * Standard seats each class's own preset (model/attributes.js
 //     classAttributePreset), and the resource strip's Hand and Draw chips are
@@ -39,7 +39,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { classAttributePreset, creationMode, orderedAttributes } from '../src/model/attributes.js';
 import { statRow } from '../src/model/statRows.js';
-import { ruleWeights } from '../src/model/derivedStats.js';
+import { ruleWeights, statRowValue } from '../src/model/derivedStats.js';
 import { handResourceRows } from '../src/model/statProjection.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -51,7 +51,8 @@ const MODES = { standard: 'lean', assign: 'assign' };
 const expectedHand = (classId, attributes) => {
   const rows = handResourceRows(registries, { class: classId, attributes }, {});
   const value = (id) => rows.find((row) => row.id === id).value;
-  return { opening: value('openingHand'), turn: value('draw') };
+  return { opening: value('openingHand'), turn: value('draw'),
+    capacity: statRowValue(statRow(registries, { class: classId }, 'handSize'), { attributes, level: 1, statId: 'handSize' }).value };
 };
 
 const wait = (ms) => new Promise((resolveWait) => setTimeout(resolveWait, ms));
@@ -154,12 +155,12 @@ async function exercise(width, height, screenshotName) {
   const at = `${width}x${height}`;
 
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=customize` }, sessionId);
-  await until(`document.querySelectorAll('.cz-tab').length===4 && !!document.querySelector('#cz-classes .cz-class')`, 'the creation workspace', 60000);
+  await until(`document.querySelectorAll('.cz-tab').length===5 && !!document.querySelector('#cz-classes .cz-class')`, 'the creation workspace', 60000);
   await wait(250);
 
   const rail = await evaluate(`[...document.querySelectorAll('.cz-tab')].map(e=>e.id)`);
-  assert(JSON.stringify(rail) === JSON.stringify(['cz-tab-class', 'cz-tab-character', 'cz-tab-equipment', 'cz-tab-review']),
-    `${at}: the rail lists Class, Character, Equipment and Review (${JSON.stringify(rail)})`);
+  assert(JSON.stringify(rail) === JSON.stringify(['cz-tab-class', 'cz-tab-character', 'cz-tab-keepsake', 'cz-tab-equipment', 'cz-tab-review']),
+    `${at}: the rail lists Class, Primary Attributes, Keepsake, Equipment and Review (${JSON.stringify(rail)})`);
   const offered = await evaluate(`[...document.querySelectorAll('#cz-classes .cz-class')].map(e=>e.dataset.class)`);
   assert(CLASSES.every((id) => offered.includes(id)), `${at}: every class is offered (${JSON.stringify(offered)})`);
 
@@ -185,17 +186,15 @@ async function exercise(width, height, screenshotName) {
     const primaryStat = ruleWeights(statRow(registries, { class: classId }, 'openingHand'))[0][0];
     const standard = await shown();
     assert(JSON.stringify(standard.stats) === JSON.stringify(preset), `${at} ${classId}: Standard seats the class preset (${JSON.stringify(standard.stats)})`);
-    assert(standard.chips.openingHand?.key === 'Hand' && standard.chips.openingHand.value === hand.opening,
-      `${at} ${classId}: the Hand chip is the solo opening hand, ${hand.opening} (${JSON.stringify(standard.chips.openingHand)})`);
+    assert(standard.chips.handSize?.key === 'Hand' && standard.chips.handSize.value === hand.capacity,
+      `${at} ${classId}: the Hand chip shows capacity, ${hand.capacity}`);
     assert(standard.chips.draw?.key === 'Draw' && standard.chips.draw.value === hand.turn,
       `${at} ${classId}: the Draw chip is the solo turn draw, ${hand.turn} (${JSON.stringify(standard.chips.draw)})`);
     assert(standard.chips.draw?.formula.startsWith('Each turn:'), `${at} ${classId}: the Draw chip is the hand rules' turn draw, not the co-op derived row`);
-    assert(standard.chips.openingHand?.formula.startsWith('Opening hand:') && standard.chips.openingHand.formula.endsWith(`= ${hand.opening}`),
-      `${at} ${classId}: the Hand chip's tooltip carries its arithmetic`);
-    assert(/Opening hand per/.test(standard.summaries[primaryStat] || ''),
-      `${at} ${classId}: the ${primaryStat} card states the opening-hand effect (${standard.summaries[primaryStat]})`);
-    assert(Object.entries(standard.summaries).every(([id, text]) => id === primaryStat || !/Opening hand/.test(text || '')),
-      `${at} ${classId}: only the class's own attribute claims the opening hand`);
+    assert(standard.chips.handSize?.formula.includes('Opening hand:') && standard.chips.handSize.formula.endsWith(`= ${hand.opening}`),
+      `${at} ${classId}: the Hand tooltip also explains the opening hand`);
+    assert(/Magic damage \/ Potency Rating \(PR\) \+1 per point/.test(standard.summaries.intelligence || ''),
+      `${at} ${classId}: Intelligence states its primary magic bonus (${standard.summaries.intelligence})`);
     if (classId === 'starseer') {
       await evaluate(`document.querySelector('#cz-derived')?.scrollIntoView({block:'center'})`);
       await wait(150);
@@ -229,8 +228,8 @@ async function exercise(width, height, screenshotName) {
     const assigned = await shown();
     const assignedHand = expectedHand(classId, spent);
     assert(JSON.stringify(assigned.stats) === JSON.stringify(spent), `${at} ${classId}: the committed allocation is on the cards (${JSON.stringify(assigned.stats)})`);
-    assert(assigned.chips.openingHand?.value === assignedHand.opening,
-      `${at} ${classId}: after Assign points the Hand chip follows the allocation, ${assignedHand.opening} (${assigned.chips.openingHand?.value})`);
+    assert(assigned.chips.handSize?.value === assignedHand.capacity && assigned.chips.handSize.formula.endsWith(`= ${assignedHand.opening}`),
+      `${at} ${classId}: after Assign points Hand shows capacity and explains the opening hand`);
     assert(await noOverflow(), `${at} ${classId}: nothing scrolls sideways`);
   }
 

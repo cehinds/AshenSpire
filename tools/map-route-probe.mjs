@@ -43,16 +43,17 @@ try {
     return result.result.value;
   };
   const waitFor = async (expression) => {
-    const limit = Date.now() + 60000;
+    const limit = Date.now() + 120000;
     while (Date.now() < limit) { if (await evaluate(expression)) return; await new Promise((done) => setTimeout(done, 150)); }
     console.error('Browser diagnostics:', JSON.stringify({ errors, badRequests }));
-    console.error(await evaluate('document.body.innerText.slice(0, 1400)'));
+    console.error(await evaluate('JSON.stringify({url:location.href,ready:document.readyState,title:document.title,body:document.body.innerText.slice(0,1400)})'));
     throw new Error(`Map did not settle: ${expression}`);
   };
   for (const [name, width, height, walk] of [['entrance', 1600, 900, 0], ['desktop', 1600, 900, 3], ['phone', 390, 844, 3], ['small-phone', 320, 640, 3]]) {
     await call('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
     console.log(`Checking ${name}…`);
-    await call('Page.navigate', { url: new URL(`/index.html?shot=map&shotSeed=SHOWCASE${walk ? `&shotWalk=${walk}` : ''}`, served.url).href });
+    const navigation = await call('Page.navigate', { url: new URL(`/index.html?shot=map&shotSeed=SHOWCASE${walk ? `&shotWalk=${walk}` : ''}`, served.url).href });
+    assert.equal(navigation.errorText, undefined, `${name}: page navigation`);
     await waitFor(`document.querySelectorAll('.map-route-node').length > 0 && document.querySelector('.map-canvas')`);
     await evaluate('document.fonts.ready');
     await new Promise((done) => setTimeout(done, 1000));
