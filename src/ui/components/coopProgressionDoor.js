@@ -33,7 +33,7 @@ export function mountCoopProgressionDoor(host,{registries,member,onClaim,onReady
     }
     presentation.update(current);
   }
-  function rejectClaim(reason){claim=null;presentation.rejectClaim(reason);}
+  function rejectClaim(reason){claim=null;popup?.rejectClaim?.(reason);presentation.rejectClaim(reason);}
   return {update,rejectClaim,get ready(){return presentation.ready&&!popup;},get choosing(){return !!popup;},dispose(){disposed=true;popup?.close?.();popup=null;presentation.dispose();}};
 }
 

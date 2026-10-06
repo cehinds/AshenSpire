@@ -20,10 +20,10 @@ function fixture(){
 }
 
 test('manual host claim shows only newly funded choices and waits for popup close before residual and class-bonus refill',()=>{
-  const f=fixture();let popup,updates=[],closeCount=0;
+  const f=fixture();let popup,updates=[],closeCount=0,popupError;
   try{
     const before=structuredClone(f.member),claims=[];
-    const view=mountCoopProgressionDoor(f.host,{registries,member:f.member,onClaim:id=>claims.push(id),settings:{xpFillSeconds:.1,levelUpRefillSeconds:1},onChoices:(rows,resume)=>{popup={rows,resume};return {update:rows=>updates.push(rows),close:()=>closeCount++};}});
+    const view=mountCoopProgressionDoor(f.host,{registries,member:f.member,onClaim:id=>claims.push(id),settings:{xpFillSeconds:.1,levelUpRefillSeconds:1},onChoices:(rows,resume)=>{popup={rows,resume};return {update:rows=>updates.push(rows),close:()=>closeCount++,rejectClaim:reason=>popupError=reason};}});
     f.advance(0);f.advance(1000);assert.equal(view.ready,true);
     f.host.querySelector('button[data-track="class:reaver"]').click();assert.equal(view.ready,false);assert.deepEqual(claims,['class:reaver']);
     const next=structuredClone(f.member);next.skills['class:reaver']={level:1,xp:50,pendingDrafts:0};next.skills['item:blade']={level:0,xp:25,pendingDrafts:0};
@@ -32,6 +32,7 @@ test('manual host claim shows only newly funded choices and waits for popup clos
     view.update(next);assert.equal(view.choosing,true);assert.deepEqual(popup.rows.map(row=>row.key),['class:reaver:1:feat']);
     assert.equal(f.host.querySelector('.rp-under').style.width,'100%','old full bar remains while new choices are open');
     f.advance(2000);assert.equal(view.ready,false);assert.equal(f.host.querySelector('.rp-under').style.width,'100%');
+    view.rejectClaim('The host could not save this reward.');assert.equal(popupError,'The host could not save this reward.');assert.equal(view.ready,false,'a popup save refusal keeps the background reward gate closed');
     const taken=structuredClone(next);taken.pendingProgression.classMilestoneRewards=[];view.update(taken);assert.deepEqual(updates.at(-1),[]);
     popup.resume();assert.equal(view.choosing,false);assert.equal(closeCount,1);assert.equal(f.host.querySelector('.rp-under').style.width,'0%');
     assert.equal(view.ready,false);f.advance(0);f.advance(2000);assert.equal(view.ready,true);

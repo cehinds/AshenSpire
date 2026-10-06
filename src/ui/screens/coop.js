@@ -1341,15 +1341,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         onReadyChange:ready=>gateCoopProgressionControls(app,ready),
         onChoices:(rows,resume)=>{
           const continueButton=button({label:'Continue',weight:'primary'}),seatAtOpen=me;
+          let lastRows=rows,popupError='';
           const dialog=openModal({title:'Level Up!',eyebrow:'Choose your reward',primary:continueButton,onClose:resume});
           const update=nextRows=>{
             if(me!==seatAtOpen)return;
+            lastRows=nextRows;
             const progression={};for(const {kind,row}of nextRows)(progression[kind] ||= []).push(row);
-            dialog.body.replaceChildren(...progressionChoices(progression,{progressionPopup:true}));
+            dialog.body.replaceChildren(...(popupError?[blocker(popupError)]:[]),...progressionChoices(progression,{progressionPopup:true}));
             if(!nextRows.length)dialog.body.append(prose('Your rewards have been claimed.'));
           };
           continueButton.addEventListener('click',dialog.close);update(rows);
-          return {update,close:dialog.close};
+          return {update,close:dialog.close,rejectClaim:reason=>{popupError=reason || 'This reward could not be saved.';update(lastRows);}};
         },
       });
     }else progressionDoor.update(member);
