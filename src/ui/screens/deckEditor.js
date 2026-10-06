@@ -1,3 +1,4 @@
+import { progressionTip } from '../components/progressionCards.js';
 // src/ui/screens/deckEditor.js — the deck editor (SPEC §14.1 UX), mounted over
 // whatever opened it: the map's Quick Access, the Armoury, or a Rest screen.
 //
@@ -25,7 +26,7 @@
 // map's own hotkeys stand down while it is open (components/veil.js).
 
 import { el, button } from '../kit/index.js';
-import { bindModalDismiss, modalFooter } from '../components/modalShell.js';
+import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShell.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
@@ -62,7 +63,7 @@ const DRAG_HOLD_MS = 250;
 // its snapshot mid-edit, and cancelling the stale one would undo a confirm.
 let liveEditor = null;
 
-export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, dragHoldMs = DRAG_HOLD_MS }) {
+export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, dragHoldMs = DRAG_HOLD_MS }) {
   if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
@@ -618,6 +619,19 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     panel.replaceChildren?.();
     if (!panel.replaceChildren) panel.innerHTML = '';
     panel.dataset.mobileView = mobileView;
+    if (onNavigate) {
+      const head = modalHead({ tabs: [
+        { id: 'character', label: t('progression.tab.character') }, { id: 'armory', label: t('armoury.hub.armory') }, { id: 'deck', label: t('armoury.hub.deck'), selected: true },
+      ], showMenuButton: false, onClose: doCancel, onTab: id => {
+        if (id === 'deck') return;
+        const result = session.confirm();
+        if (!result.ok) { notice = result.refusal || model.done.refusal; draw(); return; }
+        close(); onNavigate(id);
+      } });
+      for (const tab of head.querySelectorAll('[data-modal-tab]')) progressionTip(tab,
+        tab.dataset.modalTab === 'deck' ? 'Edit your deck' : `Save deck and open ${tab.textContent}`);
+      panel.append(head);
+    }
     panel.append(header(), el('div', { class: 'deck-editor-toolbar' }, [navigation(), tools()]), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
     restoreFocus();
   }
