@@ -121,6 +121,7 @@ export function createRunCombat({
     // was priced by (model/statRows.js). Snapshotted into the fight, so a saved
     // fight keeps the hand it was born with.
     ratingsRules: ratingsConfigFor(registries, run) || null,
+    breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion,
     handRules: runHandRules(registries, run, settings),
     // Play in deck order (SPEC §14.1): read here, once, like the other rules.
     orderedDraw: playInDeckOrder(settings),

@@ -1,3 +1,6 @@
+import { completedRunMeta, commitRunFinish } from './model/runCompletion.js';
+import { mountInitialClassMastery } from './ui/components/classMastery.js';
+import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
@@ -47,7 +50,6 @@ import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js
 import { questBoardModel, questExchange } from './ui/models/QuestBoardModel.js';
 import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
 import { smithServicesAt } from './model/cardExtraction.js';
-import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
@@ -211,7 +213,7 @@ let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
-function rebuildRegistries(configuration = {}) {
+function rebuildRegistries(configuration = {}, masteryRun = null) {
   const configured = configuredContentBundle(contentBundle, configuration);
   const result = validateContent(configured);
   const structuralProblems = advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
@@ -224,6 +226,7 @@ function rebuildRegistries(configuration = {}) {
   } else {
     registries = createRegistries(configured);
   }
+  registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;
@@ -1022,6 +1025,7 @@ let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback incr
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
+  if (!shotState) refreshRunClassMastery(run, saves.loadMeta(), registries);
   // The derived skill bonus is restamped at every save, so a level, a new card
   // or a swapped hand shows on the faces the next screen draws (SPEC §13.4o).
   stampSkillBonuses(registries, run);
@@ -1095,7 +1099,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1138,7 +1142,10 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  const configSnapshot = advancedConfigSnapshot(saves.loadMeta().settings || {});
+  const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}) };
+  // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
+  // the old Exposure states; the pose must also carry their older rules.
+  if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,
@@ -1149,6 +1156,11 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
+  if (quickStart) run.quickStart = true;
+  if (!shotState) {
+    openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
+    registries = registriesForClassMastery(registries, run);
+  }
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
   run.path = [];
   run.seenEvents = [];
@@ -1328,6 +1340,8 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   resetArmouryTraySession();
   activeSlot = slot;
   run = loaded;
+  refreshRunClassMastery(run, saves.loadMeta(), registries);
+  registries = registriesForClassMastery(registries, run);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
@@ -1339,7 +1353,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     const configured = configuredContentBundle(contentBundle, currentXpSnapshot);
     if (validateContent(configured).ok && advancedConfigStructuralProblems(contentBundle, currentXpSnapshot.overrides).length === 0) {
       run.advancedConfigSnapshot = currentXpSnapshot;
-      rebuildRegistries(currentXpSnapshot);
+      rebuildRegistries(currentXpSnapshot, run);
       persist();
     } else {
       showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
@@ -1353,6 +1367,10 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   // this run's stream counters and the previous run's rng is still standing
   // until the line above.
   if (run.prologue?.version === 1) { migratePrologueState(run); persist(); }
+  if (run.pendingFinish) {
+    const victory = run.pendingFinish.victory;
+    return showFinishedRun(victory);
+  }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
     mountPendingReward();
@@ -1739,7 +1757,7 @@ function persistSettingsChange(changed) {
     const problems = advancedConfigStructuralProblems(contentBundle, snapshot.overrides);
     if (validation.ok && problems.length === 0) {
       run.advancedConfigSnapshot = snapshot;
-      rebuildRegistries(snapshot);
+      rebuildRegistries(snapshot, run);
       if (xpCombat) xpCombat.registries = registries;
       persist();
     } else {
@@ -1843,20 +1861,19 @@ function showArmoury(request = '', returnTo = showMap) {
       persist();
     },
     onClose: returnTo,
-    onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo) : null,
+    onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
     onProgression: () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
-    onCharacterSheet: (opener) => showCharacterSheet(opener),
+    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards }),
   });
 }
 
-// The Character sheet (screens/characterSheet.js): read-only, over whatever
-// opened it. Which character-level rewards it lists are the player's own
+// The Progression hub opens over the current screen. Which character-level rewards it lists are the player's own
 // Settings → Advanced → Rewards answers, the ones the level door reads.
-function showCharacterSheet(opener) {
+function showCharacterSheet(opener, options = {}) {
   if (!run) return null;
   const settings = saves.loadMeta().settings || {};
   return openCharacterSheet({
-    registries, run, opener,
+    registries, run, opener, settings, onChange: persist, ...options,
     offers: {
       statPoints: settingOn(settings, 'rewardLevelStatPoints'),
       feats: settingOn(settings, 'rewardLevelFeats'),
@@ -1876,12 +1893,16 @@ function deckDoors(services = null) {
   return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
 }
 
-function showDeckEditor(returnTo = showMap) {
+function showDeckEditor(returnTo = showMap, hub = true) {
   if (!run) return;
   mountDeckEditor(document.body, {
     registries,
     run,
     settings: saves.loadMeta().settings || {},
+    onNavigate: hub ? destination => {
+      persist(); showArmoury(destination === 'character' ? 'grid' : 'rack', returnTo);
+      document.querySelector(`.armoury-head [data-modal-tab="${destination}"]`)?.focus({ preventScroll: true });
+    } : null,
     // A confirmed edit is written at once; a cancelled one restored the run
     // exactly (cancelDeckEdit), so there is nothing to write.
     onDone: () => { persist(); returnTo(); },
@@ -2071,13 +2092,39 @@ function treasureSmithingReward() {
 }
 
 function finishRun(victory) {
-  const result = runResult(victory);
-  const meta = saves.recordResult(result);
-  meta.progress = recordProgress(meta.progress, result);
-  const fresh = evaluateUnlocks(registries.unlocks, meta);
-  if (fresh.length) meta.unlocked = [...(meta.unlocked || []), ...fresh];
-  saves.saveMeta(meta);
-  return fresh.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
+  return commitRunFinish(run, {
+    victory,
+    finishId: run.classMasteryState?.receiptId || crypto.randomUUID(),
+    checkpoint: persist,
+    bank: () => {
+      if (!hasClassMastery(run)) return;
+      const bank = saves.bankClassMastery(run, registries);
+      if (!bank.ok) throw new Error(`Class mastery was not saved: ${bank.reason}`);
+      adoptClassMasteryProfile(run, bank.meta);
+      if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+    },
+    complete: (pending) => {
+      const result = { ...runResult(pending.victory), finishId: pending.id };
+      const completed = completedRunMeta(registries, saves.loadMeta(), result);
+      const saved = saves.saveMeta(completed.meta);
+      if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
+      return completed.unlocked.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
+    },
+    clear: () => {
+      saves.clearRun(activeSlot);
+      if (saves.hasRun(activeSlot)) throw new Error('The completed run could not be cleared from its slot.');
+    },
+  });
+}
+
+function showFinishedRun(victory) {
+  const result = finishRun(victory);
+  const retry = () => showFinishedRun(victory);
+  mountGameOver(app, { registries, game: run, victory, earned: result.earned,
+    onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry });
+  if (!result.ok) openSaveStatusReview({
+    ...runIdentityParts(), savedAt: run.savedAt ?? null, error: result.error, onRetry: retry,
+  });
 }
 
 function showCustomize(slot = 1, catalog = false) {
@@ -2098,6 +2145,8 @@ function showCustomize(slot = 1, catalog = false) {
       : null,
     onBack: showTitle,
     slot,
+    onSettings: showSettings,
+    onQuit: quitGame,
     // W2c REPLACE, AT THE WRITE BOUNDARY (FRONTEND-WIREFRAMES W1l/W2c): choosing
     // an occupied slot on the title touched nothing; Begin is where the old
     // climb would be written over, so this is where it is asked, naming both
@@ -2195,7 +2244,12 @@ function remountMapIfShowing(changed) {
 }
 
 function showMap(opts) {
-  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
+  if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
+  // Quick start previews its first fight after the required tree choice.
+  // Enter still confirms travel, and every other reachable route can be chosen.
+  const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon
+    ? run.mapGraph.startIds.find(id => run.mapGraph.nodes[id].type === 'monster') : null;
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : suggested;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
   if (run.legacyDungeon) return showLegacyDungeon({ selectedId });
@@ -2560,9 +2614,8 @@ function leaveLegacyDungeon() {
   if (run.journey) completeJourneyNode(run.journey, run.legacyDungeon.parentNodeId);
   delete run.legacyDungeon;
   if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (!run.journey && run.actNumber >= 3 && !endlessOn())) {
-    audio.music('victory'); sendLanStatus({ victory: true }); saves.clearRun(activeSlot);
-    const earned = finishRun(true);
-    return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
+    audio.music('victory'); sendLanStatus({ victory: true });
+    return showFinishedRun(true);
   }
   if (run.journey) { persist(); showMap(); } else advanceAct();
 }
@@ -2803,9 +2856,7 @@ async function onCombatEnd(result, combat, enc) {
     sfx.play('youDied');
     run.hp = 0;
     sendLanStatus({ dead: true });
-    saves.clearRun(activeSlot);
-    const earnedOnDeath = finishRun(false);
-    return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
+    return showFinishedRun(false);
   }
   // Settings → Advanced → Recovery: a won fight restores its after-combat
   // percent of each pool (0 at the defaults, model/recoveryRules.js).
@@ -2841,9 +2892,7 @@ async function onCombatEnd(result, combat, enc) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       sendLanStatus({ victory: true });
-      saves.clearRun(activeSlot);
-      const earned = finishRun(true);
-      return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
+      return showFinishedRun(true);
     }
     // Act boss down: boss rewards, then the climb continues.
     // A boss always drops an armament — unless you already own every one it
@@ -2937,7 +2986,8 @@ function rollLevelChoices(levelsEarned) {
     const options = [];
     if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
     if (offerClassTree && !run.classUnequipped) {
-      const level = Math.max(run.skills?.[classSkillId(run.class)]?.level || 0, firstRewardLevel + ordinal + 1);
+      const masteryLevel = run.skills?.[classSkillId(run.class)]?.level || 0;
+      const level = hasClassMastery(run) ? masteryLevel : Math.max(masteryLevel, firstRewardLevel + ordinal + 1);
       options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
         .map((id) => ({ kind: 'classNode', id })));
     }
@@ -3122,7 +3172,18 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
     onClaimSkill: (skillId) => {
+      const before = hasClassMastery(run) && skillId.startsWith('class:') ? { skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), classRewardLevels: { ...run.classRewardLevels } } : null;
       const claim = claimBankedSkillLevel(registries, run, skillId);
+      if (claim && before && run.classMasteryState.bankable) {
+        const bank = saves.bankClassMastery(run, registries);
+        if (!bank.ok) {
+          Object.assign(run, before);
+          showSettingsNotice(`Class level was not saved: ${bank.reason}`, 'profile');
+          return null;
+        }
+        adoptClassMasteryProfile(run, bank.meta);
+        if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+      }
       if (claim && skillId === classSkillId(run.class)) {
         run.classRewardLevels = { ...run.classRewardLevels, [run.class]: claim.after };
       }
@@ -3772,6 +3833,11 @@ if (shotState === 'combat-test') {
   // reason it gives: that const IS the gate's reach.
   const shotClass = shotParams.get('shotClass');
   newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', journeyProfile: shotState === 'atlas' ? (shotParams.get('shotProfile') || 'wanderer') : null, slot: 1 });
+  // In-memory QA fixture: earned attribute points. Feats come from actual claims.
+  if (shotParams.get('shotProgression') === '1') {
+    awardLevelXp(registries, run, levelXpToNext(registries, 1), { pointsPerLevel: 2 });
+    showMap();
+  }
   // `?shotNewerSlot=<n>` — STAND BESIDE A CLIMB FROM A NEWER BUILD. Slot n
   // gets slot 1's own bytes (the real writer's, just persisted by newRun) with
   // the schema one ahead, so the in-run Load door meets exactly what a newer

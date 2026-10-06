@@ -3,6 +3,196 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1651",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Crowded combat targets stay selectable",
+    "detail": "Numbered enemy targets make overlapping foes easy to select. Cards reject targets on the wrong side before spending resources, and enemies remain at least as tall as the player without shrinking sprites.",
+    "build": "0.7.1.1046",
+    "pullRequest": 1651,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1651"
+  },
+  {
+    "id": "pr-1623",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "The Windows installer link downloads the installer",
+    "detail": "The README's Windows installer link now downloads the latest test installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The release and main installers have their own direct links.",
+    "build": "0.7.1.1044",
+    "pullRequest": 1623,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1623"
+  },
+  {
+    "id": "pr-1681",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Inspect your starting stats and relic",
+    "detail": "Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.",
+    "build": "0.7.1.1043",
+    "pullRequest": 1681,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1681"
+  },
+  {
+    "id": "pr-1674",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Ready to begin, easier to read",
+    "detail": "Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.",
+    "build": "0.7.1.1041",
+    "pullRequest": 1674,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1674"
+  },
+  {
+    "id": "pr-1672",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative updates keep their build numbers current",
+    "detail": "Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.",
+    "build": "0.7.1.1039",
+    "pullRequest": 1672,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1672"
+  },
+  {
+    "id": "pr-1675",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Upgrade items in one continuous visit",
+    "detail": "Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.",
+    "build": "0.7.1.1038",
+    "pullRequest": 1675,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1675"
+  },
+  {
+    "id": "pr-1671",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Your character, gear and deck share one Armory",
+    "detail": "Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.",
+    "build": "0.7.1.1036",
+    "pullRequest": 1671,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1671"
+  },
+  {
+    "id": "pr-1668",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative combat keeps its own battlefield",
+    "detail": "New dev changes flow into alternative/dev after a protected merge verifies that its battlefield, HUD, cards and footer stay unchanged. Background and sprite updates remain eligible; unrelated conflicts stop for review. The pipeline builds and publishes the updated alternative preview.",
+    "build": "0.7.1.1034",
+    "pullRequest": 1668,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1668"
+  },
+  {
+    "id": "pr-1667",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative previews stay current without losing their changes",
+    "detail": "Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.",
+    "build": "0.7.1.1033",
+    "pullRequest": 1667,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1667"
+  },
+  {
+    "id": "pr-1666",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: modular class rewards and retraining",
+    "detail": "The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.",
+    "build": "0.7.1.1032",
+    "pullRequest": 1666,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1666"
+  },
+  {
+    "id": "pr-1664",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Smaller text fits more card descriptions",
+    "detail": "Card titles, rules, tags and cost numbers are two points smaller, including the automatic fitting range. More descriptions fit fully inside the existing card frame on desktop and phone.",
+    "build": "0.7.1.1031",
+    "pullRequest": 1664,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1664"
+  },
+  {
+    "id": "pr-1662",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Drive class mastery in full browser gates",
+    "detail": "The cold-boot walkthrough and map-camera persistence drive choose required class mastery nodes before entering the map, including when the walkthrough starts a second run. Both use real input and preserve the combat, storage and camera assertions; mastery door priority is covered by probe selftests.",
+    "build": "0.7.1.1029",
+    "pullRequest": 1662,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1662"
+  },
+  {
+    "id": "pr-1658",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Class mastery follows the profile into every new run",
+    "detail": "New solo runs and co-op seats open at profile mastery with core card pools, global item gates and a fresh tree pick per open tier. Solo claims bank cumulative XP immediately and add their unlocks to live rewards. Co-op reads profile mastery without banking earned progress. Books retain their named lessons, class swaps open at their own mastery, and legacy saves keep prior progression. Terminal save failures retain an idempotent receipt and offer Retry. Four hundred seeded runs finish without crashes or soft locks; browser reward, creation, tree-reset and quota-retry receipts live in docs/qa/class-mastery. Quick start still reaches its first played card in six inputs.",
+    "build": "0.7.1.1027",
+    "pullRequest": 1658,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1658"
+  },
+  {
+    "id": "pr-1659",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "The downloaded game opens again",
+    "detail": "The bundled game could stop before the title screen while checking class mastery and report that it could not create a loadout. The shared token helper now loads without that dependency loop. Card artwork, costs and gameplay rules are unchanged.",
+    "build": "0.7.1.1024",
+    "pullRequest": 1659,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1659"
+  },
+  {
+    "id": "pr-1656",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Every card gets its own painting",
+    "detail": "All 220 card identities and 17 equipment profiles now have portrait artwork in the existing card frame. Upgrades share their base painting, with names, costs and rules kept readable over the same card layout. The taller artwork leaves room to choose a crop in the card assembler, which also offers eight alternate paintings.",
+    "build": "0.7.1.1022",
+    "pullRequest": 1656,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1656"
+  },
+  {
+    "id": "pr-1655",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: class progress kept safely",
+    "detail": "Class mastery now has durable profile storage. Separate runs add their earned XP through receipts that make retries safe, and settings saves retain newer class progress. Returning profiles keep every authored unlock at level zero; live runs adopt mastery in the following update.",
+    "build": "0.7.1.1020",
+    "pullRequest": 1655,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1655"
+  },
+  {
+    "id": "pr-1654",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: class levels that last",
+    "detail": "The class mastery plan now has its card bundles, equipment, relics and twenty class feats authored, with checks that keep every starting kit intact and every school deep enough to offer a choice. This supplies the data for lasting class levels; runs still use their earlier progression until the profile and run screens adopt it.",
+    "build": "0.7.1.1018",
+    "pullRequest": 1654,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1654"
+  },
+  {
+    "id": "pr-1653",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "One bar to break",
+    "detail": "In a new run, physical and magical hits both fill Poise. Ward remains a defence against magic, shown in a fighter's details. A magical Stagger makes an enemy take more magic damage, and your Arcane properties work from that Stagger. Dodge Roll guards the shared bar. Runs saved before this change keep their earlier bars and rules.",
+    "build": "0.7.1.1010",
+    "pullRequest": 1653,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1653"
+  },
+  {
+    "id": "pr-1652",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Herald: a cup of Mana",
+    "detail": "Ember Communion joins the Herald's common cards. Spend 1 Stamina to restore 1 Mana and heal 2 HP. It Exhausts for the fight until you upgrade it, then returns to the discard pile like an ordinary skill.",
+    "build": "0.7.1.1006",
+    "pullRequest": 1652,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1652"
+  },
+  {
     "id": "pr-1648",
     "date": "2026-10-05",
     "group": "2026-10-05",

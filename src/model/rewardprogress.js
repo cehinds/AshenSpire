@@ -128,7 +128,7 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     const gained = Number.isFinite(trackGains[track.id]) && trackGains[track.id] > 0 ? Math.floor(trackGains[track.id]) : 0;
     const level = skillLevel(run, track.id);
     const xp = ledger && Number.isFinite(ledger.xp) ? Math.max(0, Math.floor(ledger.xp)) : 0;
-    if (!gained && !level && !xp) continue; // never touched, never paid — not a row
+    if (!gained && !level && !xp && !(track.kind === 'class' && run.classMasteryState)) continue; // never touched, never paid — not a row
     let next = null;
     try { next = skillXpToNext(registries, track.kind, level); } catch { next = null; }
     if (!(Number.isFinite(next) && next > 0)) continue; // no curve, no row
@@ -138,7 +138,7 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     rows.push(Object.freeze({
       kind: track.kind,
       id: track.id,
-      label: track.label || track.id,
+      label: track.kind === 'class' && run.classMasteryState ? `${track.label || track.id} mastery` : track.label || track.id,
       level,
       xp,
       xpToNext: capped ? null : next,

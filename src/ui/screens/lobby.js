@@ -1,3 +1,4 @@
+import { masteryClassSummary } from '../components/classMastery.js';
 // src/ui/screens/lobby.js — Forsaken Together lobby (LAN play, phase 1).
 //
 // Browse: light a fire (host) or join one found by UDP discovery (the list
@@ -46,6 +47,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     classId: registries.classes.all()[0].id,
     startingKitId: null,
     discoveredArmaments: [...new Set(meta.discoveredArmaments || [])],
+    classMastery: structuredClone(meta.classMastery || {}),
     tint: localStorage.getItem(TINT_KEY) || 'gold',
     spriteStyle: localStorage.getItem('sote_lan_style') || DEFAULT_SPRITE_STYLE,
     ready: false,
@@ -150,7 +152,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
             // The seat draws by its owner's Play in deck order (SPEC §14.1).
             playInDeckOrder: playInDeckOrder(meta.settings || {}) });
         } else if (msg.t === 'roster') {
@@ -210,7 +212,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
 
   /** A class card under the names the LAN instruments read (`.class-pick h3`). */
   function classCard(cls, chosen) {
-    const card = optionCard({ glyph: classGlyph(cls.id), name: cls.name, selected: chosen, arrow: false, className: 'class-pick cr-class', attrs: { dataset: { member: cls.id } } });
+    const card = optionCard({ glyph: classGlyph(cls.id), name: cls.name, description: masteryClassSummary(registries, meta, cls.id), selected: chosen, arrow: false, className: 'class-pick cr-class', attrs: { dataset: { member: cls.id } } });
     const heading = el('h3', { class: 'on', text: cls.name });
     card.querySelector('.on').replaceWith(heading);
     return card;
@@ -285,7 +287,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       card.addEventListener('click', () => {
         state.classId = cls.id;
         state.startingKitId = baselineKit(cls.id);
-        conn.send({ t: 'pick', classId: cls.id, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments });
+        conn.send({ t: 'pick', classId: cls.id, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery });
       });
       classes.appendChild(card);
     }
@@ -294,7 +296,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     });
     kitSeg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       state.startingKitId = b.dataset.val;
-      conn.send({ t: 'pick', startingKitId: b.dataset.val, discoveredArmaments: state.discoveredArmaments });
+      conn.send({ t: 'pick', startingKitId: b.dataset.val, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery });
     }));
     kitBox.appendChild(kitSeg);
     // Accent swatches: the chosen tint colors your sprite + party chips for
@@ -370,7 +372,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       if (state.players.length >= 4 || state.locals.length >= 3) return;
       const n = state.locals.length + 2;
       const classId = classList[(n - 1) % classList.length].id;
-      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
+      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
       renderLocals(); sendLocals();
     });
     leaveBtn.addEventListener('click', () => back());

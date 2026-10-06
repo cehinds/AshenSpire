@@ -130,6 +130,12 @@ export function combatSnapshotProblems(snapshot) {
     if (!ratings || typeof ratings !== 'object') problems.push('Combat ratings: missing rating rows');
     else for (const id of ratingIds) problems.push(...storedStatRowProblems(ratings[id], `Combat ratings: ${id}`));
   }
+  if (snapshot.breakMeterVersion !== undefined) {
+    if (snapshot.breakMeterVersion !== 1 || !snapshot.ratingsRules?.enabled) problems.push('breakMeterVersion requires version 1 and enabled ratings');
+    for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((entity, i) => [`enemies[${i}]`, entity])]) {
+      for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) if (entity?.[field] !== undefined) problems.push(`${path}.${field} is retired by breakMeterVersion 1`);
+    }
+  }
   // The fight's copy of the run's derived-stat rules prices the Poise vessel on
   // restore and is preferred over the run's own, so it is held to the same
   // door the run's is: a truthy but malformed copy (`{}`, a missing row) is

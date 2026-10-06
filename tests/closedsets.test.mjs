@@ -26,6 +26,21 @@ function tree() {
   return root;
 }
 
+test('exported function defaults and object values are readers, while named re-exports are not', () => {
+  const root = tree();
+  try {
+    const use = join(root, 'src/model/use.js');
+    writeFileSync(use, "import { REAL_SET } from './sets.js';\nexport { REAL_SET };\n");
+    assert.deepEqual(collect(root).sets[0].readers, [], 'import and re-export alone do not consume the set');
+    writeFileSync(use, "import { REAL_SET } from './sets.js';\nexport function choose({ values = REAL_SET } = {}) { return values[0]; }\n");
+    assert.equal(collect(root).sets[0].readers.length, 1, 'an exported function default evaluates the set');
+    writeFileSync(use, "import { REAL_SET } from './sets.js';\nexport const defaults = { values: REAL_SET };\n");
+    assert.equal(collect(root).sets[0].readers.length, 1, 'an exported object initializer evaluates the set');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('a file that is listed but gone by the time it is read does not crash the scan', () => {
   const root = tree();
   try {

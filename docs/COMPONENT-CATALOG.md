@@ -141,7 +141,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 |---|---|---|---|---|
 | `player.scenePainting` | `PlayerArtworkModel` | `scenePainting`, `servicePortrait` | Title, rest and services | Painted scenery with independent foreground layers. |
 | `player.engravedIcon` | `engravedGlyphId` | `engravedIcon`, `engravedIconHtml` | Shared controls | Current-color engraved icons with tier-aware masks. |
-| `illustrated-card` | `card-layout.json`, generated card objects | `illustratedCardHtml`, `fitIllustratedCardText` | All ability cards | Clipped proportional art, live centered rules, stamina/mana banners and tags. |
+| `illustrated-card` | `card-layout.json`, generated card objects, `extendedCardArtwork.js` | `illustratedCardHtml`, `fitIllustratedCardText` | All ability cards | Existing frame, live centered rules, stamina/mana banners and tags. Canonical card/profile portraits cover the artwork region with lower-action framing; upgrades reuse base artwork. |
 | `illustrated-background` | Environment artwork and floor model | `illustratedBackground` | Battlefields | Layered painting preserves authored floor anchors. |
 | `illustrated-vitality-hud` | `RunHudViewModel` | `hudmeta`, `runHud` | Run screens | Enlarged HP above relics with transparent background and illustrated controls; measured combat header clearance stays reserved. |
 | `skill-book-offer` | `consumablePurchasePlan`, shop `components.bookOffers` | `skillBookOffer.renderSkillBookOffer` | Market | Uniform book sprite, live details and native Buy control. |
@@ -331,6 +331,12 @@ title screen
       └─ title-modal-continue-control
 ```
 
+## Terminal save recovery composition
+
+| Component ID | Model | Renderer | Reuse surface |
+|---|---|---|---|
+| `run-finish-retry` | `commitRunFinish` + `SaveStatusModel` | `gameover.mountGameOver` + `main.showFinishedRun` | Victory or death after failed storage; shared status dialog Retry and persistent Game Over Retry resume one terminal receipt |
+
 ## Character Creation components
 
 These components are the production renderers used by Character Creation and
@@ -341,9 +347,9 @@ custom art does not require a second card implementation.
 | Component ID | Model / input | Renderer | Reuse |
 |---|---|---|---|
 | `character-disclosure` | disclosure entries | `disclosure.mountDisclosure` | Character Creation + catalog |
-| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` | Class preview + catalog |
-| `class-resource-grid` | `statProjection.derived[]` | `creationCards.classResourceGrid` | Class preview + catalog |
-| `class-choice-card` | class row + selected/locked state | `creationCards.classChoiceCard` | Class selection + catalog |
+| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` + `classUnfold` | Class preview + catalog; compact contained sprite and icon beside class details. Native stat and relic buttons open shared modal details through `creationPreviewDetails`; stat definition and value precede the projected calculation at the bottom. |
+| `class-resource-grid` | `statProjection.derived[]` + hand resource rows | `creationCards.classResourceGrid` | Class preview + catalog; HP, SP, MP, opening Hand and Draw. Optional inspection callback renders native buttons with full accessible names. |
+| `class-choice-card` | class row + selected/locked/expanded state | `creationCards.classChoiceCard` | Class selection + catalog; folded choices are buttons, the expanded selected card is a labelled article so its detail buttons have no interactive ancestor. |
 | `view-mode-toggle` | view-mode state | `creationCards.viewModeToggle` | Class/Equipment + catalog |
 | `boolean-setting-toggle` | boolean setting state | `creationCards.booleanSettingToggle` | Auto-advance + future settings |
 | `selection-section-face` | label/value/visual receipt | `creationCards.selectionSectionFace` | Equipment disclosures + catalog |
@@ -404,14 +410,17 @@ Smith is a modal composition rather than an inline card dump:
 smith-upgrade-modal
 ├─ smith-candidate-card × distinct eligible owned armaments
 ├─ smith-upgrade-preview × selected armament's grouped card deltas
-├─ Back to Shrine (also Escape)
-└─ Confirm selected armament (disabled until selected and affordable)
+├─ Header: available Smithing Stones, then the close button
+├─ Upgrade selected armament in the preview pane (requires affordability)
+└─ Full-width Back to Shrine footer (also Escape)
 ```
 
-Selection is reversible presentation state. Back and Escape restore the Shrine
-without mutation. Confirm spends the displayed Smithing Stone cost, promotes exactly one
-armament for the run, refreshes every sourced basic card from that armament, and leaves the
-Shrine. Ordinary non-equipment cards retain their independent per-copy upgrade behavior.
+Selection takes one tap and opens every affected card preview expanded. The compact
+item list starts open. Back, the centered close glyph, and Escape return without
+spending another stone; completed upgrades remain saved. Confirm spends the displayed
+cost, promotes one item, and refreshes the picker while stones remain. The last stone
+uses the site's existing stay/leave rule. Ordinary non-equipment cards retain their
+independent per-copy upgrade behavior.
 
 ## Folding Tray session geometry
 
@@ -684,75 +693,4 @@ merchant armament offers and buy/sell inspection, reward armament inspection, an
 
 Item cards: equipmentCard.js owns the uniformly scaled poker canvas. collectibleCard.js composes authored potion/relic effects into that frame for Inventory, merchant shelves, and potion reward inspection. Listing tracks are fixed at 280px; reveals span the grid. Delegated hold feedback paints above card art and inspection gestures reach the existing hold owner. Full-text disclosure remains independent of equip gestures.
 Playing cards: card.renderCard now adds playing-poker-card. The brown-and-gold inset frame, art well and subdued type band match equipment cards. Combat dimensions, resource badges, live values, tag fitting and selected/unaffordable states retain their existing contracts. Validation: tools/card-feedback.mjs covers desktop/phone input and reduced motion; --shots also records the initial hand.
-Combat sizing: fitFan hands uniformly scale the complete 178px canvas to fit the current hand area. Titles and body use 16px canvas type, and titles wrap to two lines. One cost row above the title groups action, mana and stamina badges without covering text. Full details remain available through Information. BattlefieldStage grows sprites into available space and grounds their stacks near the hand, preserving HUD/intent clearance. Three-enemy phone fields fit without horizontal scrolling; four or more may scroll. Short-height battles scroll vertically instead of shrinking below readable card sizes.
-
-Mobile combat art: at widths up to 640px, figures render at 90% of their fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents retain their existing layout and size.
-
-Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
-
-Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
-
-World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
-masks, inspectable landmark overlays, and one native location dialog. It is laid
-out in W4b bands: a header, the map scene, and a context band for the selected
-place and its open roads. A Recenter / Enter footer closes the screen
-(`AtlasSelectionModel.js`: a tap selects, Enter travels or opens the current
-place). Local points select a detail pane instead of opening nested dialogs. The
-same renderer serves `world-atlas-preview.html`; its authoring controls and ID
-selector are isolated from the game. Actual service dispatch reuses the existing
-merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
-normalized content contract and `tools/world-atlas-qa.mjs` for browser checks.
-
-Equipment Information appears after the first touch selection, with a configurable delay and fade. Inventory short taps reveal it without equipping, and Inventory and Smith reserve room above their cards so the control remains reachable. The approved 60 percent art allocation remains; mechanics receive at least 54 pixels on the authored canvas.
-
-Shared modals contain keyboard focus in the top dialog, restore the opener on Escape, and activate tabs with arrows, Home and End. Narrow labels scale within readable bounds and settings categories remain horizontally scrollable. See `docs/preview/responsive-type/index.html`.
-
-Reward chooser: playing-card inspection yields face taps to reward selection; the separate Confirm control owns collection. Back retains selection and a failed save exposes a retry status without adding a duplicate card. Touch flicks retain the current shared TouchFlickModel and Accessibility controls.
-
-Selected content inspection: reward radio choices retain Information after Back and redraw. Keyboard focus reveals the same control. Reward, merchant, pile, inventory and smith card rows reserve space above the face, including wrapped rows. Smith extraction/installation item choices and mount rows expose Information without collecting, buying or confirming the service; explicit transaction controls retain ownership.
-
-`map-detail` shares viewport tile selection, decoded-image replacement and engraved fog between traditional/co-op and World Journey/Long Expedition. `mapPresentation.js` holds the tile budget, density cap and route widths; `mapArt.generated.js` owns asset versions and available dimensions. Tiles never carry node discovery or travel permissions.
-
-`local-map-camera` composes fixed-size accessible markers over adaptive detail imagery. `localMapPresentation.js` holds defaults and optional map-ID overrides; `LocalMapCameraModel` derives pan and anchored zoom. `LocalServiceModel` reads existing healing, smithing, refill and level-up plans without mutating the run. World Journey and Long Expedition share this location dialog.
-
-Relic reward rows open a collectible card and full effects before Take relic; Back leaves the reward pending. Map and combat relic slots open the same read-only collectible inspection. Playing-card inspection expands its text area and stacks card/details on phones so complete effects remain readable.
-
-Primary confirmation buttons use green when enabled and neutral styling when native or ARIA disabled. Reward Continue stays gold while any reward remains unresolved and turns green once all rows are taken or explicitly skipped; its existing hold and auto-collect behavior is preserved.
-Combatant overhead controls: `combatantOverhead.js` shares Information and enlarged intent between solo and co-op. Actions anchor 14 screen pixels above the card's visible artwork. Narrow controls retain the reserved formation x coordinate independently of the half-field sprite clamp, with their measured visible control union kept inside the field and six screen pixels between same-row controls sharing an overhead band. Information stacks above intent, or beside it on short landscape screens, and empty slots collapse. Its selected outline precedes the configured tooltip delay for hover, touch, and focus. Information opens the existing detailed body; overhead input never bubbles into combat targeting.
-
-Ready primary actions lift by 2px and scale to 1.015 without shifting surrounding layout. End Turn is ready only during the player phase when no affordable playable hand card remains; zero-Action cards still use their Mana/Stamina costs. Ready modal footers hide helper copy, retain secondary actions in their own row, and expand the primary button across the container. Reduced motion removes the transition.
-
-Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.
-
-
-Single-dagger coverage adds 32 skins across all 35 catalog armor entries to the
-equipment animation reference component. It selects only right dagger + left empty
-with one-hand grip. The visual miniature includes Rogue single dagger; the
-[full synchronized gallery](../art/dagger-outfits-2026-09-19/index.html) provides
-class/outfit filters, pose order, timing, portrait and conversation references.
-
-### Stats, conversions, and hand rules
-
-Advanced → Stats is the one editing area for everything an attribute turns
-into. Each trait is a topic — Actions, Draw & hand, HP, Stamina, Mana, Poise,
-Ward, AR, DR, PR — holding its stat row (ruleset 7: one editor per row, the
-same fields in the same order — Base, STR, DEX, CON, WIS, INT, Per level, Min,
-Max) and related constants under subsection headings
-(`models/AdvancedSettingsGroups.js` `statsSection`). Draw & hand keeps the
-Opening hand, Draw / turn and Hand size rows beside Retention & discards; Poise
-ends with the legacy meter rows used only while ratings are off.
-`src/ui/models/StatsPreviewModel.js` computes the worked example above each
-topic from the same configured bundle, derived-stat engine, hand rules and
-rating receipt the game uses (a new character through `createRunState`, so
-starting relics are included); `settings.js` renders it and redraws it after
-every edit. In-run previews use the character's current attributes and level;
-outside a run the example is a chosen class's starting attributes.
-
-`src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
-read-only card faces and footer buttons into the turn-end discard selector.
-Checkboxes select card instance IDs. Keep all/Confirm commit once; Close/Escape
-cancel without changing combat state. `src/engine/handRules.js` validates the
-selection independently before the turn can advance.
-
-### Ratings, Poise and Ward
-Advanced → Stats holds a topic for each rating's stat row, plus curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.
+Combat sizing: fitFan hands uniformly scale the complete 178px canvas to fit the current hand area. Titles and body use 16px canvas type, and titles wrap to two lines. One cost row above the title groups action, mana and stamina badges without covering text. Full details remain available through Information. Ba

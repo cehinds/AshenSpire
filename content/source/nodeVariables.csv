@@ -10,6 +10,7 @@
 #
 # columns: nodeId, variable, role
 nodeId,variable,role
+staggerBreak,magicalImpactAdd,magicalImpactAdd
 siphon,restoreMana,amount
 siphon,restoreMana_2,amount
 siphon,siphonMasteryLevel,level

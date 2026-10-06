@@ -137,10 +137,12 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 
 /* Close keeps the full accessible hit target above, while its visible square
    is 75% of that target. Every modal inherits the same smaller corner mark. */
-.modal-close { position: relative; background: transparent; border-color: transparent; }
+/* Match button.subtle specificity so its text-button padding cannot crush the icon. */
+button.modal-close { position: relative; padding: 0; background: transparent; border-color: transparent; }
 .modal-close > .modal-close-face {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 75%; height: 75%; pointer-events: none;
+  width: 75%; height: 75%; flex-shrink: 0; pointer-events: none;
+  font: 24px/1 Arial, sans-serif;
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2);
 }
 .modal-close:hover, .modal-close:focus-visible { background: transparent; border-color: transparent; }
@@ -1818,6 +1820,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .disc-face > .as-row .ls-hint { font-family: var(--font-body); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .disc-face > .as-row > .as-status { font: 600 1.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); flex: 0 0 auto; }
 .disc-face > .as-row.face-lite .ls-label { color: var(--parchment); font: 500 1.3rem/1.2 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.cc-primary-stat > .as-row.face-lite .ls-label { text-transform: none; }
 .disc-face > .as-row.face-lite > .as-status { color: var(--muted); font: 500 1.28rem/1 var(--font-body); }
 
 /* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
@@ -2119,7 +2122,12 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-item-type-row > .as-tag { color: var(--gold); }
 .smith-preview-region.as-pane { gap: 0.6rem; min-height: 0; overflow: hidden; background: var(--panel); }
 .smith-pane-status { flex: 0 0 auto; text-align: left; }
+.smith-upgrade-modal > .modal-head > .modal-head-actions { margin-left: auto; align-self: center; align-items: center; min-width: 0; flex-shrink: 1; }
+.smith-header-stones { text-align: right; min-width: 0; }
+.smith-upgrade-modal .modal-close > .modal-close-face { font: 24px/1 Arial, sans-serif; }
+.smith-upgrade-modal .modal-close > .modal-close-face::after { content: none; }
 .smith-preview-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.smith-upgrade-modal .smith-preview-host { flex: 1 1 0; overflow: hidden; }
 .smith-consequence { flex: 0 0 auto; margin: 0; }
 .mount-service-outcome { display: flex; gap: 1.2rem; align-items: flex-start; margin: 0.4rem 0 0.8rem; }
 /* The pane's card scrolls its facts; its padding-bottom is the cost strip's,
@@ -4329,23 +4337,27 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 .cc-summary-slot.unmet > .equipment-poker-card { outline:2px solid var(--danger); outline-offset:2px; border-radius:10px; }
 .cc-summary-unmet { margin:0; color:var(--danger); font-size:13px; line-height:1.35; }
 .cc-summary-empty { display:grid; place-items:center; aspect-ratio:var(--card-ratio); width:100%; max-width:var(--card-w-glance, 152px); border:1px dashed var(--line); border-radius:10px; color:var(--muted); }
-.cc-summary-character { position:relative; display:flex; flex-direction:column; gap:8px; width:100%; max-width:var(--card-w-glance, 152px); aspect-ratio:var(--card-ratio); overflow:visible; box-sizing:border-box; padding:12px; border:1px solid var(--gold); border-radius:10px; background:color-mix(in srgb, var(--gold) 6%, var(--panel)); cursor:help; }
+/* This summary sits beside equipment faces, whose frame is 5:7. The global
+   --card-ratio describes illustrated playing cards and may be a different shape. */
+.cc-summary-character { position:relative; display:flex; flex-direction:column; gap:6px; width:100%; max-width:var(--card-w-glance, 152px); aspect-ratio:5/7; overflow:visible; box-sizing:border-box; padding:10px; border:1px solid var(--gold); border-radius:10px; background:color-mix(in srgb, var(--gold) 6%, var(--panel)); cursor:help; }
 .cc-summary-eyebrow { color:var(--muted); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; }
 .cc-summary-name { margin:0; color:var(--gold); font:700 18px/1.15 var(--font-display); overflow-wrap:anywhere; }
 .cc-summary-character > .as-hairline { margin:0; }
 .cc-summary-stats { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px 10px; }
 .cc-summary-stats > .as-statpair { justify-content:space-between; font-size:13px; }
-.cc-summary-character > .cc-summary-stats:last-child { margin-top:auto; }
+.cc-summary-stats .sp-v { flex-shrink:0; overflow:visible; text-overflow:clip; }
+.cc-summary-character[data-summary-level='glance'] > .cc-summary-stats:last-child { margin-top:auto; }
 .cc-summary-more { grid-column:1 / -1; color:var(--muted); font:700 16px/0.7 var(--font-body); letter-spacing:0.15em; }
 .card-inspection-art > .cc-summary-character {
-  width:100%; max-width:var(--card-w-inspect,320px); min-height:0; aspect-ratio:var(--card-ratio); overflow:hidden; margin:0 auto;
+  width:100%; max-width:var(--card-w-inspect,320px); min-height:0; aspect-ratio:auto; overflow:visible; margin:0 auto; padding:14px; gap:10px;
   cursor:default;
 }
-.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats { grid-template-columns:minmax(0,1fr); gap:4px; }
+.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats { grid-template-columns:minmax(0,1fr); gap:8px; }
 .cc-summary-character[data-summary-level='inspect'] .cc-summary-stats > .as-statpair { font-size:14px; }
 .cc-summary-character[data-summary-level='inspect'] .cc-summary-stats .sp-k {
-  overflow:visible; text-overflow:clip; white-space:normal;
+  overflow:visible; text-overflow:clip; white-space:normal; font-size:12px; line-height:1.3; letter-spacing:0.06em;
 }
+.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats .sp-v { font-size:17px; }
 .card-inspection-modal:has(.cc-summary-character) .modal-body { overflow-y:auto; overflow-x:hidden; }
 .card-inspection-modal:has(.cc-summary-character) .card-inspection-layout { height:auto; align-content:start; }
 .card-inspection-modal:has(.cc-summary-character) .card-inspection-details { min-height:auto; overflow:visible; }
@@ -5462,6 +5474,7 @@ button[data-button-size] {
    written as custom properties by the screen; nothing here is a number. */
 .customize:not(.component-catalog) .modal-body.cz-scroll { display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 0; }
 .customize .cz-railed { flex: 1 1 auto; min-height: 0; height: 100%; width: 100%; }
+.customize .cz-railed[data-cat-nav='rail'] { grid-template-columns:19rem minmax(0,1fr); }
 .customize .cz-pane { overflow: auto; min-height: 0; height: 100%; }
 .customize .cz-pane > .cz-stage { height: auto; }
 .customize .modal-head .figure.cz-portrait {
@@ -5469,8 +5482,10 @@ button[data-button-size] {
   min-height: 0 !important; min-width: 0 !important; max-width: none; margin-inline-start: var(--creation-portrait-gap); border-radius: 50%; overflow: hidden; align-self: center;
 }
 .customize .modal-head .figure.cz-portrait > * { width: 100%; height: 100%; object-fit: cover; }
-.customize .cz-tab { display: flex; flex-direction: column; align-items: flex-start; gap: var(--creation-rail-gap); white-space: normal; }
-.customize .cz-tab-value { font-size: calc(1em * var(--creation-rail-value-scale)); color: var(--muted); }
+.customize .cz-tab { display:flex; flex-direction:row; align-items:center; gap:8px; white-space:normal; padding-block:10px; }
+.customize .cz-tab > .rail-label { flex:0 1 auto; min-width:0; }
+.customize .cz-tab-value { flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; font-size:calc(1em * var(--creation-rail-value-scale)); color:var(--muted); }
+.customize .cz-tab-value:empty { display:none; }
 .customize .cc-primary-stats { display: grid; grid-template-columns: repeat(var(--creation-attribute-columns), minmax(0, 1fr)); gap: var(--creation-attribute-gap); }
 .customize .cc-review { padding: 0 var(--creation-review-pad) var(--creation-review-pad); }
 
@@ -5502,42 +5517,68 @@ button[data-button-size] {
   grid-template-areas: "info info" "meters actions" "rail actions";
 }
 :root[data-layout='narrow'] .shared-hud .hud-control-grid { align-self: start; }
-/* W1c, the chosen card unfolds (owner, 2026-09-19): with
-   behavior.classPreview "unfold" the preview column is gone and the picked
-   class card opens to --creation-unfold-height, the portrait taking
-   --creation-unfold-portrait of its width and the summary the rest, nothing
-   past the card's box. The card is a flex row; the unfold wraps under it. */
+/* The chosen class puts a compact icon and contained sprite beside its details.
+   Let the card grow on narrow screens instead of clipping its description. */
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-preview-host,
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-divider { display: none; }
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
-.customize .cz-class.unfolded { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-items: center; height: max(var(--creation-unfold-height), var(--creation-unfold-min)); overflow: hidden; }
-.customize .cz-class.unfolded > .cc-class-unfold { grid-column: 1 / -1; min-height: 0; height: 100%; align-self: stretch; display: grid; grid-template-columns: var(--creation-unfold-portrait) minmax(0, var(--creation-unfold-summary)); gap: var(--creation-head-tools-gap); overflow: hidden; }
-.customize .cc-unfold-portrait { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 0; overflow: hidden; }
-.customize .cc-unfold-portrait > .figure.cc-unfold-art { display: block; height: 100% !important; width: auto !important; aspect-ratio: 1 / 1; max-width: 100%; max-height: 100%; min-height: 0; min-width: 0; }
+.customize .cz-railed .cz-class.unfolded { display:block; grid-column:1 / -1; height:auto; min-height:0; padding-block:1.2rem; }
+.customize .cz-class.unfolded > :is(.og, .ob) { display:none; }
+.customize .cz-class.unfolded > .cc-class-unfold { min-height: 0; display: grid; grid-template-columns: clamp(11rem, 16vw, 15rem) minmax(0, 1fr); gap:1rem; align-items:center; }
+.customize .cc-unfold-portrait { display:flex; align-items:center; justify-content:flex-start; gap:.6rem; min-width:0; }
+.customize .cc-unfold-class-icon { display:inline-flex; flex:0 0 auto; color:var(--gold); }
+.customize .cc-unfold-class-icon > * { width:2rem; height:2rem; }
+.customize .cc-unfold-portrait > .figure.cc-unfold-art { display:block; flex:1 1 auto; height:auto !important; width:min(100%, 12rem) !important; aspect-ratio:1 / 1; max-width:12rem; min-height:0; min-width:0; border:0; border-radius:0; background:none; box-shadow:none; }
 .customize .cc-unfold-portrait > .figure.cc-unfold-art > * { width: 100%; height: 100%; object-fit: contain; }
-.customize .cc-unfold-summary { display: flex; flex-direction: column; justify-content: center; gap: var(--creation-head-tools-gap); min-width: 0; min-height: 0; overflow: hidden; text-align: start; font-weight: normal; }
+.customize .cc-unfold-summary { display:flex; flex-direction:column; justify-content:center; gap:.55rem; min-width:0; text-align:start; font-weight:normal; }
+.customize .cc-unfold-heading { color:var(--gold); font:600 1.6rem/1.25 var(--font-display); }
+.customize .cc-unfold-description { color:var(--parchment); font-size:max(1.4rem, 14px); line-height:1.45; }
+.customize .cc-unfold-mastery { color:var(--muted); font-size:max(1.1rem, 11px); line-height:1.35; }
+.customize .cc-unfold-summary .cc-class-resource-grid { display:flex; flex-wrap:wrap; gap:.35rem .8rem; }
 .customize .cc-unfold-relic { display: inline-flex; align-items: center; gap: var(--creation-rail-gap); color: var(--ink-dim); font-size: calc(1em * var(--creation-rail-value-scale)); }
+.customize article.cz-class { cursor:default; }
+.customize article.cz-class .cc-unfold-heading { overflow-wrap:anywhere; }
+.customize .cc-preview-detail-trigger { display:inline-flex; align-items:center; align-self:flex-start; width:auto; min-width:0; min-height:0; padding:.2rem 0; border:0; border-radius:2px; background:transparent; color:inherit; font:inherit; line-height:inherit; text-align:start; white-space:normal; cursor:pointer; }
+.customize .cc-preview-detail-trigger :is(.ck, .cc-unfold-relic-name) { text-decoration:underline dotted; text-underline-offset:3px; }
+.customize .cc-preview-detail-trigger:hover { color:var(--gold); background:transparent; }
+.customize .cc-preview-detail-trigger:focus-visible, .customize article.cz-class:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+.cc-preview-detail-modal > .modal-body { padding:var(--modal-inset, 1.4rem); }
+.cc-preview-detail-body p { margin:0; }
+.cc-preview-detail-definition { font-size:max(1.4rem, 14px); line-height:1.5; }
+.cc-preview-detail-value { font-size:1.6rem; }
+.cc-preview-detail-calculation { border-top:1px solid var(--line-soft); padding-top:1.2rem; }
+.cc-preview-detail-formula { overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 .customize .cz-class.unfolded::after { display: none; }
 
 /* Creation is read top-to-bottom: compact stats, resources, then Continue.
    Only the workspace pane scrolls when enlarged text needs more room. */
-.customize #cz-primary-stats { gap:4px; }
+.customize .cc-character-grid { grid-template-columns:minmax(0,1fr); }
+.customize .cc-character-grid > .cc-stats-side { order:0; }
+.customize .cc-character-grid > .cc-preview-side { order:1; min-height:0; }
+.customize #cz-primary-stats { gap:4px; grid-template-columns:minmax(0,1fr); }
 .customize .cc-name-row { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:1rem; padding-block:.5rem; }
 .customize .cc-name-row > .r-trail { max-width:100%; width:100%; }
 .customize .cc-name-row .cz-name { width:100%; max-width:100%; }
 .customize #cz-primary-stats .cc-primary-stat.hosts-face > .as-row,
 .cc-stat-modal .cc-primary-stat.hosts-face > .as-row { min-height:var(--tap-floor); padding:.35rem .8rem; gap:.6rem; }
 .customize #cz-primary-stats .cc-primary-stat { min-height:var(--tap-floor); }
-.customize #cz-primary-stats .cc-primary-stat > .as-row { font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); }
+.customize #cz-primary-stats .cc-primary-stat > .as-row { font-size:max(1rem, calc(16px / var(--ui-zoom, 1))); }
 .customize #cz-primary-stats :is(.ls-label, .as-status) { font-size:inherit; }
-.customize #cz-primary-stats .ls-hint { font-size:max(.9em, calc(12px / var(--ui-zoom, 1))); line-height:1.25; }
+.customize #cz-primary-stats .ls-hint { font-size:max(1em, calc(14px / var(--ui-zoom, 1))); line-height:1.3; white-space:normal; overflow:visible; }
 .customize #cz-primary-group { gap:.6rem; }
+.customize #cz-statedit { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.6rem; align-items:center; }
+.customize #cz-statedit .cc-mode-edit { white-space:nowrap; min-height:var(--tap-floor); }
 .customize .cc-mode-select { width:100%; min-height:var(--tap-floor); padding:.4rem .8rem; font:inherit; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:var(--r-1); color-scheme:dark; }
-.customize .cz-stage .modal-btnrow.cc-primary-continue-row { position:static; margin-top:.5rem; padding:0; background:none; }
-.customize #cz-derived .cc-derived { display:flex; flex-wrap:wrap; gap:.35rem .75rem; }
-.customize #cz-derived .as-chip { padding:.15rem 0; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); }
+.customize .cc-primary-footer { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; align-items:center; }
+.customize .cz-stage .modal-btnrow.cc-primary-continue-row { position:static; margin:0; padding:0; width:auto; background:none; border:0; align-items:center; flex:0 0 auto; }
+.customize .cc-primary-continue-row .cc-primary-continue { flex:0 0 auto; width:max-content; min-width:11rem; padding-inline:1.2rem; }
+.customize .cc-primary-footer .cc-resource-row { display:contents; }
+.cc-derived:has(> .cc-resource-row) { display:flex; flex-direction:column; align-items:stretch; gap:.35rem; }
+.cc-resource-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:.35rem 1.25rem; }
+.customize #cz-derived .cc-derived { display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:.35rem .9rem; }
+.customize #cz-derived .as-chip { padding:.15rem 0; font-size:max(1rem, calc(16px / var(--ui-zoom, 1))); }
 .customize #cz-derived .as-chip .cv { font-size:inherit; }
-.customize #cz-derived .as-chip .ck { font-size:max(.8em, calc(11px / var(--ui-zoom, 1))); letter-spacing:.03em; }
+.customize #cz-derived .as-chip .ck { font-size:max(.875em, calc(14px / var(--ui-zoom, 1))); letter-spacing:.03em; }
 .customize .cc-equipment-details:empty { display:none; }
 .customize .cc-equip-group:has(> .cc-equipment-details:empty) { grid-template-columns:minmax(0,1fr); }
 .customize .cc-equip-group > .cc-card-selectors { --cc-choice-head:14px; grid-row:auto; overflow:visible; max-height:none; }
@@ -5666,16 +5707,19 @@ button[data-button-size] {
 
 /* Creation header: stable menu and a single, plain close control. */
 .customize .cz-menu-button { min-width: var(--tap-floor); min-height: var(--tap-floor); font: 24px/1 Arial, sans-serif; padding: 0; }
+.customize .cz-head-view-tools { flex: 0 0 auto; }
+@media (max-width: 600px) {
+  .customize .cz-head-view-tools .cc-view-option { padding-inline: 6px; min-width: var(--tap-floor); }
+}
 /* `--place-gap` is the ONE home for the hairline under the ☰ button: fx.js
    placeGap() reads this declaration, customize.js writes nothing, and
    tools/placement.mjs reads the same line the code used. */
 .customize .cz-head-tools.cz-header-menu { --place-gap: 8px; display: none; position: fixed; inset: auto; margin: 0; padding: 12px; width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--line-soft); border-radius: var(--r-2); box-shadow: 0 8px 24px #0008; }
-/* A window too short for four categories scrolls the menu instead of pinning
-   Review off the bottom edge (customize.js writes the max-height it was bound to). */
+/* Short windows scroll the game actions inside the available menu height. */
 .customize .cz-head-tools.cz-header-menu:popover-open { display: grid; gap: 12px; overflow: hidden auto; }
 .customize .cz-menu-navigation { display: grid; gap: 6px; }
 .customize .modal-head .modal-close { border: 1px solid var(--line-soft); }
-.customize .modal-head .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; font: 28px/1 Arial, sans-serif; }
+.customize .modal-head .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; }
 
 /* Keep all three creation header controls on the same square footprint. */
 .customize .modal-head :is(.figure.cz-portrait, .cz-menu-button, .modal-close) {
@@ -5877,4 +5921,93 @@ button[data-button-size] {
   .merchant-offer-details { padding-left: var(--book-compact-gap); }
   .merchant-offer-details > h3 { font-size: 1.5rem; }
   .merchant-offer-details > p { font-size: 1.2rem; }
+}
+/* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */
+.armoury[data-view="grid"] .armoury-views { display: none; }
+.armoury[data-view="grid"] .armoury-railed { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-view="grid"] .armoury-character { display: grid; grid-template-columns: minmax(16rem, .7fr) minmax(0, 1.3fr); grid-template-rows: auto minmax(0, 1fr); gap: .8rem 1.2rem; }
+.armoury[data-view="grid"] .armoury-character-stats { overflow: visible; gap: .6rem; }
+.armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: clamp(12rem, 28vh, 28rem); }
+.character-skill-section { display: grid; gap: .35rem; }
+.character-skill-progression { width: 100%; text-align: left; }
+.progression-summary, .progression-skill-button { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: .5rem; background: var(--panel, #201b16); color: var(--parchment); text-align: left; }
+button.progression-summary, .progression-attributes-toggle { display: flex; flex-direction: column; gap: .55rem; padding: .8rem 1rem; cursor: pointer; }
+.progression-banner-title { font-family: var(--font-display, serif); font-size: 1.6rem; }
+.progression-summary-line { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: 1.3rem; line-height: 1.5; }
+.progression-summary-line > span { white-space: nowrap; }
+.progression-summary-line strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+.progression-attributes-banner { display: flex; align-items: center; gap: .7rem; padding-right: 1rem; }
+.progression-attributes-toggle { flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; text-align: left; }
+.progression-points { flex: none; border: 1px solid var(--line); border-radius: .4rem; min-height: 44px; padding: .5rem .8rem; font: inherit; font-size: 1.3rem; color: var(--muted); background: transparent; cursor: default; }
+.progression-points.available { color: #e0f2ff; background: #16476c; border-color: #72c5ff; box-shadow: 0 0 .6rem #3faaff40; cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+.progression-points.available:is(:hover, :focus-visible) { transform: translateY(-2px); background: #205e8e; box-shadow: 0 0 1.4rem #52b8ff90; }
+.progression-attributes-detail { border-top: 1px solid var(--line); padding: .7rem 1rem; }
+.progression-attributes-detail[hidden] { display: none; }
+.progression-attributes-detail > .as-prose { margin: 0 0 .5rem; font-size: 1.2rem; }
+.progression-attributes-detail .cc-attribute-card { margin-block: .3rem; }
+.progression-summary:focus-visible, .progression-skill-button:focus-visible, .progression-attributes-toggle:focus-visible, .progression-points:focus-visible { outline: var(--focus-ring, 2px solid var(--gold)); outline-offset: 2px; }
+.progression-skill-button { display: block; padding: .4rem .6rem; min-height: 44px; cursor: pointer; }
+.progression-skill-button:is(:hover, :focus-visible), button.progression-summary:hover, .progression-attributes-toggle:hover { border-color: var(--gold); background: rgba(var(--accent-rgb), .08); }
+.progression-skill-button .as-meter { pointer-events: none; width: 100%; }
+.character-sheet.progression-hub .character-sheet-body { overflow: auto; }
+.character-sheet.progression-hub .cs-pane { overflow: visible; gap: .65rem; }
+.progression-track-list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.progression-feats .as-title-s { margin-block: 0 .3rem; }
+.progression-feat-list, .progression-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+.progression-levels { border: 1px solid var(--line); border-radius: .4rem; }
+.progression-levels > summary { min-height: 44px; padding: .75rem 1rem; cursor: pointer; }
+.progression-levels .cs-ladder { padding: .8rem; }
+.progression-associated-cards { display: flex; gap: 1rem; overflow-x: auto; padding: .5rem .25rem 1rem; }
+.progression-associated-cards > * { flex-shrink: 0; }
+.progression-inspection .cs-pane { overflow: visible; padding: 0; }
+.progression-inspection .cc-class-resource-grid { flex-wrap: wrap; }
+.progression-inspection .progression-stat-card { width: 100%; }
+.deck-editor:has(> .modal-head) { grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+@media (max-width: 680px) {
+  .armoury[data-view="grid"] .armoury-character { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: .6rem; }
+  .armoury[data-view="grid"] .armoury-character > * { grid-column: 1; grid-row: auto; }
+  .armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: calc(100px / var(--ui-zoom, 1)); }
+  .progression-track-list { grid-template-columns: minmax(0, 1fr); }
+  .progression-attributes-banner { flex-wrap: wrap; padding: .4rem .7rem; gap: .3rem; }
+  .progression-attributes-toggle { padding: .3rem; }
+  .progression-points { margin-left: auto; font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+  .progression-summary-line { font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); gap: .3rem .8rem; }
+  .progression-hub .cs-cadence { font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progression-points.available { transition: none; }
+  .progression-points.available:is(:hover, :focus-visible) { transform: none; }
+}
+
+.progression-inspection > .modal-body { padding: var(--modal-inset, 1.4rem); }
+.progression-points, .progression-skill-button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+
+.armoury[data-view="grid"] #armoury-view-select { display: none; }
+:is(.progression-attributes-detail, .progression-stat-card) .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
+:is(.progression-attributes-detail, .progression-stat-card) .ls { min-width: 0; }
+
+:is(.progression-attributes-detail, .progression-stat-card) .disc-face > .as-row .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
+
+/* Feats expose their effect before inspection, using the same framed option motif. */
+.progression-feats-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; }
+.progression-feats-heading .as-title-s { margin: 0; }
+.progression-feat-count { color: var(--muted); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.progression-feat-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+button.progression-feat-card { display: flex; flex-direction: column; align-items: stretch; gap: .55rem; width: 100%; min-width: 0; padding: 1rem 1.2rem; text-align: left; color: var(--parchment); border: 1px solid var(--line-soft); border-radius: var(--r-2); background-color: var(--panel); cursor: pointer; }
+button.progression-feat-card::after { content: none; }
+.progression-feat-topline, .progression-feat-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.progression-feat-name { color: var(--gold); font-family: var(--font-display); font-size: 1.6rem; }
+.progression-feat-state { flex: none; font-size: 1.1rem; color: var(--ink-dim); }
+[data-feat-owned='true'] .progression-feat-state { color: var(--good, #a2be91); }
+.progression-feat-effect { font: 400 1.35rem/1.5 var(--font-body); color: var(--parchment); }
+.progression-feat-footer { margin-top: auto; color: var(--ink-dim); font-size: 1.1rem; }
+.progression-feat-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.progression-feat-tag { border: 1px solid var(--line-soft); padding: .2rem .5rem; border-radius: var(--r-2); }
+.progression-feat-open { font-size: 2rem; line-height: 1; }
+button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--gold); background-color: color-mix(in srgb, var(--panel) 90%, var(--gold)); }
+.progression-feat-empty { padding: .9rem 1.1rem; border: 1px solid var(--line-soft); border-radius: var(--r-2); }
+.progression-feat-empty .as-prose { margin: .3rem 0 0; font-size: 1.25rem; color: var(--ink-dim); }
+@media (max-width: 680px) {
+  .progression-feat-list { grid-template-columns: minmax(0, 1fr); }
+  .progression-feat-effect { font-size: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
 }

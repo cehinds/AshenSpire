@@ -1,20 +1,16 @@
-// src/ui/screens/characterSheet.js — the Character sheet: every character
-// level and every skill track's ladder, each level saying what it grants.
-//
-// READ-ONLY. It claims nothing and picks nothing: levels are claimed at the
-// Level up door and its picks made there (SPEC §13.4o). This page is the map
-// of that road — where the player stands and what each level ahead pays.
-//
-// ON THE KIT: an xl W1 modal (openModal) with two head tabs, Character and
-// Skills. Character is one Meter (levelProgress, the bar the Armoury shows)
-// over the level ladder; Skills is a Rail of tracks beside the chosen track's
-// Meter, its cadence line and its ladder. Every number is the model's
-// (models/CharacterSheetModel.js); every word is a uiStrings row.
+// Progression hub and read-only skill / feat inspection. Reward claims and
+// attribute allocation use their existing game writers.
 
-import { el, meter, openModal, pill, prose, rail, railItem, statusText, titleS } from '../kit/index.js';
+import { el, meter, openModal, pill, prose, statusText, titleS, button } from '../kit/index.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { characterSheetModel, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
 import { levelProgress, skillProgressRows } from '../../model/progression.js';
+import { attributesCard, characterStatsButton, progressionTip } from '../components/progressionCards.js';
+import { skillInspection, ownedFeatInspections } from '../models/ProgressionInspectionModel.js';
+import { renderCard } from '../components/card.js';
+import { hideTooltip } from '../components/tooltip.js';
+import { pendingLevelCount } from '../../model/levelup.js';
+import { deferredProgressionCount, deferredOtherClassRewardCount } from '../../model/deferredProgression.js';
 import { t } from '../strings.js';
 
 const RARITY_WORDS = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' };
@@ -32,6 +28,7 @@ export function grantText(grant) {
     case 'classCard': return grant.pct >= 100 ? t('characterSheet.grant.classCard') : t('characterSheet.grant.classCardChance', { pct: grant.pct });
     case 'levelCard': return t('characterSheet.grant.levelCard');
     case 'cardDraft': return t('characterSheet.grant.cardDraft', { rank: grant.rank });
+    case 'masteryUnlock': return `Unlocks ${grant.names.join(', ')}`;
     case 'classNodeDraft': return t('characterSheet.grant.classNodeDraft');
     case 'rarity': return t('characterSheet.grant.rarity', { rarity: RARITY_WORDS[grant.rarity] || grant.rarity });
     case 'rankUp': return t('characterSheet.grant.rankUp');
@@ -74,15 +71,113 @@ function ladderRow(row) {
 
 const ladder = (rows, label) => el('ol', { class: 'cs-ladder', 'aria-label': label }, rows.map(ladderRow));
 
-function characterPane(registries, run, sheet) {
+function characterPane(registries, run, sheet, state) {
   const progress = levelProgress(registries, run);
-  return el('div', { class: 'cs-pane', dataset: { pane: 'character' } }, [
+  const levelDetails = el('details', { class: 'progression-levels' }, [
+    el('summary', { text: t('progression.levels') }), ladder(sheet.character.rows, t('progression.characterLevels')),
+  ]);
+  progressionTip(levelDetails.querySelector('summary'), 'Show every level and its rewards');
+  const rewards = pendingLevelCount(registries, run) + deferredProgressionCount(run);
+  const otherClassRewards = deferredOtherClassRewardCount(run);
+  const claim = state.onRewards ? button({ label: rewards ? `Level rewards · ${rewards} waiting` : t('progression.rewards') }) : null;
+  claim?.addEventListener('click', () => { state.close(); state.onRewards(); });
+  if (claim) progressionTip(claim, 'Open your level and skill reward choices');
+  return el('div', { class: 'cs-pane progression-character', dataset: { pane: 'character' } }, [
     meter({ stack: true, tone: 'xp', label: progress.label, value: progress.value, pct: progress.pct,
       cur: progress.capped ? null : progress.xp, max: progress.capped ? null : progress.xpToNext, ariaLabel: progress.sense,
       attrs: { class: 'cs-meter' } }),
     prose(t('characterSheet.character.cadence', { max: sheet.character.maxLevel }), { class: 'cs-cadence' }),
-    ladder(sheet.character.rows, t('characterSheet.tab.character')),
+    attributesCard({ registries, run, settings: state.settings, onChange: state.onChange ? () => { state.onChange(); state.show('character'); state.host.querySelector('.progression-points')?.focus({ preventScroll: true }); } : null }),
+    characterStatsButton({ registries, run, settings: state.settings }),
+    featButtons(registries, run, ownedFeatInspections(registries, run)),
+    levelDetails, claim,
+    otherClassRewards ? prose(`${otherClassRewards} saved rewards await their original class. Equip that class to claim them.`) : null,
   ]);
+}
+
+function tagList(registries, tags) {
+  return el('div', { class: 'progression-tags' }, tags.length ? tags.map(id => {
+    const node = registries.nodes.find(node => node.id === id);
+    const tag = pill({ label: node?.label || node?.name || id });
+    tag.tabIndex = 0;
+    progressionTip(tag, node?.description || node?.sense || id);
+    return tag;
+  }) : [statusText(t('progression.noTags'))]);
+}
+
+export function openFeatInspection({ registries, feat, opener }) {
+  let shell;
+  const back = button({ label: t('common.back') });
+  back.addEventListener('click', () => shell.close());
+  shell = openModal({ size: 'md', title: feat.name, eyebrow: t('progression.feat'), opener, showMenuButton: false,
+    className: 'progression-inspection', secondary: [back], onClose: hideTooltip, body: el('div', { class: 'as-stack' }, [
+      prose(feat.description), statusText(feat.owned ? t('progression.feat.acquired') + (feat.owned > 1 ? ` ×${feat.owned}` : '') : `Unlocks at skill level ${feat.minLevel || 1}`),
+      titleS(t('progression.tags')), tagList(registries, feat.tags),
+    ]) });
+  return shell;
+}
+
+function featButtons(registries, run, feats) {
+  return el('section', { class: 'progression-feats', 'aria-label': t('progression.feats') }, [
+    el('div', { class: 'progression-feats-heading' }, [titleS(t('progression.feats')),
+      el('span', { class: 'progression-feat-count', text: String(feats.length) })]),
+    feats.length ? el('div', { class: 'progression-feat-list' }, feats.map(feat => {
+      const status = feat.owned ? t('progression.feat.acquired') + (feat.owned > 1 ? ` ×${feat.owned}` : '')
+        : t('progression.feat.unlock', { n: feat.minLevel || 1 });
+      const node = el('button', { type: 'button', class: 'as-option progression-feat-card',
+        'aria-haspopup': 'dialog', 'aria-label': t('deckEditor.inspectNamed', { name: feat.name }),
+        dataset: { feat: feat.id, featOwned: String(!!feat.owned) } }, [
+        el('span', { class: 'progression-feat-topline' }, [
+          el('strong', { class: 'progression-feat-name', text: feat.name }),
+          el('span', { class: 'progression-feat-state', text: status }),
+        ]),
+        el('span', { class: 'progression-feat-effect', text: feat.description }),
+        el('span', { class: 'progression-feat-footer' }, [
+          el('span', { class: 'progression-feat-tags' }, feat.tags.map(id => {
+            const tag = registries.nodes.find(node => node.id === id);
+            return el('span', { class: 'progression-feat-tag', text: tag?.label || tag?.name || id });
+          })),
+          el('span', { class: 'progression-feat-open', 'aria-hidden': 'true', text: '›' }),
+        ]),
+      ]);
+      progressionTip(node, t('deckEditor.inspectNamed', { name: feat.name }));
+      node.addEventListener('click', () => openFeatInspection({ registries, feat, opener: node }));
+      return node;
+    })) : el('div', { class: 'progression-feat-empty' }, [
+      statusText(t('progression.noFeats')), prose(t('progression.feat.emptyHint')),
+    ]),
+  ]);
+}
+
+export function openSkillInspection({ registries, run, track, opener }) {
+  const model = skillInspection(registries, run, track);
+  const cards = el('div', { class: 'progression-associated-cards' }, model.cards.map(card => renderCard(registries, { cardId: card.id, upgraded: false })));
+  let shell;
+  const back = button({ label: t('common.back') });
+  back.addEventListener('click', () => shell.close());
+  shell = openModal({ size: 'xl', title: track.label, eyebrow: track.kind === 'class' ? t('progression.class') : t('progression.skill'),
+    opener, showMenuButton: false, className: 'character-sheet progression-inspection', secondary: [back], onClose: hideTooltip,
+    body: el('div', { class: 'as-stack progression-skill-detail' }, [
+      titleS(t('progression.cards')),
+      prose(model.requiresEquipment ? t('progression.cards.equip') : t('progression.cards.note')),
+      model.cards.length ? cards : statusText(t('progression.emptyCards')),
+      titleS(t('progression.tags')), tagList(registries, model.tags),
+      titleS(t('progression.bonuses')), prose(cadenceLine(registries, track)), featButtons(registries, run, model.feats),
+      titleS(t('progression.tree')), trackPane(registries, run, track),
+    ]) });
+  return shell;
+}
+
+export function skillTrackButton(registries, run, track, progress) {
+  const node = el('button', { type: 'button', class: 'progression-skill-button', 'aria-haspopup': 'dialog',
+    'aria-label': `${track.label}, level ${track.level}. Open progression`, dataset: { skill: track.id } }, [
+    meter({ stack: true, tone: 'skill', label: `${track.kind === 'class' ? 'Class · ' : ''}${track.label} · Level ${track.level}`,
+      value: progress.value, pct: progress.pct, cur: progress.capped ? null : progress.xp,
+      max: progress.capped ? null : progress.xpToNext, ariaLabel: progress.sense }),
+  ]);
+  progressionTip(node, `Open ${track.label} progression`);
+  node.addEventListener('click', () => openSkillInspection({ registries, run, track, opener: node }));
+  return node;
 }
 
 // The track's cadence, read off its own ladder: a clause only for a reward
@@ -121,27 +216,11 @@ function trackPane(registries, run, track) {
   ]);
 }
 
-const bodyHostOf = (state) => state.host || null;
-
 function skillsPane(registries, run, sheet, state) {
-  const selected = sheet.tracks.find((tr) => tr.id === state.track) || sheet.tracks[0];
-  if (!selected) return el('div', { class: 'cs-pane' }, prose(t('characterSheet.skills.none')));
-  state.track = selected.id;
-  const items = sheet.tracks.map((tr) => {
-    const item = railItem({ label: t('characterSheet.skills.railItem', { label: tr.label, n: tr.level, max: tr.maxLevel }),
-      current: tr.id === selected.id, member: tr.id,
-      className: `cs-rail-item${tr.touched ? ' touched' : ''}${tr.id === sheet.ownTrackId ? ' own' : ''}` });
-    item.addEventListener('click', () => {
-      state.show('skills', tr.id);
-      // The redraw replaced the rail: keep the keyboard on the item just chosen.
-      bodyHostOf(state)?.querySelector('.cs-rail .as-railitem.on')?.focus({ preventScroll: true });
-    });
-    return item;
-  });
-  return el('div', { class: 'cs-skills' }, [
-    rail(items, { class: 'cs-rail', 'aria-label': t('characterSheet.tab.skills') }),
-    trackPane(registries, run, selected),
-  ]);
+  const rows = skillProgressRows(registries, run, { includeUntouched: true });
+  const tracks = sheet.tracks.filter(track => (track.kind === 'class') === (state.tab === 'class'));
+  return el('div', { class: 'cs-pane progression-track-list' }, tracks.length ? tracks.map(track =>
+    skillTrackButton(registries, run, track, rows.find(row => row.id === track.id))) : [prose(t('progression.emptyClass'))]);
 }
 
 /**
@@ -149,27 +228,26 @@ function skillsPane(registries, run, sheet, state) {
  * → the modal shell. `offers` names which character-level rewards the
  * player's settings switch on (CharacterSheetModel DEFAULT_LEVEL_OFFERS).
  */
-export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null } = {}) {
-  const sheet = characterSheetModel(registries, run, { offers });
+export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, settings = {}, onChange = null, onRewards = null } = {}) {
   let bodyHost = null;
-  const state = { tab, track, show: null };
+  const state = { tab, track, show: null, settings, onChange, onRewards, close: null };
   const render = () => {
     if (!bodyHost) return;
-    bodyHost.replaceChildren(state.tab === 'skills' ? skillsPane(registries, run, sheet, state) : characterPane(registries, run, sheet));
+    const sheet = characterSheetModel(registries, run, { offers });
+    bodyHost.replaceChildren(state.tab !== 'character' ? skillsPane(registries, run, sheet, state) : characterPane(registries, run, sheet, state));
     bodyHost.dataset.tab = state.tab;
-    // Open on where the player stands, not on level 1 — scrolling the ladder's
-    // own pane only, never the page behind the modal.
-    const here = bodyHost.querySelector('.cs-ladder .cs-row[data-state="current"]');
-    const pane = here && here.closest('.cs-pane');
-    if (pane) pane.scrollTop = Math.max(0, here.offsetTop - (pane.clientHeight - here.offsetHeight) / 2);
   };
   state.show = (nextTab, nextTrack = state.track) => { state.tab = nextTab; state.track = nextTrack; render(); };
+  const back = button({ label: t('common.back') });
+  back.addEventListener('click', () => state.close());
   const shell = openModal({
     size: 'xl',
-    className: 'character-sheet',
+    className: 'character-sheet progression-hub',
+    eyebrow: t('progression.title'), secondary: [back],
     tabs: [
-      { id: 'character', label: t('characterSheet.tab.character'), selected: tab !== 'skills' },
-      { id: 'skills', label: t('characterSheet.tab.skills'), selected: tab === 'skills' },
+      { id: 'character', label: t('progression.tab.character'), selected: tab === 'character' },
+      { id: 'skills', label: t('progression.tab.skills'), selected: tab === 'skills' },
+      { id: 'class', label: t('progression.tab.class'), selected: tab === 'class' },
     ],
     onTab: (id) => state.show(id),
     showMenuButton: false, // a read-only page has no menu to offer
@@ -179,6 +257,7 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     ...(opener ? { opener } : {}),
     onClose,
   });
+  state.close = shell.close;
   markUiComponent(shell.panel, UI.characterSheet);
   render();
   return shell;

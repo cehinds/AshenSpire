@@ -160,7 +160,7 @@ on:
   # `release`, so no commit runs twice. Nothing was removed: every job and step
   # runs, unchanged, on every push to `test` and `release`.
   push:
-    branches: [test, release]
+    branches: [test, release, alternative/test, 'alternative/**/test']
   workflow_dispatch:
 
 # A PUSH to `test` or `release` is a promotion, and each promoted tree is its
@@ -170,8 +170,8 @@ on:
 # by its ref, so a newer dispatch on the same branch supersedes the older one
 # and a 3-OS matrix is not paid for twice.
 concurrency:
-  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'push' }}
+  group: ci-${{ github.ref_name }}-${{ (github.event_name == 'push' || startsWith(github.ref_name, 'alternative/')) && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' && !startsWith(github.ref_name, 'alternative/') }}
 
 permissions:
   contents: read
@@ -254,6 +254,18 @@ jobs:
             !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      - name: Install card artwork encoder for conversion tests
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python -m venv "$RUNNER_TEMP/card-art-python"
+            encoder="$RUNNER_TEMP/card-art-python/Scripts"
+          else
+            python3 -m venv "$RUNNER_TEMP/card-art-python"
+            encoder="$RUNNER_TEMP/card-art-python/bin"
+          fi
+          "$encoder/python" -m pip install Pillow==11.1.0
+          echo "$encoder" >> "$GITHUB_PATH"
       # The art packs, before anything builds, serves or tests this checkout (step 12).
       - uses: ./.github/actions/fetch-art
         with:
@@ -533,7 +545,7 @@ jobs:
         # The pack-shaped game and the light single file (step 8e).
         env:
           NODE_OPTIONS: --max-old-space-size=6144
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
@@ -675,7 +687,7 @@ jobs:
       - name: Build the standalone (about-changelog opens build/AshenSpire.html)
         # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main keep the full art.
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
@@ -753,7 +765,7 @@ jobs:
       - name: Build the standalone (the same build browser-guard makes)
         # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main keep the full art.
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
@@ -869,7 +881,7 @@ jobs:
       - name: Build the standalone (the same build browser-guard makes)
         # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main keep the full art.
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 

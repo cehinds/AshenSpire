@@ -1,0 +1,16 @@
+AshenSpire full-run simulation — 100 runs/class, greedy bot
+grace refill: ON  |  level-up points into constitution  |  allocation: shipped class presets
+
+Reaver      full-run wins 39/100  avg act 2.50  avg floor 13.0  deaths: boss×61
+  mastery XP/run: mean 304.3, median 330, p90 415, min 165, max 455 (100 fresh-profile seeds)
+
+graces visited 545, flask charges/grants poured 539
+character levels earned: 3.0 per run over 100 runs; 3.9 per full (victorious) run over 39 (shipped curve) — the acceptance band is 10-20 per full run: <-- OUT OF BAND (plan phase 6; a greedy bot, the ceiling a real climb approaches)
+XP earned per full run: 1461 (this curve's receipt: 8660 reaches level 11)
+attribute points assigned at shrines: 290 over 100 runs = 2.9 per run; over the 39 full runs: 3.8 per run
+event choices recorded: 233 over 100 runs, 3 of them answering a gated quest step (E12) — 0 gated steps across a fleet means the chain never entered the simulation
+class tree picks: 357 over 100 runs = 3.6 per run (plan phase 5b: the bot picks the first node offered)
+skill drafts taken: 396 over 100 runs = 4.0 per run (plan phase 4b: one per track per door, the bot takes the first card)
+cinder economy: 177007 left at run end = 1770 cinders per run unspent (the bot buys nothing at merchants; cinders buy no level since plan phase 6)
+No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.
+RESULT: 100 runs over 1 classes (100 fixed seeds each), every one to a win or a death — 39 wins, 0 crashes, 0 soft-locks.

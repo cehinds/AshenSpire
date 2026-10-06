@@ -1,3 +1,4 @@
+import { masteryUnlockName } from '../../model/classMasteryRun.js';
 import { isProgressionReward, progressionRewardUnlocked } from '../../model/deferredProgression.js';
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
 //
@@ -69,6 +70,7 @@ import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, ran
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
+import { breakPropertyRule } from '../../model/breakMeter.js';
 import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
@@ -569,8 +571,11 @@ export function mountRewards(app, {
     // since the number lands on the card faces rather than as a row to take —
     // and only for the cards it actually raised (a card sums its tracks' flats).
     const raised = owned().filter((inst) => skillBonusFor(registries, run, inst) > (bonusBefore.get(inst) || 0)).length;
+    const unlocks = run.classMasteryState && skillId.startsWith('class:') ? registries.classMastery.filter(row => row.classId === skillId.slice(6) && row.level === claim.after).map(row => masteryUnlockName(registries, row)) : [];
+    const unlockedLine = unlocks.length ? ` Unlocked: ${unlocks.join(', ')}.` : '';
     const flat = raised ? ` ${raised} card${raised === 1 ? '' : 's'} gain${raised === 1 ? 's' : ''} +1.` : '';
-    openLevelView(skillId, `${label} · Level ${claim.after}`, `Your ${label} skill is now level ${claim.after}.${flat}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
+    const mastery = run.classMasteryState && skillId.startsWith('class:');
+    openLevelView(skillId, `${label}${mastery ? ' mastery' : ''} · Level ${claim.after}`, `Your ${label}${mastery ? ' mastery' : ' skill'} is now level ${claim.after}.${flat}${unlockedLine}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
   }
 
   // THE LEVEL POPUP. What this claim unlocked, as the list's own blue rows:
@@ -1046,7 +1051,7 @@ export function mountRewards(app, {
     if (!progress || (!progress.character && !progress.skills.length)) return null;
     const skills = progress.skills.map((row) => progressRow(
       row,
-      row.kind === 'class' ? t('reward.progress.classTrack', { class: row.label }) : row.label,
+      row.kind === 'class' && !run.classMasteryState ? t('reward.progress.classTrack', { class: row.label }) : row.label,
     ));
     return el('section', { class: 'reward-progress', 'aria-label': t('reward.progress.heading') }, [
       el('h3', { class: 'as-eyebrow', text: t('reward.progress.heading') }),
@@ -1172,7 +1177,7 @@ export function mountRewards(app, {
       // An attribute pick's option (SPEC §13.4o): the attribute, now and after.
       const attribute = option.kind === 'attribute' ? { name: attributeLabel(option.id), now: run.attributes?.[option.id] ?? 0 } : null;
       const node = option.kind === 'classNode' ? (registries.nodes || []).find((entry) => entry.id === option.id) : null;
-      const rule = node && registries.propertyRules?.has(node.id) ? registries.propertyRules.get(node.id) : null;
+      const rule = node && registries.propertyRules?.has(node.id) ? breakPropertyRule({ registries, ratingsRules: registries.balance.combatRatings, breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion }, registries.propertyRules.get(node.id)) : null;
       const tokens = node ? nodeTokens(registries, node.id) : {};
       const sentence = String(rule?.textTemplate || '').replace(/\{(\w+)\}/g, (m, tok) => tokens[tok] !== undefined ? String(tokens[tok]) : m);
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
@@ -1190,7 +1195,7 @@ export function mountRewards(app, {
     }
     for (const nodeId of isNodeRow ? ids : []) {
       const node = (registries.nodes || []).find((n) => n && n.id === nodeId) || { id: nodeId, label: nodeId };
-      const rule = registries.propertyRules && registries.propertyRules.has(nodeId) ? registries.propertyRules.get(nodeId) : null;
+      const rule = registries.propertyRules && registries.propertyRules.has(nodeId) ? breakPropertyRule({ registries, ratingsRules: registries.balance.combatRatings, breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion }, registries.propertyRules.get(nodeId)) : null;
       const tokens = nodeTokens(registries, nodeId);
       const sentence = String((rule && rule.textTemplate) || '').replace(/\{(\w+)\}/g, (m, tok) => (tokens[tok] !== undefined ? String(tokens[tok]) : m));
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio', 'aria-checked': String(nodeId === selectedCardId), dataset: { pickId: nodeId, nodeId } }, [

@@ -1,3 +1,4 @@
+import { masteryClassSummary } from '../components/classMastery.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
@@ -35,7 +36,7 @@ import { creationMode, creationModeHasPoints, orderedAttributes, classAttributeP
 import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
-  selectStartingHand,
+  selectStartingHand, quickStartRunConfig,
 } from '../../model/characterCreation.js';
 import { pieceChip, setPieceChipChosen } from './equipment.js';
 import { ATLAS } from '../../model/worldAtlas.js';
@@ -64,6 +65,7 @@ import {
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
+import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../components/creationPreviewDetails.js';
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
@@ -80,7 +82,7 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   energy: 'Action Points (AP)',
   ar: 'Attack Rating (AR)',
   dr: 'Defense Rating (DR)',
-  pr: 'Power Rating (PR)',
+  pr: 'Potency Rating (PR)',
   openingHand: t('statsPreview.overview.openingHand'),
   draw: 'Cards drawn each turn',
 });
@@ -98,8 +100,10 @@ function showNode(node, on) {
 }
 
 export function mountCustomize(app, {
-  registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null, slot = null,
+  registries, meta = {}, defaultSeedString, onBack, onStart, onSettings = null, onQuit = null, catalog = false, shotPose = null, slot = null,
 }) {
+  // A new screen must never inherit another card's selection or spent tap.
+  clearSelection();
   // THE HAND A NEW CHARACTER IS PROMISED IS THE HAND ITS FIRST FIGHT DEALS
   // (Codex, #1294): the legacy derived `draw` row gives way to the Hand and
   // Draw chips read from the run's own hand rows (its class's opening hand),
@@ -113,35 +117,27 @@ export function mountCustomize(app, {
   // whose `i` had been read kept its first beat for the life of the page, and
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
-  clearSelection();
-  const firstClass = registries.classes.all()[0];
+  const defaults = quickStartRunConfig(registries);
+  const firstClass = registries.classes.get(defaults.classId);
   const creationLayout = registries.characterCreation.layout || {};
   const visibleModes = creationModeViews(registries);
-  // THE FLOW IS GATED (2026-09-11). Constantine: "continue to character
-  // didn't turn green after I selected a class". Nothing was waiting for a
-  // choice — class, Standard, keepsake and armour were all preselected at
-  // mount, and the section Continues were secondary-weight, which can never
-  // turn green. Now each step starts UNCHOSEN and its Continue refuses, with
-  // the reason as its tooltip, until the step is complete. `classId` still
-  // carries the first class so everything derived from it (preview, kit,
-  // relic) has a value; `classChosen` is whether the player has said so.
-  // The component catalogue keeps the old preselection: its specimens need
-  // a chosen state to draw.
+  // Start with the authored ready-to-play choices. Players can keep pressing
+  // Continue or change any choice; validation still gates incomplete edits.
   const gated = !catalog;
   const state = {
     classId: firstClass.id,
-    classChosen: !gated,
+    classChosen: true,
     name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
     spriteStyle: DEFAULT_SPRITE_STYLE,
-    keepsakeId: gated ? null : registries.characterCreation.keepsakes[0].id,
+    keepsakeId: defaults.keepsakeId,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
     startingSlotChoices: {},
     startingArmourId: null,
     startingRelicId: firstClass.startingRelic,
-    attributeMode: gated ? null : visibleModes[0].id,
+    attributeMode: defaults.attributeMode,
     attributes: null,
     classChoiceView: creationLayout.classChoiceView,
     equipmentChoiceView: creationLayout.equipmentChoiceView,
@@ -202,12 +198,12 @@ export function mountCustomize(app, {
       el('section', { id: 'cz-primary-group', class: 'as-stack cc-character-picker' }, [
         el('div', { id: 'cz-statedit', class: 'cz-statedit' }),
         el('div', { id: 'cz-primary-stats', class: 'as-stack tight cc-primary-stats' }),
-        el('div', { id: 'cz-derived', class: 'cc-derived', 'aria-label': 'Derived resources' }),
-        // The way on from the stats, bottom-right of the section: shown once a
-        // mode is chosen, green once the allocation is complete.
-        buttonRow({ size: 'long', className: 'end cc-primary-continue-row', buttons: [
-          button({ label: 'Continue', weight: 'primary', className: 'cc-primary-continue' }),
-        ] }),
+        el('div', { class: 'cc-primary-footer' }, [
+          el('div', { id: 'cz-derived', class: 'cc-derived', 'aria-label': 'Derived resources' }),
+          buttonRow({ size: 'long', className: 'end cc-primary-continue-row', buttons: [
+            button({ label: t('common.continue'), weight: 'primary', className: 'cc-primary-continue' }),
+          ] }),
+        ]),
       ]),
       el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' })),
     ]),
@@ -265,9 +261,11 @@ export function mountCustomize(app, {
   const railItems = creationRailItems({
     categories, current: categories[0],
     labels: Object.fromEntries(categories.map((id) => [id, t(`creation.category.${id}`)])),
-  }).map((entry) => {
+  }).flatMap((entry) => entry.id === 'character'
+    ? [{ ...entry, label: t('creation.primaryAttributes') }, { id: 'keepsake', label: t('creation.section.keepsake') }]
+    : [entry]).map((entry) => {
     const item = railItem({ label: entry.label, member: entry.id, id: `cz-tab-${entry.id}`, className: 'cz-tab', attrs: { 'aria-controls': 'cz-pane' } });
-    item.append(el('span', { class: 'cz-tab-value as-status' }));
+    item.replaceChildren(el('span', { class: 'rail-label', text: entry.label }), el('span', { class: 'cz-tab-value as-status' }));
     return item;
   });
   const rail = el('div', { class: 'as-rail cz-rail', role: 'tablist', 'aria-label': t('creation.categories'), 'aria-orientation': 'vertical', dataset: { surface: 'creationCategory' } }, railItems);
@@ -285,16 +283,24 @@ export function mountCustomize(app, {
   // active category's shows (owner, 2026-09-19: no row spent on a toggle).
   const classTools = el('div', { id: 'cz-class-view-toggle', class: 'cz-head-tool' });
   const equipmentTools = el('div', { id: 'cz-equipment-view-toggle', class: 'cz-head-tool' });
-  const headTools = el('div', { class: 'cz-head-tools' }, [classTools, equipmentTools]);
-  if (catalog) { close.hidden = true; flow.prepend(headTools); }
+  const viewTools = el('div', { class: 'cz-head-tools cz-head-view-tools' }, [classTools, equipmentTools]);
+  const headTools = el('div', { class: 'cz-head-tools' });
+  if (catalog) { close.hidden = true; flow.prepend(viewTools); }
   else {
+    head.insertBefore(viewTools, head.querySelector('.modal-head-actions'));
     headTools.classList.add('cz-header-menu');
     headTools.setAttribute('popover', 'auto');
-    const menu = el('button', { type: 'button', class: 'as-btn cz-menu-button', text: '\u2630', 'aria-label': 'Character menu', 'aria-haspopup': 'true', 'aria-expanded': 'false' });
+    const menu = el('button', { type: 'button', class: 'as-btn cz-menu-button', text: '\u2630', 'aria-label': t('creation.menu.title'), 'aria-haspopup': 'true', 'aria-expanded': 'false' });
     const navigation = el('div', { class: 'cz-menu-navigation' });
-    for (const id of categories) {
-      const item = el('button', { type: 'button', class: 'as-btn', text: t(`creation.category.${id}`) });
-      item.addEventListener('click', () => { activate(id); headTools.hidePopover(); });
+    const menuActions = [
+      { label: t('common.continue'), action: () => menu.focus() },
+      ...(onSettings ? [{ label: t('settings.title'), action: onSettings }] : []),
+      { label: t('creation.menu.main'), action: onBack },
+      ...(onQuit ? [{ label: t('creation.menu.quit'), action: onQuit }] : []),
+    ];
+    for (const { label, action } of menuActions) {
+      const item = el('button', { type: 'button', class: 'as-btn', text: label });
+      item.addEventListener('click', () => { headTools.hidePopover(); action?.(); });
       navigation.append(item);
     }
     headTools.prepend(navigation);
@@ -356,7 +362,6 @@ export function mountCustomize(app, {
       headTools.style.maxHeight = `${Math.max(0, view.height - (anchor.top + anchor.height + placeGap(headTools)) - PAD * 2)}px`;
       placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });
     });
-    close.querySelector('.modal-close-face').textContent = '\u00d7';
     close.before(portrait, menu, headTools);
   }
   const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back', attrs: { 'data-back': '' } });
@@ -502,24 +507,13 @@ export function mountCustomize(app, {
     state.startingKitId = kit.id;
     state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null };
     state.startingSlotChoices = {};
-    // Armour is the player's to choose: it starts unchosen and the armour
-    // step's Continue waits for it. Hands and relic keep the class defaults
-    // so the common case is one click per step, not four mandatory picks.
-    state.startingArmourId = gated ? null : armourChoices()[0].id;
+    const armour = armourChoices();
+    state.startingArmourId = (armour.find((piece) => piece.unlock === '') || armour[0]).id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
-    // A NEW CLASS IS A NEW ALLOCATION: the preset a class is biased toward is
-    // not the one the next class wants, so the points go back and the mode
-    // returns to unchosen, which puts the placeholder back and makes choosing
-    // it again a fresh allocation.
-    // ONLY IN THE GATED FLOW. This function runs at mount too, and the
-    // component catalogue deliberately mounts PRESELECTED — its specimens
-    // need a chosen state to draw (the note at the head of this screen). With
-    // the mode aliased to the one editable mode, clearing it here blanked the
-    // catalogue's own seed on the first call: the stat rows, the resources
-    // and the continue row stopped drawing, and catalogue Begin — which reads
-    // statsProblem() without modeProblem() — went green on an empty mode that
-    // createRunState refuses by name (review, #1217).
-    if (gated && hasPoints(state.attributeMode)) { state.attributeMode = ''; state.attributes = null; }
+    // A class change restores that class's complete preset without making
+    // the player choose the mode again. Explicit Assign Points still opens
+    // a fresh allocation through its own change handler.
+    state.attributes = classAttributePreset(registries, state.classId, state.attributeMode);
   }
 
   // ---- what each step still needs ------------------------------------------
@@ -611,17 +605,17 @@ export function mountCustomize(app, {
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
     })));
     const poise = playerPoiseThresholdReceipt(registries, run);
-    const ratings = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run);
-    const ratingRows = [['attack', 'AR', 'Attack'], ['guard', 'DR', 'Defense']].map(([role, faceLabel, label]) => {
-      const rating = ratings.find(row => row.role === role);
-      return { id: `${role}Rating`, faceLabel, value: rating?.receipt.value ?? 0,
-        formula: `${label} rating · ${rating?.profile.displayName || 'Unarmed'} · before card-specific modifiers.` };
-    });
+    // Legacy ratings-off configurations still expose their equipment kit
+    // attack and guard receipts. Modern totals come from the Poise receipt.
+    const legacyRatings = poise.ratings ? [] : equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run)
+      .filter((entry) => ['attack', 'guard'].includes(entry.role))
+      .map((entry) => ({ id: entry.role === 'attack' ? 'ar' : 'dr', value: entry.receipt.value,
+        formula: `${entry.profile.displayName} · before card-specific modifiers.` }));
     // resourceStrip drops the derived `poise` row itself and appends the whole
     // threshold as one chip; this call only renames three faces.
     const resources = creationResources(run, projection)
       .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) }));
-    $('#cz-derived').replaceChildren(resourceStrip([...resources, ...ratingRows], poise));
+    $('#cz-derived').replaceChildren(resourceStrip([...resources, ...legacyRatings], poise, { compact: true }));
     renderClassPreview();
   }
 
@@ -633,7 +627,11 @@ export function mountCustomize(app, {
       ? paintedPresentation(state.classId, state.startingArmourId, 'stand')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
-    const resources = classResourceGrid(classPreviewResources(run, projection));
+    const resourceOrder = ['hp', 'stamina', 'mana', 'openingHand', 'draw'];
+    const resources = classResourceGrid(classPreviewResources(run, projection)
+      .map((entry) => ({ ...entry, faceLabel: creationDerivedLabel(entry), inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.label }))
+      .sort((a, b) => resourceOrder.indexOf(a.id) - resourceOrder.indexOf(b.id)), { onInspect: openCreationStatDetail });
+    const inspectRelic = (selectedRelic, opener) => openCreationRelicDetail(selectedRelic, relicText(selectedRelic, registries), opener);
     if (!catalog && creationClassPreview() === 'unfold') {
       // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
       // picked card opens to the portrait and the summary. Before a pick the
@@ -641,10 +639,10 @@ export function mountCustomize(app, {
       for (const open of classBox.querySelectorAll('.cz-class.unfolded')) { open.classList.remove('unfolded'); open.querySelector('.cc-class-unfold')?.remove(); open.removeAttribute('aria-describedby'); }
       const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
       if (card) {
-        const unfold = classUnfold({ cls, sprite, resources, relic });
+        const unfold = classUnfold({ cls, sprite, resources, relic,
+          visual: classGlyph(cls.id), mastery: masteryClassSummary(registries, meta, cls.id), onRelicInspect: inspectRelic });
         card.classList.add('unfolded');
         card.append(unfold);
-        card.setAttribute('aria-describedby', unfold.id); // the button's description: the resources and the relic
       }
       $('#cz-class-preview-host').replaceChildren();
       return;
@@ -654,6 +652,7 @@ export function mountCustomize(app, {
       resources,
       relic,
       relicDescription: relicText(relic, registries),
+      onRelicInspect: inspectRelic,
     });
     $('#cz-class-preview-host').replaceChildren(previewPane);
   }
@@ -700,7 +699,7 @@ export function mountCustomize(app, {
     // (review, #1217). This button is that path, and it is a revision: the
     // committed numbers are on the steppers and Cancel puts them back.
     const editPoints = el('button', {
-      type: 'button', class: 'as-btn cc-mode-edit', text: 'Edit points',
+      type: 'button', class: 'as-btn cc-mode-edit', text: t('creation.editStats'),
       'aria-label': 'Edit your stat allocation',
     });
     editPoints.addEventListener('click', () => openPointBuy({ fresh: false }));
@@ -730,6 +729,7 @@ export function mountCustomize(app, {
   /** Stats settled: fold Primary Stats, unfold Keepsake, put the cursor there. */
   function advanceToKeepsake({ focus = true } = {}) {
     characterFold.open('keepsake');
+    if (!catalog) selectRailItem('keepsake');
     if (focus) seatFace('keepsake', $('#cz-keepsakes .cz-keepsake'));
   }
 
@@ -929,7 +929,9 @@ export function mountCustomize(app, {
     // with its unlock's hint; every shipped class is free until a row gates it.
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
       selected: state.classChosen && cls.id === state.classId,
+      expanded: !catalog && creationClassPreview() === 'unfold',
       visual: classGlyph(cls.id),
+      mastery: masteryClassSummary(registries, meta, cls.id),
       locked: !classAvailable(registries.unlocks, cls.id, meta),
       hint: classAvailable(registries.unlocks, cls.id, meta) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
       onChoose: () => {
@@ -937,6 +939,9 @@ export function mountCustomize(app, {
         state.classId = cls.id; state.classChosen = true; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         fitStage();
+        // The selected choice is now an article hosting detail controls.
+        // Keep keyboard focus on its replacement after the button is rebuilt.
+        if (!catalog && creationClassPreview() === 'unfold') focusCreationClassPreview(classBox.querySelector(`.cz-class[data-class="${cls.id}"]`));
       },
     }));
     // Before a pick the preview pane follows the pointer, so it is never a
@@ -974,7 +979,7 @@ export function mountCustomize(app, {
   }
 
   function renderEquipment(preferredOpenId = null) {
-    equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices() });
+    equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices(), meta });
     equipmentNodes = new Map();
     equipmentGateRefreshers = [];
     const refreshers = [];
@@ -1218,7 +1223,7 @@ export function mountCustomize(app, {
       .filter(entry => entry.id !== 'poise')
       .map(entry => ({
         id: entry.id,
-        label: creationDerivedLabel(entry),
+        label: entry.id === 'handSize' ? t('creation.handCapacity.short') : creationDerivedLabel(entry),
         inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.faceLabel,
         value: entry.value,
         explanation: entry.formula,
@@ -1434,6 +1439,11 @@ export function mountCustomize(app, {
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
   })), { structure: 'details' });
   markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
+  for (const key of ['primary', 'keepsake']) {
+    $('#cz-character-fold').querySelector(`[data-face="${key}"]`).addEventListener('click', () => {
+      if (!catalog) selectRailItem(key === 'keepsake' ? 'keepsake' : 'character');
+    });
+  }
   refreshCharacterFaces = () => {
     for (const row of characterRows) characterFold.setValue(row.key, row.value());
   };
@@ -1651,13 +1661,13 @@ export function mountCustomize(app, {
     refreshSectionFaces = () => {
       for (const item of railItems) {
         const rowFor = sectionRows.find((row) => row.key === item.dataset.member);
-        if (rowFor) item.querySelector('.cz-tab-value').textContent = rowFor.value();
+        item.querySelector('.cz-tab-value').textContent = ['class', 'equipment'].includes(item.dataset.member) && rowFor ? rowFor.value() : '';
       }
     };
     const nav = categoryNav({
       items: railItems, rail, ariaLabel: t('creation.categories'),
       choose: (id) => activate(id),
-      face: (item) => item.querySelector('.rail-label')?.textContent || item.firstChild?.textContent || item.dataset.member,
+      face: (item) => [item.querySelector('.rail-label')?.textContent || item.firstChild?.textContent, item.querySelector('.cz-tab-value')?.textContent].filter(Boolean).join(' · '),
       toggleClass: 'cz-cat-select', toggleId: 'cz-cat-select',
       onChange: ({ mode, open }) => { railed.dataset.creationNav = mode; railed.toggleAttribute('data-nav-open', open); },
     });
@@ -1693,18 +1703,24 @@ export function mountCustomize(app, {
   const stageProblems = { class: classProblem, character: characterProblem, equipment: activeEquipmentProblem, review: () => null };
   let current = categories[0];
   const categoryLabel = (id) => t(`creation.category.${id}`);
-  function activate(id) {
-    if (catalog || !categories.includes(id)) return;
-    current = id;
-    paneHost.replaceChildren(stages[id]);
-    paneHost.scrollTop = 0;
-    paneHost.setAttribute('aria-labelledby', `cz-tab-${id}`);
+  function selectRailItem(member) {
+    paneHost.setAttribute('aria-labelledby', `cz-tab-${member}`);
     for (const item of railItems) {
-      const on = item.dataset.member === id;
+      const on = item.dataset.member === member;
       item.classList.toggle('on', on);
       item.setAttribute('aria-selected', String(on));
       if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
     }
+  }
+  function activate(id) {
+    const member = id;
+    if (id === 'keepsake') id = 'character';
+    if (catalog || !categories.includes(id)) return;
+    current = id;
+    paneHost.replaceChildren(stages[id]);
+    paneHost.scrollTop = 0;
+    selectRailItem(member);
+    if (id === 'character') characterFold.open(member === 'keepsake' ? 'keepsake' : 'primary');
     const plan = creationFooterPlan({ categories, current: id });
     next.hidden = plan.primary !== 'next';
     start.hidden = plan.primary !== 'begin';

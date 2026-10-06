@@ -1,4 +1,6 @@
+import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
+import { advancedConfigSnapshot } from './advancedConfig.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -90,7 +92,9 @@ export const MAX_CARD_RANK = 99;
 // 19 (SPEC §15.4, §15.5 step 5): `attunedSigils`, the legendary sigils the run
 // holds attuned (a subset of `sigils`), rides the save. A v18-or-older save is
 // filled with [] at migrateRunSchema and its `sigils` are left untouched.
-export const RUN_SCHEMA_VERSION = 20;
+// 21: optional durable mastery run receipt and owner unlock snapshot. Older
+// runs keep their previous class curve and pools; migration never opts them in.
+export const RUN_SCHEMA_VERSION = 21;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -140,9 +144,9 @@ export function createRunState({
   const attributeModeSnapshot = creationModeSnapshot(registries, selectedAttributeMode);
   const idGen = createIdGen('rc');
   const baseStartingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
-  const hands = resolveCreationHands(registries, classId, startingHands, baseStartingKit);
+  const hands = resolveCreationHands(registries, classId, startingHands, baseStartingKit, profileMeta);
   const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}) };
-  const startingRelic = resolveCreationRelic(registries, classId, startingRelicId);
+  const startingRelic = resolveCreationRelic(registries, classId, startingRelicId, profileMeta);
   // E5 (#250): the set the run begins wearing. Resolved against the same
   // profile meta the kit above is — absent, the class's free set, which is
   // what createLoadout always chose. The loadout row is the persisted home;
@@ -169,6 +173,7 @@ export function createRunState({
   const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
+    advancedConfigSnapshot: advancedConfigSnapshot(profileMeta.settings || {}),
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
@@ -718,6 +723,9 @@ export const RUN_SHAPE = [
   // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },
+  { key: 'classMasteryState', type: 'object', optional: true },
+  { key: 'pendingFinish', type: 'object', optional: true },
+  { key: 'quickStart', type: 'boolean', optional: true },
   // SPEC §14.1. Required at schema 11: the owned cards the deck editor took out
   // of the deck. A preSideboard save (≤ 10) is filled with none at the
   // migration door. `editMintCounter` keeps minted basics' instance ids unique;
@@ -935,6 +943,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
   if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
+  if (run.classMasteryState !== undefined) problems.push(...classMasteryRunProblems(run.classMasteryState));
+  if (run.pendingFinish !== undefined && (typeof run.pendingFinish?.victory !== 'boolean' || typeof run.pendingFinish?.id !== 'string' || !run.pendingFinish.id)) problems.push('pendingFinish must hold a victory and completion ID');
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
@@ -1547,8 +1557,8 @@ export function migrateRunSchema(run) {
   // needs the deck's own attack slots, so the load door does it once
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ${RUN_SCHEMA_VERSION})`);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });

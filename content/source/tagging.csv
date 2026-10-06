@@ -1310,6 +1310,10 @@ card,,bloodPact,classification.skill
 card,,blightTouch,classification.attack
 card,,flagellation,classification.attack
 card,,penance,classification.skill
+card,,emberCommunion,classification.skill
+card,,emberCommunion,ritual
+card,,emberCommunion,fx:ritual
+card,,emberCommunion,fx:heal
 card,,litany,classification.skill
 card,,graveOffering,classification.attack
 card,,bloodletting,classification.skill

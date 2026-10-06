@@ -295,10 +295,12 @@ async function newGameFromTitle(label) {
   const typed = await ev(`document.querySelector('#seed-input').value`);
   await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin to accept the character');
   await press('#cz-start');
-  await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.map-scroll .map-node'))`, 'the opening or the map', MOUNT_MS);
+  await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-scroll .map-node'))`, 'the opening or the map', MOUNT_MS);
   if (await ev(`(() => { const s = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent)); if (!s) return false; s.dataset.fullRunSkip = '1'; return true; })()`)) {
     await press('[data-full-run-skip]');
   }
+  const opened = await leaveRoom();
+  if (opened !== 'map') throw new Error(`new run opened ${opened} instead of its map`);
   await until(`!!document.querySelector('.map-scroll .map-node.reachable')`, 'the act map with a lit node', MOUNT_MS);
   await skipTutorial();
   return { className, typed };
@@ -379,6 +381,7 @@ async function resolveFight() {
 // for a level claim, a level chooser, an XP bar still filling.
 const DOORS = {
   map: `.map-scroll .map-node.reachable`,
+  classMastery: `.class-mastery-node:not([disabled])`,
   veil: `.modal-veil`,
   gameover: `#to-title`,
   rewardVeil: `.reward-veil`,
@@ -404,6 +407,7 @@ const SNAPSHOT = `(() => { const out = {}; for (const [k, sel] of Object.entries
 function pickDoor(d) {
   if (d.map && !d.veil) return { done: 'map' };
   if (d.gameover) return { done: 'gameover' };
+  if (d.classMastery) return { press: DOORS.classMastery };
   if (d.combat) return { done: 'combat' };
   if (d.rewardVeil) {
     // An open chooser (a level card or draft the walk opened from the menu):
@@ -481,6 +485,8 @@ if (argv.includes('--selftest')) {
     ['a claimed level\'s reward waiting in the menu: open it', D({ rewardVeil: true, veil: true, levelOffer: true, rewardContinue: true }), DOORS.levelOffer],
     ['a level popup with its rewards taken: Continue', D({ rewardVeil: true, veil: true, levelContinue: true }), DOORS.levelContinue],
     ['the spoils with Continue enabled', D({ rewardVeil: true, veil: true, rewardContinue: true }), DOORS.rewardContinue],
+    ['a mastery choice before the map exists', D({ classMastery: true }), DOORS.classMastery],
+    ['a mastery choice over the map owns the next input', D({ classMastery: true, map: true, veil: true }), DOORS.classMastery],
     ['the map under no veil', D({ map: true }), 'map'],
   ];
   // Doors the game mounts DISABLED (event.js Continue until a response,

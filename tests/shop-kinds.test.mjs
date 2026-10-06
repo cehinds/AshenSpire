@@ -287,7 +287,7 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
   const addedSinceCapture = new Set(['hewingArc', 'sunderingChop', 'setTheShield', 'aegisOfEmbers', 'shieldCrash',
     'pinningShot', 'arrowVolley', 'nockAndWait', 'aimedShot', 'barbedArrow', 'bindingParry', 'whirlingGuard',
     'cinderSigil', 'ashenMote', 'emberVigil', 'readTheAsh', 'pyreOfCharts', 'ashCircle', 'kindledOmen', 'cinderLance',
-    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders']);
+    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders', 'emberCommunion']);
   const CAPTURE_REG = createRegistries({ ...contentBundle,
     classes: contentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => !addedSinceCapture.has(id)) })) });
   for (const n of seeds) {

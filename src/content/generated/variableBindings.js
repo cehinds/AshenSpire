@@ -5,6 +5,13 @@ export const variableBindings = [
   {
     "scope": "default",
     "scopeId": "",
+    "nodeId": "staggerBreak",
+    "variable": "magicalImpactAdd",
+    "balancePath": "exposure.staggerBreakImpact"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
     "nodeId": "siphon",
     "variable": "restoreMana",
     "balancePath": "exposure.siphonRefund"

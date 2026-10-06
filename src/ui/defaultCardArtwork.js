@@ -108,6 +108,7 @@ export const DEFAULT_CARD_ART = Object.freeze({
   "starSpark": "assets/cards/default-outline/icons/stars.svg",
   "astralInsight": "assets/cards/default-outline/icons/book.svg",
   "attune": "assets/cards/default-outline/icons/crystal.svg",
+  "emberCommunion": "assets/cards/default-outline/icons/heal.svg",
   "urgentHeal": "assets/cards/default-outline/icons/heal.svg",
   "bloodPact": "assets/cards/default-outline/icons/blood.svg",
   "blightTouch": "assets/cards/default-outline/icons/plague.svg",

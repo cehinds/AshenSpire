@@ -79,7 +79,7 @@ function scanTriggers(ctx, event) {
   // with or without a foundation ruleset — an ally's heal is the ally's.
   const everySeat = ctx.players && (
     (ctx.foundation && ['damageDealt', 'hpLost', 'enemyDied', 'statusApplied', 'impactDealt', 'attackEvaded', 'healed'].includes(event.type))
-    || event.type === 'healed');
+    || event.type === 'healed' || event.type === 'arcaneStagger');
   const owners = everySeat
     ? [...ctx.players.values()].filter((p) => p.entity.alive && p.connected).map((p) => p.entity) : [player];
   // Relics and stances react for their actual owner, including inactive co-op seats.

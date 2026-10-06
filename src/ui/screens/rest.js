@@ -605,12 +605,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   if (canInspectSmithing) {
     // Smith is a reversible modal transaction until its explicit Confirm.
     // Opening and selecting mutate presentation state only. Back and Escape
-    // return to the Shrine with the run byte-for-byte untouched; Confirm is
-    // the one item promotion and the one path that leaves the Shrine.
+    // return to the Shrine; Confirm promotes one item and returns to the
+    // picker while stones remain. Every completed upgrade is persisted.
     const smithOption = app.querySelector('#smith-opt');
     const openSmith = () => {
       let selectedItemRef = null;
-      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse });
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse, repeatUpgrades: true });
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,
@@ -619,11 +619,13 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           selectedItemRef = itemRef;
           modal.update(model());
         },
-        onBack: () => {},
+        onBack: () => { remount(); app.querySelector('#smith-opt')?.focus({ preventScroll: true }); },
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
           sfx.play('shrine');
-          if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
+          if (onLevelUp) onLevelUp();
+          if (run.smithingStones > 0) { openSmith(); return; }
+          if (multiUse) { remount(); return; }
           onDone(`Upgraded ${esc(receipt.itemName || receipt.armamentName)} to tier ${receipt.afterLevel}: spent ${receipt.cost} Stone.`);
         },
       });

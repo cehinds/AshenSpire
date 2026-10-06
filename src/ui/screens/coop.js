@@ -1,3 +1,5 @@
+import { mountInitialClassMastery } from '../components/classMastery.js';
+import { registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
@@ -738,10 +740,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function infoEl(entity, name, def = null) {
     return combatantInfo(name, opener => {
-      const resources = [
+        const resources = [
         { label: 'HP', value: entity.hp, max: entity.maxHp },
         { label: 'MP', value: entity.mana, max: entity.maxMana },
-        { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
+          { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
+          { label: t('combat.rating.ward'), value: entity.ratings?.ward },
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
@@ -1097,6 +1100,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   // ---- map (THE act map, mounted with a co-op viewer) ------------------------
   function renderMap() {
+    const member = snap.party.find(row => row.id === me);
+    if (member?.classMasteryState?.initialTreeTiers?.length) {
+      const treeRun = { ...member, class: member.classId };
+      app.replaceChildren();
+      return mountInitialClassMastery(app, { registries: registriesForClassMastery(registries, treeRun), run: treeRun, onChoose: nodeId => send({ t: 'chooseMasteryNode', nodeId }), onPersist: () => {}, onDone: render });
+    }
     const map = snap.map;
     if (!map) { app.innerHTML = '<div class="screen"><div class="coop-note">Loading the path…</div></div>'; return; }
 
