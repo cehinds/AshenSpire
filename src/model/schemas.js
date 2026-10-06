@@ -200,6 +200,7 @@ export const PREDICATES = Object.freeze([
   'turnMetric',
   'chargeAvailable',
   'eventChargeConsumed',
+  'eventDiscardExplicit',
   'enemyKilledWithStatus',
   'enemyNegativeStatusNew',
   'cardAbilityKindIs',

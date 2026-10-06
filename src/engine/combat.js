@@ -1406,7 +1406,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
       case 'grantCardCharge': {
         for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) {
           const token = tokenByIndexField.get(`${i}:${field}`);
-          if (token) tokens[token] = eff[field];
+          if (token) tokens[token] = Math.max(0, evalPreview(combat, action, eff[field], primary));
         }
         entry.value = null;
         break;

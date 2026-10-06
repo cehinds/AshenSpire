@@ -1,14 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
 import { progressionCards, progressionCardUnlocks, abilityCardUpdates } from '../src/content/progression/cards.js';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { createCombat } from '../src/engine/combat.js';
-import { executeAction } from '../src/engine/actions.js';
-import { createRng } from '../src/engine/rng.js';
-import { getStacks } from '../src/framework/statusSemantics.js';
 import { nodes } from '../src/content/generated/nodes.js';
 import { tagging } from '../src/content/generated/tagging.js';
+
+// Content remains independently authorable; integration can exercise these
+// same recipes against the assembled core and DSL without copying test data.
+const engineRoot = process.env.PROGRESSION_ENGINE_ROOT;
+const engineModule = path => import(engineRoot ? pathToFileURL(resolve(engineRoot, path)).href : new URL(`../${path}`, import.meta.url).href);
+const [{ contentBundle }, { createRegistries }, { createCombat }, { executeAction }, { createRng }, { getStacks }] = await Promise.all([
+  engineModule('src/content/index.js'), engineModule('src/model/registries.js'), engineModule('src/engine/combat.js'), engineModule('src/engine/actions.js'), engineModule('src/engine/rng.js'), engineModule('src/framework/statusSemantics.js'),
+]);
 
 const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards.filter(c => !progressionCards.some(n => n.id === c.id)), ...progressionCards] });
 const byName = name => progressionCards.find(c => c.name === name);

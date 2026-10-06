@@ -809,7 +809,11 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'grantCardCharge': {
-      for (const target of resolveTargets(ctx, action, eff.target)) grantAbilityCharge(target, eff);
+      for (const target of resolveTargets(ctx, action, eff.target)) {
+        const charge = { ...eff };
+        for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) charge[field] = Math.max(0, evalNum(ctx, action, eff[field], 0, target));
+        grantAbilityCharge(target, charge);
+      }
       break;
     }
     case 'draw': {

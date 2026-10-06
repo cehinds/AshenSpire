@@ -2403,7 +2403,10 @@ export function validateEffects(effects, path, vctx) {
       if (eff.abilityKind !== undefined && !['spell', 'maneuver'].includes(eff.abilityKind)) err(`${p}.abilityKind`, 'must be spell or maneuver');
       const chargeFields = ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup'];
       if (!chargeFields.some(field => eff[field] !== undefined)) err(p, 'charge must grant a numeric bonus');
-      for (const field of chargeFields) if (eff[field] !== undefined && (!Number.isInteger(eff[field]) || eff[field] < 0)) err(`${p}.${field}`, 'must be a non-negative integer');
+      for (const field of chargeFields) if (eff[field] !== undefined) {
+        if (typeof eff[field] === 'number' && (!Number.isInteger(eff[field]) || eff[field] < 0)) err(`${p}.${field}`, 'must be a non-negative integer');
+        else validateFormula(eff[field], `${p}.${field}`, vctx);
+      }
       if (eff.buildup !== undefined && !vctx.ids.statuses.has(eff.buildupStatus)) err(`${p}.buildupStatus`, 'must name a status');
       if (eff.damageScope !== undefined && !['effect', 'hit'].includes(eff.damageScope)) err(`${p}.damageScope`, 'must be effect or hit');
     }
@@ -2595,6 +2598,7 @@ const PREDICATE_FIELDS = {
   turnMetric: ['metric', 'tag', 'cardId', 'atLeast', 'atMost', 'snapshot'],
   chargeAvailable: ['key'],
   eventChargeConsumed: ['key'],
+  eventDiscardExplicit: [],
   enemyKilledWithStatus: ['status'],
   enemyNegativeStatusNew: ['statuses'],
   cardAbilityKindIs: ['kind'],

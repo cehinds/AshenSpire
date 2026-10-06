@@ -312,6 +312,8 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       return !!(pctx.owner || pctx.source || ctx.player)?.abilityRiders?.charges?.[pred.key];
     case 'eventChargeConsumed':
       return pctx.event?.type === 'cardChargeConsumed' && pctx.event.keys?.includes(pred.key);
+    case 'eventDiscardExplicit':
+      return pctx.event?.type === 'cardDiscarded' && pctx.event.explicit === true && ['effect', 'chosen', 'random'].includes(pctx.event.reason);
     case 'enemyKilledWithStatus': {
       const status = pctx.event?.targetStatusesBefore?.[pred.status];
       return pctx.event?.type === 'enemyDied' && (status?.meter?.value ?? status?.stacks ?? 0) > 0;

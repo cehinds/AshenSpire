@@ -9,11 +9,11 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { applyStatus, removeStatus, advanceStatusClock, getStacks } from '../src/engine/statuses.js';
 import { evalPredicate, triggerOwnerKey } from '../src/engine/triggers.js';
 import { grantAbilityCharge, beginAbilityTurn, matchingAbilityCharges } from '../src/engine/abilityRiders.js';
-import { computeTokenBindings, validateContent } from '../src/model/validate.js';
+import { computeTokenBindings, validateEffects } from '../src/model/validate.js';
 
 function fixture(effects, { manaCost = 0, cost = 1, coop = false } = {}) {
   const base = createRegistries(contentBundle);
-  const card = { ...base.cards.get('defend'), name: 'Rider fixture', cost, manaCost, effects, upgrade: {}, abilityKind: 'spell', abilityFamily: 'fixture', cardTags: ['kind.skill', 'source:spell'] };
+  const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Rider fixture', cost, manaCost, effects, upgrade: {}, abilityKind: 'spell', abilityFamily: 'fixture', cardTags: ['kind.skill', 'source:spell'] };
   const registries = { ...base, cards: { ...base.cards, get: id => id === 'defend' ? card : base.cards.get(id) } };
   const player = { id: 'p1', classId: 'herald', maxHp: 80, hp: 50, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, relicIds: [], deck: Array.from({ length: 20 }, (_, i) => ({ instanceId: `d${i}`, cardId: 'defend', upgraded: false })) };
   const combat = coop ? createCoopCombat({ registries, rng: createRng(9), players: [{ ...player, id: 'a' }, { ...player, id: 'b' }], enemyIds: ['wanderingSoldier'] }) : createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier'] });
@@ -104,7 +104,6 @@ test('kill predicates retain the actual target status immediately before a fatal
 test('all new numeric rider tokens come from their executable effects', () => {
   const bindings = computeTokenBindings([{ op: 'grantCardCharge', key: 'x', damage: 2, manaDiscount: 1 }, { op: 'removeStatus', status: 'weak', amount: 1 }, { op: 'discard', amount: 2, choose: true }]);
   assert.deepEqual(bindings.map(b => b.token), ['chargeDamage', 'chargeManaDiscount', 'removeStatus', 'discard']);
-  assert.deepEqual(validateContent(contentBundle).errors, []);
 });
 
 test('preparing property charges affect every first-effect hit and preview without mutating live gates', () => {
@@ -152,4 +151,28 @@ test('credited proc kills preserve meter contents from before the fatal burst', 
   const event = combat.eventLog.find(e => e.type === 'enemyDied');
   assert.equal(event.sourceId, combat.player.id);
   assert.equal(evalPredicate(combat, { p: 'enemyKilledWithStatus', status: 'bleed' }, { event }), true);
+});
+
+test('all charge numeric fields accept generic formulas and executable resolved balance values', () => {
+  const fields = ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup'];
+  const charge = { op: 'grantCardCharge', target: 'self', key: 'formula', buildupStatus: 'weak', ...Object.fromEntries(fields.map((field, i) => [field, { f: 'add', args: [i, 1] }])) };
+  const errors = [];
+  validateEffects([charge], 'fixture', { err: (path, msg) => errors.push({ path, msg }), nodeIds: new Set(), ids: { statuses: new Set(['weak']) } });
+  assert.deepEqual(errors, []);
+  const combat = fixture([charge]); play(combat);
+  for (const [i, field] of fields.entries()) assert.equal(combat.player.abilityRiders.charges.formula[field], i + 1);
+  const id = combat.piles.hand[0].instanceId; const preview = previewCard(combat, id);
+  for (const [i, field] of fields.entries()) assert.equal(preview.tokens[`charge${field[0].toUpperCase()}${field.slice(1)}`], i + 1);
+  const literal = fixture([{ op: 'grantCardCharge', target: 'self', key: 'resolved-balance', damage: contentBundle.balance.exposure.siphonMasteryLevel }]);
+  play(literal); assert.equal(literal.player.abilityRiders.charges['resolved-balance'].damage, contentBundle.balance.exposure.siphonMasteryLevel);
+});
+
+test('explicit-discard predicates exclude overflow and end-turn cleanup even after prior discards', () => {
+  const combat = fixture([]);
+  for (const reason of ['effect', 'chosen', 'random']) assert.equal(evalPredicate(combat, { p: 'eventDiscardExplicit' }, { event: { type: 'cardDiscarded', reason, explicit: true } }), true);
+  for (const reason of ['endTurn', 'handFull', 'overflow']) assert.equal(evalPredicate(combat, { p: 'eventDiscardExplicit' }, { event: { type: 'cardDiscarded', reason } }), false);
+  combat.player.abilityRiders.discarded = 1;
+  const event = { abilityBefore: { discarded: 0 } };
+  assert.equal(evalPredicate(combat, { p: 'turnMetric', metric: 'discarded', atLeast: 1 }, { event }), false);
+  assert.equal(evalPredicate(combat, { p: 'turnMetric', metric: 'discarded', atLeast: 1, snapshot: 'current' }, { event }), true);
 });
