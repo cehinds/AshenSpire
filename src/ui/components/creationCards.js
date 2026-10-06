@@ -48,12 +48,11 @@ function segmentButton({ label, ariaLabel, selected, className, dataset, onChoos
 }
 
 /**
- * The attribute face: a compact Row (short label + summary + current value)
+ * The attribute face: a compact Row (label + summary + current value)
  * inside a semantic details/summary fold, so the reveal (long name, sense,
- * derived lines) remains structurally attached to its own face. The short
- * label is deliberate: it keeps Character Creation and allocation rows the
- * same shape as the Armoury's Attributes card instead of growing a second,
- * wider primary-stat treatment.
+ * derived lines) remains structurally attached to its own face. The
+ * label includes the attribute name and abbreviation so players can read
+ * the bonus without having to decode the stat acronym.
  * `.disc-summary` rides on the hint for the instruments that read the folded
  * summary.
  */
@@ -62,7 +61,8 @@ function renderPrimaryStatCard(input, peers = null) {
   host.dataset.stat = input.id;
   const face = row({
     tag: 'span', className: 'face-lite',
-    labelNode: labelStack({ label: input.face.label, hint: input.face.summary || '' }),
+    labelNode: labelStack({ label: input.reveal?.title ? `${input.reveal.title} (${input.face.label})` : input.face.label,
+      hint: input.face.mainSummary || input.face.summary || '' }),
     status: input.face.value === '' || input.face.value == null ? '' : String(input.face.value),
   });
   face.querySelector('.ls-hint')?.classList.add('disc-summary');
@@ -111,15 +111,36 @@ export function primaryStatCard(input) {
  * doing, and three callers filtering by hand is three chances to forget
  * (review, #1217).
  */
-export function resourceStrip(rows, poise) {
-  const chips = rows.filter((entry) => entry.id !== 'poise').map((entry) => {
-    const item = chip({ key: entry.faceLabel, value: entry.value, attrs: { dataset: { stat: entry.id, formula: entry.formula } } });
-    attachTooltip(item, () => esc(entry.formula));
-    return item;
-  });
-  chips.push(chip({ key: 'Poise', value: poise.value, attrs: { dataset: { stat: 'poise' } } }));
-  if (poise.ratings) for (const id of ['ward', 'ar', 'dr', 'pr']) chips.push(chip({ key: id === 'ward' ? 'Ward' : id.toUpperCase(), value: poise.ratings[id], attrs: { dataset: { stat: id } } }));
-  const strip = statStrip(chips, { class: 'cc-derived', 'aria-label': 'Derived resources' });
+export function resourceStrip(rows, poise, { compact = false } = {}) {
+  const entries = new Map(rows.map((entry) => [entry.id, entry]));
+  entries.set('poise', { id: 'poise', value: poise.value, formula: poise.note || '' });
+  if (poise.ratings) for (const id of ['ward', 'ar', 'dr', 'pr']) {
+    entries.set(id, { ...entries.get(id), id, value: poise.ratings[id],
+      formula: `${id.toUpperCase()} ${poise.ratings[id]} · Includes attributes and equipment.` });
+  }
+  const labels = { hp: 'HP', stamina: 'SP', mana: 'MP', ar: 'AR', pr: 'PR', dr: 'DR', poise: 'Poise', ward: 'Ward', handSize: 'Hand Size', draw: 'Draw', openingHand: 'Opening Hand' };
+  const groups = [['hp', 'stamina', 'mana'], ['ar', 'pr'], ['dr', 'poise', 'ward'], ['handSize', 'draw'], ['openingHand']];
+  const known = new Set(groups.flat());
+  if (compact) {
+    groups.pop();
+    labels.handSize = t('statsPreview.hand.title');
+    const capacity = entries.get('handSize');
+    if (capacity) entries.set('handSize', { ...capacity,
+      formula: [capacity.formula, entries.get('openingHand')?.formula].filter(Boolean).join(' · ') });
+  }
+  const extra = [...entries.keys()].filter((id) => !known.has(id) && !['energy', 'attackRating', 'guardRating'].includes(id));
+  if (extra.length) groups.push(extra);
+  const lines = groups.map((ids) => {
+    const chips = ids.filter((id) => entries.has(id)).map((id) => {
+      const entry = entries.get(id);
+      const item = chip({ key: labels[id] || entry.faceLabel, value: entry.value,
+        attrs: { dataset: { stat: id, formula: entry.formula || '' } } });
+      if (entry.formula) attachTooltip(item, () => esc(entry.formula));
+      return item;
+    });
+    return chips.length ? el('span', { class: 'cc-resource-row' }, chips) : null;
+  }).filter(Boolean);
+  const strip = statStrip(lines, { class: 'cc-derived', 'aria-label': 'Derived resources' });
   return markUiComponent(strip, UI.resourceStrip);
 }
 
@@ -213,7 +234,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
  * inside the card, so it is the card that unfolds; the shares and the
  * height are the screen's --creation-unfold-* (creation.json).
  */
-export function classUnfold({ cls, sprite = null, resources = null, relic = null }) {
+export function classUnfold({ cls, sprite = null, resources = null, relic = null, visual = null, mastery = '' }) {
   // Spans only: this lives inside the card's <button>, which admits no div
   // and discards a group role. The card names the class; the portrait is
   // decoration here, and the resources and relic reach a reader through the
@@ -221,8 +242,14 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
   if (sprite && sprite.tagName === 'IMG') sprite.alt = '';
   const art = el('span', { class: 'as-artwell figure cc-unfold-art' }, sprite);
   const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
-    el('span', { class: 'cc-unfold-portrait' }, art),
+    el('span', { class: 'cc-unfold-portrait' }, [
+      el('span', { class: 'cc-unfold-class-icon', 'aria-hidden': 'true' }, visualNode(visual)),
+      art,
+    ]),
     el('span', { class: 'cc-unfold-summary' }, [
+      el('span', { class: 'cc-unfold-heading', text: cls.name }),
+      el('span', { class: 'cc-unfold-description', text: cls.description }),
+      mastery ? el('span', { class: 'cc-unfold-mastery', text: mastery }) : null,
       resources,
       relic ? el('span', { class: 'cc-unfold-relic' }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null,
     ]),

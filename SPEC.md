@@ -314,22 +314,26 @@ attribute 5. Mana's INT weight is 0.125 per the owner's sum-to-1 formula
 (`.5 w + 0.25 c + 0.125 str + 0.125 int = 1`).
 Equipment, relics and statuses are external addends on top (armour
 `poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses), as before. The
-owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's to 1.
+owner's current defaults (2026-10-06): STR adds 1 AR, DEX adds 1 DR,
+CON adds 1 HP and 1 Poise, WIS adds 1 Ward, and INT adds 1 PR per point.
+These main bonuses use one attribute each to make character creation readable.
+Mana and Stamina retain their separate configurable weights; existing saves
+keep their snapshotted rules.
 
 | Row (id) | Base | STR | DEX | CON | WIS | INT | Per level | Min–max | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| HP (`hp`) | 51 | 0.35 | — | 4 | 0.1 | — | 2 | — | Base 30 → 51 (A3, FINISH D28, 2026-09-27): the lowest stock pool covers the simulator's 90th-percentile HP lost over a run's first three fights; stock pools Reaver 70, Starseer 69, Rogue and Herald 59. The run clamps max HP to ≥ 1. |
+| HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Owner's +1 main-bonus defaults (2026-10-06); stock pools including starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. The run clamps max HP to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
-| Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
+| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | Pays card and combat costs; refills each turn. |
 | Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
 | Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; configurable per-class overrides remain available. |
 | Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards only reduce this when capacity is reached. |
 | Hand size (`handSize`) | 15 | — | — | — | — | — | — | 1–15 | Flat absolute capacity by default, independently configurable. |
-| AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
-| DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |
-| PR (`pr`) | 0 | — | 0.25 | 0.5 | 0.5 | 0.75 | — | — | 〃 |
-| Ward (`ward`) | 1 | — | 0.2 | 0.3 | 1 | 0.5 | — | — | 〃 |
-| Poise (`poise`) | 1 | 0.5 | — | 1 | 0.3 | 0.2 | — | — | ONE Poise: the rating with ratings on, the vessel with them off; armour and relics add. |
+| AR (`ar`) | 0 | 1 | — | — | — | — | — | — | Read while combat ratings are on. |
+| DR (`dr`) | 0 | — | 1 | — | — | — | — | — | 〃 |
+| PR (`pr`) | 0 | — | — | — | — | 1 | — | — | 〃 |
+| Ward (`ward`) | 1 | — | — | — | 1 | — | — | — | 〃 |
+| Poise (`poise`) | 1 | — | — | 1 | — | — | — | — | ONE Poise: the rating with ratings on, the vessel with them off; armour and relics add. |
 
 | Output | Default formula | Meaning |
 |---|---|---|
