@@ -553,17 +553,18 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       const plan = smithingPlan(registries, run);
       const el = smithOption('shop-upgrade', '⚒', 'Upgrade an Item',
         plan.candidates.length ? `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'} · choose one owned armament.` : 'No owned armament has an effective tier remaining.',
-        plan.candidates.length > 0, () => {
+        plan.candidates.length > 0, function openUpgrade() {
           let selectedItemRef = null;
-          const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse: true });
+          const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse: true, repeatUpgrades: true });
           const modal = mountSmithUpgradeModal(app, model(), {
             registries, meta, returnFocusElement: el,
             onSelect: (itemRef) => { selectedItemRef = itemRef; modal.update(model()); },
-            onBack: () => {},
+            onBack: () => { render(); app.querySelector('#shop-upgrade')?.focus({ preventScroll: true }); },
             onConfirm: (itemRef) => {
               commitSmithing(registries, run, itemRef);
               sfx.play('shrine');
               onChanged();
+              if (run.smithingStones > 0) { openUpgrade(); return; }
               render();
             },
           });
