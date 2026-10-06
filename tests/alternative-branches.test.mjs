@@ -129,20 +129,44 @@ test('generated conflicts are regenerated and the snapshot names the merged sour
   mkdirSync(join(dir, 'tools')); mkdirSync(join(dir, 'docs'));
   // These are generator boundaries: this fixture tests merge ordering and
   // provenance, not the production digest algorithm's own existing tests.
-  commit('tools/buildversion.mjs', "import {writeFileSync} from 'node:fs'; export function bumpOrdinal(){writeFileSync('buildordinal.json','regenerated');}");
+  commit('tools/buildversion.mjs', "import {readFileSync,writeFileSync} from 'node:fs'; export const release=()=> '0.7.1'; export function bumpOrdinal(){const previous=JSON.parse(readFileSync('buildordinal.json','utf8')); writeFileSync('buildordinal.json',JSON.stringify({release:release(),ordinal:previous.ordinal+1,digest:'regenerated'}));}");
   commit('tools/update-architecture.mjs', "import {writeFileSync} from 'node:fs'; writeFileSync('docs/ARCHITECTURE-CURRENT-DEV.md',process.env.ARCHITECTURE_SOURCE_SHA);");
-  commit('buildordinal.json', 'original');
+  commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 100 }));
   commit('docs/ARCHITECTURE-CURRENT-DEV.md', 'original');
   git('branch', '-f', 'alternative/dev', 'HEAD');
-  git('switch', 'alternative/dev'); commit('buildordinal.json', 'alternative build'); commit('variant.txt', 'retained');
-  git('switch', 'test'); commit('buildordinal.json', 'primary build'); commit('shared.txt', 'new primary');
+  git('switch', 'alternative/dev'); commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 101 })); commit('variant.txt', 'retained');
+  git('switch', 'test'); commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 103 })); commit('shared.txt', 'new primary');
   const after = mergeAlternative(dir, 'test', 'alternative/dev', { regenerate: true });
-  assert.equal(git('show', `${after}:buildordinal.json`), 'regenerated');
+  assert.deepEqual(JSON.parse(git('show', `${after}:buildordinal.json`)), { release: '0.7.1', ordinal: 104, digest: 'regenerated' });
   assert.equal(git('show', `${after}:variant.txt`), 'retained');
   const merged = git('rev-parse', `${after}^`);
   assert.equal(git('show', `${after}:docs/ARCHITECTURE-CURRENT-DEV.md`), merged);
   assert.equal(git('show', `${merged}:shared.txt`), 'new primary');
 });
+
+for (const example of [
+  { name: 'an alternative counter ahead of primary', targetRelease: '0.7.1', targetOrdinal: 110, expected: 111 },
+  { name: 'a larger counter from an older release', targetRelease: '0.6.9', targetOrdinal: 900, expected: 104 },
+]) {
+  test(`receipt regeneration respects ${example.name}`, (t) => {
+    const { dir, git, commit } = fixture(t);
+    mkdirSync(join(dir, 'tools')); mkdirSync(join(dir, 'docs'));
+    commit('tools/buildversion.mjs', "import {readFileSync,writeFileSync} from 'node:fs'; export const release=()=> '0.7.1'; export function bumpOrdinal(){const previous=JSON.parse(readFileSync('buildordinal.json','utf8')); writeFileSync('buildordinal.json',JSON.stringify({release:release(),ordinal:previous.ordinal+1}));}");
+    commit('tools/update-architecture.mjs', "import {writeFileSync} from 'node:fs'; writeFileSync('docs/ARCHITECTURE-CURRENT-DEV.md',process.env.ARCHITECTURE_SOURCE_SHA);");
+    commit('buildordinal.json', JSON.stringify({ release: '0.6.9', ordinal: 100 }));
+    commit('docs/ARCHITECTURE-CURRENT-DEV.md', 'original');
+    git('branch', '-f', 'alternative/dev', 'HEAD');
+    git('switch', 'alternative/dev');
+    commit('buildordinal.json', JSON.stringify({ release: example.targetRelease, ordinal: example.targetOrdinal }));
+    commit('variant.txt', 'retained');
+    git('switch', 'test');
+    commit('buildordinal.json', JSON.stringify({ release: '0.7.1', ordinal: 103 }));
+    commit('shared.txt', 'promoted');
+    const after = mergeAlternative(dir, 'test', 'alternative/dev', { regenerate: true });
+    assert.equal(JSON.parse(git('show', `${after}:buildordinal.json`)).ordinal, example.expected);
+    assert.equal(git('show', `${after}:variant.txt`), 'retained');
+  });
+}
 
 test('nested preview indexes resolve play, downloads and root navigation correctly', () => {
   const branch = 'alternative/art/test';

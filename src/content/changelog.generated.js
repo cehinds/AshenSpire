@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Ready to begin, easier to read",
     "detail": "Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.",
-    "build": "0.7.1.1040",
+    "build": "0.7.1.1041",
     "pullRequest": 1674,
     "url": "https://github.com/cehinds/AshenSpire/pull/1674"
+  },
+  {
+    "id": "pr-1672",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative updates keep their build numbers current",
+    "detail": "Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.",
+    "build": "0.7.1.1039",
+    "pullRequest": 1672,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1672"
   },
   {
     "id": "pr-1675",
