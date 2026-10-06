@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1667",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative previews stay current without losing their changes",
+    "detail": "Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.",
+    "build": "0.7.1.1032",
+    "pullRequest": 1667,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1667"
+  },
+  {
     "id": "pr-1664",
     "date": "2026-10-06",
     "group": "2026-10-06",

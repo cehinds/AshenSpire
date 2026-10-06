@@ -138,6 +138,8 @@ function branchRoles() {
 }
 const BRANCH_ROLE = branchRoles();
 const NO_ROLE = 'no role recorded in git-ownership.json';
+const branchRole = (branch) => BRANCH_ROLE[branch] || (branch.startsWith('alternative/')
+  ? (channelRole(branch) === 'dev' ? 'Alternative development preview' : 'Alternative test preview') : NO_ROLE);
 // RULE 3'S SUBJECT, and it is not a list of site pages. These are THE BUILD and
 // the alias copies tools/launch.mjs keeps beside it. They are already on this
 // page — once per branch, per ordinal, byte-proven — so listing them again as
@@ -767,8 +769,8 @@ export function rootIndex(branchData, generatedAt, otherPages) {
   const cards = (data) => data.map((d) => {
     const { branch, builds } = d;
     const b = builds[0];
-    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}</section>`;
-    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}
+    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(branchRole(branch))}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}</section>`;
+    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(branchRole(branch))}</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}
 <p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
 <a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a>${b.mobileBytes ? ` <a class="play" href="${branch}/${b.ordinal}/mobile/">Play mobile</a>` : ''} ${downloadButtons('', b, '')} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
@@ -799,7 +801,7 @@ export function branchIndex(branch, builds, head, generatedAt, current = true, h
     ? `branch head <a href="${REPO_URL}/commit/${head}">${head.slice(0, 10)}</a>`
     : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
-<p><a href="${siteRoot(branch)}">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
+<p><a href="${siteRoot(branch)}">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(branchRole(branch))} · ${headLine}</p>
 ${uncommittedNote(branch, current, headTracksBuild)}
 ${skippedNote(branch)}
 ${builds.length && !current ? `<p><a class="play" href="${builds[0].ordinal}/">Play newest listed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play newest listed mobile</a>` : ''}</p>` : ''}

@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Alternative previews stay current without losing their changes** ([#1667](https://github.com/cehinds/AshenSpire/pull/1667), `0.7.1.1032`). Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.
+
 - **Smaller text fits more card descriptions** ([#1664](https://github.com/cehinds/AshenSpire/pull/1664), `0.7.1.1031`). Card titles, rules, tags and cost numbers are two points smaller, including the automatic fitting range. More descriptions fit fully inside the existing card frame on desktop and phone.
 
 - **Drive class mastery in full browser gates** ([#1662](https://github.com/cehinds/AshenSpire/pull/1662), `0.7.1.1029`). The cold-boot walkthrough and map-camera persistence drive choose required class mastery nodes before entering the map, including when the walkthrough starts a second run. Both use real input and preserve the combat, storage and camera assertions; mastery door priority is covered by probe selftests.

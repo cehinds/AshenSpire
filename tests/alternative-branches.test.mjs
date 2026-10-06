@@ -86,6 +86,40 @@ test('no alternative pairs is a successful no-op', (t) => {
   assert.deepEqual(syncAlternatives(dir, { push: true, regenerate: false }), []);
 });
 
+test('both alternative refs receive a safe promotion in one atomic push', (t) => {
+  const { dir, git, commit } = fixture(t);
+  const remote = join(dir, 'remote.git');
+  git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
+  git('switch', 'alternative/dev'); commit('variant.txt', 'custom content');
+  git('switch', 'test'); commit('shared.txt', 'promoted');
+  git('push', 'origin', 'test', 'alternative/dev', 'alternative/test');
+  const updates = syncAlternatives(dir, { push: true, regenerate: false });
+  assert.equal(updates.length, 2);
+  for (const { branch, sha } of updates) {
+    assert.equal(git('--git-dir', remote, 'rev-parse', branch), sha);
+    assert.equal(git('show', `${sha}:variant.txt`), 'custom content');
+    assert.equal(git('show', `${sha}:shared.txt`), 'promoted');
+  }
+  assert.equal(updates[0].sha, updates[1].sha, 'test can advance to the prepared dev result without rebuilding it');
+});
+
+test('a concurrent alternative test update rejects the entire push', (t) => {
+  const { dir, git, commit } = fixture(t);
+  const remote = join(dir, 'remote.git');
+  git('init', '--bare', remote); git('remote', 'add', 'origin', remote);
+  git('switch', 'test'); commit('shared.txt', 'promoted');
+  git('push', 'origin', 'test', 'alternative/dev', 'alternative/test');
+  const oldTest = git('rev-parse', 'origin/alternative/test');
+  const oldDev = git('rev-parse', 'origin/alternative/dev');
+  git('switch', 'alternative/test'); commit('variant.txt', 'concurrent owner edit');
+  git('push', 'origin', 'alternative/test');
+  const concurrent = git('rev-parse', 'HEAD');
+  git('update-ref', 'refs/remotes/origin/alternative/test', oldTest);
+  assert.throws(() => syncAlternatives(dir, { push: true, regenerate: false }), /atomic|rejected|failed/i);
+  assert.equal(git('--git-dir', remote, 'rev-parse', 'alternative/dev'), oldDev);
+  assert.equal(git('--git-dir', remote, 'rev-parse', 'alternative/test'), concurrent);
+});
+
 test('nested preview indexes resolve play, downloads and root navigation correctly', () => {
   const branch = 'alternative/art/test';
   const b = { branch, ordinal: 12, version: '0.7.8', digest: 'abcdef', sha: 'a'.repeat(40), built: '2026-10-06', bytes: 42, shape: 'pack', download: { bytes: 30 } };
