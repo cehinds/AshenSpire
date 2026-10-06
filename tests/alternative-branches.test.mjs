@@ -120,6 +120,26 @@ test('a concurrent alternative test update rejects the entire push', (t) => {
   assert.equal(git('--git-dir', remote, 'rev-parse', 'alternative/test'), concurrent);
 });
 
+test('generated conflicts are regenerated and the snapshot names the merged source', (t) => {
+  const { dir, git, commit } = fixture(t);
+  mkdirSync(join(dir, 'tools')); mkdirSync(join(dir, 'docs'));
+  // These are generator boundaries: this fixture tests merge ordering and
+  // provenance, not the production digest algorithm's own existing tests.
+  commit('tools/buildversion.mjs', "import {writeFileSync} from 'node:fs'; export function bumpOrdinal(){writeFileSync('buildordinal.json','regenerated');}");
+  commit('tools/update-architecture.mjs', "import {writeFileSync} from 'node:fs'; writeFileSync('docs/ARCHITECTURE-CURRENT-DEV.md',process.env.ARCHITECTURE_SOURCE_SHA);");
+  commit('buildordinal.json', 'original');
+  commit('docs/ARCHITECTURE-CURRENT-DEV.md', 'original');
+  git('branch', '-f', 'alternative/dev', 'HEAD');
+  git('switch', 'alternative/dev'); commit('buildordinal.json', 'alternative build'); commit('variant.txt', 'retained');
+  git('switch', 'test'); commit('buildordinal.json', 'primary build'); commit('shared.txt', 'new primary');
+  const after = mergeAlternative(dir, 'test', 'alternative/dev', { regenerate: true });
+  assert.equal(git('show', `${after}:buildordinal.json`), 'regenerated');
+  assert.equal(git('show', `${after}:variant.txt`), 'retained');
+  const merged = git('rev-parse', `${after}^`);
+  assert.equal(git('show', `${after}:docs/ARCHITECTURE-CURRENT-DEV.md`), merged);
+  assert.equal(git('show', `${merged}:shared.txt`), 'new primary');
+});
+
 test('nested preview indexes resolve play, downloads and root navigation correctly', () => {
   const branch = 'alternative/art/test';
   const b = { branch, ordinal: 12, version: '0.7.8', digest: 'abcdef', sha: 'a'.repeat(40), built: '2026-10-06', bytes: 42, shape: 'pack', download: { bytes: 30 } };

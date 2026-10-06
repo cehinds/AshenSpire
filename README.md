@@ -70,7 +70,7 @@ A browser roguelike with card combat, equipment, skill training, exploration, an
 - **Code layout:** `src/content/` holds data, `src/engine/` rules, `src/model/` schemas, `src/ui/` rendering, `styles/` CSS, `tests/` checks, and `docs/` contracts. Adding a card should touch one content file.
 - **Roadmap:** combat and run loop shipped; content is core implemented; polish and release acceptance remain open. [Acceptance tracking](docs/FINISH.md) · [Milestone criteria](SPEC.md).
 
-## Credits and license
+## Legal and credits
 
 - Code: [MIT license](LICENSE). Original fan-inspired work; no FromSoftware assets, music, or proper nouns, and no affiliation with FromSoftware or Bandai Namco.
-- [AI disclosure](src/content/aiDisclosure.js) records AI-assisted code, writing, artwork, and synthesized music. [Credits](CREDITS.md) records sources, rights, and provenance gaps; bundled lore fonts use SIL OFL.
+- “Ashen Spire was built by AI under human direction.” Anthropic Claude assisted with code and writing; OpenAI ChatGPT generated artwork. The [AI disclosure](src/content/aiDisclosure.js) records the full account, including synthesized music. [Credits](CREDITS.md) records sources, rights, and provenance gaps; bundled lore fonts use SIL OFL.
