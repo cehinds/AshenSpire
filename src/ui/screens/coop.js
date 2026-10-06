@@ -1,5 +1,6 @@
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
+import {mountCoopProgressionDoor,gateCoopProgressionControls} from '../components/coopProgressionDoor.js';
 import { mountInitialClassMastery } from '../components/classMastery.js';
 import { registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -258,7 +259,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const member = snap.party.find(member => member.id === ownerId);
       let plan;
       if (event.type === 'cardPlayed' && member) {
-        const definition = resolveCard(registries, { cardId: event.cardId, profileId: event.profileId, upgraded: event.upgraded });
+        const definition = resolveCard(registriesForClassMastery(registries,{...member,class:member.classId}), event);
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
         const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
         const animation = equipmentAnimationForLoadout(registries, member.loadout, member.classId);
@@ -294,11 +295,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // the door, so the picks are kept here, one entry per seat and door.
   const levelPicks = createLevelCardPicks();
   let progressionError='';
+  let progressionDoor=null,progressionHost=null,progressionSeat=null;
+  function disposeProgression(){progressionDoor?.dispose();progressionDoor=null;progressionHost=null;progressionSeat=null;}
 
   conn.setHandlers({
     onMessage: (msg) => {
       if (msg.t === 'rejoined') { seats = [msg.id]; seatIdx = 0; me = msg.id; return; }
-      if(msg.t==='progressionResult'&&msg.memberId===me){progressionError=msg.ok?'':msg.error || 'This progression claim could not be saved.';if(!msg.ok)render();return;}
+      if(msg.t==='progressionResult'&&msg.memberId===me){progressionError=msg.ok?'':msg.error || 'This progression claim could not be saved.';if(!msg.ok){progressionDoor?.rejectClaim(progressionError);render();}return;}
       if (msg.t === 'state') receiveSnapshot(msg.snapshot);
     },
     onClose: () => {
@@ -324,8 +327,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     cardChoiceShell = null;
     if (shell && shell.close) shell.close();
   }
-  const send = (obj) => {
+  const send = (obj,{progressionPopup=false}={}) => {
     if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard)) { showPendingDiscard(); return; }
+    if(progressionDoor&&!progressionDoor.ready&&!progressionPopup&&['chooseReward','catchupChoice','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(obj.t))return false;
     if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
     // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it
     // here, before its one network intent, from the same offer the host
@@ -333,7 +337,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (obj.t === 'playCard' && obj.choice == null) {
       const seat = latestWireSnap?.scene?.players?.find((entry) => entry.id === me);
       const inst = seat?.hand?.find((entry) => entry.instanceId === obj.cardInstanceId);
-      const def = inst ? resolveCard(registries, { cardId: inst.cardId, upgraded: inst.upgraded, mods: inst.mods, rank: inst.rank, skillBonus: inst.skillBonus, passiveBlock: inst.passiveBlock }) : null;
+      const def = inst ? cardDef(inst) : null;
       const plan = def ? cardChoice(registries, def, seat.classId, seat.stanceId) : null;
       if (plan) {
         // THE CHOOSER OWNS THE COUCH KEYBOARD while it stands (#1449 review,
@@ -422,6 +426,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function setSeat(i) {
     if (i === seatIdx || !seats[i]) return;
+    disposeProgression();
     seatIdx = i;
     me = seats[i];
     closeCoopPotions();
@@ -543,6 +548,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
   };
   const keyHandler = (ev) => {
+    if(progressionDoor?.choosing)return;
     if(isClassRespecOpen())return; // the reviewed class form owns Tab and Escape
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (cardChoiceShell) return; // the stance chooser owns the keyboard (see send)
@@ -596,6 +602,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    disposeProgression();
     closeClassRespec();
     app.removeEventListener('click', dismissCombatant);
     app.removeEventListener('cardinspectionselect', inspectCard);
@@ -617,7 +624,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
-  const cardDef = (c) => ({ ...resolveCard(registries, c), combatPreview: c.combatPreview });
+  const memberRegistries=()=>{const member=myMember();return member?registriesForClassMastery(registries,{...member,class:member.classId}):registries;};
+  const cardDef = (c) => ({ ...resolveCard(memberRegistries(), c), combatPreview: c.combatPreview });
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
     playFirstFromLatest: () => {
@@ -654,6 +662,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function render() {
     closeClassRespec({silent:true});
     if (!snap) return;
+    if(['combat','complete','lobby'].includes(snap.scene.kind))disposeProgression();
     posePresentations = new Map([...app.querySelectorAll('.coop-seat')].map(node => [node.dataset.seat, stageFor(node)?.presentation]));
     clearCombatEffects(app.querySelector('.fx-layer'));
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
@@ -1011,7 +1020,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // and asks, it does not resolve.
     if (handStrip) handStrip.teardown();
     handStrip = mountHand(app.querySelector('.hand'), {
-      registries, fitFan: true,
+      registries:memberRegistries(), fitFan: true,
       wireCard: (el, entry) => {
         el.addEventListener('click', () => {
           if (pacing || meP?.ended || !entry.affordable) return;
@@ -1041,7 +1050,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
               : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
                 : !energyAffordable ? 'Not enough Stamina' : 'Turn already ended';
           return {
-            inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods, rank: c.rank, skillBonus: c.skillBonus, passiveBlock: c.passiveBlock },
+            inst: {...c},
             def, name: def.name, affordable, reason,
             preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
@@ -1289,40 +1298,62 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (reason) attachTooltip(card, () => esc(reason));
     return card;
   }
-  function abilityDraftStrips(offer,{catchup=false}={}) {
+  function abilityDraftStrips(offer,{catchup=false,progressionPopup=false}={}) {
     return (offer.skillDrafts || []).flatMap(row=>{
       const grid=el('div',{class:'reward-row'});
       for(const choiceId of row.choiceIds || row.cardIds){
         const pick=abilityDraftChoice(row,choiceId);if(!pick)continue;
-        const card=renderCard(registries,{cardId:pick.cardId,abilityRank:pick.abilityRank,upgraded:false},{});
-        card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',`Choose ${registries.cards.get(pick.cardId).name}, rank ${pick.abilityRank}`);
-        const take=()=>send({t:'chooseAbilityDraft',offerId:row.offerId,choiceId:pick.choiceId,catchup});
+        const card=renderCard(memberRegistries(),{cardId:pick.cardId,abilityRank:pick.abilityRank,upgraded:false},{});
+        card.classList.add('coop-progression-choice');card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',`Choose ${registries.cards.get(pick.cardId).name}, rank ${pick.abilityRank}`);
+        const take=()=>send({t:'chooseAbilityDraft',offerId:row.offerId,choiceId:pick.choiceId,catchup},{progressionPopup});
         card.addEventListener('click',take);card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();take();}});grid.appendChild(card);
       }
       return [subtitle(`${row.skillId==='combatManeuvers'?'Combat Maneuvers':'Spellcraft'} · Level ${row.level}`),grid];
     });
   }
-  function renderProgression(){
-    const member=myMember();if(member?.progressionRulesVersion!==1||['combat','complete','lobby'].includes(snap.scene.kind))return;
-    const progression=member.pendingProgression || {},children=[];
-    if(progressionError)children.push(blocker(progressionError));
-    for(const track of member.pendingLevels || []){const action=button({label:`Level Up! · ${track.label} ${track.level} → ${track.level+1}`,weight:'primary',attrs:{'aria-label':`Level up ${track.label} to ${track.level+1}`}});action.addEventListener('click',()=>send({t:'claimSkillLevel',skillId:track.skillId}));children.push(action);}
-    children.push(...abilityDraftStrips(progression));
+  function progressionChoices(progression,{progressionPopup=false}={}){
+    const children=abilityDraftStrips(progression,{progressionPopup});
     for(const row of progression.classMilestoneRewards || []){
       children.push(subtitle(`Class level ${row.level} · ${({cards:'Card',feat:'Feat',armory:'Equipment',relic:'Relic',attribute:'Attribute'})[row.rewardKind]}`));
       const grid=el('div',{class:row.rewardKind==='cards'?'reward-row':'coop-choices'});
       for(const [index,id] of row.options.entries()){
         const selection=row.choiceIds?.[index] || id,rank=row.abilityRanks?.[index],name=classRespecOptionName(registries,row.rewardKind,id,rank);
-        const option=row.rewardKind==='cards'?renderCard(registries,{cardId:id,upgraded:false,...(Number.isInteger(rank)?{abilityRank:rank}:{})},{}):button({label:name});
-        option.tabIndex=0;option.setAttribute('role','button');option.setAttribute('aria-label',`Choose ${name}`);
-        const take=()=>send({t:'chooseClassMilestone',receiptId:row.receiptId,selection});option.addEventListener('click',take);
+        const option=row.rewardKind==='cards'?renderCard(memberRegistries(),{cardId:id,upgraded:false,...(Number.isInteger(rank)?{abilityRank:rank}:{})},{}):button({label:name});
+        option.classList.add('coop-progression-choice');option.tabIndex=0;option.setAttribute('role','button');option.setAttribute('aria-label',`Choose ${name}`);
+        const take=()=>send({t:'chooseClassMilestone',receiptId:row.receiptId,selection},{progressionPopup});option.addEventListener('click',take);
         if(row.rewardKind==='cards')option.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();take();}});
         grid.append(option);
       }
       children.push(grid);
     }
-    for(const row of progression.levelCards || []){const grid=el('div',{class:'reward-row'});children.push(subtitle(`Character level ${row.level} · Card`),grid);for(const id of row.cardIds){const card=renderCard(registries,{cardId:id,upgraded:false},{});card.tabIndex=0;card.setAttribute('role','button');const take=()=>send({t:'chooseLevelCard',key:row.key,cardId:id});card.addEventListener('click',take);card.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();take();}});grid.append(card);}}
-    if(children.length)(app.querySelector('.coop-scene') || app).append(el('section',{class:'as-body','aria-label':'Progression'},children));
+    for(const row of progression.levelCards || []){const grid=el('div',{class:'reward-row'});children.push(subtitle(`Character level ${row.level} · Card`),grid);for(const id of row.cardIds){const card=renderCard(registries,{cardId:id,upgraded:false},{});card.classList.add('coop-progression-choice');card.tabIndex=0;card.setAttribute('role','button');const take=()=>send({t:'chooseLevelCard',key:row.key,cardId:id},{progressionPopup});card.addEventListener('click',take);card.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();take();}});grid.append(card);}}
+    return children;
+  }
+  function renderProgression(){
+    const member=myMember();if(member?.progressionRulesVersion!==1||['combat','complete','lobby'].includes(snap.scene.kind)){disposeProgression();return;}
+    if(progressionSeat!==me){disposeProgression();progressionSeat=me;progressionHost=el('div');}
+    const section=el('section',{class:'as-body','aria-label':'Progression'},[progressionHost,...(progressionError?[blocker(progressionError)]:[]),...progressionChoices(member.pendingProgression || {})]);
+    (app.querySelector('.coop-scene') || app).append(section);
+    if(!progressionDoor){
+      progressionDoor=mountCoopProgressionDoor(progressionHost,{registries,member,
+        settings:{xpFillSeconds:Number(meta.settings?.victoryXpSeconds ?? 3),levelUpRefillSeconds:Number(meta.settings?.levelUpRefillSeconds ?? .28)},
+        onClaim:skillId=>send({t:'claimSkillLevel',skillId}),
+        onReadyChange:ready=>gateCoopProgressionControls(app,ready),
+        onChoices:(rows,resume)=>{
+          const continueButton=button({label:'Continue',weight:'primary'}),seatAtOpen=me;
+          const dialog=openModal({title:'Level Up!',eyebrow:'Choose your reward',primary:continueButton,onClose:resume});
+          const update=nextRows=>{
+            if(me!==seatAtOpen)return;
+            const progression={};for(const {kind,row}of nextRows)(progression[kind] ||= []).push(row);
+            dialog.body.replaceChildren(...progressionChoices(progression,{progressionPopup:true}));
+            if(!nextRows.length)dialog.body.append(prose('Your rewards have been claimed.'));
+          };
+          continueButton.addEventListener('click',dialog.close);update(rows);
+          return {update,close:dialog.close};
+        },
+      });
+    }else progressionDoor.update(member);
+    gateCoopProgressionControls(app,progressionDoor.ready);
   }
   function renderReward() {
     const offer = snap.scene.offers[me];
@@ -1341,7 +1372,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const takes = [
       offer.relicId ? choice({ glyph: '◆', name: 'Take the relic', description: registries.relics.get(offer.relicId).name, className: 'coop-take', attrs: { dataset: { take: 'relic' } } }) : null,
       offer.flaskId ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
-      choice({ glyph: '›', name: offer.cardIds.length ? 'Skip the card' : t('reward.continue'), attrs: { dataset: { take: 'skip' } } }),
+      choice({ glyph: '›', name: myMember()?.progressionRulesVersion===1?t('reward.continue'):offer.cardIds.length ? 'Skip the card' : t('reward.continue'), attrs: { dataset: { take: 'skip' } } }),
     ];
     sceneDoor({
       title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
@@ -1529,7 +1560,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         item.type === 'reward' && item.offer.cardMissed ? el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') }) : null,
         options([
           relic ? choice({ glyph: '◆', name: 'Take the relic', className: 'coop-take', attrs: { dataset: { cu: 'relic' } } }) : null,
-          choice({ glyph: '›', name: 'Skip', attrs: { dataset: { cu: 'skip' } } }),
+          choice({ glyph: '›', name: mm.progressionRulesVersion===1?'Continue':'Skip', attrs: { dataset: { cu: 'skip' } } }),
         ], { class: 'coop-choices' }),
       ],
     });

@@ -1015,7 +1015,11 @@ export function createSession({ registries, seedString, endless = false, restore
       const xpBefore={character:{level:member.run.level.level,xp:member.run.level.xp},tracks:Object.fromEntries(Object.entries(member.run.skills || {}).map(([id,row])=>[id,{level:row.level,xp:row.xp}]))};
       const award=skillId==='character'?claimBankedLevel(scoped,member.run):claimBankedSkillLevel(scoped,member.run,skillId);
       if(!award)return {ok:false,error:'This track has no funded level to claim.'};
-      if(award.skillAwards?.length)member.run.coopXpProgress={id:`claim:${member.run.coopXpProgress?.id || member.id}:${skillId}:${award.after}`,xpBefore,xpGains:combatXpGains({awards:award.skillAwards})};
+      if(award.skillAwards?.length){
+        const previous=member.run.coopXpProgress;
+        const history=previous?[...(previous.history || []),{id:previous.id,xpBefore:previous.xpBefore,xpGains:previous.xpGains}]:[];
+        member.run.coopXpProgress={id:`claim:${history[0]?.id || member.id}:${skillId}:${award.after}`,xpBefore,xpGains:combatXpGains({awards:award.skillAwards}),...(history.length?{history}:{} )};
+      }
       if(skillId==='character'){
         const plan=cardRewardPlan(scoped.balance,{pool:'normal',levelsGained:1},member.rng);
         for(let index=0;index<plan.levelCards;index++){

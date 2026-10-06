@@ -9,13 +9,14 @@ import {playCard,endTurn} from '../src/engine/coopCombat.js';
 import {validateRunShape} from '../src/model/state.js';
 import {xpToNext as characterXpToNext} from '../src/model/levelup.js';
 import {coopProgressionProblems} from '../src/model/coopProgression.js';
+import {skillXpReceipt} from '../src/engine/skillXp.js';
 
 const root=createRegistries(contentBundle);
 function fresh(){const host=createSession({registries:root,seedString:'CLAIM20'});host.addMember({id:'a',name:'A',classId:'reaver',classMastery:{}});host.addMember({id:'b',name:'B',classId:'reaver'});host.start();return host;}
 function win(host,{receipt={combatManeuvers:101}}={}){
   host.resolveNode({type:'monster'});assert.ok(host.live);
   host.live.combat.skillXp ||= {};host.live.combat.skillXp.a={xp:{...receipt}};
-  let plays=0;
+  let plays=0,finalReceipt={};
   host.autoResolveCombat((combat,id)=>{
     for(const enemy of combat.enemies)if(enemy.alive)enemy.hp=Math.min(enemy.hp,1);
     const player=combat.players.get(id);if(!player||player.ended||combat.phase!=='player'||combat.result)return;
@@ -26,24 +27,27 @@ function win(host,{receipt={combatManeuvers:101}}={}){
       try{playCard(combat,id,inst.instanceId,target);plays++;}catch{endTurn(combat,id);break;}
     }
     if(!player.ended&&!combat.result)endTurn(combat,id);
+    finalReceipt=skillXpReceipt(combat,'a');
   });
   assert.equal(host.session.scene.kind,'reward');assert.ok(plays>0,'the live session resolves real card plays');
+  return finalReceipt;
 }
 const copy=host=>structuredClone(host.serialize());
 test('actual co-op victory banks expanded XP at the scoped curve and only manual claims unlock milestones',()=>{
   const host=fresh(),a=host.session.members.get('a'),scoped=registriesForClassMastery(root,a.run),classCost=xpToNext(scoped,'class',0);
   bankSkillXp(scoped,a.run,'class:reaver',classCost-1);a.run.classMasteryState.earnedXp.reaver+=classCost-1;
   a.run.level.xp=characterXpToNext(scoped,1)-1;
-  win(host);
-  assert.equal(a.run.skills.combatManeuvers.level,1);assert.equal(a.run.skills.combatManeuvers.xp,101);
+  const receipt=win(host),paid=receipt.combatManeuvers;
+  assert.equal(a.run.skills.combatManeuvers.level,1);assert.equal(a.run.skills.combatManeuvers.xp,paid);
   assert.equal(a.run.skills['class:reaver'].level,0);assert.equal(a.run.level.level,1);
   assert.equal(pendingSkillLevelCount(scoped,a.run,'combatManeuvers'),1);
   const old=copy(host),other=structuredClone(host.session.members.get('b').run),beforeRng=a.rng.getCounters();
   assert.equal(host.claimMemberSkillLevel('a','combatManeuvers',{saveSession:()=>false}).ok,false);assert.deepEqual(copy(host),old);
   let saved;const saveSession=data=>{saved=structuredClone(data);return true;};
-  assert.equal(host.claimMemberSkillLevel('a','combatManeuvers',{saveSession}).ok,true);assert.equal(a.run.skills.combatManeuvers.level,2);assert.equal(a.run.skills.combatManeuvers.xp,1);
+  assert.equal(host.claimMemberSkillLevel('a','combatManeuvers',{saveSession}).ok,true);assert.equal(a.run.skills.combatManeuvers.level,2);assert.equal(a.run.skills.combatManeuvers.xp,paid-100);
   const beforeClass=structuredClone(a.run.skills),classClaim=host.claimMemberSkillLevel('a','class:reaver',{saveSession});
   assert.equal(classClaim.ok,true);assert.equal(classClaim.award.skillAwards.length,4);
+  assert.equal(a.run.coopXpProgress.history.length,1);assert.ok(a.run.coopXpProgress.history[0].id.startsWith('combat:'));assert.equal(a.run.coopXpProgress.history[0].xpGains.tracks.combatManeuvers,paid);
   for(const bonus of classClaim.award.skillAwards){assert.equal(bonus.gained,25);assert.equal(a.run.skills[bonus.skillId].level,beforeClass[bonus.skillId]?.level || (bonus.skillId==='combatManeuvers'?1:0));}
   assert.equal(a.run.classMilestones['class:reaver:1'].grants.feat.state,'pending');
   const view=host.snapshot().party.find(row=>row.id==='a'),offer=view.pendingProgression.classMilestoneRewards.find(row=>row.level===1&&row.rewardKind==='feat');assert.ok(offer);
@@ -53,6 +57,7 @@ test('actual co-op victory banks expanded XP at the scoped curve and only manual
   assert.equal(host.chooseClassMilestone('a',offer.receiptId,offer.options[0],{saveSession}).ok,false);assert.ok(a.run.skillFeats.includes(offer.options[0]));
   assert.deepEqual(host.session.members.get('b').run,other);
   const restored=restoreSession(root,saved);assert.equal(restored.refusedMembers().length,0,JSON.stringify(restored.refusedMembers()));restored.setConnected('a',true);
+  assert.deepEqual(restored.snapshot().party.find(row=>row.id==='a').xpProgression,a.run.coopXpProgress,'reload retains the original Class and Character award alongside supplemental bonus receipts');
   assert.equal(restored.chooseClassMilestone('a',offer.receiptId,offer.options[0],{saveSession}).ok,false);
   assert.deepEqual(validateRunShape(a.run),[]);assert.deepEqual(host.serialize().rng,old.rng);assert.ok(Object.keys(beforeRng).length);
   assert.equal(host.claimMemberSkillLevel('a','character',{saveSession}).ok,true);assert.equal(a.run.level.level,2);
@@ -67,6 +72,7 @@ test('all earned class milestone kinds are generated at level 12, persist across
     assert.equal(host.claimMemberSkillLevel('a','class:reaver',{saveSession}).ok,true);
   }
   const offers=host.snapshot().party.find(row=>row.id==='a').pendingProgression.classMilestoneRewards;
+  assert.equal(a.run.coopXpProgress.history.length,11);assert.equal(new Set([...a.run.coopXpProgress.history,a.run.coopXpProgress].map(row=>row.id)).size,12,'successive class claims retain distinct immutable display receipts');
   assert.deepEqual(Object.fromEntries(['cards','feat','armory','relic','attribute'].map(kind=>[kind,offers.filter(row=>row.rewardKind===kind).length])),{cards:6,feat:4,armory:4,relic:3,attribute:2});
   a.catchup=[{type:'reward',offer:{cardIds:[],classMilestoneRewards:structuredClone(offers)}}];
   for(const kind of ['cards','feat','armory','relic','attribute']){
