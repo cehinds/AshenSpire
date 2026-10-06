@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1683",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative characters keep pace",
+    "detail": "The alternative preview gains the ready-to-play character defaults, compact class cards, stat and relic detail dialogs, and continuous Smith upgrades. Its own battlefield and artwork stay intact, with both update histories preserved.",
+    "build": "0.7.1.1045",
+    "pullRequest": 1683,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1683"
+  },
+  {
     "id": "pr-1681",
     "date": "2026-10-06",
     "group": "2026-10-06",
