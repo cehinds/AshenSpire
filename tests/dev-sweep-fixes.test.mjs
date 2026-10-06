@@ -19,7 +19,8 @@
 // client PAINTS is the browser gates; this says the field is sent and read.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
+// Historical defect receipts retain their original character/combat contract.
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession } from '../tools/session.mjs';
 import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
