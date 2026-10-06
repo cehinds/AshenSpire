@@ -1,0 +1,29 @@
+{
+  "id": "drowned-coast-ground",
+  "region": "drowned-coast",
+  "kind": "ground",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: broad flat wet dark coastal flagstones, shallow reflective tide pools only at edges, salt and seaweed. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+  "resultFile": "scenes/shared/drowned-coast/ground.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-11df5625-7b39-4f4a-9571-8e0fc9244f83.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "ddf9847dc2002da11a3cae639948ab82faa848ee782b1c9010a647541b40aa61",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.4611530303955078,
+  "visibleBounds": [
+    0,
+    399,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

@@ -6,7 +6,7 @@ import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio } from '../models/CombatSpriteScaleModel.js';
-import { wireAlternativeBackdrop } from '../alternativeArt.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
@@ -290,6 +290,8 @@ export function wireBattlefieldStage(field, model) {
     const backdropWidth = backdrop ? backdrop.clientWidth : 0;
     combat.style.setProperty('--environment-top', '0px');
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
+    fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
+      fieldTop: (fieldRect.top - rect.top) / zoom, ground: plan.ground / zoom, narrow });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: (fieldRect.top - rect.top) / zoom, windowHeight: fieldRect.height / zoom,

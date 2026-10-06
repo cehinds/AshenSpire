@@ -1,0 +1,25 @@
+{
+  "id": "undercroft-far",
+  "kind": "far",
+  "transparent": false,
+  "resultFile": "scenes/shared/ashen-crown/undercroft-far.png",
+  "prompt": "Create one opaque distant BACK WALL AND VAULT background plate for Throne Undercroft in AshenSpire. Vast underground Gothic crypt, deep recessed ribbed stone vaults and almost-black masonry, faint dust haze and tiny distant amber candle niches, dim warm grey shafts from small high ceiling apertures. Painterly weathered realistic dark fantasy matching reference. View horizontal through interior, low distant horizon y=44%, softer contrast farther away. No outdoor sky, sunset, city, trees, near columns, near throne, foreground floor details, characters or UI. Background fills whole 1536x1024 canvas; lower half falls into dark atmospheric interior distance.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-105025a9-6c6c-4909-9b9f-4aedf965f744.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGB",
+  "sha256": "e5dfb01f8e8ec5f5f9af83bcf0bf28cd87da87a0c8d9b891add745619f1ec61a",
+  "alphaRange": null,
+  "transparentFraction": 0,
+  "visibleBounds": [
+    0,
+    0,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

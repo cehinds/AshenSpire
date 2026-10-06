@@ -764,3 +764,11 @@ selection independently before the turn can advance.
 
 ### Ratings, Poise and Ward
 Advanced → Stats holds a topic for each rating's stat row, plus curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.
+
+Alternative battlefield art: `alternativeArtCatalog` and `alternativeArt.js`
+provide canonical idle actor lookup, desktop/phone exports, and independently
+fitted four-layer scenery for 32 named combat settings. `battlefield-stage`
+continues to own actor slots, floor alignment, HUD and intent clearance. The
+companion indicator uses the same catalog. No review-page HUD or action anchors
+are imported. The Combat Studio source package and its portable drafts remain
+separate from generated runtime exports.

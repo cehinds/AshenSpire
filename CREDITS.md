@@ -462,3 +462,16 @@ masters, export recipe and source/export hashes are preserved in
 The 512px and 1024px WebPs under `assets/cards/` and their light twins share
 this provenance. No third-party artwork was downloaded and no third-party
 license is claimed.
+
+## Alternative combat collection (2026-10-06)
+
+The 59 idle actor appearances and 69 scenery masters in
+`docs/design/combat-depth-2026-10-05/` are original OpenAI image-generation
+outputs for AshenSpire. This integration imports the reviewed package from
+local source commit `41ae95ae42cce66e56805cc35ae1903a92a4d5a5`.
+Exact prompts, PNG source hashes and generation receipts remain in that package.
+`tools/alternative-art-build.py` verifies the selected source hashes and produces
+branch-owned desktop and phone WebPs under `assets-alternative/`, with lossless
+alpha and export hashes in `src/ui/alternativeArtCatalog.js`. No third-party
+license is claimed. This uses the existing alternative art pack/inline loader;
+it does not change the shared external art release.

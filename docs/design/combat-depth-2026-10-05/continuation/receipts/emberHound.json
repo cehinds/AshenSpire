@@ -1,0 +1,32 @@
+{
+  "id": "emberHound",
+  "prompt": "Edit target: the supplied Ember Hound sprite. Preserve its canine identity, friendly alert expression, charcoal fur and glowing ember cracks, anatomical four legs and long tail. Rotate the entire body into rear three-quarter view from BEHIND, back and haunches nearest viewer, head and body looking away toward upper-right into battle alongside the player. Full animal including paws and tail, generously padded edges, grounded idle stance. Detailed painterly dark fantasy. True transparent alpha everywhere outside silhouette, no colored backdrop, halo, floor, shadows or text. Landscape 1536x1024.",
+  "kind": "sprite",
+  "sourceId": "emberHound",
+  "reference": "../masters/emberHound.png",
+  "resultFile": "sprites/emberHound-rear.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-157f6f52-1450-42ed-9626-52486f8d7da8.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "388bbf5d314d887ef86de46912aa0b15b482910b10ddd9287f50adcce3701c98",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6370633443196615,
+  "visibleBounds": [
+    162,
+    12,
+    1327,
+    997
+  ],
+  "alphaThreshold": 32,
+  "anchor": [
+    744.5,
+    997
+  ]
+}

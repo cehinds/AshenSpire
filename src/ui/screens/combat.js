@@ -2,6 +2,7 @@ import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.j
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
+import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -1260,6 +1261,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const fightsLeft = ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1;
       const chip = pill({ label: t('combat.companion.left', { name: def.name, n: fightsLeft }), attrs: { class: 'companion-chip', dataset: { companion: id } } });
       chip.setAttribute('title', def.blurb);
+      const art = alternativeCompanionIcon(id);
+      if (art) chip.prepend(art);
       trailing.push(chip);
     }
     if (combat.foundation && p.evade > 0) {

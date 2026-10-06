@@ -1,0 +1,21 @@
+{
+  "actors": 59,
+  "scenes": 32,
+  "sceneCompositions": 64,
+  "layers": 69,
+  "protectedOriginals": 52,
+  "issues": [],
+  "checks": [
+    "canonical scene and actor coverage",
+    "52 original sprite hashes preserved",
+    "PNG hashes and dimensions",
+    "real alpha and unclipped actor silhouettes",
+    "foot anchors and visible bounds",
+    "ground fill and empty upper center",
+    "foreground center clearance",
+    "four independently moving layers per scene",
+    "separate desktop and phone transforms",
+    "art-only tracked change scope"
+  ],
+  "runtimeVerified": false
+}
