@@ -38,7 +38,7 @@ function fight(classId, coreTags) {
   if (!cb.piles.hand.includes(inst)) { cb.piles.draw.splice(cb.piles.draw.indexOf(inst), 1); cb.piles.hand.push(inst); }
   const foe = cb.enemies[0];
   foe.block = 0;
-  const play = () => dispatch(cb, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: foe.id });
+  const play = () => dispatch(cb, { type: 'playCard', cardInstanceId: inst.instanceId });
   return { cb, foe, play };
 }
 

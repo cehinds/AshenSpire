@@ -6,6 +6,7 @@
 //   node tools/session-smoke.mjs
 
 import { contentBundle } from '../src/content/index.js';
+import { botCardTargetId } from './simbot.mjs';
 import { createRegistries, resolveCard, passiveSum } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession, restoreSession, coopHpMult } from './session.mjs';
@@ -35,15 +36,9 @@ function botTurn(combat, memberId) {
       // a play the pool cannot fund throws, and a throw ends the bot's turn.
       return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana && (def.staminaCost || 0) <= (P.entity.stamina || 0);
     });
-    // A SELF-TARGETING CARD IS NOT AIMED AT AN ENEMY. The engine refuses one
-    // that is ("Invalid self target"), and a refusal here used to end the bot's
-    // turn — so a defensive card in hand (Defend, the Dodge Roll) cut the turn
-    // short and the party lost fights the harness means to walk through.
-    const def = card ? resolveCard(REG, { cardId: card.cardId, upgraded: card.upgraded }) : null;
-    const wantsEnemy = def ? (def.effects || []).some((eff) => eff.target === 'enemy') : false;
-    const tgt = wantsEnemy ? combat.enemies.find((e) => e.alive) : null;
+    const tgt = combat.enemies.find((e) => e.alive);
     try {
-      if (card) playCard(combat, memberId, card.instanceId, tgt ? tgt.id : undefined);
+      if (card) playCard(combat, memberId, card.instanceId, botCardTargetId(REG, combat, card, tgt?.id));
       else { endTurn(combat, memberId); break; }
     } catch { endTurn(combat, memberId); break; }
   }

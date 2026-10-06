@@ -32,6 +32,7 @@ import { chargeFlaskId } from '../model/gracerefill.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { syncRelicProperties, syncClassProperties, syncLoadoutProperties, syncSigilProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
+import { cardTargetPlan, assertCardTarget } from '../model/cardTargets.js';
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 
 import * as A from './actions.js';
@@ -478,6 +479,9 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     ended: entry.ended,
   })));
   if (friendlyPlan.active) targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);
+  assertCardTarget(cardTargetPlan(def, C.playerKey, C.enemies, [...C.players.values()].map(entry => ({
+    id: entry.id, alive: entry.entity.alive, connected: entry.connected,
+  }))), targetId);
 
   let target = null;
   if (targetId != null) {

@@ -14,6 +14,7 @@
 // clears it when a new player turn begins.
 
 import { resolveCard } from '../src/model/registries.js';
+import { cardTargetPlan } from '../src/model/cardTargets.js';
 import { cardPlayCosts } from '../src/engine/combat.js';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 
@@ -27,6 +28,13 @@ export function affordableCards(registries, combat, refused = new Set()) {
     const cost = cardPlayCosts(combat, h.instanceId);
     return cost.energy <= p.energy && cost.mana <= p.mana && cost.stamina <= p.stamina;
   });
+}
+
+/** Keep the chosen foe for hostile cards; source/friendly cards resolve automatically. */
+export function botCardTargetId(registries, combat, hand, enemyId) {
+  const def = resolveCard(registries, hand);
+  const plan = cardTargetPlan(def, combat.player?.id, combat.enemies);
+  return plan.mode === 'enemy' ? enemyId : undefined;
 }
 
 /** A per-combat refusal set that empties itself at each new player turn. */

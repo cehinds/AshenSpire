@@ -199,6 +199,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let selectedEnemy = null;
   let selectedCombatantId = null;
   function selectCombatant(id) {
+    if (id && armedFriendlyCard && snap?.scene.kind === 'combat') {
+      const actor = snap.scene.players.find(player => player.id === me);
+      const card = actor?.hand.find(entry => entry.instanceId === armedFriendlyCard);
+      if (!card || !friendlyTargetPlan(cardDef(card), me, snap.scene.players).legalIds.includes(id)) return;
+    }
     selectedCombatantId = id;
     selectCombatantInfo(app, id);
   }
@@ -932,6 +937,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }
       if (p.alive) wireCombatantContext(box, m.name || p.id);
       adoptCombatantFrame(box);
+      box.inert = !p.alive || (!!targetPlan && !friendly);
+      if (box.inert) box.setAttribute('aria-disabled', 'true');
       zone.appendChild(box);
     }
 
@@ -956,9 +963,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.appendChild(statusRow(e.statuses));
       if (!dead) {
         wireCombatantContext(box, def.name);
-        box.addEventListener('click', () => { selectedEnemy = e.id; selectCombatant(e.id); render(); });
+        box.addEventListener('click', () => {
+          if (armedFriendlyCard) return;
+          selectedEnemy = e.id; selectCombatant(e.id); render();
+        });
       }
       adoptCombatantFrame(box);
+      box.inert = dead || !!targetPlan;
+      if (box.inert) box.setAttribute('aria-disabled', 'true');
       row.appendChild(box);
     }
 
