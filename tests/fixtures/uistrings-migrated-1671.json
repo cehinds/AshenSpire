@@ -1,4 +1,5 @@
 {
+  "source": "PR #1671 Armory and progression copy; frozen after merge so origin/dev cannot remove its sweep coverage",
   "ids": [
     "progression.title",
     "progression.tab.character",
@@ -35,6 +36,5 @@
     "progression.feat.acquired",
     "progression.feat.unlock",
     "progression.feat.emptyHint"
-  ],
-  "_": "Progression uiStrings added by PR #1671. Preserve no-shadow checks and semantic allowances after origin/dev includes these rows."
+  ]
 }
