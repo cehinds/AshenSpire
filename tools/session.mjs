@@ -1,6 +1,10 @@
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
 import {isAbilitySkill} from '../src/model/abilityGrades.js';
+import {rollClassMilestoneRewards,claimClassMilestoneReward} from '../src/model/classMilestoneOffers.js';
+import {pendingClassMilestones} from '../src/model/classMilestones.js';
+import {combatXpGains} from '../src/model/rewardprogress.js';
+import {coopProgressionProblems} from '../src/model/coopProgression.js';
 import {createClassRespecDraft,classRespecView,previewClassRespec,applyClassRespec,classRespecAvailability} from '../src/model/classRespec.js';
 import { openRunClassMastery, registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { initialClassTreeChoices, pickInitialClassTreeNode } from '../src/model/classTree.js';
@@ -28,11 +32,11 @@ import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, m
 import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
-import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
-import { stampSkillBonuses,skillTracks,spendSkillDraft } from '../src/model/skills.js';
+import { stampDeck, healMissingSlotCells,addToStorage,carriedIds } from '../src/model/loadout.js';
+import { stampSkillBonuses,skillTracks,spendSkillDraft,pendingSkillLevelCount,claimBankedSkillLevel } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { awardClassXp } from '../src/model/classTree.js';
-import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
+import { awardLevelXp, combatLevelXp,bankLevelXp,claimBankedLevel,pendingLevelCount } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
@@ -218,6 +222,7 @@ export function createSession({ registries, seedString, endless = false, restore
         }
         const legacyKit = md.run.schemaVersion === 1;
         migrateRunSchema(md.run);
+        const progressionProblems=coopProgressionProblems(md.run);if(progressionProblems.length)throw new Error(progressionProblems.join('; '));
         // SPEC §15.4, rarity at every door: this door restores a run without
         // loadRun, so it asks the same sigil questions engine/save.js does.
         const strangeSigil = unknownSigilId(registries, md.run);
@@ -313,7 +318,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const profile = classMastery === undefined ? { discoveredArmaments: entitlement } : normalizeMasteryProfile({ discoveredArmaments: entitlement, classMastery });
     if (classMastery !== undefined && masteryProfileProblems(profile).length) throw new Error('co-op class mastery profile is malformed');
     const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile });
-    if (classMastery !== undefined) openRunClassMastery(registries, run, profile, { receiptId: `coop:${seed}:${id}`, bankable: false });
+    if (classMastery !== undefined || run.progressionRulesVersion===1) openRunClassMastery(registries, run, profile, { receiptId: `coop:${seed}:${id}`, bankable: false });
     // The party's order, not the default: a member's run rides the session's
     // seats exactly as it rides the session's act and floor (SPEC §13.4).
     run.seatOrder = session.seatOrder.slice();
@@ -334,6 +339,7 @@ export function createSession({ registries, seedString, endless = false, restore
       alive: true,
     };
     members.set(id, m);
+    rollMemberProgression(m);
     return m;
   }
 
@@ -519,9 +525,10 @@ export function createSession({ registries, seedString, endless = false, restore
   function memberAsPlayer(m) {
     // The derived skill bonus (SPEC §13.4o): a seat levels through applySkillXp,
     // never through the solo save door, so its fight stamps it here.
-    stampSkillBonuses(registries, m.run);
+    stampSkillBonuses(registriesForClassMastery(registries,m.run), m.run);
     return {
       id: m.id, name: m.name, classId: m.classId,
+      registries:registriesForClassMastery(registries,m.run),progressionRulesVersion:m.run.progressionRulesVersion,skillFeats:[...(m.run.skillFeats || [])],
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
       orderedDraw: !!m.playInDeckOrder, // Play in deck order, per seat (SPEC §14.1)
       maxMana: m.run.maxMana, mana: m.run.mana,
@@ -809,16 +816,21 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
         m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
         // The seat's skill receipt, keyed by its own id (plan phase 4a).
-        applySkillXp(registries, m.run, skillXpReceipt(c, m.id));
+        const scoped=registriesForClassMastery(registries,m.run),manual=m.run.progressionRulesVersion===1;
+        const xpBefore={character:{level:m.run.level.level,xp:m.run.level.xp},tracks:Object.fromEntries(Object.entries(m.run.skills || {}).map(([id,row])=>[id,{level:row.level,xp:row.xp}]))};
+        const receipt=skillXpReceipt(c,m.id);
+        applySkillXp(scoped, m.run, receipt,{bank:manual});
         // The class track (plan phase 5b), paid per seat by the session, which knows the pool.
-        awardClassXp(registriesForClassMastery(registries, m.run), m.run, { victory: c.result === 'victory', pool: live && live.pool });
-        stampSkillBonuses(registries, m.run); // the saved seat reads the new levels; cards a later reward adds are stamped at the next fight
+        const classAward=awardClassXp(scoped, m.run, { victory: c.result === 'victory', pool: live && live.pool,bank:manual });
+        stampSkillBonuses(scoped, m.run); // the saved seat reads the new levels; cards a later reward adds are stamped at the next fight
         // The character level (plan phase 6), per seat: the party's kills are
         // every seat's. No settings dial here — the server is authoritative
         // and reads the authored points per level.
-        levelUpsBy[m.id] = awardLevelXp(registries, m.run, combatLevelXp(registries, {
+        const levelAward=(manual?bankLevelXp:awardLevelXp)(scoped, m.run, combatLevelXp(scoped, {
           victory: c.result === 'victory', pool: live && live.pool, enemies: c.enemies,
-        })).levelUps;
+        }));
+        levelUpsBy[m.id]=levelAward.levelUps;
+        if(manual)m.run.coopXpProgress={id:`combat:${last.receiptSeq}:${session.actNumber}:${session.floor}:${m.id}`,xpBefore,xpGains:combatXpGains({receipt,awards:[classAward],levelGained:levelAward.gained,levelDiscarded:levelAward.discarded})};
       }
     }
     live = null;
@@ -875,6 +887,13 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- rewards + catch-up --------------------------------------------------
+  function rollMemberProgression(m) {
+    if(m.run.progressionRulesVersion!==1)return {};
+    const scoped=registriesForClassMastery(registries,m.run);
+    const skillDrafts=skillTracks(scoped).filter(track=>isAbilitySkill(track.id)).flatMap(track=>rollPendingAbilityOffers(scoped,m.rng,m.run,{skillId:track.id}));
+    const classMilestoneRewards=rollClassMilestoneRewards(scoped,m.rng,m.run,{meta:{discoveredArmaments:m.discoveredArmaments}});
+    return {...(skillDrafts.length?{skillDrafts}:{}),...(classMilestoneRewards.length?{classMilestoneRewards}:{})};
+  }
   function rollRewardFor(m, pool, levelsGained = 0) {
     // THE CARD REWARD SCHEDULE (SPEC §15.1), read through the one door solo
     // and the simulator read (model/rewardplan.js cardRewardPlan). Co-op has
@@ -901,10 +920,9 @@ export function createSession({ registries, seedString, endless = false, restore
     const relicId = pool === 'elite' || pool === 'boss'
       ? rollRelicReward(registriesForClassMastery(registries, m.run), m.rng, m.run.relics, pool === 'boss' ? { rarities: ['boss'] } : {})
       : null;
-    const skillDrafts=m.run.progressionRulesVersion===1?skillTracks(registries).filter(track=>isAbilitySkill(track.id)).flatMap(track=>rollPendingAbilityOffers(registriesForClassMastery(registries,m.run),m.rng,m.run,{skillId:track.id})):[];
     return {
       pool, cardIds, cinders, flaskId, relicId,
-      ...(skillDrafts.length?{skillDrafts}:{}),
+      ...rollMemberProgression(m),
       ...(plan.cardMissed ? { cardMissed: true } : {}),
       ...(levelCards.length ? { levelCards } : {}),
     };
@@ -954,13 +972,77 @@ export function createSession({ registries, seedString, endless = false, restore
     offer.skillDrafts=offer.skillDrafts.filter(row=>row.offerId!==offerId);
     return {ok:true};
   }
-  function chooseAbilityDraft(memberId,offerId,choiceId,{catchup=false}={}) {
+  function chooseAbilityDraft(memberId,offerId,choiceId,{catchup=false,saveSession}={}) {
+    if(typeof saveSession==='function')return commitMemberProgression(memberId,(member)=>{
+      if(catchup&&!member.catchup?.[0]?.offer?.skillDrafts?.some(row=>row.offerId===offerId))return {ok:false,error:'This catch-up ability offer is unavailable.'};
+      const offer=member.run.abilityOffers?.[offerId];return offer?takeAbilityDraft(member,{skillDrafts:[offer]},offerId,choiceId):{ok:false,error:'This ability offer is unavailable.'};
+    },{saveSession});
     const member=members.get(memberId);
     if(!member?.connected||!member.alive)return {ok:false,error:'This seat is unavailable.'};
     if(catchup){const item=member.catchup?.[0];return item?.type==='reward'?takeAbilityDraft(member,item.offer,offerId,choiceId):{ok:false,error:'This seat has no catch-up reward open.'};}
+    if(member.run.progressionRulesVersion===1&&!live&&session.scene.kind!=='combat'&&session.scene.kind!=='complete'){
+      const offer=member.run.abilityOffers?.[offerId];
+      return offer?takeAbilityDraft(member,{skillDrafts:[offer]},offerId,choiceId):{ok:false,error:'This ability offer is unavailable.'};
+    }
     const offer=session.scene.offers?.[memberId];
     if(session.scene.kind!=='reward' || !member?.connected || !member.alive || session.scene.chosen[memberId] || !offer)return {ok:false,error:'This seat has no ability reward open.'};
     return takeAbilityDraft(member,offer,offerId,choiceId);
+  }
+  // A level or milestone is a host transaction: build a separate seat and its
+  // RNG, persist that exact candidate, then adopt it. Failed saves pay nothing.
+  function commitMemberProgression(memberId,mutate,{saveSession}={}) {
+    const member=members.get(memberId);
+    if(!member?.connected||!member.alive||member.run.progressionRulesVersion!==1||live||['combat','complete','lobby'].includes(session.scene.kind))return {ok:false,error:'Progression is available for a present seat between encounters.'};
+    if(typeof saveSession!=='function')return {ok:false,error:'A save owner must commit this progression claim.'};
+    const local={...member,run:structuredClone(member.run),rng:createRng(member.rng.seed,member.rng.getCounters())};
+    let result,progression;
+    try{
+      result=mutate(local,registriesForClassMastery(registries,local.run));if(!result?.ok)return result || {ok:false};
+      progression=rollMemberProgression(local);stampSkillBonuses(registriesForClassMastery(registries,local.run),local.run);syncZones(local.run);
+      const saved=serialize();if(!saved)return {ok:false,error:'This progression claim cannot be saved during combat.'};
+      const next=structuredClone(saved),seat=next.members.find(row=>row.id===memberId);seat.run=local.run;seat.rng=local.rng.getCounters();seat.cardSeq=local.cardSeq;
+      const refresh=offer=>{if(!offer)return;for(const field of ['skillDrafts','classMilestoneRewards']){if(progression[field])offer[field]=structuredClone(progression[field]);else delete offer[field];}};
+      refresh(next.scene.offers?.[memberId]);for(const item of seat.catchup || [])if(item.type==='reward')refresh(item.offer);
+      if(saveSession(next)===false)return {ok:false,error:'The progression claim could not be saved.'};
+      for(const key of Object.keys(member.run))delete member.run[key];Object.assign(member.run,local.run);member.rng=local.rng;member.cardSeq=local.cardSeq;
+      member.catchup=seat.catchup;if(session.scene.offers?.[memberId]){for(const key of Object.keys(session.scene.offers[memberId]))delete session.scene.offers[memberId][key];Object.assign(session.scene.offers[memberId],next.scene.offers[memberId]);}
+      return result;
+    }catch(error){return {ok:false,error:error.message};}
+  }
+  function claimMemberSkillLevel(memberId,skillId,{saveSession}={}) {
+    return commitMemberProgression(memberId,(member,scoped)=>{
+      if(skillId?.startsWith('class:')&&skillId!==`class:${member.run.class}`)return {ok:false,error:'Equip this class before claiming its level.'};
+      const xpBefore={character:{level:member.run.level.level,xp:member.run.level.xp},tracks:Object.fromEntries(Object.entries(member.run.skills || {}).map(([id,row])=>[id,{level:row.level,xp:row.xp}]))};
+      const award=skillId==='character'?claimBankedLevel(scoped,member.run):claimBankedSkillLevel(scoped,member.run,skillId);
+      if(!award)return {ok:false,error:'This track has no funded level to claim.'};
+      if(award.skillAwards?.length)member.run.coopXpProgress={id:`claim:${member.run.coopXpProgress?.id || member.id}:${skillId}:${award.after}`,xpBefore,xpGains:combatXpGains({awards:award.skillAwards})};
+      if(skillId==='character'){
+        const plan=cardRewardPlan(scoped.balance,{pool:'normal',levelsGained:1},member.rng);
+        for(let index=0;index<plan.levelCards;index++){
+          const key=`coop-character:${award.after}:${index}`,cardIds=rollCardRewardIds(scoped,member.rng,{classId:member.classId,pool:'normal',relicIds:member.run.relics});
+          if(cardIds.length){member.run.coopLevelCards ||= {};member.run.coopLevelCards[key] ||= {key,level:award.after,cardIds};}
+        }
+      }
+      return {ok:true,award};
+    },{saveSession});
+  }
+  function chooseClassMilestone(memberId,receiptId,selection,{saveSession}={}) {
+    return commitMemberProgression(memberId,(member,scoped)=>{
+      const claimed=claimClassMilestoneReward(scoped,member.run,receiptId,selection,{meta:{discoveredArmaments:member.discoveredArmaments},collectEquipment:ref=>{
+        if(ref.startsWith('armament/')){const id=ref.slice(9);return !carriedIds(member.run.loadout).includes(id)&&addToStorage(member.run.loadout,id,scoped.balance.equipment.storageSlots ?? 8);}
+        const [,classId,id]=ref.split('/');member.run.loadout.boughtArmour ||= [];
+        if(member.run.loadout.boughtArmour.some(row=>row.classId===classId&&row.id===id))return false;
+        member.run.loadout.boughtArmour.push({classId,id});return true;
+      }});
+      return claimed?{ok:true,receiptId}:{ok:false,error:'This class milestone is unavailable, already claimed, or cannot fit in inventory.'};
+    },{saveSession});
+  }
+  function chooseMemberLevelCard(memberId,key,cardId,{saveSession}={}) {
+    return commitMemberProgression(memberId,(member)=>{
+      const offer=member.run.coopLevelCards?.[key];
+      if(!offer||offer.taken||offer.key!==key||offer.level>member.run.level.level||!offer.cardIds.includes(cardId))return {ok:false,error:'This level card is unavailable or already claimed.'};
+      member.run.deck.push({instanceId:`${key}:${member.id}`,cardId,upgraded:false});offer.taken=cardId;return {ok:true};
+    },{saveSession});
   }
   // A present member takes their card/relic pick (or skips with null).
   function chooseReward(memberId, { cardId = null, takeRelic = false, flask = false, levelCardIds = null } = {}) {
@@ -1504,7 +1586,11 @@ export function createSession({ registries, seedString, endless = false, restore
   }
   function cancelMemberClassRespec(memberId,draftId){const form=respecForms.get(memberId);if(!form || form.id!==draftId)return {ok:false};respecForms.delete(memberId);return {ok:true};}
   function memberView(m) {
+    const scoped=registriesForClassMastery(registries,m.run),expanded=m.run.progressionRulesVersion===1;
+    const pendingIds=new Set(pendingClassMilestones(m.run).map(grant=>grant.id));
     return {
+      ...(expanded?{progressionRuleSnapshot:structuredClone(m.run.progressionRuleSnapshot),xpProgression:m.run.coopXpProgress?structuredClone(m.run.coopXpProgress):undefined}:{}),
+      ...(expanded?{progressionRulesVersion:1,pendingLevels:[...(pendingLevelCount(scoped,m.run)>0?[{skillId:'character',label:'Character',level:m.run.level.level,count:pendingLevelCount(scoped,m.run)}]:[]),...skillTracks(scoped).filter(track=>!track.id.startsWith('class:')||track.id===`class:${m.run.class}`).flatMap(track=>{const count=pendingSkillLevelCount(scoped,m.run,track.id);return count?[{skillId:track.id,label:track.label,level:m.run.skills[track.id]?.level || 0,count}]:[];})],pendingProgression:{skillDrafts:Object.values(m.run.abilityOffers || {}).filter(offer=>offer.level<=(m.run.skills[offer.skillId]?.level || 0)&&(m.run.skills[offer.skillId]?.pendingDrafts || 0)>0&&!m.run.abilityDraftClaims?.[offer.skillId]?.[offer.offerId]),classMilestoneRewards:Object.values(m.run.classMilestoneOffers || {}).filter(offer=>pendingIds.has(offer.receiptId)),levelCards:Object.values(m.run.coopLevelCards || {}).filter(offer=>!offer.taken)}}:{}),
       classRespecAvailable: session.scene.kind==='map' && classRespecAvailability(registriesForClassMastery(registries,m.run),m.run).ok,
       ...(respecForms.get(m.id)?.view ? {classRespec:structuredClone(respecForms.get(m.id).view)} : {}),
       skills: structuredClone(m.run.skills),
@@ -1534,6 +1620,7 @@ export function createSession({ registries, seedString, endless = false, restore
         instanceId: c.instanceId,
         cardId: c.cardId,
         upgraded: c.upgraded,
+        ...(Number.isInteger(c.abilityRank)?{abilityRank:c.abilityRank}:{}),...(c.legacyAbility?{legacyAbility:true}:{}),
         ...(c.rank > 1 ? { rank: c.rank } : {}),
         ...(c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
         ...(c.passiveBlock > 0 ? { passiveBlock: c.passiveBlock } : {}),
@@ -1651,7 +1738,7 @@ export function createSession({ registries, seedString, endless = false, restore
     start, chooseNode, chooseMasteryNode, resolveNode,
     previewMemberClassRespec,applyMemberClassRespec,cancelMemberClassRespec,
     combatPlay, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat,
-    chooseReward, chooseAbilityDraft, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
+    chooseReward, chooseAbilityDraft,claimMemberSkillLevel,chooseClassMilestone,chooseMemberLevelCard, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
     get live() { return live; },

@@ -231,7 +231,8 @@ export function attachLan(server, { port, root }) {
     if (!g) return;
     // Couch co-op: `as` lets a client act for any seat it OWNS (validated).
     const id = msg.as && memberIdsOf(pl).includes(msg.as) ? msg.as : pl.id;
-    if(msg.t.startsWith('classRespec') && msg.as && !memberIdsOf(pl).includes(msg.as))return;
+    if((msg.t.startsWith('classRespec')||['claimSkillLevel','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(msg.t)) && msg.as && !memberIdsOf(pl).includes(msg.as))return;
+    const progressionIntent=operation=>{const result=operation();for(const [socket,client] of session.clients)if(client===pl)socket.write(wsEncode(JSON.stringify({t:'progressionResult',memberId:id,ok:result.ok,error:result.error})));};
     switch (msg.t) {
       case 'classRespecPreview': g.previewMemberClassRespec(id,msg.draftId?msg:null); break;
       case 'classRespecApply': g.applyMemberClassRespec(id,msg.draftId,{saveSession:persistRespecSnapshot}); break;
@@ -243,7 +244,10 @@ export function attachLan(server, { port, root }) {
       case 'chooseDiscard': g.combatChooseDiscard(id, msg.cardInstanceIds); break;
       case 'endTurn': g.combatEndTurn(id); break;
       case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
-      case 'chooseAbilityDraft': g.chooseAbilityDraft(id,msg.offerId,msg.choiceId,{catchup:msg.catchup===true}); break;
+      case 'chooseAbilityDraft': progressionIntent(()=>g.chooseAbilityDraft(id,msg.offerId,msg.choiceId,{catchup:msg.catchup===true,saveSession:persistRespecSnapshot})); break;
+      case 'claimSkillLevel': progressionIntent(()=>g.claimMemberSkillLevel(id,msg.skillId,{saveSession:persistRespecSnapshot})); break;
+      case 'chooseClassMilestone': progressionIntent(()=>g.chooseClassMilestone(id,msg.receiptId,msg.selection,{saveSession:persistRespecSnapshot})); break;
+      case 'chooseLevelCard': progressionIntent(()=>g.chooseMemberLevelCard(id,msg.key,msg.cardId,{saveSession:persistRespecSnapshot})); break;
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
       case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
       case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;

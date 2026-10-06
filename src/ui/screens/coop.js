@@ -1,4 +1,4 @@
-import {mountClassRespec,closeClassRespec,isClassRespecOpen} from '../components/classRespec.js';
+import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
 import { mountInitialClassMastery } from '../components/classMastery.js';
 import { registriesForClassMastery } from '../../model/classMasteryRun.js';
@@ -293,10 +293,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // snapshot (another seat's choice, a resync) and every seat tab rebuilds
   // the door, so the picks are kept here, one entry per seat and door.
   const levelPicks = createLevelCardPicks();
+  let progressionError='';
 
   conn.setHandlers({
     onMessage: (msg) => {
       if (msg.t === 'rejoined') { seats = [msg.id]; seatIdx = 0; me = msg.id; return; }
+      if(msg.t==='progressionResult'&&msg.memberId===me){progressionError=msg.ok?'':msg.error || 'This progression claim could not be saved.';if(!msg.ok)render();return;}
       if (msg.t === 'state') receiveSnapshot(msg.snapshot);
     },
     onClose: () => {
@@ -681,7 +683,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     if (snap.scene.kind !== 'combat') lastSoundSeq = coopReceiptSounds(snap.scene, lastSoundSeq, seats);
     const mm = myMember();
-    if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
+    if (mm && mm.catchupQueue && mm.catchupQueue.length){renderCatchup(mm);renderProgression();return;}
     if (snap.scene.kind !== 'combat') prevCombat = null;
     // The board holds a ResizeObserver and a timeout aimed at a scrollport the
     // next render is about to replace. The same leak the solo screen fixes at
@@ -689,14 +691,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (mapBoard && snap.scene.kind !== 'map') { mapBoard.teardown(); mapBoard = null; }
     renderSeatTabs();
     switch (snap.scene.kind) {
-      case 'map': return renderMap();
-      case 'combat': renderCombat(); showPendingDiscard(); return;
-      case 'reward': return renderReward();
-      case 'shrine': return renderShrine();
-      case 'event': return renderEvent();
-      case 'complete': return renderComplete();
+      case 'map': renderMap();break;
+      case 'combat': renderCombat();showPendingDiscard();break;
+      case 'reward': renderReward();break;
+      case 'shrine': renderShrine();break;
+      case 'event': renderEvent();break;
+      case 'complete': renderComplete();break;
       default: app.innerHTML = ''; app.appendChild(el('div', { class: 'screen coop-scene' }, flavour(`${snap.scene.kind}…`, { class: 'coop-note' })));
     }
+    renderProgression();
   }
 
   // ---- shared board helpers (snapshot-fed twins of combat.js) ---------------
@@ -1299,6 +1302,28 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       return [subtitle(`${row.skillId==='combatManeuvers'?'Combat Maneuvers':'Spellcraft'} · Level ${row.level}`),grid];
     });
   }
+  function renderProgression(){
+    const member=myMember();if(member?.progressionRulesVersion!==1||['combat','complete','lobby'].includes(snap.scene.kind))return;
+    const progression=member.pendingProgression || {},children=[];
+    if(progressionError)children.push(blocker(progressionError));
+    for(const track of member.pendingLevels || []){const action=button({label:`Level Up! · ${track.label} ${track.level} → ${track.level+1}`,weight:'primary',attrs:{'aria-label':`Level up ${track.label} to ${track.level+1}`}});action.addEventListener('click',()=>send({t:'claimSkillLevel',skillId:track.skillId}));children.push(action);}
+    children.push(...abilityDraftStrips(progression));
+    for(const row of progression.classMilestoneRewards || []){
+      children.push(subtitle(`Class level ${row.level} · ${({cards:'Card',feat:'Feat',armory:'Equipment',relic:'Relic',attribute:'Attribute'})[row.rewardKind]}`));
+      const grid=el('div',{class:row.rewardKind==='cards'?'reward-row':'coop-choices'});
+      for(const [index,id] of row.options.entries()){
+        const selection=row.choiceIds?.[index] || id,rank=row.abilityRanks?.[index],name=classRespecOptionName(registries,row.rewardKind,id,rank);
+        const option=row.rewardKind==='cards'?renderCard(registries,{cardId:id,upgraded:false,...(Number.isInteger(rank)?{abilityRank:rank}:{})},{}):button({label:name});
+        option.tabIndex=0;option.setAttribute('role','button');option.setAttribute('aria-label',`Choose ${name}`);
+        const take=()=>send({t:'chooseClassMilestone',receiptId:row.receiptId,selection});option.addEventListener('click',take);
+        if(row.rewardKind==='cards')option.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();take();}});
+        grid.append(option);
+      }
+      children.push(grid);
+    }
+    for(const row of progression.levelCards || []){const grid=el('div',{class:'reward-row'});children.push(subtitle(`Character level ${row.level} · Card`),grid);for(const id of row.cardIds){const card=renderCard(registries,{cardId:id,upgraded:false},{});card.tabIndex=0;card.setAttribute('role','button');const take=()=>send({t:'chooseLevelCard',key:row.key,cardId:id});card.addEventListener('click',take);card.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();take();}});grid.append(card);}}
+    if(children.length)(app.querySelector('.coop-scene') || app).append(el('section',{class:'as-body','aria-label':'Progression'},children));
+  }
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
@@ -1323,7 +1348,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // Ordinary and refined stones (SPEC §15.3) on the one line, each when paid.
       note: smithingStoneNote(stone, t),
       children: [
-        ...abilityDraftStrips(offer),
         ...levelStrips,
         ...(levelStrips.length ? [el('p', { class: 'reward-note', dataset: { note: 'levelCardAuto' }, text: t('reward.note.levelCardAuto') })] : []),
         ...(offer.cardIds.length ? [subtitle(t('reward.card.eyebrow')), grid] : []),
@@ -1500,7 +1524,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       title, eyebrow: debt,
       note: ['Claim what you would have earned while away.', stoneNote].filter(Boolean).join(' '),
       children: [
-        ...(item.type==='reward'?abilityDraftStrips(item.offer,{catchup:true}):[]),
         ...levelStrips,
         grid,
         item.type === 'reward' && item.offer.cardMissed ? el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') }) : null,
