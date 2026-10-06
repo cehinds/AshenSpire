@@ -33,7 +33,7 @@ export function mergeAlternative(repo, source, target, { regenerate = false } = 
   if (spawnSync('git', ['-C', repo, 'merge-base', '--is-ancestor', target, source]).status === 0) return git(repo, 'rev-parse', source);
   const { protectedFiles, overlaps } = protectedPaths(repo, source, target);
   if (overlaps.length) throw new Error(`Refusing ${target}: shared updates overlap alternative changes:\n${overlaps.join('\n')}`);
-  const scratch = process.platform === 'win32' ? 'D:/repos/.codex/tmp' : tmpdir();
+  const scratch = process.platform === 'win32' ? 'D:/repos/.codex/worktrees' : tmpdir();
   mkdirSync(scratch, { recursive: true });
   const parent = mkdtempSync(join(scratch, 'ashen-alternative-'));
   const worktree = join(parent, 'checkout');
