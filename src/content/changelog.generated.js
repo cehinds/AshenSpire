@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Your route, one choice at a time",
     "detail": "The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.",
-    "build": "0.7.1.1043",
+    "build": "0.7.1.1045",
     "pullRequest": 1679,
     "url": "https://github.com/cehinds/AshenSpire/pull/1679"
+  },
+  {
+    "id": "pr-1681",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Inspect your starting stats and relic",
+    "detail": "Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.",
+    "build": "0.7.1.1043",
+    "pullRequest": 1681,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1681"
   },
   {
     "id": "pr-1674",
