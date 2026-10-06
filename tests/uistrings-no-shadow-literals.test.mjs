@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1671].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
