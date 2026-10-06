@@ -5542,6 +5542,7 @@ button[data-button-size] {
 .customize .cc-preview-detail-trigger :is(.ck, .cc-unfold-relic-name) { text-decoration:underline dotted; text-underline-offset:3px; }
 .customize .cc-preview-detail-trigger:hover { color:var(--gold); background:transparent; }
 .customize .cc-preview-detail-trigger:focus-visible, .customize article.cz-class:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+.cc-preview-detail-modal > .modal-body { padding:var(--modal-inset, 1.4rem); }
 .cc-preview-detail-body p { margin:0; }
 .cc-preview-detail-definition { font-size:max(1.4rem, 14px); line-height:1.5; }
 .cc-preview-detail-value { font-size:1.6rem; }
