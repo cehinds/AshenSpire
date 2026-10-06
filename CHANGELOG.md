@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Alternative updates keep their build numbers current** ([#1672](https://github.com/cehinds/AshenSpire/pull/1672), `0.7.1.1039`). Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.
+
 - **Upgrade items in one continuous visit** ([#1675](https://github.com/cehinds/AshenSpire/pull/1675), `0.7.1.1038`). Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.
 
 - **Your character, gear and deck share one Armory** ([#1671](https://github.com/cehinds/AshenSpire/pull/1671), `0.7.1.1036`). Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.
