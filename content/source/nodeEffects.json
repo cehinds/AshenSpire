@@ -70,7 +70,11 @@
   "staggerBreak": {
     "singleBreak": {
       "triggers": [],
-      "passives": { "magicalImpactAdd": { "variable": "magicalImpactAdd" } },
+      "passives": {
+        "magicalImpactAdd": {
+          "variable": "magicalImpactAdd"
+        }
+      },
       "textTemplate": "Spell hits gain {magicalImpactAdd} magical impact."
     },
     "triggers": [
@@ -2367,6 +2371,1916 @@
             }
           }
         ]
+      }
+    ]
+  },
+  "feat:coal-on-steel": {
+    "triggers": [
+      {
+        "on": "damageDealt",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "blade"
+                },
+                {
+                  "p": "cardTypeIs",
+                  "type": "attack"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:brace-and-bite": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "blade"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "hasBlock",
+                  "of": "self",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:brace-and-bite",
+            "damage": 3,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:red-footwork": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "bleed",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "draw",
+            "target": "self",
+            "amount": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:anvil-discipline": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "heavy"
+                },
+                {
+                  "p": "cardTypeIs",
+                  "type": "attack"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:anvil-discipline",
+            "break": 2
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:forge-momentum": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "blade"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guard"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:forge-momentum",
+            "damage": 4,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:paid-in-blood": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "blood"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "hpLostSinceTurnStart",
+                  "atLeast": 1
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:paid-in-blood",
+            "damage": 4,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:last-rampart": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "hpBelowPct",
+                  "of": "self",
+                  "pct": 50,
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:last-rampart",
+            "block": 4
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:war-cadence": {
+    "triggers": [
+      {
+        "on": "cardResolved",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "heavy"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 2,
+                  "tag": "heavy",
+                  "snapshot": "current"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:broad-sentence": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTargetsAllEnemies"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:broad-sentence",
+            "damage": 2,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:ember-sovereign": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "chargeAvailable",
+                  "key": "ember-crown"
+                },
+                {
+                  "p": "cardTypeIs",
+                  "type": "attack"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:ember-sovereign",
+            "damage": 2,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:nightglass-scholar": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "chargeAvailable",
+                  "key": "nightglass"
+                },
+                {
+                  "p": "cardTypeIs",
+                  "type": "attack"
+                },
+                {
+                  "p": "cardAbilityKindIs",
+                  "kind": "spell"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:nightglass-scholar",
+            "damage": 2,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:smoke-dancer": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "chargeAvailable",
+                  "key": "smoke-edge"
+                },
+                {
+                  "p": "cardTypeIs",
+                  "type": "attack"
+                },
+                {
+                  "p": "cardTagIs",
+                  "tag": "blade"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:smoke-dancer",
+            "damage": 2,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:dread-of-the-hammer": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "heavy"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "staggered",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:dread-of-the-hammer",
+            "damage": 4,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:scarred-oath": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "hpLostSinceTurnStart",
+                  "atLeast": 1
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:scarred-oath",
+            "block": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:harvest-the-wound": {
+    "triggers": [
+      {
+        "on": "enemyDied",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "enemyKilledWithStatus",
+              "status": "bleed"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "once": true
+      }
+    ]
+  },
+  "feat:sepulchral-promise": {
+    "triggers": [
+      {
+        "on": "enemyDied",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "enemyKilledWithStatus",
+              "status": "crimsonBlight"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "once": true
+      }
+    ]
+  },
+  "feat:orbit-keeper": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "starstone"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "previousSpell",
+                  "atLeast": 1
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:orbit-keeper",
+            "damage": 3,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:moonward-scholar": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "cardAbilityKindIs",
+                  "kind": "spell"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "manaSpent",
+                  "atLeast": 2
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:moonward-scholar",
+            "block": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:comet-reader": {
+    "triggers": [
+      {
+        "on": "cardResolved",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:comet-mark"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
+            "stacks": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:weight-of-the-void": {
+    "triggers": [
+      {
+        "on": "cardResolved",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:gravity-snare"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:crooked-measure": {
+    "triggers": [
+      {
+        "on": "cardResolved",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:crooked-guard"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:mirror-of-rime": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:rime-mirror"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:mirror-of-rime",
+            "buildup": 2,
+            "buildupStatus": "frost"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:constellation-keeper": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "starstone"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "distinctTagPlays",
+                  "atLeast": 2,
+                  "tag": "starstone"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:constellation-keeper",
+            "damage": 3,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:patient-wellspring": {
+    "triggers": [
+      {
+        "on": "manaRestored",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:mana-weave"
+            },
+            {
+              "p": "manaPositive"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:eclipse-hunter": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "starstone"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "any",
+                  "preds": [
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "frost",
+                      "snapshot": "beforePlay"
+                    },
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "frostExposed",
+                      "snapshot": "beforePlay"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:eclipse-hunter",
+            "damage": 4,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:firmament-keeper": {
+    "triggers": [
+      {
+        "on": "cardChargeConsumed",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "eventChargeConsumed",
+              "key": "warded-casting"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:celestial-refrain": {
+    "triggers": [
+      {
+        "on": "cardResolved",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "starstone"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "sameCardPlays",
+                  "atLeast": 2,
+                  "atMost": 2,
+                  "cardId": "event",
+                  "snapshot": "current"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 4
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:memory-of-winter": {
+    "passives": {
+      "retainBlockUpTo": 4
+    }
+  },
+  "feat:threefold-sky": {
+    "triggers": [
+      {
+        "on": "cardResolved",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "starstone"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "distinctTagPlays",
+                  "atLeast": 3,
+                  "atMost": 3,
+                  "tag": "starstone",
+                  "snapshot": "current"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "draw",
+            "target": "self",
+            "amount": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:first-knife": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "blade"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "cardsPlayed",
+                  "atLeast": 0,
+                  "atMost": 0
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:first-knife",
+            "damage": 3,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:pocket-method": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "discarded",
+                  "atLeast": 1
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:pocket-method",
+            "block": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:open-flank": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "blade"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "not",
+                  "pred": {
+                    "p": "hasBlock",
+                    "of": "target",
+                    "snapshot": "beforePlay"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:open-flank",
+            "damage": 3,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:hidden-palm": {
+    "triggers": [
+      {
+        "on": "cardResolved",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "ability:sleight-hand"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "discarded",
+                  "atLeast": 1,
+                  "snapshot": "current"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:tighten-the-wire": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "ability:tether-cut"
+                },
+                {
+                  "p": "any",
+                  "preds": [
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "weak",
+                      "snapshot": "beforePlay"
+                    },
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "vulnerable",
+                      "snapshot": "beforePlay"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:tighten-the-wire",
+            "damage": 3,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:carrion-measure": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "blade"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "hpBelowPct",
+                  "of": "target",
+                  "pct": 50,
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:carrion-measure",
+            "damage": 4,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:two-quiet-knives": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:paired-strikes"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:two-quiet-knives",
+            "damage": 1,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:trapdoor-smile": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "blade"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guile"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "tagPlays",
+                  "atLeast": 1,
+                  "tag": "guard"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:trapdoor-smile",
+            "damage": 4,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:clean-exit": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "attacksPlayed",
+                  "atLeast": 0,
+                  "atMost": 0
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "restoreStamina",
+            "target": "self",
+            "amount": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:razor-ledger": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "blade"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "discarded",
+                  "atLeast": 1
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:razor-ledger",
+            "damage": 3,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:ashen-mercy": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:mercy-ash"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:ashen-mercy",
+            "heal": 2
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:censer-keeper": {
+    "triggers": [
+      {
+        "on": "hpOfferingPaid",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:blood-censer"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:sower-of-blight": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:blight-seed"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:sower-of-blight",
+            "buildup": 2,
+            "buildupStatus": "crimsonBlight"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:funeral-watch": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "hpBelowPct",
+                  "of": "self",
+                  "pct": 50,
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:funeral-watch",
+            "block": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:ember-almoner": {
+    "triggers": [
+      {
+        "on": "hpOfferingPaid",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:ember-tithe"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "regen",
+            "stacks": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:choir-of-bone": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "allEnemies",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "restoreStamina",
+            "target": "self",
+            "amount": 1
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:requiem-reader": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "ritual"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "hasStatus",
+                  "of": "target",
+                  "status": "crimsonBlight",
+                  "snapshot": "beforePlay"
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:requiem-reader",
+            "damage": 3,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:pilgrim-of-scars": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "cardTagIs",
+                  "tag": "guard"
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "turnStartHpPct",
+                  "atMost": 50
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:crowned-offering": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "all",
+              "preds": [
+                {
+                  "p": "all",
+                  "preds": [
+                    {
+                      "p": "cardTagIs",
+                      "tag": "ritual"
+                    },
+                    {
+                      "p": "cardTypeIs",
+                      "type": "attack"
+                    }
+                  ]
+                },
+                {
+                  "p": "turnMetric",
+                  "metric": "offeringsPaid",
+                  "atLeast": 1
+                }
+              ]
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "self",
+            "key": "feat:crowned-offering",
+            "damage": 4,
+            "damageScope": "effect"
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:dawn-cantor": {
+    "triggers": [
+      {
+        "on": "statusRemoved",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "ability:dawn-rite"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "feat:bearer-of-burdens": {
+    "triggers": [
+      {
+        "on": "statusApplied",
+        "if": {
+          "p": "enemyNegativeStatusNew",
+          "statuses": [
+            "weak",
+            "vulnerable",
+            "frail",
+            "bleed",
+            "frost",
+            "insanity",
+            "frostExposed",
+            "insanityExposed",
+            "crimsonBlight",
+            "burn",
+            "madness",
+            "staggered",
+            "venom",
+            "magicVulnerable"
+          ]
+        },
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "self",
+            "amount": 1
+          }
+        ],
+        "limitPerTurn": 1
       }
     ]
   }

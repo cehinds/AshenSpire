@@ -171,6 +171,7 @@ export function combatSnapshotProblems(snapshot) {
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
   // before them, refused by name when present and malformed.
   if (snapshot.skills !== undefined) problems.push(...skillsProblems(snapshot.skills));
+  if (snapshot.skillFeats !== undefined && (!Array.isArray(snapshot.skillFeats) || snapshot.skillFeats.some(id => !nonEmptyString(id)) || new Set(snapshot.skillFeats).size !== snapshot.skillFeats.length)) problems.push('snapshot.skillFeats must contain unique feat ids');
   if (snapshot.coreTags !== undefined) problems.push(...coreTagsProblems(snapshot.coreTags).map((p) => `snapshot.${p}`));
   // SPEC §14.3: the fight's consumable counts and the companions it mounted;
   // absent on a snapshot written before them, refused by name when malformed.

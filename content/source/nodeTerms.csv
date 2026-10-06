@@ -116,3 +116,53 @@ hearthSigil,,,"Whenever you heal, gain {block} Block."
 vigilSigil,,,"At the start of each fight, if your HP is at or below {pct}%, gain {block} Block."
 pyreSigil,,,"Whenever a card is exhausted, gain {block} Block."
 gravelightSigil,,,"Whenever an enemy dies while your HP is at or below {pct}%, heal {heal} HP."
+feat:coal-on-steel,,,The first Blade hit each turn applies +{bleed} Bleed buildup.
+feat:brace-and-bite,,,The first Blade attack each turn played while you have Block deals +3 damage.
+feat:red-footwork,,,The first Guard card each turn targeting an enemy with Bleed buildup draws {draw} card.
+feat:anvil-discipline,,,The first Heavy attack each turn deals +2 Break damage.
+feat:forge-momentum,,,Your first Blade attack after a Guard card each turn deals +4 damage.
+feat:paid-in-blood,,,The first Blood attack after you have lost HP since your previous turn began deals +4 damage.
+feat:last-rampart,,,"At half HP or lower, your first Guard card each turn grants +4 Block."
+feat:war-cadence,,,"After your second Heavy card in a turn, gain {block} Block, once per turn."
+feat:broad-sentence,,,Your first attack that hits all living enemies each turn deals +2 damage to each target.
+feat:ember-sovereign,,,"Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
+feat:dread-of-the-hammer,,,Your first Heavy attack against a Staggered target each turn deals +4 damage.
+feat:scarred-oath,,,"Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
+feat:harvest-the-wound,,,"Your first credited kill of an enemy with Bleed buildup heals {heal} HP, once per combat."
+feat:orbit-keeper,,,Your first Starstone spell following another spell each turn deals +3 direct damage.
+feat:moonward-scholar,,,The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block.
+feat:comet-reader,,,The first Comet Mark attack each turn applies +{vulnerable} Vulnerable after damage.
+feat:mirror-of-rime,,,Your first Rime Mirror each turn applies +2 Frost buildup.
+feat:constellation-keeper,,,Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage.
+feat:patient-wellspring,,,The first Mana Weave restoration each turn also grants {block} Block.
+feat:weight-of-the-void,,,The first Gravity Snare each turn applies +{weak} Weak after damage.
+feat:nightglass-scholar,,,"Once per turn, your Nightglass charge grants +2 additional damage when consumed."
+feat:eclipse-hunter,,,Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage.
+feat:firmament-keeper,,,"Once per turn, consuming a Warded Casting charge also grants {block} Block."
+feat:celestial-refrain,,,"The second play of the same Starstone card ID in a turn grants {block} Block, once per turn."
+feat:memory-of-winter,,,Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block.
+feat:threefold-sky,,,"Playing your third distinct Starstone card ID in a turn draws {draw} card, once per turn."
+feat:first-knife,,,"If your first card this turn is a Blade attack, it deals +3 damage."
+feat:pocket-method,,,Your first Guard card after an explicit discard each turn grants +3 Block.
+feat:crooked-measure,,,Your first Crooked Guard hit each turn applies +{weak} Weak after damage.
+feat:open-flank,,,Your first Blade attack against an enemy with zero Block each turn deals +3 damage.
+feat:hidden-palm,,,The first Sleight of Hand sequence each turn grants {block} Block after the discard.
+feat:tighten-the-wire,,,Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage.
+feat:smoke-dancer,,,"Once per turn, a Smoke Edge charge adds +2 damage before it is consumed."
+feat:carrion-measure,,,Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage.
+feat:two-quiet-knives,,,Your first Paired Strikes attack each turn deals +1 damage on each of its two hits.
+feat:trapdoor-smile,,,Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage.
+feat:clean-exit,,,"Your first Guard card played before any attack this turn restores {restoreStamina} Stamina, once per turn."
+feat:razor-ledger,,,Your first Blade attack after an explicit discard each turn deals +3 damage.
+feat:ashen-mercy,,,The first Mercy in Ash card each turn heals +2 HP.
+feat:censer-keeper,,,The first Blood Censer offering each turn grants +{block} Block after its HP payment.
+feat:sower-of-blight,,,The first Blight Seed hit each turn applies +2 Crimson Blight buildup.
+feat:funeral-watch,,,"At half HP or lower, your first Guard card each turn grants +3 Block."
+feat:ember-almoner,,,Your first Ember Tithe each turn grants +{regen} Regen after the HP payment.
+feat:choir-of-bone,,,"The first Guard card you play while any living enemy has Crimson Blight buildup restores {restoreStamina} Stamina, once per turn."
+feat:requiem-reader,,,The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage.
+feat:pilgrim-of-scars,,,"If you began the turn at half HP or lower, your first Guard card that turn heals {heal} HP."
+feat:crowned-offering,,,The first Ritual attack after an earlier HP offering this turn deals +4 damage.
+feat:dawn-cantor,,,The first Dawn Rite removal each turn also grants {block} Block.
+feat:bearer-of-burdens,,,The first negative status newly applied to you by an enemy each turn restores {restoreMana} Mana.
+feat:sepulchral-promise,,,"Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."

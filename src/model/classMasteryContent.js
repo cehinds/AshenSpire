@@ -101,11 +101,17 @@ export function classMasteryProblems(bundle) {
   for(const feat of bundle.classSkillFeats || []){
     if(!feat?.id || featIds.has(feat.id))at('feats','class feat must have a unique id');
     featIds.add(feat?.id);
+    for(const key of Object.keys(feat || {}))if(!['id','skillId','minLevel','name','description','crit','passive'].includes(key))at(feat?.id,`unknown feat field '${key}'; behaviour must use a property carrier`);
     if(typeof feat?.skillId!=='string' || !feat.skillId.startsWith('class:') || !classes.has(feat.skillId.slice(6)))at(feat?.id,'class feat must name a class track');
     if(!Number.isInteger(feat?.minLevel) || feat.minLevel<0 || !feat?.name || !feat?.description)at(feat?.id,'class feat needs a name, description and non-negative minLevel');
-    if(!feat?.crit && !feat?.passive)at(feat?.id,'class feat must author an effect');
+    const propertyTags=(bundle.tagging || []).filter(row=>row.family==='feat' && row.objectId===feat?.id).map(row=>row.tagId).filter(id=>(bundle.propertyRules || []).some(rule=>rule.tag===id));
+    if(!feat?.crit && !feat?.passive && !propertyTags.length)at(feat?.id,'class feat must author an effect or carry a property rule');
+    for(const tag of propertyTags){
+      const rule=(bundle.propertyRules || []).find(row=>row.tag===tag);
+      if(!rule?.passives && !rule?.triggers?.length)at(feat?.id,`feat property '${tag}' must confer an effect`);
+    }
     const effect=feat?.crit || feat?.passive;
-    if(!Array.isArray(effect?.tags) || !effect.tags.length || effect.tags.some(t=>!(bundle.nodes || []).some(n=>n.id===t)))at(feat?.id,'feat effect tags must name nodes');
+    if(effect && (!Array.isArray(effect.tags) || !effect.tags.length || effect.tags.some(t=>!(bundle.nodes || []).some(n=>n.id===t))))at(feat?.id,'feat effect tags must name nodes');
     if(feat?.passive && (!Number.isInteger(feat.passive.block) || feat.passive.block<=0))at(feat.id,'passive Block must be a positive integer');
     if(feat?.crit){
       const rule=feat.crit;

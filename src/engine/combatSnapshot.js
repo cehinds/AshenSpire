@@ -7,7 +7,7 @@
 import { bindTurnStamina } from '../model/turnStamina.js';
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
@@ -96,6 +96,7 @@ export function serializeCombatSnapshot(combat) {
     skills: combat.skills,
     skillXp: combat.skillXp,
     coreTags: combat.coreTags,
+    skillFeats: combat.skillFeats || [],
     // SPEC §14.3: the fight's consumable counts (a spent revive token stays
     // spent on a reload; the log alone could not keep it so) and the
     // companions it mounted, which a restore mounts again.
@@ -203,6 +204,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // the gates read level 0 and the receipt starts here, as createCombat's do.
     skills: saved.skills ?? {},
     skillXp: saved.skillXp ?? {},
+    skillFeats: Array.isArray(saved.skillFeats) ? saved.skillFeats : [],
     coreTags: Array.isArray(saved.coreTags) ? saved.coreTags : [],
     // A snapshot from before SPEC §14.3 carries neither: no counts (null, so
     // its combat end leaves the run's alone) and no companion mounted.
@@ -230,6 +232,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   syncLoadoutProperties(combat);
   syncRelicProperties(combat);
   syncClassProperties(combat);
+  syncFeatProperties(combat);
   syncCompanionProperties(combat);
   syncSigilProperties(combat);
   // The player's poise max is RE-DERIVED, never trusted from the save (plan

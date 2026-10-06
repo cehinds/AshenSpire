@@ -13291,5 +13291,731 @@ export const tagging = [
     "scope": "",
     "objectId": "perfectHeist",
     "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "source:unarmed"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-coal-on-steel",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-coal-on-steel",
+    "tagId": "feat:coal-on-steel"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-brace-and-bite",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-brace-and-bite",
+    "tagId": "feat:brace-and-bite"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-red-footwork",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-red-footwork",
+    "tagId": "feat:red-footwork"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-anvil-discipline",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-anvil-discipline",
+    "tagId": "feat:anvil-discipline"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-forge-momentum",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-forge-momentum",
+    "tagId": "feat:forge-momentum"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-paid-in-blood",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-paid-in-blood",
+    "tagId": "feat:paid-in-blood"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-last-rampart",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-last-rampart",
+    "tagId": "feat:last-rampart"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-war-cadence",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-war-cadence",
+    "tagId": "feat:war-cadence"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-broad-sentence",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-broad-sentence",
+    "tagId": "feat:broad-sentence"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-ember-sovereign",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-ember-sovereign",
+    "tagId": "feat:ember-sovereign"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-dread-of-the-hammer",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-dread-of-the-hammer",
+    "tagId": "feat:dread-of-the-hammer"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-scarred-oath",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-scarred-oath",
+    "tagId": "feat:scarred-oath"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-harvest-the-wound",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-harvest-the-wound",
+    "tagId": "feat:harvest-the-wound"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-orbit-keeper",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-orbit-keeper",
+    "tagId": "feat:orbit-keeper"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-moonward-scholar",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-moonward-scholar",
+    "tagId": "feat:moonward-scholar"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-comet-reader",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-comet-reader",
+    "tagId": "feat:comet-reader"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-mirror-of-rime",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-mirror-of-rime",
+    "tagId": "feat:mirror-of-rime"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-constellation-keeper",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-constellation-keeper",
+    "tagId": "feat:constellation-keeper"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-patient-wellspring",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-patient-wellspring",
+    "tagId": "feat:patient-wellspring"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-weight-of-the-void",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-weight-of-the-void",
+    "tagId": "feat:weight-of-the-void"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-nightglass-scholar",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-nightglass-scholar",
+    "tagId": "feat:nightglass-scholar"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-eclipse-hunter",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-eclipse-hunter",
+    "tagId": "feat:eclipse-hunter"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-firmament-keeper",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-firmament-keeper",
+    "tagId": "feat:firmament-keeper"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-celestial-refrain",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-celestial-refrain",
+    "tagId": "feat:celestial-refrain"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-memory-of-winter",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-memory-of-winter",
+    "tagId": "feat:memory-of-winter"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-threefold-sky",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-threefold-sky",
+    "tagId": "feat:threefold-sky"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-first-knife",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-first-knife",
+    "tagId": "feat:first-knife"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-pocket-method",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-pocket-method",
+    "tagId": "feat:pocket-method"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-crooked-measure",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-crooked-measure",
+    "tagId": "feat:crooked-measure"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-open-flank",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-open-flank",
+    "tagId": "feat:open-flank"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-hidden-palm",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-hidden-palm",
+    "tagId": "feat:hidden-palm"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-tighten-the-wire",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-tighten-the-wire",
+    "tagId": "feat:tighten-the-wire"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-smoke-dancer",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-smoke-dancer",
+    "tagId": "feat:smoke-dancer"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-carrion-measure",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-carrion-measure",
+    "tagId": "feat:carrion-measure"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-two-quiet-knives",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-two-quiet-knives",
+    "tagId": "feat:two-quiet-knives"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-trapdoor-smile",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-trapdoor-smile",
+    "tagId": "feat:trapdoor-smile"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-clean-exit",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-clean-exit",
+    "tagId": "feat:clean-exit"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-razor-ledger",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-razor-ledger",
+    "tagId": "feat:razor-ledger"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-ashen-mercy",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-ashen-mercy",
+    "tagId": "feat:ashen-mercy"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-censer-keeper",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-censer-keeper",
+    "tagId": "feat:censer-keeper"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-sower-of-blight",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-sower-of-blight",
+    "tagId": "feat:sower-of-blight"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-funeral-watch",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-funeral-watch",
+    "tagId": "feat:funeral-watch"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-ember-almoner",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-ember-almoner",
+    "tagId": "feat:ember-almoner"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-choir-of-bone",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-choir-of-bone",
+    "tagId": "feat:choir-of-bone"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-requiem-reader",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-requiem-reader",
+    "tagId": "feat:requiem-reader"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-pilgrim-of-scars",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-pilgrim-of-scars",
+    "tagId": "feat:pilgrim-of-scars"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-crowned-offering",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-crowned-offering",
+    "tagId": "feat:crowned-offering"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-dawn-cantor",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-dawn-cantor",
+    "tagId": "feat:dawn-cantor"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-bearer-of-burdens",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-bearer-of-burdens",
+    "tagId": "feat:bearer-of-burdens"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-sepulchral-promise",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "progression-sepulchral-promise",
+    "tagId": "feat:sepulchral-promise"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "reaverIronFooting",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "reaverKeenBlade",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "reaverBloodDiscipline",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "reaverMasteryFocus",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "reaverMasteryResolve",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "starseerAshShelter",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "starseerClearSky",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "starseerRitualPrecision",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "starseerMasteryFocus",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "starseerMasteryResolve",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "rogueQuietGuard",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "rogueMeasuredPoint",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "rogueKnifeWork",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "rogueMasteryFocus",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "rogueMasteryResolve",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "heraldRiteShelter",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "heraldBlightPrecision",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "heraldOathEdge",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "heraldMasteryFocus",
+    "tagId": "classification.feat"
+  },
+  {
+    "family": "feat",
+    "scope": "",
+    "objectId": "heraldMasteryResolve",
+    "tagId": "classification.feat"
   }
 ];

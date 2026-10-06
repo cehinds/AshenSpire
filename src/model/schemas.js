@@ -332,6 +332,7 @@ export const PASSIVE_TYPES = Object.freeze({
   // class card's `favored` property confers it, and engine/skillXp.js reads
   // it scoped to the mounts whose tags include the track — never unscoped.
   skillXpMult: 'num',
+  retainBlockUpTo: 'num', // highest allowance wins at owner turn start
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));

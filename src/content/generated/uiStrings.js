@@ -5739,14 +5739,14 @@ export const uiStrings = [
     "id": "settings.row.victoryXpSeconds",
     "extends": "",
     "short": "Victory XP animation (seconds)",
-    "full": "Total time for all XP bars together. 0 shows the final values immediately.",
+    "full": "Time to fill one complete XP bar. All tracks use the same fractional speed. 0 shows the final values immediately.",
     "tip": ""
   },
   {
     "id": "settings.row.levelUpRefillSeconds",
     "extends": "",
     "short": "Residual XP refill (seconds)",
-    "full": "After each Level press, reset that bar and refill it with remaining XP before its reward opens. 0 settles immediately.",
+    "full": "After returning from a claimed level's choices, refill its remaining XP. Time is per complete bar; partial refills take less time. 0 settles immediately.",
     "tip": ""
   },
   {

@@ -225,7 +225,7 @@ export function createRegistries(contentBundle) {
   // …and the class tree (plan phase 5b): classId, nodeId, tier — read by
   // model/classTree.js as a plain table, like the tree's own companions.
   for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree', 'classMastery', 'classSkillFeats']) {
-    registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
+    registries[table] = deepFreeze((table === 'classSkillFeats' ? collection(table, bundle[table] || []) : (bundle[table] || [])).map((row) => ({ ...row })));
   }
   registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });
   registries.tree = nodeTree(registries);
@@ -517,6 +517,14 @@ export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}, mo
   }
   for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') s += v;
   return s;
+}
+
+/** Highest retention allowance wins across properties and relics. */
+export function passiveMax(registries, relicIds, key, mounts = null) {
+  knownPassive(key);
+  const values = (relicIds || []).map(id => registries.relics.get(id).passives?.[key]);
+  values.push(...mountedPassiveValues(mounts, key));
+  return Math.max(0, ...values.filter(Number.isFinite));
 }
 
 /** True if any owned relic or mounted property sets the boolean passive. */

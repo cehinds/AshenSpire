@@ -1,3 +1,4 @@
+import { passiveMax } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 // src/engine/combat.js — action queue + turn loop (generic interpreter)
@@ -41,7 +42,7 @@ import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolv
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, syncSigilProperties, propertyMountsOf } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties, propertyMountsOf } from './properties.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -232,6 +233,7 @@ export function createCombat({
     // never writes it.
     skills: player.skills ? structuredClone(player.skills) : {},
     // The core card's picked tree nodes (plan phase 5b), mounted with the class.
+    skillFeats: Array.isArray(player.skillFeats) ? [...player.skillFeats] : [],
     coreTags: Array.isArray(player.coreTags) ? [...player.coreTags] : [],
     // SPEC §14.3: the run's consumable counts, copied — a revive token spends
     // from this copy (engine/actions.js) and the run's owner settles it back
@@ -274,6 +276,7 @@ export function createCombat({
   // …and the class card, the core zone's one card (plan phase 5a): its
   // `favored` leaning is a property like any other.
   syncClassProperties(combat);
+  syncFeatProperties(combat);
   // …and the companions travelling with the run (SPEC §14.3): each mounts as a
   // `companion` carrier, its rules its tagging.csv property rows.
   syncCompanionProperties(combat);
@@ -419,7 +422,7 @@ function startPlayerTurn(combat) {
   // (2) Lose all block — unless modified (generic 'retainBlock' modifier;
   // a 'blockCap' modifier clamps what is kept).
   if (!S.getFlag(combat, p, 'retainBlock')) {
-    p.block = 0;
+    p.block = Math.min(p.block, passiveMax(combat.registries, p.relicIds, 'retainBlockUpTo', propertyMountsOf(combat, p)));
   } else {
     const cap = S.getCap(combat, p, 'blockCap');
     if (cap != null) p.block = Math.min(p.block, cap);

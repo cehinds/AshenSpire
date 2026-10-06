@@ -649,5 +649,305 @@ export const nodeTerms = [
     "playerTermId": "",
     "tooltipTermId": "",
     "template": "Whenever an enemy dies while your HP is at or below {pct}%, heal {heal} HP."
+  },
+  {
+    "nodeId": "feat:coal-on-steel",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Blade hit each turn applies +{bleed} Bleed buildup."
+  },
+  {
+    "nodeId": "feat:brace-and-bite",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Blade attack each turn played while you have Block deals +3 damage."
+  },
+  {
+    "nodeId": "feat:red-footwork",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Guard card each turn targeting an enemy with Bleed buildup draws {draw} card."
+  },
+  {
+    "nodeId": "feat:anvil-discipline",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Heavy attack each turn deals +2 Break damage."
+  },
+  {
+    "nodeId": "feat:forge-momentum",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Blade attack after a Guard card each turn deals +4 damage."
+  },
+  {
+    "nodeId": "feat:paid-in-blood",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Blood attack after you have lost HP since your previous turn began deals +4 damage."
+  },
+  {
+    "nodeId": "feat:last-rampart",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At half HP or lower, your first Guard card each turn grants +4 Block."
+  },
+  {
+    "nodeId": "feat:war-cadence",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "After your second Heavy card in a turn, gain {block} Block, once per turn."
+  },
+  {
+    "nodeId": "feat:broad-sentence",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first attack that hits all living enemies each turn deals +2 damage to each target."
+  },
+  {
+    "nodeId": "feat:ember-sovereign",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
+  },
+  {
+    "nodeId": "feat:dread-of-the-hammer",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Heavy attack against a Staggered target each turn deals +4 damage."
+  },
+  {
+    "nodeId": "feat:scarred-oath",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
+  },
+  {
+    "nodeId": "feat:harvest-the-wound",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first credited kill of an enemy with Bleed buildup heals {heal} HP, once per combat."
+  },
+  {
+    "nodeId": "feat:orbit-keeper",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Starstone spell following another spell each turn deals +3 direct damage."
+  },
+  {
+    "nodeId": "feat:moonward-scholar",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block."
+  },
+  {
+    "nodeId": "feat:comet-reader",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Comet Mark attack each turn applies +{vulnerable} Vulnerable after damage."
+  },
+  {
+    "nodeId": "feat:mirror-of-rime",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Rime Mirror each turn applies +2 Frost buildup."
+  },
+  {
+    "nodeId": "feat:constellation-keeper",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage."
+  },
+  {
+    "nodeId": "feat:patient-wellspring",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Mana Weave restoration each turn also grants {block} Block."
+  },
+  {
+    "nodeId": "feat:weight-of-the-void",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Gravity Snare each turn applies +{weak} Weak after damage."
+  },
+  {
+    "nodeId": "feat:nightglass-scholar",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Once per turn, your Nightglass charge grants +2 additional damage when consumed."
+  },
+  {
+    "nodeId": "feat:eclipse-hunter",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage."
+  },
+  {
+    "nodeId": "feat:firmament-keeper",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Once per turn, consuming a Warded Casting charge also grants {block} Block."
+  },
+  {
+    "nodeId": "feat:celestial-refrain",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The second play of the same Starstone card ID in a turn grants {block} Block, once per turn."
+  },
+  {
+    "nodeId": "feat:memory-of-winter",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block."
+  },
+  {
+    "nodeId": "feat:threefold-sky",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Playing your third distinct Starstone card ID in a turn draws {draw} card, once per turn."
+  },
+  {
+    "nodeId": "feat:first-knife",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "If your first card this turn is a Blade attack, it deals +3 damage."
+  },
+  {
+    "nodeId": "feat:pocket-method",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Guard card after an explicit discard each turn grants +3 Block."
+  },
+  {
+    "nodeId": "feat:crooked-measure",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Crooked Guard hit each turn applies +{weak} Weak after damage."
+  },
+  {
+    "nodeId": "feat:open-flank",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Blade attack against an enemy with zero Block each turn deals +3 damage."
+  },
+  {
+    "nodeId": "feat:hidden-palm",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Sleight of Hand sequence each turn grants {block} Block after the discard."
+  },
+  {
+    "nodeId": "feat:tighten-the-wire",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage."
+  },
+  {
+    "nodeId": "feat:smoke-dancer",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Once per turn, a Smoke Edge charge adds +2 damage before it is consumed."
+  },
+  {
+    "nodeId": "feat:carrion-measure",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage."
+  },
+  {
+    "nodeId": "feat:two-quiet-knives",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Paired Strikes attack each turn deals +1 damage on each of its two hits."
+  },
+  {
+    "nodeId": "feat:trapdoor-smile",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage."
+  },
+  {
+    "nodeId": "feat:clean-exit",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Guard card played before any attack this turn restores {restoreStamina} Stamina, once per turn."
+  },
+  {
+    "nodeId": "feat:razor-ledger",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Blade attack after an explicit discard each turn deals +3 damage."
+  },
+  {
+    "nodeId": "feat:ashen-mercy",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Mercy in Ash card each turn heals +2 HP."
+  },
+  {
+    "nodeId": "feat:censer-keeper",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Blood Censer offering each turn grants +{block} Block after its HP payment."
+  },
+  {
+    "nodeId": "feat:sower-of-blight",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Blight Seed hit each turn applies +2 Crimson Blight buildup."
+  },
+  {
+    "nodeId": "feat:funeral-watch",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At half HP or lower, your first Guard card each turn grants +3 Block."
+  },
+  {
+    "nodeId": "feat:ember-almoner",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Ember Tithe each turn grants +{regen} Regen after the HP payment."
+  },
+  {
+    "nodeId": "feat:choir-of-bone",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Guard card you play while any living enemy has Crimson Blight buildup restores {restoreStamina} Stamina, once per turn."
+  },
+  {
+    "nodeId": "feat:requiem-reader",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage."
+  },
+  {
+    "nodeId": "feat:pilgrim-of-scars",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "If you began the turn at half HP or lower, your first Guard card that turn heals {heal} HP."
+  },
+  {
+    "nodeId": "feat:crowned-offering",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Ritual attack after an earlier HP offering this turn deals +4 damage."
+  },
+  {
+    "nodeId": "feat:dawn-cantor",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Dawn Rite removal each turn also grants {block} Block."
+  },
+  {
+    "nodeId": "feat:bearer-of-burdens",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first negative status newly applied to you by an enemy each turn restores {restoreMana} Mana."
+  },
+  {
+    "nodeId": "feat:sepulchral-promise",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."
   }
 ];

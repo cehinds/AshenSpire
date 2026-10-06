@@ -1,3 +1,4 @@
+import { passiveMax } from '../model/registries.js';
 // src/engine/coopCombat.js — shared N-player combat runner (Forsaken Together S3).
 //
 // A SEPARATE co-op fight engine that reuses the solo engine's generic opcode /
@@ -30,7 +31,7 @@
 
 import { chargeFlaskId } from '../model/gracerefill.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
-import { syncRelicProperties, syncClassProperties, syncLoadoutProperties, syncSigilProperties } from './properties.js';
+import { syncRelicProperties, syncClassProperties, syncFeatProperties, syncLoadoutProperties, syncSigilProperties, propertyMountsOf } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 
@@ -162,6 +163,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
     syncClassProperties(C, P.entity);
+    syncFeatProperties(C, P.entity, P.skillFeats);
     syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
     if (C.ratingsRules) refreshCombatRatings(C);
     C.emit('combatStart', {});
@@ -246,6 +248,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     loadout: p.loadout ? structuredClone(p.loadout) : null,
     itemUpgradeLevels: p.itemUpgradeLevels || {},
     skills: p.skills ? structuredClone(p.skills) : {},
+    skillFeats: Array.isArray(p.skillFeats) ? [...p.skillFeats] : [],
     coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
     // SPEC §15.4: the seat's attuned legendary sigils, mounted under its own key.
     attunedSigils: Array.isArray(p.attunedSigils) ? [...p.attunedSigils] : [],
@@ -269,6 +272,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
     syncClassProperties(C, P.entity);
+    syncFeatProperties(C, P.entity, P.skillFeats);
     syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
     if (C.ratingsRules) refreshCombatRatings(C);
     setActive(C, wasActive || null);
@@ -408,7 +412,7 @@ function startPlayerPhase(C) {
     // endOnePlayerTurn, so the counter is zeroed here, at every seat's turn
     // start, and never survives into a later turn to suppress its recovery.
     e.counters.staminaSpentThisTurn = 0;
-    if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
+    if (!S.getFlag(C, e, 'retainBlock')) e.block = Math.min(e.block, passiveMax(C.registries, e.relicIds, 'retainBlockUpTo', propertyMountsOf(C, e)));
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     reconcileWardBlock(e);
     clearMeterGuards(e);
