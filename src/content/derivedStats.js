@@ -89,18 +89,21 @@ export const derivedStatRules = {
     },
     draw: { base: 4, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
     handSize: { base: 15, min: 1, max: 15 },
-    hp: { base: 51, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
+    // Owner, 2026-10-06: each primary attribute has a clear +1 main bonus.
+    // Bases, level growth and secondary resource rules stay independently
+    // configurable. Existing runs retain their snapshotted coefficients.
+    hp: { base: 51, constitution: 1, perLevel: 2 },
     // Budget 1 each, the owner's own sums.
     stamina: { base: 3, dexterity: 0.25, constitution: 0.25, wisdom: 0.2, intelligence: 0.2, perLevel: 0.1 },
     mana: { base: 1, strength: 0.125, constitution: 0.25, wisdom: 0.5, intelligence: 0.125, perLevel: 0.2 },
-    // The combat ratings, budget 2. Equipment, relics and statuses add on top.
-    ar: { base: 0, strength: 0.75, dexterity: 0.5, constitution: 0.25, wisdom: 0.25, intelligence: 0.25 },
-    dr: { base: 0, strength: 0.5, dexterity: 0.75, constitution: 0.25, wisdom: 0.35, intelligence: 0.15 },
-    pr: { base: 0, dexterity: 0.25, constitution: 0.5, wisdom: 0.5, intelligence: 0.75 },
-    ward: { base: 1, dexterity: 0.2, constitution: 0.3, wisdom: 1, intelligence: 0.5 },
+    // Equipment, relics and statuses add on top of each attribute's bonus.
+    ar: { base: 0, strength: 1 },
+    dr: { base: 0, dexterity: 1 },
+    pr: { base: 0, intelligence: 1 },
+    ward: { base: 1, wisdom: 1 },
     // ONE Poise: the rating and the pool were two rows for one number. Armour
     // and relics remain its external addends, exactly as HP's equipment bonus.
-    poise: { base: 1, strength: 0.5, constitution: 1, wisdom: 0.3, intelligence: 0.2 },
+    poise: { base: 1, constitution: 1 },
   },
   // ---- D26: how each row READS, authored beside the row it describes -------
   //

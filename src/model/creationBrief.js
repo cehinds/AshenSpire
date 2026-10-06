@@ -158,6 +158,9 @@ function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING
       // other bounded fact (Codex, #1321).
       const cap = Number.isFinite(rule.max) ? rule.max : null;
       return {
+        id,
+        weight: Number(rule[attributeId]),
+        multiplier: rule.multiplier,
         line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}${cap !== null ? ` (at most ${cap})` : ''}`,
         summary: `${label} weight ${rule[attributeId]}${cap !== null ? ` (max ${cap})` : ''}`,
         cap,
@@ -179,6 +182,32 @@ function attributeCycle(weight, perIncrease) {
     if (Math.abs(increases - Math.round(increases)) <= 1e-9 && Math.round(increases) > 0) return n;
   }
   return null;
+}
+
+// The compact face names the main benefit; the disclosure keeps every
+// secondary contribution. Values still come from the active run's rules.
+const MAIN_BENEFITS = {
+  strength: [['ar', 'Physical damage / Attack Rating (AR)']],
+  dexterity: [['dr', 'Defense / Defense Rating (DR)']],
+  constitution: [['hp', 'Health'], ['poise', 'Poise']],
+  wisdom: [['ward', 'Ward']],
+  intelligence: [['pr', 'Magic damage / Potency Rating (PR)']],
+};
+
+function mainBenefitSummary(attributeId, feeds, ratings) {
+  return (MAIN_BENEFITS[attributeId] || []).flatMap(([id, label]) => {
+    const feed = feeds.find((fact) => fact.id === id);
+    const rating = ratings.find((fact) => fact.id === id);
+    if (!feed && !rating) return [];
+    const points = feed ? feed.points : attributeCycle(rating.weight, 1);
+    const gain = feed ? feed.perTier : points && Math.round(points * rating.weight * 100) / 100;
+    const cap = (feed || rating).cap;
+    // Legacy global multipliers floor the combined total, so a per-attribute
+    // promise would be misleading. Their exact formula remains in the reveal.
+    const simple = !rating || !Number.isFinite(rating.multiplier) || rating.multiplier === 1;
+    const cadence = points === 1 ? 'per point' : `every ${points} points`;
+    return [`${label} ${simple && Number.isFinite(gain) && points ? `+${gain} ${cadence}` : 'scales with points'}${cap != null ? ` (max ${cap})` : ''}`];
+  }).join(' · ');
 }
 
 /**
@@ -307,7 +336,8 @@ export function attributeCardModels(registries, attributes, { projection = null,
       key: `attribute:${def.id}`,
       kind: 'attribute',
       disclosure: def.disclosure,
-      face: { label: def.shortLabel, summary: faceSummary, value: def.value },
+      face: { label: def.shortLabel, summary: faceSummary,
+        mainSummary: mainBenefitSummary(def.id, feedFacts, ratingFacts) || faceSummary, value: def.value },
       reveal: {
         title: def.label,
         sense: def.sense,

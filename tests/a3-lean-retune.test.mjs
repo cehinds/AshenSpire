@@ -29,10 +29,10 @@ const run = (registries, classId, attributes) => createRunState({ seed: 0xa3, cl
 
 test('stock lean pools open on the retuned HP base', () => {
   assert.equal(contentBundle.derivedStatRules.rules.hp.base, 51, 'hp.base is the A3 figure');
-  // Reaver carries the Forsaken Medallion's flat ten, the Starseer its shard's
-  // fourteen; CON 2 is 8 and the Reaver's STR 3 × 0.35 is one more.
+  // The 2026-10-06 primary-bonus retune keeps this base and gives one HP per
+  // CON. Reaver's medallion adds ten; Starseer's shard adds fourteen.
   const pools = Object.fromEntries(['reaver', 'starseer', 'rogue', 'herald'].map((id) => [id, run(REG, id).maxHp]));
-  assert.deepEqual(pools, { reaver: 70, starseer: 69, rogue: 59, herald: 59 });
+  assert.deepEqual(pools, { reaver: 63, starseer: 66, rogue: 53, herald: 53 });
   for (const [id, hp] of Object.entries(pools)) assert.equal(run(REG, id).hp, hp, `${id} opens at full HP`);
 });
 
@@ -58,8 +58,8 @@ test('the first extra Action is at DEX 4: reachable at creation, and three level
 
 test('configurability (FINISH A2–A4): overriding each retuned row changes the engine result', () => {
   // hp.base: the stock Rogue's pool moves one for one with the row.
-  assert.equal(run(withRows({ hp: { base: 30 } }), 'rogue').maxHp, 38, 'the pre-A3 base restores the pre-A3 pool');
-  assert.equal(run(withRows({ hp: { base: 60 } }), 'rogue').maxHp, 68);
+  assert.equal(run(withRows({ hp: { base: 30 } }), 'rogue').maxHp, 32, 'the base changes without changing the CON bonus');
+  assert.equal(run(withRows({ hp: { base: 60 } }), 'rogue').maxHp, 62);
   // energy.dexterity: DEX 4 gives the extra Action only while 4 × weight ≥ 1.
   const dex4 = { strength: 1, dexterity: 4, constitution: 1, wisdom: 1, intelligence: 1 };
   assert.equal(run(withRows({ energy: { dexterity: 0.2 } }), 'rogue', dex4).energyMax, 3, 'the pre-A3 weight puts the step back at DEX 5');
