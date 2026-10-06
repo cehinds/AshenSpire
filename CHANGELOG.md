@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
-- **Ready to begin, easier to read** ([#1674](https://github.com/cehinds/AshenSpire/pull/1674), `0.7.1.1039`). Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.
+- **Ready to begin, easier to read** ([#1674](https://github.com/cehinds/AshenSpire/pull/1674), `0.7.1.1040`). Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.
 
 - **Upgrade items in one continuous visit** ([#1675](https://github.com/cehinds/AshenSpire/pull/1675), `0.7.1.1038`). Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.
 

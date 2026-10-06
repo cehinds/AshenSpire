@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Ready to begin, easier to read",
     "detail": "Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.",
-    "build": "0.7.1.1039",
+    "build": "0.7.1.1040",
     "pullRequest": 1674,
     "url": "https://github.com/cehinds/AshenSpire/pull/1674"
   },
