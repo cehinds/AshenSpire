@@ -34,6 +34,11 @@ test('transactional real plays bank skill XP once, scoped to the solo or co-op o
     const before = structuredClone(combat.skillXp);
     if (coop) previewCoopCard(combat, owner, id); else previewCard(combat, id);
     assert.deepEqual(combat.skillXp, before);
+    seat.entity.mana = 0;
+    assert.throws(() => coop ? playCard(combat, owner, id, combat.enemies[0].id) : play(combat), /Not enough mana/);
+    assert.deepEqual(combat.skillXp, before);
+    assert.ok(seat.piles.hand.some(card => card.instanceId === id));
+    seat.entity.mana = 20;
     if (coop) playCard(combat, owner, id, combat.enemies[0].id); else play(combat);
     assert.equal(skillXpReceipt(combat, owner)['item:magic-focus'], 10);
     if (coop) assert.equal(skillXpReceipt(combat, 'b')['item:magic-focus'], undefined);

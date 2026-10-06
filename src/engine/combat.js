@@ -1132,7 +1132,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
     target ||= combat.enemies.find(e => e.alive) || null;
   }
   ({ energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def));
-  if (p.energy < cost || p.mana < manaCost) throw new Error('Card preparation made this play unaffordable');
+  if (p.energy < cost) throw new Error('Not enough Actions (Stamina) to play this card');
+  if (p.mana < manaCost) throw new Error('Not enough mana to play this card');
 
   // Pay cost (X-cost consumes ALL energy — SPEC §4.3).
   p.energy -= cost;

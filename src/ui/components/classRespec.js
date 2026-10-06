@@ -2,6 +2,7 @@ import {button,el,openModal,prose,statusText} from '../kit/index.js';
 import {markUiComponent,UI_COMPONENTS as UI} from './uiComponents.js';
 import {renderCard} from './card.js';
 import {createClassRespecDraft,classRespecView,previewClassRespec} from '../../model/classRespec.js';
+import {getFeatDescription} from '../../model/classSkillFeatDescription.js';
 
 const KIND={cards:'Cards',feat:'Feats',armory:'Equipment',relic:'Relics',attribute:'Attributes'};
 const choiceKey=choice=>`${choice.id}${Number.isInteger(choice.abilityRank)?'@'+choice.abilityRank:''}`;
@@ -73,7 +74,7 @@ export function mountClassRespec({registries,run=null,meta={},view=null,onApply,
           select.addEventListener('change',()=>{const selected=options.find(choice=>choiceKey(choice)===select.value);if(selected)selections[slot.receiptId]={...selected,transfer:'retain'};else delete selections[slot.receiptId];refresh();});
           fieldset.append(el('label',{for:id},[el('span',{text:`Level ${slot.level} · ${current} →`}),select]));
           const selected=selections[slot.receiptId];
-          if(kind==='feat' && selected){const description=registries.classSkillFeats.find(row=>row.id===selected.id)?.description;if(description)fieldset.append(prose(description));}
+          if(kind==='feat' && selected){const description=getFeatDescription(registries,selected.id);if(description)fieldset.append(prose(description));}
           if(kind==='cards' && selected){
             const detail=el('details',{},el('summary',{text:`Inspect ${label(kind,selected.id,selected.abilityRank)}`}));
             detail.addEventListener('toggle',()=>{if(detail.open && detail.childElementCount===1)detail.append(renderCard(registries,{cardId:selected.id,upgraded:false,...(Number.isInteger(selected.abilityRank)?{abilityRank:selected.abilityRank}:{})},{tooltip:false}));});

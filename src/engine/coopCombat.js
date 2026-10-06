@@ -561,7 +561,8 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     target ||= C.enemies.find(e => e.alive) || null;
   }
   manaCost = Math.max(0, pools.mana - charges.manaDiscount);
-  if (p.energy < cost || p.mana < manaCost) throw new Error('Not enough stamina or Mana to play this card');
+  if (p.energy < cost) throw new Error('Not enough Actions (Stamina) to play this card');
+  if (p.mana < manaCost) throw new Error('Not enough mana to play this card');
 
   p.energy -= cost;
   if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
