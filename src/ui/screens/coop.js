@@ -1332,8 +1332,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function renderProgression(){
     const member=myMember();if(member?.progressionRulesVersion!==1||['combat','complete','lobby'].includes(snap.scene.kind)){disposeProgression();return;}
     if(progressionSeat!==me){disposeProgression();progressionSeat=me;progressionHost=el('div');}
-    const section=el('section',{class:'as-body','aria-label':'Progression'},[progressionHost,...(progressionError?[blocker(progressionError)]:[]),...progressionChoices(member.pendingProgression || {})]);
-    (app.querySelector('.coop-scene') || app).append(section);
+    const doorBody=app.querySelector('.coop-scene > .as-pagedoor > .modal-body');
+    const section=el('section',{class:doorBody?'as-decide coop-progression':'as-body coop-progression','aria-label':'Progression'},[progressionHost,...(progressionError?[blocker(progressionError)]:[]),...progressionChoices(member.pendingProgression || {})]);
+    // The page door owns one scrollable body. A sibling flex body can shrink
+    // that door to its header/footer on phones, clipping Continue entirely.
+    (doorBody || app.querySelector('.coop-scene') || app).append(section);
     if(!progressionDoor){
       progressionDoor=mountCoopProgressionDoor(progressionHost,{registries,member,
         settings:{xpFillSeconds:Number(meta.settings?.victoryXpSeconds ?? 3),levelUpRefillSeconds:Number(meta.settings?.levelUpRefillSeconds ?? .28)},
