@@ -19,6 +19,7 @@
   ],
   "artExtensions": [".png", ".webp", ".jpg", ".jpeg", ".svg", ".avif", ".gif"],
   "artMetadata": [
+    "src/ui/alternativeArtCatalog.js",
     "docs/design/combat-depth-2026-10-05/catalog.json",
     "docs/design/combat-depth-2026-10-05/catalog-data.js",
     "docs/design/combat-depth-2026-10-05/editor/library-data.js",

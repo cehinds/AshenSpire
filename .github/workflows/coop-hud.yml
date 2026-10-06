@@ -25,11 +25,11 @@ name: coop hud
 
 on:
   push:
-    branches: [test, release]
+    branches: [test, release, alternative/test, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
-  group: coop-hud-${{ github.sha }}
+  group: coop-hud-${{ github.ref_name }}-${{ github.sha }}
   cancel-in-progress: false
 
 permissions:

@@ -51,9 +51,11 @@ alternative branch unchanged. The failed Actions run identifies what needs revie
   previous alternative SHA, and retained paths). Extract the preview and follow
   `docs/design/COMBAT-STUDIO-ALTERNATIVE.md` to run it locally.
 
-This is a tested authoring/source preview artifact, not a production combat
-deployment or a claim that the full game/browser suite ran. The existing optional
-audio-pack limitation still applies to the lightweight local preview.
+The pipeline also fetches the pinned art packs, builds the playable game, commits
+its generated build ordinal, and explicitly dispatches the alternative preview
+workflow after pushing. That workflow supplies the standalone download and the
+hosted Pages build. Its CI and browser results remain separate from the merge
+policy proof.
 
 ## Development checks
 

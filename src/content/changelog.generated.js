@@ -6,11 +6,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1668",
     "date": "2026-10-06",
     "group": "2026-10-06",
-    "summary": "Keep the alternative battlefield while development continues",
-    "detail": "New development merges can update the alternative development branch without replacing its battlefield layout, editor, HUD, cards or footer. Background and sprite updates remain eligible; conflicting gameplay or art edits stop for review. Each successful sync produces a checked source preview.",
-    "build": "0.7.1.1033",
+    "summary": "Alternative combat keeps its own battlefield",
+    "detail": "New dev changes flow into alternative/dev after a protected merge verifies that its battlefield, HUD, cards and footer stay unchanged. Background and sprite updates remain eligible; unrelated conflicts stop for review. The pipeline builds and publishes the updated alternative preview.",
+    "build": "0.7.1.1034",
     "pullRequest": 1668,
     "url": "https://github.com/cehinds/AshenSpire/pull/1668"
+  },
+  {
+    "id": "pr-1667",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative previews stay current without losing their changes",
+    "detail": "Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.",
+    "build": "0.7.1.1033",
+    "pullRequest": 1667,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1667"
   },
   {
     "id": "pr-1666",

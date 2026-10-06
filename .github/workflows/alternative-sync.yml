@@ -39,6 +39,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -60,6 +61,10 @@ jobs:
           git fetch --no-tags origin dev alternative/dev
           python tools/alternative-sync.py --report "$RUNNER_TEMP/alternative-sync.json"
           echo "needed=$(python -c 'import json,os; print(str(json.load(open(os.environ["RUNNER_TEMP"]+"/alternative-sync.json"))["mergeNeeded"]).lower())')" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/fetch-art
+        if: steps.prepare.outputs.needed == 'true'
+        with:
+          packs: all
       - name: Validate and refresh permitted artwork
         if: steps.prepare.outputs.needed == 'true'
         shell: bash
@@ -77,6 +82,12 @@ jobs:
           python docs/design/combat-depth-2026-10-05/build-library.py
           python docs/design/combat-depth-2026-10-05/verify-assets.py
           python docs/design/combat-depth-2026-10-05/pack.py
+          if [ -f tools/alternative-art-build.py ]; then
+            python tools/alternative-art-build.py
+            git add -- assets-alternative src/ui/alternativeArtCatalog.js
+          fi
+          node tools/launch.mjs --build-only
+          git add -- buildordinal.json src/content/generated src/framework/data
           git add -- docs/design/combat-depth-2026-10-05
           python tools/alternative-sync.py --verify --report "$RUNNER_TEMP/alternative-sync.json"
           git diff --quiet
@@ -95,6 +106,11 @@ jobs:
       - name: Publish the validated alternative dev merge
         if: steps.prepare.outputs.needed == 'true'
         run: git push origin HEAD:refs/heads/alternative/dev
+      - name: Build the downloadable and hosted alternative preview
+        if: steps.prepare.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run dev-preview.yml --ref alternative/dev
       - name: Sync proof
         if: always()
         uses: actions/upload-artifact@v4
