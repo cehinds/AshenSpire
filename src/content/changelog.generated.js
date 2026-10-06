@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Alternative updates keep their build numbers current",
     "detail": "Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.",
-    "build": "0.7.1.1035",
+    "build": "0.7.1.1037",
     "pullRequest": 1672,
     "url": "https://github.com/cehinds/AshenSpire/pull/1672"
+  },
+  {
+    "id": "pr-1671",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Your character, gear and deck share one Armory",
+    "detail": "Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.",
+    "build": "0.7.1.1036",
+    "pullRequest": 1671,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1671"
   },
   {
     "id": "pr-1668",
