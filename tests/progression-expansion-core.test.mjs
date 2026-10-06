@@ -204,3 +204,21 @@ test('class bonus XP banks every favored skill and leaves its level for the manu
   assert.equal(claimBankedSkillLevel(reg,restored,'item:blade').after,2);
   assert.equal(restored.skills['item:blade'].xp,15);
 });
+
+test('new draft and sealed pools preserve every equipment gate while legacy full pools retain their contract',()=>{
+  const gated = new Set(source.classMastery.filter(row=>['weapon','armament'].includes(row.kind)).map(row=>row.ref));
+  for(const mode of ['draft','sealed']) {
+    const run=createRunState({registries:source,classId:'reaver',seed:3});run.custom={deckMode:mode};
+    openRunClassMastery(source,run,{}, {receiptId:mode});
+    const reg=registriesForClassMastery(source,run);
+    assert.ok(reg.equipment.armaments.every(piece=>!gated.has(`armament/${piece.id}`)));
+    assert.ok(reg.equipment.armour.every(piece=>!gated.has(`armor/${piece.classId}/${piece.id}`)));
+    assert.equal(reg.classes.get('reaver').cardPool.length,source.classes.get('reaver').cardPool.length);
+    const oldRoot=source.legacyProgressionSource;
+    const old=createRunState({registries:oldRoot,classId:'reaver',seed:3});old.custom={deckMode:mode};
+    openRunClassMastery(oldRoot,old,{}, {receiptId:'old:'+mode});
+    const legacy=registriesForClassMastery(source,old);
+    assert.equal(legacy.equipment.armaments.length,oldRoot.equipment.armaments.length);
+    assert.equal(legacy.equipment.armour.length,oldRoot.equipment.armour.length);
+  }
+});

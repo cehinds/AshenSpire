@@ -81,7 +81,7 @@ export function registriesForClassMastery(registries, run) {
   const source = run && !expandedProgression(run) && root.legacyProgressionSource ? root.legacyProgressionSource : root;
   if (!hasClassMastery(run)) return source;
   const full = () => run.classMasteryState.fullPools === true;
-  const open = (ref, kinds) => full() || masteryReferenceOpen(source, masteryProfileFor(run), ref, kinds);
+  const open = (ref, kinds) => (full() && (!expandedProgression(run) || kinds?.includes('cards'))) || masteryReferenceOpen(source, masteryProfileFor(run), ref, kinds);
   const classRow = id => {
     const cls = source.classes.get(id);
     return { ...cls, cardPool: cls.cardPool.filter(ref => open(ref, ['cards'])) };
