@@ -10,6 +10,7 @@ import { applyStatus, removeStatus, advanceStatusClock, getStacks } from '../src
 import { evalPredicate, triggerOwnerKey } from '../src/engine/triggers.js';
 import { grantAbilityCharge, beginAbilityTurn, matchingAbilityCharges } from '../src/engine/abilityRiders.js';
 import { computeTokenBindings, validateEffects } from '../src/model/validate.js';
+import { skillXpReceipt } from '../src/engine/skillXp.js';
 
 function fixture(effects, { manaCost = 0, cost = 1, coop = false } = {}) {
   const base = createRegistries(contentBundle);
@@ -21,6 +22,23 @@ function fixture(effects, { manaCost = 0, cost = 1, coop = false } = {}) {
   return combat;
 }
 const play = combat => dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: combat.enemies[0].id });
+
+test('transactional real plays bank skill XP once, scoped to the solo or co-op owner', () => {
+  for (const coop of [false, true]) {
+    const combat = fixture([{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }], { manaCost: 5, coop });
+    combat.registries = { ...combat.registries, progressionEnabled: true };
+    const seat = coop ? combat.players.get('a') : { entity: combat.player, piles: combat.piles };
+    const id = seat.piles.hand[0].instanceId;
+    const owner = coop ? 'a' : 'player';
+    const before = structuredClone(combat.skillXp);
+    if (coop) previewCoopCard(combat, owner, id); else previewCard(combat, id);
+    assert.deepEqual(combat.skillXp, before);
+    if (coop) playCard(combat, owner, id, combat.enemies[0].id); else play(combat);
+    assert.equal(skillXpReceipt(combat, owner)['item:magic-focus'], 10);
+    if (coop) assert.equal(skillXpReceipt(combat, 'b')['item:magic-focus'], undefined);
+    assert.equal(combat.eventLog.filter(event => event.type === 'cardResolved').length, 1);
+  }
+});
 
 test('preplay target snapshots prevent a card from satisfying its own status and Block conditions', () => {
   const combat = fixture([{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 }, { op: 'block', target: 'enemy', amount: 4 }, { op: 'block', target: 'self', amount: 7, if: { p: 'hasStatus', of: 'target', status: 'weak', snapshot: 'beforePlay' } }, { op: 'block', target: 'self', amount: 8, if: { p: 'hasBlock', of: 'target', snapshot: 'beforePlay' } }]);

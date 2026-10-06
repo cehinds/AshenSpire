@@ -4,6 +4,7 @@ import { bindTurnStamina } from '../model/turnStamina.js';
 import { validateCombatRules, validateCombatProfile, validateAttack, allocateInteger, resolveDamageComponents, weaponImpact, groupedResistance } from '../model/combatRules.js';
 import { evaluate } from '../model/formulas.js';
 import { createRng } from './rng.js';
+import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
@@ -214,6 +215,9 @@ export function candidateState(ctx) {
   if (candidate.player) bindTurnStamina(candidate.player);
   if (candidate.players) for (const seat of candidate.players.values()) bindTurnStamina(seat.entity);
   candidate.emit = (type, payload) => candidate._emitEvent(candidate, type, payload);
+  // Detached plays must pay the same receipt as the live event bus. Failed
+  // plays and previews keep those payments confined to this candidate.
+  attachSkillXp(candidate);
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
   if (ctx.players) candidate.playerIdForEntity = (entity) => {
