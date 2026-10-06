@@ -18,6 +18,7 @@
 //   · settling a fight: its copy of the counts back to the run, and every
 //     companion one fight closer to leaving (engine/runCombat.js runCombatEnd);
 //   · the content door's checks and the Settings rows for every number.
+import { hasClassMastery } from './classMasteryRun.js';
 import { NOTE } from '../content/balance.js';
 import { awardSkillXp, skillTracks } from './skills.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
@@ -76,7 +77,7 @@ export function unknownCompanionId(registries, run) {
 /** A consumable's shelf sentence, its {tokens} filled from the row's live values. */
 export function consumableText(registries, def) {
   const track = def.skill ? skillTracks(registries).find((row) => row.id === def.skill) : null;
-  return String(def.blurb || '').replace(/\{(\w+)\}/g, (whole, key) => {
+  return String((hasClassMastery(registries.masteryRun) && def.masteryBlurb) || def.blurb || '').replace(/\{(\w+)\}/g, (whole, key) => {
     if (key === 'skill') return track ? track.label : String(def.skill || '');
     return def[key] !== undefined ? String(def[key]) : whole;
   });
@@ -104,7 +105,8 @@ export function skillBookReadPlan(registries, run, id, { inCombat = false, skill
   if (!reason && !tracks.some((row) => row.id === track)) reason = say('book.refuse.track');
   if (!reason && !lessons.length) reason = say('book.refuse.empty');
   if (!reason && choice && !lessons.some((row) => row.kind === choice.kind && row.id === choice.id)) reason = say('book.refuse.choice');
-  return { ok: !reason, reason, id, def, count: heldCount(run, id), tracks, skillId: track, lessons, choice, rewardChances: [def?.combatCardChance || 0, def?.featChance || 0], revision: run.bookReadRevision || 0 };
+  const xp = hasClassMastery(run) && track?.startsWith('class:') ? 0 : def?.xp || 0;
+  return { ok: !reason, reason, id, def, xp, count: heldCount(run, id), tracks, skillId: track, lessons, choice, rewardChances: [def?.combatCardChance || 0, def?.featChance || 0], revision: run.bookReadRevision || 0 };
 }
 
 /** One validated lesson plus XP, then one fewer book. Returns both rewards. */
@@ -118,7 +120,9 @@ export function commitSkillBookRead(registries, run, quote, { inCombat = false, 
   // copies remain available in the sideboard under the deck editor's rules.
   const destination = plan.choice.kind === 'card' && run.deck.filter((card) => card.cardId === plan.choice.id).length >= deckCopyLimit(registries, plan.choice.id, settings, run.class) ? 'sideboard' : 'deck';
   const bonuses = classBookBonuses(registries, run, plan.def);
-  const receipt = awardSkillXp(registries, run, plan.skillId, plan.def.xp);
+  const receipt = hasClassMastery(run) && plan.skillId.startsWith('class:')
+    ? { skillId: plan.skillId, gained: 0, levels: 0 }
+    : awardSkillXp(registries, run, plan.skillId, plan.def.xp);
   const classLearned = plan.choice.kind === 'class' && !learnedClassIds(run).includes(plan.choice.id);
   if (plan.choice.kind === 'class') {
     if (classLearned) learnClassCard(registries, run, plan.choice.id);
@@ -204,7 +208,7 @@ export function tickCompanions(run) {
 // ---------------------------------------------------------------------------
 
 const CONSUMABLE_FIELDS = Object.freeze({
-  skillBook: ['id', 'kind', 'name', 'blurb', 'cost', 'sellValue', 'skill', 'xp', 'learnTags', 'learnClass', 'learnAny', 'combatCardChance', 'featChance'],
+  skillBook: ['id', 'kind', 'name', 'blurb', 'masteryBlurb', 'cost', 'sellValue', 'skill', 'xp', 'learnTags', 'learnClass', 'learnAny', 'combatCardChance', 'featChance'],
   revive: ['id', 'kind', 'name', 'blurb', 'cost', 'sellValue', 'hpPct'],
 });
 const COMPANION_FIELDS = Object.freeze(['id', 'name', 'blurb', 'cost', 'combats']);
@@ -234,6 +238,7 @@ export function consumableTableProblems(rows, bundle, err) {
     if (!CONSUMABLE_KINDS.includes(row.kind)) { err(`${at}.kind`, `must be one of ${CONSUMABLE_KINDS.join(', ')}, got ${JSON.stringify(row.kind)}`); return; }
     for (const key of Object.keys(row)) if (!CONSUMABLE_FIELDS[row.kind].includes(key)) err(`${at}.${key}`, `is not a ${row.kind} field (fields: ${CONSUMABLE_FIELDS[row.kind].join(', ')})`);
     for (const key of ['name', 'blurb']) if (typeof row[key] !== 'string' || !row[key]) err(`${at}.${key}`, 'must be a non-empty string');
+    if (row.masteryBlurb !== undefined && (typeof row.masteryBlurb !== 'string' || !row.masteryBlurb)) err(`${at}.masteryBlurb`, 'must be a non-empty string');
     wholeAtLeast(row, 'cost', 1, at, err);
     wholeAtLeast(row, 'sellValue', 1, at, err);
     if (Number.isSafeInteger(row.cost) && Number.isSafeInteger(row.sellValue) && row.sellValue > row.cost) {

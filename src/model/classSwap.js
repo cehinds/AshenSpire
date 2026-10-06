@@ -9,6 +9,7 @@
 // relics, the loadout, the attributes and the weapon skills are the run's
 // and stay; the new class's kit is not dealt (the run was born once).
 
+import { hasClassMastery, openClassMasteryTrack, masteryProfileFor } from './classMasteryRun.js';
 import { classTreeRows } from './classTree.js';
 import { classSkillId, skillLevel } from './skills.js';
 import { syncZones } from './state.js';
@@ -41,7 +42,7 @@ export function swapRunClass(registries, run, classId, { preserveProgress = fals
   const before = Array.isArray(run.coreTags) ? run.coreTags : [];
   const droppedTags = before.filter((id) => !permitted.has(id));
   run.coreTags = before.filter((id) => permitted.has(id));
-  const resetTracks = preserveProgress ? [] : Object.keys(run.skills || {}).filter((id) => id.startsWith('class:'));
+  const resetTracks = preserveProgress || hasClassMastery(run) ? [] : Object.keys(run.skills || {}).filter((id) => id.startsWith('class:'));
   for (const id of resetTracks) delete run.skills[id];
   const droppedArmour = [];
   const armour = ((registries.equipment || {}).armour) || [];
@@ -54,6 +55,7 @@ export function swapRunClass(registries, run, classId, { preserveProgress = fals
     if (run.loadout.active) run.loadout.active.armor = Math.max(0, sets.armor.findIndex((id) => !!id));
   }
   run.class = classId;
+  if (hasClassMastery(run)) openClassMasteryTrack(registries, run, classId);
   // The armour changed hands, so the deck is restamped and the equipment
   // pools reconciled as the loadout screen does after any change (the review
   // of #1193): the old set's card rewrites and max-HP bonus leave with it.
@@ -73,7 +75,7 @@ export function swapRunClass(registries, run, classId, { preserveProgress = fals
 export function peakClassLevel(run) {
   const live = Object.entries((run && run.skills) || {}).filter(([id]) => id.startsWith('class:')).map(([, row]) => (row && row.level) || 0);
   const swapped = ((run && run.history) || []).filter((h) => h && h.kind === 'classSwapped').map((h) => Number(h.fromLevel) || 0);
-  return Math.max(0, ...live, ...swapped);
+  return Math.max(0, ...live, ...swapped, ...Object.values(masteryProfileFor(run).classMastery || {}).map(row => row.level));
 }
 
 /** The class track id the swap will reset, for readers that name it. */

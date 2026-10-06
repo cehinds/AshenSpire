@@ -330,6 +330,12 @@ title screen
       └─ title-modal-continue-control
 ```
 
+## Terminal save recovery composition
+
+| Component ID | Model | Renderer | Reuse surface |
+|---|---|---|---|
+| `run-finish-retry` | `commitRunFinish` + `SaveStatusModel` | `gameover.mountGameOver` + `main.showFinishedRun` | Victory or death after failed storage; shared status dialog Retry and persistent Game Over Retry resume one terminal receipt |
+
 ## Character Creation components
 
 These components are the production renderers used by Character Creation and

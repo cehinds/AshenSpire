@@ -526,7 +526,7 @@ async function main() {
     await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && !b.disabled && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin accepting the finished character', 5000);
     await clickSel('#cz-start', 'BEGIN THE CLIMB');
     // A new climb opens on the opening sequence before its map; Skip opening.
-    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.map-node.reachable'))`, 'the opening sequence or the map');
+    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the opening sequence or the map');
     const skip = await evalIn(`(() => {
       const b = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent));
       if (!b) return false;
@@ -534,6 +534,10 @@ async function main() {
       return true;
     })()`);
     if (skip) await clickSel('[data-tut-reach-skip="true"]', 'Skip opening');
+    await until(`!!(document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the first tree choice or map');
+    if (await evalIn(`!!document.querySelector('.class-mastery-node')`)) {
+      await clickSel('.class-mastery-node', 'the initial class tree choice');
+    }
     await until(`!!document.querySelector('.map-node.reachable')`, 'the map');
   };
 

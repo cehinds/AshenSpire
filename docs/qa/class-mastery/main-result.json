@@ -1,0 +1,21 @@
+{
+  "counts": [
+    {
+      "seed": 17,
+      "count": 6
+    },
+    {
+      "seed": 8,
+      "count": 6
+    }
+  ],
+  "errors": [],
+  "checks": [
+    "cold boot",
+    "actual quick start",
+    "mandatory tree pick",
+    "first map destination preview",
+    "first card play",
+    "actual creation mastery summary at phone and desktop"
+  ]
+}

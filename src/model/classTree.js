@@ -11,6 +11,7 @@
 // exclude one another by content rule (validate.js), so the top pick is the
 // subclass, never a stack.
 
+import { hasClassMastery, recordClassMasteryXp } from './classMasteryRun.js';
 import { classSkillId, awardSkillXp, bankSkillXp, skillLevel } from './skills.js';
 
 /** The tree rows of one class, in table order. */
@@ -70,6 +71,19 @@ export function pickClassNode(registries, run, nodeId, { levelOverride = null } 
   return true;
 }
 
+export function initialClassTreeChoices(registries, run) {
+  const tier = run?.classMasteryState?.initialTreeTiers?.[0];
+  if (!tier) return [];
+  const candidates = new Set(classDraftPool(registries, run.class, run.coreTags, skillLevel(run, classSkillId(run.class))));
+  return classTreeRows(registries, run.class).filter(row => row.tier === tier && candidates.has(row.nodeId)).map(row => row.nodeId);
+}
+
+export function pickInitialClassTreeNode(registries, run, nodeId) {
+  if (!initialClassTreeChoices(registries, run).includes(nodeId) || !pickClassNode(registries, run, nodeId)) return false;
+  run.classMasteryState.initialTreeTiers.shift();
+  return true;
+}
+
 /**
  * awardClassXp(registries, run, { victory, pool }) → the award, or null: the
  * class track's pay for a fight, made by the RUN'S OWNER (main.js,
@@ -80,7 +94,10 @@ export function pickClassNode(registries, run, nodeId, { levelOverride = null } 
 export function awardClassXp(registries, run, { victory = false, pool = 'normal', bank = false, multiplier = 1 } = {}) {
   if (!victory || !run || !run.class || run.classUnequipped) return null;
   const xp = ((((registries || {}).balance || {}).skill || {}).class || {}).xp || {};
-  const amount = Math.floor(((xp.perWin || 0) + (pool === 'boss' ? (xp.bossKill || 0) : 0)) * multiplier);
+  const pay = registries.balance.classMastery?.pay || {};
+  const base = hasClassMastery(run) ? (pool === 'boss' ? pay.perBoss : pool === 'elite' ? pay.perElite : pay.perWin) : (xp.perWin || 0) + (pool === 'boss' ? (xp.bossKill || 0) : 0);
+  const amount = Math.floor(base * multiplier);
+  recordClassMasteryXp(run, run.class, amount);
   if (!(amount > 0)) return null;
   return (bank ? bankSkillXp : awardSkillXp)(registries, run, classSkillId(run.class), amount);
 }

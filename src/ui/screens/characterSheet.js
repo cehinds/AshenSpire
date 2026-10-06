@@ -32,6 +32,7 @@ export function grantText(grant) {
     case 'classCard': return grant.pct >= 100 ? t('characterSheet.grant.classCard') : t('characterSheet.grant.classCardChance', { pct: grant.pct });
     case 'levelCard': return t('characterSheet.grant.levelCard');
     case 'cardDraft': return t('characterSheet.grant.cardDraft', { rank: grant.rank });
+    case 'masteryUnlock': return `Unlocks ${grant.names.join(', ')}`;
     case 'classNodeDraft': return t('characterSheet.grant.classNodeDraft');
     case 'rarity': return t('characterSheet.grant.rarity', { rarity: RARITY_WORDS[grant.rarity] || grant.rarity });
     case 'rankUp': return t('characterSheet.grant.rankUp');
