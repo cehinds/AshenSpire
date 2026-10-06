@@ -1,0 +1,70 @@
+{
+  "id": "herald-emberhabit",
+  "name": "Emberlight Habit \u00b7 Herald",
+  "family": "armor",
+  "classId": "herald",
+  "outfitId": "emberhabit",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A Furnace Chapel novice, scarred human face beneath a deep cowl, layered ritual cloth over modest mail, tarnished brass reliquary and censer, a worn ritual mace lowered. Austere pilgrim, gold and rot, not a crowned pope. Outfit: Emberlight Habit. Lore: Warm long after the fire is out. Material palette: plate #6E3212, plateLt #B4602A, leather #3A2618, under #2A1C12. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/herald-emberhabit-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-ceea7b3c-e556-44ea-a95a-5afd994f7cc5.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5001888275146484,
+    "visibleBounds": [
+      66,
+      37,
+      1021,
+      1495
+    ],
+    "anchor": [
+      543.5,
+      1495
+    ],
+    "sha256": "a1b7daca07f7470328d5da75056148706d063ae4449bd628e08bad3654c7bd2d"
+  },
+  "referenceImages": [
+    "masters/herald-emberhabit.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/herald-emberhabit.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5377839406331381,
+      "visibleBounds": [
+        87,
+        48,
+        946,
+        1492
+      ],
+      "anchor": [
+        516.5,
+        1492
+      ],
+      "sha256": "57c536d26cfa50b4f79a4986f954f8c44401d5692b3e47141ae694e4159d5b28"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A Furnace Chapel novice, scarred human face beneath a deep cowl, layered ritual cloth over modest mail, tarnished brass reliquary and censer, a worn ritual mace lowered. Austere pilgrim, gold and rot, not a crowned pope. Outfit: Emberlight Habit. Lore: Warm long after the fire is out. Material palette: plate #6E3212, plateLt #B4602A, leather #3A2618, under #2A1C12. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

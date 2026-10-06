@@ -1,0 +1,39 @@
+{
+  "id": "swordSaint",
+  "name": "The Sword Saint",
+  "family": "speaker",
+  "source": "content/source/speakers.csv",
+  "facing": "right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly master swordsman in austere layered weathered cloth and light steel guards, long worn sword held down, quiet controlled posture. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "file": "masters/swordSaint.png",
+  "status": "generated",
+  "referenceImages": [
+    "references/composition.png"
+  ],
+  "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly master swordsman in austere layered weathered cloth and light steel guards, long worn sword held down, quiet controlled posture. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-a776728d-1d96-4616-973a-f7e91095056c.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5592466990152994,
+    "visibleBounds": [
+      50,
+      44,
+      982,
+      1496
+    ],
+    "anchor": [
+      516.0,
+      1496
+    ],
+    "sha256": "dcb8ab14ed2a9c6421b727b67bf0ce29091d1c06f733ec91981a3d265e913a5d"
+  }
+}

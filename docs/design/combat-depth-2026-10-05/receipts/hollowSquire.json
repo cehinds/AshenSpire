@@ -1,0 +1,35 @@
+{
+  "id": "hollowSquire",
+  "name": "Hollow Squire",
+  "family": "companion",
+  "source": "src/content/companions.js",
+  "facing": "right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hollow young squire in battered modest steel mail, ragged tabard and an oversized shield, sword lowered, timid but loyal stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "file": "masters/hollowSquire.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-cba9b283-3a46-4cca-960a-835c5316ad88.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.6196670532226562,
+    "visibleBounds": [
+      145,
+      104,
+      889,
+      1460
+    ],
+    "anchor": [
+      517.0,
+      1460
+    ],
+    "sha256": "1a1334d754d083111a0dd534b49cc6e953c10f89f63639d938337f6e8950dd6f"
+  }
+}

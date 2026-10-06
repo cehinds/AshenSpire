@@ -1,0 +1,70 @@
+{
+  "id": "starseer-starlit",
+  "name": "Starlit Silks \u00b7 Starseer",
+  "family": "armor",
+  "classId": "starseer",
+  "outfitId": "starlit",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A gaunt Observatory apprentice, shadowed hood, intricate layered scholar robes, weathered leather belts and chart scrolls, modest blue starstone on a long staff held vertically; human anatomy, no oversized wizard hat. Outfit: Starlit Silks. Lore: It catches light that is not there. Material palette: plate #4A5E96, plateLt #93AEE2, leather #3A3226, under #242A40. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/starseer-starlit-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-18947543-3cf0-447a-9026-b5df5ad55522.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5200112660725912,
+    "visibleBounds": [
+      44,
+      12,
+      982,
+      1483
+    ],
+    "anchor": [
+      513.0,
+      1483
+    ],
+    "sha256": "df5c433da0aa083356035c50da83989b5ab9009fc6d957694faadd89444d72ae"
+  },
+  "referenceImages": [
+    "masters/starseer-starlit.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/starseer-starlit.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5521621704101562,
+      "visibleBounds": [
+        46,
+        11,
+        956,
+        1506
+      ],
+      "anchor": [
+        501.0,
+        1506
+      ],
+      "sha256": "47feae70f1cb472d1b5c9254f2bf5adbc46c9285191a8818abf7d2b357aceda4"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A gaunt Observatory apprentice, shadowed hood, intricate layered scholar robes, weathered leather belts and chart scrolls, modest blue starstone on a long staff held vertically; human anatomy, no oversized wizard hat. Outfit: Starlit Silks. Lore: It catches light that is not there. Material palette: plate #4A5E96, plateLt #93AEE2, leather #3A3226, under #242A40. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

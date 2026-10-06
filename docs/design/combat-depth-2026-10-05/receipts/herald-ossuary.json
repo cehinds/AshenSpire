@@ -1,0 +1,70 @@
+{
+  "id": "herald-ossuary",
+  "name": "Ossuary Weave \u00b7 Herald",
+  "family": "armor",
+  "classId": "herald",
+  "outfitId": "ossuary",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A Furnace Chapel novice, scarred human face beneath a deep cowl, layered ritual cloth over modest mail, tarnished brass reliquary and censer, a worn ritual mace lowered. Austere pilgrim, gold and rot, not a crowned pope. Outfit: Ossuary Weave. Lore: Threaded through with quiet bone. Material palette: plate #3A3630, plateLt #555047, leather #2A2622, under #1E1B18. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/herald-ossuary-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-9fc90d3e-cc90-4275-a5d1-d39959b832eb.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5449536641438802,
+    "visibleBounds": [
+      53,
+      35,
+      995,
+      1482
+    ],
+    "anchor": [
+      524.0,
+      1482
+    ],
+    "sha256": "76b8e571ec7a222d3136c15128c156cb16803fd5f6c767ad65f7fade06dcba34"
+  },
+  "referenceImages": [
+    "masters/herald-ossuary.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/herald-ossuary.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5378246307373047,
+      "visibleBounds": [
+        88,
+        48,
+        947,
+        1492
+      ],
+      "anchor": [
+        517.5,
+        1492
+      ],
+      "sha256": "0e802ab4904218c45f7fa6bd21a5868f49cd92dca642039681cf17bda0581878"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A Furnace Chapel novice, scarred human face beneath a deep cowl, layered ritual cloth over modest mail, tarnished brass reliquary and censer, a worn ritual mace lowered. Austere pilgrim, gold and rot, not a crowned pope. Outfit: Ossuary Weave. Lore: Threaded through with quiet bone. Material palette: plate #3A3630, plateLt #555047, leather #2A2622, under #1E1B18. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

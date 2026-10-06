@@ -1,0 +1,39 @@
+{
+  "id": "roadWarden",
+  "name": "The Road Warden",
+  "family": "speaker",
+  "source": "content/source/speakers.csv",
+  "facing": "right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Weathered veteran road warden in practical old green-black mail and hooded cloak, lantern held low and a sturdy walking spear, calm guarded pose. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "file": "masters/roadWarden.png",
+  "status": "generated",
+  "referenceImages": [
+    "references/composition.png"
+  ],
+  "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Weathered veteran road warden in practical old green-black mail and hooded cloak, lantern held low and a sturdy walking spear, calm guarded pose. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-eafa27a1-2f6b-4291-9748-e2387b4381b1.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5798511505126953,
+    "visibleBounds": [
+      86,
+      10,
+      936,
+      1508
+    ],
+    "anchor": [
+      511.0,
+      1508
+    ],
+    "sha256": "8e469ce8710db403f4a0c563070e7a1d085d2be63ffffd146ad9d60080011e54"
+  }
+}

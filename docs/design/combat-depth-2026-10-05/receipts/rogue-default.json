@@ -1,0 +1,70 @@
+{
+  "id": "rogue-default",
+  "name": "Gutter Leathers \u00b7 Rogue",
+  "family": "armor",
+  "classId": "rogue",
+  "outfitId": "default",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A lean river-city scavenger, hood and scarf partly covering the face, close-fitting layered leather armor, torn coat tails, practical pouches, two short blades held low. Subtle ash patina and restrained cold teal accents. Outfit: Gutter Leathers. Lore: Quiet leather for a loud profession. Material palette: plate #303A35, plateLt #52665D, leather #3C2E25, under #1D211F. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/rogue-default-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-3cd6c02f-392e-4dad-b7ee-905ae7dc542c.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.6119842529296875,
+    "visibleBounds": [
+      52,
+      58,
+      996,
+      1461
+    ],
+    "anchor": [
+      524.0,
+      1461
+    ],
+    "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215"
+  },
+  "referenceImages": [
+    "masters/rogue-default.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/rogue-default.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.6482531229654948,
+      "visibleBounds": [
+        84,
+        77,
+        978,
+        1450
+      ],
+      "anchor": [
+        531.0,
+        1450
+      ],
+      "sha256": "efebc50180d58d565205df3595a878da5d3fe6045c1feedba613bbd2eee3b1ac"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A lean river-city scavenger, hood and scarf partly covering the face, close-fitting layered leather armor, torn coat tails, practical pouches, two short blades held low. Subtle ash patina and restrained cold teal accents. Outfit: Gutter Leathers. Lore: Quiet leather for a loud profession. Material palette: plate #303A35, plateLt #52665D, leather #3C2E25, under #1D211F. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width."
+  }
+}

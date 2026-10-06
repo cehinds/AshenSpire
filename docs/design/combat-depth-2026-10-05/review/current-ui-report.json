@@ -1,0 +1,23 @@
+{
+  "errors": [],
+  "comparisons": [
+    {
+      "key": ".topbar",
+      "textUnchanged": true,
+      "maxRectDifference": 0
+    },
+    {
+      "key": ".hand-area",
+      "textUnchanged": true,
+      "maxRectDifference": 0
+    },
+    {
+      "key": ".hand",
+      "textUnchanged": true,
+      "maxRectDifference": 0
+    }
+  ],
+  "previewOnly": true,
+  "currentUiComesFrom": "Unmodified game rendered inside same-origin iframe; pointer interaction disabled for visual review",
+  "sourceAssetLimitation": "Current checkout server uses tracked light art; common/high release packs are not fetched."
+}
