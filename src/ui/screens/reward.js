@@ -200,7 +200,7 @@ export function mountRewards(app, {
   // ---- one apply function per kind — tap and auto-collect share them -------
   const apply = {
     classMilestone(row) {
-      if (!row.options.includes(row.choiceId) || !onClaimClassReward) return false;
+      if (!(row.choiceIds || row.options).includes(row.choiceId) || !onClaimClassReward) return false;
       if (!onClaimClassReward(row.receiptId, row.choiceId)) return false;
       chosenDraftCardIds[row.key] = row.choiceId;
       return true;
@@ -246,9 +246,10 @@ export function mountRewards(app, {
       return true;
     },
     skillDraft(row) {
+      if (row.choiceIds && (!row.choiceIds.includes(row.choiceId) || row.cardIds[row.choiceIds.indexOf(row.choiceId)] !== row.cardId)) return false;
       if (!spendSkillDraft(run, row.skillId)) return false;
       run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false, ...draftInstance(row, row.cardId) });
-      chosenDraftCardIds[row.key] = row.cardId;
+      chosenDraftCardIds[row.key] = row.choiceId || row.cardId;
       return true;
     },
     // A skill feat (SPEC §13.4o): the chosen feat of the track joins the run
@@ -422,7 +423,9 @@ export function mountRewards(app, {
         const skill = skillTracks(registries).find((track) => track.id === row.skillId);
         const label = esc((skill && skill.label) || row.skillId);
         if (state === 'taken') {
-          const def = registries.cards.get(chosenDraftCardIds[row.key]);
+          const chosen = chosenDraftCardIds[row.key];
+          const cardId = row.choiceIds ? row.cardIds[row.choiceIds.indexOf(chosen)] : chosen;
+          const def = registries.cards.get(cardId);
           return { title: t('reward.skillDraft.title', { skill: label, level: row.level }), body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
         }
         return {
@@ -522,6 +525,7 @@ export function mountRewards(app, {
   // The catalogue supplies the definition. Choice UI never invents a grant;
   // the atomic callback checks the saved milestone receipt and applies it.
   function classMilestoneOption(row, id) {
+    if (row.choiceIds) id = row.options[row.choiceIds.indexOf(id)];
     let definition = null;
     if (row.rewardKind === 'cards') definition = registries.cards?.get(id);
     else if (row.rewardKind === 'feat') definition = registries.classSkillFeats?.find(entry => entry.id === id) || featById(id);
@@ -534,7 +538,7 @@ export function mountRewards(app, {
       definition = kind === 'armament' ? equipment.armaments?.find(entry => entry.id === classOrId)
         : equipment.armour?.find(entry => entry.classId === classOrId && entry.id === armorId);
     }
-    return { definition, name: definition?.name || definition?.label || id || '', text: definition?.description || definition?.textTemplate || definition?.text || '' };
+    return { definition, name: definition?.name || definition?.label || id || '', text: row.rewardKind === 'feat' ? getFeatDescription(registries, definition) : definition?.description || definition?.textTemplate || definition?.text || '' };
   }
 
   function isNew(row) {
@@ -573,14 +577,16 @@ export function mountRewards(app, {
   const draftTrackId = (row) => row.kind === 'classDraft' || row.kind === 'classMilestone' ? classSkillId(row.classId) : row.skillId;
   // The rank a drafted card was rolled at (SPEC §13.4o): the offer carries one
   // per card, in the order of its cards; an older offer without them is rank 1.
-  const draftRank = (row, cardId) => {
-    const rank = Array.isArray(row.ranks) ? row.ranks[(row.cardIds || []).indexOf(cardId)] : 1;
+  const draftRank = (row, cardId, choiceId = row.choiceId || cardId) => {
+    const index = (row.choiceIds || row.cardIds || []).indexOf(choiceId);
+    const rank = Array.isArray(row.ranks) ? row.ranks[index] : 1;
     return Number.isInteger(rank) && rank > 1 ? rank : 1;
   };
-  const draftInstance = (row, cardId) => {
-    const abilityRank = row.abilityRanks?.[(row.cardIds || row.options || []).indexOf(cardId)];
+  const draftInstance = (row, cardId, choiceId = row.choiceId || cardId) => {
+    const index = (row.choiceIds || row.cardIds || row.options || []).indexOf(choiceId);
+    const abilityRank = row.abilityRanks?.[index];
     if (Number.isInteger(abilityRank) && abilityRank >= 0 && abilityRank <= 5) return { abilityRank };
-    const rank = row.kind === 'skillDraft' ? draftRank(row, cardId) : 1;
+    const rank = row.kind === 'skillDraft' ? draftRank(row, cardId, choiceId) : 1;
     return rank > 1 ? { rank } : {};
   };
   const characterLevelRow = (row) => ['levelChoice', 'levelCard'].includes(row.kind) && !row.source;
@@ -1162,8 +1168,8 @@ export function mountRewards(app, {
     // at the rank it would rise to; its pick is an instance id.
     const isRankUp = row.kind === 'skillRankUp';
     const rankUpCards = isRankUp ? rankUpCandidates(registries, run, row.skillId) : [];
-    const ids = isMilestone ? row.options : isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : isRankUp ? rankUpCards.map((inst) => inst.instanceId) : row.cardIds;
-    const pickField = isMilestone || isLevelChoice ? 'choiceId' : isNodeRow ? 'nodeId' : isRankUp ? 'instanceId' : 'cardId';
+    const ids = isMilestone ? row.choiceIds || row.options : isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : isRankUp ? rankUpCards.map((inst) => inst.instanceId) : row.choiceIds || row.cardIds;
+    const pickField = isMilestone || isLevelChoice || row.choiceIds ? 'choiceId' : isNodeRow ? 'nodeId' : isRankUp ? 'instanceId' : 'cardId';
     const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
@@ -1283,7 +1289,8 @@ export function mountRewards(app, {
       const skill = skillTracks(registries).find((track) => track.id === row.skillId);
       strip.appendChild(el('p', { class: 'reward-rank-none', text: t('reward.skillRankUp.none', { skill: (skill && skill.label) || row.skillId }) }));
     }
-    for (const cardId of isNodeRow || isLevelChoice || isRankUp || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
+    for (const choiceId of isNodeRow || isLevelChoice || isRankUp || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
+      const cardId = (row.cardIds || row.options)[ids.indexOf(choiceId)];
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
@@ -1292,7 +1299,7 @@ export function mountRewards(app, {
       // purpose is taking the card being read. Choosing from inside the door
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
-      const grade = draftInstance(row, cardId);
+      const grade = draftInstance(row, cardId, choiceId);
       // The face shows what the card will be once taken: its rank and the
       // skill bonus and passive Block it would be stamped with (SPEC §13.4o).
       const skillBonus = skillBonusFor(registries, run, { cardId });
@@ -1302,17 +1309,17 @@ export function mountRewards(app, {
         actionOwnsTouch: true,
         surface: 'reward',
         availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },
-        commands: { choose: () => { selectCard(cardId); confirmButton.click(); } },
+        commands: { choose: () => { selectCard(choiceId); confirmButton.click(); } },
       });
       el.dataset.cardId = cardId;
-      el.dataset.pickId = cardId;
+      el.dataset.pickId = choiceId;
       el.classList.add('reward-pick');
       el.setAttribute('role', 'radio');
-      el.setAttribute('aria-checked', String(cardId === selectedCardId));
+      el.setAttribute('aria-checked', String(choiceId === selectedCardId));
       // `reward-selected` is the door's own lift; `is-chosen` is the ring the
       // whole game now shares (kit.css). Both, always together.
-      el.classList.toggle('reward-selected', cardId === selectedCardId);
-      el.classList.toggle('is-chosen', cardId === selectedCardId);
+      el.classList.toggle('reward-selected', choiceId === selectedCardId);
+      el.classList.toggle('is-chosen', choiceId === selectedCardId);
       if (marks.cards.includes(cardId)) {
         // The marker is a RENDERED badge, not only a data attribute — Codex
         // 4989824448's third finding: `data-new` alone had no consumer in any
@@ -1326,7 +1333,7 @@ export function mountRewards(app, {
         badge.textContent = t('reward.card.new');
         el.appendChild(badge);
       }
-      el.addEventListener('click', () => selectCard(cardId));
+      el.addEventListener('click', () => selectCard(choiceId));
       strip.appendChild(el);
     }
     confirmButton.disabled = !selectedCardId;
@@ -1340,7 +1347,8 @@ export function mountRewards(app, {
         // door refuses (a draft the ledger has no draft queued for — an
         // offer older than its ledger) returns false and must not leave the
         // chooser armed but dead: say so and hand the button back.
-        if (!take({ ...row, [pickField]: selectedCardId }, row.key)) {
+        const cardSelection = row.kind === 'skillDraft' && row.choiceIds ? { cardId: row.cardIds[row.choiceIds.indexOf(selectedCardId)] } : {};
+        if (!take({ ...row, ...cardSelection, [pickField]: selectedCardId }, row.key)) {
           message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : row.kind === 'skillAttribute' ? 'reward.skillAttribute.spent' : row.kind === 'skillFeat' ? 'reward.skillFeat.spent' : 'reward.card.alreadyTaken');
           message.hidden = false;
           confirming = false;
