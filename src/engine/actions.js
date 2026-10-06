@@ -29,6 +29,7 @@ import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
+import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import { evalPredicate, checkPhases, emitEvent } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
@@ -201,7 +202,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if (hpLoss > 0) {
     if (ctx.ratingsRules) applyRatingImpact(ctx, source, target, carrier);
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
-    applyArcaneExposure(ctx, source, target, carrier);
+    if (!usesSingleBreakMeter(ctx)) applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target);
   return dmg;
@@ -289,6 +290,7 @@ export function computeMeterGuardGain(ctx, entity, base, card = null) {
  */
 export function gainMeterGuard(ctx, entity, meter, base, card = null) {
   if (!entity.alive) return 0;
+  if (usesSingleBreakMeter(ctx) && meter === 'ward') meter = 'poise';
   const amt = computeMeterGuardGain(ctx, entity, base, card);
   const key = meter + 'Guard';
   if (amt > 0) entity[key] = (entity[key] || 0) + amt;
@@ -798,7 +800,9 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'draw': {
-      drawCards(ctx, Math.max(0, evalNum(ctx, action, eff.amount, 1)));
+      const amount = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      if (ctx.drawCardsFor) ctx.drawCardsFor(action.owner || action.source, amount);
+      else drawCards(ctx, amount);
       break;
     }
     case 'discard': {
@@ -942,6 +946,12 @@ function runOpcode(ctx, action, eff) {
       // threshold is the only scale there is.
       const firedThreshold = action.meta && action.meta.event && action.meta.event.threshold;
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        if (usesSingleBreakMeter(ctx)) {
+          const threshold = Number.isFinite(firedThreshold) ? firedThreshold : t.poiseMeter?.max || 0;
+          const amount = eff.pct !== undefined ? Math.floor(threshold * evalNum(ctx, action, eff.pct, 0, t) / 100) : evalNum(ctx, action, eff.amount, 0, t);
+          applyRatingImpact(ctx, null, t, { damageSchool: school }, amount, { triggerHit: false });
+          continue;
+        }
         addArcaneExposure(ctx, action.source, t, {
           school,
           amountFor: (cfg) => (eff.pct !== undefined

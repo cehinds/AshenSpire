@@ -1138,7 +1138,10 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  const configSnapshot = advancedConfigSnapshot(saves.loadMeta().settings || {});
+  const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}) };
+  // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
+  // the old Exposure states; the pose must also carry their older rules.
+  if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,

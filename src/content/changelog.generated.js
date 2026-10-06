@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1654",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: class levels that last",
+    "detail": "The class mastery plan now has its card bundles, equipment, relics and twenty class feats authored, with checks that keep every starting kit intact and every school deep enough to offer a choice. This supplies the data for lasting class levels; runs still use their earlier progression until the profile and run screens adopt it.",
+    "build": "0.7.1.1018",
+    "pullRequest": 1654,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1654"
+  },
+  {
+    "id": "pr-1653",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "One bar to break",
+    "detail": "In a new run, physical and magical hits both fill Poise. Ward remains a defence against magic, shown in a fighter's details. A magical Stagger makes an enemy take more magic damage, and your Arcane properties work from that Stagger. Dodge Roll guards the shared bar. Runs saved before this change keep their earlier bars and rules.",
+    "build": "0.7.1.1010",
+    "pullRequest": 1653,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1653"
+  },
+  {
     "id": "pr-1652",
     "date": "2026-10-05",
     "group": "2026-10-05",

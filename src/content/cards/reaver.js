@@ -71,6 +71,10 @@ export const reaverCards = [
       { op: 'gainWard', target: 'self', amount: 3 },
     ],
     textTemplate: 'Gain {block} Block, {gainPoise} Poise and {gainWard} Ward. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina.',
+    singleBreak: {
+      effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'gainPoise', target: 'self', amount: 3 }],
+      textTemplate: 'Gain {block} Block and {gainPoise} Poise guard. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina.',
+    },
     // No `upgrade`: the flat dodge is one fixed number (the owner's 3) plus
     // DR, and its price is the class's. As an equipment-composed weapon art
     // it rides no armament, so an upgrade would have nowhere to live; the

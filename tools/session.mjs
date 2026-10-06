@@ -16,6 +16,7 @@
 // series when they return (see resolveCatchup).
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
+import { advancedConfigSnapshot } from '../src/model/advancedConfig.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
@@ -151,6 +152,7 @@ export function createSession({ registries, seedString, endless = false, restore
   let order = restore ? restore.order : 0;
 
   const session = {
+    ...(restore ? (restore.advancedConfigSnapshot ? { advancedConfigSnapshot: structuredClone(restore.advancedConfigSnapshot) } : {}) : { advancedConfigSnapshot: advancedConfigSnapshot() }),
     id: `s${(seed % 100000).toString(36)}`,
     seedString: restore ? restore.seedString : seedToString(seed),
     seed,
@@ -548,6 +550,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const boss = bossTierScale(registries, { encounter: enc, tier: contentAct() });
     const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * (boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct()));
     const combat = createCoopCombat({
+      breakMeterVersion: session.advancedConfigSnapshot?.breakMeterVersion,
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
@@ -663,6 +666,7 @@ export function createSession({ registries, seedString, endless = false, restore
     live.opening = null;
     return {
       kind: 'combat',
+      ...(c.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
       receiptSeq: ++combatReceiptSeq,
       opening,
       events,
@@ -675,6 +679,8 @@ export function createSession({ registries, seedString, endless = false, restore
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
         alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        ...(e.wardMeter ? { wardMeter: e.wardMeter } : {}),
+        ...(e.ratings ? { ratings: { ...e.ratings } } : {}),
         // WHAT IT HAS ALREADY DONE. The engine records every move that
         // RESOLVED on `performedMoves` (coopCombat.js, beside combat.js's own
         // line), and solo's inspector reads it straight off the entity. This
@@ -704,7 +710,9 @@ export function createSession({ registries, seedString, endless = false, restore
         // so a live meter the host fills was invisible to every co-op player
         // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
-        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded, ...(c2.rank > 1 ? { rank: c2.rank } : {}), ...(c2.skillBonus > 0 ? { skillBonus: c2.skillBonus } : {}), ...(c2.passiveBlock > 0 ? { passiveBlock: c2.passiveBlock } : {}) })),
+        ...(P.entity.wardMeter ? { wardMeter: P.entity.wardMeter } : {}),
+        ratings: P.entity.ratings,
+        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded, breakMeterVersion: c.breakMeterVersion === 1 ? 1 : 0, ...(c2.rank > 1 ? { rank: c2.rank } : {}), ...(c2.skillBonus > 0 ? { skillBonus: c2.skillBonus } : {}), ...(c2.passiveBlock > 0 ? { passiveBlock: c2.passiveBlock } : {}) })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
@@ -1489,6 +1497,7 @@ export function createSession({ registries, seedString, endless = false, restore
       reachableIds: session.reachableIds.slice(),
       scene: session.scene,
       started: session.started,
+      ...(session.advancedConfigSnapshot ? { advancedConfigSnapshot: session.advancedConfigSnapshot } : {}),
       history: session.history.slice(),
       mapGraph: session.mapGraph,
       rng: rng.getCounters(),

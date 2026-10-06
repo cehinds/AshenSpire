@@ -15,6 +15,8 @@
 // combos or curate a deck. Any full-run crash = a real integration bug.
 //
 // Run: node tools/runsim.mjs [runsPerClass=30] [--endless] [--incoming] [--level-stat=<attr>]
+//   --single-break-meter: use the configured ratings and version-1 run stamp
+//   from SPEC §13.4p; assert that each measured fight uses the shared meter.
 //   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
 //   (capped at act 15 here); reports climb depth instead of win rate.
 //   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
@@ -39,6 +41,7 @@
 //   and balance.bossTiers rows (read from content, never restated here).
 
 import { contentBundle } from '../src/content/index.js';
+import { configuredContentBundle, advancedConfigSnapshot } from '../src/model/advancedConfig.js';
 import { createRegistries } from '../src/model/registries.js';
 import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
@@ -73,7 +76,10 @@ const levelBundle = XP_CURVE
     return { ...contentBundle, balance: { ...contentBundle.balance, level: { ...contentBundle.balance.level, xp: { base, growth, roundTo } } } };
   })()
   : contentBundle;
-const REG = createRegistries(levelBundle);
+// SPEC §13.4p: explicitly exercise new rated runs; preserve the historical
+// simulator corpus when the flag is absent.
+const SINGLE_BREAK = argv.includes('--single-break-meter');
+const REG = createRegistries(SINGLE_BREAK ? configuredContentBundle(levelBundle, advancedConfigSnapshot()) : levelBundle);
 const ENDLESS = argv.includes('--endless');
 // THE GRACE REFILL A/B (Sten, 2026-08-08). Constantine flagged the cost himself
 // — "However, that would mean making combat harder" — and a nod is not an
@@ -351,6 +357,9 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     enemyDamageMult: boss ? boss.damage : 1,
     enemyStatuses: cm.enemyStatuses || [],
   });
+  if (SINGLE_BREAK && (combat.breakMeterVersion !== 1 || !combat.ratingsRules || combat.player.wardMeter || combat.enemies.some(e => e.wardMeter || e.arcaneExposure))) {
+    throw new Error('single-break-meter fleet reached a fight outside its stamped rules');
+  }
   if (DIGEST) decisionDigest.beginFight(run.class, run.seed, fightFingerprint(combat, rng));
   let guard = 0;
   // A STALEMATE IS A LOSS, NOT A CRASH. Neither side can finish the other: a
