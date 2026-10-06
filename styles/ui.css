@@ -254,6 +254,15 @@
   pointer-events: none; z-index: 2;
 }
 
+/* Ability identity belongs to the authored face at every grade, including 0. */
+.card .card-ability-type {
+  position: absolute; left: 10%; right: 10%; top: 46%; z-index: 2;
+  padding: 2px 3px; border: 1px solid #8c7650; border-radius: var(--r-3);
+  background: rgba(22, 18, 12, 0.92); color: #f2e4c5;
+  font-size: 0.625rem; line-height: 1.2; text-align: center;
+  pointer-events: none;
+}
+
 /* The card chooser's NEW badge belongs to the status stack above the card,
    never to the title band. The reward row owns the stack's shared dimensions
    in kit.css; fallbacks keep this component safe in an isolated render. The
