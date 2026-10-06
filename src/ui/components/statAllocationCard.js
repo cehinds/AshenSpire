@@ -101,7 +101,7 @@ export function renderStatAllocationCard(host, {
   let close = () => {};
   if (modal) {
     const door = openModal({
-      size: 'md', className: 'cc-stat-modal', eyebrow: 'Attributes', title, titleId: 'cc-stat-title',
+      size: 'md', className: 'cc-stat-modal', eyebrow: t('progression.attributes'), title, titleId: 'cc-stat-title',
       body: el('div', { class: 'as-pane stat-allocation-card' }, body),
       secondary: [cancel], primary: done, footSize: 'medium', host, onClose,
     });
@@ -110,7 +110,7 @@ export function renderStatAllocationCard(host, {
     close = door.close;
   } else {
     card = el('section', { class: 'as-pane flush stat-allocation-card', tabindex: '-1' }, [
-      eyebrow('Attributes'),
+      eyebrow(t('progression.attributes')),
       titleS(title, { tag: 'h3', id: 'cc-stat-title' }),
       ...body,
       buttonRow({ size: 'medium', buttons: [cancel, done], className: 'cc-stat-actions' }),
