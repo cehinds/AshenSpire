@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Alternative artwork loads from the web packs",
     "detail": "The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.",
-    "build": "0.7.1.1037",
+    "build": "0.7.1.1038",
     "pullRequest": 1673,
     "url": "https://github.com/cehinds/AshenSpire/pull/1673"
+  },
+  {
+    "id": "pr-1671",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Your character, gear and deck share one Armory",
+    "detail": "Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.",
+    "build": "0.7.1.1036",
+    "pullRequest": 1671,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1671"
   },
   {
     "id": "pr-1668",

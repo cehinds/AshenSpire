@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
-- **Alternative artwork loads from the web packs** ([#1673](https://github.com/cehinds/AshenSpire/pull/1673), `0.7.1.1037`). The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.
+- **Alternative artwork loads from the web packs** ([#1673](https://github.com/cehinds/AshenSpire/pull/1673), `0.7.1.1038`). The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.
+
+- **Your character, gear and deck share one Armory** ([#1671](https://github.com/cehinds/AshenSpire/pull/1671), `0.7.1.1036`). Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.
 
 - **Alternative combat keeps its own battlefield** ([#1668](https://github.com/cehinds/AshenSpire/pull/1668), `0.7.1.1034`). New dev changes flow into alternative/dev after a protected merge verifies that its battlefield, HUD, cards and footer stay unchanged. Background and sprite updates remain eligible; unrelated conflicts stop for review. The pipeline builds and publishes the updated alternative preview.
 

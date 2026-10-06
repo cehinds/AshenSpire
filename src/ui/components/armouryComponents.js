@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 import { swapOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
 // src/ui/components/armouryComponents.js — the Armoury's renderers, on the kit.
@@ -27,22 +28,16 @@ export function renderArmouryOverlay(model) {
   return wrap;
 }
 
-export function renderArmouryPanel(model, wrap, { back = null, primary = null } = {}) {
+export function renderArmouryPanel(model, wrap, { back = null, primary = null, tabs = null, onTab = null } = {}) {
   const header = childModel(model, UI.armouryHeader);
   const switcher = childModel(header, UI.armouryViewSwitcher);
   const body = descendantModel(model, UI.armouryBody);
   const inventory = descendantModel(model, UI.armouryInventory);
   const cards = descendantModel(model, UI.armouryCardStrip);
   const stats = descendantModel(model, UI.armouryStatsPanel);
-  // W1e: THE ARMOURY IS A W1 WORKSPACE ON THE KIT'S SHELL. The head carries
-  // the one title and the close IconButton in the corner every door uses. The
-  // views are the kit's W1 category navigation (kit categoryNav: a rail beside
-  // the pane on wide hosts, one [Category ▾] selector above it on compact
-  // ones), never a strip of head tabs nor a grid of cells. The pane is
-  // the active view's body; the footer holds Back and, when the selected item
-  // has one, its action. The rail items keep the tab semantics and the
-  // `data-surface="armouryView"` / `data-member` / `data-modal-tab` hooks the
-  // tools read. A refusal shown in place is the kit's Blocker.
+  // The shared header holds Character / Armory / Edit Deck. Within Armory,
+  // the existing category rail still selects equipment, inventory and cards.
+  // Existing data hooks and leave restrictions are preserved.
   wrap.innerHTML = `
     <div class="modal armoury${model.properties.picking ? ' picking' : ''}" data-wireframe="W1" data-wireframe-child="W1e" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-labelledby="armoury-title">
       <div class="modal-body armoury-shell-body">
@@ -81,7 +76,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null } 
   const selectedView = railNode.querySelector('[aria-selected="true"]');
   if (selectedView) pane.setAttribute('aria-labelledby', selectedView.id);
   const head = modalHead({
-    title: header.properties.title,
+    title: header.properties.title, tabs, onTab,
     titleId: 'armoury-title',
     showMenuButton: false,
     closeLabel: header.properties.closeLabel,
@@ -92,6 +87,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null } 
   close.classList.add('armoury-close');
   wrap.querySelector('.armoury').prepend(head);
   const panel = wrap.querySelector('.armoury');
+  if (tabs) { panel.removeAttribute('aria-labelledby'); panel.setAttribute('aria-label', t('armoury.hub.name')); }
   // W1e's rung through the shell's one stamp rather than a literal in the
   // markup above, so the Armoury answers the modal width choice (Settings →
   // Advanced → Wireframes → Modals) like every other door.
