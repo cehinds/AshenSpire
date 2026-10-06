@@ -1,4 +1,5 @@
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
+import { queueInitialProgression } from './model/initialProgression.js';
 import { isAbilitySkill } from './model/abilityGrades.js';
 import { expandedProgression } from './model/classMilestones.js';
 import { claimClassMilestoneReward, rollClassMilestoneRewards } from './model/classMilestoneOffers.js';
@@ -2253,7 +2254,7 @@ function remountMapIfShowing(changed) {
 
 function showMap(opts) {
   if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
-  if (run.initialProgressionPending) { delete run.initialProgressionPending; return showCharacterProgression(() => showMap(opts)); }
+  queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
   const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon

@@ -181,7 +181,7 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     if (pane) pane.scrollTop = Math.max(0, here.offsetTop - (pane.clientHeight - here.offsetHeight) / 2);
   };
   state.show = (nextTab, nextTrack = state.track) => { state.tab = nextTab; state.track = nextTrack; render(); };
-  const respecAction=onRespec?button({label:'Respec class',weight:'primary'}):null;
+  const respecAction=onRespec?button({label:t('classRespec.title'),weight:'primary'}):null;
   const shell = openModal({
     size: 'xl',
     className: 'character-sheet',

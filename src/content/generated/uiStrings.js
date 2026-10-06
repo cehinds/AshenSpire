@@ -8002,5 +8002,222 @@ export const uiStrings = [
     "short": "HP offering paid",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "classRespec.title",
+    "extends": "",
+    "short": "Respec class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.review",
+    "extends": "",
+    "short": "Review changes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.edit",
+    "extends": "",
+    "short": "Edit choices",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.beforeAfter",
+    "extends": "",
+    "short": "Before → After",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.tree",
+    "extends": "",
+    "short": "Class tree",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.keep",
+    "extends": "",
+    "short": "Keep unassigned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.unassigned",
+    "extends": "",
+    "short": "Unassigned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.kind.feat",
+    "extends": "",
+    "short": "Feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.kind.armory",
+    "extends": "",
+    "short": "Equipment",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.kind.relic",
+    "extends": "",
+    "short": "Relics",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.kind.attribute",
+    "extends": "",
+    "short": "Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.budgets",
+    "extends": "",
+    "short": "{budgets}. Tree points: {chosen}/{total}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.cost",
+    "extends": "",
+    "short": "Cost: {cost}. Spent rewards remain spent. Current HP, Mana, Actions and flask charges are preserved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.treeSummary",
+    "extends": "",
+    "short": "Class tree: {chosen} selected points; {remaining} remain available.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.treeChanges",
+    "extends": "",
+    "short": "Tree choices: {before} → {after}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.retainedCard",
+    "extends": "",
+    "short": "Retain in sideboard: {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.transfer",
+    "extends": "",
+    "short": "Retain upgrades and components: {from} → {to}{tier}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.rankSuffix",
+    "extends": "",
+    "short": "· Rank {rank}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.tierSuffix",
+    "extends": "",
+    "short": "· Tier {tier}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.tierChoice",
+    "extends": "",
+    "short": "Tier {tier} · {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.spent",
+    "extends": "",
+    "short": "Level {level} · {name} · Spent",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.slotAria",
+    "extends": "",
+    "short": "{kind} earned at level {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.retainedSuffix",
+    "extends": "",
+    "short": "· Retain in sideboard",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.slotLabel",
+    "extends": "",
+    "short": "Level {level} · {name} →",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.preservation",
+    "extends": "",
+    "short": "Exchanged cards keep their instance and earned rank. Compatible item upgrades, mounted cards and sigils transfer together; incompatible transfers require a different selection.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.apply",
+    "extends": "",
+    "short": "Apply · {cost}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.eyebrow",
+    "extends": "",
+    "short": "{class} · Mastery {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard.title",
+    "extends": "",
+    "short": "Choose {count} {noun} to discard",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard.resolving",
+    "extends": "",
+    "short": "Resolving card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard.later",
+    "extends": "",
+    "short": "Choose later",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard.prompt",
+    "extends": "",
+    "short": "Select cards from your current hand to finish this play.",
+    "full": "",
+    "tip": ""
   }
 ];

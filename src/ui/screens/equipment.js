@@ -1930,7 +1930,7 @@ export function mountEquipment(host, {
     // character and of each skill, and what it grants. Read-only, so it stays
     // over the Armoury rather than closing it.
     if (onClassRespec && !inCombat) {
-      const action = button({label:'Respec class',className:'character-respec-action'});
+      const action = button({label:t('classRespec.title'),className:'character-respec-action'});
       action.addEventListener('click',()=>{close();onClassRespec();});node.append(action);
     }
     if (onCharacterSheet) {

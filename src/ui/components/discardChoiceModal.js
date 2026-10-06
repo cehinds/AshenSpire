@@ -8,10 +8,10 @@ export function openDiscardChoiceModal({ cards, count, cardName, onChoose, onClo
   let answer = null;
   const confirm = button({ label: `${t('combat.discard')} ${count}`, weight: 'primary', disabled: true });
   const shell = openModal({
-    title: `Choose ${count} card${count === 1 ? '' : 's'} to discard`, eyebrow: cardName || 'Resolving card',
-    size: 'md', className: 'discard-choice', closeLabel: 'Choose later',
+    title: t('combat.discard.title',{count,noun:count===1?'card':'cards'}), eyebrow: cardName || t('combat.discard.resolving'),
+    size: 'md', className: 'discard-choice', closeLabel: t('combat.discard.later'),
     body: host => {
-      host.appendChild(el('p', { text: 'Select cards from your current hand to finish this play.' }));
+      host.appendChild(el('p', { text: t('combat.discard.prompt') }));
       for (const card of cards) {
         const pick = button({ label: card.name, attrs: { 'data-discard-id': card.instanceId, 'aria-pressed': 'false' } });
         pick.addEventListener('click', () => {

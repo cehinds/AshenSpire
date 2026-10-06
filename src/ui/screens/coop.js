@@ -1232,7 +1232,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     mapBoard.recenter();
     renderPartyBar();
     wireLeave();
-    if(member?.classRespecAvailable){const action=button({label:'Respec class'});action.addEventListener('click',()=>send({t:'classRespecPreview',as:me}));app.querySelector('.mh-actions').prepend(action);}
+    if(member?.classRespecAvailable){const action=button({label:t('classRespec.title')});action.addEventListener('click',()=>send({t:'classRespecPreview',as:me}));app.querySelector('.mh-actions').prepend(action);}
     if(member?.classRespec)mountClassRespec({registries,view:member.classRespec,
       onPreview:input=>send({t:'classRespecPreview',as:me,draftId:member.classRespec.draftId,...input}),
       onApply:()=>{send({t:'classRespecApply',as:me,draftId:member.classRespec.draftId});return {ok:false};},
@@ -1333,7 +1333,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const member=myMember();if(member?.progressionRulesVersion!==1||['combat','complete','lobby'].includes(snap.scene.kind)){disposeProgression();return;}
     if(progressionSeat!==me){disposeProgression();progressionSeat=me;progressionHost=el('div');}
     const doorBody=app.querySelector('.coop-scene > .as-pagedoor > .modal-body');
-    const section=el('section',{class:doorBody?'as-decide coop-progression':'as-body coop-progression','aria-label':'Progression'},[progressionHost,...(progressionError?[blocker(progressionError)]:[]),...progressionChoices(member.pendingProgression || {})]);
+    const section=el('section',{class:doorBody?'as-decide coop-progression':'as-body coop-progression','aria-label':t('reward.progress.heading')},[progressionHost,...(progressionError?[blocker(progressionError)]:[]),...progressionChoices(member.pendingProgression || {})]);
     // The page door owns one scrollable body. A sibling flex body can shrink
     // that door to its header/footer on phones, clipping Continue entirely.
     (doorBody || app.querySelector('.coop-scene') || app).append(section);

@@ -173,7 +173,7 @@ test('legacy carrier rows and explicit saved faces preserve original schools and
   }
 });
 
-test('a pre-expansion save reload keeps every original damage carrier while new grades retain their traits', { skip: !engineRoot }, async () => {
+test('a pre-expansion save reload keeps every original damage carrier while new grades retain their traits', async () => {
   const { createRunState, serializeRun, deserializeRun } = await engineModule('src/model/state.js');
   const { registriesForClassMastery } = await engineModule('src/model/classMasteryRun.js');
   const legacy = registries.legacyProgressionSource;
@@ -194,12 +194,12 @@ test('a pre-expansion save reload keeps every original damage carrier while new 
   }
 });
 
-test('assembled content validates every normalized card, feat and relic rule', { skip: !engineRoot }, () => {
+test('assembled content validates every normalized card, feat and relic rule', () => {
   const validation = validateContent(contentBundle);
   assert.deepEqual(validation.errors, []);
 });
 
-test('every authored family grade completes a paid real play in the assembled engine', { skip: !engineRoot }, () => {
+test('every authored family grade completes a paid real play in the assembled engine', () => {
   for (const card of progressionCards) for (const profile of card.gradeProfiles) {
     const combat = fixture();
     const instance = { instanceId: 'graded-play', cardId: card.id, upgraded: false, abilityRank: profile.rank };
@@ -219,7 +219,7 @@ test('every authored family grade completes a paid real play in the assembled en
   }
 });
 
-test('mounted feat buildup applies at low and high grades with solo and co-op preview parity', { skip: !engineRoot }, () => {
+test('mounted feat buildup applies at low and high grades with solo and co-op preview parity', () => {
   for (const coop of [false, true]) for (const rank of [0, 3]) for (const [name, feat, status] of [
     ['Rime Mirror', 'progression-mirror-of-rime', 'frost'],
     ['Blight Litany', 'progression-sower-of-blight', 'crimsonBlight'],
@@ -244,7 +244,7 @@ test('mounted feat buildup applies at low and high grades with solo and co-op pr
   }
 });
 
-test('Broad Sentence reads actual grade area in preparing previews and real plays', { skip: !engineRoot }, () => {
+test('Broad Sentence reads actual grade area in preparing previews and real plays', () => {
   for (const coop of [false, true]) for (const rank of [0, 3]) {
     const card = byName('Ashen Cleaver');
     const make = skillFeats => {
