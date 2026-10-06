@@ -10,8 +10,9 @@ import { tagging } from '../src/content/generated/tagging.js';
 // same recipes against the assembled core and DSL without copying test data.
 const engineRoot = process.env.PROGRESSION_ENGINE_ROOT;
 const engineModule = path => import(engineRoot ? pathToFileURL(resolve(engineRoot, path)).href : new URL(`../${path}`, import.meta.url).href);
-const [{ contentBundle }, { createRegistries }, { createCombat }, { executeAction }, { createRng }, { getStacks }] = await Promise.all([
+const [{ contentBundle }, { createRegistries, resolveCard }, { createCombat, dispatch, previewCard }, { executeAction }, { createRng }, { getStacks }, { validateContent }] = await Promise.all([
   engineModule('src/content/index.js'), engineModule('src/model/registries.js'), engineModule('src/engine/combat.js'), engineModule('src/engine/actions.js'), engineModule('src/engine/rng.js'), engineModule('src/framework/statusSemantics.js'),
+  engineModule('src/model/validate.js'),
 ]);
 
 const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards.filter(c => !progressionCards.some(n => n.id === c.id)), ...progressionCards] });
@@ -157,4 +158,29 @@ test('legacy existing faces keep their prior cost and effect recipes for explici
   assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').manaCost, 1);
   assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').legacyFace.manaCost, 0);
   assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').manaCost, 2);
+});
+
+test('assembled content validates every normalized card, feat and relic rule', { skip: !engineRoot }, () => {
+  const validation = validateContent(contentBundle);
+  assert.deepEqual(validation.errors, []);
+});
+
+test('every authored family grade completes a paid real play in the assembled engine', { skip: !engineRoot }, () => {
+  for (const card of progressionCards) for (const profile of card.gradeProfiles) {
+    const combat = fixture();
+    const instance = { instanceId: 'graded-play', cardId: card.id, upgraded: false, abilityRank: profile.rank };
+    combat.piles.hand.push(instance);
+    const face = resolveCard(combat.registries, instance);
+    assert.equal(face.cost, profile.actionCost, `${card.name}/${profile.rank}`);
+    assert.equal(face.manaCost, profile.rank, `${card.name}/${profile.rank}`);
+    const preview = previewCard(combat, instance.instanceId);
+    assert.equal(preview.manaCost, profile.rank);
+    dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: combat.enemies[0].id });
+    while (combat.pendingAbilityDiscard) {
+      const ids = combat.piles.hand.slice(0, combat.pendingAbilityDiscard.count).map(c => c.instanceId);
+      assert.doesNotThrow(() => dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ids }), `${card.name}/${profile.rank}, choosing ${JSON.stringify(ids)} from ${combat.piles.hand.length}`);
+    }
+    assert.equal(combat.eventLog.filter(e => e.type === 'cardResolved').length, 1, `${card.name}/${profile.rank}`);
+    assert.equal(combat.player.mana, 100 - profile.rank + (card.id === 'progression-wellspring-sigil' && profile.rank >= 2 ? 1 : 0));
+  }
 });

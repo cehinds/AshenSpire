@@ -67,6 +67,7 @@ test('chosen discard sees newly drawn cards and saves its paid play and remainin
   const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(9, combat.rng.getCounters()), snapshot: saved });
   assert.throws(() => dispatch(restored, { type: 'chooseDiscard', cardInstanceIds: ['missing'] }), /distinct cards/);
   dispatch(restored, { type: 'chooseDiscard', cardInstanceIds: [originallyDrawn] });
+  assert.equal(restored.pendingAbilityDiscard, undefined); assert.equal(restored.pendingAbilityPlay, undefined);
   assert.equal(restored.player.block, 5); assert.ok(restored.piles.discard.some(card => card.instanceId === id));
   assert.equal(restored.eventLog.filter(e => e.type === 'cardResolved').length, 1);
   assert.equal(restored.player.abilityRiders.discarded, 1);
@@ -89,6 +90,7 @@ test('co-op discard belongs to its seat and charges and resolution carry seat ow
   assert.throws(() => endTurn(combat, 'b'), /Choose the cards/);
   assert.throws(() => chooseDiscard(combat, 'b', []), /another player/);
   chooseDiscard(combat, 'a', [combat.players.get('a').piles.hand[0].instanceId]);
+  assert.equal(combat.pendingAbilityDiscard, undefined); assert.equal(combat.pendingAbilityPlay, undefined);
   const resolved = combat.eventLog.find(e => e.type === 'cardResolved'); assert.equal(resolved.sourcePlayerId, 'a');
   assert.equal(combat.players.get('a').entity.abilityRiders.discarded, 1);
   assert.equal(combat.players.get('b').entity.abilityRiders.discarded, 0);

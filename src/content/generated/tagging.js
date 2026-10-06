@@ -13236,7 +13236,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "kickOff",
-    "tagId": "source:weapon"
+    "tagId": "source:unarmed"
   },
   {
     "family": "card",

@@ -264,6 +264,7 @@ export function foundationTransaction(ctx, execute) {
     for (const key of Object.keys(ctx.loadout)) delete ctx.loadout[key];
     Object.assign(ctx.loadout, candidate.loadout); candidate.loadout = ctx.loadout;
   }
+  for (const key of Object.keys(ctx)) if (typeof ctx[key] !== 'function' && !['registries', 'rng'].includes(key) && !(key in candidate)) delete ctx[key];
   for (const [key, value] of Object.entries(candidate)) {
     if (key === 'rng') ctx.rng.restoreCounters(value.getCounters());
     else if (typeof value !== 'function' && key !== 'registries') ctx[key] = value;
