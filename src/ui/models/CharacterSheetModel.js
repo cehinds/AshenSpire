@@ -1,3 +1,4 @@
+import { masteryUnlockName } from '../../model/classMasteryRun.js';
 // src/ui/models/CharacterSheetModel.js — the Character sheet's two ladders,
 // read for a surface to draw: every character level, and every level of every
 // skill track the run can climb, each row saying what that level grants.
@@ -148,6 +149,10 @@ export function trackLadder(registries, run, track) {
     const grants = [];
     if (track.kind === 'class') {
       grants.push({ kind: 'classNodeDraft' });
+      if (run.classMasteryState) {
+        const names = registries.classMastery.filter(row => row.classId === classId && row.level === level).map(row => masteryUnlockName(registries, row));
+        if (names.length) grants.push({ kind: 'masteryUnlock', names });
+      }
       // The class level's source bonuses (engine/sourceRewardBonuses.js):
       // a feat choice and a class-pool card, each at its authored chance.
       const bonus = (balanceOf(registries).rewards || {}).sourceBonuses || {};

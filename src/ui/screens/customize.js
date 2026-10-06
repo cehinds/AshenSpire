@@ -1,3 +1,4 @@
+import { masteryClassSummary } from '../components/classMastery.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
@@ -930,6 +931,7 @@ export function mountCustomize(app, {
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
       selected: state.classChosen && cls.id === state.classId,
       visual: classGlyph(cls.id),
+      mastery: masteryClassSummary(registries, meta, cls.id),
       locked: !classAvailable(registries.unlocks, cls.id, meta),
       hint: classAvailable(registries.unlocks, cls.id, meta) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
       onChoose: () => {
@@ -974,7 +976,7 @@ export function mountCustomize(app, {
   }
 
   function renderEquipment(preferredOpenId = null) {
-    equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices() });
+    equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices(), meta });
     equipmentNodes = new Map();
     equipmentGateRefreshers = [];
     const refreshers = [];

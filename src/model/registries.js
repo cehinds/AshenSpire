@@ -230,6 +230,7 @@ export function createRegistries(contentBundle) {
   registries.tree = nodeTree(registries);
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  if (bundle.classMasteryVersion === 1) registries.classMasteryVersion = 1;
   if (bundle.breakMeterVersion === 1) registries.breakMeterVersion = 1;
   // The shop kinds and their offerings (SPEC §14.2), as configured for this
   // run; a bundle without them reads the shipped table.

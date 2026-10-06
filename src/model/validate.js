@@ -127,6 +127,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'equipment',
   'unlocks',
   'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
+  'classMasteryVersion',
   'breakMeterVersion', // configured bundle's scoped card faces, never stamped onto old runs
   'classMastery',
   'classSkillFeats',
@@ -353,6 +354,7 @@ export function validateContent(bundle) {
 function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
+  if (b.classMasteryVersion !== undefined && b.classMasteryVersion !== 1) err('classMasteryVersion', 'must be 1 when present');
   if (b.breakMeterVersion !== undefined && b.breakMeterVersion !== 1) err('breakMeterVersion', 'must be 1 when present');
 
   // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a

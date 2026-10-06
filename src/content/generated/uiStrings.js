@@ -7890,5 +7890,54 @@ export const uiStrings = [
     "short": "New tiers open at the levels marked.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "book.read.masterySummary",
+    "extends": "",
+    "short": "Learn one selected card. Class mastery advances through fights and quests. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.masteryClassSummary",
+    "extends": "",
+    "short": "Learn this class. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Class mastery advances through fights and quests. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.classNext",
+    "extends": "",
+    "short": "Mastery {level} · Next: {unlocks}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.classComplete",
+    "extends": "",
+    "short": "Mastery {level} · All levels claimed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeEyebrow",
+    "extends": "",
+    "short": "{class} · Mastery {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeTitle",
+    "extends": "",
+    "short": "Choose your tier {tier} node",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeIntro",
+    "extends": "",
+    "short": "Your class level lasts. Choose a fresh build for this climb.",
+    "full": "",
+    "tip": ""
   }
 ];

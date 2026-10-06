@@ -1,3 +1,5 @@
+import { mountInitialClassMastery } from '../components/classMastery.js';
+import { registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
@@ -1086,6 +1088,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   // ---- map (THE act map, mounted with a co-op viewer) ------------------------
   function renderMap() {
+    const member = snap.party.find(row => row.id === me);
+    if (member?.classMasteryState?.initialTreeTiers?.length) {
+      const treeRun = { ...member, class: member.classId };
+      app.replaceChildren();
+      return mountInitialClassMastery(app, { registries: registriesForClassMastery(registries, treeRun), run: treeRun, onChoose: nodeId => send({ t: 'chooseMasteryNode', nodeId }), onPersist: () => {}, onDone: render });
+    }
     const map = snap.map;
     if (!map) { app.innerHTML = '<div class="screen"><div class="coop-note">Loading the path…</div></div>'; return; }
 

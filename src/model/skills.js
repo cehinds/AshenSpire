@@ -16,6 +16,10 @@
 import { mechanics } from '../framework/data/mechanics.js';
 import { activeIn, HAND_SLOT_IDS } from './zones.js';
 import { xpStepCost } from './xpCurve.js';
+import { classSkillFeats } from '../content/classSkillFeats.js';
+import { hasClassMastery, claimRunClassMastery, masteryProfileFor } from './classMasteryRun.js';
+import { classMastery } from '../content/generated/classMastery.js';
+import { masteryRowId } from './classMastery.js';
 import { skillFeats } from '../content/skillFeats.js';
 
 // The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
@@ -131,6 +135,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
   row.xp += gain;
   let cost = xpToNext(registries, kind, row.level);
   while (belowCap(registries, kind, row.level) && row.xp >= cost) {
+    if (kind === 'class' && hasClassMastery(run)) run.classMasteryState.spentXp[skillId.slice(6)] += cost;
     row.xp -= cost;
     row.level += 1;
     row.pendingDrafts += 1;
@@ -139,6 +144,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
     queueSkillFeat(registries, skillId, row);
     cost = xpToNext(registries, kind, row.level);
   }
+  if (kind === 'class' && row.level > before) claimRunClassMastery(registries, run);
   return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain };
 }
 
@@ -172,18 +178,23 @@ export function bankSkillXp(registries, run, skillId, amount) {
 
 /** Claim exactly one paid-for skill level, retaining excess XP and queuing its reward. */
 export function claimBankedSkillLevel(registries, run, skillId) {
+  const owner = run;
+  if (hasClassMastery(run) && skillId.startsWith('class:')) run = { ...run, skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState) };
   const kind = skillKindOf(registries, skillId);
   const row = run && run.skills && run.skills[skillId];
   if (!kind || !row || !belowCap(registries, kind, row.level)) return null;
   const cost = xpToNext(registries, kind, row.level);
   if (row.xp < cost) return null;
   const before = row.level;
+  if (kind === 'class' && hasClassMastery(run)) run.classMasteryState.spentXp[skillId.slice(6)] += cost;
   row.xp -= cost;
   row.level += 1;
   row.pendingDrafts += 1;
   queueRankUp(kind, row);
   queueAttributePick(registries, skillId, row);
   queueSkillFeat(registries, skillId, row);
+  if (kind === 'class') claimRunClassMastery(registries, run);
+  if (owner !== run) { owner.skills = run.skills; owner.classMasteryState = run.classMasteryState; }
   return { skillId, before, after: row.level, levelUps: 1, gained: 0 };
 }
 
@@ -431,14 +442,14 @@ export function spendAttributePick(run, skillId) {
 // ---- the every-2nd-level skill feat (SPEC §13.4o) ----------------------------
 
 /** A skill feat by id, or null. */
-export const skillFeatById = (id) => skillFeats.find((feat) => feat.id === id) || null;
+export const skillFeatById = (id) => [...skillFeats, ...classSkillFeats].find((feat) => feat.id === id) || null;
 /** The feats a track authors (content/skillFeats.js), in authored order. */
-export const trackSkillFeats = (skillId) => skillFeats.filter((feat) => feat.skillId === skillId);
+export const trackSkillFeats = (skillId, mastery = false) => [...skillFeats, ...(mastery ? classSkillFeats : [])].filter((feat) => feat.skillId === skillId);
 
 /** Whether reaching `level` on this track queues a feat pick: every featEvery levels of a track that authors any. */
 export function levelQueuesSkillFeat(registries, skillId, level) {
   const every = draftRows(registries).featEvery;
-  return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && trackSkillFeats(skillId).length > 0;
+  return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && trackSkillFeats(skillId, !!registries.masteryRun).length > 0;
 }
 
 function queueSkillFeat(registries, skillId, row) {
@@ -448,7 +459,14 @@ function queueSkillFeat(registries, skillId, row) {
 /** skillFeatOptions(run, skillId, level) → the track's feats open at `level` the run has not taken. */
 export function skillFeatOptions(run, skillId, level) {
   const taken = new Set(Array.isArray(run && run.skillFeats) ? run.skillFeats : []);
-  return trackSkillFeats(skillId).filter((feat) => feat.minLevel <= level && !taken.has(feat.id)).map((feat) => feat.id);
+  return trackSkillFeats(skillId, hasClassMastery(run)).filter((feat) => {
+    if (taken.has(feat.id)) return false;
+    const gate = classMastery.find(row => row.kind === 'feat' && row.ref === feat.id);
+    // A reward plan previews the level its claim will reach; the commit calls
+    // this again with the actual claimed level before spending the pick.
+    if (hasClassMastery(run) && gate) return level >= gate.level || (masteryProfileFor(run).classMastery?.[gate.classId]?.unlockedRows || []).includes(masteryRowId(gate));
+    return feat.minLevel <= level;
+  }).map((feat) => feat.id);
 }
 
 /**
@@ -459,6 +477,7 @@ export function takeSkillFeat(run, skillId, featId) {
   const feat = skillFeatById(featId);
   const row = run && run.skills && run.skills[skillId];
   if (!feat || feat.skillId !== skillId || !row || !(row.pendingSkillFeats > 0)) return false;
+  if (hasClassMastery(run) && !skillFeatOptions(run, skillId, row.level).includes(featId)) return false;
   if (Array.isArray(run.skillFeats) && run.skillFeats.includes(featId)) return false;
   row.pendingSkillFeats -= 1;
   run.skillFeats = [...(Array.isArray(run.skillFeats) ? run.skillFeats : []), featId];

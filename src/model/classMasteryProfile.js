@@ -27,6 +27,7 @@ export function masteryProfileProblems(meta) {
   else for (const [id, row] of Object.entries(meta.classMastery)) {
     if (!safeKey(id) || !object(row) || !count(row.xp) || !count(row.level) || !Array.isArray(row.unlockedRows)
       || row.unlockedRows.some(ref => typeof ref !== 'string')) problems.push(`profile.classMastery.${id} has invalid XP, level or unlock rows`);
+    if (row?.spentXp !== undefined && (!count(row.spentXp) || row.spentXp > row.xp)) problems.push(`profile.classMastery.${id}.spentXp must be funded nonnegative XP`);
   }
   if (!object(meta.classMasteryReceipts)) problems.push('profile.classMasteryReceipts must be an object');
   else for (const [id, receipt] of Object.entries(meta.classMasteryReceipts)) {
@@ -44,6 +45,7 @@ export function mergeMasteryProfiles(incoming, current) {
   for (const [id, old] of Object.entries(previous.classMastery)) {
     const row = (Object.hasOwn(mastery, id) ? mastery[id] : null) || { xp: 0, level: 0, unlockedRows: [] };
     mastery[id] = { ...row, xp: Math.max(row.xp, old.xp), level: Math.max(row.level, old.level),
+      ...((row.spentXp !== undefined || old.spentXp !== undefined) ? { spentXp: Math.max(row.spentXp ?? masterySpentXp(null, row.level), old.spentXp ?? masterySpentXp(null, old.level)) } : {}),
       unlockedRows: [...new Set([...row.unlockedRows, ...old.unlockedRows])] };
   }
   const receipts = structuredClone(next.classMasteryReceipts);
@@ -77,7 +79,9 @@ export function bankMasteryProfile(meta, run, registry) {
     row.xp += delta;
     receipt[id] = Math.max(Object.hasOwn(receipt, id) ? receipt[id] : 0, earned);
     const claimed = run.skills?.[`class:${id}`]?.level || 0;
-    if (!count(claimed) || claimed > cap || masterySpentXp(registry, claimed) > row.xp) throw new Error(`class mastery claim for ${id} is not funded`);
+    const spent = state.spentXp?.[id] ?? masterySpentXp(registry, claimed);
+    if (!count(claimed) || (claimed > row.level && (claimed > cap || !count(spent) || spent > row.xp))) throw new Error(`class mastery claim for ${id} is not funded`);
+    if (claimed > row.level) row.spentXp = spent;
     const level = Math.max(row.level, claimed);
     changed ||= delta > 0 || level > row.level;
     row.level = level;

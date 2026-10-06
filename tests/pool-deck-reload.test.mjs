@@ -406,17 +406,17 @@ test('a fight\'s poolDeck flag must agree with its run, and never rides a run (C
 });
 
 test('schema 20 brings the dealt-deck rule: a 20 save loads as it is, a 19 pool save heals through the migration, a 20 pool save without the marker is refused (Codex review)', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 20);
+  assert.ok(RUN_SCHEMA_VERSION >= 20);
   // A schema-20 Sealed save (newRun wrote the marker) loads untouched.
   {
     const { saves, storage } = deal('starseer', 'sealed');
     const bytes = JSON.parse(storage.getItem('sote_run_v1'));
-    assert.equal(bytes.schemaVersion, 20);
+    assert.equal(bytes.schemaVersion, RUN_SCHEMA_VERSION);
     assert.equal(bytes.poolDeckRule, POOL_DECK_RULE);
     const back = saves.loadRun(registries, 1);
     assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
     assert.equal(saves.runStatus().state, 'ok');
-    assert.equal(back.schemaVersion, 20);
+    assert.equal(back.schemaVersion, RUN_SCHEMA_VERSION);
   }
   // A schema-19 Sealed save (no marker, the composed quota) migrates to 20:
   // the ledger names the migration from 19, the quota heal, and the marker.
@@ -428,15 +428,15 @@ test('schema 20 brings the dealt-deck rule: a 20 save loads as it is, a 19 pool 
     const back = saves.loadRun(registries, 1);
     assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
     assert.equal(saves.runStatus().state, 'healed');
-    assert.equal(back.schemaVersion, 20);
+    assert.equal(back.schemaVersion, RUN_SCHEMA_VERSION);
     assert.equal(back.poolDeckRule, POOL_DECK_RULE);
     const rows = saves.runStatus().ledger.entries;
-    assert.ok(rows.some((row) => row.field === 'schemaVersion' && row.was === 19 && row.now === 20), 'the migration from 19 is named');
+    assert.ok(rows.some((row) => row.field === 'schemaVersion' && row.was === 19 && row.now === RUN_SCHEMA_VERSION), 'the migration from 19 is named');
     assert.ok(rows.some((row) => row.site === 'save.js:dealtAttackSlotCount'), 'the heal is named');
     // Saved again, it is a schema-20 save carrying the marker, and loads clean.
     saves.saveRun(back, createRng(SEED));
     const resaved = JSON.parse(storage.getItem('sote_run_v1'));
-    assert.equal(resaved.schemaVersion, 20, 'the resave is this build\'s own schema-20 save');
+    assert.equal(resaved.schemaVersion, RUN_SCHEMA_VERSION, 'the resave is this build\'s own schema-20 save');
     assert.equal(resaved.poolDeckRule, POOL_DECK_RULE);
     assert.ok(saves.loadRun(registries, 1));
     assert.equal(saves.runStatus().state, 'ok');
@@ -446,18 +446,22 @@ test('schema 20 brings the dealt-deck rule: a 20 save loads as it is, a 19 pool 
     const { saves } = deal('reaver', 'standard', { fixed: false });
     const back = saves.loadRun(registries, 1);
     assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
-    assert.equal(back.schemaVersion, 20);
+    assert.equal(back.schemaVersion, RUN_SCHEMA_VERSION);
     assert.equal('poolDeckRule' in back, false);
   }
-  // A schema-20 Sealed or Draft save without the marker was not written by
-  // newRun: refused by name, never healed.
-  for (const [classId, deckMode] of [['starseer', 'sealed'], ['rogue', 'draft']]) {
-    const { run, rng, saves } = deal(classId, deckMode);
-    delete run.poolDeckRule;
-    saves.saveRun(run, rng);
-    assert.equal(saves.loadRun(registries, 1), null, `${deckMode}: a schema-20 save without the marker must be refused`);
-    assert.equal(saves.runStatus().state, 'archived');
-    assert.match(saves.runStatus().reason, /schema-20 .* missing poolDeckRule/);
+  // Neither current nor migrated schema-20 bytes may heal a missing marker.
+  for (const version of [...new Set([20, RUN_SCHEMA_VERSION])]) {
+    for (const [classId, deckMode] of [['starseer', 'sealed'], ['rogue', 'draft']]) {
+      const { run, rng, saves, storage } = deal(classId, deckMode);
+      delete run.poolDeckRule;
+      saves.saveRun(run, rng);
+      const bytes = JSON.parse(storage.getItem('sote_run_v1'));
+      bytes.schemaVersion = version;
+      storage.setItem('sote_run_v1', JSON.stringify(bytes));
+      assert.equal(saves.loadRun(registries, 1), null, `${deckMode}: schema-${version} without the marker must be refused`);
+      assert.equal(saves.runStatus().state, 'archived');
+      assert.match(saves.runStatus().reason, /schema-2[0-9] .* missing poolDeckRule/);
+    }
   }
 });
 

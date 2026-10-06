@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `a2f863a56eaed820bda4868e47240d82a5b00d94`
+- Source commit: `e1696fe73ce8a5c4a588fd41fc76af04f727df34`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,16 +21,16 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 132 |
+| Domain models and contracts | `src/model/` | 134 |
 | Headless simulation/services | `src/engine/` | 23 |
 | Screen presenters/hosts | `src/ui/screens/` | 33 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 83 |
-| DOM components and observer adapters | `src/ui/components/` | 105 |
+| DOM components and observer adapters | `src/ui/components/` | 106 |
 | Code-side content adapters | `src/content/` | 130 |
 | Authoritative JSON/CSV content | `content/source/` | 32 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 324 |
+| Tests | `tests/` | 325 |
 | Architecture/tooling | `tools/` | 419 |
 
 ## Current implementation signals
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **9953**.
-Extensions: `.bat` 1, `.cjs` 9, `.cmd` 3, `.css` 31, `.csv` 28, `.gitattributes` 1, `.gitignore` 3, `.html` 44, `.jpg` 4, `.js` 626, `.json` 286, `.md` 168, `.mjs` 668, `.nojekyll` 1, `.nsi` 1, `.png` 1005, `.ps1` 10, `.py` 18, `.sh` 4, `.sql` 1, `.svg` 724, `.txt` 21, `.webp` 6271, `.woff2` 9, `.yml` 15, `(none)` 1.
+Tracked files: **9981**.
+Extensions: `.bat` 1, `.cjs` 9, `.cmd` 3, `.css` 31, `.csv` 28, `.gitattributes` 1, `.gitignore` 3, `.html` 45, `.jpg` 4, `.js` 629, `.json` 291, `.md` 169, `.mjs` 673, `.nojekyll` 1, `.nsi` 1, `.png` 1014, `.ps1` 10, `.py` 18, `.sh` 4, `.sql` 1, `.svg` 724, `.txt` 25, `.webp` 6271, `.woff2` 9, `.yml` 15, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
