@@ -254,7 +254,7 @@ function bundledStartingDecks(html, { restoreCycle = false } = {}) {
   var bundle = require("src/content/index.js").contentBundle;
   globalThis.startingDeckValidation = require("src/model/validate.js").validateContent(bundle);
 })();`);
-  const context = vm.createContext({ console });
+  const context = vm.createContext({ console, structuredClone });
   try {
     new vm.Script(script, { filename: 'bundled-starting-decks' }).runInContext(context, { timeout: 30000 });
     const result = context.startingDeckValidation;
@@ -1030,8 +1030,9 @@ console.log('module is executed here. 5m covers an argument naming nothing; an a
 console.log('names the WRONG existing thing is caught only where the probe touches it.');
 console.log('BOUNDARY (6v/6y): "a whole program" here means the written <script> COMPILES.');
 console.log('It is a real answer to "is this a game or a fragment of one" and it is not an');
-console.log('answer to "does this game run": nothing executed the 93 modules, so a bundle');
-console.log('that parses and throws on load passes 6y exactly as it passes the tool.');
+console.log('answer to "does this game run": 6y compiles but never executes the modules.');
+console.log('The control separately runs starting-deck validation through bundled model');
+console.log('factories and catches its known cycle; it mounts no UI and runs no browser.');
 console.log('BOUNDARY (6 ordering): two refusal checks are pinned above the write by name.');
 console.log('A THIRD check added below the write would print OK above its own error and');
 console.log('nothing here would say so — this is a list, not a derived property.');
