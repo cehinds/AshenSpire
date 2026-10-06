@@ -354,7 +354,6 @@ function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
   if (b.breakMeterVersion !== undefined && b.breakMeterVersion !== 1) err('breakMeterVersion', 'must be 1 when present');
-  for (const problem of classMasteryProblems(b)) err('classMastery', problem);
 
   // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a
   // bundle carrying no events section at all is a BUILD fault, not a content
@@ -2070,6 +2069,9 @@ function collectContentProblems(bundle, errors = []) {
     users: scriptUsers,
   };
 
+  // The cross-table mastery planner needs structurally valid dependencies.
+  // Keep their existing field-addressed refusals before asking it to plan.
+  if (!errors.length) for (const problem of classMasteryProblems(b)) err('classMastery', problem);
   return { ok: errors.length === 0, errors, scriptReport };
 }
 
