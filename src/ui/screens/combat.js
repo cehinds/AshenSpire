@@ -431,7 +431,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (inst) {
       if (!inspectionPlayAction(cardId).enabled) return [];
       const def = resolveCard(registries, inst);
-      const hostile = (def.effects || []).some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target));
+      const hostile = previewCard(combat, inst.instanceId).needsTarget || (def.effects || []).some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target));
       if (hostile) return combat.enemies.filter(enemy => enemy.alive).map(enemy => ({
         el: combatEl.querySelector(`.combatant.enemy[data-eid="${CSS.escape(enemy.id)}"]`), kind: 'enemy',
       })).filter(target => target.el);
@@ -1552,7 +1552,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       let pv = null;
       try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
       if (pv.needsTarget && !combat.enemies.some(enemy => enemy.alive)) return false;
-      const friendly = friendlyTargetPlan(resolveCard(registries, inst), combat.player.id,
+      const friendly = friendlyTargetPlan({ ...resolveCard(registries, inst), combatPreview: pv }, combat.player.id,
         [{ ...combat.player, connected: true }]);
       if (friendly.active && !friendly.legalIds.length) return false;
       return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)

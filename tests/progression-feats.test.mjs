@@ -142,10 +142,11 @@ test('invalid feat carriers and malformed property DSL fail with row identity',(
 // Exercise the modifier path through actual card resolution, rather than only
 // inspecting queued recipes. Each scalar modifier is measured against the same
 // play without the feat, with identical seed, history and targets.
+const firstHitFeats = new Set(['ember-sovereign','nightglass-scholar','smoke-dancer','requiem-reader']);
 for(const [slug,tags,scenario,opcode,values] of cases.filter(row=>row[3]==='grantCardCharge'))test(slug+' changes a real card result by its exact bonus',()=>{
  function play(selected){
   const stat=values.buildupStatus;
-  const effects=[{op:'damage',target:scenario.targetsAll?'allEnemies':'enemy',amount:5,...(slug==='two-quiet-knives'?{hits:2}:{})},{op:'block',target:'self',amount:5},{op:'heal',target:'self',amount:5},...(stat?[{op:'applyStatus',target:'enemy',status:stat,stacks:1}]:[])];
+  const effects=[{op:'damage',target:scenario.targetsAll?'allEnemies':'enemy',amount:5,...(slug==='two-quiet-knives'||firstHitFeats.has(slug)?{hits:2}:{})},{op:'block',target:'self',amount:5},{op:'heal',target:'self',amount:5},...(stat?[{op:'applyStatus',target:'enemy',status:stat,stacks:1}]:[])];
   const card={...acceptance,type:'attack',cost:0,manaCost:0,abilityKind:scenario.spell?'spell':'maneuver',effects,upgrade:undefined};
   const rb={...bundle,cards:[...contentBundle.cards,card],tagging:[...bundle.tagging,{family:'card',scope:'',objectId:'acceptance',tagId:'classification.attack'},...tags.map(tagId=>({family:'card',scope:'',objectId:'acceptance',tagId}))]};
   const rr=createRegistries(rb);const c=engine.createCombat({registries:rr,rng:createRng(59),player:player(selected?[id(slug)]:[]),enemyIds:scenario.targetsAll?['wanderingSoldier','wanderingSoldier']:['wanderingSoldier']});
@@ -156,7 +157,7 @@ for(const [slug,tags,scenario,opcode,values] of cases.filter(row=>row[3]==='gran
   const events=c.eventLog.slice(before);return {c,damage:events.filter(e=>e.type==='damageDealt'&&e.sourceId==='player').map(e=>e.amount),block:c.player.block,heal:events.filter(e=>e.type==='healed').reduce((n,e)=>n+e.amount,0),buildup:events.filter(e=>e.type==='statusApplied'&&e.status===stat).reduce((n,e)=>n+e.stacks,0),impact:events.filter(e=>e.type==='poiseDamageDealt'||e.type==='impactDealt')};
  }
  const base=play(false),boosted=play(true);
- if(values.damage)assert.deepEqual(boosted.damage,base.damage.map(n=>n+(slug==='dread-of-the-hammer'?6:values.damage)),'every primary hit/target receives authored effect bonus');
+ if(values.damage)assert.deepEqual(boosted.damage,base.damage.map((n,index)=>n+(firstHitFeats.has(slug)&&index>0?0:slug==='dread-of-the-hammer'?6:values.damage)),'only the authored hit or effect scope receives the bonus');
  if(values.block)assert.equal(boosted.block-base.block,values.block);
  if(values.heal)assert.equal(boosted.heal-base.heal,values.heal);
  if(values.buildup)assert.equal(boosted.buildup-base.buildup,values.buildup);

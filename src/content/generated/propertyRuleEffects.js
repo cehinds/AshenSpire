@@ -2793,7 +2793,7 @@ export const propertyRuleEffects = {
             "damage": {
               "balance": "progressionFeats.ember-sovereign.damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -3227,7 +3227,7 @@ export const propertyRuleEffects = {
             "damage": {
               "balance": "progressionFeats.nightglass-scholar.damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -3720,7 +3720,7 @@ export const propertyRuleEffects = {
             "damage": {
               "balance": "progressionFeats.smoke-dancer.damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -4205,7 +4205,7 @@ export const propertyRuleEffects = {
             "damage": {
               "balance": "progressionFeats.requiem-reader.damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1

@@ -85,7 +85,7 @@ import { adoptCombatantFrame } from '../components/combatantFrame.js';
 import { mountHand } from '../components/hand.js';
 import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
 import { decorateFriendlyTarget } from '../components/friendlyTargets.js';
-import { friendlyTargetPlan } from '../../model/friendlyTargets.js';
+import { cardNeedsEnemyTarget, friendlyTargetPlan } from '../../model/friendlyTargets.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 // THE CHROME IS THE KIT'S: the seat strip is a Dock of Tabs with a Keycap and a
@@ -559,7 +559,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const def = cardDef(c);
       if (!cardAffordableFromSnapshot(def, meP)) return;
       if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
-      const needs = (def.effects || []).some((e) => e.target === 'enemy');
+      const needs = cardNeedsEnemyTarget(def);
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
     }
   };
@@ -1011,7 +1011,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             armFriendlyTargeting(entry.inst.instanceId);
             return;
           }
-          const needs = effects.some((ef) => ef.target === 'enemy');
+          const needs = cardNeedsEnemyTarget(entry.def);
           send({ t: 'playCard', cardInstanceId: entry.inst.instanceId, targetId: needs ? selectedEnemy : undefined });
         });
       },
@@ -1064,7 +1064,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const hasPlayable = canEnd && meP.hand.some(card => {
       const def = cardDef(card);
       if (registries.framework.isUnplayable(def) || !cardAffordableFromSnapshot(def, meP)) return false;
-      if (def.effects?.some(effect => effect.target === 'enemy') && !sc.enemies.some(enemy => enemy.hp > 0)) return false;
+      if (cardNeedsEnemyTarget(def) && !sc.enemies.some(enemy => enemy.hp > 0)) return false;
       const friendly = friendlyTargetPlan(def, me, sc.players);
       return !friendly.active || friendly.legalIds.length > 0;
     });

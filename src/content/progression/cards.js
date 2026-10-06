@@ -1,7 +1,8 @@
 // Forty class families. Rank is a recipe selection, never an imperative card hook.
 import { cardFamilies } from './cardFamilies.js';
 import { recipeText } from './cardRecipeText.js';
-export { abilityCardUpdates } from './lessons.js';
+import { abilityCardUpdates as lessonUpdates } from './lessons.js';
+export const abilityCardUpdates = lessonUpdates;
 
 const damage = (amount, target = 'enemy', extra = {}) => ({ op: 'damage', target, amount, ...extra });
 const block = (amount, extra = {}) => ({ op: 'block', target: 'self', amount, ...extra });

@@ -2793,7 +2793,7 @@ export const nodeEffects = {
             "damage": {
               "variable": "damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -2837,7 +2837,7 @@ export const nodeEffects = {
             "damage": {
               "variable": "damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -2881,7 +2881,7 @@ export const nodeEffects = {
             "damage": {
               "variable": "damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -4234,7 +4234,7 @@ export const nodeEffects = {
             "damage": {
               "variable": "damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1

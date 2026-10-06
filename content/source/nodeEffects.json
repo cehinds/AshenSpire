@@ -2790,7 +2790,7 @@
             "damage": {
               "variable": "damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -2834,7 +2834,7 @@
             "damage": {
               "variable": "damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -2878,7 +2878,7 @@
             "damage": {
               "variable": "damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
@@ -4231,7 +4231,7 @@
             "damage": {
               "variable": "damage"
             },
-            "damageScope": "effect"
+            "damageScope": "hit"
           }
         ],
         "limitPerTurn": 1
