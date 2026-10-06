@@ -133,8 +133,8 @@ test('every object states exactly one kind, the one its collection and type name
       counted += 1;
     }
   }
-  // Current 505 objects plus the blacksmith's four sigils.
-  assert.equal(counted, 512, 'all 512 shipped objects, including projected shared armor sets, companions and sigils (three legendary, SPEC §15.4)');
+  // Includes Ember Communion alongside projected shared armor and sigils.
+  assert.equal(counted, 513, 'all 513 shipped objects, including projected shared armor sets, companions and sigils (three legendary, SPEC §15.4)');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

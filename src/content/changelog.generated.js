@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1652",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Herald: a cup of Mana",
+    "detail": "Ember Communion joins the Herald's common cards. Spend 1 Stamina to restore 1 Mana and heal 2 HP. It Exhausts for the fight until you upgrade it, then returns to the discard pile like an ordinary skill.",
+    "build": "0.7.1.1006",
+    "pullRequest": 1652,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1652"
+  },
+  {
     "id": "pr-1648",
     "date": "2026-10-05",
     "group": "2026-10-05",
