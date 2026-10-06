@@ -1,5 +1,13 @@
 # AshenSpire component catalog
 
+The map's `act-route-strip` uses `ActRouteModel` and `actRouteStripHtml` to show
+the act title, Entrance, a fixed evenly spaced circle for each non-boss floor,
+and Boss on one desktop row. Committed visits fill circles with the shared map
+glyph; the current node receives a ring and future kinds stay undisclosed.
+On phones the title moves above the rail. The authored dungeon adapter uses
+its numbered room positions and visited history. This is a read-only receipt;
+selecting a destination for inspection does not record travel.
+
 `prologue-screen` composes text-free WebP paintings, a class item layer, motif
 wash, live narration, and a control band that is the frame's own last row — the
 buttons and the scene counter stay at the bottom whichever wireframe is standing
