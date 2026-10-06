@@ -22,9 +22,9 @@ name: dev preview
 
 on:
   push:
-    branches: [dev, test, release, main]
+    branches: [dev, test, release, main, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
   pull_request:
-    branches: [dev]
+    branches: [dev, alternative/dev, 'alternative/**/dev']
   workflow_dispatch:
 
 concurrency:
@@ -32,7 +32,7 @@ concurrency:
   # may not be REPLACED while queued either (a group holds one pending run). The
   # built HTML is not committed, so a push run's upload is the only copy of that
   # commit's build — so push runs are grouped by commit, never by branch.
-  group: dev-preview-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: dev-preview-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -47,7 +47,7 @@ env:
   CHANNEL: ${{ github.base_ref || github.ref_name }}
   # The pack-shaped build's tier flag for bundle.mjs: light on dev
   # (owner, 2026-09-26; test joins full art 2026-10-04), high (no flag) on test/release/main.
-  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
+  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
   # The art packs this workflow fetches (docs/EXTERNAL-ASSETS-PLAN.md §2,
   # tools/fetch-art.mjs --pack): all three on every branch since step 13. The
   # build carries only its tier's (light and common on dev), but the
@@ -95,7 +95,15 @@ jobs:
       # commit its download (the standalone uploads right below; the preview
       # package collects and uploads on `steps.build.outcome`).
       - name: Make the channel safe for a file and artifact name
-        run: echo "CHANNEL=${CHANNEL//\//-}" >> "$GITHUB_ENV"
+        run: |
+          safe="${CHANNEL//\//-}"
+          file_channel="$safe"
+          if [[ "$CHANNEL" == alternative/* ]]; then
+            file_channel="${CHANNEL##*/}-${CHANNEL%/*}"
+            file_channel="${file_channel//\//-}"
+          fi
+          echo "CHANNEL=$safe" >> "$GITHUB_ENV"
+          echo "FILE_CHANNEL=$file_channel" >> "$GITHUB_ENV"
 
       - name: Build the game (the pack shape and the light single file)
         id: build
@@ -104,8 +112,13 @@ jobs:
         # and the light single file to build/download/ and the root alias
         # (docs/EXTERNAL-ASSETS-PLAN.md step 8e).
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         run: node tools/launch.mjs --build-only $ART_TIER
+
+      - name: Record the preview build number
+        if: steps.build.outcome == 'success'
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const b=JSON.parse(fs.readFileSync("buildordinal.json")); fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## ${process.env.CHANNEL} preview\n\n- Build: **${b.release}.${b.ordinal}**\n- Commit: ${process.env.GITHUB_SHA}\n`);'
 
       # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
       # a saved file's name to open the dev-only settings, and a plain
@@ -119,13 +132,13 @@ jobs:
           # The root alias is the light single file on every branch since step
           # 8e: the one inline download (owner answer 3). The full-art single
           # file and the separate mobile file are retired (owner answers 6, 2).
-          cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
+          cp AshenSpire.html "standalone/AshenSpire-${FILE_CHANNEL}-preview.html"
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CHANNEL }}-standalone-${{ github.sha }}
           path: standalone/
-          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || (env.CHANNEL == 'test' && 30 || 14) }}
+          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || ((env.CHANNEL == 'test' || endsWith(github.ref_name, '/test')) && 30 || 14) }}
 
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
@@ -288,6 +301,11 @@ jobs:
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
           cp -r src "$W/src"
+          # Variant-only authoring material stays inside this branch's artifact.
+          if [[ "$GITHUB_REF_NAME" == alternative/* ]] && [ -d docs/design/combat-depth-2026-10-05 ]; then
+            mkdir -p "$W/docs/design"
+            cp -r docs/design/combat-depth-2026-10-05 "$W/docs/design/"
+          fi
           cp world-atlas-preview.html equipment-selection-preview.html armament-kits-preview.html "$W/"
           cp tools/serve-preview.mjs "$W/serve-preview.mjs"
           cp -r styles "$W/styles"
@@ -437,7 +455,7 @@ jobs:
     # push to `dev`, where the `preview` job above still builds and uploads.
     # Every step below is unchanged; the job-level `if:` reports it as skipped
     # on a dev PR rather than absent.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'dev')
+    if: (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'dev')) && !endsWith(github.ref_name, '/dev')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

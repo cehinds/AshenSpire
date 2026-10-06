@@ -29,9 +29,9 @@ name: receipts
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, alternative/dev, 'alternative/**/dev']
   pull_request:
-    branches: [dev]
+    branches: [dev, alternative/dev, 'alternative/**/dev']
   workflow_dispatch:
 
 concurrency:
@@ -58,14 +58,19 @@ jobs:
       # but the bounded answer is the one worth having, so fetch the ref.
       - name: Fetch the promotion target so the range is the real one
         if: github.event_name != 'pull_request'
-        run: git fetch --no-tags origin test:refs/remotes/origin/test || echo "no test branch yet; the tool will say so"
+        shell: bash
+        run: |
+          target=test
+          if [[ "$GITHUB_REF_NAME" == alternative/*/dev ]]; then target="${GITHUB_REF_NAME%dev}test"; fi
+          git fetch --no-tags origin "$target:refs/remotes/origin/$target"
+          echo "RECEIPT_BASE=origin/$target" >> "$GITHUB_ENV"
 
       - name: The corpus still catches its own known-bads
         run: node tools/verdict.mjs -- node tools/receipts.mjs --selftest
 
       - name: Every pull request merged since the last promotion has a receipt
         if: github.event_name != 'pull_request'
-        run: node tools/verdict.mjs -- node tools/receipts.mjs --check
+        run: node tools/verdict.mjs -- node tools/receipts.mjs --check --since "$RECEIPT_BASE"
 
       - name: This pull request has a receipt of its own
         if: github.event_name == 'pull_request'

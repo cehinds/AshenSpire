@@ -44,12 +44,13 @@ import { ASSET_BASE_FILE, packPinOf, packPages, publishPack, serviceWorkerFindin
 import { SW_FILE, SW_KILL, SW_VERSION, serviceWorkerSource } from './pages-sw.mjs';
 import { objectPath } from './asset-pack.mjs';
 import { fetchPlanFor } from './art-source.mjs';
+import { alternativePairs, channelRole, downloadChannel, siteRoot } from './alternative-branches.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync, symlinkSync, unlinkSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_URL = 'https://github.com/cehinds/AshenSpire';
@@ -58,7 +59,9 @@ const flag = (name, dflt) => { const i = argv.indexOf(name); return i >= 0 && ar
 const has = (name) => argv.includes(name);
 
 const REMOTE = flag('--remote', 'origin');
-const BRANCHES = flag('--branches', 'dev,test,release,main').split(',').map((s) => s.trim()).filter(Boolean);
+const alternativeRefs = execFileSync('git', ['-C', ROOT, 'for-each-ref', '--format=%(refname:strip=3)', `refs/remotes/${REMOTE}/alternative/`], { encoding: 'utf8' }).trim().split('\n');
+const alternativeBranches = alternativePairs(alternativeRefs).flatMap(({ dev, test }) => [dev, test]);
+const BRANCHES = flag('--branches', ['dev', 'test', 'release', 'main', ...alternativeBranches].join(',')).split(',').map((s) => s.trim()).filter(Boolean);
 // Clamped: each listed build that is no longer committed costs a rebuild, so a
 // dispatch typo must not turn one run into hundreds of them.
 const KEEP_MAX = 25;
@@ -106,12 +109,13 @@ let BUILD_MISSING = flag('--build-missing', null);
 // rebuild --full-art, so a failed high-pack fetch there also stops the publish;
 // that is accepted: the high pack is the same release main's root build fetches
 // before this runs. release/main are not listed.
-const HEAD_REQUIRED = new Set(flag('--require-head', 'dev,test').split(',').map((x) => x.trim()).filter(Boolean));
+const HEAD_REQUIRED = new Set(flag('--require-head', ['dev', 'test', ...alternativeBranches].join(',')).split(',').map((x) => x.trim()).filter(Boolean));
 const FULL_ART_BRANCHES = new Set(['release', 'main']);
 // test joined them on full art (owner, 2026-10-04), but only for commits whose
 // own dev-preview.yml gave test --full-art: an older test build was built light
 // and is rebuilt light, never with art it did not ship.
 function fullArtFor(branch, sha) {
+  branch = channelRole(branch);
   if (FULL_ART_BRANCHES.has(branch)) return true;
   if (branch !== 'test') return false;
   try { return /== 'test' \|\|/.test(git(['show', `${sha}:.github/workflows/dev-preview.yml`], { stdio: ['ignore', 'pipe', 'ignore'] })); } catch { return false; }
@@ -607,7 +611,7 @@ const EDITIONS = Object.freeze({
   mobile: { artifact: MOBILE_ARTIFACT, sub: 'mobile/', prefix: 'mobile-', label: 'mobile' },
 });
 function mb(bytes) { return `${(bytes / 1e6).toFixed(1)} MB`; }
-function downloadName(b, edition = 'full') { return `AshenSpire-${EDITIONS[edition].prefix}${b.branch}-${b.version ? `${b.version}.${b.ordinal}` : b.ordinal}.html`; }
+function downloadName(b, edition = 'full') { return `AshenSpire-${EDITIONS[edition].prefix}${downloadChannel(b.branch)}-${b.version ? `${b.version}.${b.ordinal}` : b.ordinal}.html`; }
 // A PACK-SHAPED BUILD'S DOWNLOAD IS ITS LIGHT SINGLE FILE at download/ (step
 // 6b): the page itself is a 9.5 MB HTML whose art lives in the site's store,
 // which saved alone would play with placeholders.
@@ -759,8 +763,8 @@ function titleOf(file) {
   } catch { return null; }
 }
 
-function rootIndex(branchData, generatedAt, otherPages) {
-  const cards = branchData.map((d) => {
+export function rootIndex(branchData, generatedAt, otherPages) {
+  const cards = (data) => data.map((d) => {
     const { branch, builds } = d;
     const b = builds[0];
     if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}</section>`;
@@ -772,7 +776,10 @@ function rootIndex(branchData, generatedAt, otherPages) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — builds</title><style>${CSS}</style></head><body><main>
 <h1>AshenSpire — every build, by branch</h1>
 <p class="lead">Each build is the game that commit shipped — the committed file byte for byte, or, for a commit that no longer commits its build, rebuilt here from that commit's source and checked against the source digest its <code>buildordinal.json</code> names — served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>. A newer build is the <strong>web edition</strong>: the page loads its art from this site's shared store, and its <em>Download</em> is the light-art single file at <code>/&lt;branch&gt;/&lt;build&gt;/download/</code>. An older full-art build also has its mobile edition <code>AshenSpire-mobile.html</code> at <code>/&lt;branch&gt;/&lt;build&gt;/mobile/</code>. The stamp here is the one the game shows on its title screen.</p>
-<div class="grid">${cards}</div>
+<div class="grid">${cards(branchData.filter((d) => !d.branch.startsWith('alternative/')))}</div>
+<h2 id="alternative-previews">Alternative branch previews</h2>
+<p>Shared updates with each alternative's own changes preserved. Versions and commits identify the published builds.</p>
+<div class="grid">${cards(branchData.filter((d) => d.branch.startsWith('alternative/')))}</div>
 <div class="note"><strong>Web edition builds</strong> play here with their art fetched as needed; in the game, <em>Download &amp; saves</em> → <em>Make available offline</em> keeps one in this browser for offline play. Their <em>Download</em> saves the light-art single file: one self-contained <code>.html</code> that plays by double-click.</div>
 <div class="note"><strong>Light builds</strong> (dev and test) are one file whose art is already phone-sized, so they have no separate mobile download. <strong>Two downloads, one game</strong> for the others: <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to under a third of its size and recompressed, held under 30 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
@@ -784,7 +791,7 @@ ${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)
 </main></body></html>`;
 }
 
-function branchIndex(branch, builds, head, generatedAt, current = true, headTracksBuild = false) {
+export function branchIndex(branch, builds, head, generatedAt, current = true, headTracksBuild = false) {
   // NO HEAD MEANS THE BRANCH IS GONE, and the page says exactly that rather
   // than linking a commit that does not exist. `head` is null only on that
   // path — buildsOf returns it for a branch with no ref.
@@ -792,13 +799,13 @@ function branchIndex(branch, builds, head, generatedAt, current = true, headTrac
     ? `branch head <a href="${REPO_URL}/commit/${head}">${head.slice(0, 10)}</a>`
     : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
-<p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
+<p><a href="${siteRoot(branch)}">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
 ${uncommittedNote(branch, current, headTracksBuild)}
 ${skippedNote(branch)}
 ${builds.length && !current ? `<p><a class="play" href="${builds[0].ordinal}/">Play newest listed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play newest listed mobile</a>` : ''}</p>` : ''}
-${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
+${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons(siteRoot(branch), builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
 <p class="meta">${builds[0].shape === 'pack' ? 'This is the web edition: Play loads its art from this site. A download is the light-art single file, one self-contained HTML file.' : builds[0].edition === 'light' ? 'A download is one self-contained HTML file. This is a light build: its art is the phone-sized set, so there is no separate mobile file.' : 'A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB.'} On a phone or tablet, download from here rather than from inside the game.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
-${rowsTable(builds, '../', new Set(current && builds[0] ? [builds[0]] : []))}
+${rowsTable(builds, siteRoot(branch), new Set(current && builds[0] ? [builds[0]] : []))}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
 
@@ -1157,6 +1164,8 @@ function assemble(outDir, keep) {
       mkdirSync(latest, { recursive: true });
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
+      const stamp = esc(builds[0].version ? `${builds[0].version}.${builds[0].ordinal}` : builds[0].ordinal);
+      writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="24" role="img" aria-label="Published build ${stamp}"><rect width="220" height="24" rx="4" fill="#243344"/><text x="110" y="16" text-anchor="middle" fill="white" font-family="sans-serif" font-size="13">Build ${stamp}</text></svg>`);
       // A pack-shaped build's base (same depth, so the same text) and its download.
       for (const extra of [ASSET_BASE_FILE, 'download']) {
         const from = join(outDir, branch, String(builds[0].ordinal), extra);
@@ -1172,13 +1181,13 @@ function assemble(outDir, keep) {
     mkdirSync(join(outDir, branch), { recursive: true });
     const idx = branchIndex(branch, builds, head, generatedAt, current, headTracksBuild);
     writeFileSync(join(outDir, branch, 'index.html'), idx);
-    for (const b of builds) if (!idx.includes(`href="../${branch}/${b.ordinal}/"`)) throw new Error(`${branch} index does not link build ${b.ordinal}`);
+    for (const b of builds) if (!idx.includes(`href="${siteRoot(branch)}${branch}/${b.ordinal}/"`)) throw new Error(`${branch} index does not link build ${b.ordinal}`);
     checks++;
     branchData.push({ branch, head, builds, headTracksBuild, headOrdinal });
   }
   // Discovered AFTER the branch directories exist, so this tool's own output is
   // excluded by name-of-thing-we-just-wrote rather than by a hardcoded list.
-  const generatedNames = new Set([...BRANCHES, 'index.html', 'builds.json', 'objects', 'packs', SW_FILE]);
+  const generatedNames = new Set([...BRANCHES.map((branch) => branch.split('/')[0]), 'index.html', 'builds.json', 'objects', 'packs', SW_FILE]);
   const otherPages = discoverPages(outDir, generatedNames);
   const root = rootIndex(branchData, generatedAt, otherPages);
   writeFileSync(join(outDir, 'index.html'), root);
@@ -1370,7 +1379,7 @@ function discoveryFixture() {
     ['hud/', 'Owner HUD'],
     ['index-game.html', 'Play AshenSpire'],
   ];
-  const got = discoverPages(dir, new Set([...BRANCHES, 'index.html', 'builds.json'])).map((p) => [p.href, p.title]);
+  const got = discoverPages(dir, new Set([...BRANCHES.map((branch) => branch.split('/')[0]), 'index.html', 'builds.json'])).map((p) => [p.href, p.title]);
   rmSync(dir, { recursive: true, force: true });
 
   const same = got.length === expected.length && expected.every(([h, t], i) => got[i][0] === h && got[i][1] === t);
@@ -1606,7 +1615,7 @@ function boundary() {
   console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
 }
 
-try {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) try {
   if (has('--selftest')) {
     // THE FIXTURE RUNS FIRST AND ITS ANSWER IS NOT THE GENERATOR'S. Everything
     // below reads the manifest discovery wrote, so it can only ever check the
