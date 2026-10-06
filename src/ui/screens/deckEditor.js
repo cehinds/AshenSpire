@@ -190,6 +190,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       class: `deck-editor-art${art?.kind === 'outline' ? ' outline' : ''}`,
       src: art ? assetUrl(art.path) : '', alt: '', draggable: 'false',
     });
+    if (art?.position) img.style.setProperty('object-position', art.position);
     img.addEventListener('error', () => { img.hidden = true; });
     return img;
   }

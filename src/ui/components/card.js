@@ -229,6 +229,7 @@ export function renderCard(registries, ref, opts = {}) {
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
+      artworkPosition:artwork?.position,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     // A ranked card (SPEC §13.4o) wears its rank in the top right of its art; the
@@ -244,7 +245,7 @@ export function renderCard(registries, ref, opts = {}) {
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
       const fallbacks = defaultCardArtFallbacks(ref).filter(path=>path!==artwork?.path);
-      image.addEventListener('error',()=>{const next=fallbacks.shift();if(next){image.dataset.cardArt='outline';image.src=assetUrl(next);}});
+      image.addEventListener('error',()=>{const next=fallbacks.shift();if(next){image.dataset.cardArt='outline';image.style.objectFit='contain';image.style.objectPosition='center';image.src=assetUrl(next);}});
     }
 
   };

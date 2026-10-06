@@ -254,6 +254,18 @@ jobs:
             !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      - name: Install card artwork encoder for conversion tests
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python -m venv "$RUNNER_TEMP/card-art-python"
+            encoder="$RUNNER_TEMP/card-art-python/Scripts"
+          else
+            python3 -m venv "$RUNNER_TEMP/card-art-python"
+            encoder="$RUNNER_TEMP/card-art-python/bin"
+          fi
+          "$encoder/python" -m pip install Pillow==11.1.0
+          echo "$encoder" >> "$GITHUB_PATH"
       # The art packs, before anything builds, serves or tests this checkout (step 12).
       - uses: ./.github/actions/fetch-art
         with:
