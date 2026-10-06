@@ -126,6 +126,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'equipment',
   'unlocks',
   'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
+  'breakMeterVersion', // configured bundle's scoped card faces, never stamped onto old runs
   'sfx',
   'music',
   'tagDomains', // what a tag can be about — the domain lookup
@@ -349,6 +350,7 @@ export function validateContent(bundle) {
 function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
+  if (b.breakMeterVersion !== undefined && b.breakMeterVersion !== 1) err('breakMeterVersion', 'must be 1 when present');
 
   // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a
   // bundle carrying no events section at all is a BUILD fault, not a content
@@ -677,6 +679,11 @@ function collectContentProblems(bundle, errors = []) {
     masterTableProblems(b.shops || shippedShops, err, b);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
+      for (const key of ['foldScale', 'staggerBreakImpact']) if (!Number.isFinite(exposure[key]) || exposure[key] < 0) err(`balance.exposure.${key}`, 'must be finite and non-negative');
+      const payoff = exposure.defaultPayoff;
+      if (!payoff || !(b.statuses || []).some(status => status.id === payoff.status)) err('balance.exposure.defaultPayoff.status', 'must name a status');
+      if (!Number.isInteger(payoff?.value) || payoff.value < 0) err('balance.exposure.defaultPayoff.value', 'must be a non-negative integer');
+      if (!Number.isInteger(payoff?.duration) || payoff.duration <= 0) err('balance.exposure.defaultPayoff.duration', 'must be a positive integer');
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
       if (!(Number.isInteger(exposure.resonanceSpreadPct) && exposure.resonanceSpreadPct >= 0 && exposure.resonanceSpreadPct <= 100)) err('balance.exposure.resonanceSpreadPct', `must be an integer percent 0–100, got ${JSON.stringify(exposure.resonanceSpreadPct)}`);
     }
@@ -2718,6 +2725,7 @@ function checkTemplate(template, effects, path, err, extraBindings = []) {
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
   checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
+  if (card.singleBreak) checkTemplate(card.singleBreak.textTemplate, cardTokenEffects(card.singleBreak), `${path}.singleBreak.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;
     const upEffects = card.upgrade.effects != null ? card.upgrade.effects : card.effects;

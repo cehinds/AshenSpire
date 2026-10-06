@@ -1,0 +1,11 @@
+{
+  "checks": [
+    "one Poise bar per fighter",
+    "retired meters absent",
+    "selection reveals Poise",
+    "Ward rating in inspector",
+    "magic card played through UI",
+    "390px layout"
+  ],
+  "errors": []
+}

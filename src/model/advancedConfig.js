@@ -998,6 +998,7 @@ export function advancedConfigSnapshot(settings = {}) {
   return Object.freeze({
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     ratingsVersion: 1,
+    breakMeterVersion: 1,
     xpCurveVersion: 1,
     overrides: advancedConfigSettings(settings),
   });
@@ -1161,6 +1162,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (legacyRatings) configured.balance.combatRatings.enabled = false;
+  if (configured.balance.combatRatings.enabled && (!settingsOrSnapshot?.overrides || settingsOrSnapshot.breakMeterVersion === 1)) configured.breakMeterVersion = 1;
   // THE RATING ROWS ARE THE TABLE'S (ruleset 7). A reader with no run behind
   // it — creation, a headless fixture — reads these; a run reads its own
   // snapshot's through model/statRows.js ratingsConfigFor.

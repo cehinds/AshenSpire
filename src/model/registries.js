@@ -230,6 +230,7 @@ export function createRegistries(contentBundle) {
   registries.tree = nodeTree(registries);
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  if (bundle.breakMeterVersion === 1) registries.breakMeterVersion = 1;
   // The shop kinds and their offerings (SPEC §14.2), as configured for this
   // run; a bundle without them reads the shipped table.
   registries.shops = deepFreeze(cloneShops(bundle.shops || shippedShops));
@@ -543,9 +544,10 @@ const resolveCache = new WeakMap();
  *     full upgraded set — this is what lets an upgrade remove Exhaust)
  *   - `name` defaults to base name + '+'
  */
-export function resolveCard(registries, instanceOrRef) {
+export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   const cardId = instanceOrRef.cardId;
-  const base = registries.cards.get(cardId);
+  const authored = registries.cards.get(cardId);
+  const base = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
   const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
@@ -565,7 +567,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}|b${passiveBlock}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 

@@ -733,10 +733,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function infoEl(entity, name, def = null) {
     return combatantInfo(name, opener => {
-      const resources = [
+        const resources = [
         { label: 'HP', value: entity.hp, max: entity.maxHp },
         { label: 'MP', value: entity.mana, max: entity.maxMana },
-        { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
+          { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
+          { label: t('combat.rating.ward'), value: entity.ratings?.ward },
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);

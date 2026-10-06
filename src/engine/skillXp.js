@@ -180,6 +180,7 @@ export function recordSkillXp(combat, event) {
       else if (wc === 'medium') pay(receiptFor(combat, owner), armourSkillId(wc), rows.evadeXp / 2, favoredMult(combat, owner, armourSkillId(wc)));
       return;
     }
+    case 'arcaneImpact':
     case 'arcaneExposureChanged': {
       const owner = ownerKeyOf(combat, event.sourceId, event.sourcePlayerId);
       if (!owner || !(event.amount > 0)) return;

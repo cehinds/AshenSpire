@@ -15,6 +15,7 @@
 #
 # columns: scope, scopeId, nodeId, variable, balancePath
 scope,scopeId,nodeId,variable,balancePath
+default,,staggerBreak,magicalImpactAdd,exposure.staggerBreakImpact
 default,,siphon,restoreMana,exposure.siphonRefund
 default,,siphon,restoreMana_2,exposure.siphonRefundMastered
 default,,siphon,siphonMasteryLevel,exposure.siphonMasteryLevel

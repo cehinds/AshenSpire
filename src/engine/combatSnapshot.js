@@ -46,6 +46,7 @@ export function serializeCombatSnapshot(combat) {
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
+    ...(combat.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
     ...(combat.recovery ? { recovery: combat.recovery } : {}),
@@ -133,6 +134,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     registries,
     rng,
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
+    ...(saved.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
     // saved by an earlier build holds the creation-scale divisor its ratings
     // and hand sizes were read through; nothing divides an attribute any more,

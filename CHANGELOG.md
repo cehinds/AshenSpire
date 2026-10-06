@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-06
+
+- **One bar to break** ([#1653](https://github.com/cehinds/AshenSpire/pull/1653), `0.7.1.1010`). In a new run, physical and magical hits both fill Poise. Ward remains a defence against magic, shown in a fighter's details. A magical Stagger makes an enemy take more magic damage, and your Arcane properties work from that Stagger. Dodge Roll guards the shared bar. Runs saved before this change keep their earlier bars and rules.
+
 ## 2026-10-05
 
 - **Herald: a cup of Mana** ([#1652](https://github.com/cehinds/AshenSpire/pull/1652), `0.7.1.1006`). Ember Communion joins the Herald's common cards. Spend 1 Stamina to restore 1 Mana and heal 2 HP. It Exhausts for the fight until you upgrade it, then returns to the discard pile like an ordinary skill.
