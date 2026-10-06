@@ -223,7 +223,7 @@ export function createRegistries(contentBundle) {
   // take whichever shape its question is in.
   // …and the class tree (plan phase 5b): classId, nodeId, tier — read by
   // model/classTree.js as a plain table, like the tree's own companions.
-  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree']) {
+  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree', 'classMastery', 'classSkillFeats']) {
     registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
   }
   registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });
