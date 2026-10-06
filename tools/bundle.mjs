@@ -539,6 +539,25 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 // packs/ and objects/ are only ever written under build/ or dist/ (ignored) or
 // outside the checkout.
 // ---------------------------------------------------------------------------
+// Alternative artwork is branch-owned and ships with both pack and portable
+// builds. It must never depend on an unbundled docs/ directory at runtime.
+const alternativeId = 'src/ui/alternativeArt.js';
+if (sources.has(alternativeId)) {
+  const map = {};
+  const catalogSource = sources.get('src/ui/alternativeArtCatalog.js');
+  const catalog = JSON.parse(catalogSource.match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
+  for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
+    if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
+    const bytes = readFileSync(resolve(ROOT, 'assets-alternative', file));
+    if (createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
+      fail(`Alternative art changed: ${file}. Run python tools/alternative-art-build.py to refresh its source identity.`);
+    }
+    map[`assets-alternative/${file}`] = 'data:image/webp;base64,' + bytes.toString('base64');
+  }
+  sources.set(alternativeId, sources.get(alternativeId).replace(
+    /\/\* ALTERNATIVE_ART_START \*\/[\s\S]*?\/\* ALTERNATIVE_ART_END \*\//,
+    () => `/* ALTERNATIVE_ART_START */\nconst alternativeArtMap = ${JSON.stringify(map)};\n/* ALTERNATIVE_ART_END */`));
+}
 const ASSET_PACKS_ID = 'src/ui/assetPacks.js';
 const ASSET_PACKS_MARKERS = /\/\* ASSET_PACKS_START \*\/[\s\S]*?\/\* ASSET_PACKS_END \*\//;
 const ASSET_CSS_MARKERS = /\/\* ASSET_CSS_START \*\/[\s\S]*?\/\* ASSET_CSS_END \*\//;
