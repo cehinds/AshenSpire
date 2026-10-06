@@ -10,6 +10,8 @@ import { itemUpgradeTiers } from './itemUpgrades.js';
 import { rebuildClassRespecResources } from './classRespecResources.js';
 import { validateRunShape } from './state.js';
 
+// Stable preview sentinel; UI wording is independently authored in uiStrings.
+export const RESPEC_UNASSIGNED = 'Unassigned';
 const copy = value => structuredClone(value);
 const sourceOf = reg => reg.masterySource || reg;
 const stateKey = run => { const {zones,collection,...owned}=run;return JSON.stringify(owned); };
@@ -205,7 +207,7 @@ export function previewClassRespec(registries,run,draft,{selections = draft.sele
       try{transferItem(source,candidate,grant,choice,run,transfers);}catch(error){problems.push(error.message);}
     }else if(slot.kind==='feat')candidate.skillFeats.push(choice.id);
     record.state='taken';record.selection=selection;record.respecReceiptId=respecId;
-    changes.push({receiptId:slot.receiptId,kind:slot.kind,before:slot.before?.id || 'Unassigned',after:choice.id,abilityRank:selection.abilityRank});
+    changes.push({receiptId:slot.receiptId,kind:slot.kind,before:slot.before?.id || RESPEC_UNASSIGNED,after:choice.id,abilityRank:selection.abilityRank});
   }
   if(problems.length)return {ok:false,problems,changes,displaced,transfers,draft};
   const oldAttributes=draft.slots.filter(slot=>slot.kind==='attribute'&&slot.state==='taken').length;

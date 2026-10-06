@@ -8060,23 +8060,9 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "classRespec.kind.armory",
-    "extends": "",
-    "short": "Equipment",
-    "full": "",
-    "tip": ""
-  },
-  {
-    "id": "classRespec.kind.relic",
-    "extends": "",
-    "short": "Relics",
-    "full": "",
-    "tip": ""
-  },
-  {
     "id": "classRespec.kind.attribute",
     "extends": "",
-    "short": "Attributes",
+    "short": "Attribute rewards",
     "full": "",
     "tip": ""
   },
@@ -8139,14 +8125,14 @@ export const uiStrings = [
   {
     "id": "classRespec.tierChoice",
     "extends": "",
-    "short": "Tier {tier} · {name}",
+    "short": "Class tree tier {tier} · {name}",
     "full": "",
     "tip": ""
   },
   {
     "id": "classRespec.spent",
     "extends": "",
-    "short": "Level {level} · {name} · Spent",
+    "short": "Reward earned at level {level} · {name} · Spent",
     "full": "",
     "tip": ""
   },
@@ -8167,7 +8153,7 @@ export const uiStrings = [
   {
     "id": "classRespec.slotLabel",
     "extends": "",
-    "short": "Level {level} · {name} →",
+    "short": "Reward earned at level {level} · {name} →",
     "full": "",
     "tip": ""
   },
@@ -8195,7 +8181,7 @@ export const uiStrings = [
   {
     "id": "combat.discard.title",
     "extends": "",
-    "short": "Choose {count} {noun} to discard",
+    "short": "Select for discard: {count} {noun}",
     "full": "",
     "tip": ""
   },

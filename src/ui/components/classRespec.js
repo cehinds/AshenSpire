@@ -2,10 +2,10 @@ import {t} from '../strings.js';
 import {button,el,openModal,prose,statusText} from '../kit/index.js';
 import {markUiComponent,UI_COMPONENTS as UI} from './uiComponents.js';
 import {renderCard} from './card.js';
-import {createClassRespecDraft,classRespecView,previewClassRespec} from '../../model/classRespec.js';
+import {createClassRespecDraft,classRespecView,previewClassRespec,RESPEC_UNASSIGNED} from '../../model/classRespec.js';
 import {getFeatDescription} from '../../model/classSkillFeatDescription.js';
 
-const KIND={cards:t('armoury.tab.cards'),feat:t('classRespec.kind.feat'),armory:t('classRespec.kind.armory'),relic:t('classRespec.kind.relic'),attribute:t('classRespec.kind.attribute')};
+const KIND={cards:t('armoury.tab.cards'),feat:t('classRespec.kind.feat'),armory:t('creation.category.equipment'),relic:t('settings.shops.offering.relics'),attribute:t('classRespec.kind.attribute')};
 const choiceKey=choice=>`${choice.id}${Number.isInteger(choice.abilityRank)?'@'+choice.abilityRank:''}`;
 export function classRespecOptionName(registries,kind,id,rank = null){
   let name=id;
@@ -17,7 +17,7 @@ export function classRespecOptionName(registries,kind,id,rank = null){
     const source=registries.masterySource || registries;
     name=id.startsWith('armament/')?source.equipment.armaments.find(row=>row.id===id.slice(9))?.name:source.equipment.armour.find(row=>`armor/${row.classId}/${row.id}`===id)?.name;
   }
-  return `${name || id}${Number.isInteger(rank)?t('classRespec.rankSuffix',{rank}):''}`;
+  return `${name || id}${Number.isInteger(rank)?` ${t('classRespec.rankSuffix',{rank})}`:''}`;
 }
 let active=null;
 export const isClassRespecOpen=()=>Boolean(active);
@@ -47,13 +47,13 @@ export function mountClassRespec({registries,run=null,meta={},view=null,onApply,
     body.append(prose(t('classRespec.cost',{cost:state.draft.cost.label})));
     if(review){
       const list=el('ul',{class:'class-respec-changes'});
-      for(const change of state.preview.changes)if(change.before!==change.after)list.append(el('li',{text:`${KIND[change.kind]}: ${change.before==='Unassigned'?t('classRespec.unassigned'):label(change.kind,change.before)} → ${label(change.kind,change.after,change.abilityRank)}`}));
+      for(const change of state.preview.changes)if(change.before!==change.after)list.append(el('li',{text:`${KIND[change.kind]}: ${change.before===RESPEC_UNASSIGNED?t('classRespec.unassigned'):label(change.kind,change.before)} → ${label(change.kind,change.after,change.abilityRank)}`}));
       list.append(el('li',{text:t('classRespec.treeSummary',{chosen:treeNodes.length,remaining:state.draft.treeBudget-treeNodes.length})}));
       const treeLabel=ids=>ids.map(id=>state.treeOptions.find(node=>node.nodeId===id)?.label || id).join(', ') || t('classRespec.unassigned');
       if(JSON.stringify(state.draft.treeBefore)!==JSON.stringify(treeNodes))list.append(el('li',{text:t('classRespec.treeChanges',{before:treeLabel(state.draft.treeBefore || []),after:treeLabel(treeNodes)})}));
       for(const displaced of state.preview.displaced)list.append(el('li',{text:`${label('armory',displaced.ref)} → ${displaced.destination}`}));
       for(const slot of state.draft.slots){const selected=selections[slot.receiptId],retained=(state.options[slot.receiptId] || []).find(choice=>choice.retainInSideboard&&selected&&choiceKey(choice)===choiceKey(selected));if(retained)list.append(el('li',{text:t('classRespec.retainedCard',{name:label('cards',retained.id,retained.abilityRank)})}));}
-      for(const transfer of state.preview.transfers)list.append(el('li',{text:t('classRespec.transfer',{from:transfer.from,to:transfer.to,tier:transfer.tier?t('classRespec.tierSuffix',{tier:transfer.tier}):''})}));
+      for(const transfer of state.preview.transfers)list.append(el('li',{text:t('classRespec.transfer',{from:transfer.from,to:transfer.to,tier:transfer.tier?` ${t('classRespec.tierSuffix',{tier:transfer.tier})}`:''})}));
       body.append(el('h3',{text:t('classRespec.beforeAfter')}),list);
       const back=button({label:t('classRespec.edit')});back.addEventListener('click',()=>{review=false;render();});body.append(back);
     }else{
@@ -71,7 +71,7 @@ export function mountClassRespec({registries,run=null,meta={},view=null,onApply,
           const id=`respec-${slot.receiptId.replace(/[^a-z0-9]/gi,'-')}`,select=el('select',{id,'aria-label':t('classRespec.slotAria',{kind:title,level:slot.level})});
           const options=state.options[slot.receiptId] || [];
           select.append(el('option',{value:'',text:t('classRespec.keep')}));
-          for(const choice of options)select.append(el('option',{value:choiceKey(choice),text:`${label(kind,choice.id,choice.abilityRank)}${choice.retainInSideboard?t('classRespec.retainedSuffix'):''}`}));
+          for(const choice of options)select.append(el('option',{value:choiceKey(choice),text:`${label(kind,choice.id,choice.abilityRank)}${choice.retainInSideboard?` ${t('classRespec.retainedSuffix')}`:''}`}));
           select.value=selections[slot.receiptId]?choiceKey(selections[slot.receiptId]):'';
           select.addEventListener('change',()=>{const selected=options.find(choice=>choiceKey(choice)===select.value);if(selected)selections[slot.receiptId]={...selected,transfer:'retain'};else delete selections[slot.receiptId];refresh();});
           fieldset.append(el('label',{for:id},[el('span',{text:t('classRespec.slotLabel',{level:slot.level,name:current})}),select]));
