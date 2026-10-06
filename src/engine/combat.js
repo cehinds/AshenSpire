@@ -23,7 +23,7 @@ import { handRow, scaledCards } from '../model/handRules.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import * as F from './combatRules.js';
-import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
+import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
@@ -1041,6 +1041,16 @@ export function cardPlayCosts(combat, cardInstanceId) {
   const inst = combat.piles.hand.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const def = resolveCard(combat.registries, inst);
+  // cardPreparing has no ledger side effect in recordAbilityEvent/skill XP.
+  // With no listener or queued work it cannot change any input to playCosts.
+  // Custom buses, paused/resolving actions and all hook sources keep the exact
+  // detached preview; actual card execution always retains its transaction.
+  if (!combat.result && combat.player?.alive && combat.player.hp > 0
+    && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
+    && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
+    && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
+    && !combat._foundationTransaction && !combat._foundationAncestry?.length
+    && !hasEventTriggers(combat, 'cardPreparing')) return playCosts(combat, def);
   return playCosts(preparingPreview(combat, inst, def), def);
 }
 

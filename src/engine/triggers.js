@@ -83,6 +83,37 @@ export function triggerOwnerKey(ctx, entity) {
   return ownerKeyFor(ctx, entity);
 }
 
+/** Conservative listener check: false means this bus cannot enqueue a reaction.
+ * Check inactive seats too, so an unknown co-op routing situation takes the
+ * ordinary event path. Malformed/custom sources also retain that path.
+ */
+export function hasEventTriggers(ctx, type) {
+  const listens = rows => rows == null ? false : !Array.isArray(rows) || rows.some(row => !row || typeof row !== 'object' || row.on === type);
+  try {
+    if (ctx.players && !(ctx.players instanceof Map)) return true;
+    const players = ctx.players ? [...ctx.players.values()].map(seat => seat.entity) : [ctx.player];
+    for (const player of players) {
+      if (!player) return true;
+      if (player.stanceId && listens(ctx.registries.stances.get(player.stanceId).hooks)) return true;
+    }
+    for (const sources of Object.values(ctx.propertyMounts || {})) {
+      if (!sources || typeof sources !== 'object') return true;
+      for (const mount of Object.values(sources)) {
+        if (!Array.isArray(mount?.rules)) return true;
+        for (const rule of mount.rules) if (!rule || listens(rule.triggers)) return true;
+      }
+    }
+    for (const entity of [...players, ...(ctx.enemies || [])]) {
+      if (!entity || !entity.statuses || typeof entity.statuses !== 'object') return true;
+      for (const id of Object.keys(entity.statuses)) if (listens(ctx.registries.statuses.get(id).hooks)) return true;
+    }
+    for (const enemy of ctx.enemies || []) if (listens(ctx.registries.enemies.get(enemy.enemyId).phases)) return true;
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 function scanTriggers(ctx, event) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
