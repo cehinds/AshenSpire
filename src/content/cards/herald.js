@@ -25,6 +25,17 @@ export const heraldCards = [
 
   // ---- Commons ----------------------------------------------------------------
   {
+    id: 'emberCommunion', name: 'Ember Communion', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "The Chapel's last cup.\n\nWhen the censer cooled, the celebrant passed its remaining warmth among the wounded. The rubric called the sharing a waste. Those who received it called it enough.\n\nNo name was entered in the Chapel's ledger that night.",
+    keywords: ['exhaust'], icon: '✚',
+    effects: [
+      { op: 'restoreMana', target: 'self', amount: 1 },
+      { op: 'heal', target: 'self', amount: 2 },
+    ],
+    textTemplate: 'Restore {restoreMana} Mana. Heal {heal} HP. Exhaust.',
+    upgrade: { keywords: [], textTemplate: 'Restore {restoreMana} Mana. Heal {heal} HP.' },
+  },
+  {
     id: 'bloodPact', name: 'Blood Pact', class: 'herald', rarity: 'common', cost: 0, type: 'skill',
     flavor: "Second office of the birth-rite.\n\nThe flame-mark was pressed into the newborn's wrist, and the parents answered in the child's stead. The Chapel called it a promise and a privilege.\n\nIn the birth-roll of the crown-born wards, beside the Herald's name, one word is struck through.",
     keywords: [], icon: '🩸',

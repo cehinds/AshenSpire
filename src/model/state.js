@@ -1,4 +1,5 @@
 import { retiredAttackSlots } from './cardRemoval.js';
+import { advancedConfigSnapshot } from './advancedConfig.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -169,6 +170,7 @@ export function createRunState({
   const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
+    advancedConfigSnapshot: advancedConfigSnapshot(profileMeta.settings || {}),
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,

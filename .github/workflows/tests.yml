@@ -93,6 +93,11 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      - name: Install card artwork encoder for conversion tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/card-art-python"
+          "$RUNNER_TEMP/card-art-python/bin/python" -m pip install Pillow==11.1.0
+          echo "$RUNNER_TEMP/card-art-python/bin" >> "$GITHUB_PATH"
       # The art packs, before anything builds, serves or tests this checkout (step 12).
       - uses: ./.github/actions/fetch-art
         env:

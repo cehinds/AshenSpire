@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { playingCardArtwork, playingCardArt } from '../src/ui/cardArtwork.js';
+import { playingCardArtwork as resolveArtwork, playingCardArt as resolveArt } from '../src/ui/cardArtwork.js';
+// Exercise the legacy fallback independently of the growing full-art catalog.
+const playingCardArtwork=(ref,options={})=>resolveArtwork(ref,{...options,extended:null});
+const playingCardArt=(ref,options={})=>resolveArt(ref,{...options,extended:null});
 import { DEFAULT_CARD_ART, defaultCardArtFallbacks } from '../src/ui/defaultCardArtwork.js';
 import { contentBundle } from '../src/content/index.js';
 import { existsSync } from 'node:fs';

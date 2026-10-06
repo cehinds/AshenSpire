@@ -152,6 +152,8 @@ export const EVENTS = Object.freeze([
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',
+  'arcaneStagger',
+  'arcaneImpact',
   // Plan phase 10a: a quest completed, once per quest per run. Emitted only by
   // the quest door (engine/quests.js completeQuest), for an event chain's
   // completing choice and an atlas quest's claimed reward alike.
@@ -310,6 +312,7 @@ export const PASSIVE_TYPES = Object.freeze({
   // hit's SOURCE by engine/actions.js applyArcaneExposure, relics and mounted
   // properties alike. The wand's `overcharge` property confers it (plan 1b).
   exposureBuildupMult: 'num',
+  magicalImpactAdd: 'num',
   // Skill XP × for the tracks a carrier's own tags name (plan phase 5a): the
   // class card's `favored` property confers it, and engine/skillXp.js reads
   // it scoped to the mounts whose tags include the track — never unscoped.
@@ -753,6 +756,7 @@ export const SCHEMAS = Object.freeze({
     exposureBuildupPerHit: opt(int),
     keywords: arr(ref('keywords')),
     effects,
+    singleBreak: opt(obj({ effects, textTemplate: str })),
     // Effects fired at the player's turn end for each copy still in hand
     // (before the hand is discarded) — e.g. Guilt's HP loss (SPEC §5.2).
     onTurnEndInHand: opt(effects),
@@ -819,6 +823,7 @@ export const SCHEMAS = Object.freeze({
     textTemplate: str,
     passives: opt(obj(passiveFields)),
     triggers: opt(triggersNode),
+    singleBreak: opt(obj({ passives: opt(obj(passiveFields)), triggers: opt(triggersNode), textTemplate: opt(str) })),
   }),
 
   status: obj({

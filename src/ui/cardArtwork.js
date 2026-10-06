@@ -1,3 +1,4 @@
+import { EXTENDED_CARD_ART } from './extendedCardArtwork.js';
 import { defaultCardArtwork, defaultCardArtFallbacks } from './defaultCardArtwork.js';
 export { defaultCardArtFallbacks };
 
@@ -19,15 +20,21 @@ const CARD_ART = Object.freeze({
   ambush: 'ambush',
 });
 
-export function playingCardArtwork(ref, { large = false } = {}) {
-  const name = PROFILE_ART[ref?.profileId] || CARD_ART[ref?.cardId];
+export function playingCardArtwork(ref, { large = false, extended = EXTENDED_CARD_ART } = {}) {
+  const profileScene = extended?.profiles?.[ref?.profileId];
+  if (profileScene) return `${profileScene}-${large ? '1024' : '512'}.webp`;
+  const profile = PROFILE_ART[ref?.profileId];
+  if (profile) return `assets/cards/${profile}-${large ? '1024' : '512'}.webp`;
+  const scene = extended?.cards?.[ref?.cardId];
+  if (scene) return `${scene}-${large ? '1024' : '512'}.webp`;
+  const name = CARD_ART[ref?.cardId];
   return name ? `assets/cards/${name}-${large ? '1024' : '512'}.webp` : null;
 }
 
 /** Reviewed illustrations always win; defaults only fill unillustrated cards. */
-export function playingCardArt(ref, { large = false, catalog } = {}) {
-  const official = playingCardArtwork(ref, { large });
-  if (official) return { path: official, kind: 'official' };
+export function playingCardArt(ref, { large = false, catalog, extended = EXTENDED_CARD_ART } = {}) {
+  const official = playingCardArtwork(ref, { large, extended });
+  if (official) return { path: official, kind: 'official', ...(official.startsWith('assets/cards/extended/') ? { position: '50% 65%', extended: true } : {}) };
   const fallback = defaultCardArtwork(ref, catalog);
   return fallback ? { path: fallback, kind: 'outline' } : null;
 }

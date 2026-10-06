@@ -53,6 +53,8 @@ import {
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
 import { classTree } from './generated/classTree.js';
+import { classMastery } from './generated/classMastery.js';
+import { classSkillFeats } from './classSkillFeats.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
@@ -174,6 +176,8 @@ export const contentBundle = {
   attributeRules: { ...attributeRules, retired: retiredAttributeNames },
   derivedStatRules,
   characterCreation,
+  classMastery,
+  classSkillFeats,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):

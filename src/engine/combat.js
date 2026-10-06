@@ -114,7 +114,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null,
+  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null, breakMeterVersion = null,
   // Settings → Advanced → Recovery (model/recoveryRules.js recoveryRulesFor):
   // null — every recovery setting at its default — keeps the idle-Stamina rule
   // below and writes no recovery state into the fight or its save.
@@ -156,6 +156,7 @@ export function createCombat({
       : 0);
   const combat = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
+    ...(ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -288,7 +289,7 @@ export function createCombat({
     combat.enemies.push(
       createEnemyCombatEntity({
         instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
-        arcaneExposure: def.arcaneExposure,
+        arcaneExposure: combat.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
         damageResistanceBySchool: def.damageResistanceBySchool,
         damageMult: enemyDamageMult,
       })
@@ -301,11 +302,12 @@ export function createCombat({
     for (const enemy of combat.enemies) {
       const values = combat.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
       enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
-      for (const id of ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+      for (const id of combat.breakMeterVersion === 1 ? ['poise'] : ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
     }
   }
   // Deck → draw pile: shuffle (stream 'shuffle'), Innate cards to top (§4.1(1)).
   const deck = player.deck.map((c) => ({
+    ...(combat.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
@@ -1041,7 +1043,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
   const idx = combat.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = combat.piles.hand[idx];
-  const def = resolveCard(combat.registries, inst);
+  const def = resolveCard(combat.registries, inst, combat.breakMeterVersion || 0);
   const kws = def.keywords || [];
   const chosen = assertCardChoice(cardChoice(combat.registries, def, p.classId), choice);
   F.assertFoundationPlayable(combat, def, chosen);
@@ -1227,7 +1229,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     combat.piles.discard.find((c) => c.instanceId === cardInstanceId) ||
     combat.piles.exhaust.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Unknown card instance '${cardInstanceId}'`);
-  const def = resolveCard(combat.registries, inst);
+  const def = resolveCard(combat.registries, inst, combat.breakMeterVersion || 0);
   const p = combat.player;
   const isX = def.cost === 'X';
   const shownCost = isX ? p.energy : effectiveCost(combat, def);

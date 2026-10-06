@@ -3,6 +3,56 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1656",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Every card gets its own painting",
+    "detail": "All 220 card identities and 17 equipment profiles now have portrait artwork in the existing card frame. Upgrades share their base painting, with names, costs and rules kept readable over the same card layout. The taller artwork leaves room to choose a crop in the card assembler, which also offers eight alternate paintings.",
+    "build": "0.7.1.1022",
+    "pullRequest": 1656,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1656"
+  },
+  {
+    "id": "pr-1655",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: class progress kept safely",
+    "detail": "Class mastery now has durable profile storage. Separate runs add their earned XP through receipts that make retries safe, and settings saves retain newer class progress. Returning profiles keep every authored unlock at level zero; live runs adopt mastery in the following update.",
+    "build": "0.7.1.1020",
+    "pullRequest": 1655,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1655"
+  },
+  {
+    "id": "pr-1654",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: class levels that last",
+    "detail": "The class mastery plan now has its card bundles, equipment, relics and twenty class feats authored, with checks that keep every starting kit intact and every school deep enough to offer a choice. This supplies the data for lasting class levels; runs still use their earlier progression until the profile and run screens adopt it.",
+    "build": "0.7.1.1018",
+    "pullRequest": 1654,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1654"
+  },
+  {
+    "id": "pr-1653",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "One bar to break",
+    "detail": "In a new run, physical and magical hits both fill Poise. Ward remains a defence against magic, shown in a fighter's details. A magical Stagger makes an enemy take more magic damage, and your Arcane properties work from that Stagger. Dodge Roll guards the shared bar. Runs saved before this change keep their earlier bars and rules.",
+    "build": "0.7.1.1010",
+    "pullRequest": 1653,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1653"
+  },
+  {
+    "id": "pr-1652",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Herald: a cup of Mana",
+    "detail": "Ember Communion joins the Herald's common cards. Spend 1 Stamina to restore 1 Mana and heal 2 HP. It Exhausts for the fight until you upgrade it, then returns to the discard pile like an ordinary skill.",
+    "build": "0.7.1.1006",
+    "pullRequest": 1652,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1652"
+  },
+  {
     "id": "pr-1648",
     "date": "2026-10-05",
     "group": "2026-10-05",
