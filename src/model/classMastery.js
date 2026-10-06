@@ -1,6 +1,8 @@
 // SPEC §13.4q: data-driven mastery unlock identities and pool projections.
 // No run is opted in here. The profile/run integration owns that boundary.
 import { xpStepCost } from './xpCurve.js';
+import { createRegistries } from './registries.js';
+import { createLoadout, startingDeckRefs } from './loadout.js';
 
 export const masteryRowId = row => `${row.classId}:${row.level}:${row.kind}:${row.ref}`;
 export function masteryRows(registries, classId, level = null) {
@@ -42,6 +44,7 @@ export function classMasteryProblems(bundle) {
   for(const key of ['perWin','perElite','perBoss','perQuest']) if(!Number.isInteger(rules.pay?.[key]) || rules.pay[key]<0) at(`pay.${key}`,'must be a non-negative integer');
   if(!Number.isFinite(rules.corePoolShare) || rules.corePoolShare<=0 || rules.corePoolShare>1) at('corePoolShare','must be greater than zero and at most one');
   if(!Array.isArray(bundle.classMastery)) { at('table','must be an array compiled from classMastery.csv'); return problems; }
+  if(!Array.isArray(bundle.classSkillFeats)) { at('feats','must be an array of class feat rows'); return problems; }
   const classes=new Map((bundle.classes || []).map(c=>[c.id,c]));
   const cards=new Map((bundle.cards || []).map(c=>[c.id,c]));
   const relics=new Set((bundle.relics || []).map(r=>r.id));
@@ -74,6 +77,17 @@ export function classMasteryProblems(bundle) {
   }
   const tagsFor=(family,id)=>(bundle.tagging || []).filter(t=>t.family===family && t.objectId===id).map(t=>t.tagId);
   const schools=new Set((bundle.nodes || []).filter(n=>n.parentId==='card').map(n=>n.id));
+  // Use the real deck planner, including package variants, instead of a
+  // second list of what a kit is expected to grant. A card used by ANY kit
+  // must remain core even when it belongs to another class's reward pool.
+  const globallyGatedCards=new Set(rows.filter(r=>r?.kind==='cards').map(r=>r.ref));
+  try {
+    const registries=createRegistries(bundle);
+    for(const kit of bundle.equipment?.startingKits || []){
+      const loadout=createLoadout(registries,kit.classId,kit);
+      for(const card of startingDeckRefs(registries,loadout,kit.classId))if(globallyGatedCards.has(card.cardId))at(`${kit.classId}.${kit.id}.${card.cardId}`,'starting-deck card must be core globally');
+    }
+  }catch(error){at('startingDecks',`cannot check starting decks: ${error.message}`);}
   for(const cls of classes.values()){
     const own=rows.filter(r=>r?.classId===cls.id),gated=new Set(own.filter(r=>r.kind==='cards').map(r=>r.ref));
     const core=cls.cardPool.filter(id=>!gated.has(id));
@@ -86,7 +100,7 @@ export function classMasteryProblems(bundle) {
     for(const id of starting)if(gated.has(id))at(`${cls.id}.${id}`,'starting-deck card must be core');
     for(const kit of kits.filter(k=>k.baseline))for(const id of [kit.rightHand,kit.leftHand].filter(Boolean)) if(rows.some(r=>r?.ref==='armament/'+id && ['armament','weapon'].includes(r.kind)))at(`${cls.id}.${id}`,'baseline starting equipment cannot be gated');
     for(const outfit of bundle.equipment?.armour || [])if(outfit.classId===cls.id && !outfit.unlock && !outfit.sharedSet && rows.some(r=>r?.ref===`armor/${cls.id}/${outfit.id}`))at(`${cls.id}.${outfit.id}`,'starting armour cannot be gated');
-    for(const id of [cls.startingRelic,cls.kitRelic])if(own.some(r=>r.kind==='relic' && r.ref===id))at(`${cls.id}.${id}`,'starting relic cannot be gated');
+    for(const id of [cls.startingRelic,cls.kitRelic])if(rows.some(r=>r?.kind==='relic' && r.ref===id))at(`${cls.id}.${id}`,'starting relic cannot be gated');
     for(let level=1;level<=curve.maxLevel;level++){
       const levelRows=own.filter(r=>r.level===level);
       if(!levelRows.length)at(`${cls.id}.${level}`,'level must unlock something');
@@ -107,13 +121,19 @@ export function classMasteryProblems(bundle) {
   for(const feat of bundle.classSkillFeats || []){
     if(!feat?.id || featIds.has(feat.id))at('feats','class feat must have a unique id');
     featIds.add(feat?.id);
-    if(!classes.has(feat?.skillId?.slice(6)) || !feat.skillId.startsWith('class:'))at(feat?.id,'class feat must name a class track');
+    if(typeof feat?.skillId!=='string' || !feat.skillId.startsWith('class:') || !classes.has(feat.skillId.slice(6)))at(feat?.id,'class feat must name a class track');
     if(!Number.isInteger(feat?.minLevel) || feat.minLevel<0 || !feat?.name || !feat?.description)at(feat?.id,'class feat needs a name, description and non-negative minLevel');
     if(!feat?.crit && !feat?.passive)at(feat?.id,'class feat must author an effect');
     const effect=feat?.crit || feat?.passive;
     if(!Array.isArray(effect?.tags) || !effect.tags.length || effect.tags.some(t=>!(bundle.nodes || []).some(n=>n.id===t)))at(feat?.id,'feat effect tags must name nodes');
     if(feat?.passive && (!Number.isInteger(feat.passive.block) || feat.passive.block<=0))at(feat.id,'passive Block must be a positive integer');
-    if(feat?.crit && (!Number.isFinite(feat.crit.base) || feat.crit.base<0 || !Number.isFinite(feat.crit.cap) || feat.crit.cap>1 || feat.crit.cap<feat.crit.base || !(feat.crit.multiplier>1) || !(feat.crit.divisor>0)))at(feat.id,'critical-hit chance and multiplier are invalid');
+    if(feat?.crit){
+      const rule=feat.crit;
+      if(!Number.isFinite(rule.base) || rule.base<0 || !Number.isFinite(rule.cap) || rule.cap>1 || rule.cap<rule.base || !Number.isFinite(rule.multiplier) || rule.multiplier<=1 || !Number.isFinite(rule.divisor) || rule.divisor<=0)at(feat.id,'critical-hit chance, multiplier and divisor must be valid finite numbers');
+      const attributeIds=new Set((bundle.attributes || []).map(a=>a.id));
+      if(!rule.weights || typeof rule.weights!=='object' || Array.isArray(rule.weights))at(feat.id,'critical-hit weights must be an attribute map');
+      else for(const [attribute,weight]of Object.entries(rule.weights))if(!attributeIds.has(attribute) || !Number.isFinite(weight))at(feat.id,`critical-hit weight '${attribute}' must name an attribute and be finite`);
+    }
   }
   return problems;
 }

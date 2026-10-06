@@ -6,7 +6,7 @@ export const classMastery = [
     "classId": "reaver",
     "level": 1,
     "kind": "cards",
-    "ref": "quickstep"
+    "ref": "enterGorefire"
   },
   {
     "classId": "reaver",
@@ -18,7 +18,7 @@ export const classMastery = [
     "classId": "reaver",
     "level": 3,
     "kind": "cards",
-    "ref": "enterGorefire"
+    "ref": "enterBulwark"
   },
   {
     "classId": "reaver",

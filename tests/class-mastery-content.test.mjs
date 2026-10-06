@@ -7,6 +7,7 @@ import { validateContent } from '../src/model/validate.js';
 import { classMasteryProblems, masteryRowId, masteryCorePool, masteryCardPool, masteryRefAvailable, masteryXpAtLevel } from '../src/model/classMastery.js';
 
 const reg=createRegistries(contentBundle);
+const allGatedCards=new Set(reg.classMastery.filter(r=>r.kind==='cards').map(r=>r.ref));
 const fresh=()=>structuredClone({...contentBundle,scripts:{}});
 const refusal=(edit,pattern)=>{const bundle=fresh();edit(bundle);assert.match(classMasteryProblems(bundle).join('\n'),pattern);};
 
@@ -24,7 +25,7 @@ test('mastery authors every level, a deep core, twenty feats and the front-loade
   assert.equal(reg.classSkillFeats.filter(f=>f.skillId===`class:${cls.id}`).length,5);
   for(const kitId of cls.eligibleStartingKitIds){
    const run=createRunState({registries:reg,classId:cls.id,startingKitId:kitId,seed:7,profileMeta:{discoveredArmaments:reg.equipment.armaments.map(a=>a.id)}});
-   assert.ok(run.deck.every(c=>!cls.cardPool.includes(c.cardId) || core.includes(c.cardId)),`${cls.id} ${kitId}: every starting card is core`);
+   assert.ok(run.deck.every(c=>!allGatedCards.has(c.cardId)),`${cls.id} ${kitId}: every starting card is core globally`);
   }
  }
  assert.ok(masteryCorePool(reg,'herald').includes('emberCommunion'));
@@ -47,6 +48,8 @@ test('cycle, foreign cards, duplicate ownership and starting cards are refused b
  refusal(b=>b.classMastery.find(r=>r.classId==='rogue' && r.level===8).ref='armament/warhammer',/rogue.*already listed by 'reaver'/);
  refusal(b=>b.classMastery[0].ref=b.classes.find(c=>c.id==='reaver').startingSignatureCard,/starting-deck card must be core/);
  refusal(b=>b.classMastery.find(r=>r.classId==='reaver' && r.level===8).ref='armament/straightSword',/baseline starting equipment cannot be gated/);
+ refusal(b=>b.classMastery.find(r=>r.classId==='reaver' && r.level===4).ref=b.classes.find(c=>c.id==='herald').kitRelic,/herald.*starting relic cannot be gated/);
+ refusal(b=>b.classMastery[0].ref='quickstep',/rogue.rogueBow.quickstep.*core globally/);
 });
 
 test('too-small cores and school rarity shortages fail before a run can roll them',()=>{
@@ -67,4 +70,9 @@ test('invalid balance and class-feat effects fail by their authored identity',()
  refusal(b=>b.classSkillFeats[0].passive.block=0,/reaverIronFooting.*positive integer/);
  refusal(b=>b.classMastery.find(r=>r.kind==='feat').ref='notAFeat',/notAFeat.*unknown class feat/);
  refusal(b=>b.classMastery.find(r=>r.kind==='armament').ref='armor/reaver/notAnOutfit',/notAnOutfit.*not armour/);
+ for(const multiplier of [Infinity,'1.5'])refusal(b=>b.classSkillFeats.find(f=>f.crit).crit.multiplier=multiplier,/finite numbers/);
+ refusal(b=>b.classSkillFeats.find(f=>f.crit).crit.weights={banana:100},/weight 'banana'.*name an attribute/);
+ refusal(b=>b.classSkillFeats.find(f=>f.crit).crit.weights={strength:Infinity},/weight 'strength'.*finite/);
+ refusal(b=>b.classSkillFeats[0].skillId=4,/reaverIronFooting.*name a class track/);
+ refusal(b=>b.classSkillFeats={},/feats.*must be an array/);
 });

@@ -1,8 +1,8 @@
 # Class mastery unlocks (SPEC 13.4q). Armour refs are wearer-scoped; held items use armament/<id>.
 classId,level,kind,ref
-reaver,1,cards,quickstep
+reaver,1,cards,enterGorefire
 reaver,2,armament,armor/reaver/vigil
-reaver,3,cards,enterGorefire
+reaver,3,cards,enterBulwark
 reaver,3,cards,goreslash
 reaver,4,relic,whetstoneFragment
 reaver,5,cards,bracingStance
