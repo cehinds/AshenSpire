@@ -9,7 +9,7 @@ const reg = createRegistries(contentBundle);
 const rewardIds = new Set(contentBundle.classes.flatMap(c => c.cardPool));
 
 test('reward cards have one turn cost; Mana rarity shares remain unchanged', () => {
-  for (const [rarity, count, manaShare, exceptions] of [['common',61,0.15,5], ['uncommon',63,0.3,0], ['rare',49,0.5,0]]) {
+  for (const [rarity, count, manaShare, exceptions] of [['common',62,0.15,5], ['uncommon',63,0.3,0], ['rare',49,0.5,0]]) {
     const cards = reg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
     assert.equal(cards.length, count);
     assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * manaShare) - exceptions);

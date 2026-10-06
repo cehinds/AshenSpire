@@ -13,13 +13,15 @@ The dual-resource share is included in the Stamina share. Counts round to the
 nearest whole card in each rarity. Each selected resource costs one point.
 Upgrading a card preserves its resource category.
 
-The current combat-reward census is 61 Common, 63 Uncommon and 49 Rare cards.
-The resulting Stamina-bearing/dual counts are 18/9, 32/19 and 34/25.
+The current combat-reward census is 62 Common, 63 Uncommon and 49 Rare cards.
+The resulting Stamina-bearing/dual counts are 19/9, 32/19 and 34/25.
 
 **A2 exceptions (caster starvation).** The four Starseer common attacks —
 Comet Fragment, Starblade Phalanx, Starlance and Frost Nova — cost Actions
 only, and the Herald's Blight Touch costs Stamina without Mana, so the Common
-row ships at 14 Stamina-bearing / 4 dual rather than 18/9. Mana carries between
+row ships at 15 Stamina-bearing / 4 dual rather than 19/9. Ember Communion is
+a Common Herald skill costing 1 Stamina, restoring 1 Mana and healing 2 HP;
+it Exhausts until upgraded. Mana carries between
 fights while every fight opens with full Stamina, so a caster whose attacks
 needed Mana ran dry. Measured with every #1284 row live,
 `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs
