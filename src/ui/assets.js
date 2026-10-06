@@ -1,3 +1,4 @@
+import { alternativeSprite } from './alternativeArt.js';
 import { armamentIconAsset } from '../model/equipmentArt.js';
 import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
 import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
@@ -151,6 +152,8 @@ export function spriteMirror(artFaces, side = 'enemy') {
  * placeholder, so content can ship art-less.
  */
 export function enemySprite(enemyDef, entity = {}) {
+  const alternative = alternativeSprite(enemyDef.id, 'enemy');
+  if (alternative) return alternative;
   const unity = PAINTED_ENEMIES.includes(enemyDef.id);
   const expansion = EXPANSION_ENEMIES.includes(enemyDef.id);
   const posed = ENEMY_POSES.includes(enemyDef.id);
@@ -767,6 +770,10 @@ function animatedEquippedFigure(classId, equip) {
 export function playerSprite(customization = {}, classId, armourId = 'default', presentation = {}) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
+  if (spritesEnabled && style !== 'glyph' && presentation.view !== 'portrait') {
+    const alternative = alternativeSprite(`${armourArtClass(classId, armourId)}-${armourArtKey(classId, armourId)}`, 'player') || alternativeSprite(`${classId}-default`, 'player');
+    if (alternative) return alternative;
+  }
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
     return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId, armourId, presentation);
   }

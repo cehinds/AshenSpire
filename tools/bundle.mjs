@@ -539,6 +539,19 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 // packs/ and objects/ are only ever written under build/ or dist/ (ignored) or
 // outside the checkout.
 // ---------------------------------------------------------------------------
+// Alternative artwork is branch-owned and ships with both pack and portable
+// builds. It must never depend on an unbundled docs/ directory at runtime.
+const alternativeId = 'src/ui/alternativeArt.js';
+if (sources.has(alternativeId)) {
+  const map = {};
+  for (const file of readdirSortedSync(resolve(ROOT, 'assets-alternative'))) {
+    if (!file.endsWith('.webp')) continue;
+    map[`assets-alternative/${file}`] = 'data:image/webp;base64,' + readFileSync(resolve(ROOT, 'assets-alternative', file)).toString('base64');
+  }
+  sources.set(alternativeId, sources.get(alternativeId).replace(
+    /\/\* ALTERNATIVE_ART_START \*\/[\s\S]*?\/\* ALTERNATIVE_ART_END \*\//,
+    () => `/* ALTERNATIVE_ART_START */\nconst alternativeArtMap = ${JSON.stringify(map)};\n/* ALTERNATIVE_ART_END */`));
+}
 const ASSET_PACKS_ID = 'src/ui/assetPacks.js';
 const ASSET_PACKS_MARKERS = /\/\* ASSET_PACKS_START \*\/[\s\S]*?\/\* ASSET_PACKS_END \*\//;
 const ASSET_CSS_MARKERS = /\/\* ASSET_CSS_START \*\/[\s\S]*?\/\* ASSET_CSS_END \*\//;
