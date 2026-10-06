@@ -17,13 +17,13 @@ name: quick start
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev, alternative/dev, 'alternative/**/dev']
   push:
-    branches: [dev, test, release]
+    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
-  group: quick-start-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: quick-start-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -33,7 +33,7 @@ permissions:
 # art packs, so the job fetches them right after setup-node.
 env:
   ASHEN_ART_SOURCE: cache
-  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'test' || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
 
 jobs:
   count:

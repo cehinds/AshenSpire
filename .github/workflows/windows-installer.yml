@@ -13,16 +13,16 @@ name: windows installer
 
 on:
   push:
-    branches: [test, release, main]
+    branches: [test, release, main, alternative/test, 'alternative/**/test']
   pull_request:
-    branches: [dev]
+    branches: [dev, alternative/dev, 'alternative/**/dev']
     paths:
       - 'desktop/**'
       - '.github/workflows/windows-installer.yml'
   workflow_dispatch:
 
 concurrency:
-  group: windows-installer-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: windows-installer-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:

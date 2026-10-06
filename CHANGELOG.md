@@ -34,6 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Alternative combat keeps its own battlefield** ([#1668](https://github.com/cehinds/AshenSpire/pull/1668), `0.7.1.1034`). New dev changes flow into alternative/dev after a protected merge verifies that its battlefield, HUD, cards and footer stay unchanged. Background and sprite updates remain eligible; unrelated conflicts stop for review. The pipeline builds and publishes the updated alternative preview.
+
+- **Alternative previews stay current without losing their changes** ([#1667](https://github.com/cehinds/AshenSpire/pull/1667), `0.7.1.1033`). Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.
+
+- **Plans: modular class rewards and retraining** ([#1666](https://github.com/cehinds/AshenSpire/pull/1666), `0.7.1.1032`). The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.
+
 - **Smaller text fits more card descriptions** ([#1664](https://github.com/cehinds/AshenSpire/pull/1664), `0.7.1.1031`). Card titles, rules, tags and cost numbers are two points smaller, including the automatic fitting range. More descriptions fit fully inside the existing card frame on desktop and phone.
 
 - **Drive class mastery in full browser gates** ([#1662](https://github.com/cehinds/AshenSpire/pull/1662), `0.7.1.1029`). The cold-boot walkthrough and map-camera persistence drive choose required class mastery nodes before entering the map, including when the walkthrough starts a second run. Both use real input and preserve the combat, storage and camera assertions; mastery door priority is covered by probe selftests.
