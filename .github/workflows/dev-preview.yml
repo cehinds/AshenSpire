@@ -96,14 +96,12 @@ jobs:
       # package collects and uploads on `steps.build.outcome`).
       - name: Make the channel safe for a file and artifact name
         run: |
-          safe="${CHANNEL//\//-}"
-          file_channel="$safe"
-          if [[ "$CHANNEL" == alternative/* ]]; then
-            file_channel="${CHANNEL##*/}-${CHANNEL%/*}"
-            file_channel="${file_channel//\//-}"
-          fi
-          echo "CHANNEL=$safe" >> "$GITHUB_ENV"
-          echo "FILE_CHANNEL=$file_channel" >> "$GITHUB_ENV"
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from 'node:fs';
+          import { downloadChannel } from './tools/alternative-branches.mjs';
+          const branch = process.env.CHANNEL;
+          appendFileSync(process.env.GITHUB_ENV, `CHANNEL=${branch.replaceAll('/', '-')}\nFILE_CHANNEL=${downloadChannel(branch).replaceAll('/', '-')}\n`);
+          NODE
 
       - name: Build the game (the pack shape and the light single file)
         id: build
