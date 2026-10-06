@@ -1,11 +1,11 @@
 {
-  "_": "DERIVED — written by node tools/manifest.mjs --write in cehinds/AshenSpire-art, never by a hand. One entry per asset id (the runtime `assets/…` path, or a `common` pack path: fonts, licenses/OFL.txt, music/, map-detail/). Each record's path is where the file sits in its pack's zip.",
+  "_": "DERIVED — written by node tools/art-manifest.mjs --write, never by a hand. One entry per asset id (the runtime `assets/…` path, or a `common` pack path: fonts, licenses/OFL.txt, music/, map-detail/).",
   "schema": 2,
   "tiers": {
-    "placeholder": "no file: the game draws the style guide recipe from the id",
-    "light": "assets-mobile/ in light-assets-v<N>.zip (light/assets/ in cehinds/AshenSpire-art, generated from hd/assets/ by tools/mobile-art.mjs) — the dev/test tier",
-    "high": "assets/ in hd-assets-v<N>.zip (hd/assets/ in cehinds/AshenSpire-art) — full resolution; release/main builds and the Local high-res setting",
-    "common": "common-assets-v<N>.zip (common/ in cehinds/AshenSpire-art) — one file for every tier: assets/fonts/ (the fonts), licenses/OFL.txt, music/ and map-detail/"
+    "placeholder": "no file: src/ui/assets.js draws the style guide recipe from the id (SPEC §2.4)",
+    "light": "assets-mobile/ — the dev/test tier and the mobile edition's art",
+    "high": "assets/ — full resolution; release/main builds and the Local high-res setting",
+    "common": "one file for every tier: assets/fonts/ (the fonts), licenses/OFL.txt (from asset-data/fonts/OFL.txt), music/ and map-detail/"
   },
   "count": 6361,
   "assets": {

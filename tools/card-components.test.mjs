@@ -45,10 +45,19 @@ test('release emits a separate object for every card and rejects unsafe artwork'
 
 test('reviewed card/profile art survives the illustrated shell and equipment geometry stays separate',()=>{
  const gore=illustratedArtwork({cardId:'gorefireSlash'},'gorefireSlash');
- assert.equal(gore.path,layout.artworkByCard.gorefireSlash);
+ assert.equal(gore.path,'assets/cards/extended/card-gorefireSlash-512.webp');
+ assert.equal(gore.extended,true);assert.equal(gore.equipment,false);assert.equal(gore.position,'50% 65%');
+ assert.equal(illustratedArtwork({cardId:'gorefireSlash'},'gorefireSlash',{extended:null}).path,layout.artworkByCard.gorefireSlash,'the authored shell remains the fallback when portrait delivery is disabled');
  const blood=illustratedArtwork({cardId:'bloodletting'},'bloodletting',{large:true});
- assert.equal(blood.path,'assets/cards/bloodletting-1024.webp');assert.equal(blood.equipment,false);
+ assert.equal(blood.path,'assets/cards/extended/card-bloodletting-1024.webp');assert.equal(blood.equipment,false);
  const shield=illustratedArtwork({cardId:'guard',profileId:'shieldGuard'},'guard',{equipmentArt:'weapon.webp'});
- assert.equal(shield.kind,'official');assert.equal(shield.equipment,false);
+ assert.equal(shield.kind,'official');assert.equal(shield.path,'assets/cards/extended/profile-shieldGuard-512.webp');assert.equal(shield.equipment,false);
+ const model={id:'gorefireSlash',name:'Gorefire Slash',tags:[{label:'Blade'}],costs:{variable:false,action:1,stamina:1,mana:1}};
+ const html=illustratedCardHtml(model,{rules:'Deal 5 damage. Apply 3 Bleed.',painting:gore.path,artworkKind:gore.kind,artworkPosition:gore.position});
+ assert.ok(html.includes(gore.path));assert.match(html,/object-position:50% 65%;object-fit:cover/);
+ assert.match(html,/data-cost-layout="staminaMana"/);assert.match(html,/data-card-binding="name"[^>]*>Gorefire Slash/);assert.match(html,/Deal 5 damage. Apply 3 Bleed./);
+ const dodge=illustratedArtwork({cardId:'dodgeRoll'},'dodgeRoll');
+ const dodgeHtml=illustratedCardHtml({...model,id:'dodgeRoll',name:'Dodge Roll'},{rules:'Gain 3 Block.',painting:dodge.path,artworkKind:dodge.kind});
+ assert.ok(dodgeHtml.includes(dodge.path),'new portraits restore the artwork layer even for formerly glyph-only cards');
  const fallback=illustratedArtwork({cardId:'unknown'},'unknown');assert.ok(fallback?.path);
 });

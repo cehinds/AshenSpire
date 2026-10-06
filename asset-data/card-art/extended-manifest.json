@@ -9061,7 +9061,7 @@
     "source": "cehinds/AshenSpire-art/tools/mobile-art.mjs",
     "encoder": "cwebp",
     "manifest": "art-manifest.json",
-    "manifestSha256": "eda449ec01b5935f54657581e38c237a55c69ffb51a67f621d0df71d102cbf70",
+    "manifestSha256": "b34963f78b87235882c22d2391def2d69f22e7da70920b42aee79bb0d2f1ee08",
     "release": {
       "repo": "cehinds/AshenSpire-art",
       "tag": "hd-assets-v13",
