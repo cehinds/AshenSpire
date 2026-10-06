@@ -6,6 +6,7 @@ import { featIds, featById } from './feats.js';
  * Four fixed draws isolate each read from UI previews and all other RNG streams.
  */
 export function classBookBonuses(registries, run, def) {
+  registries = registries.masterySource || registries;
   if (!def.learnClass) return { card: null, feat: null };
   const rng = createRng((run.seed ^ 0x426f6f6b) >>> 0, { cardRewards: (run.bookReadRevision || 0) * 4 });
   const cardRoll = rng.float('cardRewards') * 100;

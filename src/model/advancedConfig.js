@@ -24,7 +24,7 @@ export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
 export function isLiveXpSetting(key) {
-  return /^gameConfig\.(?:progression\.xpMultiplier$|balance\.(?:level\.xp\.|xp\.|skill\.(?:xp\.|class\.xp\.)))/.test(key);
+  return /^gameConfig\.(?:progression\.xpMultiplier$|balance\.(?:level\.xp\.|xp\.|skill\.(?:xp\.|class\.xp\.)|classMastery\.(?:xp\.|pay\.)))/.test(key);
 }
 
 export function updatedXpSnapshot(snapshot, changed) {
@@ -999,6 +999,7 @@ export function advancedConfigSnapshot(settings = {}) {
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     ratingsVersion: 1,
     breakMeterVersion: 1,
+    classMasteryVersion: 1,
     xpCurveVersion: 1,
     overrides: advancedConfigSettings(settings),
   });
@@ -1112,6 +1113,9 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     for (const key of ['impactPerXp', 'buildupPerXp']) {
       if (Number.isFinite(skill?.xp?.[key]) && xpMultiplier > 0) skill.xp[key] /= xpMultiplier;
     }
+    for (const key of ['perWin', 'perElite', 'perBoss', 'perQuest']) {
+      if (Number.isFinite(configured.balance.classMastery?.pay?.[key])) configured.balance.classMastery.pay[key] = Math.max(0, Math.round(configured.balance.classMastery.pay[key] * xpMultiplier));
+    }
     for (const key of ['perWin', 'bossKill', 'perQuest']) {
       if (Number.isFinite(skill?.class?.xp?.[key])) skill.class.xp[key] = Math.max(0, Math.round(skill.class.xp[key] * xpMultiplier));
     }
@@ -1162,6 +1166,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (legacyRatings) configured.balance.combatRatings.enabled = false;
+  if (!settingsOrSnapshot?.overrides || settingsOrSnapshot.classMasteryVersion === 1) configured.classMasteryVersion = 1;
   if (configured.balance.combatRatings.enabled && (!settingsOrSnapshot?.overrides || settingsOrSnapshot.breakMeterVersion === 1)) configured.breakMeterVersion = 1;
   // THE RATING ROWS ARE THE TABLE'S (ruleset 7). A reader with no run behind
   // it — creation, a headless fixture — reads these; a run reads its own

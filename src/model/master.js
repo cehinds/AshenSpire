@@ -37,6 +37,7 @@
 // or focus track's are every armament of its item type, and dualWield's every
 // one-handed armament (`WeaponCardPackageModel` handsRequired 1). So the
 // shelves, the lesson and the training upgrade do not depend on what is held.
+import { hasClassMastery } from './classMasteryRun.js';
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, WeaponCardPackageModel } from './loadout.js';
 import { eligibleWeaponArts } from './armamentTrading.js';
@@ -198,7 +199,7 @@ export function trainingPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   const row = masterOffering(registries, 'training')?.training || null;
   const cost = row ? cinders(row.cinders, priceMult) : 0;
   const left = run.shopStock?.training?.left ?? 0;
-  let reason = teachingRefusal(registries, run, 'training', skillId) || cappedRefusal(registries, run, skillId);
+  let reason = hasClassMastery(run) && skillId.startsWith('class:') ? 'Class mastery is earned through fights and quests.' : teachingRefusal(registries, run, 'training', skillId) || cappedRefusal(registries, run, skillId);
   if (!reason && !row) reason = say('master.refuse.notOffered');
   else if (!reason && !(left > 0)) reason = say('master.refuse.trainingSpent');
   else if (!reason && !affordable(run, cost)) reason = say('shop.refuse.cinders');
@@ -304,7 +305,8 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
 export function redistributePlan(registries, run, skillId, amount) {
   const have = pool(run);
   let reason = '';
-  if (!masterOffers(run, 'redistribute')) reason = say('master.refuse.notOffered');
+  if (hasClassMastery(run) && skillId.startsWith('class:')) reason = 'Class mastery is earned through fights and quests.';
+  else if (!masterOffers(run, 'redistribute')) reason = say('master.refuse.notOffered');
   else if (!skillKindOf(registries, skillId)) reason = say('master.refuse.unknownTrack', { skill: String(skillId) });
   else if (cappedRefusal(registries, run, skillId)) reason = cappedRefusal(registries, run, skillId);
   else if (!have) reason = say('master.refuse.poolEmpty');
@@ -426,7 +428,7 @@ export function masterServiceCandidates(registries, run, id, { master = masterOf
       return entry ? !entry.taken && entry.cardIds.length > 0 : lessonPool(registries, run, skillId, { flatRarity }).length > 0;
     });
     case 'appraisal': return [...skills];
-    case 'redistribute': return pool(run) ? skillTracks(registries).map((row) => row.id) : [];
+    case 'redistribute': return pool(run) ? skillTracks(registries).filter(row=>!hasClassMastery(run) || row.kind!=='class').map((row) => row.id) : [];
     default: return [];
   }
 }

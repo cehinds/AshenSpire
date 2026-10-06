@@ -1,3 +1,4 @@
+import { masteryUnlockName } from '../../model/classMasteryRun.js';
 import { isProgressionReward, progressionRewardUnlocked } from '../../model/deferredProgression.js';
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
 //
@@ -570,8 +571,10 @@ export function mountRewards(app, {
     // since the number lands on the card faces rather than as a row to take —
     // and only for the cards it actually raised (a card sums its tracks' flats).
     const raised = owned().filter((inst) => skillBonusFor(registries, run, inst) > (bonusBefore.get(inst) || 0)).length;
+    const unlocks = run.classMasteryState && skillId.startsWith('class:') ? registries.classMastery.filter(row => row.classId === skillId.slice(6) && row.level === claim.after).map(row => masteryUnlockName(registries, row)) : [];
+    const unlockedLine = unlocks.length ? ` Unlocked: ${unlocks.join(', ')}.` : '';
     const flat = raised ? ` ${raised} card${raised === 1 ? '' : 's'} gain${raised === 1 ? 's' : ''} +1.` : '';
-    openLevelView(skillId, `${label} · Level ${claim.after}`, `Your ${label} skill is now level ${claim.after}.${flat}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
+    openLevelView(skillId, `${label} · Level ${claim.after}`, `Your ${label} skill is now level ${claim.after}.${flat}${unlockedLine}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
   }
 
   // THE LEVEL POPUP. What this claim unlocked, as the list's own blue rows:

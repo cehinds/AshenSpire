@@ -7890,5 +7890,19 @@ export const uiStrings = [
     "short": "New tiers open at the levels marked.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "book.read.masterySummary",
+    "extends": "",
+    "short": "Learn one selected card. Class mastery advances through fights and quests. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.masteryClassSummary",
+    "extends": "",
+    "short": "Learn this class. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Class mastery advances through fights and quests. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
   }
 ];

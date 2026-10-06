@@ -1,3 +1,6 @@
+import { completedRunMeta } from './model/runCompletion.js';
+import { mountInitialClassMastery } from './ui/components/classMastery.js';
+import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
@@ -47,7 +50,6 @@ import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js
 import { questBoardModel, questExchange } from './ui/models/QuestBoardModel.js';
 import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
 import { smithServicesAt } from './model/cardExtraction.js';
-import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
@@ -211,7 +213,7 @@ let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
-function rebuildRegistries(configuration = {}) {
+function rebuildRegistries(configuration = {}, masteryRun = null) {
   const configured = configuredContentBundle(contentBundle, configuration);
   const result = validateContent(configured);
   const structuralProblems = advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
@@ -224,6 +226,7 @@ function rebuildRegistries(configuration = {}) {
   } else {
     registries = createRegistries(configured);
   }
+  registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;
@@ -1022,6 +1025,7 @@ let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback incr
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
+  if (!shotState) refreshRunClassMastery(run, saves.loadMeta(), registries);
   // The derived skill bonus is restamped at every save, so a level, a new card
   // or a swapped hand shows on the faces the next screen draws (SPEC §13.4o).
   stampSkillBonuses(registries, run);
@@ -1152,6 +1156,10 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
+  if (!shotState) {
+    openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
+    registries = registriesForClassMastery(registries, run);
+  }
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
   run.path = [];
   run.seenEvents = [];
@@ -1331,6 +1339,8 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   resetArmouryTraySession();
   activeSlot = slot;
   run = loaded;
+  refreshRunClassMastery(run, saves.loadMeta(), registries);
+  registries = registriesForClassMastery(registries, run);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
@@ -1342,7 +1352,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     const configured = configuredContentBundle(contentBundle, currentXpSnapshot);
     if (validateContent(configured).ok && advancedConfigStructuralProblems(contentBundle, currentXpSnapshot.overrides).length === 0) {
       run.advancedConfigSnapshot = currentXpSnapshot;
-      rebuildRegistries(currentXpSnapshot);
+      rebuildRegistries(currentXpSnapshot, run);
       persist();
     } else {
       showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
@@ -1356,6 +1366,11 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   // this run's stream counters and the previous run's rng is still standing
   // until the line above.
   if (run.prologue?.version === 1) { migratePrologueState(run); persist(); }
+  if (run.pendingFinish) {
+    const victory = run.pendingFinish.victory;
+    const earned = finishRun(victory);
+    return mountGameOver(app, { registries, game: run, victory, earned, onTitle: showTitle, onHistory: showHistory });
+  }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
     mountPendingReward();
@@ -1742,7 +1757,7 @@ function persistSettingsChange(changed) {
     const problems = advancedConfigStructuralProblems(contentBundle, snapshot.overrides);
     if (validation.ok && problems.length === 0) {
       run.advancedConfigSnapshot = snapshot;
-      rebuildRegistries(snapshot);
+      rebuildRegistries(snapshot, run);
       if (xpCombat) xpCombat.registries = registries;
       persist();
     } else {
@@ -2074,12 +2089,24 @@ function treasureSmithingReward() {
 }
 
 function finishRun(victory) {
-  const result = runResult(victory);
-  const meta = saves.recordResult(result);
-  meta.progress = recordProgress(meta.progress, result);
-  const fresh = evaluateUnlocks(registries.unlocks, meta);
-  if (fresh.length) meta.unlocked = [...(meta.unlocked || []), ...fresh];
-  saves.saveMeta(meta);
+  run.pendingFinish ||= { victory, id: run.classMasteryState?.receiptId || crypto.randomUUID() };
+  persist();
+  if (hasClassMastery(run)) {
+    const bank = saves.bankClassMastery(run, registries);
+    if (!bank.ok) {
+      persist();
+      showSettingsNotice(`Class mastery was not saved: ${bank.reason}. The run remains in its slot.`, 'profile');
+      return [];
+    }
+    adoptClassMasteryProfile(run, bank.meta);
+    if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+  }
+  const result = { ...runResult(victory), finishId: run.pendingFinish.id };
+  const completed = completedRunMeta(registries, saves.loadMeta(), result);
+  const fresh = completed.unlocked;
+  const saved = saves.saveMeta(completed.meta);
+  if (saved.ok) saves.clearRun(activeSlot);
+  else showSettingsNotice(`Run results were not saved: ${saved.reason}`, 'profile');
   return fresh.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
 }
 
@@ -2198,6 +2225,7 @@ function remountMapIfShowing(changed) {
 }
 
 function showMap(opts) {
+  if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts) });
   const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
@@ -2563,7 +2591,7 @@ function leaveLegacyDungeon() {
   if (run.journey) completeJourneyNode(run.journey, run.legacyDungeon.parentNodeId);
   delete run.legacyDungeon;
   if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (!run.journey && run.actNumber >= 3 && !endlessOn())) {
-    audio.music('victory'); sendLanStatus({ victory: true }); saves.clearRun(activeSlot);
+    audio.music('victory'); sendLanStatus({ victory: true });
     const earned = finishRun(true);
     return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
   }
@@ -2806,7 +2834,6 @@ async function onCombatEnd(result, combat, enc) {
     sfx.play('youDied');
     run.hp = 0;
     sendLanStatus({ dead: true });
-    saves.clearRun(activeSlot);
     const earnedOnDeath = finishRun(false);
     return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
   }
@@ -2844,7 +2871,6 @@ async function onCombatEnd(result, combat, enc) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       sendLanStatus({ victory: true });
-      saves.clearRun(activeSlot);
       const earned = finishRun(true);
       return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
     }
@@ -2940,7 +2966,8 @@ function rollLevelChoices(levelsEarned) {
     const options = [];
     if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
     if (offerClassTree && !run.classUnequipped) {
-      const level = Math.max(run.skills?.[classSkillId(run.class)]?.level || 0, firstRewardLevel + ordinal + 1);
+      const masteryLevel = run.skills?.[classSkillId(run.class)]?.level || 0;
+      const level = hasClassMastery(run) ? masteryLevel : Math.max(masteryLevel, firstRewardLevel + ordinal + 1);
       options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
         .map((id) => ({ kind: 'classNode', id })));
     }
@@ -3125,7 +3152,18 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
     onClaimSkill: (skillId) => {
+      const before = hasClassMastery(run) && skillId.startsWith('class:') ? { skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), classRewardLevels: { ...run.classRewardLevels } } : null;
       const claim = claimBankedSkillLevel(registries, run, skillId);
+      if (claim && before && run.classMasteryState.bankable) {
+        const bank = saves.bankClassMastery(run, registries);
+        if (!bank.ok) {
+          Object.assign(run, before);
+          showSettingsNotice(`Class level was not saved: ${bank.reason}`, 'profile');
+          return null;
+        }
+        adoptClassMasteryProfile(run, bank.meta);
+        if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+      }
       if (claim && skillId === classSkillId(run.class)) {
         run.classRewardLevels = { ...run.classRewardLevels, [run.class]: claim.after };
       }

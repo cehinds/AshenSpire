@@ -42,6 +42,9 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
     }
   };
   const draw = () => {
+    summary.textContent = plan.def?.learnClass
+      ? t(plan.xp === 0 ? 'book.read.masteryClassSummary' : 'book.read.classSummary', { xp: plan.xp, card: plan.def.combatCardChance || 0, feat: plan.def.featChance || 0 })
+      : t(plan.xp === 0 ? 'book.read.masterySummary' : 'book.read.summary', { xp: plan.xp });
     choices.replaceChildren();
     const query = search.value.trim().toLowerCase();
     const shown = plan.lessons.filter((row) => row.name.toLowerCase().includes(query));
@@ -73,9 +76,10 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
       if (plan.def.learnClass) showClassBookReceipt({ registries, def: plan.def, receipt });
     } catch (failure) { error.textContent = failure.message; }
   });
+  const summary = el('p');
   const body = el('div', { class: 'modal-body book-learning-body' }, [
     renderBookArt(plan.def, { className: 'book-reading-art' }),
-    el('p', { text: plan.def?.learnClass ? t('book.read.classSummary', { xp: plan.def.xp, card: plan.def.combatCardChance || 0, feat: plan.def.featChance || 0 }) : t('book.read.summary', { xp: plan.def?.xp || 0 }) }),
+    summary,
     el('label', { for: 'book-learning-track', text: t('book.read.track') }), trackSelect,
     el('p', { class: 'book-learning-rarity', text: t('book.read.rarity') }), search,
     el('div', { class: 'book-lesson-columns' }, [choices, detail]), error,

@@ -1,3 +1,4 @@
+import { normalizeMasteryProfile, masteryProfileProblems } from '../src/model/classMasteryProfile.js';
 // tools/lan.mjs — zero-dependency LAN session layer ("Forsaken Together").
 //
 // Adds three things to the launcher's static server (tools/serve.mjs):
@@ -200,9 +201,9 @@ export function attachLan(server, { port, root }) {
     const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, classMastery: cl.classMastery, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder });
       (cl.locals || []).forEach((lp, i) => game.addMember({
-        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, tint: lp.tint, spriteStyle: lp.spriteStyle,
+        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, classMastery: lp.classMastery, tint: lp.tint, spriteStyle: lp.spriteStyle,
         playInDeckOrder: cl.playInDeckOrder, // couch seats share the device's profile
       }));
     }
@@ -226,6 +227,7 @@ export function attachLan(server, { port, root }) {
     const id = msg.as && memberIdsOf(pl).includes(msg.as) ? msg.as : pl.id;
     switch (msg.t) {
       case 'resync': broadcastState(); return;
+      case 'chooseMasteryNode': g.chooseMasteryNode(id, msg.nodeId); break;
       case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
       case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice); break;
       case 'endTurn': g.combatEndTurn(id); break;
@@ -247,6 +249,12 @@ export function attachLan(server, { port, root }) {
     switch (msg.t) {
       case 'hello':
         pl.name = String(msg.name || 'Forsaken').slice(0, 18);
+        if (msg.classMastery !== undefined) {
+          const profile = normalizeMasteryProfile({ classMastery: msg.classMastery });
+          const problems = masteryProfileProblems(profile);
+          if (problems.length) { sock.write(wsEncode(JSON.stringify({ t: 'error', error: problems.join('; ') }))); return; }
+          pl.classMastery = profile.classMastery;
+        }
         pl.classId = msg.classId || null;
         pl.startingKitId = msg.startingKitId || null;
         pl.playInDeckOrder = msg.playInDeckOrder === true;
@@ -268,6 +276,12 @@ export function attachLan(server, { port, root }) {
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
       case 'pick':
+        if (msg.classMastery !== undefined) {
+          const profile = normalizeMasteryProfile({ classMastery: msg.classMastery });
+          const problems = masteryProfileProblems(profile);
+          if (problems.length) { sock.write(wsEncode(JSON.stringify({ t: 'error', error: problems.join('; ') }))); return; }
+          pl.classMastery = profile.classMastery;
+        }
         if (msg.classId) pl.classId = msg.classId;
         if (msg.startingKitId !== undefined) pl.startingKitId = msg.startingKitId || null;
         if (Array.isArray(msg.discoveredArmaments)) pl.discoveredArmaments = [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))];
@@ -284,6 +298,7 @@ export function attachLan(server, { port, root }) {
         const sane = (Array.isArray(msg.locals) ? msg.locals : []).slice(0, 3).map((lp) => ({
           name: String((lp && lp.name) || 'Forsaken').slice(0, 18),
           classId: (lp && lp.classId) || null,
+          classMastery: lp?.classMastery && !masteryProfileProblems(normalizeMasteryProfile({ classMastery: lp.classMastery })).length ? structuredClone(lp.classMastery) : undefined,
           startingKitId: (lp && lp.startingKitId) || null,
           discoveredArmaments: Array.isArray(lp && lp.discoveredArmaments) ? [...new Set(lp.discoveredArmaments.filter((id) => typeof id === 'string'))] : [],
           tint: (lp && lp.tint) || 'gold',
