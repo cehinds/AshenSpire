@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1666",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: modular class rewards and retraining",
+    "detail": "The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.",
+    "build": "0.7.1.1032",
+    "pullRequest": 1666,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1666"
+  },
+  {
     "id": "pr-1664",
     "date": "2026-10-06",
     "group": "2026-10-06",
