@@ -332,15 +332,17 @@ test('a profile that already matches is recorded as loaded', async () => {
 
 test('the preview standalone files are named so they open as their branch\'s builds', async () => {
   const { readFileSync } = await import('node:fs');
+  const { channelRole, downloadChannel } = await import('../tools/alternative-branches.mjs');
   const workflow = readFileSync(new URL('../.github/workflows/dev-preview.yml', import.meta.url), 'utf8');
   const names = [...workflow.matchAll(/standalone\/(AshenSpire[^\s"]*\.html)/g)].map((m) => m[1]);
   // One since step 8e: the light single file; the mobile file is retired.
   assert.ok(names.length >= 1, 'the workflow still writes the standalone file');
-  // The workflow names each file for the branch it built (${CHANNEL}: the PR's
-  // base or the pushed branch), so a main build must not open as dev.
-  for (const channel of ['dev', 'test', 'release', 'main']) {
-    for (const name of names.map((n) => n.replace('${CHANNEL}', channel))) {
-      assert.equal(buildChannel({ pathname: `/Downloads/${channel}-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), channel, name);
+  assert.match(workflow, /import \{ downloadChannel \} from ['"]\.\/tools\/alternative-branches\.mjs['"]/);
+  // Preserve the role in filenames even for nested alternative branch names.
+  for (const channel of ['dev', 'test', 'release', 'main', 'alternative/dev', 'alternative/test', 'alternative/art/dev']) {
+    for (const name of names.map((n) => n.replace('${CHANNEL}', channel).replace('${FILE_CHANNEL}', downloadChannel(channel)))) {
+      assert.ok(!name.includes('/'), 'a downloaded filename must not contain branch path separators');
+      assert.equal(buildChannel({ pathname: `/Downloads/${channel}-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), channelRole(channel), name);
     }
   }
 });
