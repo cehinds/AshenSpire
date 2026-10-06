@@ -172,6 +172,8 @@ const cardValueRule = () => ({
   statusMultipliers: { ...cardValueStatusMultipliers },
 });
 
+const PROGRESSION_CONTRACT_DESCRIPTION = 'The progression contract version saved for new characters, preserving the rules chosen at creation.';
+
 export const balance = {
   progression: {
     version: 1,
@@ -184,7 +186,7 @@ export const balance = {
     lessons: { 'item:magic-focus': ['cometFragment','crystalBarrier','scholarsInsight','ashenMote','emberVigil','readTheAsh','cinderSigil','starstoneArc','blightTouch','penance'], combatManeuvers: ['crimsonCleave','shieldBash','quickstep','guardCounter','riposte','rend','quickCut','backstep','stomp','lowBlow'] },
     respec: { enabled: true, cost: null },
     [NOTE]: {
-      version: 'The progression contract version saved for new characters, preserving the rules chosen at creation.',
+      version: PROGRESSION_CONTRACT_DESCRIPTION,
       ...Object.fromEntries(progressionGearRequirements.map((row,index)=>[`gearRequirements.${index}.level`, `${row.ref} — the minimum ${row.classId} class level for this gear option; existing discovery and attribute requirements also apply.`])),
       ...Object.fromEntries(Object.entries({cards:10,feat:6,armory:6,relic:6,attribute:4}).flatMap(([kind,count])=>Array.from({length:count},(_,index)=>[`cadence.${kind}.${index}`, `The class level for ${kind} reward number ${index+1}; every earned milestone keeps its own saved grant.`]))),
       skillBonusXp: 'XP banked in each of the four class-related skills when a new class level is claimed; respec cannot replay this award.',

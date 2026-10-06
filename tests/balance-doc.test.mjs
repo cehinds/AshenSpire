@@ -8,9 +8,11 @@ import { spawnSync } from 'node:child_process';
 
 test('docs/BALANCE.md matches a fresh tools/balance.mjs run', () => {
   const r = spawnSync(process.execPath, ['tools/balance.mjs', '--check'], {
-    // Full 300-seed report: measured finite expanded-content workload is
-    // about 15 minutes on Windows; retain coverage rather than truncate it.
-    cwd: new URL('..', import.meta.url), encoding: 'utf8', timeout: 20 * 60 * 1000,
+    // Full 300-seed report: about 15 minutes alone on local Windows, but
+    // concurrent suites exceeded 20. Keep every seed and bound that local
+    // contention; hosted jobs retain their separate 20-minute deadline.
+    cwd: new URL('..', import.meta.url), encoding: 'utf8',
+    timeout: (process.platform === 'win32' ? 40 : 20) * 60 * 1000,
   });
   assert.equal(r.status, 0, `${r.stderr || ''}${r.stdout || ''}`.slice(0, 2000));
 });
