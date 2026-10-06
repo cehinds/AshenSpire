@@ -8,7 +8,9 @@ import { spawnSync } from 'node:child_process';
 
 test('docs/BALANCE.md matches a fresh tools/balance.mjs run', () => {
   const r = spawnSync(process.execPath, ['tools/balance.mjs', '--check'], {
-    cwd: new URL('..', import.meta.url), encoding: 'utf8', timeout: 10 * 60 * 1000,
+    // Full 300-seed report: measured finite expanded-content workload is
+    // about 15 minutes on Windows; retain coverage rather than truncate it.
+    cwd: new URL('..', import.meta.url), encoding: 'utf8', timeout: 20 * 60 * 1000,
   });
   assert.equal(r.status, 0, `${r.stderr || ''}${r.stdout || ''}`.slice(0, 2000));
 });
