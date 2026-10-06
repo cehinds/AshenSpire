@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
-- **Plans: class levels that last** ([#1654](https://github.com/cehinds/AshenSpire/pull/1654), `0.7.1.1014`). The class mastery plan now has its card bundles, equipment, relics and twenty class feats authored, with checks that keep every starting kit intact and every school deep enough to offer a choice. This supplies the data for lasting class levels; runs still use their earlier progression until the profile and run screens adopt it.
+- **Plans: class levels that last** ([#1654](https://github.com/cehinds/AshenSpire/pull/1654), `0.7.1.1016`). The class mastery plan now has its card bundles, equipment, relics and twenty class feats authored, with checks that keep every starting kit intact and every school deep enough to offer a choice. This supplies the data for lasting class levels; runs still use their earlier progression until the profile and run screens adopt it.
 
 - **One bar to break** ([#1653](https://github.com/cehinds/AshenSpire/pull/1653), `0.7.1.1010`). In a new run, physical and magical hits both fill Poise. Ward remains a defence against magic, shown in a fighter's details. A magical Stagger makes an enemy take more magic damage, and your Arcane properties work from that Stagger. Dodge Roll guards the shared bar. Runs saved before this change keep their earlier bars and rules.
 

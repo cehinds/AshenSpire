@@ -54,7 +54,12 @@ export function classMasteryProblems(bundle) {
   const globallyGatedCards=new Set(rows.filter(r=>r?.kind==='cards').map(r=>r.ref));
   try {
     const copy=value=>Array.isArray(value)?value.map(copy):value && typeof value==='object'?Object.fromEntries(Reflect.ownKeys(value).map(key=>[key,copy(value[key])])):value;
-    const registries=createRegistries(copy(bundle));
+    const deckBundle=copy(bundle);
+    // This check concerns the composed cards. Alternate kits may require a
+    // player's allocation above a configured preset; that is Begin's gate.
+    deckBundle.equipment.equipmentRequirements=deckBundle.equipment.equipmentRequirements.map(row=>({...row,minimum:0}));
+    deckBundle.equipment.armaments=deckBundle.equipment.armaments.map(piece=>({...piece,requirements:{attributes:{}}}));
+    const registries=createRegistries(deckBundle);
     for(const kit of bundle.equipment?.startingKits || []){
       const run=createRunState({registries,classId:kit.classId,startingKitId:kit.id,seed:0,profileMeta:{discoveredArmaments:registries.equipment.armaments.map(a=>a.id)}});
       for(const card of run.deck)if(globallyGatedCards.has(card.cardId))at(`${kit.classId}.${kit.id}.${card.cardId}`,'starting-deck card must be core globally');
@@ -85,7 +90,10 @@ export function classMasteryProblems(bundle) {
       const tags=tagsFor('armament',hand).filter(t=>schools.has(t));
       for(const rarity of Object.keys(bundle.balance.skill.rarityUnlock || {})){
         const count=core.filter(id=>cards.get(id)?.rarity===rarity && tagsFor('card',id).some(t=>tags.includes(t))).length;
-        if(count<4)at(`${cls.id}.${hand}.${rarity}`,`core skill draft has ${count} cards; needs four distinct choices`);
+        const fullCount=cls.cardPool.filter(id=>cards.get(id)?.rarity===rarity && tagsFor('card',id).some(t=>tags.includes(t))).length;
+        // A newly exposed foreign hand may use the existing fallback door.
+        // Mastery must never shrink a supported school below its four choices.
+        if(fullCount>=4 && count<4)at(`${cls.id}.${hand}.${rarity}`,`core skill draft has ${count} cards; needs four distinct choices`);
       }
     }
   }

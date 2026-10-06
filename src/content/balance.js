@@ -359,7 +359,6 @@ export const balance = {
       'pay.perElite': 'Mastery XP for an elite fight won, replacing the ordinary award.',
       'pay.perBoss': 'Mastery XP for a boss fight won, replacing the ordinary award.',
       'pay.perQuest': 'Mastery XP for a completed quest.',
-      'cycle.{i}': 'The kind of unlock at position {ordinal} in the repeating mastery cycle.',
       corePoolShare: 'Minimum share of each class card pool available before any mastery unlock.',
     },
   },
