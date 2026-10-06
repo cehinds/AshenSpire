@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Alternative updates keep their build numbers current",
     "detail": "Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.",
-    "build": "0.7.1.1037",
+    "build": "0.7.1.1039",
     "pullRequest": 1672,
     "url": "https://github.com/cehinds/AshenSpire/pull/1672"
+  },
+  {
+    "id": "pr-1675",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Upgrade items in one continuous visit",
+    "detail": "Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.",
+    "build": "0.7.1.1038",
+    "pullRequest": 1675,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1675"
   },
   {
     "id": "pr-1671",

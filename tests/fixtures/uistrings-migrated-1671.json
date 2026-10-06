@@ -1,5 +1,5 @@
 {
-  "description": "Rows added by #1671; frozen so shadow-copy coverage survives origin/dev advancing.",
+  "source": "PR #1671 Armory and progression copy; frozen after merge so origin/dev cannot remove its sweep coverage",
   "ids": [
     "progression.title",
     "progression.tab.character",
