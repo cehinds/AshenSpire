@@ -13293,12 +13293,6 @@ export const tagging = [
     "tagId": "source:weapon"
   },
   {
-    "family": "card",
-    "scope": "",
-    "objectId": "kickOff",
-    "tagId": "source:unarmed"
-  },
-  {
     "family": "feat",
     "scope": "",
     "objectId": "progression-coal-on-steel",
@@ -14251,5 +14245,65 @@ export const tagging = [
     "scope": "",
     "objectId": "progression-ossuary-prayer-wheel",
     "tagId": "ability:sepulchral-pact"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-emberjaw-token",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cracked-war-anvil",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cinderbound-crown",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-moonwell-lens",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-nightglass-rosary",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-fragment-of-the-third-sky",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-whisperglass-die",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-purse-of-borrowed-shadows",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ember-alms-bowl",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ossuary-prayer-wheel",
+    "tagId": "classification.relic"
   }
 ];

@@ -146,12 +146,12 @@ pyreSigil,block,amount
 gravelightSigil,pct,pct
 gravelightSigil,heal,amount
 progression-emberjaw-token,bleed,stacks
-progression-cracked-war-anvil,poiseDamage,amount
+progression-cracked-war-anvil,poiseDamage,break
 progression-cinderbound-crown,heal,amount
 progression-moonwell-lens,block,amount
 progression-nightglass-rosary,restoreMana,amount
 progression-fragment-of-the-third-sky,block,amount
-progression-whisperglass-die,chargeDamage,amount
+progression-whisperglass-die,chargeDamage,damage
 progression-purse-of-borrowed-shadows,block,amount
 progression-ember-alms-bowl,block,amount
 progression-ossuary-prayer-wheel,restoreMana,amount

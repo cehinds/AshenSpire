@@ -2317,7 +2317,6 @@ card,,lowBlow,source:weapon
 card,,vanish,source:weapon
 card,,smokeBomb,source:weapon
 card,,perfectHeist,source:weapon
-card,,kickOff,source:unarmed
 feat,,progression-coal-on-steel,classification.feat
 feat,,progression-coal-on-steel,feat:coal-on-steel
 feat,,progression-brace-and-bite,classification.feat
@@ -2477,3 +2476,13 @@ relic,,progression-ossuary-prayer-wheel,progression-ossuary-prayer-wheel
 relic,,progression-ossuary-prayer-wheel,ritual
 relic,,progression-ossuary-prayer-wheel,blight
 relic,,progression-ossuary-prayer-wheel,ability:sepulchral-pact
+relic,,progression-emberjaw-token,classification.relic
+relic,,progression-cracked-war-anvil,classification.relic
+relic,,progression-cinderbound-crown,classification.relic
+relic,,progression-moonwell-lens,classification.relic
+relic,,progression-nightglass-rosary,classification.relic
+relic,,progression-fragment-of-the-third-sky,classification.relic
+relic,,progression-whisperglass-die,classification.relic
+relic,,progression-purse-of-borrowed-shadows,classification.relic
+relic,,progression-ember-alms-bowl,classification.relic
+relic,,progression-ossuary-prayer-wheel,classification.relic

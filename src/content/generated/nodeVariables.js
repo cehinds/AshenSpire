@@ -665,7 +665,7 @@ export const nodeVariables = [
   {
     "nodeId": "progression-cracked-war-anvil",
     "variable": "poiseDamage",
-    "role": "amount"
+    "role": "break"
   },
   {
     "nodeId": "progression-cinderbound-crown",
@@ -690,7 +690,7 @@ export const nodeVariables = [
   {
     "nodeId": "progression-whisperglass-die",
     "variable": "chargeDamage",
-    "role": "amount"
+    "role": "damage"
   },
   {
     "nodeId": "progression-purse-of-borrowed-shadows",
