@@ -2119,7 +2119,11 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-item-type-row > .as-tag { color: var(--gold); }
 .smith-preview-region.as-pane { gap: 0.6rem; min-height: 0; overflow: hidden; background: var(--panel); }
 .smith-pane-status { flex: 0 0 auto; text-align: left; }
+.smith-upgrade-modal > .modal-head > .modal-head-actions { margin-left: auto; align-self: center; align-items: center; min-width: 0; flex-shrink: 1; }
+.smith-header-stones { text-align: right; min-width: 0; }
+.smith-upgrade-modal .modal-close > .modal-close-face { font: 24px/1 Arial, sans-serif; }
 .smith-preview-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.smith-upgrade-modal .smith-preview-host { flex: 1 1 0; overflow: hidden; }
 .smith-consequence { flex: 0 0 auto; margin: 0; }
 .mount-service-outcome { display: flex; gap: 1.2rem; align-items: flex-start; margin: 0.4rem 0 0.8rem; }
 /* The pane's card scrolls its facts; its padding-bottom is the cost strip's,

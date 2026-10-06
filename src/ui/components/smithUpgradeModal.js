@@ -11,7 +11,7 @@ import { renderCollectibleCard } from './collectibleCard.js';
 // `[Selection ▾]` selector above the pane), and the pane is the selected item —
 // what it is, its current → proposed stats and requirements, every affected
 // card, then the Stone cost pinned under them. The header carries the title
-// and its exit, the footer Back and Upgrade. The stay/leave consequence sits
+// and its exit, with a full-width Back footer. Upgrade and its consequence sit
 // under the cost, next to the action it explains. Which slots the pane draws
 // is SmithWorkspaceModel.js's; every fact still comes from SmithSelectionModel.
 // `.smith-*` stay on these elements because tools/armament-smithing-ui.mjs
@@ -87,10 +87,12 @@ export function mountSmithUpgradeModal(host, initialModel, {
   workspaceFrame(modal, smithWorkspaceVars());
   markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
   // W1 header: the title top-left and its exit top-right, nothing else.
+  const purse = statusText('', { class: 'smith-header-stones', role: 'status' });
   const head = modalHead({
     title: initialModel.properties.title,
     titleId: 'smith-modal-title',
     closeLabel: initialModel.properties.backLabel,
+    extras: purse,
   });
 
   let currentModel = initialModel;
@@ -202,13 +204,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const piece = item.itemKind === 'relic' ? registries.relics.get(item.itemId)
       : item.itemKind === 'armor' ? registries.equipment.armour.find(piece => piece.id === item.itemId && piece.classId === item.classId)
         : registries.equipment.armaments.find(piece => piece.id === item.itemId);
-    // TWO TAPS: HIGHLIGHT, THEN CHOOSE (Constantine, 2026-09-12). The first
-    // tap highlights this candidate and reveals its `i`; the second reaches
-    // the navigation's `choose` and makes it the Smith's selection, which is
-    // what greens the footer's Upgrade. A press-and-hold reaches it too — it
-    // never travelled through `click`. The door is bound BEFORE the
-    // navigation listens, so the selecting tap it swallows never reaches it.
-    if (piece) bindCardInspection(card, { title: item.name, open: opener => {
+    // Selecting an item only opens its upgrade preview, so the first tap can
+    // choose it immediately. The information button remains a separate action.
+    if (piece) bindCardInspection(card, { title: item.name, actionOwnsTouch: true, open: opener => {
       const owned = Number.isInteger(item.inventoryCount) ? item.inventoryCount : null;
       // This face goes straight into openCardInspection, so it is an inspect card.
       const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false, owned, level: 'inspect' })
@@ -233,17 +231,19 @@ export function mountSmithUpgradeModal(host, initialModel, {
   const cards = initialModel.properties.candidates.map((item, index) => candidateCard(item, rows[index]));
   // The kit's W1 category navigation (rail beside the pane, one selector above
   // it on compact hosts); the Smith's items are a listbox, not tabs.
-  const nav = categoryNav({ items: cards, ariaLabel: t('smith.items.upgrade'), railAttrs: { role: 'listbox' }, choose: (itemRef) => onSelect(itemRef) });
-  const count = statusText('', { class: 'smith-pane-status', role: 'status', dataset: { smithCount: '' } });
+  const nav = categoryNav({ items: cards, ariaLabel: t('smith.items.upgrade'), railAttrs: { role: 'listbox' },
+    face: () => currentModel.properties.selected?.name || t('smith.selector.none'),
+    choose: (itemRef) => onSelect(itemRef) });
   const previewHost = el('div', { class: 'smith-preview-host' });
   const consequence = el('p', { class: 'as-flavor smith-consequence', id: 'smith-modal-consequence' });
   const previewRegion = el('section', {
     class: 'as-pane smith-preview-region', id: 'smith-preview-region', 'aria-live': 'polite', 'aria-label': 'Selected upgrade preview',
-  }, [count, previewHost, consequence]);
+  }, [previewHost, consequence]);
   const body = el('div', { class: 'modal-body smith-modal-body' }, railed(nav, previewRegion, { class: 'smith-candidate-region' }));
-  const backBtn = button({ label: initialModel.properties.backLabel, className: 'subtle smith-back' });
+  const backBtn = button({ label: initialModel.properties.backLabel, role: 'exit', className: 'subtle smith-back' });
   const confirmBtn = button({ label: '', weight: 'primary', className: 'smith-confirm' });
-  const foot = modalFooter({ secondary: [backBtn], primary: confirmBtn, className: 'smith-modal-footer', size: 'long' });
+  previewRegion.append(confirmBtn);
+  const foot = modalFooter({ primary: backBtn, className: 'smith-modal-footer', size: 'fill' });
   modal.append(head, body, foot);
   veil.appendChild(modal);
   host.appendChild(veil);
@@ -276,7 +276,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
       ]),
     ]);
     const folds = el('div', { class: 'smith-upgrade-folds' }, selected.affectedRows.map((row, index) => {
-      const fold = el('details', { class: `smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}` });
+      const fold = el('details', { open: true, class: `smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}` });
       const summary = el('summary', {}, statRow({
         tag: 'span',
         nameNode: el('b', { class: 'sr-name', text: row.name }),
@@ -322,7 +322,11 @@ export function mountSmithUpgradeModal(host, initialModel, {
     }
     const face = smithSelectorFace(model);
     nav.sync(face.text ?? t(face.id));
-    count.textContent = t('smith.pane.status', { purse: p.purseLabel, n: p.candidates.length });
+    if (!selected) {
+      nav.plan();
+      nav.setOpen(true);
+    }
+    purse.textContent = `${p.purseLabel} available`;
     consequence.textContent = p.consequence;
 
     previewHost.replaceChildren(selected
@@ -345,6 +349,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     disarmDecision?.();
     disarmDecision = null;
     confirm.disabled = !selected;
+    confirm.hidden = !selected;
     confirm.textContent = model.properties.confirmLabel;
     confirm.setAttribute('aria-disabled', String(!model.properties.canConfirm));
     confirmBlocked = selected ? model.properties.blockedReasons.join(' ') : '';
@@ -376,6 +381,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   function close({ restoreFocus = true } = {}) {
     if (closed) return;
     closed = true;
+    nav.release();
     disarmDecision?.();
     disarmDecision = null;
     window.removeEventListener('keydown', onKeydown, true);
