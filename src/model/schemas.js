@@ -765,6 +765,13 @@ export const SCHEMAS = Object.freeze({
     staminaCost: opt(int),
     // The Weight Class's dodge cost prices this card, not its authored cost
     // (mechanics.json dodgeStaminaCost; framework importer.js isPureDodge).
+    abilityKind: opt(en('spell', 'maneuver')),
+    abilityFamily: opt(str),
+    abilityRank: opt(int),
+    legacyGradeMap: opt(mapOf(int)),
+    legacyFace: opt(any),
+    requirements: opt(any),
+    gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), traits: opt(any) }))),
     weightClassPriced: opt(bool),
     type: en(...CARD_TYPES),
     attack: opt(any),

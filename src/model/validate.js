@@ -130,6 +130,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
   'classMasteryVersion',
+  'legacyProgression',
   'breakMeterVersion', // configured bundle's scoped card faces, never stamped onto old runs
   'classMastery',
   'classSkillFeats',
@@ -539,6 +540,15 @@ function collectContentProblems(bundle, errors = []) {
   // Secondary costs are semantic bounds, not merely integer shapes. A negative
   // cost would mint the resource when a card is played.
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
+    if (card?.gradeProfiles) {
+      if (!['spell','maneuver'].includes(card.abilityKind)) err(`cards.${card.id}.abilityKind`,'graded card requires authored spell/maneuver identity');
+      const ranks = card.gradeProfiles.map(row => row.rank).sort((a,b)=>a-b);
+      if (JSON.stringify(ranks) !== '[0,1,2,3,4,5]') err(`cards.${card.id}.gradeProfiles`,'must author exactly the six ranks 0..5');
+      for (const profile of card.gradeProfiles) {
+        if (profile.manaCost !== profile.rank || profile.actionCost < 1 || profile.actionCost > [3,1,2,3,4,5][profile.rank]) err(`cards.${card.id}.gradeProfiles.${profile.rank}`,'Actions/Mana costs are outside the ability grade contract');
+      }
+      if (!Number.isInteger(card.abilityRank) || card.abilityRank < 0 || card.abilityRank > 5) err(`cards.${card.id}.abilityRank`,'default grade must be 0..5');
+    }
     if (card?.attack !== undefined) {
       try { validateAttack(card.attack); } catch (e) { err(`cards.${card.id}.attack`, e.message); }
     }

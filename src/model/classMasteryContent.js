@@ -31,7 +31,7 @@ export function classMasteryProblems(bundle) {
     const cls=classes.get(row.classId);
     if(!cls)at(label,`unknown class '${row.classId}'`);
     if(!Number.isInteger(row.level) || row.level<1 || row.level>curve.maxLevel)at(label,'level is outside the mastery curve');
-    if(row.kind!==rules.cycle[(row.level-1)%rules.cycle.length])at(label,`kind '${row.kind}' breaks the cycle`);
+    if(!bundle.balance.progression && row.kind!==rules.cycle[(row.level-1)%rules.cycle.length])at(label,`kind '${row.kind}' breaks the cycle`);
     if(typeof row.ref!=='string' || !row.ref)at(label,'ref must be non-empty');
     if(seen.has(label))at(label,'duplicate row');
     seen.add(label);
@@ -80,12 +80,12 @@ export function classMasteryProblems(bundle) {
     for(const id of [cls.startingRelic,cls.kitRelic])if(rows.some(r=>r?.kind==='relic' && r.ref===id))at(`${cls.id}.${id}`,'starting relic cannot be gated');
     for(let level=1;level<=curve.maxLevel;level++){
       const levelRows=own.filter(r=>r.level===level);
-      if(!levelRows.length)at(`${cls.id}.${level}`,'level must unlock something');
-      if(levelRows.length>1 && levelRows[0].kind!=='cards')at(`${cls.id}.${level}`,'a non-card level unlocks one thing');
-      if(levelRows[0]?.kind==='cards' && levelRows.length>Math.ceil(gated.size/own.filter(r=>r.kind==='cards').map(r=>r.level).filter((v,i,a)=>a.indexOf(v)===i).length))at(`${cls.id}.${level}`,'card bundle exceeds the evenly divided bundle size');
+      if(!bundle.balance.progression && !levelRows.length)at(`${cls.id}.${level}`,'level must unlock something');
+      if(!bundle.balance.progression && levelRows.length>1 && levelRows[0].kind!=='cards')at(`${cls.id}.${level}`,'a non-card level unlocks one thing');
+      if(!bundle.balance.progression && levelRows[0]?.kind==='cards' && levelRows.length>Math.ceil(gated.size/own.filter(r=>r.kind==='cards').map(r=>r.level).filter((v,i,a)=>a.indexOf(v)===i).length))at(`${cls.id}.${level}`,'card bundle exceeds the evenly divided bundle size');
     }
     const coreFeats=[...feats.values()].filter(f=>f.skillId===`class:${cls.id}` && !own.some(r=>r.kind==='feat' && r.ref===f.id));
-    if(coreFeats.length<bundle.balance.skill.draftSize)at(`${cls.id}.feats`,'core class feats must fill draftSize');
+    if(!bundle.balance.progression && coreFeats.length<bundle.balance.skill.draftSize)at(`${cls.id}.feats`,'core class feats must fill draftSize');
     for(const hand of bundle.characterCreation?.classes?.[cls.id]?.handIds || []){
       const tags=tagsFor('armament',hand).filter(t=>schools.has(t));
       for(const rarity of Object.keys(bundle.balance.skill.rarityUnlock || {})){

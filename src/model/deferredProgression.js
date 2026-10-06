@@ -1,8 +1,8 @@
 import { rewardPlan } from './rewardplan.js';
 
-const FIELDS = { levelCard: 'levelCards', levelChoice: 'levelChoices', skillDraft: 'skillDrafts', skillRankUp: 'skillRankUps', skillAttribute: 'skillAttributes', skillFeat: 'skillFeats', classDraft: 'classDrafts' };
+const FIELDS = { classMilestone: 'classMilestoneRewards', levelCard: 'levelCards', levelChoice: 'levelChoices', skillDraft: 'skillDrafts', skillRankUp: 'skillRankUps', skillAttribute: 'skillAttributes', skillFeat: 'skillFeats', classDraft: 'classDrafts' };
 export const isProgressionReward = (row) => Object.hasOwn(FIELDS, row.kind);
-export const progressionTrack = (row) => row.kind === 'classDraft' ? `class:${row.classId}` : row.skillId || 'character';
+export const progressionTrack = (row) => ['classDraft','classMilestone'].includes(row.kind) ? `class:${row.classId}` : row.skillId || 'character';
 export const progressionRewardClass = (row) => row.classId || (row.skillId?.startsWith('class:') ? row.skillId.slice(6) : null);
 export function progressionRewardUnlocked(row, run) {
   if (!Number.isInteger(row.requiredLevel)) return true;
@@ -24,9 +24,11 @@ export function mergeProgressionRewards(saved = {}, incoming = {}, run, { manual
     }
     const fresh = (incoming[field] || []).flatMap((raw, i) => {
       const row = { ...structuredClone(raw), kind };
+      if (kind === 'classMilestone' && old.some(savedRow => savedRow.receiptId === row.receiptId)) return [];
       if (kind === 'levelChoice' && !row.classId && row.options?.some(option => option.kind === 'classNode')) row.classId = run.class;
       const track = progressionTrack(row);
-      if (reservedDrafts[track] > 0) { reservedDrafts[track]--; return []; }
+      if (kind === 'skillDraft' && row.offerId && old.some(savedRow => savedRow.offerId === row.offerId)) return [];
+      if (!row.offerId && reservedDrafts[track] > 0) { reservedDrafts[track]--; return []; }
       const requiredLevel = row.requiredLevel ?? (row.source === 'combat' ? run.level?.level || 1 : track === 'character'
         ? manual ? characterStart + (row.ordinal ?? i) + 1 : run.level?.level || 1
         : (run.skills?.[track]?.level || 0) + (row.claimOrdinal || 0));

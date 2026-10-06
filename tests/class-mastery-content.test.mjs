@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { contentBundle } from '../src/content/index.js';
+import { contentBundle as expandedBundle } from '../src/content/index.js';
+// Keep the pre-expansion regression suite on its actual saved content contract.
+const contentBundle = { ...expandedBundle, ...expandedBundle.legacyProgression, legacyProgression: undefined, balance: {...expandedBundle.balance, progression: undefined} };
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { validateContent } from '../src/model/validate.js';

@@ -1,3 +1,7 @@
+import { rollAbilityOffer } from './model/abilityOffers.js';
+import { isAbilitySkill } from './model/abilityGrades.js';
+import { expandedProgression } from './model/classMilestones.js';
+import { claimClassMilestoneReward, rollClassMilestoneRewards } from './model/classMilestoneOffers.js';
 import { completedRunMeta, commitRunFinish } from './model/runCompletion.js';
 import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
@@ -2240,6 +2244,7 @@ function remountMapIfShowing(changed) {
 
 function showMap(opts) {
   if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
+  if (run.initialProgressionPending) { delete run.initialProgressionPending; return showCharacterProgression(() => showMap(opts)); }
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
   const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon
@@ -2949,7 +2954,7 @@ async function onCombatEnd(result, combat, enc) {
 
   function withSourceBonuses(offer) {
     return runSourceRewardOffer(registries, rng, run, offer, {
-      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, flatRarity: chaosRewardsOn(),
+      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, flatRarity: chaosRewardsOn(), meta:saves.loadMeta(),
     });
   }
 }
@@ -3007,7 +3012,12 @@ function rollSkillDrafts(pool, includeBanked = false) {
     const queued = row.pendingDrafts || 0;
     const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
     for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
-      const level = row.level + banked;
+      const level = i < queued ? Math.max(1,row.level - queued + i + 1) : row.level + i - queued + 1;
+      if (expandedProgression(run) && isAbilitySkill(track.id)) {
+        const offer = rollAbilityOffer(registries,rng,run,{skillId:track.id,level,gradeLevel:row.level + banked,offerId:`ability:${track.id}:${level}`});
+        if (offer) out.push({...offer,claimOrdinal:i < queued ? 0 : i - queued + 1});
+        continue;
+      }
       const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
       // Each offered card arrives at its own rank (SPEC §13.4o), rolled now so
       // the offer, its save and its reload all show the same card.
@@ -3029,6 +3039,7 @@ function rollSkillRankUps(includeBanked = false) {
   for (const track of skillTracks(registries)) {
     const row = run.skills && run.skills[track.id];
     if (!row) continue;
+    if (expandedProgression(run) && isAbilitySkill(track.id)) continue;
     const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
     // The queued ones stand now; a banked level adds one when its claim
     // reaches a level that queues one (from 2 on), keyed by that claim.
@@ -3052,6 +3063,7 @@ function rollSkillAttributes(includeBanked = false) {
   const out = [];
   for (const track of skillTracks(registries)) {
     const row = run.skills && run.skills[track.id];
+    if (expandedProgression(run) && track.kind === 'class') continue;
     const attributeIds = skillLinkedAttributes(registries, track.id);
     if (!row || !attributeIds.length) continue;
     const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
@@ -3082,6 +3094,7 @@ function rollSkillFeats(includeBanked = false) {
       ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
         .filter((entry) => skillLevelQueuesSkillFeat(registries, track.id, entry.level)),
     ];
+    if (expandedProgression(run) && track.kind === 'class') continue;
     // One door never offers a feat twice (two rows could otherwise share the
     // only one, and the second could never land), and a pick with no feat
     // open does not use up the door's slot.
@@ -3089,7 +3102,7 @@ function rollSkillFeats(includeBanked = false) {
     let rows = 0;
     for (const entry of entries) {
       if (rows >= perDoor) break;
-      const featIds = skillFeatOptions(run, track.id, entry.level).filter((id) => !offered.has(id));
+      const featIds = skillFeatOptions(run, track.id, entry.level, registries).filter((id) => !offered.has(id));
       if (!featIds.length) continue;
       featIds.forEach((id) => offered.add(id));
       out.push({ skillId: track.id, ...entry, featIds });
@@ -3167,7 +3180,7 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
     onClaimSkill: (skillId) => {
-      const before = hasClassMastery(run) && skillId.startsWith('class:') ? { skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), classRewardLevels: { ...run.classRewardLevels } } : null;
+      const before = hasClassMastery(run) && skillId.startsWith('class:') ? { skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), classRewardLevels: { ...run.classRewardLevels }, ...(expandedProgression(run) ? {classMilestones:structuredClone(run.classMilestones || {})} : {}) } : null;
       const claim = claimBankedSkillLevel(registries, run, skillId);
       if (claim && before && run.classMasteryState.bankable) {
         const bank = saves.bankClassMastery(run, registries);
@@ -3181,9 +3194,20 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       }
       if (claim && skillId === classSkillId(run.class)) {
         run.classRewardLevels = { ...run.classRewardLevels, [run.class]: claim.after };
+        const added = mergeProgressionRewards(checkpoint.rewards,{skillDrafts:rollSkillDrafts('normal',true),classMilestoneRewards:rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,skillId),meta:saves.loadMeta()})},run);
+        Object.assign(checkpoint.rewards,added);
       }
       return claim;
     },
+    onClaimClassReward: (receiptId,selection) => claimClassMilestoneReward(registries,run,receiptId,selection,{meta:saves.loadMeta(),collectEquipment:ref => {
+      if (ref.startsWith('armament/')) return collectArmament(ref.slice(9),checkpoint.source);
+      const [,classId,id] = ref.split('/');
+      const piece = (registries.masterySource || registries).equipment.armour.find(row => row.classId === classId && row.id === id);
+      if (!piece) return false;
+      run.loadout.boughtArmour ||= [];
+      if (!run.loadout.boughtArmour.some(row => row.classId === classId && row.id === id)) run.loadout.boughtArmour.push({classId,id});
+      return true;
+    }}),
     onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
     onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,
@@ -3218,6 +3242,7 @@ function showCharacterProgression(returnTo) {
     skillAttributes: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(true) : [],
     skillFeats: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(true) : [],
     classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
+    classMilestoneRewards: expandedProgression(run) ? rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,classSkillId(run.class)),meta:saves.loadMeta()}) : [],
   }, run);
   const { available, deferred } = partitionProgressionRewards(rewards, run);
   run.pendingReward = pendingRewardCheckpoint(available, { source: 'character', after: 'map' });
