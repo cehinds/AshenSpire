@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "protectedPrefixes": [
+    "src/ui/",
+    "styles/",
+    "content/config/ui/",
+    "docs/design/combat-depth-2026-10-05/"
+  ],
+  "protectedFiles": [
+    "index.html",
+    "src/config/generated/ui.js",
+    "src/content/wireframeUi.js",
+    "docs/design/COMBAT-STUDIO-ALTERNATIVE.md"
+  ],
+  "artPrefixes": [
+    "docs/design/combat-depth-2026-10-05/masters/",
+    "docs/design/combat-depth-2026-10-05/layers/",
+    "docs/design/combat-depth-2026-10-05/library/"
+  ],
+  "artExtensions": [".png", ".webp", ".jpg", ".jpeg", ".svg", ".avif", ".gif"],
+  "artMetadata": [
+    "src/ui/alternativeArtCatalog.js",
+    "docs/design/combat-depth-2026-10-05/catalog.json",
+    "docs/design/combat-depth-2026-10-05/catalog-data.js",
+    "docs/design/combat-depth-2026-10-05/editor/library-data.js",
+    "docs/design/combat-depth-2026-10-05/review/asset-report.json",
+    "docs/design/combat-depth-2026-10-05/SHA256SUMS.txt",
+    "docs/design/combat-depth-2026-10-05/package-sha256.txt"
+  ]
+}
