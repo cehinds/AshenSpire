@@ -7738,6 +7738,34 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "characterSheet.grant.abilityDraft",
+    "extends": "",
+    "short": "Choose 1 of {n} families at rank {rank}; Intelligence may add a higher-rank option",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classMilestone",
+    "extends": "",
+    "short": "{reward} choice",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.skillXp",
+    "extends": "",
+    "short": "+{n} XP each: {tracks}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.levels",
+    "extends": "",
+    "short": "{reward} at levels {levels}.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "characterSheet.grant.classNodeDraft",
     "extends": "",
     "short": "Class-tree pick",

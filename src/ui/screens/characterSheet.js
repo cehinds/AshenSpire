@@ -13,7 +13,7 @@
 
 import { el, meter, openModal, button, pill, prose, rail, railItem, statusText, titleS } from '../kit/index.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
-import { characterSheetModel, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
+import { characterSheetModel, characterSheetRegistries, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
 import { levelProgress, skillProgressRows } from '../../model/progression.js';
 import { t } from '../strings.js';
 
@@ -31,7 +31,11 @@ export function grantText(grant) {
     case 'classFeat': return grant.pct >= 100 ? t('characterSheet.grant.featChoice') : t('characterSheet.grant.classFeatChance', { pct: grant.pct });
     case 'classCard': return grant.pct >= 100 ? t('characterSheet.grant.classCard') : t('characterSheet.grant.classCardChance', { pct: grant.pct });
     case 'levelCard': return t('characterSheet.grant.levelCard');
-    case 'cardDraft': return t('characterSheet.grant.cardDraft', { rank: grant.rank });
+    case 'cardDraft': return t(grant.ability ? 'characterSheet.grant.abilityDraft' : 'characterSheet.grant.cardDraft', { rank: grant.rank, n: grant.choices });
+    case 'classMilestone': return grant.rewardKind === 'attribute'
+      ? t('characterSheet.grant.attribute', { options: grant.options.join(' / ') })
+      : t('characterSheet.grant.classMilestone', { reward: t({ cards: 'characterSheet.grant.classCard', feat: 'characterSheet.grant.featNone', armory: 'armoury.title', relic: 'reward.kind.relic' }[grant.rewardKind]) });
+    case 'skillXp': return t('characterSheet.grant.skillXp', { n: grant.amount, tracks: grant.tracks.join(' / ') });
     case 'masteryUnlock': return `Unlocks ${grant.names.join(', ')}`;
     case 'classNodeDraft': return t('characterSheet.grant.classNodeDraft');
     case 'rarity': return t('characterSheet.grant.rarity', { rarity: RARITY_WORDS[grant.rarity] || grant.rarity });
@@ -95,6 +99,17 @@ export function cadenceLine(registries, track) {
   const parts = [];
   if (track.kind === 'class') {
     parts.push(t('characterSheet.cadence.classPick'));
+    if (track.expanded) {
+      const xp = track.rows[0]?.grants.find(grant => grant.kind === 'skillXp');
+      if (xp) parts.push(grantText(xp));
+      const rewardKinds = [...new Set(track.rows.flatMap(row => row.grants.filter(grant => grant.kind === 'classMilestone').map(grant => grant.rewardKind)))];
+      for (const kind of rewardKinds) {
+        const levels = track.rows.filter(row => row.grants.some(grant => grant.kind === 'classMilestone' && grant.rewardKind === kind));
+        parts.push(t('characterSheet.cadence.levels', { reward: grantText(levels[0].grants.find(grant => grant.kind === 'classMilestone' && grant.rewardKind === kind)), levels: levels.map(row => row.level).join(', ') }));
+      }
+      if (first('classTier') != null) parts.push(t('characterSheet.cadence.classTier'));
+      return parts.join(' ');
+    }
     const feat = track.rows[0] && track.rows[0].grants.find((g) => g.kind === 'classFeat');
     if (feat) parts.push(feat.pct >= 100 ? t('characterSheet.cadence.classFeat') : t('characterSheet.cadence.classFeatChance', { pct: feat.pct }));
     const card = track.rows[0] && track.rows[0].grants.find((g) => g.kind === 'classCard');
@@ -151,6 +166,7 @@ function skillsPane(registries, run, sheet, state) {
  * player's settings switch on (CharacterSheetModel DEFAULT_LEVEL_OFFERS).
  */
 export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, onRespec = null } = {}) {
+  registries = characterSheetRegistries(registries, run);
   const sheet = characterSheetModel(registries, run, { offers });
   let bodyHost = null;
   const state = { tab, track, show: null };
