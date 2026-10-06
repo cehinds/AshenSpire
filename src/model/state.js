@@ -725,6 +725,7 @@ export const RUN_SHAPE = [
   { key: 'skills', type: 'object' },
   { key: 'classMasteryState', type: 'object', optional: true },
   { key: 'pendingFinish', type: 'object', optional: true },
+  { key: 'quickStart', type: 'boolean', optional: true },
   // SPEC §14.1. Required at schema 11: the owned cards the deck editor took out
   // of the deck. A preSideboard save (≤ 10) is filled with none at the
   // migration door. `editMintCounter` keeps minted basics' instance ids unique;

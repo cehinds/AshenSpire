@@ -78,7 +78,7 @@ export function registriesForClassMastery(registries, run) {
     balance: { ...source.balance, skill: { ...source.balance.skill, class: { ...source.balance.skill.class,
       xp: { ...curve }, tierAt: source.balance.skill.class.tierAt.map((at, index) => index === 0 ? 0 : at) } } },
     classes: { ...source.classes, get: classRow, all: () => source.classes.all().map(cls => classRow(cls.id)) },
-    relics: { ...source.relics, all: () => source.relics.all().filter(row => open(row.id, ['relic'])) },
+    relics: { ...source.relics, all: () => source.relics.all().filter(row => open(row.id, ['relic'])), ids: () => source.relics.ids().filter(id => open(id, ['relic'])) },
     equipment: { ...source.equipment,
       get armaments() { return source.equipment.armaments.filter(row => open(`armament/${row.id}`, ['armament', 'weapon'])); },
       get armour() { return source.equipment.armour.filter(row => open(`armor/${row.classId}/${row.id}`, ['armament'])); },

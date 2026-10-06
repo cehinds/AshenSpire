@@ -222,6 +222,7 @@ export function quickStartRunConfig(registries) {
     attributeMode: row.attributeMode,
     startingRelicId: cls.startingRelic,
     skipOpening: row.skipOpening === true,
+    quickStart: true,
   };
 }
 

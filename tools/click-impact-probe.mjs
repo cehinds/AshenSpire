@@ -140,11 +140,12 @@ async function main() {
     // Pin the seed exactly as tools/quick-start-inputs.mjs does.
     await evalIn(`(() => { const real = Math.random; Math.random = () => { Math.random = real; return (${SEED} + 0.5) / 0xffffffff; }; return true; })()`);
     await click('.title-menu [data-title-action="quick-start"]', 'Quick start');
-    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.map-node.reachable'))`, 'the opening or the map');
+    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the opening, class tree or map');
     if (await evalIn(`!!document.querySelector('.prologue-screen')`)) {
       await evalIn(`(() => { const b = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent)); if (b) b.dataset.ciSkip = 'true'; return !!b; })()`);
       await click('[data-ci-skip="true"]', 'Skip opening');
     }
+    if (await evalIn(`!!document.querySelector('.class-mastery-node')`)) await click('.class-mastery-node', 'a tier 1 class-tree node');
     await until(`!!document.querySelector('.map-node.monster.reachable')`, 'a reachable fight');
     await click('.map-node.monster.reachable', 'a fight');
     for (let guard = 0; guard < 12 && !(await evalIn(`!!window.__combat && !!document.querySelector('.hand .card')`)); guard += 1) {

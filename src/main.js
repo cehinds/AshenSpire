@@ -1099,7 +1099,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1156,6 +1156,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
+  if (quickStart) run.quickStart = true;
   if (!shotState) {
     openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
     registries = registriesForClassMastery(registries, run);
@@ -2225,8 +2226,12 @@ function remountMapIfShowing(changed) {
 }
 
 function showMap(opts) {
-  if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts) });
-  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
+  if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
+  // Quick start previews its first fight after the required tree choice.
+  // Enter still confirms travel, and every other reachable route can be chosen.
+  const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon
+    ? run.mapGraph.startIds.find(id => run.mapGraph.nodes[id].type === 'monster') : null;
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : suggested;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
   if (run.legacyDungeon) return showLegacyDungeon({ selectedId });

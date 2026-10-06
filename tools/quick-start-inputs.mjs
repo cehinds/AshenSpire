@@ -189,7 +189,7 @@ async function main() {
 
   // From wherever a new climb lands (the opening or the map) to the first card play.
   const toFirstCardPlay = async () => {
-    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.map-node.reachable'))`, 'the opening sequence or the map');
+    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the opening sequence, class tree or map');
     if (await evalIn(`!!document.querySelector('.prologue-screen')`)) {
       const marked = await evalIn(`(() => {
         const b = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent));
@@ -200,6 +200,7 @@ async function main() {
       if (!marked) throw new Error('the opening sequence offers no Skip');
       await click('[data-qs-skip="true"]', 'Skip opening');
     }
+    if (await evalIn(`!!document.querySelector('.class-mastery-node')`)) await click('.class-mastery-node', 'a tier 1 class-tree node');
     await until(`!!document.querySelector('.map-node.monster.reachable')`, 'a reachable fight on the map');
     await click('.map-node.monster.reachable', 'a fight on the map');
     // A map node may ask to be confirmed; answer whatever the board asks, and count it.

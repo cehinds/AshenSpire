@@ -908,8 +908,8 @@ export function createSaveManager(storage) {
         // The heal is a schema migration: only a save written before schema
         // 20 can lack the marker. A schema-20 Sealed/Draft save without it
         // was not written by newRun, so it is refused by name.
-        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule') && run.migratedFromRunSchemaVersion === undefined) {
-          throw new Error(`a schema-${RUN_SCHEMA_VERSION} ${run.custom.deckMode} run is missing poolDeckRule`);
+        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule') && (run.migratedFromRunSchemaVersion === undefined || run.migratedFromRunSchemaVersion >= 20)) {
+          throw new Error(`a schema-${run.migratedFromRunSchemaVersion ?? RUN_SCHEMA_VERSION} ${run.custom.deckMode} run is missing poolDeckRule`);
         }
         if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule')) {
           const legacy = !(run.removedAttackSlotIds || []).length;

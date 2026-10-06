@@ -21,6 +21,7 @@ import { creationEquipmentSectionViews, creationHandChoices } from '../src/model
 import { completeQuest } from '../src/engine/quests.js';
 import { completedRunMeta } from '../src/model/runCompletion.js';
 import { createSession, restoreSession } from '../tools/session.mjs';
+import { executeRunEffects } from '../src/engine/actions.js';
 
 const source = createRegistries(configuredContentBundle(contentBundle));
 const freshMeta = () => createSaveManager(createMemoryStorage()).loadMeta();
@@ -44,6 +45,8 @@ test('fresh runs roll only core cards and ungated global equipment/relics', () =
       assert.ok(cards.every(id => !gated.some(row => row.kind === 'cards' && row.ref === id)));
       const relic = rollRelicReward(reg, rng, []);
       assert.ok(!gated.some(row => row.kind === 'relic' && row.ref === relic));
+      executeRunEffects({ run, registries: reg, rng }, [{ op: 'addRelic', random: true }]);
+      assert.ok(run.relics.every(id => !gated.some(row => row.kind === 'relic' && row.ref === id)));
       const item = rollArmamentDrop(reg, rng, { source: 'boss' });
       assert.ok(!gated.some(row => ['armament', 'weapon'].includes(row.kind) && row.ref === `armament/${item}`));
     }
