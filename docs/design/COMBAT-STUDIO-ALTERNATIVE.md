@@ -1,6 +1,7 @@
 # Alternative combat build
 
-- Branch: `codex/combat-studio-alternative`
+- Development branch: `alternative/dev`
+- Test branch: `alternative/test`
 - Base: `80015a879` (the approved card typography checkout).
 - Scope: Combat Studio authoring build, layered combat artwork, rear-view hero
   sprites, independent desktop/phone layouts, UI component editing, local
