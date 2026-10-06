@@ -143,3 +143,14 @@ test('shared utility lessons retain utility without invented attack primaries', 
     for (const p of card.gradeProfiles) assert(!p.effects.some(e => e.op === 'damage'), id);
   }
 });
+
+test('legacy existing faces keep their prior cost and effect recipes for explicit migration', () => {
+  for (const c of abilityCardUpdates) {
+    assert(c.legacyFace.effects.length > 0, c.id);
+    assert.equal(typeof c.legacyFace.textTemplate, 'string');
+  }
+  assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').legacyFace.cost, 0);
+  assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').manaCost, 1);
+  assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').legacyFace.manaCost, 0);
+  assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').manaCost, 2);
+});

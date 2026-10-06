@@ -18,11 +18,6 @@ export const cardExposure = [
     "exposureBuildupPerHit": 0
   },
   {
-    "cardId": "quickCut",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
     "cardId": "twinPrick",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
@@ -39,11 +34,6 @@ export const cardExposure = [
   },
   {
     "cardId": "ricochet",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
-    "cardId": "lowBlow",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -98,32 +88,7 @@ export const cardExposure = [
     "exposureBuildupPerHit": 0
   },
   {
-    "cardId": "crimsonCleave",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
-    "cardId": "shieldBash",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
-    "cardId": "guardCounter",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
     "cardId": "serratedBlade",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
-    "cardId": "riposte",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
-    "cardId": "rend",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -133,17 +98,7 @@ export const cardExposure = [
     "exposureBuildupPerHit": 0
   },
   {
-    "cardId": "stomp",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
     "cardId": "twinbladeFlurry",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
-    "cardId": "kickOff",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -188,32 +143,7 @@ export const cardExposure = [
     "exposureBuildupPerHit": 0
   },
   {
-    "cardId": "poiseBreaker",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
-    "cardId": "sunderplate",
-    "damageSchool": "physical",
-    "exposureBuildupPerHit": 0
-  },
-  {
     "cardId": "starstonePebble",
-    "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
-  },
-  {
-    "cardId": "cometFragment",
-    "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
-  },
-  {
-    "cardId": "starbladePhalanx",
-    "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
-  },
-  {
-    "cardId": "starShower",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 1
   },
@@ -226,16 +156,6 @@ export const cardExposure = [
     "cardId": "starlance",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 1
-  },
-  {
-    "cardId": "frostNova",
-    "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
-  },
-  {
-    "cardId": "starstoneArc",
-    "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "moonrendCut",
@@ -256,11 +176,6 @@ export const cardExposure = [
     "cardId": "astralCleave",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 5
-  },
-  {
-    "cardId": "radiantSpray",
-    "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
   },
   {
     "cardId": "supernova",
@@ -298,11 +213,6 @@ export const cardExposure = [
     "exposureBuildupPerHit": 1
   },
   {
-    "cardId": "blightTouch",
-    "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
-  },
-  {
     "cardId": "flagellation",
     "damageSchool": "arcane",
     "exposureBuildupPerHit": 1
@@ -333,11 +243,6 @@ export const cardExposure = [
     "exposureBuildupPerHit": 1
   },
   {
-    "cardId": "scourge",
-    "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
-  },
-  {
     "cardId": "crimsonRite",
     "damageSchool": "arcane",
     "exposureBuildupPerHit": 5
@@ -361,11 +266,6 @@ export const cardExposure = [
     "cardId": "witheringTouch",
     "damageSchool": "arcane",
     "exposureBuildupPerHit": 5
-  },
-  {
-    "cardId": "desperateRite",
-    "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
   },
   {
     "cardId": "bloodOfferingRite",
@@ -463,16 +363,6 @@ export const cardExposure = [
     "exposureBuildupPerHit": 0
   },
   {
-    "cardId": "cinderSigil",
-    "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
-  },
-  {
-    "cardId": "ashenMote",
-    "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
-  },
-  {
     "cardId": "pyreOfCharts",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 5
@@ -491,5 +381,225 @@ export const cardExposure = [
     "cardId": "pyreLight",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-ember-hew",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-breaker-s-toll",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-furnace-advance",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-crimson-reprisal",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-ashen-cleaver",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-cinder-orbit",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "progression-comet-needle",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-falling-constellation",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-gravitic-knot",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-eclipse-lance",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-shiv-of-ash",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-needle-feint",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-back-alley-cut",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-wire-snare",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-carrion-cut",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-twinshade",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-last-laugh",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-blood-censer",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "progression-blight-litany",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-ember-tithe",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-requiem-brand",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-crown-of-scars",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "cometFragment",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "ashenMote",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "cinderSigil",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "starstoneArc",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "blightTouch",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "crimsonCleave",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "shieldBash",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "guardCounter",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "riposte",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "rend",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "quickCut",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "starbladePhalanx",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "starShower",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "frostNova",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "radiantSpray",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "scourge",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "desperateRite",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "stomp",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "kickOff",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "sunderplate",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "poiseBreaker",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "lowBlow",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   }
 ];

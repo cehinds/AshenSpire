@@ -8,8 +8,8 @@ const block = (amount, extra = {}) => ({ op: 'block', target: 'self', amount, ..
 const draw = (amount, extra = {}) => ({ op: 'draw', amount, ...extra });
 const status = (id, stacks, extra = {}) => ({ op: 'applyStatus', target: 'enemy', status: id, stacks, ...extra });
 const metric = (name, atLeast = 1, extra = {}) => ({ p: 'turnMetric', metric: name, atLeast, ...extra });
-const has = (id, of = 'target') => ({ p: 'hasStatus', of, status: id });
-const lowHp = (of = 'self') => ({ p: 'hpBelowPct', of, pct: 50 });
+const has = (id, of = 'target') => ({ p: 'hasStatus', of, status: id, snapshot: 'beforePlay' });
+const lowHp = (of = 'self') => ({ p: 'hpBelowPct', of, pct: 50, snapshot: 'beforePlay' });
 const all = (...preds) => ({ p: 'all', preds });
 const any = (...preds) => ({ p: 'any', preds });
 const charge = (key, extra) => ({ op: 'grantCardCharge', target: 'self', key, ...extra });
@@ -19,7 +19,7 @@ const offering = (amount) => ({ op: 'loseHp', target: 'self', amount, nonlethal:
 // are composed below, with no engine branch naming one of these families.
 const riders = {
   'ember-hew': () => [status('bleed', 2)],
-  'cinder-guard': () => [charge('guarded-strike', { cardType: 'attack', damage: 3, if: { p: 'hasBlock', of: 'self' } })],
+  'cinder-guard': () => [charge('guarded-strike', { cardType: 'attack', damage: 3, if: { p: 'hasBlock', of: 'self', snapshot: 'beforePlay' } })],
   bloodstep: () => [draw(1, { if: has('bleed') })],
   'breaker-s-toll': () => [{ op: 'poiseDamage', target: 'enemy', amount: 4 }],
   'furnace-advance': () => [damage(4, 'enemy', { if: metric('tagPlays', 1, { tag: 'guard' }) })],
@@ -41,8 +41,8 @@ const riders = {
   'shiv-of-ash': () => [damage(3, 'enemy', { if: { p: 'firstCardThisTurn' } })],
   'pocket-coil': () => [draw(1, { if: metric('discarded') })],
   'needle-feint': () => [status('weak', 1)],
-  'back-alley-cut': () => [damage(4, 'enemy', { if: { p: 'not', pred: { p: 'hasBlock', of: 'target' } } })],
-  'silent-exchange': () => [draw(2), { op: 'discard', amount: 1, random: false }],
+  'back-alley-cut': () => [damage(4, 'enemy', { if: { p: 'not', pred: { p: 'hasBlock', of: 'target', snapshot: 'beforePlay' } } })],
+  'silent-exchange': () => [draw(2), { op: 'discard', amount: 1, choose: true }],
   'wire-snare': () => [status('bleed', 3, { if: any(has('weak'), has('vulnerable')) })],
   nightstep: () => [charge('smoke-edge', { cardType: 'attack', cardTag: 'blade', damage: 3 })],
   'carrion-cut': () => [damage(4, 'enemy', { if: lowHp('target') })],
@@ -82,7 +82,10 @@ export function familyGrade(family, rank) {
   const effects = [...before, primaryEffect, ...after];
   if (rank >= 4) effects.push(block(2, { oncePerTurn: 'grade-block' }));
   if (rank >= 5) effects.push(draw(1, { oncePerTurn: 'grade-draw' }));
-  return { rank, actionCost: family.actionCosts[rank], manaCost: rank, effects, textTemplate: recipeText(effects) };
+  const magical = ['starseer', 'herald'].includes(family.classId);
+  return { rank, actionCost: family.actionCosts[rank], manaCost: rank, effects, textTemplate: recipeText(effects),
+    ...(family.primary === 'damage' ? { traits: { damageSchool: magical ? 'magic' : 'physical', exposureBuildupPerHit: magical ? (rank > 0 ? 5 : 1) : 0 } } : {}),
+  };
 }
 
 export const progressionCards = cardFamilies.map(family => {
@@ -97,7 +100,7 @@ export const progressionCards = cardFamilies.map(family => {
     abilityKind: ['starseer', 'herald'].includes(family.classId) ? 'spell' : 'maneuver',
     abilityRank: family.abilityRank, abilityFamily: family.id,
     effects: base.effects, textTemplate: base.textTemplate, gradeProfiles,
-    ...(['starseer', 'herald'].includes(family.classId) ? { damageSchool: 'magic' } : {}),
+    ...base.traits,
   };
 });
 

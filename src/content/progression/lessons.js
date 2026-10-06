@@ -56,7 +56,7 @@ const recipes = [
 ];
 
 function lessonGrade(recipe, rank) {
-  const [id, , , actionCost, primaryIndex, values] = recipe;
+  const [id, abilityKind, , actionCost, primaryIndex, values] = recipe;
   const original = originals.get(id);
   const primary = structuredClone(original.effects[primaryIndex]);
   const field = primary.op === 'applyStatus' ? 'stacks' : 'amount';
@@ -80,15 +80,22 @@ function lessonGrade(recipe, rank) {
   const effects = [primary, ...riderEffects];
   if (rank >= 4) effects.push({ op: 'block', target: 'self', amount: 2, oncePerTurn: 'grade-block' });
   if (rank >= 5) effects.push({ op: 'draw', amount: 1, oncePerTurn: 'grade-draw' });
-  return { rank, actionCost: rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0)), manaCost: rank, effects, textTemplate: recipeText(effects) };
+  return { rank, actionCost: rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0)), manaCost: rank, effects, textTemplate: recipeText(effects),
+    ...(original.effects.some(e => e.op === 'damage') ? { traits: { damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } } : {}),
+  };
 }
 
 export const abilityCardUpdates = recipes.map(recipe => {
   const [id, abilityKind, abilityRank] = recipe;
+  const original = originals.get(id);
   const gradeProfiles = Array.from({ length: 6 }, (_, rank) => lessonGrade(recipe, rank));
   const base = gradeProfiles[abilityRank];
   return { id, abilityKind, abilityRank, abilityFamily: id, gradeProfiles,
+    legacyFace: { cost: original.cost, manaCost: original.manaCost || 0, effects: structuredClone(original.effects), textTemplate: original.textTemplate,
+      ...(original.upgrade ? { upgrade: structuredClone(original.upgrade) } : {}),
+    },
     cost: base.actionCost, manaCost: base.manaCost, effects: base.effects, textTemplate: base.textTemplate,
+    ...base.traits,
     // A rank recipe replaces the old upgrade recipe; never layer its old
     // free-resource effects back on top of a resolved ability grade.
     upgrade: {},
