@@ -14,6 +14,7 @@ const [{ contentBundle }, { createRegistries, resolveCard }, { createCombat, dis
   engineModule('src/content/index.js'), engineModule('src/model/registries.js'), engineModule('src/engine/combat.js'), engineModule('src/engine/actions.js'), engineModule('src/engine/rng.js'), engineModule('src/framework/statusSemantics.js'),
   engineModule('src/model/validate.js'),
 ]);
+const { createCoopCombat, playCard: coopPlay, previewCoopCard } = await engineModule('src/engine/coopCombat.js');
 
 const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards.filter(c => !progressionCards.some(n => n.id === c.id)), ...progressionCards] });
 const byName = name => progressionCards.find(c => c.name === name);
@@ -182,5 +183,53 @@ test('every authored family grade completes a paid real play in the assembled en
     }
     assert.equal(combat.eventLog.filter(e => e.type === 'cardResolved').length, 1, `${card.name}/${profile.rank}`);
     assert.equal(combat.player.mana, 100 - profile.rank + (card.id === 'progression-wellspring-sigil' && profile.rank >= 2 ? 1 : 0));
+  }
+});
+
+test('mounted feat buildup applies at low and high grades with solo and co-op preview parity', { skip: !engineRoot }, () => {
+  for (const coop of [false, true]) for (const rank of [0, 3]) for (const [name, feat, status] of [
+    ['Rime Mirror', 'progression-mirror-of-rime', 'frost'],
+    ['Blight Litany', 'progression-sower-of-blight', 'crimsonBlight'],
+  ]) {
+    const player = { id: 'p1', classId: 'herald', maxHp: 100, hp: 50, maxMana: 100, mana: 100, energyMax: 100, drawPerTurn: 0, relicIds: [], skillFeats: [feat], deck: [] };
+    const combat = coop ? createCoopCombat({ registries, rng: createRng(13), players: [{ ...player, id: 'a' }, { ...player, id: 'b', skillFeats: [] }], enemyIds: ['wanderingSoldier', 'wanderingSoldier'] }) : createCombat({ registries, rng: createRng(13), player, enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
+    combat.enemies.forEach(enemy => { enemy.hp = enemy.maxHp = 1000; enemy.block = 0; });
+    const card = byName(name);
+    const instance = { instanceId: 'charged-grade', cardId: card.id, upgraded: false, abilityRank: rank };
+    const piles = coop ? combat.players.get('a').piles : combat.piles;
+    piles.hand.push(instance);
+    const face = resolveCard(registries, instance);
+    const base = face.effects.find(effect => effect.op === 'applyStatus' && effect.status === status)?.stacks || 0;
+    const aimed = combat.enemies[1];
+    const preview = coop ? previewCoopCard(combat, 'a', instance.instanceId, aimed.id) : previewCard(combat, instance.instanceId, aimed.id);
+    assert.equal(preview.values.find(value => value.status === status)?.value, base + 2, `${name}/${rank}/${coop}`);
+    if (coop) coopPlay(combat, 'a', instance.instanceId, aimed.id); else dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: aimed.id });
+    assert.equal(getStacks(aimed, status), base + 2, `${name}/${rank}/${coop}`);
+    const source = coop ? combat.players.get('a').entity : combat.player;
+    assert.deepEqual(source.abilityRiders.charges, {});
+    if (rank === 0) assert.equal(getStacks(combat.enemies[0], status), 0, 'supplement follows the selected target');
+  }
+});
+
+test('Broad Sentence reads actual grade area in preparing previews and real plays', { skip: !engineRoot }, () => {
+  for (const coop of [false, true]) for (const rank of [0, 3]) {
+    const card = byName('Ashen Cleaver');
+    const make = skillFeats => {
+      const player = { id: 'p1', classId: 'reaver', maxHp: 100, hp: 50, maxMana: 100, mana: 100, energyMax: 100, drawPerTurn: 0, relicIds: [], skillFeats, deck: [] };
+      const combat = coop ? createCoopCombat({ registries, rng: createRng(13), players: [{ ...player, id: 'a' }, { ...player, id: 'b', skillFeats: [] }], enemyIds: ['wanderingSoldier', 'wanderingSoldier'] }) : createCombat({ registries, rng: createRng(13), player, enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
+      combat.enemies.forEach(enemy => { enemy.hp = enemy.maxHp = 1000; enemy.block = 0; });
+      const instance = { instanceId: 'area-grade', cardId: card.id, upgraded: false, abilityRank: rank };
+      (coop ? combat.players.get('a').piles : combat.piles).hand.push(instance);
+      return combat;
+    };
+    const preview = combat => coop ? previewCoopCard(combat, 'a', 'area-grade', combat.enemies[0].id) : previewCard(combat, 'area-grade', combat.enemies[0].id);
+    const baseline = preview(make([])).values.find(value => value.op === 'damage').value;
+    const combat = make(['progression-broad-sentence']);
+    const damage = preview(combat).values.find(value => value.op === 'damage').value;
+    assert.equal(damage, baseline + (rank >= 3 ? 2 : 0), `grade ${rank}, coop ${coop}`);
+    if (coop) coopPlay(combat, 'a', 'area-grade', combat.enemies[0].id); else dispatch(combat, { type: 'playCard', cardInstanceId: 'area-grade', targetId: combat.enemies[0].id });
+    assert.equal(1000 - combat.enemies[0].hp, damage);
+    assert.equal(1000 - combat.enemies[1].hp, rank >= 3 ? damage : 0);
+    assert.equal(combat.eventLog.find(event => event.type === 'cardPreparing').cardTargetsAllEnemies, rank >= 3);
   }
 });

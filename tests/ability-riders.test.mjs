@@ -196,3 +196,43 @@ test('explicit-discard predicates exclude overflow and end-turn cleanup even aft
   assert.equal(evalPredicate(combat, { p: 'turnMetric', metric: 'discarded', atLeast: 1 }, { event }), false);
   assert.equal(evalPredicate(combat, { p: 'turnMetric', metric: 'discarded', atLeast: 1, snapshot: 'current' }, { event }), true);
 });
+
+test('buildup charges supply a missing low-grade status and augment an authored status once in solo and co-op', () => {
+  for (const coop of [false, true]) for (const existing of [false, true]) {
+    const effects = [{ op: 'block', target: 'self', amount: 4 }, ...(existing ? [{ op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 }] : [])];
+    const combat = fixture(effects, { coop });
+    const source = coop ? combat.players.get('a').entity : combat.player;
+    const piles = coop ? combat.players.get('a').piles : combat.piles;
+    const id = piles.hand[0].instanceId;
+    grantAbilityCharge(source, { key: 'rime', abilityKind: 'spell', buildupStatus: 'frost', buildup: 2 });
+    const snapshot = () => JSON.stringify({ source, enemies: combat.enemies, hand: piles.hand, events: combat.eventLog, rng: combat.rng.getCounters() });
+    const saved = snapshot();
+    const preview = coop ? previewCoopCard(combat, 'a', id) : previewCard(combat, id);
+    assert.equal(preview.needsTarget, true);
+    assert.equal(preview.values.find(value => value.status === 'frost').value, existing ? 5 : 2);
+    assert.equal(snapshot(), saved);
+    if (coop) playCard(combat, 'a', id); else dispatch(combat, { type: 'playCard', cardInstanceId: id });
+    assert.equal(getStacks(combat.enemies[0], 'frost'), existing ? 5 : 2);
+    assert.equal(combat.eventLog.filter(event => event.type === 'statusApplied' && event.status === 'frost').length, 1);
+    assert.deepEqual(source.abilityRiders.charges, {});
+  }
+});
+
+test('a supplemental buildup honors explicit targets, rejects dead targets atomically and preserves an unusable charge', () => {
+  const combat = fixture([{ op: 'block', target: 'self', amount: 4 }]);
+  grantAbilityCharge(combat.player, { key: 'rime', buildupStatus: 'frost', buildup: 2 });
+  combat.enemies[0].alive = false;
+  const id = combat.piles.hand[0].instanceId;
+  const saved = JSON.stringify(serializeCombatSnapshot(combat));
+  assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: combat.enemies[0].id }), /Invalid target/);
+  assert.equal(JSON.stringify(serializeCombatSnapshot(combat)), saved);
+  assert.equal(previewCard(combat, id).values.some(value => value.status === 'frost'), false);
+  dispatch(combat, { type: 'playCard', cardInstanceId: id });
+  assert.equal(combat.player.abilityRiders.charges.rime.buildup, 2);
+});
+
+test('area predicates respect the resolved event face before the default registry face', () => {
+  const combat = fixture([{ op: 'damage', target: 'allEnemies', amount: 3 }]);
+  assert.equal(evalPredicate(combat, { p: 'cardTargetsAllEnemies' }, { event: { cardId: 'defend', cardTargetsAllEnemies: false } }), false);
+  assert.equal(evalPredicate(combat, { p: 'cardTargetsAllEnemies' }, { event: { cardId: 'defend', cardTargetsAllEnemies: true } }), true);
+});

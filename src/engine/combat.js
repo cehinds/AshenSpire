@@ -1046,7 +1046,7 @@ function preparingPreview(combat, inst, def, targetId) {
   if (clone.foundation) { clone.foundation.actionSerial++; clone.foundation.eventCount = 0; clone.foundation.rolls = {}; clone.foundation.counts = {}; }
   clone._buffer = null;
   const target = targetId ? findEntity(clone, targetId) : clone.enemies.find(e => e.alive);
-  clone.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: cardKind(def), cardTags: def.cardTags || def.tags || [], abilityKind: def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver'), sourceId: clone.player.id, targetId: target?.id || null, ...R.beforeAbilityPlay(clone, clone.player) });
+  clone.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: cardKind(def), cardTags: def.cardTags || def.tags || [], abilityKind: def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver'), sourceId: clone.player.id, targetId: target?.id || null, ...R.beforeAbilityPlay(clone, clone.player), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) });
   drainQueue(clone);
   return clone;
 }
@@ -1121,11 +1121,16 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
     ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
   };
   const sourceSnapshots = F.cardSourceSnapshots(combat, def, p, cardRef);
-  const before = R.beforeAbilityPlay(combat, p);
+  const before = { ...R.beforeAbilityPlay(combat, p), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) };
   A.preflightCardHp(combat, def, p, target, before);
   combat.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.authoredTags, abilityKind: cardRef.abilityKind, sourceId: p.id, targetId: target?.id || null, ...before });
   drainQueue(combat);
-  const charges = R.matchingAbilityCharges(p, cardRef);
+  const charges = R.matchingAbilityCharges(p, cardRef, { enemyAvailable: combat.enemies.some(e => e.alive) });
+  const chargedEffects = R.abilityChargedEffects(def.effects || [], charges, combat.enemies.some(e => e.alive));
+  if (chargedEffects !== def.effects) {
+    if (target && target.kind !== 'enemy') throw new Error('Buildup charge requires a living enemy target');
+    target ||= combat.enemies.find(e => e.alive) || null;
+  }
   ({ energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def));
   if (p.energy < cost || p.mana < manaCost) throw new Error('Card preparation made this play unaffordable');
 
@@ -1164,7 +1169,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
   if (charges.keys.length) combat.emit('cardChargeConsumed', { keys: charges.keys, cardId: inst.cardId, sourceId: p.id });
   combat.pendingAbilityPlay = { instance: inst, ref: cardRef, kind, printedManaCost: def.manaCost || 0, targetId: target?.id || null, before };
   const charged = new Set();
-  for (const [index, action] of F.cardActions(combat, def, p, target, cardRef, meta, sourceSnapshots).entries()) {
+  for (const [index, action] of F.cardActions(combat, { ...def, effects: chargedEffects }, p, target, cardRef, meta, sourceSnapshots).entries()) {
     action.meta = { ...action.meta, abilityEffectIndex: index };
     R.attachAbilityCharges(action, charges, charged);
     combat.enqueue(action);
@@ -1322,10 +1327,16 @@ export function previewCard(combat, cardInstanceId, targetId) {
 
   const values = [];
   const tokens = {};
-  const charges = R.matchingAbilityCharges(p, action.card);
+  const charges = R.matchingAbilityCharges(p, action.card, { enemyAvailable: living.length > 0 });
+  const chargedEffects = R.abilityChargedEffects(def.effects || [], charges, living.length > 0);
+  if (chargedEffects !== def.effects) {
+    if (target && (!target.alive || target.kind !== 'enemy')) throw new Error('Buildup charge requires a living enemy target');
+    action.target ||= living[0] || null;
+  }
   const applied = new Set();
-  (def.effects || []).forEach((eff, i) => {
+  chargedEffects.forEach((eff, i) => {
     if (typeof eff.op !== 'string') return;
+    const authoredIndex = (def.effects || []).indexOf(eff);
     const entry = { op: eff.op, target: eff.target || null };
     const primary = firstResolvedTarget(combat, action, eff);
     action.effect = eff;
@@ -1405,7 +1416,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
       }
       case 'grantCardCharge': {
         for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) {
-          const token = tokenByIndexField.get(`${i}:${field}`);
+          const token = tokenByIndexField.get(`${authoredIndex}:${field}`);
           if (token) tokens[token] = Math.max(0, evalPreview(combat, action, eff[field], primary));
         }
         entry.value = null;
@@ -1416,12 +1427,12 @@ export function previewCard(combat, cardInstanceId, targetId) {
     }
     if (entry.value != null) {
       const valueField = eff.op === 'applyStatus' ? 'stacks' : eff.op === 'loseMaxHpPct' ? 'pct' : 'amount';
-      const token = tokenByIndexField.get(`${i}:${valueField}`);
+      const token = tokenByIndexField.get(`${authoredIndex}:${valueField}`);
       if (token) {
         entry.token = token;
         tokens[token] = entry.value;
       }
-      const hitsToken = tokenByIndexField.get(`${i}:hits`);
+      const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
       if (hitsToken && entry.hits != null) tokens[hitsToken] = entry.hits;
     }
     values.push(entry);
@@ -1437,7 +1448,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     manaCost: playCosts(combat, def).mana,
     // The stamina badge in a fight is the class-priced one for the pure dodge.
     staminaCost: shownCost,
-    needsTarget: needsEnemyTarget(def),
+    needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,
     tokens,
   };

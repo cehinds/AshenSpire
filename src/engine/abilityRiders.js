@@ -84,9 +84,28 @@ function chargeMatches(charge, card) {
     && (!charge.abilityKind || charge.abilityKind === card.abilityKind);
 }
 
-export function matchingAbilityCharges(entity, card) {
-  const entries = Object.entries(entity?.abilityRiders?.charges || {}).filter(([, charge]) => chargeMatches(charge, card));
+export function matchingAbilityCharges(entity, card, { enemyAvailable = true } = {}) {
+  const entries = Object.entries(entity?.abilityRiders?.charges || {}).filter(([, charge]) => chargeMatches(charge, card)
+    && (enemyAvailable || !charge.buildup || ['damage', 'manaDiscount', 'block', 'heal', 'break'].some(field => charge[field] > 0)));
   return { keys: entries.map(([key]) => key), ...Object.fromEntries(['damage', 'manaDiscount', 'block', 'heal', 'break'].map(field => [field, entries.reduce((sum, [, charge]) => sum + (field === 'damage' && charge.damageScope === 'effect' ? 0 : charge[field] || 0), 0)])), damageEffect: entries.reduce((sum, [, charge]) => sum + (charge.damageScope === 'effect' ? charge.damage || 0 : 0), 0), buildupBonuses: entries.filter(([, c]) => c.buildup).map(([, c]) => ({ status: c.buildupStatus, amount: c.buildup })) };
+}
+
+export function cardTargetsAllEnemies(def) {
+  return (def.effects || []).some(effect => effect.op === 'damage' && effect.target === 'allEnemies');
+}
+
+// A buildup charge augments the first authored application of its status. If
+// this grade has no application yet, add one after its primary effect. A pure
+// guard may therefore apply its charged buildup to the selected living enemy,
+// or the first living enemy when the play has no selection.
+export function abilityChargedEffects(effects, charges, enemyAvailable = true) {
+  if (!enemyAvailable) return effects;
+  const missing = [...new Set((charges.buildupBonuses || []).map(bonus => bonus.status))]
+    .filter(status => !effects.some(effect => effect.op === 'applyStatus' && effect.status === status));
+  if (!missing.length) return effects;
+  const primary = effects.findIndex(effect => ['damage', 'block', 'heal'].includes(effect.op));
+  const index = primary < 0 ? effects.length : primary + 1;
+  return [...effects.slice(0, index), ...missing.map(status => ({ op: 'applyStatus', target: 'enemy', status, stacks: 0 })), ...effects.slice(index)];
 }
 
 export function consumeAbilityCharges(entity, keys) {

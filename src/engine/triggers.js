@@ -28,6 +28,7 @@ export function emitEvent(ctx, type, payload = {}) {
     cardId: action.card.cardId, cardInstanceId: action.card.instanceId, cardType: action.card.type,
     cardTags: action.card.authoredTags || action.card.tags || [], abilityKind: action.card.abilityKind,
     abilityBefore: action.meta?.abilityBefore, abilityEntities: action.meta?.abilityEntities,
+    cardTargetsAllEnemies: action.meta?.cardTargetsAllEnemies,
     sourceId: action.source?.id, sourceKind: action.source?.kind, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}),
     ...payload,
   };
@@ -324,6 +325,8 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     case 'cardAbilityKindIs':
       return (pctx.card?.abilityKind || pctx.event?.abilityKind) === pred.kind;
     case 'cardTargetsAllEnemies': {
+      if (pctx.card?.targetsAllEnemies != null) return pctx.card.targetsAllEnemies;
+      if (pctx.event?.cardTargetsAllEnemies != null) return pctx.event.cardTargetsAllEnemies;
       const id = pctx.card?.cardId || pctx.event?.cardId;
       const def = id && ctx.registries.cards.get(id);
       return !!def?.effects?.some(effect => effect.op === 'damage' && effect.target === 'allEnemies');

@@ -503,7 +503,10 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     connected: entry.connected,
     ended: entry.ended,
   })));
-  if (friendlyPlan.active) targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);
+  // A preparing property can add hostile buildup to a self-only grade. Read
+  // the same detached preview the client sees before routing friendly aims.
+  const chargedEnemyTarget = friendlyPlan.active && previewCoopCard(C, C.playerKey, inst.instanceId, targetId).needsTarget;
+  if (friendlyPlan.active && !chargedEnemyTarget) targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);
 
   let target = null;
   if (targetId != null) {
@@ -516,7 +519,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
       target = findEntity(C, targetId);
       if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`);
     }
-  } else if (needsEnemyTarget(def)) {
+  } else if (needsEnemyTarget(def) || chargedEnemyTarget) {
     target = C.enemies.find((e) => e.alive) || null;
     if (!target) throw new Error('No living enemy to target');
   }
@@ -547,11 +550,16 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
   };
   const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef);
-  const before = R.beforeAbilityPlay(C, p);
+  const before = { ...R.beforeAbilityPlay(C, p), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) };
   A.preflightCardHp(C, def, p, target, before);
   C.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.authoredTags, abilityKind: cardRef.abilityKind, sourceId: p.id, sourcePlayerId: C.playerKey, playerId: C.playerKey, targetId: target?.id || null, ...before });
   drainQueue(C);
-  const charges = R.matchingAbilityCharges(p, cardRef);
+  const charges = R.matchingAbilityCharges(p, cardRef, { enemyAvailable: C.enemies.some(e => e.alive) });
+  const chargedEffects = R.abilityChargedEffects(def.effects || [], charges, C.enemies.some(e => e.alive));
+  if (chargedEffects !== def.effects) {
+    if (target && target.kind !== 'enemy') throw new Error('Buildup charge requires a living enemy target');
+    target ||= C.enemies.find(e => e.alive) || null;
+  }
   manaCost = Math.max(0, pools.mana - charges.manaDiscount);
   if (p.energy < cost || p.mana < manaCost) throw new Error('Not enough stamina or Mana to play this card');
 
@@ -581,7 +589,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   if (charges.keys.length) C.emit('cardChargeConsumed', { keys: charges.keys, cardId: inst.cardId, sourceId: p.id, sourcePlayerId: C.playerKey, playerId: C.playerKey });
   C.pendingAbilityPlay = { instance: inst, ref: cardRef, kind, printedManaCost: def.manaCost || 0, targetId: target?.id || null, playerId: C.playerKey, before };
   const charged = new Set();
-  for (const [index, action] of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots).entries()) {
+  for (const [index, action] of F.cardActions(C, { ...def, effects: chargedEffects }, p, target, cardRef, meta, sourceSnapshots).entries()) {
     action.meta = { ...action.meta, abilityEffectIndex: index };
     R.attachAbilityCharges(action, charges, charged);
     C.enqueue(action);
