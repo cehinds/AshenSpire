@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Alternative combat keeps its own battlefield** ([#1668](https://github.com/cehinds/AshenSpire/pull/1668), `0.7.1.1034`). New dev changes flow into alternative/dev after a protected merge verifies that its battlefield, HUD, cards and footer stay unchanged. Background and sprite updates remain eligible; unrelated conflicts stop for review. The pipeline builds and publishes the updated alternative preview.
+
 - **Alternative previews stay current without losing their changes** ([#1667](https://github.com/cehinds/AshenSpire/pull/1667), `0.7.1.1033`). Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.
 
 - **Plans: modular class rewards and retraining** ([#1666](https://github.com/cehinds/AshenSpire/pull/1666), `0.7.1.1032`). The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.
