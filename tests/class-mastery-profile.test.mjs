@@ -141,3 +141,15 @@ test('two thousand receipts survive mirror recovery and cannot pay again', () =>
   assert.equal(recovered.bankClassMastery(run('finished-0', 10), registry).changed, false);
   assert.equal(recovered.loadMeta().classMastery.reaver.xp, 20000);
 });
+
+test('inherited object method names are durable ordinary receipt IDs', () => {
+  const storage = store();
+  const saves = createSaveManager(storage);
+  for (const id of ['toString', 'hasOwnProperty', 'valueOf']) {
+    assert.equal(saves.bankClassMastery(run(id, 50, 1), registry).ok, true);
+    assert.equal(Object.hasOwn(saves.loadMeta().classMasteryReceipts, id), true);
+  }
+  assert.equal(Object.prototype.toString.reaver, undefined);
+  assert.equal(createSaveManager(storage).bankClassMastery(run('toString', 50, 1), registry).changed, false);
+  assert.equal(saves.loadMeta().classMastery.reaver.xp, 150);
+});
