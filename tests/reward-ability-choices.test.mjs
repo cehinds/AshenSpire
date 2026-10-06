@@ -83,3 +83,29 @@ test('legacy skill drafts keep their raw card identity and rank overlay', () => 
     app.remove();
   } finally { for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
 });
+
+test('expanded ability receipt rolls back with a refused save and retries the exact grade once', () => {
+  const dom = rewardDom(), saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]])); Object.assign(globalThis, dom);
+  try {
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    const skillId = 'combatManeuvers', offerId = `ability:${skillId}:1`, key = `skillDraft:${offerId}`;
+    const ids = registries.cards.all().filter(card => card.gradeProfiles && card.abilityKind === 'maneuver').slice(0, 3).map(card => card.id);
+    const offer = { skillId, offerId, level: 1, requiredLevel: 1, cardIds: [...ids, ids[0]], abilityRanks: [0, 0, 0, 5], choiceIds: [...ids.map(id => `${id}@0`), `${ids[0]}@5`], intelligenceSnapshot: 20 };
+    const checkpoint = { states: {}, rewards: { skillDrafts: [offer] } };
+    const run = { ...runState(), progressionRulesVersion: 1, abilityOffers: { [offerId]: offer }, skills: { [skillId]: { level: 1, xp: 0, pendingDrafts: 1 } }, pendingReward: checkpoint };
+    let refuse = true, saves = 0;
+    const args = { registries, run, checkpoint, rewards: checkpoint.rewards, onDone() {}, onPersist() { if (refuse) return false; saves++; } };
+    mountRewards(app, args); app.querySelector('[data-kind="skillDraft"]').click(); app.querySelectorAll('.reward-row .reward-pick')[3].click();
+    const confirm = app.querySelector('#reward-card-confirm'); confirm.click();
+    assert.equal(run.abilityDraftClaims, undefined, 'refused save restores an absent receipt ledger');
+    assert.equal(run.skills[skillId].pendingDrafts, 1); assert.equal(run.deck.length, 0); assert.equal(checkpoint.states[key], undefined);
+    assert.equal(run.pendingReward, checkpoint, 'rollback preserves the live persistence checkpoint');
+    refuse = false; confirm.click(); confirm.click();
+    assert.equal(saves, 1); assert.equal(run.skills[skillId].pendingDrafts, 0);
+    assert.equal(run.abilityDraftClaims[skillId][offerId].choiceId, offer.choiceIds[3]);
+    assert.equal(run.deck.length, 1); assert.equal(run.deck[0].abilityRank, 5); assert.equal(run.deck[0].abilityOfferId, offerId);
+    mountRewards(app, args); assert.equal(run.deck.length, 1); assert.equal(app.querySelector('[data-state="taken"]').dataset.kind, 'skillDraft');
+    app.remove();
+  } finally { for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
+});

@@ -311,7 +311,7 @@ export function mountRewards(app, {
     const raised = row.kind === 'skillRankUp' ? ownedInstance(row.instanceId) : null;
     // An attribute pick moves attributes and every derived pool: the whole run
     // is the record a refused save puts back.
-    const runBefore = row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' ? structuredClone(run) : null;
+    const runBefore = row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' || row.kind === 'skillDraft' ? structuredClone(run) : null;
     const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? {
       deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       feats: [...(run.feats || [])],
