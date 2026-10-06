@@ -50,6 +50,7 @@ status* table lists each spec section as built, partly built or planned.
 
 ## 2. Content
 
+- [x] **Herald common Mana recovery** (Claude handoff, 2026-10-05). Test: `tests/herald-mana.test.mjs` plays Ember Communion from a dry Herald: 1 Stamina restores 1 Mana and heals 2 HP, respecting both caps; the base card Exhausts and upgrading removes Exhaust. The card reaches Herald rewards and Ritual drafts; rarity shares and draft depth stay valid. Lodestar Shard remains the Starseer kit relic. — [#1652](https://github.com/cehinds/AshenSpire/pull/1652).
 - [x] Counts meet SPEC: 4 classes, 195 cards, 63 relics (≥40), 25 events (≥10), 7 flasks, 35 colorless, 20 regular enemies, 10 bosses (§12.4); elites are tracked on their own line below (3 today, 1–5 per seat averaging 3 wanted). `validateContent` 0 errors; `scripts.js` at 0.23% (<5%).
 - [x] **Stale content validators are fixed and gated**: `tools/rogue-parity.mjs` (27/30) and `tools/enemy-level-content.mjs` (3/6) read counts from the bundle, group by seat rather than the retired `act`, and run in the suite. Test: both exit 0 and a `*.test.mjs` runs each. — [#1276](https://github.com/cehinds/AshenSpire/pull/1276): rogue-parity 31/31, enemy-level-content 6/6, both run by `tests/content-validators.test.mjs`.
 - [ ] **1–5 elites per seat, averaging 3** (D4, ruled 2026-09-26). Test: counting distinct enemy ids across each seat's `pool==='elite'` encounters (a reused enemy counts once), every seat has between 1 and 5, the mean across seats is 3 (±0.5), and `validateContent` passes.

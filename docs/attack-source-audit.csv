@@ -102,6 +102,7 @@
 "card","pyreLight","attack","true","spell","arcane","delivery:projectile","","theme:astral"
 "card","riteOfCinders","skill","false","","","","","theme:astral"
 "card","urgentHeal","skill","false","","","","",""
+"card","emberCommunion","skill","false","","","","",""
 "card","bloodPact","skill","false","","","","","theme:blood"
 "card","blightTouch","attack","true","spell","arcane","delivery:melee","","theme:blight"
 "card","flagellation","attack","true","spell","arcane","delivery:melee","",""

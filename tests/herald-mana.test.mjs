@@ -4,6 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
+import { rollSkillDraftIds } from '../src/engine/encounters.js';
 
 const reg = createRegistries(contentBundle);
 function fight({ upgraded = false, hp = 60, mana = 0 } = {}) {
@@ -42,5 +43,10 @@ test('the card reaches Herald rewards and ritual drafts; Lodestar Shard remains 
   assert.ok(reg.classes.get('herald').cardPool.includes('emberCommunion'));
   assert.equal(reg.cards.get('emberCommunion').rarity, 'common');
   assert.ok(reg.cards.get('emberCommunion').tags.includes('ritual'));
+  const offers = Array.from({ length: 64 }, (_, seed) => rollSkillDraftIds(reg, createRng(seed), {
+    classId: 'herald', skillId: 'item:magic-focus', schools: ['ritual'], level: 1,
+  }));
+  assert.ok(offers.every(ids => ids.length === reg.balance.skill.draftSize));
+  assert.ok(offers.some(ids => ids.includes('emberCommunion')), 'a seeded Ritual draft actually offers the card');
   assert.equal(reg.classes.get('starseer').kitRelic, 'lodestarShard');
 });
