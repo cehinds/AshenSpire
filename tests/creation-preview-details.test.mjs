@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { statProjection, handResourceRows, withHandResources, startingResourceRows } from '../src/model/statProjection.js';
 import { classChoiceCard, classUnfold, classResourceGrid } from '../src/ui/components/creationCards.js';
-import { openCreationStatDetail, openCreationRelicDetail } from '../src/ui/components/creationPreviewDetails.js';
+import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../src/ui/components/creationPreviewDetails.js';
 import { relicText } from '../src/ui/components/card.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
@@ -63,14 +63,20 @@ test('every starting stat opens its definition and exact calculation, then retur
   }
 }));
 
-test('a long selected class name stays whole in its heading and accessible label', () => withKitDom((dom) => {
+test('class replacement preserves its whole name and transfers both native and unified focus', () => withKitDom((dom) => {
   const cls = { ...registries.classes.get(run.class), name: 'Keeper of the Last Unbroken Ember' };
+  const host = dom.document.createElement('div'); dom.document.body.append(host);
   const card = classChoiceCard(cls, { selected: true, expanded: true });
-  card.append(classUnfold({ cls })); dom.document.body.append(card);
+  card.append(classUnfold({ cls }));
+  const folded = classChoiceCard(cls, { onChoose: () => {
+    host.replaceChildren(card);
+    focusCreationClassPreview(card);
+  } });
+  host.append(folded); folded.focus(); folded.click();
   assert.equal(card.querySelector('.cc-unfold-heading').textContent, cls.name);
   assert.equal(card.getAttribute('aria-label'), `${cls.name}, selected class`);
-  card.focus();
-  assert.equal(dom.document.activeElement, card, 'the replacement selected article remains programmatically focusable');
+  assert.equal(dom.document.activeElement, card, 'the real production helper transfers native focus from the removed button');
+  assert.equal(card.classList.contains('gp-focus'), true, 'the same article receives the unified cursor');
 }));
 
 test('stat details follow changed attributes and hand-cap calculations', () => withKitDom((dom) => {

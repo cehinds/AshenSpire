@@ -65,7 +65,7 @@ import {
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
-import { openCreationStatDetail, openCreationRelicDetail } from '../components/creationPreviewDetails.js';
+import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../components/creationPreviewDetails.js';
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
@@ -941,7 +941,7 @@ export function mountCustomize(app, {
         fitStage();
         // The selected choice is now an article hosting detail controls.
         // Keep keyboard focus on its replacement after the button is rebuilt.
-        if (!catalog && creationClassPreview() === 'unfold') focusElement(classBox.querySelector(`.cz-class[data-class="${cls.id}"]`));
+        if (!catalog && creationClassPreview() === 'unfold') focusCreationClassPreview(classBox.querySelector(`.cz-class[data-class="${cls.id}"]`));
       },
     }));
     // Before a pick the preview pane follows the pointer, so it is never a

@@ -3,6 +3,15 @@
 import { el, eyebrow, statPair } from '../kit/index.js';
 import { openModal } from './modalShell.js';
 import { t } from '../strings.js';
+import { focusElement } from '../input.js';
+
+// Replacing the selected button with an article must move both focus systems.
+// The unified cursor alone does not update native DOM focus for articles.
+export function focusCreationClassPreview(card) {
+  if (!card) return;
+  focusElement(card);
+  card.focus({ preventScroll: true });
+}
 
 export function openCreationStatDetail(entry, opener) {
   const title = entry.inspectionLabel || entry.label || entry.faceLabel;
