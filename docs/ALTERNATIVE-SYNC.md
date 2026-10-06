@@ -39,6 +39,10 @@ and deletions. New layout files cannot slip through. A rename across the boundar
 or a conflict in gameplay/art/tooling fails the sync and leaves the remote
 alternative branch unchanged. The failed Actions run identifies what needs review.
 
+Independent builds naturally conflict in generated ordinals, changelog projections
+and architecture snapshots. Those three outputs are seeded and regenerated from
+the merged source; authored changelog or gameplay conflicts still stop the sync.
+
 ## Checks and output
 
 - Git fixture tests exercise protected conflicts, additions/deletions, renames,

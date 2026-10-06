@@ -1,7 +1,8 @@
 """Prepare a real dev merge, retaining the alternative's presentation boundary.
 
-No force push, no conflict preference outside protected paths. The caller tests
-the staged merge, verifies it again, and commits/pushes only after all gates pass.
+No force push or authored-content conflict preference outside protected paths.
+Known derived outputs are seeded for regeneration. The caller tests the staged
+merge, regenerates those outputs, verifies it, then commits/pushes after gates.
 """
 import argparse
 import json
@@ -80,11 +81,25 @@ def prepare(repo, source, target, policy):
                 '--staged', '--worktree', '--pathspec-from-file=-', '--pathspec-file-nul',
                 data=b'\0'.join(p.encode() for p in paths) + b'\0')
         conflicts = names(git(repo, 'diff', '--name-only', '--diff-filter=U', '-z').stdout)
+        # Both branches build independently. These are outputs, not authored
+        # choices: seed them from the alternative, then the workflow regenerates
+        # them before publishing. Never resolve an authored-content conflict here.
+        derived = {'buildordinal.json', 'src/content/changelog.generated.js', 'docs/ARCHITECTURE-CURRENT-DEV.md'}
+        regenerated = sorted(set(conflicts) & derived)
+        for path in regenerated:
+            seed = before
+            if path == 'buildordinal.json':
+                prior = json.loads(git(repo, 'show', before + ':' + path).stdout)
+                newer = json.loads(git(repo, 'show', source_sha + ':' + path).stdout)
+                if newer.get('release') == prior.get('release') and newer['ordinal'] > prior['ordinal']:
+                    seed = source_sha
+            git(repo, 'restore', '--source=' + seed, '--staged', '--worktree', '--', path)
+        conflicts = names(git(repo, 'diff', '--name-only', '--diff-filter=U', '-z').stdout)
         if conflicts:
             raise RuntimeError('Unprotected merge conflicts need review: ' + ', '.join(conflicts))
         assert_preserved(repo, before, policy)
         retained = sorted(p for p in paths if old.get(p) != incoming.get(p))
-        return {'before': before, 'source': source_sha, 'mergeNeeded': True, 'retained': retained}
+        return {'before': before, 'source': source_sha, 'mergeNeeded': True, 'retained': retained, 'regenerate': regenerated}
     except Exception:
         git(repo, 'merge', '--abort', check=False)
         raise

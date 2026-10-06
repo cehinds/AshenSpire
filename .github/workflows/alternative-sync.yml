@@ -86,12 +86,18 @@ jobs:
             python tools/alternative-art-build.py
             git add -- assets-alternative src/ui/alternativeArtCatalog.js
           fi
+          node tools/about-changelog.mjs --write
           node tools/launch.mjs --build-only
-          git add -- buildordinal.json src/content/generated src/framework/data
+          git add -- buildordinal.json src/content/changelog.generated.js src/content/generated src/framework/data
           git add -- docs/design/combat-depth-2026-10-05
           python tools/alternative-sync.py --verify --report "$RUNNER_TEMP/alternative-sync.json"
           git diff --quiet
           git commit -m 'Sync dev into alternative/dev; preserve battlefield presentation'
+          ARCHITECTURE_SOURCE_REF=alternative/dev node tools/update-architecture.mjs --verify
+          git add -- docs/ARCHITECTURE-CURRENT-DEV.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh alternative dev architecture receipt'
+          fi
           git archive --format=tar.gz --output="$RUNNER_TEMP/alternative-dev-preview.tar.gz" HEAD
       # Build and proof belong to this job: its GITHUB_TOKEN push cannot start another workflow.
       - uses: actions/upload-artifact@v4

@@ -95,6 +95,19 @@ class SyncTests(unittest.TestCase):
         self.assertEqual(self.git('status', '--porcelain'), '')
         self.assertNotEqual(subprocess.run(['git', 'rev-parse', '--verify', 'MERGE_HEAD'], cwd=self.repo, capture_output=True).returncode, 0)
 
+    def test_independent_build_outputs_are_seeded_for_regeneration(self):
+        self.write('buildordinal.json', json.dumps({'release': '0.7.1', 'ordinal': 9, 'digest': 'dev'}))
+        self.write('src/content/changelog.generated.js', 'upstream generated receipt\n')
+        self.commit('dev build')
+        self.git('checkout', 'alternative/dev')
+        self.write('buildordinal.json', json.dumps({'release': '0.7.1', 'ordinal': 8, 'digest': 'alternative'}))
+        self.write('src/content/changelog.generated.js', 'alternative generated receipt\n')
+        self.commit('alternative build')
+        report = self.prepare()
+        self.assertEqual(report['regenerate'], ['buildordinal.json', 'src/content/changelog.generated.js'])
+        self.assertEqual(json.loads((self.repo / 'buildordinal.json').read_text())['ordinal'], 9)
+        self.assertEqual(self.git('diff', '--name-only', '--diff-filter=U'), '')
+
     def test_verifier_rejects_tampering_after_prepare(self):
         self.write('src/engine/rules.js', 'new rule\n')
         self.commit('upstream')
