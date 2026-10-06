@@ -409,14 +409,17 @@ Smith is a modal composition rather than an inline card dump:
 smith-upgrade-modal
 ├─ smith-candidate-card × distinct eligible owned armaments
 ├─ smith-upgrade-preview × selected armament's grouped card deltas
-├─ Back to Shrine (also Escape)
-└─ Confirm selected armament (disabled until selected and affordable)
+├─ Header: available Smithing Stones, then the close button
+├─ Upgrade selected armament in the preview pane (requires affordability)
+└─ Full-width Back to Shrine footer (also Escape)
 ```
 
-Selection is reversible presentation state. Back and Escape restore the Shrine
-without mutation. Confirm spends the displayed Smithing Stone cost, promotes exactly one
-armament for the run, refreshes every sourced basic card from that armament, and leaves the
-Shrine. Ordinary non-equipment cards retain their independent per-copy upgrade behavior.
+Selection takes one tap and opens every affected card preview expanded. The compact
+item list starts open. Back, the centered close glyph, and Escape return without
+spending another stone; completed upgrades remain saved. Confirm spends the displayed
+cost, promotes one item, and refreshes the picker while stones remain. The last stone
+uses the site's existing stay/leave rule. Ordinary non-equipment cards retain their
+independent per-copy upgrade behavior.
 
 ## Folding Tray session geometry
 

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1675",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Upgrade items in one continuous visit",
+    "detail": "Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.",
+    "build": "0.7.1.1038",
+    "pullRequest": 1675,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1675"
+  },
+  {
     "id": "pr-1671",
     "date": "2026-10-06",
     "group": "2026-10-06",
