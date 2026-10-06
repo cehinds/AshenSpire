@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Your route, one choice at a time** ([#1679](https://github.com/cehinds/AshenSpire/pull/1679), `0.7.1.1041`). The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.
+
 - **Alternative updates keep their build numbers current** ([#1672](https://github.com/cehinds/AshenSpire/pull/1672), `0.7.1.1039`). Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.
 
 - **Upgrade items in one continuous visit** ([#1675](https://github.com/cehinds/AshenSpire/pull/1675), `0.7.1.1038`). Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.

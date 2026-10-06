@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1679",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Your route, one choice at a time",
+    "detail": "The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.",
+    "build": "0.7.1.1041",
+    "pullRequest": 1679,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1679"
+  },
+  {
     "id": "pr-1672",
     "date": "2026-10-06",
     "group": "2026-10-06",
