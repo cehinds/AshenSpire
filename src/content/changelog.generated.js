@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1664",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Smaller text fits more card descriptions",
+    "detail": "Card titles, rules, tags and cost numbers are two points smaller, including the automatic fitting range. More descriptions fit fully inside the existing card frame on desktop and phone.",
+    "build": "0.7.1.1031",
+    "pullRequest": 1664,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1664"
+  },
+  {
     "id": "pr-1662",
     "date": "2026-10-06",
     "group": "2026-10-06",
