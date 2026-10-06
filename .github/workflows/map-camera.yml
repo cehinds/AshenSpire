@@ -31,13 +31,13 @@ name: map camera
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev, alternative/dev, 'alternative/**/dev']
   push:
-    branches: [dev, test, release]
+    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
-  group: map-camera-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: map-camera-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -78,5 +78,5 @@ jobs:
         run: node tools/verdict.mjs -- node tools/map-camera-persistence.mjs --check --no-screenshots
 
       - name: The full map-camera persistence drive (push to test/release, or dispatch)
-        if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_name == 'dev')
+        if: github.event_name != 'pull_request' && !endsWith(github.ref_name, '/dev') && !(github.event_name == 'push' && github.ref_name == 'dev')
         run: node tools/verdict.mjs -- node tools/map-camera-persistence.mjs --no-screenshots

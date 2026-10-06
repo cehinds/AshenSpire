@@ -1,0 +1,3388 @@
+[
+  {
+    "errors": [],
+    "fit": {
+      "width": 390,
+      "beforeFullyVisible": 103,
+      "afterFullyVisible": 124,
+      "improved": [
+        "card:kickOff",
+        "card:starstonePebble",
+        "card:starbladePhalanx",
+        "card:starstoneWard",
+        "card:stargazerCard",
+        "card:timeDilation",
+        "card:shootingShard",
+        "card:wardingStar",
+        "card:starPath",
+        "card:starSpark",
+        "card:cinderSigil",
+        "card:ashenMote",
+        "card:emberVigil",
+        "card:cinderLance",
+        "card:phoenixChart",
+        "card:contagion",
+        "card:whirlingGuard",
+        "card:hamstring",
+        "card:enfeeble",
+        "card:ashOath",
+        "card:vesperWard"
+      ],
+      "regressions": [],
+      "cards": [
+        {
+          "id": "card:strike",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:defend",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:technique",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:evasiveGuard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:dodgeRoll",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:gorefireSlash",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:crimsonCleave",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:shieldBash",
+          "font": 35.669270833333336,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:quickstep",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:guardCounter",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:ironResolve",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:serratedBlade",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:enterGorefire",
+          "font": 30.42708333333333,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:enterBulwark",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:riposte",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:rend",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:cleavingBlow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:stomp",
+          "font": 33.95052083333333,
+          "fullyVisible": false,
+          "height": 47,
+          "contentHeight": 71
+        },
+        {
+          "id": "card:rallyingStandard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:warSurgeon",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:hemorrhage",
+          "font": 36.013020833333336,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:twinbladeFlurry",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:shieldwall",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:kickOff",
+          "font": 27.333333333333332,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:wardingLunge",
+          "font": 30.42708333333333,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:impale",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:warcry",
+          "font": 31.114583333333325,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:executioner",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:goreblood",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:unbreakable",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:stitchedArms",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lastStand",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:warriorsVow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:ruinousBlow",
+          "font": 33.17708333333333,
+          "fullyVisible": true,
+          "height": 46,
+          "contentHeight": 46
+        },
+        {
+          "id": "card:bloodhuntersStrike",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:sanguinePactCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:goreslash",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:bracingStance",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:flameToBlade",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:ironVowCard",
+          "font": 35.92708333333333,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:bloodTithe",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:poiseBreaker",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:rondelParry",
+          "font": 33.52083333333333,
+          "fullyVisible": false,
+          "height": 47,
+          "contentHeight": 70
+        },
+        {
+          "id": "card:sunderplate",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:brace",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:hewingArc",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:sunderingChop",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:setTheShield",
+          "font": 30.341145833333325,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:aegisOfEmbers",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:shieldCrash",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starstonePebble",
+          "font": 29.30989583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:cometFragment",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:starbladePhalanx",
+          "font": 29.052083333333336,
+          "fullyVisible": true,
+          "height": 40,
+          "contentHeight": 40
+        },
+        {
+          "id": "card:crystalBarrier",
+          "font": 36.786458333333336,
+          "fullyVisible": true,
+          "height": 51,
+          "contentHeight": 51
+        },
+        {
+          "id": "card:starShower",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:scholarsInsight",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:frostVeil",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:starSlicer",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starstoneWard",
+          "font": 27.591145833333336,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:starlance",
+          "font": 31.63020833333333,
+          "fullyVisible": true,
+          "height": 44,
+          "contentHeight": 44
+        },
+        {
+          "id": "card:twinkling",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:frostNova",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starstoneArc",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lucidity",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:stargazerCard",
+          "font": 27.934895833333332,
+          "fullyVisible": true,
+          "height": 39,
+          "contentHeight": 39
+        },
+        {
+          "id": "card:astralArmorCard",
+          "font": 36.958333333333336,
+          "fullyVisible": true,
+          "height": 51,
+          "contentHeight": 51
+        },
+        {
+          "id": "card:moonrendCut",
+          "font": 35.411458333333336,
+          "fullyVisible": true,
+          "height": 49,
+          "contentHeight": 49
+        },
+        {
+          "id": "card:meteorite",
+          "font": 31.114583333333325,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:meteorSwarm",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:gravityWell",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:azureCoilCard",
+          "font": 33.69270833333333,
+          "fullyVisible": true,
+          "height": 47,
+          "contentHeight": 47
+        },
+        {
+          "id": "card:astralCleave",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:radiantSpray",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:supernova",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:timeDilation",
+          "font": 29.395833333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:starstoneKris",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:constellationCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:starfallBeam",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starcaller",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:umbralWard",
+          "font": 31.02864583333332,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:waxingMoonCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:shootingShard",
+          "font": 29.30989583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:wardingStar",
+          "font": 29.65364583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:starPath",
+          "font": 28.53645833333333,
+          "fullyVisible": true,
+          "height": 40,
+          "contentHeight": 40
+        },
+        {
+          "id": "card:moonlitShieldCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:celestialLance",
+          "font": 31.20052083333333,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:astromancerCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starSpark",
+          "font": 27.591145833333336,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:astralInsight",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:attune",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:cinderSigil",
+          "font": 27.934895833333332,
+          "fullyVisible": true,
+          "height": 39,
+          "contentHeight": 39
+        },
+        {
+          "id": "card:ashenMote",
+          "font": 29.30989583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:emberVigil",
+          "font": 29.65364583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:readTheAsh",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:pyreOfCharts",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:ashCircle",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:kindledOmen",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:cinderLance",
+          "font": 27.677083333333332,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:ashfallRite",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:phoenixChart",
+          "font": 29.825520833333336,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:pyreLight",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:riteOfCinders",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:urgentHeal",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:emberCommunion",
+          "font": 33.52083333333333,
+          "fullyVisible": true,
+          "height": 47,
+          "contentHeight": 47
+        },
+        {
+          "id": "card:bloodPact",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:blightTouch",
+          "font": 28.88020833333333,
+          "fullyVisible": false,
+          "height": 40,
+          "contentHeight": 60
+        },
+        {
+          "id": "card:flagellation",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:penance",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:litany",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:graveOffering",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:bloodletting",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:contagion",
+          "font": 29.739583333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:cullTheWeak",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:transfusion",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:blightward",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:martyrBlood",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:blightBloom",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:sacredHarvest",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:thornHaloCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:communionCard",
+          "font": 36.09895833333333,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:gildedOath",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:plagueBearer",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:exsanguinate",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:stigmataCard",
+          "font": 35.92708333333333,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:scourge",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:reclamation",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:secondBloom",
+          "font": 31.63020833333333,
+          "fullyVisible": true,
+          "height": 44,
+          "contentHeight": 44
+        },
+        {
+          "id": "card:butterflyPlague",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lifeTitheCard",
+          "font": 33.263020833333336,
+          "fullyVisible": true,
+          "height": 46,
+          "contentHeight": 46
+        },
+        {
+          "id": "card:crimsonRite",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:blightNova",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lastRites",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:zealotryCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:bloodHarvest",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:painOffering",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:witheringTouch",
+          "font": 28.966145833333332,
+          "fullyVisible": false,
+          "height": 40,
+          "contentHeight": 60
+        },
+        {
+          "id": "card:desperateRite",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:emberTideCard",
+          "font": 34.38020833333333,
+          "fullyVisible": true,
+          "height": 48,
+          "contentHeight": 48
+        },
+        {
+          "id": "card:bloodOfferingRite",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:harbingerOfBlightCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:blightwardLash",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lastMercy",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:warmLitany",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:ambush",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:rogueShiv",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:smokePellet",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:quickCut",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:feint",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:backstep",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:twinPrick",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:pocketSand",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:hamstringRogue",
+          "font": 34.809895833333336,
+          "fullyVisible": true,
+          "height": 48,
+          "contentHeight": 48
+        },
+        {
+          "id": "card:serratedShiv",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:smokeVeil",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:ricochet",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:lowBlow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:pilfer",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:vanish",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:cheapShot",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:bladeDanceRogue",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:garrote",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:fanOfKnives",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:setupRogue",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:acrobaticsRogue",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:disorient",
+          "font": 32.489583333333336,
+          "fullyVisible": true,
+          "height": 45,
+          "contentHeight": 45
+        },
+        {
+          "id": "card:coupDeGrace",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:sap",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:shadowstep",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:afterimageCard",
+          "font": 33.263020833333336,
+          "fullyVisible": true,
+          "height": 46,
+          "contentHeight": 46
+        },
+        {
+          "id": "card:bloodletterRogue",
+          "font": 36.013020833333336,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:venomcoat",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:misdirect",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:assassinate",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:thousandCutsRogue",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:deadlyTempoCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:opportunistCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:envenomCard",
+          "font": 36.013020833333336,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:toxicVolley",
+          "font": 30.25520833333333,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:smokeBomb",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:executionWindow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:perfectHeist",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:deathblow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:prepare",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:pinningShot",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:arrowVolley",
+          "font": 31.54427083333333,
+          "fullyVisible": true,
+          "height": 44,
+          "contentHeight": 44
+        },
+        {
+          "id": "card:nockAndWait",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:aimedShot",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:barbedArrow",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:bindingParry",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:whirlingGuard",
+          "font": 29.223958333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:katanaDrawCut",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:greatswordSunderingHew",
+          "font": 34.122395833333336,
+          "fullyVisible": false,
+          "height": 47,
+          "contentHeight": 71
+        },
+        {
+          "id": "card:honedEdge",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:ironSkin",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:fieldDressing",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:hex",
+          "font": 32.489583333333336,
+          "fullyVisible": true,
+          "height": 45,
+          "contentHeight": 45
+        },
+        {
+          "id": "card:transmute",
+          "font": 31.114583333333325,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:twinFang",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:blindingSand",
+          "font": 31.973958333333336,
+          "fullyVisible": true,
+          "height": 44,
+          "contentHeight": 44
+        },
+        {
+          "id": "card:hamstring",
+          "font": 29.567708333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:masterOfStrategy",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:bashingBlow",
+          "font": 35.75520833333333,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:quickGuard",
+          "font": 31.114583333333325,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:sweepingBlow",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:enfeeble",
+          "font": 29.567708333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:colossusSmash",
+          "font": 34.29427083333333,
+          "fullyVisible": true,
+          "height": 48,
+          "contentHeight": 48
+        },
+        {
+          "id": "card:wound",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:dazed",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:slimed",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:guilt",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:rallyingBanner",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:sharedFlame",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:ashOath",
+          "font": 27.677083333333332,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:shieldGuardian",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:guardianBulwark",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:shieldBastion",
+          "font": 30.25520833333333,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:spikedReprisal",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:rimeThrust",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:kilnCleave",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:vesperWard",
+          "font": 29.481770833333336,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "profile:unarmedAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:shieldAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:bladeAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:twinbladeAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:daggerPierceAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:bowPierceAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:staffMagicAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:sceptreArcaneAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:unarmedGuard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "profile:weaponGuard",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:shieldGuard",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:staffGuard",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:sceptreGuard",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:unarmedTechnique",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "profile:weaponTechnique",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "profile:bowTechnique",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "profile:staffTechnique",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        }
+      ]
+    }
+  },
+  {
+    "errors": [],
+    "fit": {
+      "width": 390,
+      "beforeFullyVisible": 103,
+      "afterFullyVisible": 124,
+      "improved": [
+        "card:kickOff",
+        "card:starstonePebble",
+        "card:starbladePhalanx",
+        "card:starstoneWard",
+        "card:stargazerCard",
+        "card:timeDilation",
+        "card:shootingShard",
+        "card:wardingStar",
+        "card:starPath",
+        "card:starSpark",
+        "card:cinderSigil",
+        "card:ashenMote",
+        "card:emberVigil",
+        "card:cinderLance",
+        "card:phoenixChart",
+        "card:contagion",
+        "card:whirlingGuard",
+        "card:hamstring",
+        "card:enfeeble",
+        "card:ashOath",
+        "card:vesperWard"
+      ],
+      "regressions": [],
+      "cards": [
+        {
+          "id": "card:strike",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:defend",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:technique",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:evasiveGuard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:dodgeRoll",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:gorefireSlash",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:crimsonCleave",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:shieldBash",
+          "font": 35.669270833333336,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:quickstep",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:guardCounter",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:ironResolve",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:serratedBlade",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:enterGorefire",
+          "font": 30.42708333333333,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:enterBulwark",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:riposte",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:rend",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:cleavingBlow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:stomp",
+          "font": 33.95052083333333,
+          "fullyVisible": false,
+          "height": 47,
+          "contentHeight": 71
+        },
+        {
+          "id": "card:rallyingStandard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:warSurgeon",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:hemorrhage",
+          "font": 36.013020833333336,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:twinbladeFlurry",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:shieldwall",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:kickOff",
+          "font": 27.333333333333332,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:wardingLunge",
+          "font": 30.42708333333333,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:impale",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:warcry",
+          "font": 31.114583333333325,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:executioner",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:goreblood",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:unbreakable",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:stitchedArms",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lastStand",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:warriorsVow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:ruinousBlow",
+          "font": 33.17708333333333,
+          "fullyVisible": true,
+          "height": 46,
+          "contentHeight": 46
+        },
+        {
+          "id": "card:bloodhuntersStrike",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:sanguinePactCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:goreslash",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:bracingStance",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:flameToBlade",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:ironVowCard",
+          "font": 35.92708333333333,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:bloodTithe",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:poiseBreaker",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:rondelParry",
+          "font": 33.52083333333333,
+          "fullyVisible": false,
+          "height": 47,
+          "contentHeight": 70
+        },
+        {
+          "id": "card:sunderplate",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:brace",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:hewingArc",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:sunderingChop",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:setTheShield",
+          "font": 30.341145833333325,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:aegisOfEmbers",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:shieldCrash",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starstonePebble",
+          "font": 29.30989583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:cometFragment",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:starbladePhalanx",
+          "font": 29.052083333333336,
+          "fullyVisible": true,
+          "height": 40,
+          "contentHeight": 40
+        },
+        {
+          "id": "card:crystalBarrier",
+          "font": 36.786458333333336,
+          "fullyVisible": true,
+          "height": 51,
+          "contentHeight": 51
+        },
+        {
+          "id": "card:starShower",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:scholarsInsight",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:frostVeil",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:starSlicer",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starstoneWard",
+          "font": 27.591145833333336,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:starlance",
+          "font": 31.63020833333333,
+          "fullyVisible": true,
+          "height": 44,
+          "contentHeight": 44
+        },
+        {
+          "id": "card:twinkling",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:frostNova",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starstoneArc",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lucidity",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:stargazerCard",
+          "font": 27.934895833333332,
+          "fullyVisible": true,
+          "height": 39,
+          "contentHeight": 39
+        },
+        {
+          "id": "card:astralArmorCard",
+          "font": 36.958333333333336,
+          "fullyVisible": true,
+          "height": 51,
+          "contentHeight": 51
+        },
+        {
+          "id": "card:moonrendCut",
+          "font": 35.411458333333336,
+          "fullyVisible": true,
+          "height": 49,
+          "contentHeight": 49
+        },
+        {
+          "id": "card:meteorite",
+          "font": 31.114583333333325,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:meteorSwarm",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:gravityWell",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:azureCoilCard",
+          "font": 33.69270833333333,
+          "fullyVisible": true,
+          "height": 47,
+          "contentHeight": 47
+        },
+        {
+          "id": "card:astralCleave",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:radiantSpray",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:supernova",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:timeDilation",
+          "font": 29.395833333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:starstoneKris",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:constellationCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:starfallBeam",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starcaller",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:umbralWard",
+          "font": 31.02864583333332,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:waxingMoonCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:shootingShard",
+          "font": 29.30989583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:wardingStar",
+          "font": 29.65364583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:starPath",
+          "font": 28.53645833333333,
+          "fullyVisible": true,
+          "height": 40,
+          "contentHeight": 40
+        },
+        {
+          "id": "card:moonlitShieldCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:celestialLance",
+          "font": 31.20052083333333,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:astromancerCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:starSpark",
+          "font": 27.591145833333336,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:astralInsight",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:attune",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:cinderSigil",
+          "font": 27.934895833333332,
+          "fullyVisible": true,
+          "height": 39,
+          "contentHeight": 39
+        },
+        {
+          "id": "card:ashenMote",
+          "font": 29.30989583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:emberVigil",
+          "font": 29.65364583333333,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:readTheAsh",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:pyreOfCharts",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:ashCircle",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:kindledOmen",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:cinderLance",
+          "font": 27.677083333333332,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:ashfallRite",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:phoenixChart",
+          "font": 29.825520833333336,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:pyreLight",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:riteOfCinders",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:urgentHeal",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:emberCommunion",
+          "font": 33.52083333333333,
+          "fullyVisible": true,
+          "height": 47,
+          "contentHeight": 47
+        },
+        {
+          "id": "card:bloodPact",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:blightTouch",
+          "font": 28.88020833333333,
+          "fullyVisible": false,
+          "height": 40,
+          "contentHeight": 60
+        },
+        {
+          "id": "card:flagellation",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:penance",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:litany",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:graveOffering",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:bloodletting",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:contagion",
+          "font": 29.739583333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:cullTheWeak",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:transfusion",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:blightward",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:martyrBlood",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:blightBloom",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:sacredHarvest",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:thornHaloCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:communionCard",
+          "font": 36.09895833333333,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:gildedOath",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:plagueBearer",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:exsanguinate",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:stigmataCard",
+          "font": 35.92708333333333,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:scourge",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:reclamation",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:secondBloom",
+          "font": 31.63020833333333,
+          "fullyVisible": true,
+          "height": 44,
+          "contentHeight": 44
+        },
+        {
+          "id": "card:butterflyPlague",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lifeTitheCard",
+          "font": 33.263020833333336,
+          "fullyVisible": true,
+          "height": 46,
+          "contentHeight": 46
+        },
+        {
+          "id": "card:crimsonRite",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:blightNova",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lastRites",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:zealotryCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:bloodHarvest",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:painOffering",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:witheringTouch",
+          "font": 28.966145833333332,
+          "fullyVisible": false,
+          "height": 40,
+          "contentHeight": 60
+        },
+        {
+          "id": "card:desperateRite",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:emberTideCard",
+          "font": 34.38020833333333,
+          "fullyVisible": true,
+          "height": 48,
+          "contentHeight": 48
+        },
+        {
+          "id": "card:bloodOfferingRite",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:harbingerOfBlightCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:blightwardLash",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:lastMercy",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:warmLitany",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:ambush",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:rogueShiv",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:smokePellet",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:quickCut",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:feint",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:backstep",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:twinPrick",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:pocketSand",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:hamstringRogue",
+          "font": 34.809895833333336,
+          "fullyVisible": true,
+          "height": 48,
+          "contentHeight": 48
+        },
+        {
+          "id": "card:serratedShiv",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:smokeVeil",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:ricochet",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:lowBlow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:pilfer",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:vanish",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:cheapShot",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:bladeDanceRogue",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:garrote",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:fanOfKnives",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:setupRogue",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:acrobaticsRogue",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:disorient",
+          "font": 32.489583333333336,
+          "fullyVisible": true,
+          "height": 45,
+          "contentHeight": 45
+        },
+        {
+          "id": "card:coupDeGrace",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:sap",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:shadowstep",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:afterimageCard",
+          "font": 33.263020833333336,
+          "fullyVisible": true,
+          "height": 46,
+          "contentHeight": 46
+        },
+        {
+          "id": "card:bloodletterRogue",
+          "font": 36.013020833333336,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:venomcoat",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:misdirect",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:assassinate",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:thousandCutsRogue",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:deadlyTempoCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:opportunistCard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:envenomCard",
+          "font": 36.013020833333336,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:toxicVolley",
+          "font": 30.25520833333333,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:smokeBomb",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:executionWindow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:perfectHeist",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:deathblow",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:prepare",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:pinningShot",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:arrowVolley",
+          "font": 31.54427083333333,
+          "fullyVisible": true,
+          "height": 44,
+          "contentHeight": 44
+        },
+        {
+          "id": "card:nockAndWait",
+          "font": 37.216145833333336,
+          "fullyVisible": true,
+          "height": 52,
+          "contentHeight": 52
+        },
+        {
+          "id": "card:aimedShot",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:barbedArrow",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:bindingParry",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:whirlingGuard",
+          "font": 29.223958333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:katanaDrawCut",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:greatswordSunderingHew",
+          "font": 34.122395833333336,
+          "fullyVisible": false,
+          "height": 47,
+          "contentHeight": 71
+        },
+        {
+          "id": "card:honedEdge",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:ironSkin",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:fieldDressing",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:hex",
+          "font": 32.489583333333336,
+          "fullyVisible": true,
+          "height": 45,
+          "contentHeight": 45
+        },
+        {
+          "id": "card:transmute",
+          "font": 31.114583333333325,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:twinFang",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:blindingSand",
+          "font": 31.973958333333336,
+          "fullyVisible": true,
+          "height": 44,
+          "contentHeight": 44
+        },
+        {
+          "id": "card:hamstring",
+          "font": 29.567708333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:masterOfStrategy",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:bashingBlow",
+          "font": 35.75520833333333,
+          "fullyVisible": true,
+          "height": 50,
+          "contentHeight": 50
+        },
+        {
+          "id": "card:quickGuard",
+          "font": 31.114583333333325,
+          "fullyVisible": true,
+          "height": 43,
+          "contentHeight": 43
+        },
+        {
+          "id": "card:sweepingBlow",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:enfeeble",
+          "font": 29.567708333333332,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "card:colossusSmash",
+          "font": 34.29427083333333,
+          "fullyVisible": true,
+          "height": 48,
+          "contentHeight": 48
+        },
+        {
+          "id": "card:wound",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:dazed",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:slimed",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "card:guilt",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "card:rallyingBanner",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:sharedFlame",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:ashOath",
+          "font": 27.677083333333332,
+          "fullyVisible": true,
+          "height": 38,
+          "contentHeight": 38
+        },
+        {
+          "id": "card:shieldGuardian",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 95
+        },
+        {
+          "id": "card:guardianBulwark",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:shieldBastion",
+          "font": 30.25520833333333,
+          "fullyVisible": true,
+          "height": 42,
+          "contentHeight": 42
+        },
+        {
+          "id": "card:spikedReprisal",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:rimeThrust",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "card:kilnCleave",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 57
+        },
+        {
+          "id": "card:vesperWard",
+          "font": 29.481770833333336,
+          "fullyVisible": true,
+          "height": 41,
+          "contentHeight": 41
+        },
+        {
+          "id": "profile:unarmedAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:shieldAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:bladeAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:twinbladeAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:daggerPierceAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:bowPierceAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:staffMagicAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:sceptreArcaneAttack",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:unarmedGuard",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "profile:weaponGuard",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:shieldGuard",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:staffGuard",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:sceptreGuard",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 27,
+          "contentHeight": 27
+        },
+        {
+          "id": "profile:unarmedTechnique",
+          "font": 27.333333333333332,
+          "fullyVisible": false,
+          "height": 38,
+          "contentHeight": 76
+        },
+        {
+          "id": "profile:weaponTechnique",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "profile:bowTechnique",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        },
+        {
+          "id": "profile:staffTechnique",
+          "font": 38.333333333333336,
+          "fullyVisible": true,
+          "height": 53,
+          "contentHeight": 53
+        }
+      ]
+    }
+  }
+]

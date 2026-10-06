@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1667",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative previews stay current without losing their changes",
+    "detail": "Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.",
+    "build": "0.7.1.1033",
+    "pullRequest": 1667,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1667"
+  },
+  {
+    "id": "pr-1666",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: modular class rewards and retraining",
+    "detail": "The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.",
+    "build": "0.7.1.1032",
+    "pullRequest": 1666,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1666"
+  },
+  {
+    "id": "pr-1664",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Smaller text fits more card descriptions",
+    "detail": "Card titles, rules, tags and cost numbers are two points smaller, including the automatic fitting range. More descriptions fit fully inside the existing card frame on desktop and phone.",
+    "build": "0.7.1.1031",
+    "pullRequest": 1664,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1664"
+  },
+  {
     "id": "pr-1662",
     "date": "2026-10-06",
     "group": "2026-10-06",

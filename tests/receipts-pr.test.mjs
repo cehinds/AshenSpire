@@ -109,8 +109,14 @@ test('--check --pr auto reads the event payload, and exits 2 when there is none'
 test('receipts.yml runs --check --pr auto on pull_request into dev, and the range check on push', () => {
   const yml = readFileSync(join(ROOT, '.github', 'workflows', 'receipts.yml'), 'utf8');
   const on = /\non:\n([\s\S]*?)\n\S/.exec(yml)?.[1] || '';
-  assert.match(on, /(^|\n) {2}pull_request:\n {4}branches: \[dev\]/, 'pull_request into dev must trigger the job');
-  assert.match(on, /(^|\n) {2}push:\n {4}branches: \[dev\]/, 'push to dev must still trigger the job');
+  for (const event of ['pull_request', 'push']) {
+    const branches = new RegExp(`(?:^|\\n) {2}${event}:\\n {4}branches: \\[([^\\]]+)\\]`).exec(on)?.[1]
+      .split(',').map((branch) => branch.trim().replace(/^['"]|['"]$/g, '')) || [];
+    for (const branch of ['dev', 'alternative/dev', 'alternative/**/dev']) {
+      assert.ok(branches.includes(branch), `${event} must include ${branch}`);
+    }
+    assert.ok(!branches.includes('test'), 'test remains the promotion boundary, not a receipt push gate');
+  }
   const step = (name) => {
     const at = yml.indexOf(`- name: ${name}`);
     assert.ok(at >= 0, `step "${name}" missing`);
@@ -122,8 +128,12 @@ test('receipts.yml runs --check --pr auto on pull_request into dev, and the rang
   assert.match(pr, /receipts\.mjs --check --pr auto/);
   const range = step('Every pull request merged since the last promotion has a receipt');
   assert.match(range, /if: github\.event_name != 'pull_request'/);
-  assert.match(range, /receipts\.mjs --check\s*$/m);
+  assert.match(range, /receipts\.mjs --check --since "\$RECEIPT_BASE"\s*$/m);
   // --pr reads no history: the full clone and the origin/test fetch serve the range only.
   assert.match(yml, /fetch-depth: \$\{\{ github\.event_name == 'pull_request' && 1 \|\| 0 \}\}/);
   assert.match(step('Fetch the promotion target so the range is the real one'), /if: github\.event_name != 'pull_request'/);
+  const fetch = step('Fetch the promotion target so the range is the real one');
+  assert.match(fetch, /promotionTarget\(process\.env\.GITHUB_REF_NAME\)/);
+  assert.match(fetch, /\$\{target\}:refs\/remotes\/origin\/\$\{target\}/);
+  assert.match(fetch, /RECEIPT_BASE=origin\/\$\{target\}/);
 });
