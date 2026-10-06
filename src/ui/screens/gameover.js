@@ -7,12 +7,13 @@
 // tools/release-shots.mjs reads for `?shot=death`; it draws nothing.
 
 import { resolveCard } from '../../model/registries.js';
+import { t } from '../strings.js';
 import { sfx } from '../sfx.js';
 import {
   el, pageDoor, decide, detailCard, statStrip, chip, kitLine, kitItem, eyebrow, titleS, button, choiceRow, statusText,
 } from '../kit/index.js';
 
-export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, earned = [] }) {
+export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, onRetry = null, earned = [] }) {
   sfx.play(victory ? 'victory' : 'youDied');
   const name = (game.customization && game.customization.name) || 'Forsaken';
   const glyph = (game.customization && game.customization.glyph) || '';
@@ -20,6 +21,8 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
 
   const toTitle = button({ label: 'Return to title', weight: 'primary', id: 'to-title' });
   const toHistory = onHistory ? button({ label: 'Run history', id: 'to-history' }) : null;
+
+  const retry = onRetry ? button({ label: t('save.status.retry'), id: 'retry-finish' }) : null;
 
   const deck = kitLine(game.deck.map((inst) => {
     const def = resolveCard(registries, inst);
@@ -48,7 +51,7 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
       el('div', { class: 'set-section-head' }, [eyebrow('Final deck'), titleS(`${game.deck.length} card${game.deck.length === 1 ? '' : 's'}`, { tag: 'h3' })]),
       deck,
       // WCB0 choice: both ways on share the half preset of the door's width.
-      choiceRow({ buttons: [toHistory, toTitle] }),
+      choiceRow({ buttons: [retry, toHistory, toTitle] }),
     ],
   });
   if (!victory) body.querySelector('.as-title-l').dataset.tone = 'loss';
@@ -66,5 +69,6 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
 
   toTitle.addEventListener('click', onTitle);
   if (toHistory) toHistory.addEventListener('click', onHistory);
+  if (retry) retry.addEventListener('click', onRetry);
   toTitle.focus({ preventScroll: true });
 }

@@ -19,7 +19,7 @@ import { skillBookReadPlan, commitSkillBookRead, consumableText } from '../src/m
 import { equipClassCard } from '../src/model/classLibrary.js';
 import { creationEquipmentSectionViews, creationHandChoices } from '../src/model/characterCreation.js';
 import { completeQuest } from '../src/engine/quests.js';
-import { completedRunMeta } from '../src/model/runCompletion.js';
+import { completedRunMeta, commitRunFinish } from '../src/model/runCompletion.js';
 import { createSession, restoreSession } from '../tools/session.mjs';
 import { executeRunEffects } from '../src/engine/actions.js';
 
@@ -246,4 +246,38 @@ test('books and sealed/draft content use complete tables and malformed mastery s
   const saved = JSON.parse(serializeRun(run));
   saved.classMasteryState.earnedXp.reaver = -1;
   assert.throws(() => deserializeRun(JSON.stringify(saved)), /classMasteryState.earnedXp/);
+});
+
+
+test('terminal finish retains its receipt across failed checkpoint, bank, history and clear writes', () => {
+  for (const failing of ['checkpoint', 'bank', 'complete', 'clear']) {
+    const { run, reg } = active('reaver', freshMeta(), `terminal-${failing}`);
+    const saves = createSaveManager(createMemoryStorage());
+    let fail = true;
+    let cleared = false;
+    const result = { finishId: `terminal-${failing}`, class: 'reaver', victory: false,
+      act: 1, floor: 1, stats: { fightsWon: 0, damageDealt: 0, damageTaken: 0 }, bossesBeaten: [], bossGroups: {} };
+    const boundary = (name, action) => () => { if (fail && failing === name) throw new Error(`${name} refused`); return action(); };
+    const options = { victory: false, finishId: result.finishId,
+      checkpoint: boundary('checkpoint', () => saves.saveRun(run, createRng(71))),
+      bank: boundary('bank', () => { const bank = saves.bankClassMastery(run, reg); assert.equal(bank.ok, true); }),
+      complete: boundary('complete', () => {
+        const next = completedRunMeta(reg, saves.loadMeta(), result);
+        assert.equal(saves.saveMeta(next.meta).ok, true);
+        return next.unlocked;
+      }),
+      clear: boundary('clear', () => { saves.clearRun(); cleared = true; }),
+    };
+    const first = commitRunFinish(run, options);
+    assert.equal(first.ok, false, failing);
+    assert.match(first.error.message, new RegExp(failing));
+    assert.equal(cleared, false);
+    assert.deepEqual(run.pendingFinish, { victory: false, id: result.finishId });
+    if (failing !== 'checkpoint') assert.equal(saves.loadRun(reg)?.pendingFinish.id, result.finishId);
+    fail = false;
+    assert.equal(commitRunFinish(run, options).ok, true);
+    assert.equal(cleared, true);
+    assert.equal(run.pendingFinish, undefined);
+    assert.equal(saves.loadMeta().results.filter(row => row.finishId === result.finishId).length, 1);
+  }
 });

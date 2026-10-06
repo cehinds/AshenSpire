@@ -11,3 +11,19 @@ export function completedRunMeta(registries, current, result) {
   if (unlocked.length) meta.unlocked = [...(meta.unlocked || []), ...unlocked];
   return { meta, unlocked };
 }
+
+// Keep the terminal receipt until every write has succeeded. Checkpoint,
+// banking and history are idempotent, so Retry can resume after any boundary.
+export function commitRunFinish(run, { victory, finishId, checkpoint, bank, complete, clear }) {
+  run.pendingFinish ||= { victory, id: finishId };
+  try {
+    checkpoint();
+    bank();
+    const earned = complete(run.pendingFinish);
+    clear();
+    delete run.pendingFinish;
+    return { ok: true, earned };
+  } catch (error) {
+    return { ok: false, earned: [], error };
+  }
+}

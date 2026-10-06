@@ -1,4 +1,4 @@
-import { completedRunMeta } from './model/runCompletion.js';
+import { completedRunMeta, commitRunFinish } from './model/runCompletion.js';
 import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
@@ -1369,8 +1369,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   if (run.prologue?.version === 1) { migratePrologueState(run); persist(); }
   if (run.pendingFinish) {
     const victory = run.pendingFinish.victory;
-    const earned = finishRun(victory);
-    return mountGameOver(app, { registries, game: run, victory, earned, onTitle: showTitle, onHistory: showHistory });
+    return showFinishedRun(victory);
   }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
@@ -2090,25 +2089,39 @@ function treasureSmithingReward() {
 }
 
 function finishRun(victory) {
-  run.pendingFinish ||= { victory, id: run.classMasteryState?.receiptId || crypto.randomUUID() };
-  persist();
-  if (hasClassMastery(run)) {
-    const bank = saves.bankClassMastery(run, registries);
-    if (!bank.ok) {
-      persist();
-      showSettingsNotice(`Class mastery was not saved: ${bank.reason}. The run remains in its slot.`, 'profile');
-      return [];
-    }
-    adoptClassMasteryProfile(run, bank.meta);
-    if (bank.warning) showSettingsNotice(bank.warning, 'profile');
-  }
-  const result = { ...runResult(victory), finishId: run.pendingFinish.id };
-  const completed = completedRunMeta(registries, saves.loadMeta(), result);
-  const fresh = completed.unlocked;
-  const saved = saves.saveMeta(completed.meta);
-  if (saved.ok) saves.clearRun(activeSlot);
-  else showSettingsNotice(`Run results were not saved: ${saved.reason}`, 'profile');
-  return fresh.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
+  return commitRunFinish(run, {
+    victory,
+    finishId: run.classMasteryState?.receiptId || crypto.randomUUID(),
+    checkpoint: persist,
+    bank: () => {
+      if (!hasClassMastery(run)) return;
+      const bank = saves.bankClassMastery(run, registries);
+      if (!bank.ok) throw new Error(`Class mastery was not saved: ${bank.reason}`);
+      adoptClassMasteryProfile(run, bank.meta);
+      if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+    },
+    complete: (pending) => {
+      const result = { ...runResult(pending.victory), finishId: pending.id };
+      const completed = completedRunMeta(registries, saves.loadMeta(), result);
+      const saved = saves.saveMeta(completed.meta);
+      if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
+      return completed.unlocked.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
+    },
+    clear: () => {
+      saves.clearRun(activeSlot);
+      if (saves.hasRun(activeSlot)) throw new Error('The completed run could not be cleared from its slot.');
+    },
+  });
+}
+
+function showFinishedRun(victory) {
+  const result = finishRun(victory);
+  const retry = () => showFinishedRun(victory);
+  mountGameOver(app, { registries, game: run, victory, earned: result.earned,
+    onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry });
+  if (!result.ok) openSaveStatusReview({
+    ...runIdentityParts(), savedAt: run.savedAt ?? null, error: result.error, onRetry: retry,
+  });
 }
 
 function showCustomize(slot = 1, catalog = false) {
@@ -2597,8 +2610,7 @@ function leaveLegacyDungeon() {
   delete run.legacyDungeon;
   if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (!run.journey && run.actNumber >= 3 && !endlessOn())) {
     audio.music('victory'); sendLanStatus({ victory: true });
-    const earned = finishRun(true);
-    return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
+    return showFinishedRun(true);
   }
   if (run.journey) { persist(); showMap(); } else advanceAct();
 }
@@ -2839,8 +2851,7 @@ async function onCombatEnd(result, combat, enc) {
     sfx.play('youDied');
     run.hp = 0;
     sendLanStatus({ dead: true });
-    const earnedOnDeath = finishRun(false);
-    return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
+    return showFinishedRun(false);
   }
   // Settings → Advanced → Recovery: a won fight restores its after-combat
   // percent of each pool (0 at the defaults, model/recoveryRules.js).
@@ -2876,8 +2887,7 @@ async function onCombatEnd(result, combat, enc) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       sendLanStatus({ victory: true });
-      const earned = finishRun(true);
-      return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
+      return showFinishedRun(true);
     }
     // Act boss down: boss rewards, then the climb continues.
     // A boss always drops an armament — unless you already own every one it
