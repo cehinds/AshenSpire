@@ -544,9 +544,15 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 const alternativeId = 'src/ui/alternativeArt.js';
 if (sources.has(alternativeId)) {
   const map = {};
-  for (const file of readdirSortedSync(resolve(ROOT, 'assets-alternative'))) {
-    if (!file.endsWith('.webp')) continue;
-    map[`assets-alternative/${file}`] = 'data:image/webp;base64,' + readFileSync(resolve(ROOT, 'assets-alternative', file)).toString('base64');
+  const catalogSource = sources.get('src/ui/alternativeArtCatalog.js');
+  const catalog = JSON.parse(catalogSource.match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
+  for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
+    if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
+    const bytes = readFileSync(resolve(ROOT, 'assets-alternative', file));
+    if (createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
+      fail(`Alternative art changed: ${file}. Run python tools/alternative-art-build.py to refresh its source identity.`);
+    }
+    map[`assets-alternative/${file}`] = 'data:image/webp;base64,' + bytes.toString('base64');
   }
   sources.set(alternativeId, sources.get(alternativeId).replace(
     /\/\* ALTERNATIVE_ART_START \*\/[\s\S]*?\/\* ALTERNATIVE_ART_END \*\//,

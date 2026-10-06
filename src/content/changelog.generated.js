@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1664"
   },
   {
+    "id": "pr-1670",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative combat faces the battlefield",
+    "detail": "The alternative build uses rear-view hero armor, detailed facing enemies, thin gold and red outlines, and a layered Hollow Weald scene. The existing cards, HUD and footer stay playable above a fading textured base, with separate phone and desktop combat placement.",
+    "build": "0.7.1.1033",
+    "pullRequest": 1670,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1670"
+  },
+  {
     "id": "pr-1662",
     "date": "2026-10-06",
     "group": "2026-10-06",
