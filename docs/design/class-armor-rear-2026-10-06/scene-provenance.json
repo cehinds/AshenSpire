@@ -1,0 +1,32 @@
+{
+  "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+  "sceneId": "ashen-crown-1",
+  "layers": [
+    {
+      "sourceFile": "scenes/shared/ashen-crown/far.png",
+      "file": "references\\scene\\ashen-crown-far.png",
+      "sha256": "06a45196153d4b0ccf43363f05b9e472209ba0a2d9ccae4cc63dd180b3763dfa"
+    },
+    {
+      "sourceFile": "scenes/ashen-crown-1/landmark.png",
+      "file": "references\\scene\\ashen-crown-1-landmark.png",
+      "sha256": "9b3ae8affa562e49d8817a865aed884570543eea9f359c5499ef041d37e8ef79"
+    },
+    {
+      "sourceFile": "scenes/shared/ashen-crown/ground.png",
+      "file": "references\\scene\\ashen-crown-ground.png",
+      "sha256": "53795f7ebc6396145b1006cfcadaed3206eb755026763e9aa811e83d15c4c8f9"
+    },
+    {
+      "sourceFile": "scenes/shared/ashen-crown/foreground.png",
+      "file": "references\\scene\\ashen-crown-foreground.png",
+      "sha256": "6564819da0cde5b6a914c53293687e190037d4d8c1733b6cbcd360ae0fdd906d"
+    },
+    {
+      "sourceFile": "scenes/shared/ashen-crown/foreground-phone.png",
+      "file": "references\\scene\\ashen-crown-phone-foreground.png",
+      "sha256": "afa6b35a06bfef2b1f2d1703180147e1ad27266fa470eec8feeb1acbd72da39e"
+    }
+  ],
+  "note": "Review background derivatives from approved layers. Not runtime integration."
+}
