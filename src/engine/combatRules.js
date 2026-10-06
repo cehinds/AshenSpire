@@ -276,6 +276,7 @@ export function foundationTransaction(ctx, execute) {
     if (key === 'rng') ctx.rng.restoreCounters(value.getCounters());
     else if (typeof value !== 'function' && key !== 'registries') ctx[key] = value;
   }
+  if (ctx.registriesForPlayer) ctx.registries = ctx.registriesForPlayer(ctx.playerKey);
   return result;
 }
 
