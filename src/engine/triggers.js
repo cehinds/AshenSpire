@@ -13,6 +13,7 @@ import { foundationEvent, foundationTriggerAllowed } from './combatRules.js';
 import { TRIGGER_EVENTS } from '../model/schemas.js';
 import { getStacks } from '../framework/statusSemantics.js';
 import { advanceStatusClock } from './statuses.js';
+import { abilityMetric, recordAbilityEvent, priorAbilityEntity } from './abilityRiders.js';
 
 const MAX_EMIT_DEPTH = 64;
 
@@ -22,8 +23,17 @@ const MAX_EMIT_DEPTH = 64;
  * event object. Every event carries { type, ...payload }.
  */
 export function emitEvent(ctx, type, payload = {}) {
+  const action = ctx._abilityAction;
+  if (action?.card) payload = {
+    cardId: action.card.cardId, cardInstanceId: action.card.instanceId, cardType: action.card.type,
+    cardTags: action.card.authoredTags || action.card.tags || [], abilityKind: action.card.abilityKind,
+    abilityBefore: action.meta?.abilityBefore, abilityEntities: action.meta?.abilityEntities,
+    sourceId: action.source?.id, sourceKind: action.source?.kind, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}),
+    ...payload,
+  };
   const event = { type, ...foundationEvent(ctx, type, payload) };
   ctx.eventLog.push(event);
+  recordAbilityEvent(ctx, type, event);
   if (ctx._buffer) ctx._buffer.push(event);
   ctx._emitDepth = (ctx._emitDepth || 0) + 1;
   if (ctx._emitDepth > MAX_EMIT_DEPTH) {
@@ -79,7 +89,7 @@ function scanTriggers(ctx, event) {
   // with or without a foundation ruleset — an ally's heal is the ally's.
   const everySeat = ctx.players && (
     (ctx.foundation && ['damageDealt', 'hpLost', 'enemyDied', 'statusApplied', 'impactDealt', 'attackEvaded', 'healed'].includes(event.type))
-    || event.type === 'healed' || event.type === 'arcaneStagger');
+    || ['healed', 'arcaneStagger', 'statusApplied', 'enemyDied'].includes(event.type));
   const owners = everySeat
     ? [...ctx.players.values()].filter((p) => p.entity.alive && p.connected).map((p) => p.entity) : [player];
   // Relics and stances react for their actual owner, including inactive co-op seats.
@@ -216,7 +226,7 @@ function maybeFire(ctx, key, trigger, owner, event) {
 // Best-effort contextual entity for a trigger's effects: the event's target
 // if it names one, else null (effects should declare explicit targets).
 function resolveEventEntity(ctx, event) {
-  if (ctx.foundation && event.targetPlayerId && ctx.players) return ctx.players.get(event.targetPlayerId)?.entity || null;
+  if (event.targetPlayerId && ctx.players) return ctx.players.get(event.targetPlayerId)?.entity || null;
   const id = event.targetId || event.enemyId || null;
   if (!id) return null;
   return findEntity(ctx, id);
@@ -291,19 +301,48 @@ function ledgerFor(ctx, owner) {
 
 export function evalPredicate(ctx, pred, pctx = {}) {
   switch (pred.p) {
+    case 'turnMetric': {
+      const owner = pctx.owner || pctx.source || ctx.player;
+      const metric = { ...pred, cardId: pred.cardId === 'event' ? pctx.event?.cardId || pctx.card?.cardId : pred.cardId };
+      const value = abilityMetric(owner, metric, pred.snapshot === 'current' ? undefined : pctx.meta?.abilityBefore || pctx.event?.abilityBefore);
+      return (pred.atLeast === undefined || value >= pred.atLeast)
+        && (pred.atMost === undefined || value <= pred.atMost);
+    }
+    case 'chargeAvailable':
+      return !!(pctx.owner || pctx.source || ctx.player)?.abilityRiders?.charges?.[pred.key];
+    case 'eventChargeConsumed':
+      return pctx.event?.type === 'cardChargeConsumed' && pctx.event.keys?.includes(pred.key);
+    case 'enemyKilledWithStatus': {
+      const status = pctx.event?.targetStatusesBefore?.[pred.status];
+      return pctx.event?.type === 'enemyDied' && (status?.meter?.value ?? status?.stacks ?? 0) > 0;
+    }
+    case 'enemyNegativeStatusNew':
+      return pctx.event?.type === 'statusApplied' && pctx.event.sourceKind === 'enemy' && pctx.event.wasAbsent === true && pred.statuses.includes(pctx.event.status)
+        && (pctx.event.targetPlayerId && ctx.playerIdForEntity ? pctx.event.targetPlayerId === ctx.playerIdForEntity(pctx.owner) : pctx.event.targetId === pctx.owner?.id);
+    case 'cardAbilityKindIs':
+      return (pctx.card?.abilityKind || pctx.event?.abilityKind) === pred.kind;
+    case 'cardTargetsAllEnemies': {
+      const id = pctx.card?.cardId || pctx.event?.cardId;
+      const def = id && ctx.registries.cards.get(id);
+      return !!def?.effects?.some(effect => effect.op === 'damage' && effect.target === 'allEnemies');
+    }
     case 'inStance':
       return ctx.player.stanceId === pred.stance;
     case 'hasStatus': {
-      const ent = resolveOf(ctx, pctx, pred.of);
+      if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && getStacks(entity, pred.status) >= (pred.atLeast ?? 1));
+      const current = resolveOf(ctx, pctx, pred.of);
+      const ent = pred.snapshot ? priorAbilityEntity(ctx, current, pctx.meta || pctx.event) : current;
       const atLeast = pred.atLeast != null ? pred.atLeast : 1;
       return ent != null && getStacks(ent, pred.status) >= atLeast;
     }
     case 'hasBlock': {
-      const ent = resolveOf(ctx, pctx, pred.of);
+      const current = resolveOf(ctx, pctx, pred.of);
+      const ent = pred.snapshot ? priorAbilityEntity(ctx, current, pctx.meta || pctx.event) : current;
       return ent != null && ent.block > 0;
     }
     case 'hpBelowPct': {
-      const ent = resolveOf(ctx, pctx, pred.of);
+      const current = resolveOf(ctx, pctx, pred.of);
+      const ent = pred.snapshot ? priorAbilityEntity(ctx, current, pctx.meta || pctx.event) : current;
       return ent != null && ent.hp <= (ent.maxHp * pred.pct) / 100;
     }
     case 'firstCardThisTurn': {

@@ -7,6 +7,7 @@ import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
+import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -320,6 +321,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (shell && shell.close) shell.close();
   }
   const send = (obj) => {
+    if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard)) { showPendingDiscard(); return; }
     if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
     // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it
     // here, before its one network intent, from the same offer the host
@@ -443,6 +445,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // Power reduction and its live Weight Class (the pure dodge is class-priced),
   // in every pool the host checks — Energy, Mana AND Stamina.
   function snapshotCosts(def, player) {
+    if (def.combatPreview) {
+      const preview = def.combatPreview;
+      return { energy: preview.costIsX ? 0 : preview.cost, mana: preview.manaCost, stamina: preview.staminaCost, preview };
+    }
     const pools = registries.framework.costProfile(def, {
       powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
       weightClass: player.weightClass || null,
@@ -455,7 +461,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     };
   }
   function cardAffordableFromSnapshot(def, player) {
-    if (!def || !player || player.ended || !player.alive || !player.connected) return false;
+    if (!def || !player || player.pendingAbilityDiscard || player.ended || !player.alive || !player.connected) return false;
     const costs = snapshotCosts(def, player);
     return player.energy >= costs.energy && player.mana >= costs.mana && (player.stamina || 0) >= costs.stamina;
   }
@@ -604,7 +610,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
-  const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods, rank: c.rank, skillBonus: c.skillBonus, passiveBlock: c.passiveBlock });
+  const cardDef = (c) => ({ ...resolveCard(registries, c), combatPreview: c.combatPreview });
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
     playFirstFromLatest: () => {
@@ -678,7 +684,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     renderSeatTabs();
     switch (snap.scene.kind) {
       case 'map': return renderMap();
-      case 'combat': return renderCombat();
+      case 'combat': renderCombat(); showPendingDiscard(); return;
       case 'reward': return renderReward();
       case 'shrine': return renderShrine();
       case 'event': return renderEvent();
@@ -808,6 +814,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       potions.addEventListener('click', () => openCoopPotions());
       renderCombatPotionTray(tray, combatPotionRows(registries, meP), (key) => openCoopPotions(key ?? null));
     }
+  }
+
+  let discardShell = null;
+  function showPendingDiscard() {
+    const player = latestWireSnap?.scene?.players?.find(p => p.id === me);
+    const pending = player?.pendingAbilityDiscard;
+    if (!pending || pending.playerId !== me || discardShell || pacing) return;
+    const owner = me;
+    discardShell = openDiscardChoiceModal({
+      count: pending.count, cardName: registries.cards.get(pending.cardId).name,
+      cards: player.hand.map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      onClosed: () => { discardShell = null; },
+      onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
+    });
   }
 
   function renderCombat() {

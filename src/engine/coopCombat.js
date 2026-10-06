@@ -35,6 +35,8 @@ import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTarge
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 
 import * as A from './actions.js';
+import * as R from './abilityRiders.js';
+import { previewCard as soloPreviewCard } from './combat.js';
 import * as F from './combatRules.js';
 import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
@@ -337,6 +339,7 @@ export function leaveCombat(C, playerId) {
   P.ended = true; // no longer blocks the phase transition
   rescaleEnemies(C);
   if (!connectedCount(C)) { C.phase = 'suspended'; return; }
+  if (C.pendingAbilityDiscard) return;
   maybeEndPlayerPhase(C);
 }
 
@@ -359,6 +362,7 @@ function drainQueue(C) {
   while (C.queue.length) {
     if (++guard > QUEUE_GUARD) throw new Error('Co-op action queue did not drain (trigger loop?)');
     A.executeAction(C, C.queue.shift());
+    if (C.pendingAbilityDiscard) return;
     endCheck(C);
     if (C.result) { C.queue.length = 0; return; }
   }
@@ -367,6 +371,7 @@ function drainQueue(C) {
 
 function endCheck(C) {
   if (C.result) return;
+  if (C.pendingAbilityPlay) return;
   // Downed players drop out of the fight; the run-level revive is the session's.
   for (const P of C.players.values()) {
     if (P.entity.alive && P.entity.hp <= 0) {
@@ -394,6 +399,7 @@ function startPlayerPhase(C) {
   for (const P of livingPlayers(C)) {
     setActive(C, P);
     const e = P.entity;
+    R.beginAbilityTurn(e);
     F.startFoundationTurn(C, e);
     P.ended = false;
     e.counters.cardsPlayedThisTurn = 0;
@@ -434,8 +440,15 @@ export function cardChoicePlan(C, playerId, cardInstanceId) {
   return cardChoice(C.registries, resolveCard(C.registries, inst), P.entity.classId, P.entity.stanceId);
 }
 
+export function previewCoopCard(C, playerId, instanceId, targetId) {
+  const clone = F.candidateState(C);
+  setActive(clone, clone.players.get(playerId));
+  return soloPreviewCard(clone, instanceId, targetId);
+}
+
 export function playCard(C, playerId, cardInstanceId, targetId, choice) {
-  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice));
+  R.assertNoAbilityChoice(C);
+  if (!C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice));
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
@@ -477,11 +490,8 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   const isX = def.cost === 'X';
   const cost = isX ? p.energy : effectiveCost(C, def);
   const pools = F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass }));
-  const manaCost = pools.mana;
+  let manaCost = Math.max(0, pools.mana - R.matchingAbilityCharges(p, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount);
   const staminaCost = cost;
-  if (p.energy < cost) throw new Error(`Not enough stamina (need ${cost}, have ${p.energy})`);
-  if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
-  if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
   const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
     id: entry.id,
@@ -512,6 +522,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   // The grip's derived tags ride the snapshot, as in solo combat (plan phase 3c).
   const derivedTags = gripTags(gripOf(C.registries, C.loadout, p.classId));
   const cardRef = {
+    abilityKind: def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver'), abilityFamily: def.abilityFamily, abilityRank: def.abilityRank,
     sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
     ratingId: inst.ratingId,
     ratingValue: inst.ratingValue,
@@ -532,6 +543,13 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
   };
   const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef);
+  const before = R.beforeAbilityPlay(C, p);
+  A.preflightCardHp(C, def, p, target, before);
+  C.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.authoredTags, abilityKind: cardRef.abilityKind, sourceId: p.id, sourcePlayerId: C.playerKey, playerId: C.playerKey, targetId: target?.id || null, ...before });
+  drainQueue(C);
+  const charges = R.matchingAbilityCharges(p, cardRef);
+  manaCost = Math.max(0, pools.mana - charges.manaDiscount);
+  if (p.energy < cost || p.mana < manaCost) throw new Error('Not enough stamina or Mana to play this card');
 
   p.energy -= cost;
   if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
@@ -544,6 +562,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   p.counters.cardsPlayedThisTurn += 1;
   p.counters.cardsPlayedThisCombat += 1;
   const meta = {
+    ...before,
     energySpent: cost,
     manaSpent: manaCost,
     staminaSpent: staminaCost,
@@ -553,14 +572,33 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     ...(chosen != null ? { choice: chosen } : {}),
   };
   if (kind === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
-  for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
+  R.recordAbilityCard(p, cardRef, manaCost);
+  R.consumeAbilityCharges(p, charges.keys);
+  if (charges.keys.length) C.emit('cardChargeConsumed', { keys: charges.keys, cardId: inst.cardId, sourceId: p.id, sourcePlayerId: C.playerKey, playerId: C.playerKey });
+  C.pendingAbilityPlay = { instance: inst, ref: cardRef, kind, printedManaCost: def.manaCost || 0, targetId: target?.id || null, playerId: C.playerKey, before };
+  const charged = new Set();
+  for (const [index, action] of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots).entries()) {
+    action.meta = { ...action.meta, abilityEffectIndex: index };
+    R.attachAbilityCharges(action, charges, charged);
+    C.enqueue(action);
+  }
   C.emit('cardPlayed', {
+    ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id, sourcePlayerId: C.playerKey,
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
     cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.tags || [], derivedTags,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });
   drainQueue(C);
+
+  finishAbilityPlay(C);
+}
+
+function finishAbilityPlay(C) {
+  const play = R.abilityResolved(C);
+  if (!play) return;
+  const inst = play.instance;
+  const def = resolveCard(C.registries, inst, C.breakMeterVersion || 0);
 
   if (!C.result) {
     // Same framework placement authority as the solo engine (hand parity).
@@ -580,6 +618,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
 // targetId may be an enemy id (offensive flask) OR another player's member id
 // (StS2 throw-to-ally: a self-beneficial flask lands on a chosen ally instead).
 export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
+  R.assertNoAbilityChoice(C);
   if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => useFlask(candidate, playerId, slot, targetId, chargeKind));
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
@@ -626,6 +665,7 @@ export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
 }
 
 export function endTurn(C, playerId) {
+  R.assertNoAbilityChoice(C);
   if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => endTurn(candidate, playerId));
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
@@ -635,6 +675,21 @@ export function endTurn(C, playerId) {
   endOnePlayerTurn(C, P);
   P.ended = true;
   maybeEndPlayerPhase(C);
+}
+
+export function chooseDiscard(C, playerId, cardInstanceIds) {
+  if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => chooseDiscard(candidate, playerId, cardInstanceIds));
+  if (C.pendingAbilityDiscard?.playerId !== playerId) throw new Error('This discard choice belongs to another player');
+  const P = C.players.get(playerId);
+  if (!P) throw new Error('Unknown player');
+  setActive(C, P);
+  C._buffer = [];
+  try {
+    R.chooseAbilityDiscard(C, cardInstanceIds);
+    drainQueue(C);
+    finishAbilityPlay(C);
+    return { events: C._buffer };
+  } finally { C._buffer = null; }
 }
 
 function endOnePlayerTurn(C, P) {

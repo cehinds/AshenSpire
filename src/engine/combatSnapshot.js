@@ -40,7 +40,7 @@ function carryRelicGateKeys(entries) {
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
-  if (combat._buffer !== null || (combat.queue && combat.queue.length)) {
+  if (combat._buffer !== null || (combat.queue && combat.queue.length && !combat.pendingAbilityDiscard)) {
     throw new Error('Combat is still resolving; wait for the action to finish before saving');
   }
   const snapshot = structuredClone({
@@ -82,6 +82,11 @@ export function serializeCombatSnapshot(combat) {
     swapCostRule: combat.swapCostRule,
     swapsLeft: combat.swapsLeft,
     piles: combat.piles,
+    ...(combat.pendingAbilityDiscard ? {
+      pendingAbilityDiscard: combat.pendingAbilityDiscard,
+      pendingAbilityPlay: combat.pendingAbilityPlay,
+      abilityQueue: combat.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
+    } : {}),
     eventLog: combat.eventLog,
     triggerState: [...combat.triggerState.entries()],
     idCounter: combat._idCounter,
@@ -188,6 +193,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     swapsLeft: saved.swapsLeft,
     piles: saved.piles,
     queue: [],
+    ...(saved.pendingAbilityDiscard ? { pendingAbilityDiscard: saved.pendingAbilityDiscard, pendingAbilityPlay: saved.pendingAbilityPlay } : {}),
     eventLog: saved.eventLog,
     _buffer: null,
     triggerState: new Map(carryRelicGateKeys(saved.triggerState)),
@@ -213,6 +219,10 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // raw emitter alone would record no XP for the rest of the restored fight.
   attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
+  if (saved.abilityQueue) {
+    const entity = id => id === combat.player.id ? combat.player : combat.enemies.find(e => e.id === id);
+    combat.queue = saved.abilityQueue.map(({ sourceId, ownerId, targetId, ...action }) => ({ ...action, source: entity(sourceId), owner: entity(ownerId), target: entity(targetId) || null }));
+  }
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   // Property mounts are never saved (definitions are not persisted): they are
   // re-derived from the restored loadout and relics, exactly as createCombat

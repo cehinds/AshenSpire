@@ -45,6 +45,7 @@ import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
+import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -170,6 +171,7 @@ function rollCrit(ctx, source, tags) {
  */
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
+  const targetStatusesBefore = structuredClone(target.statuses || {});
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
   const ratedBase = base + cardRatingBonus(ctx, source, carrier, 'damage', base);
   const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
@@ -204,7 +206,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
     if (!usesSingleBreakMeter(ctx)) applyArcaneExposure(ctx, source, target, carrier);
   }
-  afterHpChange(ctx, target);
+  afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   return dmg;
 }
 
@@ -336,13 +338,13 @@ function seatOf(ctx, target) {
 }
 
 /** loseHp — direct HP loss: ignores ALL attack modifiers AND block (SPEC §4.2). */
-export function applyLoseHp(ctx, target, amount, cause = 'effect') {
+export function applyLoseHp(ctx, target, amount, cause = 'effect', death = {}) {
   if (!target || !target.alive) return 0;
   const n = Math.max(0, Math.floor(amount));
   if (n === 0) return 0;
   target.hp -= n;
   ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: n, cause });
-  afterHpChange(ctx, target);
+  afterHpChange(ctx, target, death);
   return n;
 }
 
@@ -367,7 +369,7 @@ export function applyHeal(ctx, target, amount) {
   return gained;
 }
 
-function afterHpChange(ctx, target) {
+function afterHpChange(ctx, target, death = {}) {
   // THE DEATH-PREVENTION HOOK (SPEC §14.3): the player about to drop to 0 HP
   // spends one revive token from the fight's copy of the counts and rises at
   // hpPct of max. The copy rides the combat snapshot, so a fight saved after a
@@ -385,7 +387,7 @@ function afterHpChange(ctx, target) {
     target.hp = 0;
     target.alive = false;
     if (target.kind === 'enemy') {
-      ctx.emit('enemyDied', { targetId: target.id, enemyId: target.enemyId });
+      ctx.emit('enemyDied', { targetId: target.id, enemyId: target.enemyId, ...death });
     }
     // Player death is finalized by combat.js's end-of-combat check.
   }
@@ -531,7 +533,7 @@ export function discardFromHand(ctx, n, { random = false } = {}) {
     const idx = random ? Math.floor(ctx.rng.float('misc') * ctx.piles.hand.length) : ctx.piles.hand.length - 1;
     const card = ctx.piles.hand.splice(idx, 1)[0];
     ctx.piles.discard.push(card);
-    ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'effect' });
+    ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: random ? 'random' : 'effect', explicit: true, sourceId: ctx.player?.id, ...(ctx.playerKey ? { sourcePlayerId: ctx.playerKey, playerId: ctx.playerKey } : {}) });
   }
 }
 
@@ -672,12 +674,17 @@ export function executeAction(ctx, action) {
     };
     if (!evalPredicate(ctx, eff.if, pctx)) return;
   }
+  if (eff.oncePerTurn && !allowAbilityOnce(action.owner || action.source || ctx.player, eff.oncePerTurn, action.card, action.meta?.abilityEffectIndex ?? eff.op)) return;
 
   const repeat = evalNum(ctx, action, eff.repeat, 1);
-  for (let r = 0; r < repeat; r++) {
-    runOpcode(ctx, action, eff);
-    if (ctx.result) return;
-  }
+  const previous = ctx._abilityAction;
+  ctx._abilityAction = action;
+  try {
+    for (let r = 0; r < repeat; r++) {
+      runOpcode(ctx, action, eff);
+      if (ctx.result || ctx.pendingAbilityDiscard) return;
+    }
+  } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }
 }
 
 function runOpcode(ctx, action, eff) {
@@ -701,7 +708,8 @@ function runOpcode(ctx, action, eff) {
         const targets = resolveTargets(ctx, action, eff.target);
         for (const t of targets) {
           if (!t.alive) continue;
-          const base = evalNum(ctx, action, eff.amount, 0, t);
+          const bonus = (action.meta?.abilityChargeDamageEffect || 0) + (h === 0 && t === targets[0] ? action.meta?.abilityChargeDamage || 0 : 0);
+          const base = evalNum(ctx, action, eff.amount, 0, t) + bonus;
           const carrier = { ...action.card, ...(eff.attack ? { attack: eff.attack } : {}),
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags,
@@ -716,6 +724,7 @@ function runOpcode(ctx, action, eff) {
           const crit = rollCrit(ctx, action.source, attackTags);
           if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
+          if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak);
           // OUTSIDE the foundation ruleset (the shipped game creates its combats
           // without one), an enemy blow that draws blood rocks the player by
           // balance.poise.playerImpactPerHit — the one impact the shipped
@@ -745,7 +754,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'block': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card);
+        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t) + (action.meta?.abilityChargeBlock || 0), action.card);
       }
       break;
     }
@@ -785,7 +794,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'applyStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        const stacks = evalNum(ctx, action, eff.stacks, 1, t);
+        const stacks = evalNum(ctx, action, eff.stacks, 1, t) + (action.meta?.abilityChargeBuildup || 0);
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
         if (ctx.ratingsRules && t.id === action.source?.id && action.card && isMagicalAttack(ctx, action.card) && t.statuses[eff.status]) {
           t.statuses[eff.status].ratingCard = structuredClone(action.card);
@@ -795,8 +804,12 @@ function runOpcode(ctx, action, eff) {
     }
     case 'removeStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        statuses.removeStatus(ctx, t, eff.status, { reason: 'consumed' });
+        statuses.removeStatus(ctx, t, eff.status, { reason: 'consumed', ...(eff.amount !== undefined ? { amount: Math.max(0, evalNum(ctx, action, eff.amount, 0, t)) } : {}) });
       }
+      break;
+    }
+    case 'grantCardCharge': {
+      for (const target of resolveTargets(ctx, action, eff.target)) grantAbilityCharge(target, eff);
       break;
     }
     case 'draw': {
@@ -807,6 +820,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'discard': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      if (eff.choose) { requestAbilityDiscard(ctx, action, n); break; }
       discardFromHand(ctx, n, { random: !!eff.random });
       break;
     }
@@ -875,7 +889,13 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage
         // record can attribute the loss — display + instruments read it.
-        applyLoseHp(ctx, t, evalNum(ctx, action, eff.amount, 0, t), eff.cause || 'effect');
+        const amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+        if (eff.nonlethal && amount >= t.hp) throw new Error('Not enough HP for a nonlethal offering');
+        applyLoseHp(ctx, t, amount, eff.cause || 'effect', action.meta?.killReceipt || { targetStatusesBefore: structuredClone(t.statuses || {}), sourceId: action.source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}) });
+        if (eff.offering && amount > 0) {
+          recordAbilityOffering(t, amount);
+          ctx.emit('hpOfferingPaid', { amount, cost: amount, sourceId: t.id, targetId: t.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(t), playerId: ctx.playerIdForEntity(t) } : {}) });
+        }
       }
       break;
     }
@@ -891,7 +911,7 @@ function runOpcode(ctx, action, eff) {
         const amount = mult === 1
           ? evalNum(ctx, action, eff.amount, 0, t)
           : Math.floor(evalRaw(ctx, action, eff.amount, 0, t) * mult);
-        applyHeal(ctx, t, amount + cardRatingBonus(ctx, action.source, action.card, 'heal', amount));
+        applyHeal(ctx, t, amount + cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0));
       }
       break;
     }
@@ -964,6 +984,25 @@ function runOpcode(ctx, action, eff) {
     default:
       throw new Error(`Opcode '${eff.op}' has no implementation`);
   }
+}
+
+/** Validate all authored HP payments before any card, resource, queue or RNG change. */
+export function preflightCardHp(ctx, def, source, target, meta) {
+  const counters = ctx.rng?.getCounters();
+  const remaining = new Map();
+  try {
+  for (const effect of def.effects || []) {
+    if (effect.op !== 'loseHp') continue;
+    const action = { effect, source, owner: source, target, card: def, meta };
+    if (effect.if && !evalPredicate(ctx, effect.if, action)) continue;
+    for (const entity of resolveTargets(ctx, action, effect.target)) {
+      const amount = Math.max(0, evalNum(ctx, action, effect.amount, 0, entity)) * Math.max(0, evalNum(ctx, action, effect.repeat, 1));
+      const hp = remaining.get(entity) ?? entity.hp;
+      if (effect.nonlethal && amount >= hp) throw new Error('Not enough HP for a nonlethal offering');
+      remaining.set(entity, Math.max(0, hp - amount));
+    }
+  }
+  } finally { if (counters) ctx.rng.restoreCounters(counters); }
 }
 
 // ---------------------------------------------------------------------------

@@ -50,6 +50,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'dodgeRoll',
   'applyStatus',
   'removeStatus',
+  'grantCardCharge',
   'draw',
   'discard',
   'exhaust',
@@ -117,6 +118,10 @@ export const EVENTS = Object.freeze([
   'enemyMoveStarted',
   'cardDrawn',
   'cardPlayed',
+  'cardPreparing',
+  'cardResolved',
+  'cardChargeConsumed',
+  'hpOfferingPaid',
   'cardExhausted',
   'cardDiscarded',
   'deckShuffled',
@@ -127,6 +132,7 @@ export const EVENTS = Object.freeze([
   'healed',
   'statusApplied',
   'statusExpired',
+  'statusRemoved',
   'meterFilled',
   'stanceEntered',
   'stanceExited',
@@ -191,6 +197,13 @@ export const TRIGGER_EVENTS = Object.freeze([
 // triggers on their firing event's payload (e.g. a stance hook on damageDealt
 // that only reacts to the owner's own attack hits).
 export const PREDICATES = Object.freeze([
+  'turnMetric',
+  'chargeAvailable',
+  'eventChargeConsumed',
+  'enemyKilledWithStatus',
+  'enemyNegativeStatusNew',
+  'cardAbilityKindIs',
+  'cardTargetsAllEnemies',
   'inStance',
   'hasStatus',
   'hasBlock',
@@ -223,6 +236,8 @@ export const PREDICATES = Object.freeze([
   'any',
   'not',
 ]);
+
+export const ABILITY_TURN_METRICS = Object.freeze(['tagPlays', 'distinctTagPlays', 'manaSpent', 'discarded', 'hpLostSinceTurnStart', 'offeringsPaid', 'cardsPlayed', 'previousSpell', 'turnStartHpPct', 'sameCardPlays', 'attacksPlayed', 'cardPlaysCombat']);
 
 // THE TREE (content/source/nodes.csv and its companions). Every tag is a node;
 // a node's parent is its parentId and nothing else; the five tag tables, the
@@ -500,8 +515,9 @@ export const EFFECT_SPECS = Object.freeze({
   dodgeRoll: { allowed: [], required: [], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
+  grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
-  discard: { allowed: ['random'], required: [], refs: {} },
+  discard: { allowed: ['random', 'choose'], required: [], refs: {} },
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
@@ -511,7 +527,7 @@ export const EFFECT_SPECS = Object.freeze({
   // pool already stands at or above the floor. Exactly one of the two —
   // validate.js refuses neither and both.
   restoreMana: { allowed: ['toFloorPct'], required: [], refs: {} },
-  loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
+  loseHp: { allowed: ['cause', 'nonlethal', 'offering'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   // Exactly one of `stance` (a fixed stance) or `choose` (a pending choice the

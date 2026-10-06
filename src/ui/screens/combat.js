@@ -17,6 +17,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
+import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
 import { runHandRules } from '../../model/handRules.js';
@@ -2018,6 +2019,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function useFlask(slot, targetId, chargeKind = null) {
+    if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
       dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
@@ -2041,6 +2043,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     sfx.play('flask');
     busy = true;
     afterDispatch(out.events);
+  }
+
+  let discardShell = null;
+  function showPendingDiscard() {
+    const pending = combat.pendingAbilityDiscard;
+    if (!pending || discardShell) return;
+    discardShell = openDiscardChoiceModal({
+      count: pending.count, cardName: registries.cards.get(pending.cardId).name,
+      cards: combat.piles.hand.map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      onClosed: () => { discardShell = null; },
+      onChoose: cardInstanceIds => {
+        disp = takeSnapshot();
+        const out = dispatch(combat, { type: 'chooseDiscard', cardInstanceIds });
+        busy = true; afterDispatch(out.events);
+      },
+    });
   }
 
   function afterDispatch(events) {
@@ -2114,6 +2132,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         enemyPlayback = false;
         busy = false;
         render();
+        showPendingDiscard();
         if (combat.result) {
           // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
           //
@@ -2215,6 +2234,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function playCard(instanceId, targetId, choice) {
+    if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
       const why = { busy, result: combat.result, phase: combat.phase };
@@ -2268,6 +2288,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     question: 'End your turn and let the enemies act?',
     confirmLabel: 'END TURN',
     onConfirm: () => {
+    if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
     if (busy || combat.result || combat.phase !== 'player') {
       const why = { busy, result: combat.result, phase: combat.phase };
       console.debug('[combat] endTurn ignored:', JSON.stringify(why));
@@ -2470,6 +2491,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   $('#combat-armoury')?.addEventListener('click', (event) => openCombatArmoury(event.currentTarget.dataset.equipView || ''));
 
   render();
+  showPendingDiscard();
 
   formationMovement = wireFormationMovement($('.field'), {
     readSettings, holdConfig: registries.balance.ui.holdConfirm,

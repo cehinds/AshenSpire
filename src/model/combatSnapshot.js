@@ -34,6 +34,15 @@ function nonEmptyString(value) {
 function entityProblems(entity, path, { player = false } = {}) {
   const problems = [];
   if (!record(entity)) return [`${path} must be an object`];
+  if (entity.abilityRiders !== undefined) {
+    const state = entity.abilityRiders;
+    if (!record(state)) problems.push(`${path}.abilityRiders must be an object`);
+    else {
+      for (const key of ['cardsPlayed', 'manaSpent', 'discarded', 'hpLostSinceTurnStart', 'hpLostThisRound', 'offeringsPaid', 'previousSpell', 'attacksPlayed', 'cardPlaysCombat']) if (state[key] !== undefined && (!Number.isSafeInteger(state[key]) || state[key] < 0)) problems.push(`${path}.abilityRiders.${key} must be a non-negative whole number`);
+      if (state.turnStartHpPct !== undefined && (!finite(state.turnStartHpPct) || state.turnStartHpPct < 0 || state.turnStartHpPct > 100)) problems.push(`${path}.abilityRiders.turnStartHpPct must be a percentage`);
+      for (const key of ['charges', 'once', 'tagPlays', 'sameCardPlays', 'distinctTagPlays']) if (state[key] !== undefined && !record(state[key])) problems.push(`${path}.abilityRiders.${key} must be an object`);
+    }
+  }
   if (!nonEmptyString(entity.id)) problems.push(`${path}.id must be a non-empty string`);
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';
@@ -151,6 +160,13 @@ export function combatSnapshotProblems(snapshot) {
   }
   if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
+  if (snapshot.pendingAbilityDiscard !== undefined) {
+    const pending = snapshot.pendingAbilityDiscard;
+    if (!record(pending) || !Number.isInteger(pending.count) || pending.count < 1 || pending.count > (snapshot.piles?.hand?.length || 0)) problems.push('pendingAbilityDiscard requires a valid hand count');
+    if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityDiscard requires its paid card');
+    else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
+    if (!Array.isArray(snapshot.abilityQueue) || snapshot.abilityQueue.some(action => !record(action) || !record(action.effect) || !nonEmptyString(action.effect.op))) problems.push('abilityQueue must contain queued effects');
+  } else if (snapshot.abilityQueue !== undefined || snapshot.pendingAbilityPlay !== undefined) problems.push('saved ability queue requires a pending discard choice');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
   // before them, refused by name when present and malformed.

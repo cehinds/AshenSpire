@@ -43,6 +43,7 @@ export function hasStatus(entity, statusId) {
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
   const def = ctx.registries.statuses.get(statusId);
   if (!target || !target.alive) return;
+  const wasAbsent = getStacks(target, statusId) <= 0;
   let amount = Math.floor(stacks);
   const weights = ctx.ratingsRules?.statuses?.[statusId];
   if (weights && target.ratings && source && source.id !== target.id && amount > 0) {
@@ -116,6 +117,8 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
   }
 
   ctx.emit('statusApplied', {
+    sourceKind: source?.kind,
+    targetKind: target.kind, wasAbsent,
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}),
     targetId: target.id,
     sourceId: source ? source.id : null,
@@ -124,7 +127,7 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
     total: getStacks(target, statusId),
   });
 
-  if (def.proc) checkProcFill(ctx, target, statusId, def, inst);
+  if (def.proc) checkProcFill(ctx, target, statusId, def, inst, source);
   else if (inst.meter) checkMeterFill(ctx, target, statusId, def, inst);
 }
 
@@ -138,8 +141,9 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
 // entry — procBurst + its own hpLost — never folded into the triggering
 // hit's damageDealt. Payload order downstream is the fixed causal sentence:
 // burst → poise chunk → stagger → extra effects → resistance.
-function checkProcFill(ctx, entity, statusId, def, inst) {
+function checkProcFill(ctx, entity, statusId, def, inst, source) {
   if (inst.meter.value < inst.meter.max) return;
+  const killReceipt = { targetStatusesBefore: structuredClone(entity.statuses), sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) };
   const p = def.proc;
   inst.meter.value = 0; // reset to zero — overflow dropped, threshold constant
   const pct = Math.floor((entity.maxHp * p.burstPercent) / 100);
@@ -153,7 +157,7 @@ function checkProcFill(ctx, entity, statusId, def, inst) {
     poiseDamage: p.poiseDamage || 0,
     stagger: !!p.stagger,
   });
-  const enq = (effect) => ctx.enqueue({ effect, source: entity, owner: entity, target: entity, meta: ctx.foundation ? { foundationAncestry: [...(ctx._foundationAncestry || []), `proc:${statusId}`] } : {} });
+  const enq = (effect) => ctx.enqueue({ effect, source: entity, owner: entity, target: entity, meta: { killReceipt, ...(ctx.foundation ? { foundationAncestry: [...(ctx._foundationAncestry || []), `proc:${statusId}`] } : {}) } });
   enq({ op: 'loseHp', target: 'self', amount: burst, cause: `proc:${statusId}` });
   if (p.poiseDamage > 0 && entity.kind === 'enemy') enq({ op: 'poiseDamage', amount: p.poiseDamage });
   if (p.stagger && entity.kind === 'enemy') enq({ op: 'stagger' });
@@ -194,7 +198,29 @@ function checkMeterFill(ctx, entity, statusId, def, inst) {
 
 export function removeStatus(ctx, target, statusId, opts = {}) {
   if (!target.statuses[statusId]) return;
+  const before = getStacks(target, statusId);
+  if (opts.amount !== undefined) {
+    const instance = target.statuses[statusId];
+    const field = instance.meter ? 'value' : 'stacks';
+    const holder = instance.meter || instance;
+    holder[field] = Math.max(0, holder[field] - opts.amount);
+    if (instance.applications) {
+      const rule = ctx.registries.statuses.get(statusId).stacking;
+      let remaining = holder[field];
+      instance.applications = instance.applications.map(a => {
+        const value = Math.min(a.value, remaining);
+        if (rule?.mode !== 'strongest') remaining -= value;
+        return { ...a, value };
+      }).filter(a => a.value > 0);
+      instance.stacks = stackMagnitude(instance.applications, rule.mode, rule.cap);
+    }
+    if (holder[field] > 0) {
+      if (opts.reason === 'consumed') ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before - getStacks(target, statusId), reason: 'consumed' });
+      return;
+    }
+  }
   delete target.statuses[statusId];
+  if (opts.reason === 'consumed') ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before, reason: 'consumed' });
   if (!opts.silent) {
     ctx.emit('statusExpired', { targetId: target.id, status: statusId, reason: opts.reason || 'removed' });
   }

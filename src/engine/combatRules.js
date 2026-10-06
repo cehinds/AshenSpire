@@ -205,7 +205,7 @@ export function consumeFoundationEvade(ctx, source, target, carrier) {
 }
 
 /** Clone one graph, preserving references between players, piles and seats. */
-function candidateState(ctx) {
+export function candidateState(ctx) {
   const data = {};
   for (const [key, value] of Object.entries(ctx)) {
     if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
@@ -227,13 +227,38 @@ function candidateState(ctx) {
 export function foundationTransaction(ctx, execute) {
   const candidate = candidateState(ctx);
   candidate._foundationTransaction = true;
-  candidate.foundation.actionSerial++;
-  candidate.foundation.eventCount = 0;
-  candidate.foundation.rolls = {}; candidate.foundation.counts = {};
+  if (candidate.foundation) {
+    candidate.foundation.actionSerial++;
+    candidate.foundation.eventCount = 0;
+    candidate.foundation.rolls = {}; candidate.foundation.counts = {};
+  }
   candidate._foundationAncestry = [];
   const result = execute(candidate);
   delete candidate._foundationTransaction;
   delete candidate._foundationAncestry;
+  // Public combat entities and seats are stable handles. Commit the detached
+  // values into those handles and reconnect paused actions to the same graph.
+  const entities = new Map();
+  const commitEntity = (old, next) => {
+    if (!old || !next) return next;
+    entities.set(next, old);
+    for (const key of Object.keys(old)) delete old[key];
+    Object.assign(old, next);
+    if (old.kind === 'player') bindTurnStamina(old);
+    return old;
+  };
+  if (candidate.players) {
+    for (const [id, next] of candidate.players) {
+      const old = ctx.players.get(id);
+      if (!old) continue;
+      next.entity = commitEntity(old.entity, next.entity);
+      Object.assign(old, next);
+      candidate.players.set(id, old);
+    }
+  } else candidate.player = commitEntity(ctx.player, candidate.player);
+  candidate.enemies = candidate.enemies.map((entity, i) => commitEntity(ctx.enemies[i], entity));
+  if (candidate.players) candidate.player = entities.get(candidate.player) || candidate.player;
+  for (const action of candidate.queue) for (const key of ['source', 'owner', 'target']) action[key] = entities.get(action[key]) || action[key];
   // Keep the run's loadout object identity when committing an equipment change.
   if (!ctx.players && ctx.loadout && candidate.loadout) {
     for (const key of Object.keys(ctx.loadout)) delete ctx.loadout[key];

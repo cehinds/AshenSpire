@@ -52,7 +52,7 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, previewCoopCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
@@ -710,6 +710,8 @@ export function createSession({ registries, seedString, endless = false, restore
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
       players: [...c.players.values()].map((P) => ({
+        pendingAbilityDiscard: c.pendingAbilityDiscard || null,
+        abilityRiders: P.entity.abilityRiders,
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
         mana: P.entity.mana, maxMana: P.entity.maxMana,
@@ -725,7 +727,7 @@ export function createSession({ registries, seedString, endless = false, restore
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
         ...(P.entity.wardMeter ? { wardMeter: P.entity.wardMeter } : {}),
         ratings: P.entity.ratings,
-        hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded, breakMeterVersion: c.breakMeterVersion === 1 ? 1 : 0, ...(c2.rank > 1 ? { rank: c2.rank } : {}), ...(c2.skillBonus > 0 ? { skillBonus: c2.skillBonus } : {}), ...(c2.passiveBlock > 0 ? { passiveBlock: c2.passiveBlock } : {}) })),
+        hand: P.piles.hand.map((c2) => ({ ...c2, combatPreview: previewCoopCard(c, P.id, c2.instanceId), breakMeterVersion: c.breakMeterVersion === 1 ? 1 : 0 })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
@@ -752,6 +754,11 @@ export function createSession({ registries, seedString, endless = false, restore
   function combatEndTurn(memberId) {
     if (!live) return { ok: false, error: 'no combat' };
     try { endTurn(live.combat, memberId); } catch (e) { return { ok: false, error: e.message }; }
+    return settleCombat();
+  }
+  function combatChooseDiscard(memberId, cardInstanceIds) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { chooseDiscard(live.combat, memberId, cardInstanceIds); } catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }
   function combatFlask(memberId, slot, targetId, chargeKind = null) {
@@ -1592,7 +1599,7 @@ export function createSession({ registries, seedString, endless = false, restore
     refusedMembers: () => refused.map((r) => ({ id: r.id, name: r.name, index: r.index, reason: r.reason })),
     addMember, setConnected, setConnectedMany, connectedMembers, livingMembers,
     start, chooseNode, chooseMasteryNode, resolveNode,
-    combatPlay, combatEndTurn, flaskIntent, autoResolveCombat,
+    combatPlay, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat,
     chooseReward, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },
