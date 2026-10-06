@@ -24,6 +24,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          # Keep every commit for merge-base checks without downloading all
+          # historical artwork; Git fetches needed blobs for each checkout.
+          filter: blob:none
           lfs: false
       - uses: ./.github/actions/setup-node
       - name: Fetch current branch tips
