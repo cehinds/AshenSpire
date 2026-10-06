@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1681",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Inspect your starting stats and relic",
+    "detail": "Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.",
+    "build": "0.7.1.1043",
+    "pullRequest": 1681,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1681"
+  },
+  {
     "id": "pr-1674",
     "date": "2026-10-06",
     "group": "2026-10-06",

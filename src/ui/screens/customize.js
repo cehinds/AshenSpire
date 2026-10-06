@@ -65,6 +65,7 @@ import {
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
+import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../components/creationPreviewDetails.js';
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
@@ -628,8 +629,9 @@ export function mountCustomize(app, {
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
     const resourceOrder = ['hp', 'stamina', 'mana', 'openingHand', 'draw'];
     const resources = classResourceGrid(classPreviewResources(run, projection)
-      .map((entry) => ({ ...entry, faceLabel: creationDerivedLabel(entry) }))
-      .sort((a, b) => resourceOrder.indexOf(a.id) - resourceOrder.indexOf(b.id)));
+      .map((entry) => ({ ...entry, faceLabel: creationDerivedLabel(entry), inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.label }))
+      .sort((a, b) => resourceOrder.indexOf(a.id) - resourceOrder.indexOf(b.id)), { onInspect: openCreationStatDetail });
+    const inspectRelic = (selectedRelic, opener) => openCreationRelicDetail(selectedRelic, relicText(selectedRelic, registries), opener);
     if (!catalog && creationClassPreview() === 'unfold') {
       // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
       // picked card opens to the portrait and the summary. Before a pick the
@@ -638,10 +640,9 @@ export function mountCustomize(app, {
       const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
       if (card) {
         const unfold = classUnfold({ cls, sprite, resources, relic,
-          visual: classGlyph(cls.id), mastery: masteryClassSummary(registries, meta, cls.id) });
+          visual: classGlyph(cls.id), mastery: masteryClassSummary(registries, meta, cls.id), onRelicInspect: inspectRelic });
         card.classList.add('unfolded');
         card.append(unfold);
-        card.setAttribute('aria-describedby', unfold.id); // the button's description: the resources and the relic
       }
       $('#cz-class-preview-host').replaceChildren();
       return;
@@ -651,6 +652,7 @@ export function mountCustomize(app, {
       resources,
       relic,
       relicDescription: relicText(relic, registries),
+      onRelicInspect: inspectRelic,
     });
     $('#cz-class-preview-host').replaceChildren(previewPane);
   }
@@ -927,6 +929,7 @@ export function mountCustomize(app, {
     // with its unlock's hint; every shipped class is free until a row gates it.
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
       selected: state.classChosen && cls.id === state.classId,
+      expanded: !catalog && creationClassPreview() === 'unfold',
       visual: classGlyph(cls.id),
       mastery: masteryClassSummary(registries, meta, cls.id),
       locked: !classAvailable(registries.unlocks, cls.id, meta),
@@ -936,6 +939,9 @@ export function mountCustomize(app, {
         state.classId = cls.id; state.classChosen = true; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         fitStage();
+        // The selected choice is now an article hosting detail controls.
+        // Keep keyboard focus on its replacement after the button is rebuilt.
+        if (!catalog && creationClassPreview() === 'unfold') focusCreationClassPreview(classBox.querySelector(`.cz-class[data-class="${cls.id}"]`));
       },
     }));
     // Before a pick the preview pane follows the pointer, so it is never a

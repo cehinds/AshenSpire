@@ -7038,6 +7038,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.preview.selectedClass",
+    "extends": "",
+    "short": "{name}, selected class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.inspectRelic",
+    "extends": "",
+    "short": "Inspect {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.inspectStat",
+    "extends": "",
+    "short": "{name}: {value}. View details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.statEyebrow",
+    "extends": "",
+    "short": "Starting stat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.relicEyebrow",
+    "extends": "",
+    "short": "Starting relic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.calculation",
+    "extends": "",
+    "short": "Stat calculation",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "creation.section.review",
     "extends": "",
     "short": "REVIEW",
