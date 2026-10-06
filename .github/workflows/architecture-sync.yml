@@ -2,11 +2,11 @@ name: architecture-sync
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, alternative/dev, 'alternative/**/dev']
   workflow_dispatch:
 
 concurrency:
-  group: architecture-sync-dev
+  group: architecture-sync-${{ github.ref_name }}
   cancel-in-progress: true
 
 # The routine commits only the generated current-dev inventory. The core
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   refresh:
-    if: github.ref_name == 'dev' && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[architecture-sync]'))
+    if: (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[architecture-sync]'))
     runs-on: ubuntu-latest
     steps:
       - name: Check out the merged dev tree
@@ -47,4 +47,4 @@ jobs:
           git add -- docs/ARCHITECTURE-CURRENT-DEV.md
           git diff --cached --name-only
           git commit -m "docs: refresh current-dev architecture [architecture-sync]"
-          git push origin HEAD:dev
+          git push origin "HEAD:$GITHUB_REF_NAME"
