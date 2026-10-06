@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState, serializeRun, deserializeRun, validateRunShape, initializeRunDerivedStats } from '../src/model/state.js';
 import { openRunClassMastery, registriesForClassMastery } from '../src/model/classMasteryRun.js';
-import { awardSkillXp, bankSkillXp, claimBankedSkillLevel, activateAbilitySkill, xpToNext } from '../src/model/skills.js';
+import { awardSkillXp, bankSkillXp, claimBankedSkillLevel, activateAbilitySkill, pendingSkillLevelCount, xpToNext } from '../src/model/skills.js';
 import { classRewardBudget, pendingClassMilestones } from '../src/model/classMilestones.js';
 import { rollAbilityOffer, abilityOfferPool } from '../src/model/abilityOffers.js';
 import { rollClassMilestoneRewards, claimClassMilestoneReward } from '../src/model/classMilestoneOffers.js';
@@ -185,4 +185,22 @@ test('an advanced default family keeps a rank-zero starter and a class attribute
   assert.equal(claimClassMilestoneReward(reg,run,offer.receiptId,'constitution'),true);
   const restored=deserializeRun(serializeRun(run));
   assert.doesNotThrow(()=>initializeRunDerivedStats(restored,reg,{preserveDeficits:true}));
+});
+
+test('class bonus XP banks every favored skill and leaves its level for the manual claim',()=>{
+  const {run,reg}=fresh();
+  const threshold=xpToNext(reg,'weapon',1);
+  run.skills['item:blade']={xp:threshold-10,level:1,pendingDrafts:0};
+  fund(reg,run,50);
+  const claim=claimBankedSkillLevel(reg,run,'class:reaver');
+  const award=claim.skillAwards.find(row=>row.skillId==='item:blade');
+  assert.equal(award.before,1);assert.equal(award.after,1);assert.equal(award.gained,25);assert.equal(award.levelUps,0);
+  assert.equal(run.skills['item:blade'].level,1);
+  assert.equal(run.skills['item:blade'].xp,threshold+15);
+  assert.equal(pendingSkillLevelCount(reg,run,'item:blade'),1);
+  const restored=deserializeRun(serializeRun(run));
+  assert.equal(claimBankedSkillLevel(reg,restored,'class:reaver'),null);
+  assert.equal(restored.skills['item:blade'].xp,threshold+15);
+  assert.equal(claimBankedSkillLevel(reg,restored,'item:blade').after,2);
+  assert.equal(restored.skills['item:blade'].xp,15);
 });

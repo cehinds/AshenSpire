@@ -539,5 +539,5 @@ export function activateAbilitySkill(run, skillId) {
 }
 function payClassMilestone(registries, run, classId, level) {
   if (!expandedProgression(run) || !queueClassMilestone(registries, run, classId, level)) return [];
-  return (registries.balance.progression.classSkills[classId] || []).map(skillId => awardSkillXp(registries, run, skillId, registries.balance.progression.skillBonusXp));
+  return (registries.balance.progression.classSkills[classId] || []).map(skillId => bankSkillXp(registries, run, skillId, registries.balance.progression.skillBonusXp));
 }
