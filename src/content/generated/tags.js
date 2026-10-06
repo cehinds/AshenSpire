@@ -3358,5 +3358,95 @@ export const tags = [
     "glyph": "✦",
     "visibility": "",
     "blurb": "Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat."
+  },
+  {
+    "id": "progression-emberjaw-token",
+    "domain": "property",
+    "label": "Emberjaw Token",
+    "color": "C79C64",
+    "glyph": "🦷",
+    "visibility": "",
+    "blurb": "What Emberjaw Token confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-cracked-war-anvil",
+    "domain": "property",
+    "label": "Cracked War Anvil",
+    "color": "C79C64",
+    "glyph": "⚒️",
+    "visibility": "",
+    "blurb": "What Cracked War Anvil confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-cinderbound-crown",
+    "domain": "property",
+    "label": "Cinderbound Crown",
+    "color": "C79C64",
+    "glyph": "👑",
+    "visibility": "",
+    "blurb": "What Cinderbound Crown confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-moonwell-lens",
+    "domain": "property",
+    "label": "Moonwell Lens",
+    "color": "C79C64",
+    "glyph": "🔮",
+    "visibility": "",
+    "blurb": "What Moonwell Lens confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-nightglass-rosary",
+    "domain": "property",
+    "label": "Nightglass Rosary",
+    "color": "C79C64",
+    "glyph": "📿",
+    "visibility": "",
+    "blurb": "What Nightglass Rosary confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-fragment-of-the-third-sky",
+    "domain": "property",
+    "label": "Fragment of the Third Sky",
+    "color": "C79C64",
+    "glyph": "🌌",
+    "visibility": "",
+    "blurb": "What Fragment of the Third Sky confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-whisperglass-die",
+    "domain": "property",
+    "label": "Whisperglass Die",
+    "color": "C79C64",
+    "glyph": "🎲",
+    "visibility": "",
+    "blurb": "What Whisperglass Die confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-purse-of-borrowed-shadows",
+    "domain": "property",
+    "label": "Purse of Borrowed Shadows",
+    "color": "C79C64",
+    "glyph": "👝",
+    "visibility": "",
+    "blurb": "What Purse of Borrowed Shadows confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-ember-alms-bowl",
+    "domain": "property",
+    "label": "Ember Alms Bowl",
+    "color": "C79C64",
+    "glyph": "🥣",
+    "visibility": "",
+    "blurb": "What Ember Alms Bowl confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-ossuary-prayer-wheel",
+    "domain": "property",
+    "label": "Ossuary Prayer Wheel",
+    "color": "C79C64",
+    "glyph": "🛞",
+    "visibility": "",
+    "blurb": "What Ossuary Prayer Wheel confers when the fight gives it its moment."
   }
 ];

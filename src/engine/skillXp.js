@@ -147,7 +147,8 @@ export function recordSkillXp(combat, event) {
       const physical = !spell && (event.abilityKind === 'maneuver' || tags.includes('source:weapon') || tags.includes('source:unarmed'));
       const receipt = receiptFor(combat,owner);
       const rates = combat.registries.balance.progression.ability.xp;
-      if (magical) pay(receipt,FOCUS_ITEM_TYPE,rates.magical + (spell ? rates.spell : 0) + (spell && event.printedManaCost > 0 ? rates.manaSpell : 0));
+      const printedMana = Number.isFinite(event.printedManaCost) ? Math.max(0, event.printedManaCost) : 0;
+      if (magical) pay(receipt,FOCUS_ITEM_TYPE,rates.magical + (spell ? rates.spell + printedMana * rates.manaSpell : 0));
       if (physical) pay(receipt,'combatManeuvers',event.printedManaCost > 0 ? rates.maneuver : rates.technique);
       return;
     }

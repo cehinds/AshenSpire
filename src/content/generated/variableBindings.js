@@ -918,5 +918,75 @@ export const variableBindings = [
     "nodeId": "gravelightSigil",
     "variable": "heal",
     "balancePath": "sigils.gravelightSigil.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-emberjaw-token",
+    "variable": "bleed",
+    "balancePath": "progressionRelics.progression-emberjaw-token.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-cracked-war-anvil",
+    "variable": "poiseDamage",
+    "balancePath": "progressionRelics.progression-cracked-war-anvil.poiseDamage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-cinderbound-crown",
+    "variable": "heal",
+    "balancePath": "progressionRelics.progression-cinderbound-crown.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-moonwell-lens",
+    "variable": "block",
+    "balancePath": "progressionRelics.progression-moonwell-lens.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-nightglass-rosary",
+    "variable": "restoreMana",
+    "balancePath": "progressionRelics.progression-nightglass-rosary.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-fragment-of-the-third-sky",
+    "variable": "block",
+    "balancePath": "progressionRelics.progression-fragment-of-the-third-sky.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-whisperglass-die",
+    "variable": "chargeDamage",
+    "balancePath": "progressionRelics.progression-whisperglass-die.chargeDamage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-purse-of-borrowed-shadows",
+    "variable": "block",
+    "balancePath": "progressionRelics.progression-purse-of-borrowed-shadows.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-ember-alms-bowl",
+    "variable": "block",
+    "balancePath": "progressionRelics.progression-ember-alms-bowl.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-ossuary-prayer-wheel",
+    "variable": "restoreMana",
+    "balancePath": "progressionRelics.progression-ossuary-prayer-wheel.restoreMana"
   }
 ];

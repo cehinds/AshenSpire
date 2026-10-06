@@ -146,3 +146,13 @@ default,,vigilSigil,block,sigils.vigilSigil.block
 default,,pyreSigil,block,sigils.pyreSigil.block
 default,,gravelightSigil,pct,sigils.gravelightSigil.pct
 default,,gravelightSigil,heal,sigils.gravelightSigil.heal
+default,,progression-emberjaw-token,bleed,progressionRelics.progression-emberjaw-token.bleed
+default,,progression-cracked-war-anvil,poiseDamage,progressionRelics.progression-cracked-war-anvil.poiseDamage
+default,,progression-cinderbound-crown,heal,progressionRelics.progression-cinderbound-crown.heal
+default,,progression-moonwell-lens,block,progressionRelics.progression-moonwell-lens.block
+default,,progression-nightglass-rosary,restoreMana,progressionRelics.progression-nightglass-rosary.restoreMana
+default,,progression-fragment-of-the-third-sky,block,progressionRelics.progression-fragment-of-the-third-sky.block
+default,,progression-whisperglass-die,chargeDamage,progressionRelics.progression-whisperglass-die.chargeDamage
+default,,progression-purse-of-borrowed-shadows,block,progressionRelics.progression-purse-of-borrowed-shadows.block
+default,,progression-ember-alms-bowl,block,progressionRelics.progression-ember-alms-bowl.block
+default,,progression-ossuary-prayer-wheel,restoreMana,progressionRelics.progression-ossuary-prayer-wheel.restoreMana

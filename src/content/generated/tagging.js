@@ -14017,5 +14017,239 @@ export const tagging = [
     "scope": "",
     "objectId": "heraldMasteryResolve",
     "tagId": "classification.feat"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-emberjaw-token",
+    "tagId": "progression-emberjaw-token"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-emberjaw-token",
+    "tagId": "blade"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-emberjaw-token",
+    "tagId": "blood"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-emberjaw-token",
+    "tagId": "ability:searing-edge"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cracked-war-anvil",
+    "tagId": "progression-cracked-war-anvil"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cracked-war-anvil",
+    "tagId": "heavy"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cracked-war-anvil",
+    "tagId": "ability:hammerfall"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cinderbound-crown",
+    "tagId": "progression-cinderbound-crown"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cinderbound-crown",
+    "tagId": "blood"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cinderbound-crown",
+    "tagId": "oath"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-cinderbound-crown",
+    "tagId": "ability:wound-harvest"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-moonwell-lens",
+    "tagId": "progression-moonwell-lens"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-moonwell-lens",
+    "tagId": "starstone"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-moonwell-lens",
+    "tagId": "guard"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-moonwell-lens",
+    "tagId": "ability:lunar-guard"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-nightglass-rosary",
+    "tagId": "progression-nightglass-rosary"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-nightglass-rosary",
+    "tagId": "starstone"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-nightglass-rosary",
+    "tagId": "ritual"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-nightglass-rosary",
+    "tagId": "ability:celestial-echo"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-fragment-of-the-third-sky",
+    "tagId": "progression-fragment-of-the-third-sky"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-fragment-of-the-third-sky",
+    "tagId": "starstone"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-fragment-of-the-third-sky",
+    "tagId": "guard"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-fragment-of-the-third-sky",
+    "tagId": "ability:astral-convergence"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-whisperglass-die",
+    "tagId": "progression-whisperglass-die"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-whisperglass-die",
+    "tagId": "blade"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-whisperglass-die",
+    "tagId": "guile"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-whisperglass-die",
+    "tagId": "ability:ash-opener"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-purse-of-borrowed-shadows",
+    "tagId": "progression-purse-of-borrowed-shadows"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-purse-of-borrowed-shadows",
+    "tagId": "guile"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-purse-of-borrowed-shadows",
+    "tagId": "guard"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-purse-of-borrowed-shadows",
+    "tagId": "ability:discard-weave"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ember-alms-bowl",
+    "tagId": "progression-ember-alms-bowl"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ember-alms-bowl",
+    "tagId": "ritual"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ember-alms-bowl",
+    "tagId": "blood"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ember-alms-bowl",
+    "tagId": "ability:blood-censer"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ossuary-prayer-wheel",
+    "tagId": "progression-ossuary-prayer-wheel"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ossuary-prayer-wheel",
+    "tagId": "ritual"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ossuary-prayer-wheel",
+    "tagId": "blight"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "progression-ossuary-prayer-wheel",
+    "tagId": "ability:sepulchral-pact"
   }
 ];

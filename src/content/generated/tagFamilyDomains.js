@@ -385,5 +385,9 @@ export const tagFamilyDomains = [
   {
     "family": "feat",
     "domain": "classification"
+  },
+  {
+    "family": "relic",
+    "domain": "card"
   }
 ];

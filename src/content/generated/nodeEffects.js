@@ -4286,5 +4286,342 @@ export const nodeEffects = {
         "limitPerTurn": 1
       }
     ]
+  },
+  "progression-emberjaw-token": {
+    "triggers": [
+      {
+        "on": "damageDealt",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "blade"
+            },
+            {
+              "p": "eventIsAttack"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "status": "bleed",
+            "stacks": {
+              "variable": "bleed"
+            }
+          }
+        ],
+        "once": true
+      }
+    ]
+  },
+  "progression-cracked-war-anvil": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "heavy"
+            },
+            {
+              "p": "cardTypeIs",
+              "type": "attack"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "owner",
+            "key": "progression-cracked-war-anvil",
+            "cardType": "attack",
+            "break": {
+              "variable": "poiseDamage"
+            }
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "progression-cinderbound-crown": {
+    "triggers": [
+      {
+        "on": "enemyDied",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "enemyKilledWithStatus",
+              "status": "bleed"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "heal",
+            "target": "owner",
+            "amount": {
+              "variable": "heal"
+            }
+          }
+        ],
+        "once": true
+      }
+    ]
+  },
+  "progression-moonwell-lens": {
+    "triggers": [
+      {
+        "on": "cardPlayed",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "starstone"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "source:spell"
+            },
+            {
+              "p": "turnMetric",
+              "metric": "manaSpent",
+              "atLeast": 2
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "progression-nightglass-rosary": {
+    "triggers": [
+      {
+        "on": "cardPlayed",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "starstone"
+            },
+            {
+              "p": "turnMetric",
+              "metric": "sameCardPlays",
+              "atLeast": 1,
+              "atMost": 1,
+              "cardId": "event"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "owner",
+            "amount": {
+              "variable": "restoreMana"
+            }
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "progression-fragment-of-the-third-sky": {
+    "triggers": [
+      {
+        "on": "cardPlayed",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "starstone"
+            },
+            {
+              "p": "turnMetric",
+              "metric": "distinctTagPlays",
+              "atLeast": 2,
+              "atMost": 2,
+              "tag": "starstone"
+            },
+            {
+              "p": "turnMetric",
+              "metric": "sameCardPlays",
+              "atLeast": 0,
+              "atMost": 0,
+              "cardId": "event"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "progression-whisperglass-die": {
+    "triggers": [
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "blade"
+            },
+            {
+              "p": "cardTypeIs",
+              "type": "attack"
+            },
+            {
+              "p": "turnMetric",
+              "metric": "cardPlaysCombat",
+              "atLeast": 0,
+              "atMost": 0
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "grantCardCharge",
+            "target": "owner",
+            "key": "progression-whisperglass-die",
+            "cardType": "attack",
+            "damage": {
+              "variable": "chargeDamage"
+            }
+          }
+        ],
+        "once": true
+      }
+    ]
+  },
+  "progression-purse-of-borrowed-shadows": {
+    "triggers": [
+      {
+        "on": "cardDiscarded",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "eventDiscardExplicit"
+            },
+            {
+              "p": "turnMetric",
+              "metric": "discarded",
+              "atLeast": 1,
+              "snapshot": "current"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "progression-ember-alms-bowl": {
+    "triggers": [
+      {
+        "on": "hpOfferingPaid",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ],
+        "limitPerTurn": 1
+      }
+    ]
+  },
+  "progression-ossuary-prayer-wheel": {
+    "triggers": [
+      {
+        "on": "enemyDied",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "enemyKilledWithStatus",
+              "status": "crimsonBlight"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "owner",
+            "amount": {
+              "variable": "restoreMana"
+            }
+          }
+        ],
+        "once": true
+      }
+    ]
   }
 };

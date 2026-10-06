@@ -949,5 +949,65 @@ export const nodeTerms = [
     "playerTermId": "",
     "tooltipTermId": "",
     "template": "Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."
+  },
+  {
+    "nodeId": "progression-emberjaw-token",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Blade hit each combat applies {bleed} additional Bleed buildup."
+  },
+  {
+    "nodeId": "progression-cracked-war-anvil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Heavy attack each turn deals {poiseDamage} additional Break damage."
+  },
+  {
+    "nodeId": "progression-cinderbound-crown",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first credited kill of an enemy with Bleed buildup each combat heals {heal} HP."
+  },
+  {
+    "nodeId": "progression-moonwell-lens",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first Starstone spell each turn played after spending at least 2 Mana grants {block} Block."
+  },
+  {
+    "nodeId": "progression-nightglass-rosary",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The second play of the same Starstone card ID in a turn restores {restoreMana} Mana, once per turn."
+  },
+  {
+    "nodeId": "progression-fragment-of-the-third-sky",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your third distinct Starstone card ID played in a turn grants {block} Block, once per turn."
+  },
+  {
+    "nodeId": "progression-whisperglass-die",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "If your first card in combat is a Blade attack, it deals +{chargeDamage} damage."
+  },
+  {
+    "nodeId": "progression-purse-of-borrowed-shadows",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "After your first explicit discard each turn, gain {block} Block."
+  },
+  {
+    "nodeId": "progression-ember-alms-bowl",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first nonlethal HP offering each turn grants {block} Block after its payment."
+  },
+  {
+    "nodeId": "progression-ossuary-prayer-wheel",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana."
   }
 ];

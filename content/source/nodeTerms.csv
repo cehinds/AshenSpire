@@ -166,3 +166,13 @@ feat:crowned-offering,,,The first Ritual attack after an earlier HP offering thi
 feat:dawn-cantor,,,The first Dawn Rite removal each turn also grants {block} Block.
 feat:bearer-of-burdens,,,The first negative status newly applied to you by an enemy each turn restores {restoreMana} Mana.
 feat:sepulchral-promise,,,"Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."
+progression-emberjaw-token,,,Your first Blade hit each combat applies {bleed} additional Bleed buildup.
+progression-cracked-war-anvil,,,Your first Heavy attack each turn deals {poiseDamage} additional Break damage.
+progression-cinderbound-crown,,,Your first credited kill of an enemy with Bleed buildup each combat heals {heal} HP.
+progression-moonwell-lens,,,Your first Starstone spell each turn played after spending at least 2 Mana grants {block} Block.
+progression-nightglass-rosary,,,"The second play of the same Starstone card ID in a turn restores {restoreMana} Mana, once per turn."
+progression-fragment-of-the-third-sky,,,"Your third distinct Starstone card ID played in a turn grants {block} Block, once per turn."
+progression-whisperglass-die,,,"If your first card in combat is a Blade attack, it deals +{chargeDamage} damage."
+progression-purse-of-borrowed-shadows,,,"After your first explicit discard each turn, gain {block} Block."
+progression-ember-alms-bowl,,,Your first nonlethal HP offering each turn grants {block} Block after its payment.
+progression-ossuary-prayer-wheel,,,Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana.

@@ -1029,5 +1029,65 @@ export const propertyRules = [
     "requires": "",
     "excludes": "",
     "textTemplate": "Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."
+  },
+  {
+    "tag": "progression-emberjaw-token",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Blade hit each combat applies {bleed} additional Bleed buildup."
+  },
+  {
+    "tag": "progression-cracked-war-anvil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Heavy attack each turn deals {poiseDamage} additional Break damage."
+  },
+  {
+    "tag": "progression-cinderbound-crown",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first credited kill of an enemy with Bleed buildup each combat heals {heal} HP."
+  },
+  {
+    "tag": "progression-moonwell-lens",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Starstone spell each turn played after spending at least 2 Mana grants {block} Block."
+  },
+  {
+    "tag": "progression-nightglass-rosary",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The second play of the same Starstone card ID in a turn restores {restoreMana} Mana, once per turn."
+  },
+  {
+    "tag": "progression-fragment-of-the-third-sky",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your third distinct Starstone card ID played in a turn grants {block} Block, once per turn."
+  },
+  {
+    "tag": "progression-whisperglass-die",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "If your first card in combat is a Blade attack, it deals +{chargeDamage} damage."
+  },
+  {
+    "tag": "progression-purse-of-borrowed-shadows",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "After your first explicit discard each turn, gain {block} Block."
+  },
+  {
+    "tag": "progression-ember-alms-bowl",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first nonlethal HP offering each turn grants {block} Block after its payment."
+  },
+  {
+    "tag": "progression-ossuary-prayer-wheel",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana."
   }
 ];

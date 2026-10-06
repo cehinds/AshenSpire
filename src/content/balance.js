@@ -172,6 +172,39 @@ const cardValueRule = () => ({
 });
 
 export const balance = {
+  progressionRelics: {
+    "progression-emberjaw-token": {
+      "bleed": 2
+    },
+    "progression-cracked-war-anvil": {
+      "poiseDamage": 1
+    },
+    "progression-cinderbound-crown": {
+      "heal": 4
+    },
+    "progression-moonwell-lens": {
+      "block": 2
+    },
+    "progression-nightglass-rosary": {
+      "restoreMana": 1
+    },
+    "progression-fragment-of-the-third-sky": {
+      "block": 5
+    },
+    "progression-whisperglass-die": {
+      "chargeDamage": 5
+    },
+    "progression-purse-of-borrowed-shadows": {
+      "block": 2
+    },
+    "progression-ember-alms-bowl": {
+      "block": 2
+    },
+    "progression-ossuary-prayer-wheel": {
+      "restoreMana": 1
+    },
+    [NOTE]: { "{id}.{effect}": "The {effect} amount conferred by the progression relic {id}." },
+  },
   // Primary card values and physical/magical impact are derived from costs:
   // floor(global × (AP×action + MP×mana + SP×stamina)
   //       − statusEffectReduction × Σ(each distinct applied status))

@@ -29,7 +29,7 @@ function lessons(reg) {
     ...source.cards.get(id),abilityKind:kind,abilityRank:0,abilityFamily:id,tags:[kind === 'spell' ? 'source:spell':'source:unarmed'],
     gradeProfiles:Array.from({length:6},(_,rank)=>({rank,actionCost:rank ? Math.min(rank,3):1,manaCost:rank,effects:[{op:'block',target:'self',amount:4+rank}],textTemplate:`Grade ${rank}`})),
   });
-  return {...reg,masterySource:null,cards:{get:id=>defs.get(id)||source.cards.get(id),has:id=>defs.has(id)||source.cards.has(id),all:()=>[...defs.values()]}};
+  return {...reg,masterySource:null,cards:{get:id=>defs.get(id)||source.cards.get(id),has:id=>defs.has(id),all:()=>[...defs.values()]}};
 }
 
 test('overlapping class milestones grant every earned budget and exactly four 25-XP awards',()=>{
@@ -98,9 +98,21 @@ test('one resolved spell or maneuver pays its authored track, independent of sha
   const {reg}=fresh();const combat={registries:reg,player:{},playerKey:'player'};
   recordSkillXp(combat,{type:'cardResolved',abilityKind:'spell',cardTags:['blood','guard'],printedManaCost:2});
   recordSkillXp(combat,{type:'cardResolved',abilityKind:'maneuver',cardTags:['blood'],printedManaCost:0});
-  assert.deepEqual(skillXpReceipt(combat),{'item:magic-focus':6,combatManeuvers:2});
+  assert.deepEqual(skillXpReceipt(combat),{'item:magic-focus':7,combatManeuvers:2});
   recordSkillXp(combat,{type:'arcaneExposureChanged',sourceId:'player',amount:100});
-  assert.equal(skillXpReceipt(combat)['item:magic-focus'],6);
+  assert.equal(skillXpReceipt(combat)['item:magic-focus'],7);
+});
+
+test('Spellcraft XP scales with printed Mana rather than discounted payment or individual hits',()=>{
+  const {reg}=fresh();
+  for(const printedManaCost of [0,1,2,5]) {
+    const combat={registries:reg,player:{},playerKey:'player'};
+    recordSkillXp(combat,{type:'cardResolved',abilityKind:'spell',cardTags:['source:spell'],printedManaCost,manaPaid:0});
+    assert.equal(skillXpReceipt(combat)['item:magic-focus'],5+printedManaCost);
+    recordSkillXp(combat,{type:'damageDealt',sourceId:'player',targetId:'enemy',amount:8});
+    recordSkillXp(combat,{type:'damageDealt',sourceId:'player',targetId:'enemy',amount:8});
+    assert.equal(skillXpReceipt(combat)['item:magic-focus'],5+printedManaCost);
+  }
 });
 
 test('milestone choice commits once, preserves its receipt and pending options through save/reload',()=>{

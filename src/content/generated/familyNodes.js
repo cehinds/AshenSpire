@@ -385,5 +385,9 @@ export const familyNodes = [
   {
     "family": "feat",
     "nodeId": "classification"
+  },
+  {
+    "family": "relic",
+    "nodeId": "card"
   }
 ];

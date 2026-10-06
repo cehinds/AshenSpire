@@ -656,5 +656,55 @@ export const nodeVariables = [
     "nodeId": "gravelightSigil",
     "variable": "heal",
     "role": "amount"
+  },
+  {
+    "nodeId": "progression-emberjaw-token",
+    "variable": "bleed",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "progression-cracked-war-anvil",
+    "variable": "poiseDamage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-cinderbound-crown",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-moonwell-lens",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-nightglass-rosary",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-fragment-of-the-third-sky",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-whisperglass-die",
+    "variable": "chargeDamage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-purse-of-borrowed-shadows",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-ember-alms-bowl",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-ossuary-prayer-wheel",
+    "variable": "restoreMana",
+    "role": "amount"
   }
 ];
