@@ -63,6 +63,16 @@ test('every starting stat opens its definition and exact calculation, then retur
   }
 }));
 
+test('a long selected class name stays whole in its heading and accessible label', () => withKitDom((dom) => {
+  const cls = { ...registries.classes.get(run.class), name: 'Keeper of the Last Unbroken Ember' };
+  const card = classChoiceCard(cls, { selected: true, expanded: true });
+  card.append(classUnfold({ cls })); dom.document.body.append(card);
+  assert.equal(card.querySelector('.cc-unfold-heading').textContent, cls.name);
+  assert.equal(card.getAttribute('aria-label'), `${cls.name}, selected class`);
+  card.focus();
+  assert.equal(dom.document.activeElement, card, 'the replacement selected article remains programmatically focusable');
+}));
+
 test('stat details follow changed attributes and hand-cap calculations', () => withKitDom((dom) => {
   const changed = { ...run, attributes: { ...run.attributes, constitution: run.attributes.constitution + 1 } };
   const hp = resources(changed).find(row => row.id === 'hp');

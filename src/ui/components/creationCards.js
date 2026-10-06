@@ -197,7 +197,7 @@ export function classChoiceCard(cls, { selected = false, locked = false, expande
     badge: locked && hint ? pill({ label: hint }) : locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
     selected, disabled: locked, tag: locked ? 'div' : preview ? 'article' : 'button',
     className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`,
-    attrs: { dataset: { class: cls.id }, ...(preview ? { 'aria-label': `${cls.name}, selected class`, tabindex: '-1' } : {}) },
+    attrs: { dataset: { class: cls.id }, ...(preview ? { 'aria-label': t('creation.preview.selectedClass', { name: cls.name }), tabindex: '-1' } : {}) },
   });
   card.prepend(el('span', { class: 'og', 'aria-hidden': 'true' }, visualNode(visual)));
   if (!locked && !preview && onChoose) card.addEventListener('click', onChoose);
@@ -212,7 +212,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
   const relicCard = relic ? optionCard({
     glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
     arrow: false, tag: onRelicInspect ? 'button' : 'div', className: 'cc-class-relic',
-    attrs: onRelicInspect ? { 'aria-haspopup': 'dialog', 'aria-label': `Inspect ${relic.name}` } : {},
+    attrs: onRelicInspect ? { 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {},
   }) : null;
   if (relicCard && onRelicInspect) {
     relicCard.removeAttribute('aria-pressed');
@@ -245,7 +245,7 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
   const art = el('span', { class: 'as-artwell figure cc-unfold-art' }, sprite);
   const relicFace = relic ? el(onRelicInspect ? 'button' : 'span', {
     class: `cc-unfold-relic${onRelicInspect ? ' cc-preview-detail-trigger' : ''}`,
-    ...(onRelicInspect ? { type: 'button', 'aria-haspopup': 'dialog', 'aria-label': `Inspect ${relic.name}` } : {}),
+    ...(onRelicInspect ? { type: 'button', 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {}),
   }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
   if (relicFace && onRelicInspect) relicFace.addEventListener('click', () => onRelicInspect(relic, relicFace));
   const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
@@ -270,7 +270,7 @@ export function classResourceGrid(rows, { onInspect = null } = {}) {
     const face = chip({ key: entry.faceLabel || entry.label, value: entry.value });
     const item = onInspect ? el('button', {
       type: 'button', class: 'cc-preview-detail-trigger', 'aria-haspopup': 'dialog',
-      'aria-label': `${entry.inspectionLabel || entry.label || entry.faceLabel}: ${entry.value}. View details`,
+      'aria-label': t('creation.preview.inspectStat', { name: entry.inspectionLabel || entry.label || entry.faceLabel, value: entry.value }),
     }, face) : face;
     item.classList.add('cc-class-resource');
     item.dataset.stat = entry.id;

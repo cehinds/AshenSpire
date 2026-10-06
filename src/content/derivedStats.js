@@ -132,8 +132,8 @@ export const derivedStatRules = {
   // "No current consumer" in engine words on the first screen of the game; the
   // sense line below is the player's words, one tap down.
   presentation: {
-    hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'What you have left before the climb ends.' },
-    mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Spent by the cards that ask for more than effort.' },
+    hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'Your maximum health. Damage reduces your current Health Points; at zero, you are defeated.' },
+    mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Your maximum Mana. Cards with Mana costs spend your current Mana Points.' },
     stamina: { label: 'Stamina / turn', faceLabel: 'Stamina', order: 3, disclosure: 'face', sense: 'Pays card and combat costs. Refills at the start of every turn.' },
     // Retained for old saves and exports; omitted from character stat surfaces.
     energy: { label: 'Stamina / turn (legacy)', faceLabel: 'Stamina', order: 4, disclosure: 'reveal', sense: 'How much you can do in one turn.' },
