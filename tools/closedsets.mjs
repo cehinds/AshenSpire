@@ -134,7 +134,7 @@ export function blankNonCode(src) {
 // counts as ceremony too.
 function isSpecifierLine(line, name) {
   const t = line.trim();
-  if (/^(import|export)\b/.test(t) && /[{}]/.test(t)) return true;
+  if ((/^import\b/.test(t) && /[{}]/.test(t)) || /^export\s*\{/.test(t)) return true;
   return new RegExp(`^${name}\\s*(,|\\}.*)?$`).test(t);
 }
 

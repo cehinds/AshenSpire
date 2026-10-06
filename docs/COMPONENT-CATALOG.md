@@ -141,7 +141,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 |---|---|---|---|---|
 | `player.scenePainting` | `PlayerArtworkModel` | `scenePainting`, `servicePortrait` | Title, rest and services | Painted scenery with independent foreground layers. |
 | `player.engravedIcon` | `engravedGlyphId` | `engravedIcon`, `engravedIconHtml` | Shared controls | Current-color engraved icons with tier-aware masks. |
-| `illustrated-card` | `card-layout.json`, generated card objects | `illustratedCardHtml`, `fitIllustratedCardText` | All ability cards | Clipped proportional art, live centered rules, stamina/mana banners and tags. |
+| `illustrated-card` | `card-layout.json`, generated card objects, `extendedCardArtwork.js` | `illustratedCardHtml`, `fitIllustratedCardText` | All ability cards | Existing frame, live centered rules, stamina/mana banners and tags. Canonical card/profile portraits cover the artwork region with lower-action framing; upgrades reuse base artwork. |
 | `illustrated-background` | Environment artwork and floor model | `illustratedBackground` | Battlefields | Layered painting preserves authored floor anchors. |
 | `illustrated-vitality-hud` | `RunHudViewModel` | `hudmeta`, `runHud` | Run screens | Enlarged HP above relics with transparent background and illustrated controls; measured combat header clearance stays reserved. |
 | `skill-book-offer` | `consumablePurchasePlan`, shop `components.bookOffers` | `skillBookOffer.renderSkillBookOffer` | Market | Uniform book sprite, live details and native Buy control. |
