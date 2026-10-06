@@ -212,6 +212,12 @@ export const balance = {
   // holds the property. content/source/nodeEffects.json reads these, through variableBindings.csv,
   // through `{ "balance": "exposure.…" }`; no number is typed in that file.
   exposure: {
+    foldScale: 0.5,
+    staggerBreakImpact: 2,
+    defaultPayoff: {
+      status: 'magicVulnerable', value: 25, duration: 2,
+      [NOTE]: { value: 'Magical damage vulnerability after an enemy suffers a magical Stagger, in percent.', duration: 'Turns the default magical Stagger payoff lasts.' },
+    },
     siphonRefund: 1, // PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
     siphonRefundMastered: 2, // PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
     siphonMasteryLevel: 7, // PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
@@ -224,6 +230,8 @@ export const balance = {
     // a break with action-only spells, a Mana spell works faster.
     buildupPerManaSpell: 5, // PROVISIONAL
     [NOTE]: {
+      foldScale: 'Multiplies a spell\'s old Arcane buildup before it joins the shared Poise impact.',
+      staggerBreakImpact: 'Extra magical impact on spell hits while a focus carries Stagger Break.',
       siphonRefund: 'Mana the Siphon focus property hands back when you break a foe\'s Arcane Exposure.',
       siphonRefundMastered: 'Mana Siphon hands back instead, once the focus skill reaches the mastery level below.',
       siphonMasteryLevel: 'The focus skill level at which Siphon starts paying its mastered refund.',
@@ -337,6 +345,23 @@ export const balance = {
   // hit; one XP per impactPerXp impact absorbed (heavy), evadeXp per hit
   // evaded (light; medium reads half of each), one XP per buildupPerXp arcane
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
+  classMastery: {
+    xp: { base: 50, growth: 1.25, roundTo: 5, maxLevel: 20 },
+    pay: { perWin: 10, perElite: 25, perBoss: 50, perQuest: 10 },
+    cycle: ['cards', 'armament', 'cards', 'relic', 'cards', 'feat', 'cards', 'weapon'],
+    corePoolShare: 0.6,
+    [NOTE]: {
+      'xp.base': 'Lifetime class mastery XP needed for the first claimed level.',
+      'xp.growth': 'Exponential increase per mastery level; 1.25 brings twenty levels to about 17,000 XP.',
+      'xp.roundTo': 'Round each mastery level cost to this many XP.',
+      'xp.maxLevel': 'Highest class mastery level. XP earned beyond it stays on the profile.',
+      'pay.perWin': 'Mastery XP for an ordinary fight won.',
+      'pay.perElite': 'Mastery XP for an elite fight won, replacing the ordinary award.',
+      'pay.perBoss': 'Mastery XP for a boss fight won, replacing the ordinary award.',
+      'pay.perQuest': 'Mastery XP for a completed quest.',
+      corePoolShare: 'Minimum share of each class card pool available before any mastery unlock.',
+    },
+  },
   skill: {
     xp: {
       base: 100, linear: false, multScaler: 1.3, growth: 1.995, roundTo: 5, maxLevel: 10, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,

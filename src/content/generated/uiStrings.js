@@ -3,6 +3,34 @@
 
 export const uiStrings = [
   {
+    "id": "combat.rating.ward",
+    "extends": "",
+    "short": "Ward rating",
+    "full": "Ward rating reduces magical damage and weighs in status resistance.",
+    "tip": "Ward rating"
+  },
+  {
+    "id": "combat.poise.shared",
+    "extends": "",
+    "short": "Poise",
+    "full": "Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",
+    "tip": "Shared break meter"
+  },
+  {
+    "id": "combat.poise.actionLoss",
+    "extends": "",
+    "short": "Actions",
+    "full": "{amount} fewer Actions next turn",
+    "tip": "Actions lost after Stagger"
+  },
+  {
+    "id": "combat.poise.enemyLoss",
+    "extends": "",
+    "short": "Move",
+    "full": "lose the next move",
+    "tip": "Stagger cancels the next move"
+  },
+  {
     "id": "combat.protection.block",
     "extends": "",
     "short": "Block",
@@ -15,6 +43,20 @@ export const uiStrings = [
     "short": "Arcane Ward",
     "full": "Block granted by magical guards. Absorbs attack damage after ordinary Block.",
     "tip": "Arcane Ward"
+  },
+  {
+    "id": "combat.protection.poiseGuard",
+    "extends": "",
+    "short": "Poise guard",
+    "full": "Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.",
+    "tip": "Poise guard"
+  },
+  {
+    "id": "combat.protection.wardGuard",
+    "extends": "",
+    "short": "Ward guard",
+    "full": "Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.",
+    "tip": "Ward guard"
   },
   {
     "id": "common.back",
@@ -3398,6 +3440,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "master.respec.attributes",
+    "extends": "",
+    "short": "takes back {points} attribute point(s)",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "master.lesson.unasked",
     "extends": "",
     "short": "Ask for a lesson to see its {count} card(s).",
@@ -4668,6 +4717,48 @@ export const uiStrings = [
     "id": "creation.title",
     "extends": "",
     "short": "Create character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.primaryAttributes",
+    "extends": "",
+    "short": "Primary Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.editStats",
+    "extends": "",
+    "short": "Edit stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.handCapacity.short",
+    "extends": "",
+    "short": "Size",
+    "full": "The maximum number of cards you can hold.",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.title",
+    "extends": "",
+    "short": "Game menu",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.main",
+    "extends": "",
+    "short": "Main menu",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.quit",
+    "extends": "",
+    "short": "Quit game",
     "full": "",
     "tip": ""
   },
@@ -6947,6 +7038,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.preview.selectedClass",
+    "extends": "",
+    "short": "{name}, selected class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.inspectRelic",
+    "extends": "",
+    "short": "Inspect {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.inspectStat",
+    "extends": "",
+    "short": "{name}: {value}. View details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.statEyebrow",
+    "extends": "",
+    "short": "Starting stat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.relicEyebrow",
+    "extends": "",
+    "short": "Starting relic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.calculation",
+    "extends": "",
+    "short": "Stat calculation",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "creation.section.review",
     "extends": "",
     "short": "REVIEW",
@@ -7524,6 +7657,615 @@ export const uiStrings = [
     "id": "armoury.action.equipTo",
     "extends": "",
     "short": "Equip to {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.open",
+    "extends": "",
+    "short": "Character sheet",
+    "full": "Every character and skill level, and what each one grants.",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.close",
+    "extends": "",
+    "short": "Close character sheet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.tab.character",
+    "extends": "",
+    "short": "Character levels",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.tab.skills",
+    "extends": "",
+    "short": "Skill ladders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.character.cadence",
+    "extends": "",
+    "short": "Levels 1–{max}. Each level is claimed with Level up; its rewards are below.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.level",
+    "extends": "",
+    "short": "Skill level {n} / {max}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.railItem",
+    "extends": "",
+    "short": "{label} · {n}/{max}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.none",
+    "extends": "",
+    "short": "No skill tracks.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.start",
+    "extends": "",
+    "short": "Starting level",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.here",
+    "extends": "",
+    "short": "You are here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.step",
+    "extends": "",
+    "short": "+{n} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.total",
+    "extends": "",
+    "short": "{n} total",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.points",
+    "extends": "",
+    "short": "Attribute points +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.hp",
+    "extends": "",
+    "short": "Max HP +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.stamina",
+    "extends": "",
+    "short": "Stamina +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.mana",
+    "extends": "",
+    "short": "Mana +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.draw",
+    "extends": "",
+    "short": "Draw +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.handSize",
+    "extends": "",
+    "short": "Hand size +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.deckMinimum",
+    "extends": "",
+    "short": "Deck minimum {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featChoice",
+    "extends": "",
+    "short": "Feat choice",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classNodeChoice",
+    "extends": "",
+    "short": "Class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.levelCard",
+    "extends": "",
+    "short": "Level card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.cardDraft",
+    "extends": "",
+    "short": "Card draft, rank ≤ {rank}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classNodeDraft",
+    "extends": "",
+    "short": "Class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.rarity",
+    "extends": "",
+    "short": "{rarity} cards unlock",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.rankUp",
+    "extends": "",
+    "short": "Rank up a card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classTier",
+    "extends": "",
+    "short": "Class tree tier {tier} opens: {nodes}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.feat",
+    "extends": "",
+    "short": "Skill feat: {options}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featNone",
+    "extends": "",
+    "short": "Skill feat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.attribute",
+    "extends": "",
+    "short": "+1 {options}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.flat",
+    "extends": "",
+    "short": "+1 card power (total +{total})",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featOrNodeChoice",
+    "extends": "",
+    "short": "Feat or class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classFeatChance",
+    "extends": "",
+    "short": "Feat choice ({pct}% chance)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classCard",
+    "extends": "",
+    "short": "Class card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classCardChance",
+    "extends": "",
+    "short": "Class card ({pct}% chance)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.draft",
+    "extends": "",
+    "short": "Every level: a card draft.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.rankUp",
+    "extends": "",
+    "short": "From level {from}: a rank-up each level.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.feat",
+    "extends": "",
+    "short": "Every {n} levels: a skill feat.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.attribute",
+    "extends": "",
+    "short": "Every {n} levels: +1 to a linked attribute.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.flat",
+    "extends": "",
+    "short": "Every {n} levels: +1 card power.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classPick",
+    "extends": "",
+    "short": "Every level: a class-tree pick from the tiers open.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classFeat",
+    "extends": "",
+    "short": "Every level: a feat choice.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classFeatChance",
+    "extends": "",
+    "short": "Every level: a {pct}% chance at a feat choice.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classCardChance",
+    "extends": "",
+    "short": "Every level: a {pct}% chance at a class card.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classTier",
+    "extends": "",
+    "short": "New tiers open at the levels marked.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.masterySummary",
+    "extends": "",
+    "short": "Learn one selected card. Class mastery advances through fights and quests. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.masteryClassSummary",
+    "extends": "",
+    "short": "Learn this class. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Class mastery advances through fights and quests. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.classNext",
+    "extends": "",
+    "short": "Mastery {level} · Next: {unlocks}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.classComplete",
+    "extends": "",
+    "short": "Mastery {level} · All levels claimed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeEyebrow",
+    "extends": "",
+    "short": "{class} · Mastery {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeTitle",
+    "extends": "",
+    "short": "Choose your tier {tier} node",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeIntro",
+    "extends": "",
+    "short": "Your class level lasts. Choose a fresh build for this climb.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.title",
+    "extends": "",
+    "short": "Progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.skills",
+    "extends": "",
+    "short": "Skills",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.class",
+    "extends": "",
+    "short": "Class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.sheet",
+    "extends": "",
+    "short": "Character Sheet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.currentResources",
+    "extends": "",
+    "short": "Current character resources",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.currentStats",
+    "extends": "",
+    "short": "Current stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.attributes",
+    "extends": "",
+    "short": "Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feats",
+    "extends": "",
+    "short": "Feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat",
+    "extends": "",
+    "short": "Feat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.skill",
+    "extends": "",
+    "short": "Skill progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.class",
+    "extends": "",
+    "short": "Class progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.allocate.note",
+    "extends": "",
+    "short": "Assign earned points. Unassigned points remain available; Cancel keeps your existing attributes.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.sheet.note",
+    "extends": "",
+    "short": "Inspection only. Values include your current attributes and equipment.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.attribute.note",
+    "extends": "",
+    "short": "Bonuses compare your current stats with this attribute at zero, keeping the others unchanged. Expand for the full formula.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noFeats",
+    "extends": "",
+    "short": "No feats acquired",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noTags",
+    "extends": "",
+    "short": "No associated tags",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noBonus",
+    "extends": "",
+    "short": "No combat stat bonus",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards",
+    "extends": "",
+    "short": "Associated cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tags",
+    "extends": "",
+    "short": "Associated tags",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.bonuses",
+    "extends": "",
+    "short": "Bonuses",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tree",
+    "extends": "",
+    "short": "Skill tree",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.levels",
+    "extends": "",
+    "short": "Level progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.characterLevels",
+    "extends": "",
+    "short": "Character levels",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.rewards",
+    "extends": "",
+    "short": "Level rewards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.emptyClass",
+    "extends": "",
+    "short": "No class equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.emptyCards",
+    "extends": "",
+    "short": "No associated cards for the current loadout",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards.equip",
+    "extends": "",
+    "short": "Equip an item for this skill to see its card schools.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards.note",
+    "extends": "",
+    "short": "Associated cards include future unlocks; reward choices follow your level and current equipment.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.name",
+    "extends": "",
+    "short": "Character, Armory and Edit Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.armory",
+    "extends": "",
+    "short": "Armory",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.deck",
+    "extends": "",
+    "short": "Edit Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.acquired",
+    "extends": "",
+    "short": "Acquired",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.unlock",
+    "extends": "",
+    "short": "Skill level {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.emptyHint",
+    "extends": "",
+    "short": "Choose feats from character and skill level rewards.",
     "full": "",
     "tip": ""
   }

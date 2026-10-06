@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><base href="/"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Class mastery QA</title>
+<link rel="stylesheet" href="/styles/base.css"><link rel="stylesheet" href="/styles/ui.css"><link rel="stylesheet" href="/styles/combat.css"><link rel="stylesheet" href="/styles/combat-poses.css"><link rel="stylesheet" href="/styles/kit.css"><link rel="stylesheet" href="/styles/responsive-type.css"><link rel="stylesheet" href="/styles/hud-visibility.css"><link rel="stylesheet" href="/styles/player-polish-icons.css"><link rel="stylesheet" href="/styles/player-polish.css"><link rel="stylesheet" href="/styles/illustrated-cards.css"></head><body><main id="app"></main><script type="module">
+import {contentBundle} from '/src/content/index.js';
+import {createRegistries} from '/src/model/registries.js';
+import {configuredContentBundle} from '/src/model/advancedConfig.js';
+import {createRunState} from '/src/model/state.js';
+import {createSaveManager,createMemoryStorage} from '/src/engine/save.js';
+import {openRunClassMastery,registriesForClassMastery,adoptClassMasteryProfile} from '/src/model/classMasteryRun.js';
+import {awardClassXp} from '/src/model/classTree.js';
+import {claimBankedSkillLevel} from '/src/model/skills.js';
+import {mountRewards} from '/src/ui/screens/reward.js';
+import {mountCustomize} from '/src/ui/screens/customize.js';
+import {cardLevelCssProperties,cardShapeCssProperties,cardShelfCssProperties} from '/src/ui/models/CardSizeModel.js';
+for(const [key,value] of Object.entries({...cardLevelCssProperties(),...cardShapeCssProperties(),...cardShelfCssProperties()}))document.documentElement.style.setProperty(key,value);
+const source=createRegistries(configuredContentBundle(contentBundle));
+const saves=createSaveManager(createMemoryStorage());const meta=saves.loadMeta();
+const run=createRunState({registries:source,classId:'reaver',seed:1,profileMeta:meta});
+openRunClassMastery(source,run,meta,{receiptId:'browser-real-claim'});const reg=registriesForClassMastery(source,run);
+const app=document.getElementById('app');
+window.creation=()=>mountCustomize(app,{registries:source,meta:saves.loadMeta(),defaultSeedString:'GOLDBOUGH',onBack:()=>{},onStart:()=>{}});
+for(let i=0;i<5;i++)awardClassXp(reg,run,{victory:true,bank:true});
+mountRewards(app,{registries:reg,run,saves,rewards:{title:'Victory',pool:'normal',cardIds:[],cinders:0,xpGains:{level:0,tracks:{'class:reaver':50}}},onDone:()=>{},onPersist:()=>{},onClaimSkill:id=>{const claim=claimBankedSkillLevel(reg,run,id);const bank=saves.bankClassMastery(run,reg);if(!bank.ok)throw Error(bank.reason);adoptClassMasteryProfile(run,bank.meta);return claim;}});
+window.masteryProof=()=>({level:run.skills['class:reaver'].level,profile:saves.loadMeta().classMastery.reaver,pool:reg.classes.get('reaver').cardPool});
+</script></body></html>

@@ -443,7 +443,7 @@ test('main.js rolls the drop at a won fight, a non-terminal boss and both treasu
   assert.match(main, /function sigilOffer\(pool\) \{\s*const sigilId = rollSigilDrop\(registries, rng, run, pool\);\s*return sigilId \? \{ sigilId \} : \{\};/, 'an offer carries sigilId only when one dropped');
   assert.equal((main.match(/\.\.\.sigilOffer\('treasure'\)/g) || []).length, 2, 'both treasure doors roll');
   assert.match(main, /\.\.\.sigilOffer\(enc\.pool\)/);
-  const finish = main.indexOf('const earned = finishRun(true);');
+  const finish = main.indexOf('return showFinishedRun(true);', main.indexOf("if (enc.pool === 'boss')"));
   const bossRoll = main.indexOf("...sigilOffer('boss')");
   assert.ok(finish > 0 && bossRoll > finish, 'the boss roll sits after the terminal victory returns');
   const reward = readFileSync(new URL('../src/ui/screens/reward.js', import.meta.url), 'utf8');

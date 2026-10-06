@@ -76,14 +76,14 @@ test('a track whose curve will not read is dropped, never shown as capped', () =
   assert.ok(progress.skills.every((row) => row.capped || row.xpToNext > 0));
 });
 
-test('the tracks this fight paid lead, and every active skill has a bar', () => {
+test('the class track leads, then the tracks this fight paid, and every active skill has a bar', () => {
   const run = climber();
   const progress = rewardProgress(registries, run, { level: 10, tracks: { 'item:shield': 9, 'class:reaver': 4 } });
-  assert.deepEqual(progress.skills.map((row) => row.id), ['item:shield', 'class:reaver', 'item:blade', 'armour:heavy'],
-    'paid first, biggest gain leading; the deepest untouched track after');
+  assert.deepEqual(progress.skills.map((row) => row.id), ['class:reaver', 'item:shield', 'item:blade', 'armour:heavy'],
+    'class first (the order the bars fill and level up); then paid, biggest gain leading; the deepest untouched track after');
   assert.equal(progress.hidden, 0, 'the fourth active track has its own bar');
-  assert.equal(progress.skills[0].kind, 'weapon');
-  assert.equal(progress.skills[1].kind, 'class');
+  assert.equal(progress.skills[0].kind, 'class');
+  assert.equal(progress.skills[1].kind, 'weapon');
 });
 
 test('only the run\'s own class track is a row, and an untouched track never is', () => {
@@ -175,9 +175,10 @@ test('the door draws the panel beside the claim status, gains and all', () => {
     assert.equal(text(rows[0], 'rp-level'), 'Level 3');
     assert.equal(text(rows[0], 'rp-next'), 'Level 4');
     assert.equal(text(rows[0], 'rp-gain'), undefined, 'the character line stays on one row');
-    assert.equal(text(rows[1], 'rp-gain'), 'Gained: 8 xp', 'the track the fight paid leads the skills');
-    assert.equal(rows[2].dataset.gained, '0', 'an unpaid track shows its standing level and no gain');
-    assert.equal(text(rows[2], 'rp-gain'), undefined);
+    assert.equal(rows[1].dataset.kind, 'class', 'the class track sits under the character, above the skills');
+    assert.equal(text(rows[2], 'rp-gain'), 'Gained: 8 xp', 'the track the fight paid leads the skills');
+    assert.equal(rows[3].dataset.gained, '0', 'an unpaid track shows its standing level and no gain');
+    assert.equal(text(rows[3], 'rp-gain'), undefined);
     assert.ok(rows.every((row) => row.children.some((child) => child.className.includes('rp-layered-bar'))), 'every row carries its layered bar');
     assert.equal(app.querySelector('.reward-side .reward-claim-status'), null, 'the compact progression column does not repeat every reward');
   } finally {

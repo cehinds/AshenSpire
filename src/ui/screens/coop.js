@@ -1,3 +1,5 @@
+import { mountInitialClassMastery } from '../components/classMastery.js';
+import { registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
@@ -325,7 +327,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (obj.t === 'playCard' && obj.choice == null) {
       const seat = latestWireSnap?.scene?.players?.find((entry) => entry.id === me);
       const inst = seat?.hand?.find((entry) => entry.instanceId === obj.cardInstanceId);
-      const def = inst ? resolveCard(registries, { cardId: inst.cardId, upgraded: inst.upgraded, mods: inst.mods, rank: inst.rank, skillBonus: inst.skillBonus }) : null;
+      const def = inst ? resolveCard(registries, { cardId: inst.cardId, upgraded: inst.upgraded, mods: inst.mods, rank: inst.rank, skillBonus: inst.skillBonus, passiveBlock: inst.passiveBlock }) : null;
       const plan = def ? cardChoice(registries, def, seat.classId, seat.stanceId) : null;
       if (plan) {
         // THE CHOOSER OWNS THE COUCH KEYBOARD while it stands (#1449 review,
@@ -602,7 +604,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
-  const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods, rank: c.rank, skillBonus: c.skillBonus });
+  const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods, rank: c.rank, skillBonus: c.skillBonus, passiveBlock: c.passiveBlock });
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
     playFirstFromLatest: () => {
@@ -733,10 +735,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function infoEl(entity, name, def = null) {
     return combatantInfo(name, opener => {
-      const resources = [
+        const resources = [
         { label: 'HP', value: entity.hp, max: entity.maxHp },
         { label: 'MP', value: entity.mana, max: entity.maxMana },
-        { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
+          { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
+          { label: t('combat.rating.ward'), value: entity.ratings?.ward },
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
@@ -1009,7 +1012,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
               : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
                 : !energyAffordable ? 'Not enough Stamina' : 'Turn already ended';
           return {
-            inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods, rank: c.rank, skillBonus: c.skillBonus },
+            inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods, rank: c.rank, skillBonus: c.skillBonus, passiveBlock: c.passiveBlock },
             def, name: def.name, affordable, reason,
             preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
@@ -1085,6 +1088,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   // ---- map (THE act map, mounted with a co-op viewer) ------------------------
   function renderMap() {
+    const member = snap.party.find(row => row.id === me);
+    if (member?.classMasteryState?.initialTreeTiers?.length) {
+      const treeRun = { ...member, class: member.classId };
+      app.replaceChildren();
+      return mountInitialClassMastery(app, { registries: registriesForClassMastery(registries, treeRun), run: treeRun, onChoose: nodeId => send({ t: 'chooseMasteryNode', nodeId }), onPersist: () => {}, onDone: render });
+    }
     const map = snap.map;
     if (!map) { app.innerHTML = '<div class="screen"><div class="coop-note">Loading the path…</div></div>'; return; }
 

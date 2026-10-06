@@ -1,5 +1,5 @@
 import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
-import { tokenRe } from './validate.js';
+import { tokenRe } from './tokens.js';
 import {
   applyMountOverrides, extraMountInstances, itemMountEntries, mountKey, ownerItemRef,
 } from './cardMounts.js';
@@ -2859,10 +2859,6 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
 // Applying mods to a card
 // ---------------------------------------------------------------------------
 
-// One home: src/model/validate.js (EldenSpire#41). A fresh instance per use,
-// which is also why the defensive lastIndex resets below are now redundant.
-const TOKEN_RE = tokenRe();
-
 function firstIndexOfOp(effects, op) {
   return effects.findIndex((e) => e && e.op === op);
 }
@@ -2942,6 +2938,9 @@ export function applyCardMods(def, mods, opts = {}) {
   // reads tokens off the effects). A mod that introduced something the text
   // never mentioned gets its clause appended, so a burning Strike says so.
   let textTemplate = def.textTemplate;
+  // Instantiate at use, after the module graph has initialized. Validation
+  // also calls the starting-deck planner, so load-time work closes a cycle.
+  const TOKEN_RE = tokenRe();
   const present = new Set();
   let m;
   TOKEN_RE.lastIndex = 0;

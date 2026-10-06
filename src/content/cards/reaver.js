@@ -43,8 +43,9 @@ export const reaverCards = [
   // THE UNARMED PACKAGE (framework contract: Unarmed fallback — the entities
   // framework.evasiveGuard and framework.dodgeRoll, authored here as the base
   // cards the unarmed guard and technique profiles resolve to). Evasive Guard
-  // is a guard that also dodges; Dodge Roll is the pure dodge, priced by the
-  // Weight Class the player stands in (mechanics.json), not by this cost.
+  // is a guard that also dodges (it rolls); Dodge Roll is the pure dodge,
+  // a flat Block, Poise and Ward since 2026-10-05, priced by the Weight Class
+  // the player stands in (mechanics.json), not by this cost.
   {
     id: 'evasiveGuard', name: 'Evasive Guard', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
     flavor: "Sidestep of the Pale Marches ice-fishers.\n\nThe lakes have not thawed since the Burning. The ice cracks all the year round, and gives only beneath a second pair of feet; the fishers learned to trust the sound.\n\nWidow Arne of Sallow Lake says the sound changed last winter. She fishes no longer.",
@@ -57,12 +58,26 @@ export const reaverCards = [
     id: 'dodgeRoll', name: 'Dodge Roll', class: 'colorless', rarity: 'starter', cost: 1, type: 'skill',
     flavor: "Tumble of the ship-breakers.\n\nLearned upon hulls that shift with every tide at the Grave of Ships. The hulls were already rotting at anchor when the trade stopped, and on the night of the Burning, every hold went warm at once.\n\nGull-Bet's gang opened the holds the following spring. She has not said what was inside.",
     keywords: [], icon: '💨',
-    effects: [{ op: 'dodgeRoll', target: 'self' }],
-    textTemplate: 'Roll to evade: on a success, gain Block from the dodge. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina.',
-    // No `upgrade`: the pure dodge has nothing of its own to improve — its
-    // check is Dexterity and the Weight Class, its guard is the framework
-    // rule's, its price is the class's. An upgrade that changed none of them
-    // would spend an upgrade for nothing, so the card offers none and the
+    // Owner, 2026-10-05: "change dodge card. Just make it add a flat block and
+    // ward and poise equal to 3 + dr bonuses". No roll: 3 Block, 3 Poise and
+    // 3 Ward, each plus the DR bonus a physical skill's Block reads
+    // (engine/combatRatings.js cardRatingBonus). Poise and Ward absorb impact
+    // before the matching meter fills, until the next turn, as Block does
+    // damage. The price is still the Weight Class's (`weightClassPriced`).
+    weightClassPriced: true,
+    effects: [
+      { op: 'block', target: 'self', amount: 3 },
+      { op: 'gainPoise', target: 'self', amount: 3 },
+      { op: 'gainWard', target: 'self', amount: 3 },
+    ],
+    textTemplate: 'Gain {block} Block, {gainPoise} Poise and {gainWard} Ward. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina.',
+    singleBreak: {
+      effects: [{ op: 'block', target: 'self', amount: 3 }, { op: 'gainPoise', target: 'self', amount: 3 }],
+      textTemplate: 'Gain {block} Block and {gainPoise} Poise guard. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina.',
+    },
+    // No `upgrade`: the flat dodge is one fixed number (the owner's 3) plus
+    // DR, and its price is the class's. As an equipment-composed weapon art
+    // it rides no armament, so an upgrade would have nowhere to live; the
     // upgrade opcode never lists a composed instance (see actions.js).
   },
   {

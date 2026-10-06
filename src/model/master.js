@@ -37,11 +37,13 @@
 // or focus track's are every armament of its item type, and dualWield's every
 // one-handed armament (`WeaponCardPackageModel` handsRequired 1). So the
 // shelves, the lesson and the training upgrade do not depend on what is held.
+import { hasClassMastery } from './classMasteryRun.js';
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, WeaponCardPackageModel } from './loadout.js';
 import { eligibleWeaponArts } from './armamentTrading.js';
 import { awardSkillXp, skillTracks, skillKindOf, skillLevel, skillMaxLevel, xpToNext, rarityUnlockedAt, levelQueuesAttributePick, levelQueuesSkillFeat, DUAL_WIELD_SKILL } from './skills.js';
 import { unusedInstanceId } from './deckRules.js';
+import { withdrawSkillAttributes } from './levelup.js';
 import { cardRewardRarityWeights } from './rewardOdds.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
@@ -197,7 +199,7 @@ export function trainingPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   const row = masterOffering(registries, 'training')?.training || null;
   const cost = row ? cinders(row.cinders, priceMult) : 0;
   const left = run.shopStock?.training?.left ?? 0;
-  let reason = teachingRefusal(registries, run, 'training', skillId) || cappedRefusal(registries, run, skillId);
+  let reason = hasClassMastery(run) && skillId.startsWith('class:') ? 'Class mastery is earned through fights and quests.' : teachingRefusal(registries, run, 'training', skillId) || cappedRefusal(registries, run, skillId);
   if (!reason && !row) reason = say('master.refuse.notOffered');
   else if (!reason && !(left > 0)) reason = say('master.refuse.trainingSpent');
   else if (!reason && !affordable(run, cost)) reason = say('shop.refuse.cinders');
@@ -245,7 +247,9 @@ export function respecPlan(registries, run, skillId, { priceMult = 1 } = {}) {
   if (!reason && !cost) reason = say('master.refuse.notOffered');
   else if (!reason && level < 2) reason = say('master.refuse.respecLevel', { skill: trackLabel(registries, skillId), level });
   else if (!reason && !affordable(run, price)) reason = say('shop.refuse.cinders');
-  return { ok: !reason, reason, skillId, level, cost: price, refund, revision: masterRevision(run) };
+  // The attribute points the respec would withdraw (FINISH D13a), for the tile to say.
+  const attributePoints = Array.isArray(run.skillAttributeGrants?.[skillId]) ? run.skillAttributeGrants[skillId].length : 0;
+  return { ok: !reason, reason, skillId, level, cost: price, refund, attributePoints, revision: masterRevision(run) };
 }
 
 // A deferred draft or rank-up of the respecced track that waits for a level
@@ -267,8 +271,8 @@ function dropDeferredAboveLevelOne(run, skillId) {
 /**
  * The respec, atomic: the track back to level 1 with xp 0, its queued drafts
  * and rank-ups down by the levels lost (floored at 0), the refund into the
- * training pool.
- * Cards already drafted and upgrades already applied stay.
+ * training pool, and the attribute points its picks granted withdrawn (FINISH
+ * D13a). Cards already drafted and upgrades already applied stay.
  */
 export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = respecPlan(registries, run, quote.skillId, { priceMult });
@@ -277,7 +281,8 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   const row = run.skills[plan.skillId];
   // Queued rank-ups (SPEC §13.4o) fall by the same levels; ranks already raised stay.
   const rankUps = row.pendingRankUps === undefined ? {} : { pendingRankUps: Math.max(0, row.pendingRankUps - (plan.level - 1)) };
-  // Queued attribute picks fall by the picks the lost levels queued; points spent stay.
+  // Queued attribute picks fall by the picks the lost levels queued; the points
+  // they granted are withdrawn below.
   const lostPicks = Array.from({ length: plan.level - 1 }, (_, i) => i + 2).filter((level) => levelQueuesAttributePick(registries, plan.skillId, level)).length;
   const picks = row.pendingAttributePicks === undefined ? {} : { pendingAttributePicks: Math.max(0, row.pendingAttributePicks - lostPicks) };
   // Queued feat picks fall the same way; feats taken stay (FINISH D13).
@@ -285,6 +290,8 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
   const feats = row.pendingSkillFeats === undefined ? {} : { pendingSkillFeats: Math.max(0, row.pendingSkillFeats - lostFeats) };
   run.skills = { ...run.skills, [plan.skillId]: { xp: 0, level: 1, pendingDrafts: Math.max(0, row.pendingDrafts - (plan.level - 1)), ...rankUps, ...picks, ...feats } };
   dropDeferredAboveLevelOne(run, plan.skillId);
+  // The attribute points the track's picks granted go with its levels (FINISH D13a).
+  withdrawSkillAttributes(registries, run, plan.skillId);
   run.trainingPool = pool(run) + plan.refund;
   run.cinders -= plan.cost;
   bump(run, plan);
@@ -298,7 +305,8 @@ export function commitRespec(registries, run, quote, { priceMult = 1 } = {}) {
 export function redistributePlan(registries, run, skillId, amount) {
   const have = pool(run);
   let reason = '';
-  if (!masterOffers(run, 'redistribute')) reason = say('master.refuse.notOffered');
+  if (hasClassMastery(run) && skillId.startsWith('class:')) reason = 'Class mastery is earned through fights and quests.';
+  else if (!masterOffers(run, 'redistribute')) reason = say('master.refuse.notOffered');
   else if (!skillKindOf(registries, skillId)) reason = say('master.refuse.unknownTrack', { skill: String(skillId) });
   else if (cappedRefusal(registries, run, skillId)) reason = cappedRefusal(registries, run, skillId);
   else if (!have) reason = say('master.refuse.poolEmpty');
@@ -420,7 +428,7 @@ export function masterServiceCandidates(registries, run, id, { master = masterOf
       return entry ? !entry.taken && entry.cardIds.length > 0 : lessonPool(registries, run, skillId, { flatRarity }).length > 0;
     });
     case 'appraisal': return [...skills];
-    case 'redistribute': return pool(run) ? skillTracks(registries).map((row) => row.id) : [];
+    case 'redistribute': return pool(run) ? skillTracks(registries).filter(row=>!hasClassMastery(run) || row.kind!=='class').map((row) => row.id) : [];
     default: return [];
   }
 }

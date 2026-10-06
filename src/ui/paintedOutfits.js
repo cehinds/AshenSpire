@@ -124,18 +124,27 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   let transition = null, auraState = '';
   let resources = [], active = false;
   let reactionTimer, reactionQueue = [];
-  const clear = () => { timers.forEach(clearTimeout); timers = []; };
-  const syncAura = (stateId, fade = false, initialOpacity) => {
+  let playSteps = [];
+  const clear = () => { timers.forEach(clearTimeout); timers = []; playSteps = []; };
+  // The aura's only animation is its own fade, started below; keep that handle
+  // rather than asking `aura.getAnimations()`, which flushes pending style and
+  // so restyled the half-mounted fight on every settle.
+  let auraFade = null, crossFade = [];
+  const cancelAuraFade = () => { auraFade?.cancel?.(); auraFade = null; };
+  const syncAura =(stateId, fade = false, initialOpacity) => {
     const state = COMBAT_POSE_STATES[stateId];
-    const opacity = initialOpacity ?? (Number.parseFloat(getComputedStyle(aura).opacity) || 0);
-    aura.getAnimations().forEach(a => a.cancel());
+    // The starting opacity matters only to a fade. Reading it otherwise forced
+    // a style and layout pass on every settle, the first one mid-mount.
+    const fading = fade && !reducedMotionRequested();
+    const opacity = fading ? initialOpacity ?? (Number.parseFloat(getComputedStyle(aura).opacity) || 0) : 0;
+    cancelAuraFade();
     if (state) {
       auraState = stateId;
       aura.dataset.motif = state.motif;
       aura.style.setProperty('--pose-color', state.color);
     }
     aura.style.opacity = state ? '1' : '0';
-    if (fade && !reducedMotionRequested()) aura.animate([{ opacity }, { opacity: state ? 1 : 0 }], { duration: TIME.auraFadeMs, easing: TIME.auraEasing });
+    if (fading) auraFade = aura.animate([{ opacity }, { opacity: state ? 1 : 0 }], { duration: TIME.auraFadeMs, easing: TIME.auraEasing });
     if (!state && !fade) { auraState = ''; aura.dataset.motif = ''; }
   };
   const setPose = (pose, blend = false) => {
@@ -147,13 +156,15 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     const state = COMBAT_POSE_STATES[pose];
     const frame = frames[pose] || (state ? frames[state.frame] || frames[state.fallback] : null) || (Object.hasOwn(POWER_FRAMES, pose) ? frames.idle : null);
     if (!frame) return false;
-    previous.getAnimations().forEach(a => a.cancel());
-    img.getAnimations().forEach(a => a.cancel());
+    // The frames' own cross-fade, by handle, as the aura's (see cancelAuraFade).
+    crossFade.forEach(a => a.cancel?.()); crossFade = [];
     if (blend && current !== pose && img.getAttribute('src') && !reducedMotionRequested()) {
       previous.src = img.src; previous.style.filter = img.style.filter;
       previous.style.display = '';
-      previous.animate([{ opacity: 1 }, { opacity: 0 }], { duration: TIME.blendMs, easing: TIME.auraEasing });
-      img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: TIME.blendMs, easing: TIME.auraEasing });
+      crossFade = [
+        previous.animate([{ opacity: 1 }, { opacity: 0 }], { duration: TIME.blendMs, easing: TIME.auraEasing }),
+        img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: TIME.blendMs, easing: TIME.auraEasing }),
+      ].filter(Boolean);
     }
     current = pose;
     el.dataset.pose = pose;
@@ -213,8 +224,8 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     if (resume?.transition && next === from) {
       const remaining = Math.max(0, TIME.transitionMs - (Date.now() - resume.transition.startedAt));
       syncAura(next, true, resume.auraOpacity);
-      aura.getAnimations().forEach(a => a.cancel());
-      if (remaining) aura.animate([{ opacity: resume.auraOpacity }, { opacity: COMBAT_POSE_STATES[next] ? 1 : 0 }], { duration: remaining, easing: TIME.auraResumeEasing });
+      cancelAuraFade();
+      if (remaining) auraFade = aura.animate([{ opacity: resume.auraOpacity }, { opacity: COMBAT_POSE_STATES[next] ? 1 : 0 }], { duration: remaining, easing: TIME.auraResumeEasing });
       changeRest(resume.transition.from, resume.transition.startedAt);
     } else if (next !== from) {
       syncAura(next, true, COMBAT_POSE_STATES[from] ? undefined : 0);
@@ -244,8 +255,32 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
       resources = aura;
       const duration = Math.max(TIME.minPlayMs, ms);
       setPose(sequence[0]);
-      sequence.slice(1).forEach((p, i) => timers.push(setTimeout(() => setPose(p), duration * (!animationClip(animation, pose) && sequence.length === TIME.fourStepSequenceLength ? TIME.fourStepOffsets[i] : (i + 1) / sequence.length))));
-      timers.push(setTimeout(() => animation ? settle() : changeRest(current), duration));
+      // Each step is kept with its due time so hold() can push the rest back.
+      playSteps = [];
+      const step = (fn, delay) => {
+        const entry = { fn, due: Date.now() + delay };
+        entry.id = setTimeout(() => { playSteps = playSteps.filter((x) => x !== entry); fn(); }, delay);
+        timers.push(entry.id);
+        playSteps.push(entry);
+      };
+      sequence.slice(1).forEach((p, i) => step(() => setPose(p), duration * (!animationClip(animation, pose) && sequence.length === TIME.fourStepSequenceLength ? TIME.fourStepOffsets[i] : (i + 1) / sequence.length)));
+      step(() => animation ? settle() : changeRest(current), duration);
+      return true;
+    },
+    // Hit-stop (SPEC §7.4): freeze the playing sequence on its current frame
+    // for `ms`, then carry on; every remaining frame and the settle move back.
+    hold(ms) {
+      if (!(ms > 0) || !playSteps.length) return false;
+      const now = Date.now();
+      const pending = playSteps;
+      playSteps = [];
+      for (const entry of pending) {
+        clearTimeout(entry.id);
+        const next = { fn: entry.fn, due: entry.due + ms };
+        next.id = setTimeout(() => { playSteps = playSteps.filter((x) => x !== next); entry.fn(); }, Math.max(0, next.due - now));
+        timers.push(next.id);
+        playSteps.push(next);
+      }
       return true;
     },
   });

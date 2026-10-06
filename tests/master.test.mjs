@@ -417,6 +417,24 @@ test('a respec lowers queued rank-ups by the levels lost and drops the track\'s 
   assert.deepEqual(run.deferredProgression.skillDrafts.map((row) => [row.skillId, row.ordinal]), [['other', 0]], 'another track\'s rows stay, renumbered');
 });
 
+test('a respec withdraws the attribute points the track\'s picks granted, and only that track\'s (FINISH D13a, owner ruling 2026-10-05)', () => {
+  const { run } = masterRun(OUT);
+  const skillId = masterOf(OUT, run).skills[0];
+  track(run, skillId, { level: 5, xp: 0, pendingDrafts: 4 });
+  const before = { ...run.attributes };
+  run.attributes.strength += 2;
+  run.attributes.wisdom += 1;
+  run.skillAttributePoints = 3;
+  run.skillAttributeGrants = { [skillId]: ['strength', 'strength'], other: ['wisdom'] };
+  assert.equal(respecPlan(OUT, run, skillId).attributePoints, 2, 'the quote names the points it takes back, for the tile to say');
+  commitRespec(OUT, run, respecPlan(OUT, run, skillId));
+  assert.equal(run.attributes.strength, before.strength, 'both points the track granted went back');
+  assert.equal(run.attributes.wisdom, before.wisdom + 1, 'another track\'s point stays');
+  assert.equal(run.skillAttributePoints, 1);
+  assert.deepEqual(run.skillAttributeGrants, { other: ['wisdom'] });
+  assert.deepEqual(validateRunShape(run).filter((p) => /skillAttribute/.test(p)), []);
+});
+
 test('FINISH: a level-1 track is refused by name; a respec refuses a stale quote and changes nothing', () => {
   const { run } = masterRun(OUT);
   const skillId = masterOf(OUT, run).skills[0];

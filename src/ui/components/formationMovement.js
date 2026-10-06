@@ -16,7 +16,11 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
   tray.append(confirm, cancel); field.append(tray);
   let selected = null;
   let released = false;
-  const config = () => presentationConfig(readSettings());
+  // One reading per refresh pass. The pass asks for the config per tile and per
+  // hold control (seventy-odd times) and nothing in it can change the settings,
+  // so it reads them once; outside a pass every call reads them fresh.
+  let passConfig = null;
+  const config = () => passConfig || presentationConfig(readSettings());
   const duration = key => config()[key] === 'hold' ? holdMs(readSettings(), holdConfig) : 0;
   const usable = (cell, fromReview = false) => field.isConnected && tiles.some(tile => tile.dataset.cell === cell && !tile.hidden) && (!veilIsOpen() || fromReview) && available() && plan(cell).ok
     && !tiles.some(tile => tile.dataset.cell === cell && tile.dataset.occupied === 'true');
@@ -54,6 +58,10 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
   field.addEventListener('formationlayoutchange', refresh);
   function refresh() {
     if (released) return;
+    passConfig = presentationConfig(readSettings());
+    try { refreshPass(); } finally { passConfig = null; }
+  }
+  function refreshPass() {
     const enabled = config().movementEnabled;
     if (!enabled || !config().movementNeedsSelection || (selected && !usable(selected))) selected = null;
     grid.setAttribute('aria-hidden', String(!enabled));

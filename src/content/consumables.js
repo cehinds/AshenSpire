@@ -38,11 +38,12 @@ export const consumables = [
   book('focusTreatise', 'Focus Treatise', 'item:magic-focus', { xp: 40, cost: 180, sellValue: 140 }),
   book('pairedStepsPrimer', 'Paired Steps Primer', 'dualWield', { xp: 40, cost: 180, sellValue: 140 }),
   { ...book('spellbook', 'Spellbook', 'item:magic-focus', { xp: 40, cost: 180, sellValue: 140 }), learnTags: ['source:spell'], blurb: 'Gain {xp} Magic Focus XP and choose one spell from any class.' },
-  { ...book('universalTome', 'Universal Tome', '*', { xp: 40, cost: 180, sellValue: 140 }), learnAny: true, blurb: 'Choose a skill track for {xp} XP, then learn one skill, spell, or new class card.' },
+  { ...book('universalTome', 'Universal Tome', '*', { xp: 40, cost: 180, sellValue: 140 }), learnAny: true, blurb: 'Choose a skill track for {xp} XP, then learn one skill, spell, or new class card.', masteryBlurb: 'Learn one skill, spell, or new class card. Skill tracks gain {xp} XP; class mastery advances through fights and quests.' },
   ...classes.map((cls) => ({
     ...book(`${cls.id}ClassBook`, `${cls.name} Class Book`, `class:${cls.id}`, { xp: 40, cost: 180, sellValue: 140 }),
     learnClass: cls.id, combatCardChance: 25, featChance: 5,
     blurb: `Gain {xp} ${cls.name} XP and learn its class card if new. Each reading has a {combatCardChance}% combat-card chance and an independent {featChance}% feat chance.`,
+    masteryBlurb: `Learn the ${cls.name} class card if new. Each reading has a {combatCardChance}% combat-card chance and an independent {featChance}% feat chance. Class mastery advances through fights and quests.`,
     [NOTE]: { xp: XP, cost: COST, sellValue: SELL,
       combatCardChance: 'Percent chance that reading this class book grants one combat card from its class pool. Independent of the feat roll; 0 disables and 100 guarantees a card when the pool is available.',
       featChance: 'Percent chance that reading this class book grants one feat. Independent of the combat-card roll; 0 disables and 100 guarantees a feat.' },

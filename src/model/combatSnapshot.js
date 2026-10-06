@@ -43,6 +43,9 @@ function entityProblems(entity, path, { player = false } = {}) {
     if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
   }
   if (entity.wardBlock !== undefined && (!Number.isInteger(entity.wardBlock) || entity.wardBlock < 0 || entity.wardBlock > entity.block)) problems.push(`${path}.wardBlock must be a whole number between 0 and block`);
+  for (const key of ['poiseGuard', 'wardGuard']) {
+    if (entity[key] !== undefined && (!Number.isInteger(entity[key]) || entity[key] < 0)) problems.push(`${path}.${key} must be a whole number of at least 0`);
+  }
   if (finite(entity.maxHp) && entity.maxHp <= 0) problems.push(`${path}.maxHp must be positive`);
   if (finite(entity.hp) && finite(entity.maxHp) && (entity.hp < 0 || entity.hp > entity.maxHp)) {
     problems.push(`${path}.hp must be between 0 and maxHp`);
@@ -73,6 +76,7 @@ function cardProblems(card, path) {
   if (typeof card.upgraded !== 'boolean') problems.push(`${path}.upgraded must be boolean`);
   if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1)) problems.push(`${path}.rank must be a whole number of at least 1`);
   if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_SKILL_BONUS)) problems.push(`${path}.skillBonus must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
+  if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_SKILL_BONUS)) problems.push(`${path}.passiveBlock must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
   return problems;
 }
 
@@ -125,6 +129,12 @@ export function combatSnapshotProblems(snapshot) {
     const ratings = snapshot.ratingsRules && snapshot.ratingsRules.ratings;
     if (!ratings || typeof ratings !== 'object') problems.push('Combat ratings: missing rating rows');
     else for (const id of ratingIds) problems.push(...storedStatRowProblems(ratings[id], `Combat ratings: ${id}`));
+  }
+  if (snapshot.breakMeterVersion !== undefined) {
+    if (snapshot.breakMeterVersion !== 1 || !snapshot.ratingsRules?.enabled) problems.push('breakMeterVersion requires version 1 and enabled ratings');
+    for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((entity, i) => [`enemies[${i}]`, entity])]) {
+      for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) if (entity?.[field] !== undefined) problems.push(`${path}.${field} is retired by breakMeterVersion 1`);
+    }
   }
   // The fight's copy of the run's derived-stat rules prices the Poise vessel on
   // restore and is preferred over the run's own, so it is held to the same

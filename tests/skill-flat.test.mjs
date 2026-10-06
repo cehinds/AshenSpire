@@ -1,6 +1,6 @@
 // tests/skill-flat.test.mjs — SPEC §13.4o: every `balance.skill.flatEvery`
 // levels of a card-school track adds 1 to the primary number of every card of
-// its schools. Derived (stamped as `skillBonus`) from the best track,
+// its schools. Derived (stamped as `skillBonus`) as the sum over its tracks,
 // applied in resolveCard beside the rank, and carried into combat.
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -61,7 +61,7 @@ test('a malformed skillBonus is refused on load', () => {
   }
 });
 
-test('a card earns the flat of its best track, not a sum, and never past the cap', async () => {
+test('a card earns the sum of its tracks\' flats, and never past the cap', async () => {
   const { MAX_SKILL_BONUS } = await import('../src/model/skills.js');
   const run = createRunState({ seed: 4, classId: 'reaver', registries });
   const levels = (id, kind, n) => awardSkillXp(registries, run, id, Array.from({ length: n }, (_, l) => xpToNext(registries, kind, l)).reduce((a, b) => a + b, 0));
@@ -71,7 +71,7 @@ test('a card earns the flat of its best track, not a sum, and never past the cap
   stampSkillBonuses(registries, run);
   const bash = run.deck.find((c) => c.cardId === 'shieldBash');
   assert.ok(bash, 'the reaver deals Shield Bash');
-  assert.equal(bash.skillBonus, 2, 'blade +1, shield +2, dual +1: the best is +2, not +4');
+  assert.equal(bash.skillBonus, 4, 'blade +1, shield +2, dual +1: the sum is +4 (owner ruling, 2026-10-05)');
   const flood = { ...run, skills: { [BLADE]: { xp: 0, level: 1000, pendingDrafts: 0 } } };
   const capped = { ...registries, balance: { ...registries.balance, skill: { ...registries.balance.skill, flatEvery: 1 } } };
   assert.equal(skillBonusFor(capped, flood, { cardId: 'rend' }), MAX_SKILL_BONUS, 'no setting stamps what a save refuses');

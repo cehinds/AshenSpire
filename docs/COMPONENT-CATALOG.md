@@ -141,7 +141,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 |---|---|---|---|---|
 | `player.scenePainting` | `PlayerArtworkModel` | `scenePainting`, `servicePortrait` | Title, rest and services | Painted scenery with independent foreground layers. |
 | `player.engravedIcon` | `engravedGlyphId` | `engravedIcon`, `engravedIconHtml` | Shared controls | Current-color engraved icons with tier-aware masks. |
-| `illustrated-card` | `card-layout.json`, generated card objects | `illustratedCardHtml`, `fitIllustratedCardText` | All ability cards | Clipped proportional art, live centered rules, stamina/mana banners and tags. |
+| `illustrated-card` | `card-layout.json`, generated card objects, `extendedCardArtwork.js` | `illustratedCardHtml`, `fitIllustratedCardText` | All ability cards | Existing frame, live centered rules, stamina/mana banners and tags. Canonical card/profile portraits cover the artwork region with lower-action framing; upgrades reuse base artwork. |
 | `illustrated-background` | Environment artwork and floor model | `illustratedBackground` | Battlefields | Layered painting preserves authored floor anchors. |
 | `illustrated-vitality-hud` | `RunHudViewModel` | `hudmeta`, `runHud` | Run screens | Enlarged HP above relics with transparent background and illustrated controls; measured combat header clearance stays reserved. |
 | `skill-book-offer` | `consumablePurchasePlan`, shop `components.bookOffers` | `skillBookOffer.renderSkillBookOffer` | Market | Uniform book sprite, live details and native Buy control. |
@@ -330,6 +330,12 @@ title screen
       └─ title-modal-continue-control
 ```
 
+## Terminal save recovery composition
+
+| Component ID | Model | Renderer | Reuse surface |
+|---|---|---|---|
+| `run-finish-retry` | `commitRunFinish` + `SaveStatusModel` | `gameover.mountGameOver` + `main.showFinishedRun` | Victory or death after failed storage; shared status dialog Retry and persistent Game Over Retry resume one terminal receipt |
+
 ## Character Creation components
 
 These components are the production renderers used by Character Creation and
@@ -340,9 +346,9 @@ custom art does not require a second card implementation.
 | Component ID | Model / input | Renderer | Reuse |
 |---|---|---|---|
 | `character-disclosure` | disclosure entries | `disclosure.mountDisclosure` | Character Creation + catalog |
-| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` | Class preview + catalog |
-| `class-resource-grid` | `statProjection.derived[]` | `creationCards.classResourceGrid` | Class preview + catalog |
-| `class-choice-card` | class row + selected/locked state | `creationCards.classChoiceCard` | Class selection + catalog |
+| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` + `classUnfold` | Class preview + catalog; compact contained sprite and icon beside class details. Native stat and relic buttons open shared modal details through `creationPreviewDetails`; stat definition and value precede the projected calculation at the bottom. |
+| `class-resource-grid` | `statProjection.derived[]` + hand resource rows | `creationCards.classResourceGrid` | Class preview + catalog; HP, SP, MP, opening Hand and Draw. Optional inspection callback renders native buttons with full accessible names. |
+| `class-choice-card` | class row + selected/locked/expanded state | `creationCards.classChoiceCard` | Class selection + catalog; folded choices are buttons, the expanded selected card is a labelled article so its detail buttons have no interactive ancestor. |
 | `view-mode-toggle` | view-mode state | `creationCards.viewModeToggle` | Class/Equipment + catalog |
 | `boolean-setting-toggle` | boolean setting state | `creationCards.booleanSettingToggle` | Auto-advance + future settings |
 | `selection-section-face` | label/value/visual receipt | `creationCards.selectionSectionFace` | Equipment disclosures + catalog |
@@ -403,14 +409,17 @@ Smith is a modal composition rather than an inline card dump:
 smith-upgrade-modal
 ├─ smith-candidate-card × distinct eligible owned armaments
 ├─ smith-upgrade-preview × selected armament's grouped card deltas
-├─ Back to Shrine (also Escape)
-└─ Confirm selected armament (disabled until selected and affordable)
+├─ Header: available Smithing Stones, then the close button
+├─ Upgrade selected armament in the preview pane (requires affordability)
+└─ Full-width Back to Shrine footer (also Escape)
 ```
 
-Selection is reversible presentation state. Back and Escape restore the Shrine
-without mutation. Confirm spends the displayed Smithing Stone cost, promotes exactly one
-armament for the run, refreshes every sourced basic card from that armament, and leaves the
-Shrine. Ordinary non-equipment cards retain their independent per-copy upgrade behavior.
+Selection takes one tap and opens every affected card preview expanded. The compact
+item list starts open. Back, the centered close glyph, and Escape return without
+spending another stone; completed upgrades remain saved. Confirm spends the displayed
+cost, promotes one item, and refreshes the picker while stones remain. The last stone
+uses the site's existing stay/leave rule. Ordinary non-equipment cards retain their
+independent per-copy upgrade behavior.
 
 ## Folding Tray session geometry
 
@@ -526,6 +535,7 @@ low-contrast danger text.
 | `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt, including exact weapon-package card counts and slot-bound upgrade changes. Authored presentation chooses a sustained-hold tooltip or inline content, with data-owned hold threshold, width, and viewport cap. |
 | `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` inside `renderTray` | Stats tray content: attributes, combat values, resources, relic summary, and the equipment receipts (card packages, requirements, Poise threshold, Equip load with its Weight Class — `armoury.playerLoadReceipt`). |
 | `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` inside `renderTray` | Cards tray content: exact equipment-associated card counts grouped by card/profile in list or grid presentation. |
+| `character-sheet` | `CharacterSheetModel.characterSheetModel` (`characterLadder`, `trackLadder`) + `progression.levelProgress` / `skillProgressRows` | `characterSheet.openCharacterSheet` (xl W1 modal, kit Meter, Rail, Pill) | Armoury Character view, under the level Meter (out of combat). Read-only: Character tab lists levels 1–20 with each step's XP, running total and grants (attribute points, pool growth from the run's own snapshot, deck minimum, feat/class choice per Settings → Rewards); Skills tab lists each weapon, focus, armour and dual-wield track plus the run's own class, levels 1 to the track's cap, with draft rank, rank-up, rarity unlocks, class-tree tiers, feats (every 2nd), linked attribute (every 4th) and +1 card power (every 5th). Opens scrolled to the current level. |
 | `armoury-region-header` | compatibility semantic ID | replaced by `tray-header` | Historical Armoury-only fold header name. |
 
 ```text

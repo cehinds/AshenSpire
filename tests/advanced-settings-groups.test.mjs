@@ -268,7 +268,7 @@ test('every screen that offers a point hands the card the run it belongs to', as
   // within the call or the call does not pass one. 300 characters is longer
   // than every call site in the tree and shorter than the gap to the next one.
   let sites = 0;
-  for (const file of ['customize.js', 'rest.js', 'equipment.js']) {
+  for (const file of ['customize.js', 'rest.js', 'equipment.js', '../models/ProgressionInspectionModel.js']) {
     const source = readFileSync(new URL(`../src/ui/screens/${file}`, import.meta.url), 'utf8');
     for (let at = source.indexOf('attributeCardModels(registries'); at >= 0;
       at = source.indexOf('attributeCardModels(registries', at + 1)) {
@@ -278,7 +278,7 @@ test('every screen that offers a point hands the card the run it belongs to', as
         `${file}: the attribute card at offset ${at} is priced from a run projection, not the authored table`);
     }
   }
-  assert.equal(sites, 5, 'all five attribute-card call sites are covered (a new one must state its projection too)');
+  assert.equal(sites, 6, 'all six attribute-card call sites are covered (a new one must state its projection too)');
 });
 
 // ---- one menu, one language (owner, 2026-09-21) ----------------------------
@@ -719,7 +719,7 @@ test('the worked example recomputes from the edited values and shows the whole s
   // HP growth is.
   const veteran = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.hp.perLevel': 1 }, 'HP', { constitution: 2 }, 11);
   assert.equal(veteran.examples[0].lines[0].label, 'HP at level 11');
-  assert.equal(veteran.examples[0].lines[0].total, HP_BASE + 2 * 4 + Math.floor(10 * 1), 'ten levels of growth by level 11');
+  assert.equal(veteran.examples[0].lines[0].total, HP_BASE + 2 * 1 + Math.floor(10 * 1), 'CON 2 at +1 HP per point and ten levels of growth by level 11');
   assert.match(veteran.examples[0].lines[0].expression, /10 levels × 1 → 10/);
   assert.equal(veteran.examples[0].lines[1].label, 'HP at level 12', 'and the next level that adds to it');
   assert.match(veteran.subject.label, /level 11/);
@@ -794,13 +794,13 @@ test('the worked example recomputes from the edited values and shows the whole s
   // edit, and with ratings on Poise is that ONE row (no second, legacy line).
   const poise = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.poise.constitution': 2 }, 'Poise', { strength: 3, constitution: 2 });
   assert.deepEqual(poise.examples.map(entry => entry.kind), ['rating']);
-  assert.equal(poise.examples[0].lines[0].total, 1 + Math.floor(3 * 0.5) + Math.floor(2 * 2));
-  assert.match(poise.examples[0].lines[0].expression, /^1 base \+ STR 3 × 0\.5 → 1 \+ CON 2 × 2 → 4/);
+  assert.equal(poise.examples[0].lines[0].total, 1 + Math.floor(2 * 2));
+  assert.match(poise.examples[0].lines[0].expression, /^1 base \+ CON 2 × 2 → 4/);
   assert.doesNotMatch(poise.examples[0].lines[0].expression, /all ratings/);
   // A starting relic's rating bonus is in the rating a new character has
   // before equipment, as combat's receipt adds it (Codex, #1252).
   // AR is pinned to STR × 0.5 here so the attribute half of the sum is known;
-  // the stock AR row now reads every attribute.
+  // every other attribute weight is explicitly zero for this example.
   const relicAr = statsTopicPreview({
     'gameConfig.combatRatings.bonuses.relic:forsakenMedallion.ar': 5,
     'gameConfig.derivedStatRules.rules.ar.strength': 0.5,
@@ -852,7 +852,7 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // elsewhere means the edited HP base is not what any run receives.
   const inRun = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.hp.base': 50 }, 'HP', { constitution: 2 });
   assert.match(inRun.refused, /flask/i);
-  assert.equal(inRun.examples[0].lines[0].total, HP_BASE + 2 * 4, 'the authored HP base, not the refused edit');
+  assert.equal(inRun.examples[0].lines[0].total, HP_BASE + 2 * 1, 'the authored HP base and +1 CON weight, not the refused edit');
   // Held to the whole of validateContent, not only what createRunState trips
   // on (Codex, #1252): a Mana card-cost floor no card meets is refused at boot.
   const cost = statsTopicPreview({ 'gameConfig.balance.mana.minActionCost': 99, 'gameConfig.derivedStatRules.rules.hp.base': 50, settingsStatsExampleClass: 'reaver' }, 'HP');
@@ -865,7 +865,7 @@ test('a refused configuration is named, and the example shows the rules a run ke
   const ar = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.ar.strength': 2 }, 'Attack rating (AR)', { strength: 6 });
   assert.equal(ar.examples[0].off, true);
   assert.doesNotMatch(ar.examples[0].lines[0].expression, /STR 6 × 2 /);
-  assert.match(ar.examples[0].lines[0].expression, /STR 6 × 0\.75 → 4/, 'the authored AR row');
+  assert.match(ar.examples[0].lines[0].expression, /STR 6 × 1 → 6/, 'the authored AR row');
 });
 
 test('the example shows what a run is born with at the edges', async () => {

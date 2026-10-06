@@ -41,7 +41,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
-| `quick-start.yml` → Title Quick start to the first card play within 6 inputs (`quick-start-inputs.mjs --only quick`, real browser) | yes | yes (also on push to `dev`) |
+| `quick-start.yml` → Title Quick start to the first card play within 6 inputs (`quick-start-inputs.mjs --only quick`, real browser), then click to impact ≤ 400 ms at Normal pacing (`click-impact-probe.mjs`, same job) | yes | yes (also on push to `dev`) |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
@@ -968,7 +968,7 @@ validation refusals and the dialogue model.
 
 | Set | Where defined | Contents |
 |---|---|---|
-| Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, dodgeRoll, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, restoreMana, restoreStamina, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage, stagger, arcaneBuildup |
+| Combat opcodes | `model/schemas.js` `COMBAT_OPCODES` | damage, block, gainPoise, gainWard, dodgeRoll, applyStatus, removeStatus, draw, discard, exhaust, addCard, gainEnergy, restoreMana, restoreStamina, loseHp, heal, shuffleDiscardIntoDraw, enterStance, poiseDamage, stagger, arcaneBuildup |
 | Run opcodes | `RUN_OPCODES` | addCinders, addCardToDeck, removeCardFromDeck, upgradeCard, addRelic, addFlask, addFlaskCapacity, loseMaxHpPct, startCombat, swapClass, refillFlasks |
 | Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner, ally, otherEnemies |
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
@@ -1220,9 +1220,9 @@ of each of your turns while in hand, solo and in co-op, through the card's
 
 ## Dodge outcome presentation
 
-The engine emits dodgeRolled once per resolved roll. The combat screen retains its last player receipt before animation playback, so skipping playback cannot discard the explanation. The shared dodgeReceipt formatter labels temporaryGuard as base guard; ordinary blockGained events remain responsible for the applied Block amount. The persistent result uses the standard modal shell and focus return; a live region announces new outcomes.
+Since 2026-10-05 only Evasive Guard rolls; the Dodge Roll card grants a flat Block, Poise and Ward (SPEC §12.1) and emits no dodgeRolled. The engine emits dodgeRolled once per resolved roll, into the event log only: the owner removed the dodge-result widget (the "Dodge succeeded / failed" receipt button, its result dialog, float and live announcement) the same day, along with `src/ui/components/dodgeReceipt.js` and the browser drive `tools/dodge-outcome.mjs` that asserted it. A success shows through its blockGained float and the dodge visual (`model/combatEffectEvents.js`).
 
-Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption. Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.
+Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption.
 
 ### Every-weapon card preview
 Open `weapon-cards-preview.html` through the local server to browse every canonical
@@ -1304,3 +1304,7 @@ the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
 immutability, class lines, destination, and interrupted save recovery.
 ### Ratings and starting pools
 Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its stat row — the same nine fields everywhere (Base, STR, DEX, CON, WIS, INT, Per level, Min, Max) — and its constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js (the stat-row editors), src/model/statRows.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs.
+
+### Combat hit-stop validation
+
+Run `node --test tests/combat-feel.test.mjs` for damage thresholds, multi-hit holds, impact haptics, skip cleanup and motion settings. Run `node tools/combat-feel-probe.mjs` with an existing Playwright installation (`PLAYWRIGHT_MODULE`) for production target recoil CSS and painted frame stability at 1440x900 and 390x844. `COMBAT_FEEL_OUT` selects the screenshot directory. The browser probe uses staged production figures; physical-device and subjective visual acceptance remain separate.

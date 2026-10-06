@@ -34,6 +34,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { carrierRules } from '../model/registries.js';
+import { breakPropertyRule } from '../model/breakMeter.js';
 import { equippedPieces, pieceItemRef } from '../model/loadout.js';
 import { triggerOwnerKey } from './triggers.js';
 
@@ -82,7 +83,7 @@ function assertCarrier(carrier) {
  */
 export function mountProperties(ctx, carrier) {
   assertCarrier(carrier);
-  const rules = carrierRules(ctx.registries, carrier.tagIds);
+  const rules = carrierRules(ctx.registries, carrier.tagIds).map(rule => breakPropertyRule(ctx, rule));
   if (!rules.length) return null;
   const sourceKey = propertySourceKey(carrier);
   const mounts = ctx.propertyMounts || (ctx.propertyMounts = {});

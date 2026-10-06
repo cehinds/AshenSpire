@@ -49,6 +49,7 @@ import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/cla
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
 import { unknownConsumableId, unknownCompanionId } from '../model/consumables.js';
+import { normalizeMasteryProfile, masteryProfileProblems, mergeMasteryProfiles, bankMasteryProfile } from '../model/classMasteryProfile.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -65,7 +66,7 @@ export const SLOTS = 3; // save slots, one run each
 const HISTORY_LIMIT = 20;
 // THE ONE HOME for the meta schema's version (the run schema's one home is
 // RUN_SCHEMA_VERSION in model/state.js — two schemas, one home each).
-export const META_SCHEMA_VERSION = 2;
+export const META_SCHEMA_VERSION = 3;
 const ARCHIVE_LIMIT = 12; // keep the last N RUN archives…
 // …and profiles are counted separately, because a run must never evict one
 // (Saga's gate). This cap is generous and exists only so the drawer cannot grow
@@ -452,7 +453,7 @@ export function createSaveManager(storage) {
 
   function parseMeta(json) {
     const meta = JSON.parse(json);
-    if (!meta || typeof meta !== 'object') throw new Error('profile is not an object');
+    if (!meta || typeof meta !== 'object' || Array.isArray(meta)) throw new Error('profile is not an object');
     return meta;
   }
 
@@ -467,33 +468,30 @@ export function createSaveManager(storage) {
       return { json, error: e && e.message ? e.message : 'corrupt profile', kind: 'corrupt' };
     }
     const v = meta.schemaVersion;
-    if (v === undefined || v === META_SCHEMA_VERSION) return { json, meta };
+    if (v === META_SCHEMA_VERSION) {
+      const problems = masteryProfileProblems(meta);
+      return problems.length ? { json, meta, error: problems.join('; '), kind: 'corrupt' } : { json, meta };
+    }
     if (typeof v === 'number' && v > META_SCHEMA_VERSION) {
       return { json, meta, error: `profile schemaVersion ${v} is newer than this build (${META_SCHEMA_VERSION})`, kind: 'newer' };
     }
     // Older: migrate here when a migration exists; until one does, refuse BY
     // NAME rather than guessing at a shape nobody wrote.
     const migrated = migrateMeta(meta, v);
-    if (migrated) return { json, meta: migrated, migratedFrom: v };
+    if (migrated) {
+      const problems = masteryProfileProblems(migrated);
+      return problems.length ? { json, meta, error: problems.join('; '), kind: 'corrupt' } : { json, meta: migrated, migratedFrom: v };
+    }
     return { json, meta, error: `profile schemaVersion ${v} is older than this build (${META_SCHEMA_VERSION}) and has no migration`, kind: 'older' };
   }
 
   // migrateMeta(meta, fromVersion) → meta | null. One switch, one home; every
   // arm must be able to state what it changed.
   function migrateMeta(meta, fromVersion) {
-    if (fromVersion === 1) {
+    if (fromVersion === undefined || fromVersion === 0 || fromVersion === 1 || fromVersion === 2) {
       return {
-        ...meta,
-        schemaVersion: META_SCHEMA_VERSION,
-        discoveredArmaments: [...new Set(meta.discoveredArmaments || meta.found || [])],
-        discoveryReceipts: [...(meta.discoveryReceipts || [])],
-      };
-    }
-    if (fromVersion === 0) {
-      // v0 = the pre-#67 unversioned/zero profile: shape is already compatible,
-      // it simply never carried a stamp. Adopt it and stamp it.
-      return {
-        ...meta,
+        ...normalizeMasteryProfile({ ...meta, classMastery: {}, classMasteryReceipts: {} }, null, { veteran: (meta.results?.length || 0) > 0 || (meta.progress?.runs || 0) > 0 }),
+        ...(meta.progress ? { progress: { ...meta.progress, maxClassLevel: 0 } } : {}),
         schemaVersion: META_SCHEMA_VERSION,
         discoveredArmaments: [...new Set(meta.discoveredArmaments || meta.found || [])],
         discoveryReceipts: [...(meta.discoveryReceipts || [])],
@@ -503,25 +501,34 @@ export function createSaveManager(storage) {
   }
 
   function freshMeta() {
-    return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [] };
+    return normalizeMasteryProfile({ schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [] });
   }
 
   // The actual write, shared by saveMeta (updates the live profile) and
   // replacePrimaryWith (swaps in a different one). Verify-then-rotate lives here
   // so both paths get it.
   function saveMetaInternal(meta) {
-    const json = JSON.stringify({ ...meta, schemaVersion: META_SCHEMA_VERSION });
+    const canonical = normalizeMasteryProfile(meta, null, { veteran: !meta.classMastery && ((meta.results?.length || 0) > 0 || (meta.progress?.runs || 0) > 0) });
+    const problems = masteryProfileProblems(canonical);
+    if (problems.length) return { ok: false, reason: problems.join('; ') };
+    const json = JSON.stringify({ ...canonical, schemaVersion: META_SCHEMA_VERSION });
     storage.setItem(META_KEY, json);
     // Verify the write survived (quota, a killed tab mid-write), then rotate
     // the mirror. Backup AFTER a verified read-back, never before — a mirror
     // of bytes we never proved readable is not a backup.
     const check = readMetaFrom(META_KEY);
-    if (check.empty || check.error) {
+    if (check.empty || check.error || check.json !== json) {
       const backup = readMetaFrom(META_BACKUP_KEY);
       if (!backup.empty && !backup.error) storage.setItem(META_KEY, backup.json);
       return { ok: false, reason: 'write did not read back cleanly; primary restored from the last known good' };
     }
-    storage.setItem(META_BACKUP_KEY, json);
+    try {
+      storage.setItem(META_BACKUP_KEY, json);
+    } catch (error) {
+      // Primary read-back already committed the XP and receipt. A retry is
+      // idempotent, but must not report that committed progress was lost.
+      return { ok: true, warning: `profile saved; backup could not rotate: ${error.message}` };
+    }
     return { ok: true };
   }
 
@@ -901,8 +908,8 @@ export function createSaveManager(storage) {
         // The heal is a schema migration: only a save written before schema
         // 20 can lack the marker. A schema-20 Sealed/Draft save without it
         // was not written by newRun, so it is refused by name.
-        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule') && run.migratedFromRunSchemaVersion === undefined) {
-          throw new Error(`a schema-${RUN_SCHEMA_VERSION} ${run.custom.deckMode} run is missing poolDeckRule`);
+        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule') && (run.migratedFromRunSchemaVersion === undefined || run.migratedFromRunSchemaVersion >= 20)) {
+          throw new Error(`a schema-${run.migratedFromRunSchemaVersion ?? RUN_SCHEMA_VERSION} ${run.custom.deckMode} run is missing poolDeckRule`);
         }
         if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule')) {
           const legacy = !(run.removedAttackSlotIds || []).length;
@@ -1156,7 +1163,24 @@ export function createSaveManager(storage) {
       if (quarantined) {
         return { ok: false, reason: `profile is quarantined (${status.state}); refusing to overwrite the original bytes` };
       }
-      return saveMetaInternal(meta);
+      const current = this.loadMeta();
+      if (quarantined) return { ok: false, reason: 'profile is quarantined; refusing a stale write' };
+      const problems = meta.classMastery ? masteryProfileProblems(normalizeMasteryProfile(meta)) : [];
+      if (problems.length) return { ok: false, reason: problems.join('; ') };
+      return saveMetaInternal(mergeMasteryProfiles(meta, current));
+    },
+    /** Bank one run's cumulative XP against the freshest durable receipt. */
+    bankClassMastery(run, registries) {
+      const current = this.loadMeta();
+      if (quarantined) return { ok: false, meta: current, reason: 'profile is quarantined; mastery was not banked' };
+      try {
+        const bank = bankMasteryProfile(current, run, registries);
+        if (!bank.changed) return { ok: true, meta: current, changed: false };
+        const result = saveMetaInternal(bank.meta);
+        return { ...result, meta: result.ok ? bank.meta : current, changed: result.ok };
+      } catch (error) {
+        return { ok: false, meta: current, reason: error.message };
+      }
     },
     /** Append a run result (victory, floor, seed, class, …), capped at 20. */
     recordResult(result) {

@@ -61,6 +61,7 @@ import { attributeContentProblems, presetGearProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
+import { classMasteryProblems } from './classMasteryContent.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { attackCardDamageConfigProblems } from './attackCardDamage.js';
@@ -81,6 +82,8 @@ import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 export const TOKENIZABLE_OPS = Object.freeze([
   'damage',
   'block',
+  'gainPoise',
+  'gainWard',
   'heal',
   'loseHp',
   'applyStatus',
@@ -98,6 +101,8 @@ export const TOKENIZABLE_OPS = Object.freeze([
 export const REQUIRED_TOKEN_OPS = Object.freeze([
   'damage',
   'block',
+  'gainPoise',
+  'gainWard',
   'heal',
   'loseHp',
   'applyStatus',
@@ -122,6 +127,10 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'equipment',
   'unlocks',
   'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
+  'classMasteryVersion',
+  'breakMeterVersion', // configured bundle's scoped card faces, never stamped onto old runs
+  'classMastery',
+  'classSkillFeats',
   'sfx',
   'music',
   'tagDomains', // what a tag can be about — the domain lookup
@@ -345,6 +354,8 @@ export function validateContent(bundle) {
 function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
+  if (b.classMasteryVersion !== undefined && b.classMasteryVersion !== 1) err('classMasteryVersion', 'must be 1 when present');
+  if (b.breakMeterVersion !== undefined && b.breakMeterVersion !== 1) err('breakMeterVersion', 'must be 1 when present');
 
   // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a
   // bundle carrying no events section at all is a BUILD fault, not a content
@@ -673,6 +684,11 @@ function collectContentProblems(bundle, errors = []) {
     masterTableProblems(b.shops || shippedShops, err, b);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
+      for (const key of ['foldScale', 'staggerBreakImpact']) if (!Number.isFinite(exposure[key]) || exposure[key] < 0) err(`balance.exposure.${key}`, 'must be finite and non-negative');
+      const payoff = exposure.defaultPayoff;
+      if (!payoff || !(b.statuses || []).some(status => status.id === payoff.status)) err('balance.exposure.defaultPayoff.status', 'must name a status');
+      if (!Number.isInteger(payoff?.value) || payoff.value < 0) err('balance.exposure.defaultPayoff.value', 'must be a non-negative integer');
+      if (!Number.isInteger(payoff?.duration) || payoff.duration <= 0) err('balance.exposure.defaultPayoff.duration', 'must be a positive integer');
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
       if (!(Number.isInteger(exposure.resonanceSpreadPct) && exposure.resonanceSpreadPct >= 0 && exposure.resonanceSpreadPct <= 100)) err('balance.exposure.resonanceSpreadPct', `must be an integer percent 0–100, got ${JSON.stringify(exposure.resonanceSpreadPct)}`);
     }
@@ -2055,6 +2071,9 @@ function collectContentProblems(bundle, errors = []) {
     users: scriptUsers,
   };
 
+  // The cross-table mastery planner needs structurally valid dependencies.
+  // Keep their existing field-addressed refusals before asking it to plan.
+  if (!errors.length) for (const problem of classMasteryProblems(b)) err('classMastery', problem);
   return { ok: errors.length === 0, errors, scriptReport };
 }
 
@@ -2714,6 +2733,7 @@ function checkTemplate(template, effects, path, err, extraBindings = []) {
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
   checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
+  if (card.singleBreak) checkTemplate(card.singleBreak.textTemplate, cardTokenEffects(card.singleBreak), `${path}.singleBreak.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;
     const upEffects = card.upgrade.effects != null ? card.upgrade.effects : card.effects;

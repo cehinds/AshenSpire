@@ -15,12 +15,8 @@
 }
 .as-glyph .engraved-icon { width:100%; height:100%; }
 .as-iconbtn .engraved-icon { width:24px; height:24px; }
-.modal-close-face { font-size:0; }
-.modal-close-face::after {
-  content:''; display:block; width:20px; height:20px; background-color:currentColor;
-  mask:url('../assets/player-polish/ui/icons/close.svg') center / contain no-repeat;
-  -webkit-mask:url('../assets/player-polish/ui/icons/close.svg') center / contain no-repeat;
-}
+/* modalShell owns the single close glyph. A second masked icon here both
+   duplicated that glyph and disappeared when external art was unavailable. */
 .m-label .engraved-icon { width:18px; height:18px; margin-inline-end:5px; color:var(--meter-tone, currentColor); }
 .card-costs .engraved-icon { width:16px; height:16px; }
 .as-pip .engraved-icon { width:22px; height:22px; }
@@ -292,7 +288,6 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 .combat > .combat-hud .hud-center,
 .combat > .combat-hud .hud-trail { background:#17130fd9; }
 .combat .hand-area { background:none; }
-.combat .turn-ribbon { top:14%; }
 :root main:has(> .shop-workspace) > .shared-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
 main:has(> .shop-workspace) > .shared-hud .hud-vitals-panel { max-width:28rem; padding:.5rem; background:#17130fe8; }
 main:has(> .shop-workspace) > .shared-hud :is(.hud-info-row,.hud-vitals-panel,.hud-control-grid,.hud-bottom) { pointer-events:auto; }
@@ -385,7 +380,11 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root .combat[data-layout='formation'] > .hand-area { margin:0; padding:0; }
 :root .combat[data-layout='formation'] .environment-backdrop::before { background:linear-gradient(180deg,#08070610 25%,transparent calc(var(--scene-paint-bottom, 100%) - 16%),#17130f var(--scene-paint-bottom, 100%)); }
 :root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 2px 2px #100b08a0); }
-.combat .turn-ribbon { top:3%; background:#16120bbc; }
+/* The turn ribbon sits flush under the HUD band on every layout: the stage
+   (components/battlefieldStage.js) sets --turn-ribbon-top to the band's
+   overhang into the field, and fits every figure and intent that shares the
+   ribbon's columns below its bottom edge, so it never covers one. */
+.combat .turn-ribbon { top:var(--turn-ribbon-top, 0px); background:#16120bbc; }
 
 /* Merchant drawers expand in place. Mobile uses the same categories in one select. */
 :root[data-layout='wide']:not([data-composition='short-wide']) .shop-workspace:not(.master-workspace) .shop-frame { width:52%; }
@@ -433,7 +432,7 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu > .as-ornament:first-child { display:none; }
 :root[data-layout='narrow'] .title-screen .title-traveler { top:17%; height:28%; }
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand { overflow:visible; scrollbar-width:none; }
-:root[data-layout='narrow'] .combat .turn-ribbon { top:25%; font-size:1.2rem; }
+:root[data-layout='narrow'] .combat .turn-ribbon { font-size:1.2rem; }
 :root[data-layout='narrow'] .combat .combatant-leading .intent { font-size:calc(18px / var(--ui-zoom,1)) !important; min-width:calc(56px / var(--ui-zoom,1)); }
 :root[data-layout='narrow'] .combat .combatant-leading .intent .as-glyph { display:none; }
 :root .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }

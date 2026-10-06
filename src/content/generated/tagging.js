@@ -7469,6 +7469,30 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "emberCommunion",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCommunion",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCommunion",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCommunion",
+    "tagId": "fx:heal"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "litany",
     "tagId": "classification.skill"
   },

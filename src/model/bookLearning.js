@@ -23,6 +23,7 @@ export function bookTags(registries, def, skillId = def.skill) {
 
 /** Current class and equipped weapons never restrict a book's lesson pool. */
 export function bookLessons(registries, run, def, skillId = def.skill) {
+  registries = registries.masterySource || registries;
   if (!bookTracks(registries, def).some((track) => track.id === skillId)) return [];
   const choices = [];
   if (def.learnClass || def.learnAny) {

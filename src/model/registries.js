@@ -223,13 +223,15 @@ export function createRegistries(contentBundle) {
   // take whichever shape its question is in.
   // …and the class tree (plan phase 5b): classId, nodeId, tier — read by
   // model/classTree.js as a plain table, like the tree's own companions.
-  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree']) {
+  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree', 'classMastery', 'classSkillFeats']) {
     registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
   }
   registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });
   registries.tree = nodeTree(registries);
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  if (bundle.classMasteryVersion === 1) registries.classMasteryVersion = 1;
+  if (bundle.breakMeterVersion === 1) registries.breakMeterVersion = 1;
   // The shop kinds and their offerings (SPEC §14.2), as configured for this
   // run; a bundle without them reads the shipped table.
   registries.shops = deepFreeze(cloneShops(bundle.shops || shippedShops));
@@ -543,9 +545,10 @@ const resolveCache = new WeakMap();
  *     full upgraded set — this is what lets an upgrade remove Exhaust)
  *   - `name` defaults to base name + '+'
  */
-export function resolveCard(registries, instanceOrRef) {
+export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   const cardId = instanceOrRef.cardId;
-  const base = registries.cards.get(cardId);
+  const authored = registries.cards.get(cardId);
+  const base = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
   const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
@@ -554,7 +557,8 @@ export function resolveCard(registries, instanceOrRef) {
   const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0) return base;
+  const passiveBlock = cardPassiveBlock(instanceOrRef);
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return base;
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -564,7 +568,7 @@ export function resolveCard(registries, instanceOrRef) {
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -612,6 +616,8 @@ export function resolveCard(registries, instanceOrRef) {
   // bonus, adds 1 to the card's primary number, so the play, the preview and
   // the card face all read the same value.
   if (rank > 1 || skillBonus > 0) result = applyCardRank(result, rank, skillBonus);
+  // A passive tag's Block (SPEC §13.4o) lands on the finished face too.
+  if (passiveBlock > 0) result = applyPassiveBlock(result, passiveBlock);
   cache.set(key, result);
   return result;
 }
@@ -633,6 +639,33 @@ export function cardRank(instance) {
 export function cardSkillBonus(instance) {
   const bonus = instance && instance.skillBonus;
   return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
+}
+
+/**
+ * cardPassiveBlock(instance) → the Block the run's passive tags add to the
+ * instance (SPEC §13.4o), 0 when absent. Derived, never chosen: `skills.js
+ * stampSkillBonuses` writes it from the run's skill feats.
+ */
+export function cardPassiveBlock(instance) {
+  const bonus = instance && instance.passiveBlock;
+  return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
+}
+
+/**
+ * passiveBlockIndex(card) → the effect a passive Block lands on: the card's
+ * first unconditional Block with a numeric amount, or -1. Once per card, so a
+ * card with two Blocks gains it once.
+ */
+export function passiveBlockIndex(card) {
+  return ((card && card.effects) || []).findIndex((effect) => effect && !effect.if && effect.op === 'block' && typeof effect.amount === 'number');
+}
+
+/** applyPassiveBlock(card, amount) → the face with `amount` added to that Block. */
+export function applyPassiveBlock(card, amount) {
+  const index = passiveBlockIndex(card);
+  if (index === -1 || !amount) return card;
+  const effects = card.effects.map((effect, i) => (i === index ? { ...effect, amount: effect.amount + amount } : effect));
+  return deepFreeze({ ...card, effects });
 }
 
 /**

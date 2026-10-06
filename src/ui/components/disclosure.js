@@ -156,6 +156,7 @@ function faceHtml(entry) {
  *  gets whatever short sentence the screen authored beside it, or no tip at
  *  all. An empty tooltip is worse than none: it is a pointer that promises. */
 function tipHtml(entry) {
+  if (typeof entry.tooltip === 'string') return `<p>${esc(entry.tooltip)}</p>`;
   if (entry.reveal && entry.reveal.node) {
     return entry.reveal.sense ? `<p class="disc-sense">${esc(entry.reveal.sense)}</p>` : '';
   }

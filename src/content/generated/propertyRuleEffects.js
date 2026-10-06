@@ -71,6 +71,15 @@ export const propertyRuleEffects = {
     }
   },
   "staggerBreak": {
+    "singleBreak": {
+      "triggers": [],
+      "passives": {
+        "magicalImpactAdd": {
+          "balance": "exposure.staggerBreakImpact"
+        }
+      },
+      "textTemplate": "Spell hits gain {magicalImpactAdd} magical impact."
+    },
     "triggers": [
       {
         "on": "arcaneBreak",

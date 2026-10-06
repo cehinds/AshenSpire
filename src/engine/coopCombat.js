@@ -44,7 +44,7 @@ import { cardKind } from '../model/tree.js';
 import { gripOf, gripTags } from '../model/loadout.js';
 import { attachSkillXp } from './skillXp.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } from '../model/state.js';
-import { refreshCombatRatings } from './combatRatings.js';
+import { refreshCombatRatings, clearMeterGuards } from './combatRatings.js';
 import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
 import { turnDrawCount, endTurnCardFate, returnUnplayedCards } from './handRules.js';
@@ -65,9 +65,10 @@ export function coopHpMult(headcount, factor = 0.6) {
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null }) {
   const C = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
+    ...(ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     rng,
@@ -107,6 +108,16 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     for (const [id, P] of C.players) if (P.entity === entity) return id;
     return null;
   };
+  // A queued property draw can belong to an inactive seat. Draw through its
+  // own piles and hand rules, then restore the current seat's context.
+  C.drawCardsFor = (entity, amount) => {
+    const seat = C.players.get(C.playerIdForEntity(entity));
+    if (!seat) return A.drawCards(C, amount);
+    const prior = C.players.get(C.playerKey);
+    setActive(C, seat);
+    try { return A.drawCards(C, amount); }
+    finally { setActive(C, prior || null); }
+  };
 
   const headcount = players.length;
   C.hpFactor = (registries.balance.coop && registries.balance.coop.headcountHpFactor) || 0.6;
@@ -119,7 +130,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     hp = Math.max(1, Math.round(hp * C.baseHpMult));
     C.enemies.push(createEnemyCombatEntity({
       instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
-      arcaneExposure: def.arcaneExposure,
+      arcaneExposure: C.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
       damageResistanceBySchool: def.damageResistanceBySchool,
       damageMult: enemyDamageMult,
     }));
@@ -128,7 +139,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     for (const enemy of C.enemies) {
       const values = C.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
       enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
-      for (const id of ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+      for (const id of C.breakMeterVersion === 1 ? ['poise'] : ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
     }
   }
 
@@ -183,12 +194,14 @@ function addPlayerState(C, p, { initial = false } = {}) {
     poiseMax: Number.isInteger(p.poiseMax) ? p.poiseMax : 0,
   });
   const deck = (p.deck || []).map((c) => ({
+    ...(C.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     instanceId: c.instanceId,
     cardId: c.cardId,
     ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
     upgraded: !!c.upgraded,
     ...(Number.isInteger(c.rank) && c.rank > 1 ? { rank: c.rank } : {}),
     ...(Number.isInteger(c.skillBonus) && c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
+    ...(Number.isInteger(c.passiveBlock) && c.passiveBlock > 0 ? { passiveBlock: c.passiveBlock } : {}),
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}), // equipment numbers
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
@@ -392,6 +405,7 @@ function startPlayerPhase(C) {
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
     reconcileWardBlock(e);
+    clearMeterGuards(e);
     // Less what a Stagger took (plan phase 8): owed to this next turn only.
     e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
     e.pendingActionLoss = 0;
@@ -454,7 +468,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   const idx = C.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = C.piles.hand[idx];
-  const def = resolveCard(C.registries, inst);
+  const def = resolveCard(C.registries, inst, C.breakMeterVersion || 0);
   const kws = def.keywords || [];
   const chosen = assertCardChoice(cardChoice(C.registries, def, p.classId), choice);
   F.assertFoundationPlayable(C, def, chosen);
@@ -503,7 +517,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     ratingValue: inst.ratingValue,
     ratingCap: inst.ratingCap,
     equipmentRole: inst.equipmentRole,
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
     // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
@@ -686,6 +700,7 @@ function enemyPhase(C) {
   for (const e of C.enemies) {
     if (e.alive && !S.getFlag(C, e, 'retainBlock')) e.block = 0;
     reconcileWardBlock(e);
+    clearMeterGuards(e);
   }
   setActive(C, firstLiving(C));
   drainQueue(C);

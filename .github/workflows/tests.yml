@@ -54,13 +54,13 @@ name: tests
 
 on:
   pull_request:
-    branches: [dev] # `core` only; see the header
+    branches: [dev, alternative/dev, 'alternative/**/dev'] # `core` only; see the header
   push:
-    branches: [dev, test, release] # `core` only on dev; see the header
+    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test'] # `core` only on dev; see the header
   workflow_dispatch:
 
 concurrency:
-  group: tests-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: tests-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -93,6 +93,11 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      - name: Install card artwork encoder for conversion tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/card-art-python"
+          "$RUNNER_TEMP/card-art-python/bin/python" -m pip install Pillow==11.1.0
+          echo "$RUNNER_TEMP/card-art-python/bin" >> "$GITHUB_PATH"
       # The art packs, before anything builds, serves or tests this checkout (step 12).
       - uses: ./.github/actions/fetch-art
         env:
@@ -123,7 +128,7 @@ jobs:
     name: tool self-tests
     # About 6 minutes: over the dev-PR budget, so it runs on push to test and
     # release (and on dispatch), not on a pull request into dev.
-    if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_name == 'dev')
+    if: github.event_name != 'pull_request' && !endsWith(github.ref_name, '/dev') && !(github.event_name == 'push' && github.ref_name == 'dev')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -147,7 +152,7 @@ jobs:
     name: bundler parse gate
     # About 13 minutes: runs on push to test and release (and on dispatch),
     # not on a pull request into dev.
-    if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_name == 'dev')
+    if: github.event_name != 'pull_request' && !endsWith(github.ref_name, '/dev') && !(github.event_name == 'push' && github.ref_name == 'dev')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

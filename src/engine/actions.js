@@ -29,6 +29,7 @@ import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
+import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import { evalPredicate, checkPhases, emitEvent } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
@@ -37,7 +38,7 @@ import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
-import { cardRatingBonus, applyRatingImpact } from './combatRatings.js';
+import { cardRatingBonus, applyRatingImpact, absorbMeterGuard } from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
@@ -201,7 +202,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if (hpLoss > 0) {
     if (ctx.ratingsRules) applyRatingImpact(ctx, source, target, carrier);
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
-    applyArcaneExposure(ctx, source, target, carrier);
+    if (!usesSingleBreakMeter(ctx)) applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target);
   return dmg;
@@ -267,6 +268,40 @@ export function computeBlockGain(ctx, entity, base, card = null) {
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
+}
+
+/**
+ * computeMeterGuardGain(ctx, entity, base, card) → the Poise or Ward guard a
+ * gainPoise / gainWard effect grants: its base plus the same rating bonus the
+ * card's Block reads (cardRatingBonus 'block' — DR on a physical skill, PR on
+ * a magical card), floored, min 0. No Dexterity, Frail or block modifiers: a
+ * guard is not Block. Pure; the preview reads it too.
+ */
+export function computeMeterGuardGain(ctx, entity, base, card = null) {
+  const amt = Math.floor(base + cardRatingBonus(ctx, entity, card, 'block', base));
+  return amt < 0 ? 0 : amt;
+}
+
+/**
+ * gainMeterGuard — adds to entity.poiseGuard or entity.wardGuard. The guard
+ * absorbs physical (Poise) or magical (Ward) impact before the matching meter
+ * fills (combatRatings.js absorbMeterGuard) and clears at the start of its
+ * owner's turn, with Block.
+ */
+export function gainMeterGuard(ctx, entity, meter, base, card = null) {
+  if (!entity.alive) return 0;
+  if (usesSingleBreakMeter(ctx) && meter === 'ward') meter = 'poise';
+  const amt = computeMeterGuardGain(ctx, entity, base, card);
+  const key = meter + 'Guard';
+  if (amt > 0) entity[key] = (entity[key] || 0) + amt;
+  ctx.emit('meterGuardGained', {
+    targetId: entity.id, meter, amount: amt, total: entity[key] || 0,
+    // The weight-priced Dodge Roll's guard is the dodge visual's cue
+    // (model/combatEffectEvents.js); any other gainPoise card is not a dodge.
+    ...(card?.cardId && ctx.registries.cards.has(card.cardId) && ctx.registries.cards.get(card.cardId).weightClassPriced ? { dodge: true } : {}),
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
+  });
+  return amt;
 }
 
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
@@ -418,7 +453,9 @@ export function dealPoiseDamage(ctx, entity, amount) {
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
-  const n = Math.max(0, Math.floor(amount));
+  // A Poise guard (gainPoise) takes the impact before the meter does.
+  const n = Math.max(0, Math.floor(amount)) - absorbMeterGuard(entity, 'poise', amount);
+  if (n <= 0) return;
   if (ctx.foundation && isEnemy && entity.impactProtectedUntil >= ctx.turn) {
     entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value + n);
     return;
@@ -712,6 +749,14 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
+    case 'gainPoise':
+    case 'gainWard': {
+      const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
+      }
+      break;
+    }
     case 'dodgeRoll': {
       if (ctx.foundation) { F.grantFoundationEvade(ctx, action.source); break; }
       // The dodge (framework contract: Weight Class and Dodge Roll). Player
@@ -755,7 +800,9 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'draw': {
-      drawCards(ctx, Math.max(0, evalNum(ctx, action, eff.amount, 1)));
+      const amount = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      if (ctx.drawCardsFor) ctx.drawCardsFor(action.owner || action.source, amount);
+      else drawCards(ctx, amount);
       break;
     }
     case 'discard': {
@@ -899,6 +946,12 @@ function runOpcode(ctx, action, eff) {
       // threshold is the only scale there is.
       const firedThreshold = action.meta && action.meta.event && action.meta.event.threshold;
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        if (usesSingleBreakMeter(ctx)) {
+          const threshold = Number.isFinite(firedThreshold) ? firedThreshold : t.poiseMeter?.max || 0;
+          const amount = eff.pct !== undefined ? Math.floor(threshold * evalNum(ctx, action, eff.pct, 0, t) / 100) : evalNum(ctx, action, eff.amount, 0, t);
+          applyRatingImpact(ctx, null, t, { damageSchool: school }, amount, { triggerHit: false });
+          continue;
+        }
         addArcaneExposure(ctx, action.source, t, {
           school,
           amountFor: (cfg) => (eff.pct !== undefined

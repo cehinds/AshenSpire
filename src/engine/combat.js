@@ -19,7 +19,7 @@ import * as A from './actions.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice, returnUnplayedCards } from './handRules.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
-import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './combatRatings.js';
+import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -114,7 +114,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null,
+  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null, breakMeterVersion = null,
   // Settings → Advanced → Recovery (model/recoveryRules.js recoveryRulesFor):
   // null — every recovery setting at its default — keeps the idle-Stamina rule
   // below and writes no recovery state into the fight or its save.
@@ -156,6 +156,7 @@ export function createCombat({
       : 0);
   const combat = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
+    ...(ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -288,7 +289,7 @@ export function createCombat({
     combat.enemies.push(
       createEnemyCombatEntity({
         instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
-        arcaneExposure: def.arcaneExposure,
+        arcaneExposure: combat.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
         damageResistanceBySchool: def.damageResistanceBySchool,
         damageMult: enemyDamageMult,
       })
@@ -301,16 +302,18 @@ export function createCombat({
     for (const enemy of combat.enemies) {
       const values = combat.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
       enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
-      for (const id of ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+      for (const id of combat.breakMeterVersion === 1 ? ['poise'] : ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
     }
   }
   // Deck → draw pile: shuffle (stream 'shuffle'), Innate cards to top (§4.1(1)).
   const deck = player.deck.map((c) => ({
+    ...(combat.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
     ...(Number.isInteger(c.rank) && c.rank > 1 ? { rank: c.rank } : {}),
     ...(Number.isInteger(c.skillBonus) && c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
+    ...(Number.isInteger(c.passiveBlock) && c.passiveBlock > 0 ? { passiveBlock: c.passiveBlock } : {}),
     ...(c.acquiredAt !== undefined ? { acquiredAt: structuredClone(c.acquiredAt) } : {}),
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
     // or every card would come back to its bare-handed self at combat start.
@@ -418,6 +421,9 @@ function startPlayerTurn(combat) {
     if (cap != null) p.block = Math.min(p.block, cap);
   }
   reconcileWardBlock(p);
+  // Poise and Ward guards (gainPoise / gainWard) expire with Block; no
+  // retainBlock-style modifier keeps them.
+  clearMeterGuards(p);
 
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
@@ -502,6 +508,7 @@ function enemyPhase(combat) {
     if (!e.alive) continue;
     if (!S.getFlag(combat, e, 'retainBlock')) e.block = 0;
     reconcileWardBlock(e);
+    clearMeterGuards(e);
   }
   drainQueue(combat);
   if (combat.result) return;
@@ -1036,7 +1043,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
   const idx = combat.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = combat.piles.hand[idx];
-  const def = resolveCard(combat.registries, inst);
+  const def = resolveCard(combat.registries, inst, combat.breakMeterVersion || 0);
   const kws = def.keywords || [];
   const chosen = assertCardChoice(cardChoice(combat.registries, def, p.classId), choice);
   F.assertFoundationPlayable(combat, def, chosen);
@@ -1075,7 +1082,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
     ratingValue: inst.ratingValue,
     ratingCap: inst.ratingCap,
     equipmentRole: inst.equipmentRole,
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
     // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
@@ -1222,7 +1229,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     combat.piles.discard.find((c) => c.instanceId === cardInstanceId) ||
     combat.piles.exhaust.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Unknown card instance '${cardInstanceId}'`);
-  const def = resolveCard(combat.registries, inst);
+  const def = resolveCard(combat.registries, inst, combat.breakMeterVersion || 0);
   const p = combat.player;
   const isX = def.cost === 'X';
   const shownCost = isX ? p.energy : effectiveCost(combat, def);
@@ -1240,7 +1247,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
       ratingValue: inst.ratingValue,
       ratingCap: inst.ratingCap,
       equipmentRole: inst.equipmentRole,
-      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
+      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
       // The kind tag and the grip's derived tags, as the live play reads them
       // (above) — a preview that disagreed with the play would lie.
       type: cardKind(def), tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
@@ -1301,6 +1308,11 @@ export function previewCard(combat, cardInstanceId, targetId) {
       }
       case 'block': {
         entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary), action.card);
+        break;
+      }
+      case 'gainPoise':
+      case 'gainWard': {
+        entry.value = A.computeMeterGuardGain(combat, p, evalPreview(combat, action, eff.amount, primary), action.card);
         break;
       }
       case 'applyStatus': {

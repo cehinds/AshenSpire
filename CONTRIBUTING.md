@@ -100,6 +100,23 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
    - A promotion does not advance the release candidate (the third
      component of `contentBundle.version`); only the owner names a new
      candidate ([docs/versioning.md](docs/versioning.md)).
+   - Every `dev` → `test` promotion also starts `sync-alternatives.yml`.
+     Existing `alternative/dev` → `alternative/test` pairs (including named
+     variants such as `alternative/art/dev` → `alternative/art/test`) receive
+     the promoted snapshot, then the alternative dev result is merged into its
+     test branch. No missing branch is created. Both updates are pushed
+     atomically, without force. Alternative-specific source paths, including
+     deletions, are protected: overlapping upstream edits stop the whole sync
+     for review, even if Git could merge them. Only the generated build ordinal
+     and architecture snapshot are regenerated. Reconcile a blocked sync while
+     preserving the variant, then rerun it from `dev` or `test`.
+   - Alternative dev/test use the same stage-specific checks and build tiers as
+     primary dev/test. The sync explicitly dispatches those workflows because
+     bot pushes do not trigger them. Check the sync and alternative runs as well
+     as primary test; a blocked sync or red alternative check is not a completed
+     promotion. Alternative previews have their own Pages section and README
+     build badges; successful preview runs refresh Pages through the default
+     branch, without changing the Pages environment's allowed branches.
    - Watch the `test` run. A red there is yours to fix with a new PR into
      `dev`, which you then promote again.
    - Never merge to `release` or `main` (see

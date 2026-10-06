@@ -3,6 +3,11 @@
 
 export const nodeVariables = [
   {
+    "nodeId": "staggerBreak",
+    "variable": "magicalImpactAdd",
+    "role": "magicalImpactAdd"
+  },
+  {
     "nodeId": "siphon",
     "variable": "restoreMana",
     "role": "amount"

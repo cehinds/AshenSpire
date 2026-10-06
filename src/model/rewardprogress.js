@@ -111,9 +111,9 @@ export function characterProgress(registries, run, gained = 0, discarded = 0) {
 
 /**
  * skillProgress(registries, run, trackGains, { maxSkills }) → { rows, hidden }
- * The tracks worth a line, best first: what this fight paid, then what the run
- * has climbed furthest. `hidden` is how many candidate tracks the ceiling left
- * out — his "+Y (other skills)".
+ * The tracks worth a line: the class track first, then best first — what this
+ * fight paid, then what the run has climbed furthest. `hidden` is how many
+ * candidate tracks the ceiling left out — his "+Y (other skills)".
  */
 export function skillProgress(registries, run, trackGains = {}, { maxSkills = MAX_SKILL_ROWS } = {}) {
   let tracks = [];
@@ -128,7 +128,7 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     const gained = Number.isFinite(trackGains[track.id]) && trackGains[track.id] > 0 ? Math.floor(trackGains[track.id]) : 0;
     const level = skillLevel(run, track.id);
     const xp = ledger && Number.isFinite(ledger.xp) ? Math.max(0, Math.floor(ledger.xp)) : 0;
-    if (!gained && !level && !xp) continue; // never touched, never paid — not a row
+    if (!gained && !level && !xp && !(track.kind === 'class' && run.classMasteryState)) continue; // never touched, never paid — not a row
     let next = null;
     try { next = skillXpToNext(registries, track.kind, level); } catch { next = null; }
     if (!(Number.isFinite(next) && next > 0)) continue; // no curve, no row
@@ -138,7 +138,7 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     rows.push(Object.freeze({
       kind: track.kind,
       id: track.id,
-      label: track.label || track.id,
+      label: track.kind === 'class' && run.classMasteryState ? `${track.label || track.id} mastery` : track.label || track.id,
       level,
       xp,
       xpToNext: capped ? null : next,
@@ -147,10 +147,12 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
       capped, // SPEC §13.4o: skills stop at 10, the class track at 20
     }));
   }
-  // Paid-this-fight first (the biggest gain leading), then the deepest track,
-  // then alphabetically — a stable order, so the panel does not shuffle
-  // between two renders of the same door.
-  rows.sort((a, b) => (b.gained - a.gained) || (b.level - a.level) || (b.xp - a.xp) || a.label.localeCompare(b.label));
+  // The class track leads, so the panel reads top to bottom in the order the
+  // bars fill and level up (character, class, then skills). Then paid-this-
+  // fight first (the biggest gain leading), then the deepest track, then
+  // alphabetically — a stable order, so the panel does not shuffle between
+  // two renders of the same door.
+  rows.sort((a, b) => ((a.kind === 'class' ? 0 : 1) - (b.kind === 'class' ? 0 : 1)) || (b.gained - a.gained) || (b.level - a.level) || (b.xp - a.xp) || a.label.localeCompare(b.label));
   const shown = Math.max(0, Math.floor(maxSkills));
   return { rows: rows.slice(0, shown), hidden: Math.max(0, rows.length - shown) };
 }
