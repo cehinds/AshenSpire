@@ -71,6 +71,15 @@ export const nodeEffects = {
     }
   },
   "staggerBreak": {
+    "singleBreak": {
+      "triggers": [],
+      "passives": {
+        "magicalImpactAdd": {
+          "variable": "magicalImpactAdd"
+        }
+      },
+      "textTemplate": "Spell hits gain {magicalImpactAdd} magical impact."
+    },
     "triggers": [
       {
         "on": "arcaneBreak",

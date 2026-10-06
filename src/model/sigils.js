@@ -15,6 +15,7 @@
 
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { resolveVariable } from './tree.js';
+import { breakPropertyText } from './breakMeter.js';
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -239,6 +240,7 @@ export function rollSigilDrop(registries, rng, run, pool) {
 export function sigilRuleText(registries, id) {
   const def = registries.sigils.has(id) ? registries.sigils.get(id) : null;
   const tag = def && Array.isArray(def.propertyTags) ? def.propertyTags[0] : null;
+  if (tag && registries.breakMeterVersion === 1) return breakPropertyText(registries, tag);
   const row = tag ? (registries.nodeTerms || []).find((term) => term.nodeId === tag) : null;
   if (!row || !row.template) return '';
   return row.template.replace(/\{(\w+)\}/g, (match, variable) => {

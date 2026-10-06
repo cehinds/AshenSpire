@@ -3,6 +3,34 @@
 
 export const uiStrings = [
   {
+    "id": "combat.rating.ward",
+    "extends": "",
+    "short": "Ward",
+    "full": "Ward rating reduces magical damage and weighs in status resistance.",
+    "tip": "Ward rating"
+  },
+  {
+    "id": "combat.poise.shared",
+    "extends": "",
+    "short": "Poise",
+    "full": "Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",
+    "tip": "Shared break meter"
+  },
+  {
+    "id": "combat.poise.actionLoss",
+    "extends": "",
+    "short": "Actions",
+    "full": "{amount} fewer Actions next turn",
+    "tip": "Actions lost after Stagger"
+  },
+  {
+    "id": "combat.poise.enemyLoss",
+    "extends": "",
+    "short": "Move",
+    "full": "lose the next move",
+    "tip": "Stagger cancels the next move"
+  },
+  {
     "id": "combat.protection.block",
     "extends": "",
     "short": "Block",

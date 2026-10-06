@@ -69,6 +69,7 @@ import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, ran
 import { pickClassNode } from '../../model/classTree.js';
 import { chooseFeat, featById } from '../../model/feats.js';
 import { nodeTokens } from '../../model/tree.js';
+import { breakPropertyRule } from '../../model/breakMeter.js';
 import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
@@ -1172,7 +1173,7 @@ export function mountRewards(app, {
       // An attribute pick's option (SPEC §13.4o): the attribute, now and after.
       const attribute = option.kind === 'attribute' ? { name: attributeLabel(option.id), now: run.attributes?.[option.id] ?? 0 } : null;
       const node = option.kind === 'classNode' ? (registries.nodes || []).find((entry) => entry.id === option.id) : null;
-      const rule = node && registries.propertyRules?.has(node.id) ? registries.propertyRules.get(node.id) : null;
+      const rule = node && registries.propertyRules?.has(node.id) ? breakPropertyRule({ registries, ratingsRules: registries.balance.combatRatings, breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion }, registries.propertyRules.get(node.id)) : null;
       const tokens = node ? nodeTokens(registries, node.id) : {};
       const sentence = String(rule?.textTemplate || '').replace(/\{(\w+)\}/g, (m, tok) => tokens[tok] !== undefined ? String(tokens[tok]) : m);
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
@@ -1190,7 +1191,7 @@ export function mountRewards(app, {
     }
     for (const nodeId of isNodeRow ? ids : []) {
       const node = (registries.nodes || []).find((n) => n && n.id === nodeId) || { id: nodeId, label: nodeId };
-      const rule = registries.propertyRules && registries.propertyRules.has(nodeId) ? registries.propertyRules.get(nodeId) : null;
+      const rule = registries.propertyRules && registries.propertyRules.has(nodeId) ? breakPropertyRule({ registries, ratingsRules: registries.balance.combatRatings, breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion }, registries.propertyRules.get(nodeId)) : null;
       const tokens = nodeTokens(registries, nodeId);
       const sentence = String((rule && rule.textTemplate) || '').replace(/\{(\w+)\}/g, (m, tok) => (tokens[tok] !== undefined ? String(tokens[tok]) : m));
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio', 'aria-checked': String(nodeId === selectedCardId), dataset: { pickId: nodeId, nodeId } }, [

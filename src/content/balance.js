@@ -212,6 +212,12 @@ export const balance = {
   // holds the property. content/source/nodeEffects.json reads these, through variableBindings.csv,
   // through `{ "balance": "exposure.…" }`; no number is typed in that file.
   exposure: {
+    foldScale: 0.5,
+    staggerBreakImpact: 2,
+    defaultPayoff: {
+      status: 'magicVulnerable', value: 25, duration: 2,
+      [NOTE]: { value: 'Magical damage vulnerability after an enemy suffers a magical Stagger, in percent.', duration: 'Turns the default magical Stagger payoff lasts.' },
+    },
     siphonRefund: 1, // PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
     siphonRefundMastered: 2, // PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
     siphonMasteryLevel: 7, // PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
@@ -224,6 +230,8 @@ export const balance = {
     // a break with action-only spells, a Mana spell works faster.
     buildupPerManaSpell: 5, // PROVISIONAL
     [NOTE]: {
+      foldScale: 'Multiplies a spell\'s old Arcane buildup before it joins the shared Poise impact.',
+      staggerBreakImpact: 'Extra magical impact on spell hits while a focus carries Stagger Break.',
       siphonRefund: 'Mana the Siphon focus property hands back when you break a foe\'s Arcane Exposure.',
       siphonRefundMastered: 'Mana Siphon hands back instead, once the focus skill reaches the mastery level below.',
       siphonMasteryLevel: 'The focus skill level at which Siphon starts paying its mastered refund.',
