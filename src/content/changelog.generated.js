@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1658"
   },
   {
+    "id": "pr-1659",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "The downloaded game opens again",
+    "detail": "The bundled game could stop before the title screen while checking class mastery and report that it could not create a loadout. The shared token helper now loads without that dependency loop. Card artwork, costs and gameplay rules are unchanged.",
+    "build": "0.7.1.1024",
+    "pullRequest": 1659,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1659"
+  },
+  {
     "id": "pr-1656",
     "date": "2026-10-06",
     "group": "2026-10-06",
