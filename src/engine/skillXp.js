@@ -30,6 +30,11 @@ import { awardSkillXp, bankSkillXp, armourSkillId, DUAL_WIELD_SKILL } from '../m
 
 const FOCUS_ITEM_TYPE = 'item:magic-focus';
 
+function progressionFor(combat, owner) {
+  const registries = combat.registriesForPlayer?.(owner) || combat.registries;
+  return registries?.progressionEnabled ? registries.balance.progression : null;
+}
+
 function xpRows(combat) {
   const skill = ((combat.registries || {}).balance || {}).skill;
   return skill && skill.xp ? skill.xp : null;
@@ -139,14 +144,15 @@ export function recordSkillXp(combat, event) {
   if (!rows || !combat.player) return;
   switch (event.type) {
     case 'cardResolved': {
-      if (!combat.registries.progressionEnabled) return;
       const owner = event.sourcePlayerId || event.playerId || combat.playerKey || 'player';
+      const progression = progressionFor(combat, owner);
+      if (!progression) return;
       const tags = event.cardTags || [];
       const spell = event.abilityKind === 'spell' || tags.includes('source:spell');
       const magical = spell || event.magicalResolved === true;
       const physical = !spell && (event.abilityKind === 'maneuver' || tags.includes('source:weapon') || tags.includes('source:unarmed'));
       const receipt = receiptFor(combat,owner);
-      const rates = combat.registries.balance.progression.ability.xp;
+      const rates = progression.ability.xp;
       const printedMana = Number.isFinite(event.printedManaCost) ? Math.max(0, event.printedManaCost) : 0;
       if (magical) pay(receipt,FOCUS_ITEM_TYPE,rates.magical + (spell ? rates.spell + printedMana * rates.manaSpell : 0));
       if (physical) pay(receipt,'combatManeuvers',event.printedManaCost > 0 ? rates.maneuver : rates.technique);
@@ -158,7 +164,7 @@ export function recordSkillXp(combat, event) {
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);
-      if (!(combat.registries.progressionEnabled && group === FOCUS_ITEM_TYPE)) pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
+      if (!(progressionFor(combat, owner) && group === FOCUS_ITEM_TYPE)) pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
       if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit, favoredMult(combat, owner, DUAL_WIELD_SKILL));
       // damageDealt fires after HP is taken and before afterHpChange marks
       // the death, so the kill is read from the HP, not the flag.
@@ -174,7 +180,7 @@ export function recordSkillXp(combat, event) {
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);
-      if (!(combat.registries.progressionEnabled && group === FOCUS_ITEM_TYPE)) pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
+      if (!(progressionFor(combat, owner) && group === FOCUS_ITEM_TYPE)) pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
       if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit, favoredMult(combat, owner, DUAL_WIELD_SKILL));
       return;
     }
@@ -198,7 +204,7 @@ export function recordSkillXp(combat, event) {
     case 'arcaneExposureChanged': {
       const owner = ownerKeyOf(combat, event.sourceId, event.sourcePlayerId);
       if (!owner || !(event.amount > 0)) return;
-      if (combat.registries.progressionEnabled) return;
+      if (progressionFor(combat, owner)) return;
       pay(receiptFor(combat, owner), FOCUS_ITEM_TYPE, event.amount / rows.buildupPerXp, favoredMult(combat, owner, FOCUS_ITEM_TYPE));
       return;
     }
@@ -209,7 +215,7 @@ export function recordSkillXp(combat, event) {
       for (const seat of seatsOf(combat)) {
         const receipt = receiptFor(combat, seat.ownerKey);
         for (const group of heldGroups(combat, seat.loadout, seat.classId)) {
-          if (combat.registries.progressionEnabled && group === FOCUS_ITEM_TYPE) continue;
+          if (progressionFor(combat, seat.ownerKey) && group === FOCUS_ITEM_TYPE) continue;
           pay(receipt, group, rows.perWinEquipped * (receipt.killGroup === group ? rows.killMult : 1), favoredMult(combat, seat.ownerKey, group));
         }
         if (isDual(combat, seat.loadout, seat.classId)) pay(receipt, DUAL_WIELD_SKILL, rows.perWinEquipped, favoredMult(combat, seat.ownerKey, DUAL_WIELD_SKILL));

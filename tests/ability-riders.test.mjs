@@ -12,10 +12,10 @@ import { grantAbilityCharge, beginAbilityTurn, matchingAbilityCharges } from '..
 import { computeTokenBindings, validateEffects } from '../src/model/validate.js';
 import { skillXpReceipt } from '../src/engine/skillXp.js';
 
-function fixture(effects, { manaCost = 0, cost = 1, coop = false } = {}) {
+function fixture(effects, { manaCost = 0, cost = 1, coop = false, expanded = false } = {}) {
   const base = createRegistries(contentBundle);
   const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Rider fixture', cost, manaCost, effects, upgrade: {}, abilityKind: 'spell', abilityFamily: 'fixture', cardTags: ['kind.skill', 'source:spell'] };
-  const registries = { ...base, cards: { ...base.cards, get: id => id === 'defend' ? card : base.cards.get(id) } };
+  const registries = { ...base, progressionEnabled: expanded, cards: { ...base.cards, get: id => id === 'defend' ? card : base.cards.get(id) } };
   const player = { id: 'p1', classId: 'herald', maxHp: 80, hp: 50, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, relicIds: [], deck: Array.from({ length: 20 }, (_, i) => ({ instanceId: `d${i}`, cardId: 'defend', upgraded: false })) };
   const combat = coop ? createCoopCombat({ registries, rng: createRng(9), players: [{ ...player, id: 'a' }, { ...player, id: 'b' }], enemyIds: ['wanderingSoldier'] }) : createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier'] });
   for (const enemy of combat.enemies) { enemy.hp = enemy.maxHp = 1000; enemy.block = 0; }
@@ -25,8 +25,7 @@ const play = combat => dispatch(combat, { type: 'playCard', cardInstanceId: comb
 
 test('transactional real plays bank skill XP once, scoped to the solo or co-op owner', () => {
   for (const coop of [false, true]) {
-    const combat = fixture([{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }, { op: 'block', target: 'self', amount: 2 }], { manaCost: 5, coop });
-    combat.registries = { ...combat.registries, progressionEnabled: true };
+    const combat = fixture([{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }, { op: 'block', target: 'self', amount: 2 }], { manaCost: 5, coop, expanded: true });
     const seat = coop ? combat.players.get('a') : { entity: combat.player, piles: combat.piles };
     const id = seat.piles.hand[0].instanceId;
     seat.piles.hand[0].grantedBy = 'armament/ashStaff';

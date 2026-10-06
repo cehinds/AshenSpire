@@ -1273,7 +1273,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
           for (const [key, cardId] of Object.entries(chosen)) {
             const draft = drafts.find((d) => d.key === key);
-            if (!draft || !draft.cardIds.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
+            if (!draft || !draft.ids.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
             if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${key} requires the draft's Taken state`);
           }
           for (const draft of drafts) {

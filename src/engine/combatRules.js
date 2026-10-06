@@ -212,6 +212,9 @@ export function candidateState(ctx) {
     if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
   }
   const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  // Catalogue accessors are immutable context, never serializable combat data.
+  if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
+  if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;
   if (candidate.player) bindTurnStamina(candidate.player);
   if (candidate.players) for (const seat of candidate.players.values()) bindTurnStamina(seat.entity);
   candidate.emit = (type, payload) => candidate._emitEvent(candidate, type, payload);

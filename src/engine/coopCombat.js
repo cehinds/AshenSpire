@@ -98,6 +98,11 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     extraHpMult,
     _enemyStatuses: enemyStatuses,
   };
+  // Immutable catalogue projections stay outside the cloned combat graph.
+  // Mixed legacy and expanded seats retain their own card and XP contracts.
+  const seatRegistries = new Map(players.map(player => [player.id, player.registries || registries]));
+  C.registriesForPlayer = id => seatRegistries.get(id) || registries;
+  C.registerPlayerRegistries = (id, scoped) => seatRegistries.set(id, scoped || registries);
   C.emit = (type, payload) => emitEvent(C, type, payload);
   C._emitEvent = emitEvent;
   attachSkillXp(C); // plan phase 4a: one receipt per seat, keyed by C.playerKey
@@ -182,6 +187,8 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
 
 // ---- player state -----------------------------------------------------------
 function addPlayerState(C, p, { initial = false } = {}) {
+  C.registerPlayerRegistries?.(p.id, p.registries);
+  const registries = C.registriesForPlayer?.(p.id) || C.registries;
   const entity = createPlayerCombatEntity({
     classId: p.classId, classUnequipped: p.classUnequipped === true, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
     maxMana: Number.isFinite(p.maxMana) ? p.maxMana : 0,
@@ -203,6 +210,10 @@ function addPlayerState(C, p, { initial = false } = {}) {
     cardId: c.cardId,
     ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
     upgraded: !!c.upgraded,
+    ...(Number.isInteger(c.abilityRank) ? { abilityRank: c.abilityRank } : {}),
+    ...(c.legacyAbility === true ? { legacyAbility: true } : {}),
+    ...(c.abilityOfferId ? { abilityOfferId: c.abilityOfferId } : {}),
+    ...(c.rewardReceiptId ? { rewardReceiptId: c.rewardReceiptId } : {}),
     ...(Number.isInteger(c.rank) && c.rank > 1 ? { rank: c.rank } : {}),
     ...(Number.isInteger(c.skillBonus) && c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
     ...(Number.isInteger(c.passiveBlock) && c.passiveBlock > 0 ? { passiveBlock: c.passiveBlock } : {}),
@@ -222,7 +233,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
   // seat draws its deck as arranged and rolls nothing for it.
   const orderedDraw = p.orderedDraw ? { order: deck.map((card) => card.instanceId) } : null;
   const drawPile = orderedDrawPile(orderedDraw ? deck : C.rng.shuffle('shuffle', deck),
-    (card) => C.registries.framework.isInnate(resolveCard(C.registries, card)));
+    (card) => registries.framework.isInnate(resolveCard(registries, card)));
   // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): the seat's hand rules are
   // the shipped behaviour options plus its own opening-hand, draw and
   // hand-size rows, and its ratings its own rating rows. A seat born before
@@ -289,6 +300,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
 }
 
 function setActive(C, P) {
+  if (C.registriesForPlayer) C.registries = C.registriesForPlayer(P?.id);
   C.player = P ? P.entity : null;
   C.piles = P ? P.piles : null;
   // The shared action context is combat-shaped: the dodge opcode and the
