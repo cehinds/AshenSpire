@@ -8708,6 +8708,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('85. the skill tracks are derived, climb one curve, are paid by the combat receipt, and gate the progression predicates (plan phase 4a)', () => {
+    // This receipt contract belongs to pre-expansion runs. New authored
+    // grades and Spellcraft receipts have their own expansion regression suite.
+    const REG = createRegistries({ ...contentBundle, ...contentBundle.legacyProgression, legacyProgression: undefined, balance: { ...contentBundle.balance, progression: undefined } });
     // The tracks come from the tree, the framework and the class registry —
     // no list of their own.
     const tracks = skillTracks(REG);
@@ -9255,6 +9258,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(pickClassNode(REG, run, 'ironFooting'), true);
     const deckBefore = run.deck.map((c) => c.instanceId).join(','); const relicsBefore = run.relics.join(',');
     run.loadout.sets.armor[0] = 'vigil'; // a set the Reaver earned; the Rogue has no row for it
+    const bladeBeforeSwap = structuredClone(run.skills['item:blade']);
     const receipt = swapRunClass(REG, run, 'rogue');
     eq(receipt.fromLevel, 1, 'the level the old class reached is on the receipt');
     eq(receipt.droppedArmour.join(','), 'armor/reaver/vigil', "the reaver's armour is set aside, by name");
@@ -9266,7 +9270,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(receipt.from, 'reaver'); eq(receipt.to, 'rogue'); eq(receipt.droppedTags.join(','), 'ironFooting', "the reaver's pick has no seat in the rogue tree"); eq(receipt.resetTracks.join(','), 'class:reaver');
     eq(run.class, 'rogue'); eq(run.zones.core, 'rogue', 'the core zone follows'); eq(JSON.stringify(run.coreTags), '[]'); eq(JSON.stringify(run.zones.coreTags), '[]');
     eq(skillLevel(run, 'class:reaver'), 0, 'the class track starts over'); assert(run.skills['class:reaver'] === undefined);
-    assert(run.skills['item:blade'].xp === 50 || run.skills['item:blade'].level >= 1, 'the weapon skill is kept');
+    eq(JSON.stringify(run.skills['item:blade']), JSON.stringify(bladeBeforeSwap), 'the weapon skill and any class bonus XP are kept');
     eq(run.deck.map((c) => c.instanceId).join(','), deckBefore, 'the deck is the run\'s'); eq(run.relics.join(','), relicsBefore, 'so are the relics');
     eq(run.history.filter((h) => h.kind === 'classSwapped').length, 1, 'the swap is a history row');
     eq(swapRunClass(REG, run, 'rogue').droppedTags.length, 0, 'a swap to the same class changes nothing');
