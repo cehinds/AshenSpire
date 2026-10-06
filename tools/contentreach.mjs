@@ -443,7 +443,8 @@ export function contentReach(bundle, opts = {}) {
     }
     const orphanCount = KINDS.reduce((n, k) => n + (kinds[k] ? kinds[k].orphans.length : 0), 0);
     const verdict = floors.length ? 'FLOOR' : (orphanCount || stale.length) ? 'FAIL' : 'PASS';
-    return { kinds, witness, floors, stale, allowlist, verdict, exitCode: floors.length ? 2 : verdict === 'FAIL' ? 1 : 0 };
+    const mastery = (bundle.classMastery || []).map(({classId,level,kind,ref})=>({classId,level,kind,ref}));
+    return { kinds, witness, floors, stale, allowlist, mastery, verdict, exitCode: floors.length ? 2 : verdict === 'FAIL' ? 1 : 0 };
   }
 }
 
@@ -477,7 +478,7 @@ NOT CHECKED — what a green from this tool does NOT mean (SPEC §8.5):
 
 function report(r, { json = false } = {}) {
   if (json) {
-    console.log(JSON.stringify({ verdict: r.verdict, kinds: r.kinds, floors: r.floors, stale: r.stale }, null, 2));
+    console.log(JSON.stringify({ verdict: r.verdict, kinds: r.kinds, floors: r.floors, stale: r.stale, mastery: r.mastery }, null, 2));
     return;
   }
   console.log('contentreach: every card, relic, event, encounter and enemy row, and the way a player meets it.\n');
@@ -486,6 +487,13 @@ function report(r, { json = false } = {}) {
     console.log(`  ${k.padEnd(11)} ${String(s.reached).padStart(4)} of ${String(s.total).padStart(4)} reached  ${s.orphans.length} orphan(s)`);
   }
   console.log();
+  for (const classId of [...new Set(r.mastery.map(row=>row.classId))]) {
+    console.log(`  MASTERY ${classId} — full pools are used for the reach census`);
+    for (const level of [...new Set(r.mastery.filter(row=>row.classId===classId).map(row=>row.level))]) {
+      const rows=r.mastery.filter(row=>row.classId===classId && row.level===level);
+      console.log(`    level ${level}: ${rows[0].kind} — ${rows.map(row=>row.ref).join(', ')}`);
+    }
+  }
   for (const k of KINDS) {
     for (const id of r.kinds[k].orphans) console.log(`  RED   ${k}:${id} — NO ROUTE IN: no reward, shop, grant, kit, event or injector reaches it`);
     for (const id of r.kinds[k].dangling) console.log(`  NOTE  ${k}:${id} is granted by ${(r.witness[k].get(id) || []).join(', ')} but there is NO SUCH ROW`);

@@ -61,6 +61,7 @@ import { attributeContentProblems, presetGearProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
+import { classMasteryProblems } from './classMastery.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { attackCardDamageConfigProblems } from './attackCardDamage.js';
@@ -127,6 +128,8 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
   'breakMeterVersion', // configured bundle's scoped card faces, never stamped onto old runs
+  'classMastery',
+  'classSkillFeats',
   'sfx',
   'music',
   'tagDomains', // what a tag can be about — the domain lookup
@@ -351,6 +354,7 @@ function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
   if (b.breakMeterVersion !== undefined && b.breakMeterVersion !== 1) err('breakMeterVersion', 'must be 1 when present');
+  for (const problem of classMasteryProblems(b)) err('classMastery', problem);
 
   // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a
   // bundle carrying no events section at all is a BUILD fault, not a content
