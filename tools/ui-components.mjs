@@ -918,7 +918,7 @@ export function findings(r) {
       || !/const smith = smithingPlan\(registries, run\)/.test(r.rest)
       // #522: the Shrine hands the model its multi-use mode, and the model —
       // never the modal — derives every stay/leave sentence from it.
-      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse \}\)/.test(r.rest)
+      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse, repeatUpgrades: true \}\)/.test(r.rest)
       || !/mountSmithUpgradeModal\(app, model\(\)/.test(r.rest)
       || !/commitSmithing\(registries, run, itemRef\)/.test(r.rest)
       || !smithIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
