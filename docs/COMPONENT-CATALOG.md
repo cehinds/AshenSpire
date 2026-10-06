@@ -346,9 +346,9 @@ custom art does not require a second card implementation.
 | Component ID | Model / input | Renderer | Reuse |
 |---|---|---|---|
 | `character-disclosure` | disclosure entries | `disclosure.mountDisclosure` | Character Creation + catalog |
-| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` | Class preview + catalog |
-| `class-resource-grid` | `statProjection.derived[]` | `creationCards.classResourceGrid` | Class preview + catalog |
-| `class-choice-card` | class row + selected/locked state | `creationCards.classChoiceCard` | Class selection + catalog |
+| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` + `classUnfold` | Class preview + catalog; compact contained sprite and icon beside class details. Native stat and relic buttons open shared modal details through `creationPreviewDetails`; stat definition and value precede the projected calculation at the bottom. |
+| `class-resource-grid` | `statProjection.derived[]` + hand resource rows | `creationCards.classResourceGrid` | Class preview + catalog; HP, SP, MP, opening Hand and Draw. Optional inspection callback renders native buttons with full accessible names. |
+| `class-choice-card` | class row + selected/locked/expanded state | `creationCards.classChoiceCard` | Class selection + catalog; folded choices are buttons, the expanded selected card is a labelled article so its detail buttons have no interactive ancestor. |
 | `view-mode-toggle` | view-mode state | `creationCards.viewModeToggle` | Class/Equipment + catalog |
 | `boolean-setting-toggle` | boolean setting state | `creationCards.booleanSettingToggle` | Auto-advance + future settings |
 | `selection-section-face` | label/value/visual receipt | `creationCards.selectionSectionFace` | Equipment disclosures + catalog |
@@ -409,14 +409,17 @@ Smith is a modal composition rather than an inline card dump:
 smith-upgrade-modal
 ├─ smith-candidate-card × distinct eligible owned armaments
 ├─ smith-upgrade-preview × selected armament's grouped card deltas
-├─ Back to Shrine (also Escape)
-└─ Confirm selected armament (disabled until selected and affordable)
+├─ Header: available Smithing Stones, then the close button
+├─ Upgrade selected armament in the preview pane (requires affordability)
+└─ Full-width Back to Shrine footer (also Escape)
 ```
 
-Selection is reversible presentation state. Back and Escape restore the Shrine
-without mutation. Confirm spends the displayed Smithing Stone cost, promotes exactly one
-armament for the run, refreshes every sourced basic card from that armament, and leaves the
-Shrine. Ordinary non-equipment cards retain their independent per-copy upgrade behavior.
+Selection takes one tap and opens every affected card preview expanded. The compact
+item list starts open. Back, the centered close glyph, and Escape return without
+spending another stone; completed upgrades remain saved. Confirm spends the displayed
+cost, promotes one item, and refreshes the picker while stones remain. The last stone
+uses the site's existing stay/leave rule. Ordinary non-equipment cards retain their
+independent per-copy upgrade behavior.
 
 ## Folding Tray session geometry
 

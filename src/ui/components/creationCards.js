@@ -48,12 +48,11 @@ function segmentButton({ label, ariaLabel, selected, className, dataset, onChoos
 }
 
 /**
- * The attribute face: a compact Row (short label + summary + current value)
+ * The attribute face: a compact Row (label + summary + current value)
  * inside a semantic details/summary fold, so the reveal (long name, sense,
- * derived lines) remains structurally attached to its own face. The short
- * label is deliberate: it keeps Character Creation and allocation rows the
- * same shape as the Armoury's Attributes card instead of growing a second,
- * wider primary-stat treatment.
+ * derived lines) remains structurally attached to its own face. The
+ * label includes the attribute name and abbreviation so players can read
+ * the bonus without having to decode the stat acronym.
  * `.disc-summary` rides on the hint for the instruments that read the folded
  * summary.
  */
@@ -62,7 +61,8 @@ function renderPrimaryStatCard(input, peers = null) {
   host.dataset.stat = input.id;
   const face = row({
     tag: 'span', className: 'face-lite',
-    labelNode: labelStack({ label: input.face.label, hint: input.face.summary || '' }),
+    labelNode: labelStack({ label: input.reveal?.title ? `${input.reveal.title} (${input.face.label})` : input.face.label,
+      hint: input.face.mainSummary || input.face.summary || '' }),
     status: input.face.value === '' || input.face.value == null ? '' : String(input.face.value),
   });
   face.querySelector('.ls-hint')?.classList.add('disc-summary');
@@ -111,15 +111,36 @@ export function primaryStatCard(input) {
  * doing, and three callers filtering by hand is three chances to forget
  * (review, #1217).
  */
-export function resourceStrip(rows, poise) {
-  const chips = rows.filter((entry) => entry.id !== 'poise').map((entry) => {
-    const item = chip({ key: entry.faceLabel, value: entry.value, attrs: { dataset: { stat: entry.id, formula: entry.formula } } });
-    attachTooltip(item, () => esc(entry.formula));
-    return item;
-  });
-  chips.push(chip({ key: 'Poise', value: poise.value, attrs: { dataset: { stat: 'poise' } } }));
-  if (poise.ratings) for (const id of ['ward', 'ar', 'dr', 'pr']) chips.push(chip({ key: id === 'ward' ? 'Ward' : id.toUpperCase(), value: poise.ratings[id], attrs: { dataset: { stat: id } } }));
-  const strip = statStrip(chips, { class: 'cc-derived', 'aria-label': 'Derived resources' });
+export function resourceStrip(rows, poise, { compact = false } = {}) {
+  const entries = new Map(rows.map((entry) => [entry.id, entry]));
+  entries.set('poise', { id: 'poise', value: poise.value, formula: poise.note || '' });
+  if (poise.ratings) for (const id of ['ward', 'ar', 'dr', 'pr']) {
+    entries.set(id, { ...entries.get(id), id, value: poise.ratings[id],
+      formula: `${id.toUpperCase()} ${poise.ratings[id]} · Includes attributes and equipment.` });
+  }
+  const labels = { hp: 'HP', stamina: 'SP', mana: 'MP', ar: 'AR', pr: 'PR', dr: 'DR', poise: 'Poise', ward: 'Ward', handSize: 'Hand Size', draw: 'Draw', openingHand: 'Opening Hand' };
+  const groups = [['hp', 'stamina', 'mana'], ['ar', 'pr'], ['dr', 'poise', 'ward'], ['handSize', 'draw'], ['openingHand']];
+  const known = new Set(groups.flat());
+  if (compact) {
+    groups.pop();
+    labels.handSize = t('statsPreview.hand.title');
+    const capacity = entries.get('handSize');
+    if (capacity) entries.set('handSize', { ...capacity,
+      formula: [capacity.formula, entries.get('openingHand')?.formula].filter(Boolean).join(' · ') });
+  }
+  const extra = [...entries.keys()].filter((id) => !known.has(id) && !['energy', 'attackRating', 'guardRating'].includes(id));
+  if (extra.length) groups.push(extra);
+  const lines = groups.map((ids) => {
+    const chips = ids.filter((id) => entries.has(id)).map((id) => {
+      const entry = entries.get(id);
+      const item = chip({ key: labels[id] || entry.faceLabel, value: entry.value,
+        attrs: { dataset: { stat: id, formula: entry.formula || '' } } });
+      if (entry.formula) attachTooltip(item, () => esc(entry.formula));
+      return item;
+    });
+    return chips.length ? el('span', { class: 'cc-resource-row' }, chips) : null;
+  }).filter(Boolean);
+  const strip = statStrip(lines, { class: 'cc-derived', 'aria-label': 'Derived resources' });
   return markUiComponent(strip, UI.resourceStrip);
 }
 
@@ -165,7 +186,8 @@ export function booleanSettingToggle(label, value, onChoose) {
 }
 
 /** A class: an OptionCard — Glyph, Title·S, prose, and a StatePill when it is still locked. */
-export function classChoiceCard(cls, { selected = false, locked = false, visual = null, onChoose = null, hint = null, mastery = null } = {}) {
+export function classChoiceCard(cls, { selected = false, locked = false, expanded = false, visual = null, onChoose = null, hint = null, mastery = null } = {}) {
+  const preview = selected && expanded && !locked;
   const card = optionCard({
     name: cls.name,
     description: cls.description,
@@ -173,20 +195,29 @@ export function classChoiceCard(cls, { selected = false, locked = false, visual 
     // A locked card wears the unlock's own hint (plan phase 5c) or, for a
     // class not yet shipped, the milestone it arrives in.
     badge: locked && hint ? pill({ label: hint }) : locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
-    selected, disabled: locked, tag: locked ? 'div' : 'button',
+    selected, disabled: locked, tag: locked ? 'div' : preview ? 'article' : 'button',
     className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`,
-    attrs: { dataset: { class: cls.id } },
+    attrs: { dataset: { class: cls.id }, ...(preview ? { 'aria-label': t('creation.preview.selectedClass', { name: cls.name }), tabindex: '-1' } : {}) },
   });
   card.prepend(el('span', { class: 'og', 'aria-hidden': 'true' }, visualNode(visual)));
-  if (!locked && onChoose) card.addEventListener('click', onChoose);
+  if (!locked && !preview && onChoose) card.addEventListener('click', onChoose);
   return markUiComponent(card, UI.classChoiceCard, locked ? 'locked' : 'available');
 }
 
 /** The class preview: a Pane — Eyebrow, Title·M, the figure in an ArtWell, the resources, the relic. */
-export function classPreviewPane({ cls, sprite = null, resources = null, relic = null, relicDescription = '' }) {
+export function classPreviewPane({ cls, sprite = null, resources = null, relic = null, relicDescription = '', onRelicInspect = null }) {
   const art = artWell({ glyph: '', attrs: { class: 'figure cc-class-art' } });
   art.removeAttribute('aria-hidden');
   if (sprite) art.appendChild(sprite);
+  const relicCard = relic ? optionCard({
+    glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
+    arrow: false, tag: onRelicInspect ? 'button' : 'div', className: 'cc-class-relic',
+    attrs: onRelicInspect ? { 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {},
+  }) : null;
+  if (relicCard && onRelicInspect) {
+    relicCard.removeAttribute('aria-pressed');
+    relicCard.addEventListener('click', () => onRelicInspect(relic, relicCard));
+  }
   const pane = el('article', { class: 'as-pane cc-class-preview', 'aria-label': `${cls.name} class preview` }, [
     titleM(cls.name, { tag: 'h3' }),
     el('div', { class: 'as-stack' }, [
@@ -195,12 +226,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
         eyebrow('Starting resources'),
         resources,
       ]),
-      el('div', { class: 'as-stack tight' }, [
-        relic ? optionCard({
-          glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
-          arrow: false, tag: 'div', className: 'cc-class-relic',
-        }) : null,
-      ]),
+      el('div', { class: 'as-stack tight' }, relicCard),
     ]),
   ]);
   return markUiComponent(pane, UI.classPreviewPane);
@@ -209,33 +235,48 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
 /**
  * classUnfold({ cls, sprite, resources, relic }) → what the chosen
  * class card opens to hold (owner, 2026-09-19): the portrait on the left,
- * the summary stats on the right, never past the card's box. Appended
- * inside the card, so it is the card that unfolds; the shares and the
- * height are the screen's --creation-unfold-* (creation.json).
+ * the summary stats on the right. Appended inside the selected article;
+ * its resources and relic may open detail modals without nested buttons.
  */
-export function classUnfold({ cls, sprite = null, resources = null, relic = null }) {
-  // Spans only: this lives inside the card's <button>, which admits no div
-  // and discards a group role. The card names the class; the portrait is
-  // decoration here, and the resources and relic reach a reader through the
-  // card's aria-describedby (customize.js).
+export function classUnfold({ cls, sprite = null, resources = null, relic = null, visual = null, mastery = '', onRelicInspect = null }) {
+  // The selected card is an article so these native detail buttons have no
+  // interactive ancestor. Folded class choices remain ordinary buttons.
   if (sprite && sprite.tagName === 'IMG') sprite.alt = '';
   const art = el('span', { class: 'as-artwell figure cc-unfold-art' }, sprite);
+  const relicFace = relic ? el(onRelicInspect ? 'button' : 'span', {
+    class: `cc-unfold-relic${onRelicInspect ? ' cc-preview-detail-trigger' : ''}`,
+    ...(onRelicInspect ? { type: 'button', 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {}),
+  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
+  if (relicFace && onRelicInspect) relicFace.addEventListener('click', () => onRelicInspect(relic, relicFace));
   const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
-    el('span', { class: 'cc-unfold-portrait' }, art),
+    el('span', { class: 'cc-unfold-portrait' }, [
+      el('span', { class: 'cc-unfold-class-icon', 'aria-hidden': 'true' }, visualNode(visual)),
+      art,
+    ]),
     el('span', { class: 'cc-unfold-summary' }, [
+      el('span', { class: 'cc-unfold-heading', text: cls.name }),
+      el('span', { class: 'cc-unfold-description', text: cls.description }),
+      mastery ? el('span', { class: 'cc-unfold-mastery', text: mastery }) : null,
       resources,
-      relic ? el('span', { class: 'cc-unfold-relic' }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null,
+      relicFace,
     ]),
   ]);
   return markUiComponent(node, UI.classPreviewPane);
 }
 
 /** The five starting resources: a StatStrip of Chips. */
-export function classResourceGrid(rows) {
-  const strip = statStrip(rows.map((entry) => chip({
-    key: entry.faceLabel || entry.label, value: entry.value,
-    attrs: { class: 'cc-class-resource', dataset: { stat: entry.id } },
-  })), { class: 'cc-class-resource-grid', 'aria-label': 'Starting resources' });
+export function classResourceGrid(rows, { onInspect = null } = {}) {
+  const strip = statStrip(rows.map((entry) => {
+    const face = chip({ key: entry.faceLabel || entry.label, value: entry.value });
+    const item = onInspect ? el('button', {
+      type: 'button', class: 'cc-preview-detail-trigger', 'aria-haspopup': 'dialog',
+      'aria-label': t('creation.preview.inspectStat', { name: entry.inspectionLabel || entry.label || entry.faceLabel, value: entry.value }),
+    }, face) : face;
+    item.classList.add('cc-class-resource');
+    item.dataset.stat = entry.id;
+    if (onInspect) item.addEventListener('click', () => onInspect(entry, item));
+    return item;
+  }), { class: 'cc-class-resource-grid', 'aria-label': 'Starting resources' });
   return markUiComponent(strip, UI.classResourceGrid);
 }
 

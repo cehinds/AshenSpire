@@ -51,8 +51,11 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
   if (id) button.id = id;
   button.className = `subtle modal-close${className ? ` ${className}` : ''}`;
   button.dataset.controlRole = 'exit';
+  // An automatic focus hint would consume Escape before the modal can close.
+  button.dataset.tip = 'off';
   button.title = `${label} (Esc)`;
   button.setAttribute('aria-label', label);
+  button.setAttribute('aria-keyshortcuts', 'Escape');
   const face = document.createElement('span');
   face.className = 'modal-close-face';
   face.setAttribute('aria-hidden', 'true');
@@ -70,7 +73,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
  */
 export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
   return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}" data-control-role="exit"`
-    + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}"><span class="modal-close-face" aria-hidden="true">${MODAL_CLOSE_GLYPH}</span></button>`;
+    + ` data-tip="off" title="${esc(label)} (Esc)" aria-label="${esc(label)}" aria-keyshortcuts="Escape"><span class="modal-close-face" aria-hidden="true">${MODAL_CLOSE_GLYPH}</span></button>`;
 }
 
 /**
