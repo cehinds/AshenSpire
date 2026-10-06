@@ -53,6 +53,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1670"
   },
   {
+    "id": "pr-1673",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative artwork loads from the web packs",
+    "detail": "The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.",
+    "build": "0.7.1.1036",
+    "pullRequest": 1673,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1673"
+  },
+  {
     "id": "pr-1662",
     "date": "2026-10-06",
     "group": "2026-10-06",
