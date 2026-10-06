@@ -2449,5 +2449,455 @@ export const tags = [
     "glyph": "",
     "visibility": "INTERNAL",
     "blurb": "What a sigil is. Every object in the sigil collection carries this, and nothing outside it may."
+  },
+  {
+    "id": "ability:searing-edge",
+    "domain": "technique",
+    "label": "Searing Edge",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "A direct hit carries an authored Bleed buildup rider; the tag supplies no extra damage by itself."
+  },
+  {
+    "id": "ability:guarded-strike",
+    "domain": "technique",
+    "label": "Guarded Strike",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player currently has positive Block before an attack resolves."
+  },
+  {
+    "id": "ability:bloodstep",
+    "domain": "technique",
+    "label": "Bloodstep",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy has positive Bleed buildup before the card resolves."
+  },
+  {
+    "id": "ability:hammerfall",
+    "domain": "technique",
+    "label": "Hammerfall",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks an attack with an explicit Break-damage rider; HP damage and Break damage remain separate values."
+  },
+  {
+    "id": "ability:forgewake",
+    "domain": "technique",
+    "label": "Forgewake",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has already played a Guard card during this turn."
+  },
+  {
+    "id": "ability:crimson-reprisal",
+    "domain": "technique",
+    "label": "Crimson Reprisal",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player lost HP since their previous turn began; paying HP counts, losing Block does not."
+  },
+  {
+    "id": "ability:last-stand",
+    "domain": "technique",
+    "label": "Last Stand",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether current HP is at or below 50% of current maximum HP before resolution."
+  },
+  {
+    "id": "ability:war-tempo",
+    "domain": "technique",
+    "label": "War Tempo",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether at least two Heavy cards have already been played by the acting player during this turn."
+  },
+  {
+    "id": "ability:wide-cleave",
+    "domain": "technique",
+    "label": "Wide Cleave",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag."
+  },
+  {
+    "id": "ability:ember-crown",
+    "domain": "technique",
+    "label": "Ember Crown",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself."
+  },
+  {
+    "id": "ability:dreadweight",
+    "domain": "technique",
+    "label": "Dreadweight",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy is currently Staggered before a direct hit."
+  },
+  {
+    "id": "ability:oathscar",
+    "domain": "technique",
+    "label": "Oathscar",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn."
+  },
+  {
+    "id": "ability:wound-harvest",
+    "domain": "technique",
+    "label": "Wound Harvest",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit."
+  },
+  {
+    "id": "ability:cinder-orbit",
+    "domain": "technique",
+    "label": "Cinder Orbit",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the immediately preceding card played this turn by the same player was a spell."
+  },
+  {
+    "id": "ability:lunar-guard",
+    "domain": "technique",
+    "label": "Lunar Guard",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has already spent at least 2 Mana this turn; refunded Mana does not erase spending."
+  },
+  {
+    "id": "ability:comet-mark",
+    "domain": "technique",
+    "label": "Comet Mark",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks an attack that applies an authored Vulnerable rider after its direct damage."
+  },
+  {
+    "id": "ability:rime-mirror",
+    "domain": "technique",
+    "label": "Rime Mirror",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a defensive spell with an authored Frost buildup rider against one selected enemy."
+  },
+  {
+    "id": "ability:constellation",
+    "domain": "technique",
+    "label": "Constellation",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests how many distinct Starstone card IDs the acting player has played this turn; two copies of one ID count once."
+  },
+  {
+    "id": "ability:mana-weave",
+    "domain": "technique",
+    "label": "Mana Weave",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks an authored Mana restoration rider, capped at one activation per owning player per turn."
+  },
+  {
+    "id": "ability:gravity-snare",
+    "domain": "technique",
+    "label": "Gravity Snare",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a spell with an authored Weak rider after its direct damage."
+  },
+  {
+    "id": "ability:nightglass",
+    "domain": "technique",
+    "label": "Nightglass",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a one-charge direct-spell-damage bonus to the next spell this turn; no stacking and no carry into the next turn."
+  },
+  {
+    "id": "ability:eclipse-window",
+    "domain": "technique",
+    "label": "Eclipse Window",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy has positive Frost buildup or is Frost-exposed before resolution."
+  },
+  {
+    "id": "ability:warded-casting",
+    "domain": "technique",
+    "label": "Warded Casting",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a one-charge Mana discount for the next spell this turn; cost cannot fall below zero and the charge expires at turn end."
+  },
+  {
+    "id": "ability:celestial-echo",
+    "domain": "technique",
+    "label": "Celestial Echo",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Identifies the second play of the same Starstone card ID in a turn; the condition can activate once per turn."
+  },
+  {
+    "id": "ability:cold-memory",
+    "domain": "technique",
+    "label": "Cold Memory",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks an authored amount of Block retained into the next turn; retention sources use the largest allowance, not their sum."
+  },
+  {
+    "id": "ability:astral-convergence",
+    "domain": "technique",
+    "label": "Astral Convergence",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Identifies the third distinct Starstone card ID played by the same player in a turn; once per turn."
+  },
+  {
+    "id": "ability:ash-opener",
+    "domain": "technique",
+    "label": "Ash Opener",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether this is the acting player's first card played this turn."
+  },
+  {
+    "id": "ability:discard-weave",
+    "domain": "technique",
+    "label": "Discard Weave",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has discarded a card this turn; Exhaust and a spent card entering discard do not count."
+  },
+  {
+    "id": "ability:crooked-guard",
+    "domain": "technique",
+    "label": "Crooked Guard",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a direct attack with an authored Weak rider; the rider resolves after damage."
+  },
+  {
+    "id": "ability:exposed-flank",
+    "domain": "technique",
+    "label": "Exposed Flank",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy has exactly zero Block immediately before the hit."
+  },
+  {
+    "id": "ability:sleight-hand",
+    "domain": "technique",
+    "label": "Sleight of Hand",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks an authored draw-then-discard sequence; the player chooses the discarded card and ordinary hand limits apply."
+  },
+  {
+    "id": "ability:tether-cut",
+    "domain": "technique",
+    "label": "Tether Cut",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy currently has Weak or Vulnerable before damage resolves."
+  },
+  {
+    "id": "ability:smoke-edge",
+    "domain": "technique",
+    "label": "Smoke Edge",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a one-charge bonus to the next Blade attack this turn; the charge expires at turn end and cannot stack with itself."
+  },
+  {
+    "id": "ability:carrion-finish",
+    "domain": "technique",
+    "label": "Carrion Finish",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy is at or below 50% maximum HP before the attack."
+  },
+  {
+    "id": "ability:paired-strikes",
+    "domain": "technique",
+    "label": "Paired Strikes",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks an attack with exactly two authored direct hits; rank bonuses are divided across the hits."
+  },
+  {
+    "id": "ability:trapdoor",
+    "domain": "technique",
+    "label": "Trapdoor",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has already played at least one Guile card and one Guard card this turn."
+  },
+  {
+    "id": "ability:clean-escape",
+    "domain": "technique",
+    "label": "Clean Escape",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Identifies the first Guard card played before any attack this turn; once per turn."
+  },
+  {
+    "id": "ability:razor-debt",
+    "domain": "technique",
+    "label": "Razor Debt",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Identifies the first Blade attack after an explicit discard this turn; once per turn."
+  },
+  {
+    "id": "ability:mercy-ash",
+    "domain": "technique",
+    "label": "Mercy in Ash",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a defensive card with an authored healing rider; healing cannot exceed maximum HP."
+  },
+  {
+    "id": "ability:blood-censer",
+    "domain": "technique",
+    "label": "Blood Censer",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a card with an explicit HP offering paid before its benefits; the offering cannot reduce HP below 1."
+  },
+  {
+    "id": "ability:blight-seed",
+    "domain": "technique",
+    "label": "Blight Seed",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks a direct hit with an authored Crimson Blight buildup rider; this is not Poison."
+  },
+  {
+    "id": "ability:funeral-guard",
+    "domain": "technique",
+    "label": "Funeral Guard",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has HP at or below 50% maximum HP before a Guard card resolves."
+  },
+  {
+    "id": "ability:ember-tithe",
+    "domain": "technique",
+    "label": "Ember Tithe",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks an explicit, nonlethal HP offering that buys an authored regenerative benefit."
+  },
+  {
+    "id": "ability:bone-chorus",
+    "domain": "technique",
+    "label": "Bone Chorus",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether at least one living enemy has positive Crimson Blight buildup before resolution."
+  },
+  {
+    "id": "ability:requiem-brand",
+    "domain": "technique",
+    "label": "Requiem Brand",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy has positive Crimson Blight buildup before the hit."
+  },
+  {
+    "id": "ability:pilgrim-shelter",
+    "domain": "technique",
+    "label": "Pilgrim Shelter",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player began this turn at or below 50% maximum HP; later healing does not change that turn's result."
+  },
+  {
+    "id": "ability:scarred-rite",
+    "domain": "technique",
+    "label": "Scarred Rite",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Tests whether the acting player paid an HP offering earlier this turn, before this card's own payment; ordinary enemy damage does not count."
+  },
+  {
+    "id": "ability:dawn-rite",
+    "domain": "technique",
+    "label": "Dawn Rite",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Marks an authored removal of a specific negative status; it never removes every status implicitly."
+  },
+  {
+    "id": "ability:burden-bearer",
+    "domain": "technique",
+    "label": "Burden Bearer",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count."
+  },
+  {
+    "id": "ability:sepulchral-pact",
+    "domain": "technique",
+    "label": "Sepulchral Pact",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "blurb": "Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit."
   }
 ];

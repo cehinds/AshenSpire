@@ -323,3 +323,55 @@ classification.startingKit,classification,startingKit,,,INTERNAL,30,,,"What a st
 classification.unlock,classification,unlock,,,INTERNAL,30,,,"What a unlock is. Every object in the unlock collection carries this, and nothing outside it may."
 classification.companion,classification,companion,,,INTERNAL,30,,,"What a companion is. Every object in the companion collection carries this, and nothing outside it may."
 classification.sigil,classification,sigil,,,INTERNAL,30,,,"What a sigil is. Every object in the sigil collection carries this, and nothing outside it may."
+
+# Progression ability vocabulary (effects are authored on their carriers).
+ability:searing-edge,technique,Searing Edge,,,,,,,A direct hit carries an authored Bleed buildup rider; the tag supplies no extra damage by itself.
+ability:guarded-strike,technique,Guarded Strike,,,,,,,Tests whether the acting player currently has positive Block before an attack resolves.
+ability:bloodstep,technique,Bloodstep,,,,,,,Tests whether the selected enemy has positive Bleed buildup before the card resolves.
+ability:hammerfall,technique,Hammerfall,,,,,,,Marks an attack with an explicit Break-damage rider; HP damage and Break damage remain separate values.
+ability:forgewake,technique,Forgewake,,,,,,,Tests whether the acting player has already played a Guard card during this turn.
+ability:crimson-reprisal,technique,Crimson Reprisal,,,,,,,"Tests whether the acting player lost HP since their previous turn began; paying HP counts, losing Block does not."
+ability:last-stand,technique,Last Stand,,,,,,,Tests whether current HP is at or below 50% of current maximum HP before resolution.
+ability:war-tempo,technique,War Tempo,,,,,,,Tests whether at least two Heavy cards have already been played by the acting player during this turn.
+ability:wide-cleave,technique,Wide Cleave,,,,,,,Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.
+ability:ember-crown,technique,Ember Crown,,,,,,,Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself.
+ability:dreadweight,technique,Dreadweight,,,,,,,Tests whether the selected enemy is currently Staggered before a direct hit.
+ability:oathscar,technique,Oathscar,,,,,,,Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn.
+ability:wound-harvest,technique,Wound Harvest,,,,,,,Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit.
+ability:cinder-orbit,technique,Cinder Orbit,,,,,,,Tests whether the immediately preceding card played this turn by the same player was a spell.
+ability:lunar-guard,technique,Lunar Guard,,,,,,,Tests whether the acting player has already spent at least 2 Mana this turn; refunded Mana does not erase spending.
+ability:comet-mark,technique,Comet Mark,,,,,,,Marks an attack that applies an authored Vulnerable rider after its direct damage.
+ability:rime-mirror,technique,Rime Mirror,,,,,,,Marks a defensive spell with an authored Frost buildup rider against one selected enemy.
+ability:constellation,technique,Constellation,,,,,,,Tests how many distinct Starstone card IDs the acting player has played this turn; two copies of one ID count once.
+ability:mana-weave,technique,Mana Weave,,,,,,,"Marks an authored Mana restoration rider, capped at one activation per owning player per turn."
+ability:gravity-snare,technique,Gravity Snare,,,,,,,Marks a spell with an authored Weak rider after its direct damage.
+ability:nightglass,technique,Nightglass,,,,,,,Marks a one-charge direct-spell-damage bonus to the next spell this turn; no stacking and no carry into the next turn.
+ability:eclipse-window,technique,Eclipse Window,,,,,,,Tests whether the selected enemy has positive Frost buildup or is Frost-exposed before resolution.
+ability:warded-casting,technique,Warded Casting,,,,,,,Marks a one-charge Mana discount for the next spell this turn; cost cannot fall below zero and the charge expires at turn end.
+ability:celestial-echo,technique,Celestial Echo,,,,,,,Identifies the second play of the same Starstone card ID in a turn; the condition can activate once per turn.
+ability:cold-memory,technique,Cold Memory,,,,,,,"Marks an authored amount of Block retained into the next turn; retention sources use the largest allowance, not their sum."
+ability:astral-convergence,technique,Astral Convergence,,,,,,,Identifies the third distinct Starstone card ID played by the same player in a turn; once per turn.
+ability:ash-opener,technique,Ash Opener,,,,,,,Tests whether this is the acting player's first card played this turn.
+ability:discard-weave,technique,Discard Weave,,,,,,,Tests whether the acting player has discarded a card this turn; Exhaust and a spent card entering discard do not count.
+ability:crooked-guard,technique,Crooked Guard,,,,,,,Marks a direct attack with an authored Weak rider; the rider resolves after damage.
+ability:exposed-flank,technique,Exposed Flank,,,,,,,Tests whether the selected enemy has exactly zero Block immediately before the hit.
+ability:sleight-hand,technique,Sleight of Hand,,,,,,,Marks an authored draw-then-discard sequence; the player chooses the discarded card and ordinary hand limits apply.
+ability:tether-cut,technique,Tether Cut,,,,,,,Tests whether the selected enemy currently has Weak or Vulnerable before damage resolves.
+ability:smoke-edge,technique,Smoke Edge,,,,,,,Marks a one-charge bonus to the next Blade attack this turn; the charge expires at turn end and cannot stack with itself.
+ability:carrion-finish,technique,Carrion Finish,,,,,,,Tests whether the selected enemy is at or below 50% maximum HP before the attack.
+ability:paired-strikes,technique,Paired Strikes,,,,,,,Marks an attack with exactly two authored direct hits; rank bonuses are divided across the hits.
+ability:trapdoor,technique,Trapdoor,,,,,,,Tests whether the acting player has already played at least one Guile card and one Guard card this turn.
+ability:clean-escape,technique,Clean Escape,,,,,,,Identifies the first Guard card played before any attack this turn; once per turn.
+ability:razor-debt,technique,Razor Debt,,,,,,,Identifies the first Blade attack after an explicit discard this turn; once per turn.
+ability:mercy-ash,technique,Mercy in Ash,,,,,,,Marks a defensive card with an authored healing rider; healing cannot exceed maximum HP.
+ability:blood-censer,technique,Blood Censer,,,,,,,Marks a card with an explicit HP offering paid before its benefits; the offering cannot reduce HP below 1.
+ability:blight-seed,technique,Blight Seed,,,,,,,Marks a direct hit with an authored Crimson Blight buildup rider; this is not Poison.
+ability:funeral-guard,technique,Funeral Guard,,,,,,,Tests whether the acting player has HP at or below 50% maximum HP before a Guard card resolves.
+ability:ember-tithe,technique,Ember Tithe,,,,,,,"Marks an explicit, nonlethal HP offering that buys an authored regenerative benefit."
+ability:bone-chorus,technique,Bone Chorus,,,,,,,Tests whether at least one living enemy has positive Crimson Blight buildup before resolution.
+ability:requiem-brand,technique,Requiem Brand,,,,,,,Tests whether the selected enemy has positive Crimson Blight buildup before the hit.
+ability:pilgrim-shelter,technique,Pilgrim Shelter,,,,,,,Tests whether the acting player began this turn at or below 50% maximum HP; later healing does not change that turn's result.
+ability:scarred-rite,technique,Scarred Rite,,,,,,,"Tests whether the acting player paid an HP offering earlier this turn, before this card's own payment; ordinary enemy damage does not count."
+ability:dawn-rite,technique,Dawn Rite,,,,,,,Marks an authored removal of a specific negative status; it never removes every status implicitly.
+ability:burden-bearer,technique,Burden Bearer,,,,,,,Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count.
+ability:sepulchral-pact,technique,Sepulchral Pact,,,,,,,Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit.

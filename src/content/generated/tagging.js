@@ -3977,37 +3977,7 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "crimsonCleave",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "shieldBash",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "guardCounter",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "serratedBlade",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "riposte",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "rend",
     "tagId": "source:weapon"
   },
   {
@@ -4073,18 +4043,6 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "poiseBreaker",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "sunderplate",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "ambush",
     "tagId": "source:weapon"
   },
@@ -4092,12 +4050,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "rogueShiv",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "quickCut",
     "tagId": "source:weapon"
   },
   {
@@ -4122,12 +4074,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "ricochet",
-    "tagId": "source:weapon"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "lowBlow",
     "tagId": "source:weapon"
   },
   {
@@ -4224,12 +4170,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "stomp",
-    "tagId": "source:unarmed"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "stomp",
     "tagId": "damage:blunt"
   },
   {
@@ -4237,12 +4177,6 @@ export const tagging = [
     "scope": "",
     "objectId": "stomp",
     "tagId": "delivery:melee"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "kickOff",
-    "tagId": "source:unarmed"
   },
   {
     "family": "card",
@@ -4272,31 +4206,13 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "cometFragment",
-    "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "cometFragment",
     "tagId": "damage:arcane"
   },
   {
     "family": "card",
     "scope": "",
     "objectId": "starbladePhalanx",
-    "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "starbladePhalanx",
     "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "starShower",
-    "tagId": "source:spell"
   },
   {
     "family": "card",
@@ -4332,19 +4248,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "frostNova",
-    "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "frostNova",
     "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "starstoneArc",
-    "tagId": "source:spell"
   },
   {
     "family": "card",
@@ -4399,12 +4303,6 @@ export const tagging = [
     "scope": "",
     "objectId": "astralCleave",
     "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "radiantSpray",
-    "tagId": "source:spell"
   },
   {
     "family": "card",
@@ -4500,12 +4398,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "blightTouch",
-    "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "blightTouch",
     "tagId": "damage:arcane"
   },
   {
@@ -4584,12 +4476,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "scourge",
-    "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "scourge",
     "tagId": "damage:arcane"
   },
   {
@@ -4651,12 +4537,6 @@ export const tagging = [
     "scope": "",
     "objectId": "witheringTouch",
     "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "desperateRite",
-    "tagId": "source:spell"
   },
   {
     "family": "card",
@@ -11448,12 +11328,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "cinderSigil",
-    "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "cinderSigil",
     "tagId": "damage:arcane"
   },
   {
@@ -11485,12 +11359,6 @@ export const tagging = [
     "scope": "",
     "objectId": "ashenMote",
     "tagId": "fx:ritual"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "ashenMote",
-    "tagId": "source:spell"
   },
   {
     "family": "card",
@@ -11947,5 +11815,1481 @@ export const tagging = [
     "scope": "",
     "objectId": "gravelightSigil",
     "tagId": "classification.sigil"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-hew",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-hew",
+    "tagId": "blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-hew",
+    "tagId": "ability:searing-edge"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-hew",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-hew",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-guard",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-guard",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-guard",
+    "tagId": "ability:guarded-strike"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-guard",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-guard",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-bloodstep",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-bloodstep",
+    "tagId": "blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-bloodstep",
+    "tagId": "flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-bloodstep",
+    "tagId": "ability:bloodstep"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-bloodstep",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-bloodstep",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-breaker-s-toll",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-breaker-s-toll",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-breaker-s-toll",
+    "tagId": "ability:hammerfall"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-breaker-s-toll",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-breaker-s-toll",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-furnace-advance",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-furnace-advance",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-furnace-advance",
+    "tagId": "ability:forgewake"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-furnace-advance",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-furnace-advance",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crimson-reprisal",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crimson-reprisal",
+    "tagId": "blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crimson-reprisal",
+    "tagId": "ability:crimson-reprisal"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crimson-reprisal",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crimson-reprisal",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-warbound-defiance",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-warbound-defiance",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-warbound-defiance",
+    "tagId": "ability:last-stand"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-warbound-defiance",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-warbound-defiance",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-red-standard",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-red-standard",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-red-standard",
+    "tagId": "oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-red-standard",
+    "tagId": "ability:war-tempo"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-red-standard",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-red-standard",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ashen-cleaver",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ashen-cleaver",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ashen-cleaver",
+    "tagId": "ability:wide-cleave"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ashen-cleaver",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ashen-cleaver",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-cinders",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-cinders",
+    "tagId": "oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-cinders",
+    "tagId": "ability:ember-crown"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-cinders",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-cinders",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-orbit",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-orbit",
+    "tagId": "ability:cinder-orbit"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-orbit",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-orbit",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-lunar-aegis",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-lunar-aegis",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-lunar-aegis",
+    "tagId": "ability:lunar-guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-lunar-aegis",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-lunar-aegis",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-comet-needle",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-comet-needle",
+    "tagId": "pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-comet-needle",
+    "tagId": "ability:comet-mark"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-comet-needle",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-comet-needle",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "ability:rime-mirror"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-falling-constellation",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-falling-constellation",
+    "tagId": "ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-falling-constellation",
+    "tagId": "ability:constellation"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-falling-constellation",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-falling-constellation",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wellspring-sigil",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wellspring-sigil",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wellspring-sigil",
+    "tagId": "ability:mana-weave"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wellspring-sigil",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wellspring-sigil",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-gravitic-knot",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-gravitic-knot",
+    "tagId": "ability:gravity-snare"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-gravitic-knot",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-gravitic-knot",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightglass-reading",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightglass-reading",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightglass-reading",
+    "tagId": "ability:nightglass"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightglass-reading",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightglass-reading",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "ability:eclipse-window"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-firmament-ward",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-firmament-ward",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-firmament-ward",
+    "tagId": "ability:warded-casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-firmament-ward",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-firmament-ward",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-shiv-of-ash",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-shiv-of-ash",
+    "tagId": "flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-shiv-of-ash",
+    "tagId": "ability:ash-opener"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-shiv-of-ash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-shiv-of-ash",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pocket-coil",
+    "tagId": "guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pocket-coil",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pocket-coil",
+    "tagId": "ability:discard-weave"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pocket-coil",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pocket-coil",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-needle-feint",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-needle-feint",
+    "tagId": "guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-needle-feint",
+    "tagId": "pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-needle-feint",
+    "tagId": "ability:crooked-guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-needle-feint",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-needle-feint",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-back-alley-cut",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-back-alley-cut",
+    "tagId": "flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-back-alley-cut",
+    "tagId": "ability:exposed-flank"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-back-alley-cut",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-back-alley-cut",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-silent-exchange",
+    "tagId": "guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-silent-exchange",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-silent-exchange",
+    "tagId": "ability:sleight-hand"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-silent-exchange",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-silent-exchange",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wire-snare",
+    "tagId": "guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wire-snare",
+    "tagId": "blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wire-snare",
+    "tagId": "ability:tether-cut"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wire-snare",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wire-snare",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightstep",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightstep",
+    "tagId": "flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightstep",
+    "tagId": "ability:smoke-edge"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightstep",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightstep",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-carrion-cut",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-carrion-cut",
+    "tagId": "blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-carrion-cut",
+    "tagId": "ability:carrion-finish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-carrion-cut",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-carrion-cut",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-twinshade",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-twinshade",
+    "tagId": "flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-twinshade",
+    "tagId": "ability:paired-strikes"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-twinshade",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-twinshade",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-last-laugh",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-last-laugh",
+    "tagId": "guile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-last-laugh",
+    "tagId": "ability:trapdoor"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-last-laugh",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-last-laugh",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ash-benediction",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ash-benediction",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ash-benediction",
+    "tagId": "ability:mercy-ash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ash-benediction",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ash-benediction",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blood-censer",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blood-censer",
+    "tagId": "blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blood-censer",
+    "tagId": "ability:blood-censer"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blood-censer",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blood-censer",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blight-litany",
+    "tagId": "blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blight-litany",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blight-litany",
+    "tagId": "ability:blight-seed"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blight-litany",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blight-litany",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pallbearer-s-ward",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pallbearer-s-ward",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pallbearer-s-ward",
+    "tagId": "ability:funeral-guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pallbearer-s-ward",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pallbearer-s-ward",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-tithe",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-tithe",
+    "tagId": "blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-tithe",
+    "tagId": "ability:ember-tithe"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-tithe",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-tithe",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "ability:bone-chorus"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-requiem-brand",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-requiem-brand",
+    "tagId": "blight"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-requiem-brand",
+    "tagId": "ability:requiem-brand"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-requiem-brand",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-requiem-brand",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pilgrim-s-shelter",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pilgrim-s-shelter",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pilgrim-s-shelter",
+    "tagId": "ability:pilgrim-shelter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pilgrim-s-shelter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pilgrim-s-shelter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "ability:scarred-rite"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "oath"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "ability:dawn-rite"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scholarsInsight",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberVigil",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "readTheAsh",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "penance",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickstep",
+    "tagId": "source:unarmed"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "backstep",
+    "tagId": "source:unarmed"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gravityWell",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starPath",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightward",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gildedOath",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "reclamation",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bracingStance",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "source:unarmed"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warcry",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "feint",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pocketSand",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vanish",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeBomb",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "perfectHeist",
+    "tagId": "source:weapon"
   }
 ];
