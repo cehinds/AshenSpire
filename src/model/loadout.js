@@ -1,5 +1,5 @@
 import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
-import { tokenRe } from './validate.js';
+import { tokenRe } from './tokens.js';
 import {
   applyMountOverrides, extraMountInstances, itemMountEntries, mountKey, ownerItemRef,
 } from './cardMounts.js';

@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **The downloaded game opens again** ([#1659](https://github.com/cehinds/AshenSpire/pull/1659), `0.7.1.1024`). The bundled game could stop before the title screen while checking class mastery and report that it could not create a loadout. The shared token helper now loads without that dependency loop. Card artwork, costs and gameplay rules are unchanged.
+
 - **Every card gets its own painting** ([#1656](https://github.com/cehinds/AshenSpire/pull/1656), `0.7.1.1022`). All 220 card identities and 17 equipment profiles now have portrait artwork in the existing card frame. Upgrades share their base painting, with names, costs and rules kept readable over the same card layout. The taller artwork leaves room to choose a crop in the card assembler, which also offers eight alternate paintings.
 - **Plans: class progress kept safely** ([#1655](https://github.com/cehinds/AshenSpire/pull/1655), `0.7.1.1020`). Class mastery now has durable profile storage. Separate runs add their earned XP through receipts that make retries safe, and settings saves retain newer class progress. Returning profiles keep every authored unlock at level zero; live runs adopt mastery in the following update.
 
