@@ -4,7 +4,8 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { validateContent } from '../src/model/validate.js';
-import { classMasteryProblems, masteryRowId, masteryCorePool, masteryCardPool, masteryRefAvailable, masteryXpAtLevel } from '../src/model/classMastery.js';
+import { masteryRowId, masteryCorePool, masteryCardPool, masteryRefAvailable, masteryXpAtLevel } from '../src/model/classMastery.js';
+import { classMasteryProblems } from '../src/model/classMasteryContent.js';
 
 const reg=createRegistries(contentBundle);
 const allGatedCards=new Set(reg.classMastery.filter(r=>r.kind==='cards').map(r=>r.ref));
@@ -42,7 +43,7 @@ test('a claimed row joins the class card pool and global items open to every cla
 });
 
 test('cycle, foreign cards, duplicate ownership and starting cards are refused by name',()=>{
- refusal(b=>b.classMastery[0].kind='weapon',/reaver:1:weapon:quickstep.*breaks the cycle/);
+ refusal(b=>b.classMastery[0].kind='weapon',/reaver:1:weapon:enterGorefire.*breaks the cycle/);
  refusal(b=>b.classMastery[0].ref='missingCard',/missingCard.*unknown card/);
  refusal(b=>b.classMastery[0].ref='starSpark',/starSpark.*outside 'reaver' cardPool/);
  refusal(b=>b.classMastery.find(r=>r.classId==='rogue' && r.level===8).ref='armament/warhammer',/rogue.*already listed by 'reaver'/);

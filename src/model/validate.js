@@ -61,7 +61,7 @@ import { attributeContentProblems, presetGearProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
-import { classMasteryProblems } from './classMastery.js';
+import { classMasteryProblems } from './classMasteryContent.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { attackCardDamageConfigProblems } from './attackCardDamage.js';
