@@ -1861,20 +1861,19 @@ function showArmoury(request = '', returnTo = showMap) {
       persist();
     },
     onClose: returnTo,
-    onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo) : null,
+    onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
     onProgression: () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
-    onCharacterSheet: (opener) => showCharacterSheet(opener),
+    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards }),
   });
 }
 
-// The Character sheet (screens/characterSheet.js): read-only, over whatever
-// opened it. Which character-level rewards it lists are the player's own
+// The Progression hub opens over the current screen. Which character-level rewards it lists are the player's own
 // Settings → Advanced → Rewards answers, the ones the level door reads.
-function showCharacterSheet(opener) {
+function showCharacterSheet(opener, options = {}) {
   if (!run) return null;
   const settings = saves.loadMeta().settings || {};
   return openCharacterSheet({
-    registries, run, opener,
+    registries, run, opener, settings, onChange: persist, ...options,
     offers: {
       statPoints: settingOn(settings, 'rewardLevelStatPoints'),
       feats: settingOn(settings, 'rewardLevelFeats'),
@@ -1894,12 +1893,16 @@ function deckDoors(services = null) {
   return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
 }
 
-function showDeckEditor(returnTo = showMap) {
+function showDeckEditor(returnTo = showMap, hub = true) {
   if (!run) return;
   mountDeckEditor(document.body, {
     registries,
     run,
     settings: saves.loadMeta().settings || {},
+    onNavigate: hub ? destination => {
+      persist(); showArmoury(destination === 'character' ? 'grid' : 'rack', returnTo);
+      document.querySelector(`.armoury-head [data-modal-tab="${destination}"]`)?.focus({ preventScroll: true });
+    } : null,
     // A confirmed edit is written at once; a cancelled one restored the run
     // exactly (cancelDeckEdit), so there is nothing to write.
     onDone: () => { persist(); returnTo(); },
@@ -3830,6 +3833,11 @@ if (shotState === 'combat-test') {
   // reason it gives: that const IS the gate's reach.
   const shotClass = shotParams.get('shotClass');
   newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', journeyProfile: shotState === 'atlas' ? (shotParams.get('shotProfile') || 'wanderer') : null, slot: 1 });
+  // In-memory QA fixture: earned attribute points. Feats come from actual claims.
+  if (shotParams.get('shotProgression') === '1') {
+    awardLevelXp(registries, run, levelXpToNext(registries, 1), { pointsPerLevel: 2 });
+    showMap();
+  }
   // `?shotNewerSlot=<n>` — STAND BESIDE A CLIMB FROM A NEWER BUILD. Slot n
   // gets slot 1's own bytes (the real writer's, just persisted by newRun) with
   // the schema one ahead, so the in-run Load door meets exactly what a newer
