@@ -86,7 +86,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   // a later restamp (the Workspace frame choice) re-applies both halves.
   workspaceFrame(modal, smithWorkspaceVars());
   markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
-  // W1 header: the title top-left and its exit top-right, nothing else.
+  // W1 header: title left, available stones immediately before the exit.
   const purse = statusText('', { class: 'smith-header-stones', role: 'status' });
   const head = modalHead({
     title: initialModel.properties.title,

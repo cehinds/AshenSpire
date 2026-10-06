@@ -1,7 +1,7 @@
-// Every card owes two beats: the first tap SELECTS it and reveals its `i`
+// Most card actions owe two beats: the first tap SELECTS it and reveals its `i`
 // after the authored delay; the second reaches the card's own act. The
 // behavioural proof is tools/holdconfirm.mjs in a real browser (it presses a
-// Smith candidate and checks the shape of each beat). This file guards the
+// Smith candidate and checks its review-before-spend flow). This file guards the
 // SOURCE SHAPE, because the rule has now been broken twice by edits that each
 // looked local and correct:
 //
@@ -42,15 +42,15 @@ ok(/countBeat\(identity, douse\)/.test(code),
 
 // ---- the selection grids kept their selecting beat --------------------------
 // `actionOwnsTouch` is for surfaces with no selecting beat to spend: a card in
-// the combat hand, and the reward chooser whose click only selects anyway.
+// the combat hand, the reward chooser, and (owner, 2026-10-06) the Smith
+// candidate whose click opens a preview; Upgrade still confirms separately.
 for (const path of [
-  'src/ui/components/smithUpgradeModal.js',
   'src/ui/components/mountServiceModal.js',
   'src/ui/screens/shop.js',
 ]) {
   ok(!/actionOwnsTouch/.test(read(path)), `${path} does not spend the selecting tap`);
 }
-for (const path of ['src/ui/components/hand.js', 'src/ui/screens/reward.js']) {
+for (const path of ['src/ui/components/hand.js', 'src/ui/screens/reward.js', 'src/ui/components/smithUpgradeModal.js']) {
   ok(/actionOwnsTouch/.test(read(path)), `${path} keeps actionOwnsTouch (no selecting beat to spend)`);
 }
 
