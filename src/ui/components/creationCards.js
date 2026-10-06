@@ -168,7 +168,8 @@ export function booleanSettingToggle(label, value, onChoose) {
 export function classChoiceCard(cls, { selected = false, locked = false, visual = null, onChoose = null, hint = null, mastery = null } = {}) {
   const card = optionCard({
     name: cls.name,
-    description: [cls.description, mastery].filter(Boolean).join(' · '),
+    description: cls.description,
+    meta: mastery || '',
     // A locked card wears the unlock's own hint (plan phase 5c) or, for a
     // class not yet shipped, the milestone it arrives in.
     badge: locked && hint ? pill({ label: hint }) : locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
