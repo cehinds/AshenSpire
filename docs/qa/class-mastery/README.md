@@ -1,5 +1,7 @@
 # Class mastery evidence — PR #1658
 
+Solo claims and finishes bank progress. Co-op seats start from their own profile mastery and use their own gates; they do not bank progress while co-op results remain unrecorded, as SPEC 13.4q requires.
+
 New-run activation completes the content foundation (#1654) and durable profile banking (#1655). Browser evidence uses actual source screens at desktop 1440×1000 and phone 390×844, in isolated browser contexts. It does not claim a full human-played run or physical-device acceptance.
 
 - `main-result.json`: two cold boots, required initial tree choice, first fight preview and actual first card play, six inputs each. Actual creation shows the profile mastery and next unlock.
