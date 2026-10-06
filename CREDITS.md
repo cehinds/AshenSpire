@@ -14,6 +14,10 @@ pipeline. First-party generated artwork; no third-party asset license is claimed
 Upgraded cards reuse the corresponding base artwork. Card names, costs and rules
 remain live game content rather than text baked into the paintings.
 
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `asset-data/card-art/` | Project-authored portrait export manifest, with original OpenAI generation prompts, source hashes and delivery metadata for the linked portrait library | First-party provenance metadata and generated artwork; no third-party asset license claimed. |
+
 ## Player component collection (2026-10-04)
 
 The owner's expanded desktop/mobile screenshot breakdown contains 43 new raster
