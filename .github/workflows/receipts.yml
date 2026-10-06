@@ -60,10 +60,14 @@ jobs:
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
-          target=test
-          if [[ "$GITHUB_REF_NAME" == alternative/*/dev ]]; then target="${GITHUB_REF_NAME%dev}test"; fi
-          git fetch --no-tags origin "$target:refs/remotes/origin/$target"
-          echo "RECEIPT_BASE=origin/$target" >> "$GITHUB_ENV"
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { appendFileSync } from 'node:fs';
+          import { promotionTarget } from './tools/alternative-branches.mjs';
+          const target = promotionTarget(process.env.GITHUB_REF_NAME);
+          execFileSync('git', ['fetch', '--no-tags', 'origin', `${target}:refs/remotes/origin/${target}`], { stdio: 'inherit' });
+          appendFileSync(process.env.GITHUB_ENV, `RECEIPT_BASE=origin/${target}\n`);
+          NODE
 
       - name: The corpus still catches its own known-bads
         run: node tools/verdict.mjs -- node tools/receipts.mjs --selftest

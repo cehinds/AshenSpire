@@ -10,6 +10,11 @@ export function channelRole(branch) {
   return branch.startsWith('alternative/') ? branch.split('/').at(-1) : branch;
 }
 
+export function promotionTarget(branch) {
+  return branch.startsWith('alternative/') && channelRole(branch) === 'dev'
+    ? branch.replace(/dev$/, 'test') : 'test';
+}
+
 export function siteRoot(branch) {
   return '../'.repeat(branch.split('/').length);
 }

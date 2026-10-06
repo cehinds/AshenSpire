@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { alternativePairs, channelRole, downloadChannel, siteRoot } from '../tools/alternative-branches.mjs';
+import { alternativePairs, channelRole, downloadChannel, promotionTarget, siteRoot } from '../tools/alternative-branches.mjs';
 import { mergeAlternative, syncAlternatives } from '../tools/sync-alternatives.mjs';
 import { branchIndex, rootIndex } from '../tools/pages-site.mjs';
 
@@ -34,6 +34,10 @@ test('only complete alternative pairs are enrolled; names retain stage and nesti
   assert.equal(siteRoot('alternative/art/test'), '../../../');
   assert.equal(channelRole('alternative/art/test'), 'test');
   assert.equal(downloadChannel('alternative/art/dev'), 'dev-alternative-art');
+  assert.equal(promotionTarget('dev'), 'test');
+  assert.equal(promotionTarget('alternative/dev'), 'alternative/test');
+  assert.equal(promotionTarget('alternative/art/dev'), 'alternative/art/test');
+  assert.equal(promotionTarget('codex/topic'), 'test');
 });
 
 test('safe shared edits reach the variant without changing its files; retry is a no-op', (t) => {

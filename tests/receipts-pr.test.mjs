@@ -133,7 +133,7 @@ test('receipts.yml runs --check --pr auto on pull_request into dev, and the rang
   assert.match(yml, /fetch-depth: \$\{\{ github\.event_name == 'pull_request' && 1 \|\| 0 \}\}/);
   assert.match(step('Fetch the promotion target so the range is the real one'), /if: github\.event_name != 'pull_request'/);
   const fetch = step('Fetch the promotion target so the range is the real one');
-  assert.match(fetch, /target=test/);
-  assert.match(fetch, /target="\$\{GITHUB_REF_NAME%dev\}test"/);
-  assert.match(fetch, /RECEIPT_BASE=origin\/\$target/);
+  assert.match(fetch, /promotionTarget\(process\.env\.GITHUB_REF_NAME\)/);
+  assert.match(fetch, /\$\{target\}:refs\/remotes\/origin\/\$\{target\}/);
+  assert.match(fetch, /RECEIPT_BASE=origin\/\$\{target\}/);
 });
