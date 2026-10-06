@@ -25,10 +25,11 @@ const play = combat => dispatch(combat, { type: 'playCard', cardInstanceId: comb
 
 test('transactional real plays bank skill XP once, scoped to the solo or co-op owner', () => {
   for (const coop of [false, true]) {
-    const combat = fixture([{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }], { manaCost: 5, coop });
+    const combat = fixture([{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }, { op: 'block', target: 'self', amount: 2 }], { manaCost: 5, coop });
     combat.registries = { ...combat.registries, progressionEnabled: true };
     const seat = coop ? combat.players.get('a') : { entity: combat.player, piles: combat.piles };
     const id = seat.piles.hand[0].instanceId;
+    seat.piles.hand[0].grantedBy = 'armament/ashStaff';
     const owner = coop ? 'a' : 'player';
     const before = structuredClone(combat.skillXp);
     if (coop) previewCoopCard(combat, owner, id); else previewCard(combat, id);

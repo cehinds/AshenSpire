@@ -158,7 +158,7 @@ export function recordSkillXp(combat, event) {
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);
-      pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
+      if (!(combat.registries.progressionEnabled && group === FOCUS_ITEM_TYPE)) pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
       if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit, favoredMult(combat, owner, DUAL_WIELD_SKILL));
       // damageDealt fires after HP is taken and before afterHpChange marks
       // the death, so the kill is read from the HP, not the flag.
@@ -174,7 +174,7 @@ export function recordSkillXp(combat, event) {
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);
-      pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
+      if (!(combat.registries.progressionEnabled && group === FOCUS_ITEM_TYPE)) pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
       if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit, favoredMult(combat, owner, DUAL_WIELD_SKILL));
       return;
     }

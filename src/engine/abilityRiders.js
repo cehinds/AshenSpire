@@ -1,6 +1,7 @@
 // Shared data-driven ability riders. State is per entity and bounded to a turn;
 // it is saved with the combat entity, never reconstructed from a growing log.
-export { ABILITY_TURN_METRICS as TURN_METRICS } from '../model/schemas.js';
+import { ABILITY_TURN_METRICS } from '../model/schemas.js';
+export const TURN_METRICS = ABILITY_TURN_METRICS;
 
 function stateFor(entity) {
   return entity.abilityRiders || (entity.abilityRiders = {
