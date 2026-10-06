@@ -101,7 +101,7 @@
       "w": 260,
       "h": 50,
       "font": "Georgia",
-      "fontSize": 35.629629629629626,
+      "fontSize": 32.96296296296296,
       "fontWeight": "normal",
       "align": "center",
       "color": "#f3e8c9",
@@ -111,8 +111,8 @@
       "locked": false,
       "bind": "name",
       "autoFit": true,
-      "minFontSize": 24.94,
-      "maxFontSize": 35.629629629629626,
+      "minFontSize": 22.273333333333333,
+      "maxFontSize": 32.96296296296296,
       "maxLines": 1,
       "verticalAlign": "middle"
     },
@@ -125,7 +125,7 @@
       "w": 300.00000000000006,
       "h": 109.99999999999999,
       "font": "Georgia",
-      "fontSize": 41,
+      "fontSize": 38.333333333333336,
       "fontWeight": "normal",
       "align": "center",
       "color": "#291f16",
@@ -136,8 +136,8 @@
       "bind": "rules",
       "maxLines": 2,
       "autoFit": true,
-      "minFontSize": 30,
-      "maxFontSize": 41,
+      "minFontSize": 27.333333333333332,
+      "maxFontSize": 38.333333333333336,
       "verticalAlign": "middle"
     },
     {
@@ -172,7 +172,7 @@
       "w": 83.12743489361701,
       "h": 44.20370174160651,
       "font": "Georgia",
-      "fontSize": 48.555744680851056,
+      "fontSize": 45.88907801418439,
       "fontWeight": "bold",
       "align": "center",
       "color": "#fff5d2",
@@ -184,8 +184,8 @@
       "outline": "#101508",
       "bind": "action",
       "autoFit": true,
-      "minFontSize": 33.99,
-      "maxFontSize": 48.555744680851056,
+      "minFontSize": 31.323333333333334,
+      "maxFontSize": 45.88907801418439,
       "maxLines": 1,
       "verticalAlign": "middle"
     },
@@ -221,7 +221,7 @@
       "w": 67.30301801418443,
       "h": 80,
       "font": "Georgia",
-      "fontSize": 41,
+      "fontSize": 38.333333333333336,
       "fontWeight": "bold",
       "align": "center",
       "color": "#fff5d2",
@@ -233,8 +233,8 @@
       "outline": "#101508",
       "bind": "mana",
       "autoFit": true,
-      "minFontSize": 28.7,
-      "maxFontSize": 41,
+      "minFontSize": 26.03333333333333,
+      "maxFontSize": 38.333333333333336,
       "maxLines": 1,
       "verticalAlign": "middle"
     },
@@ -270,7 +270,7 @@
       "w": 81.88268222642016,
       "h": 70,
       "font": "Georgia",
-      "fontSize": 47.82866952477813,
+      "fontSize": 45.162002858111464,
       "fontWeight": "bold",
       "align": "center",
       "color": "#fff5d2",
@@ -282,8 +282,8 @@
       "outline": "#101508",
       "bind": "stamina",
       "autoFit": true,
-      "minFontSize": 33.48,
-      "maxFontSize": 47.82866952477813,
+      "minFontSize": 30.81333333333333,
+      "maxFontSize": 45.162002858111464,
       "maxLines": 1,
       "verticalAlign": "middle"
     },
@@ -296,7 +296,7 @@
       "w": 250,
       "h": 40.0000000000001,
       "font": "Georgia",
-      "fontSize": 26,
+      "fontSize": 23.333333333333332,
       "fontWeight": "bold",
       "align": "center",
       "color": "#fbf9f9",
@@ -306,8 +306,8 @@
       "locked": false,
       "bind": "tags",
       "autoFit": true,
-      "minFontSize": 18.2,
-      "maxFontSize": 26,
+      "minFontSize": 15.533333333333333,
+      "maxFontSize": 23.333333333333332,
       "maxLines": 1,
       "verticalAlign": "middle"
     }
@@ -363,7 +363,7 @@
     ]
   ],
   "equipmentArtwork": {
-    "x": 50.0,
+    "x": 50,
     "y": 78,
     "w": 260,
     "h": 255,
@@ -391,7 +391,7 @@
           "y": 165.57594136502163,
           "w": 83.12743489361701,
           "h": 44.20370174160651,
-          "fontSize": 48.555744680851056,
+          "fontSize": 45.88907801418439,
           "visible": false
         },
         "mana-icon": {
@@ -406,7 +406,7 @@
           "y": 65.41785312230978,
           "w": 67.30301801418443,
           "h": 80,
-          "fontSize": 41,
+          "fontSize": 38.333333333333336,
           "visible": false
         },
         "stamina-icon": {
@@ -421,7 +421,7 @@
           "y": -14.999999999999998,
           "w": 81.88268222642016,
           "h": 70,
-          "fontSize": 47.82866952477813,
+          "fontSize": 45.162002858111464,
           "visible": true
         }
       }
@@ -447,7 +447,7 @@
           "y": 165.57594136502163,
           "w": 83.12743489361701,
           "h": 44.20370174160651,
-          "fontSize": 48.555744680851056,
+          "fontSize": 45.88907801418439,
           "visible": false
         },
         "mana-icon": {
@@ -462,7 +462,7 @@
           "y": 65.41785312230978,
           "w": 67.30301801418443,
           "h": 80,
-          "fontSize": 41,
+          "fontSize": 38.333333333333336,
           "visible": true
         },
         "stamina-icon": {
@@ -477,7 +477,7 @@
           "y": -14.999999999999998,
           "w": 81.88268222642016,
           "h": 70,
-          "fontSize": 47.82866952477813,
+          "fontSize": 45.162002858111464,
           "visible": true
         }
       }
