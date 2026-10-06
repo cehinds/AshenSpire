@@ -1,6 +1,7 @@
 // Forty class families. Rank is a recipe selection, never an imperative card hook.
 import { cardFamilies } from './cardFamilies.js';
 import { recipeText } from './cardRecipeText.js';
+import { progressionCardLore } from './cardLore.js';
 import { abilityCardUpdates as lessonUpdates } from './lessons.js';
 export const abilityCardUpdates = lessonUpdates;
 
@@ -97,7 +98,7 @@ export const progressionCards = cardFamilies.map(family => {
     cost: base.actionCost, manaCost: base.manaCost,
     type: family.primary === 'damage' ? 'attack' : 'skill',
     keywords: [], icon: family.primary === 'damage' ? '✦' : '◇',
-    flavor: `A lesson of the ${family.classId}. The climb remembers its price.`,
+    flavor: progressionCardLore[family.id.replace(/^progression-/, '')].join('\n\n'),
     abilityKind: ['starseer', 'herald'].includes(family.classId) ? 'spell' : 'maneuver',
     abilityRank: family.abilityRank, abilityFamily: family.id,
     effects: base.effects, textTemplate: base.textTemplate, gradeProfiles,
