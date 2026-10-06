@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1656",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Every card gets its own painting",
+    "detail": "All 220 card identities and 17 equipment profiles now have portrait artwork in the existing card frame. Upgrades share their base painting, with names, costs and rules kept readable over the same card layout. The taller artwork leaves room to choose a crop in the card assembler, which also offers eight alternate paintings.",
+    "build": "0.7.1.1022",
+    "pullRequest": 1656,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1656"
+  },
+  {
     "id": "pr-1655",
     "date": "2026-10-06",
     "group": "2026-10-06",
