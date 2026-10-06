@@ -67,7 +67,13 @@ jobs:
           set -euo pipefail
           python -m unittest discover -s tests -p test_alternative_sync.py -v
           node tools/config-build.mjs --check
-          node docs/design/combat-depth-2026-10-05/verify-studio-model.mjs
+          # The legacy model harness writes a starter JSON. Run a copy so tests
+          # never rewrite the alternative's saved defaults (even its newline).
+          model_dir=$(mktemp -d)
+          mkdir "$model_dir/editor"
+          cp docs/design/combat-depth-2026-10-05/{verify-studio-model.mjs,catalog.json} "$model_dir/"
+          cp docs/design/combat-depth-2026-10-05/editor/{studio-model.mjs,library-data.js,starting-layout.json} "$model_dir/editor/"
+          node "$model_dir/verify-studio-model.mjs"
           python docs/design/combat-depth-2026-10-05/build-library.py
           python docs/design/combat-depth-2026-10-05/verify-assets.py
           python docs/design/combat-depth-2026-10-05/pack.py

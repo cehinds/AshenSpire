@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Keep the alternative battlefield while development continues** ([#1668](https://github.com/cehinds/AshenSpire/pull/1668), `0.7.1.1033`). New development merges can update the alternative development branch without replacing its battlefield layout, editor, HUD, cards or footer. Background and sprite updates remain eligible; conflicting gameplay or art edits stop for review. Each successful sync produces a checked source preview.
+
 - **Plans: modular class rewards and retraining** ([#1666](https://github.com/cehinds/AshenSpire/pull/1666), `0.7.1.1032`). The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.
 
 - **Smaller text fits more card descriptions** ([#1664](https://github.com/cehinds/AshenSpire/pull/1664), `0.7.1.1031`). Card titles, rules, tags and cost numbers are two points smaller, including the automatic fitting range. More descriptions fit fully inside the existing card frame on desktop and phone.

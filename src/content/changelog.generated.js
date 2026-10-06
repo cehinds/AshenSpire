@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1668",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Keep the alternative battlefield while development continues",
+    "detail": "New development merges can update the alternative development branch without replacing its battlefield layout, editor, HUD, cards or footer. Background and sprite updates remain eligible; conflicting gameplay or art edits stop for review. Each successful sync produces a checked source preview.",
+    "build": "0.7.1.1033",
+    "pullRequest": 1668,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1668"
+  },
+  {
     "id": "pr-1666",
     "date": "2026-10-06",
     "group": "2026-10-06",
