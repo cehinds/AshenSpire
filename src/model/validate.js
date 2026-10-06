@@ -131,6 +131,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
   'classMasteryVersion',
   'legacyProgression',
+  'progressionModuleOwnership',
   'breakMeterVersion', // configured bundle's scoped card faces, never stamped onto old runs
   'classMastery',
   'classSkillFeats',
