@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Class mastery follows the profile into every new run** ([#1658](https://github.com/cehinds/AshenSpire/pull/1658), `0.7.1.1024`). New solo runs and co-op seats use durable class mastery, core card pools, global item gates and a fresh tree pick per open tier. Claims bank cumulative XP immediately and add their unlocks to live rewards. Books retain their named lessons, class swaps open at their own mastery, and legacy saves keep prior progression. Terminal save failures retain an idempotent receipt and offer Retry. Four hundred seeded runs finish without crashes or soft locks; browser reward, creation, tree-reset and quota-retry receipts live in docs/qa/class-mastery. Quick start still reaches its first played card in six inputs.
+
 - **Every card gets its own painting** ([#1656](https://github.com/cehinds/AshenSpire/pull/1656), `0.7.1.1022`). All 220 card identities and 17 equipment profiles now have portrait artwork in the existing card frame. Upgrades share their base painting, with names, costs and rules kept readable over the same card layout. The taller artwork leaves room to choose a crop in the card assembler, which also offers eight alternate paintings.
 - **Plans: class progress kept safely** ([#1655](https://github.com/cehinds/AshenSpire/pull/1655), `0.7.1.1020`). Class mastery now has durable profile storage. Separate runs add their earned XP through receipts that make retries safe, and settings saves retain newer class progress. Returning profiles keep every authored unlock at level zero; live runs adopt mastery in the following update.
 

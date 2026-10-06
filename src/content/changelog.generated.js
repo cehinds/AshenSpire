@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1658",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Class mastery follows the profile into every new run",
+    "detail": "New solo runs and co-op seats use durable class mastery, core card pools, global item gates and a fresh tree pick per open tier. Claims bank cumulative XP immediately and add their unlocks to live rewards. Books retain their named lessons, class swaps open at their own mastery, and legacy saves keep prior progression. Terminal save failures retain an idempotent receipt and offer Retry. Four hundred seeded runs finish without crashes or soft locks; browser reward, creation, tree-reset and quota-retry receipts live in docs/qa/class-mastery. Quick start still reaches its first played card in six inputs.",
+    "build": "0.7.1.1024",
+    "pullRequest": 1658,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1658"
+  },
+  {
     "id": "pr-1656",
     "date": "2026-10-06",
     "group": "2026-10-06",
