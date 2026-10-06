@@ -50,4 +50,3 @@ function predicateText(p) {
     default: throw new Error(`No progression condition description for ${p.p}`);
   }
 }
-
