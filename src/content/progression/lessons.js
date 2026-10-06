@@ -5,8 +5,10 @@ import { starseerCards } from '../cards/starseer.js';
 import { rogueCards } from '../cards/rogue.js';
 import { heraldCards } from '../cards/herald.js';
 import { recipeText } from './cardRecipeText.js';
+import { cardExposure } from '../generated/cardExposure.js';
 
 const originals = new Map([...reaverCards, ...starseerCards, ...rogueCards, ...heraldCards].map(c => [c.id, c]));
+const legacyCarriers = new Map(cardExposure.map(({ cardId, ...carrier }) => [cardId, carrier]));
 const budget = [6, 9, 13, 18, 24, 30];
 // id, source, default rank, exact Actions at rank 2, primary index,
 // six authored primary values. Conditional/secondary effects activate at 2.
@@ -92,6 +94,7 @@ export const abilityCardUpdates = recipes.map(recipe => {
   const base = gradeProfiles[abilityRank];
   return { id, abilityKind, abilityRank, abilityFamily: id, gradeProfiles,
     legacyFace: { cost: original.cost, manaCost: original.manaCost || 0, effects: structuredClone(original.effects), textTemplate: original.textTemplate,
+      ...legacyCarriers.get(id),
       ...(original.upgrade ? { upgrade: structuredClone(original.upgrade) } : {}),
     },
     cost: base.actionCost, manaCost: base.manaCost, effects: base.effects, textTemplate: base.textTemplate,

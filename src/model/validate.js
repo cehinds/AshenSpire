@@ -1116,10 +1116,14 @@ function collectContentProblems(bundle, errors = []) {
       for (const card of damages) {
         const path = `cards.${card.id}`;
         const row = equipment.cardExposure.find((candidate) => candidate.cardId === card.id);
+        // The CSV remains the pre-expansion carrier for existing saved cards.
+        // Graded faces own their school/buildup explicitly in profile traits.
+        const gradeCarrier = card.gradeProfiles?.find(profile => profile.rank === card.abilityRank)?.traits;
+        const carrier = gradeCarrier?.damageSchool ? gradeCarrier : row;
         if (!row) err(`${path}.exposureBuildupPerHit`, 'Missing required explicit damage carrier row');
         if (typeof card.damageSchool !== 'string') err(`${path}.damageSchool`, 'Missing required explicit damage school');
         if (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'Missing required non-negative per-hit buildup');
-        if (row && (card.damageSchool !== row.damageSchool || card.exposureBuildupPerHit !== row.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row');
+        if (carrier && (card.damageSchool !== carrier.damageSchool || card.exposureBuildupPerHit !== carrier.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row or grade traits');
         // A Mana spell works toward a break faster than an action-only one
         // (plan phase 8): its row carries at least balance.exposure.buildupPerManaSpell.
         const floor = b.balance && b.balance.exposure && b.balance.exposure.buildupPerManaSpell;
@@ -1129,8 +1133,14 @@ function collectContentProblems(bundle, errors = []) {
         // base's (Codex, #1203); the row is one per card, so one face is enough.
         const upgradedMana = card.upgrade && Number.isInteger(card.upgrade.manaCost) ? card.upgrade.manaCost : card.manaCost;
         const costsMana = (Number.isInteger(card.manaCost) && card.manaCost > 0) || (Number.isInteger(upgradedMana) && upgradedMana > 0);
-        if (row && Number.isInteger(floor) && costsMana && (schoolMult[row.damageSchool] || 0) > 0 && row.exposureBuildupPerHit < floor) {
-          err(`equipment.cardExposure.${card.id}.exposureBuildupPerHit`, `'${card.name || card.id}' costs Mana and builds Arcane Exposure, so it builds at least ${floor} per hit (balance.exposure.buildupPerManaSpell); it builds ${row.exposureBuildupPerHit}`);
+        if (carrier && Number.isInteger(floor) && costsMana && (schoolMult[carrier.damageSchool] || 0) > 0 && carrier.exposureBuildupPerHit < floor) {
+          err(`equipment.cardExposure.${card.id}.exposureBuildupPerHit`, `'${card.name || card.id}' costs Mana and builds Arcane Exposure, so it builds at least ${floor} per hit (balance.exposure.buildupPerManaSpell); it builds ${carrier.exposureBuildupPerHit}`);
+        }
+        for (const profile of card.gradeProfiles || []) {
+          const traits = profile.traits;
+          const profilePath = `${path}.gradeProfiles.${profile.rank}.traits`;
+          if (!traits || !DAMAGE_SCHOOLS.includes(traits.damageSchool) || !Number.isInteger(traits.exposureBuildupPerHit) || traits.exposureBuildupPerHit < 0) err(profilePath, 'Damage grade requires an explicit valid school and non-negative per-hit buildup');
+          else if (profile.manaCost > 0 && (schoolMult[traits.damageSchool] || 0) > 0 && Number.isInteger(floor) && traits.exposureBuildupPerHit < floor) err(profilePath, `Mana-costing damage grade must build at least ${floor} Exposure per hit`);
         }
       }
     }

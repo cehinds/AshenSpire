@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { progressionCards, progressionCardUnlocks, abilityCardUpdates } from '../src/content/progression/cards.js';
 import { nodes } from '../src/content/generated/nodes.js';
 import { tagging } from '../src/content/generated/tagging.js';
@@ -15,6 +16,9 @@ const [{ contentBundle }, { createRegistries, resolveCard }, { createCombat, dis
   engineModule('src/model/validate.js'),
 ]);
 const { createCoopCombat, playCard: coopPlay, previewCoopCard } = await engineModule('src/engine/coopCombat.js');
+// Snapshot captured from origin/dev's canonical cardExposure.csv before the
+// expansion. Existing carriers must remain byte-for-byte semantically stable.
+const legacyCarriers = JSON.parse(readFileSync(new URL('./fixtures/progression-legacy-carriers.json', import.meta.url), 'utf8'));
 
 const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards.filter(c => !progressionCards.some(n => n.id === c.id)), ...progressionCards] });
 const byName = name => progressionCards.find(c => c.name === name);
@@ -159,6 +163,35 @@ test('legacy existing faces keep their prior cost and effect recipes for explici
   assert.equal(abilityCardUpdates.find(c => c.id === 'kickOff').manaCost, 1);
   assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').legacyFace.manaCost, 0);
   assert.equal(abilityCardUpdates.find(c => c.id === 'starShower').manaCost, 2);
+});
+
+test('legacy carrier rows and explicit saved faces preserve original schools and buildup', () => {
+  for (const update of abilityCardUpdates) {
+    const expected = legacyCarriers[update.id];
+    if (!expected) continue;
+    assert.deepEqual({ damageSchool: update.legacyFace.damageSchool, exposureBuildupPerHit: update.legacyFace.exposureBuildupPerHit }, expected, update.id);
+  }
+});
+
+test('a pre-expansion save reload keeps every original damage carrier while new grades retain their traits', { skip: !engineRoot }, async () => {
+  const { createRunState, serializeRun, deserializeRun } = await engineModule('src/model/state.js');
+  const { registriesForClassMastery } = await engineModule('src/model/classMasteryRun.js');
+  const legacy = registries.legacyProgressionSource;
+  const run = createRunState({ registries: legacy, classId: 'herald', seed: 17 });
+  run.schemaVersion = 21;
+  const reloaded = deserializeRun(serializeRun(run));
+  const projected = registriesForClassMastery(registries, reloaded);
+  assert.equal(projected.balance.progression, undefined);
+  for (const [id, expected] of Object.entries(legacyCarriers)) {
+    const face = resolveCard(projected, { cardId: id, upgraded: false });
+    assert.deepEqual({ damageSchool: face.damageSchool, exposureBuildupPerHit: face.exposureBuildupPerHit }, expected, id);
+  }
+  for (const id of ['starShower', 'scourge', 'desperateRite']) {
+    const face = resolveCard(registries, { cardId: id, abilityRank: 2 });
+    assert.equal(face.damageSchool, 'magic'); assert.equal(face.exposureBuildupPerHit, 5);
+    const savedFace = resolveCard(registries, { cardId: id, legacyAbility: true });
+    assert.deepEqual({ damageSchool: savedFace.damageSchool, exposureBuildupPerHit: savedFace.exposureBuildupPerHit }, legacyCarriers[id]);
+  }
 });
 
 test('assembled content validates every normalized card, feat and relic rule', { skip: !engineRoot }, () => {
