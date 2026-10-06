@@ -51,6 +51,7 @@ export function mountClassRespec({registries,run=null,meta={},view=null,onApply,
       const treeLabel=ids=>ids.map(id=>state.treeOptions.find(node=>node.nodeId===id)?.label || id).join(', ') || 'Unassigned';
       if(JSON.stringify(state.draft.treeBefore)!==JSON.stringify(treeNodes))list.append(el('li',{text:`Tree choices: ${treeLabel(state.draft.treeBefore || [])} → ${treeLabel(treeNodes)}`}));
       for(const displaced of state.preview.displaced)list.append(el('li',{text:`${label('armory',displaced.ref)} → ${displaced.destination}`}));
+      for(const slot of state.draft.slots){const selected=selections[slot.receiptId],retained=(state.options[slot.receiptId] || []).find(choice=>choice.retainInSideboard&&selected&&choiceKey(choice)===choiceKey(selected));if(retained)list.append(el('li',{text:`Retain in sideboard: ${label('cards',retained.id,retained.abilityRank)}`}));}
       for(const transfer of state.preview.transfers)list.append(el('li',{text:`Retain upgrades and components: ${transfer.from} → ${transfer.to}${transfer.tier?` · Tier ${transfer.tier}`:''}`}));
       body.append(el('h3',{text:'Before → After'}),list);
       const back=button({label:'Edit choices'});back.addEventListener('click',()=>{review=false;render();});body.append(back);
@@ -69,7 +70,7 @@ export function mountClassRespec({registries,run=null,meta={},view=null,onApply,
           const id=`respec-${slot.receiptId.replace(/[^a-z0-9]/gi,'-')}`,select=el('select',{id,'aria-label':`${title} earned at level ${slot.level}`});
           const options=state.options[slot.receiptId] || [];
           select.append(el('option',{value:'',text:'Keep unassigned'}));
-          for(const choice of options)select.append(el('option',{value:choiceKey(choice),text:label(kind,choice.id,choice.abilityRank)}));
+          for(const choice of options)select.append(el('option',{value:choiceKey(choice),text:`${label(kind,choice.id,choice.abilityRank)}${choice.retainInSideboard?' · Retain in sideboard':''}`}));
           select.value=selections[slot.receiptId]?choiceKey(selections[slot.receiptId]):'';
           select.addEventListener('change',()=>{const selected=options.find(choice=>choiceKey(choice)===select.value);if(selected)selections[slot.receiptId]={...selected,transfer:'retain'};else delete selections[slot.receiptId];refresh();});
           fieldset.append(el('label',{for:id},[el('span',{text:`Level ${slot.level} · ${current} →`}),select]));

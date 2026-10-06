@@ -238,7 +238,13 @@ export function classRespecView(registries,run,draft,input = {}) {
   const proposed=preview.candidate || run;
   return {draft:{classId:draft.classId,level:draft.level,budgets:draft.budgets,treeBudget:draft.treeBudget,treeBefore:[...draft.treeNodes],slots:draft.slots,cost:draft.cost},
     selections:copy(input.selections || draft.selections),treeNodes:copy(input.treeNodes || draft.treeNodes),
-    options:Object.fromEntries(draft.slots.map(slot=>[slot.receiptId,classRespecOptions(registries,run,draft,slot,{attributes:proposed.attributes,loadout:proposed.loadout})])),
+    options:Object.fromEntries(draft.slots.map(slot=>{
+      const options=classRespecOptions(registries,run,draft,slot,{attributes:proposed.attributes,loadout:proposed.loadout});
+      // Ownership survives losing the prerequisites. Keep the original face
+      // selectable without presenting it as an eligible replacement grant.
+      if(slot.kind==='cards'&&slot.state==='taken'&&slot.before&&!options.some(choice=>choice.id===slot.before.id&&(choice.abilityRank??null)===(slot.before.abilityRank??null)))options.push({id:slot.before.id,abilityRank:slot.before.abilityRank??null,retainInSideboard:true});
+      return [slot.receiptId,options];
+    })),
     treeOptions:classTreeRows(sourceOf(registries),run.class).filter(row=>draft.level>=tierOpensAt(registries,row.tier)).map(row=>({...row,label:registries.nodes.find(node=>node.id===row.nodeId)?.label || row.nodeId,description:registries.nodes.find(node=>node.id===row.nodeId)?.description || ''})),
     preview:{ok:preview.ok,problems:preview.problems,changes:preview.changes || [],displaced:preview.displaced || [],transfers:preview.transfers || [],spent:preview.spent || [],cost:draft.cost}};
 }

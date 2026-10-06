@@ -6,7 +6,7 @@ import {createRunState,serializeRun,deserializeRun,validateRunShape,initializeRu
 import {openRunClassMastery,registriesForClassMastery} from '../src/model/classMasteryRun.js';
 import {bankSkillXp,claimBankedSkillLevel,xpToNext} from '../src/model/skills.js';
 import {rollClassMilestoneRewards,claimClassMilestoneReward} from '../src/model/classMilestoneOffers.js';
-import {createClassRespecDraft,previewClassRespec,applyClassRespec,cancelClassRespec,classRespecOptions} from '../src/model/classRespec.js';
+import {createClassRespecDraft,previewClassRespec,applyClassRespec,cancelClassRespec,classRespecOptions,classRespecView} from '../src/model/classRespec.js';
 import {removeOwnedRelic} from '../src/model/classRewardProvenance.js';
 import {removeDeckCard} from '../src/model/cardRemoval.js';
 import {armamentSalePlan,commitArmamentSale} from '../src/model/armamentTrading.js';
@@ -188,7 +188,7 @@ test('earned offer snapshots and class provenance survive repeated rebuilds and 
   run.class='herald';assert.deepEqual(validateRunShape(run),[],'respec provenance belongs to its earned class after equipping another class');
 });
 
-test('unchanged earned graded cards remain owned in the sideboard when the final build cannot use them',()=>{
+test('unchanged earned graded cards remain owned in the sideboard and remain visibly selected when the final build cannot use them',async()=>{
   const {run,reg}=built(12),grant=Object.values(run.classMilestones).flatMap(row=>Object.values(row.grants)).find(grant=>grant.selection?.instanceId);
   const card=run.deck.find(card=>card.instanceId===grant.selection.instanceId),independent=structuredClone(run.deck.filter(row=>row.instanceId!==card.instanceId));
   const replacement=reg.masterySource.classes.get(run.class).cardPool.find(id=>id!==card.cardId);
@@ -198,12 +198,27 @@ test('unchanged earned graded cards remain owned in the sideboard when the final
   card.abilityRank=2;grant.selection.abilityRank=2;grant.selection.choiceId=card.cardId+'@2';
   const offer=run.classMilestoneOffers[grant.id];offer.abilityRanks=offer.options.map(id=>id===card.cardId?2:null);offer.choiceIds=offer.options.map((id,index)=>Number.isInteger(offer.abilityRanks[index])?id+'@'+offer.abilityRanks[index]:id);
   const draft=createClassRespecDraft(fixture,run),preview=previewClassRespec(fixture,run,draft);
+  const view=classRespecView(fixture,run,draft),choices=view.options[grant.id],retained=choices.find(choice=>choice.id===card.cardId&&choice.abilityRank===2);
+  assert.equal(retained.retainInSideboard,true);assert.ok(!classRespecOptions(fixture,run,draft,draft.slots.find(slot=>slot.receiptId===grant.id)).some(choice=>choice.id===card.cardId),'the display exception does not authorize a new grant');
   assert.equal(preview.ok,true,preview.problems.join(' '));assert.equal(preview.candidate.sideboard.find(row=>row.instanceId===card.instanceId).abilityRank,2);
   assert.equal(preview.candidate.deck.some(row=>row.instanceId===card.instanceId),false);
   const owned=[...preview.candidate.deck,...preview.candidate.sideboard];
   for(const original of independent)assert.ok(owned.some(row=>row.instanceId===original.instanceId&&row.cardId===original.cardId),'every independent card keeps its owned identity');
   const selections=structuredClone(draft.selections);selections[grant.id]={id:replacement,abilityRank:2};
   assert.equal(previewClassRespec(fixture,run,draft,{selections}).ok,false,'a replacement still needs the final build requirements');
+  const {rewardDom}=await import('./helpers/reward-dom.mjs'),dom=rewardDom(),saved=Object.fromEntries(Object.keys(dom).map(key=>[key,globalThis[key]]));Object.assign(globalThis,dom);
+  let closeClassRespec;
+  try{
+    document.addEventListener=(...args)=>window.addEventListener(...args);document.removeEventListener=(...args)=>window.removeEventListener(...args);
+    document.getElementById=id=>document.querySelector('#'+id);
+    Object.defineProperty(document.body.constructor.prototype,'childElementCount',{get(){return this.children.length;}});
+    const component=await import('../src/ui/components/classRespec.js');closeClassRespec=component.closeClassRespec;
+    const {mountClassRespec}=component;
+    mountClassRespec({registries:fixture,view,onApply:()=>({ok:true})});
+    const select=document.querySelector('#respec-'+grant.id.replace(/[^a-z0-9]/gi,'-'));
+    assert.ok(select);assert.equal(select.value,card.cardId+'@2');
+    assert.match(select.children.find(option=>option.getAttribute('value')===select.value).textContent,/Retain in sideboard/);
+  }finally{closeClassRespec?.({silent:true});Object.assign(globalThis,saved);}
   assert.equal(applyClassRespec(fixture,run,preview,{saveCandidate:()=>true}).ok,true);assert.deepEqual(validateRunShape(run),[]);
 });
 
