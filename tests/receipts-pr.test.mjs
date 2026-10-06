@@ -77,11 +77,19 @@ test('--check --pr: this repository\'s CHANGELOG decides the pull request head',
   const box = JSON.parse(readFileSync(join(ROOT, 'buildordinal.json'), 'utf8'));
   const stamped = (want) => [...md.matchAll(/\/pull\/(\d+)\), `([^`]+)`/g)].find(([, , s]) => want(s))?.[1];
   const onBox = stamped((s) => s === `${box.release}.${box.ordinal}`);
-  assert.ok(onBox, `no receipt in CHANGELOG.md is stamped with the committed box ${box.release}.${box.ordinal}`);
-  const green = cli(['--check', '--pr', onBox]);
-  assert.equal(green.status, 0, green.stdout + green.stderr);
+  // Automatic variant rebuilds can advance the box without creating a PR.
+  // Actual PR runs still require a matching receipt; receipts.yml also checks
+  // that the match belongs to that exact PR, not merely the same build number.
+  if (process.env.GITHUB_EVENT_NAME === 'pull_request') {
+    assert.ok(onBox, `no receipt in CHANGELOG.md is stamped with the committed box ${box.release}.${box.ordinal}`);
+  }
+  if (onBox) {
+    const green = cli(['--check', '--pr', onBox]);
+    assert.equal(green.status, 0, green.stdout + green.stderr);
+  }
   // A receipted pull request stamped with an older box is red on this tree.
   const offBox = stamped((s) => s !== `${box.release}.${box.ordinal}`);
+  assert.ok(offBox, 'the repository must retain an older receipt to exercise stamp rejection');
   const behind = cli(['--check', '--pr', offBox]);
   assert.equal(behind.status, 1, behind.stdout + behind.stderr);
   assert.match(behind.stdout, new RegExp(`#${offBox}'s receipt is stamped`));
