@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1672",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative updates keep their build numbers current",
+    "detail": "Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.",
+    "build": "0.7.1.1035",
+    "pullRequest": 1672,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1672"
+  },
+  {
     "id": "pr-1668",
     "date": "2026-10-06",
     "group": "2026-10-06",

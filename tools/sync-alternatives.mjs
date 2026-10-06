@@ -56,6 +56,15 @@ export function mergeAlternative(repo, source, target, { regenerate = false } = 
       }
     }
     if (regenerate) {
+      // Both histories can have advanced their counters independently. Seed
+      // the generator from the newest receipt in the merged release so the
+      // variant cannot fall behind a promoted changelog entry after a conflict.
+      const mergedRelease = execFileSync(process.execPath, ['--input-type=module', '-e',
+        "import { release } from './tools/buildversion.mjs'; process.stdout.write(release(process.cwd()));"], { cwd: worktree, encoding: 'utf8' }).trim();
+      const seeds = [source, before].map((ref) => ({ ref, record: JSON.parse(git(worktree, 'show', `${ref}:buildordinal.json`)) }))
+        .filter(({ record }) => record.release === mergedRelease)
+        .sort((a, b) => b.record.ordinal - a.record.ordinal);
+      if (seeds.length) git(worktree, 'restore', '--source', seeds[0].ref, '--staged', '--worktree', '--', 'buildordinal.json');
       // Use the merged tree's generator. CI builds and verifies this receipt.
       execFileSync(process.execPath, ['--input-type=module', '-e',
         "import { bumpOrdinal } from './tools/buildversion.mjs'; bumpOrdinal(process.cwd());"], { cwd: worktree, stdio: 'inherit' });
