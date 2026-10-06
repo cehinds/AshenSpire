@@ -186,7 +186,8 @@ export function booleanSettingToggle(label, value, onChoose) {
 }
 
 /** A class: an OptionCard — Glyph, Title·S, prose, and a StatePill when it is still locked. */
-export function classChoiceCard(cls, { selected = false, locked = false, visual = null, onChoose = null, hint = null, mastery = null } = {}) {
+export function classChoiceCard(cls, { selected = false, locked = false, expanded = false, visual = null, onChoose = null, hint = null, mastery = null } = {}) {
+  const preview = selected && expanded && !locked;
   const card = optionCard({
     name: cls.name,
     description: cls.description,
@@ -194,20 +195,29 @@ export function classChoiceCard(cls, { selected = false, locked = false, visual 
     // A locked card wears the unlock's own hint (plan phase 5c) or, for a
     // class not yet shipped, the milestone it arrives in.
     badge: locked && hint ? pill({ label: hint }) : locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
-    selected, disabled: locked, tag: locked ? 'div' : 'button',
+    selected, disabled: locked, tag: locked ? 'div' : preview ? 'article' : 'button',
     className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`,
-    attrs: { dataset: { class: cls.id } },
+    attrs: { dataset: { class: cls.id }, ...(preview ? { 'aria-label': `${cls.name}, selected class`, tabindex: '-1' } : {}) },
   });
   card.prepend(el('span', { class: 'og', 'aria-hidden': 'true' }, visualNode(visual)));
-  if (!locked && onChoose) card.addEventListener('click', onChoose);
+  if (!locked && !preview && onChoose) card.addEventListener('click', onChoose);
   return markUiComponent(card, UI.classChoiceCard, locked ? 'locked' : 'available');
 }
 
 /** The class preview: a Pane — Eyebrow, Title·M, the figure in an ArtWell, the resources, the relic. */
-export function classPreviewPane({ cls, sprite = null, resources = null, relic = null, relicDescription = '' }) {
+export function classPreviewPane({ cls, sprite = null, resources = null, relic = null, relicDescription = '', onRelicInspect = null }) {
   const art = artWell({ glyph: '', attrs: { class: 'figure cc-class-art' } });
   art.removeAttribute('aria-hidden');
   if (sprite) art.appendChild(sprite);
+  const relicCard = relic ? optionCard({
+    glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
+    arrow: false, tag: onRelicInspect ? 'button' : 'div', className: 'cc-class-relic',
+    attrs: onRelicInspect ? { 'aria-haspopup': 'dialog', 'aria-label': `Inspect ${relic.name}` } : {},
+  }) : null;
+  if (relicCard && onRelicInspect) {
+    relicCard.removeAttribute('aria-pressed');
+    relicCard.addEventListener('click', () => onRelicInspect(relic, relicCard));
+  }
   const pane = el('article', { class: 'as-pane cc-class-preview', 'aria-label': `${cls.name} class preview` }, [
     titleM(cls.name, { tag: 'h3' }),
     el('div', { class: 'as-stack' }, [
@@ -216,12 +226,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
         eyebrow('Starting resources'),
         resources,
       ]),
-      el('div', { class: 'as-stack tight' }, [
-        relic ? optionCard({
-          glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
-          arrow: false, tag: 'div', className: 'cc-class-relic',
-        }) : null,
-      ]),
+      el('div', { class: 'as-stack tight' }, relicCard),
     ]),
   ]);
   return markUiComponent(pane, UI.classPreviewPane);
@@ -230,17 +235,19 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
 /**
  * classUnfold({ cls, sprite, resources, relic }) → what the chosen
  * class card opens to hold (owner, 2026-09-19): the portrait on the left,
- * the summary stats on the right, never past the card's box. Appended
- * inside the card, so it is the card that unfolds; the shares and the
- * height are the screen's --creation-unfold-* (creation.json).
+ * the summary stats on the right. Appended inside the selected article;
+ * its resources and relic may open detail modals without nested buttons.
  */
-export function classUnfold({ cls, sprite = null, resources = null, relic = null, visual = null, mastery = '' }) {
-  // Spans only: this lives inside the card's <button>, which admits no div
-  // and discards a group role. The card names the class; the portrait is
-  // decoration here, and the resources and relic reach a reader through the
-  // card's aria-describedby (customize.js).
+export function classUnfold({ cls, sprite = null, resources = null, relic = null, visual = null, mastery = '', onRelicInspect = null }) {
+  // The selected card is an article so these native detail buttons have no
+  // interactive ancestor. Folded class choices remain ordinary buttons.
   if (sprite && sprite.tagName === 'IMG') sprite.alt = '';
   const art = el('span', { class: 'as-artwell figure cc-unfold-art' }, sprite);
+  const relicFace = relic ? el(onRelicInspect ? 'button' : 'span', {
+    class: `cc-unfold-relic${onRelicInspect ? ' cc-preview-detail-trigger' : ''}`,
+    ...(onRelicInspect ? { type: 'button', 'aria-haspopup': 'dialog', 'aria-label': `Inspect ${relic.name}` } : {}),
+  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
+  if (relicFace && onRelicInspect) relicFace.addEventListener('click', () => onRelicInspect(relic, relicFace));
   const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
     el('span', { class: 'cc-unfold-portrait' }, [
       el('span', { class: 'cc-unfold-class-icon', 'aria-hidden': 'true' }, visualNode(visual)),
@@ -251,18 +258,25 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
       el('span', { class: 'cc-unfold-description', text: cls.description }),
       mastery ? el('span', { class: 'cc-unfold-mastery', text: mastery }) : null,
       resources,
-      relic ? el('span', { class: 'cc-unfold-relic' }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null,
+      relicFace,
     ]),
   ]);
   return markUiComponent(node, UI.classPreviewPane);
 }
 
 /** The five starting resources: a StatStrip of Chips. */
-export function classResourceGrid(rows) {
-  const strip = statStrip(rows.map((entry) => chip({
-    key: entry.faceLabel || entry.label, value: entry.value,
-    attrs: { class: 'cc-class-resource', dataset: { stat: entry.id } },
-  })), { class: 'cc-class-resource-grid', 'aria-label': 'Starting resources' });
+export function classResourceGrid(rows, { onInspect = null } = {}) {
+  const strip = statStrip(rows.map((entry) => {
+    const face = chip({ key: entry.faceLabel || entry.label, value: entry.value });
+    const item = onInspect ? el('button', {
+      type: 'button', class: 'cc-preview-detail-trigger', 'aria-haspopup': 'dialog',
+      'aria-label': `${entry.inspectionLabel || entry.label || entry.faceLabel}: ${entry.value}. View details`,
+    }, face) : face;
+    item.classList.add('cc-class-resource');
+    item.dataset.stat = entry.id;
+    if (onInspect) item.addEventListener('click', () => onInspect(entry, item));
+    return item;
+  }), { class: 'cc-class-resource-grid', 'aria-label': 'Starting resources' });
   return markUiComponent(strip, UI.classResourceGrid);
 }
 
