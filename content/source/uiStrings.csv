@@ -28,7 +28,7 @@
 # cell containing one into an array, and the loader refuses it by name rather
 # than joining it back into a sentence nobody authored.
 id,extends,short,full,tip
-combat.rating.ward,,Ward,Ward rating reduces magical damage and weighs in status resistance.,Ward rating
+combat.rating.ward,,Ward rating,Ward rating reduces magical damage and weighs in status resistance.,Ward rating
 combat.poise.shared,,Poise,"Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",Shared break meter
 combat.poise.actionLoss,,Actions,{amount} fewer Actions next turn,Actions lost after Stagger
 combat.poise.enemyLoss,,Move,lose the next move,Stagger cancels the next move

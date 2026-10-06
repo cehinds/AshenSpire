@@ -1096,7 +1096,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             resistance: percent === null ? '' : ` by ${percent}%`,
             effect: kind === 'player' ? tFull('combat.poise.actionLoss', { amount: loss }) : tFull('combat.poise.enemyLoss'),
           }));
-          return esc(`${magical ? 'Ward' : 'Poise'} resists ${magical ? 'magical' : 'physical'} attacks${percent === null ? '' : ` by ${percent}%`} and configured status effects. The bar fills with impact from hits that pass Block. A full bar causes ${magical ? 'Disruption' : 'Stagger'}: ${kind === 'player' ? `${loss} less Stamina next turn` : 'lose the next move'}.`);
+          return esc(`${magical ? 'Ward' : 'Poise'} resists ${magical ? 'magical' : 'physical'} attacks${percent === null ? '' : ` by ${percent}%`} and configured status effects. The bar fills with impact from hits that pass Block. A full bar causes ${magical ? 'Disruption' : 'Stagger'}: ${kind === 'player' ? `${loss} less Stamina next turn` : tFull('combat.poise.enemyLoss')}.`);
         }
       }
       if (bar.id !== 'poise') return '';

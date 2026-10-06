@@ -5,7 +5,7 @@ export const uiStrings = [
   {
     "id": "combat.rating.ward",
     "extends": "",
-    "short": "Ward",
+    "short": "Ward rating",
     "full": "Ward rating reduces magical damage and weighs in status resistance.",
     "tip": "Ward rating"
   },
