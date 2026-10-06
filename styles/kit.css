@@ -2123,6 +2123,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-upgrade-modal > .modal-head > .modal-head-actions { margin-left: auto; align-self: center; align-items: center; min-width: 0; flex-shrink: 1; }
 .smith-header-stones { text-align: right; min-width: 0; }
 .smith-upgrade-modal .modal-close > .modal-close-face { font: 24px/1 Arial, sans-serif; }
+.smith-upgrade-modal .modal-close > .modal-close-face::after { content: none; }
 .smith-preview-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .smith-upgrade-modal .smith-preview-host { flex: 1 1 0; overflow: hidden; }
 .smith-consequence { flex: 0 0 auto; margin: 0; }

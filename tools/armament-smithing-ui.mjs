@@ -214,7 +214,9 @@ async function main() {
       // selector above the pane, so a candidate is reached by opening it first.
       const compact = () => evaluate(`!!document.querySelector('.smith-upgrade-modal .as-catnav-toggle')?.getClientRects().length`);
       const pick = async (itemRef) => {
-        if (await compact()) await click('.smith-upgrade-modal .as-catnav-toggle');
+        if (await compact() && !await evaluate(`document.querySelector('.smith-upgrade-modal .as-catnav-toggle')?.getAttribute('aria-expanded') === 'true'`)) {
+          await click('.smith-upgrade-modal .as-catnav-toggle');
+        }
         await click(`.smith-candidate-card[data-item-ref="${itemRef}"]`);
       };
       const openSelected = async (stones, itemRef = 'armament/straightSword', itemName = 'Straight Sword') => {
@@ -247,7 +249,7 @@ async function main() {
         const horizontal=[modal,document.querySelector('.smith-upgrade-modal .modal-head'),document.querySelector('.smith-modal-body'),document.querySelector('.smith-candidate-region'),document.querySelector('.smith-preview-region'),document.querySelector('.smith-modal-footer')].filter(Boolean).map((node)=>({name:node.className,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
         return {
           text:(preview?.textContent||'').replace(/\\s+/g,' ').trim(),
-          count:(document.querySelector('[data-smith-count]')?.textContent||'').replace(/\\s+/g,' ').trim(),
+          count:(document.querySelector('.smith-header-stones')?.textContent||'').replace(/\\s+/g,' ').trim(),
           title:document.querySelector('.smith-upgrade-modal h2')?.textContent.trim()||'',
           candidates:[...document.querySelectorAll('.smith-candidate-card')].map((node)=>({ref:node.dataset.itemRef||'',name:node.querySelector('.smith-weapon-name')?.textContent.trim()||''})),
           weaponCards:[...document.querySelectorAll('.smith-weapon-card')].map((node)=>{
@@ -376,7 +378,7 @@ async function main() {
 
       await openSelected(0);
       const zero = await reading();
-      check(zero.title === 'Upgrade an Item' && zero.count === '0 Smithing Stones · 3 eligible'
+      check(zero.title === 'Upgrade an Item' && zero.count === '0 Smithing Stones available'
           && zero.candidates.map((row)=>row.ref).join('|') === 'armament/straightSword|armament/roundShield|armor/reaver/default'
           && !zero.candidates.some((row)=>row.ref === 'relic/forsakenMedallion'),
         `SMITH-UI-${upper}-ZERO-PICKER`, `generic picker exposes the two default armaments and equipped armor by namespaced ref without inferring an unauthored owned relic (${JSON.stringify({ title: zero.title, count: zero.count, candidates: zero.candidates })})`);
@@ -502,7 +504,7 @@ async function main() {
 
       await openSelected(1);
       const one = await reading();
-      check(one.count === '1 Smithing Stone · 3 eligible'
+      check(one.count === '1 Smithing Stone available'
           && one.text.includes('Tier 0 → 1') && one.text.includes('REQ/AVAIL') && one.text.includes('Smithing Stone Cost REQ/AVAIL 1/1') && one.text.includes('STR10→9')
           && one.text.includes('Slashing Strike') && one.text.includes('AR 7 → 10')
           && one.text.includes('Weapon Technique') && one.text.includes('GUARD 3 → 5'),
@@ -634,10 +636,10 @@ async function main() {
         await until(`!!document.querySelector('.smith-upgrade-modal')`, 'co-op Smith modal');
         await pick('armament/straightSword');
         const coopModal = await evaluate(`(() => ({
-          count:(document.querySelector('[data-smith-count]')?.textContent||'').replace(/\\s+/g,' ').trim(),
+          count:(document.querySelector('.smith-header-stones')?.textContent||'').replace(/\\s+/g,' ').trim(),
           text:(document.querySelector('.smith-preview-card')?.textContent||'').replace(/\\s+/g,' ').trim(),
         }))()`);
-        check(coopModal.count === '1 Smithing Stone · 3 eligible'
+        check(coopModal.count === '1 Smithing Stone available'
             && coopModal.text.includes('AR 7 → 10')
             && coopModal.text.includes('GUARD 3 → 5'),
           'SMITH-UI-COOP-SHOT-MODAL', `co-op Shrine shot opens the shared real-delta review (${JSON.stringify(coopModal)})`);
