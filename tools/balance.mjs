@@ -25,7 +25,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, cardChoicePlan } from '../src/engine/combat.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { affordableCards, refusalsFor } from './simbot.mjs';
+import { firstAffordableCard, refusalsFor } from './simbot.mjs';
 import { createRunState } from '../src/model/state.js';
 import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
 import { bossTierScale } from '../src/model/seats.js';
@@ -57,7 +57,7 @@ function enemyStats(def) {
 const firstLiving = (c) => c.enemies.find((e) => e.alive);
 function botStep(c) {
   const refused = refusalsFor(c);
-  const card = affordableCards(REG, c, refused)[0];
+  const card = firstAffordableCard(REG, c, refused);
   if (!card) { dispatch(c, { type: 'endTurn' }); return; }
   const tgt = firstLiving(c);
   try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(c, card.instanceId)?.options[0]?.id }); }

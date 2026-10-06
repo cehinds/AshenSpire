@@ -404,7 +404,7 @@ export function createRegistries(contentBundle) {
   // resolution authority moved to the framework (src/framework/termOverlay.js).
   registries.frameworkTerms = createEntityTermOverlay(bundle);
 
-  if (bundle.legacyProgression) registries.legacyProgressionSource = createRegistries({...bundle,...bundle.legacyProgression,legacyProgression:undefined,balance:{...bundle.balance,progression:undefined}});
+  if (contentBundle.legacyProgression) registries.legacyProgressionSource = createRegistries({...contentBundle,...contentBundle.legacyProgression,legacyProgression:undefined,balance:{...contentBundle.balance,...contentBundle.legacyProgression.balance,progression:undefined}});
   return Object.freeze(registries);
 }
 
@@ -558,7 +558,9 @@ const resolveCache = new WeakMap();
  */
 export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   const cardId = instanceOrRef.cardId;
-  const definition = registries.cards.get(cardId);
+  const legacyCards = registries.legacyProgressionSource?.cards;
+  const definition = instanceOrRef.legacyAbility && legacyCards?.has(cardId)
+    ? legacyCards.get(cardId) : registries.cards.get(cardId);
   const authored = instanceOrRef.legacyAbility && definition.legacyFace ? {...definition,...definition.legacyFace,gradeProfiles:undefined} : definition;
   const legacyBase = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
   const usesAbilityGrade = Array.isArray(authored.gradeProfiles) && (instanceOrRef.abilityRank !== undefined || instanceOrRef.rank === undefined);
@@ -582,7 +584,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 

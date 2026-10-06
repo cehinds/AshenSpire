@@ -143,6 +143,22 @@ test('actual co-op settlement banks printed spell XP on the saved linear curve f
   const saved=session.serialize(),restored=restoreSession(root,saved);
   assert.deepEqual(restored.refusedMembers(),[]);
   assert.deepEqual(restored.session.members.get('a').run.skills['item:magic-focus'],member.run.skills['item:magic-focus']);
+  restored.setConnectedMany(['a'],true);
+  const beforeClaim=structuredClone(restored.serialize());
+  assert.equal(restored.claimMemberSkillLevel('a','item:magic-focus',{saveSession:()=>false}).ok,false);
+  assert.deepEqual(restored.serialize(),beforeClaim,'a failed host save preserves the real-play payout and pending level');
+  let committed;
+  assert.equal(restored.claimMemberSkillLevel('a','item:magic-focus',{saveSession:candidate=>{committed=structuredClone(candidate);return true;}}).ok,true);
+  const claimed=restored.session.members.get('a').run;
+  assert.equal(claimed.skills['item:magic-focus'].level,2);
+  assert.equal(claimed.skills['item:magic-focus'].xp,0);
+  assert.equal(claimed.skills['item:magic-focus'].pendingDrafts,beforeClaim.members.find(row=>row.id==='a').run.skills['item:magic-focus'].pendingDrafts+1);
+  const ownerOffers=restored.snapshot().party.find(row=>row.id==='a').pendingProgression.skillDrafts;
+  assert.ok(ownerOffers.length>0&&ownerOffers.every(offer=>offer.skillId==='item:magic-focus'&&offer.level<=2),'the oldest unpaid ability receipt remains visible within the configured draft limit');
+  const reloaded=restoreSession(root,committed);
+  assert.deepEqual(reloaded.refusedMembers(),[]);
+  assert.deepEqual(reloaded.session.members.get('a').run.skills['item:magic-focus'],claimed.skills['item:magic-focus']);
+  assert.deepEqual(reloaded.session.members.get('a').run.abilityOffers,claimed.abilityOffers,'the saved manual claim contains the exact owner offer');
 });
 
 test('owned class feat rules mount through the real co-op member transport after reload',()=>{

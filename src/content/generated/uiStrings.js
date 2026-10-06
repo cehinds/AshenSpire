@@ -7939,5 +7939,40 @@ export const uiStrings = [
     "short": "Your class level lasts. Choose a fresh build for this climb.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "possession.trigger.cardPreparing",
+    "extends": "",
+    "short": "Card preparing",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.explicitDiscard",
+    "extends": "",
+    "short": "Chosen discard",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.enemyKilledWithStatus",
+    "extends": "",
+    "short": "Status kill",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.cardDiscarded",
+    "extends": "",
+    "short": "Card discarded",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.hpOfferingPaid",
+    "extends": "",
+    "short": "HP offering paid",
+    "full": "",
+    "tip": ""
   }
 ];

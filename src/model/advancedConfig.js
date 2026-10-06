@@ -1191,6 +1191,16 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     const parent = own.dropPath.slice(0, -1).reduce((node, key) => node?.[key], configured);
     if (parent && typeof parent === 'object') delete parent[own.dropPath.at(-1)];
   }
+  if (bundle.legacyProgression) {
+    // Derive legacy card formula baselines from the captured faces, then apply
+    // the same settings. New grade costs must not rewrite old saved cards.
+    const legacy = configuredContentBundle({ ...bundle, ...bundle.legacyProgression,
+      legacyProgression: undefined, balance: { ...bundle.balance, progression: undefined } }, settingsOrSnapshot);
+    configured.legacyProgression = { ...bundle.legacyProgression,
+      cards: legacy.cards, relics: legacy.relics, classes: legacy.classes,
+      classSkillFeats: legacy.classSkillFeats, classMastery: legacy.classMastery,
+      equipment: legacy.equipment, balance: legacy.balance };
+  }
   return configured;
 }
 

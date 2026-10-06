@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 import { openModal, button, el } from '../kit/index.js';
 
 // This choice happens after a paid card's draw has resolved. Closing the
@@ -5,7 +6,7 @@ import { openModal, button, el } from '../kit/index.js';
 export function openDiscardChoiceModal({ cards, count, cardName, onChoose, onClosed }) {
   const selected = new Set();
   let answer = null;
-  const confirm = button({ label: `Discard ${count}`, weight: 'primary', disabled: true });
+  const confirm = button({ label: `${t('combat.discard')} ${count}`, weight: 'primary', disabled: true });
   const shell = openModal({
     title: `Choose ${count} card${count === 1 ? '' : 's'} to discard`, eyebrow: cardName || 'Resolving card',
     size: 'md', className: 'discard-choice', closeLabel: 'Choose later',

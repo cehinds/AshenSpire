@@ -18,15 +18,22 @@ import { cardPlayCosts } from '../src/engine/combat.js';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 
 /** The hand's playable, affordable cards, in hand order, minus this turn's refusals. */
-export function affordableCards(registries, combat, refused = new Set()) {
+function isAffordable(registries, combat, refused, h) {
   const p = combat.player;
-  return combat.piles.hand.filter((h) => {
-    if (refused.has(h.instanceId)) return false;
-    const def = resolveCard(registries, { cardId: h.cardId, upgraded: h.upgraded });
-    if ((def.keywords || []).includes('unplayable')) return false;
-    const cost = cardPlayCosts(combat, h.instanceId);
-    return cost.energy <= p.energy && cost.mana <= p.mana && cost.stamina <= p.stamina;
-  });
+  if (refused.has(h.instanceId)) return false;
+  const def = resolveCard(registries, { cardId: h.cardId, upgraded: h.upgraded });
+  if ((def.keywords || []).includes('unplayable')) return false;
+  const cost = cardPlayCosts(combat, h.instanceId);
+  return cost.energy <= p.energy && cost.mana <= p.mana && cost.stamina <= p.stamina;
+}
+
+export function affordableCards(registries, combat, refused = new Set()) {
+  return combat.piles.hand.filter(h => isAffordable(registries, combat, refused, h));
+}
+
+/** The same leftmost choice without previewing cards the bot will not play. */
+export function firstAffordableCard(registries, combat, refused = new Set()) {
+  return combat.piles.hand.find(h => isAffordable(registries, combat, refused, h));
 }
 
 /** A per-combat refusal set that empties itself at each new player turn. */

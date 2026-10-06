@@ -1,10 +1,11 @@
+import {t} from '../strings.js';
 import {button,el,openModal,prose,statusText} from '../kit/index.js';
 import {markUiComponent,UI_COMPONENTS as UI} from './uiComponents.js';
 import {renderCard} from './card.js';
 import {createClassRespecDraft,classRespecView,previewClassRespec} from '../../model/classRespec.js';
 import {getFeatDescription} from '../../model/classSkillFeatDescription.js';
 
-const KIND={cards:'Cards',feat:'Feats',armory:'Equipment',relic:'Relics',attribute:'Attributes'};
+const KIND={cards:t('armoury.tab.cards'),feat:'Feats',armory:'Equipment',relic:'Relics',attribute:'Attributes'};
 const choiceKey=choice=>`${choice.id}${Number.isInteger(choice.abilityRank)?'@'+choice.abilityRank:''}`;
 export function classRespecOptionName(registries,kind,id,rank = null){
   let name=id;
@@ -32,7 +33,7 @@ export function mountClassRespec({registries,run=null,meta={},view=null,onApply,
   if(draft&&!draft.ok)throw new Error(draft.reason);
   let state=view || classRespecView(registries,run,draft),review=false,selections=structuredClone(state.selections),treeNodes=[...state.treeNodes];
   let body,shell,record;
-  const cancel=button({label:'Cancel',role:'exit'}),confirm=button({label:'Review changes',weight:'primary'});
+  const cancel=button({label:t('common.cancel'),role:'exit'}),confirm=button({label:'Review changes',weight:'primary'});
   const label=(kind,id,rank=null)=>classRespecOptionName(registries,kind,id,rank);
   const refresh=()=>{
     if(onPreview){confirm.disabled=true;onPreview({selections,treeNodes});return;}
@@ -77,7 +78,7 @@ export function mountClassRespec({registries,run=null,meta={},view=null,onApply,
           const selected=selections[slot.receiptId];
           if(kind==='feat' && selected){const description=getFeatDescription(registries,selected.id);if(description)fieldset.append(prose(description));}
           if(kind==='cards' && selected){
-            const detail=el('details',{},el('summary',{text:`Inspect ${label(kind,selected.id,selected.abilityRank)}`}));
+            const detail=el('details',{},el('summary',{text:t('deckEditor.inspectNamed', {name:label(kind,selected.id,selected.abilityRank)})}));
             detail.addEventListener('toggle',()=>{if(detail.open && detail.childElementCount===1)detail.append(renderCard(registries,{cardId:selected.id,upgraded:false,...(Number.isInteger(selected.abilityRank)?{abilityRank:selected.abilityRank}:{})},{tooltip:false}));});
             fieldset.append(detail);
           }

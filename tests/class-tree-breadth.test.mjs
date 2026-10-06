@@ -5,7 +5,7 @@
 // played through a real fight so a rule that validates but never fires fails.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { classTreeRows } from '../src/model/classTree.js';
 import { createRunState } from '../src/model/state.js';

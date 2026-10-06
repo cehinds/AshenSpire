@@ -1,3 +1,4 @@
+import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
@@ -955,6 +956,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.classMasteryState !== undefined) problems.push(...classMasteryRunProblems(run.classMasteryState));
   if (run.pendingFinish !== undefined && (typeof run.pendingFinish?.victory !== 'boolean' || typeof run.pendingFinish?.id !== 'string' || !run.pendingFinish.id)) problems.push('pendingFinish must hold a victory and completion ID');
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
+  problems.push(...coopProgressionProblems(run));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
