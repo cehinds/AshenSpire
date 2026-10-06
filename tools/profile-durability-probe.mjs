@@ -101,8 +101,8 @@ if (root === '--selftest') {
     },
     {
       name: 'M2 every schemaVersion is accepted blind (an older build eats a newer profile)',
-      needle: '    if (v === undefined || v === META_SCHEMA_VERSION) return { json, meta };',
-      patch: '    return { json, meta }; /* PLANT M2: every schemaVersion accepted blind */',
+      needle: '    const v = meta.schemaVersion;',
+      patch: '    return { json, meta }; /* PLANT M2: every schemaVersion accepted blind */\n    const v = meta.schemaVersion;',
       expectFail: 'E2 a newer schemaVersion is refused rather than accepted blind',
     },
     {
