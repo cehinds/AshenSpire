@@ -16,6 +16,7 @@ import { advanceStatusClock } from './statuses.js';
 import { abilityMetric, recordAbilityEvent, priorAbilityEntity } from './abilityRiders.js';
 
 const MAX_EMIT_DEPTH = 64;
+const PLAYER_TARGET_EVENTS = new Set(['damageDealt', 'hpLost', 'healed', 'statusApplied', 'statusExpired']);
 
 /**
  * emitEvent(ctx, type, payload) — append to the event log (and the current
@@ -32,6 +33,12 @@ export function emitEvent(ctx, type, payload = {}) {
     sourceId: action.source?.id, sourceKind: action.source?.kind, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}),
     ...payload,
   };
+  // Co-op player entities share id 'player'. Attribute the actual target in
+  // the canonical bus so detached transactions and live enemy effects agree.
+  // Solo receipts keep their existing shape.
+  if (ctx.players && payload.targetId === 'player' && PLAYER_TARGET_EVENTS.has(type)) {
+    payload = { ...payload, playerId: payload.playerId ?? payload.targetPlayerId ?? ctx.playerKey };
+  }
   const event = { type, ...foundationEvent(ctx, type, payload) };
   ctx.eventLog.push(event);
   recordAbilityEvent(ctx, type, event);

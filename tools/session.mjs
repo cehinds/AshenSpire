@@ -585,20 +585,6 @@ export function createSession({ registries, seedString, endless = false, restore
       enemyDamageMult: boss ? boss.damage : 1,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
-    // Co-op player entities intentionally share the engine id `player`; the
-    // active seat key is the authoritative discriminator. Stamp it at emission
-    // time, while that discriminator is still exact, rather than asking the UI
-    // to infer a target later from HP or block deltas.
-    const emit = combat.emit;
-    combat.emit = (type, payload = {}) => emit(type,
-      // The engine names the seat an HP change hit (targetPlayerId) when it
-      // can; the active seat is only the fallback, since an enemy's move or a
-      // status can hurt a seat that is not the active one.
-      (type === 'damageDealt' || type === 'hpLost' || type === 'healed') && payload.targetId === 'player'
-        ? { ...payload, playerId: payload.playerId ?? payload.targetPlayerId ?? combat.playerKey }
-        : ['statusApplied', 'statusExpired'].includes(type) && payload.targetId === 'player'
-          ? { ...payload, playerId: payload.playerId ?? combat.playerKey }
-        : payload);
     if (combatStartStateForTools) {
       const member = connectedMembers().find((entry) => entry.name === combatStartStateForTools.name);
       const player = member ? combat.players.get(member.id) : null;

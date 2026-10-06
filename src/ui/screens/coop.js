@@ -1340,9 +1340,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         onClaim:skillId=>send({t:'claimSkillLevel',skillId}),
         onReadyChange:ready=>gateCoopProgressionControls(app,ready),
         onChoices:(rows,resume)=>{
-          const continueButton=button({label:'Continue',weight:'primary'}),seatAtOpen=me;
+          const continueButton=button({label:t('reward.continue'),weight:'primary'}),seatAtOpen=me;
           let lastRows=rows,popupError='';
-          const dialog=openModal({title:'Level Up!',eyebrow:'Choose your reward',primary:continueButton,onClose:resume});
+          const dialog=openModal({title:t('reward.level.choice.title'),eyebrow:t('reward.level.eyebrow'),primary:continueButton,onClose:resume});
           const update=nextRows=>{
             if(me!==seatAtOpen)return;
             lastRows=nextRows;
@@ -1562,7 +1562,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         item.type === 'reward' && item.offer.cardMissed ? el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') }) : null,
         options([
           relic ? choice({ glyph: '◆', name: 'Take the relic', className: 'coop-take', attrs: { dataset: { cu: 'relic' } } }) : null,
-          choice({ glyph: '›', name: mm.progressionRulesVersion===1?'Continue':'Skip', attrs: { dataset: { cu: 'skip' } } }),
+          choice({ glyph: '›', name: mm.progressionRulesVersion===1?t('reward.continue'):'Skip', attrs: { dataset: { cu: 'skip' } } }),
         ], { class: 'coop-choices' }),
       ],
     });
