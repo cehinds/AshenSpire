@@ -1,8 +1,9 @@
-import { deferredProgressionCount, deferredOtherClassRewardCount } from '../../model/deferredProgression.js';
-import { pendingLevelCount } from '../../model/levelup.js';
+import { characterSheetModel } from '../models/CharacterSheetModel.js';
+import { skillTrackButton } from './characterSheet.js';
+import { characterStatsButton, progressionTip } from '../components/progressionCards.js';
 import { swapOnError } from '../artFallback.js';
 import { characterLevel } from '../../model/levelup.js';
-import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
+import { levelProgress, skillProgressRows, staleSkillTracks } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
@@ -1819,9 +1820,9 @@ export function mountEquipment(host, {
     const runStats = run.stats || {};
     const group = (title, chips, attrs = {}) => detailCard({ eyebrow: title, muted: true, attrs: { class: 'armoury-stats-group', ...attrs }, children: statStrip(chips.map(([key, value]) => chip({ key, value: String(value) }))) });
     const box = el('div', { class: 'armoury-stats-summary', dataset: { component: 'armoury.statsSummary' } }, [
-      detailCard({ eyebrow: 'Character', name: runClassIdentity(registries, run).name, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
+      detailCard({ eyebrow: t('progression.tab.character'), name: runClassIdentity(registries, run).name, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
       group('Combat', [['Strike', valueFor('attack')], [labelFor('technique'), valueFor('technique')], ['Defense', valueFor('guard')]]),
-      group('Attributes', projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
+      group(t('progression.attributes'), projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
       group('Resources', [[t('combat.actions'), derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
       group('Run', [['Fights won', runStats.fightsWon || 0], ['Damage dealt', runStats.damageDealt || 0], ['Damage taken', runStats.damageTaken || 0]]),
       detailCard({ eyebrow: 'Relics', muted: true, attrs: { class: 'armoury-stats-group' }, children: relicNames.length
@@ -1891,6 +1892,13 @@ export function mountEquipment(host, {
    * beside it, the climb as the fill. Every number is levelProgress's, which
    * is levelUpPlan's — the shrine and this bar read the same step.
    */
+  function openProgression(opener, tab) {
+    onCharacterSheet?.(opener, tab, () => {
+      draw();
+      wrap.querySelector(tab === 'skills' ? '.character-skill-progression' : '.character-level-action')?.focus({ preventScroll: true });
+    }, onProgression && !inCombat ? () => { close(); onProgression(); } : null);
+  }
+
   function characterLevelMeter() {
     const progress = levelProgress(registries, run);
     const node = meter({
@@ -1916,50 +1924,23 @@ export function mountEquipment(host, {
     if (progress.pointsLabel) {
       badgePlate(node, statusText(progress.pointsLabel, { class: 'character-level-points' }), 'the waiting attribute points');
     }
-    if (onProgression && !inCombat) {
-      const waiting = deferredProgressionCount(run);
-      const ready = pendingLevelCount(registries, run) > 0;
-      const action = button({ label: ready ? 'Level up & rewards' : waiting ? `Level rewards · ${waiting} waiting` : 'Level up & stats',
-        weight: ready || waiting ? 'primary' : 'secondary', className: 'character-level-action' });
-      action.addEventListener('click', () => { close(); onProgression(); });
-      node.append(action);
-      const otherClassRewards = deferredOtherClassRewardCount(run);
-      if (otherClassRewards) node.append(prose(`${otherClassRewards} saved reward${otherClassRewards === 1 ? '' : 's'} await the original class. Equip that class to claim them.`, { class: 'character-level-waiting' }));
-    }
-    // The Character sheet (screens/characterSheet.js): every level of the
-    // character and of each skill, and what it grants. Read-only, so it stays
-    // over the Armoury rather than closing it.
     if (onClassRespec && !inCombat) {
       const action = button({label:t('classRespec.title'),className:'character-respec-action'});
       action.addEventListener('click',()=>{close();onClassRespec();});node.append(action);
     }
     if (onCharacterSheet) {
-      const sheet = button({ label: t('characterSheet.open'), className: 'character-sheet-action', attrs: { title: tFull('characterSheet.open') } });
-      sheet.addEventListener('click', () => onCharacterSheet(sheet));
-      node.append(sheet);
+      const action = button({ label: t('progression.title'), className: 'character-level-action', attrs: { 'aria-haspopup': 'dialog' } });
+      progressionTip(action, 'Open level, attributes, skills and class progression');
+      action.addEventListener('click', () => openProgression(action, 'character'));
+      node.append(action);
     }
     return node;
   }
 
   /** One skill track as a Meter: its name and level on the plate, its XP as the fill. */
   function skillProgressMeter(rowModel) {
-    const node = meter({
-      stack: true, tone: 'skill',
-      label: `${rowModel.label} ${rowModel.level}`,
-      value: rowModel.value,
-      pct: rowModel.pct,
-      cur: rowModel.xp, max: rowModel.xpToNext,
-      ariaLabel: rowModel.sense,
-      attrs: {
-        class: `character-skill-meter${rowModel.own ? ' own-class' : ''}`,
-        dataset: { component: 'armoury.skillTrack', skill: rowModel.id, kind: rowModel.kind, level: String(rowModel.level) },
-      },
-    });
-    if (rowModel.draftsLabel) {
-      badgePlate(node, pill({ label: rowModel.draftsLabel, attrs: { class: 'character-skill-drafts' } }), `the drafts waiting on ${rowModel.label}`);
-    }
-    attachTooltip(node, () => `<div class="tt-title">${esc(rowModel.label)}</div><p>${esc(rowModel.sense)}</p>`);
-    return node;
+    const track = characterSheetModel(registries, run).tracks.find(track => track.id === rowModel.id);
+    return skillTrackButton(registries, run, track, rowModel);
   }
 
   function characterStatsPanel() {
@@ -2052,27 +2033,31 @@ export function mountEquipment(host, {
       body: powers,
     }));
 
-    const attributes = el('section', { class: 'character-attributes' });
-    const attributeHost = el('div');
-    const attributeRows = attributeCardModels(registries, run.attributes, {
-      projection,
-      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-      // The hand a solo fight deals: mid-fight, that fight's own snapshot
-      // (`handRules`, from ui/screens/combat.js — its `meta` is synthetic and
-      // holds no hand settings, Codex #1294); otherwise the next fight's,
-      // read from the run's rows and the profile the way engine/runCombat.js
-      // reads them (`runHandRules`).
-      hand: handRules || runHandRules(registries, run, meta.settings || {}),
-    });
-    for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
-    attributeHost.replaceChildren(...primaryStatCards(attributeRows));
-    attributes.appendChild(attributeHost);
-    box.appendChild(informationCard({
-      id: 'attributesCard',
-      label: 'Attributes',
-      summary: attributeRows.map((entry) => `${entry.face.label} ${entry.face.value}`).join(' · '),
-      body: attributes,
-    }));
+    if (inCombat) {
+      const attributes = el('section', { class: 'character-attributes' });
+      const attributeHost = el('div');
+      const attributeRows = attributeCardModels(registries, run.attributes, {
+        projection,
+        equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+        // The hand a solo fight deals: mid-fight, that fight's own snapshot
+        // (`handRules`, from ui/screens/combat.js — its `meta` is synthetic and
+        // holds no hand settings, Codex #1294); otherwise the next fight's,
+        // read from the run's rows and the profile the way engine/runCombat.js
+        // reads them (`runHandRules`).
+        hand: handRules || runHandRules(registries, run, meta.settings || {}),
+      });
+      for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
+      attributeHost.replaceChildren(...primaryStatCards(attributeRows));
+      attributes.appendChild(attributeHost);
+      box.appendChild(informationCard({
+        id: 'attributesCard',
+        label: t('progression.attributes'),
+        summary: attributeRows.map((entry) => `${entry.face.label} ${entry.face.value}`).join(' · '),
+        body: attributes,
+      }));
+    } else {
+    box.append(characterStatsButton({ registries, run, settings: meta.settings || {} }));
+    }
 
     const relics = el('section', { class: 'character-relics' });
     const relicHost = el('div');
@@ -2103,12 +2088,12 @@ export function mountEquipment(host, {
     const skills = el('section', { class: 'character-skills', dataset: { component: 'armoury.skillProgressGroup' } }, [
       meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' }),
     ]);
-    box.appendChild(informationCard({
-      id: 'skillsCard',
-      label: 'Skill progression',
-      summary: skillProgressSummary(skillRows),
-      body: skills,
-    }));
+    const progression = button({ label: t('progression.skill'), className: 'character-skill-progression', attrs: { 'aria-haspopup': 'dialog' } });
+    progressionTip(progression, 'Open progression');
+    progression.addEventListener('click', () => openProgression(progression, 'skills'));
+    if (!onCharacterSheet) progression.addEventListener('click', () => skills.hidden = !skills.hidden);
+    const skillSection = el('section', { class: 'character-skill-section' }, [progression, skills]);
+    box.querySelector('.combatPowerCard').after(skillSection);
     box.appendChild(informationCard({
       id: 'equipmentReceiptsCard',
       label: 'Equipment cards',
@@ -2379,7 +2364,29 @@ export function mountEquipment(host, {
     // selected item's action bottom-right when there is one.
     const back = button({ label: t(picking ? 'armoury.destination.back' : 'common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
     back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });
-    const rendered = renderArmouryPanel(panelModel, wrap, { back });
+    const rendered = renderArmouryPanel(panelModel, wrap, { back,
+      tabs: [
+        { id: 'character', label: t('progression.tab.character'), selected: view === 'grid' },
+        { id: 'armory', label: t('armoury.hub.armory'), selected: view !== 'grid' },
+        { id: 'deck', label: t('armoury.hub.deck'), selected: false },
+      ],
+      onTab: id => {
+        hideTooltip();
+        if (id === 'deck') {
+          if (onEditDeck) { leave(); if (!wrap.isConnected) onEditDeck(); else draw(); }
+          else { notice = inCombat ? 'Deck editing is unavailable during combat.' : 'Deck editing is unavailable with the current settings.'; draw(); }
+          return;
+        }
+        picking = null;
+        view = id === 'character' ? 'grid' : 'rack';
+        onChange?.(run.loadout, { equipView: view });
+        draw();
+        wrap.querySelector(`.armoury-head [data-modal-tab="${id}"]`)?.focus({ preventScroll: true });
+      },
+    });
+    const deckTab = rendered.panel.querySelector('[data-modal-tab="deck"]');
+    deckTab?.setAttribute('aria-disabled', String(!onEditDeck));
+    if (deckTab) progressionTip(deckTab, onEditDeck ? 'Edit your deck' : inCombat ? 'Unavailable during combat' : 'Deck editing is disabled by the current settings');
     setFooterPrimary = rendered.setPrimary;
     armouryNav = rendered.nav;
     const panel = rendered.panel;

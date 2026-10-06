@@ -137,7 +137,8 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 
 /* Close keeps the full accessible hit target above, while its visible square
    is 75% of that target. Every modal inherits the same smaller corner mark. */
-.modal-close { position: relative; background: transparent; border-color: transparent; }
+/* Match button.subtle specificity so its text-button padding cannot crush the icon. */
+button.modal-close { position: relative; padding: 0; background: transparent; border-color: transparent; }
 .modal-close > .modal-close-face {
   display: inline-flex; align-items: center; justify-content: center;
   width: 75%; height: 75%; pointer-events: none;
@@ -5895,4 +5896,93 @@ button[data-button-size] {
 }
 :root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
   grid-template-areas: 'name level' 'bar next' 'gain gain';
+}
+/* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */
+.armoury[data-view="grid"] .armoury-views { display: none; }
+.armoury[data-view="grid"] .armoury-railed { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-view="grid"] .armoury-character { display: grid; grid-template-columns: minmax(16rem, .7fr) minmax(0, 1.3fr); grid-template-rows: auto minmax(0, 1fr); gap: .8rem 1.2rem; }
+.armoury[data-view="grid"] .armoury-character-stats { overflow: visible; gap: .6rem; }
+.armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: clamp(12rem, 28vh, 28rem); }
+.character-skill-section { display: grid; gap: .35rem; }
+.character-skill-progression { width: 100%; text-align: left; }
+.progression-summary, .progression-skill-button { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: .5rem; background: var(--panel, #201b16); color: var(--parchment); text-align: left; }
+button.progression-summary, .progression-attributes-toggle { display: flex; flex-direction: column; gap: .55rem; padding: .8rem 1rem; cursor: pointer; }
+.progression-banner-title { font-family: var(--font-display, serif); font-size: 1.6rem; }
+.progression-summary-line { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: 1.3rem; line-height: 1.5; }
+.progression-summary-line > span { white-space: nowrap; }
+.progression-summary-line strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+.progression-attributes-banner { display: flex; align-items: center; gap: .7rem; padding-right: 1rem; }
+.progression-attributes-toggle { flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; text-align: left; }
+.progression-points { flex: none; border: 1px solid var(--line); border-radius: .4rem; min-height: 44px; padding: .5rem .8rem; font: inherit; font-size: 1.3rem; color: var(--muted); background: transparent; cursor: default; }
+.progression-points.available { color: #e0f2ff; background: #16476c; border-color: #72c5ff; box-shadow: 0 0 .6rem #3faaff40; cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+.progression-points.available:is(:hover, :focus-visible) { transform: translateY(-2px); background: #205e8e; box-shadow: 0 0 1.4rem #52b8ff90; }
+.progression-attributes-detail { border-top: 1px solid var(--line); padding: .7rem 1rem; }
+.progression-attributes-detail[hidden] { display: none; }
+.progression-attributes-detail > .as-prose { margin: 0 0 .5rem; font-size: 1.2rem; }
+.progression-attributes-detail .cc-attribute-card { margin-block: .3rem; }
+.progression-summary:focus-visible, .progression-skill-button:focus-visible, .progression-attributes-toggle:focus-visible, .progression-points:focus-visible { outline: var(--focus-ring, 2px solid var(--gold)); outline-offset: 2px; }
+.progression-skill-button { display: block; padding: .4rem .6rem; min-height: 44px; cursor: pointer; }
+.progression-skill-button:is(:hover, :focus-visible), button.progression-summary:hover, .progression-attributes-toggle:hover { border-color: var(--gold); background: rgba(var(--accent-rgb), .08); }
+.progression-skill-button .as-meter { pointer-events: none; width: 100%; }
+.character-sheet.progression-hub .character-sheet-body { overflow: auto; }
+.character-sheet.progression-hub .cs-pane { overflow: visible; gap: .65rem; }
+.progression-track-list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.progression-feats .as-title-s { margin-block: 0 .3rem; }
+.progression-feat-list, .progression-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+.progression-levels { border: 1px solid var(--line); border-radius: .4rem; }
+.progression-levels > summary { min-height: 44px; padding: .75rem 1rem; cursor: pointer; }
+.progression-levels .cs-ladder { padding: .8rem; }
+.progression-associated-cards { display: flex; gap: 1rem; overflow-x: auto; padding: .5rem .25rem 1rem; }
+.progression-associated-cards > * { flex-shrink: 0; }
+.progression-inspection .cs-pane { overflow: visible; padding: 0; }
+.progression-inspection .cc-class-resource-grid { flex-wrap: wrap; }
+.progression-inspection .progression-stat-card { width: 100%; }
+.deck-editor:has(> .modal-head) { grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+@media (max-width: 680px) {
+  .armoury[data-view="grid"] .armoury-character { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: .6rem; }
+  .armoury[data-view="grid"] .armoury-character > * { grid-column: 1; grid-row: auto; }
+  .armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: calc(100px / var(--ui-zoom, 1)); }
+  .progression-track-list { grid-template-columns: minmax(0, 1fr); }
+  .progression-attributes-banner { flex-wrap: wrap; padding: .4rem .7rem; gap: .3rem; }
+  .progression-attributes-toggle { padding: .3rem; }
+  .progression-points { margin-left: auto; font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+  .progression-summary-line { font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); gap: .3rem .8rem; }
+  .progression-hub .cs-cadence { font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progression-points.available { transition: none; }
+  .progression-points.available:is(:hover, :focus-visible) { transform: none; }
+}
+
+.progression-inspection > .modal-body { padding: var(--modal-inset, 1.4rem); }
+.progression-points, .progression-skill-button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+
+.armoury[data-view="grid"] #armoury-view-select { display: none; }
+:is(.progression-attributes-detail, .progression-stat-card) .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
+:is(.progression-attributes-detail, .progression-stat-card) .ls { min-width: 0; }
+
+:is(.progression-attributes-detail, .progression-stat-card) .disc-face > .as-row .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
+
+/* Feats expose their effect before inspection, using the same framed option motif. */
+.progression-feats-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; }
+.progression-feats-heading .as-title-s { margin: 0; }
+.progression-feat-count { color: var(--muted); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.progression-feat-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+button.progression-feat-card { display: flex; flex-direction: column; align-items: stretch; gap: .55rem; width: 100%; min-width: 0; padding: 1rem 1.2rem; text-align: left; color: var(--parchment); border: 1px solid var(--line-soft); border-radius: var(--r-2); background-color: var(--panel); cursor: pointer; }
+button.progression-feat-card::after { content: none; }
+.progression-feat-topline, .progression-feat-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.progression-feat-name { color: var(--gold); font-family: var(--font-display); font-size: 1.6rem; }
+.progression-feat-state { flex: none; font-size: 1.1rem; color: var(--ink-dim); }
+[data-feat-owned='true'] .progression-feat-state { color: var(--good, #a2be91); }
+.progression-feat-effect { font: 400 1.35rem/1.5 var(--font-body); color: var(--parchment); }
+.progression-feat-footer { margin-top: auto; color: var(--ink-dim); font-size: 1.1rem; }
+.progression-feat-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.progression-feat-tag { border: 1px solid var(--line-soft); padding: .2rem .5rem; border-radius: var(--r-2); }
+.progression-feat-open { font-size: 2rem; line-height: 1; }
+button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--gold); background-color: color-mix(in srgb, var(--panel) 90%, var(--gold)); }
+.progression-feat-empty { padding: .9rem 1.1rem; border: 1px solid var(--line-soft); border-radius: var(--r-2); }
+.progression-feat-empty .as-prose { margin: .3rem 0 0; font-size: 1.25rem; color: var(--ink-dim); }
+@media (max-width: 680px) {
+  .progression-feat-list { grid-template-columns: minmax(0, 1fr); }
+  .progression-feat-effect { font-size: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
 }

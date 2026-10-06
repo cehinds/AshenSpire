@@ -4,6 +4,7 @@
 // class: an Eyebrow heads each receipt, a StatRow carries a name and its
 // numbers, a delta is the kit's `→` pair, a note is Flavour. The `.equip-*` /
 // `.player-*-receipt` / `data-*` names are the hooks the tools and tests read.
+import { t } from '../strings.js';
 import { esc } from './tooltip.js';
 import { FOLD_GLYPH } from './foldGlyph.js';
 
@@ -76,7 +77,7 @@ function ratingCalculationHtml(id, value, receipt) {
   ].join(' + ');
   return `<div class="rating-calculation" data-rating-id="${esc(id)}">`
     + `<div class="rating-calculation-head"><span>${esc(id.toUpperCase())}</span><strong>${numberText(value)}</strong></div>`
-    + `<div class="rating-attributes"><span class="rating-line-label">Attributes</span>${terms}</div>`
+    + `<div class="rating-attributes"><span class="rating-line-label">${esc(t('progression.attributes'))}</span>${terms}</div>`
     + `<div class="rating-formula"><span class="rating-line-label">Calculation</span>${formula} = <strong>${numberText(value)}</strong></div>`
     + '</div>';
 }

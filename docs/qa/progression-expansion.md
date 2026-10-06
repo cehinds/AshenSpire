@@ -22,6 +22,12 @@ Evidence from this workspace is under `D:/repos/.codex/authoring/progression-imp
 
 These browser checks cover the production component and real host authority in one local browser harness. Physical-device and separate-machine LAN acceptance remain unperformed. Build and full-suite results must be read from the associated pull request and CI; this document does not substitute for those gates.
 
+## Initial offers and the Armory hub
+
+Initial ability offers and veteran milestone entitlements are saved as deferred choices after the required class-tree selection. Entering the map does not require an extra reward door. The unchanged Quick Start browser probe passed 13 checks, with six inputs for the normal path and five for the skills-only path. Failed saves restore the whole run and every RNG stream; retry reproduces the same offered identities.
+
+The integration also retains the Armory hub from PR #1671: Character, Armory and Edit Deck navigation, shared attribute allocation, and skill/feat inspection. Inspection reads the run's saved catalog and card grades. Its text-migration fixture remains protected after those rows have entered `dev`, so the guard cannot silently lose its subject after promotion.
+
 ## Cost-preview equivalence
 
 The simulator's lazy first-card selection preserves the original leftmost legal choice. The engine avoids a detached pricing clone only when the canonical event bus has no preparation listener, no queued or paused work, and a live nonterminal board. Custom buses, hooks and uncertain contexts retain the detached path; actual plays remain transactional.

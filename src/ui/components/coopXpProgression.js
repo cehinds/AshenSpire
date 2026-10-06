@@ -88,7 +88,7 @@ export function mountCoopXpProgression(host,{registries,member,onClaim,onReadyCh
       if(!record){const from=!seen.size?row.fraction:before?.level===row.level&&row.xpToNext?clamp(before.xp/row.xpToNext):0;record=makeRecord(row,from);records.set(row.id,record);if(seen.size)jobs.push({id:row.id,from,to:row.fraction});}
       else if(changedLevel){record.shown=0;refill=true;jobs.push({id:row.id,from:0,to:row.fraction});if(waiting===row.id)waiting=null;}
       else if(record.row.xp!==row.xp||previousPending.includes(row.id))jobs.push({id:row.id,from:record.shown,to:row.fraction});
-      record.row=row;record.label=row.kind==='character'?'Character':row.kind==='class'?`Class · ${row.label}`:row.label;
+      record.row=row;record.label=row.kind==='character'?t('progression.tab.character'):row.kind==='class'?`Class · ${row.label}`:row.label;
       record.name.textContent=record.label;record.level.textContent=t('reward.progress.level',{level:row.level});record.next.textContent=row.capped?t('reward.progress.capped'):t('reward.progress.next',{level:row.level+1});
       record.gain.textContent=row.gained?t('reward.progress.gained',{xp:row.gained}):'';record.text.textContent=`${Math.min(row.xp,row.xpToNext||row.xp)} / ${row.xpToNext||row.xp}`;
       record.bar.setAttribute('aria-valuemax',String(row.xpToNext||row.xp));record.bar.setAttribute('aria-label',`${record.label}: ${row.xp} XP`);

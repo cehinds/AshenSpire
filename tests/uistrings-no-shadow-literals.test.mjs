@@ -7,7 +7,7 @@
 // row moved the text until the first repaint and then put it back. Fixing them
 // one thread at a time did not stop the seventh. This sweep does.
 //
-// For every frozen migration fixture (including #1489, #1535 and #1578), plus
+// For every frozen migration fixture (including #1489, #1535, #1578 and #1671), plus
 // any row the branch adds over origin/dev when git can say so, it takes the
 // short, full and tip text and looks for that same text as a string, template
 // or markup literal anywhere in src/ui. A hit is a control that can paint the
@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1671].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,12 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/screens/settings.js', 'Progression', `advanced-group id; ${ID}`],
+  ['src/ui/models/AdvancedSettingsGroups.js', 'Progression', `advanced-group id; ${ID}`],
+  ['src/ui/components/combatantInspector.js', 'Skills', 'combatant active abilities section, separate from the player progression tab'],
+  ['src/ui/components/overlay.js', 'Class', 'combat HUD identity field, separate from the progression tab'],
+  ['src/ui/screens/customRun.js', 'Class', 'custom run class selector, separate from the progression tab'],
+  ['src/ui/screens/customize.js', 'Character', 'character creation fold, separate from the progression tab'],
   ['src/ui/components/illustratedCard.js', 'Georgia', 'CSS font-family fallback, not a displayed font-selection label'],
   ['src/ui/screens/settings.js', 'Stamina', `Recovery topic id; ${ID}`],
   // Settings: category, advanced-group and topic ids. The faces read t('settings.group.*').
@@ -157,6 +163,18 @@ test('all 25 compact Armament rows remain covered independently of origin/dev', 
   const permanent = migratedTexts(permanentMigratedIds());
   assert.ok(permanent.get('Move to')?.includes('armoury.action.moveTo.short'),
     'the semantic formation allowance must still be checked after the branch delta becomes empty');
+});
+
+test('all 35 Progression hub rows remain protected after origin/dev contains the migration', () => {
+  const frozen = frozenMigrationIds(1671);
+  assert.equal(new Set(frozen).size, 35, 'retain every row authored for the Progression hub');
+  for (const id of frozen) assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
+  // The permanent list alone simulates an empty branch delta or missing origin/dev.
+  const permanent = migratedTexts(permanentMigratedIds());
+  assert.ok(permanent.get('Progression')?.includes('progression.title.short'),
+    'protect the title and its distinct settings-group ID allowance after promotion');
+  assert.ok(permanent.get('Associated cards')?.includes('progression.cards.short'),
+    'protect the hub inspection copy independently of git branch state');
 });
 
 test('no src/ui literal repaints a row #1489 moved into uiStrings.csv', () => {

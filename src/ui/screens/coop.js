@@ -1314,7 +1314,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function progressionChoices(progression,{progressionPopup=false}={}){
     const children=abilityDraftStrips(progression,{progressionPopup});
     for(const row of progression.classMilestoneRewards || []){
-      children.push(subtitle(`Class level ${row.level} · ${({cards:'Card',feat:'Feat',armory:'Equipment',relic:'Relic',attribute:'Attribute'})[row.rewardKind]}`));
+      children.push(subtitle(`Class level ${row.level} · ${({cards:'Card',feat:t('progression.feat'),armory:'Equipment',relic:'Relic',attribute:'Attribute'})[row.rewardKind]}`));
       const grid=el('div',{class:row.rewardKind==='cards'?'reward-row':'coop-choices'});
       for(const [index,id] of row.options.entries()){
         const selection=row.choiceIds?.[index] || id,rank=row.abilityRanks?.[index],name=classRespecOptionName(registries,row.rewardKind,id,rank);

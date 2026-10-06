@@ -8205,5 +8205,250 @@ export const uiStrings = [
     "short": "Select cards from your current hand to finish this play.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "progression.title",
+    "extends": "",
+    "short": "Progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.skills",
+    "extends": "",
+    "short": "Skills",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.class",
+    "extends": "",
+    "short": "Class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.sheet",
+    "extends": "",
+    "short": "Character Sheet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.currentResources",
+    "extends": "",
+    "short": "Current character resources",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.currentStats",
+    "extends": "",
+    "short": "Current stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.attributes",
+    "extends": "",
+    "short": "Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feats",
+    "extends": "",
+    "short": "Feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat",
+    "extends": "",
+    "short": "Feat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.skill",
+    "extends": "",
+    "short": "Skill progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.class",
+    "extends": "",
+    "short": "Class progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.allocate.note",
+    "extends": "",
+    "short": "Assign earned points. Unassigned points remain available; Cancel keeps your existing attributes.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.sheet.note",
+    "extends": "",
+    "short": "Inspection only. Values include your current attributes and equipment.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.attribute.note",
+    "extends": "",
+    "short": "Bonuses compare your current stats with this attribute at zero, keeping the others unchanged. Expand for the full formula.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noFeats",
+    "extends": "",
+    "short": "No feats acquired",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noTags",
+    "extends": "",
+    "short": "No associated tags",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noBonus",
+    "extends": "",
+    "short": "No combat stat bonus",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards",
+    "extends": "",
+    "short": "Associated cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tags",
+    "extends": "",
+    "short": "Associated tags",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.bonuses",
+    "extends": "",
+    "short": "Bonuses",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tree",
+    "extends": "",
+    "short": "Skill tree",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.levels",
+    "extends": "",
+    "short": "Level progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.characterLevels",
+    "extends": "",
+    "short": "Character levels",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.rewards",
+    "extends": "",
+    "short": "Level rewards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.emptyClass",
+    "extends": "",
+    "short": "No class equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.emptyCards",
+    "extends": "",
+    "short": "No associated cards for the current loadout",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards.equip",
+    "extends": "",
+    "short": "Equip an item for this skill to see its card schools.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards.note",
+    "extends": "",
+    "short": "Associated cards include future unlocks; reward choices follow your level and current equipment.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.name",
+    "extends": "",
+    "short": "Character, Armory and Edit Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.armory",
+    "extends": "",
+    "short": "Armory",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.deck",
+    "extends": "",
+    "short": "Edit Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.acquired",
+    "extends": "",
+    "short": "Acquired",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.unlock",
+    "extends": "",
+    "short": "Skill level {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.emptyHint",
+    "extends": "",
+    "short": "Choose feats from character and skill level rewards.",
+    "full": "",
+    "tip": ""
   }
 ];
