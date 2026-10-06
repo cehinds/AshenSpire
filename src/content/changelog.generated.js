@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1655",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: class progress kept safely",
+    "detail": "Class mastery now has durable profile storage. Separate runs add their earned XP through receipts that make retries safe, and settings saves retain newer class progress. Returning profiles keep every authored unlock at level zero; live runs adopt mastery in the following update.",
+    "build": "0.7.1.1020",
+    "pullRequest": 1655,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1655"
+  },
+  {
     "id": "pr-1654",
     "date": "2026-10-06",
     "group": "2026-10-06",
