@@ -626,9 +626,9 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
         throw new Error(`${error.message}; Begin refuses: ${JSON.stringify(refusal)}`);
       });
       await press('#cz-start');
-      // A new climb opens on the opening sequence (src/ui/screens/prologue.js)
-      // before its map; the player's way past it is Skip opening.
-      await waitForMount('the opening sequence or the map (flush case)', `!!(document.querySelector('.prologue-screen') || document.querySelector('.map-scroll'))`);
+      // Skip the opening sequence through its real door, then choose each
+      // required mastery tier before the map can accept camera input.
+      await waitForMount('mastery, the opening sequence or the map (flush case)', `!!(document.querySelector('.class-mastery-node') || document.querySelector('.prologue-screen') || document.querySelector('.map-scroll'))`);
       if (await evaluate(`(() => {
         const skip = [...document.querySelectorAll('.prologue-screen .prologue-controls button')]
           .find((control) => !control.hidden && /skip/i.test(control.textContent));
@@ -636,6 +636,12 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
         skip.dataset.mapCameraSkip = 'true';
         return true;
       })()`)) await press('[data-map-camera-skip="true"]');
+      await waitFor('mastery or the map after the opening (flush case)', `!!(document.querySelector('.class-mastery-node') || document.querySelector('.map-scroll'))`);
+      for (let tier = 0; tier < 3; tier += 1) {
+        if (!await evaluate(`!!document.querySelector('.class-mastery-node:not([disabled])')`)) break;
+        await press('.class-mastery-node:not([disabled])');
+      }
+      await waitFor('the mastery choices to finish (flush case)', `!document.querySelector('.class-mastery-veil')`);
       await waitFor('the new run map (flush case)', `!!(document.querySelector('.map-scroll') && document.querySelector('#zoom-in'))`)
         .catch(async (error) => {
           const seen = await evaluate(`({ screen: document.querySelector('.screen')?.className || null, text: (document.querySelector('.screen') || document.body).innerText.slice(0, 160) })`);
