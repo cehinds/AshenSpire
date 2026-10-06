@@ -1,9 +1,10 @@
 import { alternativeArtCatalog } from './alternativeArtCatalog.js';
+import { assetUrl } from './assetmap.js';
 
 /* ALTERNATIVE_ART_START */
 const alternativeArtMap = {};
 /* ALTERNATIVE_ART_END */
-export const alternativeArtUrl = path => alternativeArtMap[path] || path;
+export const alternativeArtUrl = path => alternativeArtMap[path] || assetUrl(path);
 
 // A tight, known alpha envelope keeps the intent directly above the head.
 // The original master canvas remains intact inside this clipped viewport.

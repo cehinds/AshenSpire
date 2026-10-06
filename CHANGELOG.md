@@ -34,17 +34,19 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Alternative artwork loads from the web packs** ([#1673](https://github.com/cehinds/AshenSpire/pull/1673), `0.7.1.1038`). The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.
+
 - **Your character, gear and deck share one Armory** ([#1671](https://github.com/cehinds/AshenSpire/pull/1671), `0.7.1.1036`). Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.
 
 - **Alternative combat keeps its own battlefield** ([#1668](https://github.com/cehinds/AshenSpire/pull/1668), `0.7.1.1034`). New dev changes flow into alternative/dev after a protected merge verifies that its battlefield, HUD, cards and footer stay unchanged. Background and sprite updates remain eligible; unrelated conflicts stop for review. The pipeline builds and publishes the updated alternative preview.
 
 - **Alternative previews stay current without losing their changes** ([#1667](https://github.com/cehinds/AshenSpire/pull/1667), `0.7.1.1033`). Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.
 
+- **Alternative combat faces the battlefield** ([#1670](https://github.com/cehinds/AshenSpire/pull/1670), `0.7.1.1033`). The alternative build uses rear-view hero armor, detailed facing enemies, thin gold and red outlines, and a layered Hollow Weald scene. The existing cards, HUD and footer stay playable above a fading textured base, with separate phone and desktop combat placement.
+
 - **Plans: modular class rewards and retraining** ([#1666](https://github.com/cehinds/AshenSpire/pull/1666), `0.7.1.1032`). The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.
 
 - **Smaller text fits more card descriptions** ([#1664](https://github.com/cehinds/AshenSpire/pull/1664), `0.7.1.1031`). Card titles, rules, tags and cost numbers are two points smaller, including the automatic fitting range. More descriptions fit fully inside the existing card frame on desktop and phone.
-
-- **Alternative combat faces the battlefield** ([#1670](https://github.com/cehinds/AshenSpire/pull/1670), `0.7.1.1033`). The alternative build uses rear-view hero armor, detailed facing enemies, thin gold and red outlines, and a layered Hollow Weald scene. The existing cards, HUD and footer stay playable above a fading textured base, with separate phone and desktop combat placement.
 
 - **Drive class mastery in full browser gates** ([#1662](https://github.com/cehinds/AshenSpire/pull/1662), `0.7.1.1029`). The cold-boot walkthrough and map-camera persistence drive choose required class mastery nodes before entering the map, including when the walkthrough starts a second run. Both use real input and preserve the combat, storage and camera assertions; mastery door priority is covered by probe selftests.
 

@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1671].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -163,6 +163,16 @@ test('all 25 compact Armament rows remain covered independently of origin/dev', 
   const permanent = migratedTexts(permanentMigratedIds());
   assert.ok(permanent.get('Move to')?.includes('armoury.action.moveTo.short'),
     'the semantic formation allowance must still be checked after the branch delta becomes empty');
+});
+
+test('all 35 Armory progression rows remain covered after dev promotion', () => {
+  const ids=frozenMigrationIds(1671);
+  assert.equal(new Set(ids).size,35);
+  for (const id of ids) assert.ok(uiStrings.some(row=>row.id===id), `missing authored row ${id}`);
+  const permanent=migratedTexts(permanentMigratedIds());
+  assert.ok(permanent.get('Progression')?.includes('progression.title.short'));
+  assert.ok(permanent.get('Character')?.includes('progression.tab.character.short'));
+  assert.ok(permanent.get('Skills')?.includes('progression.tab.skills.short'));
 });
 
 test('no src/ui literal repaints a row #1489 moved into uiStrings.csv', () => {

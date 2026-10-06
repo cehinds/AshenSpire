@@ -539,10 +539,10 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 // packs/ and objects/ are only ever written under build/ or dist/ (ignored) or
 // outside the checkout.
 // ---------------------------------------------------------------------------
-// Alternative artwork is branch-owned and ships with both pack and portable
-// builds. It must never depend on an unbundled docs/ directory at runtime.
+// Portable builds inline branch-owned artwork. Web builds resolve the same
+// IDs through the common pack, including Pages' shared content-addressed store.
 const alternativeId = 'src/ui/alternativeArt.js';
-if (sources.has(alternativeId)) {
+if (!EXTERNAL_ART && sources.has(alternativeId)) {
   const map = {};
   const catalogSource = sources.get('src/ui/alternativeArtCatalog.js');
   const catalog = JSON.parse(catalogSource.match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
