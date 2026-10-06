@@ -48,6 +48,12 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/screens/settings.js', 'Progression', `advanced-group id; ${ID}`],
+  ['src/ui/models/AdvancedSettingsGroups.js', 'Progression', `advanced-group id; ${ID}`],
+  ['src/ui/components/combatantInspector.js', 'Skills', 'combatant active abilities section, separate from the player progression tab'],
+  ['src/ui/components/overlay.js', 'Class', 'combat HUD identity field, separate from the progression tab'],
+  ['src/ui/screens/customRun.js', 'Class', 'custom run class selector, separate from the progression tab'],
+  ['src/ui/screens/customize.js', 'Character', 'character creation fold, separate from the progression tab'],
   ['src/ui/components/illustratedCard.js', 'Georgia', 'CSS font-family fallback, not a displayed font-selection label'],
   ['src/ui/screens/settings.js', 'Stamina', `Recovery topic id; ${ID}`],
   // Settings: category, advanced-group and topic ids. The faces read t('settings.group.*').

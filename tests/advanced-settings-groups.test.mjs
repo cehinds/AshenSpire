@@ -268,7 +268,7 @@ test('every screen that offers a point hands the card the run it belongs to', as
   // within the call or the call does not pass one. 300 characters is longer
   // than every call site in the tree and shorter than the gap to the next one.
   let sites = 0;
-  for (const file of ['customize.js', 'rest.js', 'equipment.js']) {
+  for (const file of ['customize.js', 'rest.js', 'equipment.js', '../models/ProgressionInspectionModel.js']) {
     const source = readFileSync(new URL(`../src/ui/screens/${file}`, import.meta.url), 'utf8');
     for (let at = source.indexOf('attributeCardModels(registries'); at >= 0;
       at = source.indexOf('attributeCardModels(registries', at + 1)) {
@@ -278,7 +278,7 @@ test('every screen that offers a point hands the card the run it belongs to', as
         `${file}: the attribute card at offset ${at} is priced from a run projection, not the authored table`);
     }
   }
-  assert.equal(sites, 5, 'all five attribute-card call sites are covered (a new one must state its projection too)');
+  assert.equal(sites, 6, 'all six attribute-card call sites are covered (a new one must state its projection too)');
 });
 
 // ---- one menu, one language (owner, 2026-09-21) ----------------------------
