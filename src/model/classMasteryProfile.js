@@ -15,7 +15,7 @@ const unlockRows = registry => registry?.classMastery || classMastery;
 export function normalizeMasteryProfile(meta, registry = null, { veteran = false } = {}) {
   const mastery = { ...(meta.classMastery || {}) };
   for (const cls of classRows(registry)) {
-    mastery[cls.id] = mastery[cls.id] || { xp: 0, level: 0, unlockedRows: veteran
+    mastery[cls.id] = (Object.hasOwn(mastery, cls.id) ? mastery[cls.id] : null) || { xp: 0, level: 0, unlockedRows: veteran
       ? unlockRows(registry).filter(row => row.classId === cls.id).map(rowId) : [] };
   }
   return { ...meta, classMastery: mastery, classMasteryReceipts: meta.classMasteryReceipts || {} };
@@ -42,14 +42,14 @@ export function mergeMasteryProfiles(incoming, current) {
   const previous = normalizeMasteryProfile(current);
   const mastery = { ...next.classMastery };
   for (const [id, old] of Object.entries(previous.classMastery)) {
-    const row = mastery[id] || { xp: 0, level: 0, unlockedRows: [] };
+    const row = (Object.hasOwn(mastery, id) ? mastery[id] : null) || { xp: 0, level: 0, unlockedRows: [] };
     mastery[id] = { ...row, xp: Math.max(row.xp, old.xp), level: Math.max(row.level, old.level),
       unlockedRows: [...new Set([...row.unlockedRows, ...old.unlockedRows])] };
   }
   const receipts = structuredClone(next.classMasteryReceipts);
   for (const [id, old] of Object.entries(previous.classMasteryReceipts)) {
-    const receipt = receipts[id] || (receipts[id] = {});
-    for (const [cls, xp] of Object.entries(old)) receipt[cls] = Math.max(receipt[cls] || 0, xp);
+    const receipt = Object.hasOwn(receipts, id) ? receipts[id] : (receipts[id] = {});
+    for (const [cls, xp] of Object.entries(old)) receipt[cls] = Math.max(Object.hasOwn(receipt, cls) ? receipt[cls] : 0, xp);
   }
   return { ...next, ...(next.progress ? { progress: { ...next.progress, maxClassLevel: Math.max(0, ...Object.values(mastery).map(row => row.level)) } } : {}), classMastery: mastery, classMasteryReceipts: receipts };
 }
@@ -66,16 +66,16 @@ export function bankMasteryProfile(meta, run, registry) {
   if (!state || state.version !== 1 || state.bankable !== true) return { meta, changed: false };
   if (typeof state.receiptId !== 'string' || !state.receiptId || !safeKey(state.receiptId) || !object(state.earnedXp)) throw new Error('run.classMasteryState requires a receipt ID and earned XP ledger');
   const next = structuredClone(normalizeMasteryProfile(meta, registry));
-  const receipt = next.classMasteryReceipts[state.receiptId] || (next.classMasteryReceipts[state.receiptId] = {});
+  const receipt = Object.hasOwn(next.classMasteryReceipts, state.receiptId) ? next.classMasteryReceipts[state.receiptId] : (next.classMasteryReceipts[state.receiptId] = {});
   let changed = false;
   const cap = registry?.balance?.classMastery?.xp?.maxLevel || balance.classMastery.xp.maxLevel;
   for (const [id, earned] of Object.entries(state.earnedXp)) {
     if (!count(earned) || !classRows(registry).some(cls => cls.id === id)) throw new Error(`run.classMasteryState.earnedXp.${id} is invalid`);
     const row = next.classMastery[id];
-    const delta = Math.max(0, earned - (receipt[id] || 0));
+    const delta = Math.max(0, earned - (Object.hasOwn(receipt, id) ? receipt[id] : 0));
     if (!Number.isSafeInteger(row.xp + delta)) throw new Error(`class mastery XP for ${id} exceeds the safe integer range`);
     row.xp += delta;
-    receipt[id] = Math.max(receipt[id] || 0, earned);
+    receipt[id] = Math.max(Object.hasOwn(receipt, id) ? receipt[id] : 0, earned);
     const claimed = run.skills?.[`class:${id}`]?.level || 0;
     if (!count(claimed) || claimed > cap || masterySpentXp(registry, claimed) > row.xp) throw new Error(`class mastery claim for ${id} is not funded`);
     const level = Math.max(row.level, claimed);
