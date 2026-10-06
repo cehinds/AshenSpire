@@ -1,356 +1,318 @@
-// Fifty class feats. Effects come from normalized property carriers; no feat callbacks.
-export const progressionFeats = Object.freeze([
+// Fifty class feats. Their descriptions and effects share normalized balance bindings.
+import { balance } from '../balance.js';
+import { PROPERTY_RULES } from '../propertyRules.js';
+import { TAGGING } from '../tags.js';
+import { nodeVariables } from '../generated/nodeVariables.js';
+import { variableBindings } from '../generated/variableBindings.js';
+import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
+
+const authored = { balance, propertyRules: PROPERTY_RULES, tagging: TAGGING, nodeVariables, variableBindings };
+const featRows = [
   {
     "id": "progression-coal-on-steel",
     "skillId": "class:reaver",
     "minLevel": 1,
-    "name": "Coal on Steel",
-    "description": "The first Blade hit each turn applies +1 Bleed buildup."
+    "name": "Coal on Steel"
   },
   {
     "id": "progression-brace-and-bite",
     "skillId": "class:reaver",
     "minLevel": 1,
-    "name": "Brace and Bite",
-    "description": "The first Blade attack each turn played while you have Block deals +3 damage."
+    "name": "Brace and Bite"
   },
   {
     "id": "progression-red-footwork",
     "skillId": "class:reaver",
     "minLevel": 1,
-    "name": "Red Footwork",
-    "description": "The first Guard card each turn targeting an enemy with Bleed buildup draws 1 card."
+    "name": "Red Footwork"
   },
   {
     "id": "progression-anvil-discipline",
     "skillId": "class:reaver",
     "minLevel": 4,
-    "name": "Anvil Discipline",
-    "description": "The first Heavy attack each turn deals +2 Break damage."
+    "name": "Anvil Discipline"
   },
   {
     "id": "progression-forge-momentum",
     "skillId": "class:reaver",
     "minLevel": 4,
-    "name": "Forge Momentum",
-    "description": "Your first Blade attack after a Guard card each turn deals +4 damage."
+    "name": "Forge Momentum"
   },
   {
     "id": "progression-paid-in-blood",
     "skillId": "class:reaver",
     "minLevel": 8,
-    "name": "Paid in Blood",
-    "description": "The first Blood attack after you have lost HP since your previous turn began deals +4 damage."
+    "name": "Paid in Blood"
   },
   {
     "id": "progression-last-rampart",
     "skillId": "class:reaver",
     "minLevel": 8,
-    "name": "Last Rampart",
-    "description": "At half HP or lower, your first Guard card each turn grants +4 Block."
+    "name": "Last Rampart"
   },
   {
     "id": "progression-war-cadence",
     "skillId": "class:reaver",
     "minLevel": 12,
-    "name": "War Cadence",
-    "description": "After your second Heavy card in a turn, gain 4 Block, once per turn."
+    "name": "War Cadence"
   },
   {
     "id": "progression-broad-sentence",
     "skillId": "class:reaver",
     "minLevel": 12,
-    "name": "Broad Sentence",
-    "description": "Your first attack that hits all living enemies each turn deals +2 damage to each target."
+    "name": "Broad Sentence"
   },
   {
     "id": "progression-ember-sovereign",
     "skillId": "class:reaver",
     "minLevel": 16,
-    "name": "Ember Sovereign",
-    "description": "Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
+    "name": "Ember Sovereign"
   },
   {
     "id": "progression-dread-of-the-hammer",
     "skillId": "class:reaver",
     "minLevel": 16,
-    "name": "Dread of the Hammer",
-    "description": "Your first Heavy attack against a Staggered target each turn deals +4 damage."
+    "name": "Dread of the Hammer"
   },
   {
     "id": "progression-scarred-oath",
     "skillId": "class:reaver",
     "minLevel": 20,
-    "name": "Scarred Oath",
-    "description": "Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
+    "name": "Scarred Oath"
   },
   {
     "id": "progression-harvest-the-wound",
     "skillId": "class:reaver",
     "minLevel": 20,
-    "name": "Harvest the Wound",
-    "description": "Your first credited kill of an enemy with Bleed buildup heals 3 HP, once per combat."
+    "name": "Harvest the Wound"
   },
   {
     "id": "progression-orbit-keeper",
     "skillId": "class:starseer",
     "minLevel": 1,
-    "name": "Orbit Keeper",
-    "description": "Your first Starstone spell following another spell each turn deals +3 direct damage."
+    "name": "Orbit Keeper"
   },
   {
     "id": "progression-moonward-scholar",
     "skillId": "class:starseer",
     "minLevel": 1,
-    "name": "Moonward Scholar",
-    "description": "The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block."
+    "name": "Moonward Scholar"
   },
   {
     "id": "progression-comet-reader",
     "skillId": "class:starseer",
     "minLevel": 1,
-    "name": "Comet Reader",
-    "description": "The first Comet Mark attack each turn applies +1 Vulnerable after damage."
+    "name": "Comet Reader"
   },
   {
     "id": "progression-mirror-of-rime",
     "skillId": "class:starseer",
     "minLevel": 4,
-    "name": "Mirror of Rime",
-    "description": "Your first Rime Mirror each turn applies +2 Frost buildup."
+    "name": "Mirror of Rime"
   },
   {
     "id": "progression-constellation-keeper",
     "skillId": "class:starseer",
     "minLevel": 4,
-    "name": "Constellation Keeper",
-    "description": "Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage."
+    "name": "Constellation Keeper"
   },
   {
     "id": "progression-patient-wellspring",
     "skillId": "class:starseer",
     "minLevel": 8,
-    "name": "Patient Wellspring",
-    "description": "The first Mana Weave restoration each turn also grants 3 Block."
+    "name": "Patient Wellspring"
   },
   {
     "id": "progression-weight-of-the-void",
     "skillId": "class:starseer",
     "minLevel": 8,
-    "name": "Weight of the Void",
-    "description": "The first Gravity Snare each turn applies +1 Weak after damage."
+    "name": "Weight of the Void"
   },
   {
     "id": "progression-nightglass-scholar",
     "skillId": "class:starseer",
     "minLevel": 12,
-    "name": "Nightglass Scholar",
-    "description": "Once per turn, your Nightglass charge grants +2 additional damage when consumed."
+    "name": "Nightglass Scholar"
   },
   {
     "id": "progression-eclipse-hunter",
     "skillId": "class:starseer",
     "minLevel": 12,
-    "name": "Eclipse Hunter",
-    "description": "Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage."
+    "name": "Eclipse Hunter"
   },
   {
     "id": "progression-firmament-keeper",
     "skillId": "class:starseer",
     "minLevel": 16,
-    "name": "Firmament Keeper",
-    "description": "Once per turn, consuming a Warded Casting charge also grants 4 Block."
+    "name": "Firmament Keeper"
   },
   {
     "id": "progression-celestial-refrain",
     "skillId": "class:starseer",
     "minLevel": 16,
-    "name": "Celestial Refrain",
-    "description": "The second play of the same Starstone card ID in a turn grants 4 Block, once per turn."
+    "name": "Celestial Refrain"
   },
   {
     "id": "progression-memory-of-winter",
     "skillId": "class:starseer",
     "minLevel": 20,
-    "name": "Memory of Winter",
-    "description": "Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block."
+    "name": "Memory of Winter"
   },
   {
     "id": "progression-threefold-sky",
     "skillId": "class:starseer",
     "minLevel": 20,
-    "name": "Threefold Sky",
-    "description": "Playing your third distinct Starstone card ID in a turn draws 1 card, once per turn."
+    "name": "Threefold Sky"
   },
   {
     "id": "progression-first-knife",
     "skillId": "class:rogue",
     "minLevel": 1,
-    "name": "First Knife",
-    "description": "If your first card this turn is a Blade attack, it deals +3 damage."
+    "name": "First Knife"
   },
   {
     "id": "progression-pocket-method",
     "skillId": "class:rogue",
     "minLevel": 1,
-    "name": "Pocket Method",
-    "description": "Your first Guard card after an explicit discard each turn grants +3 Block."
+    "name": "Pocket Method"
   },
   {
     "id": "progression-crooked-measure",
     "skillId": "class:rogue",
     "minLevel": 4,
-    "name": "Crooked Measure",
-    "description": "Your first Crooked Guard hit each turn applies +1 Weak after damage."
+    "name": "Crooked Measure"
   },
   {
     "id": "progression-open-flank",
     "skillId": "class:rogue",
     "minLevel": 4,
-    "name": "Open Flank",
-    "description": "Your first Blade attack against an enemy with zero Block each turn deals +3 damage."
+    "name": "Open Flank"
   },
   {
     "id": "progression-hidden-palm",
     "skillId": "class:rogue",
     "minLevel": 8,
-    "name": "Hidden Palm",
-    "description": "The first Sleight of Hand sequence each turn grants 3 Block after the discard."
+    "name": "Hidden Palm"
   },
   {
     "id": "progression-tighten-the-wire",
     "skillId": "class:rogue",
     "minLevel": 8,
-    "name": "Tighten the Wire",
-    "description": "Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage."
+    "name": "Tighten the Wire"
   },
   {
     "id": "progression-smoke-dancer",
     "skillId": "class:rogue",
     "minLevel": 12,
-    "name": "Smoke Dancer",
-    "description": "Once per turn, a Smoke Edge charge adds +2 damage before it is consumed."
+    "name": "Smoke Dancer"
   },
   {
     "id": "progression-carrion-measure",
     "skillId": "class:rogue",
     "minLevel": 12,
-    "name": "Carrion Measure",
-    "description": "Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage."
+    "name": "Carrion Measure"
   },
   {
     "id": "progression-two-quiet-knives",
     "skillId": "class:rogue",
     "minLevel": 16,
-    "name": "Two Quiet Knives",
-    "description": "Your first Paired Strikes attack each turn deals +1 damage on each of its two hits."
+    "name": "Two Quiet Knives"
   },
   {
     "id": "progression-trapdoor-smile",
     "skillId": "class:rogue",
     "minLevel": 16,
-    "name": "Trapdoor Smile",
-    "description": "Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage."
+    "name": "Trapdoor Smile"
   },
   {
     "id": "progression-clean-exit",
     "skillId": "class:rogue",
     "minLevel": 20,
-    "name": "Clean Exit",
-    "description": "Your first Guard card played before any attack this turn restores 1 Stamina, once per turn."
+    "name": "Clean Exit"
   },
   {
     "id": "progression-razor-ledger",
     "skillId": "class:rogue",
     "minLevel": 20,
-    "name": "Razor Ledger",
-    "description": "Your first Blade attack after an explicit discard each turn deals +3 damage."
+    "name": "Razor Ledger"
   },
   {
     "id": "progression-ashen-mercy",
     "skillId": "class:herald",
     "minLevel": 1,
-    "name": "Ashen Mercy",
-    "description": "The first Mercy in Ash card each turn heals +2 HP."
+    "name": "Ashen Mercy"
   },
   {
     "id": "progression-censer-keeper",
     "skillId": "class:herald",
     "minLevel": 1,
-    "name": "Censer Keeper",
-    "description": "The first Blood Censer offering each turn grants +3 Block after its HP payment."
+    "name": "Censer Keeper"
   },
   {
     "id": "progression-sower-of-blight",
     "skillId": "class:herald",
     "minLevel": 4,
-    "name": "Sower of Blight",
-    "description": "The first Blight Seed hit each turn applies +2 Crimson Blight buildup."
+    "name": "Sower of Blight"
   },
   {
     "id": "progression-funeral-watch",
     "skillId": "class:herald",
     "minLevel": 4,
-    "name": "Funeral Watch",
-    "description": "At half HP or lower, your first Guard card each turn grants +3 Block."
+    "name": "Funeral Watch"
   },
   {
     "id": "progression-ember-almoner",
     "skillId": "class:herald",
     "minLevel": 8,
-    "name": "Ember Almoner",
-    "description": "Your first Ember Tithe each turn grants +1 Regen after the HP payment."
+    "name": "Ember Almoner"
   },
   {
     "id": "progression-choir-of-bone",
     "skillId": "class:herald",
     "minLevel": 8,
-    "name": "Choir of Bone",
-    "description": "The first Guard card you play while any living enemy has Crimson Blight buildup restores 1 Stamina, once per turn."
+    "name": "Choir of Bone"
   },
   {
     "id": "progression-requiem-reader",
     "skillId": "class:herald",
     "minLevel": 12,
-    "name": "Requiem Reader",
-    "description": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage."
+    "name": "Requiem Reader"
   },
   {
     "id": "progression-pilgrim-of-scars",
     "skillId": "class:herald",
     "minLevel": 12,
-    "name": "Pilgrim of Scars",
-    "description": "If you began the turn at half HP or lower, your first Guard card that turn heals 3 HP."
+    "name": "Pilgrim of Scars"
   },
   {
     "id": "progression-crowned-offering",
     "skillId": "class:herald",
     "minLevel": 16,
-    "name": "Crowned Offering",
-    "description": "The first Ritual attack after an earlier HP offering this turn deals +4 damage."
+    "name": "Crowned Offering"
   },
   {
     "id": "progression-dawn-cantor",
     "skillId": "class:herald",
     "minLevel": 16,
-    "name": "Dawn Cantor",
-    "description": "The first Dawn Rite removal each turn also grants 3 Block."
+    "name": "Dawn Cantor"
   },
   {
     "id": "progression-bearer-of-burdens",
     "skillId": "class:herald",
     "minLevel": 20,
-    "name": "Bearer of Burdens",
-    "description": "The first negative status newly applied to you by an enemy each turn restores 1 Mana."
+    "name": "Bearer of Burdens"
   },
   {
     "id": "progression-sepulchral-promise",
     "skillId": "class:herald",
     "minLevel": 20,
-    "name": "Sepulchral Promise",
-    "description": "Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat."
+    "name": "Sepulchral Promise"
   }
-]);
+];
+export const progressionFeats = Object.freeze(featRows.map(feat => ({
+  ...feat, description: getFeatDescription(authored, feat),
+})));
+
 
 export const progressionFeatUnlocks = Object.freeze([
   {

@@ -10,6 +10,7 @@ import { applyAbilityGrade } from './abilityGrades.js';
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { tagIndex } from './tags.js';
 import { nodeTree } from './tree.js';
+import { configuredPropertyRules } from './propertyRuleBindings.js';
 import { itemTypeLabel } from '../content/equipment.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
@@ -216,7 +217,7 @@ export function createRegistries(contentBundle) {
   // What each `property` tag confers, keyed by the tag (content/propertyRules.js).
   // Read only by the mount path; a getter throws on an unknown tag like every
   // other registry, and validate.js has already refused a tag with no rule.
-  registries.propertyRules = makeRegistry('property rule', bundle.propertyRules || [], 'tag');
+  registries.propertyRules = makeRegistry('property rule', configuredPropertyRules(bundle), 'tag');
 
   // The tree itself, and its companions, for the readers that ask it directly
   // (model/tree.js nodeTree, resolveVariable). The tag tables and the property

@@ -1,3 +1,4 @@
+import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
 import { masteryUnlockName } from '../../model/classMasteryRun.js';
 import { isProgressionReward, progressionRewardUnlocked } from '../../model/deferredProgression.js';
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
@@ -1237,7 +1238,7 @@ export function mountRewards(app, {
         el('div', { class: 'glyph', text: attribute ? '▲' : feat ? '✦' : node?.glyph || '☉' }),
         el('div', { class: 'cp-body' }, [
           el('h3', { text: attribute?.name || feat?.name || node?.label || option.id }),
-          el('p', { text: attribute ? `${attribute.now} → ${attribute.now + 1}` : feat?.description || sentence || node?.blurb || '' }),
+          el('p', { text: attribute ? `${attribute.now} → ${attribute.now + 1}` : (feat ? getFeatDescription(registries, feat) : '') || sentence || node?.blurb || '' }),
         ]),
       ]);
       tile.classList.toggle('reward-selected', choiceId === selectedCardId);

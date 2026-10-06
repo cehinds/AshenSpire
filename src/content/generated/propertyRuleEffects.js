@@ -2407,7 +2407,9 @@ export const propertyRuleEffects = {
             "op": "applyStatus",
             "target": "enemy",
             "status": "bleed",
-            "stacks": 1
+            "stacks": {
+              "balance": "progressionFeats.coal-on-steel.bleed"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2454,7 +2456,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:brace-and-bite",
-            "damage": 3,
+            "damage": {
+              "balance": "progressionFeats.brace-and-bite.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2493,7 +2497,9 @@ export const propertyRuleEffects = {
           {
             "op": "draw",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "balance": "progressionFeats.red-footwork.draw"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2530,7 +2536,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:anvil-discipline",
-            "break": 2
+            "break": {
+              "balance": "progressionFeats.anvil-discipline.break"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2578,7 +2586,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:forge-momentum",
-            "damage": 4,
+            "damage": {
+              "balance": "progressionFeats.forge-momentum.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2626,7 +2636,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:paid-in-blood",
-            "damage": 4,
+            "damage": {
+              "balance": "progressionFeats.paid-in-blood.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2654,7 +2666,9 @@ export const propertyRuleEffects = {
                 {
                   "p": "hpBelowPct",
                   "of": "self",
-                  "pct": 50,
+                  "pct": {
+                    "balance": "progressionFeats.last-rampart.hpPct"
+                  },
                   "snapshot": "beforePlay"
                 }
               ]
@@ -2666,7 +2680,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:last-rampart",
-            "block": 4
+            "block": {
+              "balance": "progressionFeats.last-rampart.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2705,7 +2721,9 @@ export const propertyRuleEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 4
+            "amount": {
+              "balance": "progressionFeats.war-cadence.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2732,7 +2750,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:broad-sentence",
-            "damage": 2,
+            "damage": {
+              "balance": "progressionFeats.broad-sentence.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2770,7 +2790,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:ember-sovereign",
-            "damage": 2,
+            "damage": {
+              "balance": "progressionFeats.ember-sovereign.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2819,7 +2841,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:dread-of-the-hammer",
-            "damage": 4,
+            "damage": {
+              "balance": "progressionFeats.dread-of-the-hammer.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2858,7 +2882,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:scarred-oath",
-            "block": 3
+            "block": {
+              "balance": "progressionFeats.scarred-oath.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2885,7 +2911,9 @@ export const propertyRuleEffects = {
           {
             "op": "heal",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "balance": "progressionFeats.harvest-the-wound.heal"
+            }
           }
         ],
         "once": true
@@ -2932,7 +2960,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:orbit-keeper",
-            "damage": 3,
+            "damage": {
+              "balance": "progressionFeats.orbit-keeper.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2964,7 +2994,9 @@ export const propertyRuleEffects = {
                 {
                   "p": "turnMetric",
                   "metric": "manaSpent",
-                  "atLeast": 2
+                  "atLeast": {
+                    "balance": "progressionFeats.moonward-scholar.manaSpent"
+                  }
                 }
               ]
             }
@@ -2975,7 +3007,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:moonward-scholar",
-            "block": 3
+            "block": {
+              "balance": "progressionFeats.moonward-scholar.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3003,7 +3037,9 @@ export const propertyRuleEffects = {
             "op": "applyStatus",
             "target": "enemy",
             "status": "vulnerable",
-            "stacks": 1
+            "stacks": {
+              "balance": "progressionFeats.comet-reader.vulnerable"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3031,7 +3067,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:mirror-of-rime",
-            "buildup": 2,
+            "buildup": {
+              "balance": "progressionFeats.mirror-of-rime.buildup"
+            },
             "buildupStatus": "frost"
           }
         ],
@@ -3080,7 +3118,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:constellation-keeper",
-            "damage": 3,
+            "damage": {
+              "balance": "progressionFeats.constellation-keeper.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3111,7 +3151,9 @@ export const propertyRuleEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "balance": "progressionFeats.patient-wellspring.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3139,7 +3181,9 @@ export const propertyRuleEffects = {
             "op": "applyStatus",
             "target": "enemy",
             "status": "weak",
-            "stacks": 1
+            "stacks": {
+              "balance": "progressionFeats.weight-of-the-void.weak"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3180,7 +3224,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:nightglass-scholar",
-            "damage": 2,
+            "damage": {
+              "balance": "progressionFeats.nightglass-scholar.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3240,7 +3286,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:eclipse-hunter",
-            "damage": 4,
+            "damage": {
+              "balance": "progressionFeats.eclipse-hunter.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3268,7 +3316,9 @@ export const propertyRuleEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 4
+            "amount": {
+              "balance": "progressionFeats.firmament-keeper.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3308,7 +3358,9 @@ export const propertyRuleEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 4
+            "amount": {
+              "balance": "progressionFeats.celestial-refrain.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3317,7 +3369,9 @@ export const propertyRuleEffects = {
   },
   "feat:memory-of-winter": {
     "passives": {
-      "retainBlockUpTo": 4
+      "retainBlockUpTo": {
+        "balance": "progressionFeats.memory-of-winter.retainBlockUpTo"
+      }
     }
   },
   "feat:threefold-sky": {
@@ -3353,7 +3407,9 @@ export const propertyRuleEffects = {
           {
             "op": "draw",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "balance": "progressionFeats.threefold-sky.draw"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3401,7 +3457,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:first-knife",
-            "damage": 3,
+            "damage": {
+              "balance": "progressionFeats.first-knife.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3440,7 +3498,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:pocket-method",
-            "block": 3
+            "block": {
+              "balance": "progressionFeats.pocket-method.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3468,7 +3528,9 @@ export const propertyRuleEffects = {
             "op": "applyStatus",
             "target": "enemy",
             "status": "weak",
-            "stacks": 1
+            "stacks": {
+              "balance": "progressionFeats.crooked-measure.weak"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3518,7 +3580,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:open-flank",
-            "damage": 3,
+            "damage": {
+              "balance": "progressionFeats.open-flank.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3557,7 +3621,9 @@ export const propertyRuleEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "balance": "progressionFeats.hidden-palm.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3607,7 +3673,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:tighten-the-wire",
-            "damage": 3,
+            "damage": {
+              "balance": "progressionFeats.tighten-the-wire.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3649,7 +3717,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:smoke-dancer",
-            "damage": 2,
+            "damage": {
+              "balance": "progressionFeats.smoke-dancer.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3686,7 +3756,9 @@ export const propertyRuleEffects = {
                 {
                   "p": "hpBelowPct",
                   "of": "target",
-                  "pct": 50,
+                  "pct": {
+                    "balance": "progressionFeats.carrion-measure.hpPct"
+                  },
                   "snapshot": "beforePlay"
                 }
               ]
@@ -3698,7 +3770,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:carrion-measure",
-            "damage": 4,
+            "damage": {
+              "balance": "progressionFeats.carrion-measure.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3727,7 +3801,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:two-quiet-knives",
-            "damage": 1,
+            "damage": {
+              "balance": "progressionFeats.two-quiet-knives.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3782,7 +3858,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:trapdoor-smile",
-            "damage": 4,
+            "damage": {
+              "balance": "progressionFeats.trapdoor-smile.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3821,7 +3899,9 @@ export const propertyRuleEffects = {
           {
             "op": "restoreStamina",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "balance": "progressionFeats.clean-exit.restoreStamina"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3868,7 +3948,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:razor-ledger",
-            "damage": 3,
+            "damage": {
+              "balance": "progressionFeats.razor-ledger.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3897,7 +3979,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:ashen-mercy",
-            "heal": 2
+            "heal": {
+              "balance": "progressionFeats.ashen-mercy.heal"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3924,7 +4008,9 @@ export const propertyRuleEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "balance": "progressionFeats.censer-keeper.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3952,7 +4038,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:sower-of-blight",
-            "buildup": 2,
+            "buildup": {
+              "balance": "progressionFeats.sower-of-blight.buildup"
+            },
             "buildupStatus": "crimsonBlight"
           }
         ],
@@ -3980,7 +4068,9 @@ export const propertyRuleEffects = {
                 {
                   "p": "hpBelowPct",
                   "of": "self",
-                  "pct": 50,
+                  "pct": {
+                    "balance": "progressionFeats.funeral-watch.hpPct"
+                  },
                   "snapshot": "beforePlay"
                 }
               ]
@@ -3992,7 +4082,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:funeral-watch",
-            "block": 3
+            "block": {
+              "balance": "progressionFeats.funeral-watch.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4020,7 +4112,9 @@ export const propertyRuleEffects = {
             "op": "applyStatus",
             "target": "self",
             "status": "regen",
-            "stacks": 1
+            "stacks": {
+              "balance": "progressionFeats.ember-almoner.regen"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4058,7 +4152,9 @@ export const propertyRuleEffects = {
           {
             "op": "restoreStamina",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "balance": "progressionFeats.choir-of-bone.restoreStamina"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4106,7 +4202,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:requiem-reader",
-            "damage": 3,
+            "damage": {
+              "balance": "progressionFeats.requiem-reader.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -4134,7 +4232,9 @@ export const propertyRuleEffects = {
                 {
                   "p": "turnMetric",
                   "metric": "turnStartHpPct",
-                  "atMost": 50
+                  "atMost": {
+                    "balance": "progressionFeats.pilgrim-of-scars.hpPct"
+                  }
                 }
               ]
             }
@@ -4144,7 +4244,9 @@ export const propertyRuleEffects = {
           {
             "op": "heal",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "balance": "progressionFeats.pilgrim-of-scars.heal"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4191,7 +4293,9 @@ export const propertyRuleEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:crowned-offering",
-            "damage": 4,
+            "damage": {
+              "balance": "progressionFeats.crowned-offering.damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -4219,7 +4323,9 @@ export const propertyRuleEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "balance": "progressionFeats.dawn-cantor.block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4253,7 +4359,9 @@ export const propertyRuleEffects = {
           {
             "op": "restoreMana",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "balance": "progressionFeats.bearer-of-burdens.restoreMana"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4280,7 +4388,9 @@ export const propertyRuleEffects = {
           {
             "op": "heal",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "balance": "progressionFeats.sepulchral-promise.heal"
+            }
           }
         ],
         "once": true

@@ -2293,4 +2293,319 @@ export const balance = {
       'views.{i}.figure': 'Whether the {viewId} Armoury view draws the dressed class figure beside the slots.',
     },
   },
+  // Class feat magnitudes and thresholds (SPEC §13.4r). Nodes name these bindings.
+  progressionFeats: {
+    "coal-on-steel": {
+      bleed: 1,
+      [NOTE]: {
+        bleed: "Coal On Steel: Bleed buildup applied by the first qualifying Blade hit.",
+      },
+    },
+    "brace-and-bite": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Brace And Bite: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "red-footwork": {
+      draw: 1,
+      [NOTE]: {
+        draw: "Red Footwork: Cards drawn by the qualifying play.",
+      },
+    },
+    "anvil-discipline": {
+      break: 2,
+      [NOTE]: {
+        break: "Anvil Discipline: Additional Break damage on the first qualifying attack.",
+      },
+    },
+    "forge-momentum": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Forge Momentum: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "paid-in-blood": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Paid In Blood: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "last-rampart": {
+      block: 4,
+      hpPct: 50,
+      [NOTE]: {
+        block: "Last Rampart: Additional Block granted by the qualifying play or event.",
+        hpPct: "Last Rampart: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "war-cadence": {
+      block: 4,
+      [NOTE]: {
+        block: "War Cadence: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "broad-sentence": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Broad Sentence: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "ember-sovereign": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Ember Sovereign: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "nightglass-scholar": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Nightglass Scholar: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "smoke-dancer": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Smoke Dancer: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "dread-of-the-hammer": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Dread Of The Hammer: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "scarred-oath": {
+      block: 3,
+      [NOTE]: {
+        block: "Scarred Oath: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "harvest-the-wound": {
+      heal: 3,
+      [NOTE]: {
+        heal: "Harvest The Wound: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "sepulchral-promise": {
+      heal: 3,
+      [NOTE]: {
+        heal: "Sepulchral Promise: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "orbit-keeper": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Orbit Keeper: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "moonward-scholar": {
+      block: 3,
+      manaSpent: 2,
+      [NOTE]: {
+        block: "Moonward Scholar: Additional Block granted by the qualifying play or event.",
+        manaSpent: "Moonward Scholar: Mana that must already have been spent this turn before the qualifying spell.",
+      },
+    },
+    "comet-reader": {
+      vulnerable: 1,
+      [NOTE]: {
+        vulnerable: "Comet Reader: Vulnerable stacks applied after the qualifying attack.",
+      },
+    },
+    "weight-of-the-void": {
+      weak: 1,
+      [NOTE]: {
+        weak: "Weight Of The Void: Weak stacks applied after the qualifying attack.",
+      },
+    },
+    "crooked-measure": {
+      weak: 1,
+      [NOTE]: {
+        weak: "Crooked Measure: Weak stacks applied after the qualifying attack.",
+      },
+    },
+    "mirror-of-rime": {
+      buildup: 2,
+      [NOTE]: {
+        buildup: "Mirror Of Rime: Additional status buildup on the first matching application.",
+      },
+    },
+    "constellation-keeper": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Constellation Keeper: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "patient-wellspring": {
+      block: 3,
+      [NOTE]: {
+        block: "Patient Wellspring: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "eclipse-hunter": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Eclipse Hunter: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "firmament-keeper": {
+      block: 4,
+      [NOTE]: {
+        block: "Firmament Keeper: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "celestial-refrain": {
+      block: 4,
+      [NOTE]: {
+        block: "Celestial Refrain: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "memory-of-winter": {
+      retainBlockUpTo: 4,
+      [NOTE]: {
+        retainBlockUpTo: "Memory Of Winter: Maximum Block retained at turn start; the highest allowance wins.",
+      },
+    },
+    "threefold-sky": {
+      draw: 1,
+      [NOTE]: {
+        draw: "Threefold Sky: Cards drawn by the qualifying play.",
+      },
+    },
+    "first-knife": {
+      damage: 3,
+      [NOTE]: {
+        damage: "First Knife: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "pocket-method": {
+      block: 3,
+      [NOTE]: {
+        block: "Pocket Method: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "open-flank": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Open Flank: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "hidden-palm": {
+      block: 3,
+      [NOTE]: {
+        block: "Hidden Palm: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "tighten-the-wire": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Tighten The Wire: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "carrion-measure": {
+      damage: 4,
+      hpPct: 50,
+      [NOTE]: {
+        damage: "Carrion Measure: Additional damage on the first qualifying direct effect, including each hit and target.",
+        hpPct: "Carrion Measure: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "two-quiet-knives": {
+      damage: 1,
+      [NOTE]: {
+        damage: "Two Quiet Knives: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "trapdoor-smile": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Trapdoor Smile: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "clean-exit": {
+      restoreStamina: 1,
+      [NOTE]: {
+        restoreStamina: "Clean Exit: Stamina restored by the qualifying Guard play.",
+      },
+    },
+    "razor-ledger": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Razor Ledger: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "ashen-mercy": {
+      heal: 2,
+      [NOTE]: {
+        heal: "Ashen Mercy: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "censer-keeper": {
+      block: 3,
+      [NOTE]: {
+        block: "Censer Keeper: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "sower-of-blight": {
+      buildup: 2,
+      [NOTE]: {
+        buildup: "Sower Of Blight: Additional status buildup on the first matching application.",
+      },
+    },
+    "funeral-watch": {
+      block: 3,
+      hpPct: 50,
+      [NOTE]: {
+        block: "Funeral Watch: Additional Block granted by the qualifying play or event.",
+        hpPct: "Funeral Watch: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "ember-almoner": {
+      regen: 1,
+      [NOTE]: {
+        regen: "Ember Almoner: Regen stacks granted after the qualifying HP offering.",
+      },
+    },
+    "choir-of-bone": {
+      restoreStamina: 1,
+      [NOTE]: {
+        restoreStamina: "Choir Of Bone: Stamina restored by the qualifying Guard play.",
+      },
+    },
+    "requiem-reader": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Requiem Reader: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "pilgrim-of-scars": {
+      heal: 3,
+      hpPct: 50,
+      [NOTE]: {
+        heal: "Pilgrim Of Scars: HP restored by the qualifying play or credited kill.",
+        hpPct: "Pilgrim Of Scars: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "crowned-offering": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Crowned Offering: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "dawn-cantor": {
+      block: 3,
+      [NOTE]: {
+        block: "Dawn Cantor: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "bearer-of-burdens": {
+      restoreMana: 1,
+      [NOTE]: {
+        restoreMana: "Bearer Of Burdens: Mana restored by a new enemy-applied negative status.",
+      },
+    },
+  },
+
+
 };

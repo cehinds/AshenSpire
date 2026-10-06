@@ -9,10 +9,8 @@
 #   instance  scopeId an instanceId  this one copy
 # Only default rows ship today; the other scopes are the shape phase 2b needs
 # for per-copy relic passives, so they are declared and validated now.
-#
 # NUMBERS LIVE IN src/content/balance.js. balancePath names a row there; a
 # literal number in this column is refused by name.
-#
 # columns: scope, scopeId, nodeId, variable, balancePath
 scope,scopeId,nodeId,variable,balancePath
 default,,staggerBreak,magicalImpactAdd,exposure.staggerBreakImpact
@@ -156,3 +154,58 @@ default,,progression-whisperglass-die,chargeDamage,progressionRelics.progression
 default,,progression-purse-of-borrowed-shadows,block,progressionRelics.progression-purse-of-borrowed-shadows.block
 default,,progression-ember-alms-bowl,block,progressionRelics.progression-ember-alms-bowl.block
 default,,progression-ossuary-prayer-wheel,restoreMana,progressionRelics.progression-ossuary-prayer-wheel.restoreMana
+default,,feat:coal-on-steel,bleed,progressionFeats.coal-on-steel.bleed
+default,,feat:brace-and-bite,damage,progressionFeats.brace-and-bite.damage
+default,,feat:red-footwork,draw,progressionFeats.red-footwork.draw
+default,,feat:anvil-discipline,break,progressionFeats.anvil-discipline.break
+default,,feat:forge-momentum,damage,progressionFeats.forge-momentum.damage
+default,,feat:paid-in-blood,damage,progressionFeats.paid-in-blood.damage
+default,,feat:last-rampart,block,progressionFeats.last-rampart.block
+default,,feat:last-rampart,hpPct,progressionFeats.last-rampart.hpPct
+default,,feat:war-cadence,block,progressionFeats.war-cadence.block
+default,,feat:broad-sentence,damage,progressionFeats.broad-sentence.damage
+default,,feat:ember-sovereign,damage,progressionFeats.ember-sovereign.damage
+default,,feat:nightglass-scholar,damage,progressionFeats.nightglass-scholar.damage
+default,,feat:smoke-dancer,damage,progressionFeats.smoke-dancer.damage
+default,,feat:dread-of-the-hammer,damage,progressionFeats.dread-of-the-hammer.damage
+default,,feat:scarred-oath,block,progressionFeats.scarred-oath.block
+default,,feat:harvest-the-wound,heal,progressionFeats.harvest-the-wound.heal
+default,,feat:sepulchral-promise,heal,progressionFeats.sepulchral-promise.heal
+default,,feat:orbit-keeper,damage,progressionFeats.orbit-keeper.damage
+default,,feat:moonward-scholar,block,progressionFeats.moonward-scholar.block
+default,,feat:moonward-scholar,manaSpent,progressionFeats.moonward-scholar.manaSpent
+default,,feat:comet-reader,vulnerable,progressionFeats.comet-reader.vulnerable
+default,,feat:weight-of-the-void,weak,progressionFeats.weight-of-the-void.weak
+default,,feat:crooked-measure,weak,progressionFeats.crooked-measure.weak
+default,,feat:mirror-of-rime,buildup,progressionFeats.mirror-of-rime.buildup
+default,,feat:constellation-keeper,damage,progressionFeats.constellation-keeper.damage
+default,,feat:patient-wellspring,block,progressionFeats.patient-wellspring.block
+default,,feat:eclipse-hunter,damage,progressionFeats.eclipse-hunter.damage
+default,,feat:firmament-keeper,block,progressionFeats.firmament-keeper.block
+default,,feat:celestial-refrain,block,progressionFeats.celestial-refrain.block
+default,,feat:memory-of-winter,retainBlockUpTo,progressionFeats.memory-of-winter.retainBlockUpTo
+default,,feat:threefold-sky,draw,progressionFeats.threefold-sky.draw
+default,,feat:first-knife,damage,progressionFeats.first-knife.damage
+default,,feat:pocket-method,block,progressionFeats.pocket-method.block
+default,,feat:open-flank,damage,progressionFeats.open-flank.damage
+default,,feat:hidden-palm,block,progressionFeats.hidden-palm.block
+default,,feat:tighten-the-wire,damage,progressionFeats.tighten-the-wire.damage
+default,,feat:carrion-measure,damage,progressionFeats.carrion-measure.damage
+default,,feat:carrion-measure,hpPct,progressionFeats.carrion-measure.hpPct
+default,,feat:two-quiet-knives,damage,progressionFeats.two-quiet-knives.damage
+default,,feat:trapdoor-smile,damage,progressionFeats.trapdoor-smile.damage
+default,,feat:clean-exit,restoreStamina,progressionFeats.clean-exit.restoreStamina
+default,,feat:razor-ledger,damage,progressionFeats.razor-ledger.damage
+default,,feat:ashen-mercy,heal,progressionFeats.ashen-mercy.heal
+default,,feat:censer-keeper,block,progressionFeats.censer-keeper.block
+default,,feat:sower-of-blight,buildup,progressionFeats.sower-of-blight.buildup
+default,,feat:funeral-watch,block,progressionFeats.funeral-watch.block
+default,,feat:funeral-watch,hpPct,progressionFeats.funeral-watch.hpPct
+default,,feat:ember-almoner,regen,progressionFeats.ember-almoner.regen
+default,,feat:choir-of-bone,restoreStamina,progressionFeats.choir-of-bone.restoreStamina
+default,,feat:requiem-reader,damage,progressionFeats.requiem-reader.damage
+default,,feat:pilgrim-of-scars,heal,progressionFeats.pilgrim-of-scars.heal
+default,,feat:pilgrim-of-scars,hpPct,progressionFeats.pilgrim-of-scars.hpPct
+default,,feat:crowned-offering,damage,progressionFeats.crowned-offering.damage
+default,,feat:dawn-cantor,block,progressionFeats.dawn-cantor.block
+default,,feat:bearer-of-burdens,restoreMana,progressionFeats.bearer-of-burdens.restoreMana

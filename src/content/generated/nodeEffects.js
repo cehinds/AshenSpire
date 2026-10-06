@@ -2407,7 +2407,9 @@ export const nodeEffects = {
             "op": "applyStatus",
             "target": "enemy",
             "status": "bleed",
-            "stacks": 1
+            "stacks": {
+              "variable": "bleed"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2454,7 +2456,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:brace-and-bite",
-            "damage": 3,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2493,7 +2497,9 @@ export const nodeEffects = {
           {
             "op": "draw",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "variable": "draw"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2530,7 +2536,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:anvil-discipline",
-            "break": 2
+            "break": {
+              "variable": "break"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2578,7 +2586,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:forge-momentum",
-            "damage": 4,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2626,7 +2636,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:paid-in-blood",
-            "damage": 4,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2654,7 +2666,9 @@ export const nodeEffects = {
                 {
                   "p": "hpBelowPct",
                   "of": "self",
-                  "pct": 50,
+                  "pct": {
+                    "variable": "hpPct"
+                  },
                   "snapshot": "beforePlay"
                 }
               ]
@@ -2666,7 +2680,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:last-rampart",
-            "block": 4
+            "block": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2705,7 +2721,9 @@ export const nodeEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 4
+            "amount": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2732,7 +2750,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:broad-sentence",
-            "damage": 2,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2770,7 +2790,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:ember-sovereign",
-            "damage": 2,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2812,7 +2834,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:nightglass-scholar",
-            "damage": 2,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2854,7 +2878,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:smoke-dancer",
-            "damage": 2,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2903,7 +2929,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:dread-of-the-hammer",
-            "damage": 4,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -2942,7 +2970,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:scarred-oath",
-            "block": 3
+            "block": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -2969,7 +2999,9 @@ export const nodeEffects = {
           {
             "op": "heal",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "variable": "heal"
+            }
           }
         ],
         "once": true
@@ -2996,7 +3028,9 @@ export const nodeEffects = {
           {
             "op": "heal",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "variable": "heal"
+            }
           }
         ],
         "once": true
@@ -3043,7 +3077,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:orbit-keeper",
-            "damage": 3,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3075,7 +3111,9 @@ export const nodeEffects = {
                 {
                   "p": "turnMetric",
                   "metric": "manaSpent",
-                  "atLeast": 2
+                  "atLeast": {
+                    "variable": "manaSpent"
+                  }
                 }
               ]
             }
@@ -3086,7 +3124,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:moonward-scholar",
-            "block": 3
+            "block": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3114,7 +3154,9 @@ export const nodeEffects = {
             "op": "applyStatus",
             "target": "enemy",
             "status": "vulnerable",
-            "stacks": 1
+            "stacks": {
+              "variable": "vulnerable"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3142,7 +3184,9 @@ export const nodeEffects = {
             "op": "applyStatus",
             "target": "enemy",
             "status": "weak",
-            "stacks": 1
+            "stacks": {
+              "variable": "weak"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3170,7 +3214,9 @@ export const nodeEffects = {
             "op": "applyStatus",
             "target": "enemy",
             "status": "weak",
-            "stacks": 1
+            "stacks": {
+              "variable": "weak"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3198,7 +3244,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:mirror-of-rime",
-            "buildup": 2,
+            "buildup": {
+              "variable": "buildup"
+            },
             "buildupStatus": "frost"
           }
         ],
@@ -3247,7 +3295,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:constellation-keeper",
-            "damage": 3,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3278,7 +3328,9 @@ export const nodeEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3337,7 +3389,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:eclipse-hunter",
-            "damage": 4,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3365,7 +3419,9 @@ export const nodeEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 4
+            "amount": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3405,7 +3461,9 @@ export const nodeEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 4
+            "amount": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3414,7 +3472,9 @@ export const nodeEffects = {
   },
   "feat:memory-of-winter": {
     "passives": {
-      "retainBlockUpTo": 4
+      "retainBlockUpTo": {
+        "variable": "retainBlockUpTo"
+      }
     }
   },
   "feat:threefold-sky": {
@@ -3450,7 +3510,9 @@ export const nodeEffects = {
           {
             "op": "draw",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "variable": "draw"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3498,7 +3560,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:first-knife",
-            "damage": 3,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3537,7 +3601,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:pocket-method",
-            "block": 3
+            "block": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3587,7 +3653,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:open-flank",
-            "damage": 3,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3626,7 +3694,9 @@ export const nodeEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3676,7 +3746,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:tighten-the-wire",
-            "damage": 3,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3713,7 +3785,9 @@ export const nodeEffects = {
                 {
                   "p": "hpBelowPct",
                   "of": "target",
-                  "pct": 50,
+                  "pct": {
+                    "variable": "hpPct"
+                  },
                   "snapshot": "beforePlay"
                 }
               ]
@@ -3725,7 +3799,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:carrion-measure",
-            "damage": 4,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3754,7 +3830,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:two-quiet-knives",
-            "damage": 1,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3809,7 +3887,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:trapdoor-smile",
-            "damage": 4,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3848,7 +3928,9 @@ export const nodeEffects = {
           {
             "op": "restoreStamina",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "variable": "restoreStamina"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3895,7 +3977,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:razor-ledger",
-            "damage": 3,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -3924,7 +4008,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:ashen-mercy",
-            "heal": 2
+            "heal": {
+              "variable": "heal"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3951,7 +4037,9 @@ export const nodeEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -3979,7 +4067,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:sower-of-blight",
-            "buildup": 2,
+            "buildup": {
+              "variable": "buildup"
+            },
             "buildupStatus": "crimsonBlight"
           }
         ],
@@ -4007,7 +4097,9 @@ export const nodeEffects = {
                 {
                   "p": "hpBelowPct",
                   "of": "self",
-                  "pct": 50,
+                  "pct": {
+                    "variable": "hpPct"
+                  },
                   "snapshot": "beforePlay"
                 }
               ]
@@ -4019,7 +4111,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:funeral-watch",
-            "block": 3
+            "block": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4047,7 +4141,9 @@ export const nodeEffects = {
             "op": "applyStatus",
             "target": "self",
             "status": "regen",
-            "stacks": 1
+            "stacks": {
+              "variable": "regen"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4085,7 +4181,9 @@ export const nodeEffects = {
           {
             "op": "restoreStamina",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "variable": "restoreStamina"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4133,7 +4231,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:requiem-reader",
-            "damage": 3,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -4161,7 +4261,9 @@ export const nodeEffects = {
                 {
                   "p": "turnMetric",
                   "metric": "turnStartHpPct",
-                  "atMost": 50
+                  "atMost": {
+                    "variable": "hpPct"
+                  }
                 }
               ]
             }
@@ -4171,7 +4273,9 @@ export const nodeEffects = {
           {
             "op": "heal",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "variable": "heal"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4218,7 +4322,9 @@ export const nodeEffects = {
             "op": "grantCardCharge",
             "target": "self",
             "key": "feat:crowned-offering",
-            "damage": 4,
+            "damage": {
+              "variable": "damage"
+            },
             "damageScope": "effect"
           }
         ],
@@ -4246,7 +4352,9 @@ export const nodeEffects = {
           {
             "op": "block",
             "target": "self",
-            "amount": 3
+            "amount": {
+              "variable": "block"
+            }
           }
         ],
         "limitPerTurn": 1
@@ -4280,7 +4388,9 @@ export const nodeEffects = {
           {
             "op": "restoreMana",
             "target": "self",
-            "amount": 1
+            "amount": {
+              "variable": "restoreMana"
+            }
           }
         ],
         "limitPerTurn": 1

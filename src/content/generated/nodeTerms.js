@@ -660,7 +660,7 @@ export const nodeTerms = [
     "nodeId": "feat:brace-and-bite",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first Blade attack each turn played while you have Block deals +3 damage."
+    "template": "The first Blade attack each turn played while you have Block deals +{damage} damage."
   },
   {
     "nodeId": "feat:red-footwork",
@@ -672,25 +672,25 @@ export const nodeTerms = [
     "nodeId": "feat:anvil-discipline",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first Heavy attack each turn deals +2 Break damage."
+    "template": "The first Heavy attack each turn deals +{break} Break damage."
   },
   {
     "nodeId": "feat:forge-momentum",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Blade attack after a Guard card each turn deals +4 damage."
+    "template": "Your first Blade attack after a Guard card each turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:paid-in-blood",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first Blood attack after you have lost HP since your previous turn began deals +4 damage."
+    "template": "The first Blood attack after you have lost HP since your previous turn began deals +{damage} damage."
   },
   {
     "nodeId": "feat:last-rampart",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "At half HP or lower, your first Guard card each turn grants +4 Block."
+    "template": "At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
   },
   {
     "nodeId": "feat:war-cadence",
@@ -702,25 +702,25 @@ export const nodeTerms = [
     "nodeId": "feat:broad-sentence",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first attack that hits all living enemies each turn deals +2 damage to each target."
+    "template": "Your first attack that hits all living enemies each turn deals +{damage} damage to each target."
   },
   {
     "nodeId": "feat:ember-sovereign",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
+    "template": "Once per turn, a Crown of Cinders charge gains +{damage} damage before it is consumed."
   },
   {
     "nodeId": "feat:dread-of-the-hammer",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Heavy attack against a Staggered target each turn deals +4 damage."
+    "template": "Your first Heavy attack against a Staggered target each turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:scarred-oath",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
+    "template": "Your first Guard card after losing HP since your previous turn began grants +{block} Block, once per turn."
   },
   {
     "nodeId": "feat:harvest-the-wound",
@@ -732,13 +732,13 @@ export const nodeTerms = [
     "nodeId": "feat:orbit-keeper",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Starstone spell following another spell each turn deals +3 direct damage."
+    "template": "Your first Starstone spell following another spell each turn deals +{damage} direct damage."
   },
   {
     "nodeId": "feat:moonward-scholar",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block."
+    "template": "The first Guard spell played after you spent at least {manaSpent} Mana this turn grants +{block} Block."
   },
   {
     "nodeId": "feat:comet-reader",
@@ -750,13 +750,13 @@ export const nodeTerms = [
     "nodeId": "feat:mirror-of-rime",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Rime Mirror each turn applies +2 Frost buildup."
+    "template": "Your first Rime Mirror each turn applies +{buildup} Frost buildup."
   },
   {
     "nodeId": "feat:constellation-keeper",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage."
+    "template": "Your first Starstone attack after two distinct Starstone card IDs this turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:patient-wellspring",
@@ -774,13 +774,13 @@ export const nodeTerms = [
     "nodeId": "feat:nightglass-scholar",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Once per turn, your Nightglass charge grants +2 additional damage when consumed."
+    "template": "Once per turn, your Nightglass charge grants +{damage} additional damage when consumed."
   },
   {
     "nodeId": "feat:eclipse-hunter",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage."
+    "template": "Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:firmament-keeper",
@@ -798,7 +798,7 @@ export const nodeTerms = [
     "nodeId": "feat:memory-of-winter",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block."
+    "template": "Retain up to {retainBlockUpTo} Block into your next turn; use the highest retention allowance if another source also retains Block."
   },
   {
     "nodeId": "feat:threefold-sky",
@@ -810,13 +810,13 @@ export const nodeTerms = [
     "nodeId": "feat:first-knife",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "If your first card this turn is a Blade attack, it deals +3 damage."
+    "template": "If your first card this turn is a Blade attack, it deals +{damage} damage."
   },
   {
     "nodeId": "feat:pocket-method",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Guard card after an explicit discard each turn grants +3 Block."
+    "template": "Your first Guard card after an explicit discard each turn grants +{block} Block."
   },
   {
     "nodeId": "feat:crooked-measure",
@@ -828,7 +828,7 @@ export const nodeTerms = [
     "nodeId": "feat:open-flank",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Blade attack against an enemy with zero Block each turn deals +3 damage."
+    "template": "Your first Blade attack against an enemy with zero Block each turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:hidden-palm",
@@ -840,31 +840,31 @@ export const nodeTerms = [
     "nodeId": "feat:tighten-the-wire",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage."
+    "template": "Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +{damage} damage."
   },
   {
     "nodeId": "feat:smoke-dancer",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Once per turn, a Smoke Edge charge adds +2 damage before it is consumed."
+    "template": "Once per turn, a Smoke Edge charge adds +{damage} damage before it is consumed."
   },
   {
     "nodeId": "feat:carrion-measure",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage."
+    "template": "Your first Blade attack against an enemy at {hpPct}% HP or lower each turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:two-quiet-knives",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Paired Strikes attack each turn deals +1 damage on each of its two hits."
+    "template": "Your first Paired Strikes attack each turn deals +{damage} damage on each of its two hits."
   },
   {
     "nodeId": "feat:trapdoor-smile",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage."
+    "template": "Your first Blade attack after both a Guile card and a Guard card this turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:clean-exit",
@@ -876,13 +876,13 @@ export const nodeTerms = [
     "nodeId": "feat:razor-ledger",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your first Blade attack after an explicit discard each turn deals +3 damage."
+    "template": "Your first Blade attack after an explicit discard each turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:ashen-mercy",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first Mercy in Ash card each turn heals +2 HP."
+    "template": "The first Mercy in Ash card each turn heals +{heal} HP."
   },
   {
     "nodeId": "feat:censer-keeper",
@@ -894,13 +894,13 @@ export const nodeTerms = [
     "nodeId": "feat:sower-of-blight",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first Blight Seed hit each turn applies +2 Crimson Blight buildup."
+    "template": "The first Blight Seed hit each turn applies +{buildup} Crimson Blight buildup."
   },
   {
     "nodeId": "feat:funeral-watch",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "At half HP or lower, your first Guard card each turn grants +3 Block."
+    "template": "At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
   },
   {
     "nodeId": "feat:ember-almoner",
@@ -918,19 +918,19 @@ export const nodeTerms = [
     "nodeId": "feat:requiem-reader",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage."
+    "template": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:pilgrim-of-scars",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "If you began the turn at half HP or lower, your first Guard card that turn heals {heal} HP."
+    "template": "If you began the turn at {hpPct}% HP or lower, your first Guard card that turn heals {heal} HP."
   },
   {
     "nodeId": "feat:crowned-offering",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first Ritual attack after an earlier HP offering this turn deals +4 damage."
+    "template": "The first Ritual attack after an earlier HP offering this turn deals +{damage} damage."
   },
   {
     "nodeId": "feat:dawn-cantor",

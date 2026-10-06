@@ -415,7 +415,7 @@ function withoutSupersededLegacy(entries) {
 //     co-op, endless — is World.
 function balanceGroup(path) {
   if (/^(poise|stagger|mana)\./.test(path)) return 'Stats';
-  if (/^(level|xp\.|skill\.|classTree\.)/.test(path)) return 'Progression';
+  if (/^(level|xp\.|skill\.|classTree\.|progressionFeats\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
   if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|coop|endless|customMods)/.test(path)) return 'World';
@@ -598,7 +598,7 @@ function balanceLabel(path) {
 function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
-    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}) } : {};
+    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}), ...(joined.startsWith('progressionFeats.') && joined.endsWith('.hpPct') ? PERCENT : {}) } : {};
     const described = balanceNote(joined, { bundle, parent });
     rows.push({
       cat: 'Advanced',

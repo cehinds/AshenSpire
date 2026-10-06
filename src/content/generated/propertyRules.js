@@ -740,7 +740,7 @@ export const propertyRules = [
     "tag": "feat:brace-and-bite",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Blade attack each turn played while you have Block deals +3 damage."
+    "textTemplate": "The first Blade attack each turn played while you have Block deals +{damage} damage."
   },
   {
     "tag": "feat:red-footwork",
@@ -752,25 +752,25 @@ export const propertyRules = [
     "tag": "feat:anvil-discipline",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Heavy attack each turn deals +2 Break damage."
+    "textTemplate": "The first Heavy attack each turn deals +{break} Break damage."
   },
   {
     "tag": "feat:forge-momentum",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Blade attack after a Guard card each turn deals +4 damage."
+    "textTemplate": "Your first Blade attack after a Guard card each turn deals +{damage} damage."
   },
   {
     "tag": "feat:paid-in-blood",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Blood attack after you have lost HP since your previous turn began deals +4 damage."
+    "textTemplate": "The first Blood attack after you have lost HP since your previous turn began deals +{damage} damage."
   },
   {
     "tag": "feat:last-rampart",
     "requires": "",
     "excludes": "",
-    "textTemplate": "At half HP or lower, your first Guard card each turn grants +4 Block."
+    "textTemplate": "At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
   },
   {
     "tag": "feat:war-cadence",
@@ -782,25 +782,25 @@ export const propertyRules = [
     "tag": "feat:broad-sentence",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first attack that hits all living enemies each turn deals +2 damage to each target."
+    "textTemplate": "Your first attack that hits all living enemies each turn deals +{damage} damage to each target."
   },
   {
     "tag": "feat:ember-sovereign",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
+    "textTemplate": "Once per turn, a Crown of Cinders charge gains +{damage} damage before it is consumed."
   },
   {
     "tag": "feat:dread-of-the-hammer",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Heavy attack against a Staggered target each turn deals +4 damage."
+    "textTemplate": "Your first Heavy attack against a Staggered target each turn deals +{damage} damage."
   },
   {
     "tag": "feat:scarred-oath",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
+    "textTemplate": "Your first Guard card after losing HP since your previous turn began grants +{block} Block, once per turn."
   },
   {
     "tag": "feat:harvest-the-wound",
@@ -812,13 +812,13 @@ export const propertyRules = [
     "tag": "feat:orbit-keeper",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Starstone spell following another spell each turn deals +3 direct damage."
+    "textTemplate": "Your first Starstone spell following another spell each turn deals +{damage} direct damage."
   },
   {
     "tag": "feat:moonward-scholar",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block."
+    "textTemplate": "The first Guard spell played after you spent at least {manaSpent} Mana this turn grants +{block} Block."
   },
   {
     "tag": "feat:comet-reader",
@@ -830,13 +830,13 @@ export const propertyRules = [
     "tag": "feat:mirror-of-rime",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Rime Mirror each turn applies +2 Frost buildup."
+    "textTemplate": "Your first Rime Mirror each turn applies +{buildup} Frost buildup."
   },
   {
     "tag": "feat:constellation-keeper",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage."
+    "textTemplate": "Your first Starstone attack after two distinct Starstone card IDs this turn deals +{damage} damage."
   },
   {
     "tag": "feat:patient-wellspring",
@@ -854,13 +854,13 @@ export const propertyRules = [
     "tag": "feat:nightglass-scholar",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Once per turn, your Nightglass charge grants +2 additional damage when consumed."
+    "textTemplate": "Once per turn, your Nightglass charge grants +{damage} additional damage when consumed."
   },
   {
     "tag": "feat:eclipse-hunter",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage."
+    "textTemplate": "Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +{damage} damage."
   },
   {
     "tag": "feat:firmament-keeper",
@@ -878,7 +878,7 @@ export const propertyRules = [
     "tag": "feat:memory-of-winter",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block."
+    "textTemplate": "Retain up to {retainBlockUpTo} Block into your next turn; use the highest retention allowance if another source also retains Block."
   },
   {
     "tag": "feat:threefold-sky",
@@ -890,13 +890,13 @@ export const propertyRules = [
     "tag": "feat:first-knife",
     "requires": "",
     "excludes": "",
-    "textTemplate": "If your first card this turn is a Blade attack, it deals +3 damage."
+    "textTemplate": "If your first card this turn is a Blade attack, it deals +{damage} damage."
   },
   {
     "tag": "feat:pocket-method",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Guard card after an explicit discard each turn grants +3 Block."
+    "textTemplate": "Your first Guard card after an explicit discard each turn grants +{block} Block."
   },
   {
     "tag": "feat:crooked-measure",
@@ -908,7 +908,7 @@ export const propertyRules = [
     "tag": "feat:open-flank",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Blade attack against an enemy with zero Block each turn deals +3 damage."
+    "textTemplate": "Your first Blade attack against an enemy with zero Block each turn deals +{damage} damage."
   },
   {
     "tag": "feat:hidden-palm",
@@ -920,31 +920,31 @@ export const propertyRules = [
     "tag": "feat:tighten-the-wire",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage."
+    "textTemplate": "Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +{damage} damage."
   },
   {
     "tag": "feat:smoke-dancer",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Once per turn, a Smoke Edge charge adds +2 damage before it is consumed."
+    "textTemplate": "Once per turn, a Smoke Edge charge adds +{damage} damage before it is consumed."
   },
   {
     "tag": "feat:carrion-measure",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage."
+    "textTemplate": "Your first Blade attack against an enemy at {hpPct}% HP or lower each turn deals +{damage} damage."
   },
   {
     "tag": "feat:two-quiet-knives",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Paired Strikes attack each turn deals +1 damage on each of its two hits."
+    "textTemplate": "Your first Paired Strikes attack each turn deals +{damage} damage on each of its two hits."
   },
   {
     "tag": "feat:trapdoor-smile",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage."
+    "textTemplate": "Your first Blade attack after both a Guile card and a Guard card this turn deals +{damage} damage."
   },
   {
     "tag": "feat:clean-exit",
@@ -956,13 +956,13 @@ export const propertyRules = [
     "tag": "feat:razor-ledger",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first Blade attack after an explicit discard each turn deals +3 damage."
+    "textTemplate": "Your first Blade attack after an explicit discard each turn deals +{damage} damage."
   },
   {
     "tag": "feat:ashen-mercy",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Mercy in Ash card each turn heals +2 HP."
+    "textTemplate": "The first Mercy in Ash card each turn heals +{heal} HP."
   },
   {
     "tag": "feat:censer-keeper",
@@ -974,13 +974,13 @@ export const propertyRules = [
     "tag": "feat:sower-of-blight",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Blight Seed hit each turn applies +2 Crimson Blight buildup."
+    "textTemplate": "The first Blight Seed hit each turn applies +{buildup} Crimson Blight buildup."
   },
   {
     "tag": "feat:funeral-watch",
     "requires": "",
     "excludes": "",
-    "textTemplate": "At half HP or lower, your first Guard card each turn grants +3 Block."
+    "textTemplate": "At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
   },
   {
     "tag": "feat:ember-almoner",
@@ -998,19 +998,19 @@ export const propertyRules = [
     "tag": "feat:requiem-reader",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage."
+    "textTemplate": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +{damage} damage."
   },
   {
     "tag": "feat:pilgrim-of-scars",
     "requires": "",
     "excludes": "",
-    "textTemplate": "If you began the turn at half HP or lower, your first Guard card that turn heals {heal} HP."
+    "textTemplate": "If you began the turn at {hpPct}% HP or lower, your first Guard card that turn heals {heal} HP."
   },
   {
     "tag": "feat:crowned-offering",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Ritual attack after an earlier HP offering this turn deals +4 damage."
+    "textTemplate": "The first Ritual attack after an earlier HP offering this turn deals +{damage} damage."
   },
   {
     "tag": "feat:dawn-cantor",
