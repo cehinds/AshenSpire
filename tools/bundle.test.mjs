@@ -231,6 +231,37 @@ if (process.argv.includes('--eol-selftest')) {
   process.exit(fails ? 1 : 0);
 }
 
+// Execute the real bundled model factories/loader, with only the UI entry
+// replaced by a headless check. Native ESM live bindings masked the former
+// loadout -> validate -> classMasteryContent -> state -> loadout cycle; the
+// shipped classic loader captured an undefined createLoadout during that cycle.
+function bundledStartingDecks(html, { restoreCycle = false } = {}) {
+  const match = /<script>([\s\S]*?)<\/script>/.exec(html);
+  if (!match) return { ok: false, why: 'no bundled script' };
+  let script = match[1].replace(/"data:[^"\\\n\r]*"/g, '"data:"');
+  if (restoreCycle) {
+    const start = script.indexOf('"src/model/loadout.js": function');
+    const end = script.indexOf('\n},\n"', start);
+    if (start < 0 || end < 0) return { ok: false, why: 'loadout factory not found' };
+    const body = script.slice(start, end);
+    const leaf = 'require("src/model/tokens.js")';
+    if (!body.includes(leaf)) return { ok: false, why: 'token leaf import not found' };
+    script = script.slice(0, start) + body.replace(leaf, 'require("src/model/validate.js")') + script.slice(end);
+  }
+  const entry = '  require("src/main.js");\n})();';
+  if (!script.endsWith(entry + '\n') && !script.trimEnd().endsWith(entry)) return { ok: false, why: 'runtime entry not found' };
+  script = script.replace(entry, `  require("src/model/loadout.js");
+  var bundle = require("src/content/index.js").contentBundle;
+  globalThis.startingDeckValidation = require("src/model/validate.js").validateContent(bundle);
+})();`);
+  const context = vm.createContext({ console });
+  try {
+    new vm.Script(script, { filename: 'bundled-starting-decks' }).runInContext(context, { timeout: 30000 });
+    const result = context.startingDeckValidation;
+    return { ok: result?.ok === true, why: JSON.stringify(result?.errors ?? result) };
+  } catch (error) { return { ok: false, why: error.message }; }
+}
+
 // ---- 1. The control: an untouched tree still builds -------------------------
 // EVERY CASE RUNS IN ITS OWN FUNCTION FRAME. As bare `{ … }` blocks at module
 // top level, each case's block-scoped locals stayed alive in the one top-level
@@ -244,8 +275,21 @@ if (process.argv.includes('--eol-selftest')) {
   const outPath = resolve(dir, 'build/AshenSpire.html');
   check('control: it wrote a real bundle, not a stub',
     existsSync(outPath) && readFileSync(outPath, 'utf8').length > 500000);
+  if (existsSync(outPath)) {
+    const html = readFileSync(outPath, 'utf8');
+    const clean = bundledStartingDecks(html);
+    check('control: bundled content validation composes every starting deck', clean.ok, clean.why);
+    const planted = bundledStartingDecks(html, { restoreCycle: true });
+    check('control: restoring the validator import catches the captured createLoadout cycle',
+      !planted.ok && /createLoadout is not a function/.test(planted.why), planted.why);
+  }
   rmSync(dir, { recursive: true, force: true });
 })();
+
+if (process.argv.includes('--model-runtime-only')) {
+  console.log('BOUNDARY: real bundled model factories and loader executed; no DOM or browser rendering checked.');
+  process.exit(fails ? 1 : 0);
+}
 
 // ---- 1p. THE PACK SHAPE, the default since step 8e --------------------------
 // Built from the real light and common trees (not a small fixture pack: the
