@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1662",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Drive class mastery in full browser gates",
+    "detail": "The cold-boot walkthrough and map-camera persistence drive choose required class mastery nodes before entering the map, including when the walkthrough starts a second run. Both use real input and preserve the combat, storage and camera assertions; mastery door priority is covered by probe selftests.",
+    "build": "0.7.1.1029",
+    "pullRequest": 1662,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1662"
+  },
+  {
     "id": "pr-1658",
     "date": "2026-10-06",
     "group": "2026-10-06",
