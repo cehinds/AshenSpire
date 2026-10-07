@@ -90,6 +90,11 @@ export function enemyMoveCarrier(enemy, move, moveId) {
   return tacticalCarrier(move, { enemyId: enemy.enemyId, moveId, type: 'attack' });
 }
 
+/** The selected intent remembers preparation even after its reaction is spent. */
+export function enemyCounterDefensePrimed(enemy, moveId) {
+  return enemy.intent?.moveId === moveId && enemy.intent.counterDefensePrimed === true;
+}
+
 export function primeEnemyCounter(ctx, enemy, move, moveId) {
   const carrier = enemyMoveCarrier(enemy, move, moveId);
   if (carrier.combatProfile.maneuver !== 'counter') return;
@@ -99,4 +104,5 @@ export function primeEnemyCounter(ctx, enemy, move, moveId) {
   delete enemy.combatCounter.expiresOnTurn;
   ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block ?? matchupRules(ctx).counter.guard }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
   enqueueCounterWard(ctx, enemy, carrier, { moveId });
+  if (enemy.intent?.moveId === moveId) enemy.intent.counterDefensePrimed = true;
 }

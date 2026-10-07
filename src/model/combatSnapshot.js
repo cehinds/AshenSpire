@@ -38,6 +38,10 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.combatCounter !== undefined) problems.push(...combatCounterProblems(entity.combatCounter, `${path}.combatCounter`));
   if (entity.intentRevealed !== undefined && typeof entity.intentRevealed !== 'boolean') problems.push(`${path}.intentRevealed must be boolean`);
   if (entity.intentReads !== undefined && (!record(entity.intentReads) || Object.entries(entity.intentReads).some(([id, value]) => !nonEmptyString(id) || typeof value !== 'boolean'))) problems.push(`${path}.intentReads must map player ids to booleans`);
+  if (entity.intent?.counterDefensePrimed !== undefined) {
+    if (typeof entity.intent.counterDefensePrimed !== 'boolean') problems.push(`${path}.intent.counterDefensePrimed must be boolean`);
+    else if (entity.intent.counterDefensePrimed && (!nonEmptyString(entity.intent.moveId) || entity.intent.combatProfile?.maneuver !== 'counter')) problems.push(`${path}.intent.counterDefensePrimed requires the committed Counter move`);
+  }
   if (entity.abilityRiders !== undefined) {
     const state = entity.abilityRiders;
     if (!record(state)) problems.push(`${path}.abilityRiders must be an object`);

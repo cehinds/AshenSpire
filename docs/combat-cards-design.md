@@ -24,7 +24,7 @@ Important limit: Ranged currently means safe from **melee retaliation**, not bla
 
 ## Counter details
 
-- Counter card retains immediate Block, draw, Prepared and printed statuses. Listed direct damage/Poise becomes reply budget. No printed Block: gain 4 base Guard; all Counters add 2 base magical Ward. No listed damage: default reply base 6. Ratings/modifiers still apply where ordinary rules specify.
+- Counter card retains immediate Block, draw, Prepared and printed statuses. Listed direct damage/Poise becomes reply budget, with conditions captured after normal preparation/payment and before this card's own support or Guard/Ward. No printed Block: gain 4 base Guard; all Counters add 2 base magical Ward. No listed damage: default reply base 6. Ratings/modifiers still apply where ordinary rules specify.
 - Deferred reply damage does not ask for an enemy target during preparation; it answers the incoming attacker. Printed immediate hostile support still requires its own target. Solo and co-op share this target plan.
 - First eligible positive hit deals half damage and spends reaction. Fully absorbed hit returns `floor(base × 1.5) + 5 + bonus`. Partial absorption spends reaction without return damage. Listed positive reply Poise gets ×1.5; absent Poise stays absent.
 - Melee mode covers eligible physical Attack/Smash. Ranged mode covers physical projectiles. Spell mode covers spells and physical projectiles; against a physical projectile its reply removes Ward without HP damage. Against an incoming spell it can damage caster Health. Reactions cannot chain reactions.
@@ -62,7 +62,7 @@ Suggested school response loops: Fire melts Frost protection; Frost slows Fire s
 | Holy | `sacred` | After HP damage, cleanse one attacker debuff stack in configured priority order |
 | Necrotic | `decay` | Crimson Blight 1 after HP damage |
 
-Riders apply once per action and target, not once per hit. An already printed matching status prevents extra status rider. Ward removal never spills into Health. Existing weapon-dependent cards inherit equipped damage type; do not force every Strike to Slashing or every staff spell to Fire.
+Riders apply once per committed root action (player card or enemy move) and target, not once per hit or printed damage effect. An already printed matching status prevents extra status rider. Ward removal never spills into Health. Existing weapon-dependent cards inherit equipped damage type; do not force every Strike to Slashing or every staff spell to Fire.
 
 ## Combos and build rewards
 
@@ -81,7 +81,7 @@ Build limits: trigger once per turn/combat where stated; cap discounts at zero; 
 
 ## Enemy reads
 
-- Assumption: incomplete “70% chance to be” means **hidden exact action**, not miss chance. Base hidden chance 70%; each Wisdom reduces it 2 percentage points and each Intelligence reduces it 1 percentage point. Clamp 0–95%. Wisdom 10 / Intelligence 5 → 45% hidden.
+- Exact action starts **70% hidden**; this controls intent information. Base hidden chance 70%; each Wisdom reduces it 2 percentage points and each Intelligence reduces it 1 percentage point. Clamp 0–95%. Wisdom 10 / Intelligence 5 → 45% hidden.
 - Stance always visible: Attacking, Defending, Countering, Sweeping, Ranged, Smashing, Casting, Preparing or Staggered. Hidden action omits selected move ID, exact damage, hit count and payload. Reveal rolls once per selected intent; inspection and reload never reroll it.
 - Enemy move catalog lists known possible moves. Hidden current selection receives no active highlight or live numeric preview.
 - Suggested **Observe card**, not implemented: spend action to reveal current move and reorder one drawn card. Observation should trade tempo for certainty, not erase uncertainty free.

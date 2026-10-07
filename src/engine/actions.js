@@ -721,7 +721,9 @@ function runOpcode(ctx, action, eff) {
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
       const attackTags = attackTagsFor(action, eff, ctx.registries);
       const impact = ctx.foundation ? F.foundationImpact(ctx, action, hits) : [];
-      const combatRiderTargets = action.meta?.combatRiderTargets || [];
+      // Every queued effect of a committed card shares its carrier budget.
+      // Effect metadata is copied for charges/indices and cannot own that budget.
+      const combatRiderTargets = action.card?.combatRiderTargets || action.meta?.combatRiderTargets || [];
       if (action.meta) action.meta.combatRiderTargets = combatRiderTargets;
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit

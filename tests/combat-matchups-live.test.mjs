@@ -257,3 +257,78 @@ test('Holy lethal hit cleanses its attacker before the card ends combat', () => 
   assert.equal(getStacks(c.player, 'weak'), 2);
   assert(c.eventLog.some(event => event.type === 'statusRemoved' && event.targetId === 'player' && event.status === 'weak' && event.amount === 1));
 });
+
+test('Deathblow shares one Slashing rider across its separately queued damage effects', () => {
+  const registries = createRegistries({ ...legacyContentBundle,
+    tagging: [...legacyContentBundle.tagging, { family: 'card', scope: '', objectId: 'deathblow', tagId: 'damage:slashing' }],
+  });
+  for (const foundation of [false, true]) for (const coopMode of [false, true]) {
+    const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
+      ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
+    const c = coopMode ? createCoopCombat({ ...options, players: [{ id: 'p1', ...player('deathblow') }] })
+      : createCombat({ ...options, player: player('deathblow') });
+    const enemy = c.enemies[0]; enemy.hp = enemy.maxHp = 200;
+    applyStatus(c, enemy, 'bleed', 1); applyStatus(c, enemy, 'venom', 1);
+    if (coopMode) playCard(c, 'p1', 'card1', enemy.id);
+    else dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
+    assert.equal(c.eventLog.filter(event => event.type === 'damageDealt' && event.sourceId === 'player').length, 3);
+    assert.equal(getStacks(enemy, 'bleed'), 2, `one extra Bleed, foundation=${foundation}, coop=${coopMode}`);
+  }
+});
+
+test('multi-effect Piercing spends one bypass per target and resets for the next card', () => {
+  const registries = createRegistries({ ...legacyContentBundle,
+    cards: legacyContentBundle.cards.map(card => card.id === 'rimeThrust' ? { ...card,
+      effects: [{ op: 'damage', target: 'allEnemies', amount: 4 }, { op: 'damage', target: 'allEnemies', amount: 4 }],
+    } : card),
+  });
+  for (const foundation of [false, true]) for (const coopMode of [false, true]) {
+    const inputs = player('rimeThrust'); inputs.drawPerTurn = 2;
+    inputs.deck.push({ instanceId: 'card2', cardId: 'rimeThrust' });
+    const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier', 'wanderingSoldier'],
+      ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
+    const c = coopMode ? createCoopCombat({ ...options, players: [{ id: 'p1', ...inputs }] })
+      : createCombat({ ...options, player: inputs });
+    for (const enemy of c.enemies) { enemy.hp = enemy.maxHp = 200; enemy.block = 100; }
+    for (const instanceId of ['card1', 'card2']) {
+      if (coopMode) playCard(c, 'p1', instanceId);
+      else dispatch(c, { type: 'playCard', cardInstanceId: instanceId });
+      const expectedLoss = instanceId === 'card1' ? 2 : 4;
+      for (const enemy of c.enemies) assert.equal(enemy.hp, 200 - expectedLoss,
+        `one bypass per card and target, foundation=${foundation}, coop=${coopMode}`);
+    }
+  }
+});
+
+test('enemy move damage payloads share a rider budget per seat, including charging effects', () => {
+  for (const type of ['slashing', 'piercing']) for (const charging of [false, true]) {
+    const effects = [{ op: 'damage', target: 'player', amount: 2, repeat: 2 },
+      { op: 'damage', target: 'player', amount: 2 }];
+    const registries = createRegistries({ ...contentBundle,
+      enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier' ? { ...enemy, firstMove: 'slash' } : enemy),
+      enemyMoves: contentBundle.enemyMoves.map(move => move.enemyId === 'wanderingSoldier' && move.id === 'slash'
+        ? { ...move, damage: 2, ...(charging ? { effects: [], delay: { turns: 1, whileCharging: { effects } } }
+          : { effects: [effects[0]] }) } : move),
+      tagging: [...contentBundle.tagging.filter(row => !(row.family === 'enemyMove' && row.scope === 'wanderingSoldier'
+        && row.objectId === 'slash' && row.tagId.startsWith('damage:'))),
+      { family: 'enemyMove', scope: 'wanderingSoldier', objectId: 'slash', tagId: `damage:${type}` }],
+    });
+    for (const foundation of [false, true]) for (const coopMode of [false, true]) {
+      const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
+        ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
+      const c = coopMode ? createCoopCombat({ ...options,
+        players: ['p1', 'p2'].map(id => ({ id, ...player('strike') })) })
+        : createCombat({ ...options, player: player('strike') });
+      const targets = coopMode ? [...c.players.values()].map(seat => seat.entity) : [c.player];
+      if (type === 'piercing') for (const target of targets) target.block = 100;
+      if (coopMode) { endTurn(c, 'p1'); endTurn(c, 'p2'); }
+      else dispatch(c, { type: 'endTurn' });
+      for (const target of targets) {
+        assert.equal(target.hp, type === 'piercing' ? 198 : 194,
+          `one rider per root move/seat: ${type}, charging=${charging}, foundation=${foundation}, coop=${coopMode}`);
+        if (type === 'slashing') assert.equal(getStacks(target, 'bleed'), 1,
+          `one Bleed: charging=${charging}, foundation=${foundation}, coop=${coopMode}`);
+      }
+    }
+  }
+});

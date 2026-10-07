@@ -21,7 +21,9 @@ export function combatProfileFor(carrier = {}) {
   const authored = objectTagIds(enemyId ? 'enemyMove' : 'card', id, enemyId || '');
   // Resolved registries and equipment projections remain authoritative,
   // including an explicitly empty tag list in a custom content bundle.
-  const tags = carrier.tags || carrier.cardTags || authored;
+  // Equipment projections retain the base definition's tags alongside their
+  // replacement cardTags. The replacement is the resolved action identity.
+  const tags = carrier.cardTags ?? carrier.tags ?? authored;
   const camp = identity(tags, 'camp:', CAMP, id);
   const maneuver = identity(tags, 'maneuver:', MANEUVER, id);
   const school = identity(tags, 'school:', SCHOOL, id);

@@ -1,5 +1,5 @@
 import { combatMatchups, combatIntent } from '../content/combatMatchups.js';
-import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, primeEnemyCounter } from './combatCardTactics.js';
+import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter } from './combatMatchups.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { passiveMax } from '../model/registries.js';
@@ -624,7 +624,7 @@ function executeMovePayload(combat, enemy, move, moveId) {
       meta: { moveId },
     });
   }
-  if (move.block != null) {
+  if (move.block != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) {
     combat.enqueue({
       effect: { op: 'block', target: 'self', amount: move.block },
       source: enemy,
