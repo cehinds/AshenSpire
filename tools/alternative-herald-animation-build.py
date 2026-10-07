@@ -7,10 +7,11 @@ BASE=ROOT/'pose-studio/renewal'
 OUT=BASE/'herald'
 GEN=OUT/'source'
 SHEETS={
- 'attack': ('attack.png', .68, [
-  ('ready',(0,0,560,516),280,502),('windup',(560,0,1050,516),800,502),('advance',(1050,0,1536,516),1270,502),
+ 'attack': ('attack-left-shield.png', .68, [
+  ('ready',(0,0,560,516),280,502),('advance',(1050,0,1536,516),1270,502),
   ('contact',(0,516,660,1024),280,987),('follow',(520,516,1055,1024),800,987),('return',(1055,516,1536,1024),1270,987)]),
- 'reactions': ('reactions.png', .58, [('hurt',(0,0,724,724),350,662),('hurt-recover',(724,0,1448,724),1080,662),('down',(1370,260,2172,724),1780,662)]),
+ 'windup': ('windup-right-sword.png', .37, [('windup',(0,0,1536,1024),810,950)]),
+ 'reactions': ('reactions-left-shield.png', .58, [('hurt',(0,0,724,724),350,662),('hurt-recover',(724,0,1448,724),1080,662),('down',(1370,260,2172,724),1780,662)]),
  'casts': ('casts.png', .52, [('power',(0,0,724,724),350,689),('channel',(724,0,1448,724),1080,689),('release',(1448,0,2172,724),1800,689)])
 }
 # Split the shared gutter around the contact blade and adjacent trailing cloak.

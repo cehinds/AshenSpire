@@ -1,7 +1,7 @@
 {
   "sheets": {
     "attack": [
-      "attack.png",
+      "attack-left-shield.png",
       0.68,
       [
         [
@@ -13,17 +13,6 @@
             516
           ],
           280,
-          502
-        ],
-        [
-          "windup",
-          [
-            560,
-            0,
-            1050,
-            516
-          ],
-          800,
           502
         ],
         [
@@ -72,8 +61,25 @@
         ]
       ]
     ],
+    "windup": [
+      "windup-right-sword.png",
+      0.37,
+      [
+        [
+          "windup",
+          [
+            0,
+            0,
+            1536,
+            1024
+          ],
+          810,
+          950
+        ]
+      ]
+    ],
     "reactions": [
-      "reactions.png",
+      "reactions-left-shield.png",
       0.58,
       [
         [

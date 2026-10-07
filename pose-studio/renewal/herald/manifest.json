@@ -57,21 +57,7 @@
       "bounds": [
         98,
         134,
-        437,
-        470
-      ],
-      "anchor": [
-        256,
-        464
-      ]
-    },
-    "windup": {
-      "path": "herald/frames/windup.webp",
-      "lite": "herald/frames/windup.lite.webp",
-      "bounds": [
-        100,
-        131,
-        426,
+        447,
         470
       ],
       "anchor": [
@@ -85,8 +71,8 @@
       "bounds": [
         106,
         148,
-        433,
-        468
+        432,
+        469
       ],
       "anchor": [
         256,
@@ -97,10 +83,10 @@
       "path": "herald/frames/contact.webp",
       "lite": "herald/frames/contact.lite.webp",
       "bounds": [
-        82,
-        155,
-        503,
-        462
+        84,
+        153,
+        504,
+        463
       ],
       "anchor": [
         256,
@@ -111,8 +97,8 @@
       "path": "herald/frames/follow.webp",
       "lite": "herald/frames/follow.lite.webp",
       "bounds": [
-        86,
-        155,
+        83,
+        154,
         420,
         468
       ],
@@ -125,10 +111,24 @@
       "path": "herald/frames/return.webp",
       "lite": "herald/frames/return.lite.webp",
       "bounds": [
-        121,
-        155,
-        428,
-        471
+        119,
+        153,
+        429,
+        470
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "windup": {
+      "path": "herald/frames/windup.webp",
+      "lite": "herald/frames/windup.lite.webp",
+      "bounds": [
+        88,
+        130,
+        429,
+        465
       ],
       "anchor": [
         256,
@@ -139,10 +139,10 @@
       "path": "herald/frames/hurt.webp",
       "lite": "herald/frames/hurt.lite.webp",
       "bounds": [
-        82,
-        123,
-        462,
-        464
+        79,
+        122,
+        467,
+        465
       ],
       "anchor": [
         256,
@@ -153,10 +153,10 @@
       "path": "herald/frames/hurt-recover.webp",
       "lite": "herald/frames/hurt-recover.lite.webp",
       "bounds": [
-        83,
-        112,
-        451,
-        463
+        92,
+        110,
+        464,
+        464
       ],
       "anchor": [
         256,
@@ -167,10 +167,10 @@
       "path": "herald/frames/down.webp",
       "lite": "herald/frames/down.lite.webp",
       "bounds": [
-        26,
-        264,
-        473,
-        469
+        44,
+        263,
+        477,
+        472
       ],
       "anchor": [
         256,
@@ -590,14 +590,17 @@
     "Flattened draft poses; final grip, cloak silhouette and sheath transitions need review before gameplay binding."
   ],
   "sourceHashes": {
+    "attack-left-shield.png": "30b00f669f22cb8ce3ed32f2afd379eb9f12d350333f260c537a8f1871acdb72",
     "attack.png": "c610c9c1c9a4109668b43c4264e593d76b958b9cd9a2e510384930e3bcac0c0c",
     "casts-original.png": "2d34eb2628deaf65d5d187b164020d0ad4e2889a1f9fe9e5e29f96f122a95adc",
     "casts.png": "a96eb6ce9f8b0df954231d1e2cd42e694996b5fe0db0032b5cf0112fe8f5315a",
-    "reactions.png": "b85918a925b69c1d7049b715dfe8f6b9c0c34352316d8c91720d481429420c81"
+    "reactions-left-shield.png": "487356d4ac9d5232147538b17ef000c8d2edf3eea76d13ab3b9a85599313ccf8",
+    "reactions.png": "b85918a925b69c1d7049b715dfe8f6b9c0c34352316d8c91720d481429420c81",
+    "windup-right-sword.png": "eb8eec229bbc60f139d8aba54431e2279577b8188dfaa878a9f58c00e98cbb43"
   },
   "bytes": {
-    "webp": 474758,
-    "lite": 130934
+    "webp": 479478,
+    "lite": 133956
   },
   "families": {
     "reaver/sword": {
