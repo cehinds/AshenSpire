@@ -9,8 +9,8 @@
 // The DOM half (the production screen over tests/helpers/reward-dom.mjs): a
 // card added and removed by tap, by the ＋/－ buttons, and by a keyboard and a
 // gamepad dispatch; Done disabled with the refusal as visible text; Cancel
-// through the screen; the Quick Access door under `free` only; the shrine's
-// Rest card under `restOnly` only, and never the camp's.
+// through the screen; Armoury under `free`, with no map-header door; the
+// shrine's Rest card under `restOnly` only, and never the camp's.
 //   node --test tests/deck-editor.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
