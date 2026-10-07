@@ -1255,3 +1255,7 @@ armoury.hub.deck,,Edit Deck,,
 progression.feat.acquired,,Acquired,,
 progression.feat.unlock,,Skill level {n},,
 progression.feat.emptyHint,,Choose feats from character and skill level rewards.,,
+
+combat.enemyTarget.choose,,,Choose an enemy target,
+combat.enemyTarget.health,,,{hp}/{maxHp} HP,
+combat.enemyTarget.label,,,"Target {number}: {name}, {hp} of {maxHp} HP",

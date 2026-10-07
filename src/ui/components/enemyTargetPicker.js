@@ -1,3 +1,4 @@
+import { tFull } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 // Sprite artwork may overlap without making a living enemy unreachable. This
@@ -10,7 +11,7 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
     picker = document.createElement('div');
     picker.className = 'enemy-target-picker';
     picker.setAttribute('role', 'group');
-    picker.setAttribute('aria-label', 'Choose an enemy target');
+    picker.setAttribute('aria-label', tFull('combat.enemyTarget.choose'));
     markUiComponent(picker, UI.enemyTargetPicker);
     host.appendChild(picker);
   }
@@ -36,8 +37,8 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
     }
     button.disabled = disabled;
     button.querySelector('.enemy-target-name').textContent = `${index + 1}. ${target.name}`;
-    button.querySelector('.enemy-target-health').textContent = `${target.hp}/${target.maxHp} HP`;
-    button.setAttribute('aria-label', `Target ${index + 1}: ${target.name}, ${target.hp} of ${target.maxHp} HP`);
+    button.querySelector('.enemy-target-health').textContent = tFull('combat.enemyTarget.health', { hp: target.hp, maxHp: target.maxHp });
+    button.setAttribute('aria-label', tFull('combat.enemyTarget.label', { number: index + 1, name: target.name, hp: target.hp, maxHp: target.maxHp }));
   });
   picker.activate = onActivate;
   picker.preview = onPreview;

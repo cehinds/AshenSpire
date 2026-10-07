@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Crowded combat targets stay selectable",
     "detail": "Numbered enemy targets make overlapping foes easy to select. Cards reject targets on the wrong side before spending resources, and enemies remain at least as tall as the player without shrinking sprites.",
-    "build": "0.7.1.1046",
+    "build": "0.7.1.1048",
     "pullRequest": 1651,
     "url": "https://github.com/cehinds/AshenSpire/pull/1651"
   },
@@ -18,9 +18,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "The Windows installer link downloads the installer",
     "detail": "The README's Windows installer link now downloads the latest test installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The release and main installers have their own direct links.",
-    "build": "0.7.1.1044",
+    "build": "0.7.1.1046",
     "pullRequest": 1623,
     "url": "https://github.com/cehinds/AshenSpire/pull/1623"
+  },
+  {
+    "id": "pr-1679",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Your route, one choice at a time",
+    "detail": "The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.",
+    "build": "0.7.1.1045",
+    "pullRequest": 1679,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1679"
   },
   {
     "id": "pr-1681",
