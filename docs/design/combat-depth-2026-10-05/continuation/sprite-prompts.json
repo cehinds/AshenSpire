@@ -1,0 +1,58 @@
+[
+  {
+    "id": "hollowSquire",
+    "prompt": "Edit target: Hollow Squire in input image. Preserve exact helmet, weathered armor, cream-and-red tree tabard, red scarf, long wooden shield and straight sword. Change camera to rear three-quarter view from BEHIND, looking away toward screen upper-right to stand beside the player. Back of helmet and back armor dominate, shield held in left hand at far side, sword naturally in right gauntlet with pommel, grip and blade on a straight axis. Full body, both boots and all equipment inside generous clear canvas margins. Same highly detailed painterly dark fantasy cutout, neutral upper-left light. Actual fully transparent background everywhere outside the silhouette and between limbs; no dark backdrop, glow halo, ground, shadows, scene, text or UI. Portrait 1024x1536.",
+    "kind": "sprite",
+    "sourceId": "hollowSquire",
+    "reference": "../masters/hollowSquire.png",
+    "resultFile": "sprites/hollowSquire-rear.png"
+  },
+  {
+    "id": "emberHound",
+    "prompt": "Edit target: the supplied Ember Hound sprite. Preserve its canine identity, friendly alert expression, charcoal fur and glowing ember cracks, anatomical four legs and long tail. Rotate the entire body into rear three-quarter view from BEHIND, back and haunches nearest viewer, head and body looking away toward upper-right into battle alongside the player. Full animal including paws and tail, generously padded edges, grounded idle stance. Detailed painterly dark fantasy. True transparent alpha everywhere outside silhouette, no colored backdrop, halo, floor, shadows or text. Landscape 1536x1024.",
+    "kind": "sprite",
+    "sourceId": "emberHound",
+    "reference": "../masters/emberHound.png",
+    "resultFile": "sprites/emberHound-rear.png"
+  },
+  {
+    "id": "theNameless",
+    "prompt": "Edit target: The Nameless supplied sprite. Preserve the exact ragged pale linen hood/cloak, dark layered leather, boots and single straight sword. Change camera and pose orientation ONLY to rear three-quarter view from BEHIND facing away upper-right, broad back of cloak and back of hood dominant, no face or chest visible. Right hand naturally grips straight sword pointing down right with grip and blade collinear. Full body and weapon, all edges generously padded. Same highly detailed weathered painterly dark fantasy. Actual transparent alpha background including limb gaps. No ground, backdrop, halo, shadows, text or UI. Portrait 1024x1536.",
+    "kind": "sprite",
+    "sourceId": "theNameless",
+    "reference": "../masters/theNameless.png",
+    "resultFile": "sprites/theNameless-rear.png"
+  },
+  {
+    "id": "keeperOfTheNameless",
+    "prompt": "Edit the supplied Keeper of the Nameless. Preserve faceless closed weathered steel helmet, black ragged cloak with dark red lining, armor and downward sword. Sword must be physically straight with pommel, grip and blade collinear in natural closed gauntlet. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+    "kind": "sprite",
+    "sourceId": "keeperOfTheNameless",
+    "reference": "../masters/keeperOfTheNameless.png",
+    "resultFile": "sprites/keeperOfTheNameless-rear.png"
+  },
+  {
+    "id": "roadWarden",
+    "prompt": "Edit the supplied Road Warden. Preserve olive green hood/cloak, battered mail, tall straight walking spear and low amber lantern. Keep spear perfectly straight and fully inside canvas including tip, and keep lantern visible beside body. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+    "kind": "sprite",
+    "sourceId": "roadWarden",
+    "reference": "../masters/roadWarden.png",
+    "resultFile": "sprites/roadWarden-rear.png"
+  },
+  {
+    "id": "swordSaint",
+    "prompt": "Edit the supplied Sword Saint. Preserve elderly white hair tied back, weathered armor, red cloak and straight long sword. Show back of white-haired head, face hidden. Grip, pommel and blade collinear naturally held in right hand. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+    "kind": "sprite",
+    "sourceId": "swordSaint",
+    "reference": "../masters/swordSaint.png",
+    "resultFile": "sprites/swordSaint-rear.png"
+  },
+  {
+    "id": "starReader",
+    "prompt": "Edit the supplied Star Reader. Preserve elderly hooded identity, faded midnight robes, embroidered gold constellations, astrolabe in one hand and rolled chart in other, blue starstone trinkets. Back of hood/cloak dominant, instruments peeking around sides. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+    "kind": "sprite",
+    "sourceId": "starReader",
+    "reference": "../masters/starReader.png",
+    "resultFile": "sprites/starReader-rear.png"
+  }
+]

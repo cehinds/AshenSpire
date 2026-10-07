@@ -6,7 +6,7 @@
   "entries": [
     {
       "id": "reaver-default",
-      "name": "Wayfarer Plate \u00b7 Reaver",
+      "name": "Wayfarer Plate · Reaver",
       "family": "armor",
       "classId": "reaver",
       "outfitId": "default",
@@ -77,7 +77,7 @@
     },
     {
       "id": "reaver-vigil",
-      "name": "Ashen Vigil \u00b7 Reaver",
+      "name": "Ashen Vigil · Reaver",
       "family": "armor",
       "classId": "reaver",
       "outfitId": "vigil",
@@ -147,7 +147,7 @@
     },
     {
       "id": "reaver-oathsworn",
-      "name": "Gilded Oathsworn \u00b7 Reaver",
+      "name": "Gilded Oathsworn · Reaver",
       "family": "armor",
       "classId": "reaver",
       "outfitId": "oathsworn",
@@ -217,7 +217,7 @@
     },
     {
       "id": "reaver-warden",
-      "name": "Warden Mail \u00b7 Reaver",
+      "name": "Warden Mail · Reaver",
       "family": "armor",
       "classId": "reaver",
       "outfitId": "warden",
@@ -287,7 +287,7 @@
     },
     {
       "id": "starseer-default",
-      "name": "Nightweave \u00b7 Starseer",
+      "name": "Nightweave · Starseer",
       "family": "armor",
       "classId": "starseer",
       "outfitId": "default",
@@ -357,7 +357,7 @@
     },
     {
       "id": "starseer-eclipse",
-      "name": "Eclipse Habit \u00b7 Starseer",
+      "name": "Eclipse Habit · Starseer",
       "family": "armor",
       "classId": "starseer",
       "outfitId": "eclipse",
@@ -427,7 +427,7 @@
     },
     {
       "id": "starseer-starlit",
-      "name": "Starlit Silks \u00b7 Starseer",
+      "name": "Starlit Silks · Starseer",
       "family": "armor",
       "classId": "starseer",
       "outfitId": "starlit",
@@ -497,7 +497,7 @@
     },
     {
       "id": "starseer-astral",
-      "name": "Astral Vestment \u00b7 Starseer",
+      "name": "Astral Vestment · Starseer",
       "family": "armor",
       "classId": "starseer",
       "outfitId": "astral",
@@ -567,7 +567,7 @@
     },
     {
       "id": "herald-default",
-      "name": "Rite Vestments \u00b7 Herald",
+      "name": "Rite Vestments · Herald",
       "family": "armor",
       "classId": "herald",
       "outfitId": "default",
@@ -637,7 +637,7 @@
     },
     {
       "id": "herald-ossuary",
-      "name": "Ossuary Weave \u00b7 Herald",
+      "name": "Ossuary Weave · Herald",
       "family": "armor",
       "classId": "herald",
       "outfitId": "ossuary",
@@ -707,7 +707,7 @@
     },
     {
       "id": "herald-emberhabit",
-      "name": "Emberlight Habit \u00b7 Herald",
+      "name": "Emberlight Habit · Herald",
       "family": "armor",
       "classId": "herald",
       "outfitId": "emberhabit",
@@ -777,7 +777,7 @@
     },
     {
       "id": "herald-pilgrim",
-      "name": "Pilgrim Wrap \u00b7 Herald",
+      "name": "Pilgrim Wrap · Herald",
       "family": "armor",
       "classId": "herald",
       "outfitId": "pilgrim",
@@ -847,7 +847,7 @@
     },
     {
       "id": "rogue-default",
-      "name": "Gutter Leathers \u00b7 Rogue",
+      "name": "Gutter Leathers · Rogue",
       "family": "armor",
       "classId": "rogue",
       "outfitId": "default",
@@ -917,7 +917,7 @@
     },
     {
       "id": "rogue-nightveil",
-      "name": "Nightveil Coat \u00b7 Rogue",
+      "name": "Nightveil Coat · Rogue",
       "family": "armor",
       "classId": "rogue",
       "outfitId": "nightveil",
@@ -987,7 +987,7 @@
     },
     {
       "id": "rogue-duelist",
-      "name": "Duelist Jerkin \u00b7 Rogue",
+      "name": "Duelist Jerkin · Rogue",
       "family": "armor",
       "classId": "rogue",
       "outfitId": "duelist",
@@ -1057,7 +1057,7 @@
     },
     {
       "id": "rogue-shadow",
-      "name": "Shadow Mantle \u00b7 Rogue",
+      "name": "Shadow Mantle · Rogue",
       "family": "armor",
       "classId": "rogue",
       "outfitId": "shadow",
@@ -1127,7 +1127,7 @@
     },
     {
       "id": "reaver-bastion",
-      "name": "Bastion Harness \u00b7 Reaver",
+      "name": "Bastion Harness · Reaver",
       "family": "armor",
       "classId": "reaver",
       "outfitId": "bastion",
@@ -1197,7 +1197,7 @@
     },
     {
       "id": "starseer-rimeweave",
-      "name": "Rimeweave Robes \u00b7 Starseer",
+      "name": "Rimeweave Robes · Starseer",
       "family": "armor",
       "classId": "starseer",
       "outfitId": "rimeweave",
@@ -1267,7 +1267,7 @@
     },
     {
       "id": "rogue-waywatcher",
-      "name": "Waywatcher Coat \u00b7 Rogue",
+      "name": "Waywatcher Coat · Rogue",
       "family": "armor",
       "classId": "rogue",
       "outfitId": "waywatcher",
@@ -2693,12 +2693,12 @@
       "name": "Hollow Squire",
       "family": "companion",
       "source": "src/content/companions.js",
-      "facing": "right",
+      "facing": "away, rear three-quarter right",
       "pose": "idle",
       "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hollow young squire in battered modest steel mail, ragged tabard and an oversized shield, sword lowered, timid but loyal stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "file": "masters/hollowSquire.png",
+      "file": "continuation/sprites/hollowSquire-rear.png",
       "status": "generated",
-      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-cba9b283-3a46-4cca-960a-835c5316ad88.png",
+      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-38a0a618-02ad-452f-b81d-0f4f96deaa97.png",
       "validation": {
         "size": [
           1024,
@@ -2709,35 +2709,64 @@
           0,
           254
         ],
-        "transparentFraction": 0.6196670532226562,
+        "transparentFraction": 0.5826651255289713,
         "visibleBounds": [
-          145,
-          104,
-          889,
-          1460
+          91,
+          15,
+          1019,
+          1478
         ],
         "anchor": [
-          517.0,
-          1460
+          555.0,
+          1478
         ],
-        "sha256": "1a1334d754d083111a0dd534b49cc6e953c10f89f63639d938337f6e8950dd6f"
+        "sha256": "ee1ee8dfb73d81969eb2e61482dea91082c876df31e5aaed7f05d1551e86dedc",
+        "alphaThreshold": 32
       },
       "referenceImages": [
-        "references/composition.png"
+        "masters/hollowSquire.png"
       ],
-      "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hollow young squire in battered modest steel mail, ragged tabard and an oversized shield, sword lowered, timid but loyal stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+      "promptUsed": "Edit target: Hollow Squire in input image. Preserve exact helmet, weathered armor, cream-and-red tree tabard, red scarf, long wooden shield and straight sword. Change camera to rear three-quarter view from BEHIND, looking away toward screen upper-right to stand beside the player. Back of helmet and back armor dominate, shield held in left hand at far side, sword naturally in right gauntlet with pommel, grip and blade on a straight axis. Full body, both boots and all equipment inside generous clear canvas margins. Same highly detailed painterly dark fantasy cutout, neutral upper-left light. Actual fully transparent background everywhere outside the silhouette and between limbs; no dark backdrop, glow halo, ground, shadows, scene, text or UI. Portrait 1024x1536.",
+      "previousView": {
+        "file": "masters/hollowSquire.png",
+        "validation": {
+          "size": [
+            1024,
+            1536
+          ],
+          "mode": "RGBA",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "transparentFraction": 0.6196670532226562,
+          "visibleBounds": [
+            145,
+            104,
+            889,
+            1460
+          ],
+          "anchor": [
+            517.0,
+            1460
+          ],
+          "sha256": "1a1334d754d083111a0dd534b49cc6e953c10f89f63639d938337f6e8950dd6f"
+        },
+        "facing": "right",
+        "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hollow young squire in battered modest steel mail, ragged tabard and an oversized shield, sword lowered, timid but loyal stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+      }
     },
     {
       "id": "emberHound",
       "name": "Ember Hound",
       "family": "companion",
       "source": "src/content/companions.js",
-      "facing": "right",
+      "facing": "away, rear three-quarter right",
       "pose": "idle",
       "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Loyal alert hound of banked coals, charcoal fur with dim amber warmth beneath, ears raised, four paws firmly planted, gentle watchful stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "file": "masters/emberHound.png",
+      "file": "continuation/sprites/emberHound-rear.png",
       "status": "generated",
-      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-1e2959c2-38ae-4514-922d-5c666c4f376d.png",
+      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-157f6f52-1450-42ed-9626-52486f8d7da8.png",
       "validation": {
         "size": [
           1536,
@@ -2748,35 +2777,64 @@
           0,
           254
         ],
-        "transparentFraction": 0.6787796020507812,
+        "transparentFraction": 0.6370633443196615,
         "visibleBounds": [
-          160,
-          73,
-          1364,
-          958
+          162,
+          12,
+          1327,
+          997
         ],
         "anchor": [
-          762.0,
-          958
+          744.5,
+          997
         ],
-        "sha256": "66dd9a8bf65b1d263a5bce3962bf4e008a351bb0d2e3bc49b85e0e3364f7ad08"
+        "sha256": "388bbf5d314d887ef86de46912aa0b15b482910b10ddd9287f50adcce3701c98",
+        "alphaThreshold": 32
       },
       "referenceImages": [
-        "references/composition.png"
+        "masters/emberHound.png"
       ],
-      "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Loyal alert hound of banked coals, charcoal fur with dim amber warmth beneath, ears raised, four paws firmly planted, gentle watchful stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+      "promptUsed": "Edit target: the supplied Ember Hound sprite. Preserve its canine identity, friendly alert expression, charcoal fur and glowing ember cracks, anatomical four legs and long tail. Rotate the entire body into rear three-quarter view from BEHIND, back and haunches nearest viewer, head and body looking away toward upper-right into battle alongside the player. Full animal including paws and tail, generously padded edges, grounded idle stance. Detailed painterly dark fantasy. True transparent alpha everywhere outside silhouette, no colored backdrop, halo, floor, shadows or text. Landscape 1536x1024.",
+      "previousView": {
+        "file": "masters/emberHound.png",
+        "validation": {
+          "size": [
+            1536,
+            1024
+          ],
+          "mode": "RGBA",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "transparentFraction": 0.6787796020507812,
+          "visibleBounds": [
+            160,
+            73,
+            1364,
+            958
+          ],
+          "anchor": [
+            762.0,
+            958
+          ],
+          "sha256": "66dd9a8bf65b1d263a5bce3962bf4e008a351bb0d2e3bc49b85e0e3364f7ad08"
+        },
+        "facing": "right",
+        "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Loyal alert hound of banked coals, charcoal fur with dim amber warmth beneath, ears raised, four paws firmly planted, gentle watchful stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+      }
     },
     {
       "id": "theNameless",
       "name": "The Nameless",
       "family": "speaker",
       "source": "content/source/speakers.csv",
-      "facing": "right",
+      "facing": "away, rear three-quarter right",
       "pose": "idle",
       "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hooded anonymous Forsaken spirit, pale threadbare shroud over worn unmarked travel clothes, face lost in shadow, modest broken sword. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "file": "masters/theNameless.png",
+      "file": "continuation/sprites/theNameless-rear-padded.png",
       "status": "generated",
-      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-62d42201-3d7c-4696-8e3c-c0e5342c823b.png",
+      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-680b5f68-b149-4142-a912-fb0ee5325097.png",
       "validation": {
         "size": [
           1024,
@@ -2787,35 +2845,64 @@
           0,
           254
         ],
-        "transparentFraction": 0.5592880249023438,
+        "transparentFraction": 0.6793778737386068,
         "visibleBounds": [
-          70,
-          45,
-          995,
-          1495
+          73,
+          136,
+          972,
+          1378
         ],
         "anchor": [
-          532.5,
-          1495
+          522.5,
+          1378
         ],
-        "sha256": "fbff521cd60d0528f2629500dd5b56e57a3d9e0c967f93e1a0c461cd8bae55bd"
+        "sha256": "29686a1d533aaafb68a46d28468b7d84e491009da68ca70a035fb8d519b571c1",
+        "alphaThreshold": 32
       },
       "referenceImages": [
-        "references/composition.png"
+        "continuation/sprites/theNameless-rear.png"
       ],
-      "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hooded anonymous Forsaken spirit, pale threadbare shroud over worn unmarked travel clothes, face lost in shadow, modest broken sword. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+      "promptUsed": "Edit this rear-view Nameless sprite only to give its entire silhouette generous empty margins. Zoom OUT: reduce figure and sword to occupy central 75% of canvas width and 82% of height. Full straight sword tip must end clearly before right edge with at least 100 pixels of transparent space. Preserve same rear-right orientation, all equipment, ragged pale hood and cloak, dark leathers, proportions and detailed paint. Do not turn or redesign character. Actual transparent alpha everywhere outside figure, no background or glow, no floor, no labels. 1024x1536 portrait.",
+      "previousView": {
+        "file": "masters/theNameless.png",
+        "validation": {
+          "size": [
+            1024,
+            1536
+          ],
+          "mode": "RGBA",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "transparentFraction": 0.5592880249023438,
+          "visibleBounds": [
+            70,
+            45,
+            995,
+            1495
+          ],
+          "anchor": [
+            532.5,
+            1495
+          ],
+          "sha256": "fbff521cd60d0528f2629500dd5b56e57a3d9e0c967f93e1a0c461cd8bae55bd"
+        },
+        "facing": "right",
+        "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hooded anonymous Forsaken spirit, pale threadbare shroud over worn unmarked travel clothes, face lost in shadow, modest broken sword. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+      }
     },
     {
       "id": "keeperOfTheNameless",
       "name": "Keeper of the Nameless",
       "family": "speaker",
       "source": "content/source/speakers.csv",
-      "facing": "right",
+      "facing": "away, rear three-quarter right",
       "pose": "idle",
       "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Silent unmarked Forsaken traveler, ragged dark cloak, faceless weathered helm, broken sword held down, old cloth bindings and no insignia. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "file": "masters/keeperOfTheNameless.png",
+      "file": "continuation/sprites/keeperOfTheNameless-rear.png",
       "status": "generated",
-      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-7b4fbebe-4808-4128-a626-aab104bfd96b.png",
+      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-075f6063-a0bf-4cbd-bfdd-52d0398b8eab.png",
       "validation": {
         "size": [
           1024,
@@ -2826,39 +2913,68 @@
           0,
           254
         ],
-        "transparentFraction": 0.5379358927408854,
+        "transparentFraction": 0.6111685434977213,
         "visibleBounds": [
-          42,
-          38,
-          1001,
-          1507
+          56,
+          75,
+          978,
+          1398
         ],
         "anchor": [
-          521.5,
-          1507
+          517.0,
+          1398
         ],
-        "sha256": "30a29762143e859db67d30840d82af62634833388534587624747f6b97808ab0"
+        "sha256": "41130e769684b78770b2831f052853bb8fc02bdff4cf752a726bba05cfc2dbcd",
+        "alphaThreshold": 32
       },
       "referenceImages": [
-        "references/composition.png"
+        "masters/keeperOfTheNameless.png"
       ],
-      "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Silent unmarked Forsaken traveler, ragged dark cloak, faceless weathered helm, broken sword held down, old cloth bindings and no insignia. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+      "promptUsed": "Edit the supplied Keeper of the Nameless. Preserve faceless closed weathered steel helmet, black ragged cloak with dark red lining, armor and downward sword. Sword must be physically straight with pommel, grip and blade collinear in natural closed gauntlet. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+      "previousView": {
+        "file": "masters/keeperOfTheNameless.png",
+        "validation": {
+          "size": [
+            1024,
+            1536
+          ],
+          "mode": "RGBA",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "transparentFraction": 0.5379358927408854,
+          "visibleBounds": [
+            42,
+            38,
+            1001,
+            1507
+          ],
+          "anchor": [
+            521.5,
+            1507
+          ],
+          "sha256": "30a29762143e859db67d30840d82af62634833388534587624747f6b97808ab0"
+        },
+        "facing": "right",
+        "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Silent unmarked Forsaken traveler, ragged dark cloak, faceless weathered helm, broken sword held down, old cloth bindings and no insignia. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+      }
     },
     {
       "id": "roadWarden",
       "name": "The Road Warden",
       "family": "speaker",
       "source": "content/source/speakers.csv",
-      "facing": "right",
+      "facing": "away, rear three-quarter right",
       "pose": "idle",
       "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Weathered veteran road warden in practical old green-black mail and hooded cloak, lantern held low and a sturdy walking spear, calm guarded pose. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "file": "masters/roadWarden.png",
+      "file": "continuation/sprites/roadWarden-rear.png",
       "status": "generated",
       "referenceImages": [
-        "references/composition.png"
+        "masters/roadWarden.png"
       ],
-      "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Weathered veteran road warden in practical old green-black mail and hooded cloak, lantern held low and a sturdy walking spear, calm guarded pose. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-eafa27a1-2f6b-4291-9748-e2387b4381b1.png",
+      "promptUsed": "Edit the supplied Road Warden. Preserve olive green hood/cloak, battered mail, tall straight walking spear and low amber lantern. Keep spear perfectly straight and fully inside canvas including tip, and keep lantern visible beside body. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-103b1029-aa5d-4675-afe9-181b6904c474.png",
       "validation": {
         "size": [
           1024,
@@ -2869,18 +2985,47 @@
           0,
           254
         ],
-        "transparentFraction": 0.5798511505126953,
+        "transparentFraction": 0.6350091298421224,
         "visibleBounds": [
-          86,
-          10,
-          936,
-          1508
+          161,
+          34,
+          941,
+          1450
         ],
         "anchor": [
-          511.0,
-          1508
+          551.0,
+          1450
         ],
-        "sha256": "8e469ce8710db403f4a0c563070e7a1d085d2be63ffffd146ad9d60080011e54"
+        "sha256": "51a6ea4eb0eb062a0098ed4e1e34567de5e19e8050fa6295219a0c605d9e2af2",
+        "alphaThreshold": 32
+      },
+      "previousView": {
+        "file": "masters/roadWarden.png",
+        "validation": {
+          "size": [
+            1024,
+            1536
+          ],
+          "mode": "RGBA",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "transparentFraction": 0.5798511505126953,
+          "visibleBounds": [
+            86,
+            10,
+            936,
+            1508
+          ],
+          "anchor": [
+            511.0,
+            1508
+          ],
+          "sha256": "8e469ce8710db403f4a0c563070e7a1d085d2be63ffffd146ad9d60080011e54"
+        },
+        "facing": "right",
+        "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Weathered veteran road warden in practical old green-black mail and hooded cloak, lantern held low and a sturdy walking spear, calm guarded pose. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
       }
     },
     {
@@ -2888,16 +3033,16 @@
       "name": "The Sword Saint",
       "family": "speaker",
       "source": "content/source/speakers.csv",
-      "facing": "right",
+      "facing": "away, rear three-quarter right",
       "pose": "idle",
       "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly master swordsman in austere layered weathered cloth and light steel guards, long worn sword held down, quiet controlled posture. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "file": "masters/swordSaint.png",
+      "file": "continuation/sprites/swordSaint-rear.png",
       "status": "generated",
       "referenceImages": [
-        "references/composition.png"
+        "masters/swordSaint.png"
       ],
-      "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly master swordsman in austere layered weathered cloth and light steel guards, long worn sword held down, quiet controlled posture. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-a776728d-1d96-4616-973a-f7e91095056c.png",
+      "promptUsed": "Edit the supplied Sword Saint. Preserve elderly white hair tied back, weathered armor, red cloak and straight long sword. Show back of white-haired head, face hidden. Grip, pommel and blade collinear naturally held in right hand. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-85fbdd10-56f2-4c87-8d25-747d2ffe91f5.png",
       "validation": {
         "size": [
           1024,
@@ -2908,18 +3053,47 @@
           0,
           254
         ],
-        "transparentFraction": 0.5592466990152994,
+        "transparentFraction": 0.6268234252929688,
         "visibleBounds": [
-          50,
-          44,
-          982,
-          1496
+          59,
+          72,
+          1010,
+          1411
         ],
         "anchor": [
-          516.0,
-          1496
+          534.5,
+          1411
         ],
-        "sha256": "dcb8ab14ed2a9c6421b727b67bf0ce29091d1c06f733ec91981a3d265e913a5d"
+        "sha256": "0189bf8fab739b3905070e86fe508d66ea4392f653435db209a307ee5fc8c0c6",
+        "alphaThreshold": 32
+      },
+      "previousView": {
+        "file": "masters/swordSaint.png",
+        "validation": {
+          "size": [
+            1024,
+            1536
+          ],
+          "mode": "RGBA",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "transparentFraction": 0.5592466990152994,
+          "visibleBounds": [
+            50,
+            44,
+            982,
+            1496
+          ],
+          "anchor": [
+            516.0,
+            1496
+          ],
+          "sha256": "dcb8ab14ed2a9c6421b727b67bf0ce29091d1c06f733ec91981a3d265e913a5d"
+        },
+        "facing": "right",
+        "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly master swordsman in austere layered weathered cloth and light steel guards, long worn sword held down, quiet controlled posture. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
       }
     },
     {
@@ -2927,16 +3101,16 @@
       "name": "The Star Reader",
       "family": "speaker",
       "source": "content/source/speakers.csv",
-      "facing": "right",
+      "facing": "away, rear three-quarter right",
       "pose": "idle",
       "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly hooded star reader in faded midnight robes, aged brass astrolabe held close and rolled star chart, restrained blue starstone ornament. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "file": "masters/starReader.png",
+      "file": "continuation/sprites/starReader-rear.png",
       "status": "generated",
       "referenceImages": [
-        "references/composition.png"
+        "masters/starReader.png"
       ],
-      "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly hooded star reader in faded midnight robes, aged brass astrolabe held close and rolled star chart, restrained blue starstone ornament. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
-      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-20a5b162-ed5a-42ed-ac96-d72c77d3a761.png",
+      "promptUsed": "Edit the supplied Star Reader. Preserve elderly hooded identity, faded midnight robes, embroidered gold constellations, astrolabe in one hand and rolled chart in other, blue starstone trinkets. Back of hood/cloak dominant, instruments peeking around sides. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+      "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-3da1a2dc-d634-40ed-9ab9-8c52729eeb84.png",
       "validation": {
         "size": [
           1024,
@@ -2947,18 +3121,47 @@
           0,
           254
         ],
-        "transparentFraction": 0.49807167053222656,
+        "transparentFraction": 0.5373140970865885,
         "visibleBounds": [
-          107,
-          11,
-          952,
-          1522
+          129,
+          44,
+          893,
+          1489
         ],
         "anchor": [
-          529.5,
-          1522
+          511.0,
+          1489
         ],
-        "sha256": "3c63b19bb037700fb4a6ea0aa56b3dfb552cd529bbcb20189d5d0db1f0fd4484"
+        "sha256": "bcb5fcf009618b07507b2cb8ba345df38fd653d6be59be6c3ec2b63748bcae08",
+        "alphaThreshold": 32
+      },
+      "previousView": {
+        "file": "masters/starReader.png",
+        "validation": {
+          "size": [
+            1024,
+            1536
+          ],
+          "mode": "RGBA",
+          "alphaRange": [
+            0,
+            254
+          ],
+          "transparentFraction": 0.49807167053222656,
+          "visibleBounds": [
+            107,
+            11,
+            952,
+            1522
+          ],
+          "anchor": [
+            529.5,
+            1522
+          ],
+          "sha256": "3c63b19bb037700fb4a6ea0aa56b3dfb552cd529bbcb20189d5d0db1f0fd4484"
+        },
+        "facing": "right",
+        "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly hooded star reader in faded midnight robes, aged brass astrolabe held close and rolled star chart, restrained blue starstone ornament. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
       }
     }
   ],
@@ -3045,6 +3248,19 @@
     "date": "2026-10-06",
     "heroAppearances": 19,
     "generation": "Built-in image_gen",
-    "originalFrontViewsRetained": true
+    "originalFrontViewsRetained": true,
+    "companionAppearances": 2,
+    "speakerAppearances": 5
+  },
+  "sceneCatalog": "continuation/scene-catalog.json",
+  "scenePreview": "continuation/index.html",
+  "artContinuation": {
+    "date": "2026-10-06",
+    "baseBranch": "alternative/dev",
+    "sceneCount": 32,
+    "compositions": 64,
+    "retainedApprovedSprites": 52,
+    "convertedSprites": 7,
+    "validation": "continuation/validation.json"
   }
 }

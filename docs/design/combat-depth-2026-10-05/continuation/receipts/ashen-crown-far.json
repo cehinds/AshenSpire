@@ -1,0 +1,26 @@
+{
+  "id": "ashen-crown-far",
+  "region": "ashen-crown",
+  "kind": "far",
+  "reference": "../references/composition.png",
+  "transparent": false,
+  "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: ruined royal capital, distant Gothic towers and aqueduct silhouettes under smoky amber dusk, weathered grey limestone, russet leaves. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+  "resultFile": "scenes/shared/ashen-crown/far.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-750a25c7-17fb-43de-b5e2-66f08d794188.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGB",
+  "sha256": "06a45196153d4b0ccf43363f05b9e472209ba0a2d9ccae4cc63dd180b3763dfa",
+  "alphaRange": null,
+  "transparentFraction": 0,
+  "visibleBounds": [
+    0,
+    0,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}
