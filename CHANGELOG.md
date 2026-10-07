@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Alternative battles use the completed art collection** ([#1684](https://github.com/cehinds/AshenSpire/pull/1684), `0.7.1.1046`). All 32 named combat settings have four independent layers with desktop and phone compositions. The collection has 59 canonical idle appearances, including the approved rear companions and speakers; dedicated armor appearances resolve before older aliases. Phone exports keep the artwork smaller while the current HUD, cards and footer stay in place.
+
 - **Alternative characters keep pace** ([#1683](https://github.com/cehinds/AshenSpire/pull/1683), `0.7.1.1045`). The alternative preview gains the ready-to-play character defaults, compact class cards, stat and relic detail dialogs, and continuous Smith upgrades. Its own battlefield and artwork stay intact, with both update histories preserved.
 
 - **Inspect your starting stats and relic** ([#1681](https://github.com/cehinds/AshenSpire/pull/1681), `0.7.1.1043`). Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.

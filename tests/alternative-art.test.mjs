@@ -81,3 +81,19 @@ test('saved dungeon location selects its own layered scene', () => {
     assert(html.includes(`data-scene="${scene.id}"`), scene.id);
   }
 });
+
+test('phone first paint references only phone scene exports before fitting', () => {
+  const previous = globalThis.document;
+  globalThis.document = { documentElement: { dataset: { layout: 'narrow' } } };
+  try {
+    for (const id of Object.keys(catalog.scenes)) {
+      const html = alternativeBackdropHtml(id);
+      const paths = [...html.matchAll(/assets-alternative\/[A-Za-z0-9-]+\.webp/g)].map(m => m[0]);
+      assert.equal(paths.length, 5);
+      assert(paths.every(p => p.endsWith('-mobile.webp')), id);
+    }
+  } finally {
+    if (previous === undefined) delete globalThis.document;
+    else globalThis.document = previous;
+  }
+});

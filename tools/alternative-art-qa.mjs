@@ -11,7 +11,7 @@ const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODUL
 const out = resolve(process.env.COMBAT_ART_OUT || 'outputs/combat-art');
 mkdirSync(out, { recursive: true });
 const served = await serve({ port: 4296, open: false });
-const base = process.env.COMBAT_ART_URL || `http://localhost:${served.port}/`;
+const base = process.env.COMBAT_ART_URL || `http://localhost:${served.port}/${process.argv.includes('--pack') ? 'build/AshenSpire.html' : ''}`;
 const launched = await launchBrowser({ prefix: 'artqa-', browser: process.env.CHROME, timeoutMs: 60000 });
 const browser = await chromium.connectOverCDP(launched.wsUrl);
 const report = { base, scenes: [], play: [], errors: [], httpErrors: [], optionalSourceRequests: [] };
@@ -43,8 +43,8 @@ try {
       const failure = { status: response.status(), url: response.url() };
       // Source preview probes the optional LAN service and recorded SFX before
       // its synthesized fallback. Keep those visible, separate from required art.
-      const optional = !process.env.COMBAT_ART_URL && response.status() === 404
-        && /^\/(api\/lan\/info|assets\/sfx\/[A-Za-z0-9_-]+\.ogg)$/.test(new URL(response.url()).pathname);
+      const optional = !base.startsWith('file:') && response.status() === 404
+        && /\/(api\/lan\/info|assets\/sfx\/[A-Za-z0-9_-]+\.ogg)$/.test(new URL(response.url()).pathname);
       (optional ? report.optionalSourceRequests : report.httpErrors).push(failure);
     });
     if (!process.argv.includes('--play-only')) {

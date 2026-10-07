@@ -31,12 +31,14 @@ Integration base: `c448cb31c` on `alternative/dev`.
 
 ## Validation
 
-- 11 focused Node tests passed: all actor IDs and source identities, every
+- 12 focused Node tests passed: all actor IDs and source identities, every
   armor mapping, both device paths, all scene layer references and dimensions,
   saved dungeon selection, existing environment and formation contracts.
 - 17 asset-pack/mobile tests passed, including stale-hash rejection and the
   common-pack loader used by the alternative art.
-- Local light pack and portable builds succeeded. Built HTML remains ignored.
+- Local light pack and portable builds succeeded: `0.7.1.1041`, identity
+  `3af276545a`. Build identity (9 checks) and shipped-file verification
+  (12 checks) passed. Built HTML remains ignored.
 - Chromium/Edge at 1440x900 and 390x844 loaded all 64 scene/device combinations
   in production combat, checked selected layer IDs and phone sprite paths,
   decoded every selected layer and actor, and found no horizontal page overflow.
@@ -44,13 +46,13 @@ Integration base: `c448cb31c` on `alternative/dev`.
   and representative full-size screenshots were visually inspected.
 - Fresh Quick start, mastery selection, map entry, tutorial Skip, real card
   selection/targeting, hold End Turn, hand retention and turn 2 passed at both
-  sizes, from the source preview and from the offline portable file.
+  sizes, from the source preview, served pack, and offline portable file.
 - The first input harness run exposed a tutorial overlay and an early End Turn
   attempt during card playback. The harness now uses the visible Skip control
   and waits for enabled controls/retention. Both complete playthroughs were
   rerun successfully. These were harness changes, not gameplay changes.
 - No page JavaScript errors or required-art HTTP errors. The source preview
-  still probes optional recorded SFX and `/api/lan/info` and receives 404s;
+  and served pack still probe optional recorded SFX and `/api/lan/info` and receive 404s;
   it uses its existing synthesized audio fallback. These are listed separately
   in `validation.json`. The portable playthrough has no HTTP errors.
 
@@ -70,4 +72,5 @@ separate from these local checks. Nothing was merged, promoted or published.
 Reproduce with `python tools/alternative-art-build.py`, the focused tests named
 in DEVELOPER.md, `node tools/launch.mjs --build-only`, and
 `node tools/alternative-art-qa.mjs`. Point `COMBAT_ART_URL` at the portable file
-and add `--play-only` to test the built game. Keep local outputs/temp on D:.
+and add `--play-only` to test the portable game; use `--play-only --pack`
+for the served pack. Keep local outputs/temp on D:.

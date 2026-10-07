@@ -6,6 +6,7 @@ import { armourById } from '../content/equipment.js';
 const alternativeArtMap = {};
 /* ALTERNATIVE_ART_END */
 export const alternativeArtUrl = path => alternativeArtMap[path] || assetUrl(path);
+const phoneArt = () => typeof document !== 'undefined' && document.documentElement.dataset.layout === 'narrow';
 
 // Dedicated canonical appearances win over legacy painted-rig aliases. Shared
 // armor keeps the package's explicit visual-class mapping until dedicated art lands.
@@ -66,15 +67,16 @@ export function alternativeCompanionIcon(id) {
 export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
   const scene = alternativeArtCatalog.scenes[sceneId];
   if (!scene) return null;
-  const device = scene.devices.desktop;
+  const mobile = phoneArt();
+  const device = scene.devices[mobile ? 'phone' : 'desktop'];
   return `<div class="backdrop alternative-backdrop" data-region="${scene.region}" data-scene="${sceneId}" aria-hidden="true">
     <svg class="alternative-scene" viewBox="0 0 ${device.width} ${device.height}" focusable="false">
-      ${device.layers.map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(alternativeArtCatalog.sceneLayers[layer.id].path)}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
+      ${device.layers.map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(alternativeArtCatalog.sceneLayers[layer.id][mobile ? 'mobilePath' : 'path'])}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
     </svg></div>${alternativeCardFadeHtml()}`;
 }
 
 export function alternativeCardFadeHtml() {
-  return `<div class="alternative-card-fade" aria-hidden="true" style="background-image:url('${alternativeArtUrl(alternativeArtCatalog.layers['card-section-texture'])}')"></div>`;
+  return `<div class="alternative-card-fade" aria-hidden="true" style="background-image:url('${alternativeArtUrl((phoneArt() ? alternativeArtCatalog.mobileLayers : alternativeArtCatalog.layers)['card-section-texture'])}')"></div>`;
 }
 
 // Fit the art canvas to the actual battlefield, keeping its measured ground
@@ -101,7 +103,8 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
     group.dataset.depth = String(layer.depth);
     image.dataset.layer = layer.id;
     for (const prop of ['x', 'y', 'width', 'height']) image.setAttribute(prop, layer[prop]);
-    image.setAttribute('href', alternativeArtUrl(narrow ? art.mobilePath : art.path));
+    const href = alternativeArtUrl(narrow ? art.mobilePath : art.path);
+    if (image.getAttribute('href') !== href) image.setAttribute('href', href);
     group.style.visibility = ['far', 'landmark'].includes(art.kind) && document.documentElement.dataset.wireframeSceneSkyline === 'off' ? 'hidden' : '';
   });
   const fade = combat.querySelector('.alternative-card-fade');

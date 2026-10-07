@@ -1650,7 +1650,7 @@
       },
       {
         "status": 404,
-        "url": "http://localhost:4296/assets/sfx/hit_medium.ogg"
+        "url": "http://localhost:4296/assets/sfx/hit_light.ogg"
       },
       {
         "status": 404,
@@ -1667,6 +1667,10 @@
       {
         "status": 404,
         "url": "http://localhost:4296/assets/sfx/deckShuffle.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/assets/sfx/playerHurt.ogg"
       },
       {
         "status": 404,
@@ -1694,7 +1698,7 @@
       },
       {
         "status": 404,
-        "url": "http://localhost:4296/assets/sfx/hit_medium.ogg"
+        "url": "http://localhost:4296/assets/sfx/hit_light.ogg"
       },
       {
         "status": 404,
@@ -1719,7 +1723,7 @@
     ]
   },
   "portablePlay": {
-    "base": "file:///D:/repos/.codex/worktrees/combat-art-runtime/AshenSpire/dist/download/AshenSpire.html",
+    "base": "file:///D:/repos/.codex/worktrees/combat-art-runtime/AshenSpire/build/download/AshenSpire.html",
     "scenes": [],
     "play": [
       {
@@ -1736,5 +1740,128 @@
     "errors": [],
     "httpErrors": [],
     "optionalSourceRequests": []
+  },
+  "build": {
+    "_": "DERIVED \u00e2\u20ac\u201d written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+    "release": "0.7.1",
+    "ordinal": 1041,
+    "digest": "3af276545a",
+    "built": "2026-10-07"
+  },
+  "packPlay": {
+    "base": "http://localhost:4296/build/AshenSpire.html",
+    "scenes": [],
+    "play": [
+      {
+        "device": "desktop",
+        "turn": 2,
+        "cardsPlayed": 1
+      },
+      {
+        "device": "phone",
+        "turn": 2,
+        "cardsPlayed": 1
+      }
+    ],
+    "errors": [],
+    "httpErrors": [],
+    "optionalSourceRequests": [
+      {
+        "status": 404,
+        "url": "http://localhost:4296/api/lan/info"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/nodeTravel.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/cardDraw.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/turnStinger.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdTick.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/cardPlay.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/hit_medium.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/relic.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdTick_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdCommit_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/deckShuffle.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/playerHurt.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/api/lan/info"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/nodeTravel.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/turnStinger.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/cardDraw.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdTick.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/cardPlay.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/hit_medium.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/relic.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdTick_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/holdCommit_endTurn.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/deckShuffle.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/playerHurt.ogg"
+      }
+    ]
   }
 }
