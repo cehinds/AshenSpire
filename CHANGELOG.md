@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Your route, one choice at a time** ([#1679](https://github.com/cehinds/AshenSpire/pull/1679), `0.7.1.1045`). The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.
+
 - **Inspect your starting stats and relic** ([#1681](https://github.com/cehinds/AshenSpire/pull/1681), `0.7.1.1043`). Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.
 
 - **Ready to begin, easier to read** ([#1674](https://github.com/cehinds/AshenSpire/pull/1674), `0.7.1.1041`). Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.
