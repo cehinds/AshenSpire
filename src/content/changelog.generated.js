@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1701",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Both game versions retain their updates",
+    "detail": "Alternative updates preserve the reviewed artwork checks, skill Level Up repairs and both changelog histories while accepting the latest promoted primary build.",
+    "build": "0.7.1.1067",
+    "pullRequest": 1701,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1701"
+  },
+  {
     "id": "pr-1689",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -21,6 +31,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1065",
     "pullRequest": 1691,
     "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
+    "id": "pr-1698",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates keep progressing",
+    "detail": "The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1698,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1698"
   },
   {
     "id": "pr-1695",
