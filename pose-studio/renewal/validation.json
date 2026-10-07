@@ -7,7 +7,7 @@
   "decodedImages": 36,
   "checks": {
     "poseStudioAndRenewalTests": {
-      "passed": 14,
+      "passed": 15,
       "failed": 0
     },
     "workshopSchema": "passed",
@@ -20,6 +20,7 @@
     "normalMs": 260,
     "fastMs": 160,
     "downHolds": true,
+    "redHitFlash": "alpha-masked tint verified in browser; fades before recovery; suppressed for reduced motion",
     "workshopPlayback": "verified",
     "poseStudioImportAndPlayback": "verified"
   },
