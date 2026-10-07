@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1698",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates keep progressing",
+    "detail": "The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1698,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1698"
+  },
+  {
     "id": "pr-1692",
     "date": "2026-10-07",
     "group": "2026-10-07",
