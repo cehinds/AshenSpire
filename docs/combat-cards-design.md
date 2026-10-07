@@ -25,6 +25,7 @@ Important limit: Ranged currently means safe from **melee retaliation**, not bla
 ## Counter details
 
 - Counter card retains immediate Block, draw, Prepared and printed statuses. Listed direct damage/Poise becomes reply budget. No printed Block: gain 4 base Guard; all Counters add 2 base magical Ward. No listed damage: default reply base 6. Ratings/modifiers still apply where ordinary rules specify.
+- Deferred reply damage does not ask for an enemy target during preparation; it answers the incoming attacker. Printed immediate hostile support still requires its own target. Solo and co-op share this target plan.
 - First eligible positive hit deals half damage and spends reaction. Fully absorbed hit returns `floor(base × 1.5) + 5 + bonus`. Partial absorption spends reaction without return damage. Listed positive reply Poise gets ×1.5; absent Poise stays absent.
 - Melee mode covers eligible physical Attack/Smash. Ranged mode covers physical projectiles. Spell mode covers spells and physical projectiles; against a physical projectile its reply removes Ward without HP damage. Against an incoming spell it can damage caster Health. Reactions cannot chain reactions.
 - Player reaction expires at next player-turn start. Enemy Counter becomes active when next stance is rolled; it expires at that enemy's turn start. Stagger immediately interrupts an armed Counter; death prevents retaliation.
