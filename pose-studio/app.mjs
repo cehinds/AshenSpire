@@ -5,9 +5,11 @@ import {catalog,effectFrames,PAINTED_OUTFITS,labels,cards,cardContext,effectAnch
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const renewalParam=new URLSearchParams(location.search).get('renewal');
 const renewal=['attack','power','spell'].includes(renewalParam)?renewalParam:null;
-const KEY='ashenspire.pose-studio.draft.v1'+(renewal?'.renewal.'+renewal:''),GAME_KEY='ashenspire.pose-studio.active.v1';
+const familyParam=new URLSearchParams(location.search).get('family');
+const renewalFamily=['rogue','starseer','herald'].includes(familyParam)?familyParam:'reaver';
+const KEY='ashenspire.pose-studio.draft.v1'+(renewal?'.renewal.'+renewal+(renewalFamily==='reaver'?'':'.'+renewalFamily):''),GAME_KEY='ashenspire.pose-studio.active.v1';
 let initial=starter(),loadWarning='';try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&!validate(saved,catalog).length)initial=saved;}catch{loadWarning='The saved draft could not be read. A fresh project is open.';}
-if(renewal){try{if(!localStorage.getItem(KEY)){const response=await fetch('./renewal/'+renewal+'.pose.json');if(!response.ok)throw Error('Project unavailable');const imported=await response.json(),errors=validate(imported,catalog);if(errors.length)throw Error(errors.join('; '));initial=imported;}}catch(e){loadWarning='Could not open alternative study: '+e.message;}}
+if(renewal){try{if(!localStorage.getItem(KEY)){const response=await fetch('./renewal/'+(renewalFamily==='reaver'?'':renewalFamily+'/')+renewal+'.pose.json');if(!response.ok)throw Error('Project unavailable');const imported=await response.json(),errors=validate(imported,catalog);if(errors.length)throw Error(errors.join('; '));initial=imported;}}catch(e){loadWarning='Could not open alternative study: '+e.message;}}
 let stack=history(initial),project=stack.value,selected=project.clips[0]?.id,binding=project.bindings[0]?.id,time=700,playing=false,last=0;
 let editing=null;
 const images=new Map(),canvas=$('#stage'),ctx=canvas.getContext('2d');

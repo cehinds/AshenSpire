@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `alternative/test`
-- Source commit: `340a5e977f0549d2df4ebadb3a71614393ead678`
+- Source branch: `alternative/dev`
+- Source commit: `e4ed662845814311009eaf51efa6a764fa2f688d`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -31,7 +31,7 @@
 | Authoritative JSON/CSV content | `content/source/` | 32 |
 | Transport | `src/net/` | 1 |
 | Tests | `tests/` | 372 |
-| Architecture/tooling | `tools/` | 429 |
+| Architecture/tooling | `tools/` | 434 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **10981**.
-Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 38, `.csv` 28, `.gitattributes` 1, `.gitignore` 3, `.html` 51, `.jpg` 91, `.js` 676, `.json` 469, `.log` 1, `.md` 182, `.mjs` 729, `.nojekyll` 1, `.nsi` 1, `.png` 1236, `.ps1` 10, `.py` 38, `.sh` 4, `.sql` 1, `.svg` 729, `.txt` 33, `.webp` 6614, `.woff2` 9, `.yml` 17, `(none)` 1.
+Tracked files: **11144**.
+Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 38, `.csv` 28, `.gitattributes` 1, `.gitignore` 3, `.html` 51, `.jpg` 100, `.js` 676, `.json` 493, `.log` 1, `.md` 185, `.mjs` 729, `.nojekyll` 1, `.nsi` 1, `.png` 1286, `.ps1` 10, `.py` 43, `.sh` 4, `.sql` 1, `.svg` 729, `.txt` 33, `.webp` 6686, `.woff2` 9, `.yml` 17, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

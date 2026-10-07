@@ -9,10 +9,13 @@ const flashCanvas=document.createElement('canvas');flashCanvas.width=flashCanvas
 const flashContext=flashCanvas.getContext('2d');
 const response=await fetch('./manifest.json');
 if(!response.ok)throw Error('Cannot load renewal manifest');
-const manifest=await response.json(), images=new Map();
+const manifest=await response.json(), images=new Map(), families=new Map([['reaver/sword',manifest]]);
+for(const [key,entry] of Object.entries(manifest.families||{})){if(entry.manifest){const r=await fetch('./'+entry.manifest);if(!r.ok)throw Error('Cannot load family: '+key);families.set(key,await r.json());}}
 let action='attack', time=0, playing=false, last=0, ready=false, cyclePause=0;
-const available=()=>$('#actor').value==='reaver'&&$('#loadout').value==='sword';
-const seq=()=>manifest.sequences[action];
+const familyKey=()=>$('#actor').value+'/'+$('#loadout').value;
+const family=()=>families.get(familyKey())||manifest;
+const available=()=>families.has(familyKey());
+const seq=()=>family().sequences[action];
 const duration=()=>durationFor(seq(),ANIM_SPEEDS[$('#pace').value]);
 const message=t=>$('#message').textContent=t;
 async function image(url){
@@ -21,11 +24,12 @@ async function image(url){
 }
 let decoded=new Map();
 async function preload(){
- const urls=Object.values(manifest.frames).flatMap(f=>[f.path,f.lite]);
- urls.push(...['slash','ward','starbolt','shieldBash'].flatMap(e=>COMBAT_EFFECT_ART[e].map(p=>'../../'+p.replace('assets/','assets-mobile/'))));
+ const urls=[...families.values()].flatMap(m=>Object.values(m.frames).flatMap(f=>[f.path,f.lite]));
+ const effects=new Set(['slash','ward','starbolt','shieldBash',...[...families.values()].flatMap(m=>Object.values(m.sequences).map(s=>s.effect).filter(Boolean))]);
+ urls.push(...[...effects].flatMap(e=>COMBAT_EFFECT_ART[e].map(p=>'../../'+p.replace('assets/','assets-mobile/'))));
  urls.push(...manifest.classes.map(c=>'../../'+alternativeArtCatalog.sprites[c+'-default'].path));
  await Promise.all(urls.map(async u=>decoded.set(u,await image(u))));
- ready=true;render();message('Reference study ready. Reaver / sword is drafted; the remaining 39 base combinations are pending.');
+ ready=true;render();message(`${families.size} base families drafted; ${manifest.coverage.length-families.size} combinations remain pending.`);
 }
 $('#actor').innerHTML=manifest.classes.map(c=>`<option value="${c}">${c[0].toUpperCase()+c.slice(1)}</option>`).join('');
 $('#loadout').innerHTML=manifest.loadouts.map(l=>`<option value="${l.id}">${l.label}</option>`).join('');
@@ -35,15 +39,18 @@ function reset(){time=0;cyclePause=0;render();}
 function selection(){
  stop();reset();
  const drafted=available();
+ const entry=manifest.families?.[familyKey()];
+ $('#workshop-project').hidden=!drafted;$('#workshop-project').href=entry?.rig||'reaver-sword.rig.json';
+ document.querySelector('[data-action=attack]').textContent=family().sequences.attack.label;
  $('#coverage').textContent=drafted?'Draft · 5 actions to inspect':'Pending · base reference only';
  $('#play').disabled=$('#restart').disabled=$('#scrub').disabled=!drafted||!ready;
  document.querySelectorAll('[data-action]').forEach(b=>{b.disabled=!drafted;b.classList.toggle('active',b.dataset.action===action);});
  $('#stage-label').textContent=`${$('#actor').value.toUpperCase()} · BASE ARMOUR · ${$('#loadout').selectedOptions[0].textContent.toUpperCase()}`;
- $('#action-note').textContent=action==='down'?'Down holds its final pose until Restart.':action==='power'||action==='spell'?'Sword is sheathed while casting. Draw / sheath transitions still need review.':'Forward travel returns to the same stance anchor.';
+ $('#action-note').textContent=action==='down'?'Down holds its final pose until Restart.':action==='power'||action==='spell'?($('#loadout').value==='staff'?'Staff stays in hand; the free hand releases the spell.':$('#loadout').value==='swordShield'?'Sword is sheathed; shield stays on the left arm. Draw / sheath transitions still need review.':'Weapons are sheathed while casting. Draw / sheath transitions still need review.'):'Forward travel returns to the same stance anchor.';
  $('#edit').hidden=!drafted||!['attack','power','spell'].includes(action);
- $('#edit').href='../index.html?renewal='+action;
+ $('#edit').href='../index.html?renewal='+action+'&family='+$('#actor').value;
  $('#board').innerHTML=manifest.coverage.filter(r=>r.classId===$('#actor').value).map(r=>`<div class="card ${r.status}">${manifest.loadouts.find(l=>l.id===r.loadout).label}<span>${r.status==='draft'?'Draft · attack / hurt / down / casts':'Pending artwork'}</span></div>`).join('');
- $('#timeline').innerHTML=drafted?seq().poses.map((p,i)=>`<button class="frame" data-frame="${i}" aria-label="Inspect ${p}"><img src="${manifest.frames[p].path}" alt="${p}"><span>${String(i+1).padStart(2,'0')} · ${p}</span></button>`).join(''):'';
+ $('#timeline').innerHTML=drafted?seq().poses.map((p,i)=>`<button class="frame" data-frame="${i}" aria-label="Inspect ${p}"><img src="${family().frames[p].path}" alt="${p}"><span>${String(i+1).padStart(2,'0')} · ${p}</span></button>`).join(''):'';
  render();
 }
 function drawFigure(img,x,y,size,filter='none'){
@@ -53,7 +60,7 @@ function render(){
  const d=duration(), sampled=sampleSequence(seq(),time,d,{reduced:$('#reduced').checked});
  $('#scrub').max=d||1;$('#scrub').value=Math.min(time,d);
  $('#clock').textContent=`${Math.round(Math.min(time,d))} / ${Math.round(d)} ms`;
- $('#metrics').textContent=available()?`${seq().poses.length} poses · ${Math.round(d)} ms · ${Math.max(...seq().travel.map(Math.abs))} px maximum travel · ${Math.round(manifest.bytes[$('#quality').value==='lite'?'lite':'webp']/1024)} KB for all 12 poses`:"No animation artwork for this class / loadout yet";
+ $('#metrics').textContent=available()?`${seq().poses.length} poses · ${Math.round(d)} ms · ${Math.max(...seq().travel.map(Math.abs))} px maximum travel · ${Math.round(family().bytes[$('#quality').value==='lite'?'lite':'webp']/1024)} KB for all ${Object.keys(family().frames).length} poses`:"No animation artwork for this class / loadout yet";
  document.querySelectorAll('[data-frame]').forEach(b=>b.classList.toggle('active',Number(b.dataset.frame)===sampled.index));
  const grad=ctx.createLinearGradient(0,0,0,580);grad.addColorStop(0,'#121d19');grad.addColorStop(1,'#29392b');ctx.fillStyle=grad;ctx.fillRect(0,0,1000,580);
  ctx.strokeStyle='#a8bd9d12';ctx.lineWidth=1;for(let x=0;x<1000;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,580);ctx.stroke();}for(let y=30;y<580;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1000,y);ctx.stroke();}
@@ -66,7 +73,7 @@ function render(){
  }
  const reduce=$('#reduced').checked, instant=!d;
  const pose=(instant||reduce)&&!seq().hold?(action==='power'||action==='spell'?'power':'ready'):seq().poses[sampled.index];
- const frame=manifest.frames[pose],img=decoded.get($('#quality').value==='lite'?frame.lite:frame.path);
+ const frame=family().frames[pose],img=decoded.get($('#quality').value==='lite'?frame.lite:frame.path);
  const aura=$('#aura').value, filter=aura==='none'?'none':auraFilter(action==='power'?'power2':'idle',aura==='guard'?'guard':'idle',aura==='guard'?[]:[aura],aura!=='guard');
  const x=410+(reduce?0:sampled.x),size=470;
  drawFigure(img,x,530,size,filter);

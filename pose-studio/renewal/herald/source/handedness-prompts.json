@@ -1,0 +1,19 @@
+{
+  "tool": "image_gen",
+  "mode": "built-in edit",
+  "date": "2026-10-07",
+  "prompts": [
+    {
+      "name": "shieldAttackRepairPrompt"
+    },
+    {
+      "name": "shieldWindupLowRepairPrompt",
+      "prompt": "Fix ONLY the TOP MIDDLE figure in this six-pose sprite sheet. Its sword is in the WRONG hand. Remove the entire raised arm/sword gesture on the viewer-left side of that figure. Redraw the top-middle pose as a LOW RIGHT-HANDED WIND-UP, not an overhead swing: the same near-side arm that holds the sword in the TOP LEFT figure must hold the sword here. That arm begins at the shoulder on the viewer's RIGHT, bends at the elbow down beside the right waist, and the RIGHT HAND grips the sword beside the right hip at the viewer's RIGHT edge of the body. Sword blade points diagonally DOWN and RIGHT with its whole tip in the cell. The shield must be attached to the OTHER, far-side LEFT arm, held forward in front of chest as in top-left ready pose. There must be NO raised hand above or to the viewer-left of the hood and NO sword on the viewer-left side. Two arms only. Keep costume, body orientation, feet, scale and other FIVE figures exactly unchanged. Transparent background. No extra weapons, effects, labels, shadows, or cell lines."
+    },
+    {
+      "name": "shieldHurtRepairPrompt",
+      "prompt": "Edit this three-pose Herald reaction sprite sheet, preserving all three full-body figures, rear-right-facing camera, costume and scale. Correct the LEFTMOST hurt figure only: remove the empty hand/arm raised behind the hood on the viewer-left. That is the shield arm and cannot be raised independently. The character's LEFT hand and forearm must stay inside/behind the shield, holding it forward in front of the chest exactly as in the center recovery figure. His RIGHT hand keeps the sword, using the visible near-side arm at the viewer-right of the torso, with sword lowered as currently shown. Show just two arms and two hands; the left hand may be correctly occluded by the shield. Keep the recoil body pose, all other parts and the middle/right figures unchanged. Ensure every weapon tip is contained in its own cell with transparent gutters; no effects, labels, scenery or background. Genuine transparency."
+    }
+  ],
+  "note": "The six-frame attack edit still had an incorrect wind-up. That cell is not used; windup-right-sword.png is the corrected replacement."
+}
