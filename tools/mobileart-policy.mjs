@@ -35,11 +35,12 @@ export const MOBILE_ASSET_DIR = 'assets-mobile';
  * Non-webp art (svg) is copied verbatim. Authoring-only trees are excluded by
  * the same runtimeAsset() rule the full build uses.
  *
- * Raised 2026-10-04 at the owner's ask ("art quality is way too low for
- * mobile; 480 to 720p", budget up to 100 MB, preferably under 80 MB): figures,
- * frames and effects at most 480 px (the 512 animation frames were 160 px),
- * everything else — backdrops, maps, cards, prologue, interface — at most
- * 720 px. Measured on hd-assets-v11: about 51 MB raw, 68 MB inlined.
+ * Runtime exports target 480px figures and 720p scenery. Scenery fits within
+ * 1280x720, preserving aspect ratio; portrait art stays at most 720px tall.
+ * A four-scene combat atlas has two rows, so its ceiling is 2160x1440:
+ * 1080x720 per scene. Smaller originals are never enlarged. Sprite encoding
+ * spends fewer bytes on figures so maps and backgrounds retain more detail.
+ * Source masters remain untouched; these rules apply to delivered twins.
  */
 export const POLICY = Object.freeze({
   maxEdge: 720,
@@ -47,12 +48,14 @@ export const POLICY = Object.freeze({
   alphaQuality: 50,
   // First match wins.
   overrides: Object.freeze([
+    Object.freeze({ prefixes: Object.freeze(['ashen-crown', 'cinder-reach', 'drowned-coast', 'hollow-weald', 'pale-marches'].map(id => `environments/${id}-combat.webp`)), maxEdge: 2160, maxHeight: 1440, quality: 78, alphaQuality: 80 }),
+    Object.freeze({ prefixes: Object.freeze(['bg/', 'environments/', 'prologue/', 'player-polish/scenes/']), maxEdge: 1280, maxHeight: 720, quality: 78, alphaQuality: 80 }),
     // Full portrait cards retain 720px resolution; a small compression change
     // keeps the complete roster inside the owner's 100 MB download maximum.
     Object.freeze({ prefixes: Object.freeze(['cards/extended/']), maxEdge: 720, quality: 44, alphaQuality: 50 }),
     // Every figure, frame and effect uses the same reduction, including small
     // cropped poses. Registration and playback timing remain in native units.
-    Object.freeze({ prefixes: Object.freeze(SPRITE_ASSET_FAMILIES.map(family => `${family}/`)), maxEdge: 480, quality: 32, alphaQuality: 25 }),
+    Object.freeze({ prefixes: Object.freeze(SPRITE_ASSET_FAMILIES.map(family => `${family}/`)), maxEdge: 480, quality: 18, alphaQuality: 25 }),
   ]),
 });
 
@@ -148,8 +151,7 @@ export function webpDimensions(buf) {
  * would put them.
  */
 export function twinDimensions({ width, height }, policy = POLICY) {
-  const edge = Math.max(width, height);
-  if (!(edge > policy.maxEdge)) return { width, height };
-  const scale = policy.maxEdge / edge;
+  const scale = Math.min(1, policy.maxEdge / Math.max(width, height), policy.maxHeight ? policy.maxHeight / height : 1);
+  if (scale >= 1) return { width, height };
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }

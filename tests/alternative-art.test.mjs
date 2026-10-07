@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { alternativeArtCatalog as catalog } from '../src/ui/alternativeArtCatalog.js';
+import { webpDimensions } from '../tools/mobileart-policy.mjs';
 
 test('every runtime sprite/layer resolves to the bytes pinned in source identity',()=>{
   const entries=[...Object.values(catalog.sprites).map(s=>s.path),...Object.values(catalog.layers)];
@@ -15,5 +16,22 @@ test('every runtime sprite/layer resolves to the bytes pinned in source identity
   for(const sprite of Object.values(catalog.sprites)){
     const [w,h]=sprite.size,[x0,y0,x1,y1]=sprite.bounds;
     assert(x0>=0 && y0>=0 && x1>x0 && y1>y0 && x1<=w && y1<=h,sprite.name);
+  }
+});
+
+test('smaller exports preserve the original crop registration and scene resolution budget',()=>{
+  for(const sprite of Object.values(catalog.sprites)) {
+    const bytes=readFileSync(new URL('../'+sprite.path,import.meta.url));
+    const {width,height}=webpDimensions(bytes);
+    assert.deepEqual([width,height],sprite.size,sprite.name);
+    assert(Math.max(width,height)<=480,sprite.name);
+    assert(width<=sprite.sourceSize[0] && height<=sprite.sourceSize[1],sprite.name);
+    sprite.bounds.forEach((value,index)=>assert(Math.abs(value/sprite.size[index%2]
+      -sprite.sourceBounds[index]/sprite.sourceSize[index%2])<1e-12,`${sprite.name}: crop registration`));
+  }
+  for(const [id,path] of Object.entries(catalog.layers)) {
+    const {width,height}=webpDimensions(readFileSync(new URL('../'+path,import.meta.url)));
+    assert.deepEqual([width,height],catalog.layerSizes[id],id);
+    assert(width<=1280 && height<=720,id);
   }
 });
