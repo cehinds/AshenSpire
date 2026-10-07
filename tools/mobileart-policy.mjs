@@ -55,7 +55,7 @@ export const POLICY = Object.freeze({
     Object.freeze({ prefixes: Object.freeze(['cards/extended/']), maxEdge: 720, quality: 44, alphaQuality: 50 }),
     // Every figure, frame and effect uses the same reduction, including small
     // cropped poses. Registration and playback timing remain in native units.
-    Object.freeze({ prefixes: Object.freeze(SPRITE_ASSET_FAMILIES.map(family => `${family}/`)), maxEdge: 480, quality: 18, alphaQuality: 25 }),
+    Object.freeze({ prefixes: Object.freeze(SPRITE_ASSET_FAMILIES.map(family => `${family}/`)), maxEdge: 480, quality: 12, alphaQuality: 25 }),
   ]),
 });
 
@@ -79,7 +79,7 @@ export function policyFor(rel, policy = POLICY) {
 export const MOBILE_BUNDLE_BUDGET_BYTES = 100_000_000;
 
 /**
- * Mobile art's share of the owner's 100 MB maximum, reserving 14.2 MB for code
+ * Mobile art's share of the owner's 100 MB maximum, reserving 18.5 MB for code, CSS and alternative artwork
  * and counting base64 growth (4/3). The complete portrait library exceeds the
  * preferred 69 MB art target (80 MB including code), while retaining the
  * 720px card resolution. Delivery validation must also measure the
@@ -89,9 +89,9 @@ export const MOBILE_BUNDLE_BUDGET_BYTES = 100_000_000;
  * (`distinctInlinedBytes`), since the bundler aliases byte-identical files.
  */
 // The complete card portrait library uses the owner's already-approved 100 MB
-// maximum. Reserve 14.2 MB for code and measure the finished file at delivery.
+// maximum. Reserve 18.5 MB for code, CSS and alternative artwork and measure the finished file at delivery.
 // 69 MB remains the preferred art target (80 MB including code), not the cap.
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 85_800_000;
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 81_500_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {

@@ -6,7 +6,7 @@ Do not enlarge small originals to meet a number.
 
 | Runtime art | Export target |
 | --- | --- |
-| Characters, enemies, poses, animation frames, equipment and effects | At most 480px on the longest edge; WebP quality 18, alpha quality 25 |
+| Characters, enemies, poses, animation frames, equipment and effects | At most 480px on the longest edge; WebP quality 12, alpha quality 25 |
 | Maps, backgrounds, prologue art and full-screen scene paintings | Fit inside 1280×720; WebP quality 78, alpha quality 80 |
 | Four-scene combat atlases | Up to 1080×720 per scene, or 2160×1440 for the two-by-two atlas; never enlarge a native 768×512 scene |
 | Cards and other raster interface art | At most 720px on the longest edge; retain their existing category-specific compression |
