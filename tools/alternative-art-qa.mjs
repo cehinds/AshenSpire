@@ -37,6 +37,7 @@ try {
     const context = await browser.newContext({ viewport, hasTouch: device === 'phone' });
     const page = await context.newPage();
     page.setDefaultTimeout(45000);
+    page.setDefaultNavigationTimeout(180000);
     page.on('pageerror', e => report.errors.push(e.message));
     page.on('response', response => {
       if (response.status() < 400) return;

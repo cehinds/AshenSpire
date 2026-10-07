@@ -1744,8 +1744,8 @@
   "build": {
     "_": "DERIVED \u00e2\u20ac\u201d written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
     "release": "0.7.1",
-    "ordinal": 1041,
-    "digest": "3af276545a",
+    "ordinal": 1046,
+    "digest": "6c2378998c",
     "built": "2026-10-07"
   },
   "packPlay": {
@@ -1812,6 +1812,14 @@
       },
       {
         "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/heal.ogg"
+      },
+      {
+        "status": 404,
+        "url": "http://localhost:4296/build/assets/sfx/block.ogg"
+      },
+      {
+        "status": 404,
         "url": "http://localhost:4296/build/assets/sfx/playerHurt.ogg"
       },
       {
@@ -1824,11 +1832,11 @@
       },
       {
         "status": 404,
-        "url": "http://localhost:4296/build/assets/sfx/turnStinger.ogg"
+        "url": "http://localhost:4296/build/assets/sfx/cardDraw.ogg"
       },
       {
         "status": 404,
-        "url": "http://localhost:4296/build/assets/sfx/cardDraw.ogg"
+        "url": "http://localhost:4296/build/assets/sfx/turnStinger.ogg"
       },
       {
         "status": 404,
@@ -1863,5 +1871,76 @@
         "url": "http://localhost:4296/build/assets/sfx/playerHurt.ogg"
       }
     ]
+  },
+  "integrationBase": "fdd992dc6740f2f5ae0dbf97c15dff7566203c3a",
+  "sceneSweepBase": "c448cb31c",
+  "rebasedSceneRetry": {
+    "result": "incomplete",
+    "reason": "Navigation to ashen-crown-3 exceeded 45 seconds waiting for networkidle during concurrent build. First two desktop scenes passed; no page or HTTP errors.",
+    "report": {
+      "base": "http://localhost:4296/",
+      "scenes": [
+        {
+          "scene": "ashen-crown-1",
+          "device": "desktop",
+          "layers": [
+            "ashen-crown-far",
+            "ashen-crown-1-landmark",
+            "ashen-crown-ground",
+            "ashen-crown-foreground"
+          ],
+          "actors": [
+            {
+              "id": "reaver-default",
+              "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+            },
+            {
+              "id": "stitchedHound",
+              "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+            },
+            {
+              "id": "stitchedHound",
+              "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+            }
+          ],
+          "overflow": false
+        },
+        {
+          "scene": "ashen-crown-2",
+          "device": "desktop",
+          "layers": [
+            "ashen-crown-far",
+            "ashen-crown-2-landmark",
+            "ashen-crown-ground",
+            "ashen-crown-foreground"
+          ],
+          "actors": [
+            {
+              "id": "reaver-default",
+              "source": "http://localhost:4296/assets-alternative/reaver-default.webp"
+            },
+            {
+              "id": "stitchedHound",
+              "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+            },
+            {
+              "id": "stitchedHound",
+              "source": "http://localhost:4296/assets-alternative/stitchedHound.webp"
+            }
+          ],
+          "overflow": false
+        }
+      ],
+      "play": [],
+      "errors": [],
+      "httpErrors": [],
+      "optionalSourceRequests": []
+    }
+  },
+  "sourcePlayBase": "c448cb31c",
+  "changelogCheck": {
+    "orderingChecksPassed": 812,
+    "generatedReceipts": 766,
+    "browserCheck": "failed: source title Settings control unreachable after timeout; readyState interactive, empty body; repeated after rebase"
   }
 }

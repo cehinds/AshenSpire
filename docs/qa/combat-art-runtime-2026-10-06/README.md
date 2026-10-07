@@ -1,7 +1,9 @@
 # Completed combat art runtime integration
 
 Source art: local commit `41ae95ae42cce66e56805cc35ae1903a92a4d5a5`.
-Integration base: `c448cb31c` on `alternative/dev`.
+Integration base: `fdd992dc6` on `alternative/dev` (rebased after PR #1683).
+The original 64-scene sweep ran on base `c448cb31c`; the later base changes
+updated creation and smithing while retaining the alternative battlefield.
 
 ## Implementation
 
@@ -34,10 +36,14 @@ Integration base: `c448cb31c` on `alternative/dev`.
 - 12 focused Node tests passed: all actor IDs and source identities, every
   armor mapping, both device paths, all scene layer references and dimensions,
   saved dungeon selection, existing environment and formation contracts.
+- Changelog ordering passed 812 checks and its 766 receipts were regenerated.
+  `about-changelog.mjs --check` did not pass: the raw-CDP source Settings probe
+  timed out with an empty title body, including on retry. This remains an
+  open validation gap, separate from the passing gameplay harness.
 - 17 asset-pack/mobile tests passed, including stale-hash rejection and the
   common-pack loader used by the alternative art.
-- Local light pack and portable builds succeeded: `0.7.1.1041`, identity
-  `3af276545a`. Build identity (9 checks) and shipped-file verification
+- Local light pack and portable builds succeeded: `0.7.1.1046`, identity
+  `6c2378998c`. Build identity (9 checks) and shipped-file verification
   (12 checks) passed. Built HTML remains ignored.
 - Chromium/Edge at 1440x900 and 390x844 loaded all 64 scene/device combinations
   in production combat, checked selected layer IDs and phone sprite paths,
@@ -47,6 +53,10 @@ Integration base: `c448cb31c` on `alternative/dev`.
 - Fresh Quick start, mastery selection, map entry, tutorial Skip, real card
   selection/targeting, hold End Turn, hand retention and turn 2 passed at both
   sizes, from the source preview, served pack, and offline portable file.
+  Pack and portable gameplay passed again after rebasing onto `fdd992dc6`.
+  The repeat source scene sweep timed out on its third navigation during the
+  concurrent rebuild; its first two scenes passed without page/HTTP errors.
+  The full 64-scene sweep and source gameplay evidence precede the rebase.
 - The first input harness run exposed a tutorial overlay and an early End Turn
   attempt during card playback. The harness now uses the visible Skip control
   and waits for enabled controls/retention. Both complete playthroughs were
