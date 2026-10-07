@@ -32,9 +32,21 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
-## 2026-10-06
+## 2026-10-07
+
+- **Alternative figures recover and keep moving** ([#1689](https://github.com/cehinds/AshenSpire/pull/1689), `0.7.1.1065`). Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.
+
+- **Skill Level Up works after victory** ([#1691](https://github.com/cehinds/AshenSpire/pull/1691), `0.7.1.1065`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.
+
 
 - **Preview the new alternative character animations** ([#1695](https://github.com/cehinds/AshenSpire/pull/1695), `0.7.1.1060`). The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.
+
+- **Skill Level Up works after victory** ([#1692](https://github.com/cehinds/AshenSpire/pull/1692), `0.7.1.1059`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.
+
+
+## 2026-10-06
+
+
 
 - **Lighter alternative characters, clearer scenery** ([#1694](https://github.com/cehinds/AshenSpire/pull/1694), `0.7.1.1059`). The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.
 
@@ -44,9 +56,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Landscape targets clear the intent labels** ([#1690](https://github.com/cehinds/AshenSpire/pull/1690), `0.7.1.1056`). Enemy tap areas and health columns move below nearby intent controls when space is tight, while their figures keep the same ground positions. The overlap check keeps the player's fitted tap area above the hand, and all five desktop and phone layouts are checked independently.
 
-- **Alternative builds gain class progression and retraining** ([#1686](https://github.com/cehinds/AshenSpire/pull/1686), `0.7.1.1054`). Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.
-
 - **Short-screen controls keep their own space** ([#1688](https://github.com/cehinds/AshenSpire/pull/1688), `0.7.1.1054`). Crowded enemy feet and health columns stay separate without moving their artwork. Intent labels remain reachable in short landscape views, and the merchant header sits below the HUD. Browser checks follow the actual tap areas; portable build checks include authored alternative artwork.
+
+- **Alternative builds gain class progression and retraining** ([#1686](https://github.com/cehinds/AshenSpire/pull/1686), `0.7.1.1054`). Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.
 
 - **Choose each class milestone and retrain your build** ([#1676](https://github.com/cehinds/AshenSpire/pull/1676), `0.7.1.1052`). Class rewards now follow a saved schedule for cards, feats, equipment, relics and attributes. Independent catalog modules add 40 card families with six ranks, 50 feats, 50 ability tags and 10 relics; available choices and level lists populate from their requirements. Spellcraft and Combat Maneuvers offer three cards with an Intelligence chance for a fourth higher-rank option. Actions and Stamina share one pool. Free class retraining previews earned choices without rerolling offers or restoring spent rewards. Solo and co-op XP fill Class, Character and gained skills in order before revealing blue Level Up buttons and a green Continue; remaining XP fills when you return.
 
