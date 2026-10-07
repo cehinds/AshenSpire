@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `codex/pr-resolution-alternative-20261007`
-- Source commit: `3cb0fe05d2962ef3cf9e45538203d947a2fa7547`
+- Source commit: `30078a0bc7dac0954e8bdf32ac89ef301fff2723`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
