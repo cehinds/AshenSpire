@@ -56,6 +56,30 @@ test('magic impacts Ward, physical impacts Poise, breaks cost next-turn Actions'
   assert.equal(c.player.statuses.vulnerable, undefined);
 });
 
+test('rating breaks cancel waiting player Counter replies without suppressing riders or later replies', () => {
+  for (const single of [false, true]) for (const damageSchool of ['physical', 'magic']) {
+    const c = fight(), enemy = c.enemies[0], hp = enemy.hp;
+    if (single) c.breakMeterVersion = 1;
+    const meter = damageSchool === 'magic' && !single ? 'wardMeter' : 'poiseMeter';
+    c.player[meter] = { value: 0, max: 1 };
+    const reaction = { source: c.player, owner: c.player, target: enemy,
+      card: { combatReaction: true, skipRatingBonus: true },
+      effect: { op: 'damage', amount: 3 }, meta: { combatCounterReaction: true } };
+    c.queue.push(reaction, { ...reaction, effect: { op: 'poiseDamage', amount: 6 }, meta: { combatCounterReaction: true } },
+      { source: c.player, owner: c.player, target: enemy, card: { combatReaction: true },
+        effect: { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }, meta: { combatDamageRider: true } });
+    applyRatingImpact(c, enemy, c.player, { damageSchool }, 1);
+    while (c.queue.length) executeAction(c, c.queue.shift());
+    const label = `${single ? 'single' : 'dual'} ${damageSchool}`;
+    assert.equal(enemy.hp, hp, `${label}: cancelled Counter cannot deal HP damage`);
+    assert.equal(enemy.poiseMeter.value, 0, `${label}: its queued Poise is cancelled too`);
+    assert.ok(enemy.statuses.weak, `${label}: ordinary typed rider still resolves`);
+    assert.ok(c.player.pendingActionLoss > 0, `${label}: rating break occurred`);
+    executeAction(c, { ...reaction, meta: { combatCounterReaction: true } });
+    assert.ok(enemy.hp < hp, `${label}: earlier break does not suppress a newly queued reply`);
+  }
+});
+
 test('weapon impact categories and per-card overrides are configurable', () => {
   const c = fight();
   assert.equal(attackImpact(c, c.player, magical), 1);

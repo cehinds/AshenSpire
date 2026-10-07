@@ -1,19 +1,21 @@
 // Display is derived from the same numeric recipe rather than copying numbers
 // into prose. Condition descriptions carry no hidden combat implementation.
-export function recipeText(effects) {
+export function recipeText(effects, { counterMode = null } = {}) {
   const counts = {};
   const token = base => { const n = counts[base] = (counts[base] || 0) + 1; return `{${base}${n > 1 ? '.' + n : ''}}`; };
-  return effects.map(e => {
+  const body = effects.map(e => {
     const t = e.amount != null && e.op !== 'grantCardCharge' ? token(e.op) : e.stacks != null ? token(e.status) : null;
     const target = e.target === 'allEnemies' ? ' every living enemy' : ' the selected enemy';
     let text;
     switch (e.op) {
-      case 'damage': text = `Deal ${t} damage to${target}${e.hits ? `, ${token('hits')} times` : ''}`; break;
+      case 'damage': text = counterMode
+        ? `Prepare ${t} base reply damage${e.hits ? `, ${token('hits')} times` : ''}`
+        : `Deal ${t} damage to${target}${e.hits ? `, ${token('hits')} times` : ''}`; break;
       case 'block': text = `Gain ${t} Block`; break;
       case 'draw': text = `Draw ${t} card(s)`; break;
       case 'discard': text = `Choose and discard ${t} card(s)`; break;
       case 'applyStatus': text = `Apply ${t} ${e.status} to${e.target === 'self' ? ' yourself' : target}`; break;
-      case 'poiseDamage': text = `Deal ${t} Break damage to${target}`; break;
+      case 'poiseDamage': text = counterMode ? `Prepare ${t} base reply Poise damage` : `Deal ${t} Break damage to${target}`; break;
       case 'restoreMana': text = `Restore ${t} Mana`; break;
       case 'gainEnergy': text = `Restore ${t} Actions (Stamina)`; break;
       case 'heal': text = `Heal ${t} HP`; break;
@@ -25,6 +27,7 @@ export function recipeText(effects) {
     }
     return `${e.if ? predicateText(e.if) + ': ' : ''}${text}${e.oncePerTurn ? ', once per turn from this family' : ''}.`;
   }).join(' ');
+  return counterMode ? `Prepare ${counterMode === 'spell' ? 'Spell' : counterMode === 'ranged' ? 'Ranged' : 'Melee'} Counter. ${body}` : body;
 }
 
 function predicateText(p) {

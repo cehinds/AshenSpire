@@ -1,0 +1,52 @@
+Art review - 2026-10-06
+
+Coverage: 35/35 canonical records, 31/31 supported distinct appearances,
+76/76 class/armor matrix cells. 45 unsupported cells explicitly explained.
+Four equivalent same-wearer default/shared record pairs use one master each.
+Twelve new shared-set masters; nineteen exact approved masters retained.
+Three additional Reaver framing drafts are retained in references/ through
+the correction provenance. All generation used built-in image_gen.
+
+Visual inspection completed on all four desktop checker contact pages,
+all four actual 390-pixel phone contact pages, the twelve-new-appearances
+sheet, and all eight desktop/phone composition montages. Individual source
+images were reviewed during generation. The four approved default PNGs and
+the prior approved contact sheet established camera, equipment and style.
+
+Observed: consistent rear three-quarter right view; backs and hoods/helmets
+dominate; complete feet, cloak hems and weapon tips; clean alpha gaps; no
+baked floor, UI, outline or visible aura. Reaver retains the red cloak and
+straight collinear sword. Starseer retains staff/scroll silhouette, Herald
+retains sceptre/censer, Rogue retains paired daggers. Shared plate, blue
+Nightweave, burgundy Rite Vestments and olive leather remain distinguishable.
+Fine embroidery is naturally lost at 140-pixel contact-sheet height, while
+class equipment and armor colors remain legible.
+
+Framing corrections: the first three Reaver shared-set drafts were too tight
+at the cloak/sword extremities. Built-in edits zoomed them out, and corrected
+original generator PNGs are selected. All twelve new files pass a minimum
+64-pixel clearance on all sides; smallest measured clearance is 76 pixels.
+Approved source files have tighter margins (minimum 3 px on one inherited
+Herald file). They are intact, not clipped at alpha >32, and preserved exactly
+as requested. The gallery and contact compositions supply external spacing.
+
+Deterministic validation: 380 checks passed with zero errors. Covers complete
+matrix, canonical IDs, snapshot agreement, independent unique PNG hashes,
+unchanged original PNG bytes, alpha, dimensions, bounds, measured idle anchors,
+reference/scene hashes, 62 device composition files and art-only Git scope.
+Margin warnings describe inherited source padding; they are not hidden.
+
+Browser verification: Chrome at http://127.0.0.1:43187. Correct page identity;
+class filtering to Rogue, selecting Wayfarer Plate and switching checker/phone
+views changed the displayed art correctly. At viewport 390x844, scrollWidth
+375 <= innerWidth 390, selected phone composition loaded with natural size.
+No captured warning/error console messages. Screenshots:
+  review/browser-desktop.png
+  review/browser-phone.png
+One UTF-8 decoding issue in the generated HTML was found and repaired.
+An initial gallery port resolved another existing art page; verification and
+delivery use a separate port. No claims are based on that other page.
+
+Limits: this is idle art and art-stage/browser review. No gameplay/runtime
+integration, CI, action animation, hand rigging or physical-device testing.
+Owner acceptance and later runtime integration are separate delivery gates.

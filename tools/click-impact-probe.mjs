@@ -46,12 +46,13 @@ const PLAYS = Number(argOf('--plays') || 5);
 const SEED = Number(argOf('--seed') || 1);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-function connectCdp(wsUrl) {
+function connectCdp(wsUrl, pageErrors = []) {
   const ws = new WebSocket(wsUrl);
   let nextId = 1;
   const pending = new Map();
   ws.addEventListener('message', (ev) => {
     const msg = JSON.parse(ev.data);
+    if (msg.method === 'Runtime.exceptionThrown') pageErrors.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);
     if (msg.id && pending.has(msg.id)) {
       const { res, rej } = pending.get(msg.id);
       pending.delete(msg.id);
@@ -86,7 +87,9 @@ async function main() {
     args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows'],
     timeoutMs: 12000,
   });
-  const cdp = connectCdp(wsUrl);
+  const pageErrors = [];
+  let lastPicked = null;
+  const cdp = connectCdp(wsUrl, pageErrors);
   await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -176,14 +179,24 @@ async function main() {
       if (await evalIn(`!window.__combat || window.__combat.result != null`)) break;
       await until(idle, 'an idle hand', 15000);
       await wait(400);
-      const picked = await evalIn(`(() => {
+      const picked = await evalIn(`(async () => {
+        const { resolveCard } = await import('/src/model/registries.js');
+        const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
+        const combat = window.__combat;
         const hand = [...document.querySelectorAll('.hand .card')];
         hand.forEach((c) => delete c.dataset.ciCard);
-        const pick = hand.find((c) => c.classList.contains('type-attack') && !c.classList.contains('unaffordable'));
+        const pick = hand.find(c => {
+          if (c.classList.contains('unaffordable')) return false;
+          const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId);
+          return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst));
+        });
         if (!pick) return false;
         pick.dataset.ciCard = 'true';
-        return true;
+        return { cardId: pick.dataset.cardId, instanceId: pick.dataset.instanceId,
+          maneuver: pick.dataset.combatManeuver };
       })()`);
+      lastPicked = picked;
+      if (args.includes('--debug')) console.log('    picked', JSON.stringify(picked));
       if (!picked) {
         // End Turn asks for a hold while playable cards remain (as
         // tools/full-run-probe.mjs presses it).
@@ -204,6 +217,7 @@ async function main() {
       await click('[data-ci-card="true"]', 'an attack card', false);
       const t0 = Date.now();
       while (Date.now() - t0 < 3000 && (await played()) === before) {
+        if (await evalIn(`!!document.querySelector('.combatant.player.armed')`)) { await click('.combatant.player.armed', 'its source', false); break; }
         if (await evalIn(`!!document.querySelector('.enemy-row .enemy.targetable')`)) { await click('.enemy-row .enemy.targetable', 'its target', false); break; }
         await wait(30);
       }
@@ -228,6 +242,15 @@ async function main() {
     process.exitCode = okay ? 0 : 1;
   } catch (e) {
     console.error(`click-impact-probe: ${e.message}`);
+    console.error('last picked card:', JSON.stringify(lastPicked));
+    if (pageErrors.length) console.error('page errors:', pageErrors.join('\n'));
+    console.error('target state:', JSON.stringify(await evalIn(`({
+      selected: document.querySelector('.hand .card.selected')?.dataset.cardId,
+      armed: document.querySelector('.hand .card.armed')?.dataset.cardId,
+      targetableEnemies: [...document.querySelectorAll('.enemy.targetable')].map(e => e.dataset.eid),
+      targetablePlayer: !!document.querySelector('.player.targetable'),
+      cardsPlayed: window.__combat?.player?.counters?.cardsPlayedThisCombat,
+    })`).catch(() => null)));
     process.exitCode = 1;
   } finally {
     cdp.close();

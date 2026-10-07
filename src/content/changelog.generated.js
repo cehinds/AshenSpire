@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1706",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative combat gains tactical cards and readable stances",
+    "detail": "Physical and spell cards, damage effects and guarded Counters now follow the shared combat rules. Hidden enemy moves keep their stances visible, and co-op reads stay private to each character. The alternative battlefield retains its figures, layered scenery, motion and update history.",
+    "build": "0.7.1.1092",
+    "pullRequest": 1706,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1706"
+  },
+  {
+    "id": "pr-1705",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Combat cards and enemy moves share tactical rules",
+    "detail": "All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.",
+    "build": "0.7.1.1089",
+    "pullRequest": 1705,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1705"
+  },
+  {
+    "id": "pr-1703",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Square targets and starting abilities",
+    "detail": "Enemy selection buttons form a square grid near their foes and move apart when crowded. After armaments, Starseer and Herald choose two distinct Rank 1 spells; Reaver and Rogue choose one Rank 1 combat maneuver. Legal choices follow equipped weapons and the selected cards enter the saved starting deck.",
+    "build": "0.7.1.1080",
+    "pullRequest": 1703,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1703"
+  },
+  {
+    "id": "pr-1702",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Clearer header with fewer controls",
+    "detail": "Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.",
+    "build": "0.7.1.1074",
+    "pullRequest": 1702,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1702"
+  },
+  {
     "id": "pr-1707",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -41,6 +81,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1065",
     "pullRequest": 1691,
     "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
+    "id": "pr-1704",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Combat matchup rules defined",
+    "detail": "Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.",
+    "build": "0.7.1.1064",
+    "pullRequest": 1704,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1704"
+  },
+  {
+    "id": "pr-1697",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Rear sprite studies archived for authoring",
+    "detail": "The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.",
+    "build": "0.7.1.1061",
+    "pullRequest": 1697,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1697"
   },
   {
     "id": "pr-1698",

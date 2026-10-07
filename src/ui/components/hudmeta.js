@@ -114,7 +114,6 @@ export function quickAccessPanelHtml(model) {
   };
   return `<section class="hud-control-grid as-cluster stack" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
     <div class="hud-actions as-cluster">
-      ${part(model, UI.deckEditorControl, (deck) => button(deck))}
       ${part(model, UI.armouryControl, (armoury) => button(armoury))}
       ${part(model, UI.quickMenuControl, (menu) => button(menu, { 'data-action-hint': 'menu' }))}
     </div>

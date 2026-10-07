@@ -24,5 +24,10 @@ const free = render({ cost: 0, staminaCost: 0, manaCost: 0, tokens: {} });
 assert.match(free, /data-card-binding="stamina"[^>]*>0<\/div>/);
 assert.match(free, /data-cost-layout="staminaOnly"/);
 assert.doesNotMatch(free, /data-component="mana-(icon|value)"/);
+const flurry = renderCard(registries, { cardId: 'twinbladeFlurry' }, { tooltip: false, inspection: false,
+  preview: { cost: 1, staminaCost: 1, manaCost: 0, tokens: { damage: 1, hits: 3 },
+    damageSequences: [{ amountToken: 'damage', hitsToken: 'hits', hitDamages: [1, 3, 3], totalDamage: 7 }] } }).innerHTML;
+assert.match(flurry, /1 \+ 3 \+ 3<\/span> damage \(7 total across 3 hits\)/);
+assert.doesNotMatch(flurry, />1<\/span> damage <span class="val">3<\/span> times/);
 assert.match(render(undefined), /illustrated-card-face/);
-console.log('10 illustrated resource checks passed');
+console.log('12 illustrated resource and tactical preview checks passed');

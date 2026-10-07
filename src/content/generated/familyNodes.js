@@ -389,5 +389,93 @@ export const familyNodes = [
   {
     "family": "relic",
     "nodeId": "card"
+  },
+  {
+    "family": "card",
+    "nodeId": "camp"
+  },
+  {
+    "family": "card",
+    "nodeId": "maneuver"
+  },
+  {
+    "family": "card",
+    "nodeId": "school"
+  },
+  {
+    "family": "card",
+    "nodeId": "counterMode"
+  },
+  {
+    "family": "basicCardProfile",
+    "nodeId": "camp"
+  },
+  {
+    "family": "basicCardProfile",
+    "nodeId": "maneuver"
+  },
+  {
+    "family": "basicCardProfile",
+    "nodeId": "school"
+  },
+  {
+    "family": "basicCardProfile",
+    "nodeId": "counterMode"
+  },
+  {
+    "family": "effect",
+    "nodeId": "camp"
+  },
+  {
+    "family": "effect",
+    "nodeId": "maneuver"
+  },
+  {
+    "family": "effect",
+    "nodeId": "school"
+  },
+  {
+    "family": "effect",
+    "nodeId": "counterMode"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "camp"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "maneuver"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "school"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "counterMode"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "classification"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "attackSource"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "delivery"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "damageType"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "technique"
+  },
+  {
+    "family": "enemyMove",
+    "nodeId": "theme"
   }
 ];

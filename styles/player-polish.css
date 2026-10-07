@@ -487,6 +487,18 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 /* Enlarge the complete HP row while reserving its scaled height above relics. */
 :root .shared-hud .resbars-host { zoom:1.22; }
 
+/* Thin black edges keep floating header items legible over bright artwork. */
+:root :is(.shared-hud, .atlas-header) {
+ text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;
+}
+:root .shared-hud :is(.hud-info-row, .resbars) { text-shadow:inherit; }
+:root .shared-hud :is(.illustrated-hud-icon, .icon-tray .as-pip, .resplate .engraved-icon) {
+ filter:drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000);
+}
+:root .shared-hud .resbar { box-shadow:0 0 0 1px #000; }
+:root :is(.shared-hud .hud-actions, .atlas-header-actions) > button { border:1px solid #000; }
+
+
 /* Approved merchant composition: four compact offers, category dock, footer.
    All dimensions below are local CSS pixels; UI zoom keeps tap targets physical. */
 :root .shop-workspace.merchant-workspace { --merchant-gold:var(--gold); padding:7rem 2rem 1rem; }

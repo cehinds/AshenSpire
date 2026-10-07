@@ -44,10 +44,10 @@ function withSchedule(patch) {
 const args = (pool, extra = {}) => ({ classId: 'reaver', pool, relicIds: [], flatRarity: false, draftWaiting: false, levelUps: 0, ...extra });
 
 test('rewardRolls is appended after every stream before it, so no existing stream moves', () => {
-  // `shopOffers` (SPEC §14.2) and then `sigils` (SPEC §15.4) were appended
+  // `shopOffers` (SPEC §14.2), `sigils` (SPEC §15.4) and intent reads (§4.7) were appended
   // after it; tests/shop-kinds.test.mjs and tests/legendary-sigils.test.mjs hold those.
   const at = STREAM_NAMES.indexOf('rewardRolls');
-  assert.deepEqual(STREAM_NAMES.slice(at + 1), ['shopOffers', 'sigils']);
+  assert.deepEqual(STREAM_NAMES.slice(at + 1), ['shopOffers', 'sigils', 'enemyIntentVisibility']);
   assert.deepEqual(STREAM_NAMES.slice(0, at), [
     'map', 'shuffle', 'cardRewards', 'relicRewards', 'flaskRewards', 'armaments', 'enemyAI', 'enemyHP',
     'events', 'shop', 'misc', 'smith', 'combatProcs', 'seats',

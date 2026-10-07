@@ -996,7 +996,7 @@ export const nodes = [
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Slashing identity; effects are authored separately."
+    "blurb": "Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect."
   },
   {
     "id": "damage:piercing",
@@ -1008,7 +1008,7 @@ export const nodes = [
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Piercing identity; effects are authored separately."
+    "blurb": "Bypasses up to 2 Guard; bypasses melee Counter."
   },
   {
     "id": "damage:blunt",
@@ -1020,7 +1020,7 @@ export const nodes = [
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Blunt identity; effects are authored separately."
+    "blurb": "Adds 2 Poise damage once per action against each target."
   },
   {
     "id": "damage:fire",
@@ -1032,19 +1032,19 @@ export const nodes = [
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Fire identity; effects are authored separately."
+    "blurb": "Applies 1 Burn on a Health hit unless the card already prints a Burn effect."
   },
   {
     "id": "damage:frost",
     "parentId": "damageType",
-    "label": "Frost",
+    "label": "Cold",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Frost identity; effects are authored separately."
+    "blurb": "Applies 1 Frost on a Health hit unless the card already prints a Frost effect."
   },
   {
     "id": "damage:lightning",
@@ -1056,43 +1056,43 @@ export const nodes = [
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Lightning identity; effects are authored separately."
+    "blurb": "Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect."
   },
   {
     "id": "damage:arcane",
     "parentId": "damageType",
-    "label": "Arcane",
+    "label": "Force",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Arcane identity; effects are authored separately."
+    "blurb": "Strips 2 Ward once per action; bypasses melee Counter."
   },
   {
     "id": "damage:sacred",
     "parentId": "damageType",
-    "label": "Sacred",
+    "label": "Holy",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Sacred identity; effects are authored separately."
+    "blurb": "Removes 1 hostile debuff from the attacker after a Health hit."
   },
   {
     "id": "damage:decay",
     "parentId": "damageType",
-    "label": "Decay",
+    "label": "Necrotic",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Categorized Decay identity; effects are authored separately."
+    "blurb": "Applies 1 Crimson Blight on a Health hit unless the card already prints a Crimson Blight effect."
   },
   {
     "id": "technique:heavy",
@@ -4861,5 +4861,293 @@ export const nodes = [
     "domain": "",
     "aside": "",
     "blurb": "What Ossuary Prayer Wheel confers when the fight gives it its moment."
+  },
+  {
+    "id": "camp",
+    "parentId": "",
+    "label": "Combat camp",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "maneuver",
+    "parentId": "",
+    "label": "Combat maneuver",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "school",
+    "parentId": "",
+    "label": "Magic school",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "counterMode",
+    "parentId": "",
+    "label": "Counter reach",
+    "color": "",
+    "glyph": "",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "camp:physical",
+    "parentId": "camp",
+    "label": "Physical",
+    "color": "D7B36B",
+    "glyph": "⚔",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Selects physical Guard or magical Ward combat rules."
+  },
+  {
+    "id": "camp:spell",
+    "parentId": "camp",
+    "label": "Spell",
+    "color": "9FC3E8",
+    "glyph": "✦",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Selects physical Guard or magical Ward combat rules."
+  },
+  {
+    "id": "maneuver:attack",
+    "parentId": "maneuver",
+    "label": "Attack",
+    "color": "D7B36B",
+    "glyph": "⚔",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy."
+  },
+  {
+    "id": "maneuver:defend",
+    "parentId": "maneuver",
+    "label": "Defend",
+    "color": "9FC3E8",
+    "glyph": "🛡",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard."
+  },
+  {
+    "id": "maneuver:counter",
+    "parentId": "maneuver",
+    "label": "Counter",
+    "color": "C8A3D8",
+    "glyph": "↩",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter."
+  },
+  {
+    "id": "maneuver:sweep",
+    "parentId": "maneuver",
+    "label": "Sweep",
+    "color": "93C9BC",
+    "glyph": "🌀",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it."
+  },
+  {
+    "id": "maneuver:ranged",
+    "parentId": "maneuver",
+    "label": "Ranged",
+    "color": "AAC88A",
+    "glyph": "➶",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Ranged delivery avoids melee replies. Ranged Counter, spell Counter and defensive Alteration answer it."
+  },
+  {
+    "id": "maneuver:smash",
+    "parentId": "maneuver",
+    "label": "Smash",
+    "color": "DB9871",
+    "glyph": "⚒",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it."
+  },
+  {
+    "id": "school:frost",
+    "parentId": "school",
+    "label": "Frost",
+    "color": "A6D8EF",
+    "glyph": "❄",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo."
+  },
+  {
+    "id": "school:fire",
+    "parentId": "school",
+    "label": "Fire",
+    "color": "E47C43",
+    "glyph": "🔥",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Fire pressure: Burn buildup keeps pressure between turns."
+  },
+  {
+    "id": "school:lightning",
+    "parentId": "school",
+    "label": "Lightning",
+    "color": "E8D46A",
+    "glyph": "ϟ",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Lightning disruption: Sap weakens direct attacks and enables spell follow-ups."
+  },
+  {
+    "id": "school:force",
+    "parentId": "school",
+    "label": "Force",
+    "color": "B99DEC",
+    "glyph": "✦",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Force pressure: strip Ward and bypass melee Counter."
+  },
+  {
+    "id": "school:alteration",
+    "parentId": "school",
+    "label": "Alteration",
+    "color": "9BC8BE",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Defensive and shaping magic: Ward, resource shaping and control. Answers ranged pressure."
+  },
+  {
+    "id": "school:illusion",
+    "parentId": "school",
+    "label": "Illusion",
+    "color": "C59BD7",
+    "glyph": "◎",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Tempo and hand control: Weak, confusion, draw and energy tools."
+  },
+  {
+    "id": "school:divine",
+    "parentId": "school",
+    "label": "Divine",
+    "color": "F0D99A",
+    "glyph": "✚",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Restoration and cleansing: heal, protect and remove hostile effects."
+  },
+  {
+    "id": "school:decay",
+    "parentId": "school",
+    "label": "Decay",
+    "color": "A4BD72",
+    "glyph": "☣",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Attrition and offerings: Crimson Blight, life transfer and pay-health combos."
+  },
+  {
+    "id": "counter:melee",
+    "parentId": "counterMode",
+    "label": "Melee counter",
+    "color": "D7B36B",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction."
+  },
+  {
+    "id": "counter:ranged",
+    "parentId": "counterMode",
+    "label": "Ranged counter",
+    "color": "D7B36B",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Replies only to incoming physical projectiles. Spells and melee moves do not trigger it."
+  },
+  {
+    "id": "counter:spell",
+    "parentId": "counterMode",
+    "label": "Spell counter",
+    "color": "D7B36B",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health."
+  },
+  {
+    "id": "classification.enemyMove",
+    "parentId": "classification",
+    "label": "enemyMove",
+    "color": "",
+    "glyph": "",
+    "visibility": "INTERNAL",
+    "priority": 30,
+    "domain": "",
+    "aside": "",
+    "blurb": "A scoped action in an enemy move table."
   }
 ];

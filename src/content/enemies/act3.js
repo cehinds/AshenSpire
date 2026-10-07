@@ -213,6 +213,7 @@ export const act3Enemies = [
       },
       "foldedBlades": {
         "intent": "block",
+        "counterDamage": 6,
         "block": 8,
         "weight": 15,
         "maxConsecutive": 1

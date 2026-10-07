@@ -28,7 +28,7 @@ export const armamentCards = [
     flavor: "Shield with nails driven through the boss.\n\nThe nails are from the Bastion's own gates. It is said a sellsword made it on the night of the Burning, from the gate he was hired to hold. His name is not known.\n\nNo bearer since has drawn the nails.",
     keywords: [], icon: '🛡', damageSchool: 'physical', exposureBuildupPerHit: 0,
     effects: [{ op: 'block', target: 'self', amount: 4 }, { op: 'damage', target: 'enemy', amount: 4 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 }],
-    textTemplate: 'Gain {block} Block. Deal {damage} damage. Apply {bleed} Bleed.',
+    textTemplate: 'Gain {block} Block. Prepare Melee Counter with {damage} base reply damage. Apply {bleed} Bleed.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 6 }, { op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 }] },
   },
   {

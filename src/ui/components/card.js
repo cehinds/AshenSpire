@@ -28,6 +28,7 @@ import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
+import { combatProfileFor, combatProfileTags } from '../../model/combatCardProfile.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -92,10 +93,22 @@ export function relicText(def, registries = null) {
   return grown ? `${base} ${grown}` : base;
 }
 
-function fillTemplate(def, tokens, baseTokens) {
-  let html = esc(def.textTemplate);
+function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
+  let template = def.textTemplate;
+  const liveTokens = { ...tokens };
+  for (const sequence of damageSequences) {
+    if (!sequence?.amountToken || !sequence?.hitsToken || !Array.isArray(sequence.hitDamages)
+      || sequence.hitDamages.length < 2 || sequence.hitDamages.every(amount => amount === sequence.hitDamages[0])) continue;
+    const amount = sequence.amountToken.replaceAll('.', '\\.');
+    const hits = sequence.hitsToken.replaceAll('.', '\\.');
+    const pattern = new RegExp(`\\{${amount}\\}([^{}]*?)\\{${hits}\\}\\s+times`);
+    template = template.replace(pattern,
+      `{${sequence.amountToken}}$1(${sequence.totalDamage} total across ${sequence.hitDamages.length} hits)`);
+    liveTokens[sequence.amountToken] = sequence.hitDamages.join(' + ');
+  }
+  let html = esc(template);
   html = html.replace(tokenRe(), (m, tok) => {
-    const v = tokens[tok];
+    const v = liveTokens[tok];
     if (v == null) return m;
     let cls = 'val';
     if (baseTokens && typeof baseTokens[tok] === 'number') {
@@ -127,7 +140,10 @@ export function renderCard(registries, ref, opts = {}) {
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
   // left. The output is byte-identical by construction: the model's bodies are
   // the ones that stood here.
-  const model = playingCardModel(registries, ref, { preview: opts.preview || null });
+  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null });
+  const combatProfile = combatProfileFor(def);
+  const combatTags = combatProfileTags(combatProfile, registries);
+  const model = { ...rawModel, tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   const sourcePiece = ref.sourceArmamentId
     ? registries.equipment?.armaments?.find(piece => piece.id === ref.sourceArmamentId)
     : null;
@@ -153,6 +169,9 @@ export function renderCard(registries, ref, opts = {}) {
   if (opts.affordable === false) el.classList.add('unaffordable');
   if (model.instanceId) el.dataset.instanceId = model.instanceId;
   el.dataset.cardId = model.id;
+  if (combatProfile.camp) el.dataset.combatCamp = combatProfile.camp;
+  if (combatProfile.maneuver) el.dataset.combatManeuver = combatProfile.maneuver;
+  if (combatProfile.school) el.dataset.combatSchool = combatProfile.school;
 
   // Equipment-generated cards carry their profile's tags on `cardTags`; authored
   // cards resolve through the junction. BOTH read the ACTIVE registries — the
@@ -225,7 +244,7 @@ export function renderCard(registries, ref, opts = {}) {
     el.innerHTML = illustratedCardHtml(model,{
       // A weight-priced card (the Dodge Roll) keeps its live numbers at glance
       // size and folds its per-class price table into one clause.
-      rules:at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens).replace(/\. (?=[A-Z])/g,'.\n'),
+      rules:at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/\. (?=[A-Z])/g,'.\n'),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
@@ -274,7 +293,7 @@ export function renderCard(registries, ref, opts = {}) {
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
-      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts);
+      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
       decorateKeywords(details);
       // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
       // everything. The note above the regions used to say a playing card
@@ -508,7 +527,7 @@ export function cardDetailHtml(registries, ref) {
   return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
 }
 
-function cardTooltip(registries, def, tokens, liveCosts = null) {
+function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
@@ -523,7 +542,9 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
     + `<div class="ti-meta"><span class="as-tag">${esc(def.type)}</span><span class="ti-cost">${costText}</span></div>`;
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
-  html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
+  const combatProfile = combatProfileFor(def);
+  if (combatProfile.maneuver === 'counter') html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
@@ -565,8 +586,9 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
     }
   }
   const service = tagService(registries);
-  const tags = def.cardTags?.length ? service.resolve(def.cardTags) : service.tagsOf('card', def);
+  const tags = def.cardTags != null ? service.resolve(def.cardTags) : service.tagsOf('card', def);
   for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }

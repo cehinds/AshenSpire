@@ -3,6 +3,7 @@ import { cardFamilies } from './cardFamilies.js';
 import { recipeText } from './cardRecipeText.js';
 import { progressionCardLore } from './cardLore.js';
 import { abilityCardUpdates as lessonUpdates } from './lessons.js';
+import { combatProfileFor } from '../../model/combatCardProfile.js';
 export const abilityCardUpdates = lessonUpdates;
 
 const damage = (amount, target = 'enemy', extra = {}) => ({ op: 'damage', target, amount, ...extra });
@@ -85,7 +86,7 @@ export function familyGrade(family, rank) {
   if (rank >= 4) effects.push(block(2, { oncePerTurn: 'grade-block' }));
   if (rank >= 5) effects.push(draw(1, { oncePerTurn: 'grade-draw' }));
   const magical = ['starseer', 'herald'].includes(family.classId);
-  return { rank, actionCost: family.actionCosts[rank], manaCost: rank, effects, textTemplate: recipeText(effects),
+  return { rank, actionCost: family.actionCosts[rank], manaCost: rank, effects, textTemplate: recipeText(effects, combatProfileFor(family.id)),
     ...(family.primary === 'damage' ? { traits: { damageSchool: magical ? 'magic' : 'physical', exposureBuildupPerHit: magical ? (rank > 0 ? 5 : 1) : 0 } } : {}),
   };
 }

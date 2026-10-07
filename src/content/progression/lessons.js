@@ -5,6 +5,7 @@ import { starseerCards } from '../cards/starseer.js';
 import { rogueCards } from '../cards/rogue.js';
 import { heraldCards } from '../cards/herald.js';
 import { recipeText } from './cardRecipeText.js';
+import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardExposure } from '../generated/cardExposure.js';
 
 const originals = new Map([...reaverCards, ...starseerCards, ...rogueCards, ...heraldCards].map(c => [c.id, c]));
@@ -82,7 +83,7 @@ function lessonGrade(recipe, rank) {
   const effects = [primary, ...riderEffects];
   if (rank >= 4) effects.push({ op: 'block', target: 'self', amount: 2, oncePerTurn: 'grade-block' });
   if (rank >= 5) effects.push({ op: 'draw', amount: 1, oncePerTurn: 'grade-draw' });
-  return { rank, actionCost: rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0)), manaCost: rank, effects, textTemplate: recipeText(effects),
+  return { rank, actionCost: rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0)), manaCost: rank, effects, textTemplate: recipeText(effects, combatProfileFor(id)),
     ...(original.effects.some(e => e.op === 'damage') ? { traits: { damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } } : {}),
   };
 }

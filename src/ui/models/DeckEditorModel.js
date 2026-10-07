@@ -425,8 +425,8 @@ export function openDeckEdit(registries, run, settings = {}) {
 
 /**
  * deckEditorDoors({ settings, inCombat, services }) → which doors open the
- * editor (SPEC §14.1 Settings): under `free` the map's Quick Access and the
- * Armoury, out of combat only; under `restOnly` only the Rest screen of a
+ * editor (SPEC §14.1 Settings): under `free` the Armoury, out of combat only;
+ * under `restOnly` only the Rest screen of a
  * place whose tags carry `deckEdit` (`services.deckEdit`); with deck editing
  * off, none.
  */
@@ -434,7 +434,6 @@ export function deckEditorDoors({ settings = {}, inCombat = false, services = nu
   const editing = deckEditingOn(settings) && !inCombat;
   const where = deckEditingWhere(settings);
   return Object.freeze({
-    quickAccess: editing && where === 'free',
     armoury: editing && where === 'free',
     rest: editing && where === 'restOnly' && !!(services && services.deckEdit),
   });

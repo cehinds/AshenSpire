@@ -6044,3 +6044,11 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
   .progression-feat-list { grid-template-columns: minmax(0, 1fr); }
   .progression-feat-effect { font-size: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
 }
+
+/* Starting abilities use combat card faces and explicit multi-pick controls. */
+.cc-equip-group[data-equipment-section="startingAbilities"] { display:flex; flex-direction:column; }
+.cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); grid-row:auto; gap:48px 12px; padding:64px 6px 14px; }
+.cc-ability-choice { display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0; }
+.cc-ability-choice > .card { width:100%; max-width:180px; flex-shrink:0; }
+.cc-ability-choose { width:100%; max-width:180px; white-space:normal; text-align:center; }
+.cc-ability-progress { margin:0; flex-shrink:0; }

@@ -1,6 +1,6 @@
 import { progressionTip } from '../components/progressionCards.js';
 // src/ui/screens/deckEditor.js — the deck editor (SPEC §14.1 UX), mounted over
-// whatever opened it: the map's Quick Access, the Armoury, or a Rest screen.
+// whatever opened it: the Armoury or an eligible Rest screen.
 //
 // THE SCREEN DECIDES NOTHING. Every row, count, refusal and disabled state is
 // read off `deckEditorModel` (ui/models/DeckEditorModel.js), and every change

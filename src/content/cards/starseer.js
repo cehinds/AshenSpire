@@ -497,7 +497,7 @@ export const starseerCards = [
       { op: 'block', target: 'self', amount: 30, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Starstone: {block.2} instead.',
+    textTemplate: 'Prepare Spell Counter. Gain {block} Block. Starstone: {block.2} instead.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 26, if: { p: 'not', pred: CHARGED } },
@@ -548,7 +548,7 @@ export const starseerCards = [
       { op: 'draw', amount: 1, if: CHARGED },
       GAIN_CHARGE,
     ],
-    textTemplate: 'Gain {block} Block. Starstone: draw {draw} card.',
+    textTemplate: 'Prepare Spell Counter. Gain {block} Block. Starstone: draw {draw} card.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 8 },

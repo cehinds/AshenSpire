@@ -401,8 +401,14 @@ async function main() {
   };
   const armAttackTarget = async () => {
     for (let guard = 0; guard < 8; guard++) {
-      const pt = await evalIn(`(() => {
-        const c = document.querySelector('.hand .card.type-attack:not(.unaffordable)');
+      const pt = await evalIn(`(async () => {
+        const { resolveCard } = await import('/src/model/registries.js');
+        const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
+        const combat = window.__combat;
+        const c = [...document.querySelectorAll('.hand .card:not(.unaffordable)')].find(node => {
+          const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
+          return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst), { targeted: true });
+        });
         if (!c) return null;
         const r = c.getBoundingClientRect();
         return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId };
@@ -517,6 +523,11 @@ async function main() {
     await clickSel('#cz-armours .equip-chip .equipment-choose', 'Choose armour');
     for (let step = 0; step < 8; step += 1) {
       if (await evalIn(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+      if (await evalIn(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {
+        while (await evalIn(`!!document.querySelector('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])') && document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
+          await clickSel('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])', 'a starting ability');
+        }
+      }
       await clickSel('#cz-next', 'Next (towards Review)');
     }
     await until(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`, 'the Review stage');

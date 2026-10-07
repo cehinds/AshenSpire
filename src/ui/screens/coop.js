@@ -7,6 +7,8 @@ import { combatantInfo, combatantIntent, selectCombatantInfo } from '../componen
 import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { combatProfileFor } from '../../model/combatCardProfile.js';
+import { coopEnemyIntent } from '../models/CoopIntentModel.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
@@ -202,6 +204,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let seats = (myIds && myIds.length ? myIds : [myId]).slice();
   let seatIdx = 0;
   let me = seats[0];
+  let combatantDoor = null;
+  function closeCombatantDoor() {
+    combatantDoor?.close();
+    combatantDoor = null;
+  }
   let selectedEnemy = null;
   let selectedCombatantId = null;
   function selectCombatant(id) {
@@ -431,6 +438,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function setSeat(i) {
     if (i === seatIdx || !seats[i]) return;
+    closeCombatantDoor();
     disposeProgression();
     seatIdx = i;
     me = seats[i];
@@ -607,6 +615,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    closeCombatantDoor();
     disposeProgression();
     closeClassRespec();
     app.removeEventListener('click', dismissCombatant);
@@ -638,7 +647,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const player = sc?.kind === 'combat' ? sc.players.find((entry) => entry.id === me) : null;
       const card = player?.hand.find((entry) => {
         const def = cardDef(entry);
-        return (def.effects || []).some((effect) => effect.target === 'enemy')
+        return cardNeedsEnemyTarget(def)
           && cardAffordableFromSnapshot(def, player);
       });
       const enemy = sc?.enemies.find((entry) => entry.alive);
@@ -759,7 +768,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return wrap;
   }
   function intentEl(intent) {
-    return combatantIntent(intent, () => intentTooltip(intent, { victim: 'each hero' }));
+    return combatantIntent(intent, () => intentTooltip(intent), registries);
+  }
+
+  function readEnemyIntent(entity, def) {
+    const moveId = entity.intent?.moveId;
+    const move = def?.moves?.[moveId];
+    const profile = move ? combatProfileFor({ ...move, enemyId: def.id, moveId }) : null;
+    return coopEnemyIntent(entity, me, profile);
   }
 
   function infoEl(entity, name, def = null) {
@@ -772,7 +788,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
-      const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) : null;
+      const intent = def ? readEnemyIntent(entity, def) : null;
+      const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
       // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
       // solo reads off `entity.performedMoves`. The snapshot now carries the
       // field, so an enemy that has acted lists what it did and one that has
@@ -782,7 +799,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // source for both, so the history and the move set cannot word a move
       // two different ways. Indexed once: this runs on every inspector open,
       // and a scan per entry is a needless m×n in a path a player waits on.
-      const cardsByMoveId = moveCards && new Map(moveCards.map((c) => [c.moveId, c]));
+      const cardsByMoveId = def && new Map(enemyMoveCards(def, { enemy: entity, registries, combatMatchupRules: snap.scene.combatMatchupRules }).map((c) => [c.moveId, c]));
       const history = def && Array.isArray(entity.performedMoves)
         ? entity.performedMoves.map((moveId) => {
           const card = cardsByMoveId.get(moveId);
@@ -790,11 +807,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         })
         : null;
       const subject = { name, resources, statuses: abilities, ...(def
-        ? { moveCards, history }
+        ? { moveCards, history, intent: {
+          ...intent,
+          name: intent.hidden ? `${intent.stance} · Move hidden` : (moveCards.find(card => card.active)?.name || intent.stance),
+          detail: intent.hidden ? 'Exact move, damage, and effects unread.' : intentTooltip(intent),
+        } }
         : { abilities }) };
-      openModal({ title: name, size: 'md', className: 'combatant-door', opener,
+      closeCombatantDoor();
+      combatantDoor = openModal({ title: name, size: 'md', className: 'combatant-door', opener,
         bodyClassName: 'combatant-inspector-body',
         body: host => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+        onClose: () => { combatantDoor = null; },
       });
     });
   }
@@ -992,7 +1015,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant enemy${dead ? ' dead' : ''}${!dead && e.id === selectedEnemy ? ' selected-target' : ''}`;
       box.dataset.eid = e.id;
       box.dataset.stature = statureFor(registries, def.id);
-      if (!dead) box.append(infoEl(e, def.name, def), intentEl(e.intent));
+      if (!dead) box.append(infoEl(e, def.name, def), intentEl(readEnemyIntent(e, def)));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, e));

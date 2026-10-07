@@ -1106,7 +1106,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1155,7 +1155,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot);
   run = createRunState({
-    seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,
+    seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
     profileMeta: saves.loadMeta(),
   });
   run.advancedConfigSnapshot = configSnapshot;
@@ -1902,7 +1902,7 @@ function showCharacterSheet(opener, options = {}) {
 
 // ---- the deck editor (SPEC §14.1) --------------------------------------------
 // Which doors open it is the settings' answer (DeckEditorModel.deckEditorDoors):
-// under `free` the map's Quick Access and the Armoury, under `restOnly` the
+// under `free` the Armoury, under `restOnly` the
 // Rest screen of a place carrying `deckEdit`, and none with deck editing off.
 // Every door here is out of combat; the fight's Armoury gets none.
 function deckDoors(services = null) {
@@ -2282,7 +2282,6 @@ function showMap(opts) {
     },
     onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
     onMenu: showOverlay, onArmoury: showArmoury,
-    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onQuit: () => { persist(); showCollapsedTitle(); },
     inspectNodeId: run.journey.inspectNodeId || null,
   });
@@ -2296,7 +2295,6 @@ function showMap(opts) {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
-    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
@@ -3774,6 +3772,12 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // The creation probe reads both the live deck and the shot's memory save.
+  window.__startingAbilities = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    const cards = row => (row?.deck || []).filter(inst => inst.abilityRank === 1).map(inst => ({ cardId: inst.cardId, abilityRank: inst.abilityRank }));
+    return { live: cards(run), saved: cards(saved) };
+  };
   // THE FLASKS, read-only, same species: the live run's flask ledger and
   // carried potions beside the slot's saved copy, and the stored "Use flasks
   // outside combat" setting. tools/flask-menu-probe.mjs proves a map Potions

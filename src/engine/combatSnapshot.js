@@ -45,6 +45,8 @@ export function serializeCombatSnapshot(combat) {
   }
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
+    ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...(combat.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
@@ -139,6 +141,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   const combat = {
     registries,
     rng,
+    ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
+    ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
     ...(saved.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight

@@ -311,9 +311,10 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
     for (const key of Object.keys(stock)) assert.ok(key in before.stock || key === 'kind' || key === 'offerings' || MARKET_ADDITIONS.includes(key), `seed ${n}: stray stock key ${key}`);
     // Nothing new is drawn on any existing stream. Only the additions' own
     // rolls (§14.3, on shopOffers after the offering roll) draw on the new one.
-    // `sigils` (SPEC §15.4) was appended after the fixture; a shop draws nothing there.
-    const { shopOffers: _offers, sigils: _sigils, ...counters } = rng.getCounters();
+    // Sigils and intent visibility were appended after the fixture; shops use neither.
+    const { shopOffers: _offers, sigils: _sigils, enemyIntentVisibility: _intentReads, ...counters } = rng.getCounters();
     assert.equal(_sigils, 0);
+    assert.equal(_intentReads, 0);
     assert.deepEqual(counters, before.counters, `seed ${n}: every existing stream`);
   }
 });
@@ -322,10 +323,11 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
 // The rest of §14.2 that step 4 builds
 // ---------------------------------------------------------------------------
 
-test('shopOffers is appended to the END of STREAM_NAMES, so no existing stream moves', () => {
-  // §15.4's `sigils` was appended after it later (tests/legendary-sigils.test.mjs).
-  assert.equal(STREAM_NAMES.at(-2), 'shopOffers');
-  assert.equal(STREAM_NAMES.at(-3), 'rewardRolls');
+test('shopOffers retains its appended index after later stream additions', () => {
+  // Sigils and intent visibility append after it, preserving historical indices.
+  assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
+  assert.equal(STREAM_NAMES.indexOf('rewardRolls'), 14);
+  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility']);
   assert.equal(STREAM_NAMES.indexOf('shop'), 9);
   // A save written before the stream existed restores it at 0.
   assert.equal(createRng(7, { shop: 3 }).getCounters().shopOffers, 0);

@@ -24,7 +24,7 @@ export const act2Enemies = [
     art: '♞',
     moves: {
       thrust: { intent: 'attack', damage: 11, weight: 50, maxConsecutive: 2 },
-      parry: { intent: 'block', block: 9, weight: 30, maxConsecutive: 1 },
+      parry: { intent: 'block', counterDamage: 6, block: 9, weight: 30, maxConsecutive: 1 },
       rally: {
         intent: 'buff', weight: 20, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 }],
@@ -147,7 +147,7 @@ export const act2Enemies = [
       },
       flurry: { intent: 'attack', damage: 5, hits: 3, weight: 40, maxConsecutive: 2 },
       lunge: { intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1 },
-      riposte: { intent: 'block', block: 10, weight: 20, maxConsecutive: 1 },
+      riposte: { intent: 'block', counterDamage: 6, block: 10, weight: 20, maxConsecutive: 1 },
     },
   },
 
@@ -222,6 +222,7 @@ export const act2Enemies = [
       },
       "polishedWard": {
         "intent": "block",
+        "counterDamage": 6,
         "block": 6,
         "weight": 20,
         "maxConsecutive": 1
