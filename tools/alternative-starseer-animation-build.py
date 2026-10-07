@@ -33,7 +33,7 @@ manifest['notes']=['Staff is retained while casting; free hand releases the spel
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 rig=json.loads((BASE/'reaver-sword.rig.json').read_text());rig['name']='Alternative Starseer · staff'
 for name in frames:
- rig['assets'][name]['src']=uri(name);rig['poses'][name]['gripMode']='one-handed'
+ rig['assets'][name]['src']=uri(name);rig['poses'][name]['gripMode']='two-handed' if name in ['windup','advance','contact','follow'] else 'one-handed'
 rig['animations']['attack']['name']='Staff attack'
 (OUT/'starseer-staff.rig.json').write_text(json.dumps(rig,separators=(',',':')))
 for action in ['attack','power','spell']:
