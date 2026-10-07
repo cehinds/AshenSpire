@@ -331,6 +331,8 @@ function bundledSkillClaims(html, { restoreCycle = false } = {}) {
       check('control: selected-source branch artwork catalog contains declared hashes', catalogHashes.length > 0);
       const mapMatch = html.match(/const alternativeArtMap = (\{[^\n]+\});/);
       const inlineArt = mapMatch ? JSON.parse(mapMatch[1]) : {};
+      const aliasMatch = html.match(/for \(const \[alias, key\] of (\[[^\n]+\])\) alternativeArtMap\[alias\] = alternativeArtMap\[key\];/);
+      for (const [alias, key] of aliasMatch ? JSON.parse(aliasMatch[1]) : []) inlineArt[alias] = inlineArt[key];
       const mismatches = catalogHashes.filter(([file, hash]) => {
         const payload = inlineArt[`assets-alternative/${file}`];
         return !payload?.startsWith('data:image/webp;base64,')
