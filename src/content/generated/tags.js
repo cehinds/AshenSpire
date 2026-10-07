@@ -2449,5 +2449,1004 @@ export const tags = [
     "glyph": "",
     "visibility": "INTERNAL",
     "blurb": "What a sigil is. Every object in the sigil collection carries this, and nothing outside it may."
+  },
+  {
+    "id": "ability:searing-edge",
+    "domain": "technique",
+    "label": "Searing Edge",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "A direct hit carries an authored Bleed buildup rider; the tag supplies no extra damage by itself."
+  },
+  {
+    "id": "ability:guarded-strike",
+    "domain": "technique",
+    "label": "Guarded Strike",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player currently has positive Block before an attack resolves."
+  },
+  {
+    "id": "ability:bloodstep",
+    "domain": "technique",
+    "label": "Bloodstep",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy has positive Bleed buildup before the card resolves."
+  },
+  {
+    "id": "ability:hammerfall",
+    "domain": "technique",
+    "label": "Hammerfall",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks an attack with an explicit Break-damage rider; HP damage and Break damage remain separate values."
+  },
+  {
+    "id": "ability:forgewake",
+    "domain": "technique",
+    "label": "Forgewake",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has already played a Guard card during this turn."
+  },
+  {
+    "id": "ability:crimson-reprisal",
+    "domain": "technique",
+    "label": "Crimson Reprisal",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player lost HP since their previous turn began; paying HP counts, losing Block does not."
+  },
+  {
+    "id": "ability:last-stand",
+    "domain": "technique",
+    "label": "Last Stand",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether current HP is at or below 50% of current maximum HP before resolution."
+  },
+  {
+    "id": "ability:war-tempo",
+    "domain": "technique",
+    "label": "War Tempo",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether at least two Heavy cards have already been played by the acting player during this turn."
+  },
+  {
+    "id": "ability:wide-cleave",
+    "domain": "technique",
+    "label": "Wide Cleave",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag."
+  },
+  {
+    "id": "ability:ember-crown",
+    "domain": "technique",
+    "label": "Ember Crown",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself."
+  },
+  {
+    "id": "ability:dreadweight",
+    "domain": "technique",
+    "label": "Dreadweight",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy is currently Staggered before a direct hit."
+  },
+  {
+    "id": "ability:oathscar",
+    "domain": "technique",
+    "label": "Oathscar",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn."
+  },
+  {
+    "id": "ability:wound-harvest",
+    "domain": "technique",
+    "label": "Wound Harvest",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit."
+  },
+  {
+    "id": "ability:cinder-orbit",
+    "domain": "technique",
+    "label": "Cinder Orbit",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the immediately preceding card played this turn by the same player was a spell."
+  },
+  {
+    "id": "ability:lunar-guard",
+    "domain": "technique",
+    "label": "Lunar Guard",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has already spent at least 2 Mana this turn; refunded Mana does not erase spending."
+  },
+  {
+    "id": "ability:comet-mark",
+    "domain": "technique",
+    "label": "Comet Mark",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks an attack that applies an authored Vulnerable rider after its direct damage."
+  },
+  {
+    "id": "ability:rime-mirror",
+    "domain": "technique",
+    "label": "Rime Mirror",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a defensive spell with an authored Frost buildup rider against one selected enemy."
+  },
+  {
+    "id": "ability:constellation",
+    "domain": "technique",
+    "label": "Constellation",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests how many distinct Starstone card IDs the acting player has played this turn; two copies of one ID count once."
+  },
+  {
+    "id": "ability:mana-weave",
+    "domain": "technique",
+    "label": "Mana Weave",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks an authored Mana restoration rider, capped at one activation per owning player per turn."
+  },
+  {
+    "id": "ability:gravity-snare",
+    "domain": "technique",
+    "label": "Gravity Snare",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a spell with an authored Weak rider after its direct damage."
+  },
+  {
+    "id": "ability:nightglass",
+    "domain": "technique",
+    "label": "Nightglass",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a one-charge direct-spell-damage bonus to the next spell this turn; no stacking and no carry into the next turn."
+  },
+  {
+    "id": "ability:eclipse-window",
+    "domain": "technique",
+    "label": "Eclipse Window",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy has positive Frost buildup or is Frost-exposed before resolution."
+  },
+  {
+    "id": "ability:warded-casting",
+    "domain": "technique",
+    "label": "Warded Casting",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a one-charge Mana discount for the next spell this turn; cost cannot fall below zero and the charge expires at turn end."
+  },
+  {
+    "id": "ability:celestial-echo",
+    "domain": "technique",
+    "label": "Celestial Echo",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Identifies the second play of the same Starstone card ID in a turn; the condition can activate once per turn."
+  },
+  {
+    "id": "ability:cold-memory",
+    "domain": "technique",
+    "label": "Cold Memory",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks an authored amount of Block retained into the next turn; retention sources use the largest allowance, not their sum."
+  },
+  {
+    "id": "ability:astral-convergence",
+    "domain": "technique",
+    "label": "Astral Convergence",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Identifies the third distinct Starstone card ID played by the same player in a turn; once per turn."
+  },
+  {
+    "id": "ability:ash-opener",
+    "domain": "technique",
+    "label": "Ash Opener",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether this is the acting player's first card played this turn."
+  },
+  {
+    "id": "ability:discard-weave",
+    "domain": "technique",
+    "label": "Discard Weave",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has discarded a card this turn; Exhaust and a spent card entering discard do not count."
+  },
+  {
+    "id": "ability:crooked-guard",
+    "domain": "technique",
+    "label": "Crooked Guard",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a direct attack with an authored Weak rider; the rider resolves after damage."
+  },
+  {
+    "id": "ability:exposed-flank",
+    "domain": "technique",
+    "label": "Exposed Flank",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy has exactly zero Block immediately before the hit."
+  },
+  {
+    "id": "ability:sleight-hand",
+    "domain": "technique",
+    "label": "Sleight of Hand",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks an authored draw-then-discard sequence; the player chooses the discarded card and ordinary hand limits apply."
+  },
+  {
+    "id": "ability:tether-cut",
+    "domain": "technique",
+    "label": "Tether Cut",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy currently has Weak or Vulnerable before damage resolves."
+  },
+  {
+    "id": "ability:smoke-edge",
+    "domain": "technique",
+    "label": "Smoke Edge",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a one-charge bonus to the next Blade attack this turn; the charge expires at turn end and cannot stack with itself."
+  },
+  {
+    "id": "ability:carrion-finish",
+    "domain": "technique",
+    "label": "Carrion Finish",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy is at or below 50% maximum HP before the attack."
+  },
+  {
+    "id": "ability:paired-strikes",
+    "domain": "technique",
+    "label": "Paired Strikes",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks an attack with exactly two authored direct hits; rank bonuses are divided across the hits."
+  },
+  {
+    "id": "ability:trapdoor",
+    "domain": "technique",
+    "label": "Trapdoor",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has already played at least one Guile card and one Guard card this turn."
+  },
+  {
+    "id": "ability:clean-escape",
+    "domain": "technique",
+    "label": "Clean Escape",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Identifies the first Guard card played before any attack this turn; once per turn."
+  },
+  {
+    "id": "ability:razor-debt",
+    "domain": "technique",
+    "label": "Razor Debt",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Identifies the first Blade attack after an explicit discard this turn; once per turn."
+  },
+  {
+    "id": "ability:mercy-ash",
+    "domain": "technique",
+    "label": "Mercy in Ash",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a defensive card with an authored healing rider; healing cannot exceed maximum HP."
+  },
+  {
+    "id": "ability:blood-censer",
+    "domain": "technique",
+    "label": "Blood Censer",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a card with an explicit HP offering paid before its benefits; the offering cannot reduce HP below 1."
+  },
+  {
+    "id": "ability:blight-seed",
+    "domain": "technique",
+    "label": "Blight Seed",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks a direct hit with an authored Crimson Blight buildup rider; this is not Poison."
+  },
+  {
+    "id": "ability:funeral-guard",
+    "domain": "technique",
+    "label": "Funeral Guard",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player has HP at or below 50% maximum HP before a Guard card resolves."
+  },
+  {
+    "id": "ability:ember-tithe",
+    "domain": "technique",
+    "label": "Ember Tithe",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks an explicit, nonlethal HP offering that buys an authored regenerative benefit."
+  },
+  {
+    "id": "ability:bone-chorus",
+    "domain": "technique",
+    "label": "Bone Chorus",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether at least one living enemy has positive Crimson Blight buildup before resolution."
+  },
+  {
+    "id": "ability:requiem-brand",
+    "domain": "technique",
+    "label": "Requiem Brand",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the selected enemy has positive Crimson Blight buildup before the hit."
+  },
+  {
+    "id": "ability:pilgrim-shelter",
+    "domain": "technique",
+    "label": "Pilgrim Shelter",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player began this turn at or below 50% maximum HP; later healing does not change that turn's result."
+  },
+  {
+    "id": "ability:scarred-rite",
+    "domain": "technique",
+    "label": "Scarred Rite",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Tests whether the acting player paid an HP offering earlier this turn, before this card's own payment; ordinary enemy damage does not count."
+  },
+  {
+    "id": "ability:dawn-rite",
+    "domain": "technique",
+    "label": "Dawn Rite",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Marks an authored removal of a specific negative status; it never removes every status implicitly."
+  },
+  {
+    "id": "ability:burden-bearer",
+    "domain": "technique",
+    "label": "Burden Bearer",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count."
+  },
+  {
+    "id": "ability:sepulchral-pact",
+    "domain": "technique",
+    "label": "Sepulchral Pact",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit."
+  },
+  {
+    "id": "classification.feat",
+    "domain": "classification",
+    "label": "feat",
+    "color": "",
+    "glyph": "",
+    "visibility": "INTERNAL",
+    "blurb": "A selected class progression feat."
+  },
+  {
+    "id": "feat:coal-on-steel",
+    "domain": "property",
+    "label": "Coal on Steel",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Blade hit each turn applies +1 Bleed buildup."
+  },
+  {
+    "id": "feat:brace-and-bite",
+    "domain": "property",
+    "label": "Brace and Bite",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Blade attack each turn played while you have Block deals +3 damage."
+  },
+  {
+    "id": "feat:red-footwork",
+    "domain": "property",
+    "label": "Red Footwork",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Guard card each turn targeting an enemy with Bleed buildup draws 1 card."
+  },
+  {
+    "id": "feat:anvil-discipline",
+    "domain": "property",
+    "label": "Anvil Discipline",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Heavy attack each turn deals +2 Break damage."
+  },
+  {
+    "id": "feat:forge-momentum",
+    "domain": "property",
+    "label": "Forge Momentum",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Blade attack after a Guard card each turn deals +4 damage."
+  },
+  {
+    "id": "feat:paid-in-blood",
+    "domain": "property",
+    "label": "Paid in Blood",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Blood attack after you have lost HP since your previous turn began deals +4 damage."
+  },
+  {
+    "id": "feat:last-rampart",
+    "domain": "property",
+    "label": "Last Rampart",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "At half HP or lower, your first Guard card each turn grants +4 Block."
+  },
+  {
+    "id": "feat:war-cadence",
+    "domain": "property",
+    "label": "War Cadence",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "After your second Heavy card in a turn, gain 4 Block, once per turn."
+  },
+  {
+    "id": "feat:broad-sentence",
+    "domain": "property",
+    "label": "Broad Sentence",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first attack that hits all living enemies each turn deals +2 damage to each target."
+  },
+  {
+    "id": "feat:ember-sovereign",
+    "domain": "property",
+    "label": "Ember Sovereign",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
+  },
+  {
+    "id": "feat:dread-of-the-hammer",
+    "domain": "property",
+    "label": "Dread of the Hammer",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Heavy attack against a Staggered target each turn deals +4 damage."
+  },
+  {
+    "id": "feat:scarred-oath",
+    "domain": "property",
+    "label": "Scarred Oath",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
+  },
+  {
+    "id": "feat:harvest-the-wound",
+    "domain": "property",
+    "label": "Harvest the Wound",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first credited kill of an enemy with Bleed buildup heals 3 HP, once per combat."
+  },
+  {
+    "id": "feat:orbit-keeper",
+    "domain": "property",
+    "label": "Orbit Keeper",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Starstone spell following another spell each turn deals +3 direct damage."
+  },
+  {
+    "id": "feat:moonward-scholar",
+    "domain": "property",
+    "label": "Moonward Scholar",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block."
+  },
+  {
+    "id": "feat:comet-reader",
+    "domain": "property",
+    "label": "Comet Reader",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Comet Mark attack each turn applies +1 Vulnerable after damage."
+  },
+  {
+    "id": "feat:mirror-of-rime",
+    "domain": "property",
+    "label": "Mirror of Rime",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Rime Mirror each turn applies +2 Frost buildup."
+  },
+  {
+    "id": "feat:constellation-keeper",
+    "domain": "property",
+    "label": "Constellation Keeper",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage."
+  },
+  {
+    "id": "feat:patient-wellspring",
+    "domain": "property",
+    "label": "Patient Wellspring",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Mana Weave restoration each turn also grants 3 Block."
+  },
+  {
+    "id": "feat:weight-of-the-void",
+    "domain": "property",
+    "label": "Weight of the Void",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Gravity Snare each turn applies +1 Weak after damage."
+  },
+  {
+    "id": "feat:nightglass-scholar",
+    "domain": "property",
+    "label": "Nightglass Scholar",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Once per turn, your Nightglass charge grants +2 additional damage when consumed."
+  },
+  {
+    "id": "feat:eclipse-hunter",
+    "domain": "property",
+    "label": "Eclipse Hunter",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage."
+  },
+  {
+    "id": "feat:firmament-keeper",
+    "domain": "property",
+    "label": "Firmament Keeper",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Once per turn, consuming a Warded Casting charge also grants 4 Block."
+  },
+  {
+    "id": "feat:celestial-refrain",
+    "domain": "property",
+    "label": "Celestial Refrain",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The second play of the same Starstone card ID in a turn grants 4 Block, once per turn."
+  },
+  {
+    "id": "feat:memory-of-winter",
+    "domain": "property",
+    "label": "Memory of Winter",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block."
+  },
+  {
+    "id": "feat:threefold-sky",
+    "domain": "property",
+    "label": "Threefold Sky",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Playing your third distinct Starstone card ID in a turn draws 1 card, once per turn."
+  },
+  {
+    "id": "feat:first-knife",
+    "domain": "property",
+    "label": "First Knife",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "If your first card this turn is a Blade attack, it deals +3 damage."
+  },
+  {
+    "id": "feat:pocket-method",
+    "domain": "property",
+    "label": "Pocket Method",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Guard card after an explicit discard each turn grants +3 Block."
+  },
+  {
+    "id": "feat:crooked-measure",
+    "domain": "property",
+    "label": "Crooked Measure",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Crooked Guard hit each turn applies +1 Weak after damage."
+  },
+  {
+    "id": "feat:open-flank",
+    "domain": "property",
+    "label": "Open Flank",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Blade attack against an enemy with zero Block each turn deals +3 damage."
+  },
+  {
+    "id": "feat:hidden-palm",
+    "domain": "property",
+    "label": "Hidden Palm",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Sleight of Hand sequence each turn grants 3 Block after the discard."
+  },
+  {
+    "id": "feat:tighten-the-wire",
+    "domain": "property",
+    "label": "Tighten the Wire",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage."
+  },
+  {
+    "id": "feat:smoke-dancer",
+    "domain": "property",
+    "label": "Smoke Dancer",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Once per turn, a Smoke Edge charge adds +2 damage before it is consumed."
+  },
+  {
+    "id": "feat:carrion-measure",
+    "domain": "property",
+    "label": "Carrion Measure",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage."
+  },
+  {
+    "id": "feat:two-quiet-knives",
+    "domain": "property",
+    "label": "Two Quiet Knives",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Paired Strikes attack each turn deals +1 damage on each of its two hits."
+  },
+  {
+    "id": "feat:trapdoor-smile",
+    "domain": "property",
+    "label": "Trapdoor Smile",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage."
+  },
+  {
+    "id": "feat:clean-exit",
+    "domain": "property",
+    "label": "Clean Exit",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Guard card played before any attack this turn restores 1 Stamina, once per turn."
+  },
+  {
+    "id": "feat:razor-ledger",
+    "domain": "property",
+    "label": "Razor Ledger",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Blade attack after an explicit discard each turn deals +3 damage."
+  },
+  {
+    "id": "feat:ashen-mercy",
+    "domain": "property",
+    "label": "Ashen Mercy",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Mercy in Ash card each turn heals +2 HP."
+  },
+  {
+    "id": "feat:censer-keeper",
+    "domain": "property",
+    "label": "Censer Keeper",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Blood Censer offering each turn grants +3 Block after its HP payment."
+  },
+  {
+    "id": "feat:sower-of-blight",
+    "domain": "property",
+    "label": "Sower of Blight",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Blight Seed hit each turn applies +2 Crimson Blight buildup."
+  },
+  {
+    "id": "feat:funeral-watch",
+    "domain": "property",
+    "label": "Funeral Watch",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "At half HP or lower, your first Guard card each turn grants +3 Block."
+  },
+  {
+    "id": "feat:ember-almoner",
+    "domain": "property",
+    "label": "Ember Almoner",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first Ember Tithe each turn grants +1 Regen after the HP payment."
+  },
+  {
+    "id": "feat:choir-of-bone",
+    "domain": "property",
+    "label": "Choir of Bone",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Guard card you play while any living enemy has Crimson Blight buildup restores 1 Stamina, once per turn."
+  },
+  {
+    "id": "feat:requiem-reader",
+    "domain": "property",
+    "label": "Requiem Reader",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage."
+  },
+  {
+    "id": "feat:pilgrim-of-scars",
+    "domain": "property",
+    "label": "Pilgrim of Scars",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "If you began the turn at half HP or lower, your first Guard card that turn heals 3 HP."
+  },
+  {
+    "id": "feat:crowned-offering",
+    "domain": "property",
+    "label": "Crowned Offering",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Ritual attack after an earlier HP offering this turn deals +4 damage."
+  },
+  {
+    "id": "feat:dawn-cantor",
+    "domain": "property",
+    "label": "Dawn Cantor",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first Dawn Rite removal each turn also grants 3 Block."
+  },
+  {
+    "id": "feat:bearer-of-burdens",
+    "domain": "property",
+    "label": "Bearer of Burdens",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The first negative status newly applied to you by an enemy each turn restores 1 Mana."
+  },
+  {
+    "id": "feat:sepulchral-promise",
+    "domain": "property",
+    "label": "Sepulchral Promise",
+    "color": "D7B36B",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat."
+  },
+  {
+    "id": "progression-emberjaw-token",
+    "domain": "property",
+    "label": "Emberjaw Token",
+    "color": "C79C64",
+    "glyph": "🦷",
+    "visibility": "",
+    "blurb": "What Emberjaw Token confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-cracked-war-anvil",
+    "domain": "property",
+    "label": "Cracked War Anvil",
+    "color": "C79C64",
+    "glyph": "⚒️",
+    "visibility": "",
+    "blurb": "What Cracked War Anvil confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-cinderbound-crown",
+    "domain": "property",
+    "label": "Cinderbound Crown",
+    "color": "C79C64",
+    "glyph": "👑",
+    "visibility": "",
+    "blurb": "What Cinderbound Crown confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-moonwell-lens",
+    "domain": "property",
+    "label": "Moonwell Lens",
+    "color": "C79C64",
+    "glyph": "🔮",
+    "visibility": "",
+    "blurb": "What Moonwell Lens confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-nightglass-rosary",
+    "domain": "property",
+    "label": "Nightglass Rosary",
+    "color": "C79C64",
+    "glyph": "📿",
+    "visibility": "",
+    "blurb": "What Nightglass Rosary confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-fragment-of-the-third-sky",
+    "domain": "property",
+    "label": "Fragment of the Third Sky",
+    "color": "C79C64",
+    "glyph": "🌌",
+    "visibility": "",
+    "blurb": "What Fragment of the Third Sky confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-whisperglass-die",
+    "domain": "property",
+    "label": "Whisperglass Die",
+    "color": "C79C64",
+    "glyph": "🎲",
+    "visibility": "",
+    "blurb": "What Whisperglass Die confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-purse-of-borrowed-shadows",
+    "domain": "property",
+    "label": "Purse of Borrowed Shadows",
+    "color": "C79C64",
+    "glyph": "👝",
+    "visibility": "",
+    "blurb": "What Purse of Borrowed Shadows confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-ember-alms-bowl",
+    "domain": "property",
+    "label": "Ember Alms Bowl",
+    "color": "C79C64",
+    "glyph": "🥣",
+    "visibility": "",
+    "blurb": "What Ember Alms Bowl confers when the fight gives it its moment."
+  },
+  {
+    "id": "progression-ossuary-prayer-wheel",
+    "domain": "property",
+    "label": "Ossuary Prayer Wheel",
+    "color": "C79C64",
+    "glyph": "🛞",
+    "visibility": "",
+    "blurb": "What Ossuary Prayer Wheel confers when the fight gives it its moment."
   }
 ];

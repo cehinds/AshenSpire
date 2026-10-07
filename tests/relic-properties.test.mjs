@@ -114,6 +114,6 @@ test('a relic with triggers carries the property tag that holds them', () => {
   // …and the census, so a silent drop of the whole table cannot pass the loop
   // above by having nothing to iterate.
   const carrying = REG.relics.all().filter((def) => relicPropertyRules(REG, def).length);
-  assert.equal(carrying.length, 52,
-    'the 52 trigger-carrying relics each hold their property tag (48 before plan phase 5a\'s four kit relics); the other 7 are passives-only');
+  assert.equal(carrying.length, 62,
+    'the 52 historical and 10 progression trigger-carrying relics each hold their property tag; the other 7 are passives-only');
 });

@@ -3,7 +3,7 @@
 
 import { el, meter, openModal, pill, prose, statusText, titleS, button } from '../kit/index.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
-import { characterSheetModel, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
+import { characterSheetModel, characterSheetRegistries, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
 import { levelProgress, skillProgressRows } from '../../model/progression.js';
 import { attributesCard, characterStatsButton, progressionTip } from '../components/progressionCards.js';
 import { skillInspection, ownedFeatInspections } from '../models/ProgressionInspectionModel.js';
@@ -27,7 +27,11 @@ export function grantText(grant) {
     case 'classFeat': return grant.pct >= 100 ? t('characterSheet.grant.featChoice') : t('characterSheet.grant.classFeatChance', { pct: grant.pct });
     case 'classCard': return grant.pct >= 100 ? t('characterSheet.grant.classCard') : t('characterSheet.grant.classCardChance', { pct: grant.pct });
     case 'levelCard': return t('characterSheet.grant.levelCard');
-    case 'cardDraft': return t('characterSheet.grant.cardDraft', { rank: grant.rank });
+    case 'cardDraft': return t(grant.ability ? 'characterSheet.grant.abilityDraft' : 'characterSheet.grant.cardDraft', { rank: grant.rank, n: grant.choices });
+    case 'classMilestone': return grant.rewardKind === 'attribute'
+      ? t('characterSheet.grant.attribute', { options: grant.options.join(' / ') })
+      : t('characterSheet.grant.classMilestone', { reward: t({ cards: 'characterSheet.grant.classCard', feat: 'characterSheet.grant.featNone', armory: 'armoury.title', relic: 'reward.kind.relic' }[grant.rewardKind]) });
+    case 'skillXp': return t('characterSheet.grant.skillXp', { n: grant.amount, tracks: grant.tracks.join(' / ') });
     case 'masteryUnlock': return `Unlocks ${grant.names.join(', ')}`;
     case 'classNodeDraft': return t('characterSheet.grant.classNodeDraft');
     case 'rarity': return t('characterSheet.grant.rarity', { rarity: RARITY_WORDS[grant.rarity] || grant.rarity });
@@ -150,8 +154,12 @@ function featButtons(registries, run, feats) {
 }
 
 export function openSkillInspection({ registries, run, track, opener }) {
+  registries = characterSheetRegistries(registries, run);
   const model = skillInspection(registries, run, track);
-  const cards = el('div', { class: 'progression-associated-cards' }, model.cards.map(card => renderCard(registries, { cardId: card.id, upgraded: false })));
+  const cards = el('div', { class: 'progression-associated-cards' }, model.cards.map(card => renderCard(registries, { cardId: card.id, upgraded: false,
+    ...(Number.isInteger(card.abilityRank) ? { abilityRank: card.abilityRank } : {}),
+    ...(card.legacyAbility ? { legacyAbility: true } : {}),
+  })));
   let shell;
   const back = button({ label: t('common.back') });
   back.addEventListener('click', () => shell.close());
@@ -189,6 +197,17 @@ export function cadenceLine(registries, track) {
   const parts = [];
   if (track.kind === 'class') {
     parts.push(t('characterSheet.cadence.classPick'));
+    if (track.expanded) {
+      const xp = track.rows[0]?.grants.find(grant => grant.kind === 'skillXp');
+      if (xp) parts.push(grantText(xp));
+      const rewardKinds = [...new Set(track.rows.flatMap(row => row.grants.filter(grant => grant.kind === 'classMilestone').map(grant => grant.rewardKind)))];
+      for (const kind of rewardKinds) {
+        const levels = track.rows.filter(row => row.grants.some(grant => grant.kind === 'classMilestone' && grant.rewardKind === kind));
+        parts.push(t('characterSheet.cadence.levels', { reward: grantText(levels[0].grants.find(grant => grant.kind === 'classMilestone' && grant.rewardKind === kind)), levels: levels.map(row => row.level).join(', ') }));
+      }
+      if (first('classTier') != null) parts.push(t('characterSheet.cadence.classTier'));
+      return parts.join(' ');
+    }
     const feat = track.rows[0] && track.rows[0].grants.find((g) => g.kind === 'classFeat');
     if (feat) parts.push(feat.pct >= 100 ? t('characterSheet.cadence.classFeat') : t('characterSheet.cadence.classFeatChance', { pct: feat.pct }));
     const card = track.rows[0] && track.rows[0].grants.find((g) => g.kind === 'classCard');
@@ -228,7 +247,8 @@ function skillsPane(registries, run, sheet, state) {
  * → the modal shell. `offers` names which character-level rewards the
  * player's settings switch on (CharacterSheetModel DEFAULT_LEVEL_OFFERS).
  */
-export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, settings = {}, onChange = null, onRewards = null } = {}) {
+export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, settings = {}, onChange = null, onRewards = null, onRespec = null } = {}) {
+  registries = characterSheetRegistries(registries, run);
   let bodyHost = null;
   const state = { tab, track, show: null, settings, onChange, onRewards, close: null };
   const render = () => {
@@ -238,6 +258,7 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     bodyHost.dataset.tab = state.tab;
   };
   state.show = (nextTab, nextTrack = state.track) => { state.tab = nextTab; state.track = nextTrack; render(); };
+  const respecAction=onRespec?button({label:t('classRespec.title'),weight:'primary'}):null;
   const back = button({ label: t('common.back') });
   back.addEventListener('click', () => state.close());
   const shell = openModal({
@@ -256,7 +277,9 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     bodyClassName: 'character-sheet-body',
     ...(opener ? { opener } : {}),
     onClose,
+    ...(respecAction ? {primary:respecAction} : {}),
   });
+  respecAction?.addEventListener('click',()=>{shell.close();onRespec();});
   state.close = shell.close;
   markUiComponent(shell.panel, UI.characterSheet);
   render();

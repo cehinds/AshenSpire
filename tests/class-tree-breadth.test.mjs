@@ -5,7 +5,7 @@
 // played through a real fight so a rule that validates but never fires fails.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { classTreeRows } from '../src/model/classTree.js';
 import { createRunState } from '../src/model/state.js';
@@ -38,7 +38,7 @@ function fight(classId, coreTags) {
   if (!cb.piles.hand.includes(inst)) { cb.piles.draw.splice(cb.piles.draw.indexOf(inst), 1); cb.piles.hand.push(inst); }
   const foe = cb.enemies[0];
   foe.block = 0;
-  const play = () => dispatch(cb, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: foe.id });
+  const play = () => dispatch(cb, { type: 'playCard', cardInstanceId: inst.instanceId });
   return { cb, foe, play };
 }
 

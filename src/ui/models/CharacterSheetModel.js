@@ -1,4 +1,6 @@
-import { masteryUnlockName } from '../../model/classMasteryRun.js';
+import { masteryUnlockName, registriesForClassMastery } from '../../model/classMasteryRun.js';
+import { abilityRankAt, isAbilitySkill } from '../../model/abilityGrades.js';
+import { classRewardBudget, expandedProgression } from '../../model/classMilestones.js';
 // src/ui/models/CharacterSheetModel.js — the Character sheet's two ladders,
 // read for a surface to draw: every character level, and every level of every
 // skill track the run can climb, each row saying what that level grants.
@@ -30,7 +32,7 @@ import { orderedAttributes } from '../../model/attributes.js';
 export const LEVEL_STATS = Object.freeze(['hp', 'stamina', 'mana', 'draw', 'handSize']);
 
 /** The grants a skill ladder pays at (nearly) every level: a row with only these is not a milestone. */
-export const EVERY_LEVEL_GRANTS = Object.freeze(['cardDraft', 'classNodeDraft', 'classFeat', 'classCard', 'rankUp']);
+export const EVERY_LEVEL_GRANTS = Object.freeze(['cardDraft', 'classNodeDraft', 'classFeat', 'classCard', 'rankUp', 'skillXp']);
 
 /** Which level rewards are switched on (Settings → Advanced → Rewards); the shipped defaults. */
 export const DEFAULT_LEVEL_OFFERS = Object.freeze({
@@ -39,6 +41,15 @@ export const DEFAULT_LEVEL_OFFERS = Object.freeze({
 
 const balanceOf = (registries) => (registries && registries.balance) || {};
 const skillRows = (registries) => balanceOf(registries).skill || {};
+
+// The public model also accepts the root registry. Read this character's saved
+// rules even when its caller has not already projected a mastery registry.
+export function characterSheetRegistries(registries, run) {
+  const scoped = registriesForClassMastery(registries, run);
+  return { ...scoped, progressionEnabled: expandedProgression(run),
+    balance: { ...scoped.balance, ...(expandedProgression(run) && run.progressionRuleSnapshot
+      ? { progression: run.progressionRuleSnapshot } : {}) } };
+}
 
 /** reached | current | next | locked — where a ladder row stands against the level held. */
 export function rowState(rowLevel, held) {
@@ -132,6 +143,9 @@ function tiersOpeningAt(registries, classId, level) {
  * than the every-level draft and rank-up.
  */
 export function trackLadder(registries, run, track) {
+  registries = characterSheetRegistries(registries, run);
+  const expanded = expandedProgression(run);
+  const ability = expanded && isAbilitySkill(track.id);
   const s = skillRows(registries);
   const maxLevel = skillMaxLevel(registries, track.kind) || 10;
   const held = skillLevel(run, track.id);
@@ -144,7 +158,7 @@ export function trackLadder(registries, run, track) {
   const rows = [];
   let total = 0;
   for (let level = 1; level <= maxLevel; level += 1) {
-    const stepXp = skillXpToNext(registries, track.kind, level - 1);
+    const stepXp = ability && level === 1 ? 0 : skillXpToNext(registries, track.kind, level - 1);
     total += stepXp;
     const grants = [];
     if (track.kind === 'class') {
@@ -155,32 +169,44 @@ export function trackLadder(registries, run, track) {
       }
       // The class level's source bonuses (engine/sourceRewardBonuses.js):
       // a feat choice and a class-pool card, each at its authored chance.
-      const bonus = (balanceOf(registries).rewards || {}).sourceBonuses || {};
-      if (bonus.classFeatChancePct > 0) grants.push({ kind: 'classFeat', pct: Math.min(100, bonus.classFeatChancePct) });
-      if (bonus.classCardChancePct > 0) grants.push({ kind: 'classCard', pct: Math.min(100, bonus.classCardChancePct) });
-    } else grants.push({ kind: 'cardDraft', rank: Math.min(level, rankMax) });
-    if (track.kind !== 'class') {
+      if (expanded) {
+        const before = classRewardBudget(registries, level - 1), after = classRewardBudget(registries, level);
+        for (const kind of Object.keys(after)) if (after[kind] > before[kind]) {
+          grants.push({ kind: 'classMilestone', rewardKind: kind,
+            ...(kind === 'attribute' ? { options: Object.freeze(linkedAttributes(registries, track.id).map(id => attrLabels.get(id) || id)) } : {}) });
+        }
+        const skills = skillTracks(registries);
+        grants.push({ kind: 'skillXp', amount: registries.balance.progression.skillBonusXp,
+          tracks: Object.freeze((registries.balance.progression.classSkills[classId] || []).map(id => skills.find(skill => skill.id === id)?.label || id)) });
+      } else {
+        const bonus = (balanceOf(registries).rewards || {}).sourceBonuses || {};
+        if (bonus.classFeatChancePct > 0) grants.push({ kind: 'classFeat', pct: Math.min(100, bonus.classFeatChancePct) });
+        if (bonus.classCardChancePct > 0) grants.push({ kind: 'classCard', pct: Math.min(100, bonus.classCardChancePct) });
+      }
+    } else grants.push({ kind: 'cardDraft', rank: ability ? abilityRankAt(registries, level) : Math.min(level, rankMax),
+      ...(ability ? { ability: true, choices: registries.balance.progression.ability.draftSize } : {}) });
+    if (track.kind !== 'class' && !ability) {
       for (const rarity of Object.keys(unlock)) {
         if (unlock[rarity] === level && level > 1) grants.push({ kind: 'rarity', rarity });
       }
     }
-    if (levelQueuesRankUp(track.kind, level)) grants.push({ kind: 'rankUp' });
+    if (!ability && levelQueuesRankUp(track.kind, level)) grants.push({ kind: 'rankUp' });
     if (classId) grants.push(...tiersOpeningAt(registries, classId, level));
-    if (levelQueuesSkillFeat(registries, track.id, level)) {
-      grants.push({ kind: 'feat', options: Object.freeze(trackSkillFeats(track.id).filter((f) => f.minLevel <= level).map((f) => f.name)) });
+    if (!(expanded && classId) && levelQueuesSkillFeat(registries, track.id, level)) {
+      grants.push({ kind: 'feat', options: Object.freeze(trackSkillFeats(track.id, !!run.classMasteryState, registries).filter((f) => f.minLevel <= level).map((f) => f.name)) });
     }
-    if (levelQueuesAttributePick(registries, track.id, level)) {
+    if (!(expanded && classId) && levelQueuesAttributePick(registries, track.id, level)) {
       grants.push({ kind: 'attribute', options: Object.freeze(linkedAttributes(registries, track.id).map((id) => attrLabels.get(id) || id)) });
     }
     const every = s.flatEvery;
-    if (rankUpKind(track.kind) && Number.isInteger(every) && every > 0 && level % every === 0) {
+    if (!ability && rankUpKind(track.kind) && Number.isInteger(every) && every > 0 && level % every === 0) {
       grants.push({ kind: 'flat', total: level / every });
     }
     const milestone = grants.some((g) => !EVERY_LEVEL_GRANTS.includes(g.kind));
     rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), milestone, grants: Object.freeze(grants.map(Object.freeze)) }));
   }
   return Object.freeze({
-    id: track.id, kind: track.kind, label: track.label,
+    id: track.id, kind: track.kind, label: track.label, expanded,
     level: held, maxLevel, xp, touched: held > 0 || xp > 0,
     rows: Object.freeze(rows),
   });
@@ -194,6 +220,7 @@ export function trackLadder(registries, run, track) {
  * order.
  */
 export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OFFERS } = {}) {
+  registries = characterSheetRegistries(registries, run);
   const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
   const ownTrackId = classId ? classSkillId(classId) : null;
   const tracks = skillTracks(registries)

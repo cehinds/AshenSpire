@@ -51,7 +51,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → the checks that need a real browser | no | yes |
 | `ci.yml` → idle animation and reduced motion in a real browser (`motion-probe.mjs` and its `--selftest`) | no | yes |
 | `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
-| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>` ([desktop/windows/README.md](desktop/windows/README.md)) | only when the PR touches `desktop/` | yes (also `main`) |
+| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push also replaces the `installer-<branch>` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) | only when the PR touches `desktop/` | yes (also `main`) |
 
 The workflows' own `on:` blocks and job `if:` conditions are the source of this
 table; a skipped job shows on the PR as *skipped*, not as missing.
@@ -1335,3 +1335,4 @@ all 32 settings at desktop and phone sizes, co-op, a mounted resize, and real
 Quick start/card/end-turn interactions. Set `PLAYWRIGHT_MODULE`, `CHROME`, and
 `COMBAT_ART_OUT` as needed; `COMBAT_ART_URL` plus `--play-only` checks a built
 portable file. Outputs and temporary/browser storage must stay on D: locally.
+

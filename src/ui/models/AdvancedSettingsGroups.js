@@ -163,6 +163,7 @@ function topic(row, section) {
   if (section === 'Progression') {
     if (row.classTopic) return row.classTopic;
     if (key === 'creationAutoAdvance') return 'General';
+    if (/^progressionFeats\./.test(path)) return 'Class feats';
     if (/^skill\.xp\./.test(path)) return 'Skill xp';
     if (/^skill\.class\./.test(path)) return 'Skill class';
     if (/^skill\./.test(path)) return 'Skill unlocks';
@@ -305,7 +306,7 @@ export function advancedSubgroups(rows, section) {
     // bound. A topic not named here keeps its discovered order, after the
     // named ones.
     byOrder([...PROGRESSION_TOPIC_ORDER, ...CLASS_TOPICS, 'Experience',
-      'Skill xp', 'Skill class', 'Skill unlocks', ...CLASS_TOPICS.map((name) => `Talents · ${name}`), 'General']);
+      'Skill xp', 'Skill class', 'Skill unlocks', 'Class feats', ...CLASS_TOPICS.map((name) => `Talents · ${name}`), 'General']);
   }
   return result;
 }

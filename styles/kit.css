@@ -3002,9 +3002,7 @@ body.pad-mode .as-keycap.float { display: none; }
 .shared-hud[data-hud-layout="map-compact"] .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: center; }
 .shared-hud[data-hud-layout="map-compact"] .hud-control-grid { grid-area: actions; align-self: center; }
 /* The fold's yield rules are § BAND FOLD, shared with W4c's folded band. */
-/* THE ROUTE STRIP is a receipt — no pointer, nothing to tap: the act's name as
-   a Title·S beside (narrow) or over (wide) a StatStrip whose two ends are
-   Eyebrows with a rail between them. */
+/* The map's route receipts are centred on the rail, one fixed slot per floor. */
 .act-route-strip {
   box-sizing: border-box; pointer-events: none; user-select: none; cursor: default;
 }
@@ -3031,7 +3029,23 @@ body.pad-mode .as-keycap.float { display: none; }
 .shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip [data-role="start"] { display: none; }
 .shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip .map-orientation-progress { grid-template-columns: minmax(1.5rem, 1fr) auto; }
 .act-route-strip [data-role="boss"] { color: var(--ember); }
-.act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
+.act-route-strip .map-orientation-rail {
+  position: relative; display: flex; align-items: center; min-width: 0;
+  height: calc(24px / var(--ui-zoom, 1));
+}
+.act-route-strip .map-orientation-rail::before {
+  content: ''; position: absolute; inset-inline: 0; top: 50%; height: 1px; background: var(--map-structure);
+}
+.act-route-strip .map-route-slot { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; }
+.act-route-strip .map-route-node {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: min(calc(20px / var(--ui-zoom, 1)), calc(100% - 2px)); aspect-ratio: 1;
+  border: 1px solid var(--map-structure); border-radius: 50%; background: var(--bg-raise);
+  color: var(--gold); font-size: calc(12px / var(--ui-zoom, 1)); line-height: 1;
+}
+.act-route-strip .map-route-node.is-visited { background: color-mix(in srgb, var(--gold) 24%, var(--bg-raise)); border-color: var(--gold); }
+.act-route-strip .map-route-node.is-current { box-shadow: 0 0 0 2px var(--bg-raise), 0 0 0 3px var(--gold); }
+.act-route-strip [data-role="boss"][data-visited="true"] { color: var(--gold); }
 .act-route-strip .map-orientation-rail::after {
   content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
   border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
@@ -3040,17 +3054,18 @@ body.pad-mode .as-keycap.float { display: none; }
 
 /* Map context follows the shared HUD instead of being compressed into it. */
 .mapscreen > .act-route-strip {
-  box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
-  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
+  box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 18px;
+  width: 100%; margin-inline: auto; padding: 8px 16px;
   border-bottom: 1px solid var(--line); background: var(--bg-raise);
   pointer-events: none; user-select: none; cursor: default;
 }
-.mapscreen > .act-route-strip > .as-title-s { font-size: 1.1rem; letter-spacing: 0.2em; }
+.mapscreen > .act-route-strip > .as-title-s { max-width: 32vw; font-size: 1.1rem; letter-spacing: 0.12em; }
 @media (max-width: 700px) {
   .mapscreen > .act-route-strip {
-    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
-    margin-left: auto; margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
+    grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 6px 10px;
   }
+  .mapscreen > .act-route-strip > .as-title-s { max-width: 100%; }
+  .act-route-strip .map-route-node { font-size: calc(10px / var(--ui-zoom, 1)); }
 }
 /* THE ZOOM BAR is a Band on the foot of the map with four IconButtons in it,
    BESIDE the board and never over it (styles/map.css says why). The bar has no
@@ -5921,6 +5936,24 @@ button[data-button-size] {
   .merchant-offer-details { padding-left: var(--book-compact-gap); }
   .merchant-offer-details > h3 { font-size: 1.5rem; }
   .merchant-offer-details > p { font-size: 1.2rem; }
+}
+
+/* Character and skill rows share the same aligned columns and visible name. */
+.reward-door .reward-claim-layout > .reward-menu:empty { display: none; }
+.reward-door .reward-claim-layout:has(> .reward-menu:empty) .reward-side { grid-column: 1 / -1; }
+.reward-door .reward-claim-layout[aria-busy='true'] .reward-level-offer { visibility: hidden; }
+.reward-door .reward-progress-row[data-kind='character'] {
+  grid-template-columns: subgrid;
+  grid-template-areas: 'name level bar next' 'gain gain gain gain';
+  gap: 0 .6rem;
+}
+:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name level' 'bar bar' 'gain next';
+  font-size: 1rem;
+}
+:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
+  grid-template-areas: 'name level' 'bar next' 'gain gain';
 }
 /* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */
 .armoury[data-view="grid"] .armoury-views { display: none; }

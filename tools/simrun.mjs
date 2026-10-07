@@ -1,3 +1,6 @@
+import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
+import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
+import {isAbilitySkill} from '../src/model/abilityGrades.js';
 import { openRunClassMastery, registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { initialClassTreeChoices, pickInitialClassTreeNode } from '../src/model/classTree.js';
 import { commitEventChoice } from '../src/engine/quests.js';
@@ -114,6 +117,13 @@ export function createRunLoop(REG, config) {
     for (const track of skillTracks(REG)) {
       const row = run.skills && run.skills[track.id];
       if (!row || !(row.pendingDrafts > 0)) continue;
+      if(run.progressionRulesVersion===1 && isAbilitySkill(track.id)){
+        for(const offer of rollPendingAbilityOffers(REG,rng,run,{skillId:track.id})){
+          const choice=abilityDraftChoice(offer,offer.choiceIds[0]);
+          if(spendSkillDraft(run,track.id,offer.offerId,choice.choiceId)){run.deck.push({instanceId:run._id(),cardId:choice.cardId,upgraded:false,abilityRank:choice.abilityRank,abilityOfferId:offer.offerId});drafts++;}
+        }
+        continue;
+      }
       for (let i = 0; i < Math.min(REG.balance.skill.draftsPerCombat, row.pendingDrafts); i++) {
         const ids = rollSkillDraftIds(REG, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool });
         if (!ids.length) break;

@@ -14,19 +14,46 @@
 // clears it when a new player turn begins.
 
 import { resolveCard } from '../src/model/registries.js';
-import { cardPlayCosts } from '../src/engine/combat.js';
+import { cardTargetPlan } from '../src/model/cardTargets.js';
+import { cardPlayCosts, cardNeedsEnemyTargetNow } from '../src/engine/combat.js';
+import { cardNeedsEnemyTargetForPlayer } from '../src/engine/coopCombat.js';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 
 /** The hand's playable, affordable cards, in hand order, minus this turn's refusals. */
-export function affordableCards(registries, combat, refused = new Set()) {
+function isAffordable(registries, combat, refused, h) {
   const p = combat.player;
-  return combat.piles.hand.filter((h) => {
-    if (refused.has(h.instanceId)) return false;
-    const def = resolveCard(registries, { cardId: h.cardId, upgraded: h.upgraded });
-    if ((def.keywords || []).includes('unplayable')) return false;
-    const cost = cardPlayCosts(combat, h.instanceId);
-    return cost.energy <= p.energy && cost.mana <= p.mana && cost.stamina <= p.stamina;
-  });
+  if (refused.has(h.instanceId)) return false;
+  const def = resolveCard(registries, { cardId: h.cardId, upgraded: h.upgraded });
+  if ((def.keywords || []).includes('unplayable')) return false;
+  const cost = cardPlayCosts(combat, h.instanceId);
+  return cost.energy <= p.energy && cost.mana <= p.mana && cost.stamina <= p.stamina;
+}
+
+export function affordableCards(registries, combat, refused = new Set()) {
+  return combat.piles.hand.filter(h => isAffordable(registries, combat, refused, h));
+}
+
+/** The same leftmost choice without previewing cards the bot will not play. */
+export function firstAffordableCard(registries, combat, refused = new Set()) {
+  return combat.piles.hand.find(h => isAffordable(registries, combat, refused, h));
+}
+
+/** Keep the chosen foe for hostile cards; source/friendly cards resolve automatically. */
+export function botCardTargetId(registries, combat, hand, enemyId, playerId = undefined) {
+  // Existing solo callers need no owner. Co-op callers name the seat; an exact
+  // hand-object match also keeps older callers safe without guessing by card ID.
+  const ownerId = combat.players
+    ? playerId ?? [...combat.players.values()].find(seat => seat.piles.hand.includes(hand))?.id
+    : combat.player?.id;
+  if (combat.players && !ownerId) throw new Error('A co-op target preview requires the card owner');
+  const ownerRegistries = combat.registriesForPlayer?.(ownerId) || registries;
+  const def = resolveCard(ownerRegistries, hand);
+  const plan = cardTargetPlan(def, ownerId, combat.enemies);
+  if (plan.mode === 'enemy') return enemyId;
+  const hostile = combat.players
+    ? cardNeedsEnemyTargetForPlayer(combat, ownerId, hand.instanceId)
+    : cardNeedsEnemyTargetNow(combat, hand.instanceId);
+  return hostile ? enemyId : undefined;
 }
 
 /** A per-combat refusal set that empties itself at each new player turn. */

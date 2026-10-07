@@ -415,7 +415,7 @@ function withoutSupersededLegacy(entries) {
 //     co-op, endless — is World.
 function balanceGroup(path) {
   if (/^(poise|stagger|mana)\./.test(path)) return 'Stats';
-  if (/^(level|xp\.|skill\.|classTree\.)/.test(path)) return 'Progression';
+  if (/^(level|xp\.|skill\.|classTree\.|progressionFeats\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
   if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|coop|endless|customMods)/.test(path)) return 'World';
@@ -598,7 +598,7 @@ function balanceLabel(path) {
 function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
-    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}) } : {};
+    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}), ...(joined.startsWith('progressionFeats.') && joined.endsWith('.hpPct') ? PERCENT : {}) } : {};
     const described = balanceNote(joined, { bundle, parent });
     rows.push({
       cat: 'Advanced',
@@ -1190,6 +1190,16 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     if (!own.dropPath || ownOn(raw, own)) continue;
     const parent = own.dropPath.slice(0, -1).reduce((node, key) => node?.[key], configured);
     if (parent && typeof parent === 'object') delete parent[own.dropPath.at(-1)];
+  }
+  if (bundle.legacyProgression) {
+    // Derive legacy card formula baselines from the captured faces, then apply
+    // the same settings. New grade costs must not rewrite old saved cards.
+    const legacy = configuredContentBundle({ ...bundle, ...bundle.legacyProgression,
+      legacyProgression: undefined, balance: { ...bundle.balance, progression: undefined } }, settingsOrSnapshot);
+    configured.legacyProgression = { ...bundle.legacyProgression,
+      cards: legacy.cards, relics: legacy.relics, classes: legacy.classes,
+      classSkillFeats: legacy.classSkillFeats, classMastery: legacy.classMastery,
+      equipment: legacy.equipment, balance: legacy.balance };
   }
   return configured;
 }

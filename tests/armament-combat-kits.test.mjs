@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { startingDeckRefs, stampDeck, WeaponCardPackageModel, reconcileGrantedCardsInCombat } from '../src/model/loadout.js';
@@ -39,7 +39,7 @@ function play(combat, id) {
   combat.player.energy = 20;
   combat.player.stamina = combat.player.maxStamina;
   combat.player.mana = combat.player.maxMana;
-  dispatch(combat, { type: 'playCard', cardInstanceId: ref.instanceId, targetId: combat.enemies[0].id });
+  dispatch(combat, { type: 'playCard', cardInstanceId: ref.instanceId });
   return ref;
 }
 

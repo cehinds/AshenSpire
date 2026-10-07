@@ -30,7 +30,7 @@
  * follow in his order (flask IS the potion seat in this game).
  */
 // `sigil` (SPEC §15.4) is a dropped legendary sigil, after the relic.
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'skillRankUp', 'skillAttribute', 'skillFeat', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'classMilestone', 'skillDraft', 'skillRankUp', 'skillAttribute', 'skillFeat', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
 
 // ---- the card reward schedule (SPEC §15.1) ----------------------------------
 
@@ -102,7 +102,8 @@ export function cardRewardPlan(balance, { pool, levelsGained = 0, draftWaiting =
  * of a state goes through the key, so the saved `states` of a pre-draft
  * offer (keyed by kind) still read.
  */
-export const rowKey = (kind, row = {}) => (kind === 'skillDraft' || kind === 'skillRankUp' || kind === 'skillAttribute' || kind === 'skillFeat' ? `${kind}:${row.skillId}:${row.ordinal || 0}`
+export const rowKey = (kind, row = {}) => (kind === 'skillDraft' && row.offerId ? `skillDraft:${row.offerId}` : kind === 'skillDraft' || kind === 'skillRankUp' || kind === 'skillAttribute' || kind === 'skillFeat' ? `${kind}:${row.skillId}:${row.ordinal || 0}`
+  : kind === 'classMilestone' ? `classMilestone:${row.receiptId}`
   : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}`
   : kind === 'levelCard' || kind === 'levelChoice' ? `${kind}:${row.ordinal || 0}` : kind);
 
@@ -117,7 +118,7 @@ export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft
 export const rewardNotes = (rewards = {}) => (rewards && rewards.cardMissed === true ? ['cardMissed'] : []);
 
 /** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
-export const pickIds = (row) => (Array.isArray(row.options)
+export const pickIds = (row) => (Array.isArray(row.choiceIds) ? row.choiceIds : row.kind === 'classMilestone' ? row.options || [] : Array.isArray(row.options)
   ? row.options.map((option) => `${option.kind}:${option.id}`)
   : Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
 
@@ -150,6 +151,11 @@ const KINDS = {
     },
     blocked: () => null,
   },
+  classMilestone: {
+    present: r => Array.isArray(r.classMilestoneRewards) && r.classMilestoneRewards.length > 0,
+    rows: r => r.classMilestoneRewards.map(row => ({ ...row, options: row.options.slice(), choice: true })),
+    blocked: () => null,
+  },
   skillDraft: {
     // One row per draft the offer carries; each is a CHOICE (pick 1 of N)
     // the way a card offer is, keyed by its track so two drafts never share
@@ -158,7 +164,7 @@ const KINDS = {
     rows: (r) => {
       const seen = {};
       return r.skillDrafts.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), ...(Array.isArray(d.ranks) ? { ranks: d.ranks.slice() } : {}), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
+        .map((d) => ({ skillId: d.skillId, offerId: d.offerId, ...(Array.isArray(d.choiceIds) ? { choiceIds:d.choiceIds.slice() } : {}), ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), ...(Array.isArray(d.ranks) ? { ranks: d.ranks.slice() } : {}), ...(Array.isArray(d.abilityRanks) ? { abilityRanks: d.abilityRanks.slice() } : {}), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
     },
     blocked: () => null,
   },
@@ -343,11 +349,11 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice') {
+      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'classMilestone') {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
         take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id }
-          : row.kind === 'levelChoice' ? { choiceId: id } : { cardId: id }) });
+          : row.kind === 'levelChoice' || row.kind === 'classMilestone' ? { choiceId: id } : row.choiceIds ? { cardId:row.cardIds[ids.indexOf(id)], choiceId:id } : { cardId: id }) });
       } else {
         take.push(row);
       }
