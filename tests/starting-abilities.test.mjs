@@ -23,6 +23,7 @@ for (const [classId, count, kind] of [['reaver', 1, 'maneuver'], ['rogue', 1, 'm
     assert.equal(chosen.length, count);
     assert.equal(run.deck.length, original.deck.length + count);
     assert.ok(chosen.every(inst => resolveCard(registries, inst).abilityRank === 1));
+    assert.ok(chosen.every(inst => inst.exposureBuildupPerHit === resolveCard(registries, { cardId: inst.cardId, abilityRank: 1 }).exposureBuildupPerHit));
     stampDeck(registries, run);
     const restored = deserializeRun(serializeRun(run));
     assert.deepEqual(restored.deck.filter(inst => chosen.some(row => row.instanceId === inst.instanceId)), chosen);

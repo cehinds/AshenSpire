@@ -17,7 +17,7 @@ import { advancedConfigSnapshot } from './advancedConfig.js';
 // Headless: no document/window/localStorage/timers.
 
 import { bindTurnStamina } from './turnStamina.js';
-import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, reconcileGrantedCards, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { journeyProblems } from './worldAtlas.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
@@ -305,13 +305,19 @@ export function createRunState({
     derivedStatOptions,
     preserveDeficits: false,
   });
-  stampDeck(registries, run);
+  // Starting choices must see package and weapon grants, because those cards
+  // count toward copy limits and distinct-family eligibility.
+  reconcileGrantedCards(registries, run);
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
   for (const ref of startingAbilityRefs(registries, run, startingAbilityIds)) {
     run.deck.push({ ...createCardInstance(ref.cardId, false, idGen), ...ref });
   }
+  // Stamp only after every opening card exists. Starting ability grades own
+  // their carrier fields too; adding them after this door left the initial
+  // instance on its legacy buildup until a later restamp changed its rules.
+  stampDeck(registries, run);
   // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
   // weapon arts onto the deck, so this is the first moment the whole opening
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
