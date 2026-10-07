@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
-- **Clearer header with fewer controls** ([#1702](https://github.com/cehinds/AshenSpire/pull/1702), `0.7.1.1063`). Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.
+- **Clearer header with fewer controls** ([#1702](https://github.com/cehinds/AshenSpire/pull/1702), `0.7.1.1068`). Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.
+
+- **Combat matchup rules defined** ([#1704](https://github.com/cehinds/AshenSpire/pull/1704), `0.7.1.1064`). Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.
 
 - **Rear sprite studies archived for authoring** ([#1697](https://github.com/cehinds/AshenSpire/pull/1697), `0.7.1.1061`). The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.
 

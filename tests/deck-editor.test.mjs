@@ -303,16 +303,16 @@ test('confirm succeeds only inside the bounds', () => {
   assert.equal(edit.confirm().ok, true);
 });
 
-test('the doors: free opens Quick Access and the Armoury, restOnly only a deckEdit place\'s Rest, off none', () => {
+test('the doors: free opens the Armoury, restOnly only a deckEdit place\'s Rest, off none', () => {
   const shrine = locationServices(REG, locationTags(REG, 'shrine'));
   const camp = locationServices(REG, locationTags(REG, 'camp'));
   for (const id of ['shrine', 'inn', 'chapel']) assert.ok(locationTags(REG, id).includes('deckEdit'), `${id} carries deckEdit`);
   assert.equal(locationTags(REG, 'camp').includes('deckEdit'), false, 'the camp does not');
-  assert.deepEqual({ ...deckEditorDoors({ settings: {}, services: shrine }) }, { quickAccess: true, armoury: true, rest: false });
-  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: shrine }) }, { quickAccess: false, armoury: false, rest: true });
-  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: camp }) }, { quickAccess: false, armoury: false, rest: false });
-  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditing: false }, services: shrine }) }, { quickAccess: false, armoury: false, rest: false });
-  assert.deepEqual({ ...deckEditorDoors({ settings: {}, inCombat: true, services: shrine }) }, { quickAccess: false, armoury: false, rest: false });
+  assert.deepEqual({ ...deckEditorDoors({ settings: {}, services: shrine }) }, { armoury: true, rest: false });
+  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: shrine }) }, { armoury: false, rest: true });
+  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: camp }) }, { armoury: false, rest: false });
+  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditing: false }, services: shrine }) }, { armoury: false, rest: false });
+  assert.deepEqual({ ...deckEditorDoors({ settings: {}, inCombat: true, services: shrine }) }, { armoury: false, rest: false });
 });
 
 // ---- the DOM ---------------------------------------------------------------
@@ -923,8 +923,7 @@ test('DOM: the header omits Edit Deck in every mode; the shrine Rest card remain
     const run = freshRun();
     const meta = { settings: {} };
     for (const settings of [{}, { deckEditingWhere: 'restOnly' }, { deckEditing: false }]) {
-      const doors = deckEditorDoors({ settings });
-      const markup = runHudHtml({ registries: REG, run, meta, place: 'map', deckDoor: doors.quickAccess });
+      const markup = runHudHtml({ registries: REG, run, meta, place: 'map' });
       assert.equal(markup.includes('id="open-deck-editor"'), false, `No header deck door under ${JSON.stringify(settings)}`);
       assert.equal(markup.includes('data-ui-component="deck-editor-control"'), false);
     }

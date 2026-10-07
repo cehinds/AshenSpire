@@ -1902,7 +1902,7 @@ function showCharacterSheet(opener, options = {}) {
 
 // ---- the deck editor (SPEC §14.1) --------------------------------------------
 // Which doors open it is the settings' answer (DeckEditorModel.deckEditorDoors):
-// under `free` the map's Quick Access and the Armoury, under `restOnly` the
+// under `free` the Armoury, under `restOnly` the
 // Rest screen of a place carrying `deckEdit`, and none with deck editing off.
 // Every door here is out of combat; the fight's Armoury gets none.
 function deckDoors(services = null) {

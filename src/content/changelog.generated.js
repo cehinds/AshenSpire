@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Clearer header with fewer controls",
     "detail": "Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.",
-    "build": "0.7.1.1063",
+    "build": "0.7.1.1068",
     "pullRequest": 1702,
     "url": "https://github.com/cehinds/AshenSpire/pull/1702"
+  },
+  {
+    "id": "pr-1704",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Combat matchup rules defined",
+    "detail": "Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.",
+    "build": "0.7.1.1064",
+    "pullRequest": 1704,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1704"
   },
   {
     "id": "pr-1697",
