@@ -1650,7 +1650,7 @@
       },
       {
         "status": 404,
-        "url": "http://localhost:4296/assets/sfx/hit_light.ogg"
+        "url": "http://localhost:4296/assets/sfx/hit_medium.ogg"
       },
       {
         "status": 404,
@@ -1937,7 +1937,7 @@
       "optionalSourceRequests": []
     }
   },
-  "sourcePlayBase": "c448cb31c",
+  "sourcePlayBase": "fdd992dc6740f2f5ae0dbf97c15dff7566203c3a",
   "changelogCheck": {
     "orderingChecksPassed": 812,
     "generatedReceipts": 766,

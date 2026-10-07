@@ -36,6 +36,7 @@ updated creation and smithing while retaining the alternative battlefield.
 - 12 focused Node tests passed: all actor IDs and source identities, every
   armor mapping, both device paths, all scene layer references and dimensions,
   saved dungeon selection, existing environment and formation contracts.
+- The receipt tests passed all eight cases on the final receipt.
 - Changelog ordering passed 812 checks and its 766 receipts were regenerated.
   `about-changelog.mjs --check` did not pass: the raw-CDP source Settings probe
   timed out with an empty title body, including on retry. This remains an
@@ -53,10 +54,11 @@ updated creation and smithing while retaining the alternative battlefield.
 - Fresh Quick start, mastery selection, map entry, tutorial Skip, real card
   selection/targeting, hold End Turn, hand retention and turn 2 passed at both
   sizes, from the source preview, served pack, and offline portable file.
-  Pack and portable gameplay passed again after rebasing onto `fdd992dc6`.
+  Source, pack and portable gameplay passed again after rebasing onto `fdd992dc6`.
   The repeat source scene sweep timed out on its third navigation during the
   concurrent rebuild; its first two scenes passed without page/HTTP errors.
-  The full 64-scene sweep and source gameplay evidence precede the rebase.
+  The full 64-scene sweep precedes the rebase; the subsequent source gameplay
+  rerun passed at both sizes after the rebuild finished.
 - The first input harness run exposed a tutorial overlay and an early End Turn
   attempt during card playback. The harness now uses the visible Skip control
   and waits for enabled controls/retention. Both complete playthroughs were
