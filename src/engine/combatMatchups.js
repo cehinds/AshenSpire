@@ -58,8 +58,16 @@ export function armCombatCounter(ctx, entity, carrier, options = {}) {
   return entity.combatCounter;
 }
 
-export function clearCombatCounter(entity) {
-  if (entity) delete entity.combatCounter;
+export function clearCombatCounter(entity, ctx = null) {
+  if (!entity) return;
+  delete entity.combatCounter;
+  // A triggered reply has spent its charge, but may still be waiting behind
+  // the root action's remaining effects. Interruption cancels only that reply.
+  for (const action of ctx?.queue || []) {
+    if (action.source === entity && action.meta?.combatCounterReaction) {
+      action.meta = { ...action.meta, combatCounterInterrupted: true };
+    }
+  }
 }
 
 /** Pure: both ordinary damage previews and live resolution call this once. */
