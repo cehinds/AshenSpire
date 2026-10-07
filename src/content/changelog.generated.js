@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1689",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative figures recover and keep moving",
+    "detail": "Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1689,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1689"
+  },
+  {
     "id": "pr-1688",
     "date": "2026-10-06",
     "group": "2026-10-06",
