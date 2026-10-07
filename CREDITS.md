@@ -1,5 +1,16 @@
 # Credits & Asset Licenses
 
+## Alternative animation reference study (2026-10-06)
+
+`pose-studio/renewal/` contains first-party Reaver sword animation drafts made
+with OpenAI's built-in Image Generation tool from the approved alternative
+Wayfarer Plate sprite. [Exact prompts and review notes](pose-studio/renewal/source/prompts.json)
+and [source hashes and coverage](pose-studio/renewal/manifest.json) accompany the
+PNG sources, normalized PNG/WebP frames, Lite twins, and portable authoring
+projects. No third-party asset license is claimed. Existing slash, ward,
+shield and projectile images retain their established credits. This local
+authoring study has not been published as a game asset release.
+
 ## Full card portrait library (2026-10-06)
 
 The 220 card identities and 17 equipment profiles use original portrait paintings
