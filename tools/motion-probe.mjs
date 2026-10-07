@@ -271,17 +271,22 @@ if (argv.includes('--selftest')) {
         expectRed: /RED REDUCED setting\+os — .*card-flight/,
       },
       {
-        // A timer flipbook with no Animation object. Two gates stand in front
-        // of it (the fx timeline and the layer's own), so both are lifted:
-        // either alone still leaves the board still, which is the design.
+        // A timer flipbook: lift the timeline and the actual figure's effect
+        // gate. Alternative silhouettes have no pose attachment host, so their
+        // six-frame effect uses playCombatEffect's fallback overlay instead of
+        // combatant-effect-layer. Each branch must expose its real src swaps.
         name: 'the combatant effect flipbook runs under reduced motion',
         edits: [
           { file: 'src/ui/fx.js', find: '  if (!speed || reduced) {', replace: '  if (!speed) {' },
-          { file: 'src/ui/combatantEffectLayers.js',
-            find: " if(!stage||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return null;",
-            replace: " if(!stage||document.body.classList.contains('reduce-flashes'))return null;" },
+          ALTERNATIVE ? { file: 'src/ui/combatEffectSprites.js',
+            find: " if(!layer||!from||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return ()=>{};",
+            replace: " if(!layer||!from||document.body.classList.contains('reduce-flashes'))return ()=>{};" }
+            : { file: 'src/ui/combatantEffectLayers.js',
+              find: " if(!stage||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return null;",
+              replace: " if(!stage||document.body.classList.contains('reduce-flashes'))return null;" },
         ],
-        expectRed: /RED REDUCED-SCRIPT setting\+os — .*combatant-effect-layer/,
+        expectRed: ALTERNATIVE ? /RED REDUCED-SCRIPT setting\+os — .*painted-combat-effect/
+          : /RED REDUCED-SCRIPT setting\+os — .*combatant-effect-layer/,
       },
     ],
   });

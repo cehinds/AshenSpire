@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { rewardDom } from './helpers/reward-dom.mjs';
 import { alternativeSprite } from '../src/ui/alternativeArt.js';
+import { uiConfig } from '../src/config/generated/ui.js';
 
 const source = readFileSync(new URL('../tools/motion-probe.mjs', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
@@ -86,6 +87,60 @@ test('alternative browser predicate rejects absent, duplicate, wrong-layer and b
     assert.equal(verdict.ok, false, JSON.stringify(plant));
     assert.match(verdict.detail, reason);
   }
+});
+
+test('the alternative flipbook plant opens the actual production fallback and schedules its six src frames', () => {
+  const plantStart = source.indexOf("name: 'the combatant effect flipbook runs under reduced motion'");
+  const plantSource = source.slice(plantStart, source.indexOf('\n      },', plantStart));
+  const plant = runInNewContext(`({ ${plantSource} })`, { ALTERNATIVE: true });
+  assert.equal(plant.edits.length, 2, 'both independent reduced-motion gates must be planted');
+  assert.equal(plant.edits[0].file, 'src/ui/fx.js');
+  const edit = plant.edits[1];
+  assert.equal(edit.file, 'src/ui/combatEffectSprites.js');
+  const sprites = readFileSync(new URL('../src/ui/combatEffectSprites.js', import.meta.url), 'utf8');
+  const playSource = sprites.slice(sprites.indexOf('export function playCombatEffect(')).replace('export function', 'function');
+  assert.equal(playSource.split(edit.find).length, 2, 'the real fallback guard must be planted exactly once');
+
+  const dom = rewardDom(), layer = dom.document.createElement('div'), tickets = [];
+  const createElement = dom.document.createElement.bind(dom.document);
+  dom.document.createElement = tag => {
+    const node = createElement(tag);
+    node.animate = () => ({ cancel() {} });
+    return node;
+  };
+  const context = {
+    document: dom.document, M: uiConfig.presentation.combatEffectPlayback.motion,
+    SZ: uiConfig.presentation.combatEffectPlayback.sizing, active: new WeakMap(),
+    reducedMotionRequested: () => true, combatEffectFrames: () => Array.from({ length: 6 }, (_, i) => `frame-${i + 1}.webp`),
+    combatEffectPresentation: () => ({ sizeScale: 1, startScale: 1, endScale: 1, opacity: 1 }),
+    warmEffectFrames() {}, hintImage: image => image, currentArtUrl: url => url,
+    combatEffectAngle: () => 0, combatEffectOrientation: () => '',
+    setTimeout(callback, delay) { tickets.push({ callback, delay }); return tickets.length; }, clearTimeout() {},
+  };
+  const load = text => runInNewContext(`${text}\nplayCombatEffect`, context);
+  const from = { left: 0, top: 0, width: 100, height: 190 };
+  load(playSource)(layer, from, 'slash');
+  assert.equal(layer.children.length, 0, 'production reduced-motion guard mounts no overlay');
+  assert.equal(tickets.length, 0, 'production reduced-motion guard schedules no flipbook');
+
+  const stop = load(playSource.replace(edit.find, edit.replace))(layer, from, 'slash');
+  const image = layer.querySelector('.painted-combat-effect');
+  assert.ok(image, 'the armed plant must mount the actual fallback image');
+  assert.equal(tickets.length, 6, 'five later frames and final cleanup are scheduled');
+  const frames = [image.src];
+  for (const ticket of tickets.slice(0, 5)) { ticket.callback(); frames.push(image.src); }
+  assert.deepEqual(frames, Array.from({ length: 6 }, (_, i) => `frame-${i + 1}.webp`));
+  assert.ok(plant.expectRed.test('RED REDUCED-SCRIPT setting+os — img.painted-combat-effect (src changed 6 times within 1000 ms)'));
+  assert.equal(plant.expectRed.test('RED REDUCED setting+os — unrelated CSSAnimation'), false);
+  stop();
+});
+
+test('the primary branch retains the attached-layer flipbook plant and exact script-motion predicate', () => {
+  const start = source.indexOf("name: 'the combatant effect flipbook runs under reduced motion'");
+  const plant = runInNewContext(`({ ${source.slice(start, source.indexOf('\n      },', start))} })`, { ALTERNATIVE: false });
+  assert.equal(plant.edits[1].file, 'src/ui/combatantEffectLayers.js');
+  assert.ok(plant.expectRed.test('RED REDUCED-SCRIPT setting+os — img.combatant-effect-layer (src changed 6 times within 1000 ms)'));
+  assert.equal(plant.expectRed.test('RED REDUCED-SCRIPT setting+os — img.painted-combat-effect'), false);
 });
 
 test('every same-door variant plant still changes the current real source', async () => {
