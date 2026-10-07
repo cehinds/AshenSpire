@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Alternative figures recover and keep moving",
     "detail": "Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.",
-    "build": "0.7.1.1061",
+    "build": "0.7.1.1060",
     "pullRequest": 1689,
     "url": "https://github.com/cehinds/AshenSpire/pull/1689"
+  },
+  {
+    "id": "pr-1694",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Lighter alternative characters, clearer scenery",
+    "detail": "The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.",
+    "build": "0.7.1.1059",
+    "pullRequest": 1694,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1694"
   },
   {
     "id": "pr-1684",
@@ -23,6 +33,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1684"
   },
   {
+    "id": "pr-1693",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Sharper maps and lighter sprites",
+    "detail": "Maps and backgrounds keep up to 720px of image height, and combat scenes retain their native detail. Sprites use lighter compression within a 480px ceiling. The shared art release and documented export targets apply to regular and alternative builds, with original paintings preserved.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1693,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1693"
+  },
+  {
     "id": "pr-1690",
     "date": "2026-10-06",
     "group": "2026-10-06",
@@ -33,16 +53,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1690"
   },
   {
-    "id": "pr-1688",
-    "date": "2026-10-06",
-    "group": "2026-10-06",
-    "summary": "Short-screen controls keep their own space",
-    "detail": "Crowded enemy feet and health columns stay separate without moving their artwork. Intent labels remain reachable in short landscape views, and the merchant header sits below the HUD. Browser checks follow the actual tap areas; portable build checks include authored alternative artwork.",
-    "build": "0.7.1.1054",
-    "pullRequest": 1688,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1688"
-  },
-  {
     "id": "pr-1686",
     "date": "2026-10-06",
     "group": "2026-10-06",
@@ -51,6 +61,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1054",
     "pullRequest": 1686,
     "url": "https://github.com/cehinds/AshenSpire/pull/1686"
+  },
+  {
+    "id": "pr-1688",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Short-screen controls keep their own space",
+    "detail": "Crowded enemy feet and health columns stay separate without moving their artwork. Intent labels remain reachable in short landscape views, and the merchant header sits below the HUD. Browser checks follow the actual tap areas; portable build checks include authored alternative artwork.",
+    "build": "0.7.1.1054",
+    "pullRequest": 1688,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1688"
   },
   {
     "id": "pr-1676",

@@ -538,6 +538,6 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head-status { grid-column:2; grid-row:1; font-size:11px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-close { grid-column:3; }
 @media (max-height:500px) {
- :root .shop-workspace.merchant-workspace { padding-top:max(1rem,var(--merchant-hud-clearance,0px)); }
+ :root .shop-workspace.merchant-workspace { padding-top:1rem; }
  :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(6,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1)); }
 }
