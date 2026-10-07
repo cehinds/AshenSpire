@@ -1,0 +1,17 @@
+{
+  "reference": "kiteShield",
+  "camera": "Rear three-quarter characters facing screen right; preserve the kite shield direction in either hand.",
+  "layerOrder": "left weapon, right weapon, foreground hands, full body (topmost)",
+  "flipped": {
+    "buckler": "Reverse the shield perspective to match the kite shield reference.",
+    "towerShield": "Reverse the shield perspective to match the kite shield reference.",
+    "roundShield": "Reverse the shield perspective to match the kite shield reference.",
+    "spikedShield": "Reverse the rim perspective to match the kite shield reference.",
+    "shortbow": "Put the string behind the bow's forward-facing limbs.",
+    "battleaxe": "Point the axe cutting edge forward with the character.",
+    "cinderAxe": "Preserve the canonical battleaxe artwork alias and its facing.",
+    "halberd": "Point the halberd cutting edge forward with the character.",
+    "frostSpear": "Preserve the canonical halberd artwork alias and its facing."
+  },
+  "unchanged": ["kiteShield", "straightSword", "greatsword", "dagger", "katana", "warhammer", "twinblade", "parryDagger", "lantern", "torch", "ashStaff", "starstoneStaff", "boneSceptre", "emberlightSceptre", "goldboughBranch", "blightRod", "gorefireBrand", "wyrmhornStaff", "duskChime"]
+}
