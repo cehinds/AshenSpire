@@ -51,7 +51,7 @@ Pin the chosen rule to the run at creation. Present the exact odds before starti
 
 ### Rupture: requested high-risk rule
 
-At the first crossing to 100, resolve one threshold roll before the played card's benefits:
+On each transition from below 100 to 100, resolve one threshold roll before the played card's benefits. This includes crossing again after Sanctuary cleansing; remaining at 100 does not trigger another threshold roll:
 
 - **90%:** immediate death; run ends.
 - **10%:** survive as Blighted; transform the deck.
