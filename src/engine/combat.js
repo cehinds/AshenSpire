@@ -1,5 +1,5 @@
 import { combatMatchups, combatIntent } from '../content/combatMatchups.js';
-import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
+import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
@@ -1434,19 +1434,37 @@ export function previewCard(combat, cardInstanceId, targetId) {
           entry.sourceBuildup = structuredClone(carrier.resolvedSource.buildup || []);
           attackTags = carrier.tags;
         }
-        entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
+        const isCounterReply = action.card.combatProfile?.maneuver === 'counter';
+        entry.hits = isCounterReply
+          ? counterEffectPreview(combat, p, primary, action.card, eff, action.meta)?.hits || 0
+          : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         entry.perTargetHitDamages = {};
         for (const e of living) {
-          const b = evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
-          const result = previewDamageHits(combat, p, e, b, attackTags, carrier, entry.hits,
-            damagePreviewStates.get(e.id));
+          const counter = isCounterReply && counterEffectPreview(combat, p, e, action.card, eff, action.meta);
+          const result = counter
+            ? (() => {
+              const hitDamages = Array.from({ length: counter.hits }, () => counter.value);
+              if (hitDamages.length) hitDamages[0] += (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
+              return { damage: hitDamages[0] || 0, hitDamages,
+                totalDamage: hitDamages.reduce((sum, amount) => sum + amount, 0) };
+            })()
+            : previewDamageHits(combat, p, e,
+              evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
+              attackTags, carrier, entry.hits, damagePreviewStates.get(e.id));
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
             hitDamages: result.hitDamages, totalDamage: result.totalDamage });
         }
-        if (entry.value == null) {
+        if (entry.value == null && isCounterReply) {
+          const counter = counterEffectPreview(combat, p, primary, action.card, eff, action.meta);
+          const hitDamages = Array.from({ length: counter?.hits || 0 }, () => counter.value);
+          if (hitDamages.length) hitDamages[0] += (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
+          entry.value = hitDamages[0] || 0;
+          entry.hitDamages = hitDamages;
+          entry.totalDamage = hitDamages.reduce((sum, amount) => sum + amount, 0);
+        } else if (entry.value == null) {
           const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, carrier);
           entry.hitDamages = Array.from({ length: Math.max(0, Math.floor(entry.hits)) }, () => entry.value);
