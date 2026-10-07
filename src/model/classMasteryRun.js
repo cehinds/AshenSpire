@@ -1,5 +1,5 @@
 import { expandedProgression, queueClassMilestone } from './classMilestones.js';
-import { activateAbilitySkill } from './skills.js';
+import { activateAbilitySkill } from './abilitySkillActivation.js';
 // SPEC §13.4q. A scoped projection keeps authored content complete while live
 // reward/shop readers see the run owner's current unlocks. Definitions remain
 // readable, including a locked card taught by a book.
