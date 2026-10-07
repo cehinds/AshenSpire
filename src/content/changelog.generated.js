@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1692",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1692,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1692"
+  },
+  {
     "id": "pr-1688",
     "date": "2026-10-06",
     "group": "2026-10-06",
