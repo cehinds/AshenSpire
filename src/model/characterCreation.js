@@ -104,7 +104,7 @@ export function characterCreationProblems(source) {
     .filter((row) => row && typeof row === 'object')
     .map((row) => row.id));
   const slotFields = creationSlotFields(cfg);
-  const classFields = new Set([...REQUIRED_CLASS_FIELDS, ...slotFields]);
+  const classFields = new Set([...REQUIRED_CLASS_FIELDS, ...slotFields, 'startingAbility']);
   for (const [index, section] of (Array.isArray(sections) ? sections : []).entries()) {
     if (!section || section.kind !== 'slot' || typeof section.slot !== 'string') continue;
     if (!slots.some((row) => row && row.id === section.slot)) {
@@ -119,6 +119,14 @@ export function characterCreationProblems(source) {
       continue;
     }
     for (const key of Object.keys(row)) if (!classFields.has(key)) problems.push(`${path}.${key}: Unknown field`);
+    if (row.startingAbility !== undefined) {
+      const ability = row.startingAbility;
+      if (!ability || !['combatManeuvers', 'item:magic-focus'].includes(ability.skillId)
+        || !Number.isInteger(ability.count) || ability.count < 1 || ability.count > 2
+        || ability.rank !== 1 || Object.keys(ability).some(key => !['skillId', 'count', 'rank'].includes(key))) {
+        problems.push(`${path}.startingAbility: requires skillId, count (1–2), and rank 1`);
+      }
+    }
     for (const field of REQUIRED_CLASS_FIELDS) {
       const values = row[field];
       if (!Array.isArray(values) || values.length < 2) {

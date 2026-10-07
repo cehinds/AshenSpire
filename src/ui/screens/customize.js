@@ -4,6 +4,7 @@ import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { EMPTY_HAND_PRESENTATION } from '../components/emptyHandCard.js';
 import { startingEquipmentPreview } from '../../model/startingEquipmentPreview.js';
+import { startingAbilityPlan, startingAbilityProblem } from '../../model/startingAbilities.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
 //
@@ -135,6 +136,7 @@ export function mountCustomize(app, {
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
     startingSlotChoices: {},
+    startingAbilityIds: [],
     startingArmourId: null,
     startingRelicId: firstClass.startingRelic,
     attributeMode: defaults.attributeMode,
@@ -507,6 +509,7 @@ export function mountCustomize(app, {
     state.startingKitId = kit.id;
     state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null };
     state.startingSlotChoices = {};
+    state.startingAbilityIds = [];
     const armour = armourChoices();
     state.startingArmourId = (armour.find((piece) => piece.unlock === '') || armour[0]).id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
@@ -526,7 +529,8 @@ export function mountCustomize(app, {
   /** The stats step: the mode, then a complete and legal allocation. */
   function statsStepProblem() { return modeProblem() || allocationProblem(); }
   function characterProblem() { return statsStepProblem() || keepsakeProblem(); }
-  function equipmentProblem() { return armourProblem() || handsProblem(); }
+  function abilitiesProblem() { return startingAbilityProblem(registries, previewRun(), state.startingAbilityIds); }
+  function equipmentProblem() { return armourProblem() || handsProblem() || abilitiesProblem(); }
   function flowProblem() { return classProblem() || characterProblem() || equipmentProblem(); }
 
   function pointbuyMode() { return creationMode(registries, state.attributeMode || EDITABLE); }
@@ -980,6 +984,13 @@ export function mountCustomize(app, {
 
   function renderEquipment(preferredOpenId = null) {
     equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices(), meta });
+    const ability = startingAbilityPlan(registries, previewRun());
+    if (ability) {
+      const sections = [...equipmentSectionViews];
+      const lastHand = sections.findLastIndex(section => section.kind === 'hand');
+      sections.splice(lastHand + 1, 0, { ...ability, label: t(ability.skillId === 'combatManeuvers' ? 'creation.abilities.maneuvers' : 'creation.abilities.spells') });
+      equipmentSectionViews = sections.map((section, index) => ({ ...section, nextId: sections[index + 1]?.id || null }));
+    }
     equipmentNodes = new Map();
     equipmentGateRefreshers = [];
     const refreshers = [];
@@ -992,6 +1003,48 @@ export function mountCustomize(app, {
       box.dataset.many = String(section.choices.length > 2);
       const node = el('section', { class: 'cc-equip-group', dataset: { equipmentSection: section.id } }, box);
       equipmentNodes.set(section.id, node);
+      if (section.kind === 'ability') {
+        const progress = el('p', { class: 'cc-ability-progress', 'aria-live': 'polite' });
+        node.prepend(progress);
+        const refresh = () => {
+          progress.textContent = t('creation.abilities.progress', { chosen: state.startingAbilityIds.length, count: section.count, rank: section.rank });
+          for (const entry of box.children) {
+            const picked = state.startingAbilityIds.includes(entry.dataset.cardId);
+            entry.querySelector('.card').classList.toggle('selected', picked);
+            const choose = entry.querySelector('.cc-ability-choose');
+            choose.textContent = t(picked ? 'creation.abilities.remove' : 'creation.abilities.choose');
+            choose.setAttribute('aria-pressed', String(picked));
+            choose.disabled = !picked && section.count > 1 && state.startingAbilityIds.length >= section.count;
+          }
+        };
+        // Requirements can change while an earlier equipment fold is open.
+        state.startingAbilityIds = state.startingAbilityIds.filter(id => section.choices.some(card => card.id === id));
+        for (const card of section.choices) {
+          const face = renderCard(registries, { cardId: card.id, abilityRank: section.rank });
+          const choose = button({ label: t('creation.abilities.choose'), weight: 'secondary', className: 'cc-ability-choose' });
+          choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
+          const select = () => {
+            const picked = state.startingAbilityIds.includes(card.id);
+            if (picked) state.startingAbilityIds = state.startingAbilityIds.filter(id => id !== card.id);
+            else if (section.count === 1) state.startingAbilityIds = [card.id];
+            else if (state.startingAbilityIds.length < section.count) state.startingAbilityIds.push(card.id);
+            refresh(); renderEquipmentSummary(); refreshFaces(); updateStartRefusal();
+          };
+          choose.addEventListener('click', select);
+          face.addEventListener('cardinspectionselect', () => { if (!state.startingAbilityIds.includes(card.id)) select(); });
+          box.append(el('div', { class: 'cc-ability-choice', dataset: { cardId: card.id } }, [face, choose]));
+        }
+        refresh();
+        const next = equipmentSectionViews.find(row => row.id === section.nextId);
+        const continueButton = button({ label: t('common.continue'), weight: 'primary', className: 'cc-equipment-continue' });
+        equipmentGateRefreshers.push(refusesWhen(continueButton, abilitiesProblem));
+        continueButton.addEventListener('click', () => {
+          if (abilitiesProblem()) return;
+          if (next) openEquipmentSection(next.id); else advanceFrom('equipment');
+        });
+        node.append(continueButton);
+        continue;
+      }
       const detailPane = el('div', { class: 'cc-equipment-details card-inspection-details', 'aria-live': 'polite' });
       node.append(detailPane);
       const isSelected = piece => section.kind === 'relic' ? piece.id === state.startingRelicId : section.kind === 'armour'
@@ -1195,6 +1248,14 @@ export function mountCustomize(app, {
       face: { node: equipmentFaces.get(section.id).node },
       reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
     })), { structure: 'details' });
+    const abilityFace = $('#cz-equipment-fold [data-face="startingAbilities"]');
+    abilityFace?.addEventListener('click', event => {
+      if (abilityFace.closest('details').open) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openEquipmentSection('startingAbilities');
+      $('#cz-equipment-fold [data-face="startingAbilities"]')?.focus();
+    }, { capture: true });
     refreshEquipmentFaces = () => {
       for (const section of equipmentSectionViews) equipmentFaces.get(section.id).setValue(equipmentValue(section));
     };
@@ -1354,6 +1415,9 @@ export function mountCustomize(app, {
     slots.push({ key: 'relic', label: 'Relic', node: relic
       ? renderCollectibleCard(registries, relic, 'Relic', { ...summaryCard, identity: 'creation-summary:relic' }).card
       : null, empty: 'None' });
+    const ability = startingAbilityPlan(registries, run);
+    for (const cardId of state.startingAbilityIds) slots.push({ key: `ability:${cardId}`, label: t('creation.abilities.summary'),
+      node: renderCard(registries, { cardId, abilityRank: ability.rank }) });
     const cards = el('div', { class: 'cc-summary-cards', role: 'list' }, slots.map((slot) => el('div', {
       class: `cc-summary-slot${slot.unmet ? ' unmet' : ''}`, role: 'listitem', dataset: { summarySlot: slot.key },
     }, [
@@ -1391,6 +1455,7 @@ export function mountCustomize(app, {
    *  EQUIPMENT SECTION) — is wholly in view with its Continue. */
   function openEquipmentSection(id) {
     if (!id || !equipmentFold) return;
+    if (id === 'startingAbilities') renderEquipment(id);
     equipmentFold.open(id);
     $('#cz-equipment-section').value = id;
     const section = equipmentSectionViews.find(row => row.id === id);
@@ -1460,6 +1525,7 @@ export function mountCustomize(app, {
   // Character choices stay folded until requested.
 
   const equipmentValue = (section) => {
+    if (section.kind === 'ability') return state.startingAbilityIds.map(id => registries.cards.get(id).name).join(' / ') || UNCHOSEN;
     if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
       row.classId === state.classId && row.id === state.startingArmourId
     ))?.name || UNCHOSEN;
@@ -1699,7 +1765,7 @@ export function mountCustomize(app, {
   // W1c: one persistent footer. Back leaves on the first category and steps
   // back otherwise; Next refuses with the current category's unmet step and
   // lands the cursor on the next question; Begin takes over on Review.
-  const activeEquipmentProblem = () => { const section = equipmentSectionViews.find(row => row.id === equipmentFold?.openKey); return !section?.nextId ? equipmentProblem() : section?.kind === 'armour' ? armourProblem() : section?.kind === 'hand' ? handProblem(section.slot) : null; };
+  const activeEquipmentProblem = () => { const section = equipmentSectionViews.find(row => row.id === equipmentFold?.openKey); return !section?.nextId ? equipmentProblem() : section?.kind === 'ability' ? abilitiesProblem() : section?.kind === 'armour' ? armourProblem() : section?.kind === 'hand' ? handProblem(section.slot) : null; };
   const stageProblems = { class: classProblem, character: characterProblem, equipment: activeEquipmentProblem, review: () => null };
   let current = categories[0];
   const categoryLabel = (id) => t(`creation.category.${id}`);
@@ -1820,6 +1886,7 @@ export function mountCustomize(app, {
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,
       startingHands: { ...state.startingHands },
+      startingAbilityIds: [...state.startingAbilityIds],
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,

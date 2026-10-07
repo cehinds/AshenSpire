@@ -20,7 +20,7 @@ let browser;
 const results = [], failures = [];
 try {
   browser = await chromium.connectOverCDP(launched.wsUrl);
-  for (const [width, height] of [[320,568],[375,667],[390,844],[1440,900]].filter(([w]) => !process.env.QA_WIDTH || w === Number(process.env.QA_WIDTH))) {
+  for (const [width, height] of [[320,568],[375,667],[390,844],[844,390],[1440,900]].filter(([w]) => !process.env.QA_WIDTH || w === Number(process.env.QA_WIDTH))) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: true });
     const page = await context.newPage();
     page.setDefaultTimeout(15000);
@@ -83,9 +83,16 @@ try {
         const hit=await buttons.evaluateAll(es=>es.map(e=>{ const r=e.getBoundingClientRect();return {id:e.dataset.eid,rect:r.toJSON(),hit:e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};}));
         record.targetButtons=hit;
         assert(hit.every(e=>e.hit&&e.rect.width>=44&&e.rect.height>=44),'buttons exposed with 44px tap area');
+        assert(hit.every(e=>Math.abs(e.rect.width-e.rect.height)<1),'targets are square');
+        const overlap=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+        assert(hit.every((e,i)=>!hit.slice(i+1).some(other=>overlap(e.rect,other.rect))),'grid buttons never overlap');
         await page.screenshot({path:resolve(out,`targeting-${width}x${height}-${count}-enemies.png`)});
         const before=await page.evaluate(()=>JSON.stringify({piles:window.__combat.piles,player:window.__combat.player,enemies:window.__combat.enemies}));
-        await page.locator('.combatant.player .sprite').click({force:true});
+        const playerPoint = await page.locator('.combatant.player .sprite').evaluate(node => {
+          const rect=node.getBoundingClientRect();
+          return {x:Math.max(1,Math.min(innerWidth-1,rect.left+rect.width/2)),y:Math.max(1,Math.min(innerHeight-1,rect.top+rect.height/2))};
+        });
+        await page.mouse.click(playerPoint.x,playerPoint.y);
         assert.equal(await page.evaluate(()=>JSON.stringify({piles:window.__combat.piles,player:window.__combat.player,enemies:window.__combat.enemies})),before,'enemy card ignores player');
         await page.keyboard.press('Escape');
         await page.keyboard.press(String(slot+1));

@@ -446,10 +446,10 @@ camp:physical,camp,Physical,D7B36B,⚔,,,,,Selects physical Guard or magical War
 camp:spell,camp,Spell,9FC3E8,✦,,,,,Selects physical Guard or magical Ward combat rules.
 maneuver:attack,maneuver,Attack,D7B36B,⚔,,,,,Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy.
 maneuver:defend,maneuver,Defend,9FC3E8,🛡,,,,,Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard.
-maneuver:counter,maneuver,Counter,C8A3D8,↩,,,,,"Prepare one reaction. Attack and Smash deal half damage. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter."
+maneuver:counter,maneuver,Counter,C8A3D8,↩,,,,,"Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter."
 maneuver:sweep,maneuver,Sweep,93C9BC,🌀,,,,,Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it.
 maneuver:ranged,maneuver,Ranged,AAC88A,➶,,,,,"Ranged delivery avoids melee replies. Ranged Counter, spell Counter and defensive Alteration answer it."
-maneuver:smash,maneuver,Smash,DB9871,⚒,,,,,Heavy strike. Deals 50% more damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it.
+maneuver:smash,maneuver,Smash,DB9871,⚒,,,,,Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it.
 school:frost,school,Frost,A6D8EF,❄,,,,,Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo.
 school:fire,school,Fire,E47C43,🔥,,,,,Fire pressure: Burn buildup keeps pressure between turns.
 school:lightning,school,Lightning,E8D46A,ϟ,,,,,Lightning disruption: Sap weakens direct attacks and enables spell follow-ups.

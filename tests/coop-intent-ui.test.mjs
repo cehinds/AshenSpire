@@ -47,3 +47,26 @@ test('inspector summary rejects a hidden move name and damage passed by any call
   assert.match(text, /casting.*Move hidden/);
   assert.doesNotMatch(text, /secretBolt|99 damage/);
 });
+
+test('revealed seats select their own host-priced hit sequence only after the strict read gate', () => {
+  const projected = { ...enemy, intentPreviews: {
+    scout: { ...enemy.intent, damage: 2, hitDamages: [2, 5, 5], hits: 3, totalDamage: 12 },
+    warrior: { ...enemy.intent, damage: 5, hitDamages: [5, 5, 5], hits: 3, totalDamage: 15 },
+  } };
+  const before = JSON.stringify(projected);
+  assert.deepEqual(coopEnemyIntent(projected, 'scout').hitDamages, [2, 5, 5]);
+  assert.equal(coopEnemyIntent(projected, 'scout').totalDamage, 12);
+  for (const seat of ['warrior', 'outsider']) {
+    const hidden = coopEnemyIntent(projected, seat);
+    assert.equal(hidden.hidden, true);
+    assert.equal(hidden.moveId, null);
+    assert.equal(hidden.hitDamages, undefined);
+    assert.equal(hidden.totalDamage, undefined);
+  }
+  assert.equal(JSON.stringify(projected), before);
+  const bothRead = { ...projected, intentReads: { scout: true, warrior: true } };
+  assert.deepEqual(coopEnemyIntent(bothRead, 'warrior').hitDamages, [5, 5, 5]);
+  assert.equal(coopEnemyIntent(bothRead, 'warrior').totalDamage, 15);
+  assert.equal(coopEnemyIntent({ ...bothRead,
+    intentPreviews: { scout: { hidden: true, moveId: 'leaked', hitDamages: [99, 99] } } }, 'scout').hitDamages, undefined);
+});

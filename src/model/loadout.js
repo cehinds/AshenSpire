@@ -17,6 +17,7 @@ import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgr
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
 import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
 import { stampSkillBonuses } from './skills.js';
+import { applyAbilityGrade } from './abilityGrades.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
@@ -3075,7 +3076,11 @@ export function stampDeck(registries, run, cards, {
       // Non-equipment cards are immutable host-stamped instances. Consult live
       // content only at the explicit new/legacy adoption door, never during a
       // later equipment swap re-stamp.
-      carrier = schoolAbsent ? registries.cards.get(inst.cardId) : inst;
+      // The first stamp reads the resolved instance face, including a chosen
+      // ability grade. Later stamps preserve the carrier already on the host
+      // instance instead of adopting live content changes.
+      const authored = registries.cards.get(inst.cardId);
+      carrier = schoolAbsent ? applyAbilityGrade(authored, inst.abilityRank) : inst;
     }
     const priorSchool = inst.damageSchool;
     const priorBuildup = inst.exposureBuildupPerHit;

@@ -66,10 +66,11 @@ import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
 import { characterCreation } from './generated/characterCreation.js';
+import { deriveEnemyMoves } from '../model/enemyMoveSources.js';
 
 const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards, ...armamentCards];
 const enemies = [...act1Enemies, ...act2Enemies, ...act3Enemies];
-const enemyMoves = enemies.flatMap((enemy) => Object.entries(enemy.moves || {}).map(([id, move]) => ({ ...move, id, enemyId: enemy.id })));
+const enemyMoves = deriveEnemyMoves(enemies);
 const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
 const cards = authoredCards.map((card) => {
   const carrier = exposureByCard.get(card.id);

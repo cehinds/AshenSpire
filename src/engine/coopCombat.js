@@ -42,7 +42,7 @@ import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 
 import * as A from './actions.js';
 import * as R from './abilityRiders.js';
-import { previewCard as soloPreviewCard, cardNeedsEnemyTargetNow } from './combat.js';
+import { previewCard as soloPreviewCard, previewIntent as soloPreviewIntent, cardNeedsEnemyTargetNow } from './combat.js';
 import * as F from './combatRules.js';
 import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
@@ -469,6 +469,16 @@ export function previewCoopCard(C, playerId, instanceId, targetId) {
   const clone = F.candidateState(C);
   setActive(clone, clone.players.get(playerId));
   return soloPreviewCard(clone, instanceId, targetId);
+}
+
+/** Seat-specific live intent without rebinding the authoritative fight. */
+export function previewCoopIntent(C, playerId, enemyInstanceId) {
+  if (!C.players.has(playerId)) throw new Error(`Unknown player '${playerId}'`);
+  // Intent math only reads the graph. Copy the active-seat facade and the one
+  // ratings object setActive assigns, rather than cloning every event/pile.
+  const context = { ...C, ...(C.ratingsRules ? { ratingsRules: { ...C.ratingsRules } } : {}) };
+  setActive(context, C.players.get(playerId));
+  return soloPreviewIntent(context, enemyInstanceId);
 }
 
 // A bot previews the requested owner without rebinding the authoritative fight.

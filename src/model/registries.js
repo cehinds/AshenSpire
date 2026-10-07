@@ -24,6 +24,7 @@ import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from 
 import { cardForSchool, projectAttackCardDamageBundle } from './attackCardDamage.js';
 import { sharedFrameworkBridge } from '../framework/bridge.js';
 import { createEntityTermOverlay } from '../framework/termOverlay.js';
+import { resolveEnemyMoveSources } from './enemyMoveSources.js';
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -201,7 +202,7 @@ function stampTags(bundle) {
 }
 
 export function createRegistries(contentBundle) {
-  const bundle = projectAttackCardDamageBundle(contentBundle || {});
+  const bundle = projectAttackCardDamageBundle(resolveEnemyMoveSources(contentBundle || {}));
   const registries = {};
 
   // The tag join, resolved once for every collection tagFamilies.csv names.

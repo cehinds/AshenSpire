@@ -73,12 +73,12 @@ export function releaseMapScreen() {
   liveMapViewportRelease = null;
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, onEditDeck = null, quickControls = {}, mapAdapter = null, selectedId = null }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null, selectedId = null }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   releaseMapScreen();
   // A redraw keeps the destination the player selected (#1474 review).
-  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, onEditDeck, quickControls, mapAdapter, selectedId: selection.selectedId });
+  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter, selectedId: selection.selectedId });
   const map = mapAdapter?.graph || run.mapGraph;
   const current = mapAdapter ? mapAdapter.current : run.mapNodeId;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
@@ -110,7 +110,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     <div data-theme="${mapAdapter?.theme || ''}" class="mapscreen${mapAdapter ? ' legacy-dungeon' : ''}${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: the same band combat, the merchant, the Shrine and an event mount (components/runHud.js). -->
       ${runHudHtml({
-        registries, run, meta, place: 'map', headerClass: 'map-header', deckDoor: !!onEditDeck,
+        registries, run, meta, place: 'map', headerClass: 'map-header',
       })}
       ${actRouteStripHtml({ title: mapAdapter?.title || actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)), graph: map, path: mapAdapter?.path || run.path || [], current })}
     </div>`;
@@ -119,7 +119,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // every room, so the map cannot drift from the merchant or the Shrine any
   // more than it could from combat (E9 / #254).
   wireRunHud(app, {
-    registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange, remount, onEditDeck,
+    registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange, remount,
   });
   // ---- THE BOARD -------------------------------------------------------
   //

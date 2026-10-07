@@ -4968,7 +4968,7 @@ export const nodes = [
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Prepare one reaction. Attack and Smash deal half damage. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter."
+    "blurb": "Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter."
   },
   {
     "id": "maneuver:sweep",
@@ -5004,7 +5004,7 @@ export const nodes = [
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Heavy strike. Deals 50% more damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it."
+    "blurb": "Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it."
   },
   {
     "id": "school:frost",

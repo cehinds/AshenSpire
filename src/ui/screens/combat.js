@@ -30,6 +30,7 @@ import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { enemyMoveDamage } from '../../model/state.js';
+import { variableIntentDamage } from '../../model/intentDamage.js';
 import { ART_REDRAW_EVENT } from '../highResArt.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -634,7 +635,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function moveDetail(move, preview = null, entity = null) {
     const source = preview || { ...(move || {}), damage: enemyMoveDamage(entity, move) };
     const pieces = [];
-    if (source.damage != null) pieces.push(`${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''} damage`);
+    const sequence = variableIntentDamage(source);
+    if (source.damage != null) pieces.push(`${sequence ? `${sequence.text} (${sequence.totalDamage} total)` : `${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''}`} damage`);
     if (source.block != null) pieces.push(`${source.block} Block`);
     for (const effect of move?.effects || []) {
       if (effect.op === 'applyStatus') pieces.push(`applies ${words(effect.status)}`);
@@ -705,7 +707,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         active: true,
       },
       skillLabel: 'Move set',
-      moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries }),
+      moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
       skills,
       statuses: statusDetails(entity),
       entityId: entity.id,

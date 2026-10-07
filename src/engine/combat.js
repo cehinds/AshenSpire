@@ -1,6 +1,7 @@
 import { combatMatchups, combatIntent } from '../content/combatMatchups.js';
 import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter } from './combatMatchups.js';
+import { previewDamageHits } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { passiveMax } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
@@ -1549,7 +1550,7 @@ function evalPreview(combat, action, value, target) {
 
 /**
  * previewIntent(combat, enemyInstanceId) → live intent for the UI (SPEC §4.6):
- * { kind, moveId, damage, hits, totalDamage, block, delayed, pending }
+ * { kind, moveId, damage, hits, hitDamages, totalDamage, block, delayed, pending }
  * Attack numbers include the enemy's attack modifiers and the player's
  * damage-taken modifiers, recomputed live through the same §4.2 math.
  */
@@ -1566,9 +1567,8 @@ export function previewIntent(combat, enemyInstanceId) {
     const move = combat.registries.enemies.get(enemy.enemyId).moves[intent.moveId];
     const effect = move?.effects?.find(e => e.op === 'damage');
     const carrier = { ...enemyMoveCarrier(enemy, move || {}, intent.moveId), damageSchool: damageSchool && damageSchool !== 'auto' ? damageSchool : effect?.damageSchool || move?.damageSchool };
-    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, carrier.tags, carrier);
-    out.hits = intent.hits != null ? intent.hits : 1;
-    out.totalDamage = out.damage * out.hits;
+    Object.assign(out, previewDamageHits(combat, enemy, combat.player, intent.damage, carrier.tags, carrier,
+      intent.hits != null ? intent.hits : 1));
   }
   out.pending = !!enemy.pendingMove;
   return out;

@@ -8,6 +8,7 @@
 import { balance } from '../content/balance.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { thaw, shallowFrozen } from '../config/authored.js';
+import { variableIntentDamage } from '../model/intentDamage.js';
 
 // THE TABLES NOW LIVE IN content/config/ui/presentation/uiContent.json and are
 // compiled into src/config/generated/ui.js. What stays in this file is the
@@ -151,7 +152,7 @@ export const INTENT_ICONS = thaw(components.intentIcons);
 // totalDamage } and marks unknown via kind:'unknown'; the co-op snapshot intent
 // supplies the same fields plus moveId (null when unknown). These helpers key on
 // kind + field presence so both shapes render identically.
-const isUnknownIntent = (iv) => !iv || iv.kind === 'unknown' || iv.moveId === null;
+const isUnknownIntent = (iv) => !iv || iv.hidden || iv.kind === 'unknown' || iv.moveId === null;
 const BADGES = components.intentBadges;
 
 /** The badge shown over an enemy → { cls, html }. */
@@ -162,7 +163,8 @@ export function intentBadge(iv) {
   if (isUnknownIntent(iv)) return { ...BADGES.unknown };
   if (iv.kind === 'staggered') return { ...BADGES.staggered };
   if (iv.damage != null) {
-    const n = iv.hits > 1 ? `${iv.damage}×${iv.hits}` : `${iv.damage}`;
+    const sequence = variableIntentDamage(iv);
+    const n = sequence ? sequence.compactText : iv.hits > 1 ? `${iv.damage}×${iv.hits}` : `${iv.damage}`;
     return {
       cls: `${BADGES.attack.cls}${iv.delayed ? BADGES.attack.delayedCls : ''}`,
       tone: BADGES.attack.tone, glyph: INTENT_ICONS.attack,
@@ -175,17 +177,19 @@ export function intentBadge(iv) {
   return { ...BADGES.unknown, cls: iv.kind || BADGES.unknown.cls };
 }
 
-/** Intent hover tooltip. `victim` names who attacks/debuffs hit ('you' solo,
- *  'each hero' in co-op). Reads totalDamage/pending when the caller has them. */
+/** Intent hover tooltip. Per-seat previews name their observer ('you').
+ *  Reads per-hit damage, totalDamage and pending when supplied by the engine. */
 export function intentTooltip(iv, { victim = copy.intentTooltips.defaultVictim } = {}) {
   const tt = copy.intentTooltips;
   if (isUnknownIntent(iv)) return tt.unknown;
   if (iv.kind === 'staggered') return tt.staggered;
   if (iv.damage != null) {
-    const multi = iv.hits > 1;
-    const total = iv.totalDamage != null && multi ? fill(tt.attackTotal, { totalDamage: iv.totalDamage }) : '';
-    const extra = multi ? fill(tt.attackMultiplier, { hits: iv.hits, total }) : '';
-    let t = fill(tt.attack, { victim, damage: iv.damage, extra });
+    const sequence = variableIntentDamage(iv);
+    const multi = sequence || iv.hits > 1;
+    const totalDamage = sequence ? sequence.totalDamage : iv.totalDamage;
+    const total = totalDamage != null && multi ? fill(tt.attackTotal, { totalDamage }) : '';
+    const extra = sequence ? total : multi ? fill(tt.attackMultiplier, { hits: iv.hits, total }) : '';
+    let t = fill(tt.attack, { victim, damage: sequence ? sequence.text : iv.damage, extra });
     if (iv.pending) t += tt.committed;
     else if (iv.delayed) t += tt.delayed;
     return t;
