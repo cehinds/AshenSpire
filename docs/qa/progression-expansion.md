@@ -26,7 +26,11 @@ These browser checks cover the production component and real host authority in o
 
 Initial ability offers and veteran milestone entitlements are saved as deferred choices after the required class-tree selection. Entering the map does not require an extra reward door. The unchanged Quick Start browser probe passed 13 checks, with six inputs for the normal path and five for the skills-only path. Failed saves restore the whole run and every RNG stream; retry reproduces the same offered identities.
 
+After integrating the current creation defaults and primary attribute bonuses, completed-boot pointer checks reached the first played card in six inputs for both a random seed and the pinned skills-only seed. Two unchanged local canonical attempts timed out at the initial 20-second document-ready wait before reaching the title; these are retained as failures, separate from the completed-boot flow evidence.
+
 The integration also retains the Armory hub from PR #1671: Character, Armory and Edit Deck navigation, shared attribute allocation, and skill/feat inspection. Inspection reads the run's saved catalog and card grades. Its text-migration fixture remains protected after those rows have entered `dev`, so the guard cannot silently lose its subject after promotion.
+
+The current creation stat/relic dialogs passed 38 browser assertions across desktop and phone, including viewport fit, Escape dismissal, focus return, preserved selection and entry to the map. Forty affected creation/progression unit tests passed. Independent snapshot review passed 50 model tests and 111 reward-confirmation checks; an old-rule earned character retained its stat coefficients, XP, earned ledger and spent pools through atomic retraining and save/reload under the new defaults.
 
 ## Cost-preview equivalence
 

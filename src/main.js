@@ -2161,6 +2161,8 @@ function showCustomize(slot = 1, catalog = false) {
       : null,
     onBack: showTitle,
     slot,
+    onSettings: showSettings,
+    onQuit: quitGame,
     // W2c REPLACE, AT THE WRITE BOUNDARY (FRONTEND-WIREFRAMES W1l/W2c): choosing
     // an occupied slot on the title touched nothing; Begin is where the old
     // climb would be written over, so this is where it is asked, naming both

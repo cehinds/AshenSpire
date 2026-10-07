@@ -4721,6 +4721,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.primaryAttributes",
+    "extends": "",
+    "short": "Primary Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.editStats",
+    "extends": "",
+    "short": "Edit stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.handCapacity.short",
+    "extends": "",
+    "short": "Size",
+    "full": "The maximum number of cards you can hold.",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.title",
+    "extends": "",
+    "short": "Game menu",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.main",
+    "extends": "",
+    "short": "Main menu",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.quit",
+    "extends": "",
+    "short": "Quit game",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "creation.categories",
     "extends": "",
     "short": "Creation steps",
@@ -6992,6 +7034,48 @@ export const uiStrings = [
     "id": "creation.section.equipment",
     "extends": "",
     "short": "STARTING EQUIP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.selectedClass",
+    "extends": "",
+    "short": "{name}, selected class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.inspectRelic",
+    "extends": "",
+    "short": "Inspect {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.inspectStat",
+    "extends": "",
+    "short": "{name}: {value}. View details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.statEyebrow",
+    "extends": "",
+    "short": "Starting stat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.relicEyebrow",
+    "extends": "",
+    "short": "Starting relic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.calculation",
+    "extends": "",
+    "short": "Stat calculation",
     "full": "",
     "tip": ""
   },

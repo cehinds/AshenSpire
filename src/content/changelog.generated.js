@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Choose each class milestone and retrain your build",
     "detail": "Class rewards now follow a saved schedule for cards, feats, equipment, relics and attributes. Independent catalog modules add 40 card families with six ranks, 50 feats, 50 ability tags and 10 relics; available choices and level lists populate from their requirements. Spellcraft and Combat Maneuvers offer three cards with an Intelligence chance for a fourth higher-rank option. Actions and Stamina share one pool. Free class retraining previews earned choices without rerolling offers or restoring spent rewards. Solo and co-op XP fill Class, Character and gained skills in order before revealing blue Level Up buttons and a green Continue; remaining XP fills when you return.",
-    "build": "0.7.1.1041",
+    "build": "0.7.1.1045",
     "pullRequest": 1676,
     "url": "https://github.com/cehinds/AshenSpire/pull/1676"
+  },
+  {
+    "id": "pr-1681",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Inspect your starting stats and relic",
+    "detail": "Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.",
+    "build": "0.7.1.1043",
+    "pullRequest": 1681,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1681"
+  },
+  {
+    "id": "pr-1674",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Ready to begin, easier to read",
+    "detail": "Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.",
+    "build": "0.7.1.1041",
+    "pullRequest": 1674,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1674"
   },
   {
     "id": "pr-1672",
