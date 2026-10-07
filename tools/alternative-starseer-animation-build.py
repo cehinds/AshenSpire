@@ -1,0 +1,6 @@
+"""Rebuild this class study through the shared export pipeline."""
+from alternative_animation_family import build_family
+
+SHEETS = {'attack': ('attack.png', 0.72, [('ready', (0, 0, 512, 516), 240, 508), ('advance', (1024, 0, 1536, 516), 1270, 505), ('contact', (0, 516, 580, 1024), 240, 990), ('follow', (580, 516, 1065, 1024), 800, 990), ('return', (1065, 516, 1536, 1024), 1298, 1010)]), 'windup': ('windup.png', 0.34, [('windup', (0, 0, 1024, 1536), 585, 1390)]), 'reactions': ('reactions.png', 0.53, [('hurt', (0, 0, 724, 724), 360, 710), ('hurt-recover', (724, 0, 1448, 724), 1080, 710), ('down', (1448, 0, 2172, 724), 1780, 710)]), 'casts': ('casts.png', 0.52, [('power', (0, 0, 724, 724), 360, 700), ('channel', (724, 0, 1448, 724), 1080, 700), ('release', (1448, 0, 2172, 724), 1800, 700)])}
+
+build_family('starseer', 'staff', 'Staff attack', SHEETS, notes=['Staff is retained while casting; free hand releases the spell.', 'Flattened poses, with separate runtime effects.', 'Wind-up uses a dedicated repair to preserve the full staff ornament.', 'Final hand contacts and reaction staff-tip margin need review before gameplay binding.'], effect='impact', rig_label='staff', two_handed=('windup','advance','contact','follow'))

@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-07",
+  "scope": "Herald base sword and shield authoring frames",
+  "rule": "Anatomical left hand and forearm retain the shield. The right hand holds the sword, or is empty while the sword is sheathed for casting. Never mirror a frame to change facing.",
+  "corrected": ["windup", "follow", "hurt"],
+  "swordRightShieldLeft": ["ready", "windup", "advance", "contact", "follow", "return", "hurt", "hurt-recover", "down"],
+  "emptyRightShieldLeft": ["power", "channel", "release"],
+  "evidence": "preview-handedness.jpg",
+  "review": "Agent visual inspection of source sheets, normalized replacements and Workshop preview. Schema validation does not prove anatomy.",
+  "excludedSourceCell": "attack-left-shield.png top-middle wind-up remains incorrect and is not exported; windup-right-sword.png supplies the wind-up."
+}

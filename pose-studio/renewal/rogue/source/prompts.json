@@ -1,0 +1,22 @@
+{
+  "tool": "image_gen",
+  "rights": "First-party generated AshenSpire concept art; no third-party assets.",
+  "prompts": [
+    {
+      "name": "rogueAttackPrompt",
+      "prompt": "Create a production 2D animation sheet using this EXACT AshenSpire Rogue. Preserve brown battered hood, layered weathered dark leather armor, ragged desaturated blue-green scarf and cloak, belts and pouches, two short steel daggers, one in each hand, rear three-quarter camera facing right. SIX full-body poses in a STRICT 3 columns x 2 rows grid. Each equal square cell has 12 percent transparent margins; absolutely no cape, dagger or foot may touch another cell. Consistent body size, camera and grounded foot baseline. Row-major poses: 1 ready low stance as reference; 2 wind-up twisting shoulders with right dagger drawn back and left dagger guarding front; 3 small step forward leading right dagger slash; 4 contact right dagger extended toward right, left dagger remains visible near torso; 5 follow-through with left dagger making second close slash and right dagger retracting; 6 return to ready stance. Exactly two arms, two legs, two daggers per pose. Preserve hood and garment identity. Painted realistic dark fantasy game sprites. Transparent background; no magic, slash trail, glow, shadow, scenery, labels or borders. Every figure entirely within its own cell."
+    },
+    {
+      "name": "rogueCleanPrompt",
+      "prompt": "Edit this six-pose Rogue attack sheet. Keep all six figures, their poses, equipment, brushwork, exact positions and size unchanged. REMOVE ALL backdrop pixels. Output genuine transparent alpha: the space between characters and surrounding daggers, cloak and feet must be completely clear (alpha zero), with crisp antialiased figure edges and no colored haze or halo. Do not add any background, ground, glow, shadows, frame or labels."
+    },
+    {
+      "name": "rogueReactionsPrompt",
+      "prompt": "Create THREE full-body reaction sprites of this exact hooded AshenSpire Rogue, using this sheet as identity reference. One row, three equal square cells, same figure scale in all cells, 12 percent empty transparent margin. Rear three-quarter view facing RIGHT, weathered brown leather armor, ragged teal cloak, exactly one steel dagger in each hand. Cell 1: hurt recoil, shoulders jerk back, knees flex, both daggers still held low and safely apart. Cell 2: recover from hurt into balanced low combat stance, both daggers held. Cell 3: defeated down pose, collapsed on right side on the ground, legs and arms anatomically clear, both daggers remain visibly gripped near body, horizontal silhouette all inside its cell. Preserve same costume and hood. Completely transparent background and zero shadows, no effects, tint, blood, labels or scenery. Painted game sprite quality."
+    },
+    {
+      "name": "rogueCastsPrompt",
+      "prompt": "Draw a three-pose casting strip of the exact AshenSpire Rogue shown here. Three separate full-body figures in one row of equal square cells, same size and ground baseline, 12 percent empty transparent padding. Same brown hood, worn leather armour, teal ragged cloak, rear three-quarter view facing right. BOTH daggers are visibly secured in belt sheaths for every pose, both hands EMPTY and anatomically clear. Left cell: basic power preparation, knees flexed, left hand at chest and right empty palm raised in front. Middle cell: spell channel, both empty hands cupped forward, body braced. Right cell: spell release, right palm extended toward right, left hand guarding close to torso. No magic or glow or projectiles: effects will be layered by the game. No scenery, ground shadows, labels or borders. Genuine transparent background. Preserve the source's painterly realism and costume; every body part and cloak tip entirely inside its cell."
+    }
+  ]
+}

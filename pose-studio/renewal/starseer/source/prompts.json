@@ -1,0 +1,23 @@
+{
+  "tool": "image_gen",
+  "reference": "assets-alternative/starseer-default.webp",
+  "rights": "First-party generated AshenSpire draft artwork.",
+  "prompts": [
+    {
+      "name": "starseerAttackPrompt",
+      "prompt": "Create a full production animation sheet of this EXACT AshenSpire Starseer: rear three-quarter view facing right, weathered charcoal-indigo hood and layered robes, faded gold celestial embroidery, brown leather bracers and boots, one ornate dark wooden staff with a gold circular astrolabe around a blue orb. Preserve that costume and staff identity. SIX separate full-body poses arranged STRICTLY in 3 columns by 2 rows, each equal square cell with at least 10 percent empty transparent padding. Consistent figure size, camera and grounded feet. Row-major poses: 1 ready with staff upright in right hand; 2 wind-up taking staff in both hands and drawing it back diagonally; 3 small forward step bringing staff toward right; 4 physical staff-strike contact, shaft held diagonally forward to right and both painted hands visibly gripping the shaft; 5 low follow-through with robe reacting to swing; 6 recover to the upright ready staff pose. Exactly one staff per figure; keep its full orb, shaft and butt within each cell even in diagonal poses. Exactly two hands gripping shaft, no floating weapon. Painted realistic fantasy game sprites with crisp silhouette. Genuine transparent background, no effects, aura, shadows, scenery, labels or dividing lines."
+    },
+    {
+      "name": "starseerWindupPrompt",
+      "prompt": "Paint ONE full-body wind-up pose for the exact Starseer in the reference: charcoal-indigo hood and tattered celestial robes with faded gold embroidery, rear three-quarter view facing right, brown boots and bracers. Preparing a physical staff strike: wide planted stance, torso wound back, both hands clearly gripping one long wooden staff diagonally across the upper body. Same gold astrolabe staff with blue orb. CRITICAL composition: the entire staff, including its top finial and bottom tip, must be fully visible. Both feet and every cape tip also fully visible. Put the whole figure and staff well inside the central 65 percent of the image, with a generous completely empty transparent border on EVERY side. Preserve realistic staff length and anatomy. No effects, shadows, scenery, floor, text or extra figures. Genuine transparent background; detailed painted game sprite."
+    },
+    {
+      "name": "starseerReactionsPrompt",
+      "prompt": "Three separate full-body reaction sprites of the exact AshenSpire Starseer in the reference. One very wide row of THREE equal square cells, each with at least 12 percent empty transparent border. Keep same rear three-quarter view facing right, charcoal-indigo hooded robes with gold celestial embroidery, leather boots and bracers, one dark wooden staff with gold astrolabe and blue orb. Cell 1 hurt: shoulders recoil backward, knees flex, staff held diagonally upright at the right with its entire orb and butt visible. Cell 2 recovery: balanced ready stance holding the same staff vertical in right hand. Cell 3 defeated: body collapsed on its right side, robe settled on ground, staff lies fully visible beside the body, one hand still touching shaft. Consistent character scale. Anatomy clear with no additional arms, hands or staffs. Nothing crosses a cell edge. No blood, glow, magic, floor, shadows, text, lines or scenery. Genuine transparent background and detailed realistic painted game-sprite finish."
+    },
+    {
+      "name": "starseerCastsPrompt",
+      "prompt": "Three full-body casting poses of this exact AshenSpire Starseer, arranged in one wide horizontal row of three equal square cells. Same rear three-quarter right-facing view, charcoal-indigo hood and weathered gold-embroidered celestial robes, brown bracers and boots, ONE wood-and-gold astrolabe staff with a blue orb. Right hand retains a clear grip on the staff in EVERY pose; left hand is empty. Pose 1 basic power: staff upright close to body, left palm against chest. Pose 2 channel: left open hand gathers near the orb, staff tilts gently forward. Pose 3 spell release: left empty palm extends forward toward the right, right hand holds the staff angled slightly toward the target. Consistent body size and floor. Keep the staff's finial, orb, butt, feet and all clothing well inside each cell with generous 15 percent clear margin; scale the figures down enough to ensure this. No magic effects, projectiles, light bloom, ground, shadows, labels, cell lines or backdrop. Actual transparent background. Painted realistic fantasy game sprites."
+    }
+  ]
+}

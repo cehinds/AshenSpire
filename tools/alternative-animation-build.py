@@ -74,6 +74,7 @@ manifest = {'schemaVersion':1, 'target':'alternative/dev', 'status':'authoring-p
         'No runtime bindings or gameplay equipment rules are changed by this study.'],
     'sourceHashes':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (OUT/'source').glob('*.png')},
     'bytes':{'webp':sum(p.stat().st_size for p in FRAMES.glob('*.webp') if '.lite.' not in p.name), 'lite':sum(p.stat().st_size for p in FRAMES.glob('*.lite.webp'))}}
+manifest['families']={'reaver/sword':{'rig':'reaver-sword.rig.json','folder':''}}
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
 
 def data_url(path):
@@ -102,4 +103,8 @@ for name in ['attack','power','spell']:
         key='assets/combat-effects/'+effect+str(i)+'.webp'
         project['assets'][key]=data_url(ROOT/key.replace('assets/','assets-mobile/',1))
     (OUT/(name+'.pose.json')).write_text(json.dumps(project,separators=(',',':')),encoding='utf-8')
-print(json.dumps({'frames':len(frames),'coverage':len(manifest['coverage']),'draftFamilies':1,'bytes':manifest['bytes']}))
+
+# Refresh coverage only after every portable family project has been written.
+import runpy
+draft_families=runpy.run_path(str(ROOT/'tools/alternative-animation-registry.py'))['refresh']()
+print(json.dumps({'frames':len(frames),'coverage':len(manifest['coverage']),'draftFamilies':draft_families,'bytes':manifest['bytes']}))
