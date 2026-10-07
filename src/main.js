@@ -2282,7 +2282,6 @@ function showMap(opts) {
     },
     onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
     onMenu: showOverlay, onArmoury: showArmoury,
-    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onQuit: () => { persist(); showCollapsedTitle(); },
     inspectNodeId: run.journey.inspectNodeId || null,
   });
@@ -2296,7 +2295,6 @@ function showMap(opts) {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
-    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,

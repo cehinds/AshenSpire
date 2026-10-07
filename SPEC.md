@@ -2472,7 +2472,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 | Key | Type | Shipped default | Meaning |
 |---|---|---|---|
 | `deckEditing` | bool | on | The editor exists at all. When it is off, no door opens it, and the deck changes only through today's paths: rewards, removal, and the Armoury. |
-| `deckEditingWhere` | choice (dropdown) `free` \| `restOnly` | `free` | **Free** opens the editor from the map's Quick Access and from the Armoury at any moment out of combat, including right after character creation and before the first node. **Rest sites only** offers it only as an option card on the Rest screen of a place whose tag set carries the new `deckEdit` service tag. `deckEdit` is a service marker like `smith`, with no rule. `tagging.csv` gives it to **shrine**, **inn** and **chapel**, and not to camp. |
+| `deckEditingWhere` | choice (dropdown) `free` \| `restOnly` | `free` | **Free** opens the editor from the Armoury at any moment out of combat, including right after character creation and before the first node. **Rest sites only** offers it only as an option card on the Rest screen of a place whose tag set carries the new `deckEdit` service tag. `deckEdit` is a service marker like `smith`, with no rule. `tagging.csv` gives it to **shrine**, **inn** and **chapel**, and not to camp. |
 | `deckMinSize` | number ≥ 0 | 10 | The fewest cards the editor lets you confirm. |
 | `deckMinUnlimited` | bool | off | When on, there is no minimum and `deckMinSize` is ignored; the `deckMinSize` row is shown disabled. |
 | `deckMaxSize` | number ≥ 1 | `deckRules.defaults.deckMaxSize` | The most cards the editor lets you confirm. A max below the effective min is refused in Settings by name. |
@@ -2519,7 +2519,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 - **Target size.** Every target is at least 48 CSS px on a coarse pointer and at least 44 px otherwise, and text is at least 11 px at 360×640 (FINISH §8).
 
 *Falsify:*
-- With defaults, a fresh run's map Quick Access offers **Deck**. With `restOnly` it does not, and the shrine's Rest screen does while the camp's does not.
+- The header has no **Edit Deck** button; with defaults a fresh run opens **Edit Deck** through the Armoury. With `restOnly`, the shrine's Rest screen offers it while the camp's does not.
 - Removing a weapon art moves the same instance to `run.sideboard` with its fields, and re-adding it moves it back. A further copy cannot be added when every owned copy is already in the deck.
 - The sideboarded art appears in `run.collection` and in the smith's installable list.
 - Removing an equipped Strike retires its slot and sideboards it, and adding a Strike un-retires that slot first.

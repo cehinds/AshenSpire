@@ -915,18 +915,18 @@ test('DOM: a second editor cannot open while one is live', async () => {
   });
 });
 
-test('DOM: the Quick Access door shows under free only; the shrine Rest card under restOnly only', async () => {
+test('DOM: the header omits Edit Deck in every mode; the shrine Rest card remains restOnly', async () => {
   const { runHudHtml } = await import('../src/ui/components/runHud.js');
   const { mountRest } = await import('../src/ui/screens/rest.js');
   const { createLocationVisit } = await import('../src/engine/locations.js');
   withDom(() => {
     const run = freshRun();
     const meta = { settings: {} };
-    for (const [settings, shown] of [[{}, true], [{ deckEditingWhere: 'restOnly' }, false], [{ deckEditing: false }, false]]) {
+    for (const settings of [{}, { deckEditingWhere: 'restOnly' }, { deckEditing: false }]) {
       const doors = deckEditorDoors({ settings });
       const markup = runHudHtml({ registries: REG, run, meta, place: 'map', deckDoor: doors.quickAccess });
-      assert.equal(markup.includes('id="open-deck-editor"'), shown, `Quick Access door under ${JSON.stringify(settings)}`);
-      assert.equal(markup.includes('data-ui-component="deck-editor-control"'), shown);
+      assert.equal(markup.includes('id="open-deck-editor"'), false, `No header deck door under ${JSON.stringify(settings)}`);
+      assert.equal(markup.includes('data-ui-component="deck-editor-control"'), false);
     }
     for (const [settings, locationId, shown] of [
       [{ deckEditingWhere: 'restOnly' }, 'shrine', true],
