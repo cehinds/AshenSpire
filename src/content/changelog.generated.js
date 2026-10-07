@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1695",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Preview the new alternative character animations",
+    "detail": "The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.",
+    "build": "0.7.1.1058",
+    "pullRequest": 1695,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1695"
+  },
+  {
     "id": "pr-1684",
     "date": "2026-10-06",
     "group": "2026-10-06",

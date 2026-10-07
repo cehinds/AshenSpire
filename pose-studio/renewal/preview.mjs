@@ -1,7 +1,7 @@
-import { ANIM_SPEEDS } from '../../../src/ui/fx.js';
-import { auraFilter } from '../../../src/ui/combatAura.js';
-import { COMBAT_EFFECT_ART } from '../../../src/content/combatEffectArt.js';
-import { alternativeArtCatalog } from '../../../src/ui/alternativeArtCatalog.js';
+import { ANIM_SPEEDS } from '../../src/ui/fx.js';
+import { auraFilter } from '../../src/ui/combatAura.js';
+import { COMBAT_EFFECT_ART } from '../../src/content/combatEffectArt.js';
+import { alternativeArtCatalog } from '../../src/ui/alternativeArtCatalog.js';
 import { durationFor, sampleSequence, hitFlashOpacity } from './model.mjs';
 
 const $=s=>document.querySelector(s), canvas=$('#preview'), ctx=canvas.getContext('2d');
@@ -22,8 +22,8 @@ async function image(url){
 let decoded=new Map();
 async function preload(){
  const urls=Object.values(manifest.frames).flatMap(f=>[f.path,f.lite]);
- urls.push(...['slash','ward','starbolt','shieldBash'].flatMap(e=>COMBAT_EFFECT_ART[e].map(p=>'../../../'+p.replace('assets/','assets-mobile/'))));
- urls.push(...manifest.classes.map(c=>'../../../'+alternativeArtCatalog.sprites[c+'-default'].path));
+ urls.push(...['slash','ward','starbolt','shieldBash'].flatMap(e=>COMBAT_EFFECT_ART[e].map(p=>'../../'+p.replace('assets/','assets-mobile/'))));
+ urls.push(...manifest.classes.map(c=>'../../'+alternativeArtCatalog.sprites[c+'-default'].path));
  await Promise.all(urls.map(async u=>decoded.set(u,await image(u))));
  ready=true;render();message('Reference study ready. Reaver / sword is drafted; the remaining 39 base combinations are pending.');
 }
@@ -60,7 +60,7 @@ function render(){
  ctx.strokeStyle='#859b6755';ctx.beginPath();ctx.moveTo(120,486);ctx.lineTo(880,486);ctx.stroke();
  if(!ready)return;
  if(!available()){
-   const art=alternativeArtCatalog.sprites[$('#actor').value+'-default'],img=decoded.get('../../../'+art.path),[x,y,x1,y1]=art.bounds;
+   const art=alternativeArtCatalog.sprites[$('#actor').value+'-default'],img=decoded.get('../../'+art.path),[x,y,x1,y1]=art.bounds;
    const scale=365/(y1-y);ctx.drawImage(img,x,y,x1-x,y1-y,500-(x1-x)*scale/2,486-365,(x1-x)*scale,365);
    ctx.fillStyle='#d6c49b';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('Base reference · selected weapon animation pending',500,540);return;
  }
@@ -80,7 +80,7 @@ function render(){
  const effect=$('#effect').value==='auto'?seq().effect:$('#effect').value;
  const progress=sampled.progress;
  if(effect&&effect!=='none'&&!reduce&&!instant&&progress>=.4&&progress<.9){
-   const t=(progress-.4)/.5,index=Math.min(5,Math.floor(t*6)),url='../../../'+COMBAT_EFFECT_ART[effect][index].replace('assets/','assets-mobile/');
+   const t=(progress-.4)/.5,index=Math.min(5,Math.floor(t*6)),url='../../'+COMBAT_EFFECT_ART[effect][index].replace('assets/','assets-mobile/');
    const fx=decoded.get(url),projectile=effect==='starbolt',shield=effect==='shieldBash'||effect==='ward';
    ctx.save();ctx.globalAlpha=effect==='slash'?.52:.7;
    const fxX=projectile?x+120+t*270:shield?x+95:x+150,fxY=shield?310:280,fxSize=shield?190:220;

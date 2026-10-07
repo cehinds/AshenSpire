@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Preview the new alternative character animations** ([#1695](https://github.com/cehinds/AshenSpire/pull/1695), `0.7.1.1058`). The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.
+
 - **Alternative battles use the completed art collection** ([#1684](https://github.com/cehinds/AshenSpire/pull/1684), `0.7.1.1057`). All 32 named combat settings have four independent layers with desktop and phone compositions. The collection has 59 canonical idle appearances, including the approved rear companions and speakers; dedicated armor appearances resolve before older aliases. Phone exports keep the artwork smaller while the current HUD, cards and footer stay in place. Sprite feet remain grounded when co-op battles resize between desktop and phone.
 
 - **Alternative builds gain class progression and retraining** ([#1686](https://github.com/cehinds/AshenSpire/pull/1686), `0.7.1.1054`). Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.
