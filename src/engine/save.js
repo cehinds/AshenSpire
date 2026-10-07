@@ -1,3 +1,4 @@
+import { migrateAbilityGrades } from '../model/abilityGrades.js';
 // src/engine/save.js — run persistence with schema + content versioning
 // (SPEC §3.12)
 //
@@ -154,6 +155,12 @@ function pendingRewardReferenceProblems(pending, registries) {
   for (const pick of Array.isArray(rewards.skillAttributes) ? rewards.skillAttributes : []) {
     if (!pick || !skillKindOf(registries, pick.skillId)) problems.push(`attribute pick track '${pick && pick.skillId}' is unknown`);
     for (const id of (pick && pick.attributeIds) || []) if (!registries.attributes.ids().includes(id)) problems.push(`attribute pick attribute '${id}' is unknown`);
+  }
+  for (const row of rewards.classMilestoneRewards || []) {
+    if (row.rewardKind === 'cards') for (const id of row.options || []) if (!registries.cards.has(id)) problems.push(`class milestone card '${id}' is unknown`);
+    if (row.rewardKind === 'relic') for (const id of row.options || []) if (!registries.relics.has(id)) problems.push(`class milestone relic '${id}' is unknown`);
+    if (row.rewardKind === 'feat') for (const id of row.options || []) if (!registries.classSkillFeats.some(feat => feat.id === id)) problems.push(`class milestone feat '${id}' is unknown`);
+    if (row.rewardKind === 'attribute') for (const id of row.options || []) if (!registries.attributes.has(id)) problems.push(`class milestone attribute '${id}' is unknown`);
   }
   for (const draft of rewards.skillDrafts || []) {
     if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);
@@ -949,6 +956,7 @@ export function createSaveManager(storage) {
           });
         }
         migrateCombatSnapshotWeaponCards(registries, run);
+        migrateAbilityGrades(registries,run);
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         // Every load crosses the same deterministic composition door. This is
         // also the one-time migration for legacy role-only attack instances:

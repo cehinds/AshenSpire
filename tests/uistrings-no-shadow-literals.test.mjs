@@ -7,7 +7,7 @@
 // row moved the text until the first repaint and then put it back. Fixing them
 // one thread at a time did not stop the seventh. This sweep does.
 //
-// For every frozen migration fixture (including #1489, #1535 and #1578), plus
+// For every frozen migration fixture (including #1489, #1535, #1578, #1651 and #1671), plus
 // any row the branch adds over origin/dev when git can say so, it takes the
 // short, full and tip text and looks for that same text as a string, template
 // or markup literal anywhere in src/ui. A hit is a control that can paint the
@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1671].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,7 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/components/friendlyTargets.js', 'Target', 'friendly-target accessibility prefix; not the numbered enemy target label row'],
   ['src/ui/screens/settings.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/components/combatantInspector.js', 'Skills', 'combatant active abilities section, separate from the player progression tab'],
@@ -165,14 +166,41 @@ test('all 25 compact Armament rows remain covered independently of origin/dev', 
     'the semantic formation allowance must still be checked after the branch delta becomes empty');
 });
 
-test('all 35 Armory progression rows remain covered after dev promotion', () => {
-  const ids=frozenMigrationIds(1671);
-  assert.equal(new Set(ids).size,35);
-  for (const id of ids) assert.ok(uiStrings.some(row=>row.id===id), `missing authored row ${id}`);
-  const permanent=migratedTexts(permanentMigratedIds());
-  assert.ok(permanent.get('Progression')?.includes('progression.title.short'));
+test('all 35 Progression hub rows remain protected after origin/dev contains the migration', () => {
+  const frozen = frozenMigrationIds(1671);
+  assert.equal(new Set(frozen).size, 35, 'retain every row authored for the Progression hub');
+  for (const id of frozen) assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
+  // The permanent list alone simulates an empty branch delta or missing origin/dev.
+  const permanent = migratedTexts(permanentMigratedIds());
+  assert.ok(permanent.get('Progression')?.includes('progression.title.short'),
+    'protect the title and its distinct settings-group ID allowance after promotion');
   assert.ok(permanent.get('Character')?.includes('progression.tab.character.short'));
   assert.ok(permanent.get('Skills')?.includes('progression.tab.skills.short'));
+  assert.ok(permanent.get('Associated cards')?.includes('progression.cards.short'),
+    'protect the hub inspection copy independently of git branch state');
+});
+
+test('all three enemy target rows remain protected independently of origin/dev', () => {
+  const frozen = frozenMigrationIds(1651);
+  assert.deepEqual([...frozen].sort(), [
+    'combat.enemyTarget.choose', 'combat.enemyTarget.health', 'combat.enemyTarget.label',
+  ], 'retain every authored target picker row, without duplicate IDs');
+  const permanentIds = permanentMigratedIds();
+  for (const id of frozen) {
+    assert.ok(permanentIds.has(id), `missing permanent coverage for ${id}`);
+    assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
+  }
+  // The permanent list alone simulates an empty branch delta or missing origin/dev.
+  const permanent = migratedTexts(permanentIds);
+  assert.ok(permanent.get('Choose an enemy target')?.includes('combat.enemyTarget.choose.full'));
+  assert.ok(permanent.get('Target')?.includes('combat.enemyTarget.label.full'),
+    'the distinct friendly-target accessibility allowance must remain checked after promotion');
+  // Health starts with a value token, so it has no literal prefix to sweep.
+  // Its live renderer must still read that authored row rather than rebuild it.
+  const picker = stripComments(readFileSync(join(ROOT, 'src/ui/components/enemyTargetPicker.js'), 'utf8'));
+  for (const id of frozen) assert.ok(picker.includes(`tFull('${id}'`), `target picker must consume ${id}`);
+  const health = uiStrings.find(row => row.id === 'combat.enemyTarget.health');
+  assert.match(health.full, /\{hp\}.*\{maxHp\}/, 'the authored health row retains both live values');
 });
 
 test('no src/ui literal repaints a row #1489 moved into uiStrings.csv', () => {

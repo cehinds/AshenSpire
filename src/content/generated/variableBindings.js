@@ -918,5 +918,460 @@ export const variableBindings = [
     "nodeId": "gravelightSigil",
     "variable": "heal",
     "balancePath": "sigils.gravelightSigil.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-emberjaw-token",
+    "variable": "bleed",
+    "balancePath": "progressionRelics.progression-emberjaw-token.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-cracked-war-anvil",
+    "variable": "poiseDamage",
+    "balancePath": "progressionRelics.progression-cracked-war-anvil.poiseDamage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-cinderbound-crown",
+    "variable": "heal",
+    "balancePath": "progressionRelics.progression-cinderbound-crown.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-moonwell-lens",
+    "variable": "block",
+    "balancePath": "progressionRelics.progression-moonwell-lens.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-nightglass-rosary",
+    "variable": "restoreMana",
+    "balancePath": "progressionRelics.progression-nightglass-rosary.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-fragment-of-the-third-sky",
+    "variable": "block",
+    "balancePath": "progressionRelics.progression-fragment-of-the-third-sky.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-whisperglass-die",
+    "variable": "chargeDamage",
+    "balancePath": "progressionRelics.progression-whisperglass-die.chargeDamage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-purse-of-borrowed-shadows",
+    "variable": "block",
+    "balancePath": "progressionRelics.progression-purse-of-borrowed-shadows.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-ember-alms-bowl",
+    "variable": "block",
+    "balancePath": "progressionRelics.progression-ember-alms-bowl.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "progression-ossuary-prayer-wheel",
+    "variable": "restoreMana",
+    "balancePath": "progressionRelics.progression-ossuary-prayer-wheel.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:coal-on-steel",
+    "variable": "bleed",
+    "balancePath": "progressionFeats.coal-on-steel.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:brace-and-bite",
+    "variable": "damage",
+    "balancePath": "progressionFeats.brace-and-bite.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:red-footwork",
+    "variable": "draw",
+    "balancePath": "progressionFeats.red-footwork.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:anvil-discipline",
+    "variable": "break",
+    "balancePath": "progressionFeats.anvil-discipline.break"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:forge-momentum",
+    "variable": "damage",
+    "balancePath": "progressionFeats.forge-momentum.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:paid-in-blood",
+    "variable": "damage",
+    "balancePath": "progressionFeats.paid-in-blood.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:last-rampart",
+    "variable": "block",
+    "balancePath": "progressionFeats.last-rampart.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:last-rampart",
+    "variable": "hpPct",
+    "balancePath": "progressionFeats.last-rampart.hpPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:war-cadence",
+    "variable": "block",
+    "balancePath": "progressionFeats.war-cadence.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:broad-sentence",
+    "variable": "damage",
+    "balancePath": "progressionFeats.broad-sentence.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:ember-sovereign",
+    "variable": "damage",
+    "balancePath": "progressionFeats.ember-sovereign.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:nightglass-scholar",
+    "variable": "damage",
+    "balancePath": "progressionFeats.nightglass-scholar.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:smoke-dancer",
+    "variable": "damage",
+    "balancePath": "progressionFeats.smoke-dancer.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:dread-of-the-hammer",
+    "variable": "damage",
+    "balancePath": "progressionFeats.dread-of-the-hammer.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:scarred-oath",
+    "variable": "block",
+    "balancePath": "progressionFeats.scarred-oath.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:harvest-the-wound",
+    "variable": "heal",
+    "balancePath": "progressionFeats.harvest-the-wound.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:sepulchral-promise",
+    "variable": "heal",
+    "balancePath": "progressionFeats.sepulchral-promise.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:orbit-keeper",
+    "variable": "damage",
+    "balancePath": "progressionFeats.orbit-keeper.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:moonward-scholar",
+    "variable": "block",
+    "balancePath": "progressionFeats.moonward-scholar.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:moonward-scholar",
+    "variable": "manaSpent",
+    "balancePath": "progressionFeats.moonward-scholar.manaSpent"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:comet-reader",
+    "variable": "vulnerable",
+    "balancePath": "progressionFeats.comet-reader.vulnerable"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:weight-of-the-void",
+    "variable": "weak",
+    "balancePath": "progressionFeats.weight-of-the-void.weak"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:crooked-measure",
+    "variable": "weak",
+    "balancePath": "progressionFeats.crooked-measure.weak"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:mirror-of-rime",
+    "variable": "buildup",
+    "balancePath": "progressionFeats.mirror-of-rime.buildup"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:constellation-keeper",
+    "variable": "damage",
+    "balancePath": "progressionFeats.constellation-keeper.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:patient-wellspring",
+    "variable": "block",
+    "balancePath": "progressionFeats.patient-wellspring.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:eclipse-hunter",
+    "variable": "damage",
+    "balancePath": "progressionFeats.eclipse-hunter.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:firmament-keeper",
+    "variable": "block",
+    "balancePath": "progressionFeats.firmament-keeper.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:celestial-refrain",
+    "variable": "block",
+    "balancePath": "progressionFeats.celestial-refrain.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:memory-of-winter",
+    "variable": "retainBlockUpTo",
+    "balancePath": "progressionFeats.memory-of-winter.retainBlockUpTo"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:threefold-sky",
+    "variable": "draw",
+    "balancePath": "progressionFeats.threefold-sky.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:first-knife",
+    "variable": "damage",
+    "balancePath": "progressionFeats.first-knife.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:pocket-method",
+    "variable": "block",
+    "balancePath": "progressionFeats.pocket-method.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:open-flank",
+    "variable": "damage",
+    "balancePath": "progressionFeats.open-flank.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:hidden-palm",
+    "variable": "block",
+    "balancePath": "progressionFeats.hidden-palm.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:tighten-the-wire",
+    "variable": "damage",
+    "balancePath": "progressionFeats.tighten-the-wire.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:carrion-measure",
+    "variable": "damage",
+    "balancePath": "progressionFeats.carrion-measure.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:carrion-measure",
+    "variable": "hpPct",
+    "balancePath": "progressionFeats.carrion-measure.hpPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:two-quiet-knives",
+    "variable": "damage",
+    "balancePath": "progressionFeats.two-quiet-knives.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:trapdoor-smile",
+    "variable": "damage",
+    "balancePath": "progressionFeats.trapdoor-smile.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:clean-exit",
+    "variable": "restoreStamina",
+    "balancePath": "progressionFeats.clean-exit.restoreStamina"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:razor-ledger",
+    "variable": "damage",
+    "balancePath": "progressionFeats.razor-ledger.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:ashen-mercy",
+    "variable": "heal",
+    "balancePath": "progressionFeats.ashen-mercy.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:censer-keeper",
+    "variable": "block",
+    "balancePath": "progressionFeats.censer-keeper.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:sower-of-blight",
+    "variable": "buildup",
+    "balancePath": "progressionFeats.sower-of-blight.buildup"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:funeral-watch",
+    "variable": "block",
+    "balancePath": "progressionFeats.funeral-watch.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:funeral-watch",
+    "variable": "hpPct",
+    "balancePath": "progressionFeats.funeral-watch.hpPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:ember-almoner",
+    "variable": "regen",
+    "balancePath": "progressionFeats.ember-almoner.regen"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:choir-of-bone",
+    "variable": "restoreStamina",
+    "balancePath": "progressionFeats.choir-of-bone.restoreStamina"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:requiem-reader",
+    "variable": "damage",
+    "balancePath": "progressionFeats.requiem-reader.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:pilgrim-of-scars",
+    "variable": "heal",
+    "balancePath": "progressionFeats.pilgrim-of-scars.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:pilgrim-of-scars",
+    "variable": "hpPct",
+    "balancePath": "progressionFeats.pilgrim-of-scars.hpPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:crowned-offering",
+    "variable": "damage",
+    "balancePath": "progressionFeats.crowned-offering.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:dawn-cantor",
+    "variable": "block",
+    "balancePath": "progressionFeats.dawn-cantor.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feat:bearer-of-burdens",
+    "variable": "restoreMana",
+    "balancePath": "progressionFeats.bearer-of-burdens.restoreMana"
   }
 ];

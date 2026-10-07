@@ -1,5 +1,5 @@
 {
-  "_": "Armory progression uiStrings added by PR #1671. Preserve shadow-literal checks and semantic allowances after origin/dev contains the rows.",
+  "_": "Armory Progression hub uiStrings ids authored in 11c05e07e for PR #1671. Preserve all 35 no-shadow checks and semantic stored-ID allowances after origin/dev contains the rows.",
   "ids": [
     "progression.title",
     "progression.tab.character",

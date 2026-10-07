@@ -6,6 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createRng } from '../src/engine/rng.js';
@@ -293,11 +294,12 @@ test('co-op treasure pays the same stone door as solo, and the catch-up names it
     return { here, away, host };
   };
   // Shipped tables: no claim, no receipt, nothing written.
-  const plain = party(REG);
+  // This historical travel/stone receipt fixture starts after character setup.
+  const plain = party(createRegistries(legacyContentBundle));
   assert.deepEqual((plain.here.run.smithingRewardClaims || []).filter((id) => id.startsWith('coop-treasure')), []);
   assert.equal(plain.away.catchup.at(-1).smithingStoneReceipt, undefined);
   // Raised: both seats are paid, present or away, and the away seat's catch-up carries the receipt.
-  const raised = party(registriesWith({ 'smithing.rewardByPool.treasure': 2, 'smithing.refinedRewardByPool.treasure': 1 }));
+  const raised = party(createRegistries(configuredContentBundle(legacyContentBundle, { 'gameConfig.balance.smithing.rewardByPool.treasure': 2, 'gameConfig.balance.smithing.refinedRewardByPool.treasure': 1 })));
   assert.equal(raised.here.run.smithingStones, 2);
   assert.equal(raised.here.run.smithingStonesRefined, 1);
   assert.equal(raised.away.run.smithingStones, 2);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
-import { combatOverheadAnchorX, combatOverheadAnchors } from '../src/ui/models/CombatOverheadModel.js';
+import { combatOverheadAnchorX, combatOverheadAnchors, combatOverheadRibbonShift } from '../src/ui/models/CombatOverheadModel.js';
 import { fitCombatSprites } from '../src/ui/models/CombatSpriteScaleModel.js';
 import { presentationConfig } from '../src/model/advancedConfig.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../src/ui/fx.js';
@@ -81,10 +81,54 @@ test('overhead offsets convert screen pixels once and retain the measured contro
   }
 });
 
+test('full-height enemies from separate formation rows keep every intent reachable when their fitted bands coincide', () => {
+  for (const width of [320, 375]) {
+    const controls = [
+      { id: 'rear', side: 'enemy', row: 0, x: width - 35, width: 62, top: 80, bottom: 128 },
+      { id: 'front-left', side: 'enemy', row: 1, x: width - 100, width: 50, top: 80, bottom: 128 },
+      { id: 'front-right', side: 'enemy', row: 1, x: width - 35, width: 62, top: 80, bottom: 128 },
+      { id: 'separate-band', side: 'enemy', row: 0, x: width - 35, width: 62, top: 180, bottom: 228 },
+    ];
+    const anchors = combatOverheadAnchors({ width, controls });
+    const band = controls.slice(0, 3).map(control => ({ ...control, x: anchors.find(anchor => anchor.id === control.id).x }));
+    for (const control of band) {
+      assert.equal(ownerAt(band, control.x), control.id, 'each physical intent centre belongs to its own control');
+      assert.ok(control.x - control.width / 2 >= 6 && control.x + control.width / 2 <= width - 6);
+    }
+    const ordered = band.toSorted((a, b) => a.x - b.x);
+    for (let i = 1; i < ordered.length; i++) {
+      assert.ok(ordered[i - 1].x + ordered[i - 1].width / 2 + 6 <= ordered[i].x - ordered[i].width / 2,
+        'different formation rows still reserve a complete six-pixel physical gap');
+    }
+    assert.equal(anchors.find(anchor => anchor.id === 'separate-band').x, width - 37,
+      'a vertically separate intent retains only its original edge clamp');
+  }
+});
+
 test('an in-bounds reserved control anchor stays put independently of figure growth', () => {
   assert.equal(combatOverheadAnchorX({ width: 1440, x: 1030, controlWidth: 108 }), 1030);
   assert.equal(combatOverheadAnchorX({ width: 390, x: 8, controlWidth: 80 }), 46);
   assert.equal(combatOverheadAnchorX({ width: 390, x: 385, controlWidth: 80 }), 344);
   assert.equal(combatOverheadAnchorX({ width: 844, x: 800, controlWidth: 164 }), 756,
     'short-landscape side-by-side Inspect and intent reserve their full measured union');
+});
+
+test('ribbon clearance repacks the final physical bands without moving already clear controls', () => {
+  const ribbon = { left: 100, right: 240, top: 100, bottom: 140 };
+  const controls = [
+    { id: 'shifted', side: 'enemy', row: 0, x: 200, width: 62, top: 80, bottom: 128 },
+    { id: 'unshifted', side: 'enemy', row: 1, x: 200, width: 62, top: 150, bottom: 198 },
+    { id: 'above', side: 'enemy', row: 0, x: 200, width: 62, top: 20, bottom: 68 },
+    { id: 'player', side: 'player', row: 0, x: 40, width: 44, top: 80, bottom: 124 },
+  ];
+  const anchors = combatOverheadAnchors({ width: 320, controls, ribbon });
+  const byId = id => anchors.find(a => a.id === id);
+  assert.equal(byId('shifted').offsetY, 74);
+  assert.equal(byId('unshifted').offsetY, 0);
+  assert.ok(Math.abs(byId('shifted').x - byId('unshifted').x) >= 62 + 6,
+    'a ribbon-shifted row reserves clearance from its new physical neighbour');
+  assert.deepEqual(byId('above'), {id:'above',x:200,offsetY:0});
+  assert.deepEqual(byId('player'), {id:'player',x:40,offsetY:0});
+  assert.equal(combatOverheadRibbonShift({x:200,width:62,top:20,bottom:68,ribbon}),0,
+    'a control fully above the ribbon keeps its ordinary anchor');
 });

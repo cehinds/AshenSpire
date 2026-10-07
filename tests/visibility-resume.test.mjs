@@ -332,7 +332,9 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
   assert.match(text, /import \{ finishCardDrag \} from '\.\.\/cardDragEnd\.js';/);
   const drags = [...text.matchAll(/trackGesture\(ev, \{[\s\S]*?\n {6}\}\);/g)].map((m) => m[0]);
   assert.equal(drags.length, 1, 'combat.js has one card-drag trackGesture');
-  assert.match(drags[0], /onEnd: \(up, info\) => finishCardDrag\(up, info, \{/, 'its onEnd is finishCardDrag, handed the gesture\'s own cancelled flag');
+  assert.match(drags[0], /onEnd: \(up, info\) => \{[\s\S]*?return finishCardDrag\(up, info, \{/, 'its onEnd returns finishCardDrag, handed the gesture\'s own cancelled flag');
+  assert.match(drags[0], /const releaseHit = dragging && !info\.cancelled \? document\.elementFromPoint\(up\.clientX, up\.clientY\) : null;[\s\S]*?return finishCardDrag/, 'a valid release captures its target before teardown');
+  assert.match(drags[0], /dropPlan: \(at\) => dropPlan\(at, true, releaseHit\)/, 'the drop resolves against the captured release target');
   assert.doesNotMatch(drags[0], /\bif \(\s*!?\s*(?:info\??\.)?cancelled\b/, 'no second cancelled decision beside it in combat.js');
 });
 

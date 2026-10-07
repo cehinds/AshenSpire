@@ -214,6 +214,43 @@
 .enemy.targetable .sprite { outline: var(--target-outline-width, 2px) dashed var(--gold); outline-offset: var(--target-outline-offset, 6px); border-radius: var(--r-3); }
 .enemy.hover-target .sprite, .enemy.targetable:is(.gp-focus, :focus-visible) .sprite { outline-style: solid; }
 
+/* Independent, nonoverlapping targets keep full-sized overlapping figures
+   selectable. The 48px touch floor is physical even at a reduced UI zoom. */
+.enemy-target-picker {
+  position: absolute;
+  top: calc(var(--turn-ribbon-top, 0px) + 48px / var(--ui-zoom, 1));
+  left: calc(8px / var(--ui-zoom, 1));
+  right: calc(8px / var(--ui-zoom, 1));
+  /* Placement reserves space outside intent/Information controls. The row
+     stays above figure hitboxes without covering those inspection controls. */
+  z-index: 1250;
+  display: flex;
+  gap: calc(6px / var(--ui-zoom, 1));
+  overflow-x: auto;
+  pointer-events: auto;
+}
+.enemy-target-picker[hidden] { display: none; }
+.enemy-target-button {
+  flex: 1 0 calc(72px / var(--ui-zoom, 1));
+  min-width: 0;
+  min-height: calc(48px / var(--ui-zoom, 1));
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--gold);
+  border-radius: var(--r-3);
+  background: #211c17f2;
+  color: var(--gold);
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.enemy-target-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.enemy-target-health { font-size: .8em; color: #eee2cf; }
+.enemy-target-button:is(:hover, :focus-visible) { outline: 2px solid var(--gold); outline-offset: -3px; background: #493c29; }
+.enemy-target-button:disabled { opacity: .5; cursor: default; }
+
 /* ---------- hand + controls ---------- */
 /* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
    BELOW THE HAND, AND IT HAS TWO CONSUMERS THAT USED TO AGREE BY ACCIDENT.

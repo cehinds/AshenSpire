@@ -1,3 +1,5 @@
+import { expandedProgression } from '../model/classMilestones.js';
+import { rollClassMilestoneRewards } from '../model/classMilestoneOffers.js';
 import { rollFeatOptions } from '../model/feats.js';
 import { classSkillId, skillKindOf, pendingSkillLevelCount } from '../model/skills.js';
 import { rollCardRewardIds, rollSkillDraftIds } from './encounters.js';
@@ -46,11 +48,18 @@ export function appendSourceRewardBonuses(rewards, bonuses) {
 // Issued alongside the offer in the same save transaction. Already claimed
 // levels (including Armoury claims) are issued once; banked rows wait for
 // their claimOrdinal and are marked issued by the level-claim callback.
-export function runSourceRewardOffer(registries, rng, run, offer, { pool, includeBanked = false, levelsGained = 0, flatRarity = false } = {}) {
+export function runSourceRewardOffer(registries, rng, run, offer, { pool, includeBanked = false, levelsGained = 0, flatRarity = false, meta = {} } = {}) {
   const current = run.skills?.[classSkillId(run.class)]?.level || 0;
   const through = run.classRewardLevels?.[run.class] ?? (run.classRewardLevels ? 0 : current - levelsGained);
   const classLevels = run.classUnequipped ? 0 : Math.max(0, current - through);
   const bankedLevels = run.classUnequipped || !includeBanked ? 0 : pendingSkillLevelCount(registries, run, classSkillId(run.class));
+  if (expandedProgression(run)) {
+    const bonuses = rollSourceRewardBonuses(registries,rng,{classId:run.class,pool,classLevels:0,bankedLevels:0,relicIds:run.relics,flatRarity});
+    const result = appendSourceRewardBonuses(offer,bonuses);
+    result.classMilestoneRewards = rollClassMilestoneRewards(registries,rng,run,{banked:bankedLevels,meta});
+    run.classRewardLevels = {...run.classRewardLevels,[run.class]:current};
+    return result;
+  }
   const result = appendSourceRewardBonuses(offer, rollSourceRewardBonuses(registries, rng, {
     classId: run.class, pool, classLevels, bankedLevels, relicIds: run.relics, flatRarity,
   }));

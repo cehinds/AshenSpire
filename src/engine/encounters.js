@@ -182,6 +182,9 @@ export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, 
   const byRarity = {};
   for (const id of registries.classes.get(classId).cardPool) {
     const def = registries.cards.get(id);
+    // Authored ability grades are earned by their own persisted lesson offer.
+    // Legacy proficiency drafts apply the old rank overlay and cannot grant them.
+    if(registries.progressionEnabled&&def.gradeProfiles)continue;
     if (!unlocked.includes(def.rarity) || !(def.tags || []).some((t) => schools.has(t))) continue;
     (byRarity[def.rarity] = byRarity[def.rarity] || []).push(id);
   }
@@ -475,4 +478,3 @@ export function applyGraceRefill(registries, run, opts = {}) {
   for (const flaskId of plan.grants) run.flasks.push({ flaskId });
   return plan;
 }
-

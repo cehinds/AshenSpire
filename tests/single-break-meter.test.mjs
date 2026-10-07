@@ -18,6 +18,8 @@ import { validateContent } from '../src/model/validate.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { breakPropertyText } from '../src/model/breakMeter.js';
 import { createSession } from '../tools/session.mjs';
+import { initialClassTreeChoices } from '../src/model/classTree.js';
+import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 
 const magic = { damageSchool: 'magic', exposureBuildupPerHit: 5 };
 const physical = { damageSchool: 'physical' };
@@ -204,6 +206,13 @@ test('the real co-op session sends Ward ratings and omits retired meters under t
   const host = createSession({ registries: reg, seedString: 'BOSSTIER' });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' }); host.start();
   assert.equal(host.serialize().advancedConfigSnapshot.breakMeterVersion, 1);
+  // Keep this a current-run host fixture, including its required starting pick.
+  const run = host.session.members.get('p1').run;
+  while (run.classMasteryState?.initialTreeTiers?.length) {
+    const choices = initialClassTreeChoices(registriesForClassMastery(reg, run), run);
+    assert.ok(choices.length, 'the starting class tier has an eligible choice');
+    assert.equal(host.chooseMasteryNode('p1', choices[0]).ok, true);
+  }
   const graph = host.session.mapGraph; const node = (graph.bossIds || [graph.bossId])[0];
   host.session.reachableIds = [node]; assert.equal(host.chooseNode('p1', node).ok, true);
   const scene = host.snapshot().scene;

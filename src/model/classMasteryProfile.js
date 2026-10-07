@@ -18,6 +18,10 @@ export function normalizeMasteryProfile(meta, registry = null, { veteran = false
     mastery[cls.id] = (Object.hasOwn(mastery, cls.id) ? mastery[cls.id] : null) || { xp: 0, level: 0, unlockedRows: veteran
       ? unlockRows(registry).filter(row => row.classId === cls.id).map(rowId) : [] };
   }
+  if (registry?.balance?.progression) for (const [id, row] of Object.entries(mastery)) {
+    const previous = new Set((row.unlockedRows || []).map(ref => ref.split(':').slice(2).join(':')));
+    row.unlockedRows = [...new Set([...row.unlockedRows,...unlockRows(registry).filter(unlock => unlock.classId === id && previous.has(`${unlock.kind}:${unlock.ref}`)).map(rowId)])];
+  }
   return { ...meta, classMastery: mastery, classMasteryReceipts: meta.classMasteryReceipts || {} };
 }
 

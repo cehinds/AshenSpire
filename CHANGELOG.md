@@ -34,6 +34,16 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Alternative builds gain class progression and retraining** ([#1686](https://github.com/cehinds/AshenSpire/pull/1686), `0.7.1.1054`). Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.
+
+- **Choose each class milestone and retrain your build** ([#1676](https://github.com/cehinds/AshenSpire/pull/1676), `0.7.1.1052`). Class rewards now follow a saved schedule for cards, feats, equipment, relics and attributes. Independent catalog modules add 40 card families with six ranks, 50 feats, 50 ability tags and 10 relics; available choices and level lists populate from their requirements. Spellcraft and Combat Maneuvers offer three cards with an Intelligence chance for a fourth higher-rank option. Actions and Stamina share one pool. Free class retraining previews earned choices without rerolling offers or restoring spent rewards. Solo and co-op XP fill Class, Character and gained skills in order before revealing blue Level Up buttons and a green Continue; remaining XP fills when you return.
+
+- **Crowded combat targets stay selectable** ([#1651](https://github.com/cehinds/AshenSpire/pull/1651), `0.7.1.1048`). Numbered enemy targets make overlapping foes easy to select. Cards reject targets on the wrong side before spending resources, and enemies remain at least as tall as the player without shrinking sprites.
+
+- **The Windows installer link downloads the installer** ([#1623](https://github.com/cehinds/AshenSpire/pull/1623), `0.7.1.1046`). The README's Windows installer link now downloads the latest `test` installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The `release` and `main` installers have their own direct links.
+
+- **Your route, one choice at a time** ([#1679](https://github.com/cehinds/AshenSpire/pull/1679), `0.7.1.1045`). The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.
+
 - **Alternative characters keep pace** ([#1683](https://github.com/cehinds/AshenSpire/pull/1683), `0.7.1.1045`). The alternative preview gains the ready-to-play character defaults, compact class cards, stat and relic detail dialogs, and continuous Smith upgrades. Its own battlefield and artwork stay intact, with both update histories preserved.
 
 - **Inspect your starting stats and relic** ([#1681](https://github.com/cehinds/AshenSpire/pull/1681), `0.7.1.1043`). Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.

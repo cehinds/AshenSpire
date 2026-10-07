@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { validateContent } from '../src/model/validate.js';

@@ -14,7 +14,7 @@ import { entities as entitiesData } from './data/entities.js';
 import { confirmationPolicies } from './data/confirmationPolicies.js';
 import { theme as themeData } from './data/theme.js';
 import { createFrameworkRegistries } from './registries.js';
-import { importLegacyContent, expectedCounts } from './importer.js';
+import { importLegacyContent, expectedCounts, legacyEntityKey } from './importer.js';
 import { validateAllContent } from './validate.js';
 import { compileTooltip } from './presentation/tooltip.js';
 import { SharedCard, SharedPropertyChip, SharedConfirmation, SharedTooltip } from './presentation/components.js';
@@ -86,7 +86,7 @@ const KEYWORD_OF_PROPERTY = Object.freeze({
 export function compareBaseline(baseline, registries, compiledById) {
   const mismatches = [];
   for (const [legacyId, expected] of baseline.cards) {
-    const compiled = compiledById.get(`card.${legacyId}`);
+    const compiled = compiledById.get(legacyEntityKey('card', legacyId));
     if (!compiled) { mismatches.push({ id: legacyId, field: 'entity', detail: 'missing from candidate' }); continue; }
     const diff = (field, got) => {
       const want = expected[field];

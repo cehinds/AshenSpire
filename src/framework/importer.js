@@ -210,7 +210,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   // globally unique, so every import key is namespaced by kind. The legacy id
   // stays verbatim in explicitOverrides.legacyId — save identity is the
   // legacy id and is never rewritten (ALWAYS preserve stable content IDs).
-  const key = (kind, id) => `${kind}.${id}`;
+  const key = legacyEntityKey;
 
   // ---- cards ---------------------------------------------------------------
   for (const card of bundle.cards) {
@@ -542,4 +542,10 @@ export function expectedCounts(bundle) {
     LOCATION: bundle.events.length,
     UI_SURFACE: bundle.equipment.armouryUi ? 1 : 0,
   };
+}
+
+export function legacyEntityKey(kind, id) {
+  if (!id.startsWith('encoded.') && /^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)*$/.test(id)) return `${kind}.${id}`;
+  const encoded = Array.from(id, char => char.codePointAt(0).toString(16).padStart(6, '0')).join('');
+  return `${kind}.encoded.x${encoded}`;
 }

@@ -2,7 +2,7 @@
 
 A browser roguelike with card combat, equipment, skill training, exploration, and optional LAN co-op.
 
-- **[Play / download builds](https://cehinds.github.io/AshenSpire/)** · [Changelog](CHANGELOG.md) · [Windows installer](https://github.com/cehinds/AshenSpire/actions/workflows/windows-installer.yml?query=branch%3Atest).
+- **[Play / download builds](https://cehinds.github.io/AshenSpire/)** · [Changelog](CHANGELOG.md) · [Windows installer](https://github.com/cehinds/AshenSpire/releases/download/installer-test/AshenSpire-Setup.exe).
 - **Development preview.** Release acceptance: [FINISH](docs/FINISH.md). The title screen and build history identify the version you are playing.
 
 ## Play and download
@@ -14,7 +14,7 @@ A browser roguelike with card combat, equipment, skill training, exploration, an
 - **GitHub downloads:** sign in, open a successful run, download `<branch>-standalone-<commit>`, unzip, and open its HTML file. Retention: dev 14 days, test 30, release/main 90.
 - **Hosted builds:** publication can lag the branch; use the build zip if a hosted link is unavailable.
 - **Build numbers:** `<major>.<minor>.<candidate>.<build>`; the counter resets with each candidate. Compare the full version. [Versioning](docs/versioning.md).
-- **Windows:** download `windows-installer-<commit>`, unzip, and run `AshenSpire-Setup-<version>.exe`. Installs for your user; choose game builds and compatible optional high-resolution art in the version chooser. [Installer guide](desktop/windows/README.md).
+- **Windows:** [download latest test installer](https://github.com/cehinds/AshenSpire/releases/download/installer-test/AshenSpire-Setup.exe) and run `AshenSpire-Setup.exe`. Release and main use `installer-release` or `installer-main` in the same URL. Older builds remain available as `windows-installer-<commit>` workflow artifacts. Installs for your user; choose game builds and compatible optional high-resolution art in the version chooser. [Installer guide](desktop/windows/README.md).
 
 ## Alternative branch previews
 

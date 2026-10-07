@@ -3,6 +3,56 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1686",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative builds gain class progression and retraining",
+    "detail": "Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.",
+    "build": "0.7.1.1054",
+    "pullRequest": 1686,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1686"
+  },
+  {
+    "id": "pr-1676",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Choose each class milestone and retrain your build",
+    "detail": "Class rewards now follow a saved schedule for cards, feats, equipment, relics and attributes. Independent catalog modules add 40 card families with six ranks, 50 feats, 50 ability tags and 10 relics; available choices and level lists populate from their requirements. Spellcraft and Combat Maneuvers offer three cards with an Intelligence chance for a fourth higher-rank option. Actions and Stamina share one pool. Free class retraining previews earned choices without rerolling offers or restoring spent rewards. Solo and co-op XP fill Class, Character and gained skills in order before revealing blue Level Up buttons and a green Continue; remaining XP fills when you return.",
+    "build": "0.7.1.1052",
+    "pullRequest": 1676,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1676"
+  },
+  {
+    "id": "pr-1651",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Crowded combat targets stay selectable",
+    "detail": "Numbered enemy targets make overlapping foes easy to select. Cards reject targets on the wrong side before spending resources, and enemies remain at least as tall as the player without shrinking sprites.",
+    "build": "0.7.1.1048",
+    "pullRequest": 1651,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1651"
+  },
+  {
+    "id": "pr-1623",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "The Windows installer link downloads the installer",
+    "detail": "The README's Windows installer link now downloads the latest test installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The release and main installers have their own direct links.",
+    "build": "0.7.1.1046",
+    "pullRequest": 1623,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1623"
+  },
+  {
+    "id": "pr-1679",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Your route, one choice at a time",
+    "detail": "The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.",
+    "build": "0.7.1.1045",
+    "pullRequest": 1679,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1679"
+  },
+  {
     "id": "pr-1683",
     "date": "2026-10-06",
     "group": "2026-10-06",

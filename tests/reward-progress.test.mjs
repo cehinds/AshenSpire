@@ -16,6 +16,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../src/model/victoryXpPresentation.js';
+import { orderedXpRows, xpFillDurations } from '../src/model/rewardXpPresentation.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
 // These tests drive the reward door's flow, not the curve: they pin the
@@ -66,7 +67,7 @@ test('a track whose curve will not read is dropped, never shown as capped', () =
   // balance.skill.xp is the weapon/armour/focus curve; the class track reads
   // balance.skill.class.xp, and the character level a third table again.
   const noSkillCurve = { ...registries, balance: { ...registries.balance, skill: { ...registries.balance.skill, xp: null } } };
-  const progress = rewardProgress(noSkillCurve, climber(), { level: 5, tracks: { 'item:blade': 9 } });
+  const progress = rewardProgress(noSkillCurve, climber(), { level: 5, tracks: { 'item:blade': 9, 'class:reaver': 4 } });
   assert.deepEqual(progress.skills.map((row) => row.id), ['class:reaver'],
     'no curve, no row — "Max" would be a broken table reading as a ceiling, even for the track the fight paid');
   assert.ok(progress.character, 'the character curve is a different table and still reads');
@@ -76,12 +77,12 @@ test('a track whose curve will not read is dropped, never shown as capped', () =
   assert.ok(progress.skills.every((row) => row.capped || row.xpToNext > 0));
 });
 
-test('the class track leads, then the tracks this fight paid, and every active skill has a bar', () => {
+test('the class track leads and only tracks paid by this reward have a bar', () => {
   const run = climber();
   const progress = rewardProgress(registries, run, { level: 10, tracks: { 'item:shield': 9, 'class:reaver': 4 } });
-  assert.deepEqual(progress.skills.map((row) => row.id), ['class:reaver', 'item:shield', 'item:blade', 'armour:heavy'],
-    'class first (the order the bars fill and level up); then paid, biggest gain leading; the deepest untouched track after');
-  assert.equal(progress.hidden, 0, 'the fourth active track has its own bar');
+  assert.deepEqual(progress.skills.map((row) => row.id), ['class:reaver', 'item:shield'],
+    'class first; standing unpaid skills stay off the reward list');
+  assert.equal(progress.hidden, 0, 'no paid tracks are hidden');
   assert.equal(progress.skills[0].kind, 'class');
   assert.equal(progress.skills[1].kind, 'weapon');
 });
@@ -132,6 +133,10 @@ test('the receipt sums the combat\'s tracks with the owner\'s own awards', () =>
   // A lost fight, an award that paid nothing, and a caller that hands none.
   assert.deepEqual(combatXpGains({ awards: [{ skillId: 'class:reaver', gained: 0 }], levelGained: -5 }), { level: 0, tracks: {} });
   assert.deepEqual(combatXpGains(), { level: 0, tracks: {} });
+  assert.deepEqual(combatXpGains({ awards: [{ skillId: 'class:reaver', gained: 10,
+    skillAwards: [{ skillId: 'item:blade', gained: 25 }, { skillId: 'armour:heavy', gained: 25 }],
+  }] }), { level: 0, tracks: { 'class:reaver': 10, 'item:blade': 25, 'armour:heavy': 25 } },
+  'an automatic class award includes its already-paid associated skills in the receipt');
 });
 
 test('the receipt crosses the save door on a real run and comes back whole', () => {
@@ -168,17 +173,14 @@ test('the door draws the panel beside the claim status, gains and all', () => {
       rewards: { cinders: 59, xpGains: { level: 25, tracks: { 'item:blade': 8 } } },
     });
     const rows = [...app.querySelectorAll('.reward-progress-row')];
-    assert.equal(rows.length, 5, 'the character level and every active skill track');
-    assert.equal(rows[0].dataset.kind, 'character');
-    const text = (row, cls) => row.children.find((child) => child.className.includes(cls))?.textContent;
-    assert.equal(text(rows[0], 'rp-name'), undefined, 'the character line has no extra label');
+    assert.equal(rows.length, 2, 'only Character and Blade gained XP');
+    assert.deepEqual(rows.map(row => row.dataset.track), ['character', 'item:blade']);
+    const text = (row, cls) => row.children.find(child => child.className.includes(cls))?.textContent;
+    assert.equal(text(rows[0], 'rp-name'), 'Character');
     assert.equal(text(rows[0], 'rp-level'), 'Level 3');
     assert.equal(text(rows[0], 'rp-next'), 'Level 4');
-    assert.equal(text(rows[0], 'rp-gain'), undefined, 'the character line stays on one row');
-    assert.equal(rows[1].dataset.kind, 'class', 'the class track sits under the character, above the skills');
-    assert.equal(text(rows[2], 'rp-gain'), 'Gained: 8 xp', 'the track the fight paid leads the skills');
-    assert.equal(rows[3].dataset.gained, '0', 'an unpaid track shows its standing level and no gain');
-    assert.equal(text(rows[3], 'rp-gain'), undefined);
+    assert.equal(text(rows[0], 'rp-gain'), 'Gained: 25 xp');
+    assert.equal(text(rows[1], 'rp-gain'), 'Gained: 8 xp');
     assert.ok(rows.every((row) => row.children.some((child) => child.className.includes('rp-layered-bar'))), 'every row carries its layered bar');
     assert.equal(app.querySelector('.reward-side .reward-claim-status'), null, 'the compact progression column does not repeat every reward');
   } finally {
@@ -435,7 +437,7 @@ test('each claim holds the leftover XP until its popup closes, then refills, for
         registries, run, onDone() {},
         onClaimLevel: () => claimBankedLevel(registries, run),
         onClaimSkill: (id) => claimBankedSkillLevel(registries, run, id),
-        rewards: { xpGains: { level: 0, tracks: {} } },
+        rewards: {},
         saves: { loadMeta: () => ({ settings: {
           levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0,
           victoryXpCharacterWeight: 0, victoryXpSkillWeight: 0, victoryXpClassWeight: 0,
@@ -452,7 +454,7 @@ test('each claim holds the leftover XP until its popup closes, then refills, for
         assert.equal(bar.querySelector('.rp-under').style.width, '0%');
         assert.equal(bar.querySelector('.rp-over').style.width, '0%');
         assert.equal(app.querySelector('.reward-level-up'), null, 'no second claim during the refill');
-        assert.equal(app.querySelector('#reward-continue').disabled, false, 'leaving is allowed during a refill');
+        assert.equal(app.querySelector('#reward-continue').disabled, true, 'Continue waits for the residual refill');
         const deadline = Date.now() + 2000;
         while (app.querySelector('.rp-layered-bar[data-animate="1"]') && Date.now() < deadline) {
           await new Promise((resolve) => setTimeout(resolve, 10));
@@ -483,7 +485,7 @@ test('a refill scheduled before a reward remount cannot change the replacement s
     first.skills = {};
     const saves = { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0 } }) };
     mountRewards(app, {
-      registries, run: first, rewards: { title: 'First reward', xpGains: { level: 0, tracks: {} } }, saves,
+      registries, run: first, rewards: { title: 'First reward' }, saves,
       onDone() {}, onClaimLevel: () => claimBankedLevel(registries, first),
     });
     app.querySelector('.reward-level-up').click();
@@ -597,7 +599,7 @@ test('each claim lifts the reward IT unlocked, not an older one still waiting', 
   } finally { Object.assign(globalThis, saved); }
 });
 
-test('bars take turns: with the character and a skill both ready, only the character carries Level up', () => {
+test('all ready tracks carry Level up together; a later skill may be claimed first', () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -605,16 +607,144 @@ test('bars take turns: with the character and a skill both ready, only the chara
     const app = document.createElement('main'); document.body.append(app);
     const run = climber(); run.level = { level: 1, xp: 100, unspentPoints: 0 };
     run.skills = { 'item:blade': { level: 0, xp: 100, pendingDrafts: 0 } };
-    mountRewards(app, { registries, run, rewards: { xpGains: { level: 0, tracks: {} } }, onDone() {},
+    mountRewards(app, { registries, run, rewards: { xpGains: { level: 100, tracks: { 'item:blade': 100 } } }, onDone() {},
       onClaimLevel: () => claimBankedLevel(registries, run),
       onClaimSkill: (id) => claimBankedSkillLevel(registries, run, id),
       saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
     });
-    assert.deepEqual(app.querySelectorAll('.reward-level-up').map(b => b.dataset.track), ['character']);
-    assert.equal(app.querySelector('.rp-layered-bar[data-track="item:blade"]').classList.contains('rp-bar-ready'), false, 'a bar waiting its turn keeps its normal look');
+    assert.deepEqual(app.querySelectorAll('.reward-level-up').map(b => b.dataset.track), ['character', 'item:blade']);
+    assert.equal(app.querySelector('.rp-layered-bar[data-track="item:blade"]').classList.contains('rp-bar-ready'), true, 'all full bars are blue');
+    app.querySelector('.reward-level-up[data-track="item:blade"]').click();
+    assert.equal(run.level.level, 1, 'claiming the skill does not claim Character');
+    app.querySelector('#reward-level-continue').click();
+    assert.deepEqual(app.querySelectorAll('.reward-level-up').map(b => b.dataset.track), ['character'], 'the other ready track remains available');
+    app.remove();
+  } finally { Object.assign(globalThis, saved); }
+});
+
+test('only gained rows sort Class, Character, then current skill level with name/id ties', () => {
+  const run = climber();
+  const progress = rewardProgress(registries, run, { level: 5, tracks: {
+    'class:reaver': 10, 'item:blade': 2, 'armour:heavy': 90, 'item:shield': 200,
+  } });
+  assert.deepEqual(orderedXpRows(progress).map(row => row.id), ['class:reaver', 'character', 'item:blade', 'armour:heavy', 'item:shield']);
+  const ties = orderedXpRows({ character: null, skills: [
+    { id: 'z', label: 'Blade', level: 2 }, { id: 'a', label: 'Blade', level: 2 }, { id: 'b', label: 'Axe', level: 2 },
+  ] });
+  assert.deepEqual(ties.map(row => row.id), ['b', 'a', 'z']);
+  assert.deepEqual(orderedXpRows(rewardProgress(registries, run, { level: 0, tracks: {} })), []);
+});
+
+test('all kinds and repeated partial refills travel at the same fraction per millisecond', () => {
+  const durations = xpFillDurations([{ from: .2, to: 1 }, { from: .5, to: .7 }, { from: 0, to: .4 }], 1000);
+  for (const [index, distance] of [.8, .2, .4].entries()) assert.ok(Math.abs(durations[index] / distance - 1000) < .00001);
+  assert.ok(Math.abs(durations.reduce((a, b) => a + b, 0) - 1400) < .00001);
+  assert.deepEqual(xpFillDurations([{ from: 0, to: .25 }], 800), [200]);
+  assert.deepEqual(xpFillDurations([{ from: 1, to: 1 }], 1400), [0]);
+  assert.deepEqual(xpFillDurations([{ from: 0, to: 1 }], 0), [0]);
+});
+
+const waitForXp = async predicate => {
+  const deadline = Date.now() + 2500;
+  while (!predicate() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 5));
+  assert.ok(predicate(), 'XP presentation reaches its next state');
+};
+
+test('every bar finishes before buttons appear; a full capped bar stays blue and cannot claim', async () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = climber(); run.level = { level: 1, xp: 355, unspentPoints: 0 };
+    run.skills = { 'class:reaver': { level: 0, xp: 355 }, 'item:blade': { level: 0, xp: 355 }, 'armour:heavy': { level: 10, xp: 0 } };
+    mountRewards(app, { registries, run, onDone() {},
+      rewards: { xpGains: { level: 355, tracks: { 'class:reaver': 355, 'item:blade': 355, 'armour:heavy': 5 } },
+        xpBefore: { character: { level: 1, xp: 0 }, tracks: { 'class:reaver': { level: 0, xp: 0 }, 'item:blade': { level: 0, xp: 0 }, 'armour:heavy': { level: 10, xp: 0 } } } },
+      onClaimLevel: () => claimBankedLevel(registries, run), onClaimSkill: id => claimBankedSkillLevel(registries, run, id),
+      saves: { loadMeta: () => ({ settings: { victoryXpSeconds: .24, levelUpRefillSeconds: .02, levelUpRefillPauseMs: 0 } }) },
+    });
+    assert.equal(app.querySelector('#reward-continue').disabled, true);
+    assert.equal(app.querySelector('.reward-level-up'), null);
+    await waitForXp(() => app.querySelector('.rp-layered-bar[data-track="class:reaver"]').classList.contains('rp-bar-ready'));
+    assert.equal(app.querySelector('.reward-level-up'), null, 'the first full blue bar is informational while later rows fill');
+    assert.equal(app.querySelector('#reward-continue').disabled, true);
+    app.querySelector('.rp-layered-bar[data-track="class:reaver"]').click();
+    assert.equal(run.skills['class:reaver'].level, 0, 'plain blue bars have no claim handler');
+    await waitForXp(() => !app.querySelector('#reward-continue').disabled);
+    assert.deepEqual(app.querySelectorAll('.reward-level-up').map(button => button.dataset.track), ['class:reaver', 'character', 'item:blade']);
+    assert.equal(app.querySelector('#reward-continue').dataset.confirmReady, 'true');
+    assert.ok(app.querySelector('.rp-layered-bar[data-track="armour:heavy"]').classList.contains('rp-bar-ready'));
+    const other = app.querySelector('.rp-layered-bar[data-track="character"]').querySelector('.rp-over').style.width;
+    app.querySelector('.reward-level-up[data-track="item:blade"]').click();
+    assert.equal(run.skills['item:blade'].xp, 255);
+    assert.equal(run.level.xp, 355);
+    app.querySelector('#reward-level-continue').click();
+    assert.equal(app.querySelector('.rp-layered-bar[data-track="character"]').querySelector('.rp-over').style.width, other, 'other bars stay filled during the refill');
+    await waitForXp(() => !app.querySelector('#reward-continue').disabled);
+    assert.ok(app.querySelector('.reward-level-up[data-track="item:blade"]'), 'surplus XP waits for another manual claim');
+    assert.equal(run.skills['item:blade'].level, 1);
+    app.remove();
+  } finally { Object.assign(globalThis, saved); }
+});
+
+test('reduced motion and empty gained lists settle immediately without spending banked XP', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    const run = climber(); run.level = { level: 1, xp: 355, unspentPoints: 0 };
+    mountRewards(app, { registries, run, onDone() {}, onClaimLevel: () => claimBankedLevel(registries, run),
+      rewards: { xpGains: { level: 355, tracks: {} }, xpBefore: { character: { level: 1, xp: 0 }, tracks: {} } },
+    });
+    assert.equal(app.querySelector('#reward-continue').disabled, false);
+    assert.equal(app.querySelector('.rp-over').style.width, '100%');
     app.querySelector('.reward-level-up').click();
     app.querySelector('#reward-level-continue').click();
-    assert.deepEqual(app.querySelectorAll('.reward-level-up').map(b => b.dataset.track), ['item:blade'], 'then the skill takes its turn');
+    assert.equal(run.level.xp, 255);
+    assert.equal(app.querySelector('#reward-continue').disabled, false);
+    assert.ok(app.querySelector('.reward-level-up'), 'the next level waits for a press');
+    document.body.classList.remove('reduced-motion');
+    mountRewards(app, { registries, run, onDone() {}, rewards: { xpGains: { level: 0, tracks: {} }, xpBefore: { character: { level: 1, xp: 0 }, tracks: {} } } });
+    assert.equal(app.querySelector('.reward-progress'), null);
+    assert.equal(app.querySelector('#reward-continue').disabled, false);
+    assert.equal(run.level.xp, 255);
+    app.remove();
+  } finally { Object.assign(globalThis, saved); }
+});
+
+test('a class claim adds its newly paid skill rows once and refills bonuses without claiming them', async () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main'); document.body.append(app);
+    const run = climber(); run.skills = { 'class:reaver': { level: 0, xp: 355 }, 'item:blade': { level: 0, xp: 80 } };
+    const rewards = { xpGains: { level: 0, tracks: { 'class:reaver': 355 } } };
+    const checkpoint = { rewards, states: {} };
+    mountRewards(app, { registries, run, rewards, checkpoint, onDone() {},
+      onClaimSkill: id => {
+        const claim = claimBankedSkillLevel(registries, run, id);
+        if (id === 'class:reaver') {
+          bankSkillXp(registries, run, 'item:blade', 25);
+          return { ...claim, skillAwards: [{ skillId: 'item:blade', gained: 25 }] };
+        }
+        return claim;
+      },
+      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: .02, levelUpRefillPauseMs: 0 } }) },
+    });
+    assert.deepEqual(app.querySelectorAll('.reward-progress-row').map(row => row.dataset.track), ['class:reaver']);
+    app.querySelector('.reward-level-up').click();
+    assert.equal(rewards.xpGains.tracks['item:blade'], 25, 'presentation records the one core payment');
+    assert.equal(run.skills['item:blade'].xp, 105, 'presentation does not pay the bonus a second time');
+    app.querySelector('#reward-level-continue').click();
+    assert.equal(app.querySelector('.rp-layered-bar[data-track="item:blade"]').querySelector('.rp-over').style.width, '80%');
+    await waitForXp(() => !app.querySelector('#reward-continue').disabled);
+    assert.deepEqual(app.querySelectorAll('.reward-level-up').map(button => button.dataset.track), ['class:reaver', 'item:blade']);
+    assert.equal(run.skills['item:blade'].level, 0, 'the newly ready bonus remains manual');
+    assert.equal(checkpoint.skillClaims['class:reaver'], 1);
     app.remove();
   } finally { Object.assign(globalThis, saved); }
 });

@@ -112,7 +112,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       ${runHudHtml({
         registries, run, meta, place: 'map', headerClass: 'map-header', deckDoor: !!onEditDeck,
       })}
-      ${actRouteStripHtml({ title: mapAdapter?.title || actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) })}
+      ${actRouteStripHtml({ title: mapAdapter?.title || actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)), graph: map, path: mapAdapter?.path || run.path || [], current })}
     </div>`;
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   // Bars, relics, Armoury and Menu: components/runHud.js fills the band for

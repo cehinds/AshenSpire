@@ -4,6 +4,7 @@ import { bindTurnStamina } from '../model/turnStamina.js';
 import { validateCombatRules, validateCombatProfile, validateAttack, allocateInteger, resolveDamageComponents, weaponImpact, groupedResistance } from '../model/combatRules.js';
 import { evaluate } from '../model/formulas.js';
 import { createRng } from './rng.js';
+import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
@@ -205,15 +206,21 @@ export function consumeFoundationEvade(ctx, source, target, carrier) {
 }
 
 /** Clone one graph, preserving references between players, piles and seats. */
-function candidateState(ctx) {
+export function candidateState(ctx) {
   const data = {};
   for (const [key, value] of Object.entries(ctx)) {
     if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
   }
   const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  // Catalogue accessors are immutable context, never serializable combat data.
+  if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
+  if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;
   if (candidate.player) bindTurnStamina(candidate.player);
   if (candidate.players) for (const seat of candidate.players.values()) bindTurnStamina(seat.entity);
   candidate.emit = (type, payload) => candidate._emitEvent(candidate, type, payload);
+  // Detached plays must pay the same receipt as the live event bus. Failed
+  // plays and previews keep those payments confined to this candidate.
+  attachSkillXp(candidate);
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
   if (ctx.players) candidate.playerIdForEntity = (entity) => {
@@ -227,22 +234,49 @@ function candidateState(ctx) {
 export function foundationTransaction(ctx, execute) {
   const candidate = candidateState(ctx);
   candidate._foundationTransaction = true;
-  candidate.foundation.actionSerial++;
-  candidate.foundation.eventCount = 0;
-  candidate.foundation.rolls = {}; candidate.foundation.counts = {};
+  if (candidate.foundation) {
+    candidate.foundation.actionSerial++;
+    candidate.foundation.eventCount = 0;
+    candidate.foundation.rolls = {}; candidate.foundation.counts = {};
+  }
   candidate._foundationAncestry = [];
   const result = execute(candidate);
   delete candidate._foundationTransaction;
   delete candidate._foundationAncestry;
+  // Public combat entities and seats are stable handles. Commit the detached
+  // values into those handles and reconnect paused actions to the same graph.
+  const entities = new Map();
+  const commitEntity = (old, next) => {
+    if (!old || !next) return next;
+    entities.set(next, old);
+    for (const key of Object.keys(old)) delete old[key];
+    Object.assign(old, next);
+    if (old.kind === 'player') bindTurnStamina(old);
+    return old;
+  };
+  if (candidate.players) {
+    for (const [id, next] of candidate.players) {
+      const old = ctx.players.get(id);
+      if (!old) continue;
+      next.entity = commitEntity(old.entity, next.entity);
+      Object.assign(old, next);
+      candidate.players.set(id, old);
+    }
+  } else candidate.player = commitEntity(ctx.player, candidate.player);
+  candidate.enemies = candidate.enemies.map((entity, i) => commitEntity(ctx.enemies[i], entity));
+  if (candidate.players) candidate.player = entities.get(candidate.player) || candidate.player;
+  for (const action of candidate.queue) for (const key of ['source', 'owner', 'target']) action[key] = entities.get(action[key]) || action[key];
   // Keep the run's loadout object identity when committing an equipment change.
   if (!ctx.players && ctx.loadout && candidate.loadout) {
     for (const key of Object.keys(ctx.loadout)) delete ctx.loadout[key];
     Object.assign(ctx.loadout, candidate.loadout); candidate.loadout = ctx.loadout;
   }
+  for (const key of Object.keys(ctx)) if (typeof ctx[key] !== 'function' && !['registries', 'rng'].includes(key) && !(key in candidate)) delete ctx[key];
   for (const [key, value] of Object.entries(candidate)) {
     if (key === 'rng') ctx.rng.restoreCounters(value.getCounters());
     else if (typeof value !== 'function' && key !== 'registries') ctx[key] = value;
   }
+  if (ctx.registriesForPlayer) ctx.registries = ctx.registriesForPlayer(ctx.playerKey);
   return result;
 }
 

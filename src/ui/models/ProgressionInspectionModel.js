@@ -7,6 +7,12 @@ import { runHandRules, handSizeReceipts } from '../../model/handRules.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { skillSchools, trackSkillFeats, skillFeatById } from '../../model/skills.js';
 import { featById, featStacks } from '../../model/feats.js';
+import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
+import { abilityKindForSkill, abilityRankAt, isAbilitySkill, SPELLCRAFT_SKILL, MANEUVERS_SKILL } from '../../model/abilityGrades.js';
+import { abilityOfferPool } from '../../model/abilityOffers.js';
+import { expandedProgression } from '../../model/classMilestones.js';
+import { resolveCard } from '../../model/registries.js';
+import { characterSheetRegistries } from './CharacterSheetModel.js';
 
 /** Presentation only: all values retain the run's own calculation receipts. */
 export function progressionStats(registries, run, settings = {}) {
@@ -47,10 +53,14 @@ export function progressionStats(registries, run, settings = {}) {
 }
 
 export function featInspection(registries, run, id) {
-  const feat = featById(id) || skillFeatById(id);
+  registries = characterSheetRegistries(registries, run);
+  const general = Array.isArray(registries.feats) ? registries.feats.find(feat => feat.id === id)
+    : registries.feats?.has(id) ? registries.feats.get(id) : null;
+  const feat = general || featById(id) || skillFeatById(id, registries);
   if (!feat) return null;
-  const tags = [...new Set([...(feat.tags || []), ...(feat.crit?.tags || []), ...(feat.passive?.tags || [])])];
-  return { ...feat, tags, owned: featStacks(run, id) || (run.skillFeats || []).filter(owned => owned === id).length };
+  const tags = [...new Set([...(feat.tags || []), ...(feat.propertyTags || []), ...(feat.crit?.tags || []), ...(feat.passive?.tags || [])])];
+  return { ...feat, description: getFeatDescription(registries, feat), tags,
+    owned: featStacks(run, id) || (run.skillFeats || []).filter(owned => owned === id).length };
 }
 
 export function ownedFeatInspections(registries, run) {
@@ -59,12 +69,25 @@ export function ownedFeatInspections(registries, run) {
 }
 
 export function skillInspection(registries, run, track) {
+  registries = characterSheetRegistries(registries, run);
+  const expanded = expandedProgression(run), ability = expanded && isAbilitySkill(track.id);
   const cls = registries.classes.get(run.class);
-  const tags = skillSchools(registries, run.loadout, track.id);
+  let tags = skillSchools(registries, run.loadout, track.id);
   const pool = (cls?.cardPool || []).map(id => registries.cards.get(id));
-  const cards = track.kind === 'class' ? pool : pool.filter(card => (card.tags || []).some(tag => tags.includes(tag)));
-  const feats = trackSkillFeats(track.id, !!run.classMasteryState)
+  const associated = ability
+    ? abilityOfferPool(registries, run, track.id, abilityRankAt(registries, Math.max(1, run.skills?.[track.id]?.level || 0))).map(id => registries.cards.get(id))
+    : track.kind === 'class' ? pool : pool.filter(card => (card.tags || []).some(tag => tags.includes(tag)));
+  const cards = associated.map(card => {
+    const skillId = card.abilityKind === 'spell' ? SPELLCRAFT_SKILL : MANEUVERS_SKILL;
+    const instance = { cardId: card.id, upgraded: false, ...(expanded && card.gradeProfiles
+      ? { abilityRank: abilityRankAt(registries, Math.max(1, run.skills?.[skillId]?.level || 0)) }
+      : !expanded ? { legacyAbility: true } : {}) };
+    return { ...resolveCard(registries, instance), ...(instance.legacyAbility ? {legacyAbility: true} : {}) };
+  });
+  const feats = trackSkillFeats(track.id, !!run.classMasteryState, registries)
     .map(feat => featInspection(registries, run, feat.id)).filter(Boolean);
+  if (ability) tags = [...new Set(cards.flatMap(card => card.tags || []))];
   const tagIds = track.kind === 'class' ? [...new Set(cards.flatMap(card => card.tags || []))] : tags;
-  return { cards, feats, tags: tagIds, requiresEquipment: ['weapon', 'focus', 'dual'].includes(track.kind) && !tags.length };
+  return { cards, feats, tags: tagIds, ...(ability ? {abilityKind: abilityKindForSkill(track.id)} : {}),
+    requiresEquipment: !ability && ['weapon', 'focus', 'dual'].includes(track.kind) && !tags.length };
 }

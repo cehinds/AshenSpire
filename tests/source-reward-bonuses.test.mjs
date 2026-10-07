@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { SETTINGS_DEFAULTS } from '../src/content/settingsDefaults.js';
 import { configuredContentBundle, presentationConfig } from '../src/model/advancedConfig.js';
 import { createRegistries } from '../src/model/registries.js';

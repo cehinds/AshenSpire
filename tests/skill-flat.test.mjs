@@ -5,7 +5,7 @@
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries, resolveCard, primaryEffectIndex } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { awardSkillXp, xpToNext, stampSkillBonuses, skillBonusFor, skillSchools } from '../src/model/skills.js';
@@ -79,7 +79,7 @@ test('a card earns the sum of its tracks\' flats, and never past the cap', async
 
 test('co-op seats stamp the bonus before their fight', () => {
   const session = readFileSync(new URL('../tools/session.mjs', import.meta.url), 'utf8');
-  assert.match(session, /function memberAsPlayer\(m\) \{[\s\S]{0,400}?stampSkillBonuses\(registries, m\.run\);[\s\S]{0,40}?return \{/);
+  assert.match(session, /function memberAsPlayer\(m\) \{[\s\S]{0,400}?stampSkillBonuses\(registriesForClassMastery\(registries,m\.run\), m\.run\);[\s\S]{0,40}?return \{/);
 });
 
 test('the level popup counts the cards a claim actually raised', async () => {

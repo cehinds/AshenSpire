@@ -153,7 +153,8 @@ test('every HP loss buzzes once per beat: direct hpLost too, and an attack pair 
 });
 
 test('co-op: a card play buzzes from its cardPlayed receipt, for this screen\'s seats only', async () => {
-  const { contentBundle } = await import('../src/content/index.js');
+  // Preserve this historical host's cards and post-setup combat entry.
+  const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
   const { createSession } = await import('../tools/session.mjs');
   const { coopReceiptSounds } = await import('../src/ui/screens/coop.js');
@@ -201,7 +202,8 @@ test('co-op: a teammate\'s direct HP loss buzzes their device, not mine (#1517 r
   // Every player entity is id 'player', so an hpLost receipt that names no
   // seat cannot be told from my own; the engine stamps the seat it cost, and
   // a receipt with no seat is nobody's here, not everyone's.
-  const { contentBundle } = await import('../src/content/index.js');
+  // Preserve this historical host's cards and post-setup combat entry.
+  const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
   const { createSession } = await import('../tools/session.mjs');
   const { applyLoseHp } = await import('../src/engine/actions.js');
@@ -244,7 +246,8 @@ function heardSfx(fn) {
 test('co-op: the card that wins the fight still buzzes, though combat is gone (#1517 review)', async () => {
   // settleCombat replaces the combat scene with the reward at once, so the
   // final card's receipts never reach a combat scene; they ride the reward.
-  const { contentBundle } = await import('../src/content/index.js');
+  // Preserve this historical host's cards and post-setup combat entry.
+  const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
   const { createSession } = await import('../tools/session.mjs');
   const { coopReceiptSounds } = await import('../src/ui/screens/coop.js');
@@ -273,7 +276,8 @@ test('co-op: the card that wins the fight still buzzes, though combat is gone (#
 });
 
 test('co-op: a setup HP loss (Warden Horn) buzzes the hurt seat in the opening (#1517 review)', async () => {
-  const { contentBundle } = await import('../src/content/index.js');
+  // Preserve this historical host's cards and post-setup combat entry.
+  const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
   const { createSession } = await import('../tools/session.mjs');
   const { coopReceiptSounds } = await import('../src/ui/screens/coop.js');
@@ -333,7 +337,8 @@ test('a skipped timeline still buzzes the hit and the turn start it jumped past,
 });
 
 test('co-op: a downed seat spectating does not buzz on a teammate\'s turn; the stinger is shared (#1517 review)', async () => {
-  const { contentBundle } = await import('../src/content/index.js');
+  // Preserve this historical host's cards and post-setup combat entry.
+  const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
   const { createSession } = await import('../tools/session.mjs');
   const { applyLoseHp } = await import('../src/engine/actions.js');
@@ -367,7 +372,8 @@ test('co-op: an enemy turn held back by pacing while the fight ends still buzzes
   // here, haptics only (pacing is DOM-bound: the wiring is read from source).
   assert.match(src('src/ui/screens/coop.js'),
     /if \(latest\.scene\?\.kind !== 'combat'\) \{\s*for \(const frame of combatFrames\) lastSoundSeq = coopReceiptSounds\(frame\.scene, lastSoundSeq, seats, \{ hapticsOnly: true \}\);/);
-  const { contentBundle } = await import('../src/content/index.js');
+  // Preserve this historical host's cards and post-setup combat entry.
+  const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
   const { createSession } = await import('../tools/session.mjs');
   const { coopReceiptSounds } = await import('../src/ui/screens/coop.js');
