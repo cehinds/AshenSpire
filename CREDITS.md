@@ -11,6 +11,12 @@ projects. No third-party asset license is claimed. Existing slash, ward,
 shield and projectile images retain their established credits. This local
 authoring study has not been published as a game asset release.
 
+The Rogue twin-dagger continuation uses the approved alternative Rogue as its
+first-party reference. Its [source prompts](pose-studio/renewal/rogue/source/prompts.json),
+normalization recipe and source hashes accompany the portable projects. The
+Starseer staff source studies are also first-party generated drafts and remain
+under visual review before registration in the animation preview.
+
 ## Full card portrait library (2026-10-06)
 
 The 220 card identities and 17 equipment profiles use original portrait paintings

@@ -52,13 +52,13 @@
   ],
   "frames": {
     "ready": {
-      "path": "frames/ready.webp",
-      "lite": "frames/ready.lite.webp",
+      "path": "rogue/frames/ready.webp",
+      "lite": "rogue/frames/ready.lite.webp",
       "bounds": [
-        104,
-        114,
-        413,
-        465
+        95,
+        116,
+        404,
+        463
       ],
       "anchor": [
         256,
@@ -66,13 +66,13 @@
       ]
     },
     "windup": {
-      "path": "frames/windup.webp",
-      "lite": "frames/windup.lite.webp",
+      "path": "rogue/frames/windup.webp",
+      "lite": "rogue/frames/windup.lite.webp",
       "bounds": [
-        86,
-        101,
-        360,
-        465
+        79,
+        126,
+        380,
+        464
       ],
       "anchor": [
         256,
@@ -80,13 +80,13 @@
       ]
     },
     "advance": {
-      "path": "frames/advance.webp",
-      "lite": "frames/advance.lite.webp",
+      "path": "rogue/frames/advance.webp",
+      "lite": "rogue/frames/advance.lite.webp",
       "bounds": [
-        68,
-        138,
-        431,
-        465
+        80,
+        125,
+        417,
+        466
       ],
       "anchor": [
         256,
@@ -94,13 +94,13 @@
       ]
     },
     "contact": {
-      "path": "frames/contact.webp",
-      "lite": "frames/contact.lite.webp",
+      "path": "rogue/frames/contact.webp",
+      "lite": "rogue/frames/contact.lite.webp",
       "bounds": [
-        76,
-        150,
-        483,
-        464
+        70,
+        128,
+        441,
+        465
       ],
       "anchor": [
         256,
@@ -108,68 +108,12 @@
       ]
     },
     "follow": {
-      "path": "frames/follow.webp",
-      "lite": "frames/follow.lite.webp",
+      "path": "rogue/frames/follow.webp",
+      "lite": "rogue/frames/follow.lite.webp",
       "bounds": [
-        100,
-        141,
-        420,
-        463
-      ],
-      "anchor": [
-        256,
-        464
-      ]
-    },
-    "return": {
-      "path": "frames/return.webp",
-      "lite": "frames/return.lite.webp",
-      "bounds": [
-        105,
-        118,
-        412,
-        470
-      ],
-      "anchor": [
-        256,
-        464
-      ]
-    },
-    "hurt": {
-      "path": "frames/hurt.webp",
-      "lite": "frames/hurt.lite.webp",
-      "bounds": [
-        87,
-        122,
-        413,
-        464
-      ],
-      "anchor": [
-        256,
-        464
-      ]
-    },
-    "hurt-recover": {
-      "path": "frames/hurt-recover.webp",
-      "lite": "frames/hurt-recover.lite.webp",
-      "bounds": [
-        81,
-        119,
-        403,
-        467
-      ],
-      "anchor": [
-        256,
-        464
-      ]
-    },
-    "down": {
-      "path": "frames/down.webp",
-      "lite": "frames/down.lite.webp",
-      "bounds": [
-        77,
-        209,
-        373,
+        76,
+        130,
+        395,
         462
       ],
       "anchor": [
@@ -177,14 +121,70 @@
         464
       ]
     },
-    "power": {
-      "path": "frames/power.webp",
-      "lite": "frames/power.lite.webp",
+    "return": {
+      "path": "rogue/frames/return.webp",
+      "lite": "rogue/frames/return.lite.webp",
       "bounds": [
-        56,
-        107,
-        377,
-        463
+        94,
+        131,
+        401,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "hurt": {
+      "path": "rogue/frames/hurt.webp",
+      "lite": "rogue/frames/hurt.lite.webp",
+      "bounds": [
+        38,
+        115,
+        383,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "hurt-recover": {
+      "path": "rogue/frames/hurt-recover.webp",
+      "lite": "rogue/frames/hurt-recover.lite.webp",
+      "bounds": [
+        78,
+        140,
+        434,
+        466
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "down": {
+      "path": "rogue/frames/down.webp",
+      "lite": "rogue/frames/down.lite.webp",
+      "bounds": [
+        72,
+        313,
+        462,
+        466
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "power": {
+      "path": "rogue/frames/power.webp",
+      "lite": "rogue/frames/power.lite.webp",
+      "bounds": [
+        72,
+        115,
+        404,
+        464
       ],
       "anchor": [
         256,
@@ -192,13 +192,13 @@
       ]
     },
     "channel": {
-      "path": "frames/channel.webp",
-      "lite": "frames/channel.lite.webp",
+      "path": "rogue/frames/channel.webp",
+      "lite": "rogue/frames/channel.lite.webp",
       "bounds": [
-        71,
-        107,
-        367,
-        463
+        78,
+        121,
+        407,
+        464
       ],
       "anchor": [
         256,
@@ -206,13 +206,13 @@
       ]
     },
     "release": {
-      "path": "frames/release.webp",
-      "lite": "frames/release.lite.webp",
+      "path": "rogue/frames/release.webp",
+      "lite": "rogue/frames/release.lite.webp",
       "bounds": [
-        65,
-        109,
-        406,
-        463
+        70,
+        121,
+        419,
+        464
       ],
       "anchor": [
         256,
@@ -222,7 +222,7 @@
   },
   "sequences": {
     "attack": {
-      "label": "Sword attack",
+      "label": "Twin-dagger attack",
       "poses": [
         "windup",
         "advance",
@@ -347,7 +347,7 @@
       "classId": "reaver",
       "armour": "default",
       "loadout": "sword",
-      "status": "draft"
+      "status": "pending"
     },
     {
       "classId": "reaver",
@@ -585,30 +585,19 @@
     }
   ],
   "notes": [
-    "Two reference families drafted; remaining combinations are pending and never substituted.",
-    "Casting uses a sheathed sword; ready-to-sheath transition remains an art review item.",
-    "Twin swords and two-weapon sword fighting remain separate authoring entries pending distinct choreography.",
-    "Enemy and non-base-armour animation expansion follows this base-loadout pass.",
-    "No runtime bindings or gameplay equipment rules are changed by this study."
+    "Daggers are sheathed for casting; sheath/draw transition remains pending.",
+    "Flattened poses, with separate runtime effects.",
+    "Attack contact and follow-through cloak edges need final review before gameplay binding."
   ],
   "sourceHashes": {
-    "attack.png": "65e2785ff28b9d3092205bf37d29a7cc43444d0a74f8df0a2776e40319b1bd18",
-    "casts.png": "261fa5c9e5724d339fdc58a9631ce626eb994f124e1395a9b6ec5d77f101149f",
-    "reactions.png": "0b0d9a2a050cd14476e63933abb7e641f2522f14ca2a4088024021b96c2d9484"
+    "attack.png": "27cc0b9f167fbdf2f30bf1fdfab89d85070550173ae906fee89e0df8649c79b3",
+    "casts.png": "a7427053759a3eef50d3a40b4b5aa700c10f60693b25f1b86581cdbaa3be49c3",
+    "reactions.png": "96baa7fb5478f723eb22eeb478dd19815de55351a1576a3583a476b353fe0f92"
   },
   "bytes": {
-    "webp": 566320,
-    "lite": 155614
+    "webp": 547762,
+    "lite": 156050
   },
-  "families": {
-    "reaver/sword": {
-      "rig": "reaver-sword.rig.json",
-      "folder": ""
-    },
-    "rogue/twinDaggers": {
-      "manifest": "rogue/manifest.json",
-      "rig": "rogue/rogue-twinDaggers.rig.json",
-      "folder": "rogue/"
-    }
-  }
+  "classId": "rogue",
+  "loadout": "twinDaggers"
 }

@@ -33,12 +33,27 @@ test('down retains its final frame and reduced/instant sampling has no displacem
 });
 test('coverage is explicit and Pose Studio packages keep runtime bindings empty',()=>{
  assert.equal(manifest.coverage.length,40);
- assert.equal(manifest.coverage.filter(r=>r.status==='draft').length,1);
+ assert.equal(manifest.coverage.filter(r=>r.status==='draft').length,2);
  for(const name of ['attack','power','spell']){
   const p=JSON.parse(readFileSync(new URL('../renewal/'+name+'.pose.json',import.meta.url)));
   assert.deepEqual(validate(p),[]);
   assert.deepEqual(p.bindings,[]);
   assert.equal(p.poses.length,5);
   for(const pose of p.poses)assert.ok(p.assets['pose:'+pose]);
+ }
+});
+
+test('Rogue artwork has its own five actions, assets and portable imports',()=>{
+ const rogue=JSON.parse(readFileSync(new URL('../renewal/rogue/manifest.json',import.meta.url)));
+ assert.equal(rogue.classId,'rogue');assert.equal(rogue.loadout,'twinDaggers');
+ assert.equal(Object.keys(rogue.frames).length,12);
+ for(const [action,seq] of Object.entries(rogue.sequences)){
+  assert.ok(seq.poses.every(p=>rogue.frames[p]));
+  assert.equal(seq.durations.reduce((a,b)=>a+b,0),260);
+  assert.equal(sampleSequence(seq,260,260).x,0);
+ }
+ for(const action of ['attack','power','spell']){
+  const p=JSON.parse(readFileSync(new URL('../renewal/rogue/'+action+'.pose.json',import.meta.url)));
+  assert.deepEqual(validate(p),[]);assert.equal(p.actor,'rogue');assert.deepEqual(p.bindings,[]);
  }
 });
