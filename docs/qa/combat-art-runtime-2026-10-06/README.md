@@ -94,7 +94,16 @@ pack sweep exposed a filename-based phone-tier assertion in the harness;
 pack images have hash URLs. The assertion now compares the selected image
 with its picture phone source, and the phone sweep passed on rerun.
 
-[Ground-contact measurements](ground-contact.json) · [Phone co-op after correction](phone-coop-grounded.png)
+After reconciling the concurrent progression/overhead update `2e29b6b69`,
+build `0.7.1.1056` (`1e6437bc6d`) repeated all 64 built scene/device checks,
+four co-op/resize checks, and desktop/phone card play. Portable play passed
+at both sizes too. The final rebuild only reorders the changelog receipt;
+the validated grounding code and artwork are unchanged. Final build
+`0.7.1.1057` (`0b6580e1b2`) passed desktop/phone gameplay in pack and portable
+form, build identity (9 checks), shipped aliases (12), and receipt ordering
+(817 checks).
+
+[Phone ground contact](phone-grounded.png) · [Ground-contact measurements](ground-contact.json) · [Phone co-op after correction](phone-coop-grounded.png)
 
 ## Evidence and acceptance boundary
 
