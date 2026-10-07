@@ -1297,3 +1297,11 @@ progression.feat.emptyHint,,Choose feats from character and skill level rewards.
 combat.enemyTarget.choose,,,Choose an enemy target,
 combat.enemyTarget.health,,,{hp}/{maxHp} HP,
 combat.enemyTarget.label,,,"Target {number}: {name}, {hp} of {maxHp} HP",
+
+creation.abilities.maneuvers,,COMBAT MANEUVER,COMBAT MANEUVER,Choose one Rank 1 combat maneuver after armaments.
+creation.abilities.spells,,STARTING SPELLS,STARTING SPELLS,Choose two distinct Rank 1 spells after armaments.
+creation.abilities.progress,,{chosen}/{count} chosen · Rank {rank},{chosen}/{count} chosen · Rank {rank},{chosen}/{count} chosen · Rank {rank}
+creation.abilities.choose,,Learn ability,Learn ability,Learn this starting ability.
+creation.abilities.remove,,Unpick ability,Unpick ability,Unpick this starting ability choice.
+creation.abilities.chooseLabel,,Learn ability {name},Learn ability {name},Learn ability {name}
+creation.abilities.summary,,Starting ability,Starting ability,Starting ability

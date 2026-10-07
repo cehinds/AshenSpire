@@ -1,0 +1,3497 @@
+[
+  {
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "count": 2,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 102.34375,
+        "sprite": {
+          "x": 21.234375,
+          "y": 138.1875,
+          "width": 80.703125,
+          "height": 102.234375,
+          "top": 138.1875,
+          "right": 101.9375,
+          "bottom": 240.421875,
+          "left": 21.234375
+        },
+        "visibleTop": 138.078125,
+        "intent": null,
+        "leading": {
+          "x": 39.625,
+          "y": 124.203125,
+          "width": 43.921875,
+          "height": 0,
+          "top": 124.203125,
+          "right": 83.546875,
+          "bottom": 124.203125,
+          "left": 39.625
+        },
+        "meters": {
+          "x": 39.625,
+          "y": 243.421875,
+          "width": 43.921875,
+          "height": 13.984375,
+          "top": 243.421875,
+          "right": 83.546875,
+          "bottom": 257.40625,
+          "left": 39.625
+        },
+        "hand": {
+          "x": 0,
+          "y": 268.3125,
+          "width": 320,
+          "height": 207.78125,
+          "top": 268.3125,
+          "right": 320,
+          "bottom": 476.09375,
+          "left": 0
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 102.34375,
+        "sprite": {
+          "x": 184.078125,
+          "y": 78,
+          "width": 119.0625,
+          "height": 165.65625,
+          "top": 78,
+          "right": 303.140625,
+          "bottom": 243.65625,
+          "left": 184.078125
+        },
+        "visibleTop": 141.3125,
+        "intent": {
+          "x": 257.953125,
+          "y": 79.421875,
+          "width": 56,
+          "height": 48,
+          "top": 79.421875,
+          "right": 313.953125,
+          "bottom": 127.421875,
+          "left": 257.953125
+        },
+        "leading": {
+          "x": 263.984375,
+          "y": 79.421875,
+          "width": 43.921875,
+          "height": 48,
+          "top": 79.421875,
+          "right": 307.90625,
+          "bottom": 127.421875,
+          "left": 263.984375
+        },
+        "meters": {
+          "x": 221.640625,
+          "y": 246.65625,
+          "width": 43.921875,
+          "height": 13.984375,
+          "top": 246.65625,
+          "right": 265.5625,
+          "bottom": 260.640625,
+          "left": 221.640625
+        },
+        "hand": {
+          "x": 0,
+          "y": 268.3125,
+          "width": 320,
+          "height": 207.78125,
+          "top": 268.3125,
+          "right": 320,
+          "bottom": 476.09375,
+          "left": 0
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 102.34375,
+        "sprite": {
+          "x": 127.75,
+          "y": 78,
+          "width": 119.0625,
+          "height": 165.65625,
+          "top": 78,
+          "right": 246.8125,
+          "bottom": 243.65625,
+          "left": 127.75
+        },
+        "visibleTop": 141.3125,
+        "intent": {
+          "x": 195.9375,
+          "y": 95.9834213256836,
+          "width": 56,
+          "height": 48.00000762939453,
+          "top": 95.9834213256836,
+          "right": 251.9375,
+          "bottom": 143.98342895507812,
+          "left": 195.9375
+        },
+        "leading": {
+          "x": 201.96875,
+          "y": 95.9834213256836,
+          "width": 43.921875,
+          "height": 48.00000762939453,
+          "top": 95.9834213256836,
+          "right": 245.890625,
+          "bottom": 143.98342895507812,
+          "left": 201.96875
+        },
+        "meters": {
+          "x": 165.3125,
+          "y": 246.65625,
+          "width": 43.921875,
+          "height": 13.984375,
+          "top": 246.65625,
+          "right": 209.234375,
+          "bottom": 260.640625,
+          "left": 165.3125
+        },
+        "hand": {
+          "x": 0,
+          "y": 268.3125,
+          "width": 320,
+          "height": 207.78125,
+          "top": 268.3125,
+          "right": 320,
+          "bottom": 476.09375,
+          "left": 0
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 63.625,
+      "width": 320,
+      "height": 204.6875
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 108.015625,
+          "y": 149.96875,
+          "width": 88,
+          "height": 88,
+          "top": 149.96875,
+          "right": 196.015625,
+          "bottom": 237.96875,
+          "left": 108.015625
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 202.015625,
+          "y": 149.96875,
+          "width": 88,
+          "height": 88,
+          "top": 149.96875,
+          "right": 290.015625,
+          "bottom": 237.96875,
+          "left": 202.015625
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 320,
+      "height": 568
+    },
+    "count": 3,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 113.71527777777777,
+        "sprite": {
+          "x": 22.921875,
+          "y": 126.828125,
+          "width": 89.671875,
+          "height": 113.59375,
+          "top": 126.828125,
+          "right": 112.59375,
+          "bottom": 240.421875,
+          "left": 22.921875
+        },
+        "visibleTop": 126.70659722222223,
+        "intent": null,
+        "leading": {
+          "x": 45.796875,
+          "y": 112.84375,
+          "width": 43.921875,
+          "height": 0,
+          "top": 112.84375,
+          "right": 89.71875,
+          "bottom": 112.84375,
+          "left": 45.796875
+        },
+        "meters": {
+          "x": 45.796875,
+          "y": 243.421875,
+          "width": 43.921875,
+          "height": 13.984375,
+          "top": 243.421875,
+          "right": 89.71875,
+          "bottom": 257.40625,
+          "left": 45.796875
+        },
+        "hand": {
+          "x": 0,
+          "y": 268.3125,
+          "width": 320,
+          "height": 207.78125,
+          "top": 268.3125,
+          "right": 320,
+          "bottom": 476.09375,
+          "left": 0
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 113.71527777777777,
+        "sprite": {
+          "x": 169.640625,
+          "y": 59.578125,
+          "width": 132.28125,
+          "height": 184.0625,
+          "top": 59.578125,
+          "right": 301.921875,
+          "bottom": 243.640625,
+          "left": 169.640625
+        },
+        "visibleTop": 129.92534722222223,
+        "intent": {
+          "x": 257.9375,
+          "y": 68.046875,
+          "width": 56,
+          "height": 48,
+          "top": 68.046875,
+          "right": 313.9375,
+          "bottom": 116.046875,
+          "left": 257.9375
+        },
+        "leading": {
+          "x": 263.96875,
+          "y": 68.046875,
+          "width": 43.921875,
+          "height": 48,
+          "top": 68.046875,
+          "right": 307.890625,
+          "bottom": 116.046875,
+          "left": 263.96875
+        },
+        "meters": {
+          "x": 213.8125,
+          "y": 246.640625,
+          "width": 43.921875,
+          "height": 13.984375,
+          "top": 246.640625,
+          "right": 257.734375,
+          "bottom": 260.625,
+          "left": 213.8125
+        },
+        "hand": {
+          "x": 0,
+          "y": 268.3125,
+          "width": 320,
+          "height": 207.78125,
+          "top": 268.3125,
+          "right": 320,
+          "bottom": 476.09375,
+          "left": 0
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 113.71527777777777,
+        "sprite": {
+          "x": 113.328125,
+          "y": 59.578125,
+          "width": 132.28125,
+          "height": 184.0625,
+          "top": 59.578125,
+          "right": 245.609375,
+          "bottom": 243.640625,
+          "left": 113.328125
+        },
+        "visibleTop": 129.92534722222223,
+        "intent": {
+          "x": 134.015625,
+          "y": 95.96858215332031,
+          "width": 56,
+          "height": 48,
+          "top": 95.96858215332031,
+          "right": 190.015625,
+          "bottom": 143.9685821533203,
+          "left": 134.015625
+        },
+        "leading": {
+          "x": 140.046875,
+          "y": 95.96858215332031,
+          "width": 43.921875,
+          "height": 48,
+          "top": 95.96858215332031,
+          "right": 183.96875,
+          "bottom": 143.9685821533203,
+          "left": 140.046875
+        },
+        "meters": {
+          "x": 121.84819030761719,
+          "y": 246.640625,
+          "width": 43.921875,
+          "height": 13.984375,
+          "top": 246.640625,
+          "right": 165.7700653076172,
+          "bottom": 260.625,
+          "left": 121.84819030761719
+        },
+        "hand": {
+          "x": 0,
+          "y": 268.3125,
+          "width": 320,
+          "height": 207.78125,
+          "top": 268.3125,
+          "right": 320,
+          "bottom": 476.09375,
+          "left": 0
+        }
+      },
+      {
+        "id": "e3",
+        "visibleHeight": 113.71527777777777,
+        "sprite": {
+          "x": 163.3125,
+          "y": 59.578125,
+          "width": 132.28125,
+          "height": 184.0625,
+          "top": 59.578125,
+          "right": 295.59375,
+          "bottom": 243.640625,
+          "left": 163.3125
+        },
+        "visibleTop": 129.92534722222223,
+        "intent": {
+          "x": 196.015625,
+          "y": 95.96858215332031,
+          "width": 56,
+          "height": 48,
+          "top": 95.96858215332031,
+          "right": 252.015625,
+          "bottom": 143.9685821533203,
+          "left": 196.015625
+        },
+        "leading": {
+          "x": 202.046875,
+          "y": 95.96858215332031,
+          "width": 43.921875,
+          "height": 48,
+          "top": 95.96858215332031,
+          "right": 245.96875,
+          "bottom": 143.9685821533203,
+          "left": 202.046875
+        },
+        "meters": {
+          "x": 167.8521728515625,
+          "y": 246.640625,
+          "width": 43.921875,
+          "height": 13.984375,
+          "top": 246.640625,
+          "right": 211.7740478515625,
+          "bottom": 260.625,
+          "left": 167.8521728515625
+        },
+        "hand": {
+          "x": 0,
+          "y": 268.3125,
+          "width": 320,
+          "height": 207.78125,
+          "top": 268.3125,
+          "right": 320,
+          "bottom": 476.09375,
+          "left": 0
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 63.625,
+      "width": 320,
+      "height": 204.6875
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 245.109375,
+          "y": 158.828125,
+          "width": 56,
+          "height": 56,
+          "top": 158.828125,
+          "right": 301.109375,
+          "bottom": 214.828125,
+          "left": 245.109375
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 183.109375,
+          "y": 158.828125,
+          "width": 56,
+          "height": 56,
+          "top": 158.828125,
+          "right": 239.109375,
+          "bottom": 214.828125,
+          "left": 183.109375
+        },
+        "hit": true
+      },
+      {
+        "id": "e3",
+        "rect": {
+          "x": 121.109375,
+          "y": 158.828125,
+          "width": 56,
+          "height": 56,
+          "top": 158.828125,
+          "right": 177.109375,
+          "bottom": 214.828125,
+          "left": 121.109375
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "count": 2,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 148.2734375,
+        "sprite": {
+          "x": 28.03125,
+          "y": 178.625,
+          "width": 117,
+          "height": 148.203125,
+          "top": 178.625,
+          "right": 145.03125,
+          "bottom": 326.828125,
+          "left": 28.03125
+        },
+        "visibleTop": 178.5546875,
+        "intent": null,
+        "leading": {
+          "x": 60.796875,
+          "y": 164.640625,
+          "width": 51.46875,
+          "height": 0,
+          "top": 164.640625,
+          "right": 112.265625,
+          "bottom": 164.640625,
+          "left": 60.796875
+        },
+        "meters": {
+          "x": 60.796875,
+          "y": 329.828125,
+          "width": 51.46875,
+          "height": 13.984375,
+          "top": 329.828125,
+          "right": 112.265625,
+          "bottom": 343.8125,
+          "left": 60.796875
+        },
+        "hand": {
+          "x": 0,
+          "y": 367.140625,
+          "width": 375,
+          "height": 207.90625,
+          "top": 367.140625,
+          "right": 375,
+          "bottom": 575.046875,
+          "left": 0
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 148.2734375,
+        "sprite": {
+          "x": 180.71875,
+          "y": 91.359375,
+          "width": 172.59375,
+          "height": 240.140625,
+          "top": 91.359375,
+          "right": 353.3125,
+          "bottom": 331.5,
+          "left": 180.71875
+        },
+        "visibleTop": 183.2265625,
+        "intent": {
+          "x": 312.953125,
+          "y": 121.296875,
+          "width": 56,
+          "height": 48,
+          "top": 121.296875,
+          "right": 368.953125,
+          "bottom": 169.296875,
+          "left": 312.953125
+        },
+        "leading": {
+          "x": 315.21875,
+          "y": 121.296875,
+          "width": 51.46875,
+          "height": 48,
+          "top": 121.296875,
+          "right": 366.6875,
+          "bottom": 169.296875,
+          "left": 315.21875
+        },
+        "meters": {
+          "x": 241.28125,
+          "y": 334.5,
+          "width": 51.46875,
+          "height": 13.984375,
+          "top": 334.5,
+          "right": 292.75,
+          "bottom": 348.484375,
+          "left": 241.28125
+        },
+        "hand": {
+          "x": 0,
+          "y": 367.140625,
+          "width": 375,
+          "height": 207.90625,
+          "top": 367.140625,
+          "right": 375,
+          "bottom": 575.046875,
+          "left": 0
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 148.2734375,
+        "sprite": {
+          "x": 114.71875,
+          "y": 91.359375,
+          "width": 172.59375,
+          "height": 240.140625,
+          "top": 91.359375,
+          "right": 287.3125,
+          "bottom": 331.5,
+          "left": 114.71875
+        },
+        "visibleTop": 183.2265625,
+        "intent": {
+          "x": 250.953125,
+          "y": 121.296875,
+          "width": 56,
+          "height": 48,
+          "top": 121.296875,
+          "right": 306.953125,
+          "bottom": 169.296875,
+          "left": 250.953125
+        },
+        "leading": {
+          "x": 253.21875,
+          "y": 121.296875,
+          "width": 51.46875,
+          "height": 48,
+          "top": 121.296875,
+          "right": 304.6875,
+          "bottom": 169.296875,
+          "left": 253.21875
+        },
+        "meters": {
+          "x": 175.28125,
+          "y": 334.5,
+          "width": 51.46875,
+          "height": 13.984375,
+          "top": 334.5,
+          "right": 226.75,
+          "bottom": 348.484375,
+          "left": 175.28125
+        },
+        "hand": {
+          "x": 0,
+          "y": 367.140625,
+          "width": 375,
+          "height": 207.90625,
+          "top": 367.140625,
+          "right": 375,
+          "bottom": 575.046875,
+          "left": 0
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 70.59375,
+      "width": 375,
+      "height": 296.546875
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 278.703125,
+          "y": 211.34375,
+          "width": 88,
+          "height": 88,
+          "top": 211.34375,
+          "right": 366.703125,
+          "bottom": 299.34375,
+          "left": 278.703125
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 184.703125,
+          "y": 211.34375,
+          "width": 88,
+          "height": 88,
+          "top": 211.34375,
+          "right": 272.703125,
+          "bottom": 299.34375,
+          "left": 184.703125
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "count": 3,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 161.52985074626866,
+        "sprite": {
+          "x": 30,
+          "y": 165.375,
+          "width": 127.46875,
+          "height": 161.453125,
+          "top": 165.375,
+          "right": 157.46875,
+          "bottom": 326.828125,
+          "left": 30
+        },
+        "visibleTop": 165.29827425373134,
+        "intent": null,
+        "leading": {
+          "x": 68,
+          "y": 151.390625,
+          "width": 51.46875,
+          "height": 0,
+          "top": 151.390625,
+          "right": 119.46875,
+          "bottom": 151.390625,
+          "left": 68
+        },
+        "meters": {
+          "x": 68,
+          "y": 329.828125,
+          "width": 51.46875,
+          "height": 13.984375,
+          "top": 329.828125,
+          "right": 119.46875,
+          "bottom": 343.8125,
+          "left": 68
+        },
+        "hand": {
+          "x": 0,
+          "y": 367.140625,
+          "width": 375,
+          "height": 207.90625,
+          "top": 367.140625,
+          "right": 375,
+          "bottom": 575.046875,
+          "left": 0
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 161.52985074626866,
+        "sprite": {
+          "x": 163.875,
+          "y": 69.875,
+          "width": 188.03125,
+          "height": 261.609375,
+          "top": 69.875,
+          "right": 351.90625,
+          "bottom": 331.484375,
+          "left": 163.875
+        },
+        "visibleTop": 169.95452425373134,
+        "intent": {
+          "x": 312.9375,
+          "y": 108.03125,
+          "width": 56,
+          "height": 48,
+          "top": 108.03125,
+          "right": 368.9375,
+          "bottom": 156.03125,
+          "left": 312.9375
+        },
+        "leading": {
+          "x": 315.203125,
+          "y": 108.03125,
+          "width": 51.46875,
+          "height": 48,
+          "top": 108.03125,
+          "right": 366.671875,
+          "bottom": 156.03125,
+          "left": 315.203125
+        },
+        "meters": {
+          "x": 232.15625,
+          "y": 334.484375,
+          "width": 51.46875,
+          "height": 13.984375,
+          "top": 334.484375,
+          "right": 283.625,
+          "bottom": 348.46875,
+          "left": 232.15625
+        },
+        "hand": {
+          "x": 0,
+          "y": 367.140625,
+          "width": 375,
+          "height": 207.90625,
+          "top": 367.140625,
+          "right": 375,
+          "bottom": 575.046875,
+          "left": 0
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 161.52985074626866,
+        "sprite": {
+          "x": 97.875,
+          "y": 69.875,
+          "width": 188.03125,
+          "height": 261.609375,
+          "top": 69.875,
+          "right": 285.90625,
+          "bottom": 331.484375,
+          "left": 97.875
+        },
+        "visibleTop": 169.95452425373134,
+        "intent": {
+          "x": 188.96875,
+          "y": 108.03125,
+          "width": 56,
+          "height": 48,
+          "top": 108.03125,
+          "right": 244.96875,
+          "bottom": 156.03125,
+          "left": 188.96875
+        },
+        "leading": {
+          "x": 191.234375,
+          "y": 108.03125,
+          "width": 51.46875,
+          "height": 48,
+          "top": 108.03125,
+          "right": 242.703125,
+          "bottom": 156.03125,
+          "left": 191.234375
+        },
+        "meters": {
+          "x": 125.23512268066406,
+          "y": 334.484375,
+          "width": 51.46875,
+          "height": 13.984375,
+          "top": 334.484375,
+          "right": 176.70387268066406,
+          "bottom": 348.46875,
+          "left": 125.23512268066406
+        },
+        "hand": {
+          "x": 0,
+          "y": 367.140625,
+          "width": 375,
+          "height": 207.90625,
+          "top": 367.140625,
+          "right": 375,
+          "bottom": 575.046875,
+          "left": 0
+        }
+      },
+      {
+        "id": "e3",
+        "visibleHeight": 161.52985074626866,
+        "sprite": {
+          "x": 156.453125,
+          "y": 58.6875,
+          "width": 188.03125,
+          "height": 261.609375,
+          "top": 58.6875,
+          "right": 344.484375,
+          "bottom": 320.296875,
+          "left": 156.453125
+        },
+        "visibleTop": 158.76702425373134,
+        "intent": {
+          "x": 250.96875,
+          "y": 96.84375,
+          "width": 56,
+          "height": 48,
+          "top": 96.84375,
+          "right": 306.96875,
+          "bottom": 144.84375,
+          "left": 250.96875
+        },
+        "leading": {
+          "x": 253.234375,
+          "y": 96.84375,
+          "width": 51.46875,
+          "height": 48,
+          "top": 96.84375,
+          "right": 304.703125,
+          "bottom": 144.84375,
+          "left": 253.234375
+        },
+        "meters": {
+          "x": 178.70591735839844,
+          "y": 323.296875,
+          "width": 51.46875,
+          "height": 13.984375,
+          "top": 323.296875,
+          "right": 230.17466735839844,
+          "bottom": 337.28125,
+          "left": 178.70591735839844
+        },
+        "hand": {
+          "x": 0,
+          "y": 367.140625,
+          "width": 375,
+          "height": 207.90625,
+          "top": 367.140625,
+          "right": 375,
+          "bottom": 575.046875,
+          "left": 0
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 70.59375,
+      "width": 375,
+      "height": 296.546875
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 274.9375,
+          "y": 240.03125,
+          "width": 72,
+          "height": 72,
+          "top": 240.03125,
+          "right": 346.9375,
+          "bottom": 312.03125,
+          "left": 274.9375
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 196.9375,
+          "y": 240.03125,
+          "width": 72,
+          "height": 72,
+          "top": 240.03125,
+          "right": 268.9375,
+          "bottom": 312.03125,
+          "left": 196.9375
+        },
+        "hit": true
+      },
+      {
+        "id": "e3",
+        "rect": {
+          "x": 274.9375,
+          "y": 162.03125,
+          "width": 72,
+          "height": 72,
+          "top": 162.03125,
+          "right": 346.9375,
+          "bottom": 234.03125,
+          "left": 274.9375
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "count": 2,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 168.43283582089552,
+        "sprite": {
+          "x": 31.0625,
+          "y": 274.171875,
+          "width": 132.859375,
+          "height": 168.296875,
+          "top": 274.171875,
+          "right": 163.921875,
+          "bottom": 442.46875,
+          "left": 31.0625
+        },
+        "visibleTop": 274.03591417910445,
+        "intent": null,
+        "leading": {
+          "x": 70.71875,
+          "y": 260.1875,
+          "width": 53.53125,
+          "height": 0,
+          "top": 260.1875,
+          "right": 124.25,
+          "bottom": 260.1875,
+          "left": 70.71875
+        },
+        "meters": {
+          "x": 70.71875,
+          "y": 445.46875,
+          "width": 53.53125,
+          "height": 13.984375,
+          "top": 445.46875,
+          "right": 124.25,
+          "bottom": 459.453125,
+          "left": 70.71875
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 390,
+          "height": 253.25,
+          "top": 498.828125,
+          "right": 390,
+          "bottom": 752.078125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 168.43283582089552,
+        "sprite": {
+          "x": 170.15625,
+          "y": 176.265625,
+          "width": 195.984375,
+          "height": 272.6875,
+          "top": 176.265625,
+          "right": 366.140625,
+          "bottom": 448.953125,
+          "left": 170.15625
+        },
+        "visibleTop": 280.52028917910445,
+        "intent": {
+          "x": 327.90625,
+          "y": 218.671875,
+          "width": 56,
+          "height": 48,
+          "top": 218.671875,
+          "right": 383.90625,
+          "bottom": 266.671875,
+          "left": 327.90625
+        },
+        "leading": {
+          "x": 329.140625,
+          "y": 218.671875,
+          "width": 53.53125,
+          "height": 48,
+          "top": 218.671875,
+          "right": 382.671875,
+          "bottom": 266.671875,
+          "left": 329.140625
+        },
+        "meters": {
+          "x": 241.375,
+          "y": 451.953125,
+          "width": 53.53125,
+          "height": 13.984375,
+          "top": 451.953125,
+          "right": 294.90625,
+          "bottom": 465.9375,
+          "left": 241.375
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 390,
+          "height": 253.25,
+          "top": 498.828125,
+          "right": 390,
+          "bottom": 752.078125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 168.43283582089552,
+        "sprite": {
+          "x": 101.515625,
+          "y": 176.265625,
+          "width": 195.984375,
+          "height": 272.6875,
+          "top": 176.265625,
+          "right": 297.5,
+          "bottom": 448.953125,
+          "left": 101.515625
+        },
+        "visibleTop": 280.52028917910445,
+        "intent": {
+          "x": 265.90625,
+          "y": 218.671875,
+          "width": 56,
+          "height": 48,
+          "top": 218.671875,
+          "right": 321.90625,
+          "bottom": 266.671875,
+          "left": 265.90625
+        },
+        "leading": {
+          "x": 267.140625,
+          "y": 218.671875,
+          "width": 53.53125,
+          "height": 48,
+          "top": 218.671875,
+          "right": 320.671875,
+          "bottom": 266.671875,
+          "left": 267.140625
+        },
+        "meters": {
+          "x": 172.734375,
+          "y": 451.953125,
+          "width": 53.53125,
+          "height": 13.984375,
+          "top": 451.953125,
+          "right": 226.265625,
+          "bottom": 465.9375,
+          "left": 172.734375
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 390,
+          "height": 253.25,
+          "top": 498.828125,
+          "right": 390,
+          "bottom": 752.078125,
+          "left": 0
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 84.40625,
+      "width": 390,
+      "height": 414.421875
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 290,
+          "y": 320.796875,
+          "width": 88,
+          "height": 88,
+          "top": 320.796875,
+          "right": 378,
+          "bottom": 408.796875,
+          "left": 290
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 196,
+          "y": 320.796875,
+          "width": 88,
+          "height": 88,
+          "top": 320.796875,
+          "right": 284,
+          "bottom": 408.796875,
+          "left": 196
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "count": 3,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 168.43283582089552,
+        "sprite": {
+          "x": 31.0625,
+          "y": 274.171875,
+          "width": 132.859375,
+          "height": 168.296875,
+          "top": 274.171875,
+          "right": 163.921875,
+          "bottom": 442.46875,
+          "left": 31.0625
+        },
+        "visibleTop": 274.03591417910445,
+        "intent": null,
+        "leading": {
+          "x": 70.71875,
+          "y": 260.1875,
+          "width": 53.53125,
+          "height": 0,
+          "top": 260.1875,
+          "right": 124.25,
+          "bottom": 260.1875,
+          "left": 70.71875
+        },
+        "meters": {
+          "x": 70.71875,
+          "y": 445.46875,
+          "width": 53.53125,
+          "height": 13.984375,
+          "top": 445.46875,
+          "right": 124.25,
+          "bottom": 459.453125,
+          "left": 70.71875
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 390,
+          "height": 253.25,
+          "top": 498.828125,
+          "right": 390,
+          "bottom": 752.078125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 168.43283582089552,
+        "sprite": {
+          "x": 170.15625,
+          "y": 176.265625,
+          "width": 195.984375,
+          "height": 272.6875,
+          "top": 176.265625,
+          "right": 366.140625,
+          "bottom": 448.953125,
+          "left": 170.15625
+        },
+        "visibleTop": 280.52028917910445,
+        "intent": {
+          "x": 327.90625,
+          "y": 218.671875,
+          "width": 56,
+          "height": 48,
+          "top": 218.671875,
+          "right": 383.90625,
+          "bottom": 266.671875,
+          "left": 327.90625
+        },
+        "leading": {
+          "x": 329.140625,
+          "y": 218.671875,
+          "width": 53.53125,
+          "height": 48,
+          "top": 218.671875,
+          "right": 382.671875,
+          "bottom": 266.671875,
+          "left": 329.140625
+        },
+        "meters": {
+          "x": 241.375,
+          "y": 451.953125,
+          "width": 53.53125,
+          "height": 13.984375,
+          "top": 451.953125,
+          "right": 294.90625,
+          "bottom": 465.9375,
+          "left": 241.375
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 390,
+          "height": 253.25,
+          "top": 498.828125,
+          "right": 390,
+          "bottom": 752.078125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 168.43283582089552,
+        "sprite": {
+          "x": 101.515625,
+          "y": 176.265625,
+          "width": 195.984375,
+          "height": 272.6875,
+          "top": 176.265625,
+          "right": 297.5,
+          "bottom": 448.953125,
+          "left": 101.515625
+        },
+        "visibleTop": 280.52028917910445,
+        "intent": {
+          "x": 265.90625,
+          "y": 218.671875,
+          "width": 56,
+          "height": 48,
+          "top": 218.671875,
+          "right": 321.90625,
+          "bottom": 266.671875,
+          "left": 265.90625
+        },
+        "leading": {
+          "x": 267.140625,
+          "y": 218.671875,
+          "width": 53.53125,
+          "height": 48,
+          "top": 218.671875,
+          "right": 320.671875,
+          "bottom": 266.671875,
+          "left": 267.140625
+        },
+        "meters": {
+          "x": 172.734375,
+          "y": 451.953125,
+          "width": 53.53125,
+          "height": 13.984375,
+          "top": 451.953125,
+          "right": 226.265625,
+          "bottom": 465.9375,
+          "left": 172.734375
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 390,
+          "height": 253.25,
+          "top": 498.828125,
+          "right": 390,
+          "bottom": 752.078125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e3",
+        "visibleHeight": 168.43283582089552,
+        "sprite": {
+          "x": 162.4375,
+          "y": 68.96875,
+          "width": 195.984375,
+          "height": 272.6875,
+          "top": 68.96875,
+          "right": 358.421875,
+          "bottom": 341.65625,
+          "left": 162.4375
+        },
+        "visibleTop": 173.22341417910448,
+        "intent": {
+          "x": 327.90625,
+          "y": 111.375,
+          "width": 56,
+          "height": 48,
+          "top": 111.375,
+          "right": 383.90625,
+          "bottom": 159.375,
+          "left": 327.90625
+        },
+        "leading": {
+          "x": 329.140625,
+          "y": 111.375,
+          "width": 53.53125,
+          "height": 48,
+          "top": 111.375,
+          "right": 382.671875,
+          "bottom": 159.375,
+          "left": 329.140625
+        },
+        "meters": {
+          "x": 233.65625,
+          "y": 344.65625,
+          "width": 53.53125,
+          "height": 13.984375,
+          "top": 344.65625,
+          "right": 287.1875,
+          "bottom": 358.640625,
+          "left": 233.65625
+        },
+        "hand": {
+          "x": 0,
+          "y": 498.828125,
+          "width": 390,
+          "height": 253.25,
+          "top": 498.828125,
+          "right": 390,
+          "bottom": 752.078125,
+          "left": 0
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 84.40625,
+      "width": 390,
+      "height": 414.421875
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 100.96875,
+          "y": 124.671875,
+          "width": 88,
+          "height": 88,
+          "top": 124.671875,
+          "right": 188.96875,
+          "bottom": 212.671875,
+          "left": 100.96875
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 194.96875,
+          "y": 312.671875,
+          "width": 88,
+          "height": 88,
+          "top": 312.671875,
+          "right": 282.96875,
+          "bottom": 400.671875,
+          "left": 194.96875
+        },
+        "hit": true
+      },
+      {
+        "id": "e3",
+        "rect": {
+          "x": 194.96875,
+          "y": 124.671875,
+          "width": 88,
+          "height": 88,
+          "top": 124.671875,
+          "right": 282.96875,
+          "bottom": 212.671875,
+          "left": 194.96875
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "count": 2,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 25.296875,
+        "sprite": {
+          "x": 67.15625,
+          "y": 111.484375,
+          "width": 19.953125,
+          "height": 25.28125,
+          "top": 111.484375,
+          "right": 87.109375,
+          "bottom": 136.765625,
+          "left": 67.15625
+        },
+        "visibleTop": 111.46875,
+        "intent": null,
+        "leading": {
+          "x": 19.203125,
+          "y": 97.5,
+          "width": 115.859375,
+          "height": 0,
+          "top": 97.5,
+          "right": 135.0625,
+          "bottom": 97.5,
+          "left": 19.203125
+        },
+        "meters": {
+          "x": 19.203125,
+          "y": 139.765625,
+          "width": 115.859375,
+          "height": 13.984375,
+          "top": 139.765625,
+          "right": 135.0625,
+          "bottom": 153.75,
+          "left": 19.203125
+        },
+        "hand": {
+          "x": 123.546875,
+          "y": 187,
+          "width": 596.90625,
+          "height": 203,
+          "top": 187,
+          "right": 720.453125,
+          "bottom": 390,
+          "left": 123.546875
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 25.296875,
+        "sprite": {
+          "x": 773.453125,
+          "y": 98.03125,
+          "width": 29.453125,
+          "height": 40.96875,
+          "top": 98.03125,
+          "right": 802.90625,
+          "bottom": 139,
+          "left": 773.453125
+        },
+        "visibleTop": 113.703125,
+        "intent": {
+          "x": 737.703125,
+          "y": 51.71875,
+          "width": 100.28125,
+          "height": 48,
+          "top": 51.71875,
+          "right": 837.984375,
+          "bottom": 99.71875,
+          "left": 737.703125
+        },
+        "leading": {
+          "x": 729.921875,
+          "y": 51.71875,
+          "width": 115.859375,
+          "height": 48,
+          "top": 51.71875,
+          "right": 845.78125,
+          "bottom": 99.71875,
+          "left": 729.921875
+        },
+        "meters": {
+          "x": 728.1410522460938,
+          "y": 142,
+          "width": 115.859375,
+          "height": 13.984375,
+          "top": 142,
+          "right": 844.0004272460938,
+          "bottom": 155.984375,
+          "left": 728.1410522460938
+        },
+        "hand": {
+          "x": 123.546875,
+          "y": 187,
+          "width": 596.90625,
+          "height": 203,
+          "top": 187,
+          "right": 720.453125,
+          "bottom": 390,
+          "left": 123.546875
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 25.296875,
+        "sprite": {
+          "x": 624.90625,
+          "y": 98.03125,
+          "width": 29.453125,
+          "height": 40.96875,
+          "top": 98.03125,
+          "right": 654.359375,
+          "bottom": 139,
+          "left": 624.90625
+        },
+        "visibleTop": 113.703125,
+        "intent": {
+          "x": 610.96875,
+          "y": 51.71875,
+          "width": 57.328125,
+          "height": 48,
+          "top": 51.71875,
+          "right": 668.296875,
+          "bottom": 99.71875,
+          "left": 610.96875
+        },
+        "leading": {
+          "x": 581.703125,
+          "y": 51.71875,
+          "width": 115.859375,
+          "height": 48,
+          "top": 51.71875,
+          "right": 697.5625,
+          "bottom": 99.71875,
+          "left": 581.703125
+        },
+        "meters": {
+          "x": 581.703125,
+          "y": 142,
+          "width": 115.859375,
+          "height": 13.984375,
+          "top": 142,
+          "right": 697.5625,
+          "bottom": 155.984375,
+          "left": 581.703125
+        },
+        "hand": {
+          "x": 123.546875,
+          "y": 187,
+          "width": 596.90625,
+          "height": 203,
+          "top": 187,
+          "right": 720.453125,
+          "bottom": 390,
+          "left": 123.546875
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 45.703125,
+      "width": 844,
+      "height": 141.296875
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 393.703125,
+          "y": 82.34375,
+          "width": 88,
+          "height": 88,
+          "top": 82.34375,
+          "right": 481.703125,
+          "bottom": 170.34375,
+          "left": 393.703125
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 487.703125,
+          "y": 82.34375,
+          "width": 88,
+          "height": 88,
+          "top": 82.34375,
+          "right": 575.703125,
+          "bottom": 170.34375,
+          "left": 487.703125
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 844,
+      "height": 390
+    },
+    "count": 3,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 1.1111111111111112,
+        "sprite": {
+          "x": 76.6875,
+          "y": 135.671875,
+          "width": 0.875,
+          "height": 1.109375,
+          "top": 135.671875,
+          "right": 77.5625,
+          "bottom": 136.78125,
+          "left": 76.6875
+        },
+        "visibleTop": 135.67013888888889,
+        "intent": null,
+        "leading": {
+          "x": 19.203125,
+          "y": 121.6875,
+          "width": 115.859375,
+          "height": 0,
+          "top": 121.6875,
+          "right": 135.0625,
+          "bottom": 121.6875,
+          "left": 19.203125
+        },
+        "meters": {
+          "x": 19.203125,
+          "y": 139.78125,
+          "width": 115.859375,
+          "height": 13.984375,
+          "top": 139.78125,
+          "right": 135.0625,
+          "bottom": 153.765625,
+          "left": 19.203125
+        },
+        "hand": {
+          "x": 123.546875,
+          "y": 187,
+          "width": 596.90625,
+          "height": 203,
+          "top": 187,
+          "right": 720.453125,
+          "bottom": 390,
+          "left": 123.546875
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 1.1111111111111112,
+        "sprite": {
+          "x": 787.53125,
+          "y": 137.1875,
+          "width": 1.28125,
+          "height": 1.796875,
+          "top": 137.1875,
+          "right": 788.8125,
+          "bottom": 138.984375,
+          "left": 787.53125
+        },
+        "visibleTop": 137.87326388888889,
+        "intent": {
+          "x": 737.703125,
+          "y": 75.890625,
+          "width": 100.28125,
+          "height": 48,
+          "top": 75.890625,
+          "right": 837.984375,
+          "bottom": 123.890625,
+          "left": 737.703125
+        },
+        "leading": {
+          "x": 729.921875,
+          "y": 75.890625,
+          "width": 115.859375,
+          "height": 48,
+          "top": 75.890625,
+          "right": 845.78125,
+          "bottom": 123.890625,
+          "left": 729.921875
+        },
+        "meters": {
+          "x": 728.1488647460938,
+          "y": 150.88873291015625,
+          "width": 115.859375,
+          "height": 13.984375,
+          "top": 150.88873291015625,
+          "right": 844.0082397460938,
+          "bottom": 164.87310791015625,
+          "left": 728.1488647460938
+        },
+        "hand": {
+          "x": 123.546875,
+          "y": 187,
+          "width": 596.90625,
+          "height": 203,
+          "top": 187,
+          "right": 720.453125,
+          "bottom": 390,
+          "left": 123.546875
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 1.1111111111111112,
+        "sprite": {
+          "x": 638.984375,
+          "y": 137.1875,
+          "width": 1.28125,
+          "height": 1.796875,
+          "top": 137.1875,
+          "right": 640.265625,
+          "bottom": 138.984375,
+          "left": 638.984375
+        },
+        "visibleTop": 137.87326388888889,
+        "intent": {
+          "x": 568.109375,
+          "y": 75.890625,
+          "width": 57.328125,
+          "height": 48,
+          "top": 75.890625,
+          "right": 625.4375,
+          "bottom": 123.890625,
+          "left": 568.109375
+        },
+        "leading": {
+          "x": 538.84375,
+          "y": 75.890625,
+          "width": 115.859375,
+          "height": 48,
+          "top": 75.890625,
+          "right": 654.703125,
+          "bottom": 123.890625,
+          "left": 538.84375
+        },
+        "meters": {
+          "x": 492.44873046875,
+          "y": 150.88873291015625,
+          "width": 115.859375,
+          "height": 13.984375,
+          "top": 150.88873291015625,
+          "right": 608.30810546875,
+          "bottom": 164.87310791015625,
+          "left": 492.44873046875
+        },
+        "hand": {
+          "x": 123.546875,
+          "y": 187,
+          "width": 596.90625,
+          "height": 203,
+          "top": 187,
+          "right": 720.453125,
+          "bottom": 390,
+          "left": 123.546875
+        }
+      },
+      {
+        "id": "e3",
+        "visibleHeight": 1.1111111111111112,
+        "sprite": {
+          "x": 770.828125,
+          "y": 113.015625,
+          "width": 1.28125,
+          "height": 1.796875,
+          "top": 113.015625,
+          "right": 772.109375,
+          "bottom": 114.8125,
+          "left": 770.828125
+        },
+        "visibleTop": 113.70138888888889,
+        "intent": {
+          "x": 631.453125,
+          "y": 51.71875,
+          "width": 100.28125,
+          "height": 48,
+          "top": 51.71875,
+          "right": 731.734375,
+          "bottom": 99.71875,
+          "left": 631.453125
+        },
+        "leading": {
+          "x": 623.671875,
+          "y": 51.71875,
+          "width": 115.859375,
+          "height": 48,
+          "top": 51.71875,
+          "right": 739.53125,
+          "bottom": 99.71875,
+          "left": 623.671875
+        },
+        "meters": {
+          "x": 610.3110961914062,
+          "y": 150.88357543945312,
+          "width": 115.859375,
+          "height": 13.984375,
+          "top": 150.88357543945312,
+          "right": 726.1704711914062,
+          "bottom": 164.86795043945312,
+          "left": 610.3110961914062
+        },
+        "hand": {
+          "x": 123.546875,
+          "y": 187,
+          "width": 596.90625,
+          "height": 203,
+          "top": 187,
+          "right": 720.453125,
+          "bottom": 390,
+          "left": 123.546875
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 45.703125,
+      "width": 844,
+      "height": 141.296875
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 210.4375,
+          "y": 76.859375,
+          "width": 88,
+          "height": 88,
+          "top": 76.859375,
+          "right": 298.4375,
+          "bottom": 164.859375,
+          "left": 210.4375
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 398.4375,
+          "y": 76.859375,
+          "width": 88,
+          "height": 88,
+          "top": 76.859375,
+          "right": 486.4375,
+          "bottom": 164.859375,
+          "left": 398.4375
+        },
+        "hit": true
+      },
+      {
+        "id": "e3",
+        "rect": {
+          "x": 304.4375,
+          "y": 76.859375,
+          "width": 88,
+          "height": 88,
+          "top": 76.859375,
+          "right": 392.4375,
+          "bottom": 164.859375,
+          "left": 304.4375
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "count": 2,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 129.72079810679557,
+        "sprite": {
+          "x": 80.40625,
+          "y": 320.9375,
+          "width": 102.40625,
+          "height": 129.71875,
+          "top": 320.9375,
+          "right": 182.8125,
+          "bottom": 450.65625,
+          "left": 80.40625
+        },
+        "visibleTop": 320.93545189320446,
+        "intent": null,
+        "leading": {
+          "x": 32.78125,
+          "y": 306.9375,
+          "width": 197.671875,
+          "height": 0,
+          "top": 306.9375,
+          "right": 230.453125,
+          "bottom": 306.9375,
+          "left": 32.78125
+        },
+        "meters": {
+          "x": 32.78125,
+          "y": 453.65625,
+          "width": 197.671875,
+          "height": 14,
+          "top": 453.65625,
+          "right": 230.453125,
+          "bottom": 467.65625,
+          "left": 32.78125
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1440,
+          "height": 270,
+          "top": 507.28125,
+          "right": 1440,
+          "bottom": 777.28125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 129.72079810679557,
+        "sprite": {
+          "x": 1269.234375,
+          "y": 247.03125,
+          "width": 151.0625,
+          "height": 210.171875,
+          "top": 247.03125,
+          "right": 1420.296875,
+          "bottom": 457.203125,
+          "left": 1269.234375
+        },
+        "visibleTop": 327.48232689320446,
+        "intent": {
+          "x": 1289.546875,
+          "y": 265.484375,
+          "width": 110.4375,
+          "height": 48,
+          "top": 265.484375,
+          "right": 1399.984375,
+          "bottom": 313.484375,
+          "left": 1289.546875
+        },
+        "leading": {
+          "x": 1245.9375,
+          "y": 265.484375,
+          "width": 197.671875,
+          "height": 48,
+          "top": 265.484375,
+          "right": 1443.609375,
+          "bottom": 313.484375,
+          "left": 1245.9375
+        },
+        "meters": {
+          "x": 1242.3359375,
+          "y": 460.203125,
+          "width": 197.671875,
+          "height": 14,
+          "top": 460.203125,
+          "right": 1440.0078125,
+          "bottom": 474.203125,
+          "left": 1242.3359375
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1440,
+          "height": 270,
+          "top": 507.28125,
+          "right": 1440,
+          "bottom": 777.28125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 129.72079810679557,
+        "sprite": {
+          "x": 1015.796875,
+          "y": 247.03125,
+          "width": 151.0625,
+          "height": 210.171875,
+          "top": 247.03125,
+          "right": 1166.859375,
+          "bottom": 457.203125,
+          "left": 1015.796875
+        },
+        "visibleTop": 327.48232689320446,
+        "intent": {
+          "x": 1057.59375,
+          "y": 265.484375,
+          "width": 67.484375,
+          "height": 48,
+          "top": 265.484375,
+          "right": 1125.078125,
+          "bottom": 313.484375,
+          "left": 1057.59375
+        },
+        "leading": {
+          "x": 992.5,
+          "y": 265.484375,
+          "width": 197.671875,
+          "height": 48,
+          "top": 265.484375,
+          "right": 1190.171875,
+          "bottom": 313.484375,
+          "left": 992.5
+        },
+        "meters": {
+          "x": 992.5,
+          "y": 460.203125,
+          "width": 197.671875,
+          "height": 14,
+          "top": 460.203125,
+          "right": 1190.171875,
+          "bottom": 474.203125,
+          "left": 992.5
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1440,
+          "height": 270,
+          "top": 507.28125,
+          "right": 1440,
+          "bottom": 777.28125,
+          "left": 0
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 90,
+      "width": 1440,
+      "height": 417.28125
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 1316,
+          "y": 291.03125,
+          "width": 88,
+          "height": 88,
+          "top": 291.03125,
+          "right": 1404,
+          "bottom": 379.03125,
+          "left": 1316
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 1034,
+          "y": 291.03125,
+          "width": 88,
+          "height": 88,
+          "top": 291.03125,
+          "right": 1122,
+          "bottom": 379.03125,
+          "left": 1034
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "count": 3,
+    "geometry": [
+      {
+        "id": "player",
+        "visibleHeight": 96.29119138149554,
+        "sprite": {
+          "x": 93.609375,
+          "y": 354.375,
+          "width": 76.015625,
+          "height": 96.28125,
+          "top": 354.375,
+          "right": 169.625,
+          "bottom": 450.65625,
+          "left": 93.609375
+        },
+        "visibleTop": 354.36505861850446,
+        "intent": null,
+        "leading": {
+          "x": 32.78125,
+          "y": 340.375,
+          "width": 197.671875,
+          "height": 0,
+          "top": 340.375,
+          "right": 230.453125,
+          "bottom": 340.375,
+          "left": 32.78125
+        },
+        "meters": {
+          "x": 32.78125,
+          "y": 453.65625,
+          "width": 197.671875,
+          "height": 14,
+          "top": 453.65625,
+          "right": 230.453125,
+          "bottom": 467.65625,
+          "left": 32.78125
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1440,
+          "height": 270,
+          "top": 507.28125,
+          "right": 1440,
+          "bottom": 777.28125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e1",
+        "visibleHeight": 96.29119138149554,
+        "sprite": {
+          "x": 1288.703125,
+          "y": 301.1875,
+          "width": 112.125,
+          "height": 156.015625,
+          "top": 301.1875,
+          "right": 1400.828125,
+          "bottom": 457.203125,
+          "left": 1288.703125
+        },
+        "visibleTop": 360.91193361850446,
+        "intent": {
+          "x": 1289.546875,
+          "y": 298.90625,
+          "width": 110.4375,
+          "height": 48,
+          "top": 298.90625,
+          "right": 1399.984375,
+          "bottom": 346.90625,
+          "left": 1289.546875
+        },
+        "leading": {
+          "x": 1245.9375,
+          "y": 298.90625,
+          "width": 197.671875,
+          "height": 48,
+          "top": 298.90625,
+          "right": 1443.609375,
+          "bottom": 346.90625,
+          "left": 1245.9375
+        },
+        "meters": {
+          "x": 1242.3359375,
+          "y": 460.203125,
+          "width": 197.671875,
+          "height": 14,
+          "top": 460.203125,
+          "right": 1440.0078125,
+          "bottom": 474.203125,
+          "left": 1242.3359375
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1440,
+          "height": 270,
+          "top": 507.28125,
+          "right": 1440,
+          "bottom": 777.28125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e2",
+        "visibleHeight": 96.29119138149554,
+        "sprite": {
+          "x": 1035.265625,
+          "y": 301.1875,
+          "width": 112.125,
+          "height": 156.015625,
+          "top": 301.1875,
+          "right": 1147.390625,
+          "bottom": 457.203125,
+          "left": 1035.265625
+        },
+        "visibleTop": 360.91193361850446,
+        "intent": {
+          "x": 1057.59375,
+          "y": 298.90625,
+          "width": 67.484375,
+          "height": 48,
+          "top": 298.90625,
+          "right": 1125.078125,
+          "bottom": 346.90625,
+          "left": 1057.59375
+        },
+        "leading": {
+          "x": 992.5,
+          "y": 298.90625,
+          "width": 197.671875,
+          "height": 48,
+          "top": 298.90625,
+          "right": 1190.171875,
+          "bottom": 346.90625,
+          "left": 992.5
+        },
+        "meters": {
+          "x": 992.5,
+          "y": 460.203125,
+          "width": 197.671875,
+          "height": 14,
+          "top": 460.203125,
+          "right": 1190.171875,
+          "bottom": 474.203125,
+          "left": 992.5
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1440,
+          "height": 270,
+          "top": 507.28125,
+          "right": 1440,
+          "bottom": 777.28125,
+          "left": 0
+        }
+      },
+      {
+        "id": "e3",
+        "visibleHeight": 96.29119138149554,
+        "sprite": {
+          "x": 1260.1875,
+          "y": 102.28125,
+          "width": 112.125,
+          "height": 156.015625,
+          "top": 102.28125,
+          "right": 1372.3125,
+          "bottom": 258.296875,
+          "left": 1260.1875
+        },
+        "visibleTop": 162.00568361850446,
+        "intent": {
+          "x": 1261.03125,
+          "y": 100,
+          "width": 110.4375,
+          "height": 48,
+          "top": 100,
+          "right": 1371.46875,
+          "bottom": 148,
+          "left": 1261.03125
+        },
+        "leading": {
+          "x": 1217.421875,
+          "y": 100,
+          "width": 197.671875,
+          "height": 48,
+          "top": 100,
+          "right": 1415.09375,
+          "bottom": 148,
+          "left": 1217.421875
+        },
+        "meters": {
+          "x": 1217.421875,
+          "y": 261.296875,
+          "width": 197.671875,
+          "height": 14,
+          "top": 261.296875,
+          "right": 1415.09375,
+          "bottom": 275.296875,
+          "left": 1217.421875
+        },
+        "hand": {
+          "x": 0,
+          "y": 507.28125,
+          "width": 1440,
+          "height": 270,
+          "top": 507.28125,
+          "right": 1440,
+          "bottom": 777.28125,
+          "left": 0
+        }
+      }
+    ],
+    "images": [
+      {
+        "src": "http://127.0.0.1:36635/assets/animations/sword-shield-outfits/reaver/STANCE-READY.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/reaver.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_idle.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-poses/stitchedHound_attack.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_buff.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_wounded.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_afflicted.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_projectile.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guard.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_guardHit.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/enemy-states/stitchedHound_hurt.webp",
+        "loaded": true
+      },
+      {
+        "src": "http://127.0.0.1:36635/assets/defeated-poses/stitchedHound.webp",
+        "loaded": true
+      }
+    ],
+    "errors": [],
+    "artLoaded": true,
+    "enemyStature": true,
+    "picker": {
+      "x": 0,
+      "y": 90,
+      "width": 1440,
+      "height": 417.28125
+    },
+    "targetButtons": [
+      {
+        "id": "e1",
+        "rect": {
+          "x": 1300.765625,
+          "y": 355.28125,
+          "width": 88,
+          "height": 88,
+          "top": 355.28125,
+          "right": 1388.765625,
+          "bottom": 443.28125,
+          "left": 1300.765625
+        },
+        "hit": true
+      },
+      {
+        "id": "e2",
+        "rect": {
+          "x": 1018.765625,
+          "y": 355.28125,
+          "width": 88,
+          "height": 88,
+          "top": 355.28125,
+          "right": 1106.765625,
+          "bottom": 443.28125,
+          "left": 1018.765625
+        },
+        "hit": true
+      },
+      {
+        "id": "e3",
+        "rect": {
+          "x": 1300.765625,
+          "y": 167.28125,
+          "width": 88,
+          "height": 88,
+          "top": 167.28125,
+          "right": 1388.765625,
+          "bottom": 255.28125,
+          "left": 1300.765625
+        },
+        "hit": true
+      }
+    ],
+    "enemyTargeting": true
+  }
+]
