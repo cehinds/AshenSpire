@@ -544,6 +544,8 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 const alternativeId = 'src/ui/alternativeArt.js';
 if (!EXTERNAL_ART && sources.has(alternativeId)) {
   const map = {};
+  const firstPathOf = new Map();
+  const aliases = [];
   const catalogSource = sources.get('src/ui/alternativeArtCatalog.js');
   const catalog = JSON.parse(catalogSource.match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
   for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
@@ -552,11 +554,18 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
     if (createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
       fail(`Alternative art changed: ${file}. Run python tools/alternative-art-build.py to refresh its source identity.`);
     }
-    map[`assets-alternative/${file}`] = 'data:image/webp;base64,' + bytes.toString('base64');
+    const path = `assets-alternative/${file}`;
+    if (firstPathOf.has(expectedHash)) aliases.push([path, firstPathOf.get(expectedHash)]);
+    else {
+      firstPathOf.set(expectedHash, path);
+      map[path] = 'data:image/webp;base64,' + bytes.toString('base64');
+    }
   }
   sources.set(alternativeId, sources.get(alternativeId).replace(
     /\/\* ALTERNATIVE_ART_START \*\/[\s\S]*?\/\* ALTERNATIVE_ART_END \*\//,
-    () => `/* ALTERNATIVE_ART_START */\nconst alternativeArtMap = ${JSON.stringify(map)};\n/* ALTERNATIVE_ART_END */`));
+    () => `/* ALTERNATIVE_ART_START */\nconst alternativeArtMap = ${JSON.stringify(map)};\n`
+      + (aliases.length ? `for (const [alias, key] of ${JSON.stringify(aliases)}) alternativeArtMap[alias] = alternativeArtMap[key];\n` : '')
+      + '/* ALTERNATIVE_ART_END */'));
 }
 const ASSET_PACKS_ID = 'src/ui/assetPacks.js';
 const ASSET_PACKS_MARKERS = /\/\* ASSET_PACKS_START \*\/[\s\S]*?\/\* ASSET_PACKS_END \*\//;
