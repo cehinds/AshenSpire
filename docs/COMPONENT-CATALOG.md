@@ -773,3 +773,4 @@ selection independently before the turn can advance.
 
 ### Ratings, Poise and Ward
 Advanced → Stats holds a topic for each rating's stat row, plus curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.
+
