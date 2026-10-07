@@ -104,9 +104,10 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     const live = buildActMap(REG, liveRng, ORDER[tier - 1], tier);
     // `rewardRolls` (SPEC §15.1) is appended after the fixture was taken; a
     // map draws nothing on it, so it is left out beside `seats` and asserted 0.
-    // `shopOffers` (SPEC §14.2) and `sigils` (SPEC §15.4) likewise.
-    const { seats: _liveSeats, rewardRolls: _rewardRolls, shopOffers: _shopOffers, sigils: _sigils, ...liveCounters } = liveRng.getCounters();
+    // Shop offers, sigils and intent visibility likewise append after capture.
+    const { seats: _liveSeats, rewardRolls: _rewardRolls, shopOffers: _shopOffers, sigils: _sigils, enemyIntentVisibility: _intentReads, ...liveCounters } = liveRng.getCounters();
     assert.equal(_sigils, 0, 'building a map draws nothing on sigils');
+    assert.equal(_intentReads, 0, 'building a map draws nothing on intent visibility');
     assert.equal(_rewardRolls, 0, 'building a map draws nothing on rewardRolls');
     assert.equal(_shopOffers, 0, 'building a map draws nothing on shopOffers');
     const shape = (nodes) => JSON.parse(JSON.stringify(nodes.map(({ id, floor, col, type, next, resolved, encounterId, destinationLabel }) => ({ id, floor, col, type, next, kind: resolved?.kind, encounterId, destinationLabel }))));
@@ -114,10 +115,11 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     const rng = createRng(seed);
     const g = buildActMap(PRE_SEAT_REG, rng, ORDER[tier - 1], tier);
     const after = { counters: rng.getCounters(), nodes: Object.values(g.nodes).map(({ id, floor, col, type, next, resolved, encounterId, destinationLabel }) => ({ id, floor, col, type, next, resolved, encounterId, destinationLabel })), bossIds: g.bossIds, startIds: g.startIds };
-    const { seats, rewardRolls, shopOffers, sigils, ...counters } = after.counters;
+    const { seats, rewardRolls, shopOffers, sigils, enemyIntentVisibility, ...counters } = after.counters;
     assert.equal(rewardRolls, 0);
     assert.equal(shopOffers, 0);
     assert.equal(sigils, 0);
+    assert.equal(enemyIntentVisibility, 0);
     // JSON round-trip: the fixture dropped `undefined` fields the way any save does.
     assert.deepEqual(JSON.parse(JSON.stringify({ ...after, counters })), before, `seed ${seed} tier ${tier}`);
   }

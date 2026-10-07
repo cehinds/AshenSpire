@@ -4,6 +4,7 @@
 
 import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
+import { combatMatchups, combatIntent } from './combatMatchups.js';
 
 // ---- WHAT EACH NUMBER DOES, WRITTEN BESIDE IT (owner, 2026-09-23) ----------
 //
@@ -175,6 +176,8 @@ const cardValueRule = () => ({
 const PROGRESSION_CONTRACT_DESCRIPTION = 'The progression contract version saved for new characters, preserving the rules chosen at creation.';
 
 export const balance = {
+  combatMatchups,
+  combatIntent,
   progression: {
     version: 1,
     gearRequirements: progressionGearRequirements,

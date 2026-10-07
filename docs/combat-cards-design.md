@@ -29,6 +29,7 @@ Important limit: Ranged currently means safe from **melee retaliation**, not bla
 - First eligible positive hit deals half damage and spends reaction. Fully absorbed hit returns `floor(base × 1.5) + 5 + bonus`. Partial absorption spends reaction without return damage. Listed positive reply Poise gets ×1.5; absent Poise stays absent.
 - Melee mode covers eligible physical Attack/Smash. Ranged mode covers physical projectiles. Spell mode covers spells and physical projectiles; against a physical projectile its reply removes Ward without HP damage. Against an incoming spell it can damage caster Health. Reactions cannot chain reactions.
 - Player reaction expires at next player-turn start. Enemy Counter becomes active when next stance is rolled; it expires at that enemy's turn start. Stagger immediately interrupts an armed Counter; death prevents retaliation.
+- A Smash Guard break resolves its listed Poise bonus before a same-hit Counter reply. If the break causes Stagger, that reply is interrupted. Multi-hit previews spend Counter once and update Guard/Ward between hits; variable sequences show their actual per-hit amounts and total.
 - Current enemy examples: Gilded Knight Parry, Court Duelist Riposte and Cinder Mantis Folded Blades use melee Counter; Chain Scavenger Chain Snare uses ranged Counter; Mirror Scribe Polished Ward uses Spell Counter. Their old support payloads stay intact; explicit reply base is 6.
 
 ## Spell schools
@@ -107,4 +108,5 @@ Keep persistent corruption separate from combat Crimson Blight, spell school Dec
 
 - Migrated candidate: 260 current cards, 17 equipment card profiles, 33 enemies and 103 moves. Card schools cover all eight identities; no current enemy is newly invented merely to fill missing Frost-caster slot.
 - Authoritative tag rows hold every classification. Counter faces and rank recipes describe preparation; immediate support remains printed. Tests cover all authored and composed cards, every scoped enemy move, Counter modes, legacy ID labels and active-tag authority.
+- Reusing a derived enemy-move table follows changes to nested moves. An explicitly replaced flat table takes precedence for its scoped rows; runtime materialization stamps the selected rows once and shares the frozen objects with nested enemy moves.
 - Land specification-only PR first. Implementation PR then carries source/generated data, engine/UI changes and behavioral validation. Separate suggested content additions and persistent-corruption work into their own scoped implementations.

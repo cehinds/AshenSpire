@@ -66,8 +66,11 @@ import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
 import { characterCreation } from './generated/characterCreation.js';
+import { deriveEnemyMoves } from '../model/enemyMoveSources.js';
 
 const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards, ...armamentCards];
+const enemies = [...act1Enemies, ...act2Enemies, ...act3Enemies];
+const enemyMoves = deriveEnemyMoves(enemies);
 const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
 const cards = authoredCards.map((card) => {
   const carrier = exposureByCard.get(card.id);
@@ -100,7 +103,8 @@ export const coreContentBundle = {
   // HUD resource bars — one row per bar (Law 0: add a row, a bar appears).
   resources,
   keywords,
-  enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
+  enemies,
+  enemyMoves,
   // Bundle order is read order: the boss pool a map draws from is this list
   // filtered, so a seat's bosses keep the columns they have always landed in
   // (SPEC §13.6). The Valkyrie row sits first in reach.js for the same reason.

@@ -101,6 +101,8 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
 const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
+  ...Object.fromEntries(['baseHiddenChance', 'wisdomReduction', 'intelligenceReduction', 'minimumHiddenChance', 'maximumHiddenChance']
+    .map(key => [`combatIntent.${key}`, Object.freeze({ integer: false, step: 0.01, min: 0, max: 1 })])),
   'rewards.sourceBonuses.combatFeatChancePct': PERCENT,
   'rewards.sourceBonuses.classFeatChancePct': PERCENT,
   'rewards.sourceBonuses.classCardChancePct': PERCENT,

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1705",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Combat cards and enemy moves share tactical rules",
+    "detail": "All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.",
+    "build": "0.7.1.1089",
+    "pullRequest": 1705,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1705"
+  },
+  {
     "id": "pr-1703",
     "date": "2026-10-07",
     "group": "2026-10-07",

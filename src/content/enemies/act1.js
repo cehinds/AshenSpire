@@ -273,6 +273,7 @@ export const act1Enemies = [
       },
       "chainSnare": {
         "intent": "debuff",
+        "counterDamage": 6,
         "weight": 20,
         "maxConsecutive": 1,
         "effects": [

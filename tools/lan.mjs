@@ -24,6 +24,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createSession, restoreSession } from './session.mjs';
 import { SEED_MAX_LEN, seedProblem } from '../src/engine/rng.js';
 import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
+import { lanMemberIds, broadcastLanSnapshot } from './lan-state.mjs';
 
 const REG = createRegistries(contentBundle);
 
@@ -182,8 +183,7 @@ export function attachLan(server, { port, root }) {
   // ownedIds is set explicitly at game start / resume; before that it derives
   // from the declared locals.
   function memberIdsOf(pl) {
-    if (pl.ownedIds) return pl.ownedIds;
-    return [pl.id, ...((pl.locals || []).map((_, i) => `${pl.id}L${i + 1}`))];
+    return lanMemberIds(pl);
   }
 
   function broadcast(obj) {
@@ -193,11 +193,11 @@ export function attachLan(server, { port, root }) {
 
   // (party progress is now carried inside the authoritative game snapshot)
 
-  // Broadcast the authoritative game snapshot to every connected client, then
+  // Project the game snapshot for each connection's controlled seats, then
   // persist the run at safe boundaries (serialize() is null mid-combat).
   function broadcastState() {
     if (!session.game) return;
-    broadcast({ t: 'state', snapshot: session.game.snapshot() });
+    broadcastLanSnapshot(session.clients, session.game.snapshot(), wsEncode);
     if (session.game.scene.kind === 'complete') clearSave(); // run over — forget it
     else persistGame();
   }

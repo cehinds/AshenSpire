@@ -14,16 +14,22 @@ import { bossTierScale, seatAtTier, seatTierHpMult } from '../src/model/seats.js
 import { enemyMoveDamage } from '../src/model/state.js';
 import { enemyMoveCards } from '../src/model/enemyMoveCards.js';
 
-const REG = createRegistries(contentBundle);
+// Tier damage fixtures read every live preview deliberately. Visibility is
+// independently tested below; disable concealment through its public config.
+const intentRegistry = (baseHiddenChance) => createRegistries({ ...contentBundle,
+  balance: { ...contentBundle.balance,
+    combatIntent: { ...contentBundle.balance.combatIntent, baseHiddenChance } },
+});
+const REG = intentRegistry(0);
 const T = REG.balance.seatTiers;
 const B = REG.balance.bossTiers;
 const enc = (id) => REG.encounters.get(id);
 const close = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} vs ${b}`);
 
 const PLAYER = { classId: 'reaver', maxHp: 999, hp: 999, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] };
-const fightWith = (encounter, tier, seed = 7) => {
-  const scale = bossTierScale(REG, { encounter, tier });
-  return createCombat({ registries: REG, rng: createRng(seed), player: structuredClone(PLAYER), enemyIds: encounter.enemies, hpMult: scale.hp, enemyDamageMult: scale.damage });
+const fightWith = (encounter, tier, seed = 7, registries = REG) => {
+  const scale = bossTierScale(registries, { encounter, tier });
+  return createCombat({ registries, rng: createRng(seed), player: structuredClone(PLAYER), enemyIds: encounter.enemies, hpMult: scale.hp, enemyDamageMult: scale.damage });
 };
 
 test('the row is data: one { hp, damage } per tier, validated by name', () => {
@@ -113,6 +119,25 @@ test('the engine rolls the scaled HP and hits for the scaled damage; intent, pre
 test('an unscaled enemy carries no stamp, so older fights and snapshots keep their shape', () => {
   const c = createCombat({ registries: REG, rng: createRng(3), player: structuredClone(PLAYER), enemyIds: enc('bossOmen').enemies });
   assert.equal('damageMult' in c.enemies[0], false);
+});
+
+test('concealing a tier-scaled boss keeps its real damage while withholding exact preview', () => {
+  const hidden = intentRegistry(0.95);
+  const king = hidden.encounters.get('a2_bossStitchedKing');
+  const c = fightWith(king, 3, 7, hidden);
+  const boss = c.enemies[0];
+  for (let turn = 0; turn < 10 && (boss.intent.damage == null || boss.intentRevealed); turn++) dispatch(c, { type: 'endTurn' });
+  const move = hidden.enemies.get(boss.enemyId).moves[boss.intent.moveId];
+  assert.ok(move.damage > 0, 'the hidden variant checks a real damaging move');
+  assert.equal(boss.intentRevealed, false);
+  const preview = previewIntent(c, boss.id);
+  assert.equal(preview.hidden, true);
+  assert.equal(preview.moveId, null);
+  assert.equal(preview.damage, undefined);
+  assert.ok(preview.stance, 'a concealed boss still announces its stance');
+  assert.equal(boss.damageMult, bossTierScale(hidden, { encounter: king, tier: 3 }).damage);
+  assert.equal(boss.intent.damage, enemyMoveDamage(boss, move));
+  assert.equal(contentBundle.balance.combatIntent.baseHiddenChance, 0.70, 'fixtures do not mutate shared balance');
 });
 
 test('a randomized seat order scales each boss by the tier it is met at', () => {
