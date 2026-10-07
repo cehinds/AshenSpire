@@ -40,6 +40,7 @@ Rebuild (Python + Pillow)
   python build.py
   python render-review.py
   python validate.py
+  python checksum.py
 The complete delivered package can render without the original worktree.
 validate.py checks the included source snapshots, masters and review files.
 It does not require the current game checkout to match the historical source.

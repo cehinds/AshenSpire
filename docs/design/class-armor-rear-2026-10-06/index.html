@@ -1978,67 +1978,67 @@ const catalog={
   "sources": [
     {
       "path": "content/source/outfits.csv",
-      "snapshot": "sources\\outfits.csv",
+      "snapshot": "sources/outfits.csv",
       "sha256": "0556ecd6ea2ef2272b39c1cfc2e52225af25444a4c63df6e343f8d61a4c48267"
     },
     {
       "path": "content/source/equipmentRequirements.csv",
-      "snapshot": "sources\\equipmentRequirements.csv",
+      "snapshot": "sources/equipmentRequirements.csv",
       "sha256": "08fe6aa7ea455298765deea924a81d563690ee23d969a416866932831e720e37"
     },
     {
       "path": "content/source/equipSlots.csv",
-      "snapshot": "sources\\equipSlots.csv",
+      "snapshot": "sources/equipSlots.csv",
       "sha256": "08c0b5f5475f90ae8f7971649da51d0004fa69a7052f5dbb9248e3bfc227138d"
     },
     {
       "path": "content/source/weapons.csv",
-      "snapshot": "sources\\weapons.csv",
+      "snapshot": "sources/weapons.csv",
       "sha256": "9dbb2246ba89a5fe01b17e5d759857b253319181d29d0f89ebef95699af7471a"
     },
     {
       "path": "content/source/itemUpgradeChanges.csv",
-      "snapshot": "sources\\itemUpgradeChanges.csv",
+      "snapshot": "sources/itemUpgradeChanges.csv",
       "sha256": "52e018cbfe0b9b9fce2a94022be5ffd96fb1cf7089b4cc6ee34ac3911494d3b8"
     },
     {
       "path": "src/content/classes.js",
-      "snapshot": "sources\\classes.js",
+      "snapshot": "sources/classes.js",
       "sha256": "75a1130ce26342620ea7d8f51dfc780be0c8eb419a777b5ecbefa8ca87db8c20"
     },
     {
       "path": "src/content/equipment.js",
-      "snapshot": "sources\\equipment.js",
+      "snapshot": "sources/equipment.js",
       "sha256": "cdd79587f17d0c8711eda29ca44b5463c4d907d306bb3ff6b321b2a491d1ffa4"
     },
     {
       "path": "src/content/generated/outfits.js",
-      "snapshot": "sources\\outfits.js",
+      "snapshot": "sources/outfits.js",
       "sha256": "951af945db49f1b984894acbffec72d7b696d82ac13d0a7d2cacd424e2f39022"
     },
     {
       "path": "src/content/sharedOutfitArt.js",
-      "snapshot": "sources\\sharedOutfitArt.js",
+      "snapshot": "sources/sharedOutfitArt.js",
       "sha256": "08f62988e899dcf5bf1a0c72e509ee6a66322ff008c299deae6a4553aac7f9d5"
     },
     {
       "path": "src/model/paintedOutfitArt.js",
-      "snapshot": "sources\\paintedOutfitArt.js",
+      "snapshot": "sources/paintedOutfitArt.js",
       "sha256": "0c31c25c5be0ac6549b547fb8953591243f477132747f00ebbd0202fef017892"
     },
     {
       "path": "src/model/loadout.js",
-      "snapshot": "sources\\loadout.js",
+      "snapshot": "sources/loadout.js",
       "sha256": "cba10801dc0fb489dc92ef1062e003c3ec12f4a4cc26827ec815e7cc87206901"
     },
     {
       "path": "tests/shared-armor.test.mjs",
-      "snapshot": "sources\\shared-armor.test.mjs",
+      "snapshot": "sources/shared-armor.test.snapshot.mjs",
       "sha256": "12aad80f2e70e0d020faf9638c46fee235feea9c1ace5c39815c3655c3d93ae5"
     },
     {
       "path": "docs/LORE.md",
-      "snapshot": "sources\\LORE.md",
+      "snapshot": "sources/LORE.md",
       "sha256": "0b460ab8f7dd69b7e36303095504a1eaad70327ef0037b7be427e024f8a8a334"
     }
   ],
@@ -2051,8 +2051,7 @@ const catalog={
     "uniqueMasters": 31,
     "missing": 0
   }
-}
-;
+};
 const entries=[...new Map(catalog.entries.map(e=>[e.masterId,e])).values()];
 const $=id=>document.getElementById(id);let selected=entries.find(e=>e.masterId==='reaver-nightweave');
 function select(id){selected=entries.find(e=>e.masterId===id);$('appearance').value=id;render();}

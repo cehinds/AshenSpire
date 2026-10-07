@@ -1395,107 +1395,107 @@
       "passed": true
     },
     {
-      "check": "reaver-nightweave reference hash references\\exec-353150bd-e088-495c-9399-c051d728e328.png",
+      "check": "reaver-nightweave reference hash references/exec-353150bd-e088-495c-9399-c051d728e328.png",
       "passed": true
     },
     {
-      "check": "reaver-riteVestments reference hash references\\exec-409d6347-1164-4c1e-af8d-00913f7b97e7.png",
+      "check": "reaver-riteVestments reference hash references/exec-409d6347-1164-4c1e-af8d-00913f7b97e7.png",
       "passed": true
     },
     {
-      "check": "reaver-gutterLeathers reference hash references\\exec-9790df6e-e7fb-49f3-8ce9-87ad8e4d5122.png",
+      "check": "reaver-gutterLeathers reference hash references/exec-9790df6e-e7fb-49f3-8ce9-87ad8e4d5122.png",
       "passed": true
     },
     {
-      "check": "starseer-wayfarerPlate reference hash references\\starseer-default-rear.png",
+      "check": "starseer-wayfarerPlate reference hash references/starseer-default-rear.png",
       "passed": true
     },
     {
-      "check": "starseer-wayfarerPlate reference hash references\\reaver-default-rear.png",
+      "check": "starseer-wayfarerPlate reference hash references/reaver-default-rear.png",
       "passed": true
     },
     {
-      "check": "starseer-riteVestments reference hash references\\starseer-default-rear.png",
+      "check": "starseer-riteVestments reference hash references/starseer-default-rear.png",
       "passed": true
     },
     {
-      "check": "starseer-riteVestments reference hash references\\herald-default-rear.png",
+      "check": "starseer-riteVestments reference hash references/herald-default-rear.png",
       "passed": true
     },
     {
-      "check": "starseer-gutterLeathers reference hash references\\starseer-default-rear.png",
+      "check": "starseer-gutterLeathers reference hash references/starseer-default-rear.png",
       "passed": true
     },
     {
-      "check": "starseer-gutterLeathers reference hash references\\rogue-default-rear.png",
+      "check": "starseer-gutterLeathers reference hash references/rogue-default-rear.png",
       "passed": true
     },
     {
-      "check": "herald-wayfarerPlate reference hash references\\herald-default-rear.png",
+      "check": "herald-wayfarerPlate reference hash references/herald-default-rear.png",
       "passed": true
     },
     {
-      "check": "herald-wayfarerPlate reference hash references\\reaver-default-rear.png",
+      "check": "herald-wayfarerPlate reference hash references/reaver-default-rear.png",
       "passed": true
     },
     {
-      "check": "herald-nightweave reference hash references\\herald-default-rear.png",
+      "check": "herald-nightweave reference hash references/herald-default-rear.png",
       "passed": true
     },
     {
-      "check": "herald-nightweave reference hash references\\starseer-default-rear.png",
+      "check": "herald-nightweave reference hash references/starseer-default-rear.png",
       "passed": true
     },
     {
-      "check": "herald-gutterLeathers reference hash references\\herald-default-rear.png",
+      "check": "herald-gutterLeathers reference hash references/herald-default-rear.png",
       "passed": true
     },
     {
-      "check": "herald-gutterLeathers reference hash references\\rogue-default-rear.png",
+      "check": "herald-gutterLeathers reference hash references/rogue-default-rear.png",
       "passed": true
     },
     {
-      "check": "rogue-wayfarerPlate reference hash references\\rogue-default-rear.png",
+      "check": "rogue-wayfarerPlate reference hash references/rogue-default-rear.png",
       "passed": true
     },
     {
-      "check": "rogue-wayfarerPlate reference hash references\\reaver-default-rear.png",
+      "check": "rogue-wayfarerPlate reference hash references/reaver-default-rear.png",
       "passed": true
     },
     {
-      "check": "rogue-nightweave reference hash references\\rogue-default-rear.png",
+      "check": "rogue-nightweave reference hash references/rogue-default-rear.png",
       "passed": true
     },
     {
-      "check": "rogue-nightweave reference hash references\\starseer-default-rear.png",
+      "check": "rogue-nightweave reference hash references/starseer-default-rear.png",
       "passed": true
     },
     {
-      "check": "rogue-riteVestments reference hash references\\rogue-default-rear.png",
+      "check": "rogue-riteVestments reference hash references/rogue-default-rear.png",
       "passed": true
     },
     {
-      "check": "rogue-riteVestments reference hash references\\herald-default-rear.png",
+      "check": "rogue-riteVestments reference hash references/herald-default-rear.png",
       "passed": true
     },
     {
-      "check": "Review scene layer references\\scene\\ashen-crown-far.png",
+      "check": "Review scene layer references/scene/ashen-crown-far.png",
       "passed": true
     },
     {
-      "check": "Review scene layer references\\scene\\ashen-crown-1-landmark.png",
+      "check": "Review scene layer references/scene/ashen-crown-1-landmark.png",
       "passed": true
     },
     {
-      "check": "Review scene layer references\\scene\\ashen-crown-ground.png",
+      "check": "Review scene layer references/scene/ashen-crown-ground.png",
       "passed": true
     },
     {
-      "check": "Review scene layer references\\scene\\ashen-crown-foreground.png",
+      "check": "Review scene layer references/scene/ashen-crown-foreground.png",
       "passed": true
     },
     {
-      "check": "Review scene layer references\\scene\\ashen-crown-phone-foreground.png",
+      "check": "Review scene layer references/scene/ashen-crown-phone-foreground.png",
       "passed": true
     }
   ],

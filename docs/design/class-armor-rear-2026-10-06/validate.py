@@ -9,6 +9,7 @@ parser.add_argument('--audit-source-checkout', action='store_true',
 args=parser.parse_args()
 read=lambda p:json.loads(p.read_text(encoding='utf-8-sig'))
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+package_path=lambda value:P/Path(str(value).replace('\\','/'))
 C=read(P/'catalog.json');M=read(P/'matrix.json');receipts={e['id']:e for e in read(P/'receipts.json')}
 old={e['id']:e for e in read(P/'sources/baseline-catalog.json')['entries']}
 errors=[];warnings=[];checks=[]
@@ -50,9 +51,9 @@ for id,e in unique.items():
         p=P/'review'/f'{id}-{device}.jpg'
         check(p.exists() and Image.open(p).size==size,f'{id} {device} composition')
 for r in receipts.values():
-    for ref in r['localReferences']:check(sha(P/ref['file'])==ref['sha256'],r['id']+' reference hash '+ref['file'])
+    for ref in r['localReferences']:check(sha(package_path(ref['file']))==ref['sha256'],r['id']+' reference hash '+ref['file'])
 for layer in read(P/'scene-provenance.json')['layers']:
-    check(sha(P/layer['file'])==layer['sha256'],'Review scene layer '+layer['file'])
+    check(sha(package_path(layer['file']))==layer['sha256'],'Review scene layer '+layer['file'])
 if args.audit_source_checkout:
     changed=subprocess.check_output(['git','status','--porcelain','--untracked-files=all'],cwd=repo,text=True).splitlines()
     check(all(line[3:].startswith('docs/design/class-armor-rear-2026-10-06/') for line in changed),'Changes confined to art-only continuation package')

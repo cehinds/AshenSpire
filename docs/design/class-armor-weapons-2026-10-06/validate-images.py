@@ -17,8 +17,9 @@ for file in (ROOT/'assets').glob('weapon-*.png'):
  im=Image.open(file);assert im.size==(512,512);assert im.getpixel((256,256))[3]>120,file;report['weaponPaintChecks']+=1;report['weapons']+=1
 receipts=read(ROOT/'receipts.json')
 for r in receipts:
- r['tool']='built-in image_gen';r['sha256']=sha(ROOT/r['file']);assert r['sha256']==sha(r['generatedPath'])
- ref=Path(r['reference']);ref=ref if ref.is_absolute() else ROOT/ref;r['referenceSha256']=sha(ref)
-write(ROOT/'receipts.json',receipts)
+ assert sha(ROOT/r['file'])==r['sha256']
+ ref=ROOT/Path(r['reference'])
+ if not ref.exists():ref=ROOT.parent/'class-armor-rear-2026-10-06'/'masters'/Path(r['reference']).name
+ assert sha(ref)==r['referenceSha256']
 report['passed']=not report['clippingFailures'];write(ROOT/'image-validation.json',report);print(json.dumps(report,indent=2))
 assert report['passed']

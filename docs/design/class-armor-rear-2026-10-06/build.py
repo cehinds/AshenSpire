@@ -8,7 +8,7 @@ BASE=Path('D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/desi
 REV='c448cb31c1459581e22642136a224256d4fd3c25'
 BASE_REV='41ae95ae42cce66e56805cc35ae1903a92a4d5a5'
 def read(p): return json.loads(p.read_text(encoding='utf-8-sig'))
-def write(p,x): p.write_text(json.dumps(x,indent=2)+'\n',encoding='utf-8')
+def write(p,x): p.write_text(json.dumps(x,indent=2)+'\n',encoding='utf-8',newline='\r\n')
 def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
 def measure(p):
     im=Image.open(p); a=im.getchannel('A')
@@ -26,9 +26,10 @@ source_paths=['content/source/outfits.csv','content/source/equipmentRequirements
  'tests/shared-armor.test.mjs','docs/LORE.md']
 sources=[]
 for path in source_paths:
-    target=P/'sources'/Path(path).name
+    target_name=Path(path).name.replace('.test.mjs','.test.snapshot.mjs')
+    target=P/'sources'/target_name
     if not target.exists(): shutil.copyfile(REPO/path,target)
-    sources.append(dict(path=path,snapshot=str(target.relative_to(P)),sha256=sha(target)))
+    sources.append(dict(path=path,snapshot=target.relative_to(P).as_posix(),sha256=sha(target)))
 rows=list(csv.DictReader(x for x in (P/'sources/outfits.csv').read_text().splitlines() if not x.startswith('#')))
 if not (P/'sources/baseline-catalog.json').exists(): shutil.copyfile(BASE/'catalog.json',P/'sources/baseline-catalog.json')
 old={e['id']:e for e in read(P/'sources/baseline-catalog.json')['entries'] if e['family']=='armor'}
@@ -82,10 +83,13 @@ with (P/'matrix.csv').open('w',newline='',encoding='utf-8') as f:
     for m in matrix:w.writerow([m['armorName'],m['classId'],m['supported'],' | '.join(m['canonicalIds']),m['appearanceId'],m['reason']])
 for receipt in receipts:
     local_refs=[]
+    archived_refs=receipt.get('localReferences',[])
     for i,path in enumerate(receipt['referenceImages']):
-        src=Path(path); dst=P/'references'/src.name
+        src=Path(path)
+        archived=P/archived_refs[i]['file'] if i<len(archived_refs) else None
+        dst=archived if archived and archived.exists() else P/'references'/Path(str(path).replace('\\','/')).name
         if not dst.exists():shutil.copyfile(src,dst)
-        local_refs.append(dict(file=str(dst.relative_to(P)),sha256=sha(dst),role='wearer identity and equipment' if i==0 else 'armor reference'))
+        local_refs.append(dict(file=dst.relative_to(P).as_posix(),sha256=sha(dst),role='wearer identity and equipment' if i==0 else 'armor reference'))
     receipt['localReferences']=local_refs
     receipt['generatedSha256']=sha(Path(receipt['generatedSource'])) if Path(receipt['generatedSource']).exists() else receipt['generatedSha256']
 write(P/'receipts.json',receipts)

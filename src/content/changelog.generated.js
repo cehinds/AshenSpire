@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Rear sprite studies archived for authoring",
     "detail": "The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.",
-    "build": "0.7.1.1060",
+    "build": "0.7.1.1061",
     "pullRequest": 1697,
     "url": "https://github.com/cehinds/AshenSpire/pull/1697"
+  },
+  {
+    "id": "pr-1698",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates keep progressing",
+    "detail": "The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1698,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1698"
   },
   {
     "id": "pr-1692",

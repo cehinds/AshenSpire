@@ -1,7 +1,12 @@
 """Render the portable layer recipe for deterministic contact-sheet inspection."""
 from build import *
 from PIL import ImageChops, ImageFont
-FONT=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',15)
+def load_font(size):
+    for path in ('DejaVuSans.ttf','C:/Windows/Fonts/segoeui.ttf'):
+        try:return ImageFont.truetype(path,size)
+        except OSError:pass
+    return ImageFont.load_default()
+FONT=load_font(15)
 def render(project,poseid):
     out=Image.new('RGBA',(512,512));pose=project['poses'][poseid]
     for layer in pose['layers']:

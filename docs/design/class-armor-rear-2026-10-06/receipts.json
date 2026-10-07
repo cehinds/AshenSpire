@@ -31,7 +31,7 @@
     "correction": "Zoom out to provide generous clearance",
     "localReferences": [
       {
-        "file": "references\\exec-353150bd-e088-495c-9399-c051d728e328.png",
+        "file": "references/exec-353150bd-e088-495c-9399-c051d728e328.png",
         "sha256": "0b41915054bcbc03082dcb43b97478826b386008241b78cd76ef3217af9ab0f2",
         "role": "wearer identity and equipment"
       }
@@ -70,7 +70,7 @@
     "correction": "Zoom out to provide generous clearance",
     "localReferences": [
       {
-        "file": "references\\exec-409d6347-1164-4c1e-af8d-00913f7b97e7.png",
+        "file": "references/exec-409d6347-1164-4c1e-af8d-00913f7b97e7.png",
         "sha256": "416f8957757b0f4b6b34887739e82dfa78a90ef7d3a75f2094100ce32fb89bb4",
         "role": "wearer identity and equipment"
       }
@@ -109,7 +109,7 @@
     "correction": "Zoom out to provide generous clearance",
     "localReferences": [
       {
-        "file": "references\\exec-9790df6e-e7fb-49f3-8ce9-87ad8e4d5122.png",
+        "file": "references/exec-9790df6e-e7fb-49f3-8ce9-87ad8e4d5122.png",
         "sha256": "d76db996afe901a12b3e890b9824f399c7dfc5d10802b63a2a2244cfb1d878c2",
         "role": "wearer identity and equipment"
       }
@@ -127,12 +127,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\starseer-default-rear.png",
+        "file": "references/starseer-default-rear.png",
         "sha256": "71a6b602ac5a2b516b041cb5456d79409588a095c86bc2f6f1648f05661a3435",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\reaver-default-rear.png",
+        "file": "references/reaver-default-rear.png",
         "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
         "role": "armor reference"
       }
@@ -150,12 +150,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\starseer-default-rear.png",
+        "file": "references/starseer-default-rear.png",
         "sha256": "71a6b602ac5a2b516b041cb5456d79409588a095c86bc2f6f1648f05661a3435",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\herald-default-rear.png",
+        "file": "references/herald-default-rear.png",
         "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca",
         "role": "armor reference"
       }
@@ -173,12 +173,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\starseer-default-rear.png",
+        "file": "references/starseer-default-rear.png",
         "sha256": "71a6b602ac5a2b516b041cb5456d79409588a095c86bc2f6f1648f05661a3435",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\rogue-default-rear.png",
+        "file": "references/rogue-default-rear.png",
         "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215",
         "role": "armor reference"
       }
@@ -196,12 +196,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\herald-default-rear.png",
+        "file": "references/herald-default-rear.png",
         "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\reaver-default-rear.png",
+        "file": "references/reaver-default-rear.png",
         "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
         "role": "armor reference"
       }
@@ -219,12 +219,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\herald-default-rear.png",
+        "file": "references/herald-default-rear.png",
         "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\starseer-default-rear.png",
+        "file": "references/starseer-default-rear.png",
         "sha256": "71a6b602ac5a2b516b041cb5456d79409588a095c86bc2f6f1648f05661a3435",
         "role": "armor reference"
       }
@@ -242,12 +242,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\herald-default-rear.png",
+        "file": "references/herald-default-rear.png",
         "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\rogue-default-rear.png",
+        "file": "references/rogue-default-rear.png",
         "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215",
         "role": "armor reference"
       }
@@ -265,12 +265,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\rogue-default-rear.png",
+        "file": "references/rogue-default-rear.png",
         "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\reaver-default-rear.png",
+        "file": "references/reaver-default-rear.png",
         "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
         "role": "armor reference"
       }
@@ -288,12 +288,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\rogue-default-rear.png",
+        "file": "references/rogue-default-rear.png",
         "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\starseer-default-rear.png",
+        "file": "references/starseer-default-rear.png",
         "sha256": "71a6b602ac5a2b516b041cb5456d79409588a095c86bc2f6f1648f05661a3435",
         "role": "armor reference"
       }
@@ -311,12 +311,12 @@
     "generator": "built-in image_gen",
     "localReferences": [
       {
-        "file": "references\\rogue-default-rear.png",
+        "file": "references/rogue-default-rear.png",
         "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215",
         "role": "wearer identity and equipment"
       },
       {
-        "file": "references\\herald-default-rear.png",
+        "file": "references/herald-default-rear.png",
         "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca",
         "role": "armor reference"
       }

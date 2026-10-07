@@ -9,7 +9,7 @@ spec=importlib.util.spec_from_file_location('review_render',OLD/'render-review.p
 review=importlib.util.module_from_spec(spec);spec.loader.exec_module(review);review.ROOT=ROOT
 from render import render
 review.render=render
-font=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',18)
+font=review.load_font(18)
 ids=list(review.read(ROOT/'registration.json'))
 sheet=Image.new('RGB',(1500,1650),(42,46,51));draw=ImageDraw.Draw(sheet)
 for i,wid in enumerate(ids):
