@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { runInNewContext } from 'node:vm';
 import { alternativeArtCatalog as catalog } from '../src/ui/alternativeArtCatalog.js';
+import { webpDimensions } from '../tools/mobileart-policy.mjs';
 import { alternativePlayerId, alternativeBackdropHtml } from '../src/ui/alternativeArt.js';
 import { ARMOUR } from '../src/content/equipment.js';
 import { ENVIRONMENTS } from '../src/content/environments.js';
@@ -101,4 +103,55 @@ test('phone first paint references only phone scene exports before fitting', () 
     if (previous === undefined) delete globalThis.document;
     else globalThis.document = previous;
   }
+});
+
+test('smaller exports preserve the original crop registration and scene resolution budget',()=>{
+  for(const sprite of Object.values(catalog.sprites)) {
+    const bytes=readFileSync(new URL('../'+sprite.path,import.meta.url));
+    const {width,height}=webpDimensions(bytes);
+    assert.deepEqual([width,height],sprite.size,sprite.name);
+    assert(Math.max(width,height)<=480,sprite.name);
+    assert(width<=sprite.sourceSize[0] && height<=sprite.sourceSize[1],sprite.name);
+    sprite.bounds.forEach((value,index)=>assert(Math.abs(value/sprite.size[index%2]
+      -sprite.sourceBounds[index]/sprite.sourceSize[index%2])<1e-12,`${sprite.name}: crop registration`));
+  }
+  for(const [id,path] of Object.entries(catalog.layers)) {
+    const {width,height}=webpDimensions(readFileSync(new URL('../'+path,import.meta.url)));
+    assert.deepEqual([width,height],catalog.layerSizes[id],id);
+    assert(width<=1280 && height<=720,id);
+  }
+  for(const [id,art] of Object.entries(catalog.sceneLayers)) {
+    for(const path of [art.path,art.mobilePath]) {
+      const {width,height}=webpDimensions(readFileSync(new URL('../'+path,import.meta.url)));
+      assert.deepEqual([width,height],art.size,id);
+      assert(width<=1280 && height<=720,id);
+    }
+  }
+  for(const art of Object.values(catalog.sprites)) {
+    assert.equal(catalog.hashes[art.path.split('/').pop()],catalog.hashes[art.mobilePath.split('/').pop()]);
+  }
+});
+
+test('portable alternative exports share duplicate bytes and reject a corrupt source', () => {
+  const bundle = readFileSync(new URL('../tools/bundle.mjs', import.meta.url), 'utf8');
+  const code = bundle.slice(bundle.indexOf("const alternativeId ="), bundle.indexOf("const ASSET_PACKS_ID ="));
+  const bytes = Buffer.from('fixture webp bytes');
+  const hash = createHash('sha256').update(bytes).digest('hex');
+  const fixture = { hashes: { 'actor.webp': hash, 'actor-mobile.webp': hash } };
+  const build = data => {
+    const sources = new Map([
+      ['src/ui/alternativeArt.js', '/* ALTERNATIVE_ART_START */\n/* ALTERNATIVE_ART_END */'],
+      ['src/ui/alternativeArtCatalog.js', `export const alternativeArtCatalog = ${JSON.stringify(fixture)};`],
+    ]);
+    runInNewContext(code, { EXTERNAL_ART: false, sources, ROOT: '.', createHash,
+      resolve: (...parts) => parts.join('/'), readFileSync: () => data,
+      fail: message => { throw new Error(message); } });
+    return sources.get('src/ui/alternativeArt.js');
+  };
+  const rendered = build(bytes);
+  assert.equal((rendered.match(/data:image\/webp;base64,/g) || []).length, 1);
+  const map = runInNewContext(rendered + '\nalternativeArtMap;');
+  assert.equal(map['assets-alternative/actor.webp'], map['assets-alternative/actor-mobile.webp']);
+  assert.equal(Buffer.from(map['assets-alternative/actor.webp'].split(',')[1], 'base64').toString(), bytes.toString());
+  assert.throws(() => build(Buffer.from('corrupt')), /Alternative art changed/);
 });

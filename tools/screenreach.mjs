@@ -302,11 +302,14 @@ const INTENT_OVERLAP = `(() => {
   const playerFrame = player.closest('.combatant'), playerStack = player.closest('.combatant-stack');
   const playerFrameBox = playerFrame.getBoundingClientRect(), stackBox = playerStack.getBoundingClientRect();
   const centreX = playerFrameBox.left + playerFrameBox.width / 2, centreY = playerFrameBox.top + playerFrameBox.height / 2;
+  // This fixture moves only sideways; keep the production target's fitted
+  // vertical anchor, which may already be clamped above the hand.
+  const playerHitY = playerFrameBox.top + parseFloat(getComputedStyle(playerFrame, '::after').top) * zoom;
   const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
   playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
-  const playerMoved = player.getBoundingClientRect();
-  playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerFrameBox.left) / zoom) + 'px');
-  playerFrame.style.setProperty('--enemy-hit-y', ((playerMoved.bottom - playerFrameBox.top) / zoom) + 'px');
+  const playerMoved = player.getBoundingClientRect(), playerMovedFrameBox = playerFrame.getBoundingClientRect();
+  playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerMovedFrameBox.left) / zoom) + 'px');
+  playerFrame.style.setProperty('--enemy-hit-y', ((playerHitY - playerMovedFrameBox.top) / zoom) + 'px');
   if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
       || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
     throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
@@ -441,14 +444,18 @@ const PROBE = `(() => {
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (hit && (hit === c || c.contains(hit))) continue;
-    // Formation frames span a grid cell. Their sprite or 44 px frame target
-    // receives the tap; the frame centre may sit beneath another fighter.
+    // Formation frames span a grid cell. Measure the actual 44 px frame tap
+    // target: final fitting can pack it away from an overlapping sprite foot.
+    // The frame centre may still sit beneath another fighter.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
       const sr = sprite?.getBoundingClientRect();
+      const targetStyle = getComputedStyle(c, '::after');
+      const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
+      const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
       const reach = c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
-        ? exposedPatch(c, 24, { left: sr.left + sr.width / 2 - 22, right: sr.left + sr.width / 2 + 22,
-            top: sr.bottom - 22, bottom: sr.bottom + 22 },
+        ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
+            top: ty - halfHeight, bottom: ty + halfHeight },
           top => top === c || top === sprite || sprite.contains(top))
         : exposedPatch(sprite, 24);
       if (reach) continue;

@@ -1,0 +1,21 @@
+{
+  "images": [
+    {
+      "src": "http://localhost:52807/build/objects/9a/9a788d19a77a4af0a91630fe78076022fe0af18f0ed5144bf7172e35632f8b5f.webp",
+      "w": 1536,
+      "h": 1024
+    }
+  ],
+  "html": "<div class=\"backdrop environment-backdrop\" data-illustrated-component=\"scene-background\" data-region=\"pale-marches\" data-scene=\"pale-marches-2\" aria-hidden=\"true\" data-scene-fit=\"floor\" data-skyline=\"on\" data-floor=\"on\" data-floor-top=\"391.07843463897706\" style=\"--scene-paint-bottom: 810.4330010022169px;\">\n  <svg viewBox=\"998.7955969702512 -61.496092906016024 306.40880605949764 663.1000828569641\" preserveAspectRatio=\"xMidYMid slice\" focusable=\"false\">\n   <svg x=\"768\" y=\"0\" width=\"768\" height=\"512\" viewBox=\"768 0 768 512\" overflow=\"hidden\">\n   <image data-layer=\"painting\" href=\"./objects/9a/9a788d19a77a4af0a91630fe78076022fe0af18f0ed5144bf7172e35632f8b5f.webp\" width=\"1536\" height=\"1024\" preserveAspectRatio=\"xMidYMid meet\"></image>\n   </svg>\n  </svg>\n </div>",
+  "style": {
+    "display": "block",
+    "opacity": "1",
+    "visibility": "visible"
+  },
+  "rect": {
+    "x": 0,
+    "y": 0,
+    "w": 390,
+    "h": 843.34375
+  }
+}
