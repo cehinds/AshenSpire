@@ -3,14 +3,64 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1701",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Both game versions retain their updates",
+    "detail": "Alternative updates preserve the reviewed artwork checks, skill Level Up repairs and both changelog histories while accepting the latest promoted primary build.",
+    "build": "0.7.1.1067",
+    "pullRequest": 1701,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1701"
+  },
+  {
+    "id": "pr-1689",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative figures recover and keep moving",
+    "detail": "Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.",
+    "build": "0.7.1.1065",
+    "pullRequest": 1689,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1689"
+  },
+  {
+    "id": "pr-1691",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1065",
+    "pullRequest": 1691,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
+    "id": "pr-1698",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates keep progressing",
+    "detail": "The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1698,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1698"
+  },
+  {
     "id": "pr-1695",
-    "date": "2026-10-06",
-    "group": "2026-10-06",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
     "summary": "Preview the new alternative character animations",
     "detail": "The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.",
     "build": "0.7.1.1060",
     "pullRequest": 1695,
     "url": "https://github.com/cehinds/AshenSpire/pull/1695"
+  },
+  {
+    "id": "pr-1692",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1059",
+    "pullRequest": 1692,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1692"
   },
   {
     "id": "pr-1694",
@@ -53,16 +103,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1690"
   },
   {
-    "id": "pr-1686",
-    "date": "2026-10-06",
-    "group": "2026-10-06",
-    "summary": "Alternative builds gain class progression and retraining",
-    "detail": "Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.",
-    "build": "0.7.1.1054",
-    "pullRequest": 1686,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1686"
-  },
-  {
     "id": "pr-1688",
     "date": "2026-10-06",
     "group": "2026-10-06",
@@ -71,6 +111,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1054",
     "pullRequest": 1688,
     "url": "https://github.com/cehinds/AshenSpire/pull/1688"
+  },
+  {
+    "id": "pr-1686",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative builds gain class progression and retraining",
+    "detail": "Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.",
+    "build": "0.7.1.1054",
+    "pullRequest": 1686,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1686"
   },
   {
     "id": "pr-1676",

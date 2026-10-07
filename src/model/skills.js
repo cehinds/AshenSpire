@@ -1,4 +1,6 @@
 import {spendAbilityDraft} from './abilityDraftReceipts.js';
+import { activateAbilitySkill } from './abilitySkillActivation.js';
+export { activateAbilitySkill };
 import { progressionFeats, progressionFeatUnlocks } from '../content/progression/feats.js';
 import { progressionUnlocks } from '../content/progression/unlocks.js';
 import { isAbilitySkill, SPELLCRAFT_SKILL, MANEUVERS_SKILL } from './abilityGrades.js';
@@ -532,14 +534,6 @@ export function skillsProblems(skills) {
   return problems;
 }
 
-export function activateAbilitySkill(run, skillId) {
-  if (!isAbilitySkill(skillId)) return false;
-  run.skills ||= {};
-  const row = run.skills[skillId] ||= { xp: 0, level: 0, pendingDrafts: 0 };
-  if (row.level > 0) return false;
-  row.level = 1; row.pendingDrafts += 1;
-  return true;
-}
 function payClassMilestone(registries, run, classId, level) {
   if (!expandedProgression(run) || !queueClassMilestone(registries, run, classId, level)) return [];
   return (registries.balance.progression.classSkills[classId] || []).map(skillId => bankSkillXp(registries, run, skillId, registries.balance.progression.skillBonusXp));

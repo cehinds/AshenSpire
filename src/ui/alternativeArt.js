@@ -1,5 +1,6 @@
 import { alternativeArtCatalog } from './alternativeArtCatalog.js';
 import { assetUrl } from './assetmap.js';
+import { markArtPlaceholder } from './artFallback.js';
 import { armourById } from '../content/equipment.js';
 
 /* ALTERNATIVE_ART_START */
@@ -16,14 +17,15 @@ export function alternativePlayerId(classId, armourId = 'default') {
     .find(id => alternativeArtCatalog.sprites[id]) || null;
 }
 
-function actorPicture(art) {
+function actorPicture(art, onError = null) {
   const picture = document.createElement('picture');
   const mobile = document.createElement('source');
   mobile.media = '(max-width: 599px)';
-  mobile.srcset = alternativeArtUrl(art.mobilePath);
   const image = new Image();
   image.alt = art.name;
   image.draggable = false;
+  if (onError) image.addEventListener('error', () => onError({ picture, mobile, image }));
+  mobile.srcset = alternativeArtUrl(art.mobilePath);
   image.src = alternativeArtUrl(art.path);
   picture.append(mobile, image);
   return { picture, image };
@@ -47,7 +49,24 @@ export function alternativeSprite(id, side = 'enemy') {
   stage.dataset.idleWidthRatio = String(width / height);
   const crop = document.createElement('div');
   crop.className = 'alternative-crop';
-  const { picture, image } = actorPicture(art);
+  const { picture, image } = actorPicture(art, ({ picture, mobile, image }) => {
+    // Keep the frame and authored crop in place while the failed image is
+    // absent. Retry restores this same responsive picture at its newly resolved URLs.
+    const placeholder = document.createElement('span');
+    placeholder.textContent = side === 'player' ? '⚔' : '☠';
+    placeholder.setAttribute('role', 'img');
+    placeholder.setAttribute('aria-label', art.name);
+    placeholder.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'
+      + 'border:2px solid var(--line-soft);border-radius:10px;background:var(--panel);font-size:48px';
+    picture.remove();
+    root.append(placeholder);
+    markArtPlaceholder(root, () => {
+      placeholder.remove();
+      crop.append(picture);
+      mobile.srcset = alternativeArtUrl(art.mobilePath);
+      image.src = alternativeArtUrl(art.path);
+    });
+  });
   image.style.cssText = `position:absolute;width:${w * scale}px;height:${h * scale}px;left:${-x0 * scale}px;top:${-y0 * scale}px;max-width:none`;
   crop.append(picture); stage.append(crop); root.append(stage);
   return root;
