@@ -8555,5 +8555,54 @@ export const uiStrings = [
     "short": "",
     "full": "Target {number}: {name}, {hp} of {maxHp} HP",
     "tip": ""
+  },
+  {
+    "id": "creation.abilities.maneuvers",
+    "extends": "",
+    "short": "COMBAT MANEUVER",
+    "full": "COMBAT MANEUVER",
+    "tip": "Choose one Rank 1 combat maneuver after armaments."
+  },
+  {
+    "id": "creation.abilities.spells",
+    "extends": "",
+    "short": "STARTING SPELLS",
+    "full": "STARTING SPELLS",
+    "tip": "Choose two distinct Rank 1 spells after armaments."
+  },
+  {
+    "id": "creation.abilities.progress",
+    "extends": "",
+    "short": "{chosen}/{count} chosen · Rank {rank}",
+    "full": "{chosen}/{count} chosen · Rank {rank}",
+    "tip": "{chosen}/{count} chosen · Rank {rank}"
+  },
+  {
+    "id": "creation.abilities.choose",
+    "extends": "",
+    "short": "Learn ability",
+    "full": "Learn ability",
+    "tip": "Learn this starting ability."
+  },
+  {
+    "id": "creation.abilities.remove",
+    "extends": "",
+    "short": "Unpick ability",
+    "full": "Unpick ability",
+    "tip": "Unpick this starting ability choice."
+  },
+  {
+    "id": "creation.abilities.chooseLabel",
+    "extends": "",
+    "short": "Learn ability {name}",
+    "full": "Learn ability {name}",
+    "tip": "Learn ability {name}"
+  },
+  {
+    "id": "creation.abilities.summary",
+    "extends": "",
+    "short": "Starting ability",
+    "full": "Starting ability",
+    "tip": "Starting ability"
   }
 ];

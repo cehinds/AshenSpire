@@ -1,9 +1,9 @@
 import { tFull } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
+import { enemyTargetGrid } from '../models/EnemyTargetGridModel.js';
 
-// Overhead controls move with the fitted figures. Reserve a separate measured
-// band for targets instead of trading target access for intent inspection.
+// Placement follows fitted figures without intercepting inspection controls.
 function watchTargetPlacement(host, picker) {
   let queued = null;
   let resize;
@@ -18,25 +18,28 @@ function watchTargetPlacement(host, picker) {
   const place = () => {
     queued = null;
     if (!host.isConnected || picker.hidden) { dispose(); return; }
-    // Read the authored starting position anew so a resize may move the row
-    // back up after an intent has left its former place.
-    picker.style.removeProperty('top');
-    const box = picker.getBoundingClientRect();
-    if (!box.height) return;
+    const box = host.getBoundingClientRect();
     const zoom = uiZoom();
-    const gap = parseFloat(getComputedStyle(picker).gap) * zoom;
     const combat = host.closest('.combat');
-    const hud = combat?.querySelector('.combat-hud')?.getBoundingClientRect();
-    const ribbon = host.querySelector('.turn-ribbon')?.getBoundingClientRect();
-    let top = Math.max(box.top, hud ? hud.bottom + gap : box.top, ribbon ? ribbon.bottom + gap : box.top);
-    const overheads = [...host.querySelectorAll('.combatant-leading')]
-      .map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height)
-      .sort((a, b) => a.top - b.top);
-    for (const rect of overheads) {
-      if (top < rect.bottom + gap && top + box.height > rect.top - gap) top = rect.bottom + gap;
+    const localRect = rect => ({ left: rect.left - box.left, top: rect.top - box.top, width: rect.width, height: rect.height });
+    const obstacles = [combat?.querySelector('.combat-hud'), host.querySelector('.turn-ribbon'),
+      ...host.querySelectorAll('.combatant-leading, .meters')]
+      .filter(Boolean).map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height).map(localRect);
+    const playerRect = host.querySelector('.combatant.player .sprite')?.getBoundingClientRect();
+    const hardObstacles = playerRect?.width && playerRect?.height ? [localRect(playerRect)] : [];
+    const targets = [...picker.children].map(button => {
+      const figure = [...host.querySelectorAll('.combatant.enemy')].find(node => node.dataset.eid === button.dataset.eid);
+      const rect = (figure?.querySelector('.sprite') || figure)?.getBoundingClientRect();
+      return { id: button.dataset.eid, x: rect ? rect.left + rect.width / 2 - box.left : box.width / 2,
+        y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2 };
+    });
+    const placements = enemyTargetGrid({ width: box.width, height: box.height, targets, obstacles, hardObstacles });
+    for (const placement of placements) {
+      const button = [...picker.children].find(node => node.dataset.eid === placement.id);
+      const local = anchorLocalBox(host, { left: box.left + placement.left, top: box.top + placement.top,
+        width: placement.width, height: placement.height }, { zoom });
+      Object.assign(button.style, { left: `${local.left}px`, top: `${local.top}px`, width: `${local.width}px`, height: `${local.height}px` });
     }
-    const local = anchorLocalBox(host, { left: box.left, top, width: box.width, height: box.height }, { zoom });
-    picker.style.top = `${local.top}px`;
   };
   const schedule = () => { if (queued == null) queued = requestAnimationFrame(place); };
   if (globalThis.ResizeObserver) {
@@ -53,7 +56,7 @@ function watchTargetPlacement(host, picker) {
 }
 
 // Sprite artwork may overlap without making a living enemy unreachable. This
-// independent target strip uses the same legal IDs and command as the figures.
+// independent target grid uses the same legal IDs and command as the figures.
 // Reuse its buttons so combat repaints do not discard keyboard focus.
 export function renderEnemyTargetPicker(host, { targets = [], disabled = false, onActivate, onPreview } = {}) {
   let picker = host.querySelector(':scope > .enemy-target-picker');

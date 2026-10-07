@@ -1,3 +1,4 @@
+import { startingAbilityRefs } from './startingAbilities.js';
 import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
@@ -135,6 +136,7 @@ export function createRunState({
   startingHands = undefined,
   startingArmourId = undefined,
   startingRelicId = undefined,
+  startingAbilityIds = undefined,
   profileMeta = {},
 }) {
   const classDef = registries.classes.get(classId);
@@ -307,6 +309,9 @@ export function createRunState({
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
+  for (const ref of startingAbilityRefs(registries, run, startingAbilityIds)) {
+    run.deck.push({ ...createCardInstance(ref.cardId, false, idGen), ...ref });
+  }
   // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
   // weapon arts onto the deck, so this is the first moment the whole opening
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
