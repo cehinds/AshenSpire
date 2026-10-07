@@ -34,6 +34,16 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Alternative characters keep pace** ([#1683](https://github.com/cehinds/AshenSpire/pull/1683), `0.7.1.1045`). The alternative preview gains the ready-to-play character defaults, compact class cards, stat and relic detail dialogs, and continuous Smith upgrades. Its own battlefield and artwork stay intact, with both update histories preserved.
+
+- **Inspect your starting stats and relic** ([#1681](https://github.com/cehinds/AshenSpire/pull/1681), `0.7.1.1043`). Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.
+
+- **Ready to begin, easier to read** ([#1674](https://github.com/cehinds/AshenSpire/pull/1674), `0.7.1.1041`). Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.
+
+- **Alternative updates keep their build numbers current** ([#1672](https://github.com/cehinds/AshenSpire/pull/1672), `0.7.1.1039`). Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.
+
+- **Upgrade items in one continuous visit** ([#1675](https://github.com/cehinds/AshenSpire/pull/1675), `0.7.1.1038`). Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.
+
 - **Alternative artwork loads from the web packs** ([#1673](https://github.com/cehinds/AshenSpire/pull/1673), `0.7.1.1038`). The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.
 
 - **Your character, gear and deck share one Armory** ([#1671](https://github.com/cehinds/AshenSpire/pull/1671), `0.7.1.1036`). Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.

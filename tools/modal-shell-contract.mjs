@@ -223,12 +223,15 @@ check('footer buttons share one height', /\.modal-btnrow\s*\{[^}]*align-items:\s
 // component appends in the house order, and no rule reorders or re-spans a foot
 // primary. tools/character-creation-check.mjs measures the rendered left edges.
 check('the footer appends every way back before the one way forward',
-  /for \(const button of secondary\) if \(button\) actions\.appendChild\(button\);[\s\S]{0,900}?actions\.appendChild\(primary\);/.test(shellSource),
+  /for \(const button of visibleSecondary\) actions\.appendChild\(button\);[\s\S]{0,900}?actions\.appendChild\(primary\);/.test(shellSource),
   'the primary must be the last child, or the way on is not on the right');
+// Explicit auto/0 declarations restore document order; they do not reproduce
+// the old span/order regression. Inspect every declaration, not mere presence.
+const primaryFootRules = [...stripComments(css).matchAll(/\.modal-foot-actions\s*>\s*\.primary[^{]*\{([^}]*)\}/g)];
 check('no rule reorders or re-spans the foot primary',
-  !/\.modal-foot-actions\s*>\s*\.primary[^{]*\{[^}]*\border\s*:/.test(css)
-    && !/\.modal-foot-actions\s*>\s*\.primary[^{]*\{[^}]*grid-column\s*:/.test(css),
-  'order: or grid-column: on a foot primary moves it off the right — the 2026-09-10 regression');
+  primaryFootRules.every(([, body]) => [...body.matchAll(/(?:^|;)\s*(order|grid-column)\s*:\s*([^;]+)/g)]
+    .every(([, property, value]) => value.trim() === (property === 'order' ? '0' : 'auto'))),
+  'only neutral order:0 and grid-column:auto resets are allowed — the 2026-09-10 regression');
 
 check('the foot note is whole or absent, never a stub',
   /\.modal-foot-note\s*\{[^}]*container-type:\s*inline-size/.test(css) && /@container\s*\(max-width:[^)]*\)\s*\{\s*\.modal-foot-note\s*>\s*span\s*\{\s*visibility:\s*hidden/.test(css)
