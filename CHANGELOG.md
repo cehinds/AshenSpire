@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Alternative updates keep progressing** ([#1698](https://github.com/cehinds/AshenSpire/pull/1698), `0.7.1.1060`). The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.
+
 - **Skill Level Up works after victory** ([#1692](https://github.com/cehinds/AshenSpire/pull/1692), `0.7.1.1059`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.
 
 ## 2026-10-06

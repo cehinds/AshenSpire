@@ -65,6 +65,20 @@ jobs:
         if: steps.prepare.outputs.needed == 'true'
         with:
           packs: all
+      - name: Install pinned alternative art encoder
+        if: steps.prepare.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/libwebp-1.6.0-linux-x86-64.tar.gz"
+          encoder="$RUNNER_TEMP/libwebp-1.6.0"
+          curl --fail --location --retry 3 https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0-linux-x86-64.tar.gz --output "$archive"
+          printf '%s  %s\n' 1c5ffab71efecefa0e3c23516c3a3a1dccb45cc310ae1095c6f14ae268e38067 "$archive" | sha256sum --check -
+          mkdir -p "$encoder"
+          tar --extract --gzip --file "$archive" --strip-components=1 --directory "$encoder"
+          version="$("$encoder/bin/cwebp" -version)"
+          test "${version%%$'\n'*}" = '1.6.0'
+          echo "$encoder/bin" >> "$GITHUB_PATH"
       - name: Validate and refresh permitted artwork
         if: steps.prepare.outputs.needed == 'true'
         shell: bash
