@@ -1,8 +1,59 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
-import { combatOverheadAnchorX, combatOverheadAnchors, combatOverheadRibbonShift } from '../src/ui/models/CombatOverheadModel.js';
+import { combatOverheadAnchorX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors } from '../src/ui/models/CombatOverheadModel.js';
 import { fitCombatSprites } from '../src/ui/models/CombatSpriteScaleModel.js';
+
+test('short-phone fitted feet keep separate full tap areas without changing the artwork', () => {
+  const targets = [
+    { id: 'player', x: 89.047, y: 237.891 },
+    { id: 'e1', x: 283.586, y: 242.203 },
+    { id: 'e2', x: 214.945, y: 242.203 },
+    { id: 'e3', x: 275.867, y: 242.219 },
+  ];
+  const before = structuredClone(targets);
+  const packed = combatTargetAnchors({ width: 390, height: 275.203, targets });
+  assert.deepEqual(targets, before, 'measured sprite feet are inputs, never moved');
+  const sorted = packed.toSorted((a, b) => a.x - b.x);
+  for (const target of sorted) {
+    assert.ok(target.x - 22 >= 0 && target.x + 22 <= 390);
+    assert.ok(target.y - 22 >= 0 && target.y + 22 <= 275.203);
+    assert.equal(target.y, before.find(t => t.id === target.id).y);
+  }
+  for (let i = 1; i < sorted.length; i++) assert.ok(sorted[i].x - sorted[i - 1].x >= 46,
+    'all final target rectangles, including coincident formation rows, have clearance');
+  assert.notEqual(packed.find(t => t.id === 'e3').x, before.find(t => t.id === 'e3').x);
+});
+
+test('tap target packing preserves unconstrained feet and clamps only targets to stage edges', () => {
+  const targets = [{ id: 'player', x: 60, y: 100 }, { id: 'enemy', x: 300, y: 200 }];
+  assert.deepEqual(combatTargetAnchors({ width: 390, height: 300, targets }), targets);
+  assert.deepEqual(combatTargetAnchors({ width: 390, height: 300,
+    targets: [{ id: 'edge', x: 389, y: 299 }] }), [{ id: 'edge', x: 368, y: 278 }]);
+});
+
+test('packed frame targets reserve their visible health footer as the owner cue', () => {
+  const targets = [{ id: 'e1', x: 284, y: 242, width: 70 },
+    { id: 'e2', x: 215, y: 242, width: 70 }, { id: 'e3', x: 276, y: 242, width: 70 }];
+  const packed = combatTargetAnchors({ width: 390, height: 275, targets }).toSorted((a,b) => a.x-b.x);
+  assert.ok(packed.every(target => target.x - 35 >= 0 && target.x + 35 <= 390));
+  for (let i=1;i<packed.length;i++) assert.ok(packed[i].x-packed[i-1].x>=72,
+    'whole visible footers have clearance, not only invisible targets');
+  assert.ok(packed.every(target => target.y === 242));
+});
+
+test('short landscape overheads pack intersecting rows despite a wide stage', () => {
+  const controls = [
+    { id: 'e1', side: 'enemy', x: 788.18, width: 58.704, top: 75.89, bottom: 123.89 },
+    { id: 'e2', side: 'enemy', x: 639.63, width: 58.704, top: 75.89, bottom: 123.89 },
+    { id: 'e3', side: 'enemy', x: 771.48, width: 58.704, top: 53.16, bottom: 101.16 },
+  ];
+  const packed = combatOverheadAnchors({ width: 844, controls }).toSorted((a,b)=>a.x-b.x);
+  for(let i=1;i<packed.length;i++) assert.ok(packed[i].x-packed[i-1].x>=64.704-1e-9,
+    'wide aspect does not waive the full measured intent clearance');
+  assert.deepEqual(combatOverheadAnchors({ width: 1440, controls }),
+    combatOverheadAnchors({ width: 844, controls }), 'packing follows measured bands rather than a phone breakpoint');
+});
 import { presentationConfig } from '../src/model/advancedConfig.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../src/ui/fx.js';
 
