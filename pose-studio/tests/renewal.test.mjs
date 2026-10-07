@@ -33,7 +33,7 @@ test('down retains its final frame and reduced/instant sampling has no displacem
 });
 test('coverage is explicit and Pose Studio packages keep runtime bindings empty',()=>{
  assert.equal(manifest.coverage.length,40);
- assert.equal(manifest.coverage.filter(r=>r.status==='draft').length,3);
+ assert.equal(manifest.coverage.filter(r=>r.status==='draft').length,4);
  for(const name of ['attack','power','spell']){
   const p=JSON.parse(readFileSync(new URL('../renewal/'+name+'.pose.json',import.meta.url)));
   assert.deepEqual(validate(p),[]);
@@ -44,7 +44,7 @@ test('coverage is explicit and Pose Studio packages keep runtime bindings empty'
 });
 
 test('additional families retain their own actions, assets and portable imports',()=>{
- for(const [actor,loadout] of [['rogue','twinDaggers'],['starseer','staff']]){
+ for(const [actor,loadout] of [['rogue','twinDaggers'],['starseer','staff'],['herald','swordShield']]){
  const rogue=JSON.parse(readFileSync(new URL('../renewal/'+actor+'/manifest.json',import.meta.url)));
  assert.equal(rogue.classId,actor);assert.equal(rogue.loadout,loadout);
  assert.equal(Object.keys(rogue.frames).length,12);
