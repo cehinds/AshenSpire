@@ -1,0 +1,11 @@
+{
+  "schema": "ashenspire.layer-validation.v1",
+  "projects": 31,
+  "armorRecords": 35,
+  "armaments": 28,
+  "poses": 26071,
+  "contacts": 50344,
+  "layers": 126759,
+  "passed": true,
+  "visualApproval": false
+}
