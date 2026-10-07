@@ -265,6 +265,49 @@ function bundledStartingDecks(html, { restoreCycle = false } = {}) {
   } catch (error) { return { ok: false, why: error.message }; }
 }
 
+// Exercise the shipped loader, not native ESM live bindings. Mastery loads
+// first on the affected reward path; the old back-edge froze its exports
+// before initialization. Restore that edge to prove the probe catches it.
+function bundledSkillClaims(html, { restoreCycle = false } = {}) {
+  let script = /<script>([\s\S]*?)<\/script>/.exec(html)?.[1];
+  if (!script) return { ok: false, why: 'no bundled script' };
+  script = script.replace(/"data:[^"\\\n\r]*"/g, '"data:"');
+  if (restoreCycle) {
+    const start = script.indexOf('"src/model/classMasteryRun.js": function');
+    const end = script.indexOf('\n},\n"', start);
+    const body = script.slice(start, end);
+    const leaf = 'require("src/model/abilitySkillActivation.js")';
+    if (start < 0 || end < 0 || !body.includes(leaf)) return { ok: false, why: 'activation leaf not found' };
+    script = script.slice(0, start) + body.replace(leaf, 'require("src/model/skills.js")') + script.slice(end);
+  }
+  const entry = '  require("src/main.js");\n})();';
+  if (!script.trimEnd().endsWith(entry)) return { ok: false, why: 'runtime entry not found' };
+  script = script.replace(entry, `
+  const mastery = require("src/model/classMasteryRun.js");
+  const skills = require("src/model/skills.js");
+  const bundle = require("src/content/index.js").contentBundle;
+  const registries = require("src/model/registries.js").createRegistries(bundle);
+  const run = require("src/model/state.js").createRunState({seed: 7172, classId: 'starseer', registries});
+  mastery.openRunClassMastery(registries, run, {}, {receiptId: 'bundled-skill-claim'});
+  const scoped = mastery.registriesForClassMastery(registries, run);
+  for (const [id, kind] of [['class:starseer','class'], ['item:magic-focus','focus'], ['item:blade','weapon'], ['combatManeuvers','ability']]) {
+    skills.activateAbilitySkill(run, id);
+    const before = run.skills[id]?.level || 0;
+    const cost = skills.xpToNext(scoped, kind, before);
+    if (kind === 'class') mastery.recordClassMasteryXp(run, 'starseer', cost + 7);
+    skills.bankSkillXp(scoped, run, id, cost + 7);
+    const claim = skills.claimBankedSkillLevel(scoped, run, id);
+    if (!claim || claim.after !== claim.before + 1 || run.skills[id].xp < 7) throw new Error('claim failed: ' + id);
+  }
+  globalThis.skillClaimsPassed = true;
+})();`);
+  const context = vm.createContext({console, structuredClone});
+  try {
+    new vm.Script(script, {filename: 'bundled-skill-claims'}).runInContext(context, {timeout: 30000});
+    return {ok: context.skillClaimsPassed === true};
+  } catch (error) { return {ok: false, why: error.message}; }
+}
+
 // ---- 1. The control: an untouched tree still builds -------------------------
 // EVERY CASE RUNS IN ITS OWN FUNCTION FRAME. As bare `{ … }` blocks at module
 // top level, each case's block-scoped locals stayed alive in the one top-level
@@ -288,6 +331,8 @@ function bundledStartingDecks(html, { restoreCycle = false } = {}) {
       check('control: selected-source branch artwork catalog contains declared hashes', catalogHashes.length > 0);
       const mapMatch = html.match(/const alternativeArtMap = (\{[^\n]+\});/);
       const inlineArt = mapMatch ? JSON.parse(mapMatch[1]) : {};
+      const aliasMatch = html.match(/for \(const \[alias, key\] of (\[[^\n]+\])\) alternativeArtMap\[alias\] = alternativeArtMap\[key\];/);
+      for (const [alias, key] of aliasMatch ? JSON.parse(aliasMatch[1]) : []) inlineArt[alias] = inlineArt[key];
       const mismatches = catalogHashes.filter(([file, hash]) => {
         const payload = inlineArt[`assets-alternative/${file}`];
         return !payload?.startsWith('data:image/webp;base64,')
@@ -301,6 +346,11 @@ function bundledStartingDecks(html, { restoreCycle = false } = {}) {
     const planted = bundledStartingDecks(html, { restoreCycle: true });
     check('control: restoring the validator import catches the captured createLoadout cycle',
       !planted.ok && /createLoadout is not a function/.test(planted.why), planted.why);
+    const claims = bundledSkillClaims(html);
+    check('control: bundled class, focus, weapon and maneuver Level Up claims succeed', claims.ok, claims.why);
+    const capturedMastery = bundledSkillClaims(html, {restoreCycle: true});
+    check('control: restoring the mastery/skills cycle reproduces hasClassMastery failure',
+      !capturedMastery.ok && /hasClassMastery is not a function/.test(capturedMastery.why), capturedMastery.why);
   }
   rmSync(dir, { recursive: true, force: true });
 })();
