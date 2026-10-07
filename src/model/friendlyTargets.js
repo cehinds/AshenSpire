@@ -1,5 +1,6 @@
 // Headless friendly-target semantics shared by the authoritative engine and
 // browser clients. This layer deliberately owns no DOM, colours, or rendering.
+import { immediateCardEffects } from './combatCardEffects.js';
 
 // Every hostile member of the effect target vocabulary owns card resolution
 // before source-side self effects are considered. An AoE/random strike may
@@ -9,11 +10,11 @@ const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEne
 
 // Authoritative previews include temporary charges on the resolved grade.
 export function cardNeedsEnemyTarget(def) {
-  return def?.combatPreview?.needsTarget === true || (def?.effects || []).some(effect => effect.target === 'enemy');
+  return def?.combatPreview?.needsTarget === true || immediateCardEffects(def).some(effect => effect.target === 'enemy');
 }
 
 export function friendlyTargetMode(def) {
-  const effects = def && Array.isArray(def.effects) ? def.effects : [];
+  const effects = immediateCardEffects(def);
   const hasEnemy = def?.combatPreview?.needsTarget === true || effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
   const hasAlly = effects.some((effect) => effect.target === 'ally');
   const hasSelf = effects.some((effect) => effect.target === 'self');

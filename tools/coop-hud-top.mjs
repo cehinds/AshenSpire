@@ -568,6 +568,57 @@ async function intentPrivacyProbe(cdp, sessionId, base, shotDir = null) {
   return bad;
 }
 
+async function counterPreparationProbe(cdp, sessionId, base, shotDir = null) {
+  const ev = async expression => (await cdp.send('Runtime.evaluate', {
+    expression, awaitPromise: true, returnByValue: true,
+  }, sessionId)).result?.value;
+  await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+  for (let t = 0; t < 90 && !(await ev('!!window.__receiveCoopSnapshotForShot')); t++) await wait(500);
+  if (!await ev('!!window.__receiveCoopSnapshotForShot')) return ['Counter preparation: co-op fixture did not mount'];
+  await ev(`(() => {
+    const s = structuredClone(window.__coopSnapshotForShot), p = s.scene.players[0];
+    p.hand = [{ instanceId: 'counter-preparation', cardId: 'guardCounter', upgraded: false }];
+    p.energy = p.stamina = p.mana = 99;
+    window.__receiveCoopSnapshotForShot(s);
+    window.__coopSentForShot.length = 0;
+  })()`);
+  await wait(300);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: '1', code: 'Digit1', windowsVirtualKeyCode: 49 }, sessionId);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: '1', code: 'Digit1', windowsVirtualKeyCode: 49 }, sessionId);
+  const target = await ev(`({ self: !!document.querySelector('.coop-seat[data-seat="p1"][data-friendly-target="self"]'),
+    enemy: !!document.querySelector('.combatant.enemy[data-friendly-target], .combatant.enemy.targetable') })`);
+  const bad = [];
+  const direct = await ev(`window.__coopSentForShot.filter(message => message.t === 'playCard')`);
+  if (target?.enemy || !(direct?.length === 1 && direct[0].as === 'p1'
+    && direct[0].cardInstanceId === 'counter-preparation' && direct[0].targetId == null)) {
+    bad.push(`Counter preparation: pure reaction expected one untargeted play, received ${JSON.stringify(direct)}`);
+  }
+  // A Counter with immediate self support still uses the ordinary friendly
+  // confirmation. Its later reply never becomes an enemy aiming requirement.
+  await ev(`(() => {
+    const s = structuredClone(window.__coopSnapshotForShot), p = s.scene.players[0];
+    p.hand = [{ instanceId: 'supported-counter', cardId: 'bindingParry', upgraded: false }];
+    p.energy = p.stamina = p.mana = 99;
+    window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0;
+  })()`);
+  await wait(300);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: '1', code: 'Digit1', windowsVirtualKeyCode: 49 }, sessionId);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: '1', code: 'Digit1', windowsVirtualKeyCode: 49 }, sessionId);
+  const self = await ev(`!!document.querySelector('.coop-seat[data-seat="p1"][data-friendly-target="self"]')`);
+  if (!self) bad.push('Counter preparation: support payload did not arm its self target');
+  if (shotDir) {
+    await wait(350);
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
+    writeFileSync(resolve(shotDir, 'coop-counter-preparation.png'), Buffer.from(data, 'base64'));
+  }
+  await ev(`document.querySelector('.coop-seat[data-seat="p1"][data-friendly-target="self"]')?.click()`);
+  const plays = await ev(`window.__coopSentForShot.filter(message => message.t === 'playCard')`);
+  if (!(plays?.length === 1 && plays[0].as === 'p1' && plays[0].cardInstanceId === 'supported-counter'
+    && plays[0].targetId === 'p1')) bad.push(`Counter preparation: expected one source-seat play, received ${JSON.stringify(plays)}`);
+  console.log(`  ${bad.length ? '✗' : '✓'} Counter preparation: shortcut prepares pure reaction; supported Counter confirms its source seat`);
+  return bad;
+}
+
 // THE STANCE CHOOSER OWNS THE COUCH KEYBOARD (#1449 review, Codex P1).
 // Warrior's Vow opens a body-level dialog before its play intent. Tab inside
 // it must move between the stance buttons, not switch the couch seat (which
@@ -776,7 +827,8 @@ async function main(args) {
       const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
       await cdp.send('Page.enable', {}, sessionId);
       await cdp.send('Runtime.enable', {}, sessionId);
-      const bad = await intentPrivacyProbe(cdp, sessionId, base, shotDir);
+      const bad = [...await intentPrivacyProbe(cdp, sessionId, base, shotDir),
+        ...await counterPreparationProbe(cdp, sessionId, base, shotDir)];
       for (const failure of bad) console.error(failure);
       await cdp.send('Target.closeTarget', { targetId });
       return bad.length ? 1 : 0;
@@ -824,6 +876,7 @@ async function main(args) {
         const seatBad = [...await orbProbe(cdp, sessionId, base),
           ...await seatSwitchProbe(cdp, sessionId, base),
           ...await intentPrivacyProbe(cdp, sessionId, base, shotDir),
+          ...await counterPreparationProbe(cdp, sessionId, base, shotDir),
           ...await repeatOpenProbe(cdp, sessionId, base),
           ...await liveSnapshotProbe(cdp, sessionId, base),
           ...await vowChoiceProbe(cdp, sessionId, base)];

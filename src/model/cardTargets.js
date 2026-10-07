@@ -1,11 +1,6 @@
 import { friendlyTargetPlan } from './friendlyTargets.js';
-import { combatProfileFor } from './combatCardProfile.js';
-
-export function immediateCardEffects(def) {
-  const effects = def?.effects || [];
-  return combatProfileFor(def).maneuver === 'counter'
-    ? effects.filter(effect => !['damage', 'poiseDamage'].includes(effect.op)) : effects;
-}
+import { immediateCardEffects } from './combatCardEffects.js';
+export { immediateCardEffects };
 
 const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies']);
 

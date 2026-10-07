@@ -647,7 +647,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const player = sc?.kind === 'combat' ? sc.players.find((entry) => entry.id === me) : null;
       const card = player?.hand.find((entry) => {
         const def = cardDef(entry);
-        return (def.effects || []).some((effect) => effect.target === 'enemy')
+        return cardNeedsEnemyTarget(def)
           && cardAffordableFromSnapshot(def, player);
       });
       const enemy = sc?.enemies.find((entry) => entry.alive);
