@@ -605,6 +605,11 @@
       "rig": "reaver-sword.rig.json",
       "folder": ""
     },
+    "herald/swordShield": {
+      "manifest": "herald/manifest.json",
+      "rig": "herald/herald-swordShield.rig.json",
+      "folder": "herald/"
+    },
     "rogue/twinDaggers": {
       "manifest": "rogue/manifest.json",
       "rig": "rogue/rogue-twinDaggers.rig.json",

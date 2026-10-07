@@ -598,6 +598,27 @@
     "webp": 547762,
     "lite": 156050
   },
+  "families": {
+    "reaver/sword": {
+      "rig": "reaver-sword.rig.json",
+      "folder": ""
+    },
+    "herald/swordShield": {
+      "manifest": "herald/manifest.json",
+      "rig": "herald/herald-swordShield.rig.json",
+      "folder": "herald/"
+    },
+    "rogue/twinDaggers": {
+      "manifest": "rogue/manifest.json",
+      "rig": "rogue/rogue-twinDaggers.rig.json",
+      "folder": "rogue/"
+    },
+    "starseer/staff": {
+      "manifest": "starseer/manifest.json",
+      "rig": "starseer/starseer-staff.rig.json",
+      "folder": "starseer/"
+    }
+  },
   "classId": "rogue",
   "loadout": "twinDaggers"
 }

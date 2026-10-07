@@ -1,6 +1,6 @@
 {
   "attack": [
-    "exec-b67c349a-5171-427e-97dd-818a7e8a03c5.png",
+    "attack.png",
     0.72,
     [
       [
@@ -72,7 +72,7 @@
     ]
   ],
   "reactions": [
-    "exec-6210a05d-7910-4191-8c8a-905ff4b877b6.png",
+    "reactions.png",
     0.55,
     [
       [
@@ -111,7 +111,7 @@
     ]
   ],
   "casts": [
-    "exec-db842407-15bc-4472-96ae-e1e75fe9c9fc.png",
+    "casts.png",
     0.52,
     [
       [
