@@ -30,7 +30,11 @@
       "Fast down holds at 160 ms",
       "spell release with shield retained",
       "no console errors"
-    ]
+    ],
+    "localToolSelftests": {
+      "passed": 18,
+      "failed": 0
+    }
   },
   "remaining": [
     "36 base class/loadout families",
@@ -52,6 +56,11 @@
     "commit": "da3c7135f683a091224354f7daabee43463e74a7",
     "families": [
       "reaver/sword"
-    ]
+    ],
+    "testPromotion": {
+      "pr": 1699,
+      "branch": "alternative/test",
+      "commit": "c46ccd898c2c2dd6ec0d5880c19115efb419594b"
+    }
   }
 }
