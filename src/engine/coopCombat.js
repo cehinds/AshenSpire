@@ -837,9 +837,14 @@ function enemyPhase(C) {
         const wc = move.delay.whileCharging || {};
         const carrier = enemyMoveCarrier(enemy, move, enemy.intent.moveId);
         if (wc.block != null) { setActive(C, firstLiving(C)); C.enqueue({ effect: { op: 'block', target: 'self', amount: wc.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId: enemy.intent.moveId } }); drainQueue(C); }
-        for (const eff of wc.effects || []) applyEnemyEffect(C, enemy, eff, enemy.intent.moveId, carrier);
-        enemy.pendingMove = { moveId: enemy.intent.moveId, resolveOnTurn: C.turn + (move.delay.turns != null ? move.delay.turns : 1) };
-        enemy.intent = { ...enemy.intent, pending: true };
+        for (const eff of wc.effects || []) {
+          if (C.result || !enemy.alive) break;
+          applyEnemyEffect(C, enemy, eff, enemy.intent.moveId, carrier);
+        }
+        if (!C.result && enemy.alive) {
+          enemy.pendingMove = { moveId: enemy.intent.moveId, resolveOnTurn: C.turn + (move.delay.turns != null ? move.delay.turns : 1) };
+          enemy.intent = { ...enemy.intent, pending: true };
+        }
       } else {
         executeMove(C, enemy, move, enemy.intent.moveId);
       }
@@ -855,6 +860,7 @@ function enemyPhase(C) {
 // A move's self/enemy-targeted parts apply once; player-targeted damage +
 // effects fan out to every living player (each blocks independently).
 function executeMove(C, enemy, move, moveId) {
+  if (C.result || !enemy.alive) return;
   (enemy.performedMoves ||= []).push(moveId); // performed, not rolled (see combat.js)
   C.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   const carrier = enemyMoveCarrier(enemy, move, moveId);
@@ -862,19 +868,22 @@ function executeMove(C, enemy, move, moveId) {
     setActive(C, firstLiving(C));
     C.enqueue({ effect: { op: 'block', target: 'self', amount: move.block }, source: enemy, owner: enemy, target: enemy, card: enemyMoveCarrier(enemy, move, moveId), meta: { moveId } });
     drainQueue(C);
-    if (C.result) return;
+    if (C.result || !enemy.alive) return;
   }
   const targets = livingPlayers(C);
   for (const P of targets) {
-    if (C.result) return;
+    if (C.result || !enemy.alive) return;
     setActive(C, P);
     if (move.damage != null && carrier.combatProfile.maneuver !== 'counter') {
       C.enqueue({ effect: { op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits != null ? move.hits : 1 }, source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId } });
       drainQueue(C);
-      if (C.result) return;
+      if (C.result || !enemy.alive) return;
     }
   }
-  for (const eff of move.effects || []) if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage'].includes(eff.op)) applyEnemyEffect(C, enemy, eff, moveId, carrier);
+  for (const eff of move.effects || []) {
+    if (C.result || !enemy.alive) return;
+    if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage'].includes(eff.op)) applyEnemyEffect(C, enemy, eff, moveId, carrier);
+  }
 }
 
 // Ops that act on the active seat's card piles (actions.js reads `ctx.piles`,
@@ -886,11 +895,12 @@ const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffle
 // Player-targeted effects (and seat-pile ops) fan out to every living seat;
 // self/enemy effects apply once.
 function applyEnemyEffect(C, enemy, eff, moveId, rootCarrier = null) {
+  if (C.result || !enemy.alive) return;
   const move = C.registries.enemies.get(enemy.enemyId).moves[moveId];
   const carrier = rootCarrier || enemyMoveCarrier(enemy, move, moveId);
   if (eff.target === 'player' || SEAT_PILE_OPS.has(eff.op)) {
     for (const P of livingPlayers(C)) {
-      if (C.result) return;
+      if (C.result || !enemy.alive) return;
       setActive(C, P);
       C.enqueue({ effect: eff, source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId } });
       drainQueue(C);
