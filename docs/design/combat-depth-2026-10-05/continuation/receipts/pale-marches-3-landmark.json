@@ -1,0 +1,31 @@
+{
+  "id": "pale-marches-3-landmark",
+  "sceneId": "pale-marches-3",
+  "name": "Monastery of Silence",
+  "region": "pale-marches",
+  "kind": "landmark",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "resultFile": "scenes/pale-marches-3/landmark.png",
+  "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Monastery of Silence'. Subject: snow-filled Gothic monastery cloister with open lancet windows, crumbled frozen buttresses, no glass panes. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, cold silver blue-grey.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-d79b9821-37c0-4fec-941b-34653e7bae14.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "c5008fd123344ed60f9e09e8ce33ee4d87f1919926848d235ae624bc74f36c05",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.5788599650065104,
+  "visibleBounds": [
+    21,
+    0,
+    1514,
+    731
+  ],
+  "alphaThreshold": 32
+}

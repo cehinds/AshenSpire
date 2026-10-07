@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Lighter alternative characters, clearer scenery",
     "detail": "The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.",
-    "build": "0.7.1.1057",
+    "build": "0.7.1.1058",
     "pullRequest": 1694,
     "url": "https://github.com/cehinds/AshenSpire/pull/1694"
+  },
+  {
+    "id": "pr-1684",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative battles use the completed art collection",
+    "detail": "All 32 named combat settings have four independent layers with desktop and phone compositions. The collection has 59 canonical idle appearances, including the approved rear companions and speakers; dedicated armor appearances resolve before older aliases. Phone exports keep the artwork smaller while the current HUD, cards and footer stay in place. Sprite feet remain grounded when co-op battles resize between desktop and phone.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1684,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1684"
   },
   {
     "id": "pr-1686",

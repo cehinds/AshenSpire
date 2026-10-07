@@ -1,0 +1,26 @@
+{
+  "id": "BS-far",
+  "region": "BS",
+  "kind": "far",
+  "reference": "../references/composition.png",
+  "transparent": false,
+  "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: Briar Sanctum, remote Gothic chapel ruins lost within autumnal tangled forest, pale fog behind dense distant boughs, weathered umber stone, deep olive, rust red leaves. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+  "resultFile": "scenes/shared/BS/far.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-ca613e3a-de2d-40bb-88b6-964940ff0011.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGB",
+  "sha256": "ea307c0960e2ab3d0d4c8be70c5658ccf68bde9396bb04841324ed7aeeea8ae8",
+  "alphaRange": null,
+  "transparentFraction": 0,
+  "visibleBounds": [
+    0,
+    0,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

@@ -1,4 +1,4 @@
-"""Encode approved Combat Studio masters with the game's shared export policy."""
+"""Export the reviewed idle collection; never infer animation/action anchors."""
 import hashlib
 import json
 import shutil
@@ -9,58 +9,95 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'docs/design/combat-depth-2026-10-05'
 OUT = ROOT / 'assets-alternative'
+SOURCE_COMMIT = '41ae95ae42cce66e56805cc35ae1903a92a4d5a5'
+OUT.mkdir(exist_ok=True)
 catalog = json.loads((SOURCE / 'catalog.json').read_text(encoding='utf-8'))
+scenes = json.loads((SOURCE / 'continuation/scene-catalog.json').read_text(encoding='utf-8'))
+hashes = {}
+sources = {}
 encoder = shutil.which('cwebp')
 if not encoder:
     raise SystemExit('alternative-art-build: put the libwebp cwebp encoder on PATH before exporting')
 
-items = [(entry, 'sprite') for entry in catalog['entries'] if entry.get('status') == 'generated']
-items += [(entry, 'scene') for entry in catalog['layers'] + [
-    {'id': 'card-section-texture', 'file': 'layers/card-section-texture.png'}]]
+# Query the shared policy once; both device paths retain the same export
+# bytes, while their scene compositions remain independently authored.
+items = [(entry['id'], SOURCE / entry['file'], True) for entry in catalog['entries']]
+items += [(entry['id'], SOURCE / entry['file'], False) for entry in catalog['layers']]
+items += [('card-section-texture', SOURCE / 'layers/card-section-texture.png', False)]
+items += [('scene-' + entry['id'], SOURCE / 'continuation' / entry['file'], False)
+          for entry in scenes['layers']]
 requests = []
-for entry, kind in items:
-    source = (SOURCE / entry['file']).resolve()
-    if not source.is_relative_to(SOURCE.resolve()):
+for id, source, sprite in items:
+    if not source.resolve().is_relative_to(SOURCE.resolve()):
         raise ValueError(f'Artwork source escapes the master directory: {source}')
     with Image.open(source) as image:
         width, height = image.size
-    if kind == 'sprite' and [width, height] != entry['validation']['size']:
-        raise ValueError(f"Revalidate changed master dimensions for {entry['id']}")
-    requests.append({'path': ('sprites/' if kind == 'sprite' else 'environments/') + entry['id'] + '.webp',
+    requests.append({'path': ('sprites/' if sprite else 'environments/') + id + '.webp',
                      'width': width, 'height': height})
-
-# Query the JS policy once for the entire export: no copied pixel limits or
-# compression constants in this Python authoring tool.
-plans = json.loads(subprocess.run(
+plans = dict(zip((item[0] for item in items), json.loads(subprocess.run(
     ['node', str(ROOT / 'tools/art-export-plan.mjs')], input=json.dumps(requests),
-    text=True, capture_output=True, check=True, cwd=ROOT).stdout)
-OUT.mkdir(exist_ok=True)
-sprites, layers, layer_sizes = {}, {}, {}
-for (entry, kind), source_size, plan in zip(items, requests, plans, strict=True):
-    source = SOURCE / entry['file']
-    target = OUT / (entry['id'] + '.webp')
-    args = [encoder, '-quiet', '-m', '6', '-q', str(plan['quality']),
-            '-alpha_q', str(plan['alphaQuality']), '-alpha_filter', 'best']
-    if (plan['width'], plan['height']) != (source_size['width'], source_size['height']):
-        args += ['-resize', str(plan['width']), str(plan['height'])]
-    subprocess.run(args + [str(source), '-o', str(target)], check=True)
-    path = 'assets-alternative/' + target.name
-    if kind == 'sprite':
-        original_bounds = entry['validation']['visibleBounds']
-        sx, sy = plan['width'] / source_size['width'], plan['height'] / source_size['height']
-        bounds = [value * (sx if index % 2 == 0 else sy) for index, value in enumerate(original_bounds)]
-        sprites[entry['id']] = {k: entry[k] for k in ('name', 'family')}
-        sprites[entry['id']].update(path=path, size=[plan['width'], plan['height']], bounds=bounds,
-            sourceSize=entry['validation']['size'], sourceBounds=original_bounds)
-    else:
-        layers[entry['id']] = path
-        layer_sizes[entry['id']] = [plan['width'], plan['height']]
+    text=True, capture_output=True, check=True, cwd=ROOT).stdout), strict=True))
 
-manifest = {'sprites': sprites, 'layers': layers, 'layerSizes': layer_sizes,
-    'hashes': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(OUT.glob('*.webp'))}}
+def encode(id, source, expected=None, sprite=False):
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    if expected and digest != expected:
+        raise ValueError(f'Unreviewed source bytes: {source}')
+    with Image.open(source) as image:
+        source_size = list(image.size)
+    plan = plans[id]
+    paths = {}
+    for device in ('desktop', 'phone'):
+        target = OUT / (id + ('-mobile' if device == 'phone' else '') + '.webp')
+        if device == 'phone':
+            shutil.copyfile(OUT / (id + '.webp'), target)
+        else:
+            args = [encoder, '-quiet', '-m', '6', '-q', str(plan['quality']),
+                    '-alpha_q', str(plan['alphaQuality']), '-alpha_filter', 'best']
+            if [plan['width'], plan['height']] != source_size:
+                args += ['-resize', str(plan['width']), str(plan['height'])]
+            subprocess.run(args + [str(source), '-o', str(target)], check=True)
+        hashes[target.name] = hashlib.sha256(target.read_bytes()).hexdigest()
+        paths['path' if device == 'desktop' else 'mobilePath'] = 'assets-alternative/' + target.name
+    paths['size'] = [plan['width'], plan['height']]
+    sources[id] = {'file': source.relative_to(SOURCE).as_posix(), 'sha256': digest,
+                   'size': source_size}
+    return paths
+
+sprites = {}
+for entry in catalog['entries']:
+    if entry.get('status') != 'generated':
+        raise ValueError(f'Unfinished actor: {entry["id"]}')
+    sprites[entry['id']] = {k: entry[k] for k in ('name', 'family', 'facing', 'pose')}
+    paths = encode(entry['id'], SOURCE / entry['file'], entry['validation']['sha256'], True)
+    original_size = entry['validation']['size']
+    if sources[entry['id']]['size'] != original_size:
+        raise ValueError(f"Revalidate changed master dimensions for {entry['id']}")
+    original_bounds = entry['validation']['visibleBounds']
+    bounds = [value * paths['size'][index % 2] / original_size[index % 2]
+              for index, value in enumerate(original_bounds)]
+    sprites[entry['id']].update(paths, bounds=bounds,
+        sourceSize=original_size, sourceBounds=original_bounds)
+
+layers = {}
+mobileLayers = {}
+layer_sizes = {}
+for entry in catalog['layers'] + [{'id': 'card-section-texture', 'file': 'layers/card-section-texture.png'}]:
+    paths = encode(entry['id'], SOURCE / entry['file'])
+    layers[entry['id']] = paths['path']
+    mobileLayers[entry['id']] = paths['mobilePath']
+    layer_sizes[entry['id']] = paths['size']
+sceneLayers = {}
+for entry in scenes['layers']:
+    sceneLayers[entry['id']] = encode('scene-' + entry['id'], SOURCE / 'continuation' / entry['file'], entry['sha256'])
+    sceneLayers[entry['id']]['kind'] = entry['kind']
+
+manifest = {'sourceCommit': SOURCE_COMMIT, 'anchorContract': 'Idle alpha bounds only; no action or hand anchors.',
+    'sprites': sprites, 'layers': layers, 'layerSizes': layer_sizes,
+    'mobileLayers': mobileLayers, 'sceneLayers': sceneLayers,
+    'scenes': {s['id']: {k: s[k] for k in ('name', 'region', 'devices')} for s in scenes['scenes']},
+    'sources': sources, 'hashes': dict(sorted(hashes.items()))}
 (ROOT / 'src/ui/alternativeArtCatalog.js').write_text(
-    '// Generated by tools/alternative-art-build.py from approved masters and the shared export policy.\n'
-    + 'export const alternativeArtCatalog = ' + json.dumps(manifest, separators=(',', ':')) + ';\n',
-    encoding='utf-8', newline='\n')
-print(f'Encoded {len(sprites)} sprites and {len(layers)} layers; '
-      f'{sum(p.stat().st_size for p in OUT.glob("*.webp")):,} bytes.')
+    '// Generated by tools/alternative-art-build.py from reviewed masters.\n'
+    + 'export const alternativeArtCatalog = ' + json.dumps(manifest, separators=(',', ':')) + ';\n', encoding='utf-8', newline='\n')
+print(f'Encoded {len(sprites)} idle actors and {len(sceneLayers)} scene layers for both devices; '
+      f'{len(hashes)} files, {sum((OUT / name).stat().st_size for name in hashes):,} bytes.')
