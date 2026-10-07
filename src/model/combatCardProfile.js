@@ -14,6 +14,7 @@ function identity(tags, prefix, allowed, name) {
 
 /** Resolve authored identity; card names and spell damage never choose a camp. */
 export function combatProfileFor(carrier = {}) {
+  carrier ??= {};
   if (typeof carrier === 'string') carrier = { id: carrier };
   const enemyId = carrier.enemyId || carrier.enemyDefinitionId;
   const id = carrier.moveId || carrier.cardId || carrier.id || carrier.abilityFamily || '';
@@ -34,6 +35,7 @@ export function combatProfileFor(carrier = {}) {
 
 /** Registry labels and blurbs stay shared across card chips and enemy intents. */
 export function combatProfileTags(carrier = {}) {
+  carrier ??= {};
   const profile = carrier.camp ? carrier : combatProfileFor(carrier);
   return resolve([
     profile.camp && `camp:${profile.camp}`,

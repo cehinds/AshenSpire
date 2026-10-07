@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatProfileFor, combatProfileTags } from '../src/model/combatCardProfile.js';
+
+test('missing combat carrier has no identity or tag rows', () => {
+  for (const carrier of [null, undefined]) {
+    assert.deepEqual(combatProfileFor(carrier), {
+      camp: null, maneuver: null, school: null, damageType: null, counterMode: null,
+    });
+    assert.deepEqual(combatProfileTags(carrier), []);
+  }
+});
 import { objectTagIds } from '../src/content/tags.js';
 import { progressionCards } from '../src/content/progression/cards.js';
 import { basicCardProfiles } from '../src/content/generated/basicCardProfiles.js';

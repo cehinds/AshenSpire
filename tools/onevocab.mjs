@@ -844,8 +844,8 @@ if (SELFTEST) {
         // check's coverage.
         name: "the class domain goes empty at the registry — ONEANSWER's denominator dies",
         file: 'src/model/registries.js',
-        find: '    registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));',
-        replace: "    registries[type] = makeRegistry(TYPE_SINGULAR[type], type === 'classes' ? [] : collection(type, bundle[type]));",
+        find: '    registries[type] = makeRegistry(TYPE_SINGULAR[type], defs);',
+        replace: "    registries[type] = makeRegistry(TYPE_SINGULAR[type], type === 'classes' ? [] : defs);",
         expectRed: /ONEANSWER HAS NO CLASS DOMAIN/,
       },
       {

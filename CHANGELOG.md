@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
-- **Combat cards and enemy moves share tactical rules** ([#1705](https://github.com/cehinds/AshenSpire/pull/1705), `0.7.1.1068`). All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.
+- **Combat cards and enemy moves share tactical rules** ([#1705](https://github.com/cehinds/AshenSpire/pull/1705), `0.7.1.1070`). All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.
 
 - **Combat matchup rules defined** ([#1704](https://github.com/cehinds/AshenSpire/pull/1704), `0.7.1.1064`). Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.
 
