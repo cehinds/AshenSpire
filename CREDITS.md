@@ -11,6 +11,13 @@ projects. No third-party asset license is claimed. Existing slash, ward,
 shield and projectile images retain their established credits. This local
 authoring study has not been published as a game asset release.
 
+The Rogue twin-dagger continuation uses the approved alternative Rogue as its
+first-party reference. Its [source prompts](pose-studio/renewal/rogue/source/prompts.json),
+normalization recipe and source hashes accompany the portable projects. The
+Starseer staff studies are also first-party generated drafts. Their source
+prompts, repaired wind-up, normalization recipe and editable projects accompany
+the preview; final hand-contact review remains open before gameplay binding.
+
 ## Full card portrait library (2026-10-06)
 
 The 220 card identities and 17 equipment profiles use original portrait paintings
@@ -486,3 +493,13 @@ branch-owned desktop and phone WebPs under `assets-alternative/`, with lossless
 alpha and export hashes in `src/ui/alternativeArtCatalog.js`. No third-party
 license is claimed. This uses the existing alternative art pack/inline loader;
 it does not change the shared external art release.
+
+### Alternative animation authoring studies
+
+`pose-studio/renewal/` contains first-party paintings generated and edited with
+OpenAI's built-in image generation tool from the project's own class references.
+The Reaver/sword, Rogue/twin-dagger, Starseer/staff and Herald/sword-and-shield
+studies retain their source sheets, prompts, hashes and normalization recipes.
+Herald hand corrections are recorded in `herald/source/handedness-prompts.json`.
+These are authoring assets with empty gameplay bindings; no third-party artwork
+was downloaded and no third-party license is claimed.

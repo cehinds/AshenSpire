@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1707",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "More class animations to preview",
+    "detail": "The alternative animation atelier adds Rogue twin daggers, Starseer staff and Herald sword-and-shield studies. The Herald keeps the sword in the right hand and shield on the left arm through attacks and reactions. Current attack timing, forward movement and return, red hit flashes, down poses and casting are available in the preview. These are authoring studies; gameplay integration and the remaining base loadouts are still pending.",
+    "build": "0.7.1.1068",
+    "pullRequest": 1707,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1707"
+  },
+  {
     "id": "pr-1701",
     "date": "2026-10-07",
     "group": "2026-10-07",

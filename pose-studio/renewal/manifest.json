@@ -431,7 +431,7 @@
       "classId": "rogue",
       "armour": "default",
       "loadout": "twinDaggers",
-      "status": "pending"
+      "status": "draft"
     },
     {
       "classId": "rogue",
@@ -479,7 +479,7 @@
       "classId": "starseer",
       "armour": "default",
       "loadout": "staff",
-      "status": "pending"
+      "status": "draft"
     },
     {
       "classId": "starseer",
@@ -533,7 +533,7 @@
       "classId": "herald",
       "armour": "default",
       "loadout": "swordShield",
-      "status": "pending"
+      "status": "draft"
     },
     {
       "classId": "herald",
@@ -585,7 +585,7 @@
     }
   ],
   "notes": [
-    "First reference family only; other loadouts are pending and never substituted.",
+    "4 reference families drafted; remaining combinations are pending and never substituted.",
     "Casting uses a sheathed sword; ready-to-sheath transition remains an art review item.",
     "Twin swords and two-weapon sword fighting remain separate authoring entries pending distinct choreography.",
     "Enemy and non-base-armour animation expansion follows this base-loadout pass.",
@@ -599,5 +599,26 @@
   "bytes": {
     "webp": 566320,
     "lite": 155614
+  },
+  "families": {
+    "reaver/sword": {
+      "rig": "reaver-sword.rig.json",
+      "folder": ""
+    },
+    "herald/swordShield": {
+      "manifest": "herald/manifest.json",
+      "rig": "herald/herald-swordShield.rig.json",
+      "folder": "herald/"
+    },
+    "rogue/twinDaggers": {
+      "manifest": "rogue/manifest.json",
+      "rig": "rogue/rogue-twinDaggers.rig.json",
+      "folder": "rogue/"
+    },
+    "starseer/staff": {
+      "manifest": "starseer/manifest.json",
+      "rig": "starseer/starseer-staff.rig.json",
+      "folder": "starseer/"
+    }
   }
 }
