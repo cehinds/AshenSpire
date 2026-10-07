@@ -26,7 +26,7 @@ function botTurn(combat, memberId) {
       return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana;
     });
     const tgt = combat.enemies.find((e) => e.alive);
-    try { if (card) playCard(combat, memberId, card.instanceId, botCardTargetId(REG, combat, card, tgt?.id)); else { endTurn(combat, memberId); break; } }
+    try { if (card) playCard(combat, memberId, card.instanceId, botCardTargetId(REG, combat, card, tgt?.id, memberId)); else { endTurn(combat, memberId); break; } }
     catch { endTurn(combat, memberId); break; }
   }
   if (!P.ended && combat.phase === 'player' && !combat.result) endTurn(combat, memberId);

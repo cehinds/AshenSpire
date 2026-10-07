@@ -10,7 +10,7 @@ import {createRng} from '../src/engine/rng.js';
 import {emitEvent,hasEventTriggers} from '../src/engine/triggers.js';
 import {serializeCombatSnapshot} from '../src/engine/combatSnapshot.js';
 import {grantAbilityCharge} from '../src/engine/abilityRiders.js';
-import {firstAffordableCard,refusalsFor} from '../tools/simbot.mjs';
+import {botCardTargetId,firstAffordableCard,refusalsFor} from '../tools/simbot.mjs';
 
 const base=createRegistries(contentBundle);
 const charge={op:'grantCardCharge',target:'self',key:'cost-probe',manaDiscount:2};
@@ -94,9 +94,9 @@ function trace(classId,encounterId,seed,forceClone){
   while(!combat.result&&combat.turn<=150&&guard++<8000){
     const refused=refusalsFor(combat),card=firstAffordableCard(base,combat,refused);
     if(!card){decisions.push(['endTurn']);dispatch(combat,{type:'endTurn'});continue;}
-    const targetId=combat.enemies.find(enemy=>enemy.alive)?.id,choice=cardChoicePlan(combat,card.instanceId)?.options[0]?.id;
+    const targetId=botCardTargetId(base,combat,card,combat.enemies.find(enemy=>enemy.alive)?.id),choice=cardChoicePlan(combat,card.instanceId)?.options[0]?.id;
     try{dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId,choice});decisions.push(['play',card.instanceId,targetId,choice]);}
-    catch(error){refused.add(card.instanceId);decisions.push(['refused',card.instanceId,error.message]);}
+    catch(error){assert.doesNotMatch(error.message,/Invalid (?:enemy|friendly|self|ally) target/,'the cost-parity bot must offer a valid destination');refused.add(card.instanceId);decisions.push(['refused',card.instanceId,error.message]);}
   }
   assert.ok(guard<8000);return {decisions,snapshot:serializeCombatSnapshot(combat),rng:combat.rng.getCounters()};
 }

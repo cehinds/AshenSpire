@@ -15,7 +15,8 @@
 
 import { resolveCard } from '../src/model/registries.js';
 import { cardTargetPlan } from '../src/model/cardTargets.js';
-import { cardPlayCosts, previewCard } from '../src/engine/combat.js';
+import { cardPlayCosts, cardNeedsEnemyTargetNow } from '../src/engine/combat.js';
+import { cardNeedsEnemyTargetForPlayer } from '../src/engine/coopCombat.js';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 
 /** The hand's playable, affordable cards, in hand order, minus this turn's refusals. */
@@ -38,11 +39,21 @@ export function firstAffordableCard(registries, combat, refused = new Set()) {
 }
 
 /** Keep the chosen foe for hostile cards; source/friendly cards resolve automatically. */
-export function botCardTargetId(registries, combat, hand, enemyId) {
-  const def = resolveCard(registries, hand);
-  const plan = cardTargetPlan(def, combat.player?.id, combat.enemies);
-  if (plan.mode === 'friendly' && previewCard(combat, hand.instanceId).needsTarget) return enemyId;
-  return plan.mode === 'enemy' ? enemyId : undefined;
+export function botCardTargetId(registries, combat, hand, enemyId, playerId = undefined) {
+  // Existing solo callers need no owner. Co-op callers name the seat; an exact
+  // hand-object match also keeps older callers safe without guessing by card ID.
+  const ownerId = combat.players
+    ? playerId ?? [...combat.players.values()].find(seat => seat.piles.hand.includes(hand))?.id
+    : combat.player?.id;
+  if (combat.players && !ownerId) throw new Error('A co-op target preview requires the card owner');
+  const ownerRegistries = combat.registriesForPlayer?.(ownerId) || registries;
+  const def = resolveCard(ownerRegistries, hand);
+  const plan = cardTargetPlan(def, ownerId, combat.enemies);
+  if (plan.mode === 'enemy') return enemyId;
+  const hostile = combat.players
+    ? cardNeedsEnemyTargetForPlayer(combat, ownerId, hand.instanceId)
+    : cardNeedsEnemyTargetNow(combat, hand.instanceId);
+  return hostile ? enemyId : undefined;
 }
 
 /** A per-combat refusal set that empties itself at each new player turn. */

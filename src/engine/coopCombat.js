@@ -38,7 +38,7 @@ import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 
 import * as A from './actions.js';
 import * as R from './abilityRiders.js';
-import { previewCard as soloPreviewCard } from './combat.js';
+import { previewCard as soloPreviewCard, cardNeedsEnemyTargetNow } from './combat.js';
 import * as F from './combatRules.js';
 import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
@@ -464,6 +464,14 @@ export function previewCoopCard(C, playerId, instanceId, targetId) {
   return soloPreviewCard(clone, instanceId, targetId);
 }
 
+// A bot previews the requested owner without rebinding the authoritative fight.
+export function cardNeedsEnemyTargetForPlayer(C, playerId, instanceId) {
+  if (!C.players.has(playerId)) throw new Error(`Unknown player '${playerId}'`);
+  const candidate = F.candidateState(C);
+  setActive(candidate, candidate.players.get(playerId));
+  return cardNeedsEnemyTargetNow(candidate, instanceId);
+}
+
 export function playCard(C, playerId, cardInstanceId, targetId, choice) {
   R.assertNoAbilityChoice(C);
   if (!C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice));
@@ -517,7 +525,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     connected: entry.connected,
     ended: entry.ended,
   })));
-  const chargedEnemyTarget = friendlyPlan.active && previewCoopCard(C, C.playerKey, inst.instanceId).needsTarget;
+  const chargedEnemyTarget = friendlyPlan.active && cardNeedsEnemyTargetNow(C, inst.instanceId);
   if (friendlyPlan.active && !chargedEnemyTarget) targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);
   assertCardTarget(cardTargetPlan({ ...def, combatPreview: { needsTarget: chargedEnemyTarget } }, C.playerKey, C.enemies, [...C.players.values()].map(entry => ({
     id: entry.id, alive: entry.entity.alive, connected: entry.connected,

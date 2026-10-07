@@ -1,7 +1,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
-import { combatOverheadAnchors } from '../models/CombatOverheadModel.js';
+import { combatOverheadAnchors, combatOverheadRibbonShift } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
@@ -57,7 +57,7 @@ export function wireBattlefieldStage(field, model) {
     }
     const ribbonRect = ribbonEl?.getBoundingClientRect();
     const ribbon = ribbonRect?.width > 0 && ribbonRect.height > 0 ? { left: ribbonRect.left - fieldRect.left,
-      right: ribbonRect.right - fieldRect.left, bottom: ribbonRect.bottom - fieldRect.top } : null;
+      right: ribbonRect.right - fieldRect.left, top: ribbonRect.top - fieldRect.top, bottom: ribbonRect.bottom - fieldRect.top } : null;
     if (fieldRect.width <= 0 || fieldRect.height <= 0) return;
     // The page zoom, read once before the writes below. anchorLocalBox reads it
     // as computed style when not handed it, and per tile and per combatant, each
@@ -153,7 +153,7 @@ export function wireBattlefieldStage(field, model) {
           // by the available headroom on a short screen.
           actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
       };
-      const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width,
+      const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width, ribbon,
         controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
           const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - 14;
@@ -229,7 +229,17 @@ export function wireBattlefieldStage(field, model) {
       const overheadX = overheads.find(overhead => overhead.id === slot.id)?.x ?? x;
       const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
         { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
-      if (leadingHost) leadingHost.style.left = `${overheadLocal.left}px`;
+      if (leadingHost) {
+        leadingHost.style.left = `${overheadLocal.left}px`;
+        // Full-height artwork may reach its final ground before the fitter
+        // can reserve more ribbon headroom. Move only the readable controls,
+        // including a packed cross-row control, clear of the ribbon.
+        const overheadTop = ground - visibleHeight - 14 - actor.leadingHeight * zoom;
+        const overheadShift = overheads.find(overhead => overhead.id === slot.id)?.offsetY
+          ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
+            top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon });
+        leadingHost.style.translate = `0 ${overheadShift / zoom}px`;
+      }
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
       frame.style.setProperty('--overhead-top', `${-14 / zoom}px`);

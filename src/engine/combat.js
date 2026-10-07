@@ -1055,6 +1055,32 @@ export function cardPlayCosts(combat, cardInstanceId) {
   return playCosts(preparingPreview(combat, inst, def), def);
 }
 
+/** Read only whether temporary buildup turns this card into an enemy aim.
+ * Ordinary source cards need no full numeric preview. Uncertain preparing
+ * work keeps the exact detached preview, including its validation/errors.
+ */
+export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
+  const inst = combat.piles.hand.find(card => card.instanceId === cardInstanceId);
+  if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
+  const def = resolveCard(combat.registries, inst, combat.breakMeterVersion || 0);
+  // Unlike the pricing optimization, this reader also runs inside the real
+  // card transaction. Avoiding a nested preview never bypasses that outer
+  // transaction or the actual cardPreparing event and its paid effects.
+  if (!combat.result && combat.player?.alive && combat.player.hp > 0
+    && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
+    && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
+    && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
+    && !combat._foundationAncestry?.length && !hasEventTriggers(combat, 'cardPreparing')) {
+    const enemyAvailable = combat.enemies.some(enemy => enemy.alive);
+    const charges = R.matchingAbilityCharges(combat.player, {
+      ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags,
+    }, { enemyAvailable });
+    const effects = R.abilityChargedEffects(def.effects || [], charges, enemyAvailable);
+    return needsEnemyTarget({ ...def, effects });
+  }
+  return previewCard(combat, cardInstanceId).needsTarget;
+}
+
 function preparingPreview(combat, inst, def, targetId) {
   const clone = F.candidateState(combat);
   if (clone.pendingAbilityDiscard) { clone.queue = []; return clone; }
@@ -1095,7 +1121,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
 
   const players = [{ id: p.id, alive: p.alive, connected: true }];
   const targetPlan = cardTargetPlan(def, p.id, combat.enemies, players, { solo: true });
-  const chargedEnemyTarget = targetPlan.mode === 'friendly' && previewCard(combat, inst.instanceId).needsTarget;
+  const chargedEnemyTarget = targetPlan.mode === 'friendly' && cardNeedsEnemyTargetNow(combat, inst.instanceId);
   assertCardTarget(chargedEnemyTarget
     ? cardTargetPlan({ ...def, combatPreview: { needsTarget: true } }, p.id, combat.enemies, players, { solo: true })
     : targetPlan, targetId);

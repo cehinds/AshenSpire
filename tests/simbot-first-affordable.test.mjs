@@ -7,7 +7,7 @@ import {createRunCombat} from '../src/engine/runCombat.js';
 import {createRng} from '../src/engine/rng.js';
 import {dispatch,cardChoicePlan} from '../src/engine/combat.js';
 import {serializeCombatSnapshot} from '../src/engine/combatSnapshot.js';
-import {affordableCards,firstAffordableCard,refusalsFor} from '../tools/simbot.mjs';
+import {botCardTargetId,affordableCards,firstAffordableCard,refusalsFor} from '../tools/simbot.mjs';
 
 const reg=createRegistries(contentBundle);
 function combatFor(classId,enemyIds,seed){
@@ -20,10 +20,10 @@ function fight(classId,enemyIds,seed,select){
   while(!combat.result&&guard++<8000&&combat.turn<=150){
     const refused=refusalsFor(combat),card=select(reg,combat,refused);
     if(!card){decisions.push(['endTurn']);dispatch(combat,{type:'endTurn'});continue;}
-    const targetId=combat.enemies.find(enemy=>enemy.alive)?.id;
+    const targetId=botCardTargetId(reg,combat,card,combat.enemies.find(enemy=>enemy.alive)?.id);
     const choice=cardChoicePlan(combat,card.instanceId)?.options[0]?.id;
     try{dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId,choice});decisions.push(['play',card.instanceId,targetId,choice]);}
-    catch(error){refused.add(card.instanceId);decisions.push(['refused',card.instanceId,error.message]);}
+    catch(error){assert.doesNotMatch(error.message,/Invalid (?:enemy|friendly|self|ally) target/,'the first-affordable bot must offer a valid destination');refused.add(card.instanceId);decisions.push(['refused',card.instanceId,error.message]);}
   }
   assert.ok(guard<8000,'the bot decision loop stays bounded');
   return {decisions,snapshot:serializeCombatSnapshot(combat)};

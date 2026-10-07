@@ -1,5 +1,56 @@
 import { tFull } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { anchorLocalBox, uiZoom } from '../fx.js';
+
+// Overhead controls move with the fitted figures. Reserve a separate measured
+// band for targets instead of trading target access for intent inspection.
+function watchTargetPlacement(host, picker) {
+  let queued = null;
+  let resize;
+  let changes;
+  const dispose = () => {
+    if (queued != null) cancelAnimationFrame(queued);
+    queued = null;
+    resize?.disconnect();
+    changes?.disconnect();
+    picker.placement = null;
+  };
+  const place = () => {
+    queued = null;
+    if (!host.isConnected || picker.hidden) { dispose(); return; }
+    // Read the authored starting position anew so a resize may move the row
+    // back up after an intent has left its former place.
+    picker.style.removeProperty('top');
+    const box = picker.getBoundingClientRect();
+    if (!box.height) return;
+    const zoom = uiZoom();
+    const gap = parseFloat(getComputedStyle(picker).gap) * zoom;
+    const combat = host.closest('.combat');
+    const hud = combat?.querySelector('.combat-hud')?.getBoundingClientRect();
+    const ribbon = host.querySelector('.turn-ribbon')?.getBoundingClientRect();
+    let top = Math.max(box.top, hud ? hud.bottom + gap : box.top, ribbon ? ribbon.bottom + gap : box.top);
+    const overheads = [...host.querySelectorAll('.combatant-leading')]
+      .map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height)
+      .sort((a, b) => a.top - b.top);
+    for (const rect of overheads) {
+      if (top < rect.bottom + gap && top + box.height > rect.top - gap) top = rect.bottom + gap;
+    }
+    const local = anchorLocalBox(host, { left: box.left, top, width: box.width, height: box.height }, { zoom });
+    picker.style.top = `${local.top}px`;
+  };
+  const schedule = () => { if (queued == null) queued = requestAnimationFrame(place); };
+  if (globalThis.ResizeObserver) {
+    resize = new ResizeObserver(schedule);
+    resize.observe(host);
+    resize.observe(picker);
+  }
+  changes = new MutationObserver(records => {
+    if (records.some(record => !picker.contains(record.target))) schedule();
+  });
+  changes.observe(host, { attributes: true, childList: true, subtree: true, attributeFilter: ['style', 'class'] });
+  picker.placement = { schedule, dispose };
+  schedule();
+}
 
 // Sprite artwork may overlap without making a living enemy unreachable. This
 // independent target strip uses the same legal IDs and command as the figures.
@@ -42,5 +93,8 @@ export function renderEnemyTargetPicker(host, { targets = [], disabled = false, 
   });
   picker.activate = onActivate;
   picker.preview = onPreview;
+  if (picker.hidden) picker.placement?.dispose();
+  else if (picker.placement) picker.placement.schedule();
+  else watchTargetPlacement(host, picker);
   return picker;
 }
