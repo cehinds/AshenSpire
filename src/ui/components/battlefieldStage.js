@@ -6,7 +6,7 @@ import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio } from '../models/CombatSpriteScaleModel.js';
-import { wireAlternativeBackdrop } from '../alternativeArt.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
@@ -43,7 +43,9 @@ export function wireBattlefieldStage(field, model) {
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
     const fieldRect = field.getBoundingClientRect();
-    const zoom = fieldRect.width / field.clientWidth || 1;
+    // clientWidth excludes a vertical scrollbar. Comparing it with the full
+    // rendered box inflated zoom on phone co-op and lifted feet off the floor.
+    const zoom = fieldRect.width / field.offsetWidth || 1;
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
@@ -331,6 +333,8 @@ export function wireBattlefieldStage(field, model) {
     const backdropWidth = backdrop ? backdrop.clientWidth : 0;
     combat.style.setProperty('--environment-top', '0px');
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
+    fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
+      fieldTop: (fieldRect.top - rect.top) / zoom, ground: plan.ground / zoom, narrow });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: (fieldRect.top - rect.top) / zoom, windowHeight: fieldRect.height / zoom,
@@ -389,3 +393,4 @@ export function wireBattlefieldStage(field, model) {
   refresh();
   return Object.freeze({ refresh, release });
 }
+

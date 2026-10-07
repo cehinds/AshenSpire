@@ -1,0 +1,30 @@
+{
+  "id": "hollow-weald-phone-foreground",
+  "kind": "foreground",
+  "phoneOnly": true,
+  "region": "hollow-weald",
+  "transparent": true,
+  "resultFile": "scenes/shared/hollow-weald/foreground-phone.png",
+  "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's hollow-weald combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY huge gnarled dark forest tree, exposed roots and small amber lantern at left edge, thinner dead tree at right edge. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-fea26437-c021-412a-baee-509a0b3a2be6.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "31c7ab62349344239a2e81ae1036eac5166bfcbde4a64fcc10ff75baa377104a",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6531696319580078,
+  "visibleBounds": [
+    0,
+    0,
+    1024,
+    1536
+  ],
+  "alphaThreshold": 32
+}
