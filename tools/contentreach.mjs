@@ -229,10 +229,17 @@ export function contentReach(bundle, opts = {}) {
     if (['cards', 'enemies', 'events'].includes(key)) continue;
     const scanned = key === 'characterCreation'
       ? Object.fromEntries(Object.entries(value || {}).filter(([k]) => k !== 'keepsakes'))
+      // Saved-run compatibility repeats original card definitions. Its cards
+      // use the same reached identity below; other legacy homes still fire F3.
+      : key === 'legacyProgression'
+        ? Object.fromEntries(Object.entries(value || {}).filter(([k]) => k !== 'cards'))
       : value;
     for (const op of opsIn(scanned, INJECTOR_OPS)) {
       floors.push(`F3  op '${op.op}' found in bundle.${key} — no route in this file models that set; enumerate it from the engine before trusting any verdict`);
     }
+  }
+  for (const card of bundle.legacyProgression?.cards || []) {
+    if (!byId.cards.has(card.id)) floors.push(`F3  legacy card '${card.id}' has no current card identity to route`);
   }
 
   // ---- classes -----------------------------------------------------------------
@@ -413,6 +420,10 @@ export function contentReach(bundle, opts = {}) {
     for (const c of pop.cards) {
       if (!witness.cards.has(c.id)) continue;
       for (const op of opsIn(c, CARD_OPS)) grew = creditOp(op, `card ${c.id}`) || grew;
+    }
+    for (const c of bundle.legacyProgression?.cards || []) {
+      if (!witness.cards.has(c.id)) continue;
+      for (const op of opsIn(c, CARD_OPS)) grew = creditOp(op, `legacy card ${c.id}`) || grew;
     }
   }
   if (randomRelic) {
@@ -692,6 +703,12 @@ function selftest(real) {
   b = clone(real);
   b.flasks = [...b.flasks, { ...clone(b.flasks[0]), id: 'plantedFlask', effects: [{ op: 'addCard', card: 'guilt' }] }];
   expect('F3  an injector in a set no route models', contentReach(b).exitCode, 2);
+  b = clone(real);
+  b.legacyProgression = { ...(b.legacyProgression || {}), plantedHook: [{ op: 'addCard', card: 'guilt' }] };
+  expect('F3  an unmodelled legacy non-card injector still fires the floor', contentReach(b).exitCode, 2);
+  b = clone(real);
+  b.legacyProgression = { ...(b.legacyProgression || {}), cards: [...(b.legacyProgression?.cards || []), card('plantedLegacyOnly')] };
+  expect('F3  a legacy card without a current identity cannot silently gain a route', contentReach(b).exitCode, 2);
 
   // The allowlist ratchet: allowlisting a REACHED row is a failure.
   r = contentReach(real, { allowlist: [{ kind: 'cards', id: 'strike', why: 'planted' }] });

@@ -250,5 +250,45 @@
   "whetstonePouch": {
     "name": "Whetstone Pouch",
     "text": "Your first attack while Prepared each combat applies 2 Bleed."
+  },
+  "progression-emberjaw-token": {
+    "name": "Emberjaw Token",
+    "text": "Your first Blade hit each combat applies 2 additional Bleed buildup."
+  },
+  "progression-cracked-war-anvil": {
+    "name": "Cracked War Anvil",
+    "text": "Your first Heavy attack each turn deals 1 additional Break damage."
+  },
+  "progression-cinderbound-crown": {
+    "name": "Cinderbound Crown",
+    "text": "Your first credited kill of an enemy with Bleed buildup each combat heals 4 HP."
+  },
+  "progression-moonwell-lens": {
+    "name": "Moonwell Lens",
+    "text": "Your first Starstone spell each turn played after spending at least 2 Mana grants 2 Block."
+  },
+  "progression-nightglass-rosary": {
+    "name": "Nightglass Rosary",
+    "text": "The second play of the same Starstone card ID in a turn restores 1 Mana, once per turn."
+  },
+  "progression-fragment-of-the-third-sky": {
+    "name": "Fragment of the Third Sky",
+    "text": "Your third distinct Starstone card ID played in a turn grants 5 Block, once per turn."
+  },
+  "progression-whisperglass-die": {
+    "name": "Whisperglass Die",
+    "text": "If your first card in combat is a Blade attack, it deals +5 damage."
+  },
+  "progression-purse-of-borrowed-shadows": {
+    "name": "Purse of Borrowed Shadows",
+    "text": "After your first explicit discard each turn, gain 2 Block."
+  },
+  "progression-ember-alms-bowl": {
+    "name": "Ember Alms Bowl",
+    "text": "Your first nonlethal HP offering each turn grants 2 Block after its payment."
+  },
+  "progression-ossuary-prayer-wheel": {
+    "name": "Ossuary Prayer Wheel",
+    "text": "Your first credited kill of an enemy with Crimson Blight buildup each combat restores 1 Mana."
   }
 }

@@ -259,7 +259,7 @@ test('§15.2: the spoils receipt says how much XP the level cap discarded', asyn
     mountRewards(app, { registries: reg, run, onDone() {}, rewards: { cinders: 10, xpGains: gains } });
     const row = app.querySelector('.reward-progress-row');
     const text = (cls) => row.children.find((child) => child.className.includes(cls))?.textContent;
-    assert.equal(text('rp-gain'), undefined, 'the character level bar remains a single line');
+    assert.equal(text('rp-gain'), 'Gained: 345 xp', 'Character uses the same gained-XP receipt row as other tracks');
     assert.equal(row.querySelector('.rp-bar').getAttribute('aria-valuenow'), String(Math.min(run.level.xp, xpToNext(reg, run.level.level))));
     assert.equal(text('rp-discarded'), `${award.discarded} xp lost to the level cap`);
   } finally {

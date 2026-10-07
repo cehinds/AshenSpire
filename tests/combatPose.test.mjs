@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../src/model/combatPose.js';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession } from '../tools/session.mjs';
 const live = (...ids) => ({ hp:30, statuses:Object.fromEntries(ids.map(id=>[id,{stacks:1}])) });

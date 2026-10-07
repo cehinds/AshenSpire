@@ -17,7 +17,7 @@ import { normalizeMasteryProfile, masteryProfileProblems } from '../src/model/cl
 import { createSocket } from 'node:dgram';
 import { createHash, randomBytes } from 'node:crypto';
 import { networkInterfaces } from 'node:os';
-import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, rmSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -118,6 +118,12 @@ export function attachLan(server, { port, root }) {
     if (!savePath || !session || !session.game) return;
     const data = session.game.serialize(); // null during a live fight
     if (data) { try { writeFileSync(savePath, JSON.stringify(data)); savedGame = data; } catch { /* disk full/RO */ } }
+  }
+  function persistRespecSnapshot(data) {
+    if(!savePath)throw new Error('The host has no session save destination.');
+    const temporary=savePath+'.respec.tmp';
+    try {writeFileSync(temporary,JSON.stringify(data));renameSync(temporary,savePath);savedGame=data;return true;}
+    catch(error){if(existsSync(temporary))rmSync(temporary);throw error;}
   }
   function clearSave() {
     savedGame = null;
@@ -225,13 +231,23 @@ export function attachLan(server, { port, root }) {
     if (!g) return;
     // Couch co-op: `as` lets a client act for any seat it OWNS (validated).
     const id = msg.as && memberIdsOf(pl).includes(msg.as) ? msg.as : pl.id;
+    if((msg.t.startsWith('classRespec')||['claimSkillLevel','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(msg.t)) && msg.as && !memberIdsOf(pl).includes(msg.as))return;
+    const progressionIntent=operation=>{const result=operation();for(const [socket,client] of session.clients)if(client===pl)socket.write(wsEncode(JSON.stringify({t:'progressionResult',memberId:id,ok:result.ok,error:result.error})));};
     switch (msg.t) {
+      case 'classRespecPreview': g.previewMemberClassRespec(id,msg.draftId?msg:null); break;
+      case 'classRespecApply': g.applyMemberClassRespec(id,msg.draftId,{saveSession:persistRespecSnapshot}); break;
+      case 'classRespecCancel': g.cancelMemberClassRespec(id,msg.draftId); break;
       case 'resync': broadcastState(); return;
       case 'chooseMasteryNode': g.chooseMasteryNode(id, msg.nodeId); break;
       case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
       case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice); break;
+      case 'chooseDiscard': g.combatChooseDiscard(id, msg.cardInstanceIds); break;
       case 'endTurn': g.combatEndTurn(id); break;
       case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
+      case 'chooseAbilityDraft': progressionIntent(()=>g.chooseAbilityDraft(id,msg.offerId,msg.choiceId,{catchup:msg.catchup===true,saveSession:persistRespecSnapshot})); break;
+      case 'claimSkillLevel': progressionIntent(()=>g.claimMemberSkillLevel(id,msg.skillId,{saveSession:persistRespecSnapshot})); break;
+      case 'chooseClassMilestone': progressionIntent(()=>g.chooseClassMilestone(id,msg.receiptId,msg.selection,{saveSession:persistRespecSnapshot})); break;
+      case 'chooseLevelCard': progressionIntent(()=>g.chooseMemberLevelCard(id,msg.key,msg.cardId,{saveSession:persistRespecSnapshot})); break;
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;
       case 'shrineChoice': g.shrineChoice(id, msg.choice, msg.targetId); break;
       case 'eventChoice': g.eventChoice(id, msg.choiceIndex); break;

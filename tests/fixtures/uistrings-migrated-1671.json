@@ -1,5 +1,5 @@
 {
-  "source": "PR #1671 Armory and progression copy; frozen after merge so origin/dev cannot remove its sweep coverage",
+  "_": "Progression hub uiStrings ids authored in 11c05e07e for PR #1671. Preserve their no-shadow coverage and stored-ID allowances after origin/dev includes these rows.",
   "ids": [
     "progression.title",
     "progression.tab.character",

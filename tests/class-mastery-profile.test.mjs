@@ -1,3 +1,4 @@
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createSaveManager, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
@@ -6,6 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { masteryRowId } from '../src/model/classMastery.js';
 
 const registry = createRegistries(contentBundle);
+const legacyRegistry = createRegistries(legacyContentBundle);
 function store() {
   const data = new Map();
   return { data, getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: key => data.delete(key) };
@@ -25,7 +27,7 @@ test('v2 migration preserves veteran access without manufacturing any class XP',
   assert.deepEqual(meta.unlocked, old.unlocked);
   assert.deepEqual(meta.discoveredArmaments, old.discoveredArmaments);
   for (const cls of registry.classes.all()) {
-    assert.deepEqual(meta.classMastery[cls.id], { xp: 0, level: 0, unlockedRows: registry.classMastery.filter(row => row.classId === cls.id).map(masteryRowId) });
+    assert.deepEqual(meta.classMastery[cls.id], { xp: 0, level: 0, unlockedRows: legacyRegistry.classMastery.filter(row => row.classId === cls.id).map(masteryRowId) });
   }
   assert.equal(saves.saveMeta(meta).ok, true);
   assert.equal(JSON.parse(storage.getItem(META_KEY)).schemaVersion, 3);
@@ -69,7 +71,7 @@ test('a v2 mastery-like payload cannot seed XP or withhold veteran access', () =
   const meta = createSaveManager(storage).loadMeta();
   assert.equal(meta.classMastery.reaver.xp, 0);
   assert.equal(meta.classMastery.reaver.level, 0);
-  assert.equal(meta.classMastery.reaver.unlockedRows.length, registry.classMastery.filter(row => row.classId === 'reaver').length);
+  assert.equal(meta.classMastery.reaver.unlockedRows.length, legacyRegistry.classMastery.filter(row => row.classId === 'reaver').length);
 });
 
 test('reserved receipt keys are refused without prototype mutation', () => {

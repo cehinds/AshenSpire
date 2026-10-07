@@ -3,6 +3,7 @@
 // Code never embeds a balance number; a balance change is a one-file diff here.
 
 import { tooltipHelp } from './tooltipHelp.js';
+import { progressionGearRequirements } from './progression/gear.js';
 
 // ---- WHAT EACH NUMBER DOES, WRITTEN BESIDE IT (owner, 2026-09-23) ----------
 //
@@ -171,7 +172,72 @@ const cardValueRule = () => ({
   statusMultipliers: { ...cardValueStatusMultipliers },
 });
 
+const PROGRESSION_CONTRACT_DESCRIPTION = 'The progression contract version saved for new characters, preserving the rules chosen at creation.';
+
 export const balance = {
+  progression: {
+    version: 1,
+    gearRequirements: progressionGearRequirements,
+    cadence: { cards: [2,4,6,8,10,12,14,16,18,20], feat: [1,4,8,12,16,20], armory: [3,6,9,12,15,18], relic: [5,8,11,14,17,20], attribute: [5,10,15,20] },
+    skillBonusXp: 25,
+    ability: { base: 100, growthPerLevel: 50, maxLevel: 10, ranksAt: [1,2,4,6,8,10], xp: { magical: 2, spell: 3, manaSpell: 1, technique: 2, maneuver: 5 }, draftSize: 3, intelligenceChance: 0.05, bonusRankDepth: 3 },
+    classSkills: { reaver: ['combatManeuvers','item:blade','item:shield','armour:heavy'], starseer: ['item:magic-focus','item:blade','armour:light','armour:medium'], rogue: ['combatManeuvers','item:blade','dualWield','armour:light'], herald: ['item:magic-focus','item:blade','item:shield','armour:medium'] },
+    classAttributes: { reaver: ['strength','constitution','dexterity'], starseer: ['intelligence','wisdom','dexterity'], rogue: ['dexterity','strength','wisdom'], herald: ['wisdom','constitution','intelligence'] },
+    lessons: { 'item:magic-focus': ['cometFragment','crystalBarrier','scholarsInsight','ashenMote','emberVigil','readTheAsh','cinderSigil','starstoneArc','blightTouch','penance'], combatManeuvers: ['crimsonCleave','shieldBash','quickstep','guardCounter','riposte','rend','quickCut','backstep','stomp','lowBlow'] },
+    respec: { enabled: true, cost: null },
+    [NOTE]: {
+      version: PROGRESSION_CONTRACT_DESCRIPTION,
+      ...Object.fromEntries(progressionGearRequirements.map((row,index)=>[`gearRequirements.${index}.level`, `${row.ref} — the minimum ${row.classId} class level for this gear option; existing discovery and attribute requirements also apply.`])),
+      ...Object.fromEntries(Object.entries({cards:10,feat:6,armory:6,relic:6,attribute:4}).flatMap(([kind,count])=>Array.from({length:count},(_,index)=>[`cadence.${kind}.${index}`, `The class level for ${kind} reward number ${index+1}; every earned milestone keeps its own saved grant.`]))),
+      skillBonusXp: 'XP banked in each of the four class-related skills when a new class level is claimed; respec cannot replay this award.',
+      'ability.base': 'XP required to advance an ability skill from its first activated level.',
+      'ability.growthPerLevel': 'Additional XP required for each successive Spellcraft or Combat Maneuvers skill level.',
+      'ability.maxLevel': 'The highest available Spellcraft or Combat Maneuvers skill level.',
+      ...Object.fromEntries(Array.from({length:6},(_,rank)=>[`ability.ranksAt.${rank}`, `The ability skill level that makes rank ${rank} card profiles available in normal offers.`])),
+      'ability.xp.magical': 'Spellcraft XP awarded once when a card resolves a magical effect.',
+      'ability.xp.spell': 'Additional Spellcraft XP awarded once for playing a Spell, including a Cantrip.',
+      'ability.xp.manaSpell': 'Additional Spellcraft XP per printed Mana point on a Spell; discounts do not reduce this award.',
+      'ability.xp.technique': 'Combat Maneuvers XP awarded once for a physical Technique with no printed Mana cost.',
+      'ability.xp.maneuver': 'Combat Maneuvers XP awarded once for a physical maneuver with a printed Mana cost.',
+      'ability.draftSize': 'Distinct card families shown at the normal available rank in each saved ability offer.',
+      'ability.intelligenceChance': 'Chance per Intelligence point for a fourth, higher-rank card option, capped at certainty.',
+      'ability.bonusRankDepth': 'Maximum number of ranks above the normal offer for the Intelligence bonus option, capped at rank five.',
+      'respec.enabled': 'Allows a class respec preview and atomic exchange of eligible choices through the current class level.',
+    },
+  },
+  progressionRelics: {
+    "progression-emberjaw-token": {
+      "bleed": 2
+    },
+    "progression-cracked-war-anvil": {
+      "poiseDamage": 1
+    },
+    "progression-cinderbound-crown": {
+      "heal": 4
+    },
+    "progression-moonwell-lens": {
+      "block": 2
+    },
+    "progression-nightglass-rosary": {
+      "restoreMana": 1
+    },
+    "progression-fragment-of-the-third-sky": {
+      "block": 5
+    },
+    "progression-whisperglass-die": {
+      "chargeDamage": 5
+    },
+    "progression-purse-of-borrowed-shadows": {
+      "block": 2
+    },
+    "progression-ember-alms-bowl": {
+      "block": 2
+    },
+    "progression-ossuary-prayer-wheel": {
+      "restoreMana": 1
+    },
+    [NOTE]: { "{id}.{effect}": "The {effect} amount conferred by the progression relic {id}." },
+  },
   // Primary card values and physical/magical impact are derived from costs:
   // floor(global × (AP×action + MP×mana + SP×stamina)
   //       − statusEffectReduction × Σ(each distinct applied status))
@@ -2260,4 +2326,319 @@ export const balance = {
       'views.{i}.figure': 'Whether the {viewId} Armoury view draws the dressed class figure beside the slots.',
     },
   },
+  // Class feat magnitudes and thresholds (SPEC §13.4r). Nodes name these bindings.
+  progressionFeats: {
+    "coal-on-steel": {
+      bleed: 1,
+      [NOTE]: {
+        bleed: "Coal On Steel: Bleed buildup applied by the first qualifying Blade hit.",
+      },
+    },
+    "brace-and-bite": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Brace And Bite: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "red-footwork": {
+      draw: 1,
+      [NOTE]: {
+        draw: "Red Footwork: Cards drawn by the qualifying play.",
+      },
+    },
+    "anvil-discipline": {
+      break: 2,
+      [NOTE]: {
+        break: "Anvil Discipline: Additional Break damage on the first qualifying attack.",
+      },
+    },
+    "forge-momentum": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Forge Momentum: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "paid-in-blood": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Paid In Blood: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "last-rampart": {
+      block: 4,
+      hpPct: 50,
+      [NOTE]: {
+        block: "Last Rampart: Additional Block granted by the qualifying play or event.",
+        hpPct: "Last Rampart: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "war-cadence": {
+      block: 4,
+      [NOTE]: {
+        block: "War Cadence: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "broad-sentence": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Broad Sentence: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "ember-sovereign": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Ember Sovereign: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "nightglass-scholar": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Nightglass Scholar: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "smoke-dancer": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Smoke Dancer: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "dread-of-the-hammer": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Dread Of The Hammer: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "scarred-oath": {
+      block: 3,
+      [NOTE]: {
+        block: "Scarred Oath: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "harvest-the-wound": {
+      heal: 3,
+      [NOTE]: {
+        heal: "Harvest The Wound: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "sepulchral-promise": {
+      heal: 3,
+      [NOTE]: {
+        heal: "Sepulchral Promise: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "orbit-keeper": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Orbit Keeper: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "moonward-scholar": {
+      block: 3,
+      manaSpent: 2,
+      [NOTE]: {
+        block: "Moonward Scholar: Additional Block granted by the qualifying play or event.",
+        manaSpent: "Moonward Scholar: Mana that must already have been spent this turn before the qualifying spell.",
+      },
+    },
+    "comet-reader": {
+      vulnerable: 1,
+      [NOTE]: {
+        vulnerable: "Comet Reader: Vulnerable stacks applied after the qualifying attack.",
+      },
+    },
+    "weight-of-the-void": {
+      weak: 1,
+      [NOTE]: {
+        weak: "Weight Of The Void: Weak stacks applied after the qualifying attack.",
+      },
+    },
+    "crooked-measure": {
+      weak: 1,
+      [NOTE]: {
+        weak: "Crooked Measure: Weak stacks applied after the qualifying attack.",
+      },
+    },
+    "mirror-of-rime": {
+      buildup: 2,
+      [NOTE]: {
+        buildup: "Mirror Of Rime: Additional status buildup on the first matching application.",
+      },
+    },
+    "constellation-keeper": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Constellation Keeper: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "patient-wellspring": {
+      block: 3,
+      [NOTE]: {
+        block: "Patient Wellspring: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "eclipse-hunter": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Eclipse Hunter: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "firmament-keeper": {
+      block: 4,
+      [NOTE]: {
+        block: "Firmament Keeper: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "celestial-refrain": {
+      block: 4,
+      [NOTE]: {
+        block: "Celestial Refrain: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "memory-of-winter": {
+      retainBlockUpTo: 4,
+      [NOTE]: {
+        retainBlockUpTo: "Memory Of Winter: Maximum Block retained at turn start; the highest allowance wins.",
+      },
+    },
+    "threefold-sky": {
+      draw: 1,
+      [NOTE]: {
+        draw: "Threefold Sky: Cards drawn by the qualifying play.",
+      },
+    },
+    "first-knife": {
+      damage: 3,
+      [NOTE]: {
+        damage: "First Knife: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "pocket-method": {
+      block: 3,
+      [NOTE]: {
+        block: "Pocket Method: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "open-flank": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Open Flank: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "hidden-palm": {
+      block: 3,
+      [NOTE]: {
+        block: "Hidden Palm: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "tighten-the-wire": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Tighten The Wire: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "carrion-measure": {
+      damage: 4,
+      hpPct: 50,
+      [NOTE]: {
+        damage: "Carrion Measure: Additional damage on the first qualifying direct effect, including each hit and target.",
+        hpPct: "Carrion Measure: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "two-quiet-knives": {
+      damage: 1,
+      [NOTE]: {
+        damage: "Two Quiet Knives: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "trapdoor-smile": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Trapdoor Smile: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "clean-exit": {
+      restoreStamina: 1,
+      [NOTE]: {
+        restoreStamina: "Clean Exit: Stamina restored by the qualifying Guard play.",
+      },
+    },
+    "razor-ledger": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Razor Ledger: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "ashen-mercy": {
+      heal: 2,
+      [NOTE]: {
+        heal: "Ashen Mercy: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "censer-keeper": {
+      block: 3,
+      [NOTE]: {
+        block: "Censer Keeper: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "sower-of-blight": {
+      buildup: 2,
+      [NOTE]: {
+        buildup: "Sower Of Blight: Additional status buildup on the first matching application.",
+      },
+    },
+    "funeral-watch": {
+      block: 3,
+      hpPct: 50,
+      [NOTE]: {
+        block: "Funeral Watch: Additional Block granted by the qualifying play or event.",
+        hpPct: "Funeral Watch: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "ember-almoner": {
+      regen: 1,
+      [NOTE]: {
+        regen: "Ember Almoner: Regen stacks granted after the qualifying HP offering.",
+      },
+    },
+    "choir-of-bone": {
+      restoreStamina: 1,
+      [NOTE]: {
+        restoreStamina: "Choir Of Bone: Stamina restored by the qualifying Guard play.",
+      },
+    },
+    "requiem-reader": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Requiem Reader: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "pilgrim-of-scars": {
+      heal: 3,
+      hpPct: 50,
+      [NOTE]: {
+        heal: "Pilgrim Of Scars: HP restored by the qualifying play or credited kill.",
+        hpPct: "Pilgrim Of Scars: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "crowned-offering": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Crowned Offering: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "dawn-cantor": {
+      block: 3,
+      [NOTE]: {
+        block: "Dawn Cantor: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "bearer-of-burdens": {
+      restoreMana: 1,
+      [NOTE]: {
+        restoreMana: "Bearer Of Burdens: Mana restored by a new enemy-applied negative status.",
+      },
+    },
+  },
+
+
 };

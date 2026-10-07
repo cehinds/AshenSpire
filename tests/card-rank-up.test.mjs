@@ -4,7 +4,7 @@
 // by one rank, never past the track's level.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { awardSkillXp, xpToNext, rankUpCandidates, raiseCardRank, skillsProblems, bankSkillXp, claimBankedSkillLevel } from '../src/model/skills.js';

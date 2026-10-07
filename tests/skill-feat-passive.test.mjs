@@ -4,7 +4,7 @@
 // card played. Stamped as the derived `passiveBlock` beside `skillBonus`.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { awardSkillXp, xpToNext, skillFeatOptions, takeSkillFeat, stampSkillBonuses, passiveBlockFor } from '../src/model/skills.js';

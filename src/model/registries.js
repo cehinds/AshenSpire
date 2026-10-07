@@ -1,3 +1,4 @@
+import { applyAbilityGrade } from './abilityGrades.js';
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
 // createRegistries(contentBundle) loads all content into typed, deep-frozen
@@ -9,6 +10,7 @@
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { tagIndex } from './tags.js';
 import { nodeTree } from './tree.js';
+import { configuredPropertyRules } from './propertyRuleBindings.js';
 import { itemTypeLabel } from '../content/equipment.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
@@ -215,7 +217,7 @@ export function createRegistries(contentBundle) {
   // What each `property` tag confers, keyed by the tag (content/propertyRules.js).
   // Read only by the mount path; a getter throws on an unknown tag like every
   // other registry, and validate.js has already refused a tag with no rule.
-  registries.propertyRules = makeRegistry('property rule', bundle.propertyRules || [], 'tag');
+  registries.propertyRules = makeRegistry('property rule', configuredPropertyRules(bundle), 'tag');
 
   // The tree itself, and its companions, for the readers that ask it directly
   // (model/tree.js nodeTree, resolveVariable). The tag tables and the property
@@ -224,7 +226,7 @@ export function createRegistries(contentBundle) {
   // …and the class tree (plan phase 5b): classId, nodeId, tier — read by
   // model/classTree.js as a plain table, like the tree's own companions.
   for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree', 'classMastery', 'classSkillFeats']) {
-    registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
+    registries[table] = deepFreeze((table === 'classSkillFeats' ? collection(table, bundle[table] || []) : (bundle[table] || [])).map((row) => ({ ...row })));
   }
   registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });
   registries.tree = nodeTree(registries);
@@ -402,6 +404,7 @@ export function createRegistries(contentBundle) {
   // resolution authority moved to the framework (src/framework/termOverlay.js).
   registries.frameworkTerms = createEntityTermOverlay(bundle);
 
+  if (contentBundle.legacyProgression) registries.legacyProgressionSource = createRegistries({...contentBundle,...contentBundle.legacyProgression,legacyProgression:undefined,balance:{...contentBundle.balance,...contentBundle.legacyProgression.balance,progression:undefined}});
   return Object.freeze(registries);
 }
 
@@ -517,6 +520,14 @@ export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}, mo
   return s;
 }
 
+/** Highest retention allowance wins across properties and relics. */
+export function passiveMax(registries, relicIds, key, mounts = null) {
+  knownPassive(key);
+  const values = (relicIds || []).map(id => registries.relics.get(id).passives?.[key]);
+  values.push(...mountedPassiveValues(mounts, key));
+  return Math.max(0, ...values.filter(Number.isFinite));
+}
+
 /** True if any owned relic or mounted property sets the boolean passive. */
 export function passiveFlag(registries, relicIds, key, mounts = null) {
   knownPassive(key);
@@ -547,8 +558,13 @@ const resolveCache = new WeakMap();
  */
 export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   const cardId = instanceOrRef.cardId;
-  const authored = registries.cards.get(cardId);
-  const base = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
+  const legacyCards = registries.legacyProgressionSource?.cards;
+  const definition = instanceOrRef.legacyAbility && legacyCards?.has(cardId)
+    ? legacyCards.get(cardId) : registries.cards.get(cardId);
+  const authored = instanceOrRef.legacyAbility && definition.legacyFace ? {...definition,...definition.legacyFace,gradeProfiles:undefined} : definition;
+  const legacyBase = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
+  const usesAbilityGrade = Array.isArray(authored.gradeProfiles) && (instanceOrRef.abilityRank !== undefined || instanceOrRef.rank === undefined);
+  const base = usesAbilityGrade ? deepFreeze(applyAbilityGrade(legacyBase, instanceOrRef.abilityRank)) : legacyBase;
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
   const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
@@ -568,7 +584,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -580,9 +596,9 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   // (model/attackCardDamage.js cardForSchool). Chosen before the upgrade merge
   // so both faces come from the same side.
   const school = typeof instanceOrRef.damageSchool === 'string' ? instanceOrRef.damageSchool : profile?.damageSchool;
-  let result = cardForSchool(base, school);
+  let result = usesAbilityGrade ? base : cardForSchool(base, school);
   if (result !== base) result = deepFreeze(result);
-  if (instanceOrRef.upgraded) result = mergeUpgrade(result);
+  if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
   if (profileId) result = applyBasicCardProfile(result, profile);
   if (mods && mods.length) {
     const eq = registries.equipment || {};
@@ -603,7 +619,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   // Smithing changes are exact item/tier content. No source id means there is
   // no authority for a tier and therefore nothing may be inferred.
   if (smithingLevel > 0 && !sourceArmamentId) throw new Error('A Smithed card must carry sourceArmamentId');
-  for (let nextTier = 1; nextTier <= smithingLevel; nextTier += 1) {
+  for (let nextTier = 1; !usesAbilityGrade && nextTier <= smithingLevel; nextTier += 1) {
     result = applyItemCardUpgradeRows(
       result,
       instanceOrRef.kitRole || instanceOrRef.equipmentRole || result.equipmentRole,
@@ -615,7 +631,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   // face: each rank past 1, and each point of the every-5th-level skill
   // bonus, adds 1 to the card's primary number, so the play, the preview and
   // the card face all read the same value.
-  if (rank > 1 || skillBonus > 0) result = applyCardRank(result, rank, skillBonus);
+  if (!usesAbilityGrade && (rank > 1 || skillBonus > 0)) result = applyCardRank(result, rank, skillBonus);
   // A passive tag's Block (SPEC §13.4o) lands on the finished face too.
   if (passiveBlock > 0) result = applyPassiveBlock(result, passiveBlock);
   cache.set(key, result);

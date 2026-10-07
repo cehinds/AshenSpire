@@ -62,7 +62,7 @@ test('solo payment is once, insufficient stamina is atomic, next turn fully rese
   assert.equal(c.player.energy, 2);
   c.player.stamina = 0;
   const before = JSON.stringify(serializeCombatSnapshot(c));
-  assert.throws(() => dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: 'e1' }), /stamina/);
+  assert.throws(() => dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: 'e1' }), /stamina/i);
   assert.equal(JSON.stringify(serializeCombatSnapshot(c)), before);
   c.player.mana = 2;
   dispatch(c, { type: 'endTurn' });

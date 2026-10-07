@@ -1,10 +1,13 @@
+import { isAbilitySkill, abilityRankAt } from './abilityGrades.js';
+import { abilityOfferPool } from './abilityOffers.js';
+import { expandedProgression } from './classMilestones.js';
 // Books teach across class pools. Reading is atomic: cancel spends nothing;
 // confirming rechecks the selected lesson and awards XP and one lesson together.
 import { skillTracks, skillLevel, rarityUnlockedAt } from './skills.js';
 
 /** The lesson preview: the card as it joins, plain — a level no longer upgrades cards (SPEC §13.4o). */
 export function bookLessonCard(registries, run, def, skillId, cardId) {
-  return { cardId, upgraded: false };
+  return { cardId, upgraded: false, ...(expandedProgression(run) && isAbilitySkill(skillId) ? {abilityRank:abilityRankAt(registries,Math.max(1,skillLevel(run,skillId)))} : {}) };
 }
 
 export function bookTracks(registries, def) {
@@ -23,6 +26,10 @@ export function bookTags(registries, def, skillId = def.skill) {
 
 /** Current class and equipped weapons never restrict a book's lesson pool. */
 export function bookLessons(registries, run, def, skillId = def.skill) {
+  if (expandedProgression(run) && isAbilitySkill(skillId)) {
+    const rank = abilityRankAt(registries,Math.max(1,skillLevel(run,skillId)));
+    return abilityOfferPool(registries,run,skillId,rank).map(id => ({kind:'card',id,name:registries.cards.get(id).name,abilityRank:rank}));
+  }
   registries = registries.masterySource || registries;
   if (!bookTracks(registries, def).some((track) => track.id === skillId)) return [];
   const choices = [];

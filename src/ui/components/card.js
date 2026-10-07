@@ -234,13 +234,14 @@ export function renderCard(registries, ref, opts = {}) {
     });
     // A ranked card (SPEC §13.4o) wears its rank in the top right of its art; the
     // number it adds is already in the face's text.
-    if(model.rank>1){const badge=document.createElement('span');badge.className='card-rank';badge.textContent=`R${model.rank}`;badge.title=`Rank ${model.rank}`;el.appendChild(badge);}
+    if(model.rankBadge){const badge=document.createElement('span');badge.className='card-rank';badge.textContent=model.rankBadge;badge.title=model.rankHelp;el.appendChild(badge);}
+    if(model.abilityRank!==null){const label=document.createElement('span');label.className='card-ability-type';label.textContent=`${model.type.glyph} ${model.type.label}${model.type.subtype ? ` · ${model.type.subtype}` : ''}`;label.title=model.type.help;el.appendChild(label);}
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
     for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
     scheduleCardFits([el]);
-    el.setAttribute?.('aria-label',model.rank>1?`${model.name}, rank ${model.rank}`:model.name);
+    el.setAttribute?.('aria-label',model.abilityRank!==null?`${model.name}, ${model.type.label}${model.type.subtype ? `, ${model.type.subtype}` : ''}, rank ${model.abilityRank}`:model.rank>1?`${model.name}, rank ${model.rank}`:model.name);
     const image = el.querySelector?.('.playing-card-art');
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';

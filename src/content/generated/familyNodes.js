@@ -377,5 +377,17 @@ export const familyNodes = [
   {
     "family": "sigil",
     "nodeId": "classification"
+  },
+  {
+    "family": "feat",
+    "nodeId": "property"
+  },
+  {
+    "family": "feat",
+    "nodeId": "classification"
+  },
+  {
+    "family": "relic",
+    "nodeId": "card"
   }
 ];

@@ -5937,6 +5937,24 @@ button[data-button-size] {
   .merchant-offer-details > h3 { font-size: 1.5rem; }
   .merchant-offer-details > p { font-size: 1.2rem; }
 }
+
+/* Character and skill rows share the same aligned columns and visible name. */
+.reward-door .reward-claim-layout > .reward-menu:empty { display: none; }
+.reward-door .reward-claim-layout:has(> .reward-menu:empty) .reward-side { grid-column: 1 / -1; }
+.reward-door .reward-claim-layout[aria-busy='true'] .reward-level-offer { visibility: hidden; }
+.reward-door .reward-progress-row[data-kind='character'] {
+  grid-template-columns: subgrid;
+  grid-template-areas: 'name level bar next' 'gain gain gain gain';
+  gap: 0 .6rem;
+}
+:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name level' 'bar bar' 'gain next';
+  font-size: 1rem;
+}
+:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
+  grid-template-areas: 'name level' 'bar next' 'gain gain';
+}
 /* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */
 .armoury[data-view="grid"] .armoury-views { display: none; }
 .armoury[data-view="grid"] .armoury-railed { grid-template-columns: minmax(0, 1fr); }

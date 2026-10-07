@@ -164,6 +164,10 @@ test('a chosen enterStance resolved with no play choice throws and enters nothin
   );
   assert.equal(c.player.stanceId ?? null, null);
   const chosenStance = /"op":"enterStance"[^{}]*"choose"/;
-  const outside = Object.entries(contentBundle).filter(([kind]) => kind !== 'cards' && chosenStance.test(JSON.stringify(contentBundle[kind]))).map(([kind]) => kind);
+  // The save-compatibility source repeats the original cards; it is not a
+  // second executing carrier. Check its non-card homes separately as well.
+  const outside = Object.entries(contentBundle).filter(([kind]) => !['cards', 'legacyProgression'].includes(kind) && chosenStance.test(JSON.stringify(contentBundle[kind]))).map(([kind]) => kind);
   assert.deepEqual(outside, [], 'no shipped row outside the cards carries enterStance choose');
+  const legacyOutside = Object.entries(contentBundle.legacyProgression || {}).filter(([kind, value]) => kind !== 'cards' && chosenStance.test(JSON.stringify(value))).map(([kind]) => kind);
+  assert.deepEqual(legacyOutside, [], 'the preserved legacy source also supplies stance choices only through cards');
 });

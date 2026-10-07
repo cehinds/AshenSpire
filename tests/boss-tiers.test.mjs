@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRng } from '../src/engine/rng.js';
@@ -133,7 +134,8 @@ test('a randomized seat order scales each boss by the tier it is met at', () => 
 
 test('co-op: the scene projects a boss’s damageMult, so a client’s move cards show the scaled damage', async () => {
   const { createSession } = await import('../tools/session.mjs');
-  const host = createSession({ registries: REG, seedString: 'BOSSTIER' });
+  // This historical boss-damage fixture starts after character setup.
+  const host = createSession({ registries: createRegistries(legacyContentBundle), seedString: 'BOSSTIER' });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.start();
   const graph = host.session.mapGraph;

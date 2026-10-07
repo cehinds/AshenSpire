@@ -1,6 +1,6 @@
 # AshenSpire progression expansion
 
-Updated design plan. Class mastery already exists; the reward cadence, six ability ranks, mana retunes, new content and offer rules below require gameplay implementation. This revision replaces the earlier eight-level rotation and proposed 1–10 ranks for these ability cards.
+Updated design and implementation plan. Gameplay PR #1676 supplies the reward cadence, six ability ranks, Mana retunes, new content, offer rules, class retraining and ordered XP presentation below. Its merge and promotion status belongs to the PR and CI evidence. This revision replaces the earlier eight-level rotation and proposed 1–10 ranks for these ability cards.
 
 Class mastery expands your available card families, feats, relics and equipment. Spellcraft and Combat Maneuvers raise the grade of the abilities you can normally receive. Intelligence can offer an early higher-grade choice. Your build still has to pay that card's Actions (also called Stamina or SP) and Mana.
 
@@ -40,6 +40,38 @@ Class mastery expands your available card families, feats, relics and equipment.
 - Finish a run
   - Keep class mastery and unlocks; choose the next run's feats and mastery attribute budget anew. Never re-award old class-to-skill XP.
 
+## XP screen sequence and layout
+
+- Build one XP receipt for this encounter or award instance.
+  - Display Class first, Character second, then only skills that actually gained XP in this instance.
+  - Sort those skills by current level, highest first, with a deterministic tie order. Skills with no XP gain do not get an extra row.
+  - Use the same percentage-fill rate for every bar, even when their numeric XP thresholds differ. Fill one bar at a time.
+- Complete all initial fills before making any level-up control actionable.
+  - A bar reaching its threshold becomes a full blue progress bar; it remains a bar while the remaining XP rows fill.
+  - Keep surplus XP and pending levels in the saved receipt. Do not discard XP when a visible bar reaches its maximum.
+  - Once every gained-XP row has completed, reveal the blue Level Up buttons and their available rewards together.
+  - Only after those buttons are revealed does Continue turn green. Continue does not depend on pressing every Level Up button; unclaimed XP and saved choices remain available through their existing owners.
+- Resolve a manual level-up and return to the XP screen.
+  - Save the chosen reward, new level and original offer identities exactly once.
+  - Quickly animate that row's residual XP against its new threshold. If it can level again, retain the next pending level and reveal its button after the fill barrier.
+  - A class claim can grant its associated skill XP. Animate any newly gained skill rows before revealing the updated buttons and enabling green Continue again.
+  - Reopening, reconnecting and returning from inspection cannot repay XP, reroll an offer or repeat a reward.
+- Keep the layout readable on desktop and phones.
+  - Put the progression rows inside the reward door's scrollable body so Continue stays reachable.
+  - Preserve the same Class → Character → gained skills order in solo and co-op, with per-player receipts and authoritative claims.
+  - Reduced motion completes the fills immediately while keeping the same reveal and claim order.
+
+## Modular content and level lists
+
+- Register cards, feats and relics as independent content modules.
+  - Each can be enabled or integrated without the other two; validate all eight combinations against the shared effect/tag grammar.
+  - Keep stable family, reward and item identities. Author new definitions through the canonical content tables and regenerate their derived runtime data.
+- Populate eligible level lists and new offers from catalog metadata.
+  - Read class affinity, minimum class level, rank, school, weapon, attribute and equipment requirements instead of maintaining separate hand-written lists per level.
+  - New registered cards, armor, weapons, feats and relics enter those lists through the same eligibility rules.
+  - Hide equipment choices until their class gate and existing prerequisites are satisfied. Preserve owned equipment and captured legacy rules through the documented compatibility paths.
+  - Saved offers retain their identities, earned ranks, Intelligence result and RNG position; a catalog update or respec cannot reroll an already generated reward.
+
 ## Class respec
 
 - Players can respec their current class and choose different options unlocked through its current mastery level. Respec changes the class build; it does not reset class level or spend earned XP.
@@ -50,7 +82,7 @@ Class mastery expands your available card families, feats, relics and equipment.
   - Replacing a class reward consumes its original grant and creates one replacement. Respec never adds feat slots, attribute points, cards, relics or gear; it never repeats the class-to-skill XP bonus.
   - Keep each replaced card's earned grade budget and original Intelligence bonus result. Changing Intelligence or repeatedly respeccing cannot roll new fourth options, raise the earned grade, or generate additional skill-card receipts.
   - Track replacements by reward receipt and item instance. A sold, consumed or otherwise expended grant cannot be restored or exchanged for another free reward. Upgrades and attached components require an explicit transfer policy and a preview before replacement; do not silently delete or duplicate them.
-- Cost is **undecided**. Keep whether there is a cost, its resource and its amount configurable and unset in this plan; no currency, fee, escalating price or cooldown has been selected.
+- A future cost is **undecided**. The current implementation enables free respec with no fee configured. Keep whether there is a cost, its resource and its amount configurable; no currency, fee, escalating price or cooldown has been selected.
   - If a cost is later enabled, show the exact charge before confirmation and deduct it only when the validated replacement build is saved successfully. Cancelled or failed changes have no charge.
 - Proposed timing: outside combat, between encounters. The respec preview shows current and proposed choices, prerequisites, displaced equipment, earned budgets and the configured cost.
   - Respec cannot restore HP, Mana or Actions (Stamina), reset encounter state, or refresh consumed relic charges. Preserve current resource amounts and clamp only to a lower resulting maximum.

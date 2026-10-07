@@ -1183,16 +1183,17 @@ test('grant and weapon-art authoring is validated by name', () => {
 // Real card dispatch with an isolated RNG override controls only Dodge's die;
 // shuffles and enemy plans still use the ordinary seeded streams.
 function dodgeCombatFixture(weight, rolls = [20, 1], cardId = 'evasiveGuard') {
-  const rng = createRng(0xd0d6e);
-  const originalInt = rng.int.bind(rng);
-  let draws = 0;
-  rng.int = (stream, min, max) => {
-    if (stream !== 'misc') return originalInt(stream, min, max);
-    eq([min, max], [1, 20], 'Dodge rolls its declared die');
-    const roll = rolls[draws++];
-    assert(roll != null, 'unexpected extra Dodge roll');
-    return roll;
-  };
+  let seed = 0xd0d6e;
+  if (rolls.length) {
+    // Use the real deterministic stream: transactions clone RNG state and
+    // intentionally do not carry a mutable test override into candidates.
+    for (seed = 1; seed < 100000; seed++) {
+      const probe = createRng(seed);
+      if (rolls.every(roll => probe.int('misc', 1, 20) === roll)) break;
+    }
+    assert(seed < 100000, 'a deterministic requested Dodge sequence exists');
+  }
+  const rng = createRng(seed);
   const combat = createCombat({
     registries: LEGACY_REG, rng,
     player: {
@@ -1210,7 +1211,7 @@ function dodgeCombatFixture(weight, rolls = [20, 1], cardId = 'evasiveGuard') {
   combat.attributeMode = 'lean';
   combat.attributes = { dexterity: 3, constitution: weight === 'light' ? 10 : weight === 'medium' ? 3 : 2, strength: weight === 'light' ? 10 : 1 };
   eq(playerWeightClass(combat).weightClass.id, weight, 'fixture reaches requested Weight Class');
-  return { combat, draws: () => draws };
+  return { combat, draws: () => rng.getCounters().misc || 0 };
 }
 
 // Since the owner's 2026-10-05 ruling only Evasive Guard rolls (its authored
@@ -1271,7 +1272,7 @@ for (const [weight, energyCost, staminaCost, guard] of [
       const state = () => JSON.stringify({ energy: p.energy, stamina: p.stamina, hp: p.hp, block: p.block, poiseGuard: p.poiseGuard, wardGuard: p.wardGuard, piles: combat.piles });
       const before = state();
       const id = combat.piles.hand[0].instanceId;
-      assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: id }), /Not enough stamina/);
+      assertThrows(() => dispatch(combat, { type: 'playCard', cardInstanceId: id }), /Not enough Actions \(Stamina\)/);
       eq(state(), before, 'refused play has no gameplay mutation');
       eq(draws(), 0, 'refused play does not consume a roll');
     }

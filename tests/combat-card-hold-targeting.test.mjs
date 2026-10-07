@@ -38,7 +38,7 @@ ok(/const tap = \(\) => \{[\s\S]*?if \(selected !== inst\.instanceId && selfArm 
 // The drop decision lives in finishCardDrag (src/ui/cardDragEnd.js, #1298);
 // combat.js hands it the drop plan and the play of THIS card.
 const dragEnd = strip(readFileSync(new URL('../src/ui/cardDragEnd.js', import.meta.url), 'utf8'));
-ok(/onEnd: \(up, info\) => finishCardDrag\(up, info, \{[\s\S]*?dropPlan: \(at\) => dropPlan\(at, true\),\s*play: \(targetId\) => playCard\(inst\.instanceId, targetId\),/.test(wire?.[1] || '')
+ok(/return finishCardDrag\(up, info, \{[\s\S]*?dropPlan: \(at\) => dropPlan\(at, true, releaseHit\),\s*play: \(targetId\) => playCard\(inst\.instanceId, targetId\),/.test(wire?.[1] || '')
   && /const plan = ops\.dropPlan\(up\);\s*if \(!plan\?\.legal\) return 'no-target';\s*ops\.play\(plan\.targetId \|\| null\);/.test(dragEnd),
   'the existing legal drag-to-play route remains present');
 ok(/if \(selected\) playCard\(selected, enemy\.id\);/.test(combat),

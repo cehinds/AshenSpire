@@ -716,7 +716,7 @@ function inventoryReveal(registries, row, {
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
   // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
-  onEditDeck = null, onProgression = null, onCharacterSheet = null,
+  onEditDeck = null, onProgression = null, onCharacterSheet = null, onClassRespec = null,
   handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -1923,6 +1923,10 @@ export function mountEquipment(host, {
     // is the model's, spelled once there; the plate is only where it lands.
     if (progress.pointsLabel) {
       badgePlate(node, statusText(progress.pointsLabel, { class: 'character-level-points' }), 'the waiting attribute points');
+    }
+    if (onClassRespec && !inCombat) {
+      const action = button({label:t('classRespec.title'),className:'character-respec-action'});
+      action.addEventListener('click',()=>{close();onClassRespec();});node.append(action);
     }
     if (onCharacterSheet) {
       const action = button({ label: t('progression.title'), className: 'character-level-action', attrs: { 'aria-haspopup': 'dialog' } });
