@@ -1,3 +1,4 @@
+import {spendClassRewardItem} from './classRewardProvenance.js';
 // src/model/cardExtraction.js — the smith's two card services: EXTRACT a card
 // out of an item's mount so it becomes the run's own, and INSTALL a run-owned
 // card into an emptied or open mount. Owner ruling, 2026-09-03.
@@ -334,6 +335,7 @@ export function commitInstall(registries, run, itemRef, mountKey, instanceId, ex
   // deck editor set aside is seated without a trip back into the deck.
   const pile = [run.deck, run.sideboard].find((cards) => Array.isArray(cards) && cards.some((inst) => inst && inst.instanceId === instanceId));
   if (!pile) throw new Error(`Deck card '${instanceId}' vanished between plan and commit`);
+  spendClassRewardItem(run,'cards',instanceId,'installed in equipment');
   pile.splice(pile.findIndex((inst) => inst && inst.instanceId === instanceId), 1);
   writeMount(run, itemRef, mountKey, { card: card.cardId, upgraded: card.upgraded, extractions: mount.extractions });
   stampDeck(registries, run);

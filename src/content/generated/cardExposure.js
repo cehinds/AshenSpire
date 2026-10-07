@@ -491,5 +491,115 @@ export const cardExposure = [
     "cardId": "pyreLight",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-ember-hew",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-breaker-s-toll",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-furnace-advance",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-crimson-reprisal",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-ashen-cleaver",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-cinder-orbit",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "progression-comet-needle",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-falling-constellation",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-gravitic-knot",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-eclipse-lance",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-shiv-of-ash",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-needle-feint",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-back-alley-cut",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-wire-snare",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-carrion-cut",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-twinshade",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-last-laugh",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "progression-blood-censer",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "progression-blight-litany",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-ember-tithe",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-requiem-brand",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "progression-crown-of-scars",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
   }
 ];

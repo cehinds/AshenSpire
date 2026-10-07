@@ -110,7 +110,8 @@ test('every one of those fx events maps to a distinct recipe that is not the def
 
 import { readFileSync } from 'node:fs';
 import { playEventCues, animateEvents } from '../src/ui/fx.js';
-import { contentBundle } from '../src/content/index.js';
+// Replay the historical host loadouts; this retains current combat/sound rules.
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession } from '../tools/session.mjs';
 import { coopReceiptSounds } from '../src/ui/screens/coop.js';
@@ -141,7 +142,7 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
   assert.match(combatSrc, /opening = false \}\) \{/, 'a caller that says nothing (a restore, a preview) replays no history');
   assert.match(src('src/main.js'), /opening: !savedSnapshot && !bossIntro,/, 'enterCombat marks only a newly created fight as an opening (a boss splash defers it)');
   // What that call hears for a real fresh solo fight's setup log.
-  const reg = createRegistries(contentBundle);
+  const reg = createRegistries(legacyContentBundle);
   const host = createSession({ registries: reg, seedString: 'SOUND1' });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.start(); host.chooseNode('p1', host.session.mapGraph.startIds[0]);
@@ -155,7 +156,7 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
 test('co-op: the session digest, through coop.js, plays the opening, hits, hurt and pile cues once', () => {
   assert.match(src('src/ui/screens/coop.js'), /lastSoundSeq = coopReceiptSounds\(sc, lastSoundSeq(?:, seats)?\);\n\s*spawnCombatFx\(sc, prevCombat\);/,
     'renderCombat hears each scene through coopReceiptSounds');
-  const reg = createRegistries(contentBundle);
+  const reg = createRegistries(legacyContentBundle);
   const host = createSession({ registries: reg, seedString: 'GUARD2' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
@@ -220,7 +221,7 @@ test('instant playback keeps cue order: the enemy hit lands before "your turn" s
 // ---- follow-ups to #1472's last review (Codex P2 threads) ------------------
 
 test('co-op: only the setup-bearing first scene is an opening; a turn-1 join after an action is silent', () => {
-  const reg = createRegistries(contentBundle);
+  const reg = createRegistries(legacyContentBundle);
   const host = createSession({ registries: reg, seedString: 'GUARD2' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
@@ -240,7 +241,7 @@ test('co-op: only the setup-bearing first scene is an opening; a turn-1 join aft
 });
 
 test('co-op: the turn stinger plays once per shared turn, however many seats start it', () => {
-  const reg = createRegistries(contentBundle);
+  const reg = createRegistries(legacyContentBundle);
   const host = createSession({ registries: reg, seedString: 'GUARD2' });
   for (const id of ['p1', 'p2', 'p3']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();

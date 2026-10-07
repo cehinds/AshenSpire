@@ -656,5 +656,330 @@ export const nodeVariables = [
     "nodeId": "gravelightSigil",
     "variable": "heal",
     "role": "amount"
+  },
+  {
+    "nodeId": "progression-emberjaw-token",
+    "variable": "bleed",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "progression-cracked-war-anvil",
+    "variable": "poiseDamage",
+    "role": "break"
+  },
+  {
+    "nodeId": "progression-cinderbound-crown",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-moonwell-lens",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-nightglass-rosary",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-fragment-of-the-third-sky",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-whisperglass-die",
+    "variable": "chargeDamage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "progression-purse-of-borrowed-shadows",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-ember-alms-bowl",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "progression-ossuary-prayer-wheel",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:coal-on-steel",
+    "variable": "bleed",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "feat:brace-and-bite",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:red-footwork",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:anvil-discipline",
+    "variable": "break",
+    "role": "break"
+  },
+  {
+    "nodeId": "feat:forge-momentum",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:paid-in-blood",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:last-rampart",
+    "variable": "block",
+    "role": "block"
+  },
+  {
+    "nodeId": "feat:last-rampart",
+    "variable": "hpPct",
+    "role": "pct"
+  },
+  {
+    "nodeId": "feat:war-cadence",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:broad-sentence",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:ember-sovereign",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:nightglass-scholar",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:smoke-dancer",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:dread-of-the-hammer",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:scarred-oath",
+    "variable": "block",
+    "role": "block"
+  },
+  {
+    "nodeId": "feat:harvest-the-wound",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:sepulchral-promise",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:orbit-keeper",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:moonward-scholar",
+    "variable": "block",
+    "role": "block"
+  },
+  {
+    "nodeId": "feat:moonward-scholar",
+    "variable": "manaSpent",
+    "role": "atLeast"
+  },
+  {
+    "nodeId": "feat:comet-reader",
+    "variable": "vulnerable",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "feat:weight-of-the-void",
+    "variable": "weak",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "feat:crooked-measure",
+    "variable": "weak",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "feat:mirror-of-rime",
+    "variable": "buildup",
+    "role": "buildup"
+  },
+  {
+    "nodeId": "feat:constellation-keeper",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:patient-wellspring",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:eclipse-hunter",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:firmament-keeper",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:celestial-refrain",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:memory-of-winter",
+    "variable": "retainBlockUpTo",
+    "role": "retainBlockUpTo"
+  },
+  {
+    "nodeId": "feat:threefold-sky",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:first-knife",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:pocket-method",
+    "variable": "block",
+    "role": "block"
+  },
+  {
+    "nodeId": "feat:open-flank",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:hidden-palm",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:tighten-the-wire",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:carrion-measure",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:carrion-measure",
+    "variable": "hpPct",
+    "role": "pct"
+  },
+  {
+    "nodeId": "feat:two-quiet-knives",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:trapdoor-smile",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:clean-exit",
+    "variable": "restoreStamina",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:razor-ledger",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:ashen-mercy",
+    "variable": "heal",
+    "role": "heal"
+  },
+  {
+    "nodeId": "feat:censer-keeper",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:sower-of-blight",
+    "variable": "buildup",
+    "role": "buildup"
+  },
+  {
+    "nodeId": "feat:funeral-watch",
+    "variable": "block",
+    "role": "block"
+  },
+  {
+    "nodeId": "feat:funeral-watch",
+    "variable": "hpPct",
+    "role": "pct"
+  },
+  {
+    "nodeId": "feat:ember-almoner",
+    "variable": "regen",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "feat:choir-of-bone",
+    "variable": "restoreStamina",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:requiem-reader",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:pilgrim-of-scars",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:pilgrim-of-scars",
+    "variable": "hpPct",
+    "role": "atMost"
+  },
+  {
+    "nodeId": "feat:crowned-offering",
+    "variable": "damage",
+    "role": "damage"
+  },
+  {
+    "nodeId": "feat:dawn-cantor",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feat:bearer-of-burdens",
+    "variable": "restoreMana",
+    "role": "amount"
   }
 ];

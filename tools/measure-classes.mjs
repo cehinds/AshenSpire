@@ -75,7 +75,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, cardChoicePlan } from '../src/engine/combat.js';
 import { emitEvent } from '../src/engine/triggers.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
-import { affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine, DIGEST_LINE } from './simbot.mjs';
+import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine, DIGEST_LINE } from './simbot.mjs';
 import { createRunLoop, payFightXp, fleetSeed } from './simrun.mjs';
 import { bossTierScale } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
@@ -329,7 +329,7 @@ function orderedDispatchHpLoss(combat, hand, target) {
   const probe = cloneCombatForOrderedProbe(combat);
   const probeTarget = probe.enemies.find((enemy) => enemy.id === target.id);
   const hpBefore = probeTarget.hp;
-  dispatch(probe, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: probeTarget.id });
+  dispatch(probe, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: botCardTargetId(REG, probe, hand, probeTarget.id) });
   return Math.min(hpBefore, Math.max(0, hpBefore - probeTarget.hp));
 }
 const cardCost = (def) => (def.cost === 'X' ? 99 : Number(def.cost || 0)) + Number(def.manaCost || 0);
@@ -643,8 +643,8 @@ function botFight(run, rng, encounterId, cm, stats, pickRandom, policy) {
     try {
       if (card && chargedAtDecision) {
         decisionTrace = traceCardDispatch(combat, selectedDef, card.instanceId,
-          () => botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id }));
-      } else if (card) botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
+          () => botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: botCardTargetId(REG, combat, card, tgt?.id), choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id }));
+      } else if (card) botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: botCardTargetId(REG, combat, card, tgt?.id), choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
       else botDispatch(combat, { type: 'endTurn' });
     } catch (e) {
       // Refused: set it aside for the turn and choose again (runsim.mjs). The
@@ -1017,7 +1017,7 @@ function realStarOutcomeFixture(cardId, { enemyHp = 120, mutation = null, stampe
   const def = resolvedHandDef(card);
   const start = combat.eventLog.length;
   const trace = traceCardDispatch(combat, def, card.instanceId,
-    () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id }));
+    () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: botCardTargetId(REG, combat, card, enemy.id) }));
   const events = combat.eventLog.slice(start);
   const stats = emptyStats();
   recordStarDecision(stats, new Set(), {

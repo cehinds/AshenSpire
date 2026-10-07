@@ -134,5 +134,12 @@ export const tagFamilies = [
     "scopeField": "",
     "label": "Sigil",
     "blurb": "A sigil set into an armament's slot at the blacksmith (SPEC §14.3, §14.4). What it does is its property row here, mounted while its armament is equipped (engine/properties.js)."
+  },
+  {
+    "family": "feat",
+    "source": "classSkillFeats",
+    "scopeField": "",
+    "label": "Class feat",
+    "blurb": "A selected class feat confers mounted property rules."
   }
 ];

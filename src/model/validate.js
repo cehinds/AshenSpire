@@ -35,6 +35,7 @@ import {
   TARGETS,
   TRIGGER_EVENTS,
   PREDICATES,
+  ABILITY_TURN_METRICS,
   CARD_TYPES,
   PILES,
   PILE_POSITIONS,
@@ -80,6 +81,7 @@ import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
 export const TOKENIZABLE_OPS = Object.freeze([
+  'discard', 'removeStatus', 'grantCardCharge',
   'damage',
   'block',
   'gainPoise',
@@ -128,6 +130,8 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'unlocks',
   'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
   'classMasteryVersion',
+  'legacyProgression',
+  'progressionModuleOwnership',
   'breakMeterVersion', // configured bundle's scoped card faces, never stamped onto old runs
   'classMastery',
   'classSkillFeats',
@@ -282,6 +286,10 @@ export function computeTokenBindings(effects) {
   (effects || []).forEach((eff, i) => {
     if (!eff || typeof eff !== 'object' || typeof eff.op !== 'string') return;
     if (!TOKENIZABLE_OPS.includes(eff.op)) return;
+    if (eff.op === 'grantCardCharge') {
+      for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) push(`charge${field[0].toUpperCase()}${field.slice(1)}`, i, field, eff.op, typeof eff[field] === 'number');
+      return;
+    }
     const field = eff.op === 'applyStatus' ? 'stacks' : eff.op === 'loseMaxHpPct' ? 'pct' : 'amount';
     const base = eff.op === 'applyStatus' ? eff.status : eff.op;
     if (typeof base !== 'string') return; // malformed; schema pass reports it
@@ -533,6 +541,15 @@ function collectContentProblems(bundle, errors = []) {
   // Secondary costs are semantic bounds, not merely integer shapes. A negative
   // cost would mint the resource when a card is played.
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
+    if (card?.gradeProfiles) {
+      if (!['spell','maneuver'].includes(card.abilityKind)) err(`cards.${card.id}.abilityKind`,'graded card requires authored spell/maneuver identity');
+      const ranks = card.gradeProfiles.map(row => row.rank).sort((a,b)=>a-b);
+      if (JSON.stringify(ranks) !== '[0,1,2,3,4,5]') err(`cards.${card.id}.gradeProfiles`,'must author exactly the six ranks 0..5');
+      for (const profile of card.gradeProfiles) {
+        if (profile.manaCost !== profile.rank || profile.actionCost < 1 || profile.actionCost > [3,1,2,3,4,5][profile.rank]) err(`cards.${card.id}.gradeProfiles.${profile.rank}`,'Actions/Mana costs are outside the ability grade contract');
+      }
+      if (!Number.isInteger(card.abilityRank) || card.abilityRank < 0 || card.abilityRank > 5) err(`cards.${card.id}.abilityRank`,'default grade must be 0..5');
+    }
     if (card?.attack !== undefined) {
       try { validateAttack(card.attack); } catch (e) { err(`cards.${card.id}.attack`, e.message); }
     }
@@ -1100,10 +1117,14 @@ function collectContentProblems(bundle, errors = []) {
       for (const card of damages) {
         const path = `cards.${card.id}`;
         const row = equipment.cardExposure.find((candidate) => candidate.cardId === card.id);
+        // The CSV remains the pre-expansion carrier for existing saved cards.
+        // Graded faces own their school/buildup explicitly in profile traits.
+        const gradeCarrier = card.gradeProfiles?.find(profile => profile.rank === card.abilityRank)?.traits;
+        const carrier = gradeCarrier?.damageSchool ? gradeCarrier : row;
         if (!row) err(`${path}.exposureBuildupPerHit`, 'Missing required explicit damage carrier row');
         if (typeof card.damageSchool !== 'string') err(`${path}.damageSchool`, 'Missing required explicit damage school');
         if (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'Missing required non-negative per-hit buildup');
-        if (row && (card.damageSchool !== row.damageSchool || card.exposureBuildupPerHit !== row.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row');
+        if (carrier && (card.damageSchool !== carrier.damageSchool || card.exposureBuildupPerHit !== carrier.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row or grade traits');
         // A Mana spell works toward a break faster than an action-only one
         // (plan phase 8): its row carries at least balance.exposure.buildupPerManaSpell.
         const floor = b.balance && b.balance.exposure && b.balance.exposure.buildupPerManaSpell;
@@ -1113,8 +1134,14 @@ function collectContentProblems(bundle, errors = []) {
         // base's (Codex, #1203); the row is one per card, so one face is enough.
         const upgradedMana = card.upgrade && Number.isInteger(card.upgrade.manaCost) ? card.upgrade.manaCost : card.manaCost;
         const costsMana = (Number.isInteger(card.manaCost) && card.manaCost > 0) || (Number.isInteger(upgradedMana) && upgradedMana > 0);
-        if (row && Number.isInteger(floor) && costsMana && (schoolMult[row.damageSchool] || 0) > 0 && row.exposureBuildupPerHit < floor) {
-          err(`equipment.cardExposure.${card.id}.exposureBuildupPerHit`, `'${card.name || card.id}' costs Mana and builds Arcane Exposure, so it builds at least ${floor} per hit (balance.exposure.buildupPerManaSpell); it builds ${row.exposureBuildupPerHit}`);
+        if (carrier && Number.isInteger(floor) && costsMana && (schoolMult[carrier.damageSchool] || 0) > 0 && carrier.exposureBuildupPerHit < floor) {
+          err(`equipment.cardExposure.${card.id}.exposureBuildupPerHit`, `'${card.name || card.id}' costs Mana and builds Arcane Exposure, so it builds at least ${floor} per hit (balance.exposure.buildupPerManaSpell); it builds ${carrier.exposureBuildupPerHit}`);
+        }
+        for (const profile of card.gradeProfiles || []) {
+          const traits = profile.traits;
+          const profilePath = `${path}.gradeProfiles.${profile.rank}.traits`;
+          if (!traits || !DAMAGE_SCHOOLS.includes(traits.damageSchool) || !Number.isInteger(traits.exposureBuildupPerHit) || traits.exposureBuildupPerHit < 0) err(profilePath, 'Damage grade requires an explicit valid school and non-negative per-hit buildup');
+          else if (profile.manaCost > 0 && (schoolMult[traits.damageSchool] || 0) > 0 && Number.isInteger(floor) && traits.exposureBuildupPerHit < floor) err(profilePath, `Mana-costing damage grade must build at least ${floor} Exposure per hit`);
         }
       }
     }
@@ -2346,7 +2373,7 @@ function isPlainObject(v) {
 // Effects / triggers / predicates / formulas (closed-set checks)
 // ---------------------------------------------------------------------------
 
-const COMMON_EFFECT_FIELDS = ['op', 'target', 'amount', 'if', 'repeat'];
+const COMMON_EFFECT_FIELDS = ['op', 'target', 'amount', 'if', 'repeat', 'oncePerTurn'];
 
 export function validateEffects(effects, path, vctx) {
   const { err } = vctx;
@@ -2377,6 +2404,23 @@ export function validateEffects(effects, path, vctx) {
       return;
     }
     const spec = EFFECT_SPECS[eff.op];
+    if (eff.oncePerTurn !== undefined && (typeof eff.oncePerTurn !== 'string' || !eff.oncePerTurn.trim())) err(`${p}.oncePerTurn`, 'must be a non-empty family marker');
+    for (const flag of ['nonlethal', 'offering', ...(eff.op === 'discard' ? ['choose'] : [])]) if (eff[flag] !== undefined && typeof eff[flag] !== 'boolean') err(`${p}.${flag}`, 'must be a boolean');
+    if (eff.op === 'discard' && eff.choose && eff.random) err(p, 'chosen discard cannot also be random');
+    if (eff.op === 'grantCardCharge') {
+      if (typeof eff.key !== 'string' || !eff.key.trim()) err(`${p}.key`, 'must be a non-empty charge key');
+      if (eff.cardType !== undefined && !CARD_TYPES.includes(eff.cardType)) err(`${p}.cardType`, 'unknown card type');
+      if (eff.cardTag !== undefined && !vctx.nodeIds.has(eff.cardTag)) err(`${p}.cardTag`, 'unknown card tag');
+      if (eff.abilityKind !== undefined && !['spell', 'maneuver'].includes(eff.abilityKind)) err(`${p}.abilityKind`, 'must be spell or maneuver');
+      const chargeFields = ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup'];
+      if (!chargeFields.some(field => eff[field] !== undefined)) err(p, 'charge must grant a numeric bonus');
+      for (const field of chargeFields) if (eff[field] !== undefined) {
+        if (typeof eff[field] === 'number' && (!Number.isInteger(eff[field]) || eff[field] < 0)) err(`${p}.${field}`, 'must be a non-negative integer');
+        else validateFormula(eff[field], `${p}.${field}`, vctx);
+      }
+      if (eff.buildup !== undefined && !vctx.ids.statuses.has(eff.buildupStatus)) err(`${p}.buildupStatus`, 'must name a status');
+      if (eff.damageScope !== undefined && !['effect', 'hit'].includes(eff.damageScope)) err(`${p}.damageScope`, 'must be effect or hit');
+    }
     const allowed = new Set([...COMMON_EFFECT_FIELDS, ...spec.allowed]);
     for (const key of Object.keys(eff)) {
       if (!allowed.has(key)) err(`${p}.${key}`, `Unknown field '${key}' on opcode '${eff.op}'`);
@@ -2562,10 +2606,18 @@ export function validateTriggers(triggers, path, vctx) {
 }
 
 const PREDICATE_FIELDS = {
+  turnMetric: ['metric', 'tag', 'cardId', 'atLeast', 'atMost', 'snapshot'],
+  chargeAvailable: ['key'],
+  eventChargeConsumed: ['key'],
+  eventDiscardExplicit: [],
+  enemyKilledWithStatus: ['status'],
+  enemyNegativeStatusNew: ['statuses'],
+  cardAbilityKindIs: ['kind'],
+  cardTargetsAllEnemies: [],
   inStance: ['stance'],
-  hasStatus: ['of', 'status', 'atLeast'],
-  hasBlock: ['of'],
-  hpBelowPct: ['of', 'pct'],
+  hasStatus: ['of', 'status', 'atLeast', 'snapshot'],
+  hasBlock: ['of', 'snapshot'],
+  hpBelowPct: ['of', 'pct', 'snapshot'],
   firstCardThisTurn: [],
   firstAttackThisCombat: [],
   cardTypeIs: ['type'],
@@ -2600,11 +2652,20 @@ export function validatePredicate(pred, path, vctx) {
   for (const key of Object.keys(pred)) {
     if (!allowed.has(key)) err(`${path}.${key}`, `Unknown field '${key}' on predicate '${pred.p}'`);
   }
-  const PRED_OF = ['self', 'owner', 'player', 'enemy', 'target'];
+  const PRED_OF = ['self', 'owner', 'player', 'enemy', 'target', ...(pred.p === 'hasStatus' ? ['allEnemies'] : [])];
+  if (pred.snapshot !== undefined && !(pred.p === 'turnMetric' ? ['beforePlay', 'current'] : ['beforePlay', 'beforeEvent']).includes(pred.snapshot)) err(`${path}.snapshot`, 'unknown predicate snapshot');
   if (pred.of !== undefined && !PRED_OF.includes(pred.of)) {
     err(`${path}.of`, `Unknown entity ref '${pred.of}' (allowed: ${PRED_OF.join(', ')})`);
   }
   switch (pred.p) {
+    case 'turnMetric':
+      if (!ABILITY_TURN_METRICS.includes(pred.metric)) err(`${path}.metric`, 'unknown ability turn metric');
+      if (['tagPlays', 'distinctTagPlays'].includes(pred.metric) && !vctx.nodeIds.has(pred.tag)) err(`${path}.tag`, 'must name a card tag');
+      if (pred.metric === 'sameCardPlays' && pred.cardId !== 'event' && !vctx.ids.cards.has(pred.cardId)) err(`${path}.cardId`, 'must name a card or event');
+      if (pred.atLeast === undefined && pred.atMost === undefined) err(path, 'turn metric requires a bound');
+      for (const key of ['atLeast', 'atMost']) if (pred[key] !== undefined && (!Number.isFinite(pred[key]) || pred[key] < 0)) err(`${path}.${key}`, 'must be a finite non-negative bound');
+      if (pred.atLeast !== undefined && pred.atMost !== undefined && pred.atLeast > pred.atMost) err(path, 'turn metric bounds are reversed');
+      break;
     case 'inStance':
       if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance)) {
         err(`${path}.stance`, `Dangling reference: unknown stance id '${pred.stance}'`);
@@ -2612,9 +2673,20 @@ export function validatePredicate(pred, path, vctx) {
       break;
     case 'hasStatus':
     case 'eventStatusIs':
+    case 'enemyKilledWithStatus':
       if (typeof pred.status !== 'string' || !vctx.ids.statuses.has(pred.status)) {
         err(`${path}.status`, `Dangling reference: unknown status id '${pred.status}'`);
       }
+      break;
+    case 'chargeAvailable':
+    case 'eventChargeConsumed':
+      if (typeof pred.key !== 'string' || !pred.key.trim()) err(`${path}.key`, 'must be a nonempty charge key');
+      break;
+    case 'cardAbilityKindIs':
+      if (!['spell', 'maneuver'].includes(pred.kind)) err(`${path}.kind`, 'must be spell or maneuver');
+      break;
+    case 'enemyNegativeStatusNew':
+      if (!Array.isArray(pred.statuses) || !pred.statuses.length || pred.statuses.some(id => !vctx.ids.statuses.has(id))) err(`${path}.statuses`, 'must name negative statuses');
       break;
     case 'cardTypeIs':
       if (!CARD_TYPES.includes(pred.type)) err(`${path}.type`, `Unknown card type '${pred.type}'`);

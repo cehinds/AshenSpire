@@ -7,20 +7,49 @@ export function combatOverheadAnchorX({ width, x, controlWidth, inset = 6 }) {
 }
 
 // Edge clamping consumes the gap between neighbouring reserved slots. Pack
-// only controls sharing a side and formation row, leaving their artwork and
-// ground anchors alone. Prefer the reserved position; shift an inner control
+// controls sharing a side and measured vertical band, leaving their artwork
+// and ground anchors alone. Fitted grounds can put separate formation rows in
+// the same physical band. Prefer the reserved position; shift an inner control
 // only as far as the measured outer control needs for a readable gap.
-export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6 }) {
+export function combatOverheadRibbonShift({ x, width, top, bottom, ribbon, clearance = 14 }) {
+  if (!ribbon || !Number.isFinite(top) || !Number.isFinite(bottom)) return 0;
+  const intersects = x - width / 2 < ribbon.right && x + width / 2 > ribbon.left
+    && top < ribbon.bottom && bottom > ribbon.top;
+  return intersects ? Math.max(0, ribbon.bottom + clearance - top) : 0;
+}
+
+export function combatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon = null }) {
+  if (ribbon) {
+    const adjusted = controls.map(control => ({ ...control, offsetY: 0 }));
+    let anchors;
+    // Moving a control below the ribbon can join another formation row's
+    // physical band. Pack those final bounds again; each control shifts at
+    // most once, so this remains bounded without moving any artwork.
+    for (let pass = 0; pass <= controls.length; pass++) {
+      anchors = combatOverheadAnchors({ width, controls: adjusted, inset, gap });
+      let changed = false;
+      for (const control of adjusted) {
+        const x = anchors.find(anchor => anchor.id === control.id).x;
+        const shift = combatOverheadRibbonShift({ ...control, x, ribbon });
+        if (!shift) continue;
+        control.top += shift; control.bottom += shift; control.offsetY += shift;
+        changed = true;
+      }
+      if (!changed) break;
+    }
+    return anchors.map(anchor => ({ ...anchor, offsetY: adjusted.find(control => control.id === anchor.id).offsetY }));
+  }
   const groups = new Map();
   for (const control of controls) {
-    const key = `${control.side}:${control.row}`;
+    const measured = Number.isFinite(control.top) && Number.isFinite(control.bottom);
+    const key = `${control.side}:${measured ? 'measured' : control.row}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push({ ...control, reservedX: control.x, x: combatOverheadAnchorX({ width,
       x: control.x, controlWidth: control.width, inset }) });
   }
   const positioned = [];
   for (const group of groups.values()) {
-    // Same-row actors of different stature can have unrelated overhead bands.
+    // Actors of different stature can have unrelated overhead bands.
     // Only vertically intersecting controls need horizontal clearance.
     const bands = [];
     for (const control of group.toSorted((a, b) => (a.top ?? 0) - (b.top ?? 0))) {

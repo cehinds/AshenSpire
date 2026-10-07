@@ -116,3 +116,6 @@ companion,classification
 # backed family it states its kind once.
 sigil,property
 sigil,classification
+feat,property
+feat,classification
+relic,card

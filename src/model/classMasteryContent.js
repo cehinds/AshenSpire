@@ -31,7 +31,7 @@ export function classMasteryProblems(bundle) {
     const cls=classes.get(row.classId);
     if(!cls)at(label,`unknown class '${row.classId}'`);
     if(!Number.isInteger(row.level) || row.level<1 || row.level>curve.maxLevel)at(label,'level is outside the mastery curve');
-    if(row.kind!==rules.cycle[(row.level-1)%rules.cycle.length])at(label,`kind '${row.kind}' breaks the cycle`);
+    if(!bundle.balance.progression && row.kind!==rules.cycle[(row.level-1)%rules.cycle.length])at(label,`kind '${row.kind}' breaks the cycle`);
     if(typeof row.ref!=='string' || !row.ref)at(label,'ref must be non-empty');
     if(seen.has(label))at(label,'duplicate row');
     seen.add(label);
@@ -80,12 +80,12 @@ export function classMasteryProblems(bundle) {
     for(const id of [cls.startingRelic,cls.kitRelic])if(rows.some(r=>r?.kind==='relic' && r.ref===id))at(`${cls.id}.${id}`,'starting relic cannot be gated');
     for(let level=1;level<=curve.maxLevel;level++){
       const levelRows=own.filter(r=>r.level===level);
-      if(!levelRows.length)at(`${cls.id}.${level}`,'level must unlock something');
-      if(levelRows.length>1 && levelRows[0].kind!=='cards')at(`${cls.id}.${level}`,'a non-card level unlocks one thing');
-      if(levelRows[0]?.kind==='cards' && levelRows.length>Math.ceil(gated.size/own.filter(r=>r.kind==='cards').map(r=>r.level).filter((v,i,a)=>a.indexOf(v)===i).length))at(`${cls.id}.${level}`,'card bundle exceeds the evenly divided bundle size');
+      if(!bundle.balance.progression && !levelRows.length)at(`${cls.id}.${level}`,'level must unlock something');
+      if(!bundle.balance.progression && levelRows.length>1 && levelRows[0].kind!=='cards')at(`${cls.id}.${level}`,'a non-card level unlocks one thing');
+      if(!bundle.balance.progression && levelRows[0]?.kind==='cards' && levelRows.length>Math.ceil(gated.size/own.filter(r=>r.kind==='cards').map(r=>r.level).filter((v,i,a)=>a.indexOf(v)===i).length))at(`${cls.id}.${level}`,'card bundle exceeds the evenly divided bundle size');
     }
     const coreFeats=[...feats.values()].filter(f=>f.skillId===`class:${cls.id}` && !own.some(r=>r.kind==='feat' && r.ref===f.id));
-    if(coreFeats.length<bundle.balance.skill.draftSize)at(`${cls.id}.feats`,'core class feats must fill draftSize');
+    if(!bundle.balance.progression && coreFeats.length<bundle.balance.skill.draftSize)at(`${cls.id}.feats`,'core class feats must fill draftSize');
     for(const hand of bundle.characterCreation?.classes?.[cls.id]?.handIds || []){
       const tags=tagsFor('armament',hand).filter(t=>schools.has(t));
       for(const rarity of Object.keys(bundle.balance.skill.rarityUnlock || {})){
@@ -101,11 +101,17 @@ export function classMasteryProblems(bundle) {
   for(const feat of bundle.classSkillFeats || []){
     if(!feat?.id || featIds.has(feat.id))at('feats','class feat must have a unique id');
     featIds.add(feat?.id);
+    for(const key of Object.keys(feat || {}))if(!['id','skillId','minLevel','name','description','crit','passive'].includes(key))at(feat?.id,`unknown feat field '${key}'; behaviour must use a property carrier`);
     if(typeof feat?.skillId!=='string' || !feat.skillId.startsWith('class:') || !classes.has(feat.skillId.slice(6)))at(feat?.id,'class feat must name a class track');
     if(!Number.isInteger(feat?.minLevel) || feat.minLevel<0 || !feat?.name || !feat?.description)at(feat?.id,'class feat needs a name, description and non-negative minLevel');
-    if(!feat?.crit && !feat?.passive)at(feat?.id,'class feat must author an effect');
+    const propertyTags=(bundle.tagging || []).filter(row=>row.family==='feat' && row.objectId===feat?.id).map(row=>row.tagId).filter(id=>(bundle.propertyRules || []).some(rule=>rule.tag===id));
+    if(!feat?.crit && !feat?.passive && !propertyTags.length)at(feat?.id,'class feat must author an effect or carry a property rule');
+    for(const tag of propertyTags){
+      const rule=(bundle.propertyRules || []).find(row=>row.tag===tag);
+      if(!rule?.passives && !rule?.triggers?.length)at(feat?.id,`feat property '${tag}' must confer an effect`);
+    }
     const effect=feat?.crit || feat?.passive;
-    if(!Array.isArray(effect?.tags) || !effect.tags.length || effect.tags.some(t=>!(bundle.nodes || []).some(n=>n.id===t)))at(feat?.id,'feat effect tags must name nodes');
+    if(effect && (!Array.isArray(effect.tags) || !effect.tags.length || effect.tags.some(t=>!(bundle.nodes || []).some(n=>n.id===t))))at(feat?.id,'feat effect tags must name nodes');
     if(feat?.passive && (!Number.isInteger(feat.passive.block) || feat.passive.block<=0))at(feat.id,'passive Block must be a positive integer');
     if(feat?.crit){
       const rule=feat.crit;

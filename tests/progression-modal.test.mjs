@@ -6,6 +6,7 @@ import { createRunState } from '../src/model/state.js';
 import { awardLevelXp, xpToNext } from '../src/model/levelup.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
+import { t } from '../src/ui/strings.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -65,5 +66,28 @@ test('Skill and feat inspection render real card references and leave progressio
     assert.ok(document.querySelectorAll('.progression-inspection').length >= 2);
     assert.deepEqual(run, before);
     for (const close of [...document.querySelectorAll('.modal-close')].reverse()) close.click();
+  });
+});
+
+test('Progression hub hands rewards and respec to their writers after closing and keeps Back functional', () => {
+  withModalDom(() => {
+    const run = createRunState({ seed: 4242, classId: 'reaver', registries });
+    const before = structuredClone(run), events = [];
+    const open = () => openCharacterSheet({ registries, run, settings: {},
+      onClose: () => events.push('closed'), onRewards: () => events.push('rewards'),
+      onRespec: () => events.push('respec'),
+    });
+    const clickLabel = (sheet, label) => {
+      const action = [...sheet.panel.querySelectorAll('button')].find(node => node.textContent === label);
+      assert.ok(action, `missing action ${label}`);
+      action.click();
+    };
+    clickLabel(open(), t('progression.rewards'));
+    assert.deepEqual(events, ['closed', 'rewards']);
+    clickLabel(open(), t('classRespec.title'));
+    assert.deepEqual(events, ['closed', 'rewards', 'closed', 'respec']);
+    clickLabel(open(), t('common.back'));
+    assert.deepEqual(events, ['closed', 'rewards', 'closed', 'respec', 'closed']);
+    assert.deepEqual(run, before, 'opening and leaving the hub never claims or rebuilds progression');
   });
 });

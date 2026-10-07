@@ -1,7 +1,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
-import { combatOverheadAnchors } from '../models/CombatOverheadModel.js';
+import { combatOverheadAnchors, combatOverheadRibbonShift } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
@@ -59,7 +59,7 @@ export function wireBattlefieldStage(field, model) {
     }
     const ribbonRect = ribbonEl?.getBoundingClientRect();
     const ribbon = ribbonRect?.width > 0 && ribbonRect.height > 0 ? { left: ribbonRect.left - fieldRect.left,
-      right: ribbonRect.right - fieldRect.left, bottom: ribbonRect.bottom - fieldRect.top } : null;
+      right: ribbonRect.right - fieldRect.left, top: ribbonRect.top - fieldRect.top, bottom: ribbonRect.bottom - fieldRect.top } : null;
     if (fieldRect.width <= 0 || fieldRect.height <= 0) return;
     // The page zoom, read once before the writes below. anchorLocalBox reads it
     // as computed style when not handed it, and per tile and per combatant, each
@@ -150,15 +150,15 @@ export function wireBattlefieldStage(field, model) {
       const growthFor = (actor, fitted) => {
         const requestedGrowth = actor.frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, actor.slot.row)] : 1;
         return Math.min(requestedGrowth, Math.max(1,
-          (actor.slot.ground - actor.leading - 6) / fitted.visibleHeight),
+          ((fitted.ground ?? actor.slot.ground) - actor.leading - 6) / fitted.visibleHeight),
           // Selection must not make the player tower over a foe already capped
           // by the available headroom on a short screen.
           actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
       };
-      const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width,
+      const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width, ribbon,
         controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
-          const bottom = actor.slot.ground - fitted.visibleHeight * growthFor(actor, fitted) - 14;
+          const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - 14;
           return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: actor.slot.x,
             width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
         }) }) : [];
@@ -200,6 +200,7 @@ export function wireBattlefieldStage(field, model) {
       const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
       const scale = fitted.scale * growth;
       const x = fitted.x;
+      const ground = fitted.ground ?? slot.ground;
       const visibleHeight = fitted.visibleHeight * growth;
       sprite.style.zoom = String(scale / zoom);
       sprite.firstElementChild.style.top = `${footOffset}px`;
@@ -207,7 +208,7 @@ export function wireBattlefieldStage(field, model) {
       // Transparent canvas above the figure is not part of the card's layout.
       // Keep the image and its feet in place while the card starts at the ink.
       sprite.style.marginTop = `${(visibleHeight - paintedHeight) / scale}px`;
-      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - visibleHeight, width: nameWidth, height: visibleHeight }, { zoom: pageZoom });
+      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: ground - visibleHeight, width: nameWidth, height: visibleHeight }, { zoom: pageZoom });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
       // Keep depth on the artwork. A z-index on the whole frame traps its
@@ -220,8 +221,8 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.baseSpriteScale = String(fitted.scale);
       frame.dataset.presentationScale = String(multiplier);
       frame.dataset.formationX = String(slot.x);
-      frame.dataset.groundY = String(fieldRect.top + slot.ground);
-      frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
+      frame.dataset.groundY = String(fieldRect.top + ground);
+      frame.dataset.groundRatio = String(ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
       // The half-field art floor may move two enemies to the same painted
       // centre. Their intent/Inspect controls retain their distinct reserved
@@ -230,7 +231,17 @@ export function wireBattlefieldStage(field, model) {
       const overheadX = overheads.find(overhead => overhead.id === slot.id)?.x ?? x;
       const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
         { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
-      if (leadingHost) leadingHost.style.left = `${overheadLocal.left}px`;
+      if (leadingHost) {
+        leadingHost.style.left = `${overheadLocal.left}px`;
+        // Full-height artwork may reach its final ground before the fitter
+        // can reserve more ribbon headroom. Move only the readable controls,
+        // including a packed cross-row control, clear of the ribbon.
+        const overheadTop = ground - visibleHeight - 14 - actor.leadingHeight * zoom;
+        const overheadShift = overheads.find(overhead => overhead.id === slot.id)?.offsetY
+          ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
+            top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon });
+        leadingHost.style.translate = `0 ${overheadShift / zoom}px`;
+      }
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
       frame.style.setProperty('--overhead-top', `${-14 / zoom}px`);

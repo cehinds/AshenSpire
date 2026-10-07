@@ -395,7 +395,7 @@ function focusables() {
   const controls = Array.from(root.querySelectorAll(FOCUS_SELECTOR));
   if (root.id === 'app') controls.push(...document.querySelectorAll('#tooltip[data-open="true"][role="dialog"] button:not([disabled])'));
   return controls.filter(
-    (el) => visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
+    (el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 

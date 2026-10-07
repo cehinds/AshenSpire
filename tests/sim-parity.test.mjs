@@ -84,7 +84,7 @@ test('the live game and every simulator build and settle fights through engine/r
   for (const tool of ['tools/runsim.mjs', 'tools/balance.mjs', 'tools/measure-classes.mjs']) {
     const text = source(tool);
     assert.match(text, /createRunCombat\(\{/, `${tool} builds through createRunCombat`);
-    assert.match(text, /affordableCards\(REG, /, `${tool} picks from affordableCards`);
+    assert.match(text, /(?:affordableCards|firstAffordableCard)\(REG, /, `${tool} picks through the shared affordability predicate`);
   }
   for (const tool of ['tools/runsim.mjs', 'tools/measure-classes.mjs']) {
     assert.match(source(tool), /runCombatEnd\(run, combat\)/, `${tool} writes the pools back`);

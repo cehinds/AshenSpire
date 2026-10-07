@@ -328,7 +328,7 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
  * ride their own maximum up and are never reduced. Shared by the point
  * assignment and the level climb: one writer for what a level does to a pool.
  */
-function rederivePools(registries, run, why) {
+export function rederivePools(registries, run, why) {
   if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) return 0;
   const rules = run.derivedStatRuleSnapshot.rules;
   const classDef = registries.classes.get(run.class);

@@ -1,3 +1,8 @@
+import {spendAbilityDraft} from './abilityDraftReceipts.js';
+import { progressionFeats, progressionFeatUnlocks } from '../content/progression/feats.js';
+import { progressionUnlocks } from '../content/progression/unlocks.js';
+import { isAbilitySkill, SPELLCRAFT_SKILL, MANEUVERS_SKILL } from './abilityGrades.js';
+import { expandedProgression, queueClassMilestone } from './classMilestones.js';
 // src/model/skills.js — the skill ledger and its one curve (plan phase 4a,
 // proposal §6.1). A track per weapon group, per armour weight class, one for
 // the focus group, one for dual-wielding and one per class; every track
@@ -27,7 +32,7 @@ import { skillFeats } from '../content/skillFeats.js';
 const ITEM_OWNED_ROLES = Object.freeze(['granted', 'weaponArt']);
 
 /** The kinds of track, and the balance row each reads its curve from. */
-export const SKILL_KINDS = Object.freeze(['weapon', 'armour', 'focus', 'dual', 'class']);
+export const SKILL_KINDS = Object.freeze(['weapon', 'armour', 'focus', 'ability', 'dual', 'class']);
 
 const FOCUS_ITEM_TYPE = 'item:magic-focus';
 const ARMOUR_ITEM_TYPE = 'item:armor';
@@ -48,11 +53,12 @@ export function skillTracks(registries) {
   const tracks = [];
   for (const node of nodes) {
     if (node.parentId !== 'itemType' || node.id === ARMOUR_ITEM_TYPE) continue;
-    tracks.push({ id: node.id, kind: node.id === FOCUS_ITEM_TYPE ? 'focus' : 'weapon', label: node.label });
+    tracks.push({ id: node.id, kind: node.id === FOCUS_ITEM_TYPE ? 'focus' : 'weapon', label: node.id === FOCUS_ITEM_TYPE ? 'Spellcraft' : node.label });
   }
   for (const cls of (mechanics.weight && mechanics.weight.classes) || []) {
     tracks.push({ id: armourSkillId(cls.id), kind: 'armour', label: `${cls.label || cls.id} armour` });
   }
+  tracks.push({ id: MANEUVERS_SKILL, kind: 'ability', label: 'Combat Maneuvers' });
   tracks.push({ id: DUAL_WIELD_SKILL, kind: 'dual', label: 'Dual-wield' });
   // Runtime registries hand the classes as a registry, the content bundle
   // (validate.js) as the authored array; both are the same rows.
@@ -87,6 +93,10 @@ export function xpToNext(registries, kind, level) {
   const step = Number.isInteger(level) && level > 0 ? level : 0;
   // Legacy skill/class curves rounded without the character curve's epsilon.
   // Preserve those saved thresholds; new linear curves share the new rounding.
+  if ((kind === 'ability' || kind === 'focus') && registries.progressionEnabled) {
+    const rule = registries.balance.progression.ability;
+    return rule.base + Math.max(0, step - 1) * rule.growthPerLevel;
+  }
   return xpStepCost(curveFor(registries, kind), step, { exponentialEpsilon: 0 });
 }
 
@@ -96,7 +106,7 @@ export function xpToNext(registries, kind, level) {
  * or null for no ceiling. XP past it stays on the ledger.
  */
 export function skillMaxLevel(registries, kind) {
-  const cap = curveFor(registries, kind).maxLevel;
+  const cap = (kind === 'ability' || kind === 'focus') && registries.progressionEnabled ? registries.balance.progression.ability.maxLevel : curveFor(registries, kind === 'ability' ? 'weapon' : kind).maxLevel;
   return Number.isInteger(cap) && cap > 0 ? cap : null;
 }
 const belowCap = (registries, kind, level) => {
@@ -128,6 +138,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
   const kind = skillKindOf(registries, skillId);
   if (!kind) throw new Error(`awardSkillXp: '${skillId}' is not a skill track`);
   if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
+  if (expandedProgression(run) && isAbilitySkill(skillId) && amount > 0) activateAbilitySkill(run, skillId);
   const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
@@ -139,13 +150,16 @@ export function awardSkillXp(registries, run, skillId, amount) {
     row.xp -= cost;
     row.level += 1;
     row.pendingDrafts += 1;
-    queueRankUp(kind, row);
-    queueAttributePick(registries, skillId, row);
-    queueSkillFeat(registries, skillId, row);
+    if (!(expandedProgression(run) && isAbilitySkill(skillId))) queueRankUp(kind, row);
+    if (!(expandedProgression(run) && kind === 'class')) { queueAttributePick(registries, skillId, row); queueSkillFeat(registries, skillId, row); }
     cost = xpToNext(registries, kind, row.level);
   }
-  if (kind === 'class' && row.level > before) claimRunClassMastery(registries, run);
-  return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain };
+  const skillAwards = [];
+  if (kind === 'class' && row.level > before) {
+    claimRunClassMastery(registries, run);
+    for (let level = before + 1; level <= row.level; level++) skillAwards.push(...payClassMilestone(registries, run, skillId.slice(6), level));
+  }
+  return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain, skillAwards };
 }
 
 /** Count the levels already paid for by a track, without advancing its ledger. */
@@ -169,6 +183,7 @@ export function bankSkillXp(registries, run, skillId, amount) {
   const kind = skillKindOf(registries, skillId);
   if (!kind) throw new Error(`bankSkillXp: '${skillId}' is not a skill track`);
   if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
+  if (expandedProgression(run) && isAbilitySkill(skillId) && amount > 0) activateAbilitySkill(run, skillId);
   const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
@@ -179,7 +194,7 @@ export function bankSkillXp(registries, run, skillId, amount) {
 /** Claim exactly one paid-for skill level, retaining excess XP and queuing its reward. */
 export function claimBankedSkillLevel(registries, run, skillId) {
   const owner = run;
-  if (hasClassMastery(run) && skillId.startsWith('class:')) run = { ...run, skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState) };
+  if (hasClassMastery(run) && skillId.startsWith('class:')) run = { ...run, skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), ...(expandedProgression(run) ? {classMilestones:structuredClone(run.classMilestones || {})} : {}) };
   const kind = skillKindOf(registries, skillId);
   const row = run && run.skills && run.skills[skillId];
   if (!kind || !row || !belowCap(registries, kind, row.level)) return null;
@@ -190,12 +205,12 @@ export function claimBankedSkillLevel(registries, run, skillId) {
   row.xp -= cost;
   row.level += 1;
   row.pendingDrafts += 1;
-  queueRankUp(kind, row);
-  queueAttributePick(registries, skillId, row);
-  queueSkillFeat(registries, skillId, row);
+  if (!(expandedProgression(run) && isAbilitySkill(skillId))) queueRankUp(kind, row);
+  if (!(expandedProgression(run) && kind === 'class')) { queueAttributePick(registries, skillId, row); queueSkillFeat(registries, skillId, row); }
+  const skillAwards = kind === 'class' ? payClassMilestone(registries, run, skillId.slice(6), row.level) : [];
   if (kind === 'class') claimRunClassMastery(registries, run);
-  if (owner !== run) { owner.skills = run.skills; owner.classMasteryState = run.classMasteryState; }
-  return { skillId, before, after: row.level, levelUps: 1, gained: 0 };
+  if (owner !== run) { owner.skills = run.skills; owner.classMasteryState = run.classMasteryState; if (expandedProgression(run)) owner.classMilestones = run.classMilestones; }
+  return { skillId, before, after: row.level, levelUps: 1, gained: 0, skillAwards };
 }
 
 // ---- drafts and rarity (plan phase 4b) ---------------------------------------
@@ -266,7 +281,8 @@ export function rarityUnlockedAt(registries, level) {
  * spendSkillDraft(run, skillId) → true when a queued draft was spent. The
  * reward door's one write to the ledger's draft count.
  */
-export function spendSkillDraft(run, skillId) {
+export function spendSkillDraft(run, skillId, offerId = null, choiceId = null) {
+  if(expandedProgression(run) && isAbilitySkill(skillId))return spendAbilityDraft(run,skillId,offerId,choiceId);
   const row = run && run.skills && run.skills[skillId];
   if (!row || !(row.pendingDrafts > 0)) return false;
   row.pendingDrafts -= 1;
@@ -308,6 +324,7 @@ export function rankUpCandidates(registries, run, skillId) {
     if (!inst || inst.sourceArmamentId || ITEM_OWNED_ROLES.includes(inst.equipmentRole)) return false;
     const def = cards && cards.has(inst.cardId) ? cards.get(inst.cardId) : null;
     if (!def || !(def.tags || []).some((t) => schools.has(t))) return false;
+    if(Number.isInteger(inst.abilityRank)||(run.progressionRulesVersion===1&&def.gradeProfiles&&!inst.legacyAbility))return false;
     return (Number.isInteger(inst.rank) && inst.rank >= 1 ? inst.rank : 1) < ceiling;
   });
 }
@@ -417,12 +434,14 @@ export function stampSkillBonuses(registries, run) {
  * STR/DEX/CON/WIS, Magic DEX/CON/WIS/INT); [] for a track with none authored.
  */
 export function linkedAttributes(registries, skillId) {
+  if (registries.progressionEnabled && skillId.startsWith('class:')) return (registries.balance.progression.classAttributes[skillId.slice(6)] || []).slice();
   const table = draftRows(registries).linkedAttributes || {};
   return Array.isArray(table[skillId]) ? table[skillId].slice() : [];
 }
 
 /** Whether reaching `level` on this track queues an attribute pick. */
 export function levelQueuesAttributePick(registries, skillId, level) {
+  if (registries.progressionEnabled && skillId.startsWith('class:')) return registries.balance.progression.cadence.attribute.includes(level);
   const every = draftRows(registries).attributeEvery;
   return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && linkedAttributes(registries, skillId).length > 0;
 }
@@ -442,12 +461,13 @@ export function spendAttributePick(run, skillId) {
 // ---- the every-2nd-level skill feat (SPEC §13.4o) ----------------------------
 
 /** A skill feat by id, or null. */
-export const skillFeatById = (id) => [...skillFeats, ...classSkillFeats].find((feat) => feat.id === id) || null;
+export const skillFeatById = (id, registries = null) => [...skillFeats, ...(registries?.classSkillFeats || [...classSkillFeats,...progressionFeats])].find((feat) => feat.id === id) || null;
 /** The feats a track authors (content/skillFeats.js), in authored order. */
-export const trackSkillFeats = (skillId, mastery = false) => [...skillFeats, ...(mastery ? classSkillFeats : [])].filter((feat) => feat.skillId === skillId);
+export const trackSkillFeats = (skillId, mastery = false, registries = null) => [...skillFeats, ...(mastery ? registries?.classSkillFeats || [...classSkillFeats,...progressionFeats] : [])].filter((feat) => feat.skillId === skillId);
 
 /** Whether reaching `level` on this track queues a feat pick: every featEvery levels of a track that authors any. */
 export function levelQueuesSkillFeat(registries, skillId, level) {
+  if (registries.progressionEnabled && skillId.startsWith('class:')) return registries.balance.progression.cadence.feat.includes(level);
   const every = draftRows(registries).featEvery;
   return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && trackSkillFeats(skillId, !!registries.masteryRun).length > 0;
 }
@@ -457,11 +477,11 @@ function queueSkillFeat(registries, skillId, row) {
 }
 
 /** skillFeatOptions(run, skillId, level) → the track's feats open at `level` the run has not taken. */
-export function skillFeatOptions(run, skillId, level) {
+export function skillFeatOptions(run, skillId, level, registries = null) {
   const taken = new Set(Array.isArray(run && run.skillFeats) ? run.skillFeats : []);
-  return trackSkillFeats(skillId, hasClassMastery(run)).filter((feat) => {
+  return trackSkillFeats(skillId, hasClassMastery(run), registries).filter((feat) => {
     if (taken.has(feat.id)) return false;
-    const gate = classMastery.find(row => row.kind === 'feat' && row.ref === feat.id);
+    const gate = (registries?.classMastery || (expandedProgression(run) ? [...progressionUnlocks,...progressionFeatUnlocks] : classMastery)).find(row => row.kind === 'feat' && row.ref === feat.id);
     // A reward plan previews the level its claim will reach; the commit calls
     // this again with the actual claimed level before spending the pick.
     if (hasClassMastery(run) && gate) return level >= gate.level || (masteryProfileFor(run).classMastery?.[gate.classId]?.unlockedRows || []).includes(masteryRowId(gate));
@@ -473,11 +493,11 @@ export function skillFeatOptions(run, skillId, level) {
  * takeSkillFeat(run, skillId, featId) → true when the feat joined the run: it
  * is the track's, not yet taken, and a pick was queued (which it spends).
  */
-export function takeSkillFeat(run, skillId, featId) {
-  const feat = skillFeatById(featId);
+export function takeSkillFeat(run, skillId, featId, registries = null) {
+  const feat = skillFeatById(featId, registries);
   const row = run && run.skills && run.skills[skillId];
   if (!feat || feat.skillId !== skillId || !row || !(row.pendingSkillFeats > 0)) return false;
-  if (hasClassMastery(run) && !skillFeatOptions(run, skillId, row.level).includes(featId)) return false;
+  if (hasClassMastery(run) && !skillFeatOptions(run, skillId, row.level, registries).includes(featId)) return false;
   if (Array.isArray(run.skillFeats) && run.skillFeats.includes(featId)) return false;
   row.pendingSkillFeats -= 1;
   run.skillFeats = [...(Array.isArray(run.skillFeats) ? run.skillFeats : []), featId];
@@ -510,4 +530,17 @@ export function skillsProblems(skills) {
     for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps', 'pendingAttributePicks', 'pendingSkillFeats'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
   }
   return problems;
+}
+
+export function activateAbilitySkill(run, skillId) {
+  if (!isAbilitySkill(skillId)) return false;
+  run.skills ||= {};
+  const row = run.skills[skillId] ||= { xp: 0, level: 0, pendingDrafts: 0 };
+  if (row.level > 0) return false;
+  row.level = 1; row.pendingDrafts += 1;
+  return true;
+}
+function payClassMilestone(registries, run, classId, level) {
+  if (!expandedProgression(run) || !queueClassMilestone(registries, run, classId, level)) return [];
+  return (registries.balance.progression.classSkills[classId] || []).map(skillId => bankSkillXp(registries, run, skillId, registries.balance.progression.skillBonusXp));
 }
