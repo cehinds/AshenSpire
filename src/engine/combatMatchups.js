@@ -119,9 +119,17 @@ export function stripCombatWard(ctx, source, target, amount) {
   return stripped;
 }
 
-export function completeMatchupHit(ctx, source, target, carrier, receipt, { blocked = 0, hpLoss = 0 } = {}) {
+export function completeMatchupHit(ctx, source, target, carrier, receipt, { blocked = 0, hpLoss = 0, applySmashBreakPoise = null } = {}) {
   if (!receipt.profile || carrier?.combatReaction) return;
   const cfg = matchupRules(ctx);
+  if (receipt.smash && receipt.guardBefore > 0 && (target.block || 0) - (target.wardBlock || 0) <= 0 && target.alive) {
+    const amount = Math.max(0, receipt.profile.breakPoiseBonus ?? cfg.smash.guardBreakPoiseBonus);
+    // The same hit's Guard-break consequence precedes its retaliation. Resolve
+    // through the ordinary Poise implementation so a real stagger can clear
+    // Counter before either its queued damage or synchronous Ward reply starts.
+    if (amount && receipt.counterEligible && typeof applySmashBreakPoise === 'function') applySmashBreakPoise(amount);
+    else if (amount) ctx.enqueue({ effect: { op: 'poiseDamage', amount }, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
+  }
   if (receipt.counterEligible && target?.combatCounter?.charges > 0) {
     const counter = receipt.counter;
     delete target.combatCounter;
@@ -138,10 +146,6 @@ export function completeMatchupHit(ctx, source, target, carrier, receipt, { bloc
         if (poise > 0) ctx.enqueue({ effect: { op: 'poiseDamage', amount: poise }, source: target, owner: target, target: source, card: reactionCarrier, meta: { combatCounterReaction: true } });
       }
     }
-  }
-  if (receipt.smash && receipt.guardBefore > 0 && (target.block || 0) - (target.wardBlock || 0) <= 0 && target.alive) {
-    const amount = Math.max(0, receipt.profile.breakPoiseBonus ?? cfg.smash.guardBreakPoiseBonus);
-    if (amount) ctx.enqueue({ effect: { op: 'poiseDamage', amount }, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
   }
 }
 

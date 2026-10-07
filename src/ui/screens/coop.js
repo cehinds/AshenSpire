@@ -768,7 +768,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return wrap;
   }
   function intentEl(intent) {
-    return combatantIntent(intent, () => intentTooltip(intent, { victim: 'each hero' }), registries);
+    return combatantIntent(intent, () => intentTooltip(intent), registries);
   }
 
   function readEnemyIntent(entity, def) {
@@ -789,7 +789,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
       const intent = def ? readEnemyIntent(entity, def) : null;
-      const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: intent, registries }) : null;
+      const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
       // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
       // solo reads off `entity.performedMoves`. The snapshot now carries the
       // field, so an enemy that has acted lists what it did and one that has
@@ -799,7 +799,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // source for both, so the history and the move set cannot word a move
       // two different ways. Indexed once: this runs on every inspector open,
       // and a scan per entry is a needless m×n in a path a player waits on.
-      const cardsByMoveId = def && new Map(enemyMoveCards(def, { enemy: entity, registries }).map((c) => [c.moveId, c]));
+      const cardsByMoveId = def && new Map(enemyMoveCards(def, { enemy: entity, registries, combatMatchupRules: snap.scene.combatMatchupRules }).map((c) => [c.moveId, c]));
       const history = def && Array.isArray(entity.performedMoves)
         ? entity.performedMoves.map((moveId) => {
           const card = cardsByMoveId.get(moveId);
@@ -810,7 +810,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ? { moveCards, history, intent: {
           ...intent,
           name: intent.hidden ? `${intent.stance} · Move hidden` : (moveCards.find(card => card.active)?.name || intent.stance),
-          detail: intent.hidden ? 'Exact move, damage, and effects unread.' : intentTooltip(intent, { victim: 'each hero' }),
+          detail: intent.hidden ? 'Exact move, damage, and effects unread.' : intentTooltip(intent),
         } }
         : { abilities }) };
       closeCombatantDoor();

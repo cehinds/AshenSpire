@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AshenSpire intent hit sequence regression</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../../styles/combat.css">
+<style>
+  :root { --ui-zoom:1; --font-ui:system-ui; --focus-ring:2px solid #e9bc66; }
+  body { margin:0; padding:28px; color:#ede6d7; background:#14131a; font:16px/1.5 system-ui; }
+  main { max-width:900px; margin:auto; } h1 { font-size:25px; } h2 { font-size:18px; margin:0 0 15px; }
+  .seats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+  article, #catalog { padding:20px; border:1px solid #705b40; border-radius:8px; background:#25202b; }
+  .combatant-leading { position:relative!important; width:auto!important; display:flex!important; justify-content:center!important; min-height:85px; }
+  .intent-copy { margin-top:15px; font-size:14px; } .tt-title { font-weight:700; margin-bottom:6px; }
+  #catalog { margin-top:20px; font-size:14px; } .note { color:#cbbfae; font-size:14px; }
+  @media(max-width:600px) { body { padding:18px; } .seats { grid-template-columns:1fr; } }
+</style>
+<main>
+  <h1>Enemy flurry · Live hit previews</h1>
+  <p>One move, three observer states. Each preview uses the same production UI.</p>
+  <div class="seats"></div>
+  <section id="catalog"><h2>Current move catalog</h2></section>
+  <p class="note">The first eligible hit spends Counter. Later hits use ordinary damage. A failed read retains only the public stance.</p>
+</main>
+<script type="module">
+  import { combatantIntent } from '../../../src/ui/components/combatantOverhead.js';
+  import { coopEnemyIntent } from '../../../src/ui/models/CoopIntentModel.js';
+  import { intentTooltip } from '../../../src/ui/uiContent.js';
+  import { enemyMoveCards } from '../../../src/model/enemyMoveCards.js';
+  const profile = { camp:'physical', maneuver:'attack', damageType:'slashing' };
+  const common = { kind:'attack', moveId:'flurry', damage:5, hits:3, combatProfile:profile };
+  const enemy = { intent:common, intentReads:{ counter:true, ordinary:true, hidden:false },
+    intentPreviews:{ counter:{ ...common, damage:2, hitDamages:[2,5,5], totalDamage:12 },
+      ordinary:{ ...common, hitDamages:[5,5,5], totalDamage:15 } } };
+  for (const [id,name] of [['counter','Counter ready'],['ordinary','Ordinary defense'],['hidden','Failed intent read']]) {
+    const intent = coopEnemyIntent(enemy,id);
+    const article = document.createElement('article'); article.dataset.seat=id;
+    const title = document.createElement('h2'); title.textContent=name;
+    const overhead = document.createElement('div'); overhead.className='combatant-leading';
+    overhead.append(combatantIntent(intent,()=>intentTooltip(intent)));
+    const copy = document.createElement('div'); copy.className='intent-copy';
+    copy.innerHTML=intent.hidden ? '<div class="tt-title">Move hidden</div>Exact move, damage, and effects unread.' : intentTooltip(intent);
+    article.append(title,overhead,copy); document.querySelector('.seats').append(article);
+  }
+  const [move] = enemyMoveCards({ id:'fixture',moves:{flurry:{name:'Flurry',intent:'attack',damage:5,hits:3}} },
+    { enemy, preview:coopEnemyIntent(enemy,'counter') });
+  const detail = document.createElement('p'); detail.textContent=`${move.name} · ${move.detail}`;
+  document.querySelector('#catalog').append(detail);
+  document.body.dataset.ready='true';
+</script>
+</html>

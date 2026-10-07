@@ -60,7 +60,7 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, previewCoopCard, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
@@ -679,6 +679,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       kind: 'combat',
       ...(c.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+      ...(c.combatMatchupRules ? { combatMatchupRules: structuredClone(c.combatMatchupRules) } : {}),
       receiptSeq: ++combatReceiptSeq,
       opening,
       events,
@@ -691,6 +692,7 @@ export function createSession({ registries, seedString, endless = false, restore
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
         alive: e.alive, intent: e.intent, intentReads: e.intentReads ? { ...e.intentReads } : undefined, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        intentPreviews: Object.fromEntries([...c.players.keys()].map(id => [id, previewCoopIntent(c, id, e.id)])),
         ...(e.wardMeter ? { wardMeter: e.wardMeter } : {}),
         ...(e.ratings ? { ratings: { ...e.ratings } } : {}),
         // WHAT IT HAS ALREADY DONE. The engine records every move that
