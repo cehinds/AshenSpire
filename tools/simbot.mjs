@@ -14,7 +14,8 @@
 // clears it when a new player turn begins.
 
 import { resolveCard } from '../src/model/registries.js';
-import { cardPlayCosts } from '../src/engine/combat.js';
+import { cardTargetPlan } from '../src/model/cardTargets.js';
+import { cardPlayCosts, previewCard } from '../src/engine/combat.js';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 
 /** The hand's playable, affordable cards, in hand order, minus this turn's refusals. */
@@ -34,6 +35,14 @@ export function affordableCards(registries, combat, refused = new Set()) {
 /** The same leftmost choice without previewing cards the bot will not play. */
 export function firstAffordableCard(registries, combat, refused = new Set()) {
   return combat.piles.hand.find(h => isAffordable(registries, combat, refused, h));
+}
+
+/** Keep the chosen foe for hostile cards; source/friendly cards resolve automatically. */
+export function botCardTargetId(registries, combat, hand, enemyId) {
+  const def = resolveCard(registries, hand);
+  const plan = cardTargetPlan(def, combat.player?.id, combat.enemies);
+  if (plan.mode === 'friendly' && previewCard(combat, hand.instanceId).needsTarget) return enemyId;
+  return plan.mode === 'enemy' ? enemyId : undefined;
 }
 
 /** A per-combat refusal set that empties itself at each new player turn. */

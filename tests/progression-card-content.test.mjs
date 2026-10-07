@@ -1,3 +1,4 @@
+import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
@@ -209,7 +210,7 @@ test('every authored family grade completes a paid real play in the assembled en
     assert.equal(face.manaCost, profile.rank, `${card.name}/${profile.rank}`);
     const preview = previewCard(combat, instance.instanceId);
     assert.equal(preview.manaCost, profile.rank);
-    dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: combat.enemies[0].id });
+    dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: botCardTargetId(combat.registries, combat, instance, combat.enemies[0].id) });
     while (combat.pendingAbilityDiscard) {
       const ids = combat.piles.hand.slice(0, combat.pendingAbilityDiscard.count).map(c => c.instanceId);
       assert.doesNotThrow(() => dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ids }), `${card.name}/${profile.rank}, choosing ${JSON.stringify(ids)} from ${combat.piles.hand.length}`);

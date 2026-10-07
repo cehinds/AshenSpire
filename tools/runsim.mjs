@@ -46,7 +46,7 @@ import { configuredContentBundle, advancedConfigSnapshot } from '../src/model/ad
 import { createRegistries } from '../src/model/registries.js';
 import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
-import { affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
+import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
 import { createRunLoop, payFightXp, SoftLock, fleetSeed } from './simrun.mjs';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 import { skillTracks } from '../src/model/skills.js';
@@ -431,7 +431,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       // below lets it escape as a CRASH rather than set the card aside.
       if (PLANT === 'fight-throw') throw new Error(`planted: card resolution threw inside ${encounterId}`);
       // A card that offers a choice (Warrior's Vow) takes its first option.
-      botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
+      botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: botCardTargetId(REG, combat, card, tgt?.id), choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
     } catch (e) {
       setAsideOrCrash(e);
       refused.add(card.instanceId);

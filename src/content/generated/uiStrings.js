@@ -8534,5 +8534,26 @@ export const uiStrings = [
     "short": "Choose feats from character and skill level rewards.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "combat.enemyTarget.choose",
+    "extends": "",
+    "short": "",
+    "full": "Choose an enemy target",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyTarget.health",
+    "extends": "",
+    "short": "",
+    "full": "{hp}/{maxHp} HP",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyTarget.label",
+    "extends": "",
+    "short": "",
+    "full": "Target {number}: {name}, {hp} of {maxHp} HP",
+    "tip": ""
   }
 ];

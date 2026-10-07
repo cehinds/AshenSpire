@@ -169,7 +169,7 @@ for(const [slug,tags,before]of [['war-cadence',['heavy'],{tagPlays:{heavy:1}}],[
  const rr=createRegistries({...bundle,cards:[...contentBundle.cards,card],tagging:[...bundle.tagging,{family:'card',scope:'',objectId:'acceptance',tagId:'classification.attack'},...tags.map(tagId=>({family:'card',scope:'',objectId:'acceptance',tagId}))]});
  const c=engine.createCombat({registries:rr,rng:createRng(44),player:player([id(slug)]),enemyIds:['wanderingSoldier']});c.skillFeats=[id(slug)];syncFeatProperties(c);
  eventFor(c,slug,tags,before);c.piles.draw=[{instanceId:'drawn-bonus',cardId:'strike'}];c.piles.hand.push({instanceId:'metric-card',cardId:'acceptance'});
- engine.dispatch(c,{type:'playCard',cardInstanceId:'metric-card',targetId:c.enemies[0].id});
+ engine.dispatch(c,{type:'playCard',cardInstanceId:'metric-card'});
  if(slug==='threefold-sky')assert.ok(c.piles.hand.some(card=>card.instanceId==='drawn-bonus'));
  else assert.equal(c.player.block,5);
 });

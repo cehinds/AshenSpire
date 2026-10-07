@@ -1,7 +1,9 @@
+import { botCardTargetId } from '../tools/simbot.mjs';
+import { cardNeedsEnemyTarget } from '../src/model/friendlyTargets.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries, relicPropertyRules } from '../src/model/registries.js';
+import { createRegistries, relicPropertyRules, resolveCard } from '../src/model/registries.js';
 import { progressionRelics, progressionRelicUnlocks } from '../src/content/progression/relics.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
@@ -34,8 +36,8 @@ function play(combat, cardId, target = combat.enemies[0]) {
   const instance = { instanceId: `play${sequence++}`, cardId, upgraded: false };
   const piles = combat.players ? combat.players.get('a').piles : combat.piles;
   piles.hand.push(instance);
-  if (combat.players) playCard(combat, 'a', instance.instanceId, target?.id);
-  else dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: target?.id });
+  if (combat.players) playCard(combat, 'a', instance.instanceId, cardNeedsEnemyTarget(resolveCard(combat.registries, instance)) ? target?.id : undefined);
+  else dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: botCardTargetId(combat.registries, combat, instance, target?.id) });
   return instance;
 }
 const spell = { abilityKind: 'spell', cardTags: ['starstone', 'source:spell'], manaCost: 2, kindIds: ['classification.skill'], effects: [] };
@@ -101,7 +103,7 @@ test('Whisperglass preview and execution add five to only the first hit of the f
   const preview = previewCard(combat, card.instanceId, combat.enemies[0].id);
   assert.equal(JSON.stringify(serializeCombatSnapshot(combat)), before);
   assert.ok(preview); const hp = combat.enemies[0].hp;
-  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
+  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: botCardTargetId(combat.registries, combat, card, combat.enemies[0].id) });
   assert.equal(hp - combat.enemies[0].hp, 11);
   play(combat, 'blade'); assert.equal(hp - combat.enemies[0].hp, 17);
   const other = fixture('whisperglass-die', { blade: {}, quiet: { effects: [], kindIds: ['classification.skill'], cardTags: [] } });

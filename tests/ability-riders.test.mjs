@@ -1,3 +1,4 @@
+import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -21,7 +22,7 @@ function fixture(effects, { manaCost = 0, cost = 1, coop = false, expanded = fal
   for (const enemy of combat.enemies) { enemy.hp = enemy.maxHp = 1000; enemy.block = 0; }
   return combat;
 }
-const play = combat => dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: combat.enemies[0].id });
+const play = combat => dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: botCardTargetId(combat.registries, combat, combat.piles.hand[0], combat.enemies[0].id) });
 
 test('transactional real plays bank skill XP once, scoped to the solo or co-op owner', () => {
   for (const coop of [false, true]) {
@@ -229,7 +230,7 @@ test('a supplemental buildup honors explicit targets, rejects dead targets atomi
   combat.enemies[0].alive = false;
   const id = combat.piles.hand[0].instanceId;
   const saved = JSON.stringify(serializeCombatSnapshot(combat));
-  assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: combat.enemies[0].id }), /Invalid target/);
+  assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: combat.enemies[0].id }), /Invalid .*target/);
   assert.equal(JSON.stringify(serializeCombatSnapshot(combat)), saved);
   assert.equal(previewCard(combat, id).values.some(value => value.status === 'frost'), false);
   dispatch(combat, { type: 'playCard', cardInstanceId: id });
@@ -240,4 +241,23 @@ test('area predicates respect the resolved event face before the default registr
   const combat = fixture([{ op: 'damage', target: 'allEnemies', amount: 3 }]);
   assert.equal(evalPredicate(combat, { p: 'cardTargetsAllEnemies' }, { event: { cardId: 'defend', cardTargetsAllEnemies: false } }), false);
   assert.equal(evalPredicate(combat, { p: 'cardTargetsAllEnemies' }, { event: { cardId: 'defend', cardTargetsAllEnemies: true } }), true);
+});
+
+
+test('charged self cards accept enemies and reject their source before spending in solo and co-op', () => {
+  for (const coop of [false, true]) {
+    const combat = fixture([{ op: 'block', target: 'self', amount: 4 }], { coop });
+    const source = coop ? combat.players.get('a').entity : combat.player;
+    const hand = coop ? combat.players.get('a').piles.hand : combat.piles.hand;
+    grantAbilityCharge(source, { key: 'rime', buildupStatus: 'frost', buildup: 2 });
+    const snapshot = () => JSON.stringify(coop ? { players: [...combat.players], enemies: combat.enemies, eventLog: combat.eventLog, skillXp: combat.skillXp, rng: combat.rng.getCounters() } : serializeCombatSnapshot(combat));
+    const before = snapshot();
+    const playAt = targetId => coop ? playCard(combat, 'a', hand[0].instanceId, targetId)
+      : dispatch(combat, { type: 'playCard', cardInstanceId: hand[0].instanceId, targetId });
+    assert.throws(() => playAt(coop ? 'a' : source.id), /Invalid enemy target/);
+    assert.equal(snapshot(), before);
+    playAt(combat.enemies[0].id);
+    assert.equal(getStacks(combat.enemies[0], 'frost'), 2);
+    assert.deepEqual(source.abilityRiders.charges, {});
+  }
 });

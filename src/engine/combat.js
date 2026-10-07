@@ -1,5 +1,6 @@
 import { passiveMax } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
+import { cardTargetPlan, assertCardTarget } from '../model/cardTargets.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 // src/engine/combat.js — action queue + turn loop (generic interpreter)
 // (SPEC §3.9, §4.1–§4.3, §4.6)
@@ -1092,11 +1093,17 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
   const isX = def.cost === 'X';
   let { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def);
 
+  const players = [{ id: p.id, alive: p.alive, connected: true }];
+  const targetPlan = cardTargetPlan(def, p.id, combat.enemies, players, { solo: true });
+  const chargedEnemyTarget = targetPlan.mode === 'friendly' && previewCard(combat, inst.instanceId).needsTarget;
+  assertCardTarget(chargedEnemyTarget
+    ? cardTargetPlan({ ...def, combatPreview: { needsTarget: true } }, p.id, combat.enemies, players, { solo: true })
+    : targetPlan, targetId);
   let target = null;
   if (targetId != null) {
     target = findEntity(combat, targetId);
     if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`);
-  } else if (needsEnemyTarget(def)) {
+  } else if (needsEnemyTarget(def) || chargedEnemyTarget) {
     target = combat.enemies.find((e) => e.alive) || null;
     if (!target) throw new Error('No living enemy to target');
   }

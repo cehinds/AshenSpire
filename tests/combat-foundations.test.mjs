@@ -152,7 +152,7 @@ function inHand(c, cardId) {
   }
   throw new Error(`Fixture lacks ${cardId}`);
 }
-function play(c, cardId, targetId = 'e1') { return dispatch(c, { type: 'playCard', cardInstanceId: inHand(c, cardId), targetId }); }
+function play(c, cardId, targetId) { return dispatch(c, { type: 'playCard', cardInstanceId: inHand(c, cardId), targetId }); }
 function state(c) { return JSON.stringify({ snapshot: serializeCombatSnapshot(c), counters: c.rng.getCounters() }); }
 
 test('prototype content passes the production validator', () => {

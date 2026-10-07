@@ -6,6 +6,9 @@ and optional desktop shortcuts and an entry under *Installed apps*.
 
 ## Getting it
 
+- **Download:** `https://github.com/cehinds/AshenSpire/releases/download/installer-<branch>/AshenSpire-Setup.exe`
+  for `test`, `release` or `main` — the rolling `installer-<branch>` prerelease,
+  replaced by every push to that branch.
 - **CI:** Actions → *windows installer* → the `windows-installer-<commit>`
   artifact. It runs on every push to `test`, `release` and `main`, on pull
   requests that touch `desktop/`, and by hand (*Run workflow*) on any branch.

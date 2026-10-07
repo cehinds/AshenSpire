@@ -33,6 +33,7 @@ import { chargeFlaskId } from '../model/gracerefill.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { syncRelicProperties, syncClassProperties, syncFeatProperties, syncLoadoutProperties, syncSigilProperties, propertyMountsOf } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
+import { cardTargetPlan, assertCardTarget } from '../model/cardTargets.js';
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 
 import * as A from './actions.js';
@@ -516,10 +517,11 @@ function doPlayCard(C, { cardInstanceId, targetId, choice }) {
     connected: entry.connected,
     ended: entry.ended,
   })));
-  // A preparing property can add hostile buildup to a self-only grade. Read
-  // the same detached preview the client sees before routing friendly aims.
-  const chargedEnemyTarget = friendlyPlan.active && previewCoopCard(C, C.playerKey, inst.instanceId, targetId).needsTarget;
+  const chargedEnemyTarget = friendlyPlan.active && previewCoopCard(C, C.playerKey, inst.instanceId).needsTarget;
   if (friendlyPlan.active && !chargedEnemyTarget) targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);
+  assertCardTarget(cardTargetPlan({ ...def, combatPreview: { needsTarget: chargedEnemyTarget } }, C.playerKey, C.enemies, [...C.players.values()].map(entry => ({
+    id: entry.id, alive: entry.entity.alive, connected: entry.connected,
+  }))), targetId);
 
   let target = null;
   if (targetId != null) {
