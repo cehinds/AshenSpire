@@ -1,7 +1,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
-import { combatOverheadAnchors, combatOverheadRibbonShift } from '../models/CombatOverheadModel.js';
+import { combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
@@ -153,13 +153,13 @@ export function wireBattlefieldStage(field, model) {
           // by the available headroom on a short screen.
           actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
       };
-      const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width, ribbon,
+      const overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon,
         controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
           const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - 14;
           return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: actor.slot.x,
             width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
-        }) }) : [];
+        }) });
       return { sizes, growthFor, overheads };
     };
     let { sizes, growthFor, overheads } = fitFormation();
@@ -224,8 +224,8 @@ export function wireBattlefieldStage(field, model) {
       stack.style.top = `${local.top}px`;
       // The half-field art floor may move two enemies to the same painted
       // centre. Their intent/Inspect controls retain their distinct reserved
-      // slots instead of following that inward art clamp. Only the narrow
-      // composition changes; the control stack's vertical gap stays intact.
+      // slots instead of following that inward art clamp. Measured collisions
+      // also occur on short landscape screens; clear anchors stay unchanged.
       const overheadX = overheads.find(overhead => overhead.id === slot.id)?.x ?? x;
       const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
         { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
@@ -270,12 +270,42 @@ export function wireBattlefieldStage(field, model) {
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
+      footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .map(footer => footer.getBoundingClientRect().width)),
+      controls: [...frame.querySelectorAll('.combatant-leading button')]
+        .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
+    const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
+      obstacles: boxes.flatMap(box => box.controls.map(rect => ({
+        left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
+        top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
+      }))),
+      targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
+        .filter(box => box.frameRect).map(box => ({
+        id: box.id,
+        x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
+        y: box.hostRect.bottom - fieldRect.top,
+        width: box.footerWidth,
+      })) });
     placed.forEach(({ frame, sprite, scale }, i) => {
       const { hostRect, frameRect, artRect } = boxes[i];
       if (frameRect) {
-        frame.style.setProperty('--enemy-hit-x', `${(hostRect.left + hostRect.width / 2 - frameRect.left) / zoom}px`);
-        frame.style.setProperty('--enemy-hit-y', `${(hostRect.bottom - frameRect.top) / zoom}px`);
+        const target = targets.find(target => target.id === frame.dataset.eid);
+        const local = anchorLocalBox(frameRect, { left: fieldRect.left + target.x,
+          top: fieldRect.top + target.y, width: 44, height: 44 }, { zoom });
+        frame.style.setProperty('--enemy-hit-x', `${local.left}px`);
+        frame.style.setProperty('--enemy-hit-y', `${local.top}px`);
+        frame.dataset.targetObstructed = String(!!target.obstructed);
+        const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
+          left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
+          top: fieldRect.top + target.y - hostRect.bottom, width: 0, height: 0 }, { zoom });
+        // Keep the visible name/health footer with its tap target. Packing
+        // only the invisible target would leave no cue to the intended owner.
+        for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
+          footer.style.translate = `${offset.left}px ${offset.top}px`;
+          footer.style.position = 'relative';
+          footer.style.zIndex = '900';
+        }
       }
       sprite.style.setProperty('--sprite-zoom', String(scale / zoom));
       sprite.style.setProperty('--art-left', `${(artRect.left - hostRect.left) / zoom}px`);
