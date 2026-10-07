@@ -1,5 +1,13 @@
 AshenSpire combat art collection
 
+October 6 alternative/dev art continuation: open continuation/index.html for
+32 named settings with four separate layers and desktop/phone compositions.
+The catalog now selects rear-right versions of both companions and all five
+speakers. All earlier sprite masters remain available. See continuation/README.txt
+for the source inventory, generation receipts, scene catalog and validation.
+The earlier ZIP and package-sha256.txt describe the earlier export; they do not
+include this continuation. SHA256SUMS.txt describes the current source package.
+
 October 6 revision: all 19 hero/armor appearances now use rear three-quarter
 views. The Reaver sword grip was corrected. Earlier front/side originals remain
 in masters; catalog.json selects the new -rear.png files. Enemies are unchanged.

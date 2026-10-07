@@ -34,7 +34,7 @@ const objectFor=id=>{const hash=catalog.hashes[id.split('/').at(-1)];return `obj
 test('actual enemy and player figures become marked placeholders and Retry restores the same authored crop',()=>{
   const figures=[enemySprite({id:'graveWisp'}),playerSprite({},'reaver','default')];
   root.append(...figures);
-  const originals=figures.map(figure=>({figure,image:figure.querySelector('img'),crop:figure.querySelector('.alternative-crop'),stage:figure.querySelector('.painted-stage'),geometry:figure.style.cssText}));
+  const originals=figures.map(figure=>({figure,image:figure.querySelector('img'),picture:figure.querySelector('picture'),mobile:figure.querySelector('source'),crop:figure.querySelector('.alternative-crop'),stage:figure.querySelector('.painted-stage'),geometry:figure.style.cssText}));
   for(const row of originals){
     row.image.dispatch('error');
     assert.equal(row.figure.querySelector('img'),null);
@@ -42,7 +42,7 @@ test('actual enemy and player figures become marked placeholders and Retry resto
     assert.equal(row.figure.querySelector('span').getAttribute('role'),'img');
     assert.equal(row.figure.style.cssText,row.geometry);
   }
-  const map=new Map(originals.map(row=>[row.image.src,objectFor(row.image.src)]));
+  const map=new Map(originals.flatMap(row=>[row.image.src,row.mobile.srcset].map(path=>[path,objectFor(path)])));
   setBuiltInSource(map); builtInArtArrived(map);
   assert.equal(restoreArtPlaceholders(root),2);
   for(const row of originals){
@@ -50,6 +50,9 @@ test('actual enemy and player figures become marked placeholders and Retry resto
     assert.equal(row.figure.querySelector('img'),row.image,'the same image returns');
     assert.equal(row.figure.querySelector('.alternative-crop'),row.crop);
     assert.equal(row.figure.querySelector('.painted-stage'),row.stage);
+    assert.equal(row.figure.querySelector('picture'),row.picture,'the responsive picture stays mounted');
+    assert.equal(row.image.parentNode,row.picture,'the restored image remains in its responsive picture');
+    assert.equal(row.mobile.srcset,map.get(catalog.sprites[row.figure.dataset.alternativeSprite].mobilePath),'Retry resolves the mobile source too');
     assert.equal(row.figure.style.cssText,row.geometry);
     assert.equal(row.image.src,map.get(catalog.sprites[row.figure.dataset.alternativeSprite].path));
     assert.equal(row.figure.hasAttribute('data-art-placeholder'),false);
