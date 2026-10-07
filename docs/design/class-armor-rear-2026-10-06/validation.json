@@ -10,7 +10,7 @@
     "uniqueMasters": 31,
     "missing": 0
   },
-  "checkCount": 380,
+  "checkCount": 365,
   "errors": [],
   "warnings": [
     "reaver-default: approved source has a tight margin; retained exactly, preview provides external clearance.",
@@ -63,15 +63,7 @@
       "passed": true
     },
     {
-      "check": "content/source/outfits.csv current worktree matches inventory",
-      "passed": true
-    },
-    {
       "check": "content/source/equipmentRequirements.csv snapshot hash",
-      "passed": true
-    },
-    {
-      "check": "content/source/equipmentRequirements.csv current worktree matches inventory",
       "passed": true
     },
     {
@@ -79,15 +71,7 @@
       "passed": true
     },
     {
-      "check": "content/source/equipSlots.csv current worktree matches inventory",
-      "passed": true
-    },
-    {
       "check": "content/source/weapons.csv snapshot hash",
-      "passed": true
-    },
-    {
-      "check": "content/source/weapons.csv current worktree matches inventory",
       "passed": true
     },
     {
@@ -95,15 +79,7 @@
       "passed": true
     },
     {
-      "check": "content/source/itemUpgradeChanges.csv current worktree matches inventory",
-      "passed": true
-    },
-    {
       "check": "src/content/classes.js snapshot hash",
-      "passed": true
-    },
-    {
-      "check": "src/content/classes.js current worktree matches inventory",
       "passed": true
     },
     {
@@ -111,15 +87,7 @@
       "passed": true
     },
     {
-      "check": "src/content/equipment.js current worktree matches inventory",
-      "passed": true
-    },
-    {
       "check": "src/content/generated/outfits.js snapshot hash",
-      "passed": true
-    },
-    {
-      "check": "src/content/generated/outfits.js current worktree matches inventory",
       "passed": true
     },
     {
@@ -127,15 +95,7 @@
       "passed": true
     },
     {
-      "check": "src/content/sharedOutfitArt.js current worktree matches inventory",
-      "passed": true
-    },
-    {
       "check": "src/model/paintedOutfitArt.js snapshot hash",
-      "passed": true
-    },
-    {
-      "check": "src/model/paintedOutfitArt.js current worktree matches inventory",
       "passed": true
     },
     {
@@ -143,23 +103,11 @@
       "passed": true
     },
     {
-      "check": "src/model/loadout.js current worktree matches inventory",
-      "passed": true
-    },
-    {
       "check": "tests/shared-armor.test.mjs snapshot hash",
       "passed": true
     },
     {
-      "check": "tests/shared-armor.test.mjs current worktree matches inventory",
-      "passed": true
-    },
-    {
       "check": "docs/LORE.md snapshot hash",
-      "passed": true
-    },
-    {
-      "check": "docs/LORE.md current worktree matches inventory",
       "passed": true
     },
     {
@@ -1549,16 +1497,9 @@
     {
       "check": "Review scene layer references\\scene\\ashen-crown-phone-foreground.png",
       "passed": true
-    },
-    {
-      "check": "Changes confined to art-only continuation package",
-      "passed": true
-    },
-    {
-      "check": "Committed scope confined to art package",
-      "passed": true
     }
   ],
+  "auditSourceCheckout": false,
   "limits": [
     "Visual review recorded separately; hashes do not prove visual quality.",
     "No game runtime, CI, animation, or physical-device acceptance claimed."

@@ -1,8 +1,12 @@
 """Read-only acceptance checks for the delivered art package."""
 from pathlib import Path
-import csv,json,hashlib,subprocess
+import argparse,csv,json,hashlib,subprocess
 from PIL import Image
 P=Path(__file__).resolve().parent;repo=P.parents[2]
+parser=argparse.ArgumentParser(description='Validate the frozen, portable art package.')
+parser.add_argument('--audit-source-checkout', action='store_true',
+    help='Also audit the original production checkout against its frozen source revision; not for later integration branches.')
+args=parser.parse_args()
 read=lambda p:json.loads(p.read_text(encoding='utf-8-sig'))
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 C=read(P/'catalog.json');M=read(P/'matrix.json');receipts={e['id']:e for e in read(P/'receipts.json')}
@@ -20,7 +24,8 @@ check(len({(m['classId'],m['armorName']) for m in M})==76,'Matrix cells unique')
 check(all(bool(m['canonicalIds'])==m['supported'] for m in M),'Unsupported cells never claim artwork coverage')
 for s in C['sources']:
     check(sha(P/s['snapshot'])==s['sha256'],s['path']+' snapshot hash')
-    check(sha(repo/s['path'])==s['sha256'],s['path']+' current worktree matches inventory')
+    if args.audit_source_checkout:
+        check((repo/s['path']).is_file() and sha(repo/s['path'])==s['sha256'],s['path']+' current worktree matches inventory')
 for e in C['entries']:
     path=P/e['file'];check(path.exists(),e['id']+' file exists')
     if not path.exists():continue
@@ -48,12 +53,14 @@ for r in receipts.values():
     for ref in r['localReferences']:check(sha(P/ref['file'])==ref['sha256'],r['id']+' reference hash '+ref['file'])
 for layer in read(P/'scene-provenance.json')['layers']:
     check(sha(P/layer['file'])==layer['sha256'],'Review scene layer '+layer['file'])
-changed=subprocess.check_output(['git','status','--porcelain','--untracked-files=all'],cwd=repo,text=True).splitlines()
-check(all(line[3:].startswith('docs/design/class-armor-rear-2026-10-06/') for line in changed),'Changes confined to art-only continuation package')
-committed=subprocess.check_output(['git','diff','--name-only',C['sourceRevision'],'HEAD'],cwd=repo,text=True).splitlines()
-check(all(line.startswith('docs/design/class-armor-rear-2026-10-06/') for line in committed),'Committed scope confined to art package')
+if args.audit_source_checkout:
+    changed=subprocess.check_output(['git','status','--porcelain','--untracked-files=all'],cwd=repo,text=True).splitlines()
+    check(all(line[3:].startswith('docs/design/class-armor-rear-2026-10-06/') for line in changed),'Changes confined to art-only continuation package')
+    committed=subprocess.check_output(['git','diff','--name-only',C['sourceRevision'],'HEAD'],cwd=repo,text=True).splitlines()
+    check(all(line.startswith('docs/design/class-armor-rear-2026-10-06/') for line in committed),'Committed scope confined to art package')
 result=dict(passed=not errors,sourceRevision=C['sourceRevision'],counts=C['counts'],checkCount=len(checks),errors=errors,warnings=warnings,checks=checks,
- limits=['Visual review recorded separately; hashes do not prove visual quality.','No game runtime, CI, animation, or physical-device acceptance claimed.'])
-(P/'validation.json').write_text(json.dumps(result,indent=2)+'\n')
+    auditSourceCheckout=args.audit_source_checkout,
+    limits=['Visual review recorded separately; hashes do not prove visual quality.','No game runtime, CI, animation, or physical-device acceptance claimed.'])
+(P/'validation.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8',newline='\n')
 print(json.dumps({k:result[k] for k in ['passed','counts','checkCount','errors','warnings']},indent=2))
 raise SystemExit(0 if not errors else 1)

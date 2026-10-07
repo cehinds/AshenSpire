@@ -33,7 +33,7 @@ Files
   references/           copied reference art, initial framing drafts, scene layers
   review/               actual desktop/phone contact sheets and compositions,
                         browser screenshots and verification receipt
-  validation.json       380 deterministic package checks and inherited warnings
+  validation.json       deterministic frozen-package checks and inherited warnings
   SHA256SUMS.txt         all package files except this checksum file
 
 Rebuild (Python + Pillow)
@@ -41,6 +41,11 @@ Rebuild (Python + Pillow)
   python render-review.py
   python validate.py
 The complete delivered package can render without the original worktree.
+validate.py checks the included source snapshots, masters and review files.
+It does not require the current game checkout to match the historical source.
+Only in the original production checkout, use
+  python validate.py --audit-source-checkout
+to additionally check live source files and Git scope against that revision.
 build.py imports from source paths only if a snapshot/master is absent.
 External provenance paths identify the source used at production time.
 Do not substitute or overwrite selected PNGs without updating provenance.
