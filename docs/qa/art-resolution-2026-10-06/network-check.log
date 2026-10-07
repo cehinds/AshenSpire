@@ -1,0 +1,17 @@
+
+  ▸ Ashen Spire is live at http://localhost:8317/
+    Serving D:\repos\.codex\worktrees\d7d3\AshenSpire\build
+    Press Ctrl+C to stop.
+
+  gate    mounted, 0 image(s), 0 from objects/, 0 broken, built-in art light; css 4 backdrop(s) from objects, 1 inline mask(s), 15/15 lore faces
+  title   mounted, 1 image(s), 1 from objects/, 0 broken, built-in art light; css 3 backdrop(s) from objects, 7 inline mask(s), 15/15 lore faces
+  combat  mounted, 49 image(s), 48 from objects/, 0 broken, built-in art light; css 0 backdrop(s) from objects, 4 inline mask(s), 15/15 lore faces
+  map     mounted, 6 image(s), 6 from objects/, 0 broken, built-in art light; css 0 backdrop(s) from objects, 2 inline mask(s), 15/15 lore faces; 2/2 detail tile(s) from common objects decoded
+  dgate   mounted, 0 image(s), 0 from objects/, 0 broken, built-in art light; css 4 backdrop(s) from objects, 1 inline mask(s), 15/15 lore faces
+  desktop mounted, 52 image(s), 51 from objects/, 0 broken, built-in art light; css 0 backdrop(s) from objects, 4 inline mask(s), 15/15 lore faces
+  dmap    mounted, 6 image(s), 6 from objects/, 0 broken, built-in art light; css 0 backdrop(s) from objects, 2 inline mask(s), 15/15 lore faces; 2/2 detail tile(s) from common objects decoded
+  7 screens mounted from build; 0 broken images; 0 failed requests; 112 images from objects/ (light on the phone, light on the desktop); 11 CSS backdrop(s) and 15 font(s) from objects, 21 inline mask(s); 4 map tile(s) and 3 track(s) from common objects, decoded.
+external-play: OK — 82 checks passed
+BOUNDARY: seven screens and the network. No run was played, and a screen that
+          mounts with the WRONG art passes this; a track that decodes is not
+          proven to be heard, and only the tiles the map screens show are drawn.

@@ -9,13 +9,36 @@ export function combatOverheadAnchorX({ width, x, controlWidth, inset = 6 }) {
 // Tap areas follow the measured feet until final sprite fitting brings two
 // formation rows together. Space only these targets, inside the stage, so a
 // neighbouring figure cannot take the owner's complete tap area.
-export function combatTargetAnchors({ width, height, targets, size = 44 }) {
+export function combatTargetAnchors({ width, height, targets, size = 44, obstacles = [] }) {
   const half = size / 2;
   const controls = targets.map(target => ({ ...target, side: 'target', width: Math.max(size, target.width || 0),
     y: Math.min(Math.max(target.y, half), Math.max(half, height - half)) }));
-  const anchors = combatOverheadAnchors({ width, inset: 0, gap: 2,
-    controls: controls.map(target => ({ ...target, top: target.y - half, bottom: target.y + half })) });
-  return anchors.map(anchor => ({ ...anchor, y: controls.find(target => target.id === anchor.id).y }));
+  const intersects = (control, x, obstacle) => x - control.width / 2 < obstacle.right
+    && x + control.width / 2 > obstacle.left
+    && control.y - half < obstacle.bottom && control.y + half > obstacle.top;
+  let anchors;
+  // A translated target can join another footer band; repack those final
+  // bounds before checking the fixed, already placed intent/Inspect controls.
+  // Each target moves below each obstacle at most once, so this is bounded.
+  for (let pass = 0; pass <= controls.length * obstacles.length; pass++) {
+    anchors = combatOverheadAnchors({ width, inset: 0, gap: 2,
+      controls: controls.map(target => ({ ...target, top: target.y - half, bottom: target.y + half })) });
+    let changed = false;
+    for (const control of controls) {
+      const x = anchors.find(anchor => anchor.id === control.id).x;
+      const covered = obstacles.filter(obstacle => intersects(control, x, obstacle));
+      if (!covered.length) continue;
+      const nextY = Math.max(...covered.map(obstacle => obstacle.bottom + half + 2));
+      if (nextY > height - half) continue; // No in-stage downward slot: report it below.
+      control.y = nextY; changed = true;
+    }
+    if (!changed) break;
+  }
+  return anchors.map(anchor => {
+    const control = controls.find(target => target.id === anchor.id);
+    const obstructed = obstacles.some(obstacle => intersects(control, anchor.x, obstacle));
+    return { ...anchor, y: control.y, ...(obstructed ? { obstructed: true } : {}) };
+  });
 }
 
 // Edge clamping consumes the gap between neighbouring reserved slots. Pack

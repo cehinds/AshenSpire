@@ -921,6 +921,26 @@ jobs:
       - name: The mobile visual reach gate can fail (13 plants)
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest
 
+  # Keep the complete desktop/portrait/landscape sweep separate from the
+  # phone regression corpus so both retain the owner's 20-minute budget.
+  # A clear phone does not prove the fitted landscape targets are clear.
+  browser-layout-all:
+    name: all five layouts in a real browser
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+      - name: Desktop, three portrait sizes, and short landscape
+        run: node tools/verdict.mjs -- node tools/screenreach.mjs
+
   # ---------------------------------------------------------------------------
   # browser-layout-guard's other half, split off by the owner's 20-minute rule
   # (2026-10-02): the menus' scrollbars, the combat action row and the Armoury.
@@ -1199,14 +1219,14 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
+    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
           echo "upstream results: test=${{ needs.test.result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
           echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
-          echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
+          echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-all=${{ needs['browser-layout-all'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
           echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
@@ -1309,11 +1329,12 @@ jobs:
           echo "    first fight with trusted presses, resolves later fights through window.__combat,"
           echo "    walks to the act-1 boss and LOSES to it, returns to the title and begins a second"
           echo "    run, with 0 console errors. It never WINS a run, never reaches act 2, and judges"
-          echo "    no balance, art or screen content. Nine jobs open a browser."
+          echo "    no balance, art or screen content. The browser jobs check their named doors."
           echo "    browser-guard owns focused checks like hand-side placement, browser-guard-stamp"
           echo "    the build stamp, cold boot and that full run, browser-guard-changelog the"
           echo "    changelog's known-bads;"
-          echo "    browser-layout-guard owns phone reach, browser-layout-hintstrip the hint strip and"
+          echo "    browser-layout-guard owns phone reach, browser-layout-all the complete five-size sweep,"
+          echo "    browser-layout-hintstrip the hint strip and"
           echo "    Armoury, browser-hintstrip-plants the hint strip's known-bads. display-first owns"
           echo "    Settings through BOTH the cold Startup -> Title door and the in-run door. It sends"
           echo "    a complete CDP Enter down/up through Startup, then the Settings controls are DOM"
