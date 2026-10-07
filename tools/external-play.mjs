@@ -258,9 +258,11 @@ cdp.on((m) => {
   }
   if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '') && !removedIndex(urls.get(m.params.requestId) || '')
       && !(FILE_MODE && sfxProbe404(urls.get(m.params.requestId) || ''))
-      // The launcher's /api/lan/ under --file is file:///api/lan/…, refused as
-      // a fetch rather than answered 404: the same non-finding as above.
-      && !(FILE_MODE && /^file:\/\/\/api\/lan\//.test(urls.get(m.params.requestId) || ''))) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
+      // The launcher's /api/lan/ under --file is file:///api/lan/… (or
+      // file:///D:/api/lan/… on Windows), refused as a fetch rather than
+      // answered 404: the same non-finding as above. No remote file host or
+      // other file path is exempted.
+      && !(FILE_MODE && /^file:\/\/\/(?:[A-Za-z]:\/)?api\/lan\//.test(urls.get(m.params.requestId) || ''))) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
   if (m.method === 'Runtime.exceptionThrown') thrown.push(m.params.exceptionDetails.text || 'exception');
 });
 const ev = async (e) => {
