@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-07
+
+- **Skill Level Up works after victory** ([#1691](https://github.com/cehinds/AshenSpire/pull/1691), `0.7.1.1056`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.
+
 ## 2026-10-06
 
 - **Alternative figures recover and keep moving** ([#1689](https://github.com/cehinds/AshenSpire/pull/1689), `0.7.1.1061`). Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.
