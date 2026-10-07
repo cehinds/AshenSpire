@@ -154,7 +154,7 @@ export const reaverCards = [
       { op: 'damage', target: 'enemy', amount: 4, if: { p: 'not', pred: { p: 'hasBlock', of: 'self' } } },
       { op: 'damage', target: 'enemy', amount: 10, if: { p: 'hasBlock', of: 'self' } },
     ],
-    textTemplate: 'Deal {damage} damage. If you have Block: deal {damage.2} instead.',
+    textTemplate: 'Prepare Melee Counter with {damage} base reply damage. If you have Block: prepare {damage.2} instead.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 6, if: { p: 'not', pred: { p: 'hasBlock', of: 'self' } } },
@@ -227,7 +227,7 @@ export const reaverCards = [
       { op: 'damage', target: 'enemy', amount: 6 },
       { op: 'poiseDamage', target: 'enemy', amount: 4, if: { p: 'hasBlock', of: 'self' } },
     ],
-    textTemplate: 'Deal {damage} damage. If you have Block: deal {poiseDamage} Poise damage.',
+    textTemplate: 'Prepare Melee Counter with {damage} base reply damage. If you have Block: prepare {poiseDamage} base reply Poise damage.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 8 },
@@ -642,7 +642,7 @@ export const reaverCards = [
       { op: 'block', target: 'self', amount: 5 },
       { op: 'poiseDamage', target: 'enemy', amount: 5 },
     ],
-    textTemplate: 'Gain {block} Block and deal {poiseDamage} Poise damage.',
+    textTemplate: 'Gain {block} Block. Prepare Melee Counter with {poiseDamage} base reply Poise damage.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 7 },

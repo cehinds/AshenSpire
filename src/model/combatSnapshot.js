@@ -2,6 +2,7 @@ import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
 import { recoveryRulesProblems } from './recoveryRules.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
+import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems } from './combatTacticsRules.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -34,6 +35,9 @@ function nonEmptyString(value) {
 function entityProblems(entity, path, { player = false } = {}) {
   const problems = [];
   if (!record(entity)) return [`${path} must be an object`];
+  if (entity.combatCounter !== undefined) problems.push(...combatCounterProblems(entity.combatCounter, `${path}.combatCounter`));
+  if (entity.intentRevealed !== undefined && typeof entity.intentRevealed !== 'boolean') problems.push(`${path}.intentRevealed must be boolean`);
+  if (entity.intentReads !== undefined && (!record(entity.intentReads) || Object.entries(entity.intentReads).some(([id, value]) => !nonEmptyString(id) || typeof value !== 'boolean'))) problems.push(`${path}.intentReads must map player ids to booleans`);
   if (entity.abilityRiders !== undefined) {
     const state = entity.abilityRiders;
     if (!record(state)) problems.push(`${path}.abilityRiders must be an object`);
@@ -94,6 +98,8 @@ export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot)) return ['snapshot must be an object'];
   const problems = [];
   if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
+  if (snapshot.combatMatchupRules !== undefined) problems.push(...combatMatchupRulesProblems(snapshot.combatMatchupRules));
+  if (snapshot.combatIntentRules !== undefined) problems.push(...combatIntentRulesProblems(snapshot.combatIntentRules));
   if (!Number.isInteger(snapshot.turn) || snapshot.turn < 1) problems.push('turn must be a positive integer');
   try { retiredAttackSlots(snapshot.equipmentAttackSlotCount, snapshot.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   if (snapshot.sideboardedEquipmentCardIds !== undefined && (!Array.isArray(snapshot.sideboardedEquipmentCardIds) || snapshot.sideboardedEquipmentCardIds.some((id) => !nonEmptyString(id)) || new Set(snapshot.sideboardedEquipmentCardIds).size !== snapshot.sideboardedEquipmentCardIds.length)) problems.push('sideboardedEquipmentCardIds must contain unique non-empty instance ids');

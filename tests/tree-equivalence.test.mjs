@@ -70,13 +70,29 @@ test('every framework property row and relation is derived unchanged, defaultPar
   assert.equal(frameworkRelations.relations.length, pre.relations.length, 'and no relation was invented');
 });
 
-test('every registered tag, domain and family pairing is derived unchanged; the additions are the named ones', () => {
+test('registered tags retain identity, approved tactical metadata changes are exact, and additions are named', () => {
   const pre = fixture('tag-registry-pre-tree.json');
   const tags = new Map(TAGS.map((t) => [t.id, t]));
+  // SPEC 4.7 deliberately changes display labels and rider descriptions,
+  // while preserving each damage ID, domain, colour and glyph. The historical
+  // fixture stays intact; every approved changed field is named here.
+  const tacticalMetadata = {
+    'damage:slashing': { blurb: 'Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect.' },
+    'damage:piercing': { blurb: 'Bypasses up to 2 Guard; bypasses melee Counter.' },
+    'damage:blunt': { blurb: 'Adds 2 Poise damage once per action against each target.' },
+    'damage:fire': { blurb: 'Applies 1 Burn on a Health hit unless the card already prints a Burn effect.' },
+    'damage:frost': { label: 'Cold', blurb: 'Applies 1 Frost on a Health hit unless the card already prints a Frost effect.' },
+    'damage:lightning': { blurb: 'Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.' },
+    'damage:arcane': { label: 'Force', blurb: 'Strips 2 Ward once per action; bypasses melee Counter.' },
+    'damage:sacred': { label: 'Holy', blurb: 'Removes 1 hostile debuff from the attacker after a Health hit.' },
+    'damage:decay': { label: 'Necrotic', blurb: 'Applies 1 Crimson Blight on a Health hit unless the card already prints a Crimson Blight effect.' },
+  };
   for (const old of pre.tags) {
     const t = tags.get(old.id);
     assert.ok(t, `tag '${old.id}' is still registered`);
-    for (const field of ['domain', 'label', 'color', 'glyph', 'blurb']) assert.equal(t[field], old[field], `tag '${old.id}'.${field}`);
+    for (const field of ['domain', 'label', 'color', 'glyph', 'blurb']) {
+      assert.equal(t[field], tacticalMetadata[old.id]?.[field] ?? old[field], `tag '${old.id}'.${field}`);
+    }
   }
   const domains = new Map(TAG_DOMAINS.map((d) => [d.id, d]));
   for (const old of pre.tagDomains) {
@@ -89,8 +105,8 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   for (const old of pre.tagFamilyDomains) assert.ok(pairs.has(`${old.family}|${old.domain}`), `pairing ${old.family}×${old.domain} is derived`);
   // The additions, by name, so a stray one cannot hide among them.
   const addedDomains = TAG_DOMAINS.map((d) => d.id).filter((id) => !pre.tagDomains.some((d) => d.id === id)).sort();
-  assert.deepEqual(addedDomains, ['classification', 'cost', 'damage', 'equipment', 'internal', 'lifecycle', 'scaling', 'targeting', 'utility'],
-    'the roots that joined are the framework\'s nine (presentation merged with the flat root of the same name)');
+  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'scaling', 'school', 'targeting', 'utility'],
+    'the roots that joined are the framework\'s nine plus four named tactical domains');
   const addedTags = TAGS.filter((t) => !pre.tags.some((o) => o.id === t.id));
   // Plan phase 5a's property nodes: the class card's leaning and the four
   // kit relics' rules. Named, so a stray chip cannot hide among them.
@@ -118,15 +134,25 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES, ...SPEC_15_PROPERTIES, ...PROGRESSION_FEATS, ...PROGRESSION_RELICS];
   const ABILITY_TAGS = ('searing-edge guarded-strike bloodstep hammerfall forgewake crimson-reprisal last-stand war-tempo wide-cleave ember-crown dreadweight oathscar wound-harvest cinder-orbit lunar-guard comet-mark rime-mirror constellation mana-weave gravity-snare nightglass eclipse-window warded-casting celestial-echo cold-memory astral-convergence ash-opener discard-weave crooked-guard exposed-flank sleight-hand tether-cut smoke-edge carrion-finish paired-strikes trapdoor clean-escape razor-debt mercy-ash blood-censer blight-seed funeral-guard ember-tithe bone-chorus requiem-brand pilgrim-shelter scarred-rite dawn-rite burden-bearer sepulchral-pact').split(' ').map(id => `ability:${id}`);
   assert.equal(ABILITY_TAGS.length, 50);
+  const TACTICAL_TAGS = {
+    camp: ['camp:physical', 'camp:spell'],
+    maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash'],
+    school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay'],
+    counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
+  };
+  for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
+    assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);
+  }
+  const tacticalIds = Object.values(TACTICAL_TAGS).flat();
   assert.deepEqual(TAGS.filter(t => t.id.startsWith('ability:')).map(t => t.id).sort(), [...ABILITY_TAGS].sort(), 'the fifty approved ability identities are exact');
   for (const id of ABILITY_TAGS) {
     const tag = tags.get(id);
     assert.equal(tag.domain, 'technique');
     assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
   }
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (t.id === 'bow' && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique')),
-    'every tag that joined is a framework node, a named property, Bow, or an approved ability identity');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', ...ABILITY_TAGS].sort(), 'the visible additions are exactly the named ones');
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (t.id === 'bow' && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id)),
+    'every tag that joined is a framework node, named property, Bow, approved ability or named tactical identity');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', ...ABILITY_TAGS, ...tacticalIds].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 
@@ -148,7 +174,8 @@ test('every object states exactly one kind, the one its collection and type name
   // The original 513, forty cards, ten relics, fifty new class feats, and the
   // twenty existing mastery feats now participating in the kind registry.
   assert.equal(contentBundle.classSkillFeats.length, 70);
-  assert.equal(counted, 513 + 40 + 10 + 70, 'all 633 objects, including the expanded class-feat kind registry');
+  assert.equal(contentBundle.enemyMoves.length, 103, 'the scoped enemy move collection contains all 103 authored actions');
+  assert.equal(counted, 513 + 40 + 10 + 70 + 103, 'all 736 objects, including class feats and scoped enemy move kinds');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

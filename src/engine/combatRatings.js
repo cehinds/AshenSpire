@@ -3,6 +3,7 @@ import { propertyMountsOf } from './properties.js';
 import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
 import * as statuses from '../framework/statusSemantics.js';
+import { clearCombatCounter } from './combatMatchups.js';
 
 export function refreshCombatRatings(ctx) {
   if (!ctx.ratingsRules) return;
@@ -57,6 +58,7 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
   while (meter.value >= meter.max && breaks < 100) {
     meter.value -= meter.max;
     breaks++;
+    clearCombatCounter(target);
     if (target.kind === 'player') target.pendingActionLoss = (target.pendingActionLoss || 0) + cfg[magical && !single ? 'wardActionLoss' : 'poiseActionLoss'];
     else {
       target.skipNextTurn = true;

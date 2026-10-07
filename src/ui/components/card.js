@@ -28,6 +28,7 @@ import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
+import { combatProfileFor, combatProfileTags } from '../../model/combatCardProfile.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -127,7 +128,10 @@ export function renderCard(registries, ref, opts = {}) {
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
   // left. The output is byte-identical by construction: the model's bodies are
   // the ones that stood here.
-  const model = playingCardModel(registries, ref, { preview: opts.preview || null });
+  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null });
+  const combatProfile = combatProfileFor(def);
+  const combatTags = combatProfileTags(combatProfile);
+  const model = { ...rawModel, tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   const sourcePiece = ref.sourceArmamentId
     ? registries.equipment?.armaments?.find(piece => piece.id === ref.sourceArmamentId)
     : null;
@@ -153,6 +157,9 @@ export function renderCard(registries, ref, opts = {}) {
   if (opts.affordable === false) el.classList.add('unaffordable');
   if (model.instanceId) el.dataset.instanceId = model.instanceId;
   el.dataset.cardId = model.id;
+  if (combatProfile.camp) el.dataset.combatCamp = combatProfile.camp;
+  if (combatProfile.maneuver) el.dataset.combatManeuver = combatProfile.maneuver;
+  if (combatProfile.school) el.dataset.combatSchool = combatProfile.school;
 
   // Equipment-generated cards carry their profile's tags on `cardTags`; authored
   // cards resolve through the junction. BOTH read the ACTIVE registries — the
@@ -523,6 +530,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
     + `<div class="ti-meta"><span class="as-tag">${esc(def.type)}</span><span class="ti-cost">${costText}</span></div>`;
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
+  const combatProfile = combatProfileFor(def);
+  if (combatProfile.maneuver === 'counter') html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
   html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
@@ -567,6 +576,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
   const service = tagService(registries);
   const tags = def.cardTags?.length ? service.resolve(def.cardTags) : service.tagsOf('card', def);
   for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  for (const tag of combatProfileTags(combatProfile).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }

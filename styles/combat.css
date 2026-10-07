@@ -1533,6 +1533,14 @@
   white-space: nowrap; letter-spacing: 0;
 }
 .combatant-leading .intent .as-glyph { font-size: inherit; }
+.combatant-leading .intent-stance {
+  font: 700 calc(11px / var(--ui-zoom, 1))/1.2 var(--font-ui, sans-serif);
+  letter-spacing: .02em;
+}
+.combatant-leading .intent:has(.intent-stance) { flex-wrap: wrap; }
+.combatant-leading .intent:has(.intent-stance) .intent-stance { flex-basis: 100%; text-align: center; }
+.combatant-leading .intent[data-intent-hidden='true'] { --intent-accent: #e5d5ad; }
+.combat-rule-hint { margin-block: .5rem; padding: .5rem; border-left: 2px solid #d9bc74; font-size: .9em; line-height: 1.4; }
 .combatant-leading .intent.attack { --intent-accent: #ffac94; }
 .combatant-leading .intent.block { --intent-accent: #a7defb; }
 .combatant-leading .intent.debuff { --intent-accent: #d6afff; }

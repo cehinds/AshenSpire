@@ -4247,12 +4247,6 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "frostNova",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "starstoneArc",
     "tagId": "damage:arcane"
   },
@@ -4391,26 +4385,8 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "starSpark",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "blightTouch",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "flagellation",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "flagellation",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -4421,20 +4397,8 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "graveOffering",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "cullTheWeak",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "cullTheWeak",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -4445,20 +4409,8 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "sacredHarvest",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "plagueBearer",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "plagueBearer",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -4469,26 +4421,8 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "exsanguinate",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "scourge",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "crimsonRite",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "crimsonRite",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -4499,20 +4433,8 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "blightNova",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "bloodHarvest",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "bloodHarvest",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -4523,26 +4445,8 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "painOffering",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "witheringTouch",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "witheringTouch",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "desperateRite",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -4553,20 +4457,8 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "bloodOfferingRite",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "blightwardLash",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "blightwardLash",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -11328,12 +11220,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "cinderSigil",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "cinderSigil",
     "tagId": "delivery:projectile"
   },
   {
@@ -11359,12 +11245,6 @@ export const tagging = [
     "scope": "",
     "objectId": "ashenMote",
     "tagId": "fx:ritual"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "ashenMote",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -11449,12 +11329,6 @@ export const tagging = [
     "scope": "",
     "objectId": "pyreOfCharts",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "pyreOfCharts",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -11550,12 +11424,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "cinderLance",
-    "tagId": "damage:arcane"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "cinderLance",
     "tagId": "delivery:projectile"
   },
   {
@@ -11587,12 +11455,6 @@ export const tagging = [
     "scope": "",
     "objectId": "ashfallRite",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "ashfallRite",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -11653,12 +11515,6 @@ export const tagging = [
     "scope": "",
     "objectId": "pyreLight",
     "tagId": "source:spell"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "pyreLight",
-    "tagId": "damage:arcane"
   },
   {
     "family": "card",
@@ -14305,5 +14161,6779 @@ export const tagging = [
     "scope": "",
     "objectId": "progression-ossuary-prayer-wheel",
     "tagId": "classification.relic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "strike",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "strike",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "defend",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "defend",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "technique",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "technique",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "evasiveGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "evasiveGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dodgeRoll",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dodgeRoll",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickstep",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickstep",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironResolve",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironResolve",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterGorefire",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterBulwark",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterBulwark",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rallyingStandard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warSurgeon",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hemorrhage",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldwall",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldwall",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingLunge",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingLunge",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warcry",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreblood",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "unbreakable",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "unbreakable",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastStand",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastStand",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warriorsVow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodhuntersStrike",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodhuntersStrike",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanguinePactCard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bracingStance",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bracingStance",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironVowCard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironVowCard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rondelParry",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rondelParry",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rondelParry",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "brace",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "brace",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setTheShield",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setTheShield",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aegisOfEmbers",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aegisOfEmbers",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scholarsInsight",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scholarsInsight",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "school:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinkling",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinkling",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "school:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "damage:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidity",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidity",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stargazerCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stargazerCard",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralArmorCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralArmorCard",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gravityWell",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gravityWell",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "azureCoilCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "azureCoilCard",
+    "tagId": "school:lightning"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "timeDilation",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "timeDilation",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "constellationCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "constellationCard",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "waxingMoonCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "waxingMoonCard",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starPath",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starPath",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonlitShieldCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonlitShieldCard",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astromancerCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astromancerCard",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "school:lightning"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "damage:lightning"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "attune",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "attune",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberVigil",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberVigil",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberVigil",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "readTheAsh",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "readTheAsh",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashCircle",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashCircle",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashCircle",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kindledOmen",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kindledOmen",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phoenixChart",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phoenixChart",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phoenixChart",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riteOfCinders",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riteOfCinders",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "urgentHeal",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "urgentHeal",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCommunion",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCommunion",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodPact",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodPact",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "penance",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "penance",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "penance",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "litany",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "litany",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletting",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletting",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletting",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "contagion",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "contagion",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cullTheWeak",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cullTheWeak",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cullTheWeak",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transfusion",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transfusion",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightward",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightward",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightward",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "martyrBlood",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "martyrBlood",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightBloom",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightBloom",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "damage:sacred"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thornHaloCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thornHaloCard",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "communionCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "communionCard",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gildedOath",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gildedOath",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stigmataCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stigmataCard",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "reclamation",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "reclamation",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "secondBloom",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "secondBloom",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "butterflyPlague",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "butterflyPlague",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lifeTitheCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lifeTitheCard",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastRites",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastRites",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "zealotryCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "zealotryCard",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberTideCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberTideCard",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "harbingerOfBlightCard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "harbingerOfBlightCard",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warmLitany",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warmLitany",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warmLitany",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokePellet",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokePellet",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "feint",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "backstep",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "backstep",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pocketSand",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pocketSand",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeVeil",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeVeil",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pilfer",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vanish",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vanish",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cheapShot",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cheapShot",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "garrote",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "garrote",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setupRogue",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "acrobaticsRogue",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "acrobaticsRogue",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "disorient",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sap",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sap",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shadowstep",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shadowstep",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "afterimageCard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletterRogue",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "venomcoat",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "misdirect",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "misdirect",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deadlyTempoCard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "opportunistCard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "envenomCard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "toxicVolley",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "toxicVolley",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeBomb",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeBomb",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executionWindow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "perfectHeist",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "prepare",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "counter:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "honedEdge",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironSkin",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironSkin",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fieldDressing",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hex",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hex",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transmute",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transmute",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinFang",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinFang",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinFang",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blindingSand",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstring",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "masterOfStrategy",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bashingBlow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bashingBlow",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bashingBlow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enfeeble",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "colossusSmash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "colossusSmash",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "colossusSmash",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wound",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dazed",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "slimed",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guilt",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rallyingBanner",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sharedFlame",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sharedFlame",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashOath",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashOath",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldGuardian",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldGuardian",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardianBulwark",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardianBulwark",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBastion",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBastion",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeThrust",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeThrust",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeThrust",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kilnCleave",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kilnCleave",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vesperWard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vesperWard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vesperWard",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-hew",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-hew",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-guard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-guard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-bloodstep",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-bloodstep",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-breaker-s-toll",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-breaker-s-toll",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-furnace-advance",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-furnace-advance",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crimson-reprisal",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crimson-reprisal",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crimson-reprisal",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-warbound-defiance",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-warbound-defiance",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-red-standard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-red-standard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ashen-cleaver",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ashen-cleaver",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-cinders",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-cinders",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-orbit",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-orbit",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-cinder-orbit",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-lunar-aegis",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-lunar-aegis",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-lunar-aegis",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-comet-needle",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-comet-needle",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-comet-needle",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "school:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-rime-mirror",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-falling-constellation",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-falling-constellation",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-falling-constellation",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wellspring-sigil",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wellspring-sigil",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wellspring-sigil",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-gravitic-knot",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-gravitic-knot",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-gravitic-knot",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightglass-reading",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightglass-reading",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightglass-reading",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "school:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-eclipse-lance",
+    "tagId": "damage:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-firmament-ward",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-firmament-ward",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-firmament-ward",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-shiv-of-ash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-shiv-of-ash",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pocket-coil",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pocket-coil",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-needle-feint",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-needle-feint",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-back-alley-cut",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-back-alley-cut",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-silent-exchange",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-silent-exchange",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wire-snare",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-wire-snare",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightstep",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-nightstep",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-carrion-cut",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-carrion-cut",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-twinshade",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-twinshade",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-last-laugh",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-last-laugh",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ash-benediction",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ash-benediction",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ash-benediction",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blood-censer",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blood-censer",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blood-censer",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blight-litany",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blight-litany",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-blight-litany",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pallbearer-s-ward",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pallbearer-s-ward",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pallbearer-s-ward",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-tithe",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-tithe",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ember-tithe",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-ossuary-cant",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-requiem-brand",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-requiem-brand",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-requiem-brand",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pilgrim-s-shelter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pilgrim-s-shelter",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-pilgrim-s-shelter",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-crown-of-scars",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "progression-dawn-after-ash",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedAttack",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedAttack",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldAttack",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldAttack",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bladeAttack",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bladeAttack",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "twinbladeAttack",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "twinbladeAttack",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffMagicAttack",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffMagicAttack",
+    "tagId": "school:force"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreGuard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreGuard",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedTechnique",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponTechnique",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowTechnique",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffTechnique",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffTechnique",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "slash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "slash",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "slash",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "slash",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "slash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "slash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "guard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "guard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "guard",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "warcry",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wanderingSoldier",
+    "objectId": "warcry",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "bite",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "bite",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "bite",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "bite",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "bite",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "bite",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "lunge",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "lunge",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "lunge",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "lunge",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "lunge",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightHound",
+    "objectId": "lunge",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "club",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "club",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "club",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "club",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "club",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "club",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "bellow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "bellow",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "brace",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "brace",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "huskBrute",
+    "objectId": "brace",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "curse",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "curse",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "curse",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "drain",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "drain",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "drain",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "drain",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "drain",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "graveWisp",
+    "objectId": "drain",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "consecrate",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "consecrate",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "consecrate",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "halberdSweep",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "halberdSweep",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "halberdSweep",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "halberdSweep",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "halberdSweep",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "halberdSweep",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "tailSlam",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "tailSlam",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "tailSlam",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "tailSlam",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "tailSlam",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "tailSlam",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "goldenGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "goldenGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmAspirant",
+    "objectId": "goldenGuard",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "caneStrike",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "caneStrike",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "caneStrike",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "caneStrike",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "caneStrike",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "caneStrike",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "hammerToss",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "hammerToss",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "hammerToss",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "hammerToss",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "hammerToss",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "hammerToss",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "heldBlade",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "heldBlade",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "heldBlade",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "heldBlade",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "heldBlade",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "heldBlade",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "twinDaggers",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "twinDaggers",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "twinDaggers",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "twinDaggers",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "twinDaggers",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "fellWarden",
+    "objectId": "twinDaggers",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "lanternDust",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "lanternDust",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "lanternDust",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "wingSparks",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "wingSparks",
+    "tagId": "school:lightning"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "wingSparks",
+    "tagId": "damage:lightning"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "wingSparks",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "wingSparks",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "lanternMoth",
+    "objectId": "wingSparks",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "rootShelter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "rootShelter",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "rootShelter",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "rootShelter",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "briarCast",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "briarCast",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "briarCast",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "briarCast",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "briarCast",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "briarCast",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "sapMend",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "sapMend",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "briarHermit",
+    "objectId": "sapMend",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "hookCast",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "hookCast",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "hookCast",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "hookCast",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "hookCast",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "hookCast",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "chainSnare",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "chainSnare",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "draggingBlow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "draggingBlow",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "draggingBlow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "draggingBlow",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "draggingBlow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "draggingBlow",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "bronzeToll",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "bronzeToll",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "bronzeToll",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "bronzeToll",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "bronzeToll",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "bronzeToll",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "clapperSwing",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "clapperSwing",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "clapperSwing",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "clapperSwing",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "clapperSwing",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "clapperSwing",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "muffledPrayer",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "muffledPrayer",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "muffledPrayer",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "muffledPrayer",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "crackedPeal",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "crackedPeal",
+    "tagId": "school:force"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "crackedPeal",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "crackedPeal",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "crackedPeal",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "bellKeeper",
+    "objectId": "crackedPeal",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "rootCrown",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "rootCrown",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "rootCrown",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "rootCrown",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "thornNeedles",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "thornNeedles",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "thornNeedles",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "thornNeedles",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "thornNeedles",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "thornNeedles",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "entwiningRoots",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "entwiningRoots",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "entwiningRoots",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "entwiningRoots",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "entwiningRoots",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "thornMatriarch",
+    "objectId": "entwiningRoots",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "thrust",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "thrust",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "thrust",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "thrust",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "thrust",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "thrust",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "parry",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "parry",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "parry",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "parry",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "rally",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "rally",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "scalpel",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "scalpel",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "scalpel",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "scalpel",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "scalpel",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "scalpel",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "sedate",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "sedate",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "stitch",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtSurgeon",
+    "objectId": "stitch",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "maul",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "maul",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "maul",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "maul",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "maul",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "maul",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "rend",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "rend",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "rend",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "rend",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "rend",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedHound",
+    "objectId": "rend",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "dart",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "dart",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "dart",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "dart",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "dart",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "dart",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "blowdart",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "blowdart",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "blowdart",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "blowdart",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "blowdart",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtMarionette",
+    "objectId": "blowdart",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "slam",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "slam",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "slam",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "slam",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "slam",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "slam",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "fortify",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "fortify",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "fortify",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "crush",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "crush",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "crush",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "crush",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "crush",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "crush",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "rimeCrush",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "rimeCrush",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "rimeCrush",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "rimeCrush",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "rimeCrush",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "livingArmor",
+    "objectId": "rimeCrush",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "enGarde",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "enGarde",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "flurry",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "flurry",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "flurry",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "flurry",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "flurry",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "flurry",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "lunge",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "lunge",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "lunge",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "lunge",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "lunge",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "lunge",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "riposte",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "riposte",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "riposte",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "riposte",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "scepterBlow",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "scepterBlow",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "scepterBlow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "scepterBlow",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "scepterBlow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "scepterBlow",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "graspingHands",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "graspingHands",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "graspingHands",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "graspingHands",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "graspingHands",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "graspingHands",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "courtlyDecree",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "courtlyDecree",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "courtlyDecree",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "thousandHands",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "thousandHands",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "thousandHands",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "thousandHands",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "thousandHands",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchedKing",
+    "objectId": "thousandHands",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "silverScript",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "silverScript",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "silverScript",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "shardVolley",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "shardVolley",
+    "tagId": "school:force"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "shardVolley",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "shardVolley",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "shardVolley",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "shardVolley",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "polishedWard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "polishedWard",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "polishedWard",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "polishedWard",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "polishedWard",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "shellFold",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "shellFold",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "shellFold",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "seamShears",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "seamShears",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "seamShears",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "seamShears",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "seamShears",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "seamShears",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "scuttleRush",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "scuttleRush",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "scuttleRush",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "scuttleRush",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "scuttleRush",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "stitchCrab",
+    "objectId": "scuttleRush",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "prismGuard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "prismGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "prismGuard",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "prismGuard",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "crystalRapier",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "crystalRapier",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "crystalRapier",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "crystalRapier",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "crystalRapier",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "crystalRapier",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "splinterRain",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "splinterRain",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "splinterRain",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "splinterRain",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "splinterRain",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "splinterRain",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "shatteredCourt",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "shatteredCourt",
+    "tagId": "school:force"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "shatteredCourt",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "shatteredCourt",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "shatteredCourt",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "glassRegent",
+    "objectId": "shatteredCourt",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "bonePrelude",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "bonePrelude",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "bonePrelude",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "ivoryKeys",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "ivoryKeys",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "ivoryKeys",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "ivoryKeys",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "ivoryKeys",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "ivoryKeys",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "funeralChord",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "funeralChord",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "funeralChord",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "funeralChord",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "funeralChord",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "funeralChord",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "quietRefrain",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "quietRefrain",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "marrowOrganist",
+    "objectId": "quietRefrain",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "cinderSlash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "cinderSlash",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "cinderSlash",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "cinderSlash",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "cinderSlash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "cinderSlash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "reform",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "reform",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "reform",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashRevenant",
+    "objectId": "reform",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "desperateClaw",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "desperateClaw",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "desperateClaw",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "desperateClaw",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "desperateClaw",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "desperateClaw",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "wail",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "wail",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "emberStarvedPilgrim",
+    "objectId": "wail",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "spiralLance",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "spiralLance",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "spiralLance",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "spiralLance",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "spiralLance",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "spiralLance",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "bloodFeather",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "bloodFeather",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "bloodFeather",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "bloodFeather",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "bloodFeather",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "valkyrieShade",
+    "objectId": "bloodFeather",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "smash",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "smash",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "smash",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "smash",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "smash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "smash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "ashCloud",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "ashCloud",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "ashCloud",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "harden",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "harden",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "charredColossus",
+    "objectId": "harden",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "consecration",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "consecration",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "consecration",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "halberdReign",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "halberdReign",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "halberdReign",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "halberdReign",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "halberdReign",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "halberdReign",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "tailSweep",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "tailSweep",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "tailSweep",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "tailSweep",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "tailSweep",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "tailSweep",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "goldenBulwark",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "goldenBulwark",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "wyrmLord",
+    "objectId": "goldenBulwark",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "spiralThrust",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "spiralThrust",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "spiralThrust",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "spiralThrust",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "spiralThrust",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "spiralThrust",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "whirlwind",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "whirlwind",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "whirlwind",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "whirlwind",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "whirlwind",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "whirlwind",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "rotWings",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "rotWings",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "rotWings",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "rotWings",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "scarletDance",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "scarletDance",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "scarletDance",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "scarletDance",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "scarletDance",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "blightedValkyrie",
+    "objectId": "scarletDance",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "scythePair",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "scythePair",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "scythePair",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "scythePair",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "scythePair",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "scythePair",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "emberPounce",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "emberPounce",
+    "tagId": "maneuver:smash"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "emberPounce",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "emberPounce",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "emberPounce",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "emberPounce",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "foldedBlades",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "foldedBlades",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "foldedBlades",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "foldedBlades",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "darkHymn",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "darkHymn",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "darkHymn",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "lunarRay",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "lunarRay",
+    "tagId": "school:force"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "lunarRay",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "lunarRay",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "lunarRay",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "lunarRay",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "fadingEcho",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "fadingEcho",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "fadingEcho",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "fadingEcho",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "fadingEcho",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "eclipseCantor",
+    "objectId": "fadingEcho",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "openFurnace",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "openFurnace",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "openFurnace",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "openFurnace",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "openFurnace",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "openFurnace",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "censerSweep",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "censerSweep",
+    "tagId": "maneuver:sweep"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "censerSweep",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "censerSweep",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "censerSweep",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "censerSweep",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "coolingAsh",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "coolingAsh",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "coolingAsh",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "furnaceSaint",
+    "objectId": "coolingAsh",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "starChart",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "starChart",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "starChart",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "orbitalShards",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "orbitalShards",
+    "tagId": "school:force"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "orbitalShards",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "orbitalShards",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "orbitalShards",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "orbitalShards",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "totalEclipse",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "totalEclipse",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "totalEclipse",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "totalEclipse",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "totalEclipse",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "totalEclipse",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "fallingHeavens",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "fallingHeavens",
+    "tagId": "school:force"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "fallingHeavens",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "fallingHeavens",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "fallingHeavens",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "hollowAstronomer",
+    "objectId": "fallingHeavens",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "obsidianClaws",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "obsidianClaws",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "obsidianClaws",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "obsidianClaws",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "obsidianClaws",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "obsidianClaws",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "tailBastion",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "tailBastion",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "tailBastion",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "heartRumble",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "heartRumble",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "ashBreath",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "ashBreath",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "ashBreath",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "ashBreath",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "ashBreath",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "ashheartDragon",
+    "objectId": "ashBreath",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "chainSnare",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "chainSnare",
+    "tagId": "counter:ranged"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "chainSnare",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "chainSnare",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "chainScavenger",
+    "objectId": "chainSnare",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "parry",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "parry",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "parry",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "riposte",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "riposte",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "riposte",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "foldedBlades",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "foldedBlades",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "cinderMantis",
+    "objectId": "foldedBlades",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "polishedWard",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "polishedWard",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "mirrorScribe",
+    "objectId": "polishedWard",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rondelParry",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "source:weapon"
   }
 ];

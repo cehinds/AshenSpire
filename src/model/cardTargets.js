@@ -1,4 +1,11 @@
 import { friendlyTargetPlan } from './friendlyTargets.js';
+import { combatProfileFor } from './combatCardProfile.js';
+
+export function immediateCardEffects(def) {
+  const effects = def?.effects || [];
+  return combatProfileFor(def).maneuver === 'counter'
+    ? effects.filter(effect => !['damage', 'poiseDamage'].includes(effect.op)) : effects;
+}
 
 const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies']);
 
@@ -6,7 +13,7 @@ const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEne
 // otherwise ignore the supplied entity and fall back to its source/first foe.
 // Omitted targets keep the engine's existing automatic resolution semantics.
 export function cardTargetPlan(def, actorId, enemies = [], players = [], { solo = false } = {}) {
-  const effects = def?.effects || [];
+  const effects = immediateCardEffects(def);
   const hostile = def?.combatPreview?.needsTarget === true || effects.some(effect => HOSTILE_TARGETS.has(effect.target));
   if (hostile) return { mode: 'enemy', legalIds: enemies.filter(enemy => enemy.alive).map(enemy => enemy.id) };
   const friendly = friendlyTargetPlan(def, actorId, players);

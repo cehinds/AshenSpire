@@ -10,6 +10,7 @@ import { checkPhases } from '../src/engine/triggers.js';
 import { BOSS_LOCATIONS } from '../src/content/bossDestinations.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { defaultSeatOrder } from '../src/model/seats.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 const added = ['lanternMoth','briarHermit','chainScavenger','bellKeeper','thornMatriarch','mirrorScribe','stitchCrab','glassRegent','marrowOrganist','cinderMantis','eclipseCantor','furnaceSaint','hollowAstronomer','ashheartDragon'];
 const bosses = new Set(['fellWarden','stitchedKing','blightedValkyrie','bellKeeper','thornMatriarch','glassRegent','marrowOrganist','furnaceSaint','hollowAstronomer','ashheartDragon']);
 const elites = new Set(['wyrmAspirant','courtDuelist','wyrmLord']);
@@ -43,10 +44,13 @@ test('all 46 new moves execute their actual damage, Block, and effect payloads',
  let count=0;
  for(const id of added)for(const [key,move]of Object.entries(reg.enemies.get(id).moves)){
   const c=fight(id),e=c.enemies[0];e.intent={kind:move.intent,moveId:key};e.hp-=1;
+  // This test isolates the authored payload; tactical riders have live tests.
+  c.combatMatchupRules = { ...c.combatMatchupRules, damageRiders: {} };
   const before=c.player.hp;end(c);
   if(move.delay){assert.equal(c.player.hp,before,id+': damage before windup');assert.equal(e.pendingMove.moveId,key);assert.equal(e.block,move.delay.whileCharging.block);for(let n=0;n<move.delay.turns;n++)end(c);assert.equal(e.pendingMove,null);}
-  assert.equal(before-c.player.hp,(move.damage||0)*(move.hits||1),id+'/'+key+' damage');
-  if(move.block!=null)assert.equal(e.block,move.block,id+'/'+key+' Block');
+  const counter = combatProfileFor(move).maneuver === 'counter';
+  assert.equal(before-c.player.hp,counter ? 0 : (move.damage||0)*(move.hits||1),id+'/'+key+' damage');
+  if(move.block!=null)assert(c.eventLog.some(event=>event.type==='blockGained'&&event.targetId===e.id&&event.amount===move.block),id+'/'+key+' printed Block receipt');
   for(const effect of move.effects||[]){
    if(effect.op==='heal')assert.equal(e.hp,e.maxHp,id+'/'+key+' heal');
    if(effect.op==='addCard')assert(Object.values(c.piles).flat().some(card=>card.cardId===effect.card),id+'/'+key+' card');

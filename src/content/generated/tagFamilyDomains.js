@@ -389,5 +389,93 @@ export const tagFamilyDomains = [
   {
     "family": "relic",
     "domain": "card"
+  },
+  {
+    "family": "card",
+    "domain": "camp"
+  },
+  {
+    "family": "card",
+    "domain": "maneuver"
+  },
+  {
+    "family": "card",
+    "domain": "school"
+  },
+  {
+    "family": "card",
+    "domain": "counterMode"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "camp"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "maneuver"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "school"
+  },
+  {
+    "family": "basicCardProfile",
+    "domain": "counterMode"
+  },
+  {
+    "family": "effect",
+    "domain": "camp"
+  },
+  {
+    "family": "effect",
+    "domain": "maneuver"
+  },
+  {
+    "family": "effect",
+    "domain": "school"
+  },
+  {
+    "family": "effect",
+    "domain": "counterMode"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "camp"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "maneuver"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "school"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "counterMode"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "classification"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "attackSource"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "delivery"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "damageType"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "technique"
+  },
+  {
+    "family": "enemyMove",
+    "domain": "theme"
   }
 ];
