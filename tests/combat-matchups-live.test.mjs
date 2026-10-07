@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, endTurn } from '../src/engine/coopCombat.js';
+import { createCoopCombat, playCard, endTurn, previewCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus, getStacks } from '../src/engine/statuses.js';
 import { combatRules } from '../src/content/combatRules.js';
@@ -118,6 +118,22 @@ test('solo and one-seat co-op execute same deferred Counter health and Poise out
   assert.equal(c.enemies[0].hp, s.enemies[0].hp);
   assert.equal(c.enemies[0].poiseMeter.value, s.enemies[0].poiseMeter.value);
   assert.deepEqual(counterEvents(c).map(event => [event.amount, event.poiseDamage]), counterEvents(s).map(event => [event.amount, event.poiseDamage]));
+});
+
+for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Counter preview ignores the support target's Vulnerable modifier`, () => {
+  const c = isCoop ? coop('spikedReprisal') : solo('spikedReprisal');
+  const enemy = c.enemies[0];
+  applyStatus(c, enemy, 'vulnerable', 1);
+  const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', enemy.id) : previewCard(c, 'card1', enemy.id);
+  const damage = preview.values.find(value => value.op === 'damage');
+  assert.equal(damage.value, 4);
+  assert.equal(damage.perTarget[enemy.id], 4);
+  assert.deepEqual(damage.hitDamages, [4]);
+  if (isCoop) playCard(c, 'p1', 'card1', enemy.id);
+  else dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
+  const actor = isCoop ? c.players.get('p1').entity : c.player;
+  assert.equal(actor.combatCounter.damage, damage.totalDamage);
+  assert.equal(getStacks(enemy, 'bleed'), 2, 'the selected enemy still receives immediate support');
 });
 
 test('two co-op seats keep independent Counter charges and retaliation owners', () => {

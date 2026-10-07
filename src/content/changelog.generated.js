@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Alternative combat gains tactical cards and readable stances",
     "detail": "Physical and spell cards, damage effects and guarded Counters now follow the shared combat rules. Hidden enemy moves keep their stances visible, and co-op reads stay private to each character. The alternative battlefield retains its figures, layered scenery, motion and update history.",
-    "build": "0.7.1.1091",
+    "build": "0.7.1.1092",
     "pullRequest": 1706,
     "url": "https://github.com/cehinds/AshenSpire/pull/1706"
   },

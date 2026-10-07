@@ -33,25 +33,38 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   return carrier;
 }
 
-function counterNumbers(ctx, source, target, carrier, effects, meta) {
-  const action = { source, owner: source, target, card: carrier, meta };
-  const formulas = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target,
+function counterFormulaContext(ctx, source, target, meta) {
+  return { entities: { self: source, owner: source, player: ctx.player, target, enemy: target,
     allEnemies: (ctx.enemies || []).filter(enemy => enemy.alive) },
     energySpent: meta.energySpent || 0, cardsPlayedThisTurn: source.counters?.cardsPlayedThisTurn || 0 };
+}
+
+/** Per-effect preparation value used by both the card face and armed reply. */
+export function counterEffectPreview(ctx, source, target, carrier, effect, meta = {}) {
+  const action = { source, owner: source, target, card: carrier, meta };
+  const formulas = counterFormulaContext(ctx, source, target, meta);
+  if (!['damage', 'poiseDamage'].includes(effect.op) || (effect.if && !evalPredicate(ctx, effect.if, action))) return null;
+  const base = Math.max(0, Math.floor(evaluate(effect.amount ?? 0, formulas)));
+  const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas)))
+    * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));
+  const value = effect.op === 'damage' ? base + cardRatingBonus(ctx, source, carrier, 'damage', base) : base;
+  return { value, hits, total: value * hits };
+}
+
+function counterNumbers(ctx, source, target, carrier, effects, meta) {
   let damage = 0, poiseDamage = 0, hasListedPoiseEffect = false;
   for (const effect of effects) {
-    if (!['damage', 'poiseDamage'].includes(effect.op) || (effect.if && !evalPredicate(ctx, effect.if, action))) continue;
-    const base = Math.max(0, Math.floor(evaluate(effect.amount ?? 0, formulas)));
-    const count = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas))) * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));
-    if (effect.op === 'damage') damage += (base + cardRatingBonus(ctx, source, carrier, 'damage', base)) * count;
-    else { hasListedPoiseEffect = true; poiseDamage += base * count; }
+    const preview = counterEffectPreview(ctx, source, target, carrier, effect, meta);
+    if (!preview) continue;
+    if (effect.op === 'damage') damage += preview.total;
+    else { hasListedPoiseEffect = true; poiseDamage += preview.total; }
   }
   // Projected cards print impact in their rating badge instead of an opcode.
   // An explicit eligible opcode wins; no weapon/unarmed fallback is invented.
   const impactKey = carrier.combatProfile?.camp === 'spell' ? 'ward' : 'poise';
   const listedImpact = carrier.cardRatingValues?.[impactKey];
   if (!hasListedPoiseEffect && listedImpact !== undefined) {
-    poiseDamage = Math.max(0, Math.floor(evaluate(listedImpact, formulas)));
+    poiseDamage = Math.max(0, Math.floor(evaluate(listedImpact, counterFormulaContext(ctx, source, target, meta))));
   }
   return { damage, poiseDamage };
 }
