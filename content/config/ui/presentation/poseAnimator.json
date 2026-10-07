@@ -1,9 +1,0 @@
-{
-  "motion": {
-    "defaultPlayMs": 260,
-    "minimumPlayMs": 60
-  },
-  "sizing": {
-    "percent": 100
-  }
-}

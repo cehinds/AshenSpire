@@ -1,4 +1,0 @@
-{
-  "sizing": { "sizeRem": "$targetRem", "labelPx": "$refRemPx" },
-  "positioning": { "gapPx": 10 }
-}

@@ -1,9 +1,0 @@
-{
-  "sizing": {
-    "minimums": { "footerPx": "$footerMinPx", "targetPx": "$targetPx" },
-    "compactBelowPx": "$compactBelowPx"
-  },
-  "layering": {
-    "plate": { "bleedFraction": "$sceneBleed" }
-  }
-}
