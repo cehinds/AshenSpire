@@ -6,6 +6,8 @@
   "poses": 26071,
   "contacts": 50344,
   "layers": 126759,
+  "flippedWeaponLayers": 16182,
+  "topmostBodyPoses": 26071,
   "passed": true,
   "visualApproval": false
 }

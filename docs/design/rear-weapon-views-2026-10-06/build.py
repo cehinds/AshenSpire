@@ -6,12 +6,16 @@ ROOT=Path(__file__).resolve().parent
 OLD=ROOT.parent/'class-armor-weapons-2026-10-06'
 sys.path.insert(0,str(OLD))
 import build as old
+from render import transformed
 read=old.read
 def write(p,v): p.write_text(json.dumps(v,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
 def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
     specs=read(ROOT/'registration.json')
     prior=read(OLD/'weapon-anchors.json')
+    facing=read(ROOT/'facing.json')
+    assert set(facing['flipped']) | set(facing['unchanged']) == set(prior)
+    assert not set(facing['flipped']) & set(facing['unchanged'])
     aliases={'frostSpear':'halberd','cinderAxe':'battleaxe','duskChime':'boneSceptre'}
     (ROOT/'assets').mkdir(exist_ok=True)
     meta={}
@@ -28,37 +32,43 @@ def main():
         output=ROOT/'assets'/f'weapon-{wid}.png';normalized.save(output)
         meta[wid]={'masterId':master,'source':str(src.relative_to(ROOT)),'sha256':sha(src),'normalizedSha256':sha(output),'grip':grip,'angle':angle,'scale':scale,'alphaAtGrip':alpha,'canonicalAlias':aliases.get(wid)}
     manifest=read(OLD/'manifest.json')
-    manifest['id']='rear-weapon-views-2026-10-06-v1'
-    manifest['title']='Rear three-quarter weapons · all armor pairs'
+    manifest['id']='rear-weapon-views-2026-10-06-v2'
+    manifest['title']='Rear weapons · corrected facing · body above weapons'
+    manifest['provenance']['assembly']='v2: explicit reversible flipX per armament; full character body draws last, above both weapons. Kite shield is the facing reference.'
     manifest['provenance']['layerSourceCommit']='4115a9c50d183abe64b897052ddd26da21f02a58'
     manifest['provenance']['weaponViews']='25 newly painted rear designs, 28 canonical records, three explicit aliases. Built-in image generation.'
     contacts=0; layercount=0; failures=[]
     for entry in manifest['projects']:
         project=read(OLD/entry['projectPath'])
         shutil.copyfile(OLD/project['assets']['body']['src'],ROOT/project['assets']['body']['src'])
-        project['notes']+=' Rear-view weapon edition: shield interiors and reverse weapon surfaces.'
+        project['notes']+=' Rear-view weapon edition v2: kite shield facing reference; weapons beneath the complete body. Layer flipX is reversible and source artwork is preserved.'
         for pose in project['poses'].values():
             body=pose['layers'][0]
             # Rear shield handles now need the same actual palm pixels above them.
             for side,anchor in [('left','H2'),('right','H1')]:
                 weapon=next((l for l in pose['layers'] if l['id']==side+'-weapon'),None)
                 if not weapon: continue
+                weapon['flipX']=weapon['assetId'] in facing['flipped']
+                weapon['notes']+=' Facing: mirrored about grip.' if weapon['flipX'] else ' Facing: source orientation.'
                 if not any(l['id']==side+'-fingers' for l in pose['layers']):
                     template=copy.deepcopy(next(l for l in project['poses']['straightSword--dagger']['layers'] if l['id']==side+'-fingers'))
                     pose['layers'].insert(pose['layers'].index(weapon)+1,template)
                 contacts+=1
+            weapons=[l for l in pose['layers'] if l['role']=='weapon']
+            hands=[l for l in pose['layers'] if l['role']=='foreground']
+            pose['layers']=weapons+hands+[body]
             layercount+=len(pose['layers'])
         for wid in prior:
             for side in ['right','left']:
                 pid=f'{wid}--empty' if side=='right' else f'empty--{wid}'
                 l=next(l for l in project['poses'][pid]['layers'] if l['role']=='weapon')
                 im=Image.open(ROOT/project['assets'][wid]['src'])
-                rendered=old.affine(im,l['scale'],l['rotation'],l['pivot'],[256+l['x'],256+l['y']])
+                rendered=transformed(im,l)
                 b=old.bounds(rendered)
                 if b[0]<=0 or b[1]<=0 or b[2]>=512 or b[3]>=512: failures.append([entry['id'],wid,side,b])
         write(ROOT/entry['projectPath'],project)
     write(ROOT/'manifest.json',manifest);write(ROOT/'weapon-metadata.json',meta)
-    report={'appearances':len(manifest['projects']),'armaments':len(meta),'generatedMasters':len(specs),'poses':26071,'contacts':contacts,'layers':layercount,'clippingFailures':failures,'paintedGripChecks':28,'passed':not failures,'visualApproval':False}
+    report={'appearances':len(manifest['projects']),'armaments':len(meta),'generatedMasters':len(specs),'poses':26071,'contacts':contacts,'layers':layercount,'clippingFailures':failures,'paintedGripChecks':28,'facingRules':28,'flippedArmaments':len(facing['flipped']),'topmostBodyPoses':26071,'passed':not failures,'visualApproval':False}
     write(ROOT/'validation.json',report)
     files=[ROOT/'manifest.json']+sorted(ROOT.glob('*.rig.json'))+sorted((ROOT/'assets').glob('*.png'))
     with zipfile.ZipFile(ROOT/'rear-weapon-views.spritepack.zip','w',zipfile.ZIP_DEFLATED) as z:

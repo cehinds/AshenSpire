@@ -22,7 +22,13 @@ The new pack ID isolates browser recovery from the previous artwork edition.
 The normalized assets preserve aspect ratio and alpha on 512 x 512 canvases.
 registration.json records manually authored painted grips and axis rotation.
 Body, weapon and actual foreground finger pixels remain separate layers.
-Rear-facing shield handles now receive foreground finger overlap too.
+The v2 assembly follows the user-approved kite shield facing. facing.json
+records all 28 orientation decisions: nine armament entries are mirrored
+using Workshop's reversible layer.flipX about the grip; the kite is unchanged.
+Both weapons draw first, hand cutouts next, and the complete body LAST,
+making the full character the highest/frontmost layer in every loadout.
+No source image is flipped or repainted. Use a Workshop with flipX support
+(included in the updated local Editor) to retain the saved orientation.
 
 VALIDATED
 - 25 generated masters and 28 normalized armament assets.
@@ -30,7 +36,8 @@ VALIDATED
 - No normalized-image clipping or clipping across 1,736 hand placements.
 - All 26,071 poses pass Workshop schema and coverage checks, including
   50,344 grip-to-palm contacts and 126,759 separate layers.
-- Review sheets show all 25 masters, all 25 designs held, and 32 mixed
+- Review sheets show all 25 masters, all 25 designs held on every appearance,
+  both hands for all five shields on every appearance, and 32 mixed
   loadouts across the four classes. Representative visual review only;
   every pose retains reviewed=false. These are editable idle art studies,
   not attack animations, physical 3D turntables or game runtime installation.
