@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
-- **Alternative figures recover and keep moving** ([#1689](https://github.com/cehinds/AshenSpire/pull/1689), `0.7.1.1057`). Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.
+- **Alternative figures recover and keep moving** ([#1689](https://github.com/cehinds/AshenSpire/pull/1689), `0.7.1.1059`). Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.
 
 - **Landscape targets clear the intent labels** ([#1690](https://github.com/cehinds/AshenSpire/pull/1690), `0.7.1.1056`). Enemy tap areas and health columns move below nearby intent controls when space is tight, while their figures keep the same ground positions. The overlap check keeps the player's fitted tap area above the hand, and all five desktop and phone layouts are checked independently.
 
