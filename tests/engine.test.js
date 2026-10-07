@@ -335,7 +335,7 @@ function withKindRows(bundle) {
   return { ...bundle, tagging: rows };
 }
 
-function playFromHand(combat, cardId, targetId = 'e1') {
+function playFromHand(combat, cardId, targetId) {
   const inst = combat.piles.hand.find((c) => c.cardId === cardId);
   if (!inst) throw new Error(`'${cardId}' not in hand: [${combat.piles.hand.map((c) => c.cardId).join(', ')}]`);
   return dispatch(combat, { type: 'playCard', cardInstanceId: inst.instanceId, targetId });
@@ -1402,7 +1402,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         return c.player.energy >= cost && c.player.mana >= (def.manaCost || 0) && (c.player.stamina ?? 0) >= (def.staminaCost || 0);
       });
       if (playable && target) {
-        dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+        dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId });
       } else {
         dispatch(c, { type: 'endTurn' });
       }
@@ -1729,7 +1729,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
             && c.player.mana >= (pools.mana || 0)
             && c.player.stamina >= (pools.stamina || 0);
         });
-        if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+        if (playable && target) dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId });
         else dispatch(c, { type: 'endTurn' });
       }
       assert(c.result === 'victory' || c.result === 'defeat', `${classId} elite fight concluded (${c.result})`);
@@ -1890,7 +1890,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         if ((def.keywords || []).includes('unplayable')) return false;
         return f.player.energy >= (def.cost === 'X' ? 0 : def.cost) && f.player.mana >= (def.manaCost || 0) && (f.player.stamina ?? 0) >= (def.staminaCost || 0);
       });
-      if (playable && target) dispatch(f, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+      if (playable && target) dispatch(f, { type: 'playCard', cardInstanceId: playable.instanceId });
       else dispatch(f, { type: 'endTurn' });
     }
     assert(f.result === 'victory' || f.result === 'defeat', `final boss fight concluded (${f.result})`);
@@ -1929,6 +1929,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 23. 'ally' target (co-op cards, solo-valid) ---------------------------
+  test('Card targets reject the wrong side before spending resources', () => {
+    const c = makeCombat({ deck: ['strike', 'defend', 'rallyingBanner'], enemies: ['tDummy', 'tDummy'] });
+    for (const [cardId, targetId] of [['strike', 'player'], ['defend', 'e1']]) {
+      const inst = c.piles.hand.find(card => card.cardId === cardId);
+      const before = JSON.stringify({ player: c.player, piles: c.piles, enemies: c.enemies, log: c.eventLog });
+      let rejected = false;
+      try { dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId }); }
+      catch (error) { rejected = /Invalid .*target/.test(error.message); }
+      assert(rejected, `${cardId} refuses ${targetId}`);
+      eq(JSON.stringify({ player: c.player, piles: c.piles, enemies: c.enemies, log: c.eventLog }), before, 'rejected targeting changes no combat state');
+    }
+  });
+
   test("23. 'ally' target falls back to self in solo; co-op cards validate", () => {
     // Solo: no teammate exists, so Rallying Banner's ally-block lands on the player.
     const c = makeCombat({ deck: ['rallyingBanner', 'strike', 'strike', 'strike', 'strike'] });
@@ -8753,7 +8766,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     while (!cb.result && ++guard < 2000) {
       const target = cb.enemies.find((e) => e.alive);
       const playable = cb.piles.hand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && cb.player.energy >= def.cost && (def.manaCost || 0) === 0 && (cb.player.stamina ?? 0) >= (def.staminaCost || 0); });
-      if (playable && target) dispatch(cb, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id }); else dispatch(cb, { type: 'endTurn' });
+      if (playable && target) dispatch(cb, { type: 'playCard', cardInstanceId: playable.instanceId }); else dispatch(cb, { type: 'endTurn' });
     }
     assert(cb.result, 'the bot finished the fight');
     // The group of an event's card, read from the log alone: the hand it was
@@ -9160,7 +9173,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     cb.player.maxStamina = 3; cb.player.stamina = 3; // Brace costs a Stamina
     const braceInst = cb.piles.hand.find((x) => x.cardId === 'brace') || cb.piles.draw.find((x) => x.cardId === 'brace');
     if (!cb.piles.hand.includes(braceInst)) { cb.piles.draw.splice(cb.piles.draw.indexOf(braceInst), 1); cb.piles.hand.push(braceInst); }
-    dispatch(cb, { type: 'playCard', cardInstanceId: braceInst.instanceId, targetId: cb.enemies[0].id });
+    dispatch(cb, { type: 'playCard', cardInstanceId: braceInst.instanceId, targetId: cb.player.id });
     assert(cb.player.block - blockBefore >= 4 + REG.balance.classTree.ironFooting.block, 'Brace braces, and Iron Footing braces more');
     const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))); eq(stored.coreTags.join(','), 'ironFooting', 'the snapshot carries the picks');
     const back2 = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: stored });

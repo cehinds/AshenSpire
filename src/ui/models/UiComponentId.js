@@ -102,6 +102,7 @@ export const UI_COMPONENTS = Object.freeze({
   trayResizeHandle: 'tray-resize-handle',
   trayContent: 'tray-content',
   battlefieldStage: 'battlefield-stage',
+  enemyTargetPicker: 'enemy-target-picker',
   combatantFrame: 'combatant-frame',
   playerCombatantFrame: 'player-combatant-frame',
   enemyCombatantFrame: 'enemy-combatant-frame',

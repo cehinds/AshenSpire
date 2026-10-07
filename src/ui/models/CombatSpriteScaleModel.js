@@ -69,7 +69,48 @@ export function fitCombatSprites({ width, height, actors, minHeight = 0 }) {
     });
   };
   const plain = fit(base, false);
-  if (!(minHeight > 0) || !actors.length) return plain;
+  // Depth, authored display scales and the one-row phone lift may make a
+  // friendly taller than an enemy. Keep every fitted figure at its existing
+  // size and grow undersized enemies instead of reducing the player. Artwork
+  // may overlap on a cramped field; target controls use separate hit areas.
+  const withEnemyHeightFloor = fits => {
+    const friendlyHeight = Math.max(0, ...fits.filter((_, i) => !isEnemy(actors[i])).map(f => f.visibleHeight));
+    let enlarged = false;
+    const result = fits.map((f, i) => {
+      const actor = actors[i];
+      if (!isEnemy(actor) || f.visibleHeight >= friendlyHeight) return f;
+      enlarged = true;
+      const scale = friendlyHeight / actor.visibleHeight;
+      return { ...f, scale, visibleHeight: friendlyHeight,
+        multiplier: f.multiplier * friendlyHeight / f.visibleHeight };
+    });
+    if (!enlarged) return result;
+    const lastGround = Math.max(...actors.map(a => a.slot.ground));
+    // Prefer moving the enemy artwork as one group, keeping formation spacing.
+    // It may cross the team divider to remain inside the viewport. If the
+    // enlarged group cannot fit, keep each figure visible where feasible;
+    // independent target controls retain the original distinct slot anchors.
+    const enemyIndices = actors.map((a, i) => i).filter(i => isEnemy(actors[i]));
+    let lo = -Infinity, hi = Infinity;
+    for (const i of enemyIndices) {
+      const half = result[i].scale * actors[i].visibleWidth / 2;
+      lo = Math.max(lo, 6 + half - result[i].x);
+      hi = Math.min(hi, width - 6 - half - result[i].x);
+    }
+    const shift = Math.max(lo, Math.min(hi, 0));
+    for (const i of enemyIndices) {
+      const half = result[i].scale * actors[i].visibleWidth / 2;
+      // The larger rear-row figure keeps its intent below the HUD/ribbon.
+      // The last reserved foot line still protects meters and hand clearance;
+      // this is an art anchor, not a change to domain formation cells.
+      const ground = Math.min(lastGround,
+        Math.max(actors[i].slot.ground, result[i].visibleHeight + actors[i].leading + 6));
+      result[i] = { ...result[i], ...(ground > actors[i].slot.ground ? { ground } : {}), x: lo <= hi ? result[i].x + shift
+        : half * 2 <= width - 12 ? Math.max(6 + half, Math.min(width - 6 - half, result[i].x)) : width / 2 };
+    }
+    return result;
+  };
+  if (!(minHeight > 0) || !actors.length) return withEnemyHeightFloor(plain);
   const raised = fit(Math.max(base, minHeight / Math.min(...actors.map(a => a.ratio * a.slot.depth))), true);
   const fits = plain.map(f => ({ ...f }));
   for (const enemy of [true, false]) {
@@ -86,5 +127,5 @@ export function fitCombatSprites({ width, height, actors, minHeight = 0 }) {
     const shift = Math.min(Math.max(0, lo), hi);
     for (const i of idx) fits[i] = { ...raised[i], x: actors[i].slot.x + shift };
   }
-  return fits;
+  return withEnemyHeightFloor(fits);
 }

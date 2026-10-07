@@ -1,4 +1,5 @@
 import { formationMovePlan } from '../model/formationMovement.js';
+import { cardTargetPlan, assertCardTarget } from '../model/cardTargets.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 // src/engine/combat.js — action queue + turn loop (generic interpreter)
 // (SPEC §3.9, §4.1–§4.3, §4.6)
@@ -1056,6 +1057,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
   if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
 
+  assertCardTarget(cardTargetPlan(def, p.id, combat.enemies,
+    [{ id: p.id, alive: p.alive, connected: true }], { solo: true }), targetId);
   let target = null;
   if (targetId != null) {
     target = findEntity(combat, targetId);

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1651",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Crowded combat targets stay selectable",
+    "detail": "Numbered enemy targets make overlapping foes easy to select. Cards reject targets on the wrong side before spending resources, and enemies remain at least as tall as the player without shrinking sprites.",
+    "build": "0.7.1.1048",
+    "pullRequest": 1651,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1651"
+  },
+  {
     "id": "pr-1623",
     "date": "2026-10-06",
     "group": "2026-10-06",

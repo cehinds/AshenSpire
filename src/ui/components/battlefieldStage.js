@@ -148,7 +148,7 @@ export function wireBattlefieldStage(field, model) {
       const growthFor = (actor, fitted) => {
         const requestedGrowth = actor.frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, actor.slot.row)] : 1;
         return Math.min(requestedGrowth, Math.max(1,
-          (actor.slot.ground - actor.leading - 6) / fitted.visibleHeight),
+          ((fitted.ground ?? actor.slot.ground) - actor.leading - 6) / fitted.visibleHeight),
           // Selection must not make the player tower over a foe already capped
           // by the available headroom on a short screen.
           actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
@@ -156,7 +156,7 @@ export function wireBattlefieldStage(field, model) {
       const overheads = narrow ? combatOverheadAnchors({ width: fieldRect.width,
         controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
-          const bottom = actor.slot.ground - fitted.visibleHeight * growthFor(actor, fitted) - 14;
+          const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - 14;
           return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: actor.slot.x,
             width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
         }) }) : [];
@@ -198,6 +198,7 @@ export function wireBattlefieldStage(field, model) {
       const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
       const scale = fitted.scale * growth;
       const x = fitted.x;
+      const ground = fitted.ground ?? slot.ground;
       const visibleHeight = fitted.visibleHeight * growth;
       sprite.style.zoom = String(scale / zoom);
       sprite.firstElementChild.style.top = `${footOffset}px`;
@@ -205,7 +206,7 @@ export function wireBattlefieldStage(field, model) {
       // Transparent canvas above the figure is not part of the card's layout.
       // Keep the image and its feet in place while the card starts at the ink.
       sprite.style.marginTop = `${(visibleHeight - paintedHeight) / scale}px`;
-      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - visibleHeight, width: nameWidth, height: visibleHeight }, { zoom: pageZoom });
+      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: ground - visibleHeight, width: nameWidth, height: visibleHeight }, { zoom: pageZoom });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
       // Keep depth on the artwork. A z-index on the whole frame traps its
@@ -218,8 +219,8 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.baseSpriteScale = String(fitted.scale);
       frame.dataset.presentationScale = String(multiplier);
       frame.dataset.formationX = String(slot.x);
-      frame.dataset.groundY = String(fieldRect.top + slot.ground);
-      frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
+      frame.dataset.groundY = String(fieldRect.top + ground);
+      frame.dataset.groundRatio = String(ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
       // The half-field art floor may move two enemies to the same painted
       // centre. Their intent/Inspect controls retain their distinct reserved

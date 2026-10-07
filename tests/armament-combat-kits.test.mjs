@@ -39,7 +39,7 @@ function play(combat, id) {
   combat.player.energy = 20;
   combat.player.stamina = combat.player.maxStamina;
   combat.player.mana = combat.player.maxMana;
-  dispatch(combat, { type: 'playCard', cardInstanceId: ref.instanceId, targetId: combat.enemies[0].id });
+  dispatch(combat, { type: 'playCard', cardInstanceId: ref.instanceId });
   return ref;
 }
 
