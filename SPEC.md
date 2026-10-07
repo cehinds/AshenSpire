@@ -2787,7 +2787,7 @@ Each item is one PR into `dev`, test-first, with a receipt, and a screenshot and
 
 1. **This SPEC PR**, with the research note and FINISH §14.
 2. **The deck rules engine and settings.** It adds `deckRules.js`, the Deck settings group, `run.sideboard` (a schema bump), `deckEditRefusal`, and ordered draw in `createCombat`/`drawCards`. It has no UI beyond the settings rows.
-3. **The deck editor UI.** It adds `DeckEditorModel`, `mountDeckEditor`, the Quick Access and Rest doors, the `deckEdit` tag, and drag, tap and gamepad input.
+3. **The deck editor UI.** It adds `DeckEditorModel`, `mountDeckEditor`, the Armoury and Rest doors, the `deckEdit` tag, and drag, tap and gamepad input.
 4. **The shop-kind framework.** It adds `shops.js`, the offering roll with the guaranteed minimum, the Shops settings group, `stock.kind`, and the existing shelves re-expressed as offerings, with seeds byte-identical.
 5. **The market additions.** It adds the smith-stone shelf, armour, and inn rest, then consumables (skill books and revive tokens), sigils (inventory only), the quest event and companions. Each is its own PR if it grows past one review.
 6. **The blacksmith screen.** It adds refining, sigil slots and sigil install, art upgrade, and stack copy.
