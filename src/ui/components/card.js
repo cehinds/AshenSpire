@@ -93,10 +93,22 @@ export function relicText(def, registries = null) {
   return grown ? `${base} ${grown}` : base;
 }
 
-function fillTemplate(def, tokens, baseTokens) {
-  let html = esc(def.textTemplate);
+function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
+  let template = def.textTemplate;
+  const liveTokens = { ...tokens };
+  for (const sequence of damageSequences) {
+    if (!sequence?.amountToken || !sequence?.hitsToken || !Array.isArray(sequence.hitDamages)
+      || sequence.hitDamages.length < 2 || sequence.hitDamages.every(amount => amount === sequence.hitDamages[0])) continue;
+    const amount = sequence.amountToken.replaceAll('.', '\\.');
+    const hits = sequence.hitsToken.replaceAll('.', '\\.');
+    const pattern = new RegExp(`\\{${amount}\\}([^{}]*?)\\{${hits}\\}\\s+times`);
+    template = template.replace(pattern,
+      `{${sequence.amountToken}}$1(${sequence.totalDamage} total across ${sequence.hitDamages.length} hits)`);
+    liveTokens[sequence.amountToken] = sequence.hitDamages.join(' + ');
+  }
+  let html = esc(template);
   html = html.replace(tokenRe(), (m, tok) => {
-    const v = tokens[tok];
+    const v = liveTokens[tok];
     if (v == null) return m;
     let cls = 'val';
     if (baseTokens && typeof baseTokens[tok] === 'number') {
@@ -232,7 +244,7 @@ export function renderCard(registries, ref, opts = {}) {
     el.innerHTML = illustratedCardHtml(model,{
       // A weight-priced card (the Dodge Roll) keeps its live numbers at glance
       // size and folds its per-class price table into one clause.
-      rules:at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens).replace(/\. (?=[A-Z])/g,'.\n'),
+      rules:at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/\. (?=[A-Z])/g,'.\n'),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
@@ -281,7 +293,7 @@ export function renderCard(registries, ref, opts = {}) {
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
-      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts);
+      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
       decorateKeywords(details);
       // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
       // everything. The note above the regions used to say a playing card
@@ -515,7 +527,7 @@ export function cardDetailHtml(registries, ref) {
   return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
 }
 
-function cardTooltip(registries, def, tokens, liveCosts = null) {
+function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
@@ -532,7 +544,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
   if (combatProfile.maneuver === 'counter') html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
-  html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {

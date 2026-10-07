@@ -247,6 +247,30 @@ test('empty custom combat identity retains local hit vulnerability tags in previ
   assert.equal(getStacks(c.enemies[0], 'bleed'), 0, 'empty card identity does not inherit a tactical Slashing rider');
 });
 
+test('card preview spends tactical defenses across every hit and later damage effect', () => {
+  const registries = createRegistries({ ...contentBundle,
+    cards: contentBundle.cards.map(card => card.id === 'twinbladeFlurry' ? { ...card,
+      effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 2 },
+        { op: 'damage', target: 'enemy', amount: 3 }],
+    } : card),
+    enemies: contentBundle.enemies.map(enemy => enemy.id === 'gildedKnight'
+      ? { ...enemy, firstMove: 'parry' } : enemy),
+  });
+  const c = solo('twinbladeFlurry', registries, 'gildedKnight');
+  const enemy = c.enemies[0];
+  assert.ok(enemy.combatCounter, 'the opening Parry is armed');
+  const before = JSON.stringify({ enemy, events: c.eventLog, rng: c.rng.getCounters() });
+  const damage = previewCard(c, 'card1', enemy.id).values.filter(row => row.op === 'damage');
+  assert.deepEqual(damage.map(row => row.hitDamages), [[1, 3], [3]]);
+  assert.deepEqual(damage.map(row => row.totalDamage), [4, 3]);
+  assert.deepEqual(damage.map(row => row.perTargetHitDamages[enemy.id]), [[1, 3], [3]]);
+  assert.equal(JSON.stringify({ enemy, events: c.eventLog, rng: c.rng.getCounters() }), before,
+    'preview is detached from the live reaction and RNG');
+  dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
+  assert.deepEqual(c.eventLog.filter(event => event.type === 'damageDealt' && event.sourceId === 'player')
+    .map(event => event.amount), [1, 3, 3]);
+});
+
 test('Holy lethal hit cleanses its attacker before the card ends combat', () => {
   const c = solo('sacredHarvest');
   c.enemies[0].hp = 1;
