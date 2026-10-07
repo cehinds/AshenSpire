@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Alternative figures recover and keep moving",
     "detail": "Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.",
-    "build": "0.7.1.1063",
+    "build": "0.7.1.1065",
     "pullRequest": 1689,
     "url": "https://github.com/cehinds/AshenSpire/pull/1689"
   },
@@ -18,9 +18,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Skill Level Up works after victory",
     "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.",
-    "build": "0.7.1.1063",
+    "build": "0.7.1.1065",
     "pullRequest": 1691,
     "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
+    "id": "pr-1695",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Preview the new alternative character animations",
+    "detail": "The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1695,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1695"
   },
   {
     "id": "pr-1692",
