@@ -746,7 +746,7 @@ export function findings(r) {
       // same map with its own title (ed4d7e6c9, `mapAdapter.title`); every
       // generated act still falls through to actTitle. Both halves are
       // required: dropping the authored title is a defect too (Codex, #1316).
-      || !/actRouteStripHtml\(\{\s*title:\s*mapAdapter\?\.title\s*\|\|\s*actTitle\(run\.actNumber\b[^\n]*?\)\s*\}\)/.test(r.map)
+      || !/actRouteStripHtml\(\{\s*title:\s*mapAdapter\?\.title\s*\|\|\s*actTitle\(run\.actNumber\b[^\n]*?\),\s*graph:\s*map,\s*path:[^\n]*?\bcurrent\s*\}\)/.test(r.map)
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }

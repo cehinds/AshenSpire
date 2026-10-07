@@ -162,6 +162,19 @@
 </head>
 <body>
 <main>
+  <section aria-label="Map route history">
+    <h2>Map route history</h2>
+    <p><code>ActRouteModel</code> and <code>actRouteStripHtml</code> compose the act title, Entrance, fixed evenly spaced encounter circles and Boss in one desktop row. Saved visits reuse map glyphs, the current position is ringed, and future circles remain empty. The title sits above the rail on phones; inspecting a destination does not change the receipt.</p>
+    <svg viewBox="0 0 760 70" width="760" style="max-width:100%" role="img" aria-label="Act I, Entrance, three chosen encounters and three empty circles, then Boss">
+      <rect width="760" height="70" fill="#191611"/>
+      <g fill="#d2b475" font-family="serif" font-size="12"><text x="12" y="39">ACT I — THE HOLLOW WEALD</text><text x="232" y="39">ENTRANCE</text><text x="710" y="39">BOSS</text></g>
+      <path d="M303 35H700l-5 -4m5 4l-5 4" stroke="#988052" fill="none"/>
+      <g stroke="#d2b475" fill="#645033"><circle cx="336" cy="35" r="10"/><circle cx="403" cy="35" r="10"/><circle cx="470" cy="35" r="10"/></g>
+      <circle cx="470" cy="35" r="13" fill="none" stroke="#d2b475"/>
+      <g fill="#eee2c5" text-anchor="middle" font-size="11"><text x="336" y="39">⚔</text><text x="403" y="39">♧</text><text x="470" y="39">¤</text></g>
+      <g stroke="#988052" fill="#191611"><circle cx="537" cy="35" r="10"/><circle cx="604" cy="35" r="10"/><circle cx="671" cy="35" r="10"/></g>
+    </svg>
+  </section>
   <section id="legacy-dungeon-runtime" aria-label="Legacy dungeon composition">
     <p>Current integration: <code>mountMap</code> and <code>mountMapBoard</code> render legacy dungeons directly. The adapter supplies geographic node positions, traced polylines and the unchanged paintings; the normal node glyphs, fog knowledge, camera, selection tray, tooltips, legend and keyboard controls are shared. There is no separate dungeon node renderer.</p>
     <p>The dungeon map now composes the shared W4b HUD, orientation strip, map frame, Potions, kit Back/Enter buttons and location tray. The shared SVG node artwork keeps markers circular; entrances sit on the approach roads. Smoky dark fog has brown haze restricted to authored road paths.</p>
