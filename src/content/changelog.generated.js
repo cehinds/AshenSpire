@@ -48,7 +48,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-06",
     "summary": "Alternative battles use the completed art collection",
     "detail": "All 32 named combat settings have four independent layers with desktop and phone compositions. The collection has 59 canonical idle appearances, including the approved rear companions and speakers; dedicated armor appearances resolve before older aliases. Phone exports keep the artwork smaller while the current HUD, cards and footer stay in place.",
-    "build": "0.7.1.1054",
+    "build": "0.7.1.1055",
     "pullRequest": 1684,
     "url": "https://github.com/cehinds/AshenSpire/pull/1684"
   },
