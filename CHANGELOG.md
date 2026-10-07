@@ -34,9 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
-- **Skill Level Up works after victory** ([#1691](https://github.com/cehinds/AshenSpire/pull/1691), `0.7.1.1056`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.
+- **Skill Level Up works after victory** ([#1691](https://github.com/cehinds/AshenSpire/pull/1691), `0.7.1.1060`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.
 
 ## 2026-10-06
+
+- **Alternative battles use the completed art collection** ([#1684](https://github.com/cehinds/AshenSpire/pull/1684), `0.7.1.1057`). All 32 named combat settings have four independent layers with desktop and phone compositions. The collection has 59 canonical idle appearances, including the approved rear companions and speakers; dedicated armor appearances resolve before older aliases. Phone exports keep the artwork smaller while the current HUD, cards and footer stay in place. Sprite feet remain grounded when co-op battles resize between desktop and phone.
 
 - **Alternative builds gain class progression and retraining** ([#1686](https://github.com/cehinds/AshenSpire/pull/1686), `0.7.1.1054`). Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.
 
@@ -45,6 +47,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **Crowded combat targets stay selectable** ([#1651](https://github.com/cehinds/AshenSpire/pull/1651), `0.7.1.1048`). Numbered enemy targets make overlapping foes easy to select. Cards reject targets on the wrong side before spending resources, and enemies remain at least as tall as the player without shrinking sprites.
 
 - **The Windows installer link downloads the installer** ([#1623](https://github.com/cehinds/AshenSpire/pull/1623), `0.7.1.1046`). The README's Windows installer link now downloads the latest `test` installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The `release` and `main` installers have their own direct links.
+
 
 - **Your route, one choice at a time** ([#1679](https://github.com/cehinds/AshenSpire/pull/1679), `0.7.1.1045`). The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.
 

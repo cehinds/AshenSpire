@@ -1,0 +1,32 @@
+{
+  "id": "keeperOfTheNameless",
+  "prompt": "Edit the supplied Keeper of the Nameless. Preserve faceless closed weathered steel helmet, black ragged cloak with dark red lining, armor and downward sword. Sword must be physically straight with pommel, grip and blade collinear in natural closed gauntlet. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+  "kind": "sprite",
+  "sourceId": "keeperOfTheNameless",
+  "reference": "../masters/keeperOfTheNameless.png",
+  "resultFile": "sprites/keeperOfTheNameless-rear.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-075f6063-a0bf-4cbd-bfdd-52d0398b8eab.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "41130e769684b78770b2831f052853bb8fc02bdff4cf752a726bba05cfc2dbcd",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6111685434977213,
+  "visibleBounds": [
+    56,
+    75,
+    978,
+    1398
+  ],
+  "alphaThreshold": 32,
+  "anchor": [
+    517.0,
+    1398
+  ]
+}

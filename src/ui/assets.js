@@ -1,4 +1,4 @@
-import { alternativeSprite } from './alternativeArt.js';
+import { alternativeSprite, alternativePlayerId } from './alternativeArt.js';
 import { armamentIconAsset } from '../model/equipmentArt.js';
 import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
 import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
@@ -771,7 +771,7 @@ export function playerSprite(customization = {}, classId, armourId = 'default', 
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && presentation.view !== 'portrait') {
-    const alternative = alternativeSprite(`${armourArtClass(classId, armourId)}-${armourArtKey(classId, armourId)}`, 'player') || alternativeSprite(`${classId}-default`, 'player');
+    const alternative = alternativeSprite(alternativePlayerId(classId, armourId), 'player');
     if (alternative) return alternative;
   }
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
