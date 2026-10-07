@@ -136,6 +136,34 @@ for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Counter p
   assert.equal(getStacks(enemy, 'bleed'), 2, 'the selected enemy still receives immediate support');
 });
 
+for (const isCoop of [false, true]) for (const inactive of ['condition', 'zeroHits', 'zeroRepeat', 'allInactive']) {
+  test(`${isCoop ? 'co-op' : 'solo'} charged Counter preserves its bonus after ${inactive}`, () => {
+    const effects = [{ op: 'damage', target: 'enemy', amount: 4,
+      ...(inactive === 'condition' || inactive === 'allInactive' ? { if: { p: 'hasStatus', of: 'self', status: 'starstoneCharge' } }
+        : inactive === 'zeroHits' ? { hits: 0 } : { repeat: 0 }) },
+      ...(inactive === 'allInactive' ? [] : [{ op: 'damage', target: 'enemy', amount: 4, hits: 2 }])];
+    const registries = { ...basicRegistry, cards: { ...basicRegistry.cards, get(id) {
+      const def = basicRegistry.cards.get(id);
+      return id === 'riposte' ? { ...def, effects, gradeProfiles: undefined } : def;
+    } } };
+    const c = isCoop ? createCoopCombat({ registries, rng: createRng(50),
+      players: [{ id: 'p1', ...player('riposte') }], enemyIds: ['wanderingSoldier'], ratingsRules: null })
+      : solo('riposte', registries);
+    const actor = isCoop ? c.players.get('p1').entity : c.player;
+    grantAbilityCharge(actor, { key: 'counter-card-charge', cardType: 'attack', damage: 2 });
+    grantAbilityCharge(actor, { key: 'counter-effect-charge', cardType: 'attack', damage: 1, damageScope: 'effect' });
+    const before = structuredClone(actor.abilityRiders);
+    const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', c.enemies[0].id) : previewCard(c, 'card1', c.enemies[0].id);
+    const damage = preview.values.filter(value => value.op === 'damage');
+    assert.deepEqual(actor.abilityRiders, before, 'preview leaves both one-use charges intact');
+    assert.deepEqual(damage.map(value => value.hitDamages), inactive === 'allInactive' ? [[3]] : [[], [7, 4]]);
+    if (isCoop) playCard(c, 'p1', 'card1');
+    else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
+    assert.equal(actor.combatCounter.damage, damage.reduce((total, value) => total + value.totalDamage, 0));
+    assert.equal(actor.combatCounter.damage, inactive === 'allInactive' ? 3 : 11);
+  });
+}
+
 test('two co-op seats keep independent Counter charges and retaliation owners', () => {
   const c = coop('riposte', 2);
   playCard(c, 'p1', 'card1'); playCard(c, 'p2', 'card1');
