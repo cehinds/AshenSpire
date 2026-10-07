@@ -302,11 +302,14 @@ const INTENT_OVERLAP = `(() => {
   const playerFrame = player.closest('.combatant'), playerStack = player.closest('.combatant-stack');
   const playerFrameBox = playerFrame.getBoundingClientRect(), stackBox = playerStack.getBoundingClientRect();
   const centreX = playerFrameBox.left + playerFrameBox.width / 2, centreY = playerFrameBox.top + playerFrameBox.height / 2;
+  // This fixture moves only sideways; keep the production target's fitted
+  // vertical anchor, which may already be clamped above the hand.
+  const playerHitY = playerFrameBox.top + parseFloat(getComputedStyle(playerFrame, '::after').top) * zoom;
   const sideX = Math.max(fieldBox.left + fieldBox.width * 0.28, centreX + stackBox.width / 2 + 20);
   playerStack.style.translate = ((sideX - playerAfter.left - playerAfter.width / 2) / zoom) + 'px 0';
-  const playerMoved = player.getBoundingClientRect();
-  playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerFrameBox.left) / zoom) + 'px');
-  playerFrame.style.setProperty('--enemy-hit-y', ((playerMoved.bottom - playerFrameBox.top) / zoom) + 'px');
+  const playerMoved = player.getBoundingClientRect(), playerMovedFrameBox = playerFrame.getBoundingClientRect();
+  playerFrame.style.setProperty('--enemy-hit-x', ((playerMoved.left + playerMoved.width / 2 - playerMovedFrameBox.left) / zoom) + 'px');
+  playerFrame.style.setProperty('--enemy-hit-y', ((playerHitY - playerMovedFrameBox.top) / zoom) + 'px');
   if (playerMoved.width >= 24 || Math.abs(playerMoved.bottom - playerAfter.bottom) > 1
       || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
     throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');

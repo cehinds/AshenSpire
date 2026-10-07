@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1689"
   },
   {
+    "id": "pr-1690",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Landscape targets clear the intent labels",
+    "detail": "Enemy tap areas and health columns move below nearby intent controls when space is tight, while their figures keep the same ground positions. The overlap check keeps the player's fitted tap area above the hand, and all five desktop and phone layouts are checked independently.",
+    "build": "0.7.1.1056",
+    "pullRequest": 1690,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1690"
+  },
+  {
     "id": "pr-1688",
     "date": "2026-10-06",
     "group": "2026-10-06",

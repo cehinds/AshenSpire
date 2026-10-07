@@ -274,8 +274,14 @@ export function wireBattlefieldStage(field, model) {
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
         .map(footer => footer.getBoundingClientRect().width)),
+      controls: [...frame.querySelectorAll('.combatant-leading button')]
+        .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
     const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
+      obstacles: boxes.flatMap(box => box.controls.map(rect => ({
+        left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
+        top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
+      }))),
       targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
         .filter(box => box.frameRect).map(box => ({
         id: box.id,
@@ -291,13 +297,14 @@ export function wireBattlefieldStage(field, model) {
           top: fieldRect.top + target.y, width: 44, height: 44 }, { zoom });
         frame.style.setProperty('--enemy-hit-x', `${local.left}px`);
         frame.style.setProperty('--enemy-hit-y', `${local.top}px`);
+        frame.dataset.targetObstructed = String(!!target.obstructed);
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
           left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: 0, width: 0, height: 0 }, { zoom });
+          top: fieldRect.top + target.y - hostRect.bottom, width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
-          footer.style.translate = `${offset.left}px 0`;
+          footer.style.translate = `${offset.left}px ${offset.top}px`;
           footer.style.position = 'relative';
           footer.style.zIndex = '900';
         }
