@@ -12,4 +12,6 @@
 .combat .combatant .alternative-silhouette { --edge-color:#d9bd7b;--edge:calc(.65px / var(--sprite-zoom,1)); filter:drop-shadow(var(--edge) 0 0 var(--edge-color)) drop-shadow(calc(-1 * var(--edge)) 0 0 var(--edge-color)) drop-shadow(0 var(--edge) 0 var(--edge-color)) drop-shadow(0 calc(-1 * var(--edge)) 0 var(--edge-color)); }
 .combat .combatant.enemy .alternative-silhouette { --edge-color:#c84136; }
 .combat .combatant .alternative-figure img { object-fit:fill; }
+/* Let the alpha-cropped figure own its box, including co-op's older 110px slot. */
+:root[data-layout='narrow'] .combat.coop .coop-seat .sprite:has(.alternative-figure) { width:max-content; height:auto; }
 .combat:has(.alternative-backdrop) .hand-area { background:transparent; }

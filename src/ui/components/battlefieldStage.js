@@ -43,7 +43,9 @@ export function wireBattlefieldStage(field, model) {
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
     const fieldRect = field.getBoundingClientRect();
-    const zoom = fieldRect.width / field.clientWidth || 1;
+    // clientWidth excludes a vertical scrollbar. Comparing it with the full
+    // rendered box inflated zoom on phone co-op and lifted feet off the floor.
+    const zoom = fieldRect.width / field.offsetWidth || 1;
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;

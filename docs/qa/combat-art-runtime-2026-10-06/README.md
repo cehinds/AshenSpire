@@ -68,6 +68,34 @@ updated creation and smithing while retaining the alternative battlefield.
   it uses its existing synthesized audio fallback. These are listed separately
   in `validation.json`. The portable playthrough has no HTTP errors.
 
+## Ground contact follow-up
+
+The phone co-op resize check found two placement defects: measuring zoom with
+`clientWidth` excluded the scrollbar, and the older co-op stylesheet forced a
+110px host around the 190px alpha-cropped artwork. The fitter now measures the
+whole field box, and alternative co-op figures keep their intrinsic dimensions.
+
+The browser check measures sprite bottoms against the current formation ground,
+samples the rendered ground layer beneath each sprite, and requires four ordered
+sections: far, landmark, ground and foreground. It waits for resizing to settle;
+attack and recoil motion are allowed to leave the resting baseline. The content
+test also requires separate desktop and phone image paths for each section.
+
+The corrected source passed all 64 scene/device combinations (192 measured
+sprite placements), both co-op sizes and both resize directions. The largest
+resting-baseline difference was 0.19px; ground alpha beneath every measured
+sprite was at least 249/255. All 12 focused tests passed.
+
+Build `0.7.1.1047` (`1b565d8ecd`) passed the same 64 scene/device checks,
+both co-op sizes and both resize directions. Desktop/phone card play through
+turn 2 passed in the pack and portable builds. Build identity (9 checks),
+shipped-file verification (12), and changelog ordering (812) passed. The first
+pack sweep exposed a filename-based phone-tier assertion in the harness;
+pack images have hash URLs. The assertion now compares the selected image
+with its picture phone source, and the phone sweep passed on rerun.
+
+[Ground-contact measurements](ground-contact.json) · [Phone co-op after correction](phone-coop-grounded.png)
+
 ## Evidence and acceptance boundary
 
 - [Desktop gameplay, turn 2](desktop-turn2.png)

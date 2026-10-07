@@ -59,6 +59,11 @@ test('all canonical settings retain independent device transforms and four pinne
     const scene = catalog.scenes[id];
     for (const [device, layout] of Object.entries(scene.devices)) {
       assert.equal(layout.layers.length, 4, `${id}/${device}`);
+      assert.deepEqual(layout.layers.map(layer => catalog.sceneLayers[layer.id]?.kind),
+        ['far', 'landmark', 'ground', 'foreground'], `${id}/${device} sections`);
+      for (const tier of ['path', 'mobilePath'])
+        assert.equal(new Set(layout.layers.map(layer => catalog.sceneLayers[layer.id]?.[tier])).size,
+          4, `${id}/${device}/${tier} must use separate section images`);
       assert.equal(new Set(layout.layers.map(l => l.depth)).size, 4);
       for (const layer of layout.layers) {
         const art = catalog.sceneLayers[layer.id];
