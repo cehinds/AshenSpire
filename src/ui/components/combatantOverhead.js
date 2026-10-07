@@ -41,7 +41,7 @@ export function combatantInfo(name, open) {
   return node;
 }
 
-export function combatantIntent(intent, content) {
+export function combatantIntent(intent, content, registries = null) {
   const stance = combatIntentStance(intent);
   const stanceLabel = stance.charAt(0).toUpperCase() + stance.slice(1);
   const badge = intent?.hidden ? {
@@ -68,7 +68,7 @@ export function combatantIntent(intent, content) {
   const tooltip = () => {
     if (intent?.hidden) return `<div class="tt-title">Stance: ${esc(stanceLabel)}</div>Exact move, damage, and effects unread. Wisdom and Intelligence improve intent reads.`;
     const body = typeof content === 'function' ? content() : content;
-    const tags = intent?.profile ? combatProfileTags(intent.profile) : [];
+    const tags = intent?.profile ? combatProfileTags(intent.profile, registries) : [];
     return `${body || ''}${tags.length ? `<div class="combat-rule-hint">${tags.map(tag => `${esc(tag.label)}: ${esc(tag.blurb)}`).join('<br>')}</div>` : ''}`;
   };
   attachTooltip(node, tooltip, { selectionFirst: true, intent: 'above', align: 'center' });

@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { combatProfileFor, combatProfileTags } from '../src/model/combatCardProfile.js';
+import { enemyMoveCards } from '../src/model/enemyMoveCards.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { renderCard, cardDetailHtml } from '../src/ui/components/card.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -89,4 +90,46 @@ test('weapon-art source metadata preserves every authored Counter identity on th
     assert.equal(card.dataset.combatManeuver, 'counter', cardId);
     assert.ok(labelsFor(card).includes('Counter'), cardId);
   }
+}));
+
+test('active tactical metadata owns enemy move descriptions, card tags and inspection tooltips', () => withCardDom(labelsFor => {
+  const renamed = {
+    'camp:physical': 'Run Might', 'maneuver:attack': 'Run Jab',
+    'maneuver:counter': 'Run Reversal', 'counter:melee': 'Run Melee Reply', 'damage:frost': 'Run Ice',
+  };
+  const custom = createRegistries({ ...contentBundle,
+    tags: contentBundle.tags.map(tag => renamed[tag.id] ? { ...tag, label: renamed[tag.id],
+      glyph: 'R', color: 'ABCDEF', blurb: `Active description for ${renamed[tag.id]}.` } : tag),
+    // Typed attack identity can add a damage chip even when the base card's
+    // junction has no damage tag. That chip must use the same active metadata.
+    cards: contentBundle.cards.map(card => card.id === 'strike'
+      ? { ...card, attack: { damageType: 'frost' } } : card),
+  });
+  const ref = { cardId: 'strike' };
+  const tags = combatProfileTags(resolveCard(custom, ref), custom);
+  for (const tag of tags) {
+    assert.equal(tag, custom.tags.find(row => row.id === tag.id), 'the active registry row owns all presentation fields');
+    assert.equal(tag.label, renamed[tag.id]);
+    assert.equal(tag.glyph, 'R');
+    assert.equal(tag.color, 'ABCDEF');
+    assert.equal(tag.blurb, `Active description for ${renamed[tag.id]}.`);
+  }
+  const card = renderCard(custom, ref, { inspection: false });
+  assert.ok(labelsFor(card).includes('Run Ice'));
+  assert.ok(labelsFor(card).includes('Run Might'));
+  assert.ok(labelsFor(card).includes('Run Jab'));
+  assert.ok(!labelsFor(card).includes('Cold'));
+  const tooltip = cardDetailHtml(custom, ref);
+  assert.match(tooltip, /Active description for Run Ice/);
+  assert.match(tooltip, />Run Ice<\/span>/);
+  const moves = enemyMoveCards(custom.enemies.get('gildedKnight'), { registries: custom });
+  const parry = moves.find(move => move.moveId === 'parry');
+  for (const id of ['camp:physical', 'maneuver:counter', 'counter:melee']) {
+    const tag = parry.combatTags.find(row => row.id === id);
+    assert.equal(tag, custom.tags.find(row => row.id === id));
+    assert.ok(parry.meta.includes(renamed[id]));
+    assert.ok(parry.detail.includes(`Active description for ${renamed[id]}.`));
+  }
+  assert.deepEqual(combatProfileTags({ camp: 'physical' }, { tags: [] }), [],
+    'a supplied empty active registry does not fall back to shipped metadata');
 }));

@@ -276,10 +276,11 @@ test('Deathblow shares one Slashing rider across its separately queued damage ef
   }
 });
 
-test('multi-effect Piercing spends one bypass per target and resets for the next card', () => {
+test('multi-effect, multi-hit AoE Piercing shares per-target budget and resets next card', () => {
   const registries = createRegistries({ ...legacyContentBundle,
     cards: legacyContentBundle.cards.map(card => card.id === 'rimeThrust' ? { ...card,
-      effects: [{ op: 'damage', target: 'allEnemies', amount: 4 }, { op: 'damage', target: 'allEnemies', amount: 4 }],
+      effects: [{ op: 'damage', target: 'allEnemies', amount: 4, hits: 2, repeat: 2 },
+        { op: 'damage', target: 'allEnemies', amount: 4, hits: 2 }],
     } : card),
   });
   for (const foundation of [false, true]) for (const coopMode of [false, true]) {
@@ -296,6 +297,8 @@ test('multi-effect Piercing spends one bypass per target and resets for the next
       const expectedLoss = instanceId === 'card1' ? 2 : 4;
       for (const enemy of c.enemies) assert.equal(enemy.hp, 200 - expectedLoss,
         `one bypass per card and target, foundation=${foundation}, coop=${coopMode}`);
+      assert.equal(c.eventLog.filter(event => event.type === 'damageDealt' && event.sourceId === 'player').length,
+        instanceId === 'card1' ? 12 : 24, 'all six contacts resolve against both targets');
     }
   }
 });

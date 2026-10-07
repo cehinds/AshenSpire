@@ -1357,7 +1357,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return combatantIntent(previewIntent(combat, enemy.id), () => {
       const intent = combatantSubject('enemy', enemy).intent;
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
-    });
+    }, registries);
   }
 
   function renderEnemies() {

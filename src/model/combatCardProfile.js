@@ -1,4 +1,5 @@
 import { objectTagIds, resolve } from '../content/tags.js';
+import { tagService } from './tagService.js';
 
 const CAMP = new Set(['physical', 'spell']);
 const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash']);
@@ -36,14 +37,17 @@ export function combatProfileFor(carrier = {}) {
 }
 
 /** Registry labels and blurbs stay shared across card chips and enemy intents. */
-export function combatProfileTags(carrier = {}) {
+export function combatProfileTags(carrier = {}, registries = null) {
   carrier ??= {};
   const profile = carrier.camp ? carrier : combatProfileFor(carrier);
-  return resolve([
+  const ids = [
     profile.camp && `camp:${profile.camp}`,
     profile.maneuver && `maneuver:${profile.maneuver}`,
     profile.school && `school:${profile.school}`,
     profile.damageType && `damage:${profile.damageType}`,
     profile.counterMode && `counter:${profile.counterMode}`,
-  ].filter(Boolean));
+  ].filter(Boolean);
+  // Runtime surfaces must describe the active bundle, including intentionally
+  // absent metadata. Static authoring callers can still use shipped labels.
+  return registries ? tagService(registries).resolve(ids) : resolve(ids);
 }

@@ -21,7 +21,7 @@ function effectText(effect, registries) {
 export function enemyMoveCards(def, { enemy = null, preview = null, registries = null } = {}) {
   return Object.entries(def.moves || {}).map(([moveId, move]) => {
     const profile = combatProfileFor({ ...move, enemyId: def.id, moveId });
-    const combatTags = combatProfileTags(profile);
+    const combatTags = combatProfileTags(profile, registries);
     const active = !preview?.hidden && preview?.moveId === moveId;
     const liveDamage = active && preview.damage != null;
     const damage = liveDamage ? preview.damage : enemyMoveDamage(enemy, move);

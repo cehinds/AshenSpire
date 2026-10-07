@@ -768,7 +768,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return wrap;
   }
   function intentEl(intent) {
-    return combatantIntent(intent, () => intentTooltip(intent, { victim: 'each hero' }));
+    return combatantIntent(intent, () => intentTooltip(intent, { victim: 'each hero' }), registries);
   }
 
   function readEnemyIntent(entity, def) {

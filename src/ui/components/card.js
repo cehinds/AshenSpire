@@ -130,7 +130,7 @@ export function renderCard(registries, ref, opts = {}) {
   // the ones that stood here.
   const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null });
   const combatProfile = combatProfileFor(def);
-  const combatTags = combatProfileTags(combatProfile);
+  const combatTags = combatProfileTags(combatProfile, registries);
   const model = { ...rawModel, tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   const sourcePiece = ref.sourceArmamentId
     ? registries.equipment?.armaments?.find(piece => piece.id === ref.sourceArmamentId)
@@ -576,7 +576,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
   const service = tagService(registries);
   const tags = def.cardTags != null ? service.resolve(def.cardTags) : service.tagsOf('card', def);
   for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
-  for (const tag of combatProfileTags(combatProfile).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }
