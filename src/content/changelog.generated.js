@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Counter cards show the reply they prepare",
     "detail": "Choosing an enemy for immediate support no longer changes the printed Counter damage. One-use damage charges stay in the preview when an earlier damage effect has no contacts. Solo and co-op show the same armed reply.",
-    "build": "0.7.1.1091",
+    "build": "0.7.1.1093",
     "pullRequest": 1711,
     "url": "https://github.com/cehinds/AshenSpire/pull/1711"
   },
