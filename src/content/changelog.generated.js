@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1688",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Short-screen controls keep their own space",
+    "detail": "Crowded enemy feet and health columns stay separate without moving their artwork. Intent labels remain reachable in short landscape views, and the merchant header sits below the HUD. Browser checks follow the actual tap areas; portable build checks include authored alternative artwork.",
+    "build": "0.7.1.1054",
+    "pullRequest": 1688,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1688"
+  },
+  {
     "id": "pr-1676",
     "date": "2026-10-06",
     "group": "2026-10-06",

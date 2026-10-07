@@ -908,6 +908,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 export function wireShopLayout(root) {
   const frame = root.querySelector('.shop-frame');
   const body = root.querySelector('.shop-body');
+  const hud = root.parentElement?.querySelector(':scope > .shared-hud');
   let pending = 0;
   let observer = null;
   function apply() {
@@ -915,6 +916,11 @@ export function wireShopLayout(root) {
     if (!root.isConnected) { release(); return; }
     const style = getComputedStyle(document.documentElement);
     const rem = parseFloat(style.fontSize) || 16;
+    // The short landscape HUD is absolute. Reserve its measured bottom before
+    // sizing the scrollable pane, so the merchant's close button stays exposed.
+    const zoom = Number(style.getPropertyValue('--ui-zoom')) || 1;
+    const clearance = hud ? Math.max(0, hud.getBoundingClientRect().bottom - root.getBoundingClientRect().top) / zoom + 8 / zoom : 0;
+    root.style.setProperty('--merchant-hud-clearance', `${clearance}px`);
     // How wide a resting card is ACTUALLY drawn. `--card-w-glance` is what
     // main.js projects after a player's card-size overrides and the phone's
     // own variant, and it is the same property the shelf's own cap reads, so
@@ -936,7 +942,6 @@ export function wireShopLayout(root) {
       const gap = 6;
       // Four rows plus three gaps and the shelf's two 2px padding edges.
       // Short landscape windows retain a readable minimum and scroll.
-      const zoom = Number(style.getPropertyValue('--ui-zoom')) || 1;
       root.style.setProperty('--merchant-row-height', `${Math.max(88 / zoom, Math.floor((port.clientHeight - gap * 3 - 4) / 4))}px`);
     }
     if (plan.detailMax == null) root.style.removeProperty('--shop-detail-max');
@@ -954,6 +959,7 @@ export function wireShopLayout(root) {
     observer = new ResizeObserver(schedule);
     observer.observe(frame);
     observer.observe(body);
+    if (hud) observer.observe(hud);
   }
   apply();
   return { apply, release };

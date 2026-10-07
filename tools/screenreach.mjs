@@ -441,14 +441,18 @@ const PROBE = `(() => {
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (hit && (hit === c || c.contains(hit))) continue;
-    // Formation frames span a grid cell. Their sprite or 44 px frame target
-    // receives the tap; the frame centre may sit beneath another fighter.
+    // Formation frames span a grid cell. Measure the actual 44 px frame tap
+    // target: final fitting can pack it away from an overlapping sprite foot.
+    // The frame centre may still sit beneath another fighter.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
       const sprite = c.querySelector('.combatant-card > .sprite');
       const sr = sprite?.getBoundingClientRect();
+      const targetStyle = getComputedStyle(c, '::after');
+      const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
+      const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
       const reach = c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
-        ? exposedPatch(c, 24, { left: sr.left + sr.width / 2 - 22, right: sr.left + sr.width / 2 + 22,
-            top: sr.bottom - 22, bottom: sr.bottom + 22 },
+        ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
+            top: ty - halfHeight, bottom: ty + halfHeight },
           top => top === c || top === sprite || sprite.contains(top))
         : exposedPatch(sprite, 24);
       if (reach) continue;

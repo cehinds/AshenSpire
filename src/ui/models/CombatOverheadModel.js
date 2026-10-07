@@ -6,6 +6,18 @@ export function combatOverheadAnchorX({ width, x, controlWidth, inset = 6 }) {
   return Math.min(Math.max(x, inset + half), width - inset - half);
 }
 
+// Tap areas follow the measured feet until final sprite fitting brings two
+// formation rows together. Space only these targets, inside the stage, so a
+// neighbouring figure cannot take the owner's complete tap area.
+export function combatTargetAnchors({ width, height, targets, size = 44 }) {
+  const half = size / 2;
+  const controls = targets.map(target => ({ ...target, side: 'target', width: Math.max(size, target.width || 0),
+    y: Math.min(Math.max(target.y, half), Math.max(half, height - half)) }));
+  const anchors = combatOverheadAnchors({ width, inset: 0, gap: 2,
+    controls: controls.map(target => ({ ...target, top: target.y - half, bottom: target.y + half })) });
+  return anchors.map(anchor => ({ ...anchor, y: controls.find(target => target.id === anchor.id).y }));
+}
+
 // Edge clamping consumes the gap between neighbouring reserved slots. Pack
 // controls sharing a side and measured vertical band, leaving their artwork
 // and ground anchors alone. Fitted grounds can put separate formation rows in
