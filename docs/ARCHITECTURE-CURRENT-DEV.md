@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `codex/alternative-art-resolution-480-720`
-- Source commit: `c52d200b7c39aa37d8c5e22920518679308de20d`
+- Source branch: `alternative/dev`
+- Source commit: `01f09e93f1f4fa0c2f57c9995926aad614e4eb09`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **10924**.
-Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 37, `.csv` 28, `.gitattributes` 1, `.gitignore` 3, `.html` 50, `.jpg` 90, `.js` 675, `.json` 461, `.log` 1, `.md` 182, `.mjs` 724, `.nojekyll` 1, `.nsi` 1, `.png` 1221, `.ps1` 10, `.py` 37, `.sh` 4, `.sql` 1, `.svg` 729, `.txt` 33, `.webp` 6590, `.woff2` 9, `.yml` 17, `(none)` 1.
+Tracked files: **10925**.
+Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 37, `.csv` 28, `.gitattributes` 1, `.gitignore` 3, `.html` 50, `.jpg` 90, `.js` 675, `.json` 462, `.log` 1, `.md` 182, `.mjs` 724, `.nojekyll` 1, `.nsi` 1, `.png` 1221, `.ps1` 10, `.py` 37, `.sh` 4, `.sql` 1, `.svg` 729, `.txt` 33, `.webp` 6590, `.woff2` 9, `.yml` 17, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
