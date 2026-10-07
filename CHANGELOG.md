@@ -34,7 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
-- **Square targets and starting abilities** ([#1703](https://github.com/cehinds/AshenSpire/pull/1703), `0.7.1.1065`). Enemy selection buttons form a square grid near their foes and move apart when crowded. After armaments, Starseer and Herald choose two distinct Rank 1 spells; Reaver and Rogue choose one Rank 1 combat maneuver. Legal choices follow equipped weapons and the selected cards enter the saved starting deck.
+- **Square targets and starting abilities** ([#1703](https://github.com/cehinds/AshenSpire/pull/1703), `0.7.1.1076`). Enemy selection buttons form a square grid near their foes and move apart when crowded. After armaments, Starseer and Herald choose two distinct Rank 1 spells; Reaver and Rogue choose one Rank 1 combat maneuver. Legal choices follow equipped weapons and the selected cards enter the saved starting deck.
+
+- **Clearer header with fewer controls** ([#1702](https://github.com/cehinds/AshenSpire/pull/1702), `0.7.1.1074`). Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.
+
+- **Combat matchup rules defined** ([#1704](https://github.com/cehinds/AshenSpire/pull/1704), `0.7.1.1064`). Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.
 
 - **Rear sprite studies archived for authoring** ([#1697](https://github.com/cehinds/AshenSpire/pull/1697), `0.7.1.1061`). The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.
 

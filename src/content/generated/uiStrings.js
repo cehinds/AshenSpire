@@ -6292,7 +6292,7 @@ export const uiStrings = [
     "id": "settings.row.deckEditingWhere",
     "extends": "",
     "short": "Where you can edit",
-    "full": "Free opens the editor from the map and the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.",
+    "full": "Free opens the editor from the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.",
     "tip": ""
   },
   {

@@ -25,7 +25,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 14 CSS `url(../assets/…)` backdrops (for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
-| 4 | Combat rules | **built** | No open M1 deviation: Warrior's Vow enters the stance the player chooses (DEVELOPER "M1 known deviations"; `tests/warriors-vow.test.mjs`). |
+| 4 | Combat rules | **built; tactical extension planned** | Legacy rules ship. §4.7 specifies the next tagged card/move update before its implementation PR; that PR records delivery and validation. Warrior's Vow enters the chosen stance. |
 | 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
@@ -241,6 +241,8 @@ effects: [
 - Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
+
+`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much buildup from a meter status). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
 
 **Card rating values are cost-derived.** Before card definitions enter the
 registries, primary values are recalculated as:
@@ -984,7 +986,7 @@ Some cards read "If in [stance]: bonus" (predicate `inStance`). Stance icon show
 
 ### 4.6 Enemy intents
 
-- Every enemy shows next action as icon + number: **Attack (exact total damage, `n×m` for multi-hit — numbers already include its Strength and your Vulnerable, recomputed live)**, Block, Buff, Debuff, Unknown (rare, for one scripted boss move), Staggered.
+- Legacy unprofiled enemies show next action as icon + live number: Attack, Block, Buff, Debuff, Unknown or Staggered. Profiled enemy moves follow §4.7: stance stays visible, while the engine may conceal selected move and exact values. Revealed Attack values show exact total damage (`n×m` for multi-hit), including current attacker and defender modifiers.
 - Move selection: per-enemy **weighted state machine** on stream `enemyAI`, with StS-style repeat constraints declared per move (`maxConsecutive: 1|2`).
 - Bosses declare phase triggers (`phases`, §3.6) keyed on HP thresholds.
 
@@ -1005,6 +1007,67 @@ Enemy definition shape (content file):
   firstMove: 'slash',      // optional scripted opener
 }
 ```
+
+### 4.7 Tagged combat cards and readable enemy stances
+
+**Contract status: planned.** This section must land in its own specification PR before the implementation PR. It extends ordinary action resolution for authored tactical profiles; it does not replace persistent class stances (§4.5), invent a new card type, or claim the full combat/equipment cutover is complete. Design examples and unimplemented suggestions live in [combat-cards-design](docs/combat-cards-design.md).
+
+**Identity and authoring**
+
+- Cards and enemy moves share combat camps `physical` and `spell`. Physical maneuver vocabulary is `attack`, `defend`, `counter`, `sweep`, `ranged`, `smash`. Defensive or reactive spell cards may also carry `defend` or `counter`; utility cards may carry no maneuver.
+- Spell schools are `frost`, `fire`, `lightning`, `force`, `alteration`, `illusion`, `divine`, `decay`. School describes an authored ability family. It does not silently create a status, refund, draw or defensive effect; those remain printed effect recipes. Damage identity is independent: a physical weapon can inflict Cold, and an Alteration spell can inflict Piercing.
+- `content/source/nodes.csv`, `familyNodes.csv`, `tagFamilies.csv` and `tagging.csv` remain the only authored tag source. Namespaces `camp:*`, `maneuver:*`, `school:*` and `counter:*` prevent collisions with `classification.attack` and class stances. Each carrier has one camp, at most one maneuver and one school; a spell has one school. Counter reach is `melee`, `ranged` or `spell` and appears only on Counter carriers.
+- Enemy actions are family `enemyMove`, source `enemyMoves`, scoped by `enemyId`; their whole key is `(enemyId, moveId)`. Flattening the authored move tables for validation does not create a second move definition. Registered enemy moves receive their own joined tags; they never inherit creature identity as an attack profile.
+- Runtime `combatProfile` contains `{ camp, maneuver, school, damageType, counterMode }`. Unassigned values are `null`. Weapon-dependent cards resolve damage from equipped attack source and explicit components rather than inventing a fixed type from a card name. Active registry tags and equipment `cardTags`, including explicit empty arrays, are authoritative. Global shipped associations are not a fallback inside engine resolution for custom content.
+- Stable damage IDs remain `blunt`, `piercing`, `slashing`, `frost`, `fire`, `lightning`, `arcane`, `sacred`, `decay`. Player-facing labels for the last four renamed categories are Cold (`frost`), Force (`arcane`), Holy (`sacred`) and Necrotic (`decay`). Accepted input aliases do not create duplicate tag identities or damage components.
+
+**Physical matchups and timing**
+
+| Maneuver | Implemented matchup contract | Answer and limit |
+|---|---|---|
+| Attack | Against prepared Smash, delayed/charging action or spellcasting, multiply listed and ordinary Poise pressure by 1.5; HP damage receives no automatic bonus | Guard and eligible melee Counter answer Attack. Bonus does not itself cancel or stun; normal break rules decide that |
+| Defend | Resolve printed protection/support normally | Smash rewards attacking physical Guard. No automatic immunity or free retaliation |
+| Counter | Prepare one deferred reaction plus Guard/Ward support, detailed below | Sweep, Force, Piercing and physical Ranged bypass melee Counter; bypass does not consume it |
+| Sweep | Windmill-style attack bypasses melee Counter | Guard can absorb it. Ranged cards avoid melee replies, not the damage of every enemy melee move |
+| Ranged | Physical projectiles do not trigger melee Counter | Ranged Counter or Spell Counter can intercept them. Defensive Alteration uses its printed Ward/Guard effects |
+| Smash | If physical Guard is positive before the hit, multiply HP damage by 1.5. Breaking that Guard adds 3 Poise damage | Fast Attack pressures preparation; eligible melee Counter halves and may return the hit. Ward alone does not grant the Smash multiplier |
+
+- Apply tactical multipliers after normal damage/typed-defense calculation and critical resolution, before Block absorption; floor nonnegative result. Preview uses the same calculation without consuming charges, draining Ward, applying statuses or advancing random streams.
+- Counter retains immediate support effects, including printed Block, draw, preparation and hostile statuses. Its `damage` and `poiseDamage` effects become deferred base reply values; evaluate their conditions after normal card preparation/payment and before queuing this Counter's immediate support or granting its Guard/Ward. The Counter's own Block must not satisfy its deferred damage conditions. Counter targeting excludes only those deferred effects: immediate hostile support still requires an eligible foe.
+- A Counter without printed Block grants 4 base Guard. Every Counter grants 2 base magical Ward; existing Block/rating rules still apply. A card with no printed HP damage has configurable default reply base 6. A new Counter replaces the previous reaction; charges never stack.
+- Player Counter survives the ensuing enemy phase and expires at the player's next turn start. Enemy Counter becomes active and grants its Guard/Ward once when its visible next stance is selected, protecting it during the intervening player phase; executing that same move does not grant the prepared defense again; it expires at that enemy's next turn start. Stagger immediately clears that entity's armed Counter, including a stance already prepared before the player phase; it cannot retaliate while interrupted. Death likewise prevents retaliation. Existing turn-skip and delayed-move cancellation rules remain authoritative.
+- First eligible **positive** incoming attack consumes the single reaction. Multiply that hit by 0.5. Full absorption (`HP loss = 0` and blocked amount covers the reduced positive hit) queues retaliation against the attacker: `floor(baseReplyDamage × 1.5) + 5 + explicitBonus`. Partial absorption produces no reply. A zero reduced hit produces no reply.
+- Listed positive reply Poise damage becomes `floor(baseReplyPoise × 1.5)`. An absent listed Poise value does not create reply Poise damage. Reaction actions carry an explicit reaction marker and cannot start another Counter or damage-rider chain.
+- Melee Counter covers physical Attack/Smash except physical projectiles, Sweep and Force/Piercing. Ranged Counter covers physical projectiles only; it suppresses Piercing's Guard bypass for the intercepted hit. Spell Counter covers incoming spells or physical projectiles, with the same Piercing interception. Spell Counter against a physical projectile drains Ward only, with no HP/ordinary Guard spill or reply Poise; against an incoming spell it may return ordinary Health-capable damage. The incoming move determines caster eligibility, so hybrid enemies behave correctly.
+- Enemy Counter base damage is explicit `counterDamage` metadata, falling back to ordinary move damage and then configured default. Optional `counterPoiseDamage` supplies its listed reply Poise. Existing support payloads and weighted move-selection numbers are retained.
+
+**Damage riders**
+
+Riders resolve once per committed root action (player card or enemy move) and target, with no reaction chaining. Status riders require positive HP loss; an already printed matching status suppresses the extra automatic status. Multi-hit cards do not receive one extra rider per hit.
+
+| Damage label | Rider |
+|---|---|
+| Blunt | +2 Poise damage |
+| Piercing | Bypass up to 2 physical Guard once; melee Counter bypass, except specialized ranged/spell interception |
+| Slashing | Apply 1 Bleed after HP loss |
+| Cold | Apply 1 Frost after HP loss |
+| Fire | Apply 1 Burn after HP loss |
+| Lightning | Apply 1 Weak, presented as Sap, after HP loss |
+| Force | Strip up to 2 Ward; bypass melee Counter. Ward drain never spills into HP or ordinary Guard |
+| Holy | After HP loss, cleanse one stack from the attacker's first eligible hostile status in configured priority order |
+| Necrotic | Apply 1 Crimson Blight after HP loss. This is combat status buildup, not persistent run corruption |
+
+All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
+
+**Intent visibility and persistence**
+
+- Design assumption resolving the incomplete user sentence “base 70% chance to be”: **70% chance to conceal the exact selected action**, not 70% hit chance. Attacks retain existing accuracy/evade rules. For profiled moves, `hiddenChance = clamp(0.70 − Wisdom × 0.02 − Intelligence × 0.01, 0, 0.95)`. Reductions are percentage points. Configuration may override coefficients; Wisdom 10/Intelligence 5 gives 45% hidden.
+- Always show a stance: Attacking, Defending, Countering, Sweeping, Ranged, Smashing, Casting, Preparing or Staggered. Physical support actions use Preparing where no actual attack/defense maneuver exists. Hidden previews expose camp/maneuver and stance only; selected move ID, exact damage/hits, Block, delay payload and school/type details are omitted through an allowlist.
+- Visibility rolls once per newly selected intent on independent deterministic stream `enemyIntentVisibility`; inspecting or previewing never rerolls. Co-op records one read per living observer. Existing delayed intent retains its committed read until a new selection occurs.
+- Persist the committed Counter charge/carrier/lifetime and enemy visibility/read state with combat entities, plus the random-stream counters. Reload restores decisions; it does not grant another reaction or reveal roll.
+- The enemy move catalog may list its authored move set and base values even when the current selection is hidden, but it must not highlight which catalog entry is selected or show its live preview. A catalog is reference information, not a back door into concealed intent.
+
+**Out of scope for this contract:** new automatic school matchup loops, new feats/relics, school-specific deck-manipulation primitives and persistent Ashen Blight corruption. [Ashen Blight proposal](docs/ashen-blight-proposal.md) remains proposed until its own state/save/preview contract and implementation land. Ordinary Exhaust and Crimson Blight must not acquire persistent corruption as a side effect of tagging existing cards.
 
 ---
 
@@ -2472,7 +2535,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 | Key | Type | Shipped default | Meaning |
 |---|---|---|---|
 | `deckEditing` | bool | on | The editor exists at all. When it is off, no door opens it, and the deck changes only through today's paths: rewards, removal, and the Armoury. |
-| `deckEditingWhere` | choice (dropdown) `free` \| `restOnly` | `free` | **Free** opens the editor from the map's Quick Access and from the Armoury at any moment out of combat, including right after character creation and before the first node. **Rest sites only** offers it only as an option card on the Rest screen of a place whose tag set carries the new `deckEdit` service tag. `deckEdit` is a service marker like `smith`, with no rule. `tagging.csv` gives it to **shrine**, **inn** and **chapel**, and not to camp. |
+| `deckEditingWhere` | choice (dropdown) `free` \| `restOnly` | `free` | **Free** opens the editor from the Armoury at any moment out of combat, including right after character creation and before the first node. **Rest sites only** offers it only as an option card on the Rest screen of a place whose tag set carries the new `deckEdit` service tag. `deckEdit` is a service marker like `smith`, with no rule. `tagging.csv` gives it to **shrine**, **inn** and **chapel**, and not to camp. |
 | `deckMinSize` | number ≥ 0 | 10 | The fewest cards the editor lets you confirm. |
 | `deckMinUnlimited` | bool | off | When on, there is no minimum and `deckMinSize` is ignored; the `deckMinSize` row is shown disabled. |
 | `deckMaxSize` | number ≥ 1 | `deckRules.defaults.deckMaxSize` | The most cards the editor lets you confirm. A max below the effective min is refused in Settings by name. |
@@ -2519,7 +2582,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 - **Target size.** Every target is at least 48 CSS px on a coarse pointer and at least 44 px otherwise, and text is at least 11 px at 360×640 (FINISH §8).
 
 *Falsify:*
-- With defaults, a fresh run's map Quick Access offers **Deck**. With `restOnly` it does not, and the shrine's Rest screen does while the camp's does not.
+- The header has no **Edit Deck** button; with defaults a fresh run opens **Edit Deck** through the Armoury. With `restOnly`, the shrine's Rest screen offers it while the camp's does not.
 - Removing a weapon art moves the same instance to `run.sideboard` with its fields, and re-adding it moves it back. A further copy cannot be added when every owned copy is already in the deck.
 - The sideboarded art appears in `run.collection` and in the smith's installable list.
 - Removing an equipped Strike retires its slot and sideboards it, and adding a Strike un-retires that slot first.
@@ -2724,7 +2787,7 @@ Each item is one PR into `dev`, test-first, with a receipt, and a screenshot and
 
 1. **This SPEC PR**, with the research note and FINISH §14.
 2. **The deck rules engine and settings.** It adds `deckRules.js`, the Deck settings group, `run.sideboard` (a schema bump), `deckEditRefusal`, and ordered draw in `createCombat`/`drawCards`. It has no UI beyond the settings rows.
-3. **The deck editor UI.** It adds `DeckEditorModel`, `mountDeckEditor`, the Quick Access and Rest doors, the `deckEdit` tag, and drag, tap and gamepad input.
+3. **The deck editor UI.** It adds `DeckEditorModel`, `mountDeckEditor`, the Armoury and Rest doors, the `deckEdit` tag, and drag, tap and gamepad input.
 4. **The shop-kind framework.** It adds `shops.js`, the offering roll with the guaranteed minimum, the Shops settings group, `stock.kind`, and the existing shelves re-expressed as offerings, with seeds byte-identical.
 5. **The market additions.** It adds the smith-stone shelf, armour, and inn rest, then consumables (skill books and revive tokens), sigils (inventory only), the quest event and companions. Each is its own PR if it grows past one review.
 6. **The blacksmith screen.** It adds refining, sigil slots and sigil install, art upgrade, and stack copy.
