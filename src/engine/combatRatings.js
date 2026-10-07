@@ -58,7 +58,7 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
   while (meter.value >= meter.max && breaks < 100) {
     meter.value -= meter.max;
     breaks++;
-    clearCombatCounter(target);
+    clearCombatCounter(target, ctx);
     if (target.kind === 'player') target.pendingActionLoss = (target.pendingActionLoss || 0) + cfg[magical && !single ? 'wardActionLoss' : 'poiseActionLoss'];
     else {
       target.skipNextTurn = true;

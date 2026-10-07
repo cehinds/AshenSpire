@@ -39,8 +39,16 @@ export function validateFoundationSnapshot(saved) {
 
 export function cardSourceSnapshots(ctx, def, source, card) {
   if (!ctx.foundation) return null;
-  return new Map((def.effects || []).filter((effect) => effect.op === 'damage')
+  const snapshots = new Map((def.effects || []).filter((effect) => effect.op === 'damage')
     .map((effect) => [effect, foundationCarrier(ctx, source, card, effect.attack)]));
+  // A Counter without printed damage still has an implicit retaliation. Capture
+  // its source at the same pre-hook boundary as authored damage effects. The
+  // null entry has no immediate effect; Counter preparation consumes the first
+  // captured carrier, while ordinary multi-source effects keep their own keys.
+  if (!snapshots.size && card.combatProfile?.maneuver === 'counter') {
+    snapshots.set(null, foundationCarrier(ctx, source, card));
+  }
+  return snapshots;
 }
 
 export function cardActions(ctx, def, source, target, card, meta, sourceSnapshots = null) {
