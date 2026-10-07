@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1703",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Square targets and starting abilities",
+    "detail": "Enemy selection buttons form a square grid near their foes and move apart when crowded. After armaments, Starseer and Herald choose two distinct Rank 1 spells; Reaver and Rogue choose one Rank 1 combat maneuver. Legal choices follow equipped weapons and the selected cards enter the saved starting deck.",
+    "build": "0.7.1.1065",
+    "pullRequest": 1703,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1703"
+  },
+  {
     "id": "pr-1697",
     "date": "2026-10-07",
     "group": "2026-10-07",

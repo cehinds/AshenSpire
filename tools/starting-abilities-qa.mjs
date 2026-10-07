@@ -25,10 +25,15 @@ try {
     await page.locator('#cz-next').click();
     if (classId === 'reaver') {
       await page.locator('#cz-equipment-section').selectOption('startingAbilities');
-      assert.equal(await page.locator('[data-equipment-section="startingAbilities"] [data-card-id="shieldBash"]').count(), 1);
-      await page.locator('#cz-equipment-section').selectOption('leftHand');
-      await page.locator('[data-hand="leftHand"][data-armament-id="empty-hand"] .equipment-choose').click();
-      assert.equal(await page.locator('[data-equipment-section="startingAbilities"] [data-card-id="shieldBash"]').count(), 0, 'changing armament refreshes maneuver requirements');
+      assert.equal(await page.locator('[data-equipment-section="startingAbilities"] .cc-ability-choice[data-card-id="shieldBash"]').count(), 1);
+      for (const hand of ['leftHand', 'rightHand']) {
+        await page.locator('#cz-equipment-section').selectOption(hand);
+        const emptyHand = page.locator(`[data-hand="${hand}"][data-armament-id="empty-hand"] .equipment-poker-card`);
+        await emptyHand.focus();
+        await emptyHand.press('Enter');
+      }
+      await page.locator('#cz-equipment-section').selectOption('startingAbilities');
+      assert.equal(await page.locator('[data-equipment-section="startingAbilities"] .cc-ability-choice[data-card-id="shieldBash"]').count(), 0, 'changing armament refreshes maneuver requirements');
       // Hidden face uses the same native disclosure click path; production dropdown is exercised below.
       await page.locator('#cz-equipment-section').selectOption('leftHand');
       await page.locator('[data-face="startingAbilities"]').dispatchEvent('click');
