@@ -556,6 +556,15 @@ ui-studio/workspace/settings.json
 # High-res art fetched by tools/fetch-art.mjs (docs/ART-REPO-PLAN.md)
 /.art-cache/
 
+# The high and common art trees live in cehinds/AshenSpire-art and reach a
+# checkout through the pinned release. The compact assets-mobile/ light tier
+# is tracked here; the high-resolution assets/ tree remains external.
+/art/
+/assets/
+/map-detail/
+/music/**/*.mp3
+/music/manifest.json
+
 # The Windows installer build (desktop/windows/build-installer.mjs): the staged
 # install tree, the packaged Electron app and AshenSpire-Setup-<version>.exe.
 build/windows-installer/
@@ -563,3 +572,12 @@ build/windows-installer/
 # Regenerable exports of the versioned player polish source kit.
 /docs/design/player-polish-asset-kit-2026-10-02.zip
 /docs/design/player-polish-asset-kit-2026-10-02.zip.sha256
+/docs/design/player-components-2026-10-03.zip
+/docs/design/player-components-2026-10-03.zip.sha256
+/docs/design/board-fidelity-2026-10-04.zip
+/docs/design/board-fidelity-2026-10-04.zip.sha256
+
+# Generated per-card release objects.
+/build/cards/
+/dist/cards/
+/build/**/cards/

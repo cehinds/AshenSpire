@@ -13,6 +13,7 @@
 // the board's input (ui.css .tut-veil is pointer-events:none; only the bubble
 // takes clicks). Even with every callout mispositioned, the player can play.
 
+import { t } from '../strings.js';
 import { anchorLocalBox } from '../fx.js';
 import { veilIsOpen } from './veil.js';
 import { actionLabel } from '../input.js';
@@ -32,16 +33,17 @@ import { el, button, buttonRow, titleS, prose } from '../kit/index.js';
 // to derive from. Said here rather than leaving the next reader to work out which
 // of the two rules applied to which line.
 const STEPS = [
-  { sel: '.energy-orb', title: 'Energy', text: 'Three energy each turn. Cards cost energy to play — spend it wisely.' },
+  { sel: '.energy-orb', title: () => t('combat.actions'), text: 'Cards spend stamina. It refills each turn. Sapphire diamonds around the orb show your available mana.' },
   { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'Enemies telegraph their next move. The number is the exact damage they will deal to you.' },
   { sel: '.hand .card', title: 'Play cards', text: 'Click a card or press 1–9. Attacks need a target — click an enemy, or drag the card onto it.' },
   { sel: '.end-turn', title: 'End your turn',
-    text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent energy and most Block are lost at your next turn.` },
+    text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent stamina and most Block are lost at your next turn.` },
 ];
 
-// What the bubble keeps off (place() below): the cards the player is being
-// taught to play. A selector, so it follows the hand wherever the layout puts it.
-const KEEP_CLEAR = '.hand .card';
+// Cards and their targets must remain clickable while the tutorial coaches
+// through play. A taller footer can otherwise move the bubble onto the player,
+// preventing the first self-targeted skill from being confirmed.
+const KEEP_CLEAR = '.hand .card, .combatant';
 
 export function mountTutorial(root, { onDone }) {
   const steps = STEPS.filter((s) => root.querySelector(s.sel));
@@ -127,7 +129,15 @@ export function mountTutorial(root, { onDone }) {
       at(box.left - b.width - GAP, midY),
       at(box.left, overHand),
       at(box.left + box.width - b.width, overHand),
+      at((view.width - b.width) / 2, MARGIN),
+      at(MARGIN, MARGIN),
+      at(view.width - b.width - MARGIN, MARGIN),
     ];
+    // Authored footer positions need not leave the same gaps as the default
+    // layout. Try the edges of the protected controls before falling back.
+    const xs = [MARGIN, view.width - b.width - MARGIN, ...clear.flatMap(k => [k.left - b.width - GAP, k.left + k.width + GAP])];
+    const ys = [MARGIN, view.height - b.height - MARGIN, ...clear.flatMap(k => [k.top - b.height - GAP, k.top + k.height + GAP])];
+    for (const y of ys) for (const x of xs) candidates.push(at(x, y));
     const pick = candidates.find((c) => !clear.some((k) => overlaps(c, k))) || candidates[0];
     bubble.style.left = `${pick.left}px`;
     bubble.style.top = `${pick.top}px`;
@@ -136,7 +146,7 @@ export function mountTutorial(root, { onDone }) {
 
   function show() {
     const step = steps[i];
-    veil.querySelector('.tut-title').textContent = step.title;
+    veil.querySelector('.tut-title').textContent = typeof step.title === 'function' ? step.title() : step.title;
     veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
     veil.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
     if (!place()) next(); // target vanished between filter and show
@@ -218,16 +228,27 @@ export function mountTutorial(root, { onDone }) {
   const FRAME_CREDIT_MS = 50;
   let resizeTimer = null;
   let settleRun = 0;
-  const targetKey = () => {
+  //
+  // AND THE KEY IS EVERYTHING place() READS, NOT ONLY THE TARGET. place() keeps
+  // the bubble off the KEEP_CLEAR cards, and the hand re-fans from its own
+  // deferred ResizeObserver layout (hand.js) — which can land after the 220 ms
+  // re-place without moving the step's target at all (Enemy intent, End Turn).
+  // A key of the target alone held still through that, and the bubble was left
+  // on a card (D45 undone by a resize). So the key is the target's box plus
+  // every keep-clear card's: either moving is a re-place.
+  const rectKey = (n) => {
+    const r = n.getBoundingClientRect();
+    return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`;
+  };
+  const settleKey = () => {
     const t = root.querySelector(steps[i]?.sel);
     if (!t) return '';
-    const r = t.getBoundingClientRect();
-    return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`;
+    return [t, ...root.querySelectorAll(KEEP_CLEAR)].map(rectKey).join('|');
   };
   function settle() {
     const run = ++settleRun;
     let prev = performance.now();
-    let last = targetKey();
+    let last = settleKey();
     let elapsed = 0; // rendered ms since settle began
     let still = 0;   // rendered ms the target has held its box
     const tick = () => {
@@ -236,7 +257,7 @@ export function mountTutorial(root, { onDone }) {
       prev = now;
       elapsed += dt;
       if (done || run !== settleRun || elapsed > SETTLE_MAX_MS) return;
-      const key = targetKey();
+      const key = settleKey();
       if (key !== last) { last = key; still = 0; place(); } else still += dt;
       if (still < SETTLE_STILL_MS) requestAnimationFrame(tick);
     };

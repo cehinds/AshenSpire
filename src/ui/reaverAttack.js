@@ -80,8 +80,16 @@ export function isReaverAttackEligible({ classId, figure, customization, sprites
 }
 
 export function reaverAttackTiming(speed) {
-  const scale = Math.max(uiConfig.presentation.reaverAttack.motion.minimumSpeedScale, Number(speed?.lungeMs || NORMAL_LUNGE_MS) / NORMAL_LUNGE_MS);
-  const frameMs = Math.max(1, Math.round(REAVER_ATTACK.frameMs * scale));
+  let scale = Math.max(uiConfig.presentation.reaverAttack.motion.minimumSpeedScale, Number(speed?.lungeMs || NORMAL_LUNGE_MS) / NORMAL_LUNGE_MS);
+  // The pace's impact cap (ui/fx.js ANIM_SPEEDS impactCapMs) applies here as it
+  // does to every authored clip (model/equipmentAnimation.js animationTiming):
+  // a swing whose impact frame lands later plays faster as a whole.
+  const cap = Number(speed?.impactCapMs);
+  const impactAt = REAVER_ATTACK.frameMs * scale * REAVER_ATTACK.impactFrameIndex;
+  const capped = cap > 0 && impactAt > cap;
+  if (capped) scale *= cap / impactAt;
+  // Floored when capped, so many short frames cannot round past the cap.
+  const frameMs = Math.max(1, (capped ? Math.floor : Math.round)(REAVER_ATTACK.frameMs * scale));
   return Object.freeze({
     frameMs,
     impactMs: REAVER_ATTACK.impactFrameIndex * frameMs,
@@ -96,7 +104,7 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
   const priorFigure = actorEl.querySelector(':scope > .class-sprite');
   if (!priorFigure) return null;
 
-  const image = hintImage(document.createElement('img'));
+  const image = hintImage(document.createElement('img'), { swapped: true });
   image.className = 'reaver-attack-sequence';
   image.alt = '';
   image.setAttribute('aria-hidden', 'true');
@@ -113,20 +121,31 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
 
   let frameIndex = 0;
   let timer = null;
+  let due = 0;
   let cancelled = false;
+  const schedule = (ms) => {
+    due = Date.now() + ms;
+    timer = setTimeout(advance, ms);
+  };
   const advance = () => {
     if (cancelled) return;
     frameIndex += 1;
     if (frameIndex >= REAVER_ATTACK_SEQUENCE.length) return;
     image.src = frameUrl(REAVER_ATTACK_SEQUENCE[frameIndex]);
     image.dataset.frameId = `P${String(frameIndex + 1).padStart(2, '0')}`;
-    timer = setTimeout(advance, timing.frameMs);
+    schedule(timing.frameMs);
   };
-  timer = setTimeout(advance, timing.frameMs);
+  schedule(timing.frameMs);
 
   return {
     impactMs: timing.impactMs,
     totalMs: timing.totalMs,
+    // Hit-stop (SPEC §7.4): stay on the current frame for `ms` more.
+    hold(ms) {
+      if (cancelled || !(ms > 0) || frameIndex >= REAVER_ATTACK_SEQUENCE.length - 1) return;
+      clearTimeout(timer);
+      schedule(Math.max(0, due - Date.now()) + ms);
+    },
     cancel() {
       if (cancelled) return;
       cancelled = true;

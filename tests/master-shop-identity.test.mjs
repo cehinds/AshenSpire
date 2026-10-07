@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createRunState } from '../src/model/state.js';
@@ -14,11 +14,16 @@ import { createRng } from '../src/engine/rng.js';
 import { marketVisitStock, buildBlacksmithStock } from '../src/engine/shopKinds.js';
 
 const FIXTURE = JSON.parse(readFileSync(new URL('./fixtures/shop-stocks-pre-master.json', import.meta.url), 'utf8'));
+// Replay the captured content catalog as well as its seeds. The 2026-10-02
+// book expansion intentionally adds candidates; that is independently tested
+// in book-learning.test.mjs, not a change to the master's stock algorithm.
+const capturedBooks = new Set(Object.values(FIXTURE.marketAllOut).flatMap((stock) => (stock.skillBooks || []).map((book) => book.id)));
+const capturedContent = { ...contentBundle, consumables: contentBundle.consumables.filter((row) => row.kind !== 'skillBook' || capturedBooks.has(row.id)) };
 const allOut = (kind) => Object.fromEntries(contentBundle.shops[kind].offerings.map((row) => [`gameConfig.shops.${kind}.${row.id}.chance`, 100]));
 const REG = {
-  defaults: createRegistries(contentBundle),
-  marketAllOut: createRegistries(configuredContentBundle(contentBundle, allOut('market'))),
-  blacksmithAllOut: createRegistries(configuredContentBundle(contentBundle, allOut('blacksmith'))),
+  defaults: createRegistries(capturedContent),
+  marketAllOut: createRegistries(configuredContentBundle(capturedContent, allOut('market'))),
+  blacksmithAllOut: createRegistries(configuredContentBundle(capturedContent, allOut('blacksmith'))),
 };
 
 function take(registries, key, build) {
@@ -38,7 +43,7 @@ const CASES = {
 };
 
 for (const [name, [registries, build]] of Object.entries(CASES)) {
-  test(`with defaults, the ${name} stocks are byte-identical to the tree before the wise master`, () => {
+  test(`with the captured book catalog, the ${name} stocks are byte-identical to the tree before the wise master`, () => {
     const keys = Object.keys(FIXTURE[name]);
     assert.equal(keys.length, 50, 'every captured seed is replayed');
     for (const key of keys) {

@@ -30,7 +30,7 @@
  * follow in his order (flask IS the potion seat in this game).
  */
 // `sigil` (SPEC §15.4) is a dropped legendary sigil, after the relic.
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'classMilestone', 'skillDraft', 'skillRankUp', 'skillAttribute', 'skillFeat', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
 
 // ---- the card reward schedule (SPEC §15.1) ----------------------------------
 
@@ -102,7 +102,8 @@ export function cardRewardPlan(balance, { pool, levelsGained = 0, draftWaiting =
  * of a state goes through the key, so the saved `states` of a pre-draft
  * offer (keyed by kind) still read.
  */
-export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}`
+export const rowKey = (kind, row = {}) => (kind === 'skillDraft' && row.offerId ? `skillDraft:${row.offerId}` : kind === 'skillDraft' || kind === 'skillRankUp' || kind === 'skillAttribute' || kind === 'skillFeat' ? `${kind}:${row.skillId}:${row.ordinal || 0}`
+  : kind === 'classMilestone' ? `classMilestone:${row.receiptId}`
   : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}`
   : kind === 'levelCard' || kind === 'levelChoice' ? `${kind}:${row.ordinal || 0}` : kind);
 
@@ -117,7 +118,7 @@ export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft
 export const rewardNotes = (rewards = {}) => (rewards && rewards.cardMissed === true ? ['cardMissed'] : []);
 
 /** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
-export const pickIds = (row) => (Array.isArray(row.options)
+export const pickIds = (row) => (Array.isArray(row.choiceIds) ? row.choiceIds : row.kind === 'classMilestone' ? row.options || [] : Array.isArray(row.options)
   ? row.options.map((option) => `${option.kind}:${option.id}`)
   : Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
 
@@ -146,8 +147,13 @@ const KINDS = {
     rows: (r) => {
       const seen = {};
       return r.classDrafts.filter((d) => d && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
-        .map((d) => ({ classId: d.classId, ordinal: (seen[d.classId] = (seen[d.classId] || 0) + 1) - 1, level: d.level, nodeIds: d.nodeIds.slice(), claimOrdinal: d.claimOrdinal || 0, choice: d.nodeIds.length > 1 }));
+        .map((d) => ({ classId: d.classId, ordinal: (seen[d.classId] = (seen[d.classId] || 0) + 1) - 1, level: d.level, nodeIds: d.nodeIds.slice(), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.nodeIds.length > 1 }));
     },
+    blocked: () => null,
+  },
+  classMilestone: {
+    present: r => Array.isArray(r.classMilestoneRewards) && r.classMilestoneRewards.length > 0,
+    rows: r => r.classMilestoneRewards.map(row => ({ ...row, options: row.options.slice(), choice: true })),
     blocked: () => null,
   },
   skillDraft: {
@@ -158,7 +164,42 @@ const KINDS = {
     rows: (r) => {
       const seen = {};
       return r.skillDrafts.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
+        .map((d) => ({ skillId: d.skillId, offerId: d.offerId, ...(Array.isArray(d.choiceIds) ? { choiceIds:d.choiceIds.slice() } : {}), ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), ...(Array.isArray(d.ranks) ? { ranks: d.ranks.slice() } : {}), ...(Array.isArray(d.abilityRanks) ? { abilityRanks: d.abilityRanks.slice() } : {}), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: d.cardIds.length > 1 }));
+    },
+    blocked: () => null,
+  },
+  skillRankUp: {
+    // A skill level's rank-up (SPEC §13.4o): raise one owned card of the
+    // track's schools by one rank. One row per rank-up the offer carries,
+    // keyed by track and ordinal as a draft is; the cards it chooses among
+    // are the run's own, read when the row is opened, never stored here.
+    present: (r) => Array.isArray(r.skillRankUps) && r.skillRankUps.some((d) => d && typeof d.skillId === 'string' && d.skillId),
+    rows: (r) => {
+      const seen = {};
+      return r.skillRankUps.filter((d) => d && typeof d.skillId === 'string' && d.skillId)
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: true }));
+    },
+    blocked: () => null,
+  },
+  skillAttribute: {
+    // A skill level's attribute pick (SPEC §13.4o, every 4th level): +1 to one
+    // attribute of the track's linked set, a choice among `attributeIds`.
+    present: (r) => Array.isArray(r.skillAttributes) && r.skillAttributes.some((d) => d && typeof d.skillId === 'string' && Array.isArray(d.attributeIds) && d.attributeIds.length > 0),
+    rows: (r) => {
+      const seen = {};
+      return r.skillAttributes.filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.attributeIds) && d.attributeIds.length > 0)
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, attributeIds: d.attributeIds.slice(), options: d.attributeIds.map((id) => ({ kind: 'attribute', id })), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: true }));
+    },
+    blocked: () => null,
+  },
+  skillFeat: {
+    // A skill level's feat pick (SPEC §13.4o, every 2nd level): one of the
+    // track's own feats (content/skillFeats.js), a choice among `featIds`.
+    present: (r) => Array.isArray(r.skillFeats) && r.skillFeats.some((d) => d && typeof d.skillId === 'string' && Array.isArray(d.featIds) && d.featIds.length > 0),
+    rows: (r) => {
+      const seen = {};
+      return r.skillFeats.filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.featIds) && d.featIds.length > 0)
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, featIds: d.featIds.slice(), options: d.featIds.map((id) => ({ kind: 'skillFeat', id })), requiredLevel: d.requiredLevel, claimOrdinal: d.claimOrdinal || 0, choice: true }));
     },
     blocked: () => null,
   },
@@ -175,13 +216,15 @@ const KINDS = {
     // among cards exactly as the card offer is.
     present: (r) => Array.isArray(r.levelCards) && r.levelCards.some((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0),
     rows: (r) => r.levelCards.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1 })),
+      .map((d, i) => ({ requiredLevel: d.requiredLevel, ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1,
+        ...(d.source ? { source: d.source, skillId: d.skillId, claimOrdinal: d.claimOrdinal || 0 } : {}) })),
     blocked: () => null,
   },
   levelChoice: {
     present: (r) => Array.isArray(r.levelChoices) && r.levelChoices.some((d) => d && Array.isArray(d.options) && d.options.length > 0),
     rows: (r) => r.levelChoices.filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
-      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, options: d.options.map((o) => ({ kind: o.kind, id: o.id })), choice: d.options.length > 1 })),
+      .map((d, i) => ({ ...(d.classId ? { classId: d.classId } : {}), requiredLevel: d.requiredLevel, ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, options: d.options.map((o) => ({ kind: o.kind, id: o.id })), choice: d.options.length > 1,
+        ...(d.source ? { source: d.source, skillId: d.skillId, claimOrdinal: d.claimOrdinal || 0 } : {}) })),
     blocked: () => null,
   },
   flask: {
@@ -306,11 +349,11 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice') {
+      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'classMilestone') {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
         take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id }
-          : row.kind === 'levelChoice' ? { choiceId: id } : { cardId: id }) });
+          : row.kind === 'levelChoice' || row.kind === 'classMilestone' ? { choiceId: id } : row.choiceIds ? { cardId:row.cardIds[ids.indexOf(id)], choiceId:id } : { cardId: id }) });
       } else {
         take.push(row);
       }
@@ -338,7 +381,8 @@ export function rewardClaimStatus(plan, states = {}) {
   const count = (state) => rows.filter((row) => row.state === state).length;
   // The first choice still waiting, in row order: a skill draft before the
   // card offer, as the menu lists them.
-  const choice = plan.rows.find((row) => row.choice && !states[row.key]);
+  // A rank-up's cards are the run's own, not the offer's, so it names no count.
+  const choice = plan.rows.find((row) => row.choice && !states[row.key] && pickIds(row).length > 0);
   return Object.freeze({
     total: rows.length,
     claimed: count('taken'),

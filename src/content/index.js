@@ -3,6 +3,13 @@
 // Aggregates every content file into the bundle createRegistries() consumes.
 // Adding content = adding a data object in one file here (SPEC §3.1(2)).
 
+import * as progressionCardModule from './progression/cards.js';
+import * as progressionFeatModule from './progression/feats.js';
+import * as progressionRelicModule from './progression/relics.js';
+import { progressionRules } from './progression/rules.js';
+import { progressionUnlocks } from './progression/unlocks.js';
+import { composeProgressionContent } from '../model/progressionContent.js';
+
 import { balance } from './balance.js';
 import { shops } from './shops.js';
 import { sigils } from './sigils.js';
@@ -53,6 +60,8 @@ import {
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
 import { classTree } from './generated/classTree.js';
+import { classMastery } from './generated/classMastery.js';
+import { classSkillFeats } from './classSkillFeats.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
@@ -65,7 +74,7 @@ const cards = authoredCards.map((card) => {
   return carrier ? { ...card, damageSchool: carrier.damageSchool, exposureBuildupPerHit: carrier.exposureBuildupPerHit } : card;
 });
 
-export const contentBundle = {
+export const coreContentBundle = {
   // Release series and candidate live here; tools/buildversion.mjs derives the
   // fourth component and resets it to zero whenever this release changes.
   // The owner moved current builds to the 0.6.x.x series on 2026-09-08.
@@ -174,7 +183,11 @@ export const contentBundle = {
   attributeRules: { ...attributeRules, retired: retiredAttributeNames },
   derivedStatRules,
   characterCreation,
+  classMastery,
+  classSkillFeats,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):
 export { LOCKED_CLASSES };
+
+export const contentBundle = composeProgressionContent(coreContentBundle, [progressionCardModule, progressionFeatModule, progressionRelicModule], { rules: progressionRules, unlocks: progressionUnlocks });

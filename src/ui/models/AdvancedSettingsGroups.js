@@ -45,7 +45,7 @@ export const DRAW_FALLBACK = 'Co-op & legacy fallback';
 // combat ratings are filed by their row id exactly as the pools are.
 const RATING_TOPICS = Object.freeze({ ar: 'Attack rating (AR)', dr: 'Defence rating (DR)', pr: 'Power rating (PR)', poise: 'Poise', ward: 'Ward' });
 const DERIVED_TOPICS = Object.freeze({
-  energy: 'Actions', openingHand: 'Draw & hand', draw: 'Draw & hand', handSize: 'Draw & hand',
+  energy: 'Stamina', openingHand: 'Draw & hand', draw: 'Draw & hand', handSize: 'Draw & hand',
   hp: 'HP', stamina: 'Stamina', mana: 'Mana', ...RATING_TOPICS,
 });
 // The hand rows each head the subsection their behaviour options sit in.
@@ -53,7 +53,7 @@ const HAND_ROW_SECTIONS = Object.freeze({ openingHand: 'Starting hand', draw: 'T
 
 /** The Stats topics, in reading order: resources first, then the ratings, then the tables. */
 export const STATS_TOPICS = Object.freeze([
-  'Overview', 'Actions', 'Draw & hand', 'HP', 'Stamina', 'Mana', 'Poise', 'Ward',
+  'Overview', 'Draw & hand', 'HP', 'Stamina', 'Mana', 'Poise', 'Ward',
   'Attack rating (AR)', 'Defence rating (DR)', 'Power rating (PR)',
   'Resistance', 'Impact', 'Breaks', 'Status resistance', 'Status bonuses',
 ]);
@@ -150,6 +150,7 @@ function topic(row, section) {
   // A row that names its own topic is filed under it. The Wireframes rows are
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
   // ARE the topics — Modals, Menus, Scenes — so a fourth family files itself.
+  // `wireframeTopic` is the group's stable id, never its rewordable label.
   if (row.wireframeTopic) return row.wireframeTopic;
   if (row.cardSizeTopic) return 'Card size';
   if (row.debugTopic) return 'Diagnostics';
@@ -162,6 +163,7 @@ function topic(row, section) {
   if (section === 'Progression') {
     if (row.classTopic) return row.classTopic;
     if (key === 'creationAutoAdvance') return 'General';
+    if (/^progressionFeats\./.test(path)) return 'Class feats';
     if (/^skill\.xp\./.test(path)) return 'Skill xp';
     if (/^skill\.class\./.test(path)) return 'Skill class';
     if (/^skill\./.test(path)) return 'Skill unlocks';
@@ -191,7 +193,7 @@ function topic(row, section) {
     if (/damage\.wardCards/.test(key)) return 'Ward card values';
     if (/^(arcaneE|e)xposure\./.test(path)) return 'Exposure';
     if (/^(deck\.|startingDeckSize)/.test(path)) return 'Deck';
-    if (/^(costs|mana)\./.test(path)) return 'Actions & costs';
+    if (/^(costs|mana)\./.test(path)) return 'Stamina & costs';
     return words(path.split('.')[0]);
   }
   if (section === 'World') {
@@ -228,12 +230,17 @@ function topic(row, section) {
 
 export function advancedSubgroups(rows, section) {
   const groups = new Map();
+  const labels = new Map();
   for (const row of rows.filter(row => advancedSection(row) === section)) {
-    const label = topic(row, section);
-    if (!groups.has(label)) groups.set(label, []);
-    groups.get(label).push(row);
+    const id = topic(row, section);
+    if (!groups.has(id)) groups.set(id, []);
+    groups.get(id).push(row);
+    // A topic id is what a profile stores and what rows group by; a row whose
+    // topic heading is rewordable copy carries that label separately, so a
+    // reword never moves the id or merges two topics (Codex, #1489).
+    if (!labels.has(id) && row.wireframeTopic && row.wireframeTopicLabel) labels.set(id, row.wireframeTopicLabel);
   }
-  const result = [...groups].map(([label, rows]) => ({ id: label, label, rows }));
+  const result = [...groups].map(([id, rows]) => ({ id, label: labels.get(id) ?? id, rows }));
   // An override switch sits directly above the first row it governs, wherever
   // generation put it, so the switch and its number read as one control.
   for (const group of result) {
@@ -272,7 +279,7 @@ export function advancedSubgroups(rows, section) {
   // catalogue itself is written in — discovered, not restated, so the two
   // cannot disagree about which family comes first. Cards and the settings
   // window follow.
-  if (section === 'Wireframes') byOrder([...WIREFRAME_CHOICE_GROUPS.map((group) => group.label), 'Card size', 'Window']);
+  if (section === 'Wireframes') byOrder([...WIREFRAME_CHOICE_GROUPS.map((group) => group.id), 'Card size', 'Window']);
   if (section === 'Interface') byOrder(['Map & HUD', 'Appearance', 'Controls']);
   if (section === 'Text') byOrder(['Flavor text', 'Lore window']);
   if (section === 'Export') byOrder(['Configuration file', 'Diagnostics']);
@@ -287,7 +294,7 @@ export function advancedSubgroups(rows, section) {
       'Shop stock & services', ...shop, 'Smithing', 'Flasks']);
   }
   if (section === 'Combat') {
-    byOrder(['Actions & costs', 'AR card values', 'DR card values', 'PR card values', 'Poise card values', 'Ward card values',
+    byOrder(['Stamina & costs', 'AR card values', 'DR card values', 'PR card values', 'Poise card values', 'Ward card values',
       'Deck', 'Exposure']);
   }
   if (section === 'Progression') {
@@ -299,7 +306,7 @@ export function advancedSubgroups(rows, section) {
     // bound. A topic not named here keeps its discovered order, after the
     // named ones.
     byOrder([...PROGRESSION_TOPIC_ORDER, ...CLASS_TOPICS, 'Experience',
-      'Skill xp', 'Skill class', 'Skill unlocks', ...CLASS_TOPICS.map((name) => `Talents · ${name}`), 'General']);
+      'Skill xp', 'Skill class', 'Skill unlocks', 'Class feats', ...CLASS_TOPICS.map((name) => `Talents · ${name}`), 'General']);
   }
   return result;
 }

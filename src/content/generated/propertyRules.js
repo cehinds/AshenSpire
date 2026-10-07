@@ -722,12 +722,372 @@ export const propertyRules = [
     "tag": "spareWhetstone",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first attack while Prepared each combat gains {gainEnergy} Energy."
+    "textTemplate": "Your first attack while Prepared each combat gains {gainEnergy} Stamina."
   },
   {
     "tag": "whettedGuard",
     "requires": "",
     "excludes": "",
     "textTemplate": "Each hit you land while Prepared grants {block} Block."
+  },
+  {
+    "tag": "feat:coal-on-steel",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Blade hit each turn applies +{bleed} Bleed buildup."
+  },
+  {
+    "tag": "feat:brace-and-bite",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Blade attack each turn played while you have Block deals +{damage} damage."
+  },
+  {
+    "tag": "feat:red-footwork",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Guard card each turn targeting an enemy with Bleed buildup draws {draw} card."
+  },
+  {
+    "tag": "feat:anvil-discipline",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Heavy attack each turn deals +{break} Break damage."
+  },
+  {
+    "tag": "feat:forge-momentum",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Blade attack after a Guard card each turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:paid-in-blood",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Blood attack after you have lost HP since your previous turn began deals +{damage} damage."
+  },
+  {
+    "tag": "feat:last-rampart",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
+  },
+  {
+    "tag": "feat:war-cadence",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "After your second Heavy card in a turn, gain {block} Block, once per turn."
+  },
+  {
+    "tag": "feat:broad-sentence",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first attack that hits all living enemies each turn deals +{damage} damage to each target."
+  },
+  {
+    "tag": "feat:ember-sovereign",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Once per turn, a Crown of Cinders charge gains +{damage} damage before it is consumed."
+  },
+  {
+    "tag": "feat:dread-of-the-hammer",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Heavy attack against a Staggered target each turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:scarred-oath",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Guard card after losing HP since your previous turn began grants +{block} Block, once per turn."
+  },
+  {
+    "tag": "feat:harvest-the-wound",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first credited kill of an enemy with Bleed buildup heals {heal} HP, once per combat."
+  },
+  {
+    "tag": "feat:orbit-keeper",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Starstone spell following another spell each turn deals +{damage} direct damage."
+  },
+  {
+    "tag": "feat:moonward-scholar",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Guard spell played after you spent at least {manaSpent} Mana this turn grants +{block} Block."
+  },
+  {
+    "tag": "feat:comet-reader",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Comet Mark attack each turn applies +{vulnerable} Vulnerable after damage."
+  },
+  {
+    "tag": "feat:mirror-of-rime",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Rime Mirror each turn applies +{buildup} Frost buildup."
+  },
+  {
+    "tag": "feat:constellation-keeper",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Starstone attack after two distinct Starstone card IDs this turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:patient-wellspring",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Mana Weave restoration each turn also grants {block} Block."
+  },
+  {
+    "tag": "feat:weight-of-the-void",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Gravity Snare each turn applies +{weak} Weak after damage."
+  },
+  {
+    "tag": "feat:nightglass-scholar",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Once per turn, your Nightglass charge grants +{damage} additional damage when consumed."
+  },
+  {
+    "tag": "feat:eclipse-hunter",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:firmament-keeper",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Once per turn, consuming a Warded Casting charge also grants {block} Block."
+  },
+  {
+    "tag": "feat:celestial-refrain",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The second play of the same Starstone card ID in a turn grants {block} Block, once per turn."
+  },
+  {
+    "tag": "feat:memory-of-winter",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Retain up to {retainBlockUpTo} Block into your next turn; use the highest retention allowance if another source also retains Block."
+  },
+  {
+    "tag": "feat:threefold-sky",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Playing your third distinct Starstone card ID in a turn draws {draw} card, once per turn."
+  },
+  {
+    "tag": "feat:first-knife",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "If your first card this turn is a Blade attack, it deals +{damage} damage."
+  },
+  {
+    "tag": "feat:pocket-method",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Guard card after an explicit discard each turn grants +{block} Block."
+  },
+  {
+    "tag": "feat:crooked-measure",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Crooked Guard hit each turn applies +{weak} Weak after damage."
+  },
+  {
+    "tag": "feat:open-flank",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Blade attack against an enemy with zero Block each turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:hidden-palm",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Sleight of Hand sequence each turn grants {block} Block after the discard."
+  },
+  {
+    "tag": "feat:tighten-the-wire",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +{damage} damage."
+  },
+  {
+    "tag": "feat:smoke-dancer",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Once per turn, a Smoke Edge charge adds +{damage} damage before it is consumed."
+  },
+  {
+    "tag": "feat:carrion-measure",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Blade attack against an enemy at {hpPct}% HP or lower each turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:two-quiet-knives",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Paired Strikes attack each turn deals +{damage} damage on each of its two hits."
+  },
+  {
+    "tag": "feat:trapdoor-smile",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Blade attack after both a Guile card and a Guard card this turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:clean-exit",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Guard card played before any attack this turn restores {restoreStamina} Stamina, once per turn."
+  },
+  {
+    "tag": "feat:razor-ledger",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Blade attack after an explicit discard each turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:ashen-mercy",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Mercy in Ash card each turn heals +{heal} HP."
+  },
+  {
+    "tag": "feat:censer-keeper",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Blood Censer offering each turn grants +{block} Block after its HP payment."
+  },
+  {
+    "tag": "feat:sower-of-blight",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Blight Seed hit each turn applies +{buildup} Crimson Blight buildup."
+  },
+  {
+    "tag": "feat:funeral-watch",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
+  },
+  {
+    "tag": "feat:ember-almoner",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Ember Tithe each turn grants +{regen} Regen after the HP payment."
+  },
+  {
+    "tag": "feat:choir-of-bone",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Guard card you play while any living enemy has Crimson Blight buildup restores {restoreStamina} Stamina, once per turn."
+  },
+  {
+    "tag": "feat:requiem-reader",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:pilgrim-of-scars",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "If you began the turn at {hpPct}% HP or lower, your first Guard card that turn heals {heal} HP."
+  },
+  {
+    "tag": "feat:crowned-offering",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Ritual attack after an earlier HP offering this turn deals +{damage} damage."
+  },
+  {
+    "tag": "feat:dawn-cantor",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first Dawn Rite removal each turn also grants {block} Block."
+  },
+  {
+    "tag": "feat:bearer-of-burdens",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first negative status newly applied to you by an enemy each turn restores {restoreMana} Mana."
+  },
+  {
+    "tag": "feat:sepulchral-promise",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."
+  },
+  {
+    "tag": "progression-emberjaw-token",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Blade hit each combat applies {bleed} additional Bleed buildup."
+  },
+  {
+    "tag": "progression-cracked-war-anvil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Heavy attack each turn deals {poiseDamage} additional Break damage."
+  },
+  {
+    "tag": "progression-cinderbound-crown",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first credited kill of an enemy with Bleed buildup each combat heals {heal} HP."
+  },
+  {
+    "tag": "progression-moonwell-lens",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first Starstone spell each turn played after spending at least 2 Mana grants {block} Block."
+  },
+  {
+    "tag": "progression-nightglass-rosary",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The second play of the same Starstone card ID in a turn restores {restoreMana} Mana, once per turn."
+  },
+  {
+    "tag": "progression-fragment-of-the-third-sky",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your third distinct Starstone card ID played in a turn grants {block} Block, once per turn."
+  },
+  {
+    "tag": "progression-whisperglass-die",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "If your first card in combat is a Blade attack, it deals +{chargeDamage} damage."
+  },
+  {
+    "tag": "progression-purse-of-borrowed-shadows",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "After your first explicit discard each turn, gain {block} Block."
+  },
+  {
+    "tag": "progression-ember-alms-bowl",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first nonlethal HP offering each turn grants {block} Block after its payment."
+  },
+  {
+    "tag": "progression-ossuary-prayer-wheel",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana."
   }
 ];

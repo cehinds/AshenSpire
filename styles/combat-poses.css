@@ -5,7 +5,8 @@
 .combat-pose-aura { position:absolute; inset:0; z-index:-1; pointer-events:none; color:var(--pose-color); opacity:0; filter:drop-shadow(0 0 2px currentColor); }
 .combat-pose-aura svg { width:100%; height:100%; overflow:visible; fill:none; stroke:currentColor; stroke-width:.85; opacity:.28; animation:pose-aura-breathe 4200ms ease-in-out var(--pulse-delay,0ms) infinite; }
 @keyframes pose-aura-breathe { 0%,100% { opacity:.18; } 50% { opacity:.38; } }
-.painted-stage .pose-frame { transition:filter 300ms ease-out; }
+/* No filter transition: tweening a stacked drop-shadow repainted the whole
+   figure every frame for 300ms on each pose change. */
 .combat-pose-aura g, .combat-pose-aura .pose-floor { display:none; }
 .combat-pose-aura[data-motif="diamond"] .pose-diamond,
 .combat-pose-aura[data-motif="constellation"] .pose-constellation,

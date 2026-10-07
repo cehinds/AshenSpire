@@ -1,0 +1,11 @@
+{
+  "id": "blight-hound-three-quarter",
+  "group": "enemies",
+  "reference": "references/05-combat-and-threats.png",
+  "canonical": "assets/enemy-poses/blightHound_idle.webp",
+  "prompt": "Create ONE high-resolution full-body transparent enemy cutout of the Blight Hound. The FIRST reference is authoritative identity: a lean diseased quadrupedal dark brown/black hound, skeletal ribs and patchy coarse hide, jagged small bone/wood-like dorsal spines, sickly green luminous blight sacs and green drool, ragged ears, elongated snarling muzzle, four clawed feet, long sparse tail. KEEP GREEN blight, do not turn it into a molten/fire wolf from the second screenshot. SECOND reference is polished painterly rendering/style only. Three-quarter view facing screen LEFT, shoulders slightly towards camera, alert grounded idle stance all four paws visible, entire tail and muzzle contained with ample alpha margins. Realistic hand-painted texture, soot/umber, subtle warm edge light, no background, ground, shadow ellipse, flames, text, UI, border or extra animal. Actual transparent background.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-b5e6ccd8-72f6-46c0-84d0-ca71846438c9.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "master": "masters/enemies/blight-hound-three-quarter.png"
+}

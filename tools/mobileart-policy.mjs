@@ -2,50 +2,60 @@
 //
 // The mobile edition is the same game with smaller art. Which files shrink, by
 // how much, and how the result is judged are stated HERE and nowhere else, so
-// the generator (tools/mobile-art.mjs), the bundler (tools/bundle.mjs) and the
-// gate (tools/mobile-art.mjs --check, tools/verify-shipped.mjs) cannot disagree
-// about the shape of the tree they share. This module is pure: no main, no
+// the generator, the bundler (tools/bundle.mjs) and the gates cannot disagree
+// about the shape of the tree they share. Since docs/EXTERNAL-ASSETS-PLAN.md
+// step 13 the generator and its --check (tools/mobile-art.mjs) live in
+// cehinds/AshenSpire-art, beside its own copy of this file; here the bundler
+// and tools/verify-shipped.mjs still read it. This module is pure: no main, no
 // writes, Node core only, so the bundler can import it without running a tool.
 //
 // It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs): a change here
 // changes what the mobile bundle carries, so it moves build identity.
 
 import { createHash } from 'node:crypto';
+// Shared with AshenSpire-art's released uniform light-sprite policy.
+const SPRITE_ASSET_FAMILIES = Object.freeze([
+  'animations', 'sprites', 'poses', 'painted-outfits', 'readiness-poses',
+  'enemy-poses', 'enemy-states', 'defeated-poses', 'enemies-unity',
+  'enemies-expansion', 'combat-effects', 'pose-effects', 'equipment',
+]);
 
 /** Where the shrunken twins live, mirroring assets/ path for path. */
 export const MOBILE_ASSET_DIR = 'assets-mobile';
 
 /**
  * The encoding policy. One rule for every runtime .webp under assets/:
- *   · an image whose longer side is at least `scaleFrom` px is resized to
- *     `scale` of its size on each axis (aspect preserved — the renderers only
- *     ever use ratios of the natural size, see combatSpriteGeometry.js);
+ *   · an image whose longer side is over `maxEdge` px is resized so that side
+ *     is `maxEdge` (aspect preserved — the renderers only ever use ratios of
+ *     the natural size, see combatSpriteGeometry.js); smaller images keep
+ *     their size;
  *   · every image is re-encoded lossy at `quality` with lossy alpha at
- *     `alphaQuality`; a re-encode that is not smaller keeps the source bytes.
+ *     `alphaQuality`; an unresized re-encode that is not smaller keeps the
+ *     source bytes.
  * Non-webp art (svg) is copied verbatim. Authoring-only trees are excluded by
  * the same runtimeAsset() rule the full build uses.
  *
- * Measured 2026-09-20 on the 0.7.1 tree: 179 MB of runtime art → ~29 MB, the
- * 3,071 512×512 animation frames (122 MB) going to 256×256 at ~5 KB each.
- *
- * Tightened 2026-09-24 for the owner's 30 MB budget: 5/16 scale (512 → 160)
- * at quality 35 / alpha 40 — about 48% of the half-size twin tree, measured on
- * a 106-file sample spanning animations, poses, outfits, environments and
- * combat effects.
+ * Runtime exports target 480px figures and 720p scenery. Scenery fits within
+ * 1280x720, preserving aspect ratio; portrait art stays at most 720px tall.
+ * A four-scene combat atlas has two rows, so its ceiling is 2160x1440:
+ * 1080x720 per scene. Smaller originals are never enlarged. Sprite encoding
+ * spends fewer bytes on figures so maps and backgrounds retain more detail.
+ * Source masters remain untouched; these rules apply to delivered twins.
  */
 export const POLICY = Object.freeze({
-  scaleFrom: 384,
-  scale: 0.3125,
-  quality: 35,
-  alphaQuality: 40,
-  // FULL-SCREEN BACKDROPS KEEP MORE. A 1536-wide backdrop at 5/16 is 480 px
-  // stretched across a ~1170 px phone and blocks visibly; 0.4 at quality 50
-  // costs ~0.6 MB raw over the whole set and reads clean. First match wins.
+  maxEdge: 720,
+  quality: 50,
+  alphaQuality: 50,
+  // First match wins.
   overrides: Object.freeze([
-    // The seven-step bow sheet adds 224 distinct frames. At 64px the motion
-    // stays readable in the light build without exceeding its 30 MB download.
-    Object.freeze({ prefixes: Object.freeze(['animations/bow/']), scale: 0.1, quality: 5 }),
-    Object.freeze({ prefixes: Object.freeze(['environments/', 'bg/', 'map/']), scale: 0.4, quality: 50 }),
+    Object.freeze({ prefixes: Object.freeze(['ashen-crown', 'cinder-reach', 'drowned-coast', 'hollow-weald', 'pale-marches'].map(id => `environments/${id}-combat.webp`)), maxEdge: 2160, maxHeight: 1440, quality: 78, alphaQuality: 80 }),
+    Object.freeze({ prefixes: Object.freeze(['bg/', 'environments/', 'prologue/', 'player-polish/scenes/']), maxEdge: 1280, maxHeight: 720, quality: 78, alphaQuality: 80 }),
+    // Full portrait cards retain 720px resolution; a small compression change
+    // keeps the complete roster inside the owner's 100 MB download maximum.
+    Object.freeze({ prefixes: Object.freeze(['cards/extended/']), maxEdge: 720, quality: 44, alphaQuality: 50 }),
+    // Every figure, frame and effect uses the same reduction, including small
+    // cropped poses. Registration and playback timing remain in native units.
+    Object.freeze({ prefixes: Object.freeze(SPRITE_ASSET_FAMILIES.map(family => `${family}/`)), maxEdge: 480, quality: 12, alphaQuality: 25 }),
   ]),
 });
 
@@ -61,22 +71,27 @@ export function policyFor(rel, policy = POLICY) {
 }
 
 /**
- * The ceiling the mobile single file is held to, in bytes. Decimal, because
- * "30 MB" is what a phone's download sheet prints. The owner's number
- * (2026-09-24, down from 50 MB set 2026-09-20): under 30 MB. verify-shipped.mjs fails a mobile artifact above
- * it, and bundle.mjs refuses to write one.
+ * The ceiling the light single file is held to, in bytes. Decimal, because
+ * "100 MB" is what a phone's download sheet prints. The owner's numbers
+ * (2026-10-04, up from 30 MB set 2026-09-24): at most 100 MB, preferably under
+ * 80 MB — the art budget below is what keeps it under 80.
  */
-export const MOBILE_BUNDLE_BUDGET_BYTES = 30_000_000;
+export const MOBILE_BUNDLE_BUDGET_BYTES = 100_000_000;
 
 /**
- * Where the mobile art itself has to land for the bundle to fit: the budget
- * less the code (~9.4 MB at 0.7.1.451) and base64 growth (4/3). A twin tree over
- * this is caught by --check before anyone builds with it.
+ * Mobile art's share of the owner's 100 MB maximum, reserving 18.5 MB for code, CSS and alternative artwork
+ * and counting base64 growth (4/3). The complete portrait library exceeds the
+ * preferred 69 MB art target (80 MB including code), while retaining the
+ * 720px card resolution. Delivery validation must also measure the
+ * finished single file against 100 MB, including actual code and metadata.
  *
  * Counted as the bundle inlines it: each distinct image once
  * (`distinctInlinedBytes`), since the bundler aliases byte-identical files.
  */
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 20_000_000;
+// The complete card portrait library uses the owner's already-approved 100 MB
+// maximum. Reserve 18.5 MB for code, CSS and alternative artwork and measure the finished file at delivery.
+// 69 MB remains the preferred art target (80 MB including code), not the cap.
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 81_500_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {
@@ -136,6 +151,7 @@ export function webpDimensions(buf) {
  * would put them.
  */
 export function twinDimensions({ width, height }, policy = POLICY) {
-  if (Math.max(width, height) < policy.scaleFrom) return { width, height };
-  return { width: Math.round(width * policy.scale), height: Math.round(height * policy.scale) };
+  const scale = Math.min(1, policy.maxEdge / Math.max(width, height), policy.maxHeight ? policy.maxHeight / height : 1);
+  if (scale >= 1) return { width, height };
+  return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }

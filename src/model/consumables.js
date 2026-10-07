@@ -18,10 +18,17 @@
 //   · settling a fight: its copy of the counts back to the run, and every
 //     companion one fight closer to leaving (engine/runCombat.js runCombatEnd);
 //   · the content door's checks and the Settings rows for every number.
+import { hasClassMastery } from './classMasteryRun.js';
 import { NOTE } from '../content/balance.js';
 import { awardSkillXp, skillTracks } from './skills.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
+import { bookTracks, bookLessons } from './bookLearning.js';
+import { learnClassCard, learnedClassIds } from './classLibraryState.js';
+import { classBookBonuses } from './bookBonusRewards.js';
+import { chooseFeat } from './feats.js';
+import { unusedInstanceId } from './cardInstanceIdentity.js';
+import { deckCopyLimit } from './deckCopyLimit.js';
 
 // The run-shape checks are a leaf's (state.js reads them without this file's
 // imports): model/marketStock.js.
@@ -70,7 +77,7 @@ export function unknownCompanionId(registries, run) {
 /** A consumable's shelf sentence, its {tokens} filled from the row's live values. */
 export function consumableText(registries, def) {
   const track = def.skill ? skillTracks(registries).find((row) => row.id === def.skill) : null;
-  return String(def.blurb || '').replace(/\{(\w+)\}/g, (whole, key) => {
+  return String((hasClassMastery(registries.masteryRun) && def.masteryBlurb) || def.blurb || '').replace(/\{(\w+)\}/g, (whole, key) => {
     if (key === 'skill') return track ? track.label : String(def.skill || '');
     return def[key] !== undefined ? String(def[key]) : whole;
   });
@@ -85,23 +92,54 @@ export function consumableBuyPrice(def, priceMult = 1) {
 // Reading a skill book (the Armoury's Inventory)
 // ---------------------------------------------------------------------------
 
-export function skillBookReadPlan(registries, run, id, { inCombat = false } = {}) {
+export function skillBookReadPlan(registries, run, id, { inCombat = false, skillId, choice } = {}) {
   const def = registries.consumables.has(id) ? registries.consumables.get(id) : null;
   let reason = '';
   if (!def || def.kind !== 'skillBook') reason = say('consumable.refuse.notBook');
   // Read outside combat only (SPEC §14.3): the model refuses, not only the door.
-  else if (inCombat) reason = say('consumable.refuse.inCombat', { name: def.name });
+  else if (inCombat || run.combatEntered) reason = say('consumable.refuse.inCombat', { name: def.name });
   else if (heldCount(run, id) < 1) reason = say('consumable.refuse.none', { name: def.name });
-  return { ok: !reason, reason, id, def, count: heldCount(run, id) };
+  const tracks = def?.kind === 'skillBook' ? bookTracks(registries, def) : [];
+  const track = skillId || tracks[0]?.id;
+  const lessons = def?.kind === 'skillBook' ? bookLessons(registries, run, def, track) : [];
+  if (!reason && !tracks.some((row) => row.id === track)) reason = say('book.refuse.track');
+  if (!reason && !lessons.length) reason = say('book.refuse.empty');
+  if (!reason && choice && !lessons.some((row) => row.kind === choice.kind && row.id === choice.id)) reason = say('book.refuse.choice');
+  const xp = hasClassMastery(run) && track?.startsWith('class:') ? 0 : def?.xp || 0;
+  return { ok: !reason, reason, id, def, xp, count: heldCount(run, id), tracks, skillId: track, lessons, choice, rewardChances: [def?.combatCardChance || 0, def?.featChance || 0], revision: run.bookReadRevision || 0 };
 }
 
-/** One awardSkillXp on the book's track, then one fewer book. Returns the award's receipt. */
-export function commitSkillBookRead(registries, run, quote, { inCombat = false } = {}) {
-  const plan = skillBookReadPlan(registries, run, quote.id, { inCombat });
+/** One validated lesson plus XP, then one fewer book. Returns both rewards. */
+export function commitSkillBookRead(registries, run, quote, { inCombat = false, settings = {} } = {}) {
+  const plan = skillBookReadPlan(registries, run, quote.id, { inCombat, skillId: quote.skillId, choice: quote.choice });
   if (!plan.ok) throw new Error(plan.reason);
-  const receipt = awardSkillXp(registries, run, plan.def.skill, plan.def.xp);
+  if (!plan.choice) throw new Error(say('book.refuse.choice'));
+  if (quote.revision !== plan.revision || quote.count !== plan.count || quote.def?.xp !== plan.def.xp) throw new Error(say('book.refuse.stale'));
+  if (plan.rewardChances.some((chance, index) => chance !== quote.rewardChances?.[index])) throw new Error(say('book.refuse.stale'));
+  // Re-read the live deck and settings before any mutation. Extra owned
+  // copies remain available in the sideboard under the deck editor's rules.
+  const destination = plan.choice.kind === 'card' && run.deck.filter((card) => card.cardId === plan.choice.id).length >= deckCopyLimit(registries, plan.choice.id, settings, run.class) ? 'sideboard' : 'deck';
+  const bonuses = classBookBonuses(registries, run, plan.def);
+  const receipt = hasClassMastery(run) && plan.skillId.startsWith('class:')
+    ? { skillId: plan.skillId, gained: 0, levels: 0 }
+    : awardSkillXp(registries, run, plan.skillId, plan.def.xp);
+  const classLearned = plan.choice.kind === 'class' && !learnedClassIds(run).includes(plan.choice.id);
+  if (plan.choice.kind === 'class') {
+    if (classLearned) learnClassCard(registries, run, plan.choice.id);
+  }
+  else {
+    (run[destination] ||= []).push({ instanceId: unusedInstanceId(run, 'book', plan.choice.id), cardId: plan.choice.id, upgraded: false, ...(Number.isInteger(plan.lessons.find(row => row.id === plan.choice.id)?.abilityRank) ? {abilityRank:plan.lessons.find(row => row.id === plan.choice.id).abilityRank} : {}) });
+  }
+  if (bonuses.card) {
+    const id = bonuses.card.id;
+    const target = run.deck.filter((card) => card.cardId === id).length >= deckCopyLimit(registries, id, settings, run.class) ? 'sideboard' : 'deck';
+    (run[target] ||= []).push({ instanceId: unusedInstanceId(run, 'book', id), cardId: id, upgraded: false });
+    bonuses.card.destination = target;
+  }
+  if (bonuses.feat) chooseFeat(run, bonuses.feat.id);
   adjustCount(run.consumables, plan.id, -1);
-  return receipt;
+  run.bookReadRevision = plan.revision + 1;
+  return { ...receipt, learned: { ...plan.choice }, classLearned, bonuses, destination: plan.choice.kind === 'card' ? destination : 'classLibrary' };
 }
 
 // ---------------------------------------------------------------------------
@@ -170,7 +208,7 @@ export function tickCompanions(run) {
 // ---------------------------------------------------------------------------
 
 const CONSUMABLE_FIELDS = Object.freeze({
-  skillBook: ['id', 'kind', 'name', 'blurb', 'cost', 'sellValue', 'skill', 'xp'],
+  skillBook: ['id', 'kind', 'name', 'blurb', 'masteryBlurb', 'cost', 'sellValue', 'skill', 'xp', 'learnTags', 'learnClass', 'learnAny', 'combatCardChance', 'featChance'],
   revive: ['id', 'kind', 'name', 'blurb', 'cost', 'sellValue', 'hpPct'],
 });
 const COMPANION_FIELDS = Object.freeze(['id', 'name', 'blurb', 'cost', 'combats']);
@@ -200,6 +238,7 @@ export function consumableTableProblems(rows, bundle, err) {
     if (!CONSUMABLE_KINDS.includes(row.kind)) { err(`${at}.kind`, `must be one of ${CONSUMABLE_KINDS.join(', ')}, got ${JSON.stringify(row.kind)}`); return; }
     for (const key of Object.keys(row)) if (!CONSUMABLE_FIELDS[row.kind].includes(key)) err(`${at}.${key}`, `is not a ${row.kind} field (fields: ${CONSUMABLE_FIELDS[row.kind].join(', ')})`);
     for (const key of ['name', 'blurb']) if (typeof row[key] !== 'string' || !row[key]) err(`${at}.${key}`, 'must be a non-empty string');
+    if (row.masteryBlurb !== undefined && (typeof row.masteryBlurb !== 'string' || !row.masteryBlurb)) err(`${at}.masteryBlurb`, 'must be a non-empty string');
     wholeAtLeast(row, 'cost', 1, at, err);
     wholeAtLeast(row, 'sellValue', 1, at, err);
     if (Number.isSafeInteger(row.cost) && Number.isSafeInteger(row.sellValue) && row.sellValue > row.cost) {
@@ -207,8 +246,17 @@ export function consumableTableProblems(rows, bundle, err) {
     }
     if (row.kind === 'skillBook') {
       wholeAtLeast(row, 'xp', 1, at, err);
-      if (typeof row.skill !== 'string' || !tracks.has(row.skill)) err(`${at}.skill`, `must be a skill track id (${[...tracks].filter((id) => !id.startsWith('class:')).join(', ')}), got ${JSON.stringify(row.skill)}`);
-      else if (row.skill.startsWith('class:')) err(`${at}.skill`, `is '${row.skill}', a class track; a skill book teaches a weapon, focus, armour or dual-wield track`);
+      for (const key of ['combatCardChance', 'featChance']) if (row[key] !== undefined) {
+        wholeAtLeast(row, key, 0, at, err, 100);
+        if (!row.learnClass) err(`${at}.${key}`, 'bonus chances are only authored on class books');
+      }
+      if (typeof row.skill !== 'string' || !(tracks.has(row.skill) || (row.skill === '*' && row.learnAny === true))) err(`${at}.skill`, 'must name a derived skill track, or * for a universal book');
+      if (typeof row.skill === 'string' && row.skill.startsWith('class:') && row.learnClass !== row.skill.slice(6)) err(`${at}.skill`, 'a class XP track requires its matching class book');
+      if (row.learnAny !== undefined && row.learnAny !== true) err(`${at}.learnAny`, 'must be true when present');
+      if (row.learnAny === true && row.skill !== '*') err(`${at}.skill`, 'a universal book requires * so the player can choose its XP track');
+      if (row.learnTags !== undefined && (!Array.isArray(row.learnTags) || !row.learnTags.length || row.learnTags.some((id) => !(bundle.nodes || []).some((node) => node.id === id)))) err(`${at}.learnTags`, 'must name one or more canonical tags');
+      if (row.learnClass !== undefined && (!(bundle.classes || []).some((cls) => cls.id === row.learnClass) || row.skill !== `class:${row.learnClass}`)) err(`${at}.learnClass`, 'must name a class and its matching XP track');
+      if ([row.learnAny, row.learnClass, row.learnTags].filter(Boolean).length > 1) err(at, 'choose one teaching scope: tags, class, or any');
     } else wholeAtLeast(row, 'hpPct', 1, at, err, 100);
     if (noted) for (const key of Object.keys(row)) {
       if (typeof row[key] === 'number' && typeof row[NOTE]?.[key] !== 'string') err(`${at}.${key}`, 'is a number with no [NOTE] beside it: write the sentence its Settings row shows');
@@ -254,7 +302,9 @@ export function companionTableProblems(rows, bundle, err) {
 const ITEM_COLLECTIONS = Object.freeze(['consumables', 'companions']);
 const words = (value) => String(value).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').replace(/^./, (c) => c.toUpperCase());
 // hpPct is a percent; every other item number is a whole count or price.
-const domainFor = (key, value) => (key === 'hpPct'
+const domainFor = (key, value) => (['combatCardChance', 'featChance'].includes(key)
+  ? { integer: true, step: 1, min: 0, max: 100 }
+  : key === 'hpPct'
   ? { integer: true, step: 1, min: 1, max: 100 }
   : { integer: true, step: 1, min: 1, max: Math.max(20, Math.ceil(Math.max(1, value) * 10)) });
 

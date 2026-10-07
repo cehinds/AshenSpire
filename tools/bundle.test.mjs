@@ -13,6 +13,7 @@
 // Run:  node tools/bundle.test.mjs
 // Exit 0 = every case behaved. Exit 1 = at least one did not, and it says which.
 
+import { copyPackTrees, SANDBOX_ENV } from './art-source.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, appendFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -32,16 +33,23 @@ const check = (name, ok, detail) => {
 // touching the working tree.
 // SINCE STEP 8e (docs/EXTERNAL-ASSETS-PLAN.md) the bundler's default is the pack
 // shape, and the one inline shape left is the light single file (--single-file),
-// which reads its payloads from assets-mobile/ with assets/ as the oracle. The
-// parse-gate cases below build that single file (it is what still compiles every
-// module into one classic script, and at ~31 MB it is a tenth of the retired
-// full-art file); `pack: true` adds the trees the pack shape writes from, for
-// the case that builds it.
+// which reads its payloads from the light pack with art-manifest.json as the
+// oracle. The parse-gate cases below build that single file (it is what still
+// compiles every module into one classic script, and at ~31 MB it is a tenth of
+// the retired full-art file); `pack: true` adds the trees the pack shape writes
+// from, for the case that builds it. SINCE STEP 13 the art trees are not in the
+// checkout: each sandbox gets its copy from the fetched packs (copyPackTrees,
+// tools/art-source.mjs) and builds with ASHEN_ART_SOURCE=trees, so a fixture
+// can edit its own copy (the EOL cases do) and never the cache.
 function sandbox({ pack = false } = {}) {
   const dir = mkdtempSync(resolve(tmpdir(), 'ashen-bundle-'));
-  for (const d of ['src', 'styles', 'tools', 'assets', 'assets-mobile', 'content', ...(pack ? ['music', 'map-detail', 'asset-data'] : [])]) {
+  // Branch-owned artwork is authored under the selected checkout, outside
+  // the shared packs (artPath resolves non-pack paths against that root).
+  // Portable variant builds read these bytes and validate their catalog hashes.
+  for (const d of ['src', 'styles', 'tools', 'content', 'assets-alternative', ...(pack ? ['asset-data'] : [])]) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
+  copyPackTrees(dir, ['assets-mobile', 'assets/fonts', ...(pack ? ['music', 'map-detail'] : [])]);
   // buildordinal.json became authored build input after this sandbox was first
   // written. Omitting it makes every real-bundler fixture refuse before it can
   // reach the property the fixture is meant to exercise.
@@ -76,7 +84,7 @@ function sandbox({ pack = false } = {}) {
 // The light single file, written where the cases read it (build/AshenSpire.html).
 const SINGLE_FILE_ARGS = ['--single-file', '--out', 'build'];
 function build(dir, args = SINGLE_FILE_ARGS) {
-  const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs'), ...args], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs'), ...args], { cwd: dir, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...SANDBOX_ENV } });
   // A child that died (signal, spawn error) says so, rather than reading as `exit null`.
   const died = r.signal ? `\n[child killed by ${r.signal}]` : r.error ? `\n[child failed: ${r.error.message}]` : '';
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') + died };
@@ -226,6 +234,80 @@ if (process.argv.includes('--eol-selftest')) {
   process.exit(fails ? 1 : 0);
 }
 
+// Execute the real bundled model factories/loader, with only the UI entry
+// replaced by a headless check. Native ESM live bindings masked the former
+// loadout -> validate -> classMasteryContent -> state -> loadout cycle; the
+// shipped classic loader captured an undefined createLoadout during that cycle.
+function bundledStartingDecks(html, { restoreCycle = false } = {}) {
+  const match = /<script>([\s\S]*?)<\/script>/.exec(html);
+  if (!match) return { ok: false, why: 'no bundled script' };
+  let script = match[1].replace(/"data:[^"\\\n\r]*"/g, '"data:"');
+  if (restoreCycle) {
+    const start = script.indexOf('"src/model/loadout.js": function');
+    const end = script.indexOf('\n},\n"', start);
+    if (start < 0 || end < 0) return { ok: false, why: 'loadout factory not found' };
+    const body = script.slice(start, end);
+    const leaf = 'require("src/model/tokens.js")';
+    if (!body.includes(leaf)) return { ok: false, why: 'token leaf import not found' };
+    script = script.slice(0, start) + body.replace(leaf, 'require("src/model/validate.js")') + script.slice(end);
+  }
+  const entry = '  require("src/main.js");\n})();';
+  if (!script.endsWith(entry + '\n') && !script.trimEnd().endsWith(entry)) return { ok: false, why: 'runtime entry not found' };
+  script = script.replace(entry, `  require("src/model/loadout.js");
+  var bundle = require("src/content/index.js").contentBundle;
+  globalThis.startingDeckValidation = require("src/model/validate.js").validateContent(bundle);
+})();`);
+  const context = vm.createContext({ console, structuredClone });
+  try {
+    new vm.Script(script, { filename: 'bundled-starting-decks' }).runInContext(context, { timeout: 30000 });
+    const result = context.startingDeckValidation;
+    return { ok: result?.ok === true, why: JSON.stringify(result?.errors ?? result) };
+  } catch (error) { return { ok: false, why: error.message }; }
+}
+
+// Exercise the shipped loader, not native ESM live bindings. Mastery loads
+// first on the affected reward path; the old back-edge froze its exports
+// before initialization. Restore that edge to prove the probe catches it.
+function bundledSkillClaims(html, { restoreCycle = false } = {}) {
+  let script = /<script>([\s\S]*?)<\/script>/.exec(html)?.[1];
+  if (!script) return { ok: false, why: 'no bundled script' };
+  script = script.replace(/"data:[^"\\\n\r]*"/g, '"data:"');
+  if (restoreCycle) {
+    const start = script.indexOf('"src/model/classMasteryRun.js": function');
+    const end = script.indexOf('\n},\n"', start);
+    const body = script.slice(start, end);
+    const leaf = 'require("src/model/abilitySkillActivation.js")';
+    if (start < 0 || end < 0 || !body.includes(leaf)) return { ok: false, why: 'activation leaf not found' };
+    script = script.slice(0, start) + body.replace(leaf, 'require("src/model/skills.js")') + script.slice(end);
+  }
+  const entry = '  require("src/main.js");\n})();';
+  if (!script.trimEnd().endsWith(entry)) return { ok: false, why: 'runtime entry not found' };
+  script = script.replace(entry, `
+  const mastery = require("src/model/classMasteryRun.js");
+  const skills = require("src/model/skills.js");
+  const bundle = require("src/content/index.js").contentBundle;
+  const registries = require("src/model/registries.js").createRegistries(bundle);
+  const run = require("src/model/state.js").createRunState({seed: 7172, classId: 'starseer', registries});
+  mastery.openRunClassMastery(registries, run, {}, {receiptId: 'bundled-skill-claim'});
+  const scoped = mastery.registriesForClassMastery(registries, run);
+  for (const [id, kind] of [['class:starseer','class'], ['item:magic-focus','focus'], ['item:blade','weapon'], ['combatManeuvers','ability']]) {
+    skills.activateAbilitySkill(run, id);
+    const before = run.skills[id]?.level || 0;
+    const cost = skills.xpToNext(scoped, kind, before);
+    if (kind === 'class') mastery.recordClassMasteryXp(run, 'starseer', cost + 7);
+    skills.bankSkillXp(scoped, run, id, cost + 7);
+    const claim = skills.claimBankedSkillLevel(scoped, run, id);
+    if (!claim || claim.after !== claim.before + 1 || run.skills[id].xp < 7) throw new Error('claim failed: ' + id);
+  }
+  globalThis.skillClaimsPassed = true;
+})();`);
+  const context = vm.createContext({console, structuredClone});
+  try {
+    new vm.Script(script, {filename: 'bundled-skill-claims'}).runInContext(context, {timeout: 30000});
+    return {ok: context.skillClaimsPassed === true};
+  } catch (error) { return {ok: false, why: error.message}; }
+}
+
 // ---- 1. The control: an untouched tree still builds -------------------------
 // EVERY CASE RUNS IN ITS OWN FUNCTION FRAME. As bare `{ … }` blocks at module
 // top level, each case's block-scoped locals stayed alive in the one top-level
@@ -239,8 +321,42 @@ if (process.argv.includes('--eol-selftest')) {
   const outPath = resolve(dir, 'build/AshenSpire.html');
   check('control: it wrote a real bundle, not a stub',
     existsSync(outPath) && readFileSync(outPath, 'utf8').length > 500000);
+  if (existsSync(outPath)) {
+    const html = readFileSync(outPath, 'utf8');
+    const branchCatalogPath = resolve(dir, 'src/ui/alternativeArtCatalog.js');
+    if (existsSync(branchCatalogPath)) {
+      const catalog = JSON.parse(readFileSync(branchCatalogPath, 'utf8')
+        .match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
+      const catalogHashes = Object.entries(catalog.hashes);
+      check('control: selected-source branch artwork catalog contains declared hashes', catalogHashes.length > 0);
+      const mapMatch = html.match(/const alternativeArtMap = (\{[^\n]+\});/);
+      const inlineArt = mapMatch ? JSON.parse(mapMatch[1]) : {};
+      const mismatches = catalogHashes.filter(([file, hash]) => {
+        const payload = inlineArt[`assets-alternative/${file}`];
+        return !payload?.startsWith('data:image/webp;base64,')
+          || createHash('sha256').update(Buffer.from(payload.slice('data:image/webp;base64,'.length), 'base64')).digest('hex') !== hash;
+      });
+      check('control: portable branch artwork matches every selected-source catalog hash',
+        mismatches.length === 0, `${mismatches.length} missing or changed: ${mismatches.map(([file]) => file).join(', ')}`);
+    }
+    const clean = bundledStartingDecks(html);
+    check('control: bundled content validation composes every starting deck', clean.ok, clean.why);
+    const planted = bundledStartingDecks(html, { restoreCycle: true });
+    check('control: restoring the validator import catches the captured createLoadout cycle',
+      !planted.ok && /createLoadout is not a function/.test(planted.why), planted.why);
+    const claims = bundledSkillClaims(html);
+    check('control: bundled class, focus, weapon and maneuver Level Up claims succeed', claims.ok, claims.why);
+    const capturedMastery = bundledSkillClaims(html, {restoreCycle: true});
+    check('control: restoring the mastery/skills cycle reproduces hasClassMastery failure',
+      !capturedMastery.ok && /hasClassMastery is not a function/.test(capturedMastery.why), capturedMastery.why);
+  }
   rmSync(dir, { recursive: true, force: true });
 })();
+
+if (process.argv.includes('--model-runtime-only')) {
+  console.log('BOUNDARY: real bundled model factories and loader executed; no DOM or browser rendering checked.');
+  process.exit(fails ? 1 : 0);
+}
 
 // ---- 1p. THE PACK SHAPE, the default since step 8e --------------------------
 // Built from the real light and common trees (not a small fixture pack: the
@@ -981,8 +1097,9 @@ console.log('module is executed here. 5m covers an argument naming nothing; an a
 console.log('names the WRONG existing thing is caught only where the probe touches it.');
 console.log('BOUNDARY (6v/6y): "a whole program" here means the written <script> COMPILES.');
 console.log('It is a real answer to "is this a game or a fragment of one" and it is not an');
-console.log('answer to "does this game run": nothing executed the 93 modules, so a bundle');
-console.log('that parses and throws on load passes 6y exactly as it passes the tool.');
+console.log('answer to "does this game run": 6y compiles but never executes the modules.');
+console.log('The control separately runs starting-deck validation through bundled model');
+console.log('factories and catches its known cycle; it mounts no UI and runs no browser.');
 console.log('BOUNDARY (6 ordering): two refusal checks are pinned above the write by name.');
 console.log('A THIRD check added below the write would print OK above its own error and');
 console.log('nothing here would say so — this is a list, not a derived property.');

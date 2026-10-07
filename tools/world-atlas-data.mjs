@@ -15,6 +15,7 @@ import { wealdEncounters } from "../src/content/encounters/weald.js";
 import { marchesEncounters } from "../src/content/encounters/marches.js";
 import { reachEncounters } from "../src/content/encounters/reach.js";
 
+import { manifestIds } from "./art-source.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const schema = readFileSync(join(root, "tools/world-atlas-schema.sql"), "utf8");
 const source = join(root, "content/source/worldAtlas.json");
@@ -98,7 +99,10 @@ export function validateAtlasData(data) {
       if (
         !/^assets\/[a-zA-Z0-9_./-]+$/.test(row.uri) ||
         row.uri.includes("..") ||
-        !existsSync(join(root, row.uri))
+        // A shipped asset is one the pinned art release carries: an id
+        // art-manifest.json lists (the art left this repository at
+        // docs/EXTERNAL-ASSETS-PLAN.md step 13).
+        !manifestIds(root).has(row.uri)
       )
         throw Error(`Missing or unsafe asset ${row.assetId}: ${row.uri}`);
     for (const row of data.service_handlers)

@@ -3,12 +3,12 @@
 //
 // The browser half is tools/disabled-reason.mjs: it mounts a representative
 // set of refusing Next / Continue / Confirm controls (ten screens; the atlas,
-// the Smith, mount service and the reward menu's level hold are pinned here or
+// the Smith, mount service and the reward menu's deferred levels are pinned here or
 // by review, not there) in a real Chromium and measures the reason line
 // (laid out, not display:none, not visibility:hidden, at least 11 px). This
 // file pins the parts a fake DOM can: the one writer of the line
 // (refusal.js reasonNote / reasonWhenDisabled / refusesWhen), the title menu's
-// disabled entry, the event screen's Continue, the reward menu's level hold,
+// disabled entry, the event screen's Continue, the reward menu's usable exit,
 // a hidden row taking its line with it, and the stylesheet floor.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -129,23 +129,38 @@ test('a hidden button row takes its reason line with it (review of #1459: charac
   assert.match(css, /\[hidden\]\s*\+\s*\.as-reasonnote/, 'a row hidden after the paint still takes the line (adjacent-sibling rule)');
 });
 
-test('reward menu: Continue held for an unclaimed level says why, as text (review of #1459)', async () => {
+test('reward menu: unclaimed levels keep Continue available and explain that rewards are saved', async () => {
   const { mountRewards } = await import('../src/ui/screens/reward.js');
   const { xpToNext } = await import('../src/model/levelup.js');
+  const { unclaimedProgressionRewards } = await import('../src/model/deferredProgression.js');
+  const { pendingRewardCheckpoint } = await import('../src/model/rewardSourcePolicy.js');
   withKitDom((dom) => {
     const app = dom.document.createElement('main');
     dom.document.body.replaceChildren(app);
     const run = createRunState({ seed: 7, classId: 'reaver', registries: REG });
     run.level = { ...(run.level || {}), level: 3, xp: xpToNext(REG, 3) + 5, unspentPoints: 0 };
+    const rewards = { xpGains: { level: 30, tracks: {} }, levelCards: [{ ordinal: 0, requiredLevel: 4, cardIds: ['rend', 'stomp'] }] };
+    const checkpoint = pendingRewardCheckpoint(rewards, { source: 'normal', after: 'map' });
+    checkpoint.expanded = true;
+    const beforeLevel = { ...run.level };
+    const beforeDeck = [...run.deck];
+    let exited = false;
     mountRewards(app, {
-      registries: REG, run, onDone() {},
-      rewards: { xpGains: { level: 30, tracks: {} }, levelCards: [{ ordinal: 0, cardIds: ['rend', 'stomp'] }] },
-      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
+      registries: REG, run, rewards, checkpoint,
+      onDone() { run.deferredProgression = unclaimedProgressionRewards(checkpoint); exited = true; app.remove(); },
+      saves: { loadMeta: () => ({ settings: { rewardCollect: 'auto', levelUpRefillSeconds: 0 } }) },
     });
     const cont = app.querySelector('#reward-continue');
-    assert.equal(cont.disabled, true, 'a waiting level holds Continue');
-    const note = noteOf(cont);
-    assert.ok(shows(note), 'the hold is explained on screen, not only in the title');
-    assert.match(note.textContent, /claim your levels/i);
+    try {
+      assert.equal(cont.disabled, false, 'a waiting level must not hold Continue');
+      assert.equal(shows(noteOf(cont)), false, 'an available exit has no stale refusal');
+      assert.match(app.querySelector('.modal-foot-note span').textContent, /unfinished levels and level rewards are saved/i);
+      cont.click();
+      assert.equal(exited, true, 'the player can actually leave');
+      assert.deepEqual(run.level, beforeLevel, 'leaving does not claim or spend the banked level');
+      assert.deepEqual(run.deck, beforeDeck, 'auto collect cannot select a deferred level card');
+      assert.deepEqual(run.deferredProgression.levelCards[0].cardIds, ['rend', 'stomp']);
+      assert.equal(run.deferredProgression.levelCards[0].requiredLevel, 4);
+    } finally { app.remove(); }
   });
 });

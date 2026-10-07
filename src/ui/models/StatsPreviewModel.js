@@ -23,11 +23,12 @@ import { ratingReceipt, resolveCombatRatings } from '../../model/combatRatings.j
 import { attributeRatingReceipt, ratingAttributeIds } from '../../model/ratingFormula.js';
 import { createRegistries } from '../../model/registries.js';
 import { createRunState } from '../../model/state.js';
+import { t } from '../strings.js';
 
 /** The settings key that remembers which class the out-of-run examples use. */
 export const STATS_EXAMPLE_CLASS_KEY = 'settingsStatsExampleClass';
 
-const DERIVED_BY_TOPIC = Object.freeze({ Actions: 'energy', HP: 'hp', Stamina: 'stamina', Mana: 'mana', Poise: 'poise' });
+const DERIVED_BY_TOPIC = Object.freeze({ Actions: 'stamina', HP: 'hp', Stamina: 'stamina', Mana: 'mana', Poise: 'poise' });
 const RATING_BY_TOPIC = Object.freeze({ 'Attack rating (AR)': 'ar', 'Defence rating (DR)': 'dr', 'Power rating (PR)': 'pr', Poise: 'poise', Ward: 'ward' });
 const RATING_LABELS = Object.freeze({ ar: 'AR', dr: 'DR', pr: 'PR', poise: 'Poise', ward: 'Ward' });
 
@@ -255,8 +256,8 @@ function handExample(ctx) {
     if (receipt.raw !== receipt.value) expression += `, kept within ${receipt.min ?? 0}–${receipt.max ?? receipt.value}`;
     return { label, expression, total: receipt.value };
   };
-  const capacity = line('Hand size', 'handSize');
-  const opening = line('Opening hand', 'openingHand');
+  const capacity = line(t('statsPreview.overview.handSize'), 'handSize');
+  const opening = line(t('statsPreview.overview.openingHand'), 'openingHand');
   if (opening.total > capacity.total) {
     opening.expression += `, then limited to capacity ${capacity.total}`;
     opening.total = capacity.total;
@@ -279,7 +280,7 @@ function handExample(ctx) {
   // room, so the example states the most a turn can draw.
   let turn;
   if (rules.drawMode === 'fill') {
-    turn = { label: 'Each turn, at most', expression: `draw until the hand holds ${capacity.total}`, total: capacity.total };
+    turn = { label: t('statsPreview.hand.eachTurn'), expression: `draw until the hand holds ${capacity.total}`, total: capacity.total };
   } else {
     // Replacements for optional discards ride on top of the fixed amount
     // (`pendingDiscardDraw`), still within capacity.
@@ -290,7 +291,7 @@ function handExample(ctx) {
       turn.total = capacity.total;
     }
     if (replacing) turn.expression += '; plus one for each card you chose to discard, never past capacity';
-    if (rules.retain) turn.expression += '; fewer when kept cards fill the hand';
+    turn.expression += '; fewer when retained cards leave too little room';
   }
   // Either mode stops when there is nothing left to draw (engine/actions.js
   // `drawCards`), and without a reshuffle the discard pile never refills it.
@@ -298,8 +299,10 @@ function handExample(ctx) {
     ? '; fewer once the draw and discard piles are both empty'
     : '; fewer once the draw pile is empty (the discard pile is not reshuffled)';
   return {
-    kind: 'hand', id: 'hand', title: 'Hand', lines: [opening, turn, capacity],
-    hint: rules.retain ? 'Unplayed cards stay in hand.' : 'Unplayed cards are discarded at turn end.',
+    kind: 'hand', id: 'hand', title: t('statsPreview.hand.title'), lines: [opening, turn, capacity],
+    hint: rules.retain ? 'Unplayed cards stay in hand.' : rules.shuffleHand
+      ? 'Retain cards stay in hand; other unplayed cards shuffle back into the draw pile. Ethereal still applies.'
+      : 'Retain cards stay in hand; other unplayed cards are discarded at turn end. Ethereal still applies.',
     sense: '',
   };
 }
@@ -337,23 +340,23 @@ function ratingExample(ctx, id) {
 
 function overviewExample(ctx) {
   const config = ctx.ratings();
-  const derived = ['hp', 'energy', 'stamina', 'mana']
+  const derived = ['hp', 'stamina', 'mana']
     .filter((id) => ctx.configured.derivedStatRules.rules[id])
     .map((id) => derivedExample(ctx, id));
   const hand = handExample(ctx);
   const lines = [
     ...derived.map((example) => ({ label: example.title, expression: example.lines[0].expression, total: example.lines[0].total })),
-    { label: 'Opening hand', expression: hand.lines[0].expression, total: hand.lines[0].total },
+    { label: t('statsPreview.overview.openingHand'), expression: hand.lines[0].expression, total: hand.lines[0].total },
     ...(config.enabled
       ? ['poise', 'ward', 'ar', 'dr', 'pr'].map((id) => {
         const example = ratingExample(ctx, id);
         return { label: example.lines[0].label, expression: example.lines[0].expression, total: example.lines[0].total };
       })
-      : [(({ lines: [first] }) => ({ label: 'Poise', expression: first.expression, total: first.total }))(derivedExample(ctx, 'poise'))]),
-    { label: 'Draw / turn', expression: hand.lines[1].expression, total: hand.lines[1].total },
-    { label: 'Hand size', expression: hand.lines[2].expression, total: hand.lines[2].total },
+      : [(({ lines: [first] }) => ({ label: t('statsPreview.overview.poise'), expression: first.expression, total: first.total }))(derivedExample(ctx, 'poise'))]),
+    { label: t('statsPreview.overview.draw'), expression: hand.lines[1].expression, total: hand.lines[1].total },
+    { label: t('statsPreview.overview.handSize'), expression: hand.lines[2].expression, total: hand.lines[2].total },
   ];
-  return { kind: 'overview', id: 'overview', title: 'Stat block', lines, hint: ctx.subject.current
+  return { kind: 'overview', id: 'overview', title: t('statsPreview.overview.title'), lines, hint: ctx.subject.current
     ? 'At your current level, under these settings; your run in progress keeps the rules it started with. Not included: relics, equipment, and permanent changes from events.'
     : 'Starting relics included; equipment adds on top.', sense: '' };
 }
@@ -376,7 +379,7 @@ export function statsTopicPreview(settings = {}, topic, previewAttributes = null
   }
   const examples = [];
   const attempt = (build) => {
-    try { examples.push(build()); } catch (error) { examples.push({ kind: 'problem', id: 'problem', title: 'Not calculable', lines: [], hint: error.message, sense: '' }); }
+    try { examples.push(build()); } catch (error) { examples.push({ kind: 'problem', id: 'problem', title: t('statsPreview.problem.title'), lines: [], hint: error.message, sense: '' }); }
   };
   const { subject } = ctx;
   const ratingsOn = ctx.ratings().enabled;
@@ -394,7 +397,7 @@ export function statsTopicPreview(settings = {}, topic, previewAttributes = null
         const parts = [`${num(threshold.attribute)} from attributes`];
         if (threshold.equipment) parts.push(`${num(threshold.equipment)} from armour`);
         if (threshold.relic) parts.push(`${num(threshold.relic)} from relics`);
-        example.lines.push({ label: 'Poise in combat', expression: parts.join(' + '), total: threshold.value });
+        example.lines.push({ label: t('statsPreview.poise.inCombat'), expression: parts.join(' + '), total: threshold.value });
       } else if (!ratingsOn) {
         example.hint = `${example.hint} Worn armour and relic Poise add on top in combat.`;
       }

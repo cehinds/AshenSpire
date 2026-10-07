@@ -16,6 +16,7 @@
 
 import { openModal } from './modalShell.js';
 import { loreParts } from '../models/LoreTypeModel.js';
+import { t } from '../strings.js';
 
 function paragraph(text, className) {
   const p = document.createElement('p');
@@ -57,12 +58,12 @@ export function loreLine({ text, title = '', eyebrow = 'Lore' } = {}) {
   // the words a sighted player reads are the words a screen reader says.
   const hint = document.createElement('span');
   hint.className = 'sr-only';
-  hint.textContent = ' — read the lore';
+  hint.textContent = ` ${t('lore.line.hint')}`;
   line.append(hint);
   const cue = document.createElement('span');
   cue.className = 'lore-read';
   cue.setAttribute('aria-hidden', 'true');
-  cue.textContent = 'Read';
+  cue.textContent = t('lore.line.read');
   line.append(cue);
   line.addEventListener('click', (event) => {
     event.stopPropagation();

@@ -152,7 +152,7 @@ function inHand(c, cardId) {
   }
   throw new Error(`Fixture lacks ${cardId}`);
 }
-function play(c, cardId, targetId = 'e1') { return dispatch(c, { type: 'playCard', cardInstanceId: inHand(c, cardId), targetId }); }
+function play(c, cardId, targetId) { return dispatch(c, { type: 'playCard', cardInstanceId: inHand(c, cardId), targetId }); }
 function state(c) { return JSON.stringify({ snapshot: serializeCombatSnapshot(c), counters: c.rng.getCounters() }); }
 
 test('prototype content passes the production validator', () => {
@@ -190,13 +190,13 @@ test('Dodge retains, costs weight-priced stamina and does not roll RNG', () => {
   const counters = c.rng.getCounters();
   const energy = c.player.energy;
   dispatch(c, { type: 'playCard', cardInstanceId: id });
-  assert.equal(c.player.energy, energy);
+  assert.equal(c.player.energy, energy - 3);
   assert.equal(c.player.stamina, 2);
   assert.equal(c.player.evade, 1);
   assert.deepEqual(c.rng.getCounters(), counters);
   const result = dispatch(c, { type: 'endTurn' });
   assert(result.events.some((e) => e.type === 'attackEvaded'));
-  assert.equal(c.player.stamina, 3);
+  assert.equal(c.player.stamina, c.player.maxStamina);
   assert.equal(c.player.evade, 0);
 });
 test('spent mana never refills automatically across turns', () => {
@@ -272,7 +272,7 @@ test('co-op commits seat-local Evade and resource costs without corrupting anoth
   assert.equal(c.players.get('p2').entity.stamina, 5);
   assert.equal(c.players.get('p1').entity.evade, 1);
   endTurn(c, 'p1'); endTurn(c, 'p2');
-  assert.equal(c.players.get('p1').entity.stamina, 3);
+  assert.equal(c.players.get('p1').entity.stamina, 5);
   assert.equal(c.players.get('p2').entity.stamina, 5);
   assert(c.eventLog.some((e) => e.type === 'attackEvaded' && e.targetPlayerId === 'p1'));
   const impacts = c.eventLog.filter((e) => e.type === 'impactDealt' && e.targetId === 'player');

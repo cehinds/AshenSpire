@@ -29,6 +29,7 @@ import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
+import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import { evalPredicate, checkPhases, emitEvent } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
@@ -37,12 +38,14 @@ import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
-import { cardRatingBonus, applyRatingImpact } from './combatRatings.js';
+import { cardRatingBonus, applyRatingImpact, absorbMeterGuard } from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
+import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
+import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -136,18 +139,49 @@ export function attackTagsFor(action, effect, registries) {
 }
 
 /**
+ * critChance(rules, attributes, tags) → { chance, multiplier } for an attack of
+ * these tags (SPEC §13.4o): every matching rule adds base + Σ weight ×
+ * attribute / divisor, the sum is capped at the highest matching cap, and the
+ * multiplier is the highest matching one. No match is { chance: 0 }.
+ */
+export function critChance(rules, attributes, tags) {
+  const tagSet = new Set(Array.isArray(tags) ? tags : []);
+  const matching = (Array.isArray(rules) ? rules : []).filter((rule) => rule && (rule.tags || []).some((tag) => tagSet.has(tag)));
+  if (!matching.length) return { chance: 0, multiplier: 1 };
+  const sum = matching.reduce((total, rule) => total + (rule.base || 0) + Object.entries(rule.weights || {})
+    .reduce((n, [id, w]) => n + w * (Number(attributes && attributes[id]) || 0), 0) / (rule.divisor || 100), 0);
+  const cap = Math.max(...matching.map((rule) => (Number.isFinite(rule.cap) ? rule.cap : 1)));
+  return { chance: Math.max(0, Math.min(cap, sum)), multiplier: Math.max(...matching.map((rule) => rule.multiplier || 1)) };
+}
+
+// The roll: only the player's attacks, only with a crit rule that matches, on
+// the combatProcs stream (nothing is drawn without a rule, so a run with no
+// such feat draws exactly what it always drew).
+function rollCrit(ctx, source, tags) {
+  if (!source || source.kind !== 'player' || !Array.isArray(source.critRules) || !source.critRules.length) return 0;
+  const { chance, multiplier } = critChance(source.critRules, ctx.attributes, tags);
+  if (!(chance > 0) || !(multiplier > 1)) return 0;
+  return ctx.rng.float('combatProcs') < chance ? multiplier : 0;
+}
+
+/**
  * applyAttackDamage(ctx, source, target, base) — full attack resolution:
  * §4.2 math, block absorption first, then HP. Emits damageDealt (+ hpLost if
  * HP was touched), handles deaths and phase checks. Returns final damage.
  */
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
+  const targetStatusesBefore = structuredClone(target.statuses || {});
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
   const ratedBase = base + cardRatingBonus(ctx, source, carrier, 'damage', base);
   const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
-  const dmg = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
+  const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
+  // A critical hit multiplies the finished blow, before Block takes its share.
+  const dmg = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
+  if (dmg > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: dmg });
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
+  reconcileWardBlock(target);
   const hpLoss = dmg - blocked;
   const components = receipt?.components;
   const hpShares = components && dmg > 0 ? allocateInteger(hpLoss, components.map((c) => c.amount)) : [];
@@ -162,16 +196,17 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     // it (engine/skillXp.js): which hand, which piece. Absent when no card did.
     ...(carrier && carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}),
     blockRemaining: target.block,
+    ...wardBlockReceipt(target),
     ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
       tags: receipt.tags } : {}),
     isAttack: true,
   });
   if (hpLoss > 0) {
     if (ctx.ratingsRules) applyRatingImpact(ctx, source, target, carrier);
-    ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack' });
-    applyArcaneExposure(ctx, source, target, carrier);
+    ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
+    if (!usesSingleBreakMeter(ctx)) applyArcaneExposure(ctx, source, target, carrier);
   }
-  afterHpChange(ctx, target);
+  afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   return dmg;
 }
 
@@ -237,6 +272,40 @@ export function computeBlockGain(ctx, entity, base, card = null) {
   return amt < 0 ? 0 : amt;
 }
 
+/**
+ * computeMeterGuardGain(ctx, entity, base, card) → the Poise or Ward guard a
+ * gainPoise / gainWard effect grants: its base plus the same rating bonus the
+ * card's Block reads (cardRatingBonus 'block' — DR on a physical skill, PR on
+ * a magical card), floored, min 0. No Dexterity, Frail or block modifiers: a
+ * guard is not Block. Pure; the preview reads it too.
+ */
+export function computeMeterGuardGain(ctx, entity, base, card = null) {
+  const amt = Math.floor(base + cardRatingBonus(ctx, entity, card, 'block', base));
+  return amt < 0 ? 0 : amt;
+}
+
+/**
+ * gainMeterGuard — adds to entity.poiseGuard or entity.wardGuard. The guard
+ * absorbs physical (Poise) or magical (Ward) impact before the matching meter
+ * fills (combatRatings.js absorbMeterGuard) and clears at the start of its
+ * owner's turn, with Block.
+ */
+export function gainMeterGuard(ctx, entity, meter, base, card = null) {
+  if (!entity.alive) return 0;
+  if (usesSingleBreakMeter(ctx) && meter === 'ward') meter = 'poise';
+  const amt = computeMeterGuardGain(ctx, entity, base, card);
+  const key = meter + 'Guard';
+  if (amt > 0) entity[key] = (entity[key] || 0) + amt;
+  ctx.emit('meterGuardGained', {
+    targetId: entity.id, meter, amount: amt, total: entity[key] || 0,
+    // The weight-priced Dodge Roll's guard is the dodge visual's cue
+    // (model/combatEffectEvents.js); any other gainPoise card is not a dodge.
+    ...(card?.cardId && ctx.registries.cards.has(card.cardId) && ctx.registries.cards.get(card.cardId).weightClassPriced ? { dodge: true } : {}),
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
+  });
+  return amt;
+}
+
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
@@ -245,9 +314,12 @@ export function gainBlock(ctx, entity, base, card = null) {
   if (cap != null && entity.block + amt > cap) {
     amt = Math.max(0, cap - entity.block);
   }
+  reconcileWardBlock(entity);
   entity.block += amt;
+  if (amt > 0 && card && isMagicalAttack(ctx, card)) entity.wardBlock = (entity.wardBlock || 0) + amt;
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
+    ...wardBlockReceipt(entity),
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
     // The card that raised it, when one did (engine/skillXp.js pays its piece's
     // group), and in co-op the seat that played it — a guard cast on an ally
@@ -258,14 +330,21 @@ export function gainBlock(ctx, entity, base, card = null) {
   return amt;
 }
 
+// Every player entity is id 'player', so in co-op an hpLost receipt names the
+// seat it cost, as damageDealt does; readers (triggers, haptics) cannot tell an
+// ally from the owner by targetId alone. Solo stamps nothing.
+function seatOf(ctx, target) {
+  return ctx.playerIdForEntity && target.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(target) } : {};
+}
+
 /** loseHp — direct HP loss: ignores ALL attack modifiers AND block (SPEC §4.2). */
-export function applyLoseHp(ctx, target, amount, cause = 'effect') {
+export function applyLoseHp(ctx, target, amount, cause = 'effect', death = {}) {
   if (!target || !target.alive) return 0;
   const n = Math.max(0, Math.floor(amount));
   if (n === 0) return 0;
   target.hp -= n;
-  ctx.emit('hpLost', { targetId: target.id, amount: n, cause });
-  afterHpChange(ctx, target);
+  ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: n, cause });
+  afterHpChange(ctx, target, death);
   return n;
 }
 
@@ -290,7 +369,7 @@ export function applyHeal(ctx, target, amount) {
   return gained;
 }
 
-function afterHpChange(ctx, target) {
+function afterHpChange(ctx, target, death = {}) {
   // THE DEATH-PREVENTION HOOK (SPEC §14.3): the player about to drop to 0 HP
   // spends one revive token from the fight's copy of the counts and rises at
   // hpPct of max. The copy rides the combat snapshot, so a fight saved after a
@@ -308,7 +387,7 @@ function afterHpChange(ctx, target) {
     target.hp = 0;
     target.alive = false;
     if (target.kind === 'enemy') {
-      ctx.emit('enemyDied', { targetId: target.id, enemyId: target.enemyId });
+      ctx.emit('enemyDied', { targetId: target.id, enemyId: target.enemyId, ...death });
     }
     // Player death is finalized by combat.js's end-of-combat check.
   }
@@ -376,7 +455,9 @@ export function dealPoiseDamage(ctx, entity, amount) {
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
-  const n = Math.max(0, Math.floor(amount));
+  // A Poise guard (gainPoise) takes the impact before the meter does.
+  const n = Math.max(0, Math.floor(amount)) - absorbMeterGuard(entity, 'poise', amount);
+  if (n <= 0) return;
   if (ctx.foundation && isEnemy && entity.impactProtectedUntil >= ctx.turn) {
     entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value + n);
     return;
@@ -452,7 +533,7 @@ export function discardFromHand(ctx, n, { random = false } = {}) {
     const idx = random ? Math.floor(ctx.rng.float('misc') * ctx.piles.hand.length) : ctx.piles.hand.length - 1;
     const card = ctx.piles.hand.splice(idx, 1)[0];
     ctx.piles.discard.push(card);
-    ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'effect' });
+    ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: random ? 'random' : 'effect', explicit: true, sourceId: ctx.player?.id, ...(ctx.playerKey ? { sourcePlayerId: ctx.playerKey, playerId: ctx.playerKey } : {}) });
   }
 }
 
@@ -593,12 +674,17 @@ export function executeAction(ctx, action) {
     };
     if (!evalPredicate(ctx, eff.if, pctx)) return;
   }
+  if (eff.oncePerTurn && !allowAbilityOnce(action.owner || action.source || ctx.player, eff.oncePerTurn, action.card, action.meta?.abilityEffectIndex ?? eff.op)) return;
 
   const repeat = evalNum(ctx, action, eff.repeat, 1);
-  for (let r = 0; r < repeat; r++) {
-    runOpcode(ctx, action, eff);
-    if (ctx.result) return;
-  }
+  const previous = ctx._abilityAction;
+  ctx._abilityAction = action;
+  try {
+    for (let r = 0; r < repeat; r++) {
+      runOpcode(ctx, action, eff);
+      if (ctx.result || ctx.pendingAbilityDiscard) return;
+    }
+  } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }
 }
 
 function runOpcode(ctx, action, eff) {
@@ -622,7 +708,8 @@ function runOpcode(ctx, action, eff) {
         const targets = resolveTargets(ctx, action, eff.target);
         for (const t of targets) {
           if (!t.alive) continue;
-          const base = evalNum(ctx, action, eff.amount, 0, t);
+          const bonus = (action.meta?.abilityChargeDamageEffect || 0) + (h === 0 && t === targets[0] ? action.meta?.abilityChargeDamage || 0 : 0);
+          const base = evalNum(ctx, action, eff.amount, 0, t) + bonus;
           const carrier = { ...action.card, ...(eff.attack ? { attack: eff.attack } : {}),
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags,
@@ -633,7 +720,11 @@ function runOpcode(ctx, action, eff) {
           }
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
           const hpBefore = t.hp;
+          // A skill feat's critical hit (SPEC §13.4o), rolled per hit and target.
+          const crit = rollCrit(ctx, action.source, attackTags);
+          if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
+          if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak);
           // OUTSIDE the foundation ruleset (the shipped game creates its combats
           // without one), an enemy blow that draws blood rocks the player by
           // balance.poise.playerImpactPerHit — the one impact the shipped
@@ -663,7 +754,15 @@ function runOpcode(ctx, action, eff) {
     }
     case 'block': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card);
+        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t) + (action.meta?.abilityChargeBlock || 0), action.card);
+      }
+      break;
+    }
+    case 'gainPoise':
+    case 'gainWard': {
+      const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
       }
       break;
     }
@@ -695,7 +794,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'applyStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        const stacks = evalNum(ctx, action, eff.stacks, 1, t);
+        const stacks = evalNum(ctx, action, eff.stacks, 1, t) + (action.meta?.abilityChargeBuildup || 0);
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
         if (ctx.ratingsRules && t.id === action.source?.id && action.card && isMagicalAttack(ctx, action.card) && t.statuses[eff.status]) {
           t.statuses[eff.status].ratingCard = structuredClone(action.card);
@@ -705,16 +804,27 @@ function runOpcode(ctx, action, eff) {
     }
     case 'removeStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        statuses.removeStatus(ctx, t, eff.status, { reason: 'consumed' });
+        statuses.removeStatus(ctx, t, eff.status, { reason: 'consumed', ...(eff.amount !== undefined ? { amount: Math.max(0, evalNum(ctx, action, eff.amount, 0, t)) } : {}) });
+      }
+      break;
+    }
+    case 'grantCardCharge': {
+      for (const target of resolveTargets(ctx, action, eff.target)) {
+        const charge = { ...eff };
+        for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) charge[field] = Math.max(0, evalNum(ctx, action, eff[field], 0, target));
+        grantAbilityCharge(target, charge);
       }
       break;
     }
     case 'draw': {
-      drawCards(ctx, Math.max(0, evalNum(ctx, action, eff.amount, 1)));
+      const amount = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      if (ctx.drawCardsFor) ctx.drawCardsFor(action.owner || action.source, amount);
+      else drawCards(ctx, amount);
       break;
     }
     case 'discard': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      if (eff.choose) { requestAbilityDiscard(ctx, action, n); break; }
       discardFromHand(ctx, n, { random: !!eff.random });
       break;
     }
@@ -756,7 +866,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'restoreStamina': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        const amount = Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1)));
+        const amount = Math.max(0, Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1))));
         t.stamina += amount; ctx.emit('staminaRecovered', { targetId: t.id, amount, reason: 'effect' });
       }
       break;
@@ -783,7 +893,13 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage
         // record can attribute the loss — display + instruments read it.
-        applyLoseHp(ctx, t, evalNum(ctx, action, eff.amount, 0, t), eff.cause || 'effect');
+        const amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+        if (eff.nonlethal && amount >= t.hp) throw new Error('Not enough HP for a nonlethal offering');
+        applyLoseHp(ctx, t, amount, eff.cause || 'effect', action.meta?.killReceipt || { targetStatusesBefore: structuredClone(t.statuses || {}), sourceId: action.source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}) });
+        if (eff.offering && amount > 0) {
+          recordAbilityOffering(t, amount);
+          ctx.emit('hpOfferingPaid', { amount, cost: amount, sourceId: t.id, targetId: t.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(t), playerId: ctx.playerIdForEntity(t) } : {}) });
+        }
       }
       break;
     }
@@ -799,7 +915,7 @@ function runOpcode(ctx, action, eff) {
         const amount = mult === 1
           ? evalNum(ctx, action, eff.amount, 0, t)
           : Math.floor(evalRaw(ctx, action, eff.amount, 0, t) * mult);
-        applyHeal(ctx, t, amount + cardRatingBonus(ctx, action.source, action.card, 'heal', amount));
+        applyHeal(ctx, t, amount + cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0));
       }
       break;
     }
@@ -854,6 +970,12 @@ function runOpcode(ctx, action, eff) {
       // threshold is the only scale there is.
       const firedThreshold = action.meta && action.meta.event && action.meta.event.threshold;
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        if (usesSingleBreakMeter(ctx)) {
+          const threshold = Number.isFinite(firedThreshold) ? firedThreshold : t.poiseMeter?.max || 0;
+          const amount = eff.pct !== undefined ? Math.floor(threshold * evalNum(ctx, action, eff.pct, 0, t) / 100) : evalNum(ctx, action, eff.amount, 0, t);
+          applyRatingImpact(ctx, null, t, { damageSchool: school }, amount, { triggerHit: false });
+          continue;
+        }
         addArcaneExposure(ctx, action.source, t, {
           school,
           amountFor: (cfg) => (eff.pct !== undefined
@@ -866,6 +988,25 @@ function runOpcode(ctx, action, eff) {
     default:
       throw new Error(`Opcode '${eff.op}' has no implementation`);
   }
+}
+
+/** Validate all authored HP payments before any card, resource, queue or RNG change. */
+export function preflightCardHp(ctx, def, source, target, meta) {
+  const counters = ctx.rng?.getCounters();
+  const remaining = new Map();
+  try {
+  for (const effect of def.effects || []) {
+    if (effect.op !== 'loseHp') continue;
+    const action = { effect, source, owner: source, target, card: def, meta };
+    if (effect.if && !evalPredicate(ctx, effect.if, action)) continue;
+    for (const entity of resolveTargets(ctx, action, effect.target)) {
+      const amount = Math.max(0, evalNum(ctx, action, effect.amount, 0, entity)) * Math.max(0, evalNum(ctx, action, effect.repeat, 1));
+      const hp = remaining.get(entity) ?? entity.hp;
+      if (effect.nonlethal && amount >= hp) throw new Error('Not enough HP for a nonlethal offering');
+      remaining.set(entity, Math.max(0, hp - amount));
+    }
+  }
+  } finally { if (counters) ctx.rng.restoreCounters(counters); }
 }
 
 // ---------------------------------------------------------------------------

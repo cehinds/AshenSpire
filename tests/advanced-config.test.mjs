@@ -126,15 +126,15 @@ test('presentation config clamps numbers and refuses unknown rows', () => {
   });
   assert.equal(config.playerSpriteScale, 2);
   assert.equal(config.enemySpawnRow, 'A');
-  assert.equal(config.playerSpawnRow, 'C');
+  assert.equal(config.playerSpawnRow, 'F');
   assert.equal(config.playerSpawnColumn, '2');
-  assert.equal(config.enemySpawnColumn, '3');
+  assert.equal(config.enemySpawnColumn, '6');
 });
 
-test('formation defaults put the player at C2 and enemies at C3', () => {
+test('formation defaults clamp to the bottom row and opposite outer columns', () => {
   const config = presentationConfig({});
-  assert.equal(`${config.playerSpawnRow}${config.playerSpawnColumn}`, 'C2');
-  assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'C3');
+  assert.equal(`${config.playerSpawnRow}${config.playerSpawnColumn}`, 'F1');
+  assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'F6');
 });
 
 test('formation appearance validates scales, colors, shapes and offsets', () => {
@@ -798,7 +798,7 @@ test("the owner's exported 0.7.1 configuration imports through the screen's own 
   // stock 4, never a customisation, so it is dropped without a word.
   const opening = warnings.filter((line) => /^Opening hand/.test(line));
   assert.equal(opening.length, 1);
-  assert.match(opening[0], /old limits of 3–15 cards were left out, so the current 4–6 applies/);
+  assert.match(opening[0], /old limits of 3–15 cards were left out, so the current opening-hand limits apply/);
   assert.doesNotMatch(opening[0], /shared base/);
   // "start with 4-6 cards": the imported configuration opens every class there.
   const registries = createRegistries(configuredContentBundle(contentBundle, changes));
@@ -808,7 +808,7 @@ test("the owner's exported 0.7.1 configuration imports through the screen's own 
     const [primary] = Object.entries(row).find(([key, value]) => key in allOnes && value);
     for (const attributes of [allOnes, contentBundle.attributeRules.presets.lean[classId], { ...allOnes, [primary]: 40 }]) {
       const cards = scaledCards(row, attributes);
-      assert.ok(cards >= 4 && cards <= 6, `${classId} opens on ${cards}`);
+      assert.ok(cards >= row.min && cards <= row.max, `${classId} opens on ${cards}`);
     }
   }
 });
@@ -859,4 +859,21 @@ test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 
   assert.equal(imported[`${ROW}byClass.reaver.strength`], 1 / 3, 'a tuned points-per-card converts exactly, as its weight');
   assert.match(importWarnings.join(' '), /old limit of 15 cards was left out/);
   assert.equal(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle)[`${ROW}max`], 5);
+});
+
+// THE SKILL-LEVEL CARD UPGRADE IS RETIRED (SPEC §13.4o): `balance.skill.upgradeAt`
+// has no row, so a profile drops it and a file carrying it still imports whole.
+test('a stored or exported balance.skill.upgradeAt is dropped with a warning, never refused', () => {
+  const KEY = 'gameConfig.balance.skill.upgradeAt';
+  assert.ok(!advancedConfigRows(contentBundle).some((row) => row.key === KEY), 'the retired key has no row');
+  const profile = { [KEY]: 3, [CINDER]: 2 };
+  const warnings = [];
+  normalizeAdvancedSettings(profile, contentBundle, warnings);
+  assert.deepEqual(profile, { [CINDER]: 2 });
+  assert.match(warnings.join(' '), /card upgrade setting is retired/);
+  const importWarnings = [];
+  const imported = parseAdvancedConfigFile(v1File({ [KEY]: 3, [`settings.${KEY}`]: 3, [CINDER]: 2 }), contentBundle, {}, [], importWarnings);
+  assert.equal(imported[CINDER], 2, 'the rest of the file lands');
+  assert.ok(!Object.hasOwn(imported, KEY));
+  assert.match(importWarnings.join(' '), /card upgrade setting is retired/);
 });

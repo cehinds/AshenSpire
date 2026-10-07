@@ -73,7 +73,8 @@ function version() {
 const args = process.argv.slice(2);
 // THE ART TIER, AND WHICH PACKS THE BUILD CARRIES. Light by default (owner,
 // 2026-09-26: "light only on dev/test"): the light and common packs, default
-// tier light. `--full-art` is the release/main shape: all three packs, default
+// tier light. `--full-art` is the test/release/main shape
+// (test joined 2026-10-04): all three packs, default
 // tier high, light kept as its fallback. `--light` says the default out loud.
 // The light single file is built either way: it is the one inline download
 // (owner answer 3), and it is always light. The full-art single file and the
@@ -144,6 +145,7 @@ const stale = [
   resolve(distDir, 'map-detail'),
   resolve(distDir, 'packs'),         // replaced whole below
   resolve(distDir, 'objects'),
+  resolve(distDir, 'cards'),
 ];
 if (existsSync(distDir)) {
   for (const name of readdirSync(distDir)) {
@@ -166,7 +168,7 @@ if (removed.length) console.log(`launch: removed ${removed.length} stale launche
 const html = resolve(buildDir, 'AshenSpire.html');
 const singleFile = resolve(buildDir, 'download', 'AshenSpire.html');
 mkdirSync(resolve(distDir, 'download'), { recursive: true });
-for (const part of ['packs', 'objects']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
+for (const part of ['packs', 'objects', 'cards']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
 for (const part of ['asset-base.json', '.asset-pack']) copyFileSync(resolve(buildDir, part), resolve(distDir, part));
 const aliases = [
   [html, resolve(distDir, 'AshenSpire.html')],

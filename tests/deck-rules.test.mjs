@@ -12,12 +12,13 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, createCardInstance, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import {
   deckEditBounds, deckEditRefusal, playInDeckOrder, isUnlimitedBasic, ownedCopies,
-  moveToSideboard, moveFromSideboard, addBasicCard, orderedDrawPile, orderedReturn,
+  moveToSideboard, moveFromSideboard, addBasicCard, orderedDrawPile, orderedReturn, deckCardEquipmentEligible,
 } from '../src/model/deckRules.js';
-import { stampDeck } from '../src/model/loadout.js';
+import { stampDeck, reconcileGrantedCardsInCombat } from '../src/model/loadout.js';
 import { projectZones } from '../src/model/zones.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch } from '../src/engine/combat.js';
 import { drawCards } from '../src/engine/actions.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -27,6 +28,117 @@ const REG = createRegistries(contentBundle);
 const ENEMY = contentBundle.enemies[0].id;
 const freshRun = (seed = 0x10a5) => createRunState({ seed, classId: 'reaver', registries: REG });
 const ordinary = (run) => run.deck.find((c) => !c.equipmentRole && !c.grantedBy);
+
+test('equipment tags gate additions without hiding owned cards or blocking removal', async () => {
+  const { deckEditorModel, deckVariantKey, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const run = freshRun();
+  const blade = run.deck.find((card) => card.cardId === 'gorefireSlash');
+  const bow = createCardInstance('pinningShot', false, () => 'bow-skill');
+  const universal = createCardInstance('fieldDressing', false, () => 'universal-skill');
+  run.sideboard.push(bow, universal);
+  run.loadout.sets.rightHand[0] = 'shortbow';
+  run.loadout.sets.leftHand[0] = null;
+  stampDeck(REG, run);
+  const edit = openDeckEdit(REG, run, {});
+  assert.equal(deckCardEquipmentEligible(REG, run, blade), false, 'item:blade on bows is not the blade card school');
+  assert.equal(edit.remove(blade.instanceId).ok, true, 'an ineligible card can always leave the deck');
+  const model = deckEditorModel({ registries: REG, run });
+  const tile = model.collection.find((row) => row.key === `card:${deckVariantKey(blade)}`);
+  assert.equal(tile.equipmentEligible, false);
+  assert.equal(tile.addable, false);
+  assert.match(tile.refusal, /equipment/i);
+  const before = structuredClone(run.sideboard);
+  assert.equal(moveFromSideboard(REG, run, blade.instanceId), false, 'the direct model mutation cannot bypass the gate');
+  assert.equal(edit.add(`card:${deckVariantKey(blade)}`).ok, false);
+  assert.deepEqual(run.sideboard, before);
+  assert.equal(edit.add(`card:${deckVariantKey(bow)}`).ok, true);
+  assert.equal(edit.add(`card:${deckVariantKey(universal)}`).ok, true);
+  assert.equal(edit.add('basic:attack').ok, true);
+  assert.equal(edit.add('basic:guard').ok, true);
+  run.loadout.sets.rightHand[0] = 'dagger';
+  stampDeck(REG, run);
+  assert.equal(edit.remove(bow.instanceId).ok, true);
+  assert.equal(edit.add(`card:${deckVariantKey(bow)}`).ok, false, 'a dagger sharing pierce does not unlock ranged skills');
+  assert.equal(edit.add(`card:${deckVariantKey(blade)}`).ok, true, 'a different blade enables the ordinary blade skill');
+});
+
+test('all granted cards can be set aside without reminting on save, combat restore or equipment reconciliation', () => {
+  const run = freshRun();
+  const granted = run.deck.filter((card) => card.grantedBy);
+  for (const card of granted) assert.equal(moveToSideboard(REG, run, card.instanceId), true);
+  const ids = granted.map((card) => card.instanceId);
+  run.loadout.sets.rightHand[1] = 'dagger';
+  stampDeck(REG, run);
+  assert.ok(ids.every((id) => !run.deck.some((card) => card.instanceId === id)));
+  const combat = createRunCombat({ registries: REG, rng: createRng(17), run, enemyIds: [ENEMY] });
+  const restored = restoreCombatSnapshot({ registries: REG, rng: createRng(17), snapshot: serializeCombatSnapshot(combat) });
+  assert.deepEqual(restored.sideboardedEquipmentCardIds, ids);
+  reconcileGrantedCardsInCombat(REG, { ...run, deck: [], sideboard: undefined, sideboardedEquipmentCardIds: restored.sideboardedEquipmentCardIds }, restored.piles);
+  assert.ok(Object.values(restored.piles).flat().every((card) => !ids.includes(card.instanceId)));
+  restored.player.energy = 10;
+  dispatch(restored, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+  dispatch(restored, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
+  assert.ok(Object.values(restored.piles).flat().every((card) => !ids.includes(card.instanceId)), 'swapping away and back does not restore set-aside grants');
+  const storage = createMemoryStorage();
+  createSaveManager(storage).saveRun(run, createRng(17));
+  const loaded = createSaveManager(storage).loadRun(REG);
+  assert.ok(loaded, 'sideboarded grants are accepted by the load door');
+  assert.deepEqual(loaded.sideboard.map((card) => card.instanceId), ids);
+  assert.ok(ids.every((id) => !loaded.deck.some((card) => card.instanceId === id)));
+  run.loadout.sets.rightHand[0] = 'shortbow';
+  run.loadout.sets.leftHand[0] = null;
+  stampDeck(REG, run);
+  assert.ok(ids.every((id) => run.sideboard.some((card) => card.instanceId === id)), 'unequipping retains library ownership');
+  const swordCard = granted.find((card) => card.grantedBy === 'straightSword');
+  assert.equal(moveFromSideboard(REG, run, swordCard.instanceId), false, 'an item-owned mount requires its original source');
+});
+
+test('sideboarded mounts adopt extraction and installation content before allowing an add', async () => {
+  const { commitExtraction, commitInstall } = await import('../src/model/cardExtraction.js');
+  const { deckVariantKey, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const run = freshRun();
+  run.loadout.sets.rightHand[0] = 'katana';
+  stampDeck(REG, run);
+  const mountId = 'weaponArt:katana:katanaDrawCut';
+  const original = structuredClone(run.deck.find((card) => card.instanceId === mountId));
+  assert.ok(original);
+  assert.equal(moveToSideboard(REG, run, mountId), true);
+  const extracted = commitExtraction(REG, run, 'armament/katana', mountId, undefined, { free: true });
+  assert.equal(run.sideboard.find((card) => card.instanceId === mountId).cardId, 'dodgeRoll', 'the library reflects the mount fallback, not the extracted art');
+  assert.equal(ownedCopies(run, 'katanaDrawCut'), 1, 'extraction creates one loose art, without a stale library duplicate');
+  assert.equal(deckCardEquipmentEligible(REG, run, original), false, 'the old advertised identity is no longer current');
+  const edit = openDeckEdit(REG, run);
+  assert.equal(edit.add(`card:${deckVariantKey(original)}`).ok, false, 'a stale tile cannot silently restore another card');
+  const fallback = structuredClone(run.sideboard.find((card) => card.instanceId === mountId));
+  run.deck.find((card) => card.instanceId === extracted.instanceId).upgraded = true;
+  commitInstall(REG, run, 'armament/katana', mountId, extracted.instanceId, undefined, { free: true });
+  const installed = run.sideboard.find((card) => card.instanceId === mountId);
+  assert.equal(installed.cardId, 'katanaDrawCut');
+  assert.equal(installed.upgraded, true);
+  assert.equal(deckCardEquipmentEligible(REG, run, fallback), false, 'the fallback identity becomes stale after installation');
+  assert.equal(edit.add(`card:${deckVariantKey(fallback)}`).ok, false);
+  assert.equal(moveFromSideboard(REG, run, mountId), true);
+  const restored = run.deck.find((card) => card.instanceId === mountId);
+  assert.equal(restored.cardId, 'katanaDrawCut');
+  assert.equal(restored.upgraded, true);
+  assert.equal(ownedCopies(run, 'katanaDrawCut'), 1);
+});
+
+test('smithing a carried but unequipped item also refreshes its library mount', async () => {
+  const { commitExtraction } = await import('../src/model/cardExtraction.js');
+  const run = freshRun();
+  run.loadout.sets.rightHand[0] = 'katana';
+  run.loadout.sets.rightHand[1] = 'straightSword';
+  stampDeck(REG, run);
+  const mountId = 'weaponArt:katana:katanaDrawCut';
+  assert.equal(moveToSideboard(REG, run, mountId), true);
+  run.loadout.active.rightHand = 1;
+  stampDeck(REG, run);
+  commitExtraction(REG, run, 'armament/katana', mountId, undefined, { free: true });
+  assert.equal(run.sideboard.find((card) => card.instanceId === mountId).cardId, 'dodgeRoll');
+  assert.equal(ownedCopies(run, 'katanaDrawCut'), 1);
+  assert.equal(moveFromSideboard(REG, run, mountId), false, 'an unequipped mount still cannot be restored');
+});
 
 test('the defaults are data, and the bounds read them', () => {
   assert.equal(DECK_RULES.defaults.deckEditing, true);
@@ -70,11 +182,15 @@ test('a limited card moves to the sideboard with its fields and back, never mint
   assert.equal(moveFromSideboard(REG, run, card.instanceId), false, 'no copy left to add');
 });
 
-test('an item-owned card is locked in the deck', () => {
+test('an item-owned card stays in the library across restamps and can return', () => {
   const run = freshRun();
   const granted = run.deck.find((c) => c.grantedBy);
-  assert.equal(moveToSideboard(REG, run, granted.instanceId), false);
-  assert.ok(run.deck.includes(granted));
+  assert.equal(moveToSideboard(REG, run, granted.instanceId), true);
+  stampDeck(REG, run);
+  assert.ok(!run.deck.some((card) => card.instanceId === granted.instanceId));
+  assert.equal(run.sideboard.find((card) => card.instanceId === granted.instanceId), granted);
+  assert.equal(moveFromSideboard(REG, run, granted.instanceId), true);
+  assert.equal(run.deck.filter((card) => card.instanceId === granted.instanceId).length, 1);
 });
 
 test('basics are matched by role and stay slot-true', () => {
@@ -190,14 +306,15 @@ test(`the sideboard rides the save: a fresh run carries it, and schema 10 loads 
   assert.deepEqual(run.sideboard, []);
 });
 
-test('the skill threshold upgrades a sideboarded card, and it comes back upgraded', async () => {
-  const { applySkillUpgrades } = await import('../src/model/skills.js');
+test('a rank-up reaches a sideboarded card, and it comes back ranked (SPEC §13.4o)', async () => {
+  const { awardSkillXp, xpToNext, raiseCardRank } = await import('../src/model/skills.js');
   const run = freshRun();
   const slash = run.deck.find((c) => c.cardId === 'gorefireSlash');
+  awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1));
   moveToSideboard(REG, run, slash.instanceId);
-  assert.ok(applySkillUpgrades(REG, run, 'item:blade').includes(slash.instanceId));
+  assert.equal(raiseCardRank(REG, run, 'item:blade', slash.instanceId)?.rank, 2);
   moveFromSideboard(REG, run, slash.instanceId);
-  assert.equal(run.deck.find((c) => c.instanceId === slash.instanceId).upgraded, true);
+  assert.equal(run.deck.find((c) => c.instanceId === slash.instanceId).rank, 2);
 });
 
 test('a sideboarded art is installable, and installing takes it from the sideboard', async () => {

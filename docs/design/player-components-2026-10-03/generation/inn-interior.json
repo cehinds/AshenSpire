@@ -1,0 +1,10 @@
+{
+  "id": "inn-interior",
+  "group": "scenes",
+  "reference": "references/04-cities-and-dungeons.png",
+  "prompt": "Standalone high-quality text-free Ashen Spire environment production painting, same realistic tactile quiet grandeur as the supplied board: worn gothic stone and rough dark wood, oxidized brass, soot/umber, cold fog beyond, small warm ivory/amber lights, restrained embers. NO foreground people, faces, creatures, UI, text, signage, letters, numbers, borders, logos, map pins, route lines or cards. ONE square new perspective of the tiny INN interior thumbnail in TOP city view only. An empty warm weathered medieval inn in a gothic refuge city: thick timber beams, rough stone fireplace on left, old bar shelves to rear, several worn tables and benches, a few beeswax candles in brass holders, plain unmarked cups, distant rain-grey window with silhouettes of ruins. Intimate painterly interior, quiet dark lower center for separate dialogue/service text. No person or named identity baked in. No large foreground object obstructing the center.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-218996a9-8ab5-4b30-9904-c70f0d5b996c.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": false,
+  "master": "masters/scenes/inn-interior.png"
+}

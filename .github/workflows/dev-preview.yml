@@ -22,9 +22,9 @@ name: dev preview
 
 on:
   push:
-    branches: [dev, test, release, main]
+    branches: [dev, test, release, main, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
   pull_request:
-    branches: [dev]
+    branches: [dev, alternative/dev, 'alternative/**/dev']
   workflow_dispatch:
 
 concurrency:
@@ -32,7 +32,7 @@ concurrency:
   # may not be REPLACED while queued either (a group holds one pending run). The
   # built HTML is not committed, so a push run's upload is the only copy of that
   # commit's build — so push runs are grouped by commit, never by branch.
-  group: dev-preview-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  group: dev-preview-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -45,20 +45,24 @@ env:
   # A dispatch from `feature/x` carries a slash; the preview job's first step
   # rewrites CHANNEL without it before anything names a file or an artifact.
   CHANNEL: ${{ github.base_ref || github.ref_name }}
-  # The pack-shaped build's tier flag for bundle.mjs: light on dev/test
-  # (owner, 2026-09-26), high (no flag) on release/main.
-  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
-  # The art packs that tier is made from (docs/EXTERNAL-ASSETS-PLAN.md §2,
-  # tools/fetch-art.mjs --pack): light and common on dev/test, all three on
-  # release/main.
-  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+  # The pack-shaped build's tier flag for bundle.mjs: light on dev
+  # (owner, 2026-09-26; test joins full art 2026-10-04), high (no flag) on test/release/main.
+  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
+  # The art packs this workflow fetches (docs/EXTERNAL-ASSETS-PLAN.md §2,
+  # tools/fetch-art.mjs --pack): all three on every branch since step 13. The
+  # build carries only its tier's (light and common on dev), but the
+  # workbench copies the high pack's folders the light one lacks.
+  ART_PACKS: all
 
-  # STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): every reader of assets-mobile/,
-  # assets/fonts/, music/ and map-detail/ reads the fetched art packs through
-  # tools/art-source.mjs, and ASHEN_ART_SOURCE=cache refuses the trees in this
-  # checkout, so a job that builds or serves without fetching first is red now,
-  # not when step 13 deletes them. Each job that builds, serves or tests the
-  # checkout fetches with ./.github/actions/fetch-art right after setup-node.
+  # STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
+  # assets-mobile/, the fonts, music/, map-detail/ and art/) left this repository
+  # at step 13; every reader reads the fetched art packs through
+  # tools/art-source.mjs, which fails (naming the fetch) for a pack that is not
+  # fetched. Each job that builds, serves or tests the checkout fetches with
+  # ./.github/actions/fetch-art right after setup-node, and fetches ALL THREE
+  # packs: the high pack is what /assets/ serves from source (tools/serve.mjs) and
+  # what the art checks read, as the assets/ tree was before step 13.
+  # ASHEN_ART_SOURCE=cache is the default behaviour now, kept as a name.
   ASHEN_ART_SOURCE: cache
 
 jobs:
@@ -91,17 +95,28 @@ jobs:
       # commit its download (the standalone uploads right below; the preview
       # package collects and uploads on `steps.build.outcome`).
       - name: Make the channel safe for a file and artifact name
-        run: echo "CHANNEL=${CHANNEL//\//-}" >> "$GITHUB_ENV"
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from 'node:fs';
+          import { downloadChannel } from './tools/alternative-branches.mjs';
+          const branch = process.env.CHANNEL;
+          appendFileSync(process.env.GITHUB_ENV, `CHANNEL=${branch.replaceAll('/', '-')}\nFILE_CHANNEL=${downloadChannel(branch).replaceAll('/', '-')}\n`);
+          NODE
 
       - name: Build the game (the pack shape and the light single file)
         id: build
-        # Light art on dev/test (owner, 2026-09-26); release/main default to high.
+        # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main default to high.
         # Either way launch.mjs writes the pack-shaped game into build/ and dist/
         # and the light single file to build/download/ and the root alias
         # (docs/EXTERNAL-ASSETS-PLAN.md step 8e).
         env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         run: node tools/launch.mjs --build-only $ART_TIER
+
+      - name: Record the preview build number
+        if: steps.build.outcome == 'success'
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const b=JSON.parse(fs.readFileSync("buildordinal.json")); fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## ${process.env.CHANNEL} preview\n\n- Build: **${b.release}.${b.ordinal}**\n- Commit: ${process.env.GITHUB_SHA}\n`);'
 
       # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
       # a saved file's name to open the dev-only settings, and a plain
@@ -115,13 +130,13 @@ jobs:
           # The root alias is the light single file on every branch since step
           # 8e: the one inline download (owner answer 3). The full-art single
           # file and the separate mobile file are retired (owner answers 6, 2).
-          cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
+          cp AshenSpire.html "standalone/AshenSpire-${FILE_CHANNEL}-preview.html"
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CHANNEL }}-standalone-${{ github.sha }}
           path: standalone/
-          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || (env.CHANNEL == 'test' && 30 || 14) }}
+          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || ((env.CHANNEL == 'test' || endsWith(github.ref_name, '/test')) && 30 || 14) }}
 
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
@@ -204,9 +219,6 @@ jobs:
 
       - name: The file a player is handed matches the tree that claims it
         run: node tools/verify-shipped.mjs
-      - name: The light art twin tree mirrors assets/ and fits its budget
-        run: node tools/mobile-art.mjs --check
-
       # Same budget as the gates above: a pure read, no execution, no browser,
       # well under a second, on the runner this job already pays for. It walks
       # every in-tree module regardless of who imports it, so a rename that
@@ -234,9 +246,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p preview
-          node tools/readiness-preview-build.mjs preview
-          mkdir -p preview/art/readiness-poses
-          cp -r art/readiness-poses/inspection preview/art/readiness-poses/inspection
+          # The readiness-pose gallery and the art/ inspection pages left with
+          # art/ (docs/EXTERNAL-ASSETS-PLAN.md step 13, ART-REPO-PLAN step 6):
+          # cehinds/AshenSpire-art publishes them from its own workflow.
           # TWO SHAPES, AND THE ROOT IS THE FAST ONE.
           #
           # preview/     the de-inlined build: 4.9 MB of HTML beside the art,
@@ -250,7 +262,7 @@ jobs:
           # The root used to be the single file, so opening the preview on a
           # phone meant 57.6 MB before the first frame. The `build` step's
           # launch.mjs already wrote the pack-shaped game to build/ with this
-          # job's tier (light on dev/test, high on release/main): AshenSpire.html
+          # job's tier (light on dev, high on test/release/main): AshenSpire.html
           # plus asset-base.json, packs/ and objects/ (docs/EXTERNAL-ASSETS-PLAN.md
           # steps 3a and 8e); its map tiles and score are common-pack objects
           # since step 3c, so no map-detail/ or music/ folder comes with it. It is
@@ -260,54 +272,55 @@ jobs:
           cp preview/AshenSpire.html preview/index.html
           # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
           # The source-module preview pages (world-atlas-, equipment-selection-,
-          # armament-kits-preview.html), the pose studio, the art inspection
-          # pages and docs/preview read `assets/…` BY PATH (assetUrl() in source
-          # mode, `../../assets/…` from art/). They get this tier's art in
-          # preview/workbench/assets/, copied from the FETCHED RELEASE (step 12):
-          # the light pack's assets-mobile/ on dev/test, with the common pack's
-          # fonts beside it (the light pack carries no fonts). tools/art-source.mjs
-          # names each cache directory; ASHEN_ART_SOURCE=cache (this workflow's
-          # env) refuses the trees, so an unfetched pack is red here, not at
-          # step 13. release/main copy the high tier, assets/, which leaves this
-          # repository with ART-REPO-PLAN step 6, plus the same fonts.
-          # preview/AshenSpire.html must not get a tree: an id its pack index
-          # misses has to 404 visibly, not load quietly from a tree left beside it.
+          # armament-kits-preview.html), the pose studio and docs/preview read
+          # `assets/…` BY PATH (assetUrl() in source mode). They get this tier's
+          # art in preview/workbench/assets/, copied from the FETCHED RELEASE
+          # (the art trees left this repository at step 13): the light pack's
+          # assets-mobile/ on dev, the high pack's assets/ on release/main,
+          # with the common pack's fonts beside either. tools/art-source.mjs
+          # names each cache directory, and fails (naming the fetch) for a pack
+          # that is not fetched. preview/AshenSpire.html must not get a tree: an
+          # id its pack index misses has to 404 visibly, not load quietly from a
+          # tree left beside it.
           W=preview/workbench
-          mkdir -p "$W/assets" "$W/art/combat-effects-2026-09-07"
+          mkdir -p "$W/assets"
+          # Assigned first: errexit ignores a failed substitution inside an
+          # argument, which would turn the source into "/.".
+          HIGH_DIR=$(node tools/art-source.mjs --dir assets)
           if [ "$(echo $WEB_TIER)" = "--light" ]; then
             LIGHT_DIR=$(node tools/art-source.mjs --dir assets-mobile)
             cp -r "$LIGHT_DIR"/. "$W/assets/"
           else
-            cp -r assets/. "$W/assets/"
+            cp -r "$HIGH_DIR"/. "$W/assets/"
           fi
           mkdir -p "$W/assets/fonts"
-          # Assigned first: errexit ignores a failed substitution inside an
-          # argument, which would turn the source into "/.".
           FONTS_DIR=$(node tools/art-source.mjs --dir assets/fonts)
           cp -r "$FONTS_DIR"/. "$W/assets/fonts/"
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
           cp -r src "$W/src"
+          # Variant-only authoring material stays inside this branch's artifact.
+          if [[ "$GITHUB_REF_NAME" == alternative/* ]] && [ -d docs/design/combat-depth-2026-10-05 ]; then
+            mkdir -p "$W/docs/design"
+            cp -r docs/design/combat-depth-2026-10-05 "$W/docs/design/"
+          fi
           cp world-atlas-preview.html equipment-selection-preview.html armament-kits-preview.html "$W/"
           cp tools/serve-preview.mjs "$W/serve-preview.mjs"
           cp -r styles "$W/styles"
           # --update=none: the copy above already placed this tier's art under
-          # workbench/assets/ (the light twins on dev/test); these copies only
+          # workbench/assets/ (the light twins on dev); these copies only
           # add the files it does not ship, and never overwrite its art.
-          cp -r --update=none assets/environments "$W/assets/"
+          cp -r --update=none "$HIGH_DIR/environments" "$W/assets/"
           mkdir -p "$W/docs/preview"
           cp -r docs/preview/world-atlas "$W/docs/preview/"
           cp -r docs/preview/combat-ground "$W/docs/preview/"
           cp -r docs/preview/combat-formation "$W/docs/preview/"
           cp -r docs/preview/starting-equipment "$W/docs/preview/"
           cp -r docs/preview/armament-kits "$W/docs/preview/"
+          cp -r docs/preview/book-library "$W/docs/preview/"
           cp -r pose-studio "$W/pose-studio"
-          cp -r --update=none assets/pose-effects "$W/assets/"
-          cp -r art/pose-studio "$W/art/"
-          cp -r art/card-effect-refresh-2026-09-09 "$W/art/"
-          cp -r --update=none assets/combat-effects assets/painted-outfits "$W/assets/"
-          cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html "$W/art/combat-effects-2026-09-07/"
-          cp -r art/combat-effects-2026-09-07/inspection "$W/art/combat-effects-2026-09-07/inspection"
+          cp -r --update=none "$HIGH_DIR/pose-effects" "$W/assets/"
+          cp -r --update=none "$HIGH_DIR/combat-effects" "$HIGH_DIR/painted-outfits" "$W/assets/"
           # The game's own folder carries no art tree; verify-external reads
           # the pack, and this keeps that honest.
           test ! -e preview/assets
@@ -325,13 +338,10 @@ jobs:
             echo "Use its class and screen-size controls to test hand choices and Continue."
             echo "Equipment screenshots and QA: docs/preview/starting-equipment/index.html."
             echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
-            echo "Open Combat-pose-preview.html (in this folder) for the offline readiness outfit gallery."
             echo "Open docs/preview/combat-formation/index.html for turn and formation comparisons."
             echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
-            echo "Open art/combat-effects-2026-09-07/sprite-catalog.html for all 56 six-frame sets."
-            echo "For the interactive card preview, serve this folder over HTTP and open"
-            echo "art/combat-effects-2026-09-07/index.html?integrated=1."
-            echo "Card/tag assignments and screenshots are in the same art folder."
+            echo "The art inspection pages (combat-effect catalog, readiness gallery) are"
+            echo "published by cehinds/AshenSpire-art since the art left this repository."
             echo
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
             echo "(any static server). Its art is in packs/ and objects/, loaded and"
@@ -393,15 +403,6 @@ jobs:
           path: preview/
           retention-days: 14
 
-      # THE AGREEMENT CHECK (docs/EXTERNAL-ASSETS-PLAN.md step 11). The packs were
-      # fetched before the build (step 12: the build and the workbench read
-      # them); while the trees are still here, the release and the trees must
-      # agree byte for byte. LAST, AND WHATEVER RAN BEFORE: its failure never
-      # costs this commit its build, its preview package or another gate's verdict.
-      - name: The fetched packs and the trees here agree byte for byte
-        if: ${{ !cancelled() }}
-        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
-
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
   #
   # PROPOSED, not adopted — this job is the subject of its own pull request and
@@ -452,7 +453,7 @@ jobs:
     # push to `dev`, where the `preview` job above still builds and uploads.
     # Every step below is unchanged; the job-level `if:` reports it as skipped
     # on a dev PR rather than absent.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'dev')
+    if: (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'dev')) && !endsWith(github.ref_name, '/dev')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

@@ -6,53 +6,41 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 
 const reg = createRegistries(contentBundle);
-const rewardIds = new Set(contentBundle.classes.flatMap(c => c.cardPool));
-const profile = c => [c.staminaCost || 0, c.manaCost || 0];
+const legacyReg = reg.legacyProgressionSource;
+const rewardIds = new Set(contentBundle.legacyProgression.classes.flatMap(c => c.cardPool));
 
-test('combat reward costs meet inclusive rounded rarity shares, including upgrades', () => {
-  // A2 (Starseer starvation) takes the four Starseer common attacks — Comet
-  // Fragment, Starblade Phalanx, Starlance, Frost Nova — off both lines, so
-  // the Common row sits four cards under its rounded 30% / 15% shares
-  // (docs/card-resource-balance.md records the exception). A2 (Herald
-  // starvation) also takes Blight Touch off the Mana line only, so the Common
-  // dual share sits one further card under.
-  // The five round-4 class cards joined the pools (FINISH D30): two commons
-  // leave both Common shares where they were, and Astral Insight carries the
-  // added Stamina + Mana line. Sunderplate supplies the second Stamina line
-  // required by the combined 63-card Uncommon census.
-  const a2ActionOnly = { common: 4, uncommon: 0, rare: 0 };
-  const a2StaminaOnly = { common: 1, uncommon: 0, rare: 0 };
-  for (const [rarity, count, staminaShare, dualShare] of [
-    ['common', 61, 0.3, 0.15], ['uncommon', 63, 0.5, 0.3], ['rare', 49, 0.7, 0.5],
-  ]) {
-    const cards = reg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
-    assert.equal(cards.length, count, `${rarity}: distinct combat-reward denominator`);
-    assert.equal(cards.filter(c => c.staminaCost > 0).length, Math.round(count * staminaShare) - a2ActionOnly[rarity]);
-    assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * dualShare) - a2ActionOnly[rarity] - a2StaminaOnly[rarity]);
-    for (const c of cards) {
-      assert.ok(!c.manaCost || c.staminaCost, `${c.id}: dual costs include stamina`);
-      assert.ok(profile(c).every(n => n === 0 || n === 1), `${c.id}: authored small resource costs`);
-      // An upgrade may LIFT a secondary cost (plan phase 8: a Mana power's
-      // upgrade drops its Mana line, since its action line has a floor), never
-      // add one.
-      const up = profile(resolveCard(reg, { cardId: c.id, upgraded: true }));
-      assert.ok(up.every((n, i) => n <= profile(c)[i]), `${c.id}: upgrade never adds a secondary cost (${up} vs ${profile(c)})`);
+test('preserved legacy reward cards retain their pinned Mana rarity shares and one turn cost', () => {
+  for (const [rarity, count, manaShare, exceptions] of [['common',62,0.15,5], ['uncommon',63,0.3,0], ['rare',49,0.5,0]]) {
+    const cards = legacyReg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
+    assert.equal(cards.length, count);
+    assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * manaShare) - exceptions);
+    for (const c of cards) for (const upgraded of [false,true]) {
+      const def = resolveCard(legacyReg, {cardId:c.id,upgraded});
+      const cost = legacyReg.framework.costProfile(def);
+      assert.equal(cost.stamina, def.cost === 'X' ? 0 : def.cost);
+      assert.equal(def.staminaCost || 0, 0, 'no obsolete additive stamina charge');
+      assert.ok(!def.manaCost || def.cost === 'X' || def.cost >= 1);
     }
-    const weaponAttacks = cards.filter(c => c.type === 'attack' && c.tags.includes('source:weapon'));
-    assert.ok(weaponAttacks.filter(c => profile(c).every(n => n === 0)).length > weaponAttacks.length / 2,
-      `${rarity}: most weapon attacks remain Actions-only`);
   }
 });
 
-test('weapon basics, merchant-only cards and starter exceptions retain their costs', () => {
-  for (const id of ['strike', 'honedEdge', 'fieldDressing', 'masterOfStrategy', 'rondelParry', 'starSpark']) {
-    assert.deepEqual(profile(reg.cards.get(id)), [0, 0], id);
+test('every expanded ability grade pays its authored Action cost and Mana equal to rank', () => {
+  const families = reg.cards.all().filter(card => card.gradeProfiles);
+  assert.equal(families.length, 82, 'forty new families and forty-two retuned existing abilities');
+  for (const card of families) {
+    assert.equal(card.gradeProfiles.length, 6, card.id);
+    for (let rank = 0; rank <= 5; rank++) {
+      const profile = card.gradeProfiles[rank];
+      const def = resolveCard(reg, { cardId: card.id, abilityRank: rank });
+      const cost = reg.framework.costProfile(def);
+      assert.equal(profile.rank, rank, card.id);
+      assert.equal(def.manaCost || 0, rank, `${card.id} grade ${rank}: printed Mana`);
+      assert.equal(def.cost, profile.actionCost, `${card.id} grade ${rank}: authored Actions`);
+      assert.ok(def.cost >= 1 && def.cost <= (rank === 0 ? 3 : rank));
+      assert.equal(cost.stamina, def.cost, 'Actions and Stamina are the same resource');
+      assert.equal(def.staminaCost || 0, 0, 'no additional Stamina charge');
+    }
   }
-  assert.deepEqual(profile(reg.cards.get('katanaDrawCut')), [1, 0]);
-  assert.deepEqual(profile(reg.cards.get('greatswordSunderingHew')), [1, 0]);
-  assert.deepEqual(profile(reg.cards.get('starstonePebble')), [0, 0], 'A2: the Starseer signature art costs actions only, so a Starseer whose Mana carries between fights can always cast it');
-  assert.deepEqual(profile(reg.cards.get('starstoneArc')), [1, 1], 'a Mana spell costs stamina beside its Mana: Mana is never the first cost line');
-  assert.deepEqual(profile(reg.cards.get('dodgeRoll')), [1, 0]);
 });
 
 function fight(cardId, upgraded = false) {
@@ -73,8 +61,8 @@ test('real plays pay all authored pools at base and upgraded levels', () => {
       const c = fight(cardId, upgraded);
       const def = resolveCard(reg, { cardId, upgraded });
       play(c);
-      assert.equal(c.player.energy, 9 - def.cost, `${cardId}: Actions`);
-      assert.equal(c.player.stamina, 3 - (def.staminaCost || 0), `${cardId}: stamina`);
+      assert.equal(c.player.energy, 3 - def.cost, `${cardId}: Actions`);
+      assert.equal(c.player.stamina, 3 - def.cost, `${cardId}: stamina`);
       assert.equal(c.player.mana, 3 - (def.manaCost || 0), `${cardId}: mana`);
     }
   }
@@ -87,7 +75,7 @@ test('either missing dual resource refuses atomically before payment or card mov
       c.player[missing] = 0;
       const before = { energy: c.player.energy, stamina: c.player.stamina, mana: c.player.mana,
         hand: structuredClone(c.piles.hand), hp: c.enemies[0].hp };
-      assert.throws(() => play(c), new RegExp(`Not enough ${missing}`));
+      assert.throws(() => play(c), missing === 'mana' ? /Not enough mana/ : /Not enough Actions \(Stamina\)/);
       assert.deepEqual({ energy: c.player.energy, stamina: c.player.stamina, mana: c.player.mana,
         hand: c.piles.hand, hp: c.enemies[0].hp }, before);
     }

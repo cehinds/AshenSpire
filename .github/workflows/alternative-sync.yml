@@ -1,0 +1,141 @@
+name: alternative dev sync
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/alternative-sync.yml
+      - .github/alternative-battlefield-policy.json
+      - tools/alternative-sync.py
+      - tests/test_alternative_sync.py
+  workflow_dispatch:
+  # Catch bot-authored dev commits too: GITHUB_TOKEN pushes do not trigger push workflows.
+  schedule:
+    - cron: '23 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alternative-sync-${{ github.event_name == 'pull_request' && github.ref || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  policy-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p test_alternative_sync.py -v
+
+  sync:
+    needs: policy-tests
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: dev
+          fetch-depth: 0
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.1.0
+      - name: Prepare merge with the alternative battlefield retained
+        id: prepare
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --no-tags origin dev alternative/dev
+          python tools/alternative-sync.py --report "$RUNNER_TEMP/alternative-sync.json"
+          echo "needed=$(python -c 'import json,os; print(str(json.load(open(os.environ["RUNNER_TEMP"]+"/alternative-sync.json"))["mergeNeeded"]).lower())')" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/fetch-art
+        if: steps.prepare.outputs.needed == 'true'
+        with:
+          packs: all
+      - name: Install pinned alternative art encoder
+        if: steps.prepare.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/libwebp-1.6.0-linux-x86-64.tar.gz"
+          encoder="$RUNNER_TEMP/libwebp-1.6.0"
+          curl --fail --location --retry 3 https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0-linux-x86-64.tar.gz --output "$archive"
+          printf '%s  %s\n' 1c5ffab71efecefa0e3c23516c3a3a1dccb45cc310ae1095c6f14ae268e38067 "$archive" | sha256sum --check -
+          mkdir -p "$encoder"
+          tar --extract --gzip --file "$archive" --strip-components=1 --directory "$encoder"
+          version="$("$encoder/bin/cwebp" -version)"
+          test "${version%%$'\n'*}" = '1.6.0'
+          echo "$encoder/bin" >> "$GITHUB_PATH"
+      - name: Validate and refresh permitted artwork
+        if: steps.prepare.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p test_alternative_sync.py -v
+          node tools/config-build.mjs --check
+          # The legacy model harness writes a starter JSON. Run a copy so tests
+          # never rewrite the alternative's saved defaults (even its newline).
+          model_dir=$(mktemp -d)
+          mkdir "$model_dir/editor"
+          cp docs/design/combat-depth-2026-10-05/{verify-studio-model.mjs,catalog.json} "$model_dir/"
+          cp docs/design/combat-depth-2026-10-05/editor/{studio-model.mjs,library-data.js,starting-layout.json} "$model_dir/editor/"
+          node "$model_dir/verify-studio-model.mjs"
+          python docs/design/combat-depth-2026-10-05/build-library.py
+          python docs/design/combat-depth-2026-10-05/verify-assets.py
+          python docs/design/combat-depth-2026-10-05/pack.py
+          if [ -f tools/alternative-art-build.py ]; then
+            python tools/alternative-art-build.py
+            git add -- assets-alternative src/ui/alternativeArtCatalog.js
+          fi
+          node tools/about-changelog.mjs --write
+          node tools/launch.mjs --build-only
+          git add -- buildordinal.json src/content/changelog.generated.js src/content/generated src/framework/data
+          git add -- docs/design/combat-depth-2026-10-05
+          python tools/alternative-sync.py --verify --report "$RUNNER_TEMP/alternative-sync.json"
+          git diff --quiet
+          git commit -m 'Sync dev into alternative/dev; preserve battlefield presentation'
+          ARCHITECTURE_SOURCE_REF=alternative/dev node tools/update-architecture.mjs --verify
+          git add -- docs/ARCHITECTURE-CURRENT-DEV.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh alternative dev architecture receipt'
+          fi
+          git archive --format=tar.gz --output="$RUNNER_TEMP/alternative-dev-preview.tar.gz" HEAD
+      # Build and proof belong to this job: its GITHUB_TOKEN push cannot start another workflow.
+      - uses: actions/upload-artifact@v4
+        if: steps.prepare.outputs.needed == 'true'
+        with:
+          name: alternative-dev-preview-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/alternative-dev-preview.tar.gz
+            ${{ runner.temp }}/alternative-sync.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Publish the validated alternative dev merge
+        if: steps.prepare.outputs.needed == 'true'
+        run: git push origin HEAD:refs/heads/alternative/dev
+      - name: Build the downloadable and hosted alternative preview
+        if: steps.prepare.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run dev-preview.yml --ref alternative/dev
+      - name: Sync proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alternative-sync-proof-${{ github.run_id }}
+          path: ${{ runner.temp }}/alternative-sync.json
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,4 +1,9 @@
 // Pure character-creation configuration reads and validation.
+import { masteryReferenceOpen } from './classMasteryRun.js';
+
+function creationReferenceOpen(registries, meta, ref, kinds) {
+  return registries.classMasteryVersion !== 1 || !meta?.classMastery || masteryReferenceOpen(registries, meta, ref, kinds);
+}
 
 const SIDES = Object.freeze(['left', 'right']);
 const REQUIRED_CLASS_FIELDS = Object.freeze(['armourIds', 'handIds', 'relicIds']);
@@ -24,7 +29,7 @@ function creationSlotFields(cfg) {
 export function characterCreationProblems(source) {
   const cfg = config(source);
   const problems = [];
-  const allowedRoot = new Set(['spritePreviewSide', 'visibleModeIds', 'layout', 'equipmentSections', 'classes', 'keepsakes']);
+  const allowedRoot = new Set(['spritePreviewSide', 'visibleModeIds', 'layout', 'quickStart', 'equipmentSections', 'classes', 'keepsakes']);
   for (const key of Object.keys(cfg || {})) if (!allowedRoot.has(key)) problems.push(`characterCreation.${key}: Unknown field`);
   if (!SIDES.includes(cfg.spritePreviewSide)) problems.push(`characterCreation.spritePreviewSide: must be ${SIDES.join('|')}`);
   const modeIds = new Set(rows(source, 'creationModes').filter((row) => row && typeof row.id === 'string').map((row) => row.id));
@@ -159,6 +164,7 @@ export function characterCreationProblems(source) {
   }
   for (const classId of classIds) if (!cfg.classes[classId]) problems.push(`characterCreation.classes: missing class '${classId}'`);
   const keepsakes = cfg.keepsakes;
+  problems.push(...quickStartProblems(cfg.quickStart, { classIds, modeIds, keepsakes }));
   if (!Array.isArray(keepsakes) || keepsakes.length < 2) problems.push('characterCreation.keepsakes: must contain at least two choices');
   const seen = new Set();
   for (const row of Array.isArray(keepsakes) ? keepsakes : []) {
@@ -177,6 +183,47 @@ export function characterCreationProblems(source) {
     if (!row || !Array.isArray(row.effects)) problems.push(`${path}.effects: must be an array`);
   }
   return problems;
+}
+
+// THE QUICK START (docs/FINISH.md §6): the Title's one-press route into a
+// climb with authored defaults, so a new player reaches the first card play
+// without walking the whole character workspace. Every default is data here
+// (content/source/characterCreation.json `quickStart`); armour, hands and relic
+// are the class's own baseline (model/state.js), as a climb with none chosen.
+const QUICK_START_FIELDS = Object.freeze(['classId', 'keepsakeId', 'attributeMode', 'skipOpening']);
+
+function quickStartProblems(row, { classIds, modeIds, keepsakes }) {
+  const path = 'characterCreation.quickStart';
+  if (!row || typeof row !== 'object' || Array.isArray(row)) return [`${path}: must be an object`];
+  const problems = [];
+  for (const key of Object.keys(row)) if (!QUICK_START_FIELDS.includes(key)) problems.push(`${path}.${key}: Unknown field`);
+  if (typeof row.classId !== 'string' || !classIds.has(row.classId)) problems.push(`${path}.classId: unknown class '${row.classId}'`);
+  const keepsakeIds = new Set((Array.isArray(keepsakes) ? keepsakes : []).filter((k) => k && typeof k.id === 'string').map((k) => k.id));
+  if (typeof row.keepsakeId !== 'string' || !keepsakeIds.has(row.keepsakeId)) problems.push(`${path}.keepsakeId: unknown keepsake '${row.keepsakeId}'`);
+  if (typeof row.attributeMode !== 'string' || !modeIds.has(row.attributeMode)) problems.push(`${path}.attributeMode: unknown creation mode '${row.attributeMode}'`);
+  if (typeof row.skipOpening !== 'boolean') problems.push(`${path}.skipOpening: must be boolean`);
+  return problems;
+}
+
+/**
+ * quickStartRunConfig(registries) → the `newRun` config the Title's Quick start
+ * begins: the authored class, keepsake and stat mode, the class's starting relic,
+ * and `skipOpening`. The seed and slot are the caller's (a fresh random seed,
+ * the first empty slot). Throws by name when the authored row does not resolve.
+ */
+export function quickStartRunConfig(registries) {
+  const row = config(registries).quickStart;
+  if (!row) throw new Error('characterCreation.quickStart: absent');
+  const cls = registries.classes.get(row.classId);
+  if (!cls) throw new Error(`characterCreation.quickStart.classId: unknown class '${row.classId}'`);
+  return {
+    classId: cls.id,
+    keepsakeId: row.keepsakeId,
+    attributeMode: row.attributeMode,
+    startingRelicId: cls.startingRelic,
+    skipOpening: row.skipOpening === true,
+    quickStart: true,
+  };
 }
 
 export function classCreationConfig(registries, classId) {
@@ -207,15 +254,15 @@ function fitsCreationHandSlot(registries, slotId, piece) {
   return !piece.hand || piece.hand === 'either' || piece.hand === slot.hand;
 }
 
-export function creationHandChoices(registries, classId, slotId = null) {
+export function creationHandChoices(registries, classId, slotId = null, meta = {}) {
   const ids = classCreationConfig(registries, classId).handIds;
   return ids
     .map((id) => (registries.equipment.armaments || []).find((row) => row.id === id))
-    .filter((piece) => fitsCreationHandSlot(registries, slotId, piece));
+    .filter((piece) => fitsCreationHandSlot(registries, slotId, piece) && creationReferenceOpen(registries, meta, `armament/${piece.id}`, ['armament', 'weapon']));
 }
 
-export function creationRelicChoices(registries, classId) {
-  return classCreationConfig(registries, classId).relicIds.map((id) => registries.relics.get(id));
+export function creationRelicChoices(registries, classId, meta = {}) {
+  return classCreationConfig(registries, classId).relicIds.filter(id => creationReferenceOpen(registries, meta, id, ['relic'])).map((id) => registries.relics.get(id));
 }
 
 function strictArmamentChoices(registries, classId, field) {
@@ -232,7 +279,7 @@ function strictArmamentChoices(registries, classId, field) {
  * at least one legal choice remains. `nextId` therefore owns auto-advance and
  * focus order after empty sections are removed.
  */
-export function creationEquipmentSectionViews(registries, classId, { armourChoices = null } = {}) {
+export function creationEquipmentSectionViews(registries, classId, { armourChoices = null, meta = {} } = {}) {
   const sections = config(registries).equipmentSections;
   if (!Array.isArray(sections)) throw new Error('characterCreation.equipmentSections: must be an array');
   const projected = sections.map((section) => {
@@ -244,14 +291,14 @@ export function creationEquipmentSectionViews(registries, classId, { armourChoic
       }
     } else if (section.kind === 'hand') {
       choices = [EMPTY_HAND_CHOICE, ...strictArmamentChoices(registries, classId, 'handIds')
-        .filter((piece) => fitsCreationHandSlot(registries, section.slot, piece))];
+        .filter((piece) => fitsCreationHandSlot(registries, section.slot, piece) && creationReferenceOpen(registries, meta, `armament/${piece.id}`, ['armament', 'weapon']))];
     } else if (section.kind === 'relic') {
-      choices = creationRelicChoices(registries, classId);
+      choices = creationRelicChoices(registries, classId, meta);
     } else if (section.kind === 'slot') {
       const field = `${section.id}Ids`;
       const slot = (registries.equipment.slots || []).find((row) => row && row.id === section.slot);
       if (!slot) throw new Error(`characterCreation.equipmentSections.${section.id}.slot: '${section.slot}' does not resolve`);
-      choices = strictArmamentChoices(registries, classId, field);
+      choices = strictArmamentChoices(registries, classId, field).filter(piece => creationReferenceOpen(registries, meta, `armament/${piece.id}`, ['armament', 'weapon']));
       for (const piece of choices) {
         if (!fitsCreationHandSlot(registries, section.slot, piece)) {
           throw new Error(`characterCreation.classes.${classId}.${field}: '${piece.id}' does not fit equipment slot '${section.slot}'`);
@@ -277,7 +324,7 @@ export function selectStartingHand(current, targetHand, itemId) {
   return next;
 }
 
-export function resolveCreationHands(registries, classId, requested, fallback) {
+export function resolveCreationHands(registries, classId, requested, fallback, meta = {}) {
   if (!requested) return { leftHand: fallback.leftHand || null, rightHand: fallback.rightHand || null };
   const allowed = new Set(classCreationConfig(registries, classId).handIds);
   const result = { leftHand: requested.leftHand || null, rightHand: requested.rightHand || null };
@@ -285,15 +332,17 @@ export function resolveCreationHands(registries, classId, requested, fallback) {
   for (const [hand, id] of Object.entries(result)) {
     if (!id) continue;
     if (!allowed.has(id)) throw new Error(`${hand}: starting armament '${id}' is unavailable to class '${classId}'`);
+    if (!creationReferenceOpen(registries, meta, `armament/${id}`, ['armament', 'weapon'])) throw new Error(`${hand}: starting armament '${id}' requires class mastery`);
     const piece = (registries.equipment.armaments || []).find((row) => row.id === id);
     if (!fitsCreationHandSlot(registries, hand, piece)) throw new Error(`${hand}: starting armament '${id}' does not fit this hand`);
   }
   return result;
 }
 
-export function resolveCreationRelic(registries, classId, requestedId) {
+export function resolveCreationRelic(registries, classId, requestedId, meta = {}) {
   const cls = registries.classes.get(classId);
   const id = requestedId || cls.startingRelic;
   if (!classCreationConfig(registries, classId).relicIds.includes(id)) throw new Error(`starting relic '${id}' is unavailable to class '${classId}'`);
+  if (!creationReferenceOpen(registries, meta, id, ['relic'])) throw new Error(`starting relic '${id}' requires class mastery`);
   return registries.relics.get(id);
 }

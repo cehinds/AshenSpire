@@ -1,3 +1,5 @@
+import { formationGroups } from './formationGroups.js';
+import { suppliedFormationPositioning } from '../content/formationPositioningPresets.js';
 import { prologueRows, prologuePresetOverrides, migratePrologueSettingKey, migratePrologueEntries } from './prologue.js';
 import { presetGearProblems } from './attributes.js';
 import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
@@ -22,7 +24,7 @@ export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
 export function isLiveXpSetting(key) {
-  return /^gameConfig\.(?:progression\.xpMultiplier$|balance\.(?:level\.xp\.|xp\.|skill\.(?:xp\.|class\.xp\.)))/.test(key);
+  return /^gameConfig\.(?:progression\.xpMultiplier$|balance\.(?:level\.xp\.|xp\.|skill\.(?:xp\.|class\.xp\.)|classMastery\.(?:xp\.|pay\.)))/.test(key);
 }
 
 export function updatedXpSnapshot(snapshot, changed) {
@@ -54,10 +56,10 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   ...FORMATION_DEFAULTS,
   playerSpriteScale: 1,
   enemySpriteScale: 2,
-  playerSpawnRow: 'C',
-  enemySpawnRow: 'C',
-  playerSpawnColumn: '2',
-  enemySpawnColumn: '3',
+  playerSpawnRow: 'F',
+  enemySpawnRow: 'F',
+  playerSpawnColumn: '1',
+  enemySpawnColumn: '6',
   showFormationGrid: false,
   movementEnabled: false, movementNeedsSelection: true, movementCostsAction: true,
   tileActivation: 'hold', moveActivation: 'hold', selectionColor: '#59bd75',
@@ -99,12 +101,27 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
 const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
+  'rewards.sourceBonuses.combatFeatChancePct': PERCENT,
+  'rewards.sourceBonuses.classFeatChancePct': PERCENT,
+  'rewards.sourceBonuses.classCardChancePct': PERCENT,
   'level.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
   'skill.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
   'skill.class.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
-  'level.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
-  'skill.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
-  'skill.class.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
+  // Three decimals: the owner's curves (SPEC §13.4o) are 1.303, 1.995 and 1.224,
+  // and a coarser step would show and store a different curve from the one in force.
+  'level.xp.growth': Object.freeze({ integer: false, step: 0.001, min: 1, max: 5 }),
+  'skill.xp.growth': Object.freeze({ integer: false, step: 0.001, min: 1, max: 5 }),
+  'skill.class.xp.growth': Object.freeze({ integer: false, step: 0.001, min: 1, max: 5 }),
+  // The level caps (SPEC §13.4o) must be positive levels, as validate.js requires.
+  'levelUp.maxLevels': Object.freeze({ integer: true, step: 1, min: 1, max: 200 }),
+  'skill.xp.maxLevel': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
+  'skill.class.xp.maxLevel': Object.freeze({ integer: true, step: 1, min: 1, max: 200 }),
+  // Card ranks and the every-Nth-level flat (SPEC §13.4o): validate.js wants a
+  // positive whole number, and a save refuses a rank past 99.
+  'skill.rankMax': Object.freeze({ integer: true, step: 1, min: 1, max: 99 }),
+  'skill.flatEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
+  'skill.attributeEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
+  'skill.featEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,
@@ -177,6 +194,13 @@ function withoutRetiredCinderKey(entries) {
 
 const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was left out: Cinders pay the authored table. Use Rewards → Cinder gain multiplier to scale them.';
 
+// The skill-level card upgrade (`balance.skill.upgradeAt`) is retired for card
+// ranks (SPEC §13.4o): its leaf is gone, so a stored value is dropped from the
+// profile and skipped on import with a warning, never refused as unknown.
+const RETIRED_UPGRADE_AT_KEY = `${ADVANCED_CONFIG_PREFIX}balance.skill.upgradeAt`;
+const RETIRED_UPGRADE_AT_KEYS = Object.freeze([RETIRED_UPGRADE_AT_KEY, `settings.${RETIRED_UPGRADE_AT_KEY}`]);
+const RETIRED_UPGRADE_AT_WARNING = 'The skill-level card upgrade setting is retired and was left out: levels raise card ranks instead.';
+
 /**
  * bringRunSnapshotForward(run, save, warnings) → `warnings`, with the retired
  * Cinder warning pushed once when the run's `advancedConfigSnapshot` held the
@@ -212,7 +236,7 @@ export function bringRunSnapshotForward(run, save, warnings = []) {
 export function hasLegacyAdvancedSettings(settings = {}) {
   // An unmarked profile holding a `draw` or `poise` row is one of them
   // (model/statRows.js hasLegacyStatSettings).
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || Object.hasOwn(settings || {}, RETIRED_UPGRADE_AT_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
 }
 
 /**
@@ -239,6 +263,10 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (Object.hasOwn(settings, LEGACY_CINDER_KEY)) {
     delete settings[LEGACY_CINDER_KEY];
     if (Array.isArray(warnings)) warnings.push(LEGACY_CINDER_WARNING);
+  }
+  if (Object.hasOwn(settings, RETIRED_UPGRADE_AT_KEY)) {
+    delete settings[RETIRED_UPGRADE_AT_KEY];
+    if (Array.isArray(warnings)) warnings.push(RETIRED_UPGRADE_AT_WARNING);
   }
   // #1294's retired 3–15 opening-hand limits and the retired shared opening
   // base and attribute go first (#1318), so they are never converted into the
@@ -316,6 +344,9 @@ export function bringProfileForward(meta, bundle, save, warnings = null) {
 const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.(energy|draw|hp|stamina|mana|poise)\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
 function withoutRetired(entries, warnings) {
+  const upgradeAt = entries.filter(([key]) => !RETIRED_UPGRADE_AT_KEYS.includes(key));
+  if (upgradeAt.length !== entries.length) warnings.push(RETIRED_UPGRADE_AT_WARNING);
+  entries = upgradeAt;
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
     warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');
@@ -384,7 +415,7 @@ function withoutSupersededLegacy(entries) {
 //     co-op, endless — is World.
 function balanceGroup(path) {
   if (/^(poise|stagger|mana)\./.test(path)) return 'Stats';
-  if (/^(level|xp\.|skill\.|classTree\.)/.test(path)) return 'Progression';
+  if (/^(level|xp\.|skill\.|classTree\.|progressionFeats\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
   if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|coop|endless|customMods)/.test(path)) return 'World';
@@ -527,7 +558,7 @@ const BALANCE_LABELS = Object.freeze({
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
-  'stagger.player.actionLoss': 'Actions you lose when your meter fills',
+  'stagger.player.actionLoss': 'Stamina you lose when your meter fills',
   'stagger.player.statuses.vulnerable': 'Vulnerable stacks when your meter fills',
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
   'mana.minActionCost': 'Least action cost of a mana card',
@@ -567,7 +598,7 @@ function balanceLabel(path) {
 function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
-    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}) } : {};
+    const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}), ...(joined.startsWith('progressionFeats.') && joined.endsWith('.hpPct') ? PERCENT : {}) } : {};
     const described = balanceNote(joined, { bundle, parent });
     rows.push({
       cat: 'Advanced',
@@ -713,6 +744,8 @@ const PRESENTATION_ROWS = Object.freeze([
 
 function presentationRows() {
   return [
+    { cat: 'Advanced', advancedGroup: 'Interface', type: 'text', presentationKey: 'formationGroups',
+      key: `${ADVANCED_CONFIG_PREFIX}presentation.formationGroups`, def: '[]', maxLength: 20000, label: 'Formation groups', note: 'Saved group offsets and member positions.' },
     { cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.formationPreset`, presentationKey: 'formationPreset',
       def: FORMATION_DEFAULTS.formationPreset, choices: FORMATION_PRESETS.map(p => p.value),
@@ -765,7 +798,7 @@ function presentationRows() {
     ...['player', 'enemy'].map((side) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnRow`,
-      presentationKey: `${side}SpawnRow`, def: 'C', choices: [...FORMATION_ROWS],
+      presentationKey: `${side}SpawnRow`, def: PRESENTATION_DEFAULTS[`${side}SpawnRow`], choices: [...FORMATION_ROWS],
       choiceLabels: Object.fromEntries([...FORMATION_ROWS].map(row => [row, `Row ${row}`])),
       legacyChoices: side === 'player'
         ? { front: 'A', middle: 'B', back: 'C' }
@@ -777,7 +810,7 @@ function presentationRows() {
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnColumn`,
       presentationKey: `${side}SpawnColumn`,
-      def: side === 'player' ? '2' : '3',
+      def: PRESENTATION_DEFAULTS[`${side}SpawnColumn`],
       choices: side === 'player' ? ['1', '2', '3'] : ['2', '3', '4', '5', '6'],
       legacyChoices: side === 'player'
         ? { left: '1', center: '2', right: '2' }
@@ -965,6 +998,8 @@ export function advancedConfigSnapshot(settings = {}) {
   return Object.freeze({
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     ratingsVersion: 1,
+    breakMeterVersion: 1,
+    classMasteryVersion: 1,
     xpCurveVersion: 1,
     overrides: advancedConfigSettings(settings),
   });
@@ -1078,6 +1113,9 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     for (const key of ['impactPerXp', 'buildupPerXp']) {
       if (Number.isFinite(skill?.xp?.[key]) && xpMultiplier > 0) skill.xp[key] /= xpMultiplier;
     }
+    for (const key of ['perWin', 'perElite', 'perBoss', 'perQuest']) {
+      if (Number.isFinite(configured.balance.classMastery?.pay?.[key])) configured.balance.classMastery.pay[key] = Math.max(0, Math.round(configured.balance.classMastery.pay[key] * xpMultiplier));
+    }
     for (const key of ['perWin', 'bossKill', 'perQuest']) {
       if (Number.isFinite(skill?.class?.xp?.[key])) skill.class.xp[key] = Math.max(0, Math.round(skill.class.xp[key] * xpMultiplier));
     }
@@ -1128,6 +1166,8 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (legacyRatings) configured.balance.combatRatings.enabled = false;
+  if (!settingsOrSnapshot?.overrides || settingsOrSnapshot.classMasteryVersion === 1) configured.classMasteryVersion = 1;
+  if (configured.balance.combatRatings.enabled && (!settingsOrSnapshot?.overrides || settingsOrSnapshot.breakMeterVersion === 1)) configured.breakMeterVersion = 1;
   // THE RATING ROWS ARE THE TABLE'S (ruleset 7). A reader with no run behind
   // it — creation, a headless fixture — reads these; a run reads its own
   // snapshot's through model/statRows.js ratingsConfigFor.
@@ -1150,6 +1190,16 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     if (!own.dropPath || ownOn(raw, own)) continue;
     const parent = own.dropPath.slice(0, -1).reduce((node, key) => node?.[key], configured);
     if (parent && typeof parent === 'object') delete parent[own.dropPath.at(-1)];
+  }
+  if (bundle.legacyProgression) {
+    // Derive legacy card formula baselines from the captured faces, then apply
+    // the same settings. New grade costs must not rewrite old saved cards.
+    const legacy = configuredContentBundle({ ...bundle, ...bundle.legacyProgression,
+      legacyProgression: undefined, balance: { ...bundle.balance, progression: undefined } }, settingsOrSnapshot);
+    configured.legacyProgression = { ...bundle.legacyProgression,
+      cards: legacy.cards, relics: legacy.relics, classes: legacy.classes,
+      classSkillFeats: legacy.classSkillFeats, classMastery: legacy.classMastery,
+      equipment: legacy.equipment, balance: legacy.balance };
   }
   return configured;
 }
@@ -1315,7 +1365,9 @@ export function presentationConfig(settings = {}) {
   for (const row of presentationRows()) {
     if (!(row.key in settings)) continue;
     const raw = settings[row.key];
-    if (row.type === 'choice') {
+    if (row.presentationKey === 'formationGroups') {
+      values.formationGroups = JSON.stringify(formationGroups(raw));
+    } else if (row.type === 'choice') {
       const normalized = row.legacyChoices?.[raw] ?? raw;
       if (row.choices.includes(normalized)) values[row.presentationKey] = normalized;
     } else if (row.type === 'color') {
@@ -1326,6 +1378,9 @@ export function presentationConfig(settings = {}) {
       const number = Number(raw);
       if (Number.isFinite(number)) values[row.presentationKey] = Math.min(row.max, Math.max(row.min, row.integer ? Math.round(number) : number));
     }
+  }
+  if (!(`${ADVANCED_CONFIG_PREFIX}presentation.formationGroups` in settings)) {
+    values.formationGroups = suppliedFormationPositioning(`${values.formationColumns}x${values.formationRows}`)?.formationGroups || '[]';
   }
   return values;
 }

@@ -14,6 +14,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
+
 import { createHash } from 'node:crypto';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
@@ -127,9 +128,8 @@ function idOf(absPath) {
 // Every module, stylesheet and image travels inside one HTML, so it runs from
 // file:// with no folder beside it — the reason this bundler rewrites ES
 // modules into closures. Its art payloads are the light tier's, under the same
-// `assets/…` keys, read since step 12 from the fetched light pack
-// (.art-cache/<tag>/light/, tools/art-source.mjs; assets-mobile/ until step 13
-// when no pack is fetched). It is held to no byte budget
+// `assets/…` keys, read from the fetched light pack (.art-cache/<tag>/light/,
+// tools/art-source.mjs; the tree left at step 13). It is held to no byte budget
 // (see the note before the write below). It is written to build/download/ by
 // default, the path the Pages site and the in-game Download name (owner
 // answer 3: one light-art single file is kept as the download). It is always
@@ -226,6 +226,14 @@ function fail(msg, items) {
 // ---------------------------------------------------------------------------
 // 1. Parse index.html: ordered stylesheet hrefs + module entry src.
 // ---------------------------------------------------------------------------
+// Defer a content-import error to the normal graph and parse diagnostics. Those
+// name the broken module and write the refusal page instead of leaving a stale game.
+let compiledCardComponents, writeCardObjects, cardCompileError;
+try {
+  const compiler = await import('./card-components.mjs');
+  writeCardObjects = compiler.writeCardObjects;
+  compiledCardComponents = compiler.generateCardComponents(ROOT);
+} catch (error) { cardCompileError = error; }
 const indexPath = resolve(ROOT, 'index.html');
 if (!existsSync(indexPath)) fail('index.html not found at ' + indexPath);
 const indexHtml = readText(indexPath);
@@ -332,20 +340,22 @@ visit(entryAbs);
 // the last hole opened; a build that carries one asset too many is a kilobyte,
 // a build that misses one is a bug nobody sees.
 // ---------------------------------------------------------------------------
+// The `assets/…` ids are resolved against this path (CSS url()s name it); no
+// file is read from it since docs/EXTERNAL-ASSETS-PLAN.md step 13 removed the tree.
 const ASSET_DIR = resolve(ROOT, 'assets');
 // The tree the payloads are READ from. The keys stay `assets/…` whatever it is,
 // because the runtime builds those paths and never learns which edition it is.
-// THE LIGHT TIER COMES FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md
-// step 12): .art-cache/<tag>/light/assets-mobile/, which tools/fetch-art.mjs
-// verified against the pin and the manifest. tools/art-source.mjs is the one
-// place that may still read assets-mobile/ from this checkout instead (its
-// fallback, which ends at step 13 with the tree).
-let lightSource = null;
-if (TWIN_ART) {
-  try { lightSource = artDir(MOBILE_ASSET_DIR); } catch (e) { fail(e.message); }
-}
-const ART_DIR = TWIN_ART ? lightSource.dir : ASSET_DIR;
-const ART_FROM = TWIN_ART ? `${lightSource.from === 'cache' ? 'the fetched light pack' : `${MOBILE_ASSET_DIR}/ (no fetched light pack)`}` : 'assets/';
+// BOTH TIERS COME FROM THE FETCHED RELEASE (steps 12 and 13), through
+// tools/art-source.mjs: the light pack's assets-mobile/ for a light build and
+// the light single file, the high pack's assets/ for a high-default pack build,
+// each verified by tools/fetch-art.mjs against the pin and the manifest. A
+// sandbox that copied the trees under its own root reads those copies instead
+// (ASHEN_ART_SOURCE=trees). A pack that is not fetched stops the build here.
+let artSource = null;
+try { artSource = artDir(TWIN_ART ? MOBILE_ASSET_DIR : 'assets'); } catch (e) { fail(e.message); }
+const lightSource = TWIN_ART ? artSource : null;
+const ART_DIR = artSource.dir;
+const ART_FROM = `${artSource.from === 'cache' ? `the fetched ${TWIN_ART ? 'light' : 'high'} pack` : `${TWIN_ART ? MOBILE_ASSET_DIR : 'assets'}/ under this root (ASHEN_ART_SOURCE=trees)`}`;
 // The common pack's files (the fonts) are never part of an art tier's sweep:
 // they reach the page through CSS only, read from the common pack below.
 const sweptPath = (rel) => !treeOf(posix.join('assets', rel.split(/[\\/]/g).join('/')));
@@ -432,7 +442,7 @@ if (TWIN_ART) {
   const missing = [...noLight, ...[...want].filter((p) => !have.has(p))];
   const stray = [...have].filter((p) => !want.has(p));
   if (missing.length || stray.length) {
-    fail(`${ART_FROM} does not hold the light records of art-manifest.json — ${missing.length} missing, ${stray.length} stray; node tools/fetch-art.mjs --pack light (or, for the tree, node tools/mobile-art.mjs --check)`,
+    fail(`${ART_FROM} does not hold the light records of art-manifest.json — ${missing.length} missing, ${stray.length} stray; node tools/fetch-art.mjs --pack light`,
       [...missing.slice(0, 5).map((p) => ({ message: `missing twin: ${MOBILE_ASSET_DIR}/${p}` })),
         ...stray.slice(0, 5).map((p) => ({ message: `stray twin with no source: ${MOBILE_ASSET_DIR}/${p}` }))]);
   }
@@ -1001,6 +1011,8 @@ if (parseErrors.length) {
   fail('refusing to write a bundle that does not parse:\n' + rows, parseErrors);
 }
 
+if (cardCompileError) fail('Card component generation failed: ' + (cardCompileError.stack || cardCompileError));
+
 const entryId = idOf(entryAbs);
 const moduleEntries = order
   .map((id) => {
@@ -1210,6 +1222,7 @@ const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
 // whole property is a second copy of a path. OUT_DIR / OUT_PATH, one home.
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_PATH, html, 'utf8');
+writeCardObjects(compiledCardComponents, OUT_DIR);
 
 // THE SIBLING DIRECTORIES THE WEB EDITION NO LONGER CARRIES (step 3c).
 //
@@ -1292,7 +1305,7 @@ if (mapEntries === 0) {
   // In external mode zero swept files means zero COPIED files, which is the
   // same defect wearing different clothes, so the same line covers both — but
   // it names what is actually broken rather than the shape it was broken in.
-  console.log('  WARNING          : the assets/ sweep found nothing — this build will show fallbacks');
+  console.log(`  WARNING          : the art sweep (${ART_FROM}) found nothing — this build will show fallbacks`);
 }
 if (EXTERNAL_ART) {
   // The counter this mode cannot afford to be quiet about. verify-shipped.mjs

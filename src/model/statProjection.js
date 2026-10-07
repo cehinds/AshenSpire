@@ -22,6 +22,7 @@ function presentationRows(registries) {
   const table = (registries.derivedStatRules || {}).presentation;
   if (!table) throw new Error('statProjection requires derivedStatRules.presentation');
   return Object.entries(table)
+    .filter(([id]) => id !== 'energy')
     .map(([id, row]) => ({ id, ...row }))
     .sort((a, b) => a.order - b.order);
 }
@@ -183,12 +184,13 @@ export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
     bonuses: capacityBonus,
     weights: { mainHandWeight: hands, offHandWeight: 0, armorWeight: armour, otherCountedWeight: 0 },
   });
-  // The class is CONSUMED the moment the composed deck holds a dodge roll
-  // (the unarmed package's Evasive Guard / Dodge Roll, or any card authored
-  // with the opcode): the roll's check and the pure dodge's price read it.
+  // The class is CONSUMED the moment the composed deck holds a dodge (the
+  // unarmed package's Evasive Guard, any card authored with the dodgeRoll
+  // opcode, or the weight-priced Dodge Roll): the roll's check and the Dodge
+  // Roll's price read it.
   const active = (run.deck || []).some((card) => {
     const def = card && registries.cards.has(card.cardId) ? registries.cards.get(card.cardId) : null;
-    return !!def && (def.effects || []).some((eff) => eff.op === 'dodgeRoll');
+    return !!def && (def.weightClassPriced === true || (def.effects || []).some((eff) => eff.op === 'dodgeRoll'));
   });
   return {
     id: 'equipLoad',
@@ -260,7 +262,7 @@ export function statProjection(registries, run) {
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''}`
         + `${receipt.raw !== receipt.value ? `, held to ${receipt.value === receipt.min ? `at least ${receipt.min}` : `at most ${receipt.value}`}` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
+      note: id === 'stamina' ? 'Pays card and combat costs; refills at the start of every turn.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
     };
   });
   // The rating rows this run reads (its own, or its retired formula restated),

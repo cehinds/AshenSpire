@@ -11,16 +11,15 @@
 // (only inside the bounds) or cancels (`cancelDeckEdit`, which restores both
 // piles, the attack-slot allocation and the mint counter exactly).
 //
-// Nothing here decides a rule. Which card is a basic, which is locked, how many
+// Nothing here decides a rule. Which card is a basic, which equipment it needs, how many
 // copies a card may have and what the bounds are all come from
 // model/deckRules.js; this file only says them in the editor's shape.
 
 import {
-  addBasicCard, beginDeckEdit, cancelDeckEdit, deckCopyLimit, deckEditBounds, deckEditRefusal,
+  addBasicCard, beginDeckEdit, cancelDeckEdit, deckCardEquipmentEligible, deckCopyLimit, deckEditBounds, deckEditRefusal,
   deckEditingOn, deckEditingWhere, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder,
 } from '../../model/deckRules.js';
 import { isItemOwned } from '../../model/loadout.js';
-import { itemRefIdentity } from '../../model/itemUpgrades.js';
 import { resolveCard } from '../../model/registries.js';
 import { deckRules } from '../../content/deckRules.js';
 import { has, t } from '../strings.js';
@@ -45,7 +44,8 @@ const TECHNIQUE_TAG_PREFIX = 'technique:';
  */
 export function deckVariantKey(card) {
   const mods = Array.isArray(card.mods) ? card.mods.join(',') : '';
-  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}`;
+  const rank = Number.isInteger(card.rank) && card.rank > 1 ? `~r${card.rank}` : '';
+  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}${card.grantedBy ? `~${card.grantedBy}` : ''}${rank}`;
 }
 
 function costBucket(cost) {
@@ -53,33 +53,16 @@ function costBucket(cost) {
   return cost >= 5 ? '5+' : String(cost);
 }
 
-function isLocked(card) { return !!(card && (card.grantedBy || isItemOwned(card))); }
+function isEquipmentCard(card) { return !!(card && (card.grantedBy || isItemOwned(card))); }
 
 function sourceOf(card, def) {
-  if (isLocked(card)) return 'item';
+  if (isEquipmentCard(card)) return 'item';
   if (isUnlimitedBasic(card)) return 'basic';
   const tags = def.tags || [];
   if (tags.includes(ART_TAG)) return 'art';
   // A technique (a skill-draft card, SPEC §13.4e) carries a `technique:*` tag.
   if (tags.some((tag) => String(tag).startsWith(TECHNIQUE_TAG_PREFIX))) return 'technique';
   return 'reward';
-}
-
-function pieceName(registries, grantedBy) {
-  // `grantedBy` is a bare armament id (a weapon's package) or a namespaced
-  // item ref (`armament/<id>`, `armor/<class>/<id>`, from the item's mounts);
-  // itemRefIdentity is the one parser of the second spelling.
-  const ref = itemRefIdentity(String(grantedBy || ''));
-  const id = ref ? ref.itemId : String(grantedBy || '');
-  const eq = registries.equipment || {};
-  const pools = ref
-    ? (ref.itemKind === 'armor' ? [eq.armour] : [eq.armaments])
-    : [eq.armaments, eq.armour];
-  for (const pool of pools.filter(Array.isArray)) {
-    const piece = pool.find((p) => p && p.id === id && (!ref || !ref.classId || p.classId === ref.classId));
-    if (piece && piece.name) return piece.name;
-  }
-  return t('deckEditor.lock.equipment');
 }
 
 function typeLabel(type) {
@@ -92,6 +75,7 @@ function typeLabel(type) {
 function describe(registries, card) {
   const def = resolveCard(registries, card);
   return {
+    ref: Object.freeze({ ...card, mods: card.mods ? Object.freeze([...card.mods]) : undefined }),
     cardId: card.cardId,
     name: def.name,
     cost: def.cost,
@@ -208,27 +192,26 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     .map((bucket) => Object.freeze({ bucket, count: tally[bucket], share: tally[bucket] / peak }));
 
   let deckRows = described.map(({ card, row }, index) => {
-    const locked = isLocked(card);
-    const piece = locked ? pieceName(registries, card.grantedBy) : '';
+    const locked = false;
     return {
       ...row,
       instanceId: card.instanceId,
       index,
       locked,
-      lockText: locked ? t('deckEditor.locked', { piece }) : '',
-      lockSentence: locked ? t('deckEditor.locked.sentence', { piece, name: row.name }) : '',
-      removable: !locked,
+      lockText: '',
+      lockSentence: '',
+      removable: true,
     };
   }).filter((row) => passes(row, state.filters));
   // SPEC §14.7: unordered, the deck list is ONE ROW PER VARIANT with a ×N
-  // count (the key the collection tiles use, plus the owner for a locked
+  // count (the key the collection tiles use, including the owner for a lent
   // card, so two pieces' grants never merge); its － takes the last copy. In
   // Play in deck order each copy is its own row so it can be placed.
   if (!ordered) {
     const groups = new Map();
     for (const row of deckRows) {
       const card = deck[row.index];
-      const key = `${deckVariantKey(card)}~${row.locked ? String(card.grantedBy || card.equipmentRole) : ''}~${card.equipmentRole || ''}`;
+      const key = `${deckVariantKey(card)}~${card.equipmentRole || ''}`;
       const group = groups.get(key);
       if (group) { group.instanceIds.push(row.instanceId); group.instanceId = row.instanceId; group.index = row.index; }
       else groups.set(key, { ...row, groupKey: key, instanceIds: [row.instanceId] });
@@ -263,7 +246,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   const inDeckById = new Map();
   for (const card of deck) if (card) inDeckById.set(card.cardId, (inDeckById.get(card.cardId) || 0) + 1);
   for (const card of [...deck, ...sideboard]) {
-    if (!card || isLocked(card) || isUnlimitedBasic(card)) continue;
+    if (!card || isUnlimitedBasic(card)) continue;
     const variant = deckVariantKey(card);
     const entry = limited.get(variant) || { card, owned: 0, inDeck: 0, loose: 0 };
     entry.owned += 1;
@@ -273,13 +256,15 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   for (const [variant, entry] of limited) {
     const row = describe(registries, entry.card);
     const limit = deckCopyLimit(registries, entry.card.cardId, settings, run.class);
+    const equipmentEligible = deckCardEquipmentEligible(registries, run, entry.card);
     let tileRefusal = '';
-    if (!entry.loose) tileRefusal = t('deckEditor.refuse.allInDeck', { name: row.name });
+    if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
+    else if (!entry.loose) tileRefusal = t('deckEditor.refuse.allInDeck', { name: row.name });
     else if ((inDeckById.get(entry.card.cardId) || 0) >= limit) tileRefusal = t('deckEditor.refuse.copyLimit', { name: row.name, limit });
     tiles.push({
       ...row, key: `card:${variant}`, unlimited: false, owned: entry.owned, inDeck: entry.inDeck,
       countText: t('deckEditor.tile.owned', { owned: entry.owned, inDeck: entry.inDeck }),
-      addable: !tileRefusal, refusal: tileRefusal,
+      equipmentEligible, addable: !tileRefusal, refusal: tileRefusal,
     });
   }
   const basics = tiles.filter((tile) => tile.unlimited);
@@ -339,30 +324,40 @@ export function nextFilterPreset(model, view) {
  *   remove(instanceId)  → { ok, refusal }
  *   move(instanceId, ±1) → { ok }           only under playInDeckOrder
  *   moveTo(instanceId, index) → { ok }
+ *   canUndo             → whether a successful edit can be undone
+ *   undo()              → { ok, refusal }  restores the preceding edit state
  *   confirm()           → { ok, refusal }
  *   cancel()
  */
 export function openDeckEdit(registries, run, settings = {}) {
   const snapshot = beginDeckEdit(run);
+  const history = [];
   let closed = false;
   const live = () => { if (closed) throw new Error('openDeckEdit: this editor session is already closed'); };
   const nameOf = (card) => resolveCard(registries, card).name;
+  // Use the same complete state boundary as Cancel: undoing a minted basic
+  // must restore its slot allocation and mint counter as well as both piles.
+  const remember = (before, result) => {
+    if (result.ok) history.push(before);
+    return result;
+  };
   return Object.freeze({
     snapshot,
     add(key) {
       live();
+      const before = beginDeckEdit(run);
       const [kind, id] = String(key || '').split(':');
       if (kind === 'basic') {
         // The mint tile: a fresh copy back, or a new one, never a set-aside
         // (upgraded) copy, which has its own tile.
         const card = addBasicCard(registries, run, id, { plain: !isEquippedRun(run), freshOnly: true });
-        return { ok: !!card, refusal: '' };
+        return remember(before, { ok: !!card, refusal: '' });
       }
       if (kind === 'kept') {
         const variant = String(key).slice('kept:'.length);
         const card = (run.sideboard || []).find((c) => isSetAsideBasic(c) && deckVariantKey(c) === variant);
         if (!card) return { ok: false, refusal: '' };
-        return { ok: moveFromSideboard(registries, run, card.instanceId, settings), refusal: '' };
+        return remember(before, { ok: moveFromSideboard(registries, run, card.instanceId, settings), refusal: '' });
       }
       if (kind !== 'card') throw new Error(`openDeckEdit.add: unknown collection key '${key}'`);
       // `card:<variant>` (a tile's key) moves a copy of exactly that variant;
@@ -370,12 +365,13 @@ export function openDeckEdit(registries, run, settings = {}) {
       const variant = String(key).slice('card:'.length);
       const matches = variant.includes('~') ? (c) => deckVariantKey(c) === variant : (c) => c.cardId === variant;
       const cardId = variant.split('~')[0];
-      const loose = (run.sideboard || []).find((c) => c && matches(c) && !isLocked(c) && !isUnlimitedBasic(c));
+      const loose = (run.sideboard || []).find((c) => c && matches(c) && !isUnlimitedBasic(c));
       if (!loose) {
         const any = (run.deck || []).find((c) => c && matches(c));
         return { ok: false, refusal: t('deckEditor.refuse.allInDeck', { name: any ? nameOf(any) : cardId }) };
       }
-      if (moveFromSideboard(registries, run, loose.instanceId, settings)) return { ok: true, refusal: '' };
+      if (!deckCardEquipmentEligible(registries, run, loose)) return { ok: false, refusal: t('deckEditor.refuse.equipment') };
+      if (moveFromSideboard(registries, run, loose.instanceId, settings)) return remember(before, { ok: true, refusal: '' });
       const limit = deckCopyLimit(registries, cardId, settings, run.class);
       return { ok: false, refusal: t('deckEditor.refuse.copyLimit', { name: nameOf(loose), limit }) };
     },
@@ -383,8 +379,8 @@ export function openDeckEdit(registries, run, settings = {}) {
       live();
       const card = (run.deck || []).find((c) => c && c.instanceId === instanceId);
       if (!card) return { ok: false, refusal: '' };
-      if (isLocked(card)) return { ok: false, refusal: t('deckEditor.locked.sentence', { name: nameOf(card), piece: pieceName(registries, card.grantedBy) }) };
-      return { ok: moveToSideboard(registries, run, instanceId), refusal: '' };
+      const before = beginDeckEdit(run);
+      return remember(before, { ok: moveToSideboard(registries, run, instanceId), refusal: '' });
     },
     moveTo(instanceId, index) {
       live();
@@ -392,26 +388,36 @@ export function openDeckEdit(registries, run, settings = {}) {
       const from = run.deck.findIndex((c) => c && c.instanceId === instanceId);
       const to = Math.max(0, Math.min(run.deck.length - 1, index));
       if (from < 0 || from === to) return { ok: false };
+      const before = beginDeckEdit(run);
       const [card] = run.deck.splice(from, 1);
       run.deck.splice(to, 0, card);
-      return { ok: true };
+      return remember(before, { ok: true });
     },
     move(instanceId, delta) {
       const from = run.deck.findIndex((c) => c && c.instanceId === instanceId);
       return this.moveTo(instanceId, from + delta);
+    },
+    undo() {
+      live();
+      if (!history.length) return { ok: false, refusal: '' };
+      cancelDeckEdit(run, history.pop());
+      return { ok: true, refusal: '' };
     },
     confirm() {
       live();
       const refusal = deckEditRefusal(run.deck.length, settings);
       if (refusal) return { ok: false, refusal };
       closed = true;
+      history.length = 0;
       return { ok: true, refusal: '' };
     },
     cancel() {
       live();
       cancelDeckEdit(run, snapshot);
       closed = true;
+      history.length = 0;
     },
+    get canUndo() { return !closed && history.length > 0; },
     get closed() { return closed; },
   });
 }

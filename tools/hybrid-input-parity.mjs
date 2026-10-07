@@ -177,8 +177,8 @@ if (args.includes('--selftest')) {
     }, {
       name: 'top-bar flask anchors are removed from the unified cursor',
       file: 'src/ui/input.js',
-      find: "(el) => visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))",
-      replace: '(el) => visible(el) && (inModal || !(el.closest && el.closest(CHROME)))',
+      find: "(el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))",
+      replace: "(el) => !el.closest?.('[inert]') && visible(el) && (inModal || !(el.closest && el.closest(CHROME)))",
       expectRed: /FAIL keyboard Crimson menu opens on Use and arrows to Inspect/,
     }, {
       name: 'D-pad menu movement no longer synchronizes DOM focus',

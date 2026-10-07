@@ -497,6 +497,7 @@ export function receipt() {
     catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
     overhead: read('src/ui/components/combatantOverhead.js'),
+    health: read('src/ui/components/combatHealth.js'),
     battlefieldStage: read('src/ui/components/battlefieldStage.js'),
     battlefieldStageModel: read('src/ui/models/BattlefieldStageModel.js'),
     spriteScale: read('src/ui/models/CombatSpriteScaleModel.js'),
@@ -617,7 +618,7 @@ export function findings(r) {
       // `base` across every actor and derives each sprite's height from it —
       // this asserts the reduce and the apply, so a return to per-frame
       // scaling is red.
-      || !/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors \}\)/.test(r.battlefieldStage)
+      || !/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors[,\s}]/.test(r.battlefieldStage)
       || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
       // A presentation multiplier (sprite scale settings) grows a figure after
       // this shared height, capped per side to the screen (2026-09-27).
@@ -634,7 +635,7 @@ export function findings(r) {
       || !/UI\.procStatusBar/.test(r.combat)
       || !/UI\.statusEffectTray/.test(r.combat)
       || !/UI\.intentIndicator/.test(r.overhead)
-      || !/UI\.blockBadge/.test(r.combat)
+      || !/UI\.blockBadge/.test(r.health) || !/combatHealthRow\(/.test(r.combat) || !/combatHealthRow\(/.test(r.coop)
       || !/UI\.arcaneExposureBar/.test(r.exposure)
       || !/UI\.tooltip/.test(r.tooltip)
       || !/UI\.guardedDamageIndicator/.test(r.fx)
@@ -745,7 +746,7 @@ export function findings(r) {
       // same map with its own title (ed4d7e6c9, `mapAdapter.title`); every
       // generated act still falls through to actTitle. Both halves are
       // required: dropping the authored title is a defect too (Codex, #1316).
-      || !/actRouteStripHtml\(\{\s*title:\s*mapAdapter\?\.title\s*\|\|\s*actTitle\(run\.actNumber\b[^\n]*?\)\s*\}\)/.test(r.map)
+      || !/actRouteStripHtml\(\{\s*title:\s*mapAdapter\?\.title\s*\|\|\s*actTitle\(run\.actNumber\b[^\n]*?\),\s*graph:\s*map,\s*path:[^\n]*?\bcurrent\s*\}\)/.test(r.map)
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
@@ -917,7 +918,7 @@ export function findings(r) {
       || !/const smith = smithingPlan\(registries, run\)/.test(r.rest)
       // #522: the Shrine hands the model its multi-use mode, and the model —
       // never the modal — derives every stay/leave sentence from it.
-      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse \}\)/.test(r.rest)
+      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse, repeatUpgrades: true \}\)/.test(r.rest)
       || !/mountSmithUpgradeModal\(app, model\(\)/.test(r.rest)
       || !/commitSmithing\(registries, run, itemRef\)/.test(r.rest)
       || !smithIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)

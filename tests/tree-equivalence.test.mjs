@@ -111,10 +111,22 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   const SPEC_14_PROPERTIES = ['deckEdit', 'companion', 'hollowSquire', 'emberHound', 'sigil', 'emberSigil', 'thornSigil', 'tideSigil', 'hearthSigil'];
   // SPEC §15.4: the three legendary sigils' leaves under the sigil branch.
   const SPEC_15_PROPERTIES = ['vigilSigil', 'pyreSigil', 'gravelightSigil'];
-  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES, ...SPEC_15_PROPERTIES];
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (t.id === 'bow' && t.domain === 'card')),
-    'every tag that joined is a framework node, a named property, or the Bow presentation tag');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow'].sort(), 'and the non-framework additions are exactly the named ones');
+  const PROGRESSION_FEATS = ('coal-on-steel brace-and-bite red-footwork anvil-discipline forge-momentum paid-in-blood last-rampart war-cadence broad-sentence ember-sovereign dread-of-the-hammer scarred-oath harvest-the-wound orbit-keeper moonward-scholar comet-reader mirror-of-rime constellation-keeper patient-wellspring weight-of-the-void nightglass-scholar eclipse-hunter firmament-keeper celestial-refrain memory-of-winter threefold-sky first-knife pocket-method crooked-measure open-flank hidden-palm tighten-the-wire smoke-dancer carrion-measure two-quiet-knives trapdoor-smile clean-exit razor-ledger ashen-mercy censer-keeper sower-of-blight funeral-watch ember-almoner choir-of-bone requiem-reader pilgrim-of-scars crowned-offering dawn-cantor bearer-of-burdens sepulchral-promise').split(' ').map(id => `feat:${id}`);
+  const PROGRESSION_RELICS = ('emberjaw-token cracked-war-anvil cinderbound-crown moonwell-lens nightglass-rosary fragment-of-the-third-sky whisperglass-die purse-of-borrowed-shadows ember-alms-bowl ossuary-prayer-wheel').split(' ').map(id => `progression-${id}`);
+  assert.equal(PROGRESSION_FEATS.length, 50);
+  assert.equal(PROGRESSION_RELICS.length, 10);
+  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES, ...SPEC_15_PROPERTIES, ...PROGRESSION_FEATS, ...PROGRESSION_RELICS];
+  const ABILITY_TAGS = ('searing-edge guarded-strike bloodstep hammerfall forgewake crimson-reprisal last-stand war-tempo wide-cleave ember-crown dreadweight oathscar wound-harvest cinder-orbit lunar-guard comet-mark rime-mirror constellation mana-weave gravity-snare nightglass eclipse-window warded-casting celestial-echo cold-memory astral-convergence ash-opener discard-weave crooked-guard exposed-flank sleight-hand tether-cut smoke-edge carrion-finish paired-strikes trapdoor clean-escape razor-debt mercy-ash blood-censer blight-seed funeral-guard ember-tithe bone-chorus requiem-brand pilgrim-shelter scarred-rite dawn-rite burden-bearer sepulchral-pact').split(' ').map(id => `ability:${id}`);
+  assert.equal(ABILITY_TAGS.length, 50);
+  assert.deepEqual(TAGS.filter(t => t.id.startsWith('ability:')).map(t => t.id).sort(), [...ABILITY_TAGS].sort(), 'the fifty approved ability identities are exact');
+  for (const id of ABILITY_TAGS) {
+    const tag = tags.get(id);
+    assert.equal(tag.domain, 'technique');
+    assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
+  }
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (t.id === 'bow' && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique')),
+    'every tag that joined is a framework node, a named property, Bow, or an approved ability identity');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', ...ABILITY_TAGS].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 
@@ -133,8 +145,10 @@ test('every object states exactly one kind, the one its collection and type name
       counted += 1;
     }
   }
-  // Current 505 objects plus the blacksmith's four sigils.
-  assert.equal(counted, 512, 'all 512 shipped objects, including projected shared armor sets, companions and sigils (three legendary, SPEC §15.4)');
+  // The original 513, forty cards, ten relics, fifty new class feats, and the
+  // twenty existing mastery feats now participating in the kind registry.
+  assert.equal(contentBundle.classSkillFeats.length, 70);
+  assert.equal(counted, 513 + 40 + 10 + 70, 'all 633 objects, including the expanded class-feat kind registry');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

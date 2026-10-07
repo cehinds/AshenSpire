@@ -2,13 +2,14 @@ import {test} from 'node:test';import assert from 'node:assert/strict';import {c
 test('ranged identity, not mana or class, selects projectiles',()=>{const hit={op:'damage',target:'enemy'};assert.equal(effect({type:'attack',manaCost:2,effects:[hit]},'starseer').projectile,false);assert.equal(effect({type:'attack',manaCost:1,tags:['starstone','ranged'],effects:[hit]}).kind,'starbolt');assert.equal(effect({type:'attack',tags:['blade','starstone'],effects:[hit]}).projectile,false);});
 test('guards and Powers use local effects and heals wait for actual receipts',()=>{assert.deepEqual(effect({type:'skill',tags:['guard']}),{kind:'physicalGuard',projectile:false});assert.equal(effect({type:'power'},'reaver').kind,'focusMotes');assert.equal(effect({type:'skill',manaCost:1,tags:['heal'],effects:[{op:'heal',target:'self'}]}).kind,'cleanse');});
 import {createRegistries} from '../src/model/registries.js';import {contentBundle} from '../src/content/index.js';import {createSession} from '../tools/session.mjs';
-test('co-op stance receipt identifies the actor for its visual effect',()=>{const host=createSession({registries:createRegistries(contentBundle),seedString:'GUARD2'});for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);const p=host.live.combat.players.get('p2');p.piles.hand.push({instanceId:'stance-fx',cardId:'enterBulwark',upgraded:false});p.entity.energy=20;p.entity.stamina=99;const r=host.combatPlay('p2','stance-fx');assert.ok(r.ok,r.error);const receipt=host.snapshot().scene.events.find(e=>e.type==='stanceEntered');assert.equal(receipt.playerId,'p2');assert.equal(receipt.stance,'bulwark');});
+// Historical host receipts start after character setup; other content tests remain modern.
+import {legacyContentBundle} from './helpers/legacy-progression-content.mjs';
+test('co-op stance receipt identifies the actor for its visual effect',()=>{const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);const p=host.live.combat.players.get('p2');p.piles.hand.push({instanceId:'stance-fx',cardId:'enterBulwark',upgraded:false});p.entity.energy=20;p.entity.stamina=99;const r=host.combatPlay('p2','stance-fx');assert.ok(r.ok,r.error);const receipt=host.snapshot().scene.events.find(e=>e.type==='stanceEntered');assert.equal(receipt.playerId,'p2');assert.equal(receipt.stance,'bulwark');});
 import { COMBAT_EFFECT_ART } from '../src/content/combatEffectArt.js';
 import { combatEffectPresentation } from '../src/content/combatEffectPresentation.js';
 import { combatEffectForEvent } from '../src/model/combatEffectEvents.js';
-import { readFileSync } from 'node:fs';
+import { artRecord } from '../tools/art-source.mjs';
 import {playCombatEffect,playCombatEffectPlan} from '../src/ui/combatEffectSprites.js';
-import { createHash } from 'node:crypto';
 
 test('Reduce flashes suppresses painted releases, casts and reactions before creating animation nodes',()=>{
  const previous=globalThis.document;
@@ -24,7 +25,9 @@ test('every shipped effect has six distinct painted frames',()=>{
  assert.equal(Object.keys(COMBAT_EFFECT_ART).length,56);
  for(const [kind,frames]of Object.entries(COMBAT_EFFECT_ART)){
   assert.equal(frames.length,6,kind);
-  const hashes=frames.map(file=>createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'));
+  // The high record's sha256 in art-manifest.json (the art left this repository at
+  // docs/EXTERNAL-ASSETS-PLAN.md step 13; the manifest names each file's bytes).
+  const hashes=frames.map(file=>artRecord(file)?.high?.sha256??assert.fail(`${file} is not in art-manifest.json`));
   assert.equal(new Set(hashes).size,6,kind+' must not repeat artwork');
  }
 });
@@ -49,7 +52,7 @@ test('actual status receipts own afflictions and resisted attempts do not burst'
 });
 
 test('co-op digest preserves the fields needed to render status and stagger receipts',()=>{
- const host=createSession({registries:createRegistries(contentBundle),seedString:'FX77'});
+ const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'FX77'});
  host.addMember({id:'p1',name:'p1',classId:'reaver'});host.start();host.chooseNode('p1',host.session.mapGraph.startIds[0]);
  host.snapshot();
  const added=[{type:'statusApplied',targetId:'p1',status:'venom',stacks:2,total:2},{type:'procBurst',targetId:'p1',status:'frost'},{type:'enemyStaggered',targetId:'e1'}];

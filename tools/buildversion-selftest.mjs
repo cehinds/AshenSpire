@@ -8,7 +8,7 @@
 // ── THE DOOR, STATED, BECAUSE THE DOOR NAMED IS THE EXTENT OF THE GREEN ──────
 //
 // Every plant below is a REAL EDIT TO A REAL FILE IN A REAL SOURCE TREE — a
-// byte-for-byte copy of index.html, styles/, src/, assets/ and the committed
+// byte-for-byte copy of index.html, styles/, src/, asset-data/ and the committed
 // bundle — and the tool is then entered at `check(root)`, the same entry point
 // the live run uses. Nothing is handed to a predicate downstream of the sweep:
 // each plant goes through the directory walk, the reader, the canonicalizer and
@@ -54,7 +54,7 @@
 //
 // Usage:  node tools/buildversion.mjs --selftest
 
-import { cpSync, existsSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
@@ -62,7 +62,9 @@ import { pathToFileURL } from 'node:url';
 import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
-const COPY = ['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
+// assets/ and assets-mobile/ are not copied: they left this repository at
+// docs/EXTERNAL-ASSETS-PLAN.md step 13 and are no input root (INPUT_ROOTS).
+const COPY = ['index.html', 'styles', 'src', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
 // CI spreads the expensive real-tree and git-history fixtures across Windows
 // runners. Each shard still enters the same check; the default runs everything.
@@ -669,6 +671,79 @@ function historyCorpus() {
       'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
   );
 
+  // THE PARENT RECORD GIT CANNOT READ. HEAD names its parent and the parent's
+  // commit is present, but the blob its tree names for buildordinal.json is not
+  // (a partial or shallow fetch, a pruned or damaged clone), so `git show
+  // <parent>:buildordinal.json` fails. That failure used to be read as "the
+  // parent has no record" — the pre-scheme n/a, a GREEN — when nothing about the
+  // parent was established at all. The record itself is the control's green one
+  // (ordinal bumped with the digest), so only the missing object moves the
+  // verdict. A missing parent COMMIT needs no case of its own: `git rev-list
+  // --parents` already fails on it and the row's catch says UNKNOWN.
+  // `spec` picks the object: the parent's record blob, HEAD's record
+  // blob, or the parent's root tree (so `git ls-tree` itself fails).
+  const dropObject = (spec, what) => (dir) => {
+    const blob = git(dir, 'rev-parse', spec).trim();
+    const loose = resolve(dir, '.git', 'objects', blob.slice(0, 2), blob.slice(2));
+    // Loose objects are written read-only; Windows refuses to unlink those.
+    // Only a loose file can be removed this way: a packed object leaves
+    // nothing at that path, and the guard below then says so plainly instead
+    // of chmod dying on ENOENT.
+    if (existsSync(loose)) {
+      chmodSync(loose, 0o666);
+      rmSync(loose);
+    }
+    // The plant proves itself: if the object survived (packed, alternates, or
+    // shared with HEAD's record), the case would test nothing, so it refuses.
+    let gone = false;
+    try { git(dir, 'cat-file', '-e', blob); } catch { gone = true; }
+    if (!gone) throw new Error(`selftest plant: ${what} ${blob.slice(0, 7)} is still readable after removing it`);
+  };
+  const dropParentRecord = dropObject(`HEAD^:${ORDINAL_HOME}`, `the parent's ${ORDINAL_HOME} blob`);
+  const dropHeadRecord = dropObject(`HEAD:${ORDINAL_HOME}`, `HEAD's ${ORDINAL_HOME} blob`);
+  const dropParentTree = dropObject('HEAD^^{tree}', "the parent's root tree");
+  CASES.push(
+    [bump, 'unknown',
+      `the PARENT's ${ORDINAL_HOME} blob is missing (partial, shallow or damaged clone), so git cannot show its record — unread is not absent, and the row must not call it the pre-scheme n/a`,
+      null, true, dropParentRecord, /^UNKNOWN — [0-9a-f]{7}'s tree names /],
+    // THE SYMMETRIC CASE: HEAD's own record blob is the one git cannot read.
+    // The diagnosis must name HEAD, not the parent (#1519 review).
+    [bump, 'unknown',
+      `HEAD's ${ORDINAL_HOME} blob is missing, so git cannot show this change's own record — unread is not absent, and the row must say so about HEAD`,
+      null, true, dropHeadRecord, /^UNKNOWN — HEAD's tree names /],
+    // THE TREE ITSELF IS UNREADABLE: `git ls-tree` fails, so nobody knows whether
+    // the parent's tree names the record. The row must say the tree could not be
+    // inspected and must NOT claim it names buildordinal.json (#1519 review).
+    [bump, 'unknown',
+      `the PARENT's root tree is missing, so git ls-tree itself fails — the row must say the tree could not be inspected, not that it names ${ORDINAL_HOME}`,
+      null, true, dropParentTree, /^UNKNOWN — [0-9a-f]{7}'s tree could not be inspected /],
+  );
+
+  // THE PARENT RECORD GIT CAN READ BUT NOBODY CAN PARSE. The blob is present,
+  // but it holds a conflict-marked record (a bad hand-merge committed as is),
+  // so JSON.parse throws. That throw used to come back as "no record" — the
+  // pre-scheme n/a, a GREEN — the same hole as the missing blob above. The
+  // hook rewrites the parent commit in place and re-commits HEAD's record
+  // unchanged, so only the parent's text moves the verdict.
+  const conflictParentRecord = (dir) => {
+    const headRecord = git(dir, 'show', `HEAD:${ORDINAL_HOME}`);
+    const parentRecord = git(dir, 'show', `HEAD^:${ORDINAL_HOME}`);
+    const p = resolve(dir, ORDINAL_HOME);
+    git(dir, 'reset', '-q', '--hard', 'HEAD^');
+    writeFileSync(p, `<<<<<<< HEAD\n${parentRecord}=======\n${parentRecord}>>>>>>> other\n`, 'utf8');
+    git(dir, 'commit', '-q', '-a', '--amend', '-m', 'the build that shipped, merged badly');
+    writeFileSync(p, headRecord, 'utf8');
+    git(dir, 'commit', '-q', '-a', '-m', 'a second build');
+    let parses = true;
+    try { JSON.parse(git(dir, 'show', `HEAD^:${ORDINAL_HOME}`)); } catch { parses = false; }
+    if (parses) throw new Error(`selftest plant: the parent's ${ORDINAL_HOME} still parses after the conflict was planted`);
+  };
+  CASES.push(
+    [bump, 'unknown',
+      `the PARENT's ${ORDINAL_HOME} is present but conflict-marked (not JSON) — unparsed is not absent, and the row must not call it the pre-scheme n/a`,
+      null, true, conflictParentRecord],
+  );
+
   return { build, CASES, skipped };
 }
 
@@ -682,12 +757,15 @@ function ordinalHistory({ build, CASES, skipped }, picked = () => true) {
   if (skipped) console.log(skipped);
   const WANT = { red: false, green: true, unknown: null };
   const selected = CASES.filter((_, index) => picked(index));
-  for (const [second, want, label, first = null, moveDigest = true] of selected) {
+  for (const [second, want, label, first = null, moveDigest = true, after = null, says = null] of selected) {
     const dir = build(second, first, moveDigest);
     try {
+      if (after) after(dir);
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
-      const hit = row !== undefined && row.ok === WANT[want];
+      // `says`, when given, pins the diagnosis too: a right verdict for the
+      // wrong reason (the wrong commit named, or a fact never established) fails.
+      const hit = row !== undefined && row.ok === WANT[want] && (says === null || says.test(detail));
       if (want === 'red') say(hit, label, detail);
       else {
         if (!hit) failures += 1;

@@ -1,3 +1,9 @@
+import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
+import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
+import {isAbilitySkill} from '../src/model/abilityGrades.js';
+import { openRunClassMastery, registriesForClassMastery } from '../src/model/classMasteryRun.js';
+import { initialClassTreeChoices, pickInitialClassTreeNode } from '../src/model/classTree.js';
+import { commitEventChoice } from '../src/engine/quests.js';
 // tools/simrun.mjs — the simulators' ONE run loop between fights.
 //
 // runsim and measure-classes both play whole seeded runs: the map path, the
@@ -18,7 +24,7 @@
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
-import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId } from '../src/model/skills.js';
+import { skillTracks, spendSkillDraft, classSkillId } from '../src/model/skills.js';
 import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
@@ -71,6 +77,7 @@ export function payFightXp(REG, run, combat, enc) {
  *          onDeath(run, act, hpIn, ctx), onFightWon(run, { act, floor, pool }, ctx)
  */
 export function createRunLoop(REG, config) {
+  const sourceRegistries = REG;
   const counters = {};
   const resetCounters = () => Object.assign(counters, {
     poured: 0, graces: 0, levelUps: 0, levelsReached: 0, levelsReachedInWins: 0, xpEarnedInWins: 0,
@@ -110,11 +117,18 @@ export function createRunLoop(REG, config) {
     for (const track of skillTracks(REG)) {
       const row = run.skills && run.skills[track.id];
       if (!row || !(row.pendingDrafts > 0)) continue;
+      if(run.progressionRulesVersion===1 && isAbilitySkill(track.id)){
+        for(const offer of rollPendingAbilityOffers(REG,rng,run,{skillId:track.id})){
+          const choice=abilityDraftChoice(offer,offer.choiceIds[0]);
+          if(spendSkillDraft(run,track.id,offer.offerId,choice.choiceId)){run.deck.push({instanceId:run._id(),cardId:choice.cardId,upgraded:false,abilityRank:choice.abilityRank,abilityOfferId:offer.offerId});drafts++;}
+        }
+        continue;
+      }
       for (let i = 0; i < Math.min(REG.balance.skill.draftsPerCombat, row.pendingDrafts); i++) {
         const ids = rollSkillDraftIds(REG, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool });
         if (!ids.length) break;
         spendSkillDraft(run, track.id);
-        run.deck.push({ instanceId: run._id(), cardId: ids[0], upgraded: skillUpgradesCards(REG, row.level) });
+        run.deck.push({ instanceId: run._id(), cardId: ids[0], upgraded: false });
         drafts += 1;
       }
     }
@@ -141,8 +155,17 @@ export function createRunLoop(REG, config) {
   }
 
   function simulateRun(classId, seed, ctx = null) {
+    REG = sourceRegistries;
     const attributes = config.attributes ? config.attributes(classId) : undefined;
     const run = createRunState({ seed, classId, registries: REG, attributes });
+    if (config.classMastery) {
+      openRunClassMastery(REG, run, {}, { receiptId: `sim:${classId}:${seed}`, bankable: false });
+      REG = registriesForClassMastery(REG, run);
+      while (run.classMasteryState.initialTreeTiers.length) {
+        const first = initialClassTreeChoices(REG, run)[0];
+        if (!first || !pickInitialClassTreeNode(REG, run, first)) throw new Error('sim cannot choose a legal initial class node');
+      }
+    }
     run._id = createIdGen('sim');
     run.seenEvents = [];
     hook('onRunStart', run, ctx);
@@ -165,6 +188,8 @@ export function createRunLoop(REG, config) {
       result.eventChoices = choices.length;
       result.questSteps = choices.filter((row) => gates[row.eventId]).length;
       result.skills = run.skills;
+      result.masteryXpByClass = { ...run.classMasteryState?.earnedXp };
+      result.masteryXp = Object.values(result.masteryXpByClass).reduce((sum, xp) => sum + xp, 0);
       return result;
     };
     // The death book: the caller's hook gets the act and the HP the run walked
@@ -240,8 +265,11 @@ export function createRunLoop(REG, config) {
             const hpBeforeEvent = run.hp;
             run.floor = pick.floor;
             run.mapNodeId = pick.id;
-            executeRunEffects({ run, registries: REG, rng }, choice.effects);
-            recordEventChoice(run, { eventId: res.eventId, choiceId: choice.id });
+            if (config.classMastery) commitEventChoice({ run, registries: REG, rng }, { eventId: res.eventId, choiceId: choice.id });
+            else {
+              executeRunEffects({ run, registries: REG, rng }, choice.effects);
+              recordEventChoice(run, { eventId: res.eventId, choiceId: choice.id });
+            }
             if (run.hp <= 0) return died(`event:${res.eventId}`, act, pick.floor, null, hpBeforeEvent);
             if (run.combatEntered) {
               const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;

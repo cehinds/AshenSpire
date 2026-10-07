@@ -45,13 +45,16 @@ test('ruleset 7 carries twelve rows in ONE shape: base, five weights, perLevel, 
   }
 });
 
-test("the owner's budget: Mana and Stamina weights sum to 1; the combat ratings to 2", () => {
+test("Mana weights sum to 1; Stamina scales from base 3; each combat rating has one primary point", () => {
   const sum = (id) => ATTRIBUTES.reduce((total, attr) => total + (table.rules[id][attr] || 0), 0);
   assert.equal(sum('mana'), 1);
   assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0.125, 0, 0.25, 0.5, 0.125]);
   assert.equal(table.rules.mana.base, 1);
-  assert.equal(sum('stamina'), 1);
-  for (const id of ['ar', 'dr', 'pr', 'ward', 'poise']) assert(Math.abs(sum(id) - 2) < 1e-9, `${id} sums to 2`);
+  assert.ok(Math.abs(sum('stamina') - 0.9) < 1e-9);
+  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 0.25, 0.25, 0.2, 0.2]);
+  assert.equal(table.rules.stamina.perLevel, 0.1);
+  assert.equal(table.rules.stamina.base, 3);
+  for (const id of ['ar', 'dr', 'pr', 'ward', 'poise']) assert.equal(sum(id), 1, `${id} sums to 1`);
 });
 
 test('ONE row function drives every stat: pools, hand, ratings, poise all equal statRowValue', () => {
@@ -84,20 +87,16 @@ test('per-term floors: a 0.125 weight adds nothing until the attribute reaches 8
   assert.equal(statRowValue({ base: 0, perLevel: 0.5 }, { attributes: {}, level: 4 }).value, 1);
 });
 
-test('the preserved rows read what ruleset 6 read at every attribute 5 and at 12 in the lead stat', () => {
-  const legacyHand = Object.fromEntries(Object.entries({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' })
-    .map(([group, id]) => [id, legacyHandRow(LEGACY_HAND_GROUPS[group])]));
-  // The Draw row's base rose from the retired `turn` group's 2 to 3 in FINISH
-  // D22 (2026-09-27); its Intelligence term still reads the group exactly.
-  const raisedBy = { draw: 1 };
-  for (const [id, legacy] of Object.entries(legacyHand)) {
-    for (const attrs of [at(3), at(5), at(8), at(12), at(5, { intelligence: 12 })]) {
-      assert.equal(statRowCount(resolvedRuleRow(table, id), attrs), statRowCount(legacy, attrs) + (raisedBy[id] || 0), `${id} at ${JSON.stringify(attrs)}`);
-    }
+test('hand scaling remains preserved while ratings use their single primary bonus', () => {
+  for (const attrs of [at(3), at(5), at(8), at(12), at(5, { intelligence: 12 })]) {
+    const draw = Math.min(10, 4 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5));
+    assert.equal(statRowCount(resolvedRuleRow(table, 'draw'), attrs), draw);
+    assert.equal(statRowCount(resolvedRuleRow(table, 'openingHand'), attrs), draw);
+    assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), 15);
   }
   for (const id of ['ar', 'dr', 'pr', 'ward']) {
     for (const attrs of [at(3), at(5), at(8), at(12)]) {
-      assert.equal(statRowCount(resolvedRuleRow(table, id), attrs), statRowCount(legacyRatingRow(LEGACY_RATING_FORMULA.ratings[id]), attrs), `${id}`);
+      assert.equal(statRowCount(resolvedRuleRow(table, id), attrs), attrs.strength + (id === 'ward' ? 1 : 0), `${id}`);
     }
   }
 });
@@ -510,8 +509,8 @@ test('legacy rating rows convert whole when tuned; bounds are said; saved levels
   const arCapped = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.ar.max': 3 }));
   const arRun = createRunState({ seed: 6, classId: 'reaver', registries: arCapped });
   const str = attributeCardModels(arCapped, arRun.attributes, { projection: statProjection(arCapped, arRun) }).find((card) => card.id === 'strength');
-  assert(str.reveal.lines.some((line) => /^AR: floor\(0\.75 × STR\) \(at most 3\)$/.test(line)), str.reveal.lines.join(' | '));
-  assert.match(str.face.summary, /AR weight 0\.75 \(max 3\)/, 'the cap reaches the face beside the other feeds');
+  assert(str.reveal.lines.some((line) => /^AR: floor\(1 × STR\) \(at most 3\)$/.test(line)), str.reveal.lines.join(' | '));
+  assert.match(str.face.summary, /AR weight 1 \(max 3\)/, 'the cap reaches the face beside the other feeds');
   assert.doesNotMatch(con.face.summary, /weight/, 'an uncapped rating stays off a face that has feeds');
   // A weight with no exact cycle still says its cap (Codex, #1321).
   const odd = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.strength': 0.3333, 'gameConfig.derivedStatRules.rules.hp.max': 40 }));

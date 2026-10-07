@@ -39,15 +39,17 @@ single place that constructs it.
 | `armoury.armamentsCard` | Armaments pane containing List and Grid presentations | `.armoury-equipment[data-component="armoury.armamentsCard"]` | `src/ui/screens/equipment.js` |
 | `armoury.armamentViewToggle` | Armaments List/Grid toggle | `.armoury-armament-view-toggle` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.hybridPaneSplitter` | Hybrid Character/Armaments divider | `.armoury-hybrid-splitter` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.equipmentPositionCard` | One complete card for every visible equipment position | `.armoury-position-card` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.occupiedPositionCard` | Occupied position with compact summary and expandable details | `.armoury-position-card.is-occupied` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.equipmentPositionCard` | Compact occupied row; empty/locked states remain procedural | `.armoury-position-card` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.occupiedPositionCard` | Compact occupied row with explicit Inspect, Replace and Unequip | `.armoury-position-card.is-occupied` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.emptyPositionCard` | Unlocked empty position/drop target, ordered after filled and locked positions | `.armoury-position-card.is-empty` | `src/ui/screens/equipment.js` + `styles/kit.css` |
 | `armoury.lockedPositionCard` | Next locked position with its authored refusal | `.armoury-position-card.is-locked` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.positionLabelPane` | Authored position name and short code | `.armoury-position-label-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.positionSpritePane` | Item or position-state art | `.armoury-position-sprite-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.summaryDivider` | Left boundary of the Item Summary Pane | `.armoury-position-sprite-pane` right border | `styles/ui.css` |
-| `armoury.positionSummaryPane` | Category, name, combat, tags, weight, and state | `.armoury-position-summary-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
-| `armoury.positionAction` | Equip or green Equipped state; combat changes route through the priced player-turn engine intent | `.armoury-position-action` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.positionLabelPane` | Authored position name and short code | `.armament-position-code` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.positionSpritePane` | Item or position-state art | `.armament-card-thumbnail` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.summaryDivider` | Left boundary of the Item Summary Pane | `.armament-card-thumbnail` right border | `styles/ui.css` |
+| `armoury.positionSummaryPane` | Authored position code, name, Equipped/Reserve badge and grouped actions | `.armament-compact-body` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.positionAction` | Inspect, Replace, Unequip and separate Make active; visible refusal and priced combat callback | `.armament-position-actions` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.armamentCardThumbnail` | Full equipment card scaled intact to authored thumbnail width | `.armament-card-thumbnail` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.armamentListInspection` | Desktop side inspection / mobile full inspection with Back | `.armament-list-inspection` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.armamentItemCard` | Expanded lore/effect/calculation details | `.armoury-position-detail` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.armamentDetailPane` | Details beneath the compact position summary | `.armoury-armament-details` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.armamentGridGroup` | One procedural equipment group in Grid mode | `.armoury-position-grid-group` | `src/ui/screens/equipment.js` + `styles/ui.css` |

@@ -6,6 +6,13 @@ import { rewardDom } from './reward-dom.mjs';
 
 export function withKitDom(fn) {
   const dom = rewardDom();
+  // SVG artwork participates in DOM structure checks; real browsers validate
+  // its rendering. Keep the namespace so namespace assertions remain useful.
+  dom.document.createElementNS = (namespaceURI, name) => {
+    const node = dom.document.createElement(name);
+    node.namespaceURI = namespaceURI;
+    return node;
+  };
   const proto = Object.getPrototypeOf(dom.document.body);
   proto.focus = function focus() { dom.document.activeElement = this; this.dispatchEvent(new dom.Event('focus')); };
   proto.replaceChildren = function replaceChildren(...nodes) { this.innerHTML = ''; this.append(...nodes.filter(Boolean)); };

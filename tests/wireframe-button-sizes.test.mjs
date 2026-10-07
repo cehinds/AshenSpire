@@ -113,7 +113,7 @@ test('real consumers: the shared footer and a choice row resolve through the mod
   const kit = read('src/ui/kit/index.js');
   assert.match(kit, /export function choiceRow\(/);
   assert.match(kit, /node\.dataset\.buttonSize = resolveButtonSize\(size\)\.id/);
-  assert.match(read('src/ui/screens/gameover.js'), /choiceRow\(\{ buttons: \[toHistory, toTitle\] \}\)/);
+  assert.match(read('src/ui/screens/gameover.js'), /choiceRow\(\{ buttons: \[retry, toHistory, toTitle\] \}\)/);
   // Declared geometry stays its own: the packed combat footer never takes a preset.
   assert.doesNotMatch(read('src/ui/models/CombatLayout.js'), /ButtonSizeModel/);
 });

@@ -661,7 +661,7 @@ const OPEN_TITLE = `(async () => {
 })()`;
 
 const OPEN_INRUN = `(async () => {
-  const m = [...document.querySelectorAll('button')].find((x) => /^\\s*(menu|☰)\\s*$/i.test(x.textContent) || x.id === 'menu' || /(^|\\s)menu(\\s|$)/i.test(x.className));
+  const m = document.querySelector('#combat-menu') || [...document.querySelectorAll('button')].find((x) => /^\\s*(menu|☰)\\s*$/i.test(x.textContent) || x.id === 'menu' || /(^|\\s)menu(\\s|$)/i.test(x.className));
   if (!m) return { err: 'no menu button in combat' };
   m.click(); await new Promise((r) => setTimeout(r, 550));
   // QuickNav includes the row's icon in its text, so use the public menu-act
@@ -1198,14 +1198,14 @@ function selftestPlants() {
         {
           file: 'src/ui/screens/settings.js',
           find: [
-            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-            "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
+            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
+            "    note: tFull('settings.row.fullscreen') },",
             '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
           ].join(settingsEol),
           replace: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
-            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
-            "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
+            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
+            "    note: tFull('settings.row.accent') },",
             '  // Fullscreen and Music are persistent quick controls on Title, Map, and',
           ].join(settingsEol),
         },
@@ -1213,13 +1213,13 @@ function selftestPlants() {
           file: 'src/ui/screens/settings.js',
           find: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
-            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
-            "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
+            "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
+            "    note: tFull('settings.row.accent') },",
             '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,',
           ].join(settingsEol),
           replace: [
-            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-            "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
+            "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
+            "    note: tFull('settings.row.fullscreen') },",
             '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,',
           ].join(settingsEol),
         },

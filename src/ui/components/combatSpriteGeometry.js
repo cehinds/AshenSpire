@@ -20,13 +20,21 @@ function imageBounds(img, refresh) {
     const context = canvas.getContext('2d', { willReadFrequently: true });
     context.drawImage(img, 0, 0);
     const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
-    let x0 = canvas.width, y0 = canvas.height, x1 = -1, y1 = -1;
-    for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
-      if (data[(y * canvas.width + x) * 4 + 3] < 40) continue;
-      x0 = Math.min(x0, x); x1 = Math.max(x1, x);
-      y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    // The same box as testing every pixel, found from the edges inwards: each
+    // scan stops at the first opaque pixel, so only the transparent margin is
+    // read. A fight's first frame waits on this once per enemy art, and the
+    // whole-canvas loop read every pixel of a 512 px canvas to find four edges.
+    const w = canvas.width, h = canvas.height;
+    const opaque = (x, y) => data[(y * w + x) * 4 + 3] >= 40;
+    const rowHit = (y) => { for (let x = 0; x < w; x++) if (opaque(x, y)) return true; return false; };
+    let y0 = 0; while (y0 < h && !rowHit(y0)) y0++;
+    if (y0 < h) {
+      let y1 = h - 1; while (y1 > y0 && !rowHit(y1)) y1--;
+      const colHit = (x) => { for (let y = y0; y <= y1; y++) if (opaque(x, y)) return true; return false; };
+      let x0 = 0; while (!colHit(x0)) x0++;
+      let x1 = w - 1; while (x1 > x0 && !colHit(x1)) x1--;
+      bounds = { x0, y0, x1, y1 };
     }
-    if (x1 >= x0) bounds = { x0, y0, x1, y1 };
   } catch { /* A cross-origin or unavailable image retains box geometry. */ }
   boundsCache.set(key, bounds);
   return bounds;
@@ -59,7 +67,7 @@ export function visibleArtBox(host, refresh) {
       width: Math.max(1, stageHeight * Number(stage.dataset.idleWidthRatio || stageWidth / stageHeight)),
     };
   }
-  const img = host.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
+  const img = host.querySelector('.enemy-pose-idle, .painted-presentation, .speaker-portrait-image, .facing > img');
   if (!img) return whole;
   const bounds = imageBounds(img, refresh);
   if (!bounds) return img.complete && img.naturalWidth ? whole : null;

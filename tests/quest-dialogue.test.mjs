@@ -335,7 +335,7 @@ test('a missing portrait shows the name plate, never a blank', () => {
     { kind: 'plate', key: null, name: 'The Warden' });
   assert.deepEqual(dialogueModel(input({ portraitAvailable: false })).speaker.portrait,
     { kind: 'plate', key: null, name: keeper.name }, 'art the screen cannot find falls back too');
-  assert.equal(registries.speakers.get('roadWarden').portraitKey, '', 'the shipped warden has no portrait yet');
+  assert.equal(registries.speakers.get('roadWarden').portraitKey, 'roadWarden', 'the shipped warden uses a standalone portrait');
   assert.throws(() => dialogueModel(input({ speaker: { id: 'x', name: '' } })), /named speaker/);
 });
 

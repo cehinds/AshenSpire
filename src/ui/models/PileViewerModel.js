@@ -1,9 +1,10 @@
 // W1h Discard / Exhaust viewer. One combined pile control opens a W1
 // workspace: a rail picks the pile, and the pane shows that pile's cards
 // beside the reading of the selected one. Viewing never moves or merges cards.
+import { t } from '../strings.js';
 
 export const SPENT_PILES = Object.freeze(['discard', 'exhaust']);
-const LABELS = Object.freeze({ discard: 'Discard', exhaust: 'Exhaust' });
+const LABELS = Object.freeze({ discard: t('combat.discard'), exhaust: t('combat.exhaust') });
 
 export function spentPileView(piles = {}, active = 'discard', selectedId = null) {
   if (!SPENT_PILES.includes(active)) throw new Error(`Unknown pile '${active}'`);

@@ -79,10 +79,8 @@ const PRELUDE = `
 // Each scenario mounts one screen in its refusing state and returns the CSS
 // selector of the refusing control.
 const SCENARIOS = [
-  ['creation-next', `
-    const { mountCustomize } = await import('/src/ui/screens/customize.js');
-    mountCustomize(app, { registries, meta: { settings: {} }, defaultSeedString: 'ASH-1', onBack() {}, onStart() {} });
-    return '#cz-next';`],
+  // Creation opens with a valid preset, so its initial Next is enabled.
+  // Invalid user edits still exercise the shared refusal through Begin below.
   ['creation-begin-bad-seed', `
     const { mountCustomize } = await import('/src/ui/screens/customize.js');
     mountCustomize(app, { registries, meta: { settings: {} }, defaultSeedString: 'ASH-1', onBack() {}, onStart() {}, catalog: true });

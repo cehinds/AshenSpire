@@ -1,0 +1,130 @@
+{
+  "id": "10b",
+  "name": "Compendium",
+  "sourceModules": [
+    "src/ui/screens/compendium.js"
+  ],
+  "sharedAssets": [
+    "assets/reused/ui/components/panel-frame.svg",
+    "assets/reused/ui/components/panel-backed.svg",
+    "assets/reused/ui/components/button-neutral.svg",
+    "assets/reused/ui/components/button-primary-ready.svg",
+    "assets/reused/ui/components/button-disabled.svg",
+    "assets/reused/ui/components/focus-outline.svg",
+    "assets/reused/ui/components/divider-plain.svg",
+    "assets/reused/materials/soot-leather-material.png",
+    "assets/reused/ui/components/item-slot-selected.svg",
+    "assets/reused/ui/components/card-parchment-label.svg"
+  ],
+  "mobileComposition": "Stable two-column gallery; create undiscovered silhouettes via CSS mask and hide unknown details.",
+  "family": "compendium",
+  "reference": "references/10-growth-and-discovery.png",
+  "referenceFeature": "lower",
+  "visualParts": [
+    "Parchment gallery",
+    "category rail",
+    "canonical object thumbnails",
+    "discovered/undiscovered masks",
+    "rarity pips",
+    "selected object mat and facts",
+    "favorite"
+  ],
+  "liveFields": [
+    "discovery",
+    "actual item identity",
+    "unknown masking",
+    "stats",
+    "favorite state"
+  ],
+  "artwork": {
+    "desktop": [
+      "assets/reused/scenes/armoury-still-life-master.png",
+      "assets/reused/canonical/assets/equipment/weapon_straightSword.webp",
+      "assets/reused/canonical/assets/equipment/weapon_roundShield.webp",
+      "assets/reused/canonical/assets/equipment/weapon_greatsword.webp"
+    ],
+    "mobile": [
+      "assets/reused/scenes/armoury-still-life-master.png",
+      "assets/reused/canonical/assets/equipment/weapon_straightSword.webp",
+      "assets/reused/canonical/assets/equipment/weapon_roundShield.webp",
+      "assets/reused/canonical/assets/equipment/weapon_greatsword.webp"
+    ]
+  },
+  "newPerspectiveOptions": {
+    "desktop": [],
+    "mobile": []
+  },
+  "components": [
+    "assets/components/navigation-sidebar.svg",
+    "assets/components/item-mat.svg",
+    "assets/components/selection-ring.svg",
+    "assets/components/service-inspector.svg",
+    "assets/components/stat-chip.svg",
+    "assets/components/engraved-folio-frame.svg",
+    "assets/components/engraved-folio-backed.svg",
+    "assets/components/action-neutral.svg",
+    "assets/components/action-ready.svg",
+    "assets/components/action-selected.svg",
+    "assets/components/action-danger.svg",
+    "assets/components/action-disabled.svg",
+    "assets/components/focus-ring.svg",
+    "assets/components/mobile-action-tray.svg"
+  ],
+  "icons": [
+    "assets/reused/ui/icons/compendium.svg",
+    "assets/reused/ui/icons/sword.svg",
+    "assets/reused/ui/icons/shield.svg",
+    "assets/reused/ui/icons/lock.svg",
+    "assets/components/favorite-star.svg"
+  ],
+  "decorations": [
+    "assets/materials/weathered-parchment.webp",
+    "assets/decorations/open-codex-stand.webp"
+  ],
+  "layout": {
+    "desktop": {
+      "referenceSize": [
+        1440,
+        900
+      ],
+      "regions": [
+        "context/rail",
+        "main stage or collection",
+        "selected inspector/comparison",
+        "bottom actions"
+      ]
+    },
+    "mobile": {
+      "referenceSize": [
+        390,
+        844
+      ],
+      "regions": [
+        "compact HUD",
+        "upper artwork or selected stage",
+        "one open detail tray",
+        "bottom safe-area actions"
+      ],
+      "note": "Stable two-column gallery; create undiscovered silhouettes via CSS mask and hide unknown details."
+    },
+    "shortLandscape": "Fold context and inspector; allow stage pan and detail scrolling; keep actions reachable."
+  },
+  "layerOrder": [
+    "background",
+    "canonical objects or optional illustrations",
+    "optional decor",
+    "readability veil",
+    "panel material",
+    "frame or socket",
+    "live DOM labels and values",
+    "selection/focus/availability overlay"
+  ],
+  "constraints": [
+    "Use canonical game data for all live fields; the screenshot is a visual reference.",
+    "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
+    "Separate focus, persistent selection, disabled state and actual legal action.",
+    "Parchment is a non-seamless cover material, dark DOM text recommended; undiscovered masks come from real item art and discovery state.",
+    "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
+  ],
+  "unresolvedIconAliases": []
+}

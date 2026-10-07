@@ -260,11 +260,11 @@ test('a stock lean character is priced by the rows, with no scale in between', (
   assert.equal(run.drawPerTurn, pool('draw'));
   assert.equal(run.maxMana, pool('mana'));
   // The numbers those rows now state for a stock lean Reaver (STR 3, DEX 1,
-  // CON 2, WIS 1, INT 1): Actions sit at their base of 3, draw at its base of 3
-  // (FINISH D22; INT 1 is below the row's baseline of 4), and Mana at its
+  // CON 2, WIS 1, INT 1): Actions sit at their base of 3, draw at its base of 4
+  // (INT 1 is below the row's baseline of 4), and Mana at its
   // base of 1 — WIS 1 at 0.5 a point floors to nothing, and no other term
   // reaches a whole point on the lean span.
-  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 3, 1]);
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 4, 1]);
 });
 
 test('the baseline is a dial, and it decides the total when it is set', () => {
@@ -478,11 +478,11 @@ test('an attribute card never promises more than the rule pays', async () => {
     }).find(row => row.id === 'constitution');
     return { card, run, registries };
   };
-  // The authored row, read against the attribute the sheet shows: four HP a
+  // The authored row, read against the attribute the sheet shows: one HP a
   // point. It used to read +20, because the lean mode divided the tier by five
   // before anything saw it (#1238); with that divisor gone the card states the
   // row.
-  assert.ok(hpLine(contentBundle).card.reveal.lines.includes('HP +4 every 1 point'));
+  assert.ok(hpLine(contentBundle).card.reveal.lines.includes('HP +1 every 1 point'));
 
   // A THRESHOLD THAT IS NOT A WHOLE NUMBER OF TIERS PER POINT. A tier of 0.6
   // buys ONE tier for some points and two for others: `floor((con + 1) / 0.6)
@@ -516,7 +516,10 @@ test('an attribute card never promises more than the rule pays', async () => {
 test('an attribute card states the floored cadence, not an average rate', async () => {
   const { attributeCardModels } = await import('../src/model/creationBrief.js');
   const { statProjection } = await import('../src/model/statProjection.js');
-  const registries = createRegistries(contentBundle);
+  // Preserve the historical uneven 4/3 cadence as an explicit fixture.
+  const fixture = { ...contentBundle, derivedStatRules: structuredClone(contentBundle.derivedStatRules) };
+  fixture.derivedStatRules.rules.hp.constitution = 4;
+  const registries = createRegistries(fixture);
   const run = createRunState({ registries, classId: 'reaver', seed: 11,
     derivedStatOptions: { explicitOverride: { defaults: { pointsPerIncrease: 3 } } } });
   const card = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
@@ -613,7 +616,7 @@ test('a run lists a stat on the card its own snapshot scales it with', async () 
   }));
   const cards = attributeCardModels(moved, run.attributes, { projection: statProjection(moved, run) });
   const lines = (id) => cards.find((card) => card.id === id).reveal.lines;
-  assert.ok(lines('constitution').includes('HP +4 every 1 point'), lines('constitution').join(' | '));
+  assert.ok(lines('constitution').includes('HP +1 every 1 point'), lines('constitution').join(' | '));
   assert.ok(!lines('strength').some((line) => line.startsWith('HP ')), lines('strength').join(' | '));
   // With no run, the live table is what a card can describe.
   const preview = attributeCardModels(moved, run.attributes).find((card) => card.id === 'strength').reveal.lines;

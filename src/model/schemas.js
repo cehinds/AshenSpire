@@ -43,9 +43,14 @@ import { DISCLOSURE_TIERS } from './disclosure.js';
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
   'block',
+  // A Poise / Ward guard (the Dodge Roll): absorbs physical / magical impact
+  // before the matching meter fills, until the owner's next turn.
+  'gainPoise',
+  'gainWard',
   'dodgeRoll',
   'applyStatus',
   'removeStatus',
+  'grantCardCharge',
   'draw',
   'discard',
   'exhaust',
@@ -102,6 +107,8 @@ export const TARGETS = Object.freeze([
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
+  // A skill feat's critical hit landed (SPEC §13.4o).
+  'critHit',
   'combatStart',
   'combatEnd',
   'playerTurnStart',
@@ -111,6 +118,10 @@ export const EVENTS = Object.freeze([
   'enemyMoveStarted',
   'cardDrawn',
   'cardPlayed',
+  'cardPreparing',
+  'cardResolved',
+  'cardChargeConsumed',
+  'hpOfferingPaid',
   'cardExhausted',
   'cardDiscarded',
   'deckShuffled',
@@ -121,6 +132,7 @@ export const EVENTS = Object.freeze([
   'healed',
   'statusApplied',
   'statusExpired',
+  'statusRemoved',
   'meterFilled',
   'stanceEntered',
   'stanceExited',
@@ -146,6 +158,8 @@ export const EVENTS = Object.freeze([
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',
+  'arcaneStagger',
+  'arcaneImpact',
   // Plan phase 10a: a quest completed, once per quest per run. Emitted only by
   // the quest door (engine/quests.js completeQuest), for an event chain's
   // completing choice and an atlas quest's claimed reward alike.
@@ -183,6 +197,14 @@ export const TRIGGER_EVENTS = Object.freeze([
 // triggers on their firing event's payload (e.g. a stance hook on damageDealt
 // that only reacts to the owner's own attack hits).
 export const PREDICATES = Object.freeze([
+  'turnMetric',
+  'chargeAvailable',
+  'eventChargeConsumed',
+  'eventDiscardExplicit',
+  'enemyKilledWithStatus',
+  'enemyNegativeStatusNew',
+  'cardAbilityKindIs',
+  'cardTargetsAllEnemies',
   'inStance',
   'hasStatus',
   'hasBlock',
@@ -215,6 +237,8 @@ export const PREDICATES = Object.freeze([
   'any',
   'not',
 ]);
+
+export const ABILITY_TURN_METRICS = Object.freeze(['tagPlays', 'distinctTagPlays', 'manaSpent', 'discarded', 'hpLostSinceTurnStart', 'offeringsPaid', 'cardsPlayed', 'previousSpell', 'turnStartHpPct', 'sameCardPlays', 'attacksPlayed', 'cardPlaysCombat']);
 
 // THE TREE (content/source/nodes.csv and its companions). Every tag is a node;
 // a node's parent is its parentId and nothing else; the five tag tables, the
@@ -304,10 +328,12 @@ export const PASSIVE_TYPES = Object.freeze({
   // hit's SOURCE by engine/actions.js applyArcaneExposure, relics and mounted
   // properties alike. The wand's `overcharge` property confers it (plan 1b).
   exposureBuildupMult: 'num',
+  magicalImpactAdd: 'num',
   // Skill XP × for the tracks a carrier's own tags name (plan phase 5a): the
   // class card's `favored` property confers it, and engine/skillXp.js reads
   // it scoped to the mounts whose tags include the track — never unscoped.
   skillXpMult: 'num',
+  retainBlockUpTo: 'num', // highest allowance wins at owner turn start
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
@@ -481,14 +507,19 @@ export const EFFECT_SPECS = Object.freeze({
   // two carriers — card chips for display, effect tags for combat).
   damage: { allowed: ['hits', 'tags', 'attack'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
+  // `amount` plus the card's Block rating bonus (engine/actions.js
+  // computeMeterGuardGain), held as entity.poiseGuard / entity.wardGuard.
+  gainPoise: { allowed: [], required: ['amount'], refs: {} },
+  gainWard: { allowed: [], required: ['amount'], refs: {} },
   // The dodge roll (framework contract: Weight Class and Dodge Roll): a
   // target and nothing else — the check, the die and the guard are the
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
+  grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
-  discard: { allowed: ['random'], required: [], refs: {} },
+  discard: { allowed: ['random', 'choose'], required: [], refs: {} },
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
@@ -498,7 +529,7 @@ export const EFFECT_SPECS = Object.freeze({
   // pool already stands at or above the floor. Exactly one of the two —
   // validate.js refuses neither and both.
   restoreMana: { allowed: ['toFloorPct'], required: [], refs: {} },
-  loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
+  loseHp: { allowed: ['cause', 'nonlethal', 'offering'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   // Exactly one of `stance` (a fixed stance) or `choose` (a pending choice the
@@ -734,12 +765,23 @@ export const SCHEMAS = Object.freeze({
     cost: costNode,
     manaCost: opt(int),
     staminaCost: opt(int),
+    // The Weight Class's dodge cost prices this card, not its authored cost
+    // (mechanics.json dodgeStaminaCost; framework importer.js isPureDodge).
+    abilityKind: opt(en('spell', 'maneuver')),
+    abilityFamily: opt(str),
+    abilityRank: opt(int),
+    legacyGradeMap: opt(mapOf(int)),
+    legacyFace: opt(any),
+    requirements: opt(any),
+    gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), traits: opt(any) }))),
+    weightClassPriced: opt(bool),
     type: en(...CARD_TYPES),
     attack: opt(any),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),
     exposureBuildupPerHit: opt(int),
     keywords: arr(ref('keywords')),
     effects,
+    singleBreak: opt(obj({ effects, textTemplate: str })),
     // Effects fired at the player's turn end for each copy still in hand
     // (before the hand is discarded) — e.g. Guilt's HP loss (SPEC §5.2).
     onTurnEndInHand: opt(effects),
@@ -806,6 +848,7 @@ export const SCHEMAS = Object.freeze({
     textTemplate: str,
     passives: opt(obj(passiveFields)),
     triggers: opt(triggersNode),
+    singleBreak: opt(obj({ passives: opt(obj(passiveFields)), triggers: opt(triggersNode), textTemplate: opt(str) })),
   }),
 
   status: obj({

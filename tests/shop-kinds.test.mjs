@@ -1,3 +1,4 @@
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 // SPEC §14.2, §14.6 step 4 — the shop-kind framework.
 //
 // docs/FINISH.md §14 "Shop kinds and the guaranteed minimum" is this file's
@@ -287,9 +288,9 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
   const addedSinceCapture = new Set(['hewingArc', 'sunderingChop', 'setTheShield', 'aegisOfEmbers', 'shieldCrash',
     'pinningShot', 'arrowVolley', 'nockAndWait', 'aimedShot', 'barbedArrow', 'bindingParry', 'whirlingGuard',
     'cinderSigil', 'ashenMote', 'emberVigil', 'readTheAsh', 'pyreOfCharts', 'ashCircle', 'kindledOmen', 'cinderLance',
-    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders']);
-  const CAPTURE_REG = createRegistries({ ...contentBundle,
-    classes: contentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => !addedSinceCapture.has(id)) })) });
+    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders', 'emberCommunion']);
+  const CAPTURE_REG = createRegistries({ ...legacyContentBundle,
+    classes: legacyContentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => !addedSinceCapture.has(id)) })) });
   for (const n of seeds) {
     const before = fixture.shelves[n];
     const run = createRunState({ seed: before.runSeed, classId: before.classId, registries: CAPTURE_REG });

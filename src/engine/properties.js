@@ -34,6 +34,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { carrierRules } from '../model/registries.js';
+import { breakPropertyRule } from '../model/breakMeter.js';
 import { equippedPieces, pieceItemRef } from '../model/loadout.js';
 import { triggerOwnerKey } from './triggers.js';
 
@@ -55,7 +56,7 @@ const LOADOUT_KINDS = new Set(['armament', 'armour']);
 // legendary shares the kind under the same `sigil:<id>` key: it is held by the
 // run while attuned (syncSigilProperties), carries no `heldBy`, and is never
 // slotted, so the two never meet.
-const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location', 'companion', 'sigil']);
+const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location', 'companion', 'sigil', 'feat']);
 
 /** The key a carrier's mount lives under, per owner. */
 export function propertySourceKey(carrier) {
@@ -82,7 +83,7 @@ function assertCarrier(carrier) {
  */
 export function mountProperties(ctx, carrier) {
   assertCarrier(carrier);
-  const rules = carrierRules(ctx.registries, carrier.tagIds);
+  const rules = carrierRules(ctx.registries, carrier.tagIds).map(rule => breakPropertyRule(ctx, rule));
   if (!rules.length) return null;
   const sourceKey = propertySourceKey(carrier);
   const mounts = ctx.propertyMounts || (ctx.propertyMounts = {});
@@ -209,12 +210,36 @@ function coreTagsOf(combat, owner) {
  */
 export function syncClassProperties(combat, entity) {
   const owner = entity || (combat && combat.player);
-  if (!combat || !owner || !owner.classId) return;
+  if (!combat || !owner || !owner.classId || owner.classUnequipped) return;
   const ownerKey = triggerOwnerKey(combat, owner);
   const carrier = classCarrier(combat.registries, owner.classId, ownerKey, coreTagsOf(combat, owner));
   if (!carrier) return;
   const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
   if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+}
+
+/** Selected class feats are held until deselected; sync also removes stale mounts. */
+export function featCarrier(registries, featId, ownerKey) {
+  const def = registries.classSkillFeats?.find(row => row.id === featId);
+  const tagIds = def?.propertyTags || [];
+  return tagIds.length ? { kind: 'feat', id: featId, instanceId: featId, ownerKey, tagIds: [...tagIds] } : null;
+}
+
+export function syncFeatProperties(combat, entity, featIds) {
+  const owner = entity || combat?.player;
+  if (!owner || !combat) return;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  const seat = combat.players instanceof Map ? [...combat.players.values()].find(row => row.entity === owner) : null;
+  const ids = featIds ?? seat?.skillFeats ?? owner.skillFeats ?? combat.skillFeats ?? [];
+  const wanted = [...new Set(ids)].map(id => featCarrier(combat.registries, id, ownerKey)).filter(Boolean);
+  const keys = new Set(wanted.map(propertySourceKey));
+  const current = combat.propertyMounts?.[ownerKey] || {};
+  for (const [key, mount] of Object.entries(current)) {
+    if (mount.kind === 'feat' && !keys.has(key)) unmountProperties(combat, { ...mount, ownerKey, tagIds: [] });
+  }
+  for (const carrier of wanted) {
+    if (!combat.propertyMounts?.[ownerKey]?.[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+  }
 }
 
 /**

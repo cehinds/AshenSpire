@@ -23,6 +23,7 @@ import { isPoolDeckMode } from '../model/cardRemoval.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 import { resolveEnemyLevel } from '../model/levels.js';
+import { stampSkillBonuses, critRulesFor } from '../model/skills.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
@@ -50,6 +51,7 @@ export function runCombatPlayer(run) {
     : run.equipmentPoolDeficits;
   return {
     classId: run.class,
+    ...(run.classUnequipped ? { classUnequipped: true } : {}),
     attributes: run.attributes,
     // The character level every stat row's `perLevel` reads (ruleset 7).
     level: Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1,
@@ -58,6 +60,8 @@ export function runCombatPlayer(run) {
     // is the one its character sheet shows (plan phase 9).
     derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
     skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
+    skillFeats: Array.isArray(run.skillFeats) ? [...run.skillFeats] : [],
+    critRules: critRulesFor(run.skillFeats), // the skill feats' critical hits (SPEC §13.4o)
     coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
     maxHp: run.maxHp,
     hp: run.hp,
@@ -71,6 +75,7 @@ export function runCombatPlayer(run) {
     equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: run.equipmentAttackSlotCount,
     removedAttackSlotIds: run.removedAttackSlotIds,
+    sideboardedEquipmentCardIds: (run.sideboard || []).map((card) => card.instanceId),
     // A dealt deck's fight keeps the dealt deck's rule at its swap door.
     ...(isPoolDeckMode(run) ? { poolDeck: true } : {}),
     equipmentPoolDeficits,
@@ -107,6 +112,9 @@ export function createRunCombat({
   registries, rng, run, enemyIds, encounter = null, settings = {},
   hpMult = 1, enemyDamageMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
 }) {
+  // The every-5th-level skill bonus is derived (SPEC §13.4o): stamped fresh
+  // here so the fight's copies carry the levels and hands it starts with.
+  stampSkillBonuses(registries, run);
   return createCombat({
     // ONE ROW FORMAT, READ FROM THE RUN (ruleset 7). The rating rows and the
     // three hand rows are this run's own — its snapshot's (its class's opening
@@ -114,6 +122,7 @@ export function createRunCombat({
     // was priced by (model/statRows.js). Snapshotted into the fight, so a saved
     // fight keeps the hand it was born with.
     ratingsRules: ratingsConfigFor(registries, run) || null,
+    breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion,
     handRules: runHandRules(registries, run, settings),
     // Play in deck order (SPEC §14.1): read here, once, like the other rules.
     orderedDraw: playInDeckOrder(settings),
@@ -145,7 +154,7 @@ export function runCombatEnd(run, combat) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   for (const field of ['hp', 'mana', 'stamina']) {
-    run[field] = combat.player[field];
+    run[field] = field === 'stamina' ? Math.min(combat.player.stamina, combat.player.maxStamina) : combat.player[field];
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
     run[maxField] = combat.player[maxField];
   }

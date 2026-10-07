@@ -1,0 +1,394 @@
+{
+  "strike": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "ambush": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "rogueShiv": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "quickCut": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "twinPrick": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "hamstringRogue": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "serratedShiv": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "ricochet": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "lowBlow": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "cheapShot": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "bladeDanceRogue": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "garrote": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "fanOfKnives": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "coupDeGrace": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "sap": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "assassinate": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "thousandCutsRogue": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "deathblow": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "gorefireSlash": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "crimsonCleave": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "shieldBash": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "guardCounter": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "serratedBlade": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "riposte": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "rend": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "cleavingBlow": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "stomp": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "twinbladeFlurry": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "kickOff": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "impale": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "executioner": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "stitchedArms": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "ruinousBlow": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "bloodhuntersStrike": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "goreslash": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "flameToBlade": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "bloodTithe": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "poiseBreaker": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "sunderplate": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "starstonePebble": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "cometFragment": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "starbladePhalanx": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "starShower": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "starSlicer": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "starlance": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "frostNova": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "starstoneArc": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "moonrendCut": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "meteorite": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "meteorSwarm": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "astralCleave": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "radiantSpray": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "supernova": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "starstoneKris": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "starfallBeam": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "starcaller": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "shootingShard": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "celestialLance": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "starSpark": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "blightTouch": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 1
+  },
+  "flagellation": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 1
+  },
+  "graveOffering": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 5
+  },
+  "cullTheWeak": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 1
+  },
+  "sacredHarvest": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 5
+  },
+  "plagueBearer": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 5
+  },
+  "exsanguinate": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 1
+  },
+  "scourge": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 1
+  },
+  "crimsonRite": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 5
+  },
+  "blightNova": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 5
+  },
+  "bloodHarvest": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 5
+  },
+  "painOffering": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 1
+  },
+  "witheringTouch": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 5
+  },
+  "desperateRite": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 1
+  },
+  "bloodOfferingRite": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 5
+  },
+  "blightwardLash": {
+    "damageSchool": "arcane",
+    "exposureBuildupPerHit": 1
+  },
+  "twinFang": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "bashingBlow": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "sweepingBlow": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "colossusSmash": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "katanaDrawCut": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "greatswordSunderingHew": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "spikedReprisal": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "rimeThrust": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "kilnCleave": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "hewingArc": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "sunderingChop": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "shieldCrash": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "pinningShot": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "arrowVolley": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "aimedShot": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "barbedArrow": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "whirlingGuard": {
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  "cinderSigil": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "ashenMote": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "pyreOfCharts": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "cinderLance": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  "ashfallRite": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  "pyreLight": {
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  }
+}

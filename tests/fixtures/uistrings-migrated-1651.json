@@ -1,0 +1,8 @@
+{
+  "_": "Enemy target picker uiStrings ids authored for PR #1651. Preserve all three rows and the distinct friendly-target accessibility allowance after origin/dev includes the migration.",
+  "ids": [
+    "combat.enemyTarget.choose",
+    "combat.enemyTarget.health",
+    "combat.enemyTarget.label"
+  ]
+}

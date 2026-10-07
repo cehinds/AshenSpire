@@ -5,6 +5,21 @@ const freeze = (value) => {
   return value;
 };
 
+// A painting may continue behind the hand, but its ground belongs to the
+// battlefield window. Fitting against half the entire screen can place the
+// painted horizon BELOW the combatants' feet when the footer grows.
+export function battlefieldBackdropConfig({ height, fieldTop, fieldHeight, formation }, config = wireframeUi.scene) {
+  // Use all possible cells, not just living actors: deaths must not pan the
+  // painting. Align with the furthest row itself, preserving more skyline
+  // rather than magnifying the foreground with an extra half-row of ground.
+  const cells = formation?.cells || [];
+  const groundTop = cells.length
+    ? Math.max(0, Math.min(...cells.map(cell => cell.ground)))
+    : fieldHeight * (1 - config.floorFraction);
+  const floorTop = fieldTop + groundTop;
+  return freeze({ ...config, floorFraction: 1 - Math.max(0, Math.min(height, floorTop)) / height });
+}
+
 // WGS1 background composition: WGS6 skyline behind, WGS7 floor at the bottom.
 // The environment art is one painted plate per scene (content/environments.js),
 // so the two layers are two regions of that plate rather than two assets. The

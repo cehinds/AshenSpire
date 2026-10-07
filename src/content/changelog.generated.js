@@ -3,6 +3,1086 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1698",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates keep progressing",
+    "detail": "The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.",
+    "build": "0.7.1.1060",
+    "pullRequest": 1698,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1698"
+  },
+  {
+    "id": "pr-1692",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1059",
+    "pullRequest": 1692,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1692"
+  },
+  {
+    "id": "pr-1693",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Sharper maps and lighter sprites",
+    "detail": "Maps and backgrounds keep up to 720px of image height, and combat scenes retain their native detail. Sprites use lighter compression within a 480px ceiling. The shared art release and documented export targets apply to regular and alternative builds, with original paintings preserved.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1693,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1693"
+  },
+  {
+    "id": "pr-1690",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Landscape targets clear the intent labels",
+    "detail": "Enemy tap areas and health columns move below nearby intent controls when space is tight, while their figures keep the same ground positions. The overlap check keeps the player's fitted tap area above the hand, and all five desktop and phone layouts are checked independently.",
+    "build": "0.7.1.1056",
+    "pullRequest": 1690,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1690"
+  },
+  {
+    "id": "pr-1688",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Short-screen controls keep their own space",
+    "detail": "Crowded enemy feet and health columns stay separate without moving their artwork. Intent labels remain reachable in short landscape views, and the merchant header sits below the HUD. Browser checks follow the actual tap areas; portable build checks include authored alternative artwork.",
+    "build": "0.7.1.1054",
+    "pullRequest": 1688,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1688"
+  },
+  {
+    "id": "pr-1676",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Choose each class milestone and retrain your build",
+    "detail": "Class rewards now follow a saved schedule for cards, feats, equipment, relics and attributes. Independent catalog modules add 40 card families with six ranks, 50 feats, 50 ability tags and 10 relics; available choices and level lists populate from their requirements. Spellcraft and Combat Maneuvers offer three cards with an Intelligence chance for a fourth higher-rank option. Actions and Stamina share one pool. Free class retraining previews earned choices without rerolling offers or restoring spent rewards. Solo and co-op XP fill Class, Character and gained skills in order before revealing blue Level Up buttons and a green Continue; remaining XP fills when you return.",
+    "build": "0.7.1.1052",
+    "pullRequest": 1676,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1676"
+  },
+  {
+    "id": "pr-1651",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Crowded combat targets stay selectable",
+    "detail": "Numbered enemy targets make overlapping foes easy to select. Cards reject targets on the wrong side before spending resources, and enemies remain at least as tall as the player without shrinking sprites.",
+    "build": "0.7.1.1048",
+    "pullRequest": 1651,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1651"
+  },
+  {
+    "id": "pr-1623",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "The Windows installer link downloads the installer",
+    "detail": "The README's Windows installer link now downloads the latest test installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The release and main installers have their own direct links.",
+    "build": "0.7.1.1046",
+    "pullRequest": 1623,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1623"
+  },
+  {
+    "id": "pr-1679",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Your route, one choice at a time",
+    "detail": "The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.",
+    "build": "0.7.1.1045",
+    "pullRequest": 1679,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1679"
+  },
+  {
+    "id": "pr-1681",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Inspect your starting stats and relic",
+    "detail": "Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.",
+    "build": "0.7.1.1043",
+    "pullRequest": 1681,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1681"
+  },
+  {
+    "id": "pr-1674",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Ready to begin, easier to read",
+    "detail": "Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.",
+    "build": "0.7.1.1041",
+    "pullRequest": 1674,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1674"
+  },
+  {
+    "id": "pr-1672",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative updates keep their build numbers current",
+    "detail": "Promotion syncs retain full merge history while avoiding downloads of old artwork. If primary and alternative build counters differ, the merged preview is regenerated from the newest counter in its release so it cannot fall behind promoted changes.",
+    "build": "0.7.1.1039",
+    "pullRequest": 1672,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1672"
+  },
+  {
+    "id": "pr-1675",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Upgrade items in one continuous visit",
+    "detail": "Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.",
+    "build": "0.7.1.1038",
+    "pullRequest": 1675,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1675"
+  },
+  {
+    "id": "pr-1671",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Your character, gear and deck share one Armory",
+    "detail": "Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.",
+    "build": "0.7.1.1036",
+    "pullRequest": 1671,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1671"
+  },
+  {
+    "id": "pr-1668",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative combat keeps its own battlefield",
+    "detail": "New dev changes flow into alternative/dev after a protected merge verifies that its battlefield, HUD, cards and footer stay unchanged. Background and sprite updates remain eligible; unrelated conflicts stop for review. The pipeline builds and publishes the updated alternative preview.",
+    "build": "0.7.1.1034",
+    "pullRequest": 1668,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1668"
+  },
+  {
+    "id": "pr-1667",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative previews stay current without losing their changes",
+    "detail": "Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.",
+    "build": "0.7.1.1033",
+    "pullRequest": 1667,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1667"
+  },
+  {
+    "id": "pr-1666",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: modular class rewards and retraining",
+    "detail": "The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.",
+    "build": "0.7.1.1032",
+    "pullRequest": 1666,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1666"
+  },
+  {
+    "id": "pr-1664",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Smaller text fits more card descriptions",
+    "detail": "Card titles, rules, tags and cost numbers are two points smaller, including the automatic fitting range. More descriptions fit fully inside the existing card frame on desktop and phone.",
+    "build": "0.7.1.1031",
+    "pullRequest": 1664,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1664"
+  },
+  {
+    "id": "pr-1662",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Drive class mastery in full browser gates",
+    "detail": "The cold-boot walkthrough and map-camera persistence drive choose required class mastery nodes before entering the map, including when the walkthrough starts a second run. Both use real input and preserve the combat, storage and camera assertions; mastery door priority is covered by probe selftests.",
+    "build": "0.7.1.1029",
+    "pullRequest": 1662,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1662"
+  },
+  {
+    "id": "pr-1658",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Class mastery follows the profile into every new run",
+    "detail": "New solo runs and co-op seats open at profile mastery with core card pools, global item gates and a fresh tree pick per open tier. Solo claims bank cumulative XP immediately and add their unlocks to live rewards. Co-op reads profile mastery without banking earned progress. Books retain their named lessons, class swaps open at their own mastery, and legacy saves keep prior progression. Terminal save failures retain an idempotent receipt and offer Retry. Four hundred seeded runs finish without crashes or soft locks; browser reward, creation, tree-reset and quota-retry receipts live in docs/qa/class-mastery. Quick start still reaches its first played card in six inputs.",
+    "build": "0.7.1.1027",
+    "pullRequest": 1658,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1658"
+  },
+  {
+    "id": "pr-1659",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "The downloaded game opens again",
+    "detail": "The bundled game could stop before the title screen while checking class mastery and report that it could not create a loadout. The shared token helper now loads without that dependency loop. Card artwork, costs and gameplay rules are unchanged.",
+    "build": "0.7.1.1024",
+    "pullRequest": 1659,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1659"
+  },
+  {
+    "id": "pr-1656",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Every card gets its own painting",
+    "detail": "All 220 card identities and 17 equipment profiles now have portrait artwork in the existing card frame. Upgrades share their base painting, with names, costs and rules kept readable over the same card layout. The taller artwork leaves room to choose a crop in the card assembler, which also offers eight alternate paintings.",
+    "build": "0.7.1.1022",
+    "pullRequest": 1656,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1656"
+  },
+  {
+    "id": "pr-1655",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: class progress kept safely",
+    "detail": "Class mastery now has durable profile storage. Separate runs add their earned XP through receipts that make retries safe, and settings saves retain newer class progress. Returning profiles keep every authored unlock at level zero; live runs adopt mastery in the following update.",
+    "build": "0.7.1.1020",
+    "pullRequest": 1655,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1655"
+  },
+  {
+    "id": "pr-1654",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Plans: class levels that last",
+    "detail": "The class mastery plan now has its card bundles, equipment, relics and twenty class feats authored, with checks that keep every starting kit intact and every school deep enough to offer a choice. This supplies the data for lasting class levels; runs still use their earlier progression until the profile and run screens adopt it.",
+    "build": "0.7.1.1018",
+    "pullRequest": 1654,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1654"
+  },
+  {
+    "id": "pr-1653",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "One bar to break",
+    "detail": "In a new run, physical and magical hits both fill Poise. Ward remains a defence against magic, shown in a fighter's details. A magical Stagger makes an enemy take more magic damage, and your Arcane properties work from that Stagger. Dodge Roll guards the shared bar. Runs saved before this change keep their earlier bars and rules.",
+    "build": "0.7.1.1010",
+    "pullRequest": 1653,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1653"
+  },
+  {
+    "id": "pr-1652",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Herald: a cup of Mana",
+    "detail": "Ember Communion joins the Herald's common cards. Spend 1 Stamina to restore 1 Mana and heal 2 HP. It Exhausts for the fight until you upgrade it, then returns to the discard pile like an ordinary skill.",
+    "build": "0.7.1.1006",
+    "pullRequest": 1652,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1652"
+  },
+  {
+    "id": "pr-1648",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Every hit you feel",
+    "detail": "Every hit that costs HP now shakes the screen a little, more the harder it lands, where before only hits of 15 or more shook. A hit of 6 or more also freezes the attacker and its target for a split second at the moment of impact. The damage number and sound still come at once. Screen shake and Reduced motion in Settings turn these off, and Instant speed has no freeze.",
+    "build": "0.7.1.1003",
+    "pullRequest": 1648,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1648"
+  },
+  {
+    "id": "pr-1645",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Behind the scenes: two automatic checks look for their faults in the right place again",
+    "detail": "Nothing you play changes. The faster map and fight entry (#1641) moved code that two browser checks use to plant deliberate faults. One check plants a black box over the Stamina number, and the plant broke the whole action row instead of covering the number. The other plants an idle bob on the fighters' pictures instead of on their layer, and since #1641 that fault shows a different symptom. Both plants now go in where the code lives now, and each check fails again for the fault it is aimed at.",
+    "build": "0.7.1.998",
+    "pullRequest": 1645,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1645"
+  },
+  {
+    "id": "pr-1646",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Plans: one break bar, harder-hitting hits, class levels that last",
+    "detail": "The design rules now say that each fighter will have a single break bar, Poise: Ward will stay as a defence, and Arcane Exposure's payoff will come from a Stagger caused by magic. Every hit will shake the screen by how hard it lands, with a brief freeze on big hits. And your class level will carry over between runs: each level unlocks one new thing: new cards on every other level, and between them armour, shields or foci, a relic, a feat option or a weapon in turn, and a class starts with about three-fifths of its cards. Nothing in the game changes yet; these land in later builds.",
+    "build": "0.7.1.997",
+    "pullRequest": 1646,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1646"
+  },
+  {
+    "id": "pr-1644",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Cards hit as you click",
+    "detail": "At Normal speed, an attack's damage now appears about a third of a second after you click, down from about 1.3 seconds. The pause before your swing is gone, and long attack animations play faster so the blow lands sooner, every frame still shown. Enemy attacks land sooner too, so enemy turns are shorter. Slow and Fast speeds keep their own, longer and shorter, timings.",
+    "build": "0.7.1.990",
+    "pullRequest": 1644,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1644"
+  },
+  {
+    "id": "pr-1640",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Character sheet: every level and what it brings",
+    "detail": "In the Armoury's Character view, the new Character sheet button lists every character level from 1 to 20 and every level of each skill and your class, with the XP each costs and what it grants: attribute points, feat and class-tree choices, more HP, Mana and Stamina, a bigger deck minimum, card drafts and their top rank, rank-ups, uncommon and rare cards unlocking, class-tree tiers opening, skill feats, linked attributes and +1 card power. It opens on the level you're at.",
+    "build": "0.7.1.986",
+    "pullRequest": 1640,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1640"
+  },
+  {
+    "id": "pr-1641",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Map picks and entering a fight respond faster",
+    "detail": "After you tap a map node, the map glides to it smoothly instead of stuttering, and entering the fight takes about a quarter less time before it appears, most noticeably on phones. Nothing about the map or the fight changes.",
+    "build": "0.7.1.984",
+    "pullRequest": 1641,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1641"
+  },
+  {
+    "id": "pr-1639",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "The turn banner no longer covers fighters",
+    "detail": "The Player Turn / Enemy Turn banner now sits at the top of the battlefield, just under the top bar, on every screen. On phones it used to sit a quarter of the way down and could hide an enemy's intent. Any fighter standing under the banner is now drawn below it, with its intent.",
+    "build": "0.7.1.982",
+    "pullRequest": 1639,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1639"
+  },
+  {
+    "id": "pr-1638",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Dodge Roll is a sure defence: Block, Poise and Ward",
+    "detail": "The Dodge Roll no longer rolls. It always gives you 3 Block, 3 Poise and 3 Ward, each plus your DR. Poise and Ward soak up impact before your Poise or Ward bar fills, and they fade at the start of your next turn, like Block. Its Stamina cost still depends on your equipment weight. Evasive Guard still rolls to evade, and the \"Dodge succeeded / failed\" result button, its pop-up and its floating text are gone: a successful roll shows as its Block and the dodge animation.",
+    "build": "0.7.1.980",
+    "pullRequest": 1638,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1638"
+  },
+  {
+    "id": "pr-1635",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Braced Shield: +3 Block on every Shield card",
+    "detail": "At Shield level 2 you can take the Braced Shield feat. Every Shield card you own, Defend included, then gains +3 on its Block, and the card shows the new number. Each card gains it once per play; a card whose Block only works in a stance gains nothing, and an upgraded card that gains a Block gets the +3 there.",
+    "build": "0.7.1.973",
+    "pullRequest": 1635,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1635"
+  },
+  {
+    "id": "pr-1632",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Skill bonuses add up, and a respec takes back its attribute points",
+    "detail": "A card that belongs to several of your skills now gets the every-fifth-level bonus from each of them, not just the best one: a Shield Bash with Blade 5, Shield 10 and Dual Wield 5 gains +4. Retraining a skill at a master now also removes the attribute points that skill's every-fourth-level choices gave you; points from other skills stay.",
+    "build": "0.7.1.969",
+    "pullRequest": 1632,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1632"
+  },
+  {
+    "id": "pr-1631",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "XP bars read top to bottom in the order they fill",
+    "detail": "After a fight, your class bar now sits directly under your character level, with skills below it, so the bars fill and offer Level up from top to bottom.",
+    "build": "0.7.1.966",
+    "pullRequest": 1631,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1631"
+  },
+  {
+    "id": "pr-1603",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Sharper art on phones; test builds carry the full art",
+    "detail": "The phone-sized art is redrawn from the full art at up to 480 px for fighters, poses and effects (animation frames were 160 px) and up to 720 px for backdrops, maps and cards (art release hd-assets-v12); the light single file grows to about 75 MB, under the new 100 MB cap. Test builds now link the high-resolution art pack, as release and main do; dev stays light-only.",
+    "build": "0.7.1.964",
+    "pullRequest": 1603,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1603"
+  },
+  {
+    "id": "pr-1629",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Blade feats and critical hits",
+    "detail": "Every second level of a skill that has its own feats lets you take one. Blade's first feat is Critical Edge, from level 2. It gives your Blade attacks a chance to land a critical hit for 1.5× damage: 5%, plus Dexterity × 0.1%, Wisdom × 0.2% and Intelligence × 0.1%, up to 50%. Other skills' feats come later.",
+    "build": "0.7.1.963",
+    "pullRequest": 1629,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1629"
+  },
+  {
+    "id": "pr-1625",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Every fourth skill level raises an attribute",
+    "detail": "At levels 4 and 8 of Blade, Shield or Magic, you choose one linked attribute to raise by 1. Blade offers Strength or Dexterity. Shield offers Strength, Dexterity, Constitution or Wisdom. Magic offers Dexterity, Constitution, Wisdom or Intelligence. The choice sits beside that level's card draft and shows each attribute's value now and after.",
+    "build": "0.7.1.959",
+    "pullRequest": 1625,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1625"
+  },
+  {
+    "id": "pr-1618",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Reference components follow the original boards",
+    "detail": "The design kit now separates the five card styles and their ability paintings, adds the missing menu forms and icons, and supplies matching class portraits and inventory weapons. Source comparisons show the differences, and Iron Guard remains a labelled candidate. This prepares reusable artwork; the live game presentation is unchanged.",
+    "build": "0.7.1.955",
+    "pullRequest": 1618,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1618"
+  },
+  {
+    "id": "pr-1622",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Skill card bonus: fairer and shown everywhere",
+    "detail": "A card now gets the every-fifth-level bonus from its best skill only, so a card that counts for two of your skills no longer gets both. Card offers show the bonus a card will have once you take it. In co-op, each player's skill levels now reach their cards, and the cards show their rank and bonus.",
+    "build": "0.7.1.954",
+    "pullRequest": 1622,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1622"
+  },
+  {
+    "id": "pr-1620",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Every fifth skill level strengthens that skill's cards",
+    "detail": "At levels 5 and 10 of a weapon, focus or dual-wield skill, every card of that skill gains +1 to its main number, its damage, Block, healing or the status it applies. The bonus shows on the card and adds to its rank. A card of two skills gets both bonuses. The level-up window tells you when it happens.",
+    "build": "0.7.1.950",
+    "pullRequest": 1620,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1620"
+  },
+  {
+    "id": "pr-1617",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Level 5 no longer upgrades every card",
+    "detail": "Reaching level 5 in a skill used to upgrade every card of that skill at once. Card ranks replace that: each level lets you raise one card of your choice, and new cards from drafts, master lessons and books arrive plain. Cards you already upgraded stay upgraded. The old setting for this is retired, and a settings file that still has it loads with a warning.",
+    "build": "0.7.1.948",
+    "pullRequest": 1617,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1617"
+  },
+  {
+    "id": "pr-1615",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Level-ups raise a card",
+    "detail": "From level 2, every weapon, focus or dual-wield skill level also lets you raise one of your own cards of that skill by one rank, beside that level's card draft. Open the reward to see your cards at the rank each would reach, then pick one. A card's rank never passes the skill's level, so if no card can rise yet, the reward waits.",
+    "build": "0.7.1.946",
+    "pullRequest": 1615,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1615"
+  },
+  {
+    "id": "pr-1613",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Cards come in ranks",
+    "detail": "A card from a skill draft can now arrive at a higher rank, up to that skill's level, and higher ranks are likelier as the skill grows. Each rank above 1 adds 1 to what the card is for: its damage, then Block, healing or the status it applies. A rank never raises a card's HP cost, draw or energy, and a multi-hit card shares the gain across its hits. A ranked card shows a small blue R badge with its rank in the top right of its picture.",
+    "build": "0.7.1.942",
+    "pullRequest": 1613,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1613"
+  },
+  {
+    "id": "pr-1612",
+    "date": "2026-10-05",
+    "group": "2026-10-05",
+    "summary": "Levelling slows down, with a ceiling on every track",
+    "detail": "Every track now takes about 100,000 XP to reach its top level. Your character starts at 200 XP a level and stops at level 20; skills start at 100 XP and stop at level 10; classes start at 400 XP and stop at level 20. XP earned past a ceiling is kept, but claims no more levels.",
+    "build": "0.7.1.936",
+    "pullRequest": 1612,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1612"
+  },
+  {
+    "id": "pr-1606",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Phone fighters no longer stack",
+    "detail": "Enemies sharing a row keep their spacing when they grow on a narrow screen, so one enemy's intent no longer covers another's. A side standing in more than one row, or whose art is too wide to grow, keeps its previous size; it is never made smaller.",
+    "build": "0.7.1.932",
+    "pullRequest": 1606,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1606"
+  },
+  {
+    "id": "pr-1609",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Level up waits for you, over the bar that filled",
+    "detail": "When a bar reaches a level after a fight, it stops and a blue Level up button covers it. Nothing levels up until you press it. Pressing it opens a popup with that level's rewards in blue; choose one, or come back to it later. Continue fills the rest of the XP, and the next bar takes its turn: character first, then class, then skills. The guided level-up setting is gone, because every level now works this way.",
+    "build": "0.7.1.930",
+    "pullRequest": 1609,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1609"
+  },
+  {
+    "id": "pr-1607",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Clear enemy intents on short phones",
+    "detail": "Enemy intent labels and Inspect controls stay distinct when enlarged fighters move inward to fit the battlefield. Their full control boxes keep six pixels of space in the same row, with room for wider intent text and Inspect, while fighter size and targeting stay intact.",
+    "build": "0.7.1.928",
+    "pullRequest": 1607,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1607"
+  },
+  {
+    "id": "pr-1602",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Level-up rewards planned",
+    "detail": "The game's rules now describe the next level-up design. Each level will wait for you to press Level up over its bar, then show its rewards. Skill levels will grant a ranked card and a card upgrade every level, a feat every second level, an attribute every fourth and a bonus to that skill's cards every fifth. Levelling will also slow down: characters start at 200 XP a level, skills at 100 and classes at 400. Nothing in play changes yet.",
+    "build": "0.7.1.924",
+    "pullRequest": 1602,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1602"
+  },
+  {
+    "id": "pr-1605",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Smoother map and animated fighters on phones",
+    "detail": "Choosing a destination on the map no longer slows the game while its panel is open. On touch screens, fighters animate again (attack poses, enemy attack art and the idle sway) instead of standing frozen, and animated sprites and weapon effects no longer blink between frames. Attacks lean from the feet instead of rocking the whole figure side to side.",
+    "build": "0.7.1.923",
+    "pullRequest": 1605,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1605"
+  },
+  {
+    "id": "pr-1599",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "More reusable scenes and foreground props",
+    "detail": "The player artwork collection adds five lore-grounded locations in separate desktop and mobile compositions, plus six transparent props including both Second Cairn sword states. Its 316 components include unchanged PNG masters, WebP exports, exact prompts and responsive layer recipes for game integration. Live game artwork bindings are unchanged.",
+    "build": "0.7.1.921",
+    "pullRequest": 1599,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1599"
+  },
+  {
+    "id": "pr-1600",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Bigger fighters on phones, more card text",
+    "detail": "On a narrow screen combatants now grow to half the battlefield's height wherever there is headroom above them, keeping their relative sizes and staying on their own side of the field. Card body text in the hand is 2pt smaller so more of each effect shows.",
+    "build": "0.7.1.919",
+    "pullRequest": 1600,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1600"
+  },
+  {
+    "id": "pr-1592",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Reset all sits last under Interface",
+    "detail": "The Reset all settings button moves to the end of Display → Interface, so Fullscreen and the accent colour stay the first two controls there. It still asks before resetting.",
+    "build": "0.7.1.915",
+    "pullRequest": 1592,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1592"
+  },
+  {
+    "id": "pr-1594",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Keep settings ordering checks working after Reset all",
+    "detail": "The fullscreen ordering regression fixture now follows the reset row's current source location. Its intentional bad ordering and detection assertions remain unchanged.",
+    "build": "0.7.1.913",
+    "pullRequest": 1594,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1594"
+  },
+  {
+    "id": "pr-1590",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Victory stops flashing; level rewards wait for you",
+    "detail": "The victory window no longer fades out and back in as XP fills and levels are claimed: it opens once, and only the bars move. Claiming a level, by hand or with guided level-up, no longer forces its reward choice open. A line under the bars records each level, and the reward that level unlocked appears in the list raised and blue, rising into place once, to open whenever you choose.",
+    "build": "0.7.1.912",
+    "pullRequest": 1590,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1590"
+  },
+  {
+    "id": "pr-1588",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Reusable artwork for every player screen",
+    "detail": "A portable art collection covers 24 player views in desktop and mobile layouts: new scene perspectives, enemy bodies and portraits, transparent props, and scalable boxes, menus and controls. PNG masters, WebP exports, an offline catalog and layer recipes are included for game integration. The live game presentation is unchanged.",
+    "build": "0.7.1.909",
+    "pullRequest": 1588,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1588"
+  },
+  {
+    "id": "pr-1589",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Recover from brief Windows art-cache locks",
+    "detail": "When an art cache needs replacing, briefly locked Windows files get a bounded retry before the game tooling reports a failure. A permanently refused rename still reports an error and leaves the existing files intact.",
+    "build": "0.7.1.908",
+    "pullRequest": 1589,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1589"
+  },
+  {
+    "id": "pr-1587",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Choose defaults or keep local settings",
+    "detail": "After an update, a device with changed preferences asks whether to keep its local settings or use the current defaults. Settings also has a visible Reset to defaults button, with confirmation and Undo. Saves and progress stay intact. If saving fails, previous settings remain in use and the choice shows a retry.",
+    "build": "0.7.1.906",
+    "pullRequest": 1587,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1587"
+  },
+  {
+    "id": "pr-1585",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Reset every setting from one button",
+    "detail": "Settings → Display → Interface has a Reset all button. It asks first, then returns every setting to its default, with Undo for a few seconds. Reset all in the options menu now asks first too. Saves and progress are untouched.",
+    "build": "0.7.1.904",
+    "pullRequest": 1585,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1585"
+  },
+  {
+    "id": "pr-1582",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Painted signature starter cards for three more classes",
+    "detail": "Starstone Pebble, Urgent Heal, and Ambush now carry original paintings of the Observatory's starstone, the Furnace Chapel healing rite, and the frozen docks. The approved second Starstone pass and compact mobile artwork ship together in art release v11.",
+    "build": "0.7.1.900",
+    "pullRequest": 1582,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1582"
+  },
+  {
+    "id": "pr-1581",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Keep armament checks accurate after merging",
+    "detail": "The checks retain the new armament text after promotion and exercise explicit equipment actions, read-only card holds, inline comparisons and fitted inspection cards. The compact armament and level-reward behavior is unchanged.",
+    "build": "0.7.1.898",
+    "pullRequest": 1581,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1581"
+  },
+  {
+    "id": "pr-1578",
+    "date": "2026-10-04",
+    "group": "2026-10-04",
+    "summary": "Compact armaments and level rewards you can finish later",
+    "detail": "Equipped positions show the item card beside its slot, name and status, with Inspect, Replace and Unequip actions. Inspect opens the full card, and equipping a reserve keeps the active position unchanged. Victory XP can pause at each level for its reward chooser, with a larger Level up button, Back and an Accessibility toggle. Leave whenever you want: unfinished levels and the original reward choices return on later victories and Character, including after saving. Class rewards wait for their original class.",
+    "build": "0.7.1.897",
+    "pullRequest": 1578,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1578"
+  },
+  {
+    "id": "pr-1575",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "See four merchant offers at once",
+    "detail": "Compact artwork, details and Buy controls fit above a fixed bottom category dock. Inspect opens the complete item or book, and the selected footer action follows mouse and keyboard selection. Warm brown panels and gold highlights match the approved shop preview.",
+    "build": "0.7.1.895",
+    "pullRequest": 1575,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1575"
+  },
+  {
+    "id": "pr-1540",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Installer game versions and Stamina browser checks",
+    "detail": "The installer adds separate game branch and exact build-version selectors linking to completed installer downloads, alongside the art selectors and AI disclosure. Browser checks follow the shared Stamina renderer, verify the Stamina number and Mana diamonds, and measure the co-op HUD with Mana ring both on and off. The SVG paint checks retain their backgrounds while measuring the visible number and label; two new known-bad cases cover hidden text and a later SVG cover. The checks retain their overlap, clipping, accessibility and known-bad coverage. Later integration retains the current shared-orb, resource-identity and built-tree probes. The illustrated desktop End Turn plate keeps its 48-pixel primary target after zoom.",
+    "build": "0.7.1.893",
+    "pullRequest": 1540,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1540"
+  },
+  {
+    "id": "pr-1573",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "A clearer resource orb and more skyline",
+    "detail": "The stamina number sits centered above its SP label with clear separation, and the battlefield ground recedes to show more of the skyline while keeping combatants grounded.",
+    "build": "0.7.1.892",
+    "pullRequest": 1573,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1573"
+  },
+  {
+    "id": "pr-1570",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Grounded combat with a compact footer",
+    "detail": "Combatants stand on the painted floor, and the smaller bottom controls leave the illustrated hand lower on screen. The artwork stays proportional and adjacent atlas scenes cannot bleed into the backdrop.",
+    "build": "0.7.1.890",
+    "pullRequest": 1570,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1570"
+  },
+  {
+    "id": "pr-1569",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Learn cards from books instead of buying loose cards",
+    "detail": "The merchant no longer offers Cards or Weapon Arts for direct purchase. Books, equipment, relics, supplies and services remain, including on saved visits.",
+    "build": "0.7.1.889",
+    "pullRequest": 1569,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1569"
+  },
+  {
+    "id": "pr-1567",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Illustrated combat keeps its breathing room",
+    "detail": "The transparent HP/relic HUD keeps combatants clear, card corners stay above the current footer, and potion minis and painted controls remain within their bounds. Embedded menu icons and build-failure diagnostics now work in every build mode.",
+    "build": "0.7.1.886",
+    "pullRequest": 1567,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1567"
+  },
+  {
+    "id": "pr-1565",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Illustrated cards and scenery join the main game",
+    "detail": "Cards use editable layered artwork, live centered text and stamina/mana banners, with individual card objects included in builds. Painted scenery and an enlarged transparent HP/relic HUD retain the current footer, Shield/Ward rules, merchant rows and turn confirmation controls.",
+    "build": "0.7.1.883",
+    "pullRequest": 1565,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1565"
+  },
+  {
+    "id": "pr-1563",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Browse every merchant shelf in clear, matching rows",
+    "detail": "Cards, equipment, relics, supplies, services and goods for sale now place their artwork, complete details and action together, following the book shelf layout. On phones, actions sit below the details. Card inspection, purchase reviews, holds and the selected footer action remain available.",
+    "build": "0.7.1.876",
+    "pullRequest": 1563,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1563"
+  },
+  {
+    "id": "pr-1558",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Remove the combat Positioning button",
+    "detail": "The Positioning toggle and its floating panel no longer appear over the battlefield, and the formation workbench that only that panel opened is gone. Formation positioning remains in Settings.",
+    "build": "0.7.1.874",
+    "pullRequest": 1558,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1558"
+  },
+  {
+    "id": "pr-1534",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Painted, editable combat footer",
+    "detail": "The stamina orb, draw cradle, End Turn plate, discarded cards and potion tray now assemble from separate painted components. Footer Atelier can move, resize and snap them together, and edit live text bindings, fonts and positions independently of the images. Solo and co-op keep their existing actions, with readable compact controls on phones and short landscape screens. The five new light images total about 9 KB.",
+    "build": "0.7.1.872",
+    "pullRequest": 1534,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1534"
+  },
+  {
+    "id": "pr-1557",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Exercise the small-player foot target on every platform",
+    "detail": "Separate the browser fixture's player stack from the grid-cell center and keep its sprite inside the measured small bounds, so text and artwork cannot bypass the minimum touch-target check. Gameplay is unchanged.",
+    "build": "0.7.1.871",
+    "pullRequest": 1557,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1557"
+  },
+  {
+    "id": "pr-1555",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep small-player touch checks reliable without artwork",
+    "detail": "Browser checks exercise a deliberately small player in their controlled overlap scene, preserving the foot anchor and verifying that removing its touch target is caught even in copied trees without artwork. Gameplay is unchanged.",
+    "build": "0.7.1.870",
+    "pullRequest": 1555,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1555"
+  },
+  {
+    "id": "pr-1552",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep positioning controls clear of combatants",
+    "detail": "Place the Positioning toggle on the player side in portrait and between the teams on short landscape screens. Keep the browser overlap check reliable across authored formation sizes, and make Quick Start's browser check target fighters without pressing their intent buttons.",
+    "build": "0.7.1.869",
+    "pullRequest": 1552,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1552"
+  },
+  {
+    "id": "pr-1550",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Small combatants stay reachable",
+    "detail": "The player keeps a 44 px touch target when scaled down. Motion and save checks choose an unobstructed target point outside nested intent controls, preserving normal card play and their existing assertions.",
+    "build": "0.7.1.862",
+    "pullRequest": 1550,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1550"
+  },
+  {
+    "id": "pr-1548",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Combat browser checks keep pace with the game",
+    "detail": "Checks recognize the shared Stamina artwork and catch invisible or covered SVG text. A controlled sprite-overlap case keeps intent buttons reachable, and the full-run driver plays affordable attacks and defensive cards through the normal controls. Gameplay is unchanged.",
+    "build": "0.7.1.860",
+    "pullRequest": 1548,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1548"
+  },
+  {
+    "id": "pr-1543",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Place and size your combat formations with a live workbench",
+    "detail": "Move whole rows, columns, teams or custom groups, snap to a 50 px grid, resize characters, test mixed classes and enemies in 1×1, 2×2 or 2×3 layouts, and export the positioning as JSON. The supplied 1×1 and 2×2 layouts retain their own offsets. Spawns fill from opposite bottom corners. Combat now rolls a card at 10% and a separate feat at 5%; skill levels guarantee a card draft, while class levels keep their tree upgrade and add a guaranteed feat plus an independent 25% technique-card chance.",
+    "build": "0.7.1.859",
+    "pullRequest": 1543,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1543"
+  },
+  {
+    "id": "pr-1544",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Specify formation positioning and reward defaults",
+    "detail": "Record the approved mirrored spawn order, authored layout profiles and separate combat, skill and class reward rolls before implementation.",
+    "build": "0.7.1.857",
+    "pullRequest": 1544,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1544"
+  },
+  {
+    "id": "pr-1541",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Shield and Arcane Ward sit beside your health",
+    "detail": "Ordinary Block has a blue shield and turns health blue until it breaks. Magical Block has a purple Arcane Ward badge to its left and adds a gold health outline. Both can appear together; when either disappears, health takes back its space. The two numbers share the existing Block total. Solo and co-op keep the same behavior, including saved fights. Narrow bars show current HP with the full value available in the tooltip.",
+    "build": "0.7.1.853",
+    "pullRequest": 1541,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1541"
+  },
+  {
+    "id": "pr-1535",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Build your deck at the Reading Desk",
+    "detail": "The illustrated deck editor has compact rows, two-line descriptions, inline Inspect, and proportionate card art. Sapphire Mana and green Stamina symbols show centered costs, with configurable resource grouping and order. Desktop inspection includes a looping skill animation with Pause. Any deck card can return to the library; adding equipment skills requires compatible equipped gear, and removed equipment cards stay removed after saving. A separate visual row editor lets you move, resize and snap components, then export the layout as JSON.",
+    "build": "0.7.1.852",
+    "pullRequest": 1535,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1535"
+  },
+  {
+    "id": "pr-1536",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep prepared spells and draw a fresh hand each turn",
+    "detail": "Opening and turn draws start at four with Intelligence scaling. Unplayed cards shuffle back into the draw pile unless they have Retain; thirty-one Herald and Starseer spells now keep that keyword when upgraded. Retained cards add to the next full draw, up to a separate default hand limit of fifteen. Solo and co-op share the rule, played cards still leave the hand normally, and existing saved fights preserve their rules. The defaults remain configurable.",
+    "build": "0.7.1.851",
+    "pullRequest": 1536,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1536"
+  },
+  {
+    "id": "pr-1542",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keepsake pictures return after an art retry",
+    "detail": "If a keepsake picture fails to load, its icon stands in; retrying the art or changing quality can restore the picture. The compact-art checks now run correctly in CI.",
+    "build": "0.7.1.845",
+    "pullRequest": 1542,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1542"
+  },
+  {
+    "id": "pr-1538",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "More of the climb has its finished artwork",
+    "detail": "The game includes compact card, relic, flask, event, and character art, including the Road Warden. Cards without a painted scene use a simple matching motif. High-resolution pictures remain in the art repository; the game uses its smaller local versions by default.",
+    "build": "0.7.1.845",
+    "pullRequest": 1538,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1538"
+  },
+  {
+    "id": "pr-1533",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "The Windows installer lets you browse and download art versions",
+    "detail": "A high-quality artwork button opens art-repository branch and published-version choices, shows installed, required and latest art versions, and lets you install the game's matching pack or save another verified release separately. The installer discloses ChatGPT-generated artwork. README links and action buttons each have their own row, while its opening description stays a plain sentence.",
+    "build": "0.7.1.843",
+    "pullRequest": 1533,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1533"
+  },
+  {
+    "id": "pr-1530",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "One turn budget, with an emerald stamina orb",
+    "detail": "Every class starts with 3 base SP, growing with Dexterity, Constitution, Wisdom, Intelligence and level. Cards and combat actions spend Stamina once, and it refills each turn. The approved emerald orb and weathered harness replace the action counter in solo and co-op, with independently positioned number and SP label. Sapphire diamonds show available mana around the rim; turn Mana ring off in Combat settings to use the top MP bar. Cards use green stamina diamonds. The component artwork is published in the separate art repository and the layout editor remains available.",
+    "build": "0.7.1.842",
+    "pullRequest": 1530,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1530"
+  },
+  {
+    "id": "pr-1532",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Full draws and selective Retain are the approved hand rules",
+    "detail": "The contract starts opening and turn draws at four with Intelligence scaling, keeps Retain cards, shuffles other unplayed cards into the draw pile, and sets a separate default hand limit of fifteen. Retained cards add to the next draw until that limit. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.839",
+    "pullRequest": 1532,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1532"
+  },
+  {
+    "id": "pr-1529",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "The README explains the current game and where to get each edition",
+    "detail": "The guide now covers retained hands, Actions, Stamina and Mana, combat ratings, equipment cards, the sideboard, progression, books and shop services. It links the installer, art repository, Unity adaptation and each browser channel's play and download paths, with verified GitHub build alternatives while hosted paths are unavailable. Gameplay is unchanged.",
+    "build": "0.7.1.838",
+    "pullRequest": 1529,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1529"
+  },
+  {
+    "id": "pr-1527",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Painted books and class-book bonuses",
+    "detail": "Books have separate painted covers and emblems, including a feat emblem, with color across the whole leather binding. Class books grant XP on every read, learn the class on the first read, and independently roll a matching combat card (25%) and feat (5%). Both chances are configurable in Advanced → Shops. The result shows what you received; excess card copies go to the sideboard.",
+    "build": "0.7.1.837",
+    "pullRequest": 1527,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1527"
+  },
+  {
+    "id": "pr-1526",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Class-book reward rules are documented",
+    "detail": "The approved contract keeps class learning and XP, makes class books repeatable, and specifies independent configurable combat-card and feat chances of 25% and 5%. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.835",
+    "pullRequest": 1526,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1526"
+  },
+  {
+    "id": "pr-1517",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Your phone can buzz on card play, damage taken and turn start",
+    "detail": "On a device that can vibrate, playing a card, losing HP (from a hit, or from a card, curse or status that costs HP) and the start of your turn each give a short buzz of its own; in co-op, your own plays, wounds and turns buzz your device, not a teammate's. Changing equipment does not buzz. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.",
+    "build": "0.7.1.834",
+    "pullRequest": 1517,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1517"
+  },
+  {
+    "id": "pr-1520",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: a whole run is now played in a real browser",
+    "detail": "Nothing you play changes. A new automatic check starts the game from the title, creates a character on a fixed seed, plays a fight, walks the map to the act boss, dies to it, returns to the title and starts a new run, and fails if anything goes wrong on the way or an error is logged.",
+    "build": "0.7.1.830",
+    "pullRequest": 1520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1520"
+  },
+  {
+    "id": "pr-1524",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: every full browser check now has to download the art first",
+    "detail": "Nothing you play changes. After the art moved out of this repository, three heavy browser checks ran without downloading it and failed on pictures that never loaded. A test now fails if any check in the full run starts a tool before the art is downloaded, including a tool started from a multi-line step.",
+    "build": "0.7.1.829",
+    "pullRequest": 1524,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1524"
+  },
+  {
+    "id": "pr-1519",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: the build-number check no longer passes when the previous build's record is missing or unreadable",
+    "detail": "Nothing you play changes. The automatic check that each new build's number is higher than the last one treated a previous build record it could not open (a damaged copy of the history), or one too garbled to read, as if there had been no record at all, and passed. It now stops and says it could not tell. A shallow copy that holds no previous build at all still passes, as before.",
+    "build": "0.7.1.828",
+    "pullRequest": 1519,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1519"
+  },
+  {
+    "id": "pr-1518",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Quick start: from the title to your first card in six presses",
+    "detail": "The title has a new Quick start. It begins a climb at once with the recommended character (the Reaver, no keepsake, Standard stats, the class's own starting gear), a fresh seed and the first empty save slot, and skips the opening. The opening still plays on your next ordinary climb. If every slot is full it asks before replacing slot 1, as Begin does. A new player now reaches their first card play in 6 inputs, down from 24 through New and character creation. New still lets you choose everything.",
+    "build": "0.7.1.826",
+    "pullRequest": 1518,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1518"
+  },
+  {
+    "id": "pr-1523",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: browser checks follow the art and wording updates",
+    "detail": "The hand-placement, animation and flask-menu checks use the verified art packs. The Fullscreen test follows the shared wording table, and flask checks report their result in the format CI reads.",
+    "build": "0.7.1.825",
+    "pullRequest": 1523,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1523"
+  },
+  {
+    "id": "pr-1521",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Read a book, learn a card, keep your class progress",
+    "detail": "Manuals grant their XP and an immediate matching card choice, including cross-class skills. Spellbooks teach spells, Universal Tomes let you choose a track and lesson, and class books unlock reusable class cards that can be equipped or removed to leave an empty slot. The shop's book rows have matching sizes and separate book, details and Buy columns. Ten customizable book recipes combine three painted cover styles, thirty independent symbol variants, colors and trim; Book Atelier exports artwork recipes for future updates. Art comes from the verified hd-assets-v4 pack, including its existing uniform light-sprite policy.",
+    "build": "0.7.1.824",
+    "pullRequest": 1521,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1521"
+  },
+  {
+    "id": "pr-1516",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the art now lives only in its own repository",
+    "detail": "Nothing you play changes. The pictures, fonts, music and map tiles were stored twice, here and in the art repository; the copies here are gone, so a fresh download of the source is about 1.9 GB lighter. Every build now takes its art from the pinned art release, checked file by file, exactly as it already did.",
+    "build": "0.7.1.822",
+    "pullRequest": 1516,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1516"
+  },
+  {
+    "id": "pr-1489",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the game's wording lives in one table again",
+    "detail": "Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.",
+    "build": "0.7.1.821",
+    "pullRequest": 1489,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1489"
+  },
+  {
+    "id": "pr-1499",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the map legend's Escape test now opens the node panel first",
+    "detail": "Nothing you play changes. The automatic test for closing the map legend with Escape or pad B never selected a map node, so the node's panel was never open and the test could not see it close by mistake. It now selects a node, checks the panel stays open when the legend closes, and checks the next press closes the panel.",
+    "build": "0.7.1.819",
+    "pullRequest": 1499,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1499"
+  },
+  {
+    "id": "pr-1475",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fighters breathe while they wait",
+    "detail": "Your fighter and every enemy now bob gently in place between actions, each at its own rhythm; before, the idle motion was meant to play but reached no one. This covers the Animated, Rendered and Classic figure styles; the Glyph style shows a sigil, not a figure, and stays still, and a fallen fighter, including a downed co-op ally, stops moving. With Reduced motion on, in the game's settings or your device's, they stand still, and a new check plays a whole turn that way to prove nothing on the board moves.",
+    "build": "0.7.1.818",
+    "pullRequest": 1475,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1475"
+  },
+  {
+    "id": "pr-1474",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
+    "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
+    "build": "0.7.1.816",
+    "pullRequest": 1474,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1474"
+  },
+  {
+    "id": "pr-1487",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the balance report's checks are stricter",
+    "detail": "Nothing you play changes. The run simulator now refuses to print per-act difficulty for an endless climb, where later loops would have been counted as the first three acts, and the balance notes' check now catches a boss listed for a region that cannot meet it, or the same row recorded twice.",
+    "build": "0.7.1.814",
+    "pullRequest": 1487,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1487"
+  },
+  {
+    "id": "pr-1490",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The tutorial bubble moves off your cards when the hand rearranges itself",
+    "detail": "After a window resize, your hand can spread itself out again a moment after the tutorial has found a spot for its speech bubble. If that put a card under the bubble, the bubble stayed there and you couldn't click that card. The bubble now moves whenever your cards move, not only when the thing it points at moves.",
+    "build": "0.7.1.813",
+    "pullRequest": 1490,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1490"
+  },
+  {
+    "id": "pr-1493",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every owner decision has its own number",
+    "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D48, and a test fails if two decisions ever share a number again.",
+    "build": "0.7.1.812",
+    "pullRequest": 1493,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
+    "id": "pr-1508",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the slowest automated checks no longer wait on a 20-minute download",
+    "detail": "Nothing you play changes. Three checks ran out of time before they started, while still downloading the project; the heavy checks now skip the source paintings and old file history they never open, cutting each one's download from about 2.3 GB to about 0.7 GB. Every check still runs; whether all of them now finish inside 20 minutes is confirmed only by the next full run.",
+    "build": "0.7.1.811",
+    "pullRequest": 1508,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1508"
+  },
+  {
     "id": "pr-1511",
     "date": "2026-10-02",
     "group": "2026-10-02",

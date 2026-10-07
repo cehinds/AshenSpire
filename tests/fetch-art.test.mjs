@@ -6,19 +6,45 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
 import { createServer } from 'node:http';
-import { agree, download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
-import { buildManifest, canonicalBytes, commonSources, serialize } from '../tools/art-manifest.mjs';
+import { download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, setAside, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
+import { buildManifest, canonicalBytes, checkManifest, commonSources, releaseDocsFromCache, releaseDocsFromZips, releaseManifest, serialize } from '../tools/art-manifest.mjs';
 import { planPacks, verifyPacks, writePacks } from '../tools/asset-pack.mjs';
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 const tmp = () => mkdtempSync(join(tmpdir(), 'fetch-art-'));
+
+test('discard waits for transient Windows handles without losing bytes or hiding a permanent refusal', () => {
+  const root = tmp();
+  try {
+    const dir = join(root, 'cache');
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'manifest'), 'preserved');
+    const pauses = [];
+    let attempts = 0;
+    const aside = setAside(dir, {
+      rename: (from, to) => { if (++attempts <= 2) throw Object.assign(new Error('busy'), { code: attempts === 1 ? 'EPERM' : 'EBUSY' }); renameSync(from, to); },
+      pause: attempt => pauses.push(attempt),
+    });
+    assert.equal(readFileSync(join(aside, 'manifest'), 'utf8'), 'preserved');
+    assert.equal(existsSync(dir), false);
+    assert.deepEqual(pauses, [0, 1]);
+    let refused = 0;
+    assert.throws(() => setAside(aside, {
+      rename: () => { refused++; throw Object.assign(new Error('denied'), { code: 'EACCES' }); },
+      pause: () => {},
+    }), /denied/);
+    assert.equal(refused, 21, 'bounded refusal is still an error');
+    assert.equal(readFileSync(join(aside, 'manifest'), 'utf8'), 'preserved');
+    assert.equal(setAside(join(root, 'missing')), null);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 test('crc32 matches the standard check value', () => {
   assert.equal(crc32(Buffer.from('123456789')), 0xcbf43926);
@@ -414,7 +440,7 @@ function threePacks({ tamper = {} } = {}) {
 
 const fetchAll = async (root, zips) => { for (const pack of ['high', 'light', 'common']) await fetchArt({ root, pack, from: zips[pack] }); };
 
-test('schema 2: each pack is verified into .art-cache/<tag>/<pack>/, and the caches agree with the trees', async () => {
+test('schema 2: each pack is verified into .art-cache/<tag>/<pack>/, and the manifest agrees with each cached pack', async () => {
   const { root, zips } = threePacks();
   try {
     const got = {};
@@ -426,9 +452,10 @@ test('schema 2: each pack is verified into .art-cache/<tag>/<pack>/, and the cac
     assert.deepEqual(got, { high: 2, light: 2, common: 5 }, 'art ids in high and light; fonts, licence, music and tiles in common');
     assert.equal(readFileSync(join(root, '.art-cache/hd-assets-v2/common/licenses/OFL.txt'), 'utf8'), TREE['asset-data/fonts/OFL.txt']);
     for (const pack of ['high', 'light', 'common']) assert.equal((await fetchArt({ root, pack, recheck: true })).reused, true);
-    const { problems, checks } = agree({ root });
-    assert.deepEqual(problems, []);
-    assert.equal(checks, 2 * (2 + 2 + 5) + 1, 'a row and a file per id per pack, and the light tree\'s font twin');
+    const { docs, missing } = releaseDocsFromCache(root);
+    assert.deepEqual(missing, []);
+    assert.deepEqual(Object.keys(docs).sort(), ['common', 'high', 'light']);
+    assert.deepEqual(checkManifest(root, { docs }), [], 'the committed manifest equals every fetched pack\'s own, row for row');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -457,24 +484,88 @@ test('known-bad: asset-pack --source cache refuses a pack that was not fetched, 
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('known-bad: --agree catches a tree that moved after the fetch, a stray cached file and an unfetched pack', async () => {
+// STEP 13 (docs/EXTERNAL-ASSETS-PLAN.md): the trees are gone, so the manifest is
+// written from the pinned release itself, and --agree (cache vs trees) is retired.
+test('art-manifest --write rebuilds the manifest byte for byte from the pinned zips alone', async () => {
+  const { root, zips, manifest } = threePacks();
+  try {
+    const docs = await releaseDocsFromZips(root, { from: join(root, 'dl') });
+    const { manifest: rebuilt, problems } = releaseManifest(docs);
+    assert.deepEqual(problems, []);
+    assert.equal(serialize(rebuilt), serialize(manifest), 'the union of the three packs\' own manifests is the committed file');
+    let asked = [];
+    const viaDownload = await releaseDocsFromZips(root, { get: async (pin, pack) => { asked.push(pack); return readFileSync(zips[pack]); } });
+    assert.deepEqual(asked, ['high', 'light', 'common']);
+    assert.equal(serialize(releaseManifest(viaDownload).manifest), serialize(manifest));
+    await assert.rejects(releaseDocsFromZips(root, { get: async (pin, pack) => (pack === 'light' ? Buffer.from('not the pinned zip') : readFileSync(zips[pack])) }), /light-assets-v2\.zip: sha256 [0-9a-f]{64}, art-release\.json pins/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: the release\'s packs that disagree, or a manifest a fetched pack contradicts, are refused by name', async () => {
+  const { root, zips, manifest } = threePacks();
+  try {
+    const docs = await releaseDocsFromZips(root, { from: join(root, 'dl') });
+    const light = JSON.parse(JSON.stringify(docs.light));
+    light.assets['assets/bg/a.webp'].light.bytes += 1;
+    assert.match(releaseManifest({ ...docs, light }).problems.join('\n'), /assets\/bg\/a\.webp: the high and light packs' rows differ/);
+    const common = JSON.parse(JSON.stringify(docs.common));
+    common.assets['assets/bg/a.webp'] = manifest.assets['assets/bg/a.webp'];
+    assert.match(releaseManifest({ ...docs, common }).problems.join('\n'), /assets\/bg\/a\.webp: the common pack's row has high\+light, not common/);
+    assert.match(releaseManifest({ high: docs.high, light: docs.light }).problems.join('\n'), /the common pack's art-manifest\.json is missing/);
+
+    await fetchAll(root, zips);
+    const p = join(root, MANIFEST_PATH);
+    const text = readFileSync(p, 'utf8');
+    writeFileSync(p, text.replace('"width":1536', '"width":2048'));
+    const fetched = releaseDocsFromCache(root).docs;
+    assert.match(checkManifest(root, { docs: fetched }).join('\n'), /assets\/bg\/a\.webp: its row differs from the (high|light) pack's/, 'a hand-edited pixel size is caught against the fetched pack');
+    writeFileSync(p, text.replace('"count": 7', '"count": 8'));
+    assert.match(checkManifest(root, { docs: {} }).join('\n'), /says count 8 but lists 7/);
+    writeFileSync(p, text.replace('never by a hand', 'by hand'));
+    assert.match(checkManifest(root, { docs: {} }).join('\n'), /differs from what --write produces/, 'the header is held byte for byte too');
+    writeFileSync(p, text);
+    const extra = JSON.parse(JSON.stringify(fetched.common));
+    extra.assets['music/extra.mp3'] = { common: { path: 'music/extra.mp3', bytes: 1, sha256: sha('x') } };
+    assert.match(checkManifest(root, { docs: { ...fetched, common: extra } }).join('\n'), /music\/extra\.mp3: in the common pack's manifest, not in this one/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: an edited manifest is compared with the fetched packs, not taken for an unfetched release', async () => {
+  // The verified marker digests the committed manifest's rows, so a manifest
+  // edited after the fetch makes the cache look unverified; --check must still
+  // read the cache of this pin's zip, name the drift, and go red.
   const { root, zips } = threePacks();
   try {
-    await fetchArt({ root, pack: 'light', from: zips.light });
-    await fetchArt({ root, pack: 'common', from: zips.common });
-    writeFileSync(join(root, 'assets-mobile/bg/a.webp'), webp(614, 410, 9));
-    writeFileSync(join(root, '.art-cache/hd-assets-v2/common/music/stray.mp3'), 'stray');
-    writeFileSync(join(root, 'assets-mobile/fonts/f-400-normal.woff2'), 'another face');
-    writeFileSync(join(root, 'assets-mobile/ui/extra.webp'), webp(8, 8));
-    const problems = agree({ root }).problems.join('\n');
-    assert.match(problems, /high: .*not a verified cache of hd-assets-v2\.zip — node tools\/fetch-art\.mjs --pack high/);
-    assert.match(problems, /light: assets\/bg\/a\.webp: assets-mobile\/bg\/a\.webp and the cache's assets-mobile\/bg\/a\.webp differ/);
-    assert.match(problems, /light: assets\/bg\/a\.webp: the release's row differs/);
-    assert.match(problems, /common: music\/stray\.mp3: in the cache, not in the trees/);
-    assert.match(problems, /common: assets-mobile\/fonts\/f-400-normal\.woff2 differs from the common pack's/);
-    assert.match(problems, /light: assets-mobile\/ui\/extra\.webp: in the light tree, not in the release/);
-    assert.deepEqual(agree({ root, packs: 'common' }).problems.filter((p) => !p.includes('fonts')).length, 1, 'only the stray, for the common pack alone');
+    await fetchAll(root, zips);
+    assert.deepEqual(checkManifest(root), []);
+    const p = join(root, MANIFEST_PATH);
+    const m = JSON.parse(readFileSync(p, 'utf8'));
+    m.assets['assets/bg/a.webp'].high.sha256 = 'e'.repeat(64);
+    writeFileSync(p, serialize(m));
+    const { missing, stale } = releaseDocsFromCache(root);
+    assert.deepEqual(missing, [], 'the caches of this pin are still read');
+    assert.match(stale.join('\n'), /the fetched (high|light) pack of hd-assets-v2 was verified against another art-manifest\.json/);
+    const problems = checkManifest(root).join('\n');
+    assert.match(problems, /assets\/bg\/a\.webp: its row differs from the (high|light) pack's/);
+    assert.match(problems, /verified against another art-manifest\.json/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('fetch-art --agree is retired with the trees: it exits 2 and says so', () => {
+  const tool = fileURLToPath(new URL('../tools/fetch-art.mjs', import.meta.url));
+  return new Promise((done, fail) => {
+    const child = spawn(process.execPath, [tool, '--agree'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let err = '';
+    child.stderr.on('data', (d) => { err += d; });
+    child.on('error', fail);
+    child.on('close', (code) => {
+      try {
+        assert.equal(code, 2);
+        assert.match(err, /--agree was retired at docs\/EXTERNAL-ASSETS-PLAN\.md step 13/);
+        done();
+      } catch (e) { fail(e); }
+    });
+  });
 });
 
 test('known-bad: a pack zip that names another pack, carries an art id in common, or lacks a track is refused', async () => {
@@ -580,7 +671,11 @@ test('known-bad: an embedded or cached manifest that parses to something other t
     try {
       const { dir } = await fetchArt({ root: ok.root, pack: 'common', from: ok.zips.common });
       writeFileSync(join(dir, MANIFEST_PATH), text);
-      await assert.rejects(fetchArt({ root: ok.root, pack: 'common', recheck: true }), (e) => { assert.match(e.problems.join('\n'), /the cached art-manifest\.json (is not a JSON object|has an "assets" that is not an object)/, text); return true; });
+      await assert.rejects(fetchArt({ root: ok.root, pack: 'common', recheck: true }), (e) => {
+        assert.ok(Array.isArray(e.problems), `Expected manifest refusal for ${text}; received ${e.stack}`);
+        assert.match(e.problems.join('\n'), /the cached art-manifest\.json (is not a JSON object|has an "assets" that is not an object)/, text);
+        return true;
+      });
     } finally { rmSync(ok.root, { recursive: true, force: true }); }
   }
 });
@@ -777,4 +872,104 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
     });
   }
   assert.ok(lines >= 4, `the four fetching workflows pass the token (found ${lines})`);
+});
+
+// Step 13 left three heavy browser jobs (flask-menu, its plants, motion) with
+// no fetch: they served a checkout whose art had gone, and the motion probe
+// went red on figures that 404 (dispatch run 37098149492). Every ci.yml job
+// that checks this repository out fetches the packs before its first step
+// that runs a tool, since any of them may build, serve or copy the art.
+//
+// A tool runs from an inline `run: node tools/…` OR from a command line inside
+// a `run: |` / `run: >` block scalar (#1524 review): both are scanned; comment
+// lines inside a block are not commands.
+// Not a parse of the command line: a step runs a repository tool when its
+// command text runs `node` AND names a script under tools/ or tests/. Node
+// options, their operands (`--require x.cjs`), `./` prefixes and env prefixes
+// all sit between the two and none of them can hide the pair (#1524 review,
+// Codex, four rounds of narrower matchers). Over-matching is safe: a step that
+// mentions both without running the tool merely has to come after the fetch.
+const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^\w-])(\.[\\/])?(tools|tests)[\\/][\w./\\-]+\.[cm]?js\b/.test(cmd) };
+// Any valid GitHub job id: letters, digits, `-` and `_`, starting with a letter or `_`.
+const JOB_ID = '[A-Za-z_][A-Za-z0-9_-]*';
+function jobsRunningToolsBeforeFetch(yml) {
+  // A job header: two-space indent, the id bare or quoted, then `:` and an
+  // optional comment (tools/workflow-lint.mjs's fixtures use both forms).
+  const HEADER = new RegExp(`^  (["']?)(${JOB_ID})\\1:[ \\t]*(#.*)?$`);
+  const jobs = [];
+  for (const line of yml.split('\n')) {
+    const h = line.match(HEADER);
+    if (h) jobs.push({ name: h[2], lines: [] });
+    else if (jobs.length) jobs.at(-1).lines.push(line);
+  }
+  const missing = [];
+  let checked = 0;
+  for (const { name, lines } of jobs) {
+    if (!lines.some((l) => !/^\s*#/.test(l) && /actions\/checkout@/.test(l))) continue;
+    checked += 1;
+    // NO YAML PARSING (#1524 review: seven rounds of Codex findings, each a
+    // spelling a narrower parser missed — quoted keys, plain and folded
+    // scalars, continuations, node options). Everything the job says before
+    // its fetch step, comment lines aside, is read as ONE text: if that text
+    // runs `node` and names a script under tools/ or tests/, a tool may run
+    // before the art is there. Over-matching only asks for an earlier fetch.
+    const at = lines.findIndex((l) => !/^\s*#/.test(l) && /\.\/\.github\/actions\/fetch-art\b/.test(l));
+    // A fetch step that carries an `if:` may be skipped on some leg (a matrix
+    // OS, an event), so it is not proof the art is there: the job counts as
+    // having no fetch (#1524 review, Codex).
+    const stepEnd = (i) => {
+      const dash = lines.slice(0, i + 1).reverse().find((l) => /^\s*-\s/.test(l));
+      const indent = dash ? dash.match(/^\s*/)[0].length : 0;
+      let j = i + 1;
+      while (j < lines.length && !(/^\s*-\s/.test(lines[j]) && lines[j].match(/^\s*/)[0].length <= indent) && !(lines[j].trim() && lines[j].match(/^\s*/)[0].length < indent)) j += 1;
+      return j;
+    };
+    const stepStart = (i) => { let k = i; while (k > 0 && !/^\s*-\s/.test(lines[k])) k -= 1; return k; };
+    const conditional = at >= 0 && lines.slice(stepStart(at), stepEnd(at)).some((l) => !/^\s*#/.test(l) && /(^|[\s{,-])["']?if["']?\s*:/.test(l));
+    const fetched = at >= 0 && !conditional;
+    const before = (fetched ? lines.slice(0, at) : lines).filter((l) => !/^\s*#/.test(l)).join(' ').replace(/\\\s+/g, ' ');
+    const bad = TOOL_CMD.test(before);
+    if (!fetched || bad) missing.push(name);
+  }
+  return { checked, missing };
+}
+
+test('every ci.yml job that checks the repository out fetches the art packs before it runs a tool', () => {
+  const yml = readFileSync(fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url)), 'utf8');
+  const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
+  assert.ok(checked >= 10, `the job split found the checkout jobs (${checked})`);
+  assert.deepEqual(missing, [], `these jobs run a tool on a checkout with no fetched art: ${missing.join(', ')}`);
+});
+
+test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool steps before the fetch', () => {
+  const job = (name, steps) => `  ${name}:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n${steps}`;
+  const fetch = '      - uses: ./.github/actions/fetch-art\n        with:\n          packs: all\n';
+  const yml = 'jobs:\n' + [
+    job('good-inline', `${fetch}      - run: node tools/a.mjs\n`),
+    job('good-block', `${fetch}      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs --selftest\n`),
+    job('good-comment-before', `      - name: x\n        run: |\n          # node tools/a.mjs is described here, not run\n          echo hi\n${fetch}`),
+    job('bad-inline', `      - run: node tools/a.mjs\n${fetch}`),
+    job('bad-block', `      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs\n${fetch}`),
+    job('bad-folded', `      - name: x\n        run: >-\n          set -e;\n          node tests/run-node.mjs\n${fetch}`),
+    job('bad-no-fetch', '      - run: echo nothing\n'),
+    job('bad-node-flag', `      - run: node --test tests/a.test.mjs\n${fetch}`),
+    job('bad-dot-path', `      - run: node ./tools/a.mjs\n${fetch}`),
+    job('good-before-underscore', `${fetch}      - run: echo ok\n`),
+    job('bad_underscore', `      - run: node tools/a.mjs\n${fetch}`),
+    job('bad-folded-split', `      - name: x\n        run: >-\n          node\n          tools/build.mjs\n${fetch}`),
+    job('bad-node-operand', `      - run: node --require setup.cjs tools/build.mjs\n${fetch}`),
+    job('bad-plain-multiline', `      - name: x\n        run: node\n          tools/build.mjs\n${fetch}`),
+    job('bad-quoted-run', `      - "run": node tools/a.mjs\n${fetch}`),
+    job('bad-cjs', `      - run: node tools/combat-formation-extra-qa.cjs\n${fetch}`),
+    job('bad-quoted-uses', `      - run: node tools/a.mjs\n${fetch}`).replace('- uses: actions/checkout@v5', '- "uses": actions/checkout@v5'),
+    job('bad-conditional-fetch', `      - uses: ./.github/actions/fetch-art\n        if: runner.os != 'Windows'\n        with:\n          packs: all\n      - run: node tools/a.mjs\n`),
+    job('bad-flow-conditional-fetch', `      - { uses: ./.github/actions/fetch-art, if: runner.os != 'Windows' }\n      - run: node tools/a.mjs\n`),
+    job('bad-windows-path', `      - run: node .\\tools\\build.mjs\n${fetch}`),
+    job('bad-continuation', `      - name: x\n        run: |\n          node \\\n            tools/build.mjs\n${fetch}`),
+  ].join('\n') + '\n'
+    + `  bad-commented: # heavy\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`
+    + `  "bad-quoted":\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`;
+  const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
+  assert.equal(checked, 23);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-flow-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
 });

@@ -17,6 +17,8 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { hasClassMastery, recordClassMasteryXp } from '../model/classMasteryRun.js';
+import { bankSkillXp, classSkillId } from '../model/skills.js';
 import { executeRunEffects } from './actions.js';
 import {
   availableEventChoices,
@@ -46,6 +48,11 @@ export function choiceAffordable(choice, run) {
 export function completeQuest(ctx, { questId, source } = {}) {
   const record = recordQuestCompletion(ctx.run, { questId, source });
   if (!record) return null;
+  if (hasClassMastery(ctx.run) && !ctx.run.classUnequipped) {
+    const amount = ctx.registries.balance.classMastery.pay.perQuest;
+    recordClassMasteryXp(ctx.run, ctx.run.class, amount);
+    bankSkillXp(ctx.registries, ctx.run, classSkillId(ctx.run.class), amount);
+  }
   const event = Object.freeze({ type: 'questCompleted', questId, source });
   if (typeof ctx.emit === 'function') ctx.emit('questCompleted', { questId, source });
   return { record, event };

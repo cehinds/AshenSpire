@@ -6,6 +6,9 @@ and optional desktop shortcuts and an entry under *Installed apps*.
 
 ## Getting it
 
+- **Download:** `https://github.com/cehinds/AshenSpire/releases/download/installer-<branch>/AshenSpire-Setup.exe`
+  for `test`, `release` or `main` — the rolling `installer-<branch>` prerelease,
+  replaced by every push to that branch.
 - **CI:** Actions → *windows installer* → the `windows-installer-<commit>`
   artifact. It runs on every push to `test`, `release` and `main`, on pull
   requests that touch `desktop/`, and by hand (*Run workflow*) on any branch.
@@ -33,6 +36,36 @@ Unticked, the game plays on the light art. Running the installer again with the
 box ticked adds the art; unticking it there removes it. An upgrade keeps the
 earlier choice and does not download art that is already installed.
 
+The next page has a **Choose game and high-quality art versions** button.
+The game selectors list **test**, **release**, **main**, and **dev** and up to
+five available successful installer builds per branch. Each version is read
+from the exact build commit. **Download this game installer** opens that exact
+GitHub artifact; GitHub sign-in is required. Unzip and run the downloaded
+installer to install that game version and its matching art. Expired artifacts,
+failed builds and pull-request previews are excluded. A branch with no available
+installer says so. This installer continues to install its own bundled game,
+whose version and branch are shown above the selectors.
+
+The chooser shows the current installed art, the release required by this game,
+and the latest published art version after checking GitHub. Branch and version
+selectors use the public `cehinds/AshenSpire-art` catalog; a release is offered
+for download only when the selected branch contains its commit. Branches with
+unpublished work do not have a new packaged version until an art release is
+published. **Refresh branches and art versions** updates the catalog.
+
+**Use this high-quality art for installation** selects the matching game pack.
+Other versions can be saved with **Download this art separately**, which opens
+Save As and checks the archive's SHA-256 before replacing an existing download.
+It does not install the game or change an existing game's art. The pinned pack
+remains available when the catalog is offline; actual downloads need network.
+Closing the chooser leaves the component checkbox unchanged unless you pressed
+the installation button. Silent installs continue to use the pinned pack.
+
+Both the installer page and chooser disclose: **The artwork is completely
+AI-generated with OpenAI ChatGPT under human direction.** Fonts and other
+third-party assets retain their credited licenses. The art repository's
+`CREDITS.md` records provenance and rights.
+
 ## How it works
 
 - **The game** is the web edition (`tools/bundle.mjs --external-art`, high
@@ -51,6 +84,13 @@ earlier choice and does not download art that is already installed.
   cancelled download leaves a working light install. Exit codes: 2 network,
   3 zip mismatch, 4 object mismatch, 5 other; any failure shows a message and the
   install still completes.
+- **The chooser** (`art-options.ps1`, Windows Forms / PowerShell 5.1) discovers
+  branches and public releases through `art-releases.ps1`. It checks release
+  ancestry and restricts download URLs to the art repository. Installation
+  remains pinned to the game's verified indexes; a different release cannot
+  silently bypass those checks. The installed art tag is recorded in the
+  existing uninstall registry entry. Older installs show their version as
+  unrecorded until upgraded.
 - **Prune**: the last step deletes objects no installed index lists (unticked
   art, an older version's files).
 - **Uninstall** removes exactly the installed files and asks before deleting saves.

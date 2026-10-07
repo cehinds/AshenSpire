@@ -1,0 +1,49 @@
+{
+  "runs": 400,
+  "wins": 131,
+  "crashes": 0,
+  "softLocks": 0,
+  "xp": "Total mastery XP awarded per run, including destination classes after swaps; rows grouped by birth class.",
+  "rows": [
+    {
+      "class": "reaver",
+      "seeds": 100,
+      "wins": 39,
+      "mean": 304.3,
+      "median": 330,
+      "p90": 415,
+      "min": 165,
+      "max": 455
+    },
+    {
+      "class": "starseer",
+      "seeds": 100,
+      "wins": 6,
+      "mean": 228.9,
+      "median": 215,
+      "p90": 265,
+      "min": 155,
+      "max": 455
+    },
+    {
+      "class": "rogue",
+      "seeds": 100,
+      "wins": 21,
+      "mean": 266.9,
+      "median": 230,
+      "p90": 405,
+      "min": 90,
+      "max": 445
+    },
+    {
+      "class": "herald",
+      "seeds": 100,
+      "wins": 65,
+      "mean": 348.1,
+      "median": 385,
+      "p90": 435,
+      "min": 170,
+      "max": 470
+    }
+  ]
+}

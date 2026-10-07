@@ -19,6 +19,7 @@
 // `shopOffers` stream) is persisted with the stock, so a reload shows the
 // same cards (balance.skill.draftSize of them) and never rolls the track again.
 import { esc } from '../components/tooltip.js';
+import { engravedIconHtml, engravedGlyphId } from '../components/engravedIcon.js';
 import { sfx } from '../sfx.js';
 import { modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
@@ -70,7 +71,7 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
 
   function tile(glyph, title, desc, reason = '') {
     const node = el('div', { class: `class-pick shop-offer${reason ? ' locked' : ''}` });
-    node.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}</div>`;
+    node.innerHTML = `<div class="glyph">${engravedIconHtml(engravedGlyphId(glyph)) || glyph}</div><div class="cp-body"><h3>${esc(title)}</h3>${desc ? `<p>${esc(desc)}</p>` : ''}</div>`;
     if (reason) node.append(statusText(reason, { class: 'shop-offer-avail' }));
     return node;
   }
@@ -132,7 +133,9 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
     respec(shelf) {
       for (const skillId of master()?.skills || []) {
         const plan = respecPlan(registries, run, skillId, { priceMult });
-        const host = tile(GLYPH.respec, trackLabel(registries, skillId), `${levelLine(skillId)} · ${t('master.respec.line', { refund: plan.refund })}`);
+        // A respec takes back the attribute points the track's picks granted (FINISH D13a): said before the press.
+        const withdrawn = plan.attributePoints ? ` · ${t('master.respec.attributes', { points: plan.attributePoints })}` : '';
+        const host = tile(GLYPH.respec, trackLabel(registries, skillId), `${levelLine(skillId)} · ${t('master.respec.line', { refund: plan.refund })}${withdrawn}`);
         actionButton(host, { id: `master-respec-${slug(skillId)}`, label: t('master.action.respec', { cost: plan.cost }), plan, commit: () => commitRespec(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }

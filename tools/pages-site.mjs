@@ -44,12 +44,13 @@ import { ASSET_BASE_FILE, packPinOf, packPages, publishPack, serviceWorkerFindin
 import { SW_FILE, SW_KILL, SW_VERSION, serviceWorkerSource } from './pages-sw.mjs';
 import { objectPath } from './asset-pack.mjs';
 import { fetchPlanFor } from './art-source.mjs';
+import { alternativePairs, channelRole, downloadChannel, siteRoot } from './alternative-branches.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync, symlinkSync, unlinkSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_URL = 'https://github.com/cehinds/AshenSpire';
@@ -58,7 +59,9 @@ const flag = (name, dflt) => { const i = argv.indexOf(name); return i >= 0 && ar
 const has = (name) => argv.includes(name);
 
 const REMOTE = flag('--remote', 'origin');
-const BRANCHES = flag('--branches', 'dev,test,release,main').split(',').map((s) => s.trim()).filter(Boolean);
+const alternativeRefs = execFileSync('git', ['-C', ROOT, 'for-each-ref', '--format=%(refname:strip=3)', `refs/remotes/${REMOTE}/alternative/`], { encoding: 'utf8' }).trim().split('\n');
+const alternativeBranches = alternativePairs(alternativeRefs).flatMap(({ dev, test }) => [dev, test]);
+const BRANCHES = flag('--branches', ['dev', 'test', 'release', 'main', ...alternativeBranches].join(',')).split(',').map((s) => s.trim()).filter(Boolean);
 // Clamped: each listed build that is no longer committed costs a rebuild, so a
 // dispatch typo must not turn one run into hundreds of them.
 const KEEP_MAX = 25;
@@ -89,8 +92,8 @@ const DOWNLOAD_PATH = 'download/AshenSpire.html';
 // `--build-missing <workdir>`, each such build newer than the branch's last
 // committed one is rebuilt here: one reusable sparse worktree (art/ left out;
 // the bundle never reads it), `node tools/launch.mjs --build-only` at that
-// commit, in the art tier CI gives the branch (light on dev/test, --full-art on
-// release/main, as dev-preview.yml does). A rebuild that leaves the worktree
+// commit, in the art tier CI gives the branch (light on dev, --full-art on
+// test/release/main, as dev-preview.yml does). A rebuild that leaves the worktree
 // dirty moved the committed box: it is not the build that commit names, so it
 // is skipped and said to be, never published.
 //
@@ -102,12 +105,21 @@ let BUILD_MISSING = flag('--build-missing', null);
 // OLDER build is a named warning; a head build that fails to rebuild would
 // leave the branch with no /latest/ while the run stays green, and Pages
 // replaces the whole site, so the published alias would silently vanish.
-// test is listed with dev: both rebuild on the same light path (Codex, #1360).
-// release/main are not listed: their --full-art rebuilds wait on the art fetch
-// (docs/ART-REPO-PLAN.md step 4), and a failure there must not take down dev's
-// publication.
-const HEAD_REQUIRED = new Set(flag('--require-head', 'dev,test').split(',').map((x) => x.trim()).filter(Boolean));
+// test is listed with dev (Codex, #1360). Since 2026-10-04 test's newer builds
+// rebuild --full-art, so a failed high-pack fetch there also stops the publish;
+// that is accepted: the high pack is the same release main's root build fetches
+// before this runs. release/main are not listed.
+const HEAD_REQUIRED = new Set(flag('--require-head', ['dev', 'test', ...alternativeBranches].join(',')).split(',').map((x) => x.trim()).filter(Boolean));
 const FULL_ART_BRANCHES = new Set(['release', 'main']);
+// test joined them on full art (owner, 2026-10-04), but only for commits whose
+// own dev-preview.yml gave test --full-art: an older test build was built light
+// and is rebuilt light, never with art it did not ship.
+function fullArtFor(branch, sha) {
+  branch = channelRole(branch);
+  if (FULL_ART_BRANCHES.has(branch)) return true;
+  if (branch !== 'test') return false;
+  try { return /== 'test' \|\|/.test(git(['show', `${sha}:.github/workflows/dev-preview.yml`], { stdio: ['ignore', 'pipe', 'ignore'] })); } catch { return false; }
+}
 // A BRANCH'S ROLE IS READ FROM THE CONTRACT THAT GOVERNS IT, not typed here.
 // `.agentops/governance/git-ownership.json` already carries one note per ref and
 // is the thing that actually decides who may write to each; duplicating that
@@ -126,6 +138,8 @@ function branchRoles() {
 }
 const BRANCH_ROLE = branchRoles();
 const NO_ROLE = 'no role recorded in git-ownership.json';
+const branchRole = (branch) => BRANCH_ROLE[branch] || (branch.startsWith('alternative/')
+  ? (channelRole(branch) === 'dev' ? 'Alternative development preview' : 'Alternative test preview') : NO_ROLE);
 // RULE 3'S SUBJECT, and it is not a list of site pages. These are THE BUILD and
 // the alias copies tools/launch.mjs keeps beside it. They are already on this
 // page — once per branch, per ordinal, byte-proven — so listing them again as
@@ -169,7 +183,10 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 //     (STABLE_PAYLOAD_DIRS), so the stable links serve what they served before.
 // assets/ STAYS (owner, 2026-10-02): /index-game.html (main's source page),
 // docs/component-catalog.html, items-preview.html, docs/low-poly-fighters/ and
-// pose-studio/ load their images from it. art/ GOES: its seven review sections
+// pose-studio/ load their images from it. It is served from main's tree while
+// main still tracks it; a main from after docs/EXTERNAL-ASSETS-PLAN.md step 13
+// tracks none, and /assets/ is then written from the object store instead
+// (writeSourceAssets: the light tier of main's manifest, about 15 MB). art/ GOES: its seven review sections
 // leave the site and, because discovery reads the assembled tree, the index
 // with them. Plain links into art/ now 404: docs/component-catalog.html,
 // pose-studio/, and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
@@ -425,7 +442,7 @@ function artifactsOf(b) {
     try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { hasMobile = false; }
     return committedEditions(html, hasMobile, () => committedArtifact(b.sha, MOBILE_ARTIFACT));
   }
-  const fullArt = FULL_ART_BRANCHES.has(b.branch);
+  const fullArt = fullArtFor(b.branch, b.sha);
   const seeded = MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha ? { dir: resolve(MAIN_BUILD) } : null;
   const r = seeded || rebuildAt(b.sha, fullArt);
   if (r.error) return r;
@@ -596,7 +613,7 @@ const EDITIONS = Object.freeze({
   mobile: { artifact: MOBILE_ARTIFACT, sub: 'mobile/', prefix: 'mobile-', label: 'mobile' },
 });
 function mb(bytes) { return `${(bytes / 1e6).toFixed(1)} MB`; }
-function downloadName(b, edition = 'full') { return `AshenSpire-${EDITIONS[edition].prefix}${b.branch}-${b.version ? `${b.version}.${b.ordinal}` : b.ordinal}.html`; }
+function downloadName(b, edition = 'full') { return `AshenSpire-${EDITIONS[edition].prefix}${downloadChannel(b.branch)}-${b.version ? `${b.version}.${b.ordinal}` : b.ordinal}.html`; }
 // A PACK-SHAPED BUILD'S DOWNLOAD IS ITS LIGHT SINGLE FILE at download/ (step
 // 6b): the page itself is a 9.5 MB HTML whose art lives in the site's store,
 // which saved alone would play with placeholders.
@@ -748,12 +765,12 @@ function titleOf(file) {
   } catch { return null; }
 }
 
-function rootIndex(branchData, generatedAt, otherPages) {
-  const cards = branchData.map((d) => {
+export function rootIndex(branchData, generatedAt, otherPages) {
+  const cards = (data) => data.map((d) => {
     const { branch, builds } = d;
     const b = builds[0];
-    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}</section>`;
-    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}
+    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(branchRole(branch))}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}</section>`;
+    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(branchRole(branch))}</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}
 <p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
 <a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a>${b.mobileBytes ? ` <a class="play" href="${branch}/${b.ordinal}/mobile/">Play mobile</a>` : ''} ${downloadButtons('', b, '')} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
@@ -761,7 +778,10 @@ function rootIndex(branchData, generatedAt, otherPages) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — builds</title><style>${CSS}</style></head><body><main>
 <h1>AshenSpire — every build, by branch</h1>
 <p class="lead">Each build is the game that commit shipped — the committed file byte for byte, or, for a commit that no longer commits its build, rebuilt here from that commit's source and checked against the source digest its <code>buildordinal.json</code> names — served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>. A newer build is the <strong>web edition</strong>: the page loads its art from this site's shared store, and its <em>Download</em> is the light-art single file at <code>/&lt;branch&gt;/&lt;build&gt;/download/</code>. An older full-art build also has its mobile edition <code>AshenSpire-mobile.html</code> at <code>/&lt;branch&gt;/&lt;build&gt;/mobile/</code>. The stamp here is the one the game shows on its title screen.</p>
-<div class="grid">${cards}</div>
+<div class="grid">${cards(branchData.filter((d) => !d.branch.startsWith('alternative/')))}</div>
+<h2 id="alternative-previews">Alternative branch previews</h2>
+<p>Shared updates with each alternative's own changes preserved. Versions and commits identify the published builds.</p>
+<div class="grid">${cards(branchData.filter((d) => d.branch.startsWith('alternative/')))}</div>
 <div class="note"><strong>Web edition builds</strong> play here with their art fetched as needed; in the game, <em>Download &amp; saves</em> → <em>Make available offline</em> keeps one in this browser for offline play. Their <em>Download</em> saves the light-art single file: one self-contained <code>.html</code> that plays by double-click.</div>
 <div class="note"><strong>Light builds</strong> (dev and test) are one file whose art is already phone-sized, so they have no separate mobile download. <strong>Two downloads, one game</strong> for the others: <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to under a third of its size and recompressed, held under 30 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
@@ -773,7 +793,7 @@ ${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)
 </main></body></html>`;
 }
 
-function branchIndex(branch, builds, head, generatedAt, current = true, headTracksBuild = false) {
+export function branchIndex(branch, builds, head, generatedAt, current = true, headTracksBuild = false) {
   // NO HEAD MEANS THE BRANCH IS GONE, and the page says exactly that rather
   // than linking a commit that does not exist. `head` is null only on that
   // path — buildsOf returns it for a branch with no ref.
@@ -781,13 +801,13 @@ function branchIndex(branch, builds, head, generatedAt, current = true, headTrac
     ? `branch head <a href="${REPO_URL}/commit/${head}">${head.slice(0, 10)}</a>`
     : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
-<p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
+<p><a href="${siteRoot(branch)}">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(branchRole(branch))} · ${headLine}</p>
 ${uncommittedNote(branch, current, headTracksBuild)}
 ${skippedNote(branch)}
 ${builds.length && !current ? `<p><a class="play" href="${builds[0].ordinal}/">Play newest listed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play newest listed mobile</a>` : ''}</p>` : ''}
-${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
+${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons(siteRoot(branch), builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
 <p class="meta">${builds[0].shape === 'pack' ? 'This is the web edition: Play loads its art from this site. A download is the light-art single file, one self-contained HTML file.' : builds[0].edition === 'light' ? 'A download is one self-contained HTML file. This is a light build: its art is the phone-sized set, so there is no separate mobile file.' : 'A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB.'} On a phone or tablet, download from here rather than from inside the game.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
-${rowsTable(builds, '../', new Set(current && builds[0] ? [builds[0]] : []))}
+${rowsTable(builds, siteRoot(branch), new Set(current && builds[0] ? [builds[0]] : []))}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
 
@@ -806,31 +826,101 @@ function inTree(ref, path) {
 }
 /**
  * THE SHARE IMAGE every build's og:image names (OG_IMAGE in tools/og-image.mjs),
- * written at the site root from the art in main's tree, or from the first other
- * published branch that has it while main predates it. Absent everywhere, the
- * run says so and --check goes red: a link preview with no picture is a defect,
- * not a reason to withhold the site.
+ * written at the site root. Since docs/EXTERNAL-ASSETS-PLAN.md step 13 the art
+ * is no longer in dev's tree (and leaves main's when dev is promoted), so it is
+ * taken FROM THE OBJECT STORE this run published: the object a branch's
+ * art-manifest.json names for OG_IMAGE.source (its high record, else its light
+ * one). A site whose store has neither falls back to the art in main's tree, or
+ * the first other published branch's, while one still carries it (a main from
+ * before step 13). Absent everywhere, the run says so and --check goes red: a
+ * link preview with no picture is a defect, not a reason to withhold the site.
+ * Called after every build is published, so the store is whole.
  */
 function writeOgImage(outDir, mainRef) {
-  const ref = ogImageSource(mainRef);
-  if (!ref) {
-    const why = `no published branch carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
+  const pick = ogImageChoice(outDir, mainRef);
+  if (!pick) {
+    const why = `no object in the store and no published branch's tree carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
     console.log(`  NO OG IMAGE ${why}`);
     if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site has no og:image::${why}`);
     return;
   }
-  writeFileSync(join(outDir, OG_IMAGE.sitePath), readGitArtifact(ROOT, ref, OG_IMAGE.source));
+  writeFileSync(join(outDir, OG_IMAGE.sitePath), ogImageBytes(outDir, pick));
 }
 /**
- * THE ONE ANSWER TO "WHICH BRANCH SUPPLIES THE SHARE IMAGE": main's tree, else
- * the first other published branch that carries OG_IMAGE.source, else null.
- * writeOgImage() and the selftest both ask it, so the selftest compares the
- * served file with the branch that really supplied it (Codex, #1442). `others`
- * and `has` are parameters only so the fallback can be proved without a repo
- * in that state.
+ * /assets/ FOR THE SOURCE PAGES, FROM THE STORE (docs/EXTERNAL-ASSETS-PLAN.md
+ * step 13). /index-game.html, docs/component-catalog.html, items-preview.html,
+ * docs/low-poly-fighters/ and pose-studio/ name images by their `assets/…` id.
+ * While main's tree carries assets/ the base tree serves it; once it does not,
+ * every id main's art-manifest.json lists is written at /<id> from the store
+ * this run published: the light object for an art id (the tier dev and test
+ * ship, about 15 MB, against 185 MB for high), the common one for a font. An id
+ * whose object the store lacks is counted and named, not invented. Returns the
+ * plan --check holds the site to: [{ id, object }], or null when main's tree
+ * still carries assets/ (or has no manifest).
  */
-function ogImageSource(mainRef, others = BRANCHES.filter((b) => b !== 'main').map(refFor), has = (r) => inTree(r, OG_IMAGE.source)) {
-  return [mainRef, ...others].find((r) => r && has(r)) || null;
+function sourceAssetPlan(outDir, mainRef) {
+  if (inTree(mainRef, 'assets')) return null;
+  let rows;
+  try { rows = JSON.parse(git(['show', `${mainRef}:art-manifest.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).assets || {}; } catch { return null; }
+  const plan = [];
+  for (const id of Object.keys(rows).sort()) {
+    if (!id.startsWith('assets/')) continue;
+    const rec = rows[id].light || rows[id].common;
+    if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
+    plan.push({ id, object: objectPath(rec.sha256, id) });
+  }
+  return plan;
+}
+function writeSourceAssets(outDir, mainRef) {
+  const plan = sourceAssetPlan(outDir, mainRef);
+  if (!plan) return;
+  let missing = 0;
+  for (const { id, object } of plan) {
+    const from = join(outDir, object);
+    if (!existsSync(from)) { missing++; continue; }
+    mkdirSync(dirname(join(outDir, id)), { recursive: true });
+    cpSync(from, join(outDir, id));
+  }
+  console.log(`  /assets/ for the source pages: ${plan.length - missing} of ${plan.length} ids written from the store`);
+  if (missing) {
+    const why = `${missing} of main's ${plan.length} assets/ ids have no object in the store; those images are missing on /index-game.html and the preview pages`;
+    console.log(`  ${why}`);
+    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site /assets/ incomplete::${why}`);
+  }
+}
+/** The bytes a choice names: the store's object, or the branch tree's art. */
+function ogImageBytes(outDir, pick) {
+  return pick.from === 'store' ? readFileSync(join(outDir, pick.object)) : readGitArtifact(ROOT, pick.ref, OG_IMAGE.source);
+}
+/** A ref's art-manifest.json row for the share image, or null (no manifest, or no such id). */
+function ogManifestRow(ref) {
+  try { return JSON.parse(git(['show', `${ref}:art-manifest.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).assets?.[OG_IMAGE.source] || null; } catch { return null; }
+}
+/**
+ * THE ONE ANSWER TO "WHERE DOES THE SHARE IMAGE COME FROM": the store's object
+ * for main's manifest row (high, else light), else each other published
+ * branch's in turn (high, else light); else main's tree, else the first other branch's tree that still
+ * carries OG_IMAGE.source; else null. → { from: 'store', ref, tier, sha, object }
+ * | { from: 'tree', ref } | null. writeOgImage() and --check both ask it, so
+ * --check compares the served file with what really supplied it (Codex, #1442).
+ * `others`, `has` and `rowOf` are parameters only so each fallback can be
+ * proved without a repository in that state.
+ */
+function ogImageChoice(outDir, mainRef, others = BRANCHES.filter((b) => b !== 'main').map(refFor), has = (r) => inTree(r, OG_IMAGE.source), rowOf = ogManifestRow) {
+  const refs = [mainRef, ...others].filter(Boolean);
+  // Ref first, tier second: main's light object beats another branch's high
+  // one, so the share image stays main's artwork while main has either tier.
+  for (const ref of refs) {
+    for (const tier of ['high', 'light']) {
+      const rec = rowOf(ref)?.[tier];
+      if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
+      const object = objectPath(rec.sha256, OG_IMAGE.source);
+      const abs = join(outDir, object);
+      if (existsSync(abs) && sha256(readFileSync(abs)) === rec.sha256) return { from: 'store', ref, tier, sha: rec.sha256, object };
+    }
+  }
+  const ref = refs.find((r) => has(r));
+  return ref ? { from: 'tree', ref } : null;
 }
 const isWebp = (buf) => buf.length > 12 && buf.subarray(0, 4).toString('latin1') === 'RIFF' && buf.subarray(8, 12).toString('latin1') === 'WEBP';
 /** Total bytes and files under `dir`, and the bytes per top-level entry. Symlinks are not followed. */
@@ -985,7 +1075,6 @@ function assemble(outDir, keep) {
     writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
   }
   mainHeadSha = git(['rev-parse', mainRef]).trim();
-  writeOgImage(outDir, mainRef);
   // THE STABLE PLAY LINKS (README: /AshenSpire.html, /AshenSpire-mobile.html).
   // A main tree that no longer tracks its build gets main's CI build instead;
   // with no build handed in, the run fails rather than publishing a site whose
@@ -1077,6 +1166,8 @@ function assemble(outDir, keep) {
       mkdirSync(latest, { recursive: true });
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
+      const stamp = esc(builds[0].version ? `${builds[0].version}.${builds[0].ordinal}` : builds[0].ordinal);
+      writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="24" role="img" aria-label="Published build ${stamp}"><rect width="220" height="24" rx="4" fill="#243344"/><text x="110" y="16" text-anchor="middle" fill="white" font-family="sans-serif" font-size="13">Build ${stamp}</text></svg>`);
       // A pack-shaped build's base (same depth, so the same text) and its download.
       for (const extra of [ASSET_BASE_FILE, 'download']) {
         const from = join(outDir, branch, String(builds[0].ordinal), extra);
@@ -1092,13 +1183,13 @@ function assemble(outDir, keep) {
     mkdirSync(join(outDir, branch), { recursive: true });
     const idx = branchIndex(branch, builds, head, generatedAt, current, headTracksBuild);
     writeFileSync(join(outDir, branch, 'index.html'), idx);
-    for (const b of builds) if (!idx.includes(`href="../${branch}/${b.ordinal}/"`)) throw new Error(`${branch} index does not link build ${b.ordinal}`);
+    for (const b of builds) if (!idx.includes(`href="${siteRoot(branch)}${branch}/${b.ordinal}/"`)) throw new Error(`${branch} index does not link build ${b.ordinal}`);
     checks++;
     branchData.push({ branch, head, builds, headTracksBuild, headOrdinal });
   }
   // Discovered AFTER the branch directories exist, so this tool's own output is
   // excluded by name-of-thing-we-just-wrote rather than by a hardcoded list.
-  const generatedNames = new Set([...BRANCHES, 'index.html', 'builds.json', 'objects', 'packs', SW_FILE]);
+  const generatedNames = new Set([...BRANCHES.map((branch) => branch.split('/')[0]), 'index.html', 'builds.json', 'objects', 'packs', SW_FILE]);
   const otherPages = discoverPages(outDir, generatedNames);
   const root = rootIndex(branchData, generatedAt, otherPages);
   writeFileSync(join(outDir, 'index.html'), root);
@@ -1118,6 +1209,10 @@ function assemble(outDir, keep) {
   // THE SERVICE WORKER, at the site root, always: the kill-switch must be
   // publishable whatever the site holds (tools/pages-sw.mjs).
   const serviceWorker = { ...writeServiceWorker(outDir, { kill: SW_KILL_RUN }), version: SW_VERSION };
+  // The share image and the source pages' /assets/, now that every build's
+  // objects are in the store.
+  writeOgImage(outDir, mainRef);
+  writeSourceAssets(outDir, mainRef);
   dropBuildTree();
   writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, skipped: skippedBuilds, serviceWorker, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
@@ -1286,7 +1381,7 @@ function discoveryFixture() {
     ['hud/', 'Owner HUD'],
     ['index-game.html', 'Play AshenSpire'],
   ];
-  const got = discoverPages(dir, new Set([...BRANCHES, 'index.html', 'builds.json'])).map((p) => [p.href, p.title]);
+  const got = discoverPages(dir, new Set([...BRANCHES.map((branch) => branch.split('/')[0]), 'index.html', 'builds.json'])).map((p) => [p.href, p.title]);
   rmSync(dir, { recursive: true, force: true });
 
   const same = got.length === expected.length && expected.every(([h, t], i) => got[i][0] === h && got[i][1] === t);
@@ -1346,10 +1441,19 @@ function baseTreeFindings(dir) {
   // The share image is the supplying branch's art, byte for byte: main's
   // while main carries it, else the fallback writeOgImage() used.
   const og = join(dir, OG_IMAGE.sitePath);
-  const ogRef = ogImageSource(mainRef);
-  if (ogRef) out.push([`/${OG_IMAGE.sitePath} is ${ogRef}'s ${OG_IMAGE.source}, byte for byte`, existsSync(og) && Buffer.compare(readFileSync(og), readGitArtifact(ROOT, ogRef, OG_IMAGE.source)) === 0]);
-  else out.push([`no published branch carries ${OG_IMAGE.source}, and /${OG_IMAGE.sitePath} is said to be missing rather than invented`, !existsSync(og)]);
+  const ogPick = ogImageChoice(dir, mainRef);
+  if (ogPick) out.push([`/${OG_IMAGE.sitePath} is ${ogPick.from === 'store' ? `the store's ${ogPick.object} (${ogPick.ref}'s ${ogPick.tier} ${OG_IMAGE.source})` : `${ogPick.ref}'s ${OG_IMAGE.source}`}, byte for byte`, existsSync(og) && Buffer.compare(readFileSync(og), ogImageBytes(dir, ogPick)) === 0]);
+  else out.push([`neither the store nor any published branch carries ${OG_IMAGE.source}, and /${OG_IMAGE.sitePath} is said to be missing rather than invented`, !existsSync(og)]);
   for (const d of BASE_TREE_KEPT_DIRS) if (inTree(mainRef, d)) out.push([`${d}/ is kept (${d === 'assets' ? 'owner, 2026-10-02' : 'owner answer 7'})`, existsSync(join(dir, d))]);
+  // A main from after step 13 tracks no assets/: the site writes it from the store.
+  const sourcePlan = sourceAssetPlan(dir, mainRef);
+  if (sourcePlan) {
+    // Every id must be there and be its object's bytes: an id whose object the
+    // store lacks was never written, and is a missing image, not a pass.
+    const absent = sourcePlan.filter(({ id, object }) => !existsSync(join(dir, object)) || !existsSync(join(dir, id)));
+    const wrong = sourcePlan.filter(({ id, object }) => existsSync(join(dir, object)) && existsSync(join(dir, id)) && Buffer.compare(readFileSync(join(dir, id)), readFileSync(join(dir, object))) !== 0);
+    out.push([`/assets/ is main's manifest, written from the store's objects (${sourcePlan.length - absent.length - wrong.length} of ${sourcePlan.length} ids${absent.length ? `; missing: ${absent.slice(0, 3).map((w) => w.id).join(', ')}${absent.length > 3 ? ' …' : ''}` : ''}${wrong.length ? `; wrong: ${wrong.slice(0, 3).map((w) => w.id).join(', ')}` : ''})`, sourcePlan.length > 0 && absent.length === 0 && wrong.length === 0]);
+  }
   // The index links nothing under an excluded root (the art review sections).
   const index = existsSync(join(dir, 'index.html')) ? readFileSync(join(dir, 'index.html'), 'utf8') : '';
   const listed = (JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || []).filter((pg) => BASE_TREE_EXCLUDED_DIRS.includes(pg.path.split('/')[0]));
@@ -1404,10 +1508,40 @@ function ogImagePlant() {
     // at all is null — the case writeOgImage() reports instead of throwing.
     const holders = new Set(['origin/test', 'origin/dev']);
     const has = (r) => holders.has(r);
+    const none = () => null;
+    const treeOf = (pick) => (pick && pick.from === 'tree' ? pick.ref : null);
+    // The store (step 13): an object the site holds under a branch's manifest row.
+    const bytes = { high: Buffer.from('RIFF\0\0\0\0WEBPVP8 high'), light: Buffer.from('RIFF\0\0\0\0WEBPVP8 light') };
+    const rows = {};
+    for (const tier of ['high', 'light']) {
+      const shaOf = sha256(bytes[tier]);
+      rows[tier] = { sha256: shaOf, path: `x/${tier}.webp`, bytes: bytes[tier].length };
+      mkdirSync(dirname(join(dir, objectPath(shaOf, OG_IMAGE.source))), { recursive: true });
+    }
+    const placed = (tiers) => {
+      for (const tier of ['high', 'light']) {
+        const abs = join(dir, objectPath(rows[tier].sha256, OG_IMAGE.source));
+        if (tiers.includes(tier)) writeFileSync(abs, bytes[tier]); else rmSync(abs, { force: true });
+      }
+    };
+    const rowFor = (map) => (r) => map[r] || null;
+    placed(['light']);
+    const lightOnly = ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, rowFor({ 'origin/dev': { light: rows.light, high: rows.high } }));
+    placed(['high', 'light']);
+    const highFirst = ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, rowFor({ 'origin/main': { light: rows.light, high: rows.high } }));
+    // Main's high object missing, another branch's high one present: main's light still wins.
+    const mainLight = ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, rowFor({ 'origin/main': { light: rows.light, high: { ...rows.high, sha256: 'f'.repeat(64) } }, 'origin/dev': { high: rows.high } }));
+    writeFileSync(join(dir, objectPath(rows.high.sha256, OG_IMAGE.source)), 'not those bytes');
+    const tampered = ogImageChoice(dir, 'origin/main', [], () => false, rowFor({ 'origin/main': { high: rows.high } }));
+    placed([]);
     return [
-      ['the share image comes from main when main carries it', ogImageSource('origin/main', ['origin/dev'], () => true) === 'origin/main'],
-      ['the share image falls back to the first other branch that carries it', ogImageSource('origin/main', [null, 'origin/release', 'origin/test', 'origin/dev'], has) === 'origin/test'],
-      ['no branch carrying the share image is null, not a throw', ogImageSource('origin/main', ['origin/release'], has) === null],
+      ['the share image is the store\'s high object when a branch\'s manifest names one the site holds', highFirst?.from === 'store' && highFirst.tier === 'high' && highFirst.ref === 'origin/main'],
+      ['the share image is the store\'s light object when the site holds no high one (a light-only dev)', lightOnly?.from === 'store' && lightOnly.tier === 'light' && lightOnly.ref === 'origin/dev'],
+      ['main\'s light object is chosen before another branch\'s high one', mainLight?.from === 'store' && mainLight.tier === 'light' && mainLight.ref === 'origin/main'],
+      ['a store object whose bytes are not its sha256 is never chosen', tampered === null],
+      ['without a store object, the share image comes from main\'s tree when main carries it', treeOf(ogImageChoice(dir, 'origin/main', ['origin/dev'], () => true, none)) === 'origin/main'],
+      ['the share image falls back to the first other branch whose tree carries it', treeOf(ogImageChoice(dir, 'origin/main', [null, 'origin/release', 'origin/test', 'origin/dev'], has, none)) === 'origin/test'],
+      ['no store object and no branch carrying the share image is null, not a throw', ogImageChoice(dir, 'origin/main', ['origin/release'], has, none) === null],
       [`--check is red when /${OG_IMAGE.sitePath} is missing`, redWithout],
       [`--check passes /${OG_IMAGE.sitePath} once it is a WebP`, greenWith],
     ];
@@ -1483,7 +1617,7 @@ function boundary() {
   console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
 }
 
-try {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) try {
   if (has('--selftest')) {
     // THE FIXTURE RUNS FIRST AND ITS ANSWER IS NOT THE GENERATOR'S. Everything
     // below reads the manifest discovery wrote, so it can only ever check the

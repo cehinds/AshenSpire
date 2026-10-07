@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { resolveCombatAnimation as route, combatRestAfterEvent as restAfter } from '../src/model/combatAnimation.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { tagService } from '../src/model/tagService.js';
 import { createSession } from '../tools/session.mjs';
 import { equipmentAnimationForLoadout, animationClip, animationArt } from '../src/model/equipmentAnimation.js';
@@ -80,7 +81,8 @@ test('rest reducer is owner-relative and paced/flush reduction agree',()=>{
   assert.equal(events.reduce((r,e,i)=>restAfter(r,e,'a',plans[i]),'idle'),rest);
 });
 test('authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets',()=>{
-  const host=createSession({registries:reg,seedString:'GUARD2'});
+  // The actor/profile receipt fixture replays the pre-expansion character setup.
+  const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
   for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});
   host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
   const combat=host.live.combat,p= combat.players.get('p2');

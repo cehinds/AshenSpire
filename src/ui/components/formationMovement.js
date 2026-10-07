@@ -2,6 +2,7 @@ import { presentationConfig } from '../../model/advancedConfig.js';
 import { armHold, holdMs } from './holdconfirm.js';
 import { openConfirmationModal } from './confirmationModal.js';
 import { veilIsOpen } from './veil.js';
+import { t } from '../strings.js';
 
 export function wireFormationMovement(field, { readSettings, holdConfig, available, plan, move }) {
   const grid = field.querySelector('.formation-grid');
@@ -11,11 +12,15 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
   const confirm = document.createElement('button');
   confirm.type = 'button'; confirm.dataset.formationMove = '';
   const cancel = document.createElement('button');
-  cancel.type = 'button'; cancel.textContent = 'Cancel';
+  cancel.type = 'button'; cancel.textContent = t('common.cancel');
   tray.append(confirm, cancel); field.append(tray);
   let selected = null;
   let released = false;
-  const config = () => presentationConfig(readSettings());
+  // One reading per refresh pass. The pass asks for the config per tile and per
+  // hold control (seventy-odd times) and nothing in it can change the settings,
+  // so it reads them once; outside a pass every call reads them fresh.
+  let passConfig = null;
+  const config = () => passConfig || presentationConfig(readSettings());
   const duration = key => config()[key] === 'hold' ? holdMs(readSettings(), holdConfig) : 0;
   const usable = (cell, fromReview = false) => field.isConnected && tiles.some(tile => tile.dataset.cell === cell && !tile.hidden) && (!veilIsOpen() || fromReview) && available() && plan(cell).ok
     && !tiles.some(tile => tile.dataset.cell === cell && tile.dataset.occupied === 'true');
@@ -29,7 +34,7 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
     refresh();
     openConfirmationModal({ title: `Move to ${cell}?`,
       message: plan(cell).cost ? 'Move to this position for 1 action.' : 'Move to this position for free.',
-      confirmLabel: 'Move', cancelLabel: 'Cancel', returnFocusElement: control,
+      confirmLabel: t('formation.move.confirm'), cancelLabel: t('common.cancel'), returnFocusElement: control,
       onConfirm: () => commit(cell, true), onCancel: () => { selected = null; refresh(); },
     });
   };
@@ -53,6 +58,10 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
   field.addEventListener('formationlayoutchange', refresh);
   function refresh() {
     if (released) return;
+    passConfig = presentationConfig(readSettings());
+    try { refreshPass(); } finally { passConfig = null; }
+  }
+  function refreshPass() {
     const enabled = config().movementEnabled;
     if (!enabled || !config().movementNeedsSelection || (selected && !usable(selected))) selected = null;
     grid.setAttribute('aria-hidden', String(!enabled));

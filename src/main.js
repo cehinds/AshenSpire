@@ -1,3 +1,12 @@
+import { rollPendingAbilityOffers } from './model/abilityOffers.js';
+import { queueInitialProgression } from './model/initialProgression.js';
+import { isAbilitySkill } from './model/abilityGrades.js';
+import { expandedProgression } from './model/classMilestones.js';
+import { claimClassMilestoneReward, rollClassMilestoneRewards } from './model/classMilestoneOffers.js';
+import { completedRunMeta, commitRunFinish } from './model/runCompletion.js';
+import { mountInitialClassMastery } from './ui/components/classMastery.js';
+import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
+import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
@@ -10,6 +19,7 @@ import { bootArtStatusModel } from './ui/models/BootArtStatusModel.js';
 import { whenNoOverlay } from './ui/whenNoOverlay.js';
 import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
+import { quickStartRunConfig } from './model/characterCreation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
@@ -45,15 +55,15 @@ import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js
 import { questBoardModel, questExchange } from './ui/models/QuestBoardModel.js';
 import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
 import { smithServicesAt } from './model/cardExtraction.js';
-import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
-import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, xpToNext as skillXpToNext } from './model/skills.js';
+import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
+import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
@@ -72,7 +82,6 @@ import {
   rollEncounter,
   rollRuneReward,
   rollCombatCardOffer,
-  rollSkillDraftIds,
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
@@ -108,10 +117,15 @@ import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
-import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
+import { seedSettingsDefaults, seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoice } from './model/settingsDefaults.js';
+import { BUILD_VERSION } from './buildversion.js';
+import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
-import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { mountClassRespec } from './ui/components/classRespec.js';
+import { applyClassRespec, classRespecAvailability, resetClassTree } from './model/classRespec.js';
+import { openCharacterSheet } from './ui/screens/characterSheet.js';
+import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, resetKeys, allResettableKeys, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -136,6 +150,7 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
+import { createHaptics, haptic } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -205,7 +220,7 @@ let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
-function rebuildRegistries(configuration = {}) {
+function rebuildRegistries(configuration = {}, masteryRun = null) {
   const configured = configuredContentBundle(contentBundle, configuration);
   const result = validateContent(configured);
   const structuralProblems = advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
@@ -218,6 +233,7 @@ function rebuildRegistries(configuration = {}) {
   } else {
     registries = createRegistries(configured);
   }
+  registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;
@@ -359,10 +375,21 @@ function seedPromotedDefaults(meta, settings) {
   meta.settings = settings;
   saves.saveMeta(meta);
 }
-seedPromotedDefaults(activeMeta, activeSettings);
+let settingsChoicePending = !shotState && saves.profileStatus().ok
+  && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
+// A device with preferences gets its choice before a new promotion moves them.
+if (!settingsChoicePending) {
+  seedPromotedDefaults(activeMeta, activeSettings);
+}
+let settingsChoiceChecked = !!shotState;
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
+// Haptics have their own seam (ui/haptics.js), played by the call sites that
+// mean card play, damage taken and turn start; a moment with a pattern in
+// content/haptics.js vibrates unless Settings → Audio → Haptics is off (read
+// live, per cue). Not fed from sfx ids: equipment swaps share the card sound.
+haptic.sink = createHaptics({ getSettings: () => activeSettings });
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
 initInput({ getSettings: () => activeSettings });
@@ -1005,6 +1032,10 @@ let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback incr
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
+  if (!shotState) refreshRunClassMastery(run, saves.loadMeta(), registries);
+  // The derived skill bonus is restamped at every save, so a level, a new card
+  // or a swapped hand shows on the faces the next screen draws (SPEC §13.4o).
+  stampSkillBonuses(registries, run);
   saves.saveRun(run, rng, activeSlot);
   sendLanStatus();
 }
@@ -1075,7 +1106,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1118,7 +1149,10 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  const configSnapshot = advancedConfigSnapshot(saves.loadMeta().settings || {});
+  const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}) };
+  // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
+  // the old Exposure states; the pose must also carry their older rules.
+  if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,
@@ -1129,6 +1163,11 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
+  if (quickStart) run.quickStart = true;
+  if (!shotState) {
+    openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
+    registries = registriesForClassMastery(registries, run);
+  }
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
   run.path = [];
   run.seenEvents = [];
@@ -1165,11 +1204,14 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
-  startClimb();
+  startClimb({ skipOpening });
 }
 
 // After the deck is finalized (incl. any draft), generate the map and go.
-function startClimb() {
+// `skipOpening` is the Title's Quick start (characterCreation.quickStart): the
+// player asked to be in the climb now, so this climb does not queue the opening.
+// It records nothing as seen — the next ordinary climb still plays it.
+function startClimb({ skipOpening = false } = {}) {
   // A dealt deck (Sealed, Draft, with any picks) was never stamped: give its
   // cards their equipment faces now, as the load door and every later restamp
   // do, so the first fight plays the same cards a reload would. A pool deck is
@@ -1177,7 +1219,7 @@ function startClimb() {
   if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
-  if ((!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
+  if (!skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
     run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
   }
   persist();
@@ -1305,6 +1347,8 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   resetArmouryTraySession();
   activeSlot = slot;
   run = loaded;
+  refreshRunClassMastery(run, saves.loadMeta(), registries);
+  registries = registriesForClassMastery(registries, run);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
@@ -1316,7 +1360,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     const configured = configuredContentBundle(contentBundle, currentXpSnapshot);
     if (validateContent(configured).ok && advancedConfigStructuralProblems(contentBundle, currentXpSnapshot.overrides).length === 0) {
       run.advancedConfigSnapshot = currentXpSnapshot;
-      rebuildRegistries(currentXpSnapshot);
+      rebuildRegistries(currentXpSnapshot, run);
       persist();
     } else {
       showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
@@ -1330,6 +1374,10 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   // this run's stream counters and the previous run's rng is still standing
   // until the line above.
   if (run.prologue?.version === 1) { migratePrologueState(run); persist(); }
+  if (run.pendingFinish) {
+    const victory = run.pendingFinish.victory;
+    return showFinishedRun(victory);
+  }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
     mountPendingReward();
@@ -1609,6 +1657,14 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     registries,
     onContinue: (slot) => resumeRun(slot),
     onNew: (slot) => showCustomize(slot),
+    // FINISH §6: authored defaults, a fresh seed, the first empty slot. A full
+    // set of slots falls back to slot 1, where startRunInSlot asks before it
+    // replaces the save there, as Begin does.
+    onQuickStart: () => {
+      rebuildRegistries(saves.loadMeta().settings || {});
+      const empty = slots.find((s) => !s.summary);
+      startRunInSlot({ ...quickStartRunConfig(registries), seedString: randomSeedString() }, empty ? empty.slot : 1);
+    },
     // A delete returns to the door it came from, with the slot now empty.
     onDelete: (slot, from = null) => {
       saves.clearRun(slot);
@@ -1630,6 +1686,46 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     artNotice: drawArtNotice,
   });
   if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
+  // Fullscreen-first stays first. Offer the choice only after the startup gate
+  // and profile sync have settled, before the player starts or resumes a run.
+  if (!settingsChoiceChecked && saves.profileStatus().ok) {
+    settingsChoiceChecked = true;
+    // Sync may have introduced or removed preferences while the gate was up.
+    const meta = saves.loadMeta();
+    settingsChoicePending = needsSettingsChoice(meta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
+    if (!settingsChoicePending && meta.settingsChoiceBuild !== BUILD_VERSION) {
+      try { saves.saveMeta({ ...meta, settingsChoiceBuild: BUILD_VERSION }); } catch { /* retry acknowledgement on the next boot */ }
+    }
+  }
+  if (settingsChoicePending) {
+    const choose = (apply) => {
+      const result = commitSettingsChoice(saves.loadMeta(), BUILD_VERSION, {
+        apply,
+        load: () => saves.loadMeta(),
+        save: meta => saves.saveMeta(meta),
+        restore: meta => { activeMeta = meta; applyRestoredSettings(meta.settings); },
+      });
+      if (result.ok) { settingsChoicePending = false; activeMeta = saves.loadMeta(); }
+      rebuildRegistries(activeSettings);
+      return result;
+    };
+    openSettingsDefaultsChoice({
+      returnFocusElement: document.activeElement,
+      onLocal: () => choose(() => {
+        const changes = keepLocalSettings(activeSettings, promotionFor(SETTINGS_DEFAULTS, promotionDebug()));
+        return persistSettingsChange(changes);
+      }),
+      onDefaults: () => choose(() => {
+        let saved = true;
+        resetKeys(activeSettings, changes => {
+          const result = persistSettingsChange(changes);
+          saved &&= result?.ok !== false;
+          return result;
+        }, allResettableKeys());
+        return { ok: saved };
+      }),
+    });
+  }
   // Forsaken Together needs the launcher's server behind the page.
   lanInfo().then((info) => {
     const btn = app.querySelector('#lan-play');
@@ -1668,7 +1764,7 @@ function persistSettingsChange(changed) {
     const problems = advancedConfigStructuralProblems(contentBundle, snapshot.overrides);
     if (validation.ok && problems.length === 0) {
       run.advancedConfigSnapshot = snapshot;
-      rebuildRegistries(snapshot);
+      rebuildRegistries(snapshot, run);
       if (xpCombat) xpCombat.registries = registries;
       persist();
     } else {
@@ -1772,7 +1868,35 @@ function showArmoury(request = '', returnTo = showMap) {
       persist();
     },
     onClose: returnTo,
-    onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo) : null,
+    onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
+    onProgression: () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
+    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards,
+      onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null }),
+    onClassRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null,
+  });
+}
+
+// The Progression hub opens over the current screen. Which character-level rewards it lists are the player's own
+// Settings → Advanced → Rewards answers, the ones the level door reads.
+function showClassRespec(returnTo = () => showArmoury({ destination: 'character' }), opener) {
+  return resetClassTree(registries,run,{openRespec:()=>mountClassRespec({registries,run,meta:saves.loadMeta(),opener,
+    onApply:preview=>applyClassRespec(registries,run,preview,{saveCandidate:candidate=>saves.saveRun(candidate,rng,activeSlot)}),
+    onClose:returnTo})});
+}
+function showCharacterSheet(opener, options = {}) {
+  if (!run) return null;
+  const settings = saves.loadMeta().settings || {};
+  return openCharacterSheet({
+    registries, run, opener, settings, onChange: persist,
+    onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec() : null,
+    ...options,
+    offers: {
+      statPoints: settingOn(settings, 'rewardLevelStatPoints'),
+      feats: settingOn(settings, 'rewardLevelFeats'),
+      classTree: settingOn(settings, 'rewardLevelClassTree'),
+      levelCards: settingOn(settings, 'rewardLevelCards'),
+      pointsPerLevel: resolveLevelUpValue(settings),
+    },
   });
 }
 
@@ -1785,12 +1909,16 @@ function deckDoors(services = null) {
   return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
 }
 
-function showDeckEditor(returnTo = showMap) {
+function showDeckEditor(returnTo = showMap, hub = true) {
   if (!run) return;
   mountDeckEditor(document.body, {
     registries,
     run,
     settings: saves.loadMeta().settings || {},
+    onNavigate: hub ? destination => {
+      persist(); showArmoury(destination === 'character' ? 'grid' : 'rack', returnTo);
+      document.querySelector(`.armoury-head [data-modal-tab="${destination}"]`)?.focus({ preventScroll: true });
+    } : null,
     // A confirmed edit is written at once; a cancelled one restored the run
     // exactly (cancelDeckEdit), so there is nothing to write.
     onDone: () => { persist(); returnTo(); },
@@ -1980,13 +2108,39 @@ function treasureSmithingReward() {
 }
 
 function finishRun(victory) {
-  const result = runResult(victory);
-  const meta = saves.recordResult(result);
-  meta.progress = recordProgress(meta.progress, result);
-  const fresh = evaluateUnlocks(registries.unlocks, meta);
-  if (fresh.length) meta.unlocked = [...(meta.unlocked || []), ...fresh];
-  saves.saveMeta(meta);
-  return fresh.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
+  return commitRunFinish(run, {
+    victory,
+    finishId: run.classMasteryState?.receiptId || crypto.randomUUID(),
+    checkpoint: persist,
+    bank: () => {
+      if (!hasClassMastery(run)) return;
+      const bank = saves.bankClassMastery(run, registries);
+      if (!bank.ok) throw new Error(`Class mastery was not saved: ${bank.reason}`);
+      adoptClassMasteryProfile(run, bank.meta);
+      if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+    },
+    complete: (pending) => {
+      const result = { ...runResult(pending.victory), finishId: pending.id };
+      const completed = completedRunMeta(registries, saves.loadMeta(), result);
+      const saved = saves.saveMeta(completed.meta);
+      if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
+      return completed.unlocked.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
+    },
+    clear: () => {
+      saves.clearRun(activeSlot);
+      if (saves.hasRun(activeSlot)) throw new Error('The completed run could not be cleared from its slot.');
+    },
+  });
+}
+
+function showFinishedRun(victory) {
+  const result = finishRun(victory);
+  const retry = () => showFinishedRun(victory);
+  mountGameOver(app, { registries, game: run, victory, earned: result.earned,
+    onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry });
+  if (!result.ok) openSaveStatusReview({
+    ...runIdentityParts(), savedAt: run.savedAt ?? null, error: result.error, onRetry: retry,
+  });
 }
 
 function showCustomize(slot = 1, catalog = false) {
@@ -2007,6 +2161,8 @@ function showCustomize(slot = 1, catalog = false) {
       : null,
     onBack: showTitle,
     slot,
+    onSettings: showSettings,
+    onQuit: quitGame,
     // W2c REPLACE, AT THE WRITE BOUNDARY (FRONTEND-WIREFRAMES W1l/W2c): choosing
     // an occupied slot on the title touched nothing; Begin is where the old
     // climb would be written over, so this is where it is asked, naming both
@@ -2078,19 +2234,42 @@ function showDraft() {
  * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
  * the map's own reads — grep `meta.settings` in ui/screens/map.js and
  * model/mapknowledge.js and mapboard.js, and they are the keys below.
+ *
+ * AND "Use flasks outside combat", which the map's Potions control
+ * (components/runPotions.js) and the run HUD's flask icons read at mount. A
+ * change here replaces `activeMeta`, so without the redraw the map kept
+ * refusing Drink after the player had turned it on, and its own redraw after a
+ * Potions action re-read the meta it was mounted with
+ * (tools/flask-menu-probe.mjs, persistence).
  */
 const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
+// Only where a flask surface reads it: the world atlas is a `.mapscreen` too but
+// has no Potions control, and a remount drops its selected destination
+// (#1474 review).
+const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
-  if (!MAP_REMOUNT_KEYS.some((k) => k in changed)) return;
-  if (!app.querySelector('.mapscreen')) return;
-  showMap();
+  const screen = app.querySelector('.mapscreen');
+  if (!screen) return;
+  const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);
+  const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');
+  // The flask key only changes what the Potions control offers, so the redraw
+  // keeps the destination the player had selected (#1474 review).
+  const selectedId = !mapKey && flaskKey ? screen.querySelector('.map-node.selected')?.dataset.node || null : null;
+  if (mapKey || flaskKey) showMap({ selectedId });
 }
 
-function showMap() {
+function showMap(opts) {
+  if (run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
+  queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
+  // Quick start previews its first fight after the required tree choice.
+  // Enter still confirms travel, and every other reachable route can be chosen.
+  const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon
+    ? run.mapGraph.startIds.find(id => run.mapGraph.nodes[id].type === 'monster') : null;
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : suggested;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
-  if (run.legacyDungeon) return showLegacyDungeon();
+  if (run.legacyDungeon) return showLegacyDungeon({ selectedId });
   if (run.journey) return mountWorldAtlas(app, {
     run, registries,
     serviceContext: {
@@ -2111,6 +2290,7 @@ function showMap() {
     registries,
     run,
     meta: activeMeta,
+    selectedId,
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
@@ -2395,11 +2575,13 @@ function combatMods(pool, encounter = null) {
   return { hpMult, damageMult, enemyStatuses, playerStatuses };
 }
 
-function showLegacyDungeon() {
+function showLegacyDungeon(opts) {
+  // A flask-only redraw hands back the selected node, as on the act map.
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   if (run.pendingReward) return mountPendingReward();
   if (run.legacyDungeon.activeRest) return showRest();
   if (run.legacyDungeon.pending) return showDungeonDialogue();
-  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow,
+  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow, selectedId,
     onTravel: id => { if (travelDungeon(run, id)) { persist(); enterDungeonLocation(); } },
     onInspect: enterDungeonLocation, onLeave: leaveLegacyDungeon });
 }
@@ -2449,9 +2631,8 @@ function leaveLegacyDungeon() {
   if (run.journey) completeJourneyNode(run.journey, run.legacyDungeon.parentNodeId);
   delete run.legacyDungeon;
   if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (!run.journey && run.actNumber >= 3 && !endlessOn())) {
-    audio.music('victory'); sendLanStatus({ victory: true }); saves.clearRun(activeSlot);
-    const earned = finishRun(true);
-    return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
+    audio.music('victory'); sendLanStatus({ victory: true });
+    return showFinishedRun(true);
   }
   if (run.journey) { persist(); showMap(); } else advanceAct();
 }
@@ -2642,7 +2823,9 @@ async function onCombatEnd(result, combat, enc) {
     tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
   };
   const pendingBefore = pendingLevelCount(registries, run);
-  const manualLevelUp = settingOn(saves.loadMeta().settings, 'manualLevelUp');
+  // Every level waits for its press (SPEC §13.4o): XP is always banked, and the
+  // reward door's Level up claims it. No setting applies a level on its own.
+  const manualLevelUp = true;
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
@@ -2690,9 +2873,7 @@ async function onCombatEnd(result, combat, enc) {
     sfx.play('youDied');
     run.hp = 0;
     sendLanStatus({ dead: true });
-    saves.clearRun(activeSlot);
-    const earnedOnDeath = finishRun(false);
-    return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
+    return showFinishedRun(false);
   }
   // Settings → Advanced → Recovery: a won fight restores its after-combat
   // percent of each pool (0 at the defaults, model/recoveryRules.js).
@@ -2728,9 +2909,7 @@ async function onCombatEnd(result, combat, enc) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       sendLanStatus({ victory: true });
-      saves.clearRun(activeSlot);
-      const earned = finishRun(true);
-      return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
+      return showFinishedRun(true);
     }
     // Act boss down: boss rewards, then the climb continues.
     // A boss always drops an armament — unless you already own every one it
@@ -2744,7 +2923,10 @@ async function onCombatEnd(result, combat, enc) {
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelsEarned),
+      skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
+      skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
+      skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
+      ...rollCardRows('boss', levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       ...sigilOffer('boss'),
       armamentId: bossArmament,
@@ -2753,13 +2935,12 @@ async function onCombatEnd(result, combat, enc) {
       xpReceipt,
       xpBefore,
       levelChoices,
+      characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
     };
-    return beginPendingReward(bossRewards, { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
+    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
   }
 
-  // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
-  // a level the fight bought is offered as a pick from the track's own
-  // schools, and while one is on the table the class-card offer is not.
+  // Skill and class level rewards are independent of the combat card roll.
   const drafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
   const classDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
   const rewards = {
@@ -2767,7 +2948,10 @@ async function onCombatEnd(result, combat, enc) {
     cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
     classDrafts,
     skillDrafts: drafts,
-    ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelsEarned),
+    skillRankUps: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
+    skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
+    skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
+    ...rollCardRows(enc.pool, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
     // SPEC §15.4: a legendary sigil, on its own `sigils` stream (0 ships: none).
@@ -2781,22 +2965,29 @@ async function onCombatEnd(result, combat, enc) {
     xpReceipt,
     xpBefore,
     levelChoices,
+    characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
   };
-  beginPendingReward(rewards, { source: enc.pool, after: 'map' });
+  beginPendingReward(withSourceBonuses(rewards), { source: enc.pool, after: 'map' });
+
+  function withSourceBonuses(offer) {
+    return runSourceRewardOffer(registries, rng, run, offer, {
+      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, flatRarity: chaosRewardsOn(), meta:saves.loadMeta(),
+    });
+  }
 }
 
 /**
- * The spoils' card rows (SPEC §15.1): the card offer — unless a draft holds
- * its seat, the schedule turns it off for this pool, or its chance misses —
+ * The spoils' card rows (SPEC §15.1): the independent combat card offer,
+ * unless the schedule turns it off for this pool or its chance misses,
  * and a level card per level this fight bought when `onLevelUp` is on. The
  * decision is engine/encounters.js rollCombatCardOffer's; this hands it the
  * run's facts and returns the offer fields (`cardIds`, and `cardMissed` /
  * `levelCards` only when they say something, so the shipped schedule writes
  * the offer it wrote before).
  */
-function rollCardRows(pool, draftWaiting, levelUps) {
+function rollCardRows(pool, levelUps) {
   return rollCombatCardOffer(registries, rng, {
-    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: !!draftWaiting,
+    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: false,
     levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
   }).rewards;
 }
@@ -2807,12 +2998,13 @@ function rollLevelChoices(levelsEarned) {
   const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
   if (!offerFeats && !offerClassTree) return [];
   const out = [];
-  const firstRewardLevel = run.level.level - (settingOn(settings, 'manualLevelUp') ? 0 : levelsEarned);
+  const firstRewardLevel = run.level.level;
   for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
     const options = [];
     if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
-    if (offerClassTree) {
-      const level = Math.max(run.skills?.[classSkillId(run.class)]?.level || 0, firstRewardLevel + ordinal + 1);
+    if (offerClassTree && !run.classUnequipped) {
+      const masteryLevel = run.skills?.[classSkillId(run.class)]?.level || 0;
+      const level = hasClassMastery(run) ? masteryLevel : Math.max(masteryLevel, firstRewardLevel + ordinal + 1);
       options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
         .map((id) => ({ kind: 'classNode', id })));
     }
@@ -2836,10 +3028,101 @@ function rollSkillDrafts(pool, includeBanked = false) {
     if (!row) continue;
     const queued = row.pendingDrafts || 0;
     const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    if (expandedProgression(run) && isAbilitySkill(track.id)) {
+      out.push(...rollPendingAbilityOffers(registries,rng,run,{skillId:track.id,banked,limit:perDoor}));
+      continue;
+    }
     for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
-      const level = row.level + banked;
-      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
-      if (cardIds.length) out.push({ skillId: track.id, level, cardIds, claimOrdinal: i < queued ? 0 : i - queued + 1 });
+      const level = i < queued ? Math.max(1,row.level - queued + i + 1) : row.level + i - queued + 1;
+      const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
+      // Each offered card arrives at its own rank (SPEC §13.4o), rolled now so
+      // the offer, its save and its reload all show the same card.
+      if (cardIds.length) out.push({ skillId: track.id, level, cardIds, ranks: cardIds.map(() => rollDraftRank(registries, rng, level)), claimOrdinal: i < queued ? 0 : i - queued + 1 });
+    }
+  }
+  return out;
+}
+
+/**
+ * The rank-ups the ledger has queued (SPEC §13.4o): one per level of a
+ * card-school track, offered beside that level's draft and on the same
+ * terms (`draftsPerCombat` per door, banked levels counted when the door
+ * claims them). No roll: the cards it chooses among are the run's own.
+ */
+function rollSkillRankUps(includeBanked = false) {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const out = [];
+  for (const track of skillTracks(registries)) {
+    const row = run.skills && run.skills[track.id];
+    if (!row) continue;
+    if (expandedProgression(run) && isAbilitySkill(track.id)) continue;
+    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    // The queued ones stand now; a banked level adds one when its claim
+    // reaches a level that queues one (from 2 on), keyed by that claim.
+    const entries = [
+      ...Array.from({ length: row.pendingRankUps || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
+      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
+        .filter((entry) => skillLevelQueuesRankUp(track.kind, entry.level)),
+    ];
+    for (const entry of entries.slice(0, perDoor)) out.push({ skillId: track.id, ...entry });
+  }
+  return out;
+}
+
+/**
+ * The attribute picks the ledger has queued (SPEC §13.4o, every 4th level of a
+ * track with a linked attribute set), offered beside that level's draft on the
+ * same terms; banked levels count when the door claims them.
+ */
+function rollSkillAttributes(includeBanked = false) {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const out = [];
+  for (const track of skillTracks(registries)) {
+    const row = run.skills && run.skills[track.id];
+    if (expandedProgression(run) && track.kind === 'class') continue;
+    const attributeIds = skillLinkedAttributes(registries, track.id);
+    if (!row || !attributeIds.length) continue;
+    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    const entries = [
+      ...Array.from({ length: row.pendingAttributePicks || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
+      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
+        .filter((entry) => skillLevelQueuesAttributePick(registries, track.id, entry.level)),
+    ];
+    for (const entry of entries.slice(0, perDoor)) out.push({ skillId: track.id, ...entry, attributeIds });
+  }
+  return out;
+}
+
+/**
+ * The skill-feat picks the ledger has queued (SPEC §13.4o, every 2nd level of
+ * a track that authors feats), offered with the track's untaken feats open at
+ * that level; a level with none open waits in the ledger.
+ */
+function rollSkillFeats(includeBanked = false) {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const out = [];
+  for (const track of skillTracks(registries)) {
+    const row = run.skills && run.skills[track.id];
+    if (!row) continue;
+    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    const entries = [
+      ...Array.from({ length: row.pendingSkillFeats || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
+      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
+        .filter((entry) => skillLevelQueuesSkillFeat(registries, track.id, entry.level)),
+    ];
+    if (expandedProgression(run) && track.kind === 'class') continue;
+    // One door never offers a feat twice (two rows could otherwise share the
+    // only one, and the second could never land), and a pick with no feat
+    // open does not use up the door's slot.
+    const offered = new Set();
+    let rows = 0;
+    for (const entry of entries) {
+      if (rows >= perDoor) break;
+      const featIds = skillFeatOptions(run, track.id, entry.level, registries).filter((id) => !offered.has(id));
+      if (!featIds.length) continue;
+      featIds.forEach((id) => offered.add(id));
+      out.push({ skillId: track.id, ...entry, featIds });
+      rows += 1;
     }
   }
   return out;
@@ -2854,6 +3137,7 @@ function rollSkillDrafts(pool, includeBanked = false) {
  * draftable keeps its draft.
  */
 function rollClassDrafts(includeBanked = false) {
+  if (run.classUnequipped) return [];
   const row = run.skills && run.skills[classSkillId(run.class)];
   if (!row) return [];
   const banked = includeBanked ? pendingSkillLevelCount(registries, run, classSkillId(run.class)) : 0;
@@ -2865,7 +3149,14 @@ function rollClassDrafts(includeBanked = false) {
 
 function beginPendingReward(rewards, { source, after }) {
   rewards = configuredRewardOffer(rewards, source);
-  run.pendingReward = pendingRewardCheckpoint(rewards, { source, after });
+  rewards = mergeProgressionRewards(run.deferredProgression, rewards, run, {
+    manual: true,
+    characterStart: rewards.characterRewardStart ?? run.level?.level ?? 1,
+  });
+  const { available, deferred } = partitionProgressionRewards(rewards, run);
+  run.pendingReward = pendingRewardCheckpoint(available, { source, after });
+  if (Object.keys(deferred).length) run.deferredProgression = deferred;
+  else delete run.deferredProgression;
   persist();
   return mountPendingReward();
 }
@@ -2883,9 +3174,16 @@ function configuredRewardOffer(rewards, source) {
   return rewardOfferForSource(rewards, source, (key) => settingOn(settings, key));
 }
 
-function mountPendingReward() {
-  const checkpoint = run.pendingReward;
+function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
   if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
+  // Older pending saves used per-door claim counters. Convert those offers once
+  // to absolute levels before they can be deferred to a different victory.
+  const baseRun = { ...run, skills: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) =>
+    [id, { ...row, level: Math.max(0, row.level - (checkpoint.skillClaims?.[id] || 0)) }])) };
+  checkpoint.rewards = mergeProgressionRewards({}, checkpoint.rewards, baseRun, {
+    manual: pendingLevelCount(registries, run) > 0 || (checkpoint.levelClaims || 0) > 0,
+    characterStart: Math.max(1, (run.level?.level || 1) - (checkpoint.levelClaims || 0)),
+  });
   return mountRewards(app, {
     registries,
     run,
@@ -2897,13 +3195,49 @@ function mountPendingReward() {
       pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
-    onClaimSkill: (skillId) => claimBankedSkillLevel(registries, run, skillId),
+    onClaimSkill: (skillId) => {
+      const before = hasClassMastery(run) && skillId.startsWith('class:') ? { skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), classRewardLevels: { ...run.classRewardLevels }, ...(expandedProgression(run) ? {classMilestones:structuredClone(run.classMilestones || {})} : {}) } : null;
+      const claim = claimBankedSkillLevel(registries, run, skillId);
+      if (claim && before && run.classMasteryState.bankable) {
+        const bank = saves.bankClassMastery(run, registries);
+        if (!bank.ok) {
+          Object.assign(run, before);
+          showSettingsNotice(`Class level was not saved: ${bank.reason}`, 'profile');
+          return null;
+        }
+        adoptClassMasteryProfile(run, bank.meta);
+        if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+      }
+      if (claim && skillId === classSkillId(run.class)) {
+        run.classRewardLevels = { ...run.classRewardLevels, [run.class]: claim.after };
+        const added = mergeProgressionRewards(checkpoint.rewards,{skillDrafts:rollSkillDrafts('normal',true),classMilestoneRewards:rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,skillId),meta:saves.loadMeta()})},run);
+        Object.assign(checkpoint.rewards,added);
+      }
+      return claim;
+    },
+    onClaimClassReward: (receiptId,selection) => claimClassMilestoneReward(registries,run,receiptId,selection,{meta:saves.loadMeta(),collectEquipment:ref => {
+      if (ref.startsWith('armament/')) return collectArmament(ref.slice(9),checkpoint.source);
+      const [,classId,id] = ref.split('/');
+      const piece = (registries.masterySource || registries).equipment.armour.find(row => row.classId === classId && row.id === id);
+      if (!piece) return false;
+      run.loadout.boughtArmour ||= [];
+      if (!run.loadout.boughtArmour.some(row => row.classId === classId && row.id === id)) run.loadout.boughtArmour.push({classId,id});
+      return true;
+    }}),
     onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
     onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,
     onDone: () => {
       const after = checkpoint.after;
+      const saved = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(checkpoint), run);
+      if (Object.keys(saved).length) run.deferredProgression = saved;
+      else delete run.deferredProgression;
       delete run.pendingReward;
+      if (returnTo) {
+        persist();
+        app.querySelector('.reward-veil')?.remove();
+        return returnTo();
+      }
       rewardDoneCount++;
       if (after === 'advanceAct') advanceAct();
       else {
@@ -2912,6 +3246,27 @@ function mountPendingReward() {
       }
     },
   });
+}
+
+function showCharacterProgression(returnTo) {
+  if (run.pendingReward) return mountPendingReward();
+  const settings = saves.loadMeta().settings || {};
+  const rewards = mergeProgressionRewards(run.deferredProgression, {
+    title: 'Level up & rewards', xpGains: { level: 0, tracks: {} },
+    skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
+    skillRankUps: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(true) : [],
+    skillAttributes: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(true) : [],
+    skillFeats: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(true) : [],
+    classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
+    classMilestoneRewards: expandedProgression(run) ? rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,classSkillId(run.class)),meta:saves.loadMeta()}) : [],
+  }, run);
+  const { available, deferred } = partitionProgressionRewards(rewards, run);
+  run.pendingReward = pendingRewardCheckpoint(available, { source: 'character', after: 'map' });
+  run.pendingReward.expanded = true;
+  if (Object.keys(deferred).length) run.deferredProgression = deferred;
+  else delete run.deferredProgression;
+  persist();
+  return mountPendingReward(run.pendingReward, returnTo);
 }
 
 // Custom Climb helpers used across nodes.
@@ -3242,8 +3597,8 @@ function coopStubMount(snapshot, myId, myIds = null) {
 function coopCombatShot() {
   const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
   const party = [
-    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
+    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 3, maxStamina: 3, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
+    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
   ];
   const snapshot = {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
@@ -3260,8 +3615,8 @@ function coopCombatShot() {
         { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 }, performedMoves: [] },
       ],
       players: [
-        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, exhaustCount: 1, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
-        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 2, maxStamina: 2, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, exhaustCount: 0, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
+        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 3, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, exhaustCount: 1, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
+        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, exhaustCount: 0, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
       ],
     },
     party,
@@ -3419,6 +3774,21 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // THE FLASKS, read-only, same species: the live run's flask ledger and
+  // carried potions beside the slot's saved copy, and the stored "Use flasks
+  // outside combat" setting. tools/flask-menu-probe.mjs proves a map Potions
+  // action and a setting change are SAVED, which a shot boot's memory storage
+  // hides from any localStorage read. Shot boots only; a player never has it.
+  window.__flasks = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    const charges = (r) => (r && r.flaskCharges ? { hp: r.flaskCharges.hpCurrent, mana: r.flaskCharges.manaCurrent } : null);
+    const carried = (r) => (r ? (r.flasks || []).map((f) => f.flaskId) : null);
+    return {
+      charges: charges(run), savedCharges: charges(saved),
+      carried: carried(run), savedCarried: carried(saved),
+      savedOutsideCombat: ((saves.loadMeta() || {}).settings || {}).useRestorativeFlasksOutsideCombat ?? null,
+    };
+  };
   // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
   // proves WHEN an armament becomes owned (meta.found) and stored (the run's
   // loadout) around the reward menu, and a shot boot runs on MEMORY storage
@@ -3499,6 +3869,11 @@ if (shotState === 'combat-test') {
   // reason it gives: that const IS the gate's reach.
   const shotClass = shotParams.get('shotClass');
   newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', journeyProfile: shotState === 'atlas' ? (shotParams.get('shotProfile') || 'wanderer') : null, slot: 1 });
+  // In-memory QA fixture: earned attribute points. Feats come from actual claims.
+  if (shotParams.get('shotProgression') === '1') {
+    awardLevelXp(registries, run, levelXpToNext(registries, 1), { pointsPerLevel: 2 });
+    showMap();
+  }
   // `?shotNewerSlot=<n>` — STAND BESIDE A CLIMB FROM A NEWER BUILD. Slot n
   // gets slot 1's own bytes (the real writer's, just persisted by newRun) with
   // the schema one ahead, so the in-run Load door meets exactly what a newer
@@ -3587,6 +3962,15 @@ if (shotState === 'combat-test') {
   const posedPools = ['shotMaxHp', 'shotMana', 'shotMaxMana', 'shotMaxStamina']
     .some((k) => shotParams.has(k));
   if (posedPools && shotState === 'map') showMap();
+  // `?shotCarried=<flaskId,...>` — CARRY POTIONS ON THE MAP. The map pose
+  // carries none, so its Potions minis and the run HUD's carried icons had
+  // nothing to open; tools/flask-menu-probe.mjs compares their menus with the
+  // shared plan. Unknown ids are skipped; the map is redrawn, as above.
+  const shotCarried = shotState === 'map' ? shotParams.get('shotCarried') : null;
+  if (shotCarried) {
+    run.flasks = shotCarried.split(',').filter((id) => registries.flasks.has(id)).map((flaskId) => ({ flaskId }));
+    showMap();
+  }
   // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
   //
   // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map
@@ -3733,6 +4117,12 @@ if (shotState === 'combat-test') {
     // so the grid photographs identically every run — gives the twenty-card
     // deck the bug was reproduced on.
     run.floor = 8;
+    // An isolated wounded arrival exercises the real recovery preview and
+    // commitment; it never touches the player's durable saves.
+    if (shotParams.get('shotRestState') === 'wounded') {
+      run.hp = Math.max(1, Math.floor(run.maxHp * .6));
+      run.mana = 0;
+    }
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     // `?shotSmithingStones=0|1` — stand on both sides of the Smith affordability
     // edge without writing durable storage. The accepted values are deliberately
@@ -3784,6 +4174,12 @@ if (shotState === 'combat-test') {
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
+    if (new URLSearchParams(location.search).has('shotLibrary')) {
+      const books = registries.consumables.all().filter((row) => row.kind === 'skillBook');
+      run.consumables = Object.fromEntries(books.map((book) => [book.id, 1]));
+      run.shopStock.offerings = ['skillBooks'];
+      run.shopStock.skillBooks = books.map((book) => ({ id: book.id, cost: book.cost }));
+    }
     showShop();
   } else if (shotState === 'blacksmith') {
     // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the atlas
@@ -3858,8 +4254,9 @@ if (shotState === 'combat-test') {
       run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 2) + 18, level: 2, pendingDrafts: 0 };
     }
     if (pose === 'refill') {
-      run.level.xp = 355;
-      run.skills['item:blade'] = { xp: 355, level: 0, pendingDrafts: 0 };
+      // Two banked levels on each track, so the refill pose shows a second Level up.
+      run.level.xp = levelXpToNext(registries, 1) + levelXpToNext(registries, 2) + 95;
+      run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 0) + skillXpToNext(registries, 'weapon', 1) + 55, level: 0, pendingDrafts: 0 };
     }
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };

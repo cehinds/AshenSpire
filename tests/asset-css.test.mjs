@@ -24,14 +24,15 @@ function externalizeAll() {
   return { template, sheets, value: templateValue(template) };
 }
 
-test('the real stylesheets: 15 lore faces and 9 backdrops become slots, the 2 masks are inlined, no file url() is left', () => {
+test('the real stylesheets externalize fonts and scene/material art, inline vectors, and leave no file URL', () => {
   const { template, sheets, value } = externalizeAll();
   const ids = slotIds(value);
   assert.equal(ids.filter((id) => id.startsWith('assets/fonts/')).length, 15, 'every "AS Lore" face');
   assert.equal(ids.filter((id) => id.startsWith('assets/bg/')).length, 9, 'every backdrop id, once');
-  assert.equal(value.rules.length, 24);
-  assert.equal(template.urls, 29, '15 fonts + 10 backdrop uses + 4 mask uses');
-  assert.equal(template.inlined, 4);
+  assert.equal(ids.filter((id) => id.startsWith('assets/player-polish/')).length, 9, 'eight desktop/portrait scene IDs and one material, each once');
+  assert.equal(value.rules.length, 33);
+  assert.equal(template.urls, 136, 'fonts, canonical backdrops, player scenes/materials and vector frame/mask uses; duplicate close masks removed');
+  assert.equal(template.inlined, 93, 'canonical, footer, folio and file-play icon fallback vectors; close uses its single shared glyph');
   for (const { href, out } of sheets) {
     for (const m of out.matchAll(CSS_URL)) assert.match(m[2], /^data:image\/svg\+xml;base64,/, `${href}: only the masks stay as url()`);
     assert.doesNotMatch(out, /@font-face[^}]*url\(\s*['"]?\.\./, `${href}: no face names a file`);

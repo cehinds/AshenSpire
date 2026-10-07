@@ -9,12 +9,15 @@ export function configuredRewardOffer(rewards, source, enabled) {
   if (['normal', 'elite', 'boss'].includes(source)) {
     removeWhenOff('rewardBattleCinders', ['cinders']);
     removeWhenOff('rewardBattleCards', ['cardIds', 'cardMissed']);
-    removeWhenOff('rewardBattleSkillDrafts', ['skillDrafts']);
+    removeWhenOff('rewardBattleSkillDrafts', ['skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats']);
     removeWhenOff('rewardBattleClassDrafts', ['classDrafts']);
     removeWhenOff('rewardBattleFlasks', ['flaskId']);
     removeWhenOff('rewardBattleRelics', ['relicId']);
     removeWhenOff('rewardBattleArmaments', ['armamentId']);
-    removeWhenOff('rewardLevelCards', ['levelCards']);
+    if (!enabled('rewardLevelCards') && offer.levelCards) {
+      offer.levelCards = offer.levelCards.filter(row => row.source === 'class');
+      if (!offer.levelCards.length) delete offer.levelCards;
+    }
   } else if (source === 'treasure') {
     removeWhenOff('rewardTreasureRelics', ['relicId']);
     removeWhenOff('rewardTreasureArmaments', ['armamentId']);

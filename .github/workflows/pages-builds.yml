@@ -18,7 +18,7 @@
 # dev commits no built HTML (test, release and main follow on promotion), so git
 # names each build (buildordinal.json) but no longer holds it. The assemble step
 # passes --build-missing: tools/pages-site.mjs rebuilds each such build from its
-# own commit's source (light art on dev/test, --full-art on release/main — the
+# own commit's source (light art on dev, --full-art on test/release/main — the
 # tiers dev-preview.yml builds), refuses one whose rebuild moves the committed
 # box, and serves the rest at /<branch>/<ordinal>/ and /<branch>/latest/.
 # Builds that are still committed are read from git as before, fetching only
@@ -91,6 +91,12 @@ name: pages-builds
 on:
   push:
     branches: [dev, test, release, main]
+  workflow_run:
+    # Successful alternative previews republish through the default dev ref,
+    # which is already admitted by the github-pages environment.
+    workflows: [dev preview]
+    branches: [alternative/dev, alternative/test, 'alternative/**/dev', 'alternative/**/test']
+    types: [completed]
   workflow_dispatch:
     inputs:
       keep:
@@ -159,6 +165,7 @@ permissions:
 
 jobs:
   assemble:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     # Bounded: about 20 light rebuilds (~20 s each) plus hydrating the committed
     # builds. A run that needs more than this is broken, not slow.
@@ -179,6 +186,8 @@ jobs:
           # LFS file at the pushed head, and it is a precondition of the LFS purge
           # (docs/ART-REPO-PLAN.md step 7) that this job stop doing so.
           lfs: false
+          # Completed alternative previews republish from trusted dev workflow code.
+          ref: ${{ github.event_name == 'workflow_run' && 'dev' || github.ref }}
           fetch-depth: 0
       # ONE MISSING BRANCH USED TO TAKE DOWN EVERY RUN. `git fetch origin dev
       # test release main` is atomic: `fatal: couldn't find remote ref test`
@@ -194,6 +203,7 @@ jobs:
       - name: Fetch the published branches so their history is readable
         run: |
           set -uo pipefail
+          git fetch --prune origin '+refs/heads/alternative/*:refs/remotes/origin/alternative/*' || exit 1
           missing=""
           for b in dev test release main; do
             if git fetch --no-tags origin "$b" 2>/dev/null; then
@@ -273,7 +283,9 @@ jobs:
             else { console.error('art-release.json names schema ' + JSON.stringify(schema) + ', which this workflow does not know'); process.exit(2); }
           ")
           if [ "$PIN_MODE" = "fetch" ]; then
-            (cd "$RUNNER_TEMP/main" && node tools/fetch-art.mjs --pack all && node tools/fetch-art.mjs --agree --pack all)
+            # --agree (step 11) proves the cache equals main's trees; a main from
+            # after step 13 has no trees, and its fetch-art retired --agree.
+            (cd "$RUNNER_TEMP/main" && node tools/fetch-art.mjs --pack all && if [ -d assets-mobile ]; then node tools/fetch-art.mjs --agree --pack all; fi)
           else
             echo "main's art-release.json predates the packs (schema 2) — it builds from its trees, with nothing to fetch"
           fi
@@ -353,7 +365,7 @@ jobs:
           # `dev` alone on the push path, because the github-pages environment admits
           # `dev` and `main` only and a run that cannot publish must not claim it
           # will — see the header.
-          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && github.ref_name == 'dev') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
+          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && github.ref_name == 'dev') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
         run: |
           set -u
           {
@@ -473,6 +485,8 @@ jobs:
       (
         github.event_name == 'push'
         && github.ref_name == 'dev'
+      ) || (
+        github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
       ) || (
         github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
         && github.actor == github.repository_owner

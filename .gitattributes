@@ -15,3 +15,14 @@ docs/design/player-polish-asset-kit-2026-10-02/**/*.py text eol=lf
 docs/design/player-polish-asset-kit-2026-10-02/**/*.cjs text eol=lf
 docs/design/player-polish-asset-kit-2026-10-02/**/*.md text eol=lf
 docs/design/player-polish-asset-kit-2026-10-02/**/*.txt text eol=lf
+docs/design/player-components-2026-10-03/**/*.svg text eol=lf
+docs/design/player-components-2026-10-03/**/*.json text eol=lf
+docs/design/player-components-2026-10-03/**/*.html text eol=lf
+docs/design/player-components-2026-10-03/**/*.css text eol=lf
+docs/design/player-components-2026-10-03/**/*.py text eol=lf
+docs/design/player-components-2026-10-03/**/*.cjs text eol=lf
+docs/design/player-components-2026-10-03/**/*.md text eol=lf
+docs/design/player-components-2026-10-03/**/*.txt text eol=lf
+
+# The local light tier is hashed byte for byte against art-manifest.json.
+assets-mobile/** -text

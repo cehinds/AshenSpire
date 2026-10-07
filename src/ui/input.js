@@ -41,6 +41,7 @@
 import { padGlyph } from './uiContent.js';
 import { topVeil } from './components/veil.js';
 import { PRESS_EVENT, RELEASE_EVENT } from './gesture.js';
+import { t } from './strings.js';
 
 const FOCUS_SELECTOR = [
   'summary',
@@ -100,8 +101,8 @@ export const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
   { id: 'confirm', label: 'Confirm / Play', short: 'Confirm', kind: 'cursor', key: 'Enter', keyHint: 'Enter', defBtn: 0 },
-  { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
-  { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
+  { id: 'cancel', label: 'Cancel / Back', short: t('common.cancel'), kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
+  { id: 'endTurn', label: t('combat.endTurn'), short: t('combat.endTurn'), kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
   // THREE DOORS, THREE NAMES. All three carried `short: 'Armoury'`, so the map's
   // hint row read "D Armoury · R Armoury · T Armoury" — three keys that look
@@ -112,7 +113,7 @@ export const ACTIONS = [
   // does not say where it goes.
   { id: 'deck', label: 'Open Armoury (Deck)', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
   { id: 'relics', label: 'Open Armoury (Equipment)', short: 'Equipment', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
-  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
+  { id: 'stats', label: 'Open Armoury (Stats)', short: t('armoury.tab.stats'), kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
@@ -394,7 +395,7 @@ function focusables() {
   const controls = Array.from(root.querySelectorAll(FOCUS_SELECTOR));
   if (root.id === 'app') controls.push(...document.querySelectorAll('#tooltip[data-open="true"][role="dialog"] button:not([disabled])'));
   return controls.filter(
-    (el) => visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
+    (el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 

@@ -73,50 +73,37 @@ export const derivedStatRules = {
     //       run's first three fights (59, every class pooled). Every stock
     //       pool rises by the same 21: Reaver 70, Starseer 69, Rogue and
     //       Herald 59. Only the base moved; CON still pays 4 a point.
-    energy: { base: 3, strength: 0.1, dexterity: 0.25, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
-    // The hand. Draw / turn and Hand size were single-attribute rules on INT,
-    // base + floor(max(0, INT − baseline) ÷ pointsPerCard); each is restated
-    // EXACTLY as a weight of 1 ÷ pointsPerCard counted from its baseline
-    // (`attributeBaseline`), so every INT reads what it read before.
-    //
-    // THE OPENING HAND IS FOUR TO SIX CARDS, BY CLASS (owner, 2026-09-24:
-    // "start with 4-6 cards depending on the base (3-5)", shipped in #1294):
-    // each class opens on its own base, plus one card for every two points of
-    // its primary attribute above 1 —
-    //   clamp(base + floor(max(0, primary − 1) / 2), 4, 6)
-    // — which is a weight of 0.5 counted from 1 (`attributeBaseline`). The
-    // Standard presets (primary 3) open 4 / 5 / 5 / 6; all 1s open 4 / 4 / 4 / 5.
-    // The shared base and Intelligence weight are the fallback for a fight
-    // with no class (a headless fixture); every shipped class has its own row.
+    energy: { base: 3, strength: 0.1, dexterity: 0.25, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 }, // Retired save row; combat reads Stamina.
+    // Owner, 2026-10-03: open and draw four, with the existing Draw scaling
+    // (+1 per five INT above 4). Retain adds to the next draw; the absolute
+    // capacity is a separate flat 15. Each row remains configurable, and
+    // existing runs continue to read their snapshotted rows.
     openingHand: {
-      base: 4, intelligence: 0.5, attributeBaseline: 1, min: 4, max: 6,
+      base: 4, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10,
       byClass: {
-        reaver: { base: 3, strength: 0.5 },
-        rogue: { base: 4, dexterity: 0.5 },
-        herald: { base: 4, wisdom: 0.5 },
-        starseer: { base: 5, intelligence: 0.5 },
+        reaver: { base: 4, intelligence: 0.2 },
+        rogue: { base: 4, intelligence: 0.2 },
+        herald: { base: 4, intelligence: 0.2 },
+        starseer: { base: 4, intelligence: 0.2 },
       },
     },
-    // Base 3 since FINISH D27 (2026-09-27, decided under the owner's
-    // delegation: retain the hand and draw the Draw stat each turn, up to
-    // capacity). The target was about 5 unless that floods a retained hand; `node tools/runsim.mjs` and a turn census
-    // showed 5 (and 4) clipped by the hand size of 7 on up to 83% (36%) of
-    // turns, so 3 is the largest draw that is never capped at creation. A run
-    // born earlier keeps its snapshotted base 2.
-    draw: { base: 3, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
-    handSize: { base: 7, intelligence: 0.2, attributeBaseline: 1, min: 1, max: 30 },
-    hp: { base: 51, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
+    draw: { base: 4, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
+    handSize: { base: 15, min: 1, max: 15 },
+    // Owner, 2026-10-06: each primary attribute has a clear +1 main bonus.
+    // Bases, level growth and secondary resource rules stay independently
+    // configurable. Existing runs retain their snapshotted coefficients.
+    hp: { base: 51, constitution: 1, perLevel: 2 },
     // Budget 1 each, the owner's own sums.
-    stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, perLevel: 0.2 },
+    stamina: { base: 3, dexterity: 0.25, constitution: 0.25, wisdom: 0.2, intelligence: 0.2, perLevel: 0.1 },
     mana: { base: 1, strength: 0.125, constitution: 0.25, wisdom: 0.5, intelligence: 0.125, perLevel: 0.2 },
-    // The combat ratings, budget 2. Equipment, relics and statuses add on top.
-    ar: { base: 0, strength: 0.75, dexterity: 0.5, constitution: 0.25, wisdom: 0.25, intelligence: 0.25 },
-    dr: { base: 0, strength: 0.5, dexterity: 0.75, constitution: 0.25, wisdom: 0.35, intelligence: 0.15 },
-    pr: { base: 0, dexterity: 0.25, constitution: 0.5, wisdom: 0.5, intelligence: 0.75 },
-    ward: { base: 1, dexterity: 0.2, constitution: 0.3, wisdom: 1, intelligence: 0.5 },
+    // Equipment, relics and statuses add on top of each attribute's bonus.
+    ar: { base: 0, strength: 1 },
+    dr: { base: 0, dexterity: 1 },
+    pr: { base: 0, intelligence: 1 },
+    ward: { base: 1, wisdom: 1 },
     // ONE Poise: the rating and the pool were two rows for one number. Armour
     // and relics remain its external addends, exactly as HP's equipment bonus.
-    poise: { base: 1, strength: 0.5, constitution: 1, wisdom: 0.3, intelligence: 0.2 },
+    poise: { base: 1, constitution: 1 },
   },
   // ---- D26: how each row READS, authored beside the row it describes -------
   //
@@ -145,21 +132,11 @@ export const derivedStatRules = {
   // "No current consumer" in engine words on the first screen of the game; the
   // sense line below is the player's words, one tap down.
   presentation: {
-    hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'What you have left before the climb ends.' },
-    mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Spent by the cards that ask for more than effort.' },
-    stamina: { label: 'Stamina', order: 3, disclosure: 'reveal', sense: 'Spent by cards that ask for it — the dodge roll among them. An idle turn recovers some.' },
-    // ACTIONS, NOT ENERGY — his rename, D17 message 3: "energy (which we
-    // should call actions going forward)", confirmed by D21 as needing no
-    // re-ask. The ENGINE ids are untouched here (`energyMax`, `balance.energy`,
-    // the orb) — that rename is a sequenced act across five branches and is not
-    // this one. What changes is the WORD A PLAYER READS, and since D26 that
-    // word has exactly one home: this row — the frame adopts this row's label
-    // rather than inventing a second one.
-    // NO SURFACE CENSUS ON THIS LINE. One lived here, listing which screens
-    // said which word. It was wrong the day it was written, nothing went red
-    // when it drifted, and it reached him. A spread worth watching gets a
-    // check that can go red, never a comment kept in sync by hand.
-    energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
+    hp: { label: 'HP', order: 1, disclosure: 'face', sense: 'Your maximum health. Damage reduces your current Health Points; at zero, you are defeated.' },
+    mana: { label: 'Mana', order: 2, disclosure: 'face', sense: 'Your maximum Mana. Cards with Mana costs spend your current Mana Points.' },
+    stamina: { label: 'Stamina / turn', faceLabel: 'Stamina', order: 3, disclosure: 'face', sense: 'Pays card and combat costs. Refills at the start of every turn.' },
+    // Retained for old saves and exports; omitted from character stat surfaces.
+    energy: { label: 'Stamina / turn (legacy)', faceLabel: 'Stamina', order: 4, disclosure: 'reveal', sense: 'How much you can do in one turn.' },
     draw: { label: 'Draw / turn', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you draw at the start of each turn.' },
     poise: { label: 'Poise', order: 6, disclosure: 'reveal', sense: 'How much blows you can take before your footing breaks.' },
     openingHand: { label: 'Opening hand', order: 7, disclosure: 'reveal', sense: 'How many cards you hold when a fight begins.' },

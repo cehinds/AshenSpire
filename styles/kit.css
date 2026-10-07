@@ -137,10 +137,12 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 
 /* Close keeps the full accessible hit target above, while its visible square
    is 75% of that target. Every modal inherits the same smaller corner mark. */
-.modal-close { position: relative; background: transparent; border-color: transparent; }
+/* Match button.subtle specificity so its text-button padding cannot crush the icon. */
+button.modal-close { position: relative; padding: 0; background: transparent; border-color: transparent; }
 .modal-close > .modal-close-face {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 75%; height: 75%; pointer-events: none;
+  width: 75%; height: 75%; flex-shrink: 0; pointer-events: none;
+  font: 24px/1 Arial, sans-serif;
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2);
 }
 .modal-close:hover, .modal-close:focus-visible { background: transparent; border-color: transparent; }
@@ -346,6 +348,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18);
 }
 .as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.cz-keepsake .og img { display: block; width: 3rem; height: 3rem; object-fit: contain; }
 .as-option .relic-art { width: 3rem; height: 3rem; }
 .tray-icon > .relic-art { width: 100%; height: 100%; }
 .as-option .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
@@ -907,6 +910,11 @@ input[type="range"] { min-height: var(--tap-floor); }
   background: #0f0c09; border: 1px solid var(--line); border-radius: var(--r-2);
   font-size: 2.9rem; line-height: 1; color: var(--parchment);
 }
+.card .art .playing-card-art { width: 100%; height: 100%; object-fit: cover; object-position: center 42%; }
+.card[data-wireframe="WC1"] .art .playing-card-art { position: absolute; inset: 0; }
+.card .art:has(.playing-card-art) .card-art-glyph { display: none; }
+.card .art .ctags { z-index: 1; }
+.card-inspection-modal .card .art .playing-card-art { object-fit: contain; }
 /* TypeBand — the type's own tint, full card width, fixed landmark. */
 .card .ctype, .as-typeband {
   --track: 0.22em;
@@ -1210,6 +1218,88 @@ input[type="range"] { min-height: var(--tap-floor); }
    above) and takes a row of its own. `.shop-collectible-offer` is the tile
    that DOES hold a face and is deliberately not exempt. */
 .card-shelf > .shop-text-offer { flex: 1 1 26rem; max-width: 40rem; }
+/* Skill books carry their own details and purchase action. The shelf's shared
+   grid track sizes every offer to its tallest row, including wrapped copy. */
+.shop-workspace[data-shop-content='skillBooks'] .shop-pane > .shop-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.shop-workspace[data-shop-content='skillBooks'] .shop-offers { container-type: inline-size; }
+.shop-offers > #shop-skillBooks:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: var(--book-gap);
+  align-content: start;
+  align-items: stretch;
+}
+#shop-skillBooks > .shop-book-offer {
+  display: grid;
+  grid-template-columns: var(--book-art-width) minmax(0, 1fr) var(--book-action-width);
+  align-items: center;
+  gap: var(--book-gap);
+  width: 100%;
+  max-width: none;
+  min-height: var(--book-min-height);
+  padding: var(--book-padding);
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: linear-gradient(120deg, var(--panel), var(--bg));
+  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 8%);
+}
+.shop-book-art { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
+.shop-book-details { min-width: 0; border-left: 1px solid var(--line); padding-left: var(--book-gap); }
+.shop-book-details > .shop-book-name { color: var(--gold); font-size: 1.8rem; line-height: 1.25; margin: 0 0 0.7rem; overflow-wrap: anywhere; }
+[data-book-id='bladeManual'] .shop-book-name { color: var(--green, #76b881); }
+.shop-book-details > p { color: var(--ink-dim); font-size: 1.3rem; line-height: 1.45; margin: 0; }
+.shop-book-details > .shop-book-usage { margin-top: 0.5rem; }
+.shop-book-actions { display: grid; gap: 0.65rem; min-width: 0; text-align: center; }
+.shop-book-buy.as-btn {
+  width: 100%; min-width: 0; min-height: 4.4rem; padding: 0.8rem 0.5rem;
+  color: #f8dfa4; border: 0; border-radius: 0.5rem;
+  background: var(--book-buy-art) center / 100% 100% no-repeat;
+  font-family: var(--font-display, Georgia, serif); font-size: 1.7rem;
+  text-transform: none; letter-spacing: 0.02em; text-shadow: 0 1px 2px #211407;
+  box-shadow: none;
+}
+.shop-book-buy.as-btn.beat-hold,
+.shop-book-buy.as-btn.beat-hold:is(:hover, :focus, :active) {
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 52%) 0 8px, rgb(0 0 0 / 58%) 8px 16px), var(--book-buy-art);
+  background-size: calc(var(--hold, 0) * 100%) 100%, 100% 100%;
+  background-position: left center, center;
+  background-repeat: no-repeat;
+}
+.shop-book-buy.as-btn:hover:not(:disabled) { filter: brightness(1.18); }
+.shop-book-buy.as-btn:disabled { opacity: 0.5; filter: grayscale(0.65); cursor: not-allowed; }
+.shop-book-price { color: var(--gold); font-size: 1.1rem; line-height: 1.4; font-variant-numeric: tabular-nums; text-transform: uppercase; overflow-wrap: anywhere; }
+.shop-book-details .shop-offer-avail { margin-top: 0.6rem; }
+@container (max-width: 460px) {
+  #shop-skillBooks > .shop-book-offer {
+    grid-template-columns: var(--book-compact-art-width) minmax(0, 1fr) var(--book-compact-action-width);
+    gap: var(--book-compact-gap); padding: var(--book-compact-padding);
+  }
+  .shop-book-details { padding-left: var(--book-compact-gap); }
+  .shop-book-details > .shop-book-name { font-size: 1.5rem; }
+  .shop-book-details > p { font-size: 1.2rem; }
+}
+/* The game's UI zoom can shrink an entire desktop composition on a phone.
+   Keep these text-led offers readable and their native Buy targets tappable. */
+@media (max-width: 600px) {
+  #shop-skillBooks > .shop-book-offer {
+    grid-template-columns:
+      max(var(--book-compact-art-width), calc(var(--book-compact-art-width) / var(--ui-zoom, 1)))
+      minmax(0, 1fr)
+      max(var(--book-compact-action-width), calc(var(--book-compact-action-width) / var(--ui-zoom, 1)));
+  }
+  .shop-book-details > .shop-book-name { font-size: max(1.5rem, calc(1.5rem / var(--ui-zoom, 1))); }
+  .shop-book-details > p { font-size: max(1.2rem, calc(1.2rem / var(--ui-zoom, 1))); }
+  .shop-book-price { font-size: max(1.1rem, calc(1.1rem / var(--ui-zoom, 1))); }
+  .shop-book-buy.as-btn {
+    min-height: max(4.4rem, calc(44px / var(--ui-zoom, 1)));
+    font-size: max(1.7rem, calc(1.7rem / var(--ui-zoom, 1)));
+  }
+}
 /* THE PLAYING CARD IS A FIXED BOX and `flex-shrink: 0`, so on a shelf it would
    have overflowed its track rather than fitting in it. `--card-w` is the box's
    one width input and the height is computed from its landmarks, not from the
@@ -1541,7 +1631,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-level-ready { --level-ready-blue: #75bfff; }
 .reward-door .rp-bar-ready { --meter-tone: var(--level-ready-blue); }
 .reward-door .rp-bar-ready .m-track { background: color-mix(in srgb, var(--level-ready-blue) 18%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--level-ready-blue) 48%, var(--line)); }
-.reward-door .reward-level-up { grid-area: next; box-sizing: border-box; height: 1.6rem; min-height: 0; padding: 0 .5rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-size: .75rem; line-height: 1; font-weight: 700; }
+.reward-door .reward-level-up { grid-area: next; box-sizing: border-box; height: auto; min-height: 44px; padding: .65rem 1rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-size: .95rem; line-height: 1; font-weight: 700; }
 .reward-door .reward-level-up:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--level-ready-blue) 43%, var(--panel)); border-color: #a7d9ff; }
 .reward-door .rp-layered-bar { position: relative; height: 1.6rem; overflow: hidden; border-radius: 999px; background: #2b2821; box-shadow: inset 0 0 0 1px var(--line); }
 .reward-door .rp-layered-bar .rp-under, .reward-door .rp-layered-bar .rp-over { position: absolute; inset: 0 auto 0 0; border-radius: inherit; }
@@ -1552,9 +1642,34 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(5rem, 1fr) auto; grid-template-areas: 'level bar next'; gap: .6rem; white-space: nowrap; }
 .reward-door .reward-progress-row[data-kind='character'] .rp-level { color: var(--parchment); }
 .reward-door .reward-progress-row[data-kind='character'] .rp-next { position: relative; z-index: 1; transition: transform .35s ease; }
-.reward-door .reward-progress-row[data-kind='character'].reward-level-ready .rp-next { transform: translateX(-2rem); }
 .reward-door .reward-progress-row[data-kind='character'] .reward-level-up { position: relative; z-index: 2; grid-area: next; }
-.reward-door .reward-stat-allocation { display: grid; gap: .5rem; width: 100%; border-top: 1px solid var(--line); padding-top: .8rem; }
+/* A LEVEL'S REWARD WAITS, IT IS NOT FORCED. A claim no longer opens its
+   chooser; the reward it unlocked joins the menu in the Level up blue and
+   lifted off the list, and the one a claim just unlocked rises into place
+   once (reward-fresh, a single short run; the reduced-motion kill in
+   base.css collapses it). */
+.reward-door .reward-kind.reward-level-offer {
+  --level-ready-blue: #75bfff;
+  border-color: var(--level-ready-blue);
+  background: color-mix(in srgb, var(--level-ready-blue) 12%, var(--panel));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--level-ready-blue) 45%, transparent), 0 6px 16px rgba(0, 0, 0, 0.35), 0 0 16px color-mix(in srgb, var(--level-ready-blue) 22%, transparent);
+  transform: translateY(-2px);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.reward-door .reward-kind.reward-level-offer:is(:hover, :focus-visible) { border-color: #a7d9ff; transform: translateY(-3px); }
+.reward-door .reward-kind.reward-level-offer > .glyph,
+.reward-door .reward-kind.reward-level-offer h3 { color: #a7d9ff; }
+.reward-door .reward-kind.reward-fresh { animation: reward-offer-rise .45s ease-out; }
+@keyframes reward-offer-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  60% { opacity: 1; transform: translateY(-4px); }
+  to { transform: translateY(-2px); }
+}
+.reward-door .reward-level-summary { margin: 0 0 .6rem; color: #a7d9ff; font-variant-numeric: tabular-nums; }
+.reward-door .reward-level-rewards { margin-bottom: .6rem; }
+.reward-door .reward-level-log { margin: .4rem 0 0; padding: 0; list-style: none; display: grid; gap: .25rem; }
+.reward-door .reward-level-line { color: #a7d9ff; font-variant-numeric: tabular-nums; }
+.reward-door .reward-stat-allocation { grid-column: 1 / -1; display: grid; gap: .5rem; width: 100%; border-top: 1px solid var(--line); padding-top: .8rem; }
 .reward-door .reward-stat-allocation h3 { margin: 0; font-size: 1rem; }
 .reward-door .reward-stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .6rem; }
 .reward-door .reward-stat-add { min-width: 2.5rem; }
@@ -1705,6 +1820,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .disc-face > .as-row .ls-hint { font-family: var(--font-body); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .disc-face > .as-row > .as-status { font: 600 1.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); flex: 0 0 auto; }
 .disc-face > .as-row.face-lite .ls-label { color: var(--parchment); font: 500 1.3rem/1.2 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.cc-primary-stat > .as-row.face-lite .ls-label { text-transform: none; }
 .disc-face > .as-row.face-lite > .as-status { color: var(--muted); font: 500 1.28rem/1 var(--font-body); }
 
 /* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
@@ -2006,7 +2122,12 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-item-type-row > .as-tag { color: var(--gold); }
 .smith-preview-region.as-pane { gap: 0.6rem; min-height: 0; overflow: hidden; background: var(--panel); }
 .smith-pane-status { flex: 0 0 auto; text-align: left; }
+.smith-upgrade-modal > .modal-head > .modal-head-actions { margin-left: auto; align-self: center; align-items: center; min-width: 0; flex-shrink: 1; }
+.smith-header-stones { text-align: right; min-width: 0; }
+.smith-upgrade-modal .modal-close > .modal-close-face { font: 24px/1 Arial, sans-serif; }
+.smith-upgrade-modal .modal-close > .modal-close-face::after { content: none; }
 .smith-preview-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.smith-upgrade-modal .smith-preview-host { flex: 1 1 0; overflow: hidden; }
 .smith-consequence { flex: 0 0 auto; margin: 0; }
 .mount-service-outcome { display: flex; gap: 1.2rem; align-items: flex-start; margin: 0.4rem 0 0.8rem; }
 /* The pane's card scrolls its facts; its padding-bottom is the cost strip's,
@@ -2812,6 +2933,10 @@ body.pad-mode .as-keycap.float { display: none; }
 /* A painted face (a flask) sits in the round well the way a glyph does. */
 .icon-tray .as-pip > .flask-identity { display: grid; place-items: center; width: 78%; height: 78%; }
 .icon-tray .as-pip > .flask-identity :is(.flask-art, .flask-art-image) { display: grid; place-items: center; width: 100%; height: 100%; object-fit: contain; }
+.combat-potion-tray .potion-mini > span:not(.as-pill) { display: grid; place-items: center; width: 78%; height: 78%; }
+.combat-potion-tray .potion-mini .flask-identity,
+.combat-potion-tray .potion-mini .flask-identity :is(.flask-art,.flask-art-image) { width: 100%; height: 100%; object-fit: contain; }
+.combat-potion-tray .potion-mini > .as-pill { right: 0; bottom: 0; }
 /* The +N tile: a round tile that opens the host's full list (WCF2), or a
    disclosure whose popover holds the rest. */
 .icon-tray > .status-overflow-more {
@@ -2877,9 +3002,7 @@ body.pad-mode .as-keycap.float { display: none; }
 .shared-hud[data-hud-layout="map-compact"] .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: center; }
 .shared-hud[data-hud-layout="map-compact"] .hud-control-grid { grid-area: actions; align-self: center; }
 /* The fold's yield rules are § BAND FOLD, shared with W4c's folded band. */
-/* THE ROUTE STRIP is a receipt — no pointer, nothing to tap: the act's name as
-   a Title·S beside (narrow) or over (wide) a StatStrip whose two ends are
-   Eyebrows with a rail between them. */
+/* The map's route receipts are centred on the rail, one fixed slot per floor. */
 .act-route-strip {
   box-sizing: border-box; pointer-events: none; user-select: none; cursor: default;
 }
@@ -2906,7 +3029,23 @@ body.pad-mode .as-keycap.float { display: none; }
 .shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip [data-role="start"] { display: none; }
 .shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip .map-orientation-progress { grid-template-columns: minmax(1.5rem, 1fr) auto; }
 .act-route-strip [data-role="boss"] { color: var(--ember); }
-.act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
+.act-route-strip .map-orientation-rail {
+  position: relative; display: flex; align-items: center; min-width: 0;
+  height: calc(24px / var(--ui-zoom, 1));
+}
+.act-route-strip .map-orientation-rail::before {
+  content: ''; position: absolute; inset-inline: 0; top: 50%; height: 1px; background: var(--map-structure);
+}
+.act-route-strip .map-route-slot { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; }
+.act-route-strip .map-route-node {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: min(calc(20px / var(--ui-zoom, 1)), calc(100% - 2px)); aspect-ratio: 1;
+  border: 1px solid var(--map-structure); border-radius: 50%; background: var(--bg-raise);
+  color: var(--gold); font-size: calc(12px / var(--ui-zoom, 1)); line-height: 1;
+}
+.act-route-strip .map-route-node.is-visited { background: color-mix(in srgb, var(--gold) 24%, var(--bg-raise)); border-color: var(--gold); }
+.act-route-strip .map-route-node.is-current { box-shadow: 0 0 0 2px var(--bg-raise), 0 0 0 3px var(--gold); }
+.act-route-strip [data-role="boss"][data-visited="true"] { color: var(--gold); }
 .act-route-strip .map-orientation-rail::after {
   content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
   border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
@@ -2915,17 +3054,18 @@ body.pad-mode .as-keycap.float { display: none; }
 
 /* Map context follows the shared HUD instead of being compressed into it. */
 .mapscreen > .act-route-strip {
-  box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
-  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
+  box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 18px;
+  width: 100%; margin-inline: auto; padding: 8px 16px;
   border-bottom: 1px solid var(--line); background: var(--bg-raise);
   pointer-events: none; user-select: none; cursor: default;
 }
-.mapscreen > .act-route-strip > .as-title-s { font-size: 1.1rem; letter-spacing: 0.2em; }
+.mapscreen > .act-route-strip > .as-title-s { max-width: 32vw; font-size: 1.1rem; letter-spacing: 0.12em; }
 @media (max-width: 700px) {
   .mapscreen > .act-route-strip {
-    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
-    margin-left: auto; margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
+    grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 6px 10px;
   }
+  .mapscreen > .act-route-strip > .as-title-s { max-width: 100%; }
+  .act-route-strip .map-route-node { font-size: calc(10px / var(--ui-zoom, 1)); }
 }
 /* THE ZOOM BAR is a Band on the foot of the map with four IconButtons in it,
    BESIDE the board and never over it (styles/map.css says why). The bar has no
@@ -4212,23 +4352,27 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 .cc-summary-slot.unmet > .equipment-poker-card { outline:2px solid var(--danger); outline-offset:2px; border-radius:10px; }
 .cc-summary-unmet { margin:0; color:var(--danger); font-size:13px; line-height:1.35; }
 .cc-summary-empty { display:grid; place-items:center; aspect-ratio:var(--card-ratio); width:100%; max-width:var(--card-w-glance, 152px); border:1px dashed var(--line); border-radius:10px; color:var(--muted); }
-.cc-summary-character { position:relative; display:flex; flex-direction:column; gap:8px; width:100%; max-width:var(--card-w-glance, 152px); aspect-ratio:var(--card-ratio); overflow:visible; box-sizing:border-box; padding:12px; border:1px solid var(--gold); border-radius:10px; background:color-mix(in srgb, var(--gold) 6%, var(--panel)); cursor:help; }
+/* This summary sits beside equipment faces, whose frame is 5:7. The global
+   --card-ratio describes illustrated playing cards and may be a different shape. */
+.cc-summary-character { position:relative; display:flex; flex-direction:column; gap:6px; width:100%; max-width:var(--card-w-glance, 152px); aspect-ratio:5/7; overflow:visible; box-sizing:border-box; padding:10px; border:1px solid var(--gold); border-radius:10px; background:color-mix(in srgb, var(--gold) 6%, var(--panel)); cursor:help; }
 .cc-summary-eyebrow { color:var(--muted); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; }
 .cc-summary-name { margin:0; color:var(--gold); font:700 18px/1.15 var(--font-display); overflow-wrap:anywhere; }
 .cc-summary-character > .as-hairline { margin:0; }
 .cc-summary-stats { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px 10px; }
 .cc-summary-stats > .as-statpair { justify-content:space-between; font-size:13px; }
-.cc-summary-character > .cc-summary-stats:last-child { margin-top:auto; }
+.cc-summary-stats .sp-v { flex-shrink:0; overflow:visible; text-overflow:clip; }
+.cc-summary-character[data-summary-level='glance'] > .cc-summary-stats:last-child { margin-top:auto; }
 .cc-summary-more { grid-column:1 / -1; color:var(--muted); font:700 16px/0.7 var(--font-body); letter-spacing:0.15em; }
 .card-inspection-art > .cc-summary-character {
-  width:100%; max-width:var(--card-w-inspect,320px); min-height:0; aspect-ratio:var(--card-ratio); overflow:hidden; margin:0 auto;
+  width:100%; max-width:var(--card-w-inspect,320px); min-height:0; aspect-ratio:auto; overflow:visible; margin:0 auto; padding:14px; gap:10px;
   cursor:default;
 }
-.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats { grid-template-columns:minmax(0,1fr); gap:4px; }
+.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats { grid-template-columns:minmax(0,1fr); gap:8px; }
 .cc-summary-character[data-summary-level='inspect'] .cc-summary-stats > .as-statpair { font-size:14px; }
 .cc-summary-character[data-summary-level='inspect'] .cc-summary-stats .sp-k {
-  overflow:visible; text-overflow:clip; white-space:normal;
+  overflow:visible; text-overflow:clip; white-space:normal; font-size:12px; line-height:1.3; letter-spacing:0.06em;
 }
+.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats .sp-v { font-size:17px; }
 .card-inspection-modal:has(.cc-summary-character) .modal-body { overflow-y:auto; overflow-x:hidden; }
 .card-inspection-modal:has(.cc-summary-character) .card-inspection-layout { height:auto; align-content:start; }
 .card-inspection-modal:has(.cc-summary-character) .card-inspection-details { min-height:auto; overflow:visible; }
@@ -4724,7 +4868,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); min-height: 0;
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext {
-  font-size: max(calc(12px / var(--ui-zoom, 1)), .8rem); line-height: 1.25;
+  font-size: max(calc((12px - 2pt) / var(--ui-zoom, 1)), calc(.8rem - 2pt)); line-height: 1.25;
 }
 :root .combat[data-layout='formation'] .hand .card > .card-cost-rail {
   top: calc(10% + .25rem); left: .35rem; right: auto; bottom: auto;
@@ -4769,6 +4913,61 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']> .pile {
   width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
+/* Footer Atelier art: live labels are SVG text, never baked into a bitmap.
+   Wide layouts honor the authored positions; compact controls keep readable
+   labels and the existing minimum hit targets and short-host rails. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] {
+  position: relative; isolation: isolate;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > :is(.pile,.end-turn,.combat-potions) {
+  position: relative; padding: 0; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none; overflow: visible;
+  color: #e7dcc0; text-shadow: 0 1px 3px #000;
+}
+.footer-art-face { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.footer-art-face text { paint-order: stroke; stroke: #100e0b; stroke-width: .6px; }
+@media (pointer: coarse) {
+  .footer-art-face [data-footer-binding='endTurnKey'] { display: none; }
+}
+.footer-sp-text { position: absolute; inset: 0; pointer-events: none; }
+.combat-action-row[data-footer-art] .stamina-orb > svg text { visibility: hidden; }
+.footer-compact-label { display: none; }
+.footer-art-rails { position: absolute; inset: 0; height: 100%; pointer-events: none; z-index: -1; }
+.combat-action-row .footer-art-rails > .footer-art-face { height: 100%; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] {
+  display: block; width: var(--footer-art-width, 100%); height: 100%; margin-inline: auto;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+  position: absolute; left: var(--art-x); top: var(--art-y); width: var(--art-w); height: var(--art-h);
+  min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); max-height: none;
+}
+/* The authored plate can be shorter than the primary action's physical target. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] > .end-turn {
+  min-width: calc(48px / var(--ui-zoom, 1)); min-height: calc(48px / var(--ui-zoom, 1));
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:focus-visible {
+  outline: 2px solid #e9c783; outline-offset: 3px;
+}
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:hover:not(:disabled) .footer-art-face {
+  filter: brightness(1.18);
+}
+.combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) .footer-art-face {
+  filter: drop-shadow(0 0 4px #83b885);
+}
+.combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) text { fill: #c2e9bc; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] .footer-art-rails,
+.combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: none; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
+  height: 100%; min-height: calc(44px / var(--ui-zoom, 1)); display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.combat-action-row[data-footer-compact='true'] button .footer-art-face { height: 58%; flex: 0 1 58%; }
+.combat-action-row[data-footer-compact='true'] .footer-compact-label {
+  display: block; font: 600 max(.72rem, calc(12px / var(--ui-zoom, 1)))/1.12 Georgia, serif;
+  white-space: pre-line; text-align: center;
+}
+.combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
+.combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
+.combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
@@ -5172,6 +5371,8 @@ button[data-button-size] {
 /* The shared sprite functions stamp combat's fixed sizes inline; the stage
    adapter places the figure by transform from the layer's origin. */
 .dialogue-portrait-art > .dialogue-figure { position: absolute !important; left: 0; top: 0; margin: 0; transform-origin: 0 0; flex: none; }
+.speaker-portrait-still { width: 512px; height: 512px; }
+.speaker-portrait-image { display: block; width: 100%; height: 100%; object-fit: contain; }
 .dialogue-portrait[data-figure-fit='pending'] > .dialogue-portrait-art { visibility: hidden; }
 /* Painted player figures face right as authored (combat does the same). */
 .dialogue-portrait .class-sprite > .facing { transform: none; }
@@ -5288,6 +5489,7 @@ button[data-button-size] {
    written as custom properties by the screen; nothing here is a number. */
 .customize:not(.component-catalog) .modal-body.cz-scroll { display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 0; }
 .customize .cz-railed { flex: 1 1 auto; min-height: 0; height: 100%; width: 100%; }
+.customize .cz-railed[data-cat-nav='rail'] { grid-template-columns:19rem minmax(0,1fr); }
 .customize .cz-pane { overflow: auto; min-height: 0; height: 100%; }
 .customize .cz-pane > .cz-stage { height: auto; }
 .customize .modal-head .figure.cz-portrait {
@@ -5295,8 +5497,10 @@ button[data-button-size] {
   min-height: 0 !important; min-width: 0 !important; max-width: none; margin-inline-start: var(--creation-portrait-gap); border-radius: 50%; overflow: hidden; align-self: center;
 }
 .customize .modal-head .figure.cz-portrait > * { width: 100%; height: 100%; object-fit: cover; }
-.customize .cz-tab { display: flex; flex-direction: column; align-items: flex-start; gap: var(--creation-rail-gap); white-space: normal; }
-.customize .cz-tab-value { font-size: calc(1em * var(--creation-rail-value-scale)); color: var(--muted); }
+.customize .cz-tab { display:flex; flex-direction:row; align-items:center; gap:8px; white-space:normal; padding-block:10px; }
+.customize .cz-tab > .rail-label { flex:0 1 auto; min-width:0; }
+.customize .cz-tab-value { flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; font-size:calc(1em * var(--creation-rail-value-scale)); color:var(--muted); }
+.customize .cz-tab-value:empty { display:none; }
 .customize .cc-primary-stats { display: grid; grid-template-columns: repeat(var(--creation-attribute-columns), minmax(0, 1fr)); gap: var(--creation-attribute-gap); }
 .customize .cc-review { padding: 0 var(--creation-review-pad) var(--creation-review-pad); }
 
@@ -5328,42 +5532,68 @@ button[data-button-size] {
   grid-template-areas: "info info" "meters actions" "rail actions";
 }
 :root[data-layout='narrow'] .shared-hud .hud-control-grid { align-self: start; }
-/* W1c, the chosen card unfolds (owner, 2026-09-19): with
-   behavior.classPreview "unfold" the preview column is gone and the picked
-   class card opens to --creation-unfold-height, the portrait taking
-   --creation-unfold-portrait of its width and the summary the rest, nothing
-   past the card's box. The card is a flex row; the unfold wraps under it. */
+/* The chosen class puts a compact icon and contained sprite beside its details.
+   Let the card grow on narrow screens instead of clipping its description. */
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-preview-host,
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-divider { display: none; }
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
-.customize .cz-class.unfolded { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-items: center; height: max(var(--creation-unfold-height), var(--creation-unfold-min)); overflow: hidden; }
-.customize .cz-class.unfolded > .cc-class-unfold { grid-column: 1 / -1; min-height: 0; height: 100%; align-self: stretch; display: grid; grid-template-columns: var(--creation-unfold-portrait) minmax(0, var(--creation-unfold-summary)); gap: var(--creation-head-tools-gap); overflow: hidden; }
-.customize .cc-unfold-portrait { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 0; overflow: hidden; }
-.customize .cc-unfold-portrait > .figure.cc-unfold-art { display: block; height: 100% !important; width: auto !important; aspect-ratio: 1 / 1; max-width: 100%; max-height: 100%; min-height: 0; min-width: 0; }
+.customize .cz-railed .cz-class.unfolded { display:block; grid-column:1 / -1; height:auto; min-height:0; padding-block:1.2rem; }
+.customize .cz-class.unfolded > :is(.og, .ob) { display:none; }
+.customize .cz-class.unfolded > .cc-class-unfold { min-height: 0; display: grid; grid-template-columns: clamp(11rem, 16vw, 15rem) minmax(0, 1fr); gap:1rem; align-items:center; }
+.customize .cc-unfold-portrait { display:flex; align-items:center; justify-content:flex-start; gap:.6rem; min-width:0; }
+.customize .cc-unfold-class-icon { display:inline-flex; flex:0 0 auto; color:var(--gold); }
+.customize .cc-unfold-class-icon > * { width:2rem; height:2rem; }
+.customize .cc-unfold-portrait > .figure.cc-unfold-art { display:block; flex:1 1 auto; height:auto !important; width:min(100%, 12rem) !important; aspect-ratio:1 / 1; max-width:12rem; min-height:0; min-width:0; border:0; border-radius:0; background:none; box-shadow:none; }
 .customize .cc-unfold-portrait > .figure.cc-unfold-art > * { width: 100%; height: 100%; object-fit: contain; }
-.customize .cc-unfold-summary { display: flex; flex-direction: column; justify-content: center; gap: var(--creation-head-tools-gap); min-width: 0; min-height: 0; overflow: hidden; text-align: start; font-weight: normal; }
+.customize .cc-unfold-summary { display:flex; flex-direction:column; justify-content:center; gap:.55rem; min-width:0; text-align:start; font-weight:normal; }
+.customize .cc-unfold-heading { color:var(--gold); font:600 1.6rem/1.25 var(--font-display); }
+.customize .cc-unfold-description { color:var(--parchment); font-size:max(1.4rem, 14px); line-height:1.45; }
+.customize .cc-unfold-mastery { color:var(--muted); font-size:max(1.1rem, 11px); line-height:1.35; }
+.customize .cc-unfold-summary .cc-class-resource-grid { display:flex; flex-wrap:wrap; gap:.35rem .8rem; }
 .customize .cc-unfold-relic { display: inline-flex; align-items: center; gap: var(--creation-rail-gap); color: var(--ink-dim); font-size: calc(1em * var(--creation-rail-value-scale)); }
+.customize article.cz-class { cursor:default; }
+.customize article.cz-class .cc-unfold-heading { overflow-wrap:anywhere; }
+.customize .cc-preview-detail-trigger { display:inline-flex; align-items:center; align-self:flex-start; width:auto; min-width:0; min-height:0; padding:.2rem 0; border:0; border-radius:2px; background:transparent; color:inherit; font:inherit; line-height:inherit; text-align:start; white-space:normal; cursor:pointer; }
+.customize .cc-preview-detail-trigger :is(.ck, .cc-unfold-relic-name) { text-decoration:underline dotted; text-underline-offset:3px; }
+.customize .cc-preview-detail-trigger:hover { color:var(--gold); background:transparent; }
+.customize .cc-preview-detail-trigger:focus-visible, .customize article.cz-class:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+.cc-preview-detail-modal > .modal-body { padding:var(--modal-inset, 1.4rem); }
+.cc-preview-detail-body p { margin:0; }
+.cc-preview-detail-definition { font-size:max(1.4rem, 14px); line-height:1.5; }
+.cc-preview-detail-value { font-size:1.6rem; }
+.cc-preview-detail-calculation { border-top:1px solid var(--line-soft); padding-top:1.2rem; }
+.cc-preview-detail-formula { overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 .customize .cz-class.unfolded::after { display: none; }
 
 /* Creation is read top-to-bottom: compact stats, resources, then Continue.
    Only the workspace pane scrolls when enlarged text needs more room. */
-.customize #cz-primary-stats { gap:4px; }
+.customize .cc-character-grid { grid-template-columns:minmax(0,1fr); }
+.customize .cc-character-grid > .cc-stats-side { order:0; }
+.customize .cc-character-grid > .cc-preview-side { order:1; min-height:0; }
+.customize #cz-primary-stats { gap:4px; grid-template-columns:minmax(0,1fr); }
 .customize .cc-name-row { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:1rem; padding-block:.5rem; }
 .customize .cc-name-row > .r-trail { max-width:100%; width:100%; }
 .customize .cc-name-row .cz-name { width:100%; max-width:100%; }
 .customize #cz-primary-stats .cc-primary-stat.hosts-face > .as-row,
 .cc-stat-modal .cc-primary-stat.hosts-face > .as-row { min-height:var(--tap-floor); padding:.35rem .8rem; gap:.6rem; }
 .customize #cz-primary-stats .cc-primary-stat { min-height:var(--tap-floor); }
-.customize #cz-primary-stats .cc-primary-stat > .as-row { font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); }
+.customize #cz-primary-stats .cc-primary-stat > .as-row { font-size:max(1rem, calc(16px / var(--ui-zoom, 1))); }
 .customize #cz-primary-stats :is(.ls-label, .as-status) { font-size:inherit; }
-.customize #cz-primary-stats .ls-hint { font-size:max(.9em, calc(12px / var(--ui-zoom, 1))); line-height:1.25; }
+.customize #cz-primary-stats .ls-hint { font-size:max(1em, calc(14px / var(--ui-zoom, 1))); line-height:1.3; white-space:normal; overflow:visible; }
 .customize #cz-primary-group { gap:.6rem; }
+.customize #cz-statedit { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.6rem; align-items:center; }
+.customize #cz-statedit .cc-mode-edit { white-space:nowrap; min-height:var(--tap-floor); }
 .customize .cc-mode-select { width:100%; min-height:var(--tap-floor); padding:.4rem .8rem; font:inherit; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:var(--r-1); color-scheme:dark; }
-.customize .cz-stage .modal-btnrow.cc-primary-continue-row { position:static; margin-top:.5rem; padding:0; background:none; }
-.customize #cz-derived .cc-derived { display:flex; flex-wrap:wrap; gap:.35rem .75rem; }
-.customize #cz-derived .as-chip { padding:.15rem 0; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); }
+.customize .cc-primary-footer { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; align-items:center; }
+.customize .cz-stage .modal-btnrow.cc-primary-continue-row { position:static; margin:0; padding:0; width:auto; background:none; border:0; align-items:center; flex:0 0 auto; }
+.customize .cc-primary-continue-row .cc-primary-continue { flex:0 0 auto; width:max-content; min-width:11rem; padding-inline:1.2rem; }
+.customize .cc-primary-footer .cc-resource-row { display:contents; }
+.cc-derived:has(> .cc-resource-row) { display:flex; flex-direction:column; align-items:stretch; gap:.35rem; }
+.cc-resource-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:.35rem 1.25rem; }
+.customize #cz-derived .cc-derived { display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:.35rem .9rem; }
+.customize #cz-derived .as-chip { padding:.15rem 0; font-size:max(1rem, calc(16px / var(--ui-zoom, 1))); }
 .customize #cz-derived .as-chip .cv { font-size:inherit; }
-.customize #cz-derived .as-chip .ck { font-size:max(.8em, calc(11px / var(--ui-zoom, 1))); letter-spacing:.03em; }
+.customize #cz-derived .as-chip .ck { font-size:max(.875em, calc(14px / var(--ui-zoom, 1))); letter-spacing:.03em; }
 .customize .cc-equipment-details:empty { display:none; }
 .customize .cc-equip-group:has(> .cc-equipment-details:empty) { grid-template-columns:minmax(0,1fr); }
 .customize .cc-equip-group > .cc-card-selectors { --cc-choice-head:14px; grid-row:auto; overflow:visible; max-height:none; }
@@ -5492,16 +5722,19 @@ button[data-button-size] {
 
 /* Creation header: stable menu and a single, plain close control. */
 .customize .cz-menu-button { min-width: var(--tap-floor); min-height: var(--tap-floor); font: 24px/1 Arial, sans-serif; padding: 0; }
+.customize .cz-head-view-tools { flex: 0 0 auto; }
+@media (max-width: 600px) {
+  .customize .cz-head-view-tools .cc-view-option { padding-inline: 6px; min-width: var(--tap-floor); }
+}
 /* `--place-gap` is the ONE home for the hairline under the ☰ button: fx.js
    placeGap() reads this declaration, customize.js writes nothing, and
    tools/placement.mjs reads the same line the code used. */
 .customize .cz-head-tools.cz-header-menu { --place-gap: 8px; display: none; position: fixed; inset: auto; margin: 0; padding: 12px; width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--line-soft); border-radius: var(--r-2); box-shadow: 0 8px 24px #0008; }
-/* A window too short for four categories scrolls the menu instead of pinning
-   Review off the bottom edge (customize.js writes the max-height it was bound to). */
+/* Short windows scroll the game actions inside the available menu height. */
 .customize .cz-head-tools.cz-header-menu:popover-open { display: grid; gap: 12px; overflow: hidden auto; }
 .customize .cz-menu-navigation { display: grid; gap: 6px; }
 .customize .modal-head .modal-close { border: 1px solid var(--line-soft); }
-.customize .modal-head .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; font: 28px/1 Arial, sans-serif; }
+.customize .modal-head .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; }
 
 /* Keep all three creation header controls on the same square footprint. */
 .customize .modal-head :is(.figure.cz-portrait, .cz-menu-button, .modal-close) {
@@ -5515,4 +5748,299 @@ button[data-button-size] {
   max-height: var(--tap-floor);
   padding: 0;
   align-self: center;
+}
+
+/* Book lessons use live card faces and a searchable, keyboard-operable list. */
+.book-learning-veil { z-index: 13000; }
+.book-learning-panel { width: min(90rem, 96vw); max-height: 94dvh; display: flex; flex-direction: column; }
+.book-learning-body { overflow: auto; min-height: 0; display: grid; gap: 1rem; padding: 1.4rem; }
+.book-learning-body > p { margin: 0; }
+.book-learning-body input, .book-learning-body select { width: 100%; min-height: 44px; padding: .8rem 1rem; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-2); }
+.book-learning-body select:disabled { opacity: 1; color: var(--ink-dim); }
+.book-learning-rarity { color: var(--ink-dim); font-size: 1.2rem; }
+.book-lesson-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr); gap: 1.4rem; }
+.book-lesson-list { display: grid; align-content: start; gap: .6rem; max-height: 42dvh; overflow: auto; }
+.book-lesson-option.as-btn { min-height: 44px; width: 100%; text-align: left; white-space: normal; }
+.book-lesson-option[aria-pressed='true'] { outline: 2px solid var(--gold); outline-offset: -2px; }
+.book-lesson-detail { display: grid; justify-items: center; align-content: start; gap: 1rem; }
+.book-lesson-detail > p { width: 100%; }
+.book-learning-status { color: var(--gold); }
+@media (max-width: 600px) {
+  .book-learning-panel { font-size: 14px; }
+  .book-lesson-columns { grid-template-columns: minmax(0, 1fr); }
+  .book-lesson-list { max-height: 25dvh; }
+  .book-learning-rarity { font-size: 12px; }
+}
+.book-art { display: inline-block; position: relative; isolation: isolate; width: 100%; aspect-ratio: 1; flex-shrink: 0; }
+.book-art > svg { display: block; width: 100%; height: 100%; pointer-events: none; }
+.book-reading-art { float: right; width: 5.5rem; margin: -0.5rem 0 0.5rem 0.5rem; }
+.inventory-face .book-art { width: 4rem; }
+.inventory-model .book-art { width: min(100%, 15rem); }
+
+/* Unified turn Stamina uses the former action diamond, in green. */
+.card .card-cost-rail > .cost.stamina-cost,
+.card.playing-poker-card .cost.stamina-cost { color: #88e183; border-color: #529b58; background: #14271b; }
+.stamina-budget,
+.combat-action-row .energy-orb,
+.combat-action-row .energy-orb :is(.sp-k, .sp-v) { color: #88e183; }
+
+/* Approved SP Atelier assembly. Keep the shared footer's measured footprint. */
+:root .combat:is(.coop,:not(.coop)) .combat-action-row > .energy-orb.stamina-orb {
+  padding: 0; border: 0; background: transparent; box-shadow: none; position: relative;
+  overflow: visible; display: block;
+}
+:root .combat .stamina-orb > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+:root .combat .stamina-orb > .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+:root .combat .stamina-orb:focus-visible { outline: 2px solid #96cbaa; outline-offset: 2px; }
+
+/* Approved compact defense HUD: Ward, shield, then an elastic HP trough.
+   The wrapper keeps the resource plan's total max-HP-scaled width. */
+:root .combat .combatant .combat-health-row {
+  --health-red: #ad403a; --health-blue: #348fcb; --ward-purple: #9a63d9; --ward-gold: #d8b354;
+  --health-row-h: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1))));
+  display: flex; align-items: center; align-self: center; gap: 2.85%; min-width: calc(112px / var(--ui-zoom, 1)); max-width: 100%;
+  min-height: var(--health-row-h); flex: none;
+}
+:root .combat .combatant .combat-health-row > .combat-health-meter {
+  position: relative; flex: 1 1 0; min-width: 0; --meter-tone: var(--health-red) !important;
+  container-type: inline-size; container-name: combat-health;
+}
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-protected='true'] { --meter-tone: var(--health-blue) !important; }
+:root .combat .combatant .combat-health-meter .m-track { height: var(--health-row-h); border-radius: 5px; background: #0d1412; }
+:root .combat .combatant .combat-health-meter[data-warded='true'] .m-track {
+  outline: max(1px, calc(2px / var(--ui-zoom, 1))) solid var(--ward-gold); outline-offset: 1px;
+  box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #d8b35466;
+}
+:root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; }
+:root .combat .combatant .combat-health-badge {
+  position: relative; flex: 0 0 max(14.285%, calc(26px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
+  color: #fff1d6; font: 500 var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))/1 var(--font-body);
+  font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
+}
+:root .combat .combatant .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
+:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #61abe0, var(--health-blue), #194a6b); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
+:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 3px #348fcb55); }
+:root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); }
+:root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
+:root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #9a63d966); }
+:root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+:root .combat .combatant .combat-health-badge { min-width: max-content; }
+:root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
+@container combat-health (max-width: 4em) {
+  :root .combat .combatant .combat-health-meter .m-value { font-size: 0 !important; }
+  :root .combat .combatant .combat-health-meter .m-value::after {
+    content: attr(data-current-hp); font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)));
+  }
+}
+@media (max-width: 600px) {
+  :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
+  :root .combat .combatant .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
+}
+
+.character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
+.character-sheet-action { min-height: 44px; width: 100%; margin-top: .4rem; }
+
+/* THE CHARACTER SHEET (screens/characterSheet.js): a read-only map of every
+   level. A ladder row is level · XP · grants; reached rows dim, the current
+   row is gold and marked, a milestone (a level that pays more than the
+   every-level draft) carries a gold rule so the eye finds it in a column. */
+.character-sheet .character-sheet-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
+.character-sheet .cs-pane { position: relative; display: flex; flex-direction: column; gap: .75rem; min-width: 0; min-height: 0; overflow: auto; padding: var(--modal-inset, 1rem); }
+.character-sheet .cs-skills { display: grid; grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); min-height: 0; overflow: hidden; flex: 1 1 auto; }
+.character-sheet .cs-rail .cs-rail-item { white-space: normal; flex: 0 0 auto; }
+.character-sheet .cs-rail .cs-rail-item:not(.touched):not(.own):not(.on) { opacity: .7; }
+.character-sheet .cs-cadence { margin: 0; color: var(--ink-dim); }
+.character-sheet .cs-track-title { margin: 0; }
+.character-sheet .cs-ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
+.character-sheet .cs-row {
+  display: grid; grid-template-columns: 3rem minmax(6.5rem, 8.5rem) minmax(0, 1fr) auto; align-items: center; gap: .4rem .75rem;
+  padding: .5rem .75rem; border: 1px solid var(--line); border-radius: var(--r-sm, 4px); min-height: 44px;
+}
+.character-sheet .cs-row.milestone { border-left: 3px solid var(--gold); }
+.character-sheet .cs-row[data-state="reached"] { opacity: .62; }
+.character-sheet .cs-row[data-state="current"] { border-color: var(--gold); background: rgba(var(--accent-rgb), .1); }
+.character-sheet .cs-row[data-state="next"] { border-style: dashed; border-color: var(--gold); }
+.character-sheet .cs-level { font: 600 1.5rem/1 var(--font-display, serif); color: var(--parchment); text-align: center; }
+.character-sheet .cs-row[data-state="current"] .cs-level { color: var(--gold); }
+.character-sheet .cs-xp { display: flex; flex-direction: column; gap: .1rem; font-variant-numeric: tabular-nums; }
+.character-sheet .cs-total { color: var(--ink-dim); font-size: .85em; }
+.character-sheet .cs-grants { display: flex; flex-wrap: wrap; gap: .3rem; min-width: 0; }
+.character-sheet .cs-grant.routine { opacity: .75; }
+.character-sheet .cs-here { color: var(--gold); white-space: nowrap; }
+@media (max-width: 760px) {
+  /* A phone stacks the rail above the ladder as a scrolling strip, and a row
+     puts its grants under the level and XP rather than squeezing a column. */
+  .character-sheet .cs-skills { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .character-sheet .cs-rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .character-sheet .cs-rail .cs-rail-item { width: auto; white-space: nowrap; }
+  .character-sheet .cs-row { grid-template-columns: 2.5rem minmax(0, 1fr) auto; }
+  .character-sheet .cs-here { grid-row: 1; grid-column: 3; }
+  .character-sheet .cs-grants { grid-column: 1 / -1; }
+}
+
+/* The bar's layers (fills, its XP text) stay inside the bar's own stacking
+   context, so nothing in it can rise over the Level up that covers it. */
+.reward-door .rp-layered-bar { isolation: isolate; }
+/* LEVEL UP COVERS ITS BAR (SPEC §13.4o): the waiting bar's own cell holds the
+   button over it, so the press sits exactly where the fill stopped. One bar
+   carries it at a time; the rest wait their turn. */
+.reward-door .reward-progress-row.reward-level-ready .reward-level-up { grid-area: bar; justify-self: stretch; align-self: center; position: relative; z-index: 2; width: 100%; min-width: max-content; min-height: max(44px, var(--tap-floor, 44px)); margin: 0; font-size: max(14px, .95rem); }
+.reward-door .reward-progress-row.reward-level-ready .rp-next { visibility: hidden; }
+/* Merchant offers use one readable image/details/action row on every shelf.
+   The native card remains inspectable; its intrinsic card geometry is preserved. */
+.merchant-workspace .shop-pane > .shop-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.merchant-workspace .shop-detail[hidden] { display: none; }
+.merchant-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: var(--book-gap);
+  align-content: start;
+}
+:root .shop-workspace .shop-shelf .merchant-offer {
+  display: grid;
+  grid-template-columns: minmax(0, var(--card-w-glance, 16rem)) minmax(0, 1fr) var(--book-action-width);
+  align-items: center;
+  align-self: stretch;
+  gap: var(--book-gap);
+  min-height: var(--book-min-height);
+  width: 100%;
+  max-width: none;
+  padding: var(--book-padding);
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: linear-gradient(120deg, var(--panel), var(--bg));
+}
+.merchant-offer-media { min-width: 0; display: grid; place-items: center; }
+.merchant-offer-media > img { width: 100%; max-height: 16rem; object-fit: contain; }
+.merchant-offer-media > .book-art { width: 100%; }
+.merchant-offer-media .card, .merchant-offer-media .equipment-poker-card { max-width: 100%; }
+.merchant-offer-media > .shop-inspect-card { width: 100%; padding: 0; border: 0; background: none; }
+.merchant-offer-glyph { display: grid; place-items: center; width: 100%; min-height: 10rem; font-size: 4rem; color: var(--gold); }
+:root .merchant-offer > .merchant-offer-details { min-width: 0; margin: 0; width: auto; text-align: left; border-left: 1px solid var(--line); padding-left: var(--book-gap); }
+:root .merchant-offer-details .shop-offer-avail { position: static; text-align: left; }
+.merchant-offer-details > h3 { margin: 0 0 .7rem; color: var(--gold); font-size: 1.8rem; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+.merchant-offer-details > p { margin: 0; color: var(--ink-dim); font-size: 1.3rem; line-height: 1.5; overflow-wrap: anywhere; }
+.merchant-offer-actions { display: grid; gap: .8rem; justify-items: stretch; align-content: center; min-width: 0; }
+.merchant-offer-action.as-btn { width: 100%; min-width: 0; min-height: 44px; white-space: normal; }
+.merchant-offer-price.as-status { color: var(--gold); text-align: center; white-space: normal; overflow-wrap: anywhere; }
+.merchant-workspace .shop-services .class-row { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
+@media (max-width: 600px) {
+  :root .shop-workspace .shop-shelf .merchant-offer { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: var(--book-compact-gap); padding: var(--book-compact-padding); }
+  .merchant-offer-actions { grid-column: 2; grid-template-columns: minmax(0, 1fr); }
+  .merchant-offer-media { grid-row: 1 / span 2; }
+  .merchant-offer-details { padding-left: var(--book-compact-gap); }
+  .merchant-offer-details > h3 { font-size: 1.5rem; }
+  .merchant-offer-details > p { font-size: 1.2rem; }
+}
+
+/* Character and skill rows share the same aligned columns and visible name. */
+.reward-door .reward-claim-layout > .reward-menu:empty { display: none; }
+.reward-door .reward-claim-layout:has(> .reward-menu:empty) .reward-side { grid-column: 1 / -1; }
+.reward-door .reward-claim-layout[aria-busy='true'] .reward-level-offer { visibility: hidden; }
+.reward-door .reward-progress-row[data-kind='character'] {
+  grid-template-columns: subgrid;
+  grid-template-areas: 'name level bar next' 'gain gain gain gain';
+  gap: 0 .6rem;
+}
+:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name level' 'bar bar' 'gain next';
+  font-size: 1rem;
+}
+:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
+  grid-template-areas: 'name level' 'bar next' 'gain gain';
+}
+/* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */
+.armoury[data-view="grid"] .armoury-views { display: none; }
+.armoury[data-view="grid"] .armoury-railed { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-view="grid"] .armoury-character { display: grid; grid-template-columns: minmax(16rem, .7fr) minmax(0, 1.3fr); grid-template-rows: auto minmax(0, 1fr); gap: .8rem 1.2rem; }
+.armoury[data-view="grid"] .armoury-character-stats { overflow: visible; gap: .6rem; }
+.armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: clamp(12rem, 28vh, 28rem); }
+.character-skill-section { display: grid; gap: .35rem; }
+.character-skill-progression { width: 100%; text-align: left; }
+.progression-summary, .progression-skill-button { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: .5rem; background: var(--panel, #201b16); color: var(--parchment); text-align: left; }
+button.progression-summary, .progression-attributes-toggle { display: flex; flex-direction: column; gap: .55rem; padding: .8rem 1rem; cursor: pointer; }
+.progression-banner-title { font-family: var(--font-display, serif); font-size: 1.6rem; }
+.progression-summary-line { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: 1.3rem; line-height: 1.5; }
+.progression-summary-line > span { white-space: nowrap; }
+.progression-summary-line strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+.progression-attributes-banner { display: flex; align-items: center; gap: .7rem; padding-right: 1rem; }
+.progression-attributes-toggle { flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; text-align: left; }
+.progression-points { flex: none; border: 1px solid var(--line); border-radius: .4rem; min-height: 44px; padding: .5rem .8rem; font: inherit; font-size: 1.3rem; color: var(--muted); background: transparent; cursor: default; }
+.progression-points.available { color: #e0f2ff; background: #16476c; border-color: #72c5ff; box-shadow: 0 0 .6rem #3faaff40; cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+.progression-points.available:is(:hover, :focus-visible) { transform: translateY(-2px); background: #205e8e; box-shadow: 0 0 1.4rem #52b8ff90; }
+.progression-attributes-detail { border-top: 1px solid var(--line); padding: .7rem 1rem; }
+.progression-attributes-detail[hidden] { display: none; }
+.progression-attributes-detail > .as-prose { margin: 0 0 .5rem; font-size: 1.2rem; }
+.progression-attributes-detail .cc-attribute-card { margin-block: .3rem; }
+.progression-summary:focus-visible, .progression-skill-button:focus-visible, .progression-attributes-toggle:focus-visible, .progression-points:focus-visible { outline: var(--focus-ring, 2px solid var(--gold)); outline-offset: 2px; }
+.progression-skill-button { display: block; padding: .4rem .6rem; min-height: 44px; cursor: pointer; }
+.progression-skill-button:is(:hover, :focus-visible), button.progression-summary:hover, .progression-attributes-toggle:hover { border-color: var(--gold); background: rgba(var(--accent-rgb), .08); }
+.progression-skill-button .as-meter { pointer-events: none; width: 100%; }
+.character-sheet.progression-hub .character-sheet-body { overflow: auto; }
+.character-sheet.progression-hub .cs-pane { overflow: visible; gap: .65rem; }
+.progression-track-list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.progression-feats .as-title-s { margin-block: 0 .3rem; }
+.progression-feat-list, .progression-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+.progression-levels { border: 1px solid var(--line); border-radius: .4rem; }
+.progression-levels > summary { min-height: 44px; padding: .75rem 1rem; cursor: pointer; }
+.progression-levels .cs-ladder { padding: .8rem; }
+.progression-associated-cards { display: flex; gap: 1rem; overflow-x: auto; padding: .5rem .25rem 1rem; }
+.progression-associated-cards > * { flex-shrink: 0; }
+.progression-inspection .cs-pane { overflow: visible; padding: 0; }
+.progression-inspection .cc-class-resource-grid { flex-wrap: wrap; }
+.progression-inspection .progression-stat-card { width: 100%; }
+.deck-editor:has(> .modal-head) { grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+@media (max-width: 680px) {
+  .armoury[data-view="grid"] .armoury-character { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: .6rem; }
+  .armoury[data-view="grid"] .armoury-character > * { grid-column: 1; grid-row: auto; }
+  .armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: calc(100px / var(--ui-zoom, 1)); }
+  .progression-track-list { grid-template-columns: minmax(0, 1fr); }
+  .progression-attributes-banner { flex-wrap: wrap; padding: .4rem .7rem; gap: .3rem; }
+  .progression-attributes-toggle { padding: .3rem; }
+  .progression-points { margin-left: auto; font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+  .progression-summary-line { font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); gap: .3rem .8rem; }
+  .progression-hub .cs-cadence { font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progression-points.available { transition: none; }
+  .progression-points.available:is(:hover, :focus-visible) { transform: none; }
+}
+
+.progression-inspection > .modal-body { padding: var(--modal-inset, 1.4rem); }
+.progression-points, .progression-skill-button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+
+.armoury[data-view="grid"] #armoury-view-select { display: none; }
+:is(.progression-attributes-detail, .progression-stat-card) .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
+:is(.progression-attributes-detail, .progression-stat-card) .ls { min-width: 0; }
+
+:is(.progression-attributes-detail, .progression-stat-card) .disc-face > .as-row .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
+
+/* Feats expose their effect before inspection, using the same framed option motif. */
+.progression-feats-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; }
+.progression-feats-heading .as-title-s { margin: 0; }
+.progression-feat-count { color: var(--muted); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.progression-feat-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+button.progression-feat-card { display: flex; flex-direction: column; align-items: stretch; gap: .55rem; width: 100%; min-width: 0; padding: 1rem 1.2rem; text-align: left; color: var(--parchment); border: 1px solid var(--line-soft); border-radius: var(--r-2); background-color: var(--panel); cursor: pointer; }
+button.progression-feat-card::after { content: none; }
+.progression-feat-topline, .progression-feat-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.progression-feat-name { color: var(--gold); font-family: var(--font-display); font-size: 1.6rem; }
+.progression-feat-state { flex: none; font-size: 1.1rem; color: var(--ink-dim); }
+[data-feat-owned='true'] .progression-feat-state { color: var(--good, #a2be91); }
+.progression-feat-effect { font: 400 1.35rem/1.5 var(--font-body); color: var(--parchment); }
+.progression-feat-footer { margin-top: auto; color: var(--ink-dim); font-size: 1.1rem; }
+.progression-feat-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.progression-feat-tag { border: 1px solid var(--line-soft); padding: .2rem .5rem; border-radius: var(--r-2); }
+.progression-feat-open { font-size: 2rem; line-height: 1; }
+button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--gold); background-color: color-mix(in srgb, var(--panel) 90%, var(--gold)); }
+.progression-feat-empty { padding: .9rem 1.1rem; border: 1px solid var(--line-soft); border-radius: var(--r-2); }
+.progression-feat-empty .as-prose { margin: .3rem 0 0; font-size: 1.25rem; color: var(--ink-dim); }
+@media (max-width: 680px) {
+  .progression-feat-list { grid-template-columns: minmax(0, 1fr); }
+  .progression-feat-effect { font-size: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
 }

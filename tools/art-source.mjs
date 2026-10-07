@@ -1,48 +1,33 @@
 #!/usr/bin/env node
-// tools/art-source.mjs — where a tool reads the art packs' files: the fetched
-// release, or (until step 13) the trees still in this checkout.
+// tools/art-source.mjs — where a tool reads the art packs' files.
 //
 //   node tools/art-source.mjs --dir <tree>     print the directory a tree's files are
-//                                             read from (assets-mobile, assets/fonts,
-//                                             music, map-detail) and exit
-//   node tools/art-source.mjs --which          one line per tree: cache or trees, and where
+//                                             read from (assets, assets-mobile,
+//                                             assets/fonts, music, map-detail) and exit
+//   node tools/art-source.mjs --which          one line per tree: its pack and where
 //
-// WHY (docs/EXTERNAL-ASSETS-PLAN.md step 12). Four trees leave this repository
-// at step 13: assets-mobile/ (the light pack), and assets/fonts/, music/ and
-// map-detail/ (the common pack). Step 11 made the release a build input:
-// tools/fetch-art.mjs verifies each pack into .art-cache/<tag>/<pack>/, whose
-// files sit at the same paths as the trees (`assets-mobile/bg/…`,
-// `assets/fonts/…`, `music/…`, `map-detail/…`). Step 12 points every reader of
-// those trees here, so this file is the ONE place that knows a tree may still
-// be on disk, and step 13 deletes the fallback with the trees.
+// The compact assets-mobile/ light tier is tracked in the game. High-resolution
+// assets/ and common files remain in cehinds/AshenSpire-art; fetch-art verifies
+// their pinned release into
+// .art-cache/<tag>/<pack>/, whose files sit at the trees' old paths
+// (`assets/bg/…`, `assets-mobile/bg/…`, `assets/fonts/…`, `music/…`,
+// `map-detail/…`). Every reader of those paths asks this file.
 //
-// THE RULE. A pack is read from its verified cache (fetch-art's marker matches
-// the current pin and manifest). When it is not fetched:
+// THE RULE. Auto reads the tracked light tier when present. Other packs are
+// read from a verified cache (fetch-art's marker matches the current pin and
+// manifest); an unfetched pack names the fetch. ASHEN_ART_SOURCE:
 //
-//   ASHEN_ART_SOURCE unset (or `auto`)  the tree in this checkout, with one note
-//                                       naming the fetch that replaces it;
-//   ASHEN_ART_SOURCE=cache              refused for the light and common packs (the
-//                                       high pack's assets/ tree leaves with
-//                                       ART-REPO-PLAN step 6): the error names the
-//                                       fetch. CI sets
-//                                       this, so a job that reads the trees
-//                                       without fetching is red now, not at step 13.
-//                                       It binds the checkout CI runs in
-//                                       (GITHUB_WORKSPACE) when that is set, so a
-//                                       tool's temporary sandbox (a copied tree,
-//                                       no cache) still builds from its copy;
-//   ASHEN_ART_SOURCE=trees              the trees, silently (a sandbox or fixture
-//                                       that copies them on purpose).
-//
-// The cache and the trees hold the same bytes while `fetch-art --agree` is
-// green (every building workflow runs it), so which one a build read never
-// changes what it ships.
+//   unset or `auto`           local light, verified cache for high and common;
+//   `cache`                   verified release for every pack (CI);
+//   `trees`                    the files at the trees' paths under the root
+//                              itself, silently: for a tool's temporary sandbox
+//                              that copies them there on purpose (a fixture).
 //
 // It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs), with every
 // other tools/ module tools/bundle.mjs reaches (tests/build-identity.test.mjs):
 // it decides which bytes the bundler reads, so a change here is a new build.
 
-import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { cpSync, existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CACHE_DIR, MANIFEST_PATH, PIN_PATH, verifiedPackDir } from './fetch-art.mjs';
@@ -50,16 +35,22 @@ import { CACHE_DIR, MANIFEST_PATH, PIN_PATH, verifiedPackDir } from './fetch-art
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const ENV = 'ASHEN_ART_SOURCE';
 export const MODES = Object.freeze(['auto', 'cache', 'trees']);
-/** The trees step 13 deletes, and the pack whose cache holds each at the same path. */
+/**
+ * The four trees step 12 switched (the light and common packs' files), and the
+ * pack whose cache holds each at the same path. tools/bundle.mjs keeps them
+ * out of an art tier's sweep, and tools/serve.mjs answers them from the cache.
+ */
 export const MOVING_TREES = Object.freeze({
   'assets-mobile': 'light',
   'assets/fonts': 'common',
   music: 'common',
   'map-detail': 'common',
 });
+/** The high tier's tree: what was assets/ here (less the fonts), the high pack since step 13. */
+export const HIGH_TREE = 'assets';
+/** Every tree a pack carries, most specific first (assets/fonts before assets). */
+export const PACK_TREES = Object.freeze({ ...MOVING_TREES, [HIGH_TREE]: 'high' });
 
-/** The packs that carry a moving tree: the ones ASHEN_ART_SOURCE=cache holds to their cache. */
-const TREE_PACKS = new Set(Object.values(MOVING_TREES));
 const posix = (p) => p.split(/[\\/]/g).join('/');
 const real = (p) => { try { return realpathSync(p); } catch { return resolve(p); } };
 
@@ -70,25 +61,22 @@ export function sourceMode(env = process.env) {
   return v;
 }
 
-/** Does `cache` mode bind this root? Every root, or only the CI checkout when GITHUB_WORKSPACE is set. */
-export function strictFor(root, env = process.env) {
-  if (sourceMode(env) !== 'cache') return false;
-  if (!env.GITHUB_WORKSPACE) return true;
-  return real(root) === real(env.GITHUB_WORKSPACE);
-}
-
-/** The moving tree a repository-relative path lies in, or null. */
+const inTree = (p, t) => p === t || p.startsWith(`${t}/`);
+/** The step-12 tree (light or common pack) a repository-relative path lies in, or null. */
 export function treeOf(rel) {
   const p = posix(rel).replace(/^\.\//, '');
-  return Object.keys(MOVING_TREES).find((t) => p === t || p.startsWith(`${t}/`)) || null;
+  return Object.keys(MOVING_TREES).find((t) => inTree(p, t)) || null;
+}
+/** Any pack's tree a repository-relative path lies in (assets/… is the high pack's), or null. */
+export function packTreeOf(rel) {
+  const p = posix(rel).replace(/^\.\//, '');
+  return Object.keys(PACK_TREES).find((t) => inTree(p, t)) || null;
 }
 
-const noted = new Set();
 // One verification per root and pack while nothing it depends on moves:
-// verifiedPackDir re-reads the
-// pin and the manifest and digests the pack's rows, and artPath runs per file.
+// verifiedPackDir re-reads the pin and the manifest and digests the pack's
+// rows, and artPath runs per file.
 const verified = new Map();
-const defaultWarn = (m) => console.warn(m);
 const mtimeOf = (p) => { try { const st = statSync(p); return `${st.mtimeMs}:${st.size}`; } catch { return '-'; } };
 /** What a verification decision depends on: the pin, the manifest and the pack's marker, by mtime and size. */
 function stampOf(root, pack) {
@@ -99,13 +87,19 @@ function stampOf(root, pack) {
 }
 
 /**
- * packSource(pack, { root, env, warn }) → { from: 'cache', dir } | { from: 'trees', dir: null, why }.
- * `dir` is the verified .art-cache/<tag>/<pack>/ directory. 'trees' means the
- * caller reads the files from this checkout; a `cache`-mode root never gets it.
+ * packSource(pack, { root, env }) → { from: 'cache', dir } | { from: 'trees', dir: null, why }.
+ * `dir` is the verified .art-cache/<tag>/<pack>/ directory. 'trees' is given
+ * only under ASHEN_ART_SOURCE=trees (a sandbox that copied the files to the
+ * trees' paths under its root); otherwise a pack that is not fetched throws,
+ * and the message names the fetch.
  */
-export function packSource(pack, { root = ROOT, env = process.env, warn = defaultWarn } = {}) {
+export function packSource(pack, { root = ROOT, env = process.env } = {}) {
   const mode = sourceMode(env);
   if (mode === 'trees') return { from: 'trees', dir: null, why: `${ENV}=trees` };
+  // The game carries its compact light tier. Auto uses those bytes directly;
+  // cache remains an explicit, pinned-release check for CI and remote builds.
+  if (mode === 'auto' && pack === 'light' && existsSync(join(root, 'assets-mobile')))
+    return { from: 'trees', dir: null, why: 'local light art' };
   const vkey = `${real(root)}\0${pack}`;
   // The decision is kept only while the pin, the manifest and every pack's
   // verified marker are unchanged, so a long-running server (tools/serve.mjs)
@@ -117,49 +111,69 @@ export function packSource(pack, { root = ROOT, env = process.env, warn = defaul
     verified.set(vkey, hit);
   }
   if (hit.dir) return { from: 'cache', dir: hit.dir };
-  const why = hit.why;
-  // The refusal guards the four trees step 13 deletes. The high pack's tree,
-  // assets/, leaves with ART-REPO-PLAN step 6, so a build that packs the high
-  // tier without the 203 MB high zip (a high-default web edition on dev) still
-  // reads assets/ here, with the note.
-  if (TREE_PACKS.has(pack) && strictFor(root, env)) throw new Error(`${ENV}=cache: ${why}`);
-  if (!noted.has(vkey)) {
-    noted.add(vkey);
-    warn(`art-source: ${why}; reading the ${pack} pack's files from the trees in this checkout until docs/EXTERNAL-ASSETS-PLAN.md step 13 removes them`);
-  }
-  return { from: 'trees', dir: null, why };
+  throw new Error(`the art trees left this repository (docs/EXTERNAL-ASSETS-PLAN.md step 13), and ${hit.why}`);
 }
 
 /**
- * artDir(tree, opts) → { dir, from }: the directory holding `tree`'s files —
- * .art-cache/<tag>/<pack>/<tree> when the pack is fetched, else <root>/<tree>.
- * Throws when neither exists, naming the fetch.
+ * artDir(tree, opts) → { dir, from, pack }: the directory holding `tree`'s
+ * files — .art-cache/<tag>/<pack>/<tree> (or <root>/<tree> under
+ * ASHEN_ART_SOURCE=trees). Throws when the pack is not fetched, naming the fetch.
  */
 export function artDir(tree, opts = {}) {
   const root = opts.root || ROOT;
-  const pack = MOVING_TREES[tree];
-  if (!pack) throw new Error(`${JSON.stringify(tree)} is not one of the trees the art packs carry (${Object.keys(MOVING_TREES).join(', ')})`);
+  const pack = PACK_TREES[tree];
+  if (!pack) throw new Error(`${JSON.stringify(tree)} is not one of the trees the art packs carry (${Object.keys(PACK_TREES).join(', ')})`);
   const src = packSource(pack, opts);
   if (src.from === 'cache') return { dir: join(src.dir, ...tree.split('/')), from: 'cache', pack };
   const dir = resolve(root, ...tree.split('/'));
-  if (!existsSync(dir)) throw new Error(`${tree}/ is not in this checkout and the ${pack} pack is not fetched (${src.why}): node tools/fetch-art.mjs --pack ${pack}`);
+  if (!existsSync(dir)) throw new Error(`${tree}/ is not under ${root} (${src.why}): copy the files there, or unset ${ENV} and run node tools/fetch-art.mjs --pack ${pack}`);
   return { dir, from: 'trees', pack };
 }
 
 /**
  * artPath(rel, opts) → the absolute file a repository-relative path inside a
- * moving tree is read from (it may not exist: the caller checks, as before).
- * A path outside the four trees resolves against the checkout unchanged.
+ * pack's tree is read from (it may not exist: the caller checks, as before).
+ * A path outside those trees resolves against the checkout unchanged.
  */
 export function artPath(rel, opts = {}) {
   const root = opts.root || ROOT;
-  const tree = treeOf(rel);
+  const tree = packTreeOf(rel);
   if (!tree) return resolve(root, rel);
   const { dir } = artDir(tree, opts);
   const rest = posix(rel).replace(/^\.\//, '').slice(tree.length + 1);
   const abs = rest ? resolve(dir, ...rest.split('/')) : dir;
   if (abs !== dir && !abs.startsWith(dir + sep)) throw new Error(`${rel} escapes ${tree}/`);
   return abs;
+}
+
+/**
+ * copyPackTrees(toRoot, trees, { root, env }) — a SANDBOX'S ART. A tool that
+ * builds in a throwaway copy of the checkout (tools/bundle.test.mjs,
+ * tools/sfx-filename-convention.mjs, …) used to copy the trees; since step 13
+ * it copies each named tree's files from this checkout's verified cache to the
+ * tree's path under `toRoot`, and runs its child with ASHEN_ART_SOURCE=trees
+ * (SANDBOX_ENV), so a fixture may edit its copy without touching the cache.
+ * Throws, naming the fetch, when a pack is not fetched.
+ */
+export const SANDBOX_ENV = Object.freeze({ [ENV]: 'trees' });
+export function copyPackTrees(toRoot, trees, { root = ROOT, env = process.env } = {}) {
+  for (const tree of trees) {
+    // Under ASHEN_ART_SOURCE=trees the root is itself a sandbox: its own copies.
+    const { dir } = artDir(tree, { root, env });
+    cpSync(dir, resolve(toRoot, ...tree.split('/')), { recursive: true });
+  }
+}
+
+/**
+ * copySourceArt(toRoot, opts) — the `assets/` tree a served SOURCE sandbox used
+ * to copy from this checkout (src/ + styles/ + assets/, played through
+ * assetUrl() in source mode): the high pack's assets/ and the common pack's
+ * fonts, written to <toRoot>/assets/. A sandbox that also carries
+ * art-release.json is served as a checkout (tools/serve.mjs), so it reads them
+ * with ASHEN_ART_SOURCE=trees (SANDBOX_ENV).
+ */
+export function copySourceArt(toRoot, opts = {}) {
+  copyPackTrees(toRoot, [HIGH_TREE, 'assets/fonts'], opts);
 }
 
 /**
@@ -186,10 +200,27 @@ export function fetchPlanFor(root, { fullArt = false } = {}) {
  * tree or cache. The committed manifest outlives the trees (step 13).
  */
 const idSets = new Map();
+const rowMaps = new Map();
+function manifestRows(root) {
+  const key = real(root);
+  if (!rowMaps.has(key)) rowMaps.set(key, JSON.parse(readFileSync(join(root, 'art-manifest.json'), 'utf8')).assets || {});
+  return rowMaps.get(key);
+}
 export function manifestIds(root = ROOT) {
   const key = real(root);
-  if (!idSets.has(key)) idSets.set(key, new Set(Object.keys(JSON.parse(readFileSync(join(root, 'art-manifest.json'), 'utf8')).assets || {})));
+  if (!idSets.has(key)) idSets.set(key, new Set(Object.keys(manifestRows(root))));
   return idSets.get(key);
+}
+
+/**
+ * artRecord(id, root) → the manifest's row for an art id ({light, high} or
+ * {common}), or null: its bytes, sha256 and pixel size per tier, read from the
+ * committed manifest with no tree or cache. A check that compares artwork (six
+ * distinct frames) compares these hashes instead of reading the files.
+ */
+export function artRecord(id, root = ROOT) {
+  const rows = manifestRows(root);
+  return Object.prototype.hasOwnProperty.call(rows, id) ? rows[id] : null;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -198,14 +229,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const at = args.indexOf('--dir');
     if (at >= 0) {
       const tree = (args[at + 1] || '').replace(/\/+$/, '');
-      console.log(relative(process.cwd(), artDir(tree, { warn: (m) => console.error(m) }).dir) || '.');
+      console.log(relative(process.cwd(), artDir(tree).dir) || '.');
     } else if (args.includes('--which')) {
-      for (const tree of Object.keys(MOVING_TREES)) {
-        const { dir, from, pack } = artDir(tree, { warn: (m) => console.error(m) });
+      for (const tree of Object.keys(PACK_TREES)) {
+        const { dir, from, pack } = artDir(tree);
         console.log(`${tree.padEnd(14)} ${pack.padEnd(7)} ${from.padEnd(6)} ${posix(relative(ROOT, dir))}`);
       }
     } else {
-      console.error('usage: node tools/art-source.mjs --dir <assets-mobile|assets/fonts|music|map-detail> | --which');
+      console.error('usage: node tools/art-source.mjs --dir <assets|assets-mobile|assets/fonts|music|map-detail> | --which');
       process.exit(2);
     }
   } catch (e) {

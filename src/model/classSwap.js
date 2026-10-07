@@ -9,6 +9,7 @@
 // relics, the loadout, the attributes and the weapon skills are the run's
 // and stay; the new class's kit is not dealt (the run was born once).
 
+import { hasClassMastery, openClassMasteryTrack, masteryProfileFor } from './classMasteryRun.js';
 import { classTreeRows } from './classTree.js';
 import { classSkillId, skillLevel } from './skills.js';
 import { syncZones } from './state.js';
@@ -26,16 +27,22 @@ import { stampDeck } from './loadout.js';
  * set aside — named on the receipt and the history row, never silently
  * lost. Armaments are the run's and stay.
  */
-export function swapRunClass(registries, run, classId) {
+export function swapRunClass(registries, run, classId, { preserveProgress = false } = {}) {
   if (!registries.classes.has(classId)) throw new Error(`swapClass: unknown class '${classId}'`);
   const from = run.class;
   const fromLevel = skillLevel(run, classSkillId(from));
   if (from === classId) return { from, to: classId, fromLevel, droppedTags: [], resetTracks: [], droppedArmour: [] };
+  // The Mirror still resets class progression, but never forgets ownership.
+  // Clear saved tree picks too, so re-equipping cannot undo that reset.
+  if (!preserveProgress) {
+    run.classCards = Object.fromEntries([...new Set([from, ...Object.keys(run.classCards || {})])].map((id) => [id, { ...run.classCards?.[id], coreTags: [] }]));
+    run.classUnequipped = false;
+  }
   const permitted = new Set(classTreeRows(registries, classId).map((row) => row.nodeId));
   const before = Array.isArray(run.coreTags) ? run.coreTags : [];
   const droppedTags = before.filter((id) => !permitted.has(id));
   run.coreTags = before.filter((id) => permitted.has(id));
-  const resetTracks = Object.keys(run.skills || {}).filter((id) => id.startsWith('class:'));
+  const resetTracks = preserveProgress || hasClassMastery(run) ? [] : Object.keys(run.skills || {}).filter((id) => id.startsWith('class:'));
   for (const id of resetTracks) delete run.skills[id];
   const droppedArmour = [];
   const armour = ((registries.equipment || {}).armour) || [];
@@ -48,6 +55,7 @@ export function swapRunClass(registries, run, classId) {
     if (run.loadout.active) run.loadout.active.armor = Math.max(0, sets.armor.findIndex((id) => !!id));
   }
   run.class = classId;
+  if (hasClassMastery(run)) openClassMasteryTrack(registries, run, classId);
   // The armour changed hands, so the deck is restamped and the equipment
   // pools reconciled as the loadout screen does after any change (the review
   // of #1193): the old set's card rewrites and max-HP bonus leave with it.
@@ -67,7 +75,7 @@ export function swapRunClass(registries, run, classId) {
 export function peakClassLevel(run) {
   const live = Object.entries((run && run.skills) || {}).filter(([id]) => id.startsWith('class:')).map(([, row]) => (row && row.level) || 0);
   const swapped = ((run && run.history) || []).filter((h) => h && h.kind === 'classSwapped').map((h) => Number(h.fromLevel) || 0);
-  return Math.max(0, ...live, ...swapped);
+  return Math.max(0, ...live, ...swapped, ...Object.values(masteryProfileFor(run).classMastery || {}).map(row => row.level));
 }
 
 /** The class track id the swap will reset, for readers that name it. */

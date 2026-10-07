@@ -7,6 +7,7 @@
 
 import { statRow, statRowCount } from '../src/model/statRows.js';
 import { contentBundle } from '../src/content/index.js';
+import { botCardTargetId } from './simbot.mjs';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
@@ -45,7 +46,7 @@ function botTurn(C, playerId) {
     });
     const tgt = C.enemies.find((e) => e.alive);
     try {
-      if (card) playCard(C, playerId, card.instanceId, tgt && tgt.id, cardChoicePlan(C, playerId, card.instanceId)?.options[0]?.id);
+      if (card) playCard(C, playerId, card.instanceId, botCardTargetId(REG, C, card, tgt?.id, playerId), cardChoicePlan(C, playerId, card.instanceId)?.options[0]?.id);
       else { endTurn(C, playerId); break; }
     } catch { endTurn(C, playerId); break; }
   }

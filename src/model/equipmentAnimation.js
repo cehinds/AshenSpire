@@ -7,7 +7,7 @@ export const ANIMATION_ROLES = Object.freeze(['idle', 'attack', 'defend', 'buff'
 const PAINTED_TECHNIQUES = new Set(['shieldGuard', 'shieldGuard3', 'shieldBash', 'parry']);
 
 // Motion belongs to the weapon family; each outfit supplies its own painted frames.
-function resolvedAnimationSet(data, set) {
+export function resolvedAnimationSet(data, set) {
   const profile = set.motionProfile ? data.motionProfiles?.[set.motionProfile] : null;
   return profile ? { ...profile, ...set } : set;
 }
@@ -137,8 +137,16 @@ export function animationView(component, role) {
 export function animationTiming(component, roleOrPose, speed) {
   const clip = animationClip(component, roleOrPose);
   if (!clip) return null;
-  const scale = Math.max(0.1, Number(speed?.lungeMs || component.normalLungeMs) / component.normalLungeMs);
-  const frameMs = Math.max(1, Math.round(clip.frameMs * scale));
+  let scale = Math.max(0.1, Number(speed?.lungeMs || component.normalLungeMs) / component.normalLungeMs);
+  // A pace's impact cap (ui/fx.js ANIM_SPEEDS impactCapMs) plays a clip whose
+  // impact frame lands later than the cap faster as a whole, so every frame
+  // still shows and the swing still lands on its authored frame.
+  const cap = Number(speed?.impactCapMs);
+  const impactAt = clip.frameMs * scale * clip.impactIndex;
+  const capped = cap > 0 && impactAt > cap;
+  if (capped) scale *= cap / impactAt;
+  // Floored when capped, so many short frames cannot round past the cap.
+  const frameMs = Math.max(1, (capped ? Math.floor : Math.round)(clip.frameMs * scale));
   return { totalMs: frameMs * clip.frames.length, impactMs: frameMs * clip.impactIndex };
 }
 

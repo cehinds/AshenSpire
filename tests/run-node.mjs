@@ -1015,6 +1015,45 @@ if (CORE) {
     if (flaskTreeOk) zoomPassed++;
     else zoomExtra++;
   }
+
+  // 98/99 — the copy ratchet (tools/uistrings.mjs, DEVELOPER.md "the
+  // ratchet"). It sat red on dev from 2026-09-17 to 2026-10-02 because
+  // nothing ran it: 24 files drifted from tools/uistrings-baseline.json, about
+  // 230 sentences landing in code instead of content/source/uiStrings.csv.
+  // 98 is the check's planted corpus; 99 is the tree against the baseline.
+  const runUiStrings = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/uistrings.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const copySelf = runUiStrings(['--selftest']);
+    const copySelfV = copySelf.out.match(/^uistrings --selftest: (?:OK|RED)[^\n]*/m)?.[0] || '';
+    const copySelfOk = copySelf.code === 0 && /: OK — /.test(copySelfV);
+    console.log(
+      `${copySelfOk ? 'PASS' : 'FAIL'}  98. the copy ratchet still catches its own known-bad corpus` +
+        ` — ${copySelfV || `uistrings --selftest (exit ${copySelf.code}) printed no verdict`}`
+    );
+    if (copySelfOk) zoomPassed++;
+    else zoomExtra++;
+  }
+
+  if (CORE) {
+    const copyTree = runUiStrings(['--check']);
+    const copyTreeV = copyTree.out.match(/^uistrings: (?:OK|RED)[^\n]*/m)?.[0] || '';
+    const copyTreeOk = copyTree.code === 0 && /^uistrings: OK — /.test(copyTreeV);
+    const copyRows = [...copyTree.out.matchAll(/^ {2}((?:GREW|SHRANK|NOT A REPO KEY)[^\n]*)$/gm)].map((m) => m[1]).join('; ');
+    console.log(
+      `${copyTreeOk ? 'PASS' : 'FAIL'}  99. no file holds more or fewer hardcoded sentences than the copy baseline records` +
+        ` — ${copyTreeV || `uistrings --check (exit ${copyTree.code}) printed no verdict`}` +
+        `${copyRows ? ` (${copyRows})` : ''}` +
+        ` (\`node tools/uistrings.mjs --check\` names each file)`
+    );
+    if (copyTreeOk) zoomPassed++;
+    else zoomExtra++;
+  }
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.

@@ -143,6 +143,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { copySourceArt } from './art-source.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -309,9 +310,11 @@ const PLANTS = [
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'hc-kb-'));
-  for (const d of ['src', 'styles', 'assets', 'content']) {
+  for (const d of ['src', 'styles', 'content']) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
+  // assets/: the fetched high pack and the fonts (the tree left at docs/EXTERNAL-ASSETS-PLAN.md step 13).
+  copySourceArt(dir);
   cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
   return dir;
 }
@@ -478,61 +481,26 @@ async function main() {
     return true;
   }
 
-  // A SMITH CANDIDATE TAKES EXACTLY TWO TOUCH TAPS, and this helper is where
-  // that number is held to (Constantine, 2026-09-12: *"it should be two taps.
-  // the first selects and the information icon (i) should appear after the set
-  // delay ... the second tap should select the card"*).
-  //
-  // THE COUNT HAS BEEN WRONG IN BOTH DIRECTIONS, so the helper pins it from
-  // both sides rather than reporting whatever it finds:
-  //   THREE (before #980) — cardInspection swallowed the selecting tap AND the
-  //     one after it, reserving the second for an information button nobody
-  //     had asked for. Measured here on 2026-09-11.
-  //   ONE (#980 through 2026-09-12) — the card was handed the first tap
-  //     outright (`actionOwnsTouch`), which bought the count by spending the
-  //     selecting beat: a thumb committed to a candidate it had not been shown.
-  //
-  // So this returns the count AND checks the shape of each beat: after tap one
-  // the card must be lit and the Smith must still hold nothing; after tap two
-  // the Smith must hold it. A tool that only counted would pass on the
-  // one-tap regression, which is the one that cost a player a choice.
-  const smithHolds = () => ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`);
-  // W1i (2026-09-14): on a compact host the Smith's item list is folded into
-  // one selector above the pane. A thumb opens it before it can reach a
-  // candidate; opening it spends no beat on the candidate itself.
+  // Owner, 2026-10-06: the first tap opens the upgrade preview. Spending
+  // still belongs to the separate Upgrade confirmation/hold action below.
+  const smithHolds = () => ev(`!!document.querySelector('.smith-preview-card')`);
   const openSmithList = async () => {
+    const open = await ev(`document.querySelector('.smith-upgrade-modal .as-catnav-toggle')?.getAttribute('aria-expanded') === 'true'`);
     const p = await pointOf('.smith-upgrade-modal .as-catnav-toggle');
-    if (p) { await press(p, 30); await wait(250); }
+    if (p && !open) { await press(p, 30); await wait(250); }
   };
-  const cardIsLit = () => ev(`!!document.querySelector('.smith-candidate-card.inspection-selected')`);
   const selectSmithCandidate = async (p, { assert = null } = {}) => {
     await press(p, 30); await wait(300);
-    const litAfterOne = await cardIsLit();
-    const heldAfterOne = await smithHolds();
-    if (assert) {
-      assert('the first tap on a Smith candidate lights it and chooses nothing',
-        litAfterOne && !heldAfterOne,
-        `lit=${litAfterOne} smith-holds-it=${heldAfterOne}`);
-    }
-    if (heldAfterOne) {
-      console.log('    (REGRESSION: one tap chose the Smith candidate — the selecting beat was spent)');
-      return 1;
-    }
-    await press(p, 30); await wait(300);
-    const heldAfterTwo = await smithHolds();
-    if (assert) {
-      assert('the second tap on a lit Smith candidate is the one that chooses it',
-        heldAfterTwo, `smith-holds-it=${heldAfterTwo}`);
-    }
-    if (!heldAfterTwo) {
-      // The old three-tap shape, if it ever comes back: say so by name rather
-      // than pressing a third time and reporting success.
-      console.log('    (REGRESSION: two taps did not choose the Smith candidate — a tap is being swallowed)');
-      return 3;
-    }
-    return 2;
+    const held = await smithHolds();
+    const expanded = await ev(`(() => {
+      const rows = [...document.querySelectorAll('.smith-upgrade-fold')];
+      return rows.length > 0 && rows.every(row => row.open);
+    })()`);
+    if (assert) assert('one tap opens the Smith preview with every affected card expanded',
+      held && expanded, `preview=${held} expanded=${expanded}`);
+    if (!held) console.log('    (REGRESSION: the first Smith tap did not open its preview)');
+    return held ? 1 : 2;
   };
-
   async function openShot(state, extra = {}) {
     const q = [`shot=${state}`, ...Object.entries(extra).map(([k, v]) => `${k}=${encodeURIComponent(v)}`)];
     await cdp.send('Page.navigate', { url: `${base}?${q.join('&')}` }, sessionId);

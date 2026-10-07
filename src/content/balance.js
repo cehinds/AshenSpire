@@ -3,6 +3,7 @@
 // Code never embeds a balance number; a balance change is a one-file diff here.
 
 import { tooltipHelp } from './tooltipHelp.js';
+import { progressionGearRequirements } from './progression/gear.js';
 
 // ---- WHAT EACH NUMBER DOES, WRITTEN BESIDE IT (owner, 2026-09-23) ----------
 //
@@ -171,7 +172,72 @@ const cardValueRule = () => ({
   statusMultipliers: { ...cardValueStatusMultipliers },
 });
 
+const PROGRESSION_CONTRACT_DESCRIPTION = 'The progression contract version saved for new characters, preserving the rules chosen at creation.';
+
 export const balance = {
+  progression: {
+    version: 1,
+    gearRequirements: progressionGearRequirements,
+    cadence: { cards: [2,4,6,8,10,12,14,16,18,20], feat: [1,4,8,12,16,20], armory: [3,6,9,12,15,18], relic: [5,8,11,14,17,20], attribute: [5,10,15,20] },
+    skillBonusXp: 25,
+    ability: { base: 100, growthPerLevel: 50, maxLevel: 10, ranksAt: [1,2,4,6,8,10], xp: { magical: 2, spell: 3, manaSpell: 1, technique: 2, maneuver: 5 }, draftSize: 3, intelligenceChance: 0.05, bonusRankDepth: 3 },
+    classSkills: { reaver: ['combatManeuvers','item:blade','item:shield','armour:heavy'], starseer: ['item:magic-focus','item:blade','armour:light','armour:medium'], rogue: ['combatManeuvers','item:blade','dualWield','armour:light'], herald: ['item:magic-focus','item:blade','item:shield','armour:medium'] },
+    classAttributes: { reaver: ['strength','constitution','dexterity'], starseer: ['intelligence','wisdom','dexterity'], rogue: ['dexterity','strength','wisdom'], herald: ['wisdom','constitution','intelligence'] },
+    lessons: { 'item:magic-focus': ['cometFragment','crystalBarrier','scholarsInsight','ashenMote','emberVigil','readTheAsh','cinderSigil','starstoneArc','blightTouch','penance'], combatManeuvers: ['crimsonCleave','shieldBash','quickstep','guardCounter','riposte','rend','quickCut','backstep','stomp','lowBlow'] },
+    respec: { enabled: true, cost: null },
+    [NOTE]: {
+      version: PROGRESSION_CONTRACT_DESCRIPTION,
+      ...Object.fromEntries(progressionGearRequirements.map((row,index)=>[`gearRequirements.${index}.level`, `${row.ref} — the minimum ${row.classId} class level for this gear option; existing discovery and attribute requirements also apply.`])),
+      ...Object.fromEntries(Object.entries({cards:10,feat:6,armory:6,relic:6,attribute:4}).flatMap(([kind,count])=>Array.from({length:count},(_,index)=>[`cadence.${kind}.${index}`, `The class level for ${kind} reward number ${index+1}; every earned milestone keeps its own saved grant.`]))),
+      skillBonusXp: 'XP banked in each of the four class-related skills when a new class level is claimed; respec cannot replay this award.',
+      'ability.base': 'XP required to advance an ability skill from its first activated level.',
+      'ability.growthPerLevel': 'Additional XP required for each successive Spellcraft or Combat Maneuvers skill level.',
+      'ability.maxLevel': 'The highest available Spellcraft or Combat Maneuvers skill level.',
+      ...Object.fromEntries(Array.from({length:6},(_,rank)=>[`ability.ranksAt.${rank}`, `The ability skill level that makes rank ${rank} card profiles available in normal offers.`])),
+      'ability.xp.magical': 'Spellcraft XP awarded once when a card resolves a magical effect.',
+      'ability.xp.spell': 'Additional Spellcraft XP awarded once for playing a Spell, including a Cantrip.',
+      'ability.xp.manaSpell': 'Additional Spellcraft XP per printed Mana point on a Spell; discounts do not reduce this award.',
+      'ability.xp.technique': 'Combat Maneuvers XP awarded once for a physical Technique with no printed Mana cost.',
+      'ability.xp.maneuver': 'Combat Maneuvers XP awarded once for a physical maneuver with a printed Mana cost.',
+      'ability.draftSize': 'Distinct card families shown at the normal available rank in each saved ability offer.',
+      'ability.intelligenceChance': 'Chance per Intelligence point for a fourth, higher-rank card option, capped at certainty.',
+      'ability.bonusRankDepth': 'Maximum number of ranks above the normal offer for the Intelligence bonus option, capped at rank five.',
+      'respec.enabled': 'Allows a class respec preview and atomic exchange of eligible choices through the current class level.',
+    },
+  },
+  progressionRelics: {
+    "progression-emberjaw-token": {
+      "bleed": 2
+    },
+    "progression-cracked-war-anvil": {
+      "poiseDamage": 1
+    },
+    "progression-cinderbound-crown": {
+      "heal": 4
+    },
+    "progression-moonwell-lens": {
+      "block": 2
+    },
+    "progression-nightglass-rosary": {
+      "restoreMana": 1
+    },
+    "progression-fragment-of-the-third-sky": {
+      "block": 5
+    },
+    "progression-whisperglass-die": {
+      "chargeDamage": 5
+    },
+    "progression-purse-of-borrowed-shadows": {
+      "block": 2
+    },
+    "progression-ember-alms-bowl": {
+      "block": 2
+    },
+    "progression-ossuary-prayer-wheel": {
+      "restoreMana": 1
+    },
+    [NOTE]: { "{id}.{effect}": "The {effect} amount conferred by the progression relic {id}." },
+  },
   // Primary card values and physical/magical impact are derived from costs:
   // floor(global × (AP×action + MP×mana + SP×stamina)
   //       − statusEffectReduction × Σ(each distinct applied status))
@@ -212,6 +278,12 @@ export const balance = {
   // holds the property. content/source/nodeEffects.json reads these, through variableBindings.csv,
   // through `{ "balance": "exposure.…" }`; no number is typed in that file.
   exposure: {
+    foldScale: 0.5,
+    staggerBreakImpact: 2,
+    defaultPayoff: {
+      status: 'magicVulnerable', value: 25, duration: 2,
+      [NOTE]: { value: 'Magical damage vulnerability after an enemy suffers a magical Stagger, in percent.', duration: 'Turns the default magical Stagger payoff lasts.' },
+    },
     siphonRefund: 1, // PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
     siphonRefundMastered: 2, // PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
     siphonMasteryLevel: 7, // PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
@@ -224,6 +296,8 @@ export const balance = {
     // a break with action-only spells, a Mana spell works faster.
     buildupPerManaSpell: 5, // PROVISIONAL
     [NOTE]: {
+      foldScale: 'Multiplies a spell\'s old Arcane buildup before it joins the shared Poise impact.',
+      staggerBreakImpact: 'Extra magical impact on spell hits while a focus carries Stagger Break.',
       siphonRefund: 'Mana the Siphon focus property hands back when you break a foe\'s Arcane Exposure.',
       siphonRefundMastered: 'Mana Siphon hands back instead, once the focus skill reaches the mastery level below.',
       siphonMasteryLevel: 'The focus skill level at which Siphon starts paying its mastered refund.',
@@ -302,14 +376,13 @@ export const balance = {
     },
   },
 
-  // MANA IS THE THIRD COST LINE, NEVER THE FIRST (plan phase 8, proposal §7.1):
-  // a card that costs Mana costs at least this much action and stamina too.
-  // validate.js refuses a card under either floor by name.
+  // Mana is an additional cost beside the single turn-Stamina cost.
+  // minActionCost retains its serialized name; the old additive floor is zero.
   mana: {
-    minActionCost: 1, minStaminaCost: 1,
+    minActionCost: 1, minStaminaCost: 0,
     [NOTE]: {
-      minActionCost: 'The least action a card that costs Mana must also cost — Mana is the third cost line, never the first.',
-      minStaminaCost: 'The least Stamina a card that costs Mana must also cost.',
+      minActionCost: 'The least turn Stamina a card that costs Mana must also cost.',
+      minStaminaCost: 'Retired additive Stamina floor; keep zero.',
     },
   },
 
@@ -338,15 +411,33 @@ export const balance = {
   // hit; one XP per impactPerXp impact absorbed (heavy), evadeXp per hit
   // evaded (light; medium reads half of each), one XP per buildupPerXp arcane
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
+  classMastery: {
+    xp: { base: 50, growth: 1.25, roundTo: 5, maxLevel: 20 },
+    pay: { perWin: 10, perElite: 25, perBoss: 50, perQuest: 10 },
+    cycle: ['cards', 'armament', 'cards', 'relic', 'cards', 'feat', 'cards', 'weapon'],
+    corePoolShare: 0.6,
+    [NOTE]: {
+      'xp.base': 'Lifetime class mastery XP needed for the first claimed level.',
+      'xp.growth': 'Exponential increase per mastery level; 1.25 brings twenty levels to about 17,000 XP.',
+      'xp.roundTo': 'Round each mastery level cost to this many XP.',
+      'xp.maxLevel': 'Highest class mastery level. XP earned beyond it stays on the profile.',
+      'pay.perWin': 'Mastery XP for an ordinary fight won.',
+      'pay.perElite': 'Mastery XP for an elite fight won, replacing the ordinary award.',
+      'pay.perBoss': 'Mastery XP for a boss fight won, replacing the ordinary award.',
+      'pay.perQuest': 'Mastery XP for a completed quest.',
+      corePoolShare: 'Minimum share of each class card pool available before any mastery unlock.',
+    },
+  },
   skill: {
     xp: {
-      base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 5, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
+      base: 100, linear: false, multScaler: 1.3, growth: 1.995, roundTo: 5, maxLevel: 10, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
       [NOTE]: {
         base: 'Weapon, armour, focus and dual-wield tracks: XP for the first step and the base used for later increases.',
         linear: 'Use base + skill level × base × scaler. Off: use base × exponential growth^skill level.',
         multScaler: 'Linear XP increase per step as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
         growth: 'Exponential growth per step, used only when the linear curve is off.',
         roundTo: 'Those tracks: every step cost is rounded to a multiple of this.',
+        maxLevel: 'The highest level those tracks reach (SPEC §13.4o: 10, about 100,000 XP); XP past it stays banked.',
         perHit: 'Skill XP for a hit or block a track\'s card lands on a live target.',
         perWinEquipped: 'Skill XP each equipped track earns for a won fight.',
         killMult: 'Multiplies that win award for the one track that landed the killing blow.',
@@ -360,13 +451,14 @@ export const balance = {
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 5, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
+      xp: { base: 400, linear: false, multScaler: 1.3, growth: 1.224, roundTo: 5, maxLevel: 20, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
       [NOTE]: {
           'xp.base': 'The class track: what its first level step costs.',
           'xp.linear': 'Use base + class skill level × base × scaler. Off: use exponential growth.',
           'xp.multScaler': 'Linear increase per class skill step as a multiple of the base. Default 1.3.',
           'xp.growth': 'Exponential class-step growth, used only when the linear curve is off.',
         'xp.roundTo': 'The class track: every step cost is rounded to a multiple of this.',
+        'xp.maxLevel': 'The highest class level (SPEC §13.4o: 20, about 100,000 XP); XP past it stays banked.',
         'xp.perWin': 'Class XP for a won fight.',
         'xp.bossKill': 'Class XP for killing an act boss, on top of the win.',
         'xp.perQuest': 'Class XP for a completed quest.',
@@ -377,8 +469,8 @@ export const balance = {
     // `draftSize` cards of the track's schools; at most `draftsPerCombat`
     // drafts per track per reward door, the rest queue; a rarity is drafted
     // from the level its row names (the game has no legendary relic or card, so the
-    // proposal's fourth row has no seat); at `upgradeAt` every deck card of
-    // the track's schools is upgraded, the shrine keeping the rest.
+    // proposal's fourth row has no seat). A level no longer upgrades the
+    // deck: card ranks replaced that threshold (SPEC §13.4o).
     rarityUnlock: {
       common: 1, uncommon: 4, rare: 7,
       [NOTE]: {
@@ -387,7 +479,25 @@ export const balance = {
     },
     draftSize: 3,
     draftsPerCombat: 1,
-    upgradeAt: 5,
+    // A card's highest rank (SPEC §13.4o). A draft offers ranks 1 to the
+    // track's level, never past this, the higher ones likelier.
+    rankMax: 10,
+    // Every this-many levels of a card-school track adds 1 to the primary
+    // number of every card of its schools (SPEC §13.4o): +1 at 5, +2 at 10.
+    flatEvery: 5,
+    // Every this-many levels a track with a linked attribute set offers +1 to
+    // one attribute of that set (SPEC §13.4o): Blade STR/DEX, Shield
+    // STR/DEX/CON/WIS, Magic DEX/CON/WIS/INT; other tracks are authored with
+    // the content (phase C).
+    attributeEvery: 4,
+    // Every this-many levels a track that authors skill feats offers one
+    // (SPEC §13.4o, content/skillFeats.js).
+    featEvery: 2,
+    linkedAttributes: {
+      'item:blade': ['strength', 'dexterity'],
+      'item:shield': ['strength', 'dexterity', 'constitution', 'wisdom'],
+      'item:magic-focus': ['dexterity', 'constitution', 'wisdom', 'intelligence'],
+    },
     // The class card's leaning (plan phase 5a, proposal §4): skill XP in the
     // weapon groups the card names (its item-type tags) is multiplied by
     // this, through the `favored` property the card carries.
@@ -395,13 +505,26 @@ export const balance = {
     [NOTE]: {
       draftSize: 'How many cards a skill draft lays out for you to take one of.',
       draftsPerCombat: 'The most drafts one track may hand out at a single reward door. The rest queue for later doors.',
-      upgradeAt: 'The track level at which every card of that track\'s schools in your deck is upgraded.',
+      featEvery: 'Every this many levels of a skill with its own feats lets you take one.',
+      attributeEvery: 'Every this many levels of a skill with linked attributes lets you raise one of them by 1.',
+      flatEvery: 'Every this many levels of a weapon, focus or dual-wield skill adds 1 to the main number of every card of that skill.',
+      rankMax: 'A card\'s highest rank. Each rank past 1 adds 1 to its main number; a skill draft offers ranks up to the skill\'s level.',
       favoredXpMult: 'Multiplies skill XP in the weapon groups your class card leans toward.',
     },
   },
 
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
+    sourceBonuses: {
+      combatFeatChancePct: 5,
+      classFeatChancePct: 100,
+      classCardChancePct: 25,
+      [NOTE]: {
+        combatFeatChancePct: 'Percent chance a won fight offers a feat, independently of its combat card.',
+        classFeatChancePct: 'Percent chance each class-track level offers a feat in addition to its class-tree upgrade.',
+        classCardChancePct: 'Percent chance each class-track level offers a combat card from the class pool, independently of its feat.',
+      },
+    },
     cardChoices: 3,
     // ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
     // base") — cinders are granted on arrival at the reward door now, so the
@@ -443,9 +566,8 @@ export const balance = {
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
     // THE CARD REWARD SCHEDULE (SPEC §15.1): when a won fight offers a card
-    // row, and whether a level the fight bought adds one. Every default here
-    // reproduces the rewards before the schedule existed: every pool offers,
-    // a chance of 100 rolls nothing on `rewardRolls`, and no level card.
+    // row, and whether a level the fight bought adds one. Combat cards ship
+    // at 10% in every pool (owner, 2026-10-03).
     // Read by engine/encounters.js `rollCombatCardOffer`.
     cardRewards: {
       afterCombat: {
@@ -455,7 +577,7 @@ export const balance = {
         },
       },
       chancePct: {
-        normal: 100, elite: 100, boss: 100,
+        normal: 10, elite: 10, boss: 10,
         [NOTE]: {
           '{kind}': 'The percent chance that winning {pool} offers its card row. At 100 nothing is rolled; a miss says "No card this time."',
         },
@@ -677,7 +799,7 @@ export const balance = {
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 10,
+      base: 200, linear: false, multScaler: 1.3, growth: 1.303, roundTo: 10,
       [NOTE]: {
         base: 'Character XP for the first step and the base used for later increases.',
         linear: 'Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).',
@@ -717,9 +839,10 @@ export const balance = {
   },
   levelUp: {
     // What a level GRANTS: attribute points, waiting on the ledger until the
-    // player assigns them at a shrine. `maxLevels` null is no ceiling.
+    // player assigns them at a shrine. `maxLevels` is the character's ceiling
+    // (SPEC §13.4o: 20, about 100,000 XP); null is no ceiling.
     pointsPerLevel: 1,
-    maxLevels: null,
+    maxLevels: 20,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
     // ladder in his own words: "i don't want a dial for hte level up, I want to
     // be able to enter the value myself and maybe a slider with it that is
@@ -739,6 +862,7 @@ export const balance = {
     pointsPerLevelMin: 1,
     pointsPerLevelMax: 20,
     [NOTE]: {
+      maxLevels: 'The highest character level (SPEC §13.4o: 20, about 100,000 XP); XP past it stays banked.',
       pointsPerLevelMin: { text: 'The lowest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
       pointsPerLevelMax: { text: 'The highest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
     },
@@ -2202,4 +2326,319 @@ export const balance = {
       'views.{i}.figure': 'Whether the {viewId} Armoury view draws the dressed class figure beside the slots.',
     },
   },
+  // Class feat magnitudes and thresholds (SPEC §13.4r). Nodes name these bindings.
+  progressionFeats: {
+    "coal-on-steel": {
+      bleed: 1,
+      [NOTE]: {
+        bleed: "Coal On Steel: Bleed buildup applied by the first qualifying Blade hit.",
+      },
+    },
+    "brace-and-bite": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Brace And Bite: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "red-footwork": {
+      draw: 1,
+      [NOTE]: {
+        draw: "Red Footwork: Cards drawn by the qualifying play.",
+      },
+    },
+    "anvil-discipline": {
+      break: 2,
+      [NOTE]: {
+        break: "Anvil Discipline: Additional Break damage on the first qualifying attack.",
+      },
+    },
+    "forge-momentum": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Forge Momentum: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "paid-in-blood": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Paid In Blood: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "last-rampart": {
+      block: 4,
+      hpPct: 50,
+      [NOTE]: {
+        block: "Last Rampart: Additional Block granted by the qualifying play or event.",
+        hpPct: "Last Rampart: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "war-cadence": {
+      block: 4,
+      [NOTE]: {
+        block: "War Cadence: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "broad-sentence": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Broad Sentence: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "ember-sovereign": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Ember Sovereign: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "nightglass-scholar": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Nightglass Scholar: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "smoke-dancer": {
+      damage: 2,
+      [NOTE]: {
+        damage: "Smoke Dancer: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "dread-of-the-hammer": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Dread Of The Hammer: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "scarred-oath": {
+      block: 3,
+      [NOTE]: {
+        block: "Scarred Oath: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "harvest-the-wound": {
+      heal: 3,
+      [NOTE]: {
+        heal: "Harvest The Wound: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "sepulchral-promise": {
+      heal: 3,
+      [NOTE]: {
+        heal: "Sepulchral Promise: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "orbit-keeper": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Orbit Keeper: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "moonward-scholar": {
+      block: 3,
+      manaSpent: 2,
+      [NOTE]: {
+        block: "Moonward Scholar: Additional Block granted by the qualifying play or event.",
+        manaSpent: "Moonward Scholar: Mana that must already have been spent this turn before the qualifying spell.",
+      },
+    },
+    "comet-reader": {
+      vulnerable: 1,
+      [NOTE]: {
+        vulnerable: "Comet Reader: Vulnerable stacks applied after the qualifying attack.",
+      },
+    },
+    "weight-of-the-void": {
+      weak: 1,
+      [NOTE]: {
+        weak: "Weight Of The Void: Weak stacks applied after the qualifying attack.",
+      },
+    },
+    "crooked-measure": {
+      weak: 1,
+      [NOTE]: {
+        weak: "Crooked Measure: Weak stacks applied after the qualifying attack.",
+      },
+    },
+    "mirror-of-rime": {
+      buildup: 2,
+      [NOTE]: {
+        buildup: "Mirror Of Rime: Additional status buildup on the first matching application.",
+      },
+    },
+    "constellation-keeper": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Constellation Keeper: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "patient-wellspring": {
+      block: 3,
+      [NOTE]: {
+        block: "Patient Wellspring: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "eclipse-hunter": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Eclipse Hunter: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "firmament-keeper": {
+      block: 4,
+      [NOTE]: {
+        block: "Firmament Keeper: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "celestial-refrain": {
+      block: 4,
+      [NOTE]: {
+        block: "Celestial Refrain: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "memory-of-winter": {
+      retainBlockUpTo: 4,
+      [NOTE]: {
+        retainBlockUpTo: "Memory Of Winter: Maximum Block retained at turn start; the highest allowance wins.",
+      },
+    },
+    "threefold-sky": {
+      draw: 1,
+      [NOTE]: {
+        draw: "Threefold Sky: Cards drawn by the qualifying play.",
+      },
+    },
+    "first-knife": {
+      damage: 3,
+      [NOTE]: {
+        damage: "First Knife: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "pocket-method": {
+      block: 3,
+      [NOTE]: {
+        block: "Pocket Method: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "open-flank": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Open Flank: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "hidden-palm": {
+      block: 3,
+      [NOTE]: {
+        block: "Hidden Palm: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "tighten-the-wire": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Tighten The Wire: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "carrion-measure": {
+      damage: 4,
+      hpPct: 50,
+      [NOTE]: {
+        damage: "Carrion Measure: Additional damage on the first qualifying direct effect, including each hit and target.",
+        hpPct: "Carrion Measure: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "two-quiet-knives": {
+      damage: 1,
+      [NOTE]: {
+        damage: "Two Quiet Knives: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "trapdoor-smile": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Trapdoor Smile: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "clean-exit": {
+      restoreStamina: 1,
+      [NOTE]: {
+        restoreStamina: "Clean Exit: Stamina restored by the qualifying Guard play.",
+      },
+    },
+    "razor-ledger": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Razor Ledger: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "ashen-mercy": {
+      heal: 2,
+      [NOTE]: {
+        heal: "Ashen Mercy: HP restored by the qualifying play or credited kill.",
+      },
+    },
+    "censer-keeper": {
+      block: 3,
+      [NOTE]: {
+        block: "Censer Keeper: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "sower-of-blight": {
+      buildup: 2,
+      [NOTE]: {
+        buildup: "Sower Of Blight: Additional status buildup on the first matching application.",
+      },
+    },
+    "funeral-watch": {
+      block: 3,
+      hpPct: 50,
+      [NOTE]: {
+        block: "Funeral Watch: Additional Block granted by the qualifying play or event.",
+        hpPct: "Funeral Watch: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "ember-almoner": {
+      regen: 1,
+      [NOTE]: {
+        regen: "Ember Almoner: Regen stacks granted after the qualifying HP offering.",
+      },
+    },
+    "choir-of-bone": {
+      restoreStamina: 1,
+      [NOTE]: {
+        restoreStamina: "Choir Of Bone: Stamina restored by the qualifying Guard play.",
+      },
+    },
+    "requiem-reader": {
+      damage: 3,
+      [NOTE]: {
+        damage: "Requiem Reader: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "pilgrim-of-scars": {
+      heal: 3,
+      hpPct: 50,
+      [NOTE]: {
+        heal: "Pilgrim Of Scars: HP restored by the qualifying play or credited kill.",
+        hpPct: "Pilgrim Of Scars: HP percentage at or below which the qualifying effect becomes available.",
+      },
+    },
+    "crowned-offering": {
+      damage: 4,
+      [NOTE]: {
+        damage: "Crowned Offering: Additional damage on the first qualifying direct effect, including each hit and target.",
+      },
+    },
+    "dawn-cantor": {
+      block: 3,
+      [NOTE]: {
+        block: "Dawn Cantor: Additional Block granted by the qualifying play or event.",
+      },
+    },
+    "bearer-of-burdens": {
+      restoreMana: 1,
+      [NOTE]: {
+        restoreMana: "Bearer Of Burdens: Mana restored by a new enemy-applied negative status.",
+      },
+    },
+  },
+
+
 };

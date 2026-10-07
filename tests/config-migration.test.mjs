@@ -50,6 +50,8 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // regeneration would relabel every other drift as intended at the same time.
 //
 // Re-pointed so far:
+//   · Illustrated card template: minimumHandHeight([]) 145.6 -> 153.6.
+//     The approved 2:3 face makes the 80px minimum width 120px tall, plus 33.6 inset.
 //   · CombatLayout.minimumHandHeight([]) 161.6 -> 145.6, for #1146, which gave
 //     the playing card one authored shape and moved its ratio from 5/8 to 5/7.
 //     The hand's floor is minWidthRem * rem / card.ratio + the inset, lift and
@@ -66,6 +68,11 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 //   · StartupGateModels' TITLE_ENTRANCE_TIMING.holdDefault is 2s, not 0.5s:
 //     the owner's uploaded defaults (#1254) set the city title pause. Only that
 //     one value is refreshed.
+//   · Compact Armoury (2026-10-04): normalizeArmouryLayout's two default probes
+//     add equipment.compactList (82/68px thumbnails, 264px inspection) and
+//     cardClasses.armamentItem (read-only disclosure, inline comparison).
+//     These are the approved new contract, not migration drift. Only those
+//     subtrees/key-order entries were added; all prior probe values remain pinned.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {

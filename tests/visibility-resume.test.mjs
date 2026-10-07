@@ -332,7 +332,9 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
   assert.match(text, /import \{ finishCardDrag \} from '\.\.\/cardDragEnd\.js';/);
   const drags = [...text.matchAll(/trackGesture\(ev, \{[\s\S]*?\n {6}\}\);/g)].map((m) => m[0]);
   assert.equal(drags.length, 1, 'combat.js has one card-drag trackGesture');
-  assert.match(drags[0], /onEnd: \(up, info\) => finishCardDrag\(up, info, \{/, 'its onEnd is finishCardDrag, handed the gesture\'s own cancelled flag');
+  assert.match(drags[0], /onEnd: \(up, info\) => \{[\s\S]*?return finishCardDrag\(up, info, \{/, 'its onEnd returns finishCardDrag, handed the gesture\'s own cancelled flag');
+  assert.match(drags[0], /const releaseHit = dragging && !info\.cancelled \? document\.elementFromPoint\(up\.clientX, up\.clientY\) : null;[\s\S]*?return finishCardDrag/, 'a valid release captures its target before teardown');
+  assert.match(drags[0], /dropPlan: \(at\) => dropPlan\(at, true, releaseHit\)/, 'the drop resolves against the captured release target');
   assert.doesNotMatch(drags[0], /\bif \(\s*!?\s*(?:info\??\.)?cancelled\b/, 'no second cancelled decision beside it in combat.js');
 });
 
@@ -346,7 +348,8 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
 // `.onblur`), a computed event name or a computed key must be
 // [entry, why it cannot move run/combat state].
 const KNOWN = {
-  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot'],
+  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot'],
+  'src/ui/assets.js': ["'animationstart'"],
   'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
   'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
   'src/ui/components/battlefieldStage.js': ["'resize'"],
@@ -357,6 +360,7 @@ const KNOWN = {
   'src/ui/components/dialogueStage.js': ["'resize'"],
   'src/ui/components/flask.js': ["'keydown'", "'click'"],
   'src/ui/components/handInspectionOverlay.js': ["'resize'"],
+  'src/ui/components/deckCardAnimationPreview.js': [["'visibilitychange'", 'suspends/resumes only the decorative preview frame clock, preserving its frame and explicit Pause state; no run/combat mutation or action dispatch, and disposal removes the listener (tests/deck-card-animation-preview.test.mjs)']],
   'src/ui/components/hints.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerout'", "'gamepadconnected'", "'gamepaddisconnected'"],
   'src/ui/components/holdconfirm.js': ["'keydown'", "'keydown'"],
   'src/ui/components/hudQuickSettings.js': ["'fullscreenchange'", "'webkitfullscreenchange'"],

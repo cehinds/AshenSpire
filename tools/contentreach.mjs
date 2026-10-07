@@ -229,10 +229,17 @@ export function contentReach(bundle, opts = {}) {
     if (['cards', 'enemies', 'events'].includes(key)) continue;
     const scanned = key === 'characterCreation'
       ? Object.fromEntries(Object.entries(value || {}).filter(([k]) => k !== 'keepsakes'))
+      // Saved-run compatibility repeats original card definitions. Its cards
+      // use the same reached identity below; other legacy homes still fire F3.
+      : key === 'legacyProgression'
+        ? Object.fromEntries(Object.entries(value || {}).filter(([k]) => k !== 'cards'))
       : value;
     for (const op of opsIn(scanned, INJECTOR_OPS)) {
       floors.push(`F3  op '${op.op}' found in bundle.${key} — no route in this file models that set; enumerate it from the engine before trusting any verdict`);
     }
+  }
+  for (const card of bundle.legacyProgression?.cards || []) {
+    if (!byId.cards.has(card.id)) floors.push(`F3  legacy card '${card.id}' has no current card identity to route`);
   }
 
   // ---- classes -----------------------------------------------------------------
@@ -414,6 +421,10 @@ export function contentReach(bundle, opts = {}) {
       if (!witness.cards.has(c.id)) continue;
       for (const op of opsIn(c, CARD_OPS)) grew = creditOp(op, `card ${c.id}`) || grew;
     }
+    for (const c of bundle.legacyProgression?.cards || []) {
+      if (!witness.cards.has(c.id)) continue;
+      for (const op of opsIn(c, CARD_OPS)) grew = creditOp(op, `legacy card ${c.id}`) || grew;
+    }
   }
   if (randomRelic) {
     for (const r of pop.relics) if (relicInRewardPool(r)) note('relics', r.id, `R-event addRelic random in ${randomRelic}`);
@@ -443,7 +454,8 @@ export function contentReach(bundle, opts = {}) {
     }
     const orphanCount = KINDS.reduce((n, k) => n + (kinds[k] ? kinds[k].orphans.length : 0), 0);
     const verdict = floors.length ? 'FLOOR' : (orphanCount || stale.length) ? 'FAIL' : 'PASS';
-    return { kinds, witness, floors, stale, allowlist, verdict, exitCode: floors.length ? 2 : verdict === 'FAIL' ? 1 : 0 };
+    const mastery = (bundle.classMastery || []).map(({classId,level,kind,ref})=>({classId,level,kind,ref}));
+    return { kinds, witness, floors, stale, allowlist, mastery, verdict, exitCode: floors.length ? 2 : verdict === 'FAIL' ? 1 : 0 };
   }
 }
 
@@ -477,7 +489,7 @@ NOT CHECKED — what a green from this tool does NOT mean (SPEC §8.5):
 
 function report(r, { json = false } = {}) {
   if (json) {
-    console.log(JSON.stringify({ verdict: r.verdict, kinds: r.kinds, floors: r.floors, stale: r.stale }, null, 2));
+    console.log(JSON.stringify({ verdict: r.verdict, kinds: r.kinds, floors: r.floors, stale: r.stale, mastery: r.mastery }, null, 2));
     return;
   }
   console.log('contentreach: every card, relic, event, encounter and enemy row, and the way a player meets it.\n');
@@ -486,6 +498,13 @@ function report(r, { json = false } = {}) {
     console.log(`  ${k.padEnd(11)} ${String(s.reached).padStart(4)} of ${String(s.total).padStart(4)} reached  ${s.orphans.length} orphan(s)`);
   }
   console.log();
+  for (const classId of [...new Set(r.mastery.map(row=>row.classId))]) {
+    console.log(`  MASTERY ${classId} — full pools are used for the reach census`);
+    for (const level of [...new Set(r.mastery.filter(row=>row.classId===classId).map(row=>row.level))]) {
+      const rows=r.mastery.filter(row=>row.classId===classId && row.level===level);
+      console.log(`    level ${level}: ${rows[0].kind} — ${rows.map(row=>row.ref).join(', ')}`);
+    }
+  }
   for (const k of KINDS) {
     for (const id of r.kinds[k].orphans) console.log(`  RED   ${k}:${id} — NO ROUTE IN: no reward, shop, grant, kit, event or injector reaches it`);
     for (const id of r.kinds[k].dangling) console.log(`  NOTE  ${k}:${id} is granted by ${(r.witness[k].get(id) || []).join(', ')} but there is NO SUCH ROW`);
@@ -684,6 +703,12 @@ function selftest(real) {
   b = clone(real);
   b.flasks = [...b.flasks, { ...clone(b.flasks[0]), id: 'plantedFlask', effects: [{ op: 'addCard', card: 'guilt' }] }];
   expect('F3  an injector in a set no route models', contentReach(b).exitCode, 2);
+  b = clone(real);
+  b.legacyProgression = { ...(b.legacyProgression || {}), plantedHook: [{ op: 'addCard', card: 'guilt' }] };
+  expect('F3  an unmodelled legacy non-card injector still fires the floor', contentReach(b).exitCode, 2);
+  b = clone(real);
+  b.legacyProgression = { ...(b.legacyProgression || {}), cards: [...(b.legacyProgression?.cards || []), card('plantedLegacyOnly')] };
+  expect('F3  a legacy card without a current identity cannot silently gain a route', contentReach(b).exitCode, 2);
 
   // The allowlist ratchet: allowlisting a REACHED row is a failure.
   r = contentReach(real, { allowlist: [{ kind: 'cards', id: 'strike', why: 'planted' }] });

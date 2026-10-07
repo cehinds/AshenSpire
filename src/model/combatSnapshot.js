@@ -9,7 +9,7 @@ import { combatRatingProblems, ratingIds } from './combatRatings.js';
 // runtime methods detached for storage and reattached after loading.
 
 import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
-import { skillsProblems } from './skills.js';
+import { skillsProblems, MAX_SKILL_BONUS } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
 import { restoreDerivedStatRuleSnapshot, storedStatRowProblems } from './derivedStats.js';
 
@@ -34,12 +34,26 @@ function nonEmptyString(value) {
 function entityProblems(entity, path, { player = false } = {}) {
   const problems = [];
   if (!record(entity)) return [`${path} must be an object`];
+  if (entity.abilityRiders !== undefined) {
+    const state = entity.abilityRiders;
+    if (!record(state)) problems.push(`${path}.abilityRiders must be an object`);
+    else {
+      for (const key of ['cardsPlayed', 'manaSpent', 'discarded', 'hpLostSinceTurnStart', 'hpLostThisRound', 'offeringsPaid', 'previousSpell', 'attacksPlayed', 'cardPlaysCombat']) if (state[key] !== undefined && (!Number.isSafeInteger(state[key]) || state[key] < 0)) problems.push(`${path}.abilityRiders.${key} must be a non-negative whole number`);
+      if (state.turnStartHpPct !== undefined && (!finite(state.turnStartHpPct) || state.turnStartHpPct < 0 || state.turnStartHpPct > 100)) problems.push(`${path}.abilityRiders.turnStartHpPct must be a percentage`);
+      for (const key of ['charges', 'once', 'tagPlays', 'sameCardPlays', 'distinctTagPlays']) if (state[key] !== undefined && !record(state[key])) problems.push(`${path}.abilityRiders.${key} must be an object`);
+    }
+  }
   if (!nonEmptyString(entity.id)) problems.push(`${path}.id must be a non-empty string`);
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';
   if (!nonEmptyString(entity[defKey])) problems.push(`${path}.${defKey} must be a non-empty string`);
+  if (entity.classUnequipped !== undefined && typeof entity.classUnequipped !== 'boolean') problems.push(`${path}.classUnequipped must be a boolean`);
   for (const key of ['hp', 'maxHp', 'block']) {
     if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
+  }
+  if (entity.wardBlock !== undefined && (!Number.isInteger(entity.wardBlock) || entity.wardBlock < 0 || entity.wardBlock > entity.block)) problems.push(`${path}.wardBlock must be a whole number between 0 and block`);
+  for (const key of ['poiseGuard', 'wardGuard']) {
+    if (entity[key] !== undefined && (!Number.isInteger(entity[key]) || entity[key] < 0)) problems.push(`${path}.${key} must be a whole number of at least 0`);
   }
   if (finite(entity.maxHp) && entity.maxHp <= 0) problems.push(`${path}.maxHp must be positive`);
   if (finite(entity.hp) && finite(entity.maxHp) && (entity.hp < 0 || entity.hp > entity.maxHp)) {
@@ -49,7 +63,18 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.ratings !== undefined && (!record(entity.ratings) || ['ar', 'dr', 'pr', 'poise', 'ward'].some(id => !Number.isFinite(entity.ratings[id]) || entity.ratings[id] < 0))) problems.push(`${path}.ratings must contain finite non-negative ratings`);
   if (entity.wardMeter !== undefined && (!record(entity.wardMeter) || !Number.isInteger(entity.wardMeter.max) || entity.wardMeter.max <= 0 || !Number.isFinite(entity.wardMeter.value) || entity.wardMeter.value < 0 || entity.wardMeter.value >= entity.wardMeter.max)) problems.push(`${path}.wardMeter is invalid`);
   if (typeof entity.alive !== 'boolean') problems.push(`${path}.alive must be boolean`);
+  // A skill feat's critical-hit rules (SPEC §13.4o): refused by name, never
+  // left to throw mid-play or to multiply a blow without bound.
+  if (entity.critRules !== undefined && !critRulesOk(entity.critRules)) problems.push(`${path}.critRules must be a list of { tags, base, weights, divisor, cap ≤ 1, multiplier 1–10 }`);
   return problems;
+}
+
+function critRulesOk(rules) {
+  const num = (v, lo, hi) => v === undefined || (Number.isFinite(v) && v >= lo && v <= hi);
+  return Array.isArray(rules) && rules.every((rule) => record(rule)
+    && Array.isArray(rule.tags) && rule.tags.length > 0 && rule.tags.every(nonEmptyString)
+    && num(rule.base, 0, 1) && num(rule.cap, 0, 1) && num(rule.divisor, 1e-9, Infinity) && num(rule.multiplier, 1, 10)
+    && (rule.weights === undefined || (record(rule.weights) && Object.values(rule.weights).every((w) => Number.isFinite(w)))));
 }
 
 function cardProblems(card, path) {
@@ -58,6 +83,9 @@ function cardProblems(card, path) {
   if (!nonEmptyString(card.instanceId)) problems.push(`${path}.instanceId must be a non-empty string`);
   if (!nonEmptyString(card.cardId)) problems.push(`${path}.cardId must be a non-empty string`);
   if (typeof card.upgraded !== 'boolean') problems.push(`${path}.upgraded must be boolean`);
+  if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1)) problems.push(`${path}.rank must be a whole number of at least 1`);
+  if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_SKILL_BONUS)) problems.push(`${path}.skillBonus must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
+  if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_SKILL_BONUS)) problems.push(`${path}.passiveBlock must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
   return problems;
 }
 
@@ -68,6 +96,7 @@ export function combatSnapshotProblems(snapshot) {
   if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
   if (!Number.isInteger(snapshot.turn) || snapshot.turn < 1) problems.push('turn must be a positive integer');
   try { retiredAttackSlots(snapshot.equipmentAttackSlotCount, snapshot.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
+  if (snapshot.sideboardedEquipmentCardIds !== undefined && (!Array.isArray(snapshot.sideboardedEquipmentCardIds) || snapshot.sideboardedEquipmentCardIds.some((id) => !nonEmptyString(id)) || new Set(snapshot.sideboardedEquipmentCardIds).size !== snapshot.sideboardedEquipmentCardIds.length)) problems.push('sideboardedEquipmentCardIds must contain unique non-empty instance ids');
   if (snapshot.poolDeck !== undefined && snapshot.poolDeck !== true) problems.push('poolDeck must be true when present');
   if (!PHASES.includes(snapshot.phase)) problems.push(`phase must be one of ${PHASES.join(', ')}`);
   if (!RESULTS.includes(snapshot.result)) problems.push("result must be null, 'victory', or 'defeat'");
@@ -110,6 +139,12 @@ export function combatSnapshotProblems(snapshot) {
     if (!ratings || typeof ratings !== 'object') problems.push('Combat ratings: missing rating rows');
     else for (const id of ratingIds) problems.push(...storedStatRowProblems(ratings[id], `Combat ratings: ${id}`));
   }
+  if (snapshot.breakMeterVersion !== undefined) {
+    if (snapshot.breakMeterVersion !== 1 || !snapshot.ratingsRules?.enabled) problems.push('breakMeterVersion requires version 1 and enabled ratings');
+    for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((entity, i) => [`enemies[${i}]`, entity])]) {
+      for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) if (entity?.[field] !== undefined) problems.push(`${path}.${field} is retired by breakMeterVersion 1`);
+    }
+  }
   // The fight's copy of the run's derived-stat rules prices the Poise vessel on
   // restore and is preferred over the run's own, so it is held to the same
   // door the run's is: a truthy but malformed copy (`{}`, a missing row) is
@@ -125,10 +160,18 @@ export function combatSnapshotProblems(snapshot) {
   }
   if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
+  if (snapshot.pendingAbilityDiscard !== undefined) {
+    const pending = snapshot.pendingAbilityDiscard;
+    if (!record(pending) || !Number.isInteger(pending.count) || pending.count < 1 || pending.count > (snapshot.piles?.hand?.length || 0)) problems.push('pendingAbilityDiscard requires a valid hand count');
+    if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityDiscard requires its paid card');
+    else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
+    if (!Array.isArray(snapshot.abilityQueue) || snapshot.abilityQueue.some(action => !record(action) || !record(action.effect) || !nonEmptyString(action.effect.op))) problems.push('abilityQueue must contain queued effects');
+  } else if (snapshot.abilityQueue !== undefined || snapshot.pendingAbilityPlay !== undefined) problems.push('saved ability queue requires a pending discard choice');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
   // before them, refused by name when present and malformed.
   if (snapshot.skills !== undefined) problems.push(...skillsProblems(snapshot.skills));
+  if (snapshot.skillFeats !== undefined && (!Array.isArray(snapshot.skillFeats) || snapshot.skillFeats.some(id => !nonEmptyString(id)) || new Set(snapshot.skillFeats).size !== snapshot.skillFeats.length)) problems.push('snapshot.skillFeats must contain unique feat ids');
   if (snapshot.coreTags !== undefined) problems.push(...coreTagsProblems(snapshot.coreTags).map((p) => `snapshot.${p}`));
   // SPEC §14.3: the fight's consumable counts and the companions it mounted;
   // absent on a snapshot written before them, refused by name when malformed.

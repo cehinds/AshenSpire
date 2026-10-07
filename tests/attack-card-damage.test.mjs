@@ -1,3 +1,4 @@
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -109,8 +110,8 @@ test('advanced settings deterministically change costs and per-status reductions
   });
   const registries = createRegistries(configured);
   const slash = registries.cards.get('gorefireSlash');
-  assert.equal(slash.effects.find((effect) => effect.op === 'damage').amount, 25);
-  assert.equal(createRegistries(configured).cards.get('gorefireSlash').effects[0].amount, 25);
+  assert.equal(slash.effects.find((effect) => effect.op === 'damage').amount, 15);
+  assert.equal(createRegistries(configured).cards.get('gorefireSlash').effects[0].amount, 15);
 });
 
 test('X-cost attacks use one Action of value per repeated hit', () => {
@@ -288,7 +289,7 @@ test('a staff Strike played in combat lands its configured Ward impact', async (
     const emit = c.emit;
     c.emit = (type, payload) => { if (type === 'ratingImpact') seen.push(payload); return emit(type, payload); };
     dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: enemy.id });
-    return { seen, face: resolveCard(registries, c.piles.discard[0] || instance) };
+    return { seen: c.eventLog.filter(event => event.type === 'ratingImpact'), face: resolveCard(registries, c.piles.discard[0] || instance) };
   };
   const staffStrike = { cardId: 'strike', profileId: 'staffMagicAttack', damageSchool: 'magic', exposureBuildupPerHit: 0 };
   for (const multiplier of [1, 3]) {
@@ -355,28 +356,28 @@ test('a staff Strike played in co-op lands its configured Ward impact', async ()
   playCard(C, 'p1', seat.piles.hand[0].instanceId, enemy.id);
   const ward = resolveCard(registries, instance).cardRatingValues.ward;
   assert.ok(ward > (registries.balance.combatRatings?.impact?.magic ?? 1), 'the Ward value differs from the magic default');
-  assert.deepEqual(seen.map((row) => [row.meter, row.amount]), [['ward', ward]]);
+  assert.deepEqual(C.eventLog.filter(event => event.type === 'ratingImpact').map((row) => [row.meter, row.amount]), [['ward', ward]]);
 });
 
 // A WEAPON PACKAGE'S PRIORITY CARDS ARE DEALT UNDER A PROFILE TOO (#1247
 // review): a staff that listed Stomp would deal it magical, so Stomp needs its
 // magical face, and a row on the magical side, like the staff's own Strike.
 test('a card a staff package deals resolves through the magical formulas', () => {
-  const staff = contentBundle.equipment.armaments.find((piece) => piece.attackProfile === 'staffMagicAttack');
-  const armaments = contentBundle.equipment.armaments.map((piece) => (piece === staff ? {
+  const staff = legacyContentBundle.equipment.armaments.find((piece) => piece.attackProfile === 'staffMagicAttack');
+  const armaments = legacyContentBundle.equipment.armaments.map((piece) => (piece === staff ? {
     ...piece,
     weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'staffMagicAttack', priorityAttackRefs: ['stomp'] },
   } : piece));
-  const bundle = { ...contentBundle, equipment: { ...contentBundle.equipment, armaments } };
+  const bundle = { ...legacyContentBundle, equipment: { ...legacyContentBundle.equipment, armaments } };
   const registries = createRegistries(bundle);
-  const dealt = resolveCard(registries, { cardId: 'stomp', profileId: 'staffMagicAttack' });
+  const dealt = resolveCard(registries, { cardId: 'stomp', legacyAbility: true, profileId: 'staffMagicAttack' });
   assert.equal(cardIsMagical(dealt), true);
   assert.ok('stomp' in registries.balance.damage.potencyCards.cardBonuses);
-  const authored = contentBundle.cards.find((card) => card.id === 'stomp');
+  const authored = contentBundle.legacyProgression.cards.find((card) => card.id === 'stomp');
   assert.deepEqual(dealt.effects.map((effect) => effect.amount), authored.effects.map((effect) => effect.amount),
     'untouched defaults keep its numbers on the magical side');
   const tuned = createRegistries(configuredContentBundle(bundle, { 'gameConfig.balance.damage.potencyCards.globalMultiplier': 5 }));
-  assert.notEqual(resolveCard(tuned, { cardId: 'stomp', profileId: 'staffMagicAttack' }).effects[0].amount, authored.effects[0].amount,
+  assert.notEqual(resolveCard(tuned, { cardId: 'stomp', legacyAbility: true, profileId: 'staffMagicAttack' }).effects[0].amount, authored.effects[0].amount,
     'the PR formula moves it');
-  assert.equal(resolveCard(tuned, { cardId: 'stomp' }).effects[0].amount, authored.effects[0].amount, 'and not its physical face');
+  assert.equal(resolveCard(tuned, { cardId: 'stomp', legacyAbility: true }).effects[0].amount, authored.effects[0].amount, 'and not its physical face');
 });

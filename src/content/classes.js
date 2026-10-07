@@ -105,7 +105,7 @@ export const classes = [
       // Commons
       'bloodPact', 'blightTouch', 'flagellation', 'penance', 'litany', 'graveOffering',
       'bloodletting', 'contagion', 'cullTheWeak', 'transfusion', 'blightward', 'painOffering', 'witheringTouch',
-      'blightwardLash',
+      'blightwardLash', 'emberCommunion',
       // Uncommons
       'martyrBlood', 'blightBloom', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'gildedOath',
       'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'reclamation', 'desperateRite', 'emberTideCard',

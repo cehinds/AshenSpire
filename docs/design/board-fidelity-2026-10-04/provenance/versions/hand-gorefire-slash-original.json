@@ -1,0 +1,32 @@
+{
+  "id": "hand-gorefire-slash",
+  "name": "Gorefire Slash",
+  "tool": "built-in image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": false,
+  "sourceBoard": {
+    "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+    "approximateArtWindowBounds": [
+      516,
+      456,
+      608,
+      513
+    ],
+    "coordinateConvention": "[left,top,right,bottom] pixels, approximately on the1448\u00c3\u20141086 original; selected miniature only, no UI copying"
+  },
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+      "role": "composition, subject, palette and light source reference; ONLY designated ability art window"
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: ONE standalone AshenSpire ability illustration matching a specific existing board05 card artwork, NOT a complete card, screenshot or UI mockup. Source image is a COMPOSITION/COLOR reference. Extract and faithfully paint ONLY the named small art-window subject described below at high resolution. Fill the entire output image with that painting: no card frame, name, cost medallion, numbers, text, labels, bottom parchment, borders, UI, extra figure, invented item lore or new composition. Match the board's richly painted gloomy charcoal brushwork and explosive localized light. Output landscape 4:3 aspect ratio, width1536 height1152. The reference board has another aspect ratio; do NOT follow its outer aspect ratio. Keep important silhouettes visible on a compact horizontal card-art window.\nNamed reference artwork: Gorefire Slash.\nPrecise target: Upper desktop combat hand, third selected card art window. Diagonal bright steel sword blade rises bottom-left to upper-right, with several vigorous ember-red/orange fire arcs sweeping across and along the blade. Dark charred rocky/smoke background with hot ember sparks, intense narrow white-orange blade edge, fire band low across painting. NO warrior or human silhouette. Preserve the board's blade-only diagonal composition.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-35f0737a-8540-47a0-836c-0ead6e1be478.png",
+  "status": "superseded",
+  "reason": "Borrowed battlefield ruins outside the designated small art window; background-only cleanup needed.",
+  "sha256": "80369a964d903da422bf5e9d5898c95e01de16cdfece34556fc392a07b429b36",
+  "bytes": 2774241,
+  "width": 1448,
+  "height": 1086,
+  "imageMode": "RGB"
+}

@@ -25,8 +25,9 @@
 //
 // HE OFFERED TWO ANSWERS AND MARINA RULED THE SECOND — a revert deletes whatever
 // the gate was protecting; a setting keeps the protection reachable. So the gate
-// now takes an `enabled` argument fed by ONE row, `Display / Short-screen
-// warning`, and `SAY.hint` names that row on the gate's own face.
+// now takes an `enabled` argument fed by ONE row, `Advanced › Interface ›
+// Short-screen warning` (settings.js, key `uprightGate`), and `hint()` names
+// that row on the gate's own face.
 //
 // ⚠ AND THE LEAST FLATTERING FACT IN THIS LANE IS ALREADY IN THIS FILE, sixty
 // lines down: *"A gate that tells a desktop player to rotate their monitor is a
@@ -188,6 +189,7 @@
 // is the thing being reported on.
 
 import { el, decide, titleL, prose, flavour } from '../kit/index.js';
+import { t } from '../strings.js';
 
 /** The gate's own element, or null when nothing is standing. */
 let gate = null;
@@ -213,19 +215,25 @@ const SAFE = 'Your run is safe — nothing is lost, and it comes right back.';
 // menu, and what that buys is a player who read the row's note before choosing.
 // SHARED BY BOTH VARIANTS for the same reason SAFE is — two doors with two
 // strings is how they drift.
-const HINT = 'Rather draw it anyway? Settings › Display › Short-screen warning.';
+//
+// THE PATH IS READ FROM THE SAME STRING ROWS SETTINGS PAINTS (#1489, Codex): the
+// window title, the Interface topic and the row's own label. The literal this
+// replaced said "Display", where the row is not (Settings files it under
+// Advanced › Interface), and a reworded `settings.row.uprightGate` would have
+// left the gate naming a row that no longer exists. `Advanced` is the category id Settings
+// shows as-is (categoryLabel falls back to the id; no row words it). Built at
+// paint time, not import time, so the face follows the table it reads.
+const hint = () => `Rather draw it anyway? ${t('settings.title')} › Advanced › ${t('settings.group.Interface')} › ${t('settings.row.uprightGate')}.`;
 const SAY = {
   rotate: {
     title: 'Turn your phone upright',
     body: 'Sideways there isn’t enough height for the board, and END TURN ends up somewhere your thumb can’t reach.',
     safe: SAFE,
-    hint: HINT,
   },
   resize: {
     title: 'This window is too short',
     body: 'There isn’t enough height for the board, and END TURN ends up somewhere you can’t reach.',
     safe: SAFE,
-    hint: HINT,
   },
 };
 
@@ -237,7 +245,7 @@ const SAY = {
  *   offerRotate  main.js asked the same decider about the SWAPPED viewport and
  *                it is not short, AND the primary pointer is coarse — so
  *                "turn it" is a true and doable instruction. WORDING ONLY.
- *   enabled      the player's own answer — `Display / Short-screen warning`.
+ *   enabled      the player's own answer — `Advanced › Interface › Short-screen warning`.
  *                `false` and nothing stands, whatever the geometry says. It is a
  *                SECOND, INDEPENDENT gate rather than a term inside `short`,
  *                because "is this screen too short" and "does this player want to
@@ -247,9 +255,9 @@ const SAY = {
  * "CONTINUE ANYWAY" BUTTON THE HEADER RULES OUT. The header's argument stands
  * unchanged — a door into a wall placed AT the wall is worse than the wall,
  * because it is pressed in the moment of annoyance by someone who has not been
- * told what is on the other side. This one is a persisted setting, in the Display
- * list, reached from a screen that is working, with the cost written on the row;
- * and the gate does not offer it, it merely NAMES it (see SAY.hint below), which
+ * told what is on the other side. This one is a persisted setting, in the
+ * Advanced › Interface list, reached from a screen that is working, with the cost written on the row;
+ * and the gate does not offer it, it merely NAMES it (see hint() above), which
  * is the difference between an escape hatch and an informed choice. **His word
  * amended the ruling and it is recorded here rather than reinterpreted.**
  *
@@ -293,7 +301,7 @@ export function updateUprightGate({ short, offerRotate, enabled = true } = {}) {
       titleL(say.title, { tag: 'h2', id: 'upright-title' }),
       prose(say.body, { class: 'upright-say' }),
       prose(say.safe, { class: 'upright-safe' }),
-      flavour(say.hint, { class: 'upright-hint' }),
+      flavour(hint(), { class: 'upright-hint' }),
     ],
   }));
   return gate;

@@ -1,3 +1,4 @@
+import { spendClassRewardItem } from './classRewardProvenance.js';
 // Merchant transactions: plans are inert; commits revalidate before mutation.
 import { carriedIds, pieceItemRef } from './loadout.js';
 import { ownerItemRef } from './cardMounts.js';
@@ -75,6 +76,7 @@ export function commitArmamentSale(registries, run, quote) {
   // Preserve run-owned extracted cards, and keep tier/mount records bound to
   // the item for reacquisition. An unowned item cannot leave usable grants.
   const deck = run.deck.filter((card) => ownerItemRef(card) !== plan.itemRef);
+  spendClassRewardItem(run,'armory',plan.itemRef,'sold');
   run.loadout.storage = storage;
   run.deck = deck;
   run.cinders += plan.price;

@@ -901,7 +901,7 @@ export function relicAttributeTierFoldProblems(term, rule) {
   return problems;
 }
 
-function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitOverride) {
+export function resolveSnapshotNumbers(rules, classDef, relicModifierReceipt, explicitOverride) {
   if (!classDef) throw new Error('Host snapshot creation requires a classDef');
   const out = structuredClone(rules);
   // A RUN SNAPSHOTS ITS OWN CLASS'S ROW: the per-class form resolves here,
@@ -948,6 +948,8 @@ export function createDerivedStatRuleSnapshot(source, options = {}) {
     snapshotVersion: DERIVED_STAT_SNAPSHOT_VERSION,
     rulesetVersion: rules.rulesetVersion,
     rules,
+    baseRules: resolveSnapshotNumbers(resolveDerivedStatRules(source,options),options.classDef,null,options.explicitOverride),
+    modifierOverride: structuredClone(options.explicitOverride || {}),
     relicModifiers: options.relicModifierReceipt ? {
       damageBySchoolAdd: options.relicModifierReceipt.damageBySchoolAdd,
       sources: options.relicModifierReceipt.sources,
@@ -1008,6 +1010,7 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
     throw new Error(`Derived-stat rulesetVersion ${snapshot.rulesetVersion} requires snapshotVersion ${expectedEnvelopes.join(' or ')}`);
   }
   throwProblems('derivedStatSnapshot', derivedStatRuleProblems(source, { ...options, unified: rowsAreUnified, carriers: true }));
+  if (snapshot.baseRules) throwProblems('derivedStatSnapshot.baseRules', derivedStatRuleProblems(snapshot.baseRules,{...options,unified:rowsAreUnified,carriers:true}));
   const rules = {
     rulesetVersion: source.rulesetVersion,
     // `perLevel: 0` UNDER a legacy table's defaults: rulesets 1–5 had no
@@ -1025,6 +1028,7 @@ export function restoreDerivedStatRuleSnapshot(snapshot, options = {}) {
     snapshotVersion: snapshot.rulesetVersion >= 3 ? DERIVED_STAT_SNAPSHOT_VERSION : snapshot.snapshotVersion,
     rulesetVersion: snapshot.rulesetVersion,
     rules,
+    ...(snapshot.baseRules ? {baseRules:structuredClone(snapshot.baseRules),modifierOverride:structuredClone(snapshot.modifierOverride || {})} : {}),
     ...(snapshot.relicModifiers ? { relicModifiers: structuredClone(snapshot.relicModifiers) } : {}),
   };
 }

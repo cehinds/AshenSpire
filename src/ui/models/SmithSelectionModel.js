@@ -15,7 +15,7 @@ function changeLabel(change) {
     block: 'Guard',
     draw: 'Draw',
     discard: 'Discard',
-    'cost:action': 'Action Cost',
+    'cost:action': 'Stamina Cost',
     'cost:mana': 'Mana Cost',
     'cost:stamina': 'Stamina Cost',
   };
@@ -73,7 +73,7 @@ function genericAffected(candidate) {
   })));
 }
 
-export function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false } = {}) {
+export function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false, repeatUpgrades = false } = {}) {
   const items = plan.candidates.map((candidate) => {
     const itemKind = candidate.itemKind || 'armament';
     const itemId = candidate.itemId || candidate.armamentId;
@@ -123,6 +123,7 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
     });
   });
   const selected = items.find((item) => item.selected) || null;
+  const staysAfterUpgrade = multiUse || (repeatUpgrades && (!selected || plan.stones > selected.cost));
   return freeze({
     component: UI.smithUpgradeModal,
     variant: selected ? 'review' : 'choose',
@@ -133,10 +134,10 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       // Every stay/leave sentence the modal shows is derived HERE (SPEC: the
       // model owns the copy; the component renders it): the footer line, the
       // header badge, and the tail of the decision message.
-      staysAtShrine: !!multiUse,
-      consequence: `Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. ${multiUse ? 'You stay at the Shrine.' : 'The upgrade leaves the Shrine.'}`,
-      consequenceBadge: multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE',
-      decisionConsequence: multiUse ? 'you stay at the Shrine' : 'and leaves the Shrine',
+      staysAtShrine: !!staysAfterUpgrade,
+      consequence: `Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. ${repeatUpgrades ? 'Keep upgrading while Smithing Stones remain. ' : ''}${staysAfterUpgrade ? 'You stay at the Shrine.' : 'The upgrade leaves the Shrine.'}`,
+      consequenceBadge: staysAfterUpgrade ? 'STAYS AT SHRINE' : 'LEAVES SHRINE',
+      decisionConsequence: staysAfterUpgrade ? 'you stay at the Shrine' : 'and leaves the Shrine',
       // Refined stones (SPEC §15.3) join the purse line once the run holds
       // any. They are shown, not spent: spending is §14.4's blacksmith.
       purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`

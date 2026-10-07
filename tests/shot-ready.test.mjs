@@ -118,7 +118,8 @@ test('BOUNDARY: the combat and co-op boards hide the animated backdrop glow', ()
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   assert.match(css, /\.backdrop::after \{[^}]*animation: backdropGlow[^}]*infinite/);
   assert.match(css, /\.environment-backdrop::after \{ display: none; \}/);
-  const art = readFileSync(new URL('../src/ui/components/environmentArt.js', import.meta.url), 'utf8');
+  const art = readFileSync(new URL('../src/ui/components/environmentArt.js', import.meta.url), 'utf8')
+    + readFileSync(new URL('../src/ui/components/illustratedBackground.js', import.meta.url), 'utf8');
   const backdrops = [...art.matchAll(/class="(backdrop[^"]*)"/g)].map((m) => m[1]);
   assert.ok(backdrops.length > 0);
   for (const cls of backdrops) assert.match(cls, /\benvironment-backdrop\b/, `combat backdrop "${cls}"`);

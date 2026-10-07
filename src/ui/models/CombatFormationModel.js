@@ -1,3 +1,4 @@
+import { applyFormationGroups } from '../../model/formationGroups.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { thaw } from '../../config/authored.js';
@@ -29,9 +30,10 @@ function legacyCombatFormation({ width, height, friends, enemies, rem = 16, pres
   const feet = [firstFoot + PLACE.footSteps[0] * step, firstFoot + PLACE.footSteps[1] * step, lastFoot];
   const group = (ids, enemy, preferred = false) => ids.map((id, index) => {
     const side = enemy ? 'enemy' : 'player';
-    const selectedRow = 'ABC'.indexOf(presentation[`${side}SpawnRow`]);
-    const selectedColumn = Number(presentation[`${side}SpawnColumn`]);
-    const usePreference = preferred && selectedRow >= 0 && (enemy ? [3, 4] : [1, 2]).includes(selectedColumn);
+    const spawn = formationSpawn(presentation, side, { columns: 2, rows: 3 });
+    const selectedRow = 'ABC'.indexOf(spawn[0]);
+    const selectedColumn = Number(spawn[1]);
+    const usePreference = preferred && (`${side}SpawnRow` in presentation || `${side}SpawnColumn` in presentation);
     const row = usePreference ? (selectedRow - Math.floor(index / 2) % 3 + 3) % 3 : Math.min(2, Math.floor(index / 2));
     const column = usePreference ? ((enemy ? 4 - selectedColumn : selectedColumn - 1) + index) % 2 : index % 2;
     const band = column ? 'front' : 'back';
@@ -98,6 +100,7 @@ export function combatFormation(input) {
         width: cellWidth, artWidth: pitch, tileHeight, depth: wireframeUi.formation.depth[Math.min(2, Math.round(progress * 2))] });
     }
   }
+  applyFormationGroups(cells, config.formationGroups, width, height);
   const group = (ids, side) => {
     const spawn = formationSpawn(config, side, dimensions);
     const row = FORMATION_ROWS.indexOf(spawn[0]);

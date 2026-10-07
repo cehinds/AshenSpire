@@ -1,3 +1,4 @@
+import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 // tools/runsim.mjs — headless FULL-RUN simulator (M3 acceptance: "all 3
 // classes can complete 3-act runs").
 //
@@ -15,6 +16,8 @@
 // combos or curate a deck. Any full-run crash = a real integration bug.
 //
 // Run: node tools/runsim.mjs [runsPerClass=30] [--endless] [--incoming] [--level-stat=<attr>]
+//   --single-break-meter: use the configured ratings and version-1 run stamp
+//   from SPEC §13.4p; assert that each measured fight uses the shared meter.
 //   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
 //   (capped at act 15 here); reports climb depth instead of win rate.
 //   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
@@ -39,10 +42,11 @@
 //   and balance.bossTiers rows (read from content, never restated here).
 
 import { contentBundle } from '../src/content/index.js';
+import { configuredContentBundle, advancedConfigSnapshot } from '../src/model/advancedConfig.js';
 import { createRegistries } from '../src/model/registries.js';
 import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
-import { affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
+import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
 import { createRunLoop, payFightXp, SoftLock, fleetSeed } from './simrun.mjs';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 import { skillTracks } from '../src/model/skills.js';
@@ -73,7 +77,11 @@ const levelBundle = XP_CURVE
     return { ...contentBundle, balance: { ...contentBundle.balance, level: { ...contentBundle.balance.level, xp: { base, growth, roundTo } } } };
   })()
   : contentBundle;
-const REG = createRegistries(levelBundle);
+// SPEC §13.4p: explicitly exercise new rated runs; preserve the historical
+// simulator corpus when the flag is absent.
+const CLASS_MASTERY = argv.includes('--class-mastery');
+const SINGLE_BREAK = argv.includes('--single-break-meter') || CLASS_MASTERY;
+const REG = createRegistries(SINGLE_BREAK ? configuredContentBundle(levelBundle, advancedConfigSnapshot()) : levelBundle);
 const ENDLESS = argv.includes('--endless');
 // THE GRACE REFILL A/B (Sten, 2026-08-08). Constantine flagged the cost himself
 // — "However, that would mean making combat harder" — and a nod is not an
@@ -97,6 +105,13 @@ let MANA_ON = true;
 // THE SEAT-TIER REPORT (SPEC §13.3, FINISH §4 *Seat-tier tolerance is stated*).
 // READ-ONLY: it records which seat each act climbed and whether its boss fell.
 const SEAT_TIERS = argv.includes('--seat-tiers');
+// Endless acts past 3 repeat content tiers 1..3 with cycle HP and Strength on
+// top, so a per-tier table would pool act 4 with act 1 under tier 1's base
+// multipliers and label both wrongly. The combination is refused, not guessed.
+if (SEAT_TIERS && ENDLESS) {
+  console.error('runsim: --seat-tiers cannot be combined with --endless — endless acts past 3 reuse tiers 1-3 with cycle scaling the per-tier report does not carry. Run --seat-tiers on the 3-act climb.');
+  process.exit(2);
+}
 // THE CLASS-SPREAD DEEPENING (Vira, 2026-08-15). `--deep` tallies each fight's
 // own eventLog — playerTurnStart / cardPlayed / blockGained / healed / hpLost /
 // damageDealt / energySpent / flaskUsed — into per-class counters, plus the
@@ -328,7 +343,9 @@ function printIncoming(book, runs) {
 }
 
 // ---- the combat bot (same policy as tests/balance) --------------------------
+const sourceRegistries = REG;
 function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
+  const REG = registriesForClassMastery(sourceRegistries, run);
   const enc = REG.encounters.get(encounterId);
   // A boss scales by the tier it is met at (balance.bossTiers) in place of
   // the seat ratio, as main.js's combatMods does.
@@ -344,6 +361,9 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     enemyDamageMult: boss ? boss.damage : 1,
     enemyStatuses: cm.enemyStatuses || [],
   });
+  if (SINGLE_BREAK && (combat.breakMeterVersion !== 1 || !combat.ratingsRules || combat.player.wardMeter || combat.enemies.some(e => e.wardMeter || e.arcaneExposure))) {
+    throw new Error('single-break-meter fleet reached a fight outside its stamped rules');
+  }
   if (DIGEST) decisionDigest.beginFight(run.class, run.seed, fightFingerprint(combat, rng));
   let guard = 0;
   // A STALEMATE IS A LOSS, NOT A CRASH. Neither side can finish the other: a
@@ -411,7 +431,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       // below lets it escape as a CRASH rather than set the card aside.
       if (PLANT === 'fight-throw') throw new Error(`planted: card resolution threw inside ${encounterId}`);
       // A card that offers a choice (Warrior's Vow) takes its first option.
-      botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
+      botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: botCardTargetId(REG, combat, card, tgt?.id), choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
     } catch (e) {
       setAsideOrCrash(e);
       refused.add(card.instanceId);
@@ -477,6 +497,7 @@ function waiveMana(combat, refused) {
 const loop = createRunLoop(REG, {
   fight: (run, rng, encId, cm, ds) => botFight(run, rng, encId, cm, ds),
   levelPick,
+  classMastery: CLASS_MASTERY,
   attributes: spendAllocation,
   get graceOn() { return GRACE_ON; },
   seededSeats: SEEDED_SEATS,
@@ -511,6 +532,7 @@ const tierBook = {};
 const tierRow = (key) => (tierBook[key] = tierBook[key] || { reached: 0, cleared: 0 });
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
+  const masteryXp = [];
   manaBook = { spent: 0, waived: 0, fights: 0, flasks: 0 };
   const deaths = {};
   const ds = DEEP || INCOMING ? newDeepStats() : null;
@@ -533,6 +555,7 @@ for (const cls of REG.classes.all()) {
       break;
     }
     if (r.victory) wins++;
+    masteryXp.push(r.masteryXp || 0);
     if (SEAT_TIERS) {
       for (const t of r.tiers) {
         const keys = [`${cls.id}|${t.tier}`, `*|${t.tier}|${t.seat}`, `*|${t.tier}`];
@@ -560,6 +583,10 @@ for (const cls of REG.classes.all()) {
         `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
         `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
+  if (CLASS_MASTERY) {
+    const sorted = [...masteryXp].sort((a,b)=>a-b);
+    console.log(`  mastery XP/run: mean ${(masteryXp.reduce((a,b)=>a+b,0)/N).toFixed(1)}, median ${sorted[Math.floor(N/2)]}, p90 ${sorted[Math.min(N-1,Math.floor(N*.9))]}, min ${sorted[0]}, max ${sorted.at(-1)} (${N} fresh-profile seeds)`);
+  }
   if (DIGEST) {
     for (const f of decisionDigest.fightsOf(cls.id)) console.log(digestLine(cls.name, f));
   }

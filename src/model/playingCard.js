@@ -154,6 +154,17 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
   // A matched tag-scoped vulnerability lights the card's boosted number in the
   // status row's own tint. Absence means no bonus — never a "+0%" badge.
   const boost = (preview?.values || []).find((row) => row.boostTint) || null;
+  const abilityRank = Array.isArray(def.gradeProfiles) && Number.isInteger(def.abilityRank)
+    && !(ref.rank !== undefined && ref.abilityRank === undefined) ? def.abilityRank : null;
+  const weaponBound = def.tags?.includes('source:weapon') || def.cardTags?.includes('source:weapon');
+  const weaponArt = abilityRank > 0 && registries.framework.costProfile(def).mana > 0 && weaponBound;
+  const abilityLabel = abilityRank === null ? null : def.abilityKind === 'spell'
+    ? abilityRank === 0 ? 'Cantrip' : 'Spell'
+    : abilityRank === 0 ? 'Technique' : 'Combat Maneuver';
+  const legacyRank = Number.isInteger(def.rank) && def.rank > 1 ? def.rank : 1;
+  const rankBadge = abilityRank !== null ? `R${abilityRank}` : legacyRank > 1 ? `R${legacyRank}` : null;
+  const rankHelp = abilityRank !== null ? `Rank ${abilityRank}: authored ${abilityLabel.toLowerCase()} profile. Actions and Mana are charged separately.`
+    : legacyRank > 1 ? `Rank ${legacyRank}` : '';
 
   return freeze({
     id: def.id,
@@ -163,9 +174,17 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     rarity: def.rarity,
     classId: def.class,
     upgraded: !!ref.upgraded,
+    // SPEC §13.4o: the rank the face was resolved at (1 when unranked).
+    rank: legacyRank,
+    abilityRank,
+    rankBadge,
+    rankHelp,
     type: freeze({
       id: def.type,
-      label: (typeRow && typeRow.label) || def.type.toUpperCase(),
+      label: abilityLabel || (typeRow && typeRow.label) || def.type.toUpperCase(),
+      subtype: abilityLabel && weaponArt ? 'Weapon Art' : null,
+      glyph: abilityLabel ? def.abilityKind === 'spell' ? '✦' : weaponArt ? '⚔' : '◆' : null,
+      help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',
     }),
     costs,
     tags,

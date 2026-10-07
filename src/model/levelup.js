@@ -28,6 +28,7 @@ import { reconcileRunLoadoutHp } from './loadout.js';
 import { note } from './healLedger.js';
 import { enemyCombatPower } from './combatPower.js';
 import { xpStepCost } from './xpCurve.js';
+import { linkedAttributes, spendAttributePick } from './skills.js';
 
 /** The authored tables, or the shape of them, so a bundle without them fails
  *  soft in tools rather than throwing on a missing key. Bad data is caught at
@@ -327,7 +328,7 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
  * ride their own maximum up and are never reduced. Shared by the point
  * assignment and the level climb: one writer for what a level does to a pool.
  */
-function rederivePools(registries, run, why) {
+export function rederivePools(registries, run, why) {
   if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) return 0;
   const rules = run.derivedStatRuleSnapshot.rules;
   const classDef = registries.classes.get(run.class);
@@ -415,4 +416,68 @@ export function applyLevelUp(registries, run, attributeId) {
     why: `one earned point assigned at level ${run.level.level} (${run.levelPoints} assigned in total, ${run.level.unspentPoints} waiting); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
   });
   return { ...plan, attributeId, points: run.level.unspentPoints, level: run.level.level };
+}
+
+/**
+ * applySkillAttribute(registries, run, skillId, attributeId) → the attribute's
+ * new value, or null (nothing written) when the track has no pick queued or
+ * the attribute is not in its linked set (SPEC §13.4o, every 4th level). The
+ * point is recorded in `run.skillAttributePoints`, which the load door adds to
+ * the levelled points it judges the allocation against, and the pools are
+ * re-derived exactly as a levelled point re-derives them. `offered` (the saved
+ * offer's own list) is honoured when given, so an offer rolled before the
+ * linked set changed still lands what it promised.
+ */
+export function applySkillAttribute(registries, run, skillId, attributeId, { offered = null } = {}) {
+  const allowed = Array.isArray(offered) && offered.length ? offered : linkedAttributes(registries, skillId);
+  if (!allowed.includes(attributeId) || !orderedAttributes(registries).some((attr) => attr.id === attributeId)) return null;
+  if (!run.attributes || !Number.isFinite(run.attributes[attributeId])) return null;
+  if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) return null;
+  if (!spendAttributePick(run, skillId)) return null;
+  run.attributes[attributeId] += 1;
+  run.skillAttributePoints = (Number.isInteger(run.skillAttributePoints) ? run.skillAttributePoints : 0) + 1;
+  // Which track granted which point, so a respec can take its own back.
+  const grants = run.skillAttributeGrants && typeof run.skillAttributeGrants === 'object' ? run.skillAttributeGrants : {};
+  run.skillAttributeGrants = { ...grants, [skillId]: [...(grants[skillId] || []), attributeId] };
+  rederivePools(registries, run, `skill point on ${attributeId}`);
+  note(run, {
+    kind: 'write',
+    site: 'levelup.js:applySkillAttribute',
+    field: `attributes.${attributeId}`,
+    was: run.attributes[attributeId] - 1,
+    now: run.attributes[attributeId],
+    why: `a ${skillId} level's attribute pick (${run.skillAttributePoints} skill points in total); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
+  });
+  return run.attributes[attributeId];
+}
+
+/**
+ * withdrawSkillAttributes(registries, run, skillId) → the attribute ids taken
+ * back: every point the track's picks granted (owner ruling, 2026-10-05: a
+ * respec withdraws them, FINISH D13a). The points leave the attributes and
+ * `skillAttributePoints` together, so the load door's allocation check still
+ * balances, and the pools are re-derived once. A save from before the record
+ * existed has nothing to name and keeps its points.
+ */
+export function withdrawSkillAttributes(registries, run, skillId) {
+  const granted = run.skillAttributeGrants && Array.isArray(run.skillAttributeGrants[skillId]) ? run.skillAttributeGrants[skillId] : [];
+  if (!granted.length) return [];
+  // Only a point actually taken off an attribute leaves the count, so a record
+  // naming an unknown id cannot unbalance the load door's allocation check.
+  let taken = 0;
+  for (const id of granted) if (Number.isFinite(run.attributes?.[id])) { run.attributes[id] -= 1; taken += 1; }
+  run.skillAttributePoints = Math.max(0, (run.skillAttributePoints || 0) - taken);
+  const rest = { ...run.skillAttributeGrants };
+  delete rest[skillId];
+  if (Object.keys(rest).length) run.skillAttributeGrants = rest; else delete run.skillAttributeGrants;
+  rederivePools(registries, run, `respec withdrew ${granted.length} ${skillId} point(s)`);
+  note(run, {
+    kind: 'write',
+    site: 'levelup.js:withdrawSkillAttributes',
+    field: 'attributes',
+    was: undefined,
+    now: granted,
+    why: `a respec of ${skillId} withdrew the attribute points its picks granted (${run.skillAttributePoints} skill points remain)`,
+  });
+  return granted;
 }

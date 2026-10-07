@@ -3,6 +3,62 @@
 
 export const uiStrings = [
   {
+    "id": "combat.rating.ward",
+    "extends": "",
+    "short": "Ward rating",
+    "full": "Ward rating reduces magical damage and weighs in status resistance.",
+    "tip": "Ward rating"
+  },
+  {
+    "id": "combat.poise.shared",
+    "extends": "",
+    "short": "Poise",
+    "full": "Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",
+    "tip": "Shared break meter"
+  },
+  {
+    "id": "combat.poise.actionLoss",
+    "extends": "",
+    "short": "Actions",
+    "full": "{amount} fewer Actions next turn",
+    "tip": "Actions lost after Stagger"
+  },
+  {
+    "id": "combat.poise.enemyLoss",
+    "extends": "",
+    "short": "Move",
+    "full": "lose the next move",
+    "tip": "Stagger cancels the next move"
+  },
+  {
+    "id": "combat.protection.block",
+    "extends": "",
+    "short": "Block",
+    "full": "Absorbs attack damage.",
+    "tip": "Block"
+  },
+  {
+    "id": "combat.protection.ward",
+    "extends": "",
+    "short": "Arcane Ward",
+    "full": "Block granted by magical guards. Absorbs attack damage after ordinary Block.",
+    "tip": "Arcane Ward"
+  },
+  {
+    "id": "combat.protection.poiseGuard",
+    "extends": "",
+    "short": "Poise guard",
+    "full": "Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.",
+    "tip": "Poise guard"
+  },
+  {
+    "id": "combat.protection.wardGuard",
+    "extends": "",
+    "short": "Ward guard",
+    "full": "Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.",
+    "tip": "Ward guard"
+  },
+  {
     "id": "common.back",
     "extends": "",
     "short": "Back",
@@ -314,6 +370,90 @@ export const uiStrings = [
     "id": "reward.skillDraft.spent",
     "extends": "",
     "short": "This draft has already been spent. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillFeat.title",
+    "extends": "",
+    "short": "{skill} · level {level}: a skill feat",
+    "full": "A level's feat: one of the skill's own feats joins you for the rest of the run.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillFeat.taken",
+    "extends": "",
+    "short": "{name} is yours.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillFeat.spent",
+    "extends": "",
+    "short": "This feat can't land: it was spent, or you already have it. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.title",
+    "extends": "",
+    "short": "{skill} · level {level}: raise an attribute",
+    "full": "A level's attribute pick: one attribute linked to the skill rises by 1.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.body",
+    "extends": "",
+    "short": "Raise one of {attributes} by 1.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.raised",
+    "extends": "",
+    "short": "{attribute} +1 (now {value}).",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillAttribute.spent",
+    "extends": "",
+    "short": "This pick can't land: it was spent, or that attribute is no longer offered. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.title",
+    "extends": "",
+    "short": "{skill} · level {level}: raise a card",
+    "full": "A level's rank-up: one of your own cards of the skill's schools rises one rank.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.body",
+    "extends": "",
+    "short": "Raise one of your {skill} cards by one rank.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.none",
+    "extends": "",
+    "short": "No {skill} card can rise yet. A card's rank stays at or below the skill's level; this waits for one.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.raised",
+    "extends": "",
+    "short": "{name} rose to rank {rank}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillRankUp.spent",
+    "extends": "",
+    "short": "This rank-up can't land: it was spent, or that card can no longer rise. Go Back; the row stays as it is.",
     "full": "",
     "tip": ""
   },
@@ -1865,6 +2005,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.book.buy",
+    "extends": "",
+    "short": "Buy",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.token.desc",
     "extends": "",
     "short": "{text} It burns by itself when you need it.",
@@ -3293,6 +3440,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "master.respec.attributes",
+    "extends": "",
+    "short": "takes back {points} attribute point(s)",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "master.lesson.unasked",
     "extends": "",
     "short": "Ask for a lesson to see its {count} card(s).",
@@ -3443,6 +3597,13 @@ export const uiStrings = [
     "id": "master.refuse.poolEmpty",
     "extends": "",
     "short": "Your training pool is empty.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.capped",
+    "extends": "",
+    "short": "{skill} is at its highest level.",
     "full": "",
     "tip": ""
   },
@@ -4560,6 +4721,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.primaryAttributes",
+    "extends": "",
+    "short": "Primary Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.editStats",
+    "extends": "",
+    "short": "Edit stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.handCapacity.short",
+    "extends": "",
+    "short": "Size",
+    "full": "The maximum number of cards you can hold.",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.title",
+    "extends": "",
+    "short": "Game menu",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.main",
+    "extends": "",
+    "short": "Main menu",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.menu.quit",
+    "extends": "",
+    "short": "Quit game",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "creation.categories",
     "extends": "",
     "short": "Creation steps",
@@ -4709,15 +4912,15 @@ export const uiStrings = [
   {
     "id": "deckEditor.pane.deck",
     "extends": "",
-    "short": "Deck",
-    "full": "The cards you will fight with. Tap one to take it out.",
+    "short": "Your Deck",
+    "full": "Select a card to inspect it. Use Remove to take a copy out.",
     "tip": "Deck"
   },
   {
     "id": "deckEditor.pane.collection",
     "extends": "",
-    "short": "Collection",
-    "full": "Every card you own. Tap one to add it to the deck.",
+    "short": "Card Library",
+    "full": "Select a card to inspect it. Use Add to put a copy in your deck.",
     "tip": "Collection"
   },
   {
@@ -5003,7 +5206,7 @@ export const uiStrings = [
   {
     "id": "deckEditor.keys",
     "extends": "",
-    "short": "Tap, ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
+    "short": "Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
     "full": "",
     "tip": ""
   },
@@ -5055,6 +5258,13 @@ export const uiStrings = [
     "short": "No saved climb yet.",
     "full": "Continue resumes a saved climb; start one with New.",
     "tip": ""
+  },
+  {
+    "id": "title.quickstart",
+    "extends": "",
+    "short": "Quick start",
+    "full": "Begin a climb at once with the recommended character, a fresh seed and no opening; New lets you choose everything.",
+    "tip": "Quick start"
   },
   {
     "id": "title.slots.continue.reason",
@@ -5299,6 +5509,3051 @@ export const uiStrings = [
     "extends": "",
     "short": "The folder copy could not be saved. Try again, or use the single-file download above.",
     "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.track",
+    "extends": "",
+    "short": "Choose a skill track taught by this book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.empty",
+    "extends": "",
+    "short": "There are no available lessons in this book. It has not been consumed.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.choice",
+    "extends": "",
+    "short": "Choose one lesson from this book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.stale",
+    "extends": "",
+    "short": "Your books have changed. Open this book again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.title",
+    "extends": "",
+    "short": "Read {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.summary",
+    "extends": "",
+    "short": "Gain {xp} XP and learn one selected card. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.track",
+    "extends": "",
+    "short": "XP skill track",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.search",
+    "extends": "",
+    "short": "Find a skill or class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.choose",
+    "extends": "",
+    "short": "Read and learn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.cancel",
+    "extends": "",
+    "short": "Cancel",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.empty",
+    "extends": "",
+    "short": "No lessons match your search.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.rarity",
+    "extends": "",
+    "short": "Skill and spell choices follow the selected track's unlocked rarities; common cards are available from level zero.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.refuse.knownClass",
+    "extends": "",
+    "short": "This class is already learned.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.class",
+    "extends": "",
+    "short": "Learn this class card now. Equip or remove it later in your inventory; its progress is kept.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.fullscreen",
+    "extends": "",
+    "short": "Fullscreen",
+    "full": "Fill the screen when this browser supports app-controlled fullscreen.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.resetAllSettings",
+    "extends": "",
+    "short": "Reset all settings",
+    "full": "Put every setting back to its default. Asks first, and the change can be undone for a few seconds.",
+    "tip": ""
+  },
+  {
+    "id": "settings.resetAll.title",
+    "extends": "",
+    "short": "Reset all settings?",
+    "full": "Every setting, in every section, goes back to its default. Saves and progress are not touched.",
+    "tip": ""
+  },
+  {
+    "id": "settings.resetAll.confirm",
+    "extends": "",
+    "short": "Reset all",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.reset",
+    "extends": "",
+    "short": "Reset to defaults",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.choice",
+    "extends": "",
+    "short": "Which settings would you like to use?",
+    "full": "This build has default settings. Keep this device's saved local settings, or reset every setting to the current defaults. Saves and progress are not touched.",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.local",
+    "extends": "",
+    "short": "Keep local settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.use",
+    "extends": "",
+    "short": "Use defaults",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.defaults.failed",
+    "extends": "",
+    "short": "Your settings could not be saved. Your previous settings are still in use. Please try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.useSprites",
+    "extends": "",
+    "short": "Character sprites",
+    "full": "Show a drawn class figure in combat instead of your chosen sigil.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.animSpeed",
+    "extends": "",
+    "short": "Combat pacing",
+    "full": "Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.performanceMode",
+    "extends": "",
+    "short": "Rendering quality",
+    "full": "Auto uses lighter effects on touch devices. Lite keeps targeting and hit feedback, reduces decorative effects, and uses fast combat pacing when pacing is Auto.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.titleCityHold",
+    "extends": "",
+    "short": "Lit city pause",
+    "full": "Pause with the city fully lit before fading to the menu. Reduced motion skips this pause.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.mapZoom",
+    "extends": "",
+    "short": "Map zoom",
+    "full": "Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage fixes the zoom instead; + / − and ⊙ still work in the map.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.mapMode",
+    "extends": "",
+    "short": "Map reveal",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.shrineMultiUse",
+    "extends": "",
+    "short": "Multi-use Shrines",
+    "full": "Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.creationAutoAdvance",
+    "extends": "",
+    "short": "Auto-advance character creation",
+    "full": "After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.useRestorativeFlasksOutsideCombat",
+    "extends": "",
+    "short": "Use flasks outside combat",
+    "full": "Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victorySummaryMode",
+    "extends": "",
+    "short": "Open full Victory summary",
+    "full": "First show a compact Victory panel, then open the full rewards and XP summary using this action.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryReceiptSeconds",
+    "extends": "",
+    "short": "Victory XP breakdown (seconds)",
+    "full": "Time for the combat-power bonus and defeated enemies to count up together. 0 reveals every line immediately.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryReceiptPauseMs",
+    "extends": "",
+    "short": "Pause between XP lines (ms)",
+    "full": "A short beat after each line. Pauses compress automatically to fit the total breakdown time.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryReceiptReadySeconds",
+    "extends": "",
+    "short": "Continue ready delay (seconds)",
+    "full": "After the final XP line, wait this long before Continue turns green.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryReceiptFormulaTerms",
+    "extends": "",
+    "short": "XP terms before +…",
+    "full": "Show this many additions beside Total XP, then use +… with the full calculation on hover or focus.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryReceiptVisibleRows",
+    "extends": "",
+    "short": "Visible XP breakdown rows",
+    "full": "Set the fixed list height. Longer enemy lists scroll inside the Victory panel.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryXpSeconds",
+    "extends": "",
+    "short": "Victory XP animation (seconds)",
+    "full": "Time to fill one complete XP bar. All tracks use the same fractional speed. 0 shows the final values immediately.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.levelUpRefillSeconds",
+    "extends": "",
+    "short": "Residual XP refill (seconds)",
+    "full": "After returning from a claimed level's choices, refill its remaining XP. Time is per complete bar; partial refills take less time. 0 settles immediately.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.levelUpRefillPauseMs",
+    "extends": "",
+    "short": "Pause after residual refill (ms)",
+    "full": "Show the settled XP bar briefly before opening its level reward.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryXpCharacterWeight",
+    "extends": "",
+    "short": "Character XP time share",
+    "full": "Relative share of the total animation time. Shares for missing tracks are redistributed.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryXpClassWeight",
+    "extends": "",
+    "short": "Class XP time share",
+    "full": "Relative share of the total animation time.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.victoryXpSkillWeight",
+    "extends": "",
+    "short": "Skill XP time share",
+    "full": "Relative share, split between the skills shown.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.levelUpAllocateStats",
+    "extends": "",
+    "short": "Assign stats in Level Up",
+    "full": "Show shrine-style stat allocation in the level reward panel. Off: earned points wait for a Shrine.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardLevelStatPoints",
+    "extends": "",
+    "short": "Level Up · Stat points",
+    "full": "Grant stat points when an earned character level is claimed.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardLevelFeats",
+    "extends": "",
+    "short": "Level Up · Feats",
+    "full": "Offer permanent passive feats when a character level is claimed.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardLevelClassTree",
+    "extends": "",
+    "short": "Level Up · Class upgrades",
+    "full": "Include eligible class-tree upgrades alongside feats in the character-level choices.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardLevelCards",
+    "extends": "",
+    "short": "Level Up · Bonus card",
+    "full": "Offer a card on a claimed level when the card reward schedule also allows it.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardBattleCinders",
+    "extends": "",
+    "short": "Battle · Cinders",
+    "full": "Include Cinders among battle rewards.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardBattleCards",
+    "extends": "",
+    "short": "Battle · Card",
+    "full": "Include the normal battle card offer when its chance succeeds.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardBattleSkillDrafts",
+    "extends": "",
+    "short": "Battle · Skill cards",
+    "full": "Offer earned skill drafts after battle. Unoffered drafts remain queued.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardBattleClassDrafts",
+    "extends": "",
+    "short": "Battle · Class choices",
+    "full": "Offer earned class choices after battle. Unoffered choices remain queued.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardBattleFlasks",
+    "extends": "",
+    "short": "Battle · Flasks",
+    "full": "Include flask drops among battle rewards.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardBattleRelics",
+    "extends": "",
+    "short": "Battle · Relics",
+    "full": "Include relic drops among elite and boss rewards.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardBattleArmaments",
+    "extends": "",
+    "short": "Battle · Equipment",
+    "full": "Include armament drops among battle rewards.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardTreasureRelics",
+    "extends": "",
+    "short": "Treasure · Relics",
+    "full": "Include relics found in treasure rooms.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardTreasureArmaments",
+    "extends": "",
+    "short": "Treasure · Equipment",
+    "full": "Include armaments found in treasure rooms.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.shrinePathGlow",
+    "extends": "",
+    "short": "Shrine path glow",
+    "full": "Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.walkedFade",
+    "extends": "",
+    "short": "Walked nodes",
+    "full": "How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.accent",
+    "extends": "",
+    "short": "Accent color",
+    "full": "Tint the interface — highlights, borders, focus ring, and glow.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.artQuality",
+    "extends": "",
+    "short": "Art quality",
+    "full": "Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art this game carries otherwise. Light and High pick one. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.uiScale",
+    "extends": "",
+    "short": "UI size",
+    "full": "Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.cardMotif",
+    "extends": "",
+    "short": "Card motif",
+    "full": "Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.cardMotifStrength",
+    "extends": "",
+    "short": "Motif strength",
+    "full": "How strongly the class colour tints a card.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.loreFace",
+    "extends": "",
+    "short": "Typeface",
+    "full": "The face card lore is set in: the one line in card inspection and the lore window it opens. Every face ships with the game; Cinzel has no italic and is always set upright.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.loreSize",
+    "extends": "",
+    "short": "Size",
+    "full": "How large card lore is set. Stacks with Text size and UI size.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.loreLeading",
+    "extends": "",
+    "short": "Line spacing",
+    "full": "Space between the lines of the lore window.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.loreTracking",
+    "extends": "",
+    "short": "Letter spacing",
+    "full": "Space between the letters of card lore.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.loreSlant",
+    "extends": "",
+    "short": "Lore slant",
+    "full": "Italic or upright for the body of the lore window.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.loreIdentitySlant",
+    "extends": "",
+    "short": "Identity line slant",
+    "full": "Italic or upright for the one-line identity shown in card inspection.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.screenShake",
+    "extends": "",
+    "short": "Screen shake",
+    "full": "Camera kick on heavy hits and staggers. Off keeps combat steady.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.ambient",
+    "extends": "",
+    "short": "Ambient effects",
+    "full": "Drifting embers and the title-screen glow. Off is the calmest.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.controlHints",
+    "extends": "",
+    "short": "Control hints",
+    "full": "Show the bar of keyboard shortcuts along the bottom of the map and combat.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.mapFreePan",
+    "extends": "",
+    "short": "Two-axis map dragging",
+    "full": "Drag the act map left and right as well as up and down. Off keeps the map centred horizontally and allows vertical dragging only.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.mapHeaderDensity",
+    "extends": "",
+    "short": "Map header",
+    "full": "Comfortable shows your name and full stats; Compact tightens the bar.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.mapHeaderRelics",
+    "extends": "",
+    "short": "Relics in map header",
+    "full": "Show your relic icons in the map header bar.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.mapHeaderSeed",
+    "extends": "",
+    "short": "Seed in map header",
+    "full": "Show the run seed in the map header bar.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.uprightGate",
+    "extends": "",
+    "short": "Short-screen warning",
+    "full": "On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.quickNav",
+    "extends": "",
+    "short": "Quick menu",
+    "full": "MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.armamentsPresentation",
+    "extends": "",
+    "short": "Combat Armaments",
+    "full": "RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.armamentsPhonePlacement",
+    "extends": "",
+    "short": "Phone Armaments location",
+    "full": "Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.showPlayedCard",
+    "extends": "",
+    "short": "Show played card animation",
+    "full": "Show the played card flying toward its target. Off by default. Character animations, combat effects and auras still play.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.musicEnabled",
+    "extends": "",
+    "short": "Music",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.muteAudio",
+    "extends": "",
+    "short": "Audio",
+    "full": "Turn music and sound effects on. Music also has a quick toggle beside the HUD.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.musicVolume",
+    "extends": "",
+    "short": "Music volume",
+    "full": "Ambient score for the title, map, and battles.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.sfxVolume",
+    "extends": "",
+    "short": "Sound effects",
+    "full": "Hits, blocks, status bursts, cards, and pickups.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.haptics",
+    "extends": "",
+    "short": "Haptics",
+    "full": "Vibrate on card play, damage taken and turn start, on devices that can. Separate from sound: muting audio does not stop it. Off keeps the device still.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.musicFolder",
+    "extends": "",
+    "short": "Custom music folder",
+    "full": "Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = the score shipped in music/ beside the game, or the built-in generated score where that is unavailable.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.musicFolder.placeholder",
+    "extends": "",
+    "short": "e.g. music/ or https://…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.touchFlickPlay",
+    "extends": "",
+    "short": "Card flick to play",
+    "full": "Flick a card upward with touch, mouse, trackpad or pen to play it on the nearest valid target. Selection and the information button work as usual.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.touchFlickDistance",
+    "extends": "",
+    "short": "Card flick distance",
+    "full": "Upward travel in screen pixels. Shorter needs less movement; longer helps avoid accidental plays. Release with an upward flick.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.reducedMotion",
+    "extends": "",
+    "short": "Reduced motion",
+    "full": "Calm ambient effects, drop the map pulse, and shorten animations.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.highContrast",
+    "extends": "",
+    "short": "High contrast",
+    "full": "Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.textSize",
+    "extends": "",
+    "short": "Text size",
+    "full": "Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.tapFloor",
+    "extends": "",
+    "short": "Minimum tap size",
+    "full": "How small a button, tab, or option is allowed to get. 44 is the size a fingertip reliably hits; smaller fits more on screen.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.colorblindSafe",
+    "extends": "",
+    "short": "Colorblind-friendly",
+    "full": "Shift danger/heal/blight/frost colors to a more distinguishable palette.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.reduceFlashes",
+    "extends": "",
+    "short": "Reduce flashes",
+    "full": "Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.readableHeadings",
+    "extends": "",
+    "short": "Readable headings",
+    "full": "Use the plain UI font for titles instead of the decorative serif.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.commandLog",
+    "extends": "",
+    "short": "Command log",
+    "full": "The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.shopSell",
+    "extends": "",
+    "short": "Merchant buys back",
+    "full": "The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.holdConfirm",
+    "extends": "",
+    "short": "Hold to confirm",
+    "full": "Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.rewardCollect",
+    "extends": "",
+    "short": "Reward collection",
+    "full": "Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.swapCostRule",
+    "extends": "",
+    "short": "Weapon swap cost",
+    "full": "What switching armament sets costs mid-fight. FLAT charges the same for every weapon; TALISMAN & RELIC starts there and lets your gear make it dearer or cheaper; WEAPON CATEGORY prices it by the weapon you are drawing — a heavy one is slow, a quick one is not. Takes effect on the next fight.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.cardWidth_glance",
+    "extends": "",
+    "short": "Resting card width",
+    "full": "How wide a card is while you are browsing past it, in pixels. Must stay smaller than the selected width.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.cardWidth_glance_mobile",
+    "extends": "",
+    "short": "Resting card width, phone",
+    "full": "The resting width on a narrow screen. It ships equal to the resting width above, so nothing changes until you move it.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.cardWidth_focus",
+    "extends": "",
+    "short": "Selected card width",
+    "full": "How wide the card you have picked out becomes. Must sit between the resting and reading widths.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.cardWidth_inspect",
+    "extends": "",
+    "short": "Reading card width",
+    "full": "How wide a card is in the window you open to read it. Must stay larger than the selected width.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.cardSizeExport",
+    "extends": "",
+    "short": "Export card sizes",
+    "full": "Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.levelUpValue",
+    "extends": "",
+    "short": "Level-up value",
+    "full": "How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.deckEditing",
+    "extends": "",
+    "short": "Deck editing",
+    "full": "Add, remove and arrange your cards between fights. Off: the deck changes only through rewards, the merchant and the Armoury.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.deckEditingWhere",
+    "extends": "",
+    "short": "Where you can edit",
+    "full": "Free opens the editor from the map and the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.deckMinUnlimited",
+    "extends": "",
+    "short": "No minimum deck size",
+    "full": "Let the editor confirm a deck of any size, however small.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.deckMinSize",
+    "extends": "",
+    "short": "Minimum deck size",
+    "full": "The fewest cards the editor lets you confirm. Rewards and purchases can still move the deck outside it; the editor then asks you to bring it back.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.deckMaxUnlimited",
+    "extends": "",
+    "short": "No maximum deck size",
+    "full": "Let the editor confirm a deck of any size, however large.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.deckMaxSize",
+    "extends": "",
+    "short": "Maximum deck size",
+    "full": "The most cards the editor lets you confirm. It may not sit below the minimum.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.classSpellPowerCopies",
+    "extends": "",
+    "short": "Copies of a class spell or Power",
+    "full": "How many copies of one of your class’s own spells or Powers the editor lets your deck hold. Strike and Defend stay unlimited; weapon arts and techniques stay limited to the copies you own.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.playInDeckOrder",
+    "extends": "",
+    "short": "Play in deck order",
+    "full": "Your draw pile is not shuffled: you draw your cards in the order you arranged them, and a spent pile returns in that order. Card effects that shuffle still shuffle. Applies from the next fight.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.promptSettingsExport",
+    "extends": "",
+    "short": "Offer export when done",
+    "full": "Ask to export a configuration file after Done and Save.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.gameConfigExport",
+    "extends": "",
+    "short": "Export game configuration",
+    "full": "Save every non-default game configuration value. Desktop opens Save As when available; mobile downloads the JSON locally.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.gameConfigImport",
+    "extends": "",
+    "short": "Load game configuration",
+    "full": "Choose an exported settings JSON file. Included values replace your current settings; other settings and saved runs are untouched. Presentation changes apply immediately; starting stats and balance apply to new runs.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Opening",
+    "extends": "",
+    "short": "Opening sequence",
+    "full": "Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Progression",
+    "extends": "",
+    "short": "Character & progression",
+    "full": "Creation points, each class’s defaults, level-up, experience, skills and talents. What the points turn into is under Stats.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Combat",
+    "extends": "",
+    "short": "Combat rules",
+    "full": "Action and resource costs, card values, deck limits and arcane exposure. Combat pacing, animation, sprites and Armaments are in General → Combat.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Stats",
+    "extends": "",
+    "short": "Stats",
+    "full": "Everything that turns attributes into Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Recovery",
+    "extends": "",
+    "short": "Recovery",
+    "full": "How HP, Stamina and Mana come back: each turn, after going unused for a few turns, every few rounds, after a won fight, and at every Rest. Applies from the next fight.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Rewards",
+    "extends": "",
+    "short": "Rewards & economy",
+    "full": "Cinders, reward rarity, merchants, flasks and smithing.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Deck",
+    "extends": "",
+    "short": "Deck",
+    "full": "The deck editor: where you can edit, the deck’s size limits, and playing your cards in the order you arranged them.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Equipment",
+    "extends": "",
+    "short": "Equipment & relics",
+    "full": "Starting kits, drops, swapping, equipment balance and relic values.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.World",
+    "extends": "",
+    "short": "Run & world",
+    "full": "Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Interface",
+    "extends": "",
+    "short": "Interface",
+    "full": "Map and HUD, card appearance, and confirmation controls.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Text",
+    "extends": "",
+    "short": "Text & lore",
+    "full": "Typeface, size and spacing for card lore. Interface text size and readable headings are in General → Accessibility.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Battlefield",
+    "extends": "",
+    "short": "Battlefield",
+    "full": "Formation layout, grid, character placement and formation movement.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Wireframes",
+    "extends": "",
+    "short": "Layout",
+    "full": "How windows, menus, scenes and cards are sized and laid out. Every choice starts where the game already draws it.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Export",
+    "extends": "",
+    "short": "Import, export & debug",
+    "full": "Load or save game configuration as a portable JSON file, and diagnostics.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Sync",
+    "extends": "",
+    "short": "Defaults & sync",
+    "full": "Save your settings as your defaults on GitHub and load them on any device.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.Changelog",
+    "extends": "",
+    "short": "Changelog",
+    "full": "Recent changes.",
+    "tip": ""
+  },
+  {
+    "id": "settings.group.About",
+    "extends": "",
+    "short": "About",
+    "full": "Version and credits.",
+    "tip": ""
+  },
+  {
+    "id": "common.cancel",
+    "extends": "",
+    "short": "Cancel",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "cardChoice.stance.active",
+    "extends": "",
+    "short": "You are already in this stance",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.actions.remaining",
+    "extends": "",
+    "short": "Stamina remaining",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.endTurn",
+    "extends": "",
+    "short": "End Turn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard",
+    "extends": "",
+    "short": "Discard",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.exhaust",
+    "extends": "",
+    "short": "Exhaust",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.actions",
+    "extends": "",
+    "short": "Stamina",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.potions.use",
+    "extends": "",
+    "short": "Use",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.potions.use.confirm",
+    "extends": "",
+    "short": "USE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "equipment.tags.more.aria",
+    "extends": "",
+    "short": "Additional equipment tags",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "equipment.tags.prompt",
+    "extends": "",
+    "short": "Select a tag for details.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "equipment.tags.aria",
+    "extends": "",
+    "short": "Equipment tags",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.move.confirm",
+    "extends": "",
+    "short": "Move",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.layout.previewOnly",
+    "extends": "",
+    "short": "Preview only — apply to save your layout.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.positioning.dragAnchors",
+    "extends": "",
+    "short": "Drag highlighted formation anchors",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.positioning.selectMembers",
+    "extends": "",
+    "short": "Select member positions first.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.positioning.groupLimit",
+    "extends": "",
+    "short": "Maximum of 32 groups reached.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.layout.saveFailed",
+    "extends": "",
+    "short": "The layout could not be saved. Your preview is still available; try applying again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "handDiscard.keepAllEndTurn",
+    "extends": "",
+    "short": "Keep all & end turn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "handDiscard.discardEndTurn",
+    "extends": "",
+    "short": "Discard {count} & end turn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "handDiscard.keepAll",
+    "extends": "",
+    "short": "Keep all",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "handDiscard.title",
+    "extends": "",
+    "short": "Choose cards to discard",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.line.read",
+    "extends": "",
+    "short": "Read",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "common.copied",
+    "extends": "",
+    "short": "Copied",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settingsSync.copy.done",
+    "extends": "common.copied",
+    "short": "",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settingsSync.copy.console",
+    "extends": "",
+    "short": "In console",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settingsSync.copy",
+    "extends": "",
+    "short": "Copy JSON",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.hudShowVitality",
+    "extends": "",
+    "short": "HUD health and resources",
+    "full": "Show health, Mana and Stamina in the top HUD.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.hudShowRelics",
+    "extends": "",
+    "short": "HUD relics",
+    "full": "Show the equipped relic rail.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.hudShowCurrency",
+    "extends": "",
+    "short": "HUD Cinders",
+    "full": "Show your Cinder balance in the HUD.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.hudShowPosition",
+    "extends": "",
+    "short": "HUD journey position",
+    "full": "Show the current act, seat and floor.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.hudShowPotions",
+    "extends": "",
+    "short": "HUD potions",
+    "full": "Show potion and flask shortcuts where the current layout provides them.",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.fell",
+    "extends": "",
+    "short": "IM Fell English",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.garamond",
+    "extends": "",
+    "short": "EB Garamond",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.cormorant",
+    "extends": "",
+    "short": "Cormorant Garamond",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.crimson",
+    "extends": "",
+    "short": "Crimson Pro",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.spectral",
+    "extends": "",
+    "short": "Spectral",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.baskerville",
+    "extends": "",
+    "short": "Libre Baskerville",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.cinzel",
+    "extends": "",
+    "short": "Cinzel",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.inter",
+    "extends": "",
+    "short": "Inter",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.face.georgia",
+    "extends": "",
+    "short": "Georgia",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.hand.eachTurn",
+    "extends": "",
+    "short": "Each turn, at most",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.hand.title",
+    "extends": "",
+    "short": "Hand",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.overview.openingHand",
+    "extends": "",
+    "short": "Opening hand",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.overview.poise",
+    "extends": "",
+    "short": "Poise",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.overview.draw",
+    "extends": "",
+    "short": "Draw / turn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.overview.handSize",
+    "extends": "",
+    "short": "Hand size",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.overview.title",
+    "extends": "",
+    "short": "Stat block",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.problem.title",
+    "extends": "",
+    "short": "Not calculable",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "statsPreview.poise.inCombat",
+    "extends": "",
+    "short": "Poise in combat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "preview.itemCards.title",
+    "extends": "",
+    "short": "Armor for every class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "preview.itemCards.intro",
+    "extends": "",
+    "short": "Available in the Armoury. Meet the listed attribute requirement to equip a set. Select a card to inspect bonuses and tags.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "preview.itemCards.pose",
+    "extends": "",
+    "short": "Preview pose",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologue.aria",
+    "extends": "",
+    "short": "Opening sequence",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologue.preview.title",
+    "extends": "",
+    "short": "Opening preview",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.title",
+    "extends": "",
+    "short": "Opening scene editor",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.grid.aria",
+    "extends": "",
+    "short": "Grid spacing percent",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.traveller.aria",
+    "extends": "",
+    "short": "Drag to move traveller; drag a corner to resize",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.tabs.aria",
+    "extends": "",
+    "short": "Scene editor controls",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.saveFailed",
+    "extends": "",
+    "short": "Could not save this change. Your previous value is still in use.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.liveNote",
+    "extends": "",
+    "short": "Live preview · save first-step edits to project JSON when ready",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.project.unchanged",
+    "extends": "",
+    "short": "Already using project defaults.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.project.saving",
+    "extends": "",
+    "short": "Saving project JSON…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.followStyle",
+    "extends": "",
+    "short": "Use opening style",
+    "full": "",
+    "tip": "Remove this scene’s override for this setting"
+  },
+  {
+    "id": "prologueEditor.followingStyle",
+    "extends": "",
+    "short": "Following opening style",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "prologueEditor.travellerWidth",
+    "extends": "",
+    "short": "Traveller width",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.level.choice.title",
+    "extends": "",
+    "short": "Level choice",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.level.skill.eyebrow",
+    "extends": "",
+    "short": "Skill Level Up",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.level.assignStats.aria",
+    "extends": "",
+    "short": "Assign stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.level.eyebrow",
+    "extends": "",
+    "short": "Level Up",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.level.button",
+    "extends": "",
+    "short": "Level up",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.xp.more.aria",
+    "extends": "",
+    "short": "Show full XP calculation",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.xp.zero",
+    "extends": "",
+    "short": "0 XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.xp.total",
+    "extends": "",
+    "short": "Total XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.xp.list.aria",
+    "extends": "",
+    "short": "XP earned this fight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.primary",
+    "extends": "",
+    "short": "PRIMARY STATS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.keepsake",
+    "extends": "",
+    "short": "KEEPSAKE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.class",
+    "extends": "",
+    "short": "CLASS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.character",
+    "extends": "",
+    "short": "CHARACTER",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.equipment",
+    "extends": "",
+    "short": "STARTING EQUIP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.selectedClass",
+    "extends": "",
+    "short": "{name}, selected class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.inspectRelic",
+    "extends": "",
+    "short": "Inspect {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.inspectStat",
+    "extends": "",
+    "short": "{name}: {value}. View details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.statEyebrow",
+    "extends": "",
+    "short": "Starting stat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.relicEyebrow",
+    "extends": "",
+    "short": "Starting relic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.preview.calculation",
+    "extends": "",
+    "short": "Stat calculation",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.review",
+    "extends": "",
+    "short": "REVIEW",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.tab.slots",
+    "extends": "",
+    "short": "Slots",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.tab.inventory",
+    "extends": "",
+    "short": "Inventory",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.tab.cards",
+    "extends": "",
+    "short": "Cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.tab.stats",
+    "extends": "",
+    "short": "Stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "wireframe.group.Modals",
+    "extends": "",
+    "short": "Modals",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "wireframe.group.Menus",
+    "extends": "",
+    "short": "Menus",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "wireframe.group.Scenes",
+    "extends": "",
+    "short": "Scenes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.wireframeModalWidth",
+    "extends": "",
+    "short": "Modal window width",
+    "full": "A window opens at the narrowest of four widths that holds what is in it. This moves every window one step along that ladder — narrower to see more of the game behind it, wider for fewer wrapped lines. Windows already open change with it, and a window at either end of the ladder stays there.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.wireframeModalFooter",
+    "extends": "",
+    "short": "Modal footer buttons",
+    "full": "How far the buttons along the bottom of a window run: Short is about a third of a wide window, Long about two thirds, and Full width gives them the whole footer — which is what a phone already does. Each window picks its own today; this asks every one of them for the same.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.wireframeMenuNav",
+    "extends": "",
+    "short": "Category navigation",
+    "full": "Every menu with categories — Shop, Armoury, Compendium, Profile, character creation — lists them down the left when they fit and folds them into one [Category ▾] button above the page when they do not. Rail and Selector answer for the screen instead, on every menu, including a narrow one that would not have chosen the list itself.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.wireframeMenuFrame",
+    "extends": "",
+    "short": "Workspace frame",
+    "full": "How much of the screen a workspace menu takes — the Compendium, your Profile, the Smith and the stable. Fill the screen removes the margin around it; Inset pulls it in. Menus already open change with it.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.wireframeSceneSkyline",
+    "extends": "",
+    "short": "Scene backdrop",
+    "full": "The painted place behind a fight or a conversation (the drawings call it WGS6). Never drawn leaves the scene on its plain background, which is the least a scene can draw. A fight or a conversation on screen takes it at once.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.wireframeSceneFloor",
+    "extends": "",
+    "short": "Scene ground line",
+    "full": "How the painting is cropped to the ground band at the bottom of a scene (the drawings call it WGS7). Aligned puts its painted ground line exactly on that band; the plain crop centres the painting instead. Where the fighters stand is set by the formation and does not move either way.",
+    "tip": ""
+  },
+  {
+    "id": "combat.potions.use.aria",
+    "extends": "",
+    "short": "Use {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.potions.use.question",
+    "extends": "",
+    "short": "Use {name}? {remaining} remaining.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "lore.line.hint",
+    "extends": "",
+    "short": "— read the lore",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.readingDesk",
+    "extends": "",
+    "short": "Reading Desk",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.readingHint",
+    "extends": "",
+    "short": "Build your deck one card at a time.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.filterSort",
+    "extends": "",
+    "short": "Filters and sort",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspect",
+    "extends": "",
+    "short": "Inspect card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspectNamed",
+    "extends": "",
+    "short": "Inspect {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.search",
+    "extends": "",
+    "short": "Search cards…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.addSelected",
+    "extends": "",
+    "short": "Add to deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.removeSelected",
+    "extends": "",
+    "short": "Remove from deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.all",
+    "extends": "",
+    "short": "All",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inDeck",
+    "extends": "",
+    "short": "In Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.searchDeck",
+    "extends": "",
+    "short": "Search your deck…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.display.list",
+    "extends": "",
+    "short": "List",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.display.cards",
+    "extends": "",
+    "short": "Cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.back",
+    "extends": "",
+    "short": "← Back to cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.dropHere",
+    "extends": "",
+    "short": "Drop a card here to add it to your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.undo",
+    "extends": "",
+    "short": "Undo",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.added",
+    "extends": "",
+    "short": "Added {name} to your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.removed",
+    "extends": "",
+    "short": "Removed {name} from your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation",
+    "extends": "",
+    "short": "Card animation",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.play",
+    "extends": "",
+    "short": "Play",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.pause",
+    "extends": "",
+    "short": "Pause",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.still",
+    "extends": "",
+    "short": "Card pose",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.unavailable",
+    "extends": "",
+    "short": "No animation available for this card.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.art.alternative",
+    "extends": "",
+    "short": "Alternative artwork",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.art.basicOnly",
+    "extends": "",
+    "short": "Basic artwork is available. Alternative artwork has not been added yet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspectAction",
+    "extends": "",
+    "short": "Inspect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.equipmentNotFound",
+    "extends": "",
+    "short": "Equipment not found",
+    "full": "This card's equipment is no longer in your loadout.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.refuse.equipment",
+    "extends": "deckEditor.equipmentNotFound",
+    "short": "",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.classSummary",
+    "extends": "",
+    "short": "Gain {xp} class XP. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.knownClass",
+    "extends": "",
+    "short": "This class is already learned. Reading still grants its XP and any bonus rewards.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.xpAwarded",
+    "extends": "",
+    "short": "Gained {xp} class XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.classLearned",
+    "extends": "",
+    "short": "Class card learned. Equip it later from your inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.cardAwarded",
+    "extends": "",
+    "short": "Combat card learned: {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.featAwarded",
+    "extends": "",
+    "short": "Feat gained: {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.sideboard",
+    "extends": "",
+    "short": "This card was added to your sideboard because the deck copy limit was reached.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.noBonus",
+    "extends": "",
+    "short": "No bonus card or feat this time.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.done",
+    "extends": "",
+    "short": "Close book",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.complete",
+    "extends": "",
+    "short": "Book read",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.manaRing",
+    "extends": "",
+    "short": "Mana ring",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.manaRing.note",
+    "extends": "",
+    "short": "Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.recovery.heading",
+    "extends": "",
+    "short": "Recovery preview",
+    "full": "Recovery preview",
+    "tip": ""
+  },
+  {
+    "id": "armoury.positions.title",
+    "extends": "",
+    "short": "Equipped positions",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.inspect",
+    "extends": "",
+    "short": "Inspect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.inspectNamed",
+    "extends": "",
+    "short": "Inspect {name} in {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.choose",
+    "extends": "",
+    "short": "Choose item",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.replace",
+    "extends": "",
+    "short": "Replace",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.chooseFor",
+    "extends": "",
+    "short": "Choose an item for {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.unequip",
+    "extends": "",
+    "short": "Unequip",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.unequipNamed",
+    "extends": "",
+    "short": "Unequip {name} from {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.activate",
+    "extends": "",
+    "short": "Make active",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.activateNamed",
+    "extends": "",
+    "short": "Make {slot} active",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.inspect.title",
+    "extends": "",
+    "short": "Inspect · {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.for",
+    "extends": "",
+    "short": "Destination for {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.title",
+    "extends": "",
+    "short": "Choose a destination",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.hint",
+    "extends": "",
+    "short": "Select a slot and position. Equipping a reserve does not make it active.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.review",
+    "extends": "",
+    "short": "Review the destination and comparison, then use the named action.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.choose",
+    "extends": "",
+    "short": "Choose a destination to equip this item.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.back",
+    "extends": "",
+    "short": "Back to armaments",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.destination.showAll",
+    "extends": "",
+    "short": "Show all items",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.change.equipped",
+    "extends": "",
+    "short": "{name} equipped in {slot}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.change.stored",
+    "extends": "",
+    "short": "{name} is available in inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.change.unequipped",
+    "extends": "",
+    "short": "{name} unequipped from {slot}. It is available in inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.change.combatUnavailable",
+    "extends": "",
+    "short": "Combat equipment changes are unavailable on this screen.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.unequipFrom",
+    "extends": "",
+    "short": "Unequip from {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.moveTo",
+    "extends": "",
+    "short": "Move to {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.action.equipTo",
+    "extends": "",
+    "short": "Equip to {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.open",
+    "extends": "",
+    "short": "Character sheet",
+    "full": "Every character and skill level, and what each one grants.",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.close",
+    "extends": "",
+    "short": "Close character sheet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.tab.character",
+    "extends": "",
+    "short": "Character levels",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.tab.skills",
+    "extends": "",
+    "short": "Skill ladders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.character.cadence",
+    "extends": "",
+    "short": "Levels 1–{max}. Each level is claimed with Level up; its rewards are below.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.level",
+    "extends": "",
+    "short": "Skill level {n} / {max}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.railItem",
+    "extends": "",
+    "short": "{label} · {n}/{max}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.skills.none",
+    "extends": "",
+    "short": "No skill tracks.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.start",
+    "extends": "",
+    "short": "Starting level",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.here",
+    "extends": "",
+    "short": "You are here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.step",
+    "extends": "",
+    "short": "+{n} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.row.total",
+    "extends": "",
+    "short": "{n} total",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.points",
+    "extends": "",
+    "short": "Attribute points +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.hp",
+    "extends": "",
+    "short": "Max HP +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.stamina",
+    "extends": "",
+    "short": "Stamina +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.mana",
+    "extends": "",
+    "short": "Mana +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.draw",
+    "extends": "",
+    "short": "Draw +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.stat.handSize",
+    "extends": "",
+    "short": "Hand size +{n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.deckMinimum",
+    "extends": "",
+    "short": "Deck minimum {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featChoice",
+    "extends": "",
+    "short": "Feat choice",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classNodeChoice",
+    "extends": "",
+    "short": "Class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.levelCard",
+    "extends": "",
+    "short": "Level card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.cardDraft",
+    "extends": "",
+    "short": "Card draft, rank ≤ {rank}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.abilityDraft",
+    "extends": "",
+    "short": "Choose 1 of {n} families at rank {rank}; Intelligence may add a higher-rank option",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classMilestone",
+    "extends": "",
+    "short": "{reward} choice",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.skillXp",
+    "extends": "",
+    "short": "+{n} XP each: {tracks}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.levels",
+    "extends": "",
+    "short": "{reward} at levels {levels}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classNodeDraft",
+    "extends": "",
+    "short": "Class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.rarity",
+    "extends": "",
+    "short": "{rarity} cards unlock",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.rankUp",
+    "extends": "",
+    "short": "Rank up a card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classTier",
+    "extends": "",
+    "short": "Class tree tier {tier} opens: {nodes}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.feat",
+    "extends": "",
+    "short": "Skill feat: {options}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featNone",
+    "extends": "",
+    "short": "Skill feat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.attribute",
+    "extends": "",
+    "short": "+1 {options}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.flat",
+    "extends": "",
+    "short": "+1 card power (total +{total})",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.featOrNodeChoice",
+    "extends": "",
+    "short": "Feat or class-tree pick",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classFeatChance",
+    "extends": "",
+    "short": "Feat choice ({pct}% chance)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classCard",
+    "extends": "",
+    "short": "Class card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.grant.classCardChance",
+    "extends": "",
+    "short": "Class card ({pct}% chance)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.draft",
+    "extends": "",
+    "short": "Every level: a card draft.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.rankUp",
+    "extends": "",
+    "short": "From level {from}: a rank-up each level.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.feat",
+    "extends": "",
+    "short": "Every {n} levels: a skill feat.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.attribute",
+    "extends": "",
+    "short": "Every {n} levels: +1 to a linked attribute.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.flat",
+    "extends": "",
+    "short": "Every {n} levels: +1 card power.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classPick",
+    "extends": "",
+    "short": "Every level: a class-tree pick from the tiers open.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classFeat",
+    "extends": "",
+    "short": "Every level: a feat choice.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classFeatChance",
+    "extends": "",
+    "short": "Every level: a {pct}% chance at a feat choice.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classCardChance",
+    "extends": "",
+    "short": "Every level: a {pct}% chance at a class card.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "characterSheet.cadence.classTier",
+    "extends": "",
+    "short": "New tiers open at the levels marked.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.masterySummary",
+    "extends": "",
+    "short": "Learn one selected card. Class mastery advances through fights and quests. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.masteryClassSummary",
+    "extends": "",
+    "short": "Learn this class. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Class mastery advances through fights and quests. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.classNext",
+    "extends": "",
+    "short": "Mastery {level} · Next: {unlocks}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.classComplete",
+    "extends": "",
+    "short": "Mastery {level} · All levels claimed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeEyebrow",
+    "extends": "",
+    "short": "{class} · Mastery {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeTitle",
+    "extends": "",
+    "short": "Choose your tier {tier} node",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "mastery.treeIntro",
+    "extends": "",
+    "short": "Your class level lasts. Choose a fresh build for this climb.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.cardPreparing",
+    "extends": "",
+    "short": "Card preparing",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.explicitDiscard",
+    "extends": "",
+    "short": "Chosen discard",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.enemyKilledWithStatus",
+    "extends": "",
+    "short": "Status kill",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.cardDiscarded",
+    "extends": "",
+    "short": "Card discarded",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.hpOfferingPaid",
+    "extends": "",
+    "short": "HP offering paid",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.title",
+    "extends": "",
+    "short": "Respec class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.review",
+    "extends": "",
+    "short": "Review changes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.edit",
+    "extends": "",
+    "short": "Edit choices",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.beforeAfter",
+    "extends": "",
+    "short": "Before → After",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.tree",
+    "extends": "",
+    "short": "Class tree",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.keep",
+    "extends": "",
+    "short": "Keep unassigned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.unassigned",
+    "extends": "",
+    "short": "Unassigned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.kind.feat",
+    "extends": "",
+    "short": "Feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.kind.attribute",
+    "extends": "",
+    "short": "Attribute rewards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.budgets",
+    "extends": "",
+    "short": "{budgets}. Tree points: {chosen}/{total}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.cost",
+    "extends": "",
+    "short": "Cost: {cost}. Spent rewards remain spent. Current HP, Mana, Actions and flask charges are preserved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.treeSummary",
+    "extends": "",
+    "short": "Class tree: {chosen} selected points; {remaining} remain available.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.treeChanges",
+    "extends": "",
+    "short": "Tree choices: {before} → {after}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.retainedCard",
+    "extends": "",
+    "short": "Retain in sideboard: {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.transfer",
+    "extends": "",
+    "short": "Retain upgrades and components: {from} → {to}{tier}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.rankSuffix",
+    "extends": "",
+    "short": "· Rank {rank}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.tierSuffix",
+    "extends": "",
+    "short": "· Tier {tier}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.tierChoice",
+    "extends": "",
+    "short": "Class tree tier {tier} · {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.spent",
+    "extends": "",
+    "short": "Reward earned at level {level} · {name} · Spent",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.slotAria",
+    "extends": "",
+    "short": "{kind} earned at level {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.retainedSuffix",
+    "extends": "",
+    "short": "· Retain in sideboard",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.slotLabel",
+    "extends": "",
+    "short": "Reward earned at level {level} · {name} →",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.preservation",
+    "extends": "",
+    "short": "Exchanged cards keep their instance and earned rank. Compatible item upgrades, mounted cards and sigils transfer together; incompatible transfers require a different selection.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.apply",
+    "extends": "",
+    "short": "Apply · {cost}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "classRespec.eyebrow",
+    "extends": "",
+    "short": "{class} · Mastery {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard.title",
+    "extends": "",
+    "short": "Select for discard: {count} {noun}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard.resolving",
+    "extends": "",
+    "short": "Resolving card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard.later",
+    "extends": "",
+    "short": "Choose later",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.discard.prompt",
+    "extends": "",
+    "short": "Select cards from your current hand to finish this play.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.title",
+    "extends": "",
+    "short": "Progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.skills",
+    "extends": "",
+    "short": "Skills",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tab.class",
+    "extends": "",
+    "short": "Class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.sheet",
+    "extends": "",
+    "short": "Character Sheet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.currentResources",
+    "extends": "",
+    "short": "Current character resources",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.currentStats",
+    "extends": "",
+    "short": "Current stats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.attributes",
+    "extends": "",
+    "short": "Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feats",
+    "extends": "",
+    "short": "Feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat",
+    "extends": "",
+    "short": "Feat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.skill",
+    "extends": "",
+    "short": "Skill progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.class",
+    "extends": "",
+    "short": "Class progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.allocate.note",
+    "extends": "",
+    "short": "Assign earned points. Unassigned points remain available; Cancel keeps your existing attributes.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.sheet.note",
+    "extends": "",
+    "short": "Inspection only. Values include your current attributes and equipment.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.attribute.note",
+    "extends": "",
+    "short": "Bonuses compare your current stats with this attribute at zero, keeping the others unchanged. Expand for the full formula.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noFeats",
+    "extends": "",
+    "short": "No feats acquired",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noTags",
+    "extends": "",
+    "short": "No associated tags",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.noBonus",
+    "extends": "",
+    "short": "No combat stat bonus",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards",
+    "extends": "",
+    "short": "Associated cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tags",
+    "extends": "",
+    "short": "Associated tags",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.bonuses",
+    "extends": "",
+    "short": "Bonuses",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.tree",
+    "extends": "",
+    "short": "Skill tree",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.levels",
+    "extends": "",
+    "short": "Level progression",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.characterLevels",
+    "extends": "",
+    "short": "Character levels",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.rewards",
+    "extends": "",
+    "short": "Level rewards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.emptyClass",
+    "extends": "",
+    "short": "No class equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.emptyCards",
+    "extends": "",
+    "short": "No associated cards for the current loadout",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards.equip",
+    "extends": "",
+    "short": "Equip an item for this skill to see its card schools.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.cards.note",
+    "extends": "",
+    "short": "Associated cards include future unlocks; reward choices follow your level and current equipment.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.name",
+    "extends": "",
+    "short": "Character, Armory and Edit Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.armory",
+    "extends": "",
+    "short": "Armory",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.hub.deck",
+    "extends": "",
+    "short": "Edit Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.acquired",
+    "extends": "",
+    "short": "Acquired",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.unlock",
+    "extends": "",
+    "short": "Skill level {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "progression.feat.emptyHint",
+    "extends": "",
+    "short": "Choose feats from character and skill level rewards.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyTarget.choose",
+    "extends": "",
+    "short": "",
+    "full": "Choose an enemy target",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyTarget.health",
+    "extends": "",
+    "short": "",
+    "full": "{hp}/{maxHp} HP",
+    "tip": ""
+  },
+  {
+    "id": "combat.enemyTarget.label",
+    "extends": "",
+    "short": "",
+    "full": "Target {number}: {name}, {hp} of {maxHp} HP",
     "tip": ""
   }
 ];

@@ -1,0 +1,35 @@
+{
+  "id": "portrait-reaver",
+  "name": "reaver",
+  "family": "portraits",
+  "sourceBoard": "01-arrival-and-identity.png",
+  "sourceRegion": [
+    0.058,
+    0.623,
+    0.068,
+    0.073
+  ],
+  "prompt": "Use case: precise-object-edit. The attached image is the authoritative Ashen Spire ARRIVAL AND IDENTITY board. Reconstruct ONLY the named class bust below, faithful to that specific portrait. Deliver ONE high quality large transparent-background PNG portrait cutout, no UI, words, icons, background scene or frame. Show head and both shoulders complete with comfortable alpha margin. Preserve source's grounded painterly medieval dark-fantasy realism, weathered materials, exact silhouette and muted palette. No design reinterpretation. Reaver portrait at bottomleft first row (x84..178,y677..756). A hooded human male fighter bust angled slightly to the right, the face mostly lost in deep hood shadow with only subtle nose and chin, dark worn charcoal layered cowl, heavy weathered gray-brown leather and steel pauldrons, muted warm rimlight along hood edge. No skull face, no skeletal monster.",
+  "tool": "built-in image_gen",
+  "mode": "precise-object-edit",
+  "originalReturnedLocalPath": "D:/repos/.codex/generated_images/01a0f976-c95b-7872-8f4f-46e22590c7da/exec-7a1e32c6-0676-47c1-a62d-1c02d47a6597.png",
+  "referenceRoles": [
+    {
+      "path": "references/01-arrival-and-identity.png",
+      "role": "authoritative portrait silhouette, material and visible face"
+    }
+  ],
+  "review": "Full output compared with named original board01 class bust: hood/helmet silhouette, visible-face distinction and source palette preserved; alpha cutout, no frame or words.",
+  "acceptedAfterVisualReview": true,
+  "file": "masters/portraits/portrait-reaver.png",
+  "sha256": "0a4f2a55282114ea1424b7d72003d0c2643900226e9b3b15c9817df4bb4613cc",
+  "bytes": 2060105,
+  "width": 1484,
+  "height": 1060,
+  "imageMode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "savedUnchanged": true
+}

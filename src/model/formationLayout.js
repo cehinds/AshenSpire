@@ -46,10 +46,10 @@ export function isFormationCell(cell, { columns, rows }, side = 'player') {
 
 export function formationSpawn(values, side, dimensions = formationDimensions(values)) {
   const { columns, rows } = dimensions;
-  const row = Math.min(rows - 1, Math.max(0, FORMATION_ROWS.indexOf(values[`${side}SpawnRow`] || 'C')));
+  const row = Math.min(rows - 1, Math.max(0, FORMATION_ROWS.indexOf(values[`${side}SpawnRow`] || 'F')));
   const low = side === 'player' ? 1 : columns + 1;
   const high = side === 'player' ? columns : columns * 2;
-  const raw = Number(values[`${side}SpawnColumn`] ?? (side === 'player' ? columns : low));
+  const raw = Number(values[`${side}SpawnColumn`] ?? (side === 'player' ? low : high));
   const column = Math.min(high, Math.max(low, Number.isFinite(raw) ? raw : low));
   return `${FORMATION_ROWS[row]}${column}`;
 }

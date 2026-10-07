@@ -15,8 +15,8 @@
 // the pending-reward offer, so a reload resumes the same sentence), never a
 // re-derivation from the combat log this file cannot see.
 //
-// WHICH TRACKS. The character level always, then every active skill track,
-// the ones this fight paid first and the highest-levelled after.
+// WHICH TRACKS. A reward receipt shows only the tracks it paid. No receipt
+// is the Character surface's standing ledger view for deferred manual claims.
 // A track nothing has ever touched and this fight did not pay is not a row:
 // the door would otherwise list every weapon group in the game.
 //
@@ -31,7 +31,7 @@
 // player's ceiling is a lie, not a degradation (Copilot, #1232).
 
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from './levelup.js';
-import { skillTracks, skillLevel, xpToNext as skillXpToNext } from './skills.js';
+import { skillTracks, skillLevel, skillMaxLevel, xpToNext as skillXpToNext } from './skills.js';
 
 /** Every active track has a visible bar and can claim its own level. */
 export const MAX_SKILL_ROWS = Infinity;
@@ -57,7 +57,10 @@ export function combatXpGains({ receipt = null, awards = [], levelGained = 0, le
     tracks[id] = (tracks[id] || 0) + Math.floor(xp);
   };
   for (const [id, xp] of Object.entries(receipt || {})) add(id, xp);
-  for (const award of awards || []) if (award) add(award.skillId, award.gained);
+  for (const award of awards || []) if (award) {
+    add(award.skillId, award.gained);
+    for (const bonus of award.skillAwards || []) if (bonus) add(bonus.skillId, bonus.gained);
+  }
   const level = Number.isFinite(levelGained) && levelGained > 0 ? Math.floor(levelGained) : 0;
   const discarded = Number.isFinite(levelDiscarded) && levelDiscarded > 0 ? Math.floor(levelDiscarded) : 0;
   return discarded ? { level, levelDiscarded: discarded, tracks } : { level, tracks };
@@ -111,11 +114,11 @@ export function characterProgress(registries, run, gained = 0, discarded = 0) {
 
 /**
  * skillProgress(registries, run, trackGains, { maxSkills }) → { rows, hidden }
- * The tracks worth a line, best first: what this fight paid, then what the run
- * has climbed furthest. `hidden` is how many candidate tracks the ceiling left
- * out — his "+Y (other skills)".
+ * The tracks worth a line: the class track first, then best first — what this
+ * fight paid, then what the run has climbed furthest. `hidden` is how many
+ * candidate tracks the ceiling left out — his "+Y (other skills)".
  */
-export function skillProgress(registries, run, trackGains = {}, { maxSkills = MAX_SKILL_ROWS } = {}) {
+export function skillProgress(registries, run, trackGains = {}, { maxSkills = MAX_SKILL_ROWS, gainedOnly = false } = {}) {
   let tracks = [];
   try { tracks = skillTracks(registries) || []; } catch { tracks = []; }
   const ledgers = (run && run.skills) || {};
@@ -126,28 +129,31 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     if (track.kind === 'class' && track.id !== `class:${run && run.class}`) continue;
     const ledger = ledgers[track.id] || null;
     const gained = Number.isFinite(trackGains[track.id]) && trackGains[track.id] > 0 ? Math.floor(trackGains[track.id]) : 0;
+    if (gainedOnly && !gained) continue;
     const level = skillLevel(run, track.id);
     const xp = ledger && Number.isFinite(ledger.xp) ? Math.max(0, Math.floor(ledger.xp)) : 0;
-    if (!gained && !level && !xp) continue; // never touched, never paid — not a row
+    if (!gained && !level && !xp && !(track.kind === 'class' && run.classMasteryState)) continue; // never touched, never paid — not a row
     let next = null;
     try { next = skillXpToNext(registries, track.kind, level); } catch { next = null; }
     if (!(Number.isFinite(next) && next > 0)) continue; // no curve, no row
+    let cap = null;
+    try { cap = skillMaxLevel(registries, track.kind); } catch { cap = null; }
+    const capped = cap != null && level >= cap;
     rows.push(Object.freeze({
       kind: track.kind,
       id: track.id,
-      label: track.label || track.id,
+      label: track.kind === 'class' && run.classMasteryState ? `${track.label || track.id} mastery` : track.label || track.id,
       level,
       xp,
-      xpToNext: next,
-      fraction: ratio(xp, next),
+      xpToNext: capped ? null : next,
+      fraction: capped ? 1 : ratio(xp, next),
       gained,
-      capped: false, // skill tracks have no authored ceiling
+      capped, // SPEC §13.4o: skills stop at 10, the class track at 20
     }));
   }
-  // Paid-this-fight first (the biggest gain leading), then the deepest track,
-  // then alphabetically — a stable order, so the panel does not shuffle
-  // between two renders of the same door.
-  rows.sort((a, b) => (b.gained - a.gained) || (b.level - a.level) || (b.xp - a.xp) || a.label.localeCompare(b.label));
+  // The class leads the skill subset; Character is inserted after Class by
+  // the presentation. Current level, then name/id give deterministic skills.
+  rows.sort((a, b) => ((a.kind === 'class' ? 0 : 1) - (b.kind === 'class' ? 0 : 1)) || (b.level - a.level) || a.label.localeCompare(b.label) || a.id.localeCompare(b.id));
   const shown = Math.max(0, Math.floor(maxSkills));
   return { rows: rows.slice(0, shown), hidden: Math.max(0, rows.length - shown) };
 }
@@ -163,7 +169,7 @@ export function rewardProgress(registries, run, gains = null, { maxSkills = MAX_
   const level = gains && Number.isFinite(gains.level) ? Math.max(0, Math.floor(gains.level)) : 0;
   const tracks = (gains && gains.tracks && typeof gains.tracks === 'object' && !Array.isArray(gains.tracks)) ? gains.tracks : {};
   const discarded = gains && Number.isFinite(gains.levelDiscarded) ? Math.max(0, Math.floor(gains.levelDiscarded)) : 0;
-  const character = characterProgress(registries, run, level, discarded);
-  const { rows, hidden } = skillProgress(registries, run, tracks, { maxSkills });
+  const character = gains && !level ? null : characterProgress(registries, run, level, discarded);
+  const { rows, hidden } = skillProgress(registries, run, tracks, { maxSkills, gainedOnly: !!gains });
   return Object.freeze({ character, skills: Object.freeze(rows), hidden });
 }

@@ -51,7 +51,7 @@
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
-  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) 90%, #17130f 100%);
+  background: linear-gradient(to bottom, rgba(13, 11, 8, 0.22), rgba(13, 11, 8, 0.06) 40%, rgba(13, 11, 8, 0.22) calc(var(--scene-paint-bottom, 100%) - 12%), #17130f var(--scene-paint-bottom, 100%));
 }
 
 /* A pale alpha-shaped edge plus dark separation reads on snow and charcoal.
@@ -213,6 +213,43 @@
    held at a physical minimum under the sprite's depth zoom. */
 .enemy.targetable .sprite { outline: var(--target-outline-width, 2px) dashed var(--gold); outline-offset: var(--target-outline-offset, 6px); border-radius: var(--r-3); }
 .enemy.hover-target .sprite, .enemy.targetable:is(.gp-focus, :focus-visible) .sprite { outline-style: solid; }
+
+/* Independent, nonoverlapping targets keep full-sized overlapping figures
+   selectable. The 48px touch floor is physical even at a reduced UI zoom. */
+.enemy-target-picker {
+  position: absolute;
+  top: calc(var(--turn-ribbon-top, 0px) + 48px / var(--ui-zoom, 1));
+  left: calc(8px / var(--ui-zoom, 1));
+  right: calc(8px / var(--ui-zoom, 1));
+  /* Placement reserves space outside intent/Information controls. The row
+     stays above figure hitboxes without covering those inspection controls. */
+  z-index: 1250;
+  display: flex;
+  gap: calc(6px / var(--ui-zoom, 1));
+  overflow-x: auto;
+  pointer-events: auto;
+}
+.enemy-target-picker[hidden] { display: none; }
+.enemy-target-button {
+  flex: 1 0 calc(72px / var(--ui-zoom, 1));
+  min-width: 0;
+  min-height: calc(48px / var(--ui-zoom, 1));
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--gold);
+  border-radius: var(--r-3);
+  background: #211c17f2;
+  color: var(--gold);
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.enemy-target-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.enemy-target-health { font-size: .8em; color: #eee2cf; }
+.enemy-target-button:is(:hover, :focus-visible) { outline: 2px solid var(--gold); outline-offset: -3px; background: #493c29; }
+.enemy-target-button:disabled { opacity: .5; cursor: default; }
 
 /* ---------- hand + controls ---------- */
 /* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
@@ -393,6 +430,11 @@
 .fx-banner.blood { color: var(--ember); }
 .fx-banner.turn { font-size: 2.4rem; color: var(--parchment); text-shadow: 0 0 24px rgba(230, 220, 195, 0.5); }
 .combat.shake { animation: shake 200ms; }
+/* Hit-stop (SPEC §7.4, content/combatFeel.js): the attacker's lunge and the
+   target's recoil (animations on the figure's own host) hold for a beat; ui/fx.js
+   removes the class. Not descendants: the idle bob keeps its clock. Painted frame
+   sequences hold through their own hold(ms). */
+.hit-stop { animation-play-state: paused !important; }
 
 /* ---------- paced playback: one actor at a time (SPEC §7.4) ---------- */
 /* Attack lunge: enemies step left toward the player, the player steps right. */
@@ -447,6 +489,9 @@
 .sprite.act-move[data-action-motion="cast"] { animation-name: family-spell; }
 .sprite.act-move[data-action-motion="brace"] { animation-name: family-guard; }
 .sprite.act-move[data-action-motion="sidestep"] { animation-name: family-dodge; }
+/* The tilting families (sweep, impact, release) lean from the feet. With the
+   default centre pivot the feet slid sideways and the figure read as rocking. */
+.sprite:is(.act-attack, .act-move)[data-action-motion] { transform-origin: 50% 100%; }
 @keyframes family-slash {
   0%, 100% { transform: none; filter: none; }
   22% { transform: translateX(var(--action-recoil, -12px)) rotate(var(--action-windup-tilt, -8deg)); }
@@ -489,8 +534,10 @@
 /* ---------- ability / relic / status fx ---------- */
 /* Hit reaction: the victim flashes AND recoils away from the blow — enemies are
    knocked right (struck from the player's side), the player left. A heavy hit
-   (≥15, the same threshold as screen shake) recoils further with a tilt. */
+   (≥15, the top screen-shake step) recoils further with a tilt. */
 .sprite.hitflash > :first-child { animation: hitflash var(--hurt-duration, 220ms) linear; }
+/* Pause the recoil layer alone; its idle-bob descendants keep their clocks. */
+.sprite.hitflash.hit-stop > :first-child { animation-play-state: paused !important; }
 .enemy .sprite.hitflash > :first-child { animation-name: hit-enemy; }
 .player .sprite.hitflash > :first-child { animation-name: hit-player; }
 .enemy .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-enemy-heavy; }
@@ -610,15 +657,36 @@
   100% { opacity: 0; transform: translateY(-48px) scale(1); }
 }
 @keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
-@keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(4px, -3px); } 50% { transform: translate(-4px, 2px); } 75% { transform: translate(3px, 3px); } }
+/* --shake-px is the hit's amplitude (ui/fx.js shake, content/combatFeel.js); 4px is the old fixed shake. */
+@keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(var(--shake-px, 4px), calc(var(--shake-px, 4px) * -0.75)); } 50% { transform: translate(calc(var(--shake-px, 4px) * -1), calc(var(--shake-px, 4px) * 0.5)); } 75% { transform: translate(calc(var(--shake-px, 4px) * 0.75), calc(var(--shake-px, 4px) * 0.75)); } }
 @keyframes pulse-gold { from { box-shadow: 0 0 6px rgba(201, 162, 39, 0.3); } to { box-shadow: 0 0 22px rgba(201, 162, 39, 0.8); } }
 
 /* ---- rendered sprites: idle bob + death fade (solo + co-op boards) -------- */
-@keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: transform; }
+/* The figure image is a grandchild of .sprite (painted poses sit in
+   .pose-layer, enemy poses in .facing), so `.sprite > img` alone never
+   matched and nothing bobbed (tools/motion-probe.mjs IDLE). The bob rides on
+   that layer, so every frame in it (idle, attack, state, the crossfade's
+   previous frame) moves together and a pose swap never jumps it. It moves
+   the individual `translate` property, not `transform`, so it composes with
+   the inline transforms those layers already carry (the mirror on .facing,
+   the centring on .pose-layer) instead of replacing them (D42).
+   Exactly one carrier per figure, so nothing bobs twice: .facing (enemies,
+   the Classic figure, a rendered image or pose stage that falls back inside
+   it), a painted stage's own .pose-layer (never inside a .facing), and the
+   Rendered style's whole .rendered-stage. That stage holds the still
+   painting and, hidden until a guard/wounded/afflicted/defeated rest pose,
+   a nested painted stage; bobbing their common parent keeps one timeline
+   across that swap, so the nested stage's .pose-layer is not a carrier
+   (#1475 review). The Glyph style is a sigil panel, not a figure, and
+   stays put. */
+@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+.combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
+.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
 /* A fallen combatant holds still: the idle bob kept every dead sprite on the
-   compositor's per-frame list for the rest of the fight. */
-.combatant.dead .sprite > img { animation: none; }
+   compositor's per-frame list for the rest of the fight. A downed co-op
+   player is fallen too (its Classic figure bobbed on .facing). */
+.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage),
+.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -632,17 +700,17 @@
   animation: none;
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
-.combatant.enemy .sprite > img { animation-duration: 2.6s; }
+.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-duration: 2.6s; }
 /* WCF3: one glow over the whole selected assembly — intent, the delayed
    inspect control, art, name and lower stack — never one per child. */
 .combatant.context-selected > .combatant-stack {
   filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
-.combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
-.combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
-.combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
-.reduced-motion .combatant .sprite > img { animation: none; }
+.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -0.9s; }
+.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -1.7s; }
+.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -2.3s; }
+.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
 /* ---------- short-wide combat composition (#27) ---------------------------
@@ -1112,7 +1180,7 @@
   width: max-content; min-width: 0; scale: none; flex: none; pointer-events: auto;
   transition: none !important;
 }
-:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox::after {
+:root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox)::after {
   content: ''; position: absolute;
   left: var(--enemy-hit-x); top: var(--enemy-hit-y);
   width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));
@@ -1131,7 +1199,7 @@
 :root .combat[data-layout='formation'] .combatant .meters { gap: calc(3px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant .meters .bar { height: calc(10px / var(--ui-zoom,1)); min-height: 0; }
 :root .combat[data-layout='formation'] .combatant .meters .bar .label { font-size: calc(10px / var(--ui-zoom,1)); line-height: 1; }
-:root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.foundation-evade,.dodge-receipt) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.foundation-evade) { pointer-events: auto; }
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
 .combat-ability-badge:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
@@ -1381,8 +1449,9 @@
   border-radius: 50%; filter: none; animation: none; opacity: 0.9;
   transform: scale(1.04); background: transparent; box-shadow: none;
 }
-:root[data-performance='lite'] .backdrop::after,
-:root[data-performance='lite'] .sprite > img { animation: none; }
+/* Lite keeps the figures' idle bob (owner, 2026-10-04); only the backdrop's
+   ambient layer stops. */
+:root[data-performance='lite'] .backdrop::after { animation: none; }
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
@@ -1494,3 +1563,20 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
+
+/* Authoring guides in the Settings formation preview sit above the actors. */
+.position-guides { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2500; touch-action: none; pointer-events: auto; }
+.position-guides [data-position-anchor] { cursor: grab; }
+.formation-positioning label { display: grid; gap: 4px; margin-block: 6px; font-size: max(12px, calc(12px / var(--ui-zoom, 1))); }
+.formation-positioning select, .formation-positioning input { width: 100%; min-width: 0; padding: 6px; color: inherit; background: #21333d; border: 1px solid #55707c; border-radius: 4px; }
+.formation-positioning button { padding: 6px 9px; color: inherit; background: #21333d; border: 1px solid #55707c; border-radius: 4px; cursor: pointer; }
+.formation-positioning button:disabled { opacity: .45; cursor: default; }
+.position-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.position-nudges { display: flex; align-items: center; gap: 5px; margin-block: 8px; }
+.position-nudges label { max-width: 70px; margin-left: auto; }
+.formation-positioning output { display: block; margin-top: 10px; color: #ead38b; font-size: max(12px, calc(12px / var(--ui-zoom, 1))); line-height: 1.6; }
+.formation-positioning details { margin-top: 12px; }
+.formation-positioning .position-snap { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.formation-positioning .position-snap input { width: auto; }
+.formation-positioning textarea { box-sizing: border-box; width: 100%; font: 12px monospace; background: #0c171e; color: #d9e6eb; }
+.formation-positioning .formation-help { font-size: max(11px, calc(11px / var(--ui-zoom, 1))); line-height: 1.5; opacity: .8; }

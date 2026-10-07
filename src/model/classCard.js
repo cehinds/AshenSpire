@@ -74,6 +74,7 @@ export function classCard(registries, classId, coreTags = []) {
  * keeps its id as its name.
  */
 export function runClassIdentity(registries, run) {
+  if (run?.classUnequipped) return { name: 'Classless', glyph: '◇' };
   const classId = run && run.class;
   if (!registries.classes || !registries.classes.has(classId)) return { name: String(classId || ''), glyph: null };
   return classCard(registries, classId, (run && run.coreTags) || []).presentation;

@@ -1,4 +1,9 @@
+import { coopProgressionProblems } from './coopProgression.js';
+import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
+import { classMilestoneProblems } from './classMilestones.js';
+import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
+import { advancedConfigSnapshot } from './advancedConfig.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -10,6 +15,7 @@ import { retiredAttackSlots } from './cardRemoval.js';
 //
 // Headless: no document/window/localStorage/timers.
 
+import { bindTurnStamina } from './turnStamina.js';
 import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { journeyProblems } from './worldAtlas.js';
@@ -32,12 +38,18 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
+import { classLibraryProblems } from './classLibraryState.js';
 import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
 import { sigilInventoryProblems, attunedSigilProblems } from './sigils.js';
+
+// The structural ceiling on a card's rank (SPEC §13.4o). The configured
+// balance.skill.rankMax (validated to stay at or under it) caps what a draft
+// rolls; this bound only refuses a save no setting could have produced.
+export const MAX_CARD_RANK = 99;
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
@@ -83,7 +95,9 @@ import { sigilInventoryProblems, attunedSigilProblems } from './sigils.js';
 // 19 (SPEC §15.4, §15.5 step 5): `attunedSigils`, the legendary sigils the run
 // holds attuned (a subset of `sigils`), rides the save. A v18-or-older save is
 // filled with [] at migrateRunSchema and its `sigils` are left untouched.
-export const RUN_SCHEMA_VERSION = 20;
+// 21: optional durable mastery run receipt and owner unlock snapshot. Older
+// runs keep their previous class curve and pools; migration never opts them in.
+export const RUN_SCHEMA_VERSION = 22;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -133,9 +147,9 @@ export function createRunState({
   const attributeModeSnapshot = creationModeSnapshot(registries, selectedAttributeMode);
   const idGen = createIdGen('rc');
   const baseStartingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
-  const hands = resolveCreationHands(registries, classId, startingHands, baseStartingKit);
+  const hands = resolveCreationHands(registries, classId, startingHands, baseStartingKit, profileMeta);
   const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}) };
-  const startingRelic = resolveCreationRelic(registries, classId, startingRelicId);
+  const startingRelic = resolveCreationRelic(registries, classId, startingRelicId, profileMeta);
   // E5 (#250): the set the run begins wearing. Resolved against the same
   // profile meta the kit above is — absent, the class's free set, which is
   // what createLoadout always chose. The loadout row is the persisted home;
@@ -162,6 +176,7 @@ export function createRunState({
   const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
+    advancedConfigSnapshot: advancedConfigSnapshot(profileMeta.settings || {}),
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
@@ -186,6 +201,9 @@ export function createRunState({
     // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
     // written only by model/skills.js awardSkillXp. Empty until a hit lands.
     skills: {},
+    ...(registries.balance.progression ? { progressionRulesVersion: 1, progressionRuleSnapshot: structuredClone(registries.balance.progression), classMilestones: {} } : {}),
+    // Last claimed class level whose separate feat/technique offer was issued.
+    classRewardLevels: {},
     // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
     coreTags: [],
     feats: [],
@@ -286,6 +304,9 @@ export function createRunState({
     preserveDeficits: false,
   });
   stampDeck(registries, run);
+  // Starter families keep their weak action-only face even when their reward
+  // catalogue defaults to an advanced Mana-costing profile.
+  if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
   // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
   // weapon arts onto the deck, so this is the first moment the whole opening
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
@@ -623,6 +644,12 @@ export const RUN_SHAPE = [
   // that build had one possible level value (attributes.js).
   { key: 'levelUps', type: 'number', optional: true },
   { key: 'levelPoints', type: 'number', optional: true },
+  // Attribute points a skill level's pick granted (SPEC §13.4o), absent at 0.
+  { key: 'skillAttributePoints', type: 'number', optional: true },
+  // Which track's pick granted which attribute point (SPEC §13.4o, D13a).
+  { key: 'skillAttributeGrants', type: 'object', optional: true },
+  // The skill feats taken (SPEC §13.4o), absent until the first.
+  { key: 'skillFeats', type: 'array', optional: true },
   // Plan phase 6. Required at schema 10; a preXpLevels save (≤ 9) is filled
   // at the migration door from its bought levels, with nothing waiting.
   { key: 'level', type: 'object' },
@@ -679,6 +706,7 @@ export const RUN_SHAPE = [
   { key: 'lastMountReceipt', type: 'object', optional: true },
   { key: 'mountTransactions', type: 'number', optional: true },
   { key: 'pendingReward', type: 'object', optional: true },
+  { key: 'deferredProgression', type: 'object', optional: true },
   { key: 'deck', type: 'array' },
   { key: 'relics', type: 'array' },
   { key: 'damageBySchoolAdd', type: 'object' },
@@ -702,6 +730,9 @@ export const RUN_SHAPE = [
   // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },
+  { key: 'classMasteryState', type: 'object', optional: true },
+  { key: 'pendingFinish', type: 'object', optional: true },
+  { key: 'quickStart', type: 'boolean', optional: true },
   // SPEC §14.1. Required at schema 11: the owned cards the deck editor took out
   // of the deck. A preSideboard save (≤ 10) is filled with none at the
   // migration door. `editMintCounter` keeps minted basics' instance ids unique;
@@ -817,7 +848,7 @@ function pendingDraftRows(pending) {
   const rewards = (pending && pending.rewards) || {};
   const skill = (Array.isArray(rewards.skillDrafts) ? rewards.skillDrafts : [])
     .filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-    .map((d) => ({ key: `skillDraft:${d.skillId}:${(seen[`s:${d.skillId}`] = (seen[`s:${d.skillId}`] || 0) + 1) - 1}`, cardIds: d.cardIds, ids: d.cardIds }));
+    .map((d) => ({ key: d.offerId ? `skillDraft:${d.offerId}` : `skillDraft:${d.skillId}:${(seen[`s:${d.skillId}`] = (seen[`s:${d.skillId}`] || 0) + 1) - 1}`, cardIds: d.cardIds, ids: d.choiceIds || d.cardIds }));
   // A class draft (plan phase 5b) picks a tree node, keyed by class and ordinal.
   const cls = (Array.isArray(rewards.classDrafts) ? rewards.classDrafts : [])
     .filter((d) => d && typeof d.classId === 'string' && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
@@ -826,14 +857,35 @@ function pendingDraftRows(pending) {
   // kept in chosenDraftCardIds beside the skill drafts', one map keyed by row.
   const level = (Array.isArray(rewards.levelCards) ? rewards.levelCards : [])
     .filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-    .map((d, i) => ({ key: `levelCard:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: d.cardIds, ids: d.cardIds }));
+    .map((d, i) => ({ key: `levelCard:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: d.cardIds, ids: d.choiceIds || d.cardIds }));
   const choices = (Array.isArray(rewards.levelChoices) ? rewards.levelChoices : [])
     .filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
     .map((d, i) => {
       const ids = d.options.map((option) => `${option.kind}:${option.id}`);
       return { key: `levelChoice:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: ids, ids };
     });
-  return [...cls, ...skill, ...level, ...choices];
+  // A rank-up (SPEC §13.4o) picks an owned card, not one the offer names: its
+  // row has a key and no ids, and its pick lives in chosenRankUps.
+  const rankUps = (Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : [])
+    .filter((d) => d && typeof d.skillId === 'string' && d.skillId)
+    .map((d) => ({ key: `skillRankUp:${d.skillId}:${(seen[`r:${d.skillId}`] = (seen[`r:${d.skillId}`] || 0) + 1) - 1}`, rankUp: true }));
+  // An attribute pick (SPEC §13.4o) chooses among its offered attributes,
+  // `attribute:<id>`, its pick kept in chosenDraftCardIds as a level choice's is.
+  const attrs = (Array.isArray(rewards.skillAttributes) ? rewards.skillAttributes : [])
+    .filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.attributeIds) && d.attributeIds.length > 0)
+    .map((d) => {
+      const ids = d.attributeIds.map((id) => `attribute:${id}`);
+      return { key: `skillAttribute:${d.skillId}:${(seen[`a:${d.skillId}`] = (seen[`a:${d.skillId}`] || 0) + 1) - 1}`, cardIds: ids, ids };
+    });
+  // A feat pick (SPEC §13.4o) chooses among its offered feats, `skillFeat:<id>`.
+  const feats = (Array.isArray(rewards.skillFeats) ? rewards.skillFeats : [])
+    .filter((d) => d && typeof d.skillId === 'string' && Array.isArray(d.featIds) && d.featIds.length > 0)
+    .map((d) => {
+      const ids = d.featIds.map((id) => `skillFeat:${id}`);
+      return { key: `skillFeat:${d.skillId}:${(seen[`f:${d.skillId}`] = (seen[`f:${d.skillId}`] || 0) + 1) - 1}`, cardIds: ids, ids };
+    });
+  const milestones = (rewards.classMilestoneRewards || []).map(row => ({ key: `classMilestone:${row.receiptId}`, ids: row.choiceIds || row.options, cardIds: row.options }));
+  return [...cls, ...skill, ...rankUps, ...attrs, ...feats, ...level, ...choices, ...milestones];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -854,6 +906,14 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
+  problems.push(...classMilestoneProblems(run));
+  problems.push(...abilityDraftClaimProblems(run));
+  if (run.classRewardLevels !== undefined) {
+    if (!run.classRewardLevels || typeof run.classRewardLevels !== 'object' || Array.isArray(run.classRewardLevels)) problems.push('classRewardLevels must be an object');
+    else for (const [id, level] of Object.entries(run.classRewardLevels)) {
+      if (!id || !Number.isInteger(level) || level < 0) problems.push(`classRewardLevels.${id} must be a non-negative integer`);
+    }
+  }
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
@@ -893,8 +953,12 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
   if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
+  if (run.classMasteryState !== undefined) problems.push(...classMasteryRunProblems(run.classMasteryState));
+  if (run.pendingFinish !== undefined && (typeof run.pendingFinish?.victory !== 'boolean' || typeof run.pendingFinish?.id !== 'string' || !run.pendingFinish.id)) problems.push('pendingFinish must hold a victory and completion ID');
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
+  problems.push(...coopProgressionProblems(run));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  problems.push(...classLibraryProblems(run));
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
     if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
   });
@@ -959,11 +1023,21 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
     }
   }
+  // A respec withdraws what the record names (FINISH D13a), so it may never
+  // name more points than the run holds.
+  if (run.skillAttributeGrants !== undefined && run.skillAttributeGrants !== null && typeof run.skillAttributeGrants === 'object') {
+    const lists = Object.values(run.skillAttributeGrants);
+    if (lists.some((list) => !Array.isArray(list) || list.some((id) => typeof id !== 'string' || !id))) problems.push('skillAttributeGrants must map track ids to lists of attribute ids');
+    else if (lists.reduce((n, list) => n + list.length, 0) > (Number.isInteger(run.skillAttributePoints) ? run.skillAttributePoints : 0)) problems.push('skillAttributeGrants must not name more points than skillAttributePoints');
+  }
   // A level count is a whole number of purchases and can never be negative. The
   // ALLOCATION check that reads it lives at the load door
   // (attributes.js:grantedAttributePoints); this is the shape check, and a
   // fractional or negative value would silently shift the expected total there.
-  for (const key of ['levelUps', 'levelPoints']) {
+  if (Array.isArray(run.skillFeats) && (run.skillFeats.some((id) => typeof id !== 'string' || !id) || new Set(run.skillFeats).size !== run.skillFeats.length)) {
+    problems.push('skillFeats must be distinct feat ids');
+  }
+  for (const key of ['levelUps', 'levelPoints', 'skillAttributePoints']) {
     if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
       problems.push(`${key} must be a non-negative integer`);
     }
@@ -1024,6 +1098,17 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       seenClaims.add(rewardId);
     }
   }
+  if (run.deferredProgression !== undefined) {
+    const saved = run.deferredProgression;
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) problems.push('deferredProgression must be an object');
+    else {
+      const fields = ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats', 'classDrafts', 'classMilestoneRewards'];
+      if (Object.keys(saved).some(key => !fields.includes(key))) problems.push('deferredProgression contains a non-progression reward');
+      const pendingReward = { schemaVersion: 1, source: 'deferred', after: 'map', rewards: saved, states: {} };
+      problems.push(...validateRunShape({ ...run, deferredProgression: undefined, pendingReward })
+        .filter(problem => problem.startsWith('pendingReward')).map(problem => problem.replace('pendingReward', 'deferredProgression')));
+    }
+  }
   if (run.pendingReward !== undefined) {
     const pending = run.pendingReward;
     if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
@@ -1055,6 +1140,15 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           }
         }
       }
+      if (pending.rewards?.classMilestoneRewards !== undefined) {
+        const rows = pending.rewards.classMilestoneRewards;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.classMilestoneRewards must be an array');
+        else rows.forEach((row,index) => {
+          const p = `pendingReward.rewards.classMilestoneRewards[${index}]`;
+          const offer = run.classMilestoneOffers?.[row?.receiptId];
+          if (!row || !offer || ['classId','skillId','level','requiredLevel','rewardKind'].some(key => row[key] !== offer[key]) || ['options','abilityRanks','choiceIds'].some(key => JSON.stringify(row[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted milestone offer`);
+        });
+      }
       if (pending.rewards?.skillDrafts !== undefined) {
         const drafts = pending.rewards.skillDrafts;
         if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.skillDrafts must be an array');
@@ -1064,7 +1158,69 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
           if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
           if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+          if (d.abilityRanks !== undefined && (!Array.isArray(d.abilityRanks) || d.abilityRanks.length !== d.cardIds?.length || d.abilityRanks.some(r => !Number.isInteger(r) || r < 0 || r > 5))) problems.push(`${p}.abilityRanks must hold one grade 0..5 per card`);
+          if (d.choiceIds !== undefined && (!Array.isArray(d.choiceIds) || d.choiceIds.length !== d.cardIds?.length || new Set(d.choiceIds).size !== d.choiceIds.length || d.choiceIds.some(id => typeof id !== 'string' || !id))) problems.push(`${p}.choiceIds must identify each offered face uniquely`);
+          if (d.offerId) {
+            const offer = run.abilityOffers?.[d.offerId];
+            if (!offer || offer.skillId !== d.skillId || offer.level !== d.level || ['cardIds','abilityRanks','choiceIds'].some(key => JSON.stringify(d[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted ability offer`);
+          }
+          // Each offered card's rank (SPEC §13.4o), one per card id when present.
+          if (d.ranks !== undefined && (!Array.isArray(d.ranks) || d.ranks.length !== (Array.isArray(d.cardIds) ? d.cardIds.length : -1)
+            || d.ranks.some((r) => !Number.isInteger(r) || r < 1 || r > MAX_CARD_RANK))) problems.push(`${p}.ranks must hold one rank from 1 to ${MAX_CARD_RANK} per card id`);
         });
+      }
+      if (pending.rewards?.skillRankUps !== undefined) {
+        const ups = pending.rewards.skillRankUps;
+        if (!Array.isArray(ups)) problems.push('pendingReward.rewards.skillRankUps must be an array');
+        else ups.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillRankUps[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (d.claimOrdinal !== undefined && (!Number.isInteger(d.claimOrdinal) || d.claimOrdinal < 0)) problems.push(`${p}.claimOrdinal must be a non-negative integer`);
+        });
+      }
+      if (pending.chosenRankUps !== undefined) {
+        const chosen = pending.chosenRankUps;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenRankUps must be an object keyed by rank-up row');
+        else {
+          const keys = new Set(pendingDraftRows(pending).filter((d) => d.rankUp).map((d) => d.key));
+          for (const [key, instanceId] of Object.entries(chosen)) {
+            if (!keys.has(key)) problems.push(`pendingReward.chosenRankUps.${key} must name a rank-up the offer carries`);
+            if (typeof instanceId !== 'string' || !instanceId) problems.push(`pendingReward.chosenRankUps.${key} must be a card instance id`);
+            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenRankUps.${key} requires the rank-up's Taken state`);
+          }
+        }
+      }
+      for (const { key } of pendingDraftRows(pending).filter((d) => d.rankUp)) {
+        if (pending.states?.[key] === 'taken' && !(pending.chosenRankUps && pending.chosenRankUps[key])) problems.push(`pendingReward ${key} Taken state requires its chosen card`);
+      }
+      if (pending.rewards?.skillFeats !== undefined) {
+        const picks = pending.rewards.skillFeats;
+        if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillFeats must be an array');
+        else picks.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillFeats[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, featIds }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.featIds) || !d.featIds.length || d.featIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.featIds must be a non-empty array of feat ids`);
+        });
+      }
+      if (pending.rewards?.skillAttributes !== undefined) {
+        const picks = pending.rewards.skillAttributes;
+        if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillAttributes must be an array');
+        else picks.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillAttributes[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, attributeIds }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.attributeIds) || !d.attributeIds.length || d.attributeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.attributeIds must be a non-empty array of attribute ids`);
+        });
+      }
+      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats', 'classDrafts', 'classMilestoneRewards']) {
+        for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
+          if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
+        }
       }
       if (pending.rewards?.levelCards !== undefined) {
         // SPEC §15.1: absent on an offer written before the schedule.
@@ -1094,6 +1250,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           }
         });
       }
+      for (const key of ['levelChoices', 'levelCards']) {
+        for (const [i, row] of (Array.isArray(pending.rewards?.[key]) ? pending.rewards[key] : []).entries()) {
+          if (!row || row.source === undefined) continue;
+          const path = `pendingReward.rewards.${key}[${i}]`;
+          if (!['combat', 'class'].includes(row.source) || (key === 'levelCards' && row.source !== 'class')) problems.push(`${path}.source is invalid`);
+          if (row.source === 'class' && (typeof row.skillId !== 'string' || !row.skillId.startsWith('class:') || !Number.isInteger(row.claimOrdinal) || row.claimOrdinal < 0)) problems.push(`${path} must name a class track and claim ordinal`);
+        }
+      }
       if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
         problems.push('pendingReward.rewards.cardMissed must be a boolean');
       }
@@ -1111,7 +1275,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
           for (const [key, cardId] of Object.entries(chosen)) {
             const draft = drafts.find((d) => d.key === key);
-            if (!draft || !draft.cardIds.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
+            if (!draft || !draft.ids.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
             if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${key} requires the draft's Taken state`);
           }
           for (const draft of drafts) {
@@ -1184,6 +1348,12 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`${pile}[${i}].ratingId '${card.ratingId}' is unknown`);
       if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`${pile}[${i}].ratingValue must be a finite non-negative number`);
       if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`${pile}[${i}].ratingCap must be a finite non-negative number`);
+      // A card's rank (SPEC §13.4o): absent is rank 1.
+      if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1 && card.rank <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].rank must be a whole number from 1 to ${MAX_CARD_RANK}`);
+      if (card.abilityRank !== undefined && !(Number.isInteger(card.abilityRank) && card.abilityRank >= 0 && card.abilityRank <= 5)) problems.push(`${pile}[${i}].abilityRank must be 0..5`);
+      // The derived every-5th-level skill bonus (SPEC §13.4o), absent at 0.
+      if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].skillBonus must be a whole number from 1 to ${MAX_CARD_RANK}`);
+      if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].passiveBlock must be a whole number from 1 to ${MAX_CARD_RANK}`);
       // A set-aside attack basic's slot is retired; any other would make the
       // next restamp disagree with the allocation.
       if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined
@@ -1414,8 +1584,8 @@ export function migrateRunSchema(run) {
   // needs the deck's own attack slots, so the load door does it once
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ${RUN_SCHEMA_VERSION})`);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
@@ -1471,19 +1641,20 @@ export function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
+export function createPlayerCombatEntity({ classId, classUnequipped = false, maxHp, hp, maxMana, mana, maxStamina, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {}, critRules = null }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
     id: 'player',
     kind: 'player',
     classId,
+    ...(classUnequipped ? { classUnequipped: true } : {}),
     hp: hp != null ? hp : maxHp,
     maxHp,
     mana: mana != null ? mana : maxMana,
     maxMana,
-    stamina: stamina != null ? stamina : maxStamina,
-    maxStamina,
+    stamina: stamina ?? maxStamina ?? energyMax,
+    maxStamina: maxStamina ?? energyMax,
     block: 0,
     energy: 0,
     energyMax,
@@ -1495,6 +1666,8 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, damageBySchoolAdd[school] || 0])),
     flasks: flasks.map((f) => ({ ...f })),
     flaskCharges: flaskCharges ? { ...flaskCharges } : null,
+    // A skill feat's critical-hit rules (SPEC §13.4o), absent without one.
+    ...(Array.isArray(critRules) && critRules.length ? { critRules: structuredClone(critRules) } : {}),
     counters: {
       cardsPlayedThisTurn: 0,
       cardsPlayedThisCombat: 0,
@@ -1504,7 +1677,7 @@ export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, ma
     alive: true,
   };
   stampPlayerPoiseMax(entity, poiseMax);
-  return entity;
+  return bindTurnStamina(entity);
 }
 
 /**

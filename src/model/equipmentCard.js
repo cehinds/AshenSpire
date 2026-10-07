@@ -1,6 +1,7 @@
 import { parseMod } from './loadout.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
+import { breakPropertyText } from './breakMeter.js';
 
 /** Authored facts only; live comparison and smithing receipts stay beside this card. */
 export function equipmentCardModel(registries, piece) {
@@ -24,7 +25,7 @@ export function equipmentCardModel(registries, piece) {
   });
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
   return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
-    tags: tags.map(id => field(tag(id)?.label || id, id, tag(id)?.blurb || 'Authored equipment classification.')),
+    tags: tags.map(id => field(tag(id)?.label || id, id, registries.breakMeterVersion === 1 ? breakPropertyText(registries, id) || tag(id)?.blurb || 'Authored equipment classification.' : tag(id)?.blurb || 'Authored equipment classification.')),
     typeExplanation: (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
     flavor: piece.blurb || 'No flavor text authored.',
     requirement: requirements ? `Requires ${requirements}` : armor ? `${className} outfit` : 'Either hand',

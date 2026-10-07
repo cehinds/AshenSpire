@@ -23,7 +23,7 @@
 //
 // WHAT THE DIGEST COVERS, and it is a closed set stated in one place:
 //
-//     index.html · styles/** · src/** · assets/** · assets-mobile/** · asset-data/**
+//     index.html · styles/** · src/** · asset-data/**
 //     tools/bundle.mjs · tools/buildversion.mjs · tools/dirorder.mjs
 //
 // `buildordinal.json` is deliberately OUTSIDE that set — see INPUT_ROOTS for
@@ -100,8 +100,8 @@ export const RUN_PATH_SERVE = 'source tree';
 /**
  * The edition's anchors and its two values. Since step 8e
  * (docs/EXTERNAL-ASSETS-PLAN.md) the edition is the build's DEFAULT TIER:
- * `high` (release/main, and the source tree, which serves assets/ as
- * authored) or `light` (dev/test, and always the light single file). Unlike
+ * `high` (release/main, and the source tree, which serves assets/ from the
+ * fetched high pack, tools/serve.mjs) or `light` (dev/test, and always the light single file). Unlike
  * the four above, the source holds a real value rather than a placeholder —
  * the served tree IS the high tier — so row A checks that the value at rest is
  * `high`. `full` and `mobile`, the two single files' editions before the flip,
@@ -168,7 +168,13 @@ export const DIGEST_CHARS = 10;
 // manifests, the class-art packet, the OFL text; docs/ART-REPO-PLAN.md step 4).
 // It stays a root so the digest and row B sweep the same files they did before
 // the move, including the successor packet CONTRACT_COLUMN_SITES names.
-export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data']);
+//
+// assets/ and assets-mobile/ LEFT AT docs/EXTERNAL-ASSETS-PLAN.md STEP 13 (with
+// the trees): the art is the pinned release now, and the digest sees it through
+// art-release.json and art-manifest.json (BUILD_IDENTITY_FILES), which name every
+// byte a build can carry. A leftover, ignored copy of either tree on someone's
+// disk must not move the digest, so neither is a root any more.
+export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'asset-data']);
 
 /**
  * The closed executable seam that turns INPUT_ROOTS into the shipped bundle.
@@ -178,6 +184,7 @@ export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets
  */
 export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/bundle.mjs',
+  'tools/card-components.mjs',
   'tools/assetmime.mjs',
   'tools/buildversion.mjs',
   'tools/dirorder.mjs',
@@ -188,7 +195,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   // build carries, so a change to any of them is a new build.
   // tests/build-identity.test.mjs walks that graph and fails on one not here.
   //   art-source   where the light pack and the fonts are read from (the
-  //                verified cache or, until step 13, the tree)
+  //                verified cache; the trees left at step 13)
   //   fetch-art    what "verified" means for a cached pack; zip.mjs beneath it
   //   art-manifest the records a pack is checked against, and canonical bytes
   //   asset-pack   the pack shape: objects/, the indexes, the font sidecar
@@ -952,10 +959,17 @@ export function check(root = REPO_ROOT) {
       ? `title and the startup gate each derive directly; the run HUD carries no stamp`
       : `the named version-consumer chain is broken:\n      ${consumerFailures.join('\n      ')}`);
 
-  // D — THE CONTAINMENT CLAIM. The digest's four roots must be a superset of
+  // D — THE CONTAINMENT CLAIM. The digest's roots must be a superset of
   //     what the bundler reads, or a real source change can move the build
-  //     without moving the string.
+  //     without moving the string. An art id art-manifest.json lists (a
+  //     stylesheet's `url(../assets/…)`) is contained too: since
+  //     docs/EXTERNAL-ASSETS-PLAN.md step 13 its bytes are the pinned release's,
+  //     and the pin and the manifest (BUILD_IDENTITY_FILES) name every one of
+  //     them, so a changed file is a changed manifest is a new digest.
   const outside = [];
+  let artIds = new Set();
+  try { artIds = new Set(Object.keys(JSON.parse(src('art-manifest.json')).assets || {})); } catch { /* every art url is then reported outside */ }
+  const contained = (rel) => insideRoots(rel) || artIds.has(rel);
   const index = src('index.html');
   // The quote that opens an href closes it (an inline data: icon carries the
   // other quote inside it). Only a NON-stylesheet link with a data:/http(s):
@@ -976,7 +990,7 @@ export function check(root = REPO_ROOT) {
       for (const m of css.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)) {
         if (/^(data:|https?:|\/\/)/i.test(m[2])) continue;
         const t = relative(root, resolve(dirname(resolve(root, h)), m[2].split(/[?#]/)[0])).split('\\').join('/');
-        if (!insideRoots(t)) outside.push(`${h} → url(${m[2]})`);
+        if (!contained(t)) outside.push(`${h} → url(${m[2]})`);
       }
     }
   }
@@ -992,7 +1006,7 @@ export function check(root = REPO_ROOT) {
   }
   add(outside.length === 0, 'D CONTAINMENT',
     outside.length === 0
-      ? `every stylesheet, css asset and bundled module resolves inside ${INPUT_ROOTS.join(', ')}`
+      ? `every stylesheet, css asset and bundled module resolves inside ${INPUT_ROOTS.join(', ')}, or is an art id art-manifest.json pins`
       : `the build reads outside the digest's roots — the version can miss a real change:\n      ${outside.join('\n      ')}`);
 
   // E — THE SHIPPED BUNDLE CARRIES THIS SOURCE'S VERSION. Narrower than
@@ -1189,11 +1203,42 @@ export function check(root = REPO_ROOT) {
   // `fatal: not a git repository`, and a row that already resolves that to
   // UNKNOWN in its own words does not also need git shouting between the rows.
   const g = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  // UNREAD IS NOT ABSENT. `null` means the commit's tree has no record — the
+  // pre-scheme n/a. A record the tree NAMES but git cannot hand over (its blob
+  // missing from a partial, shallow or damaged clone) is a different fact, and
+  // it comes back as { unreadable } so the row can say UNKNOWN instead of
+  // mistaking it for a parent from before the scheme. So is a record git hands
+  // over that is not JSON (a conflict-marked or truncated file): it comes back
+  // as { unparsable }, never as null. `--full-tree` makes the path read from
+  // the top of the repository, as `<rev>:<path>` does.
+  // git's own reason rides along: the first line of `e.message` is only
+  // "Command failed: git …"; the `fatal: …` line on stderr says whether the
+  // object is missing or the path is wrong.
+  const why = (e) => {
+    const said = String(e && e.stderr || '').split('\n').map((l) => l.trim()).find(Boolean);
+    const head = String(e && e.message || e).split('\n')[0];
+    return said ? `${head}: ${said}` : head;
+  };
   const at = (rev) => {
+    let text;
     try {
-      const raw = JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`));
+      text = g('show', `${rev}:${ORDINAL_HOME}`);
+    } catch (shown) {
+      let listed;
+      try {
+        listed = g('ls-tree', '--full-tree', '--name-only', rev, '--', ORDINAL_HOME).trim();
+      } catch (e) {
+        // THE TREE ITSELF COULD NOT BE LISTED (its tree object missing or
+        // damaged). Whether it names the record at all is then unknown, so this
+        // is a third fact, kept apart from "named but unreadable" (#1519 review).
+        return { uninspected: why(e) };
+      }
+      return listed ? { unreadable: why(shown) } : null;
+    }
+    try {
+      const raw = JSON.parse(text);
       return { ordinal: Number(raw.ordinal), release: raw.release ?? null, digest: raw.digest ?? null };
-    } catch { return null; }
+    } catch (e) { return { unparsable: String(e && e.message || e).split('\n')[0] }; }
   };
   try {
     const parents = g('rev-list', '--parents', '-n', '1', 'HEAD').trim().split(/\s+/);
@@ -1203,6 +1248,38 @@ export function check(root = REPO_ROOT) {
     } else {
       const before = at(parent);
       const now = at('HEAD');
+      const blind = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.uninspected);
+      if (blind) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${blind[0]}'s tree could not be inspected (${blind[1].uninspected}), so whether it records ${ORDINAL_HOME} at all is not known;`
+          + ` an unlisted tree is not one without a record, so this is not the pre-scheme n/a;`
+          + ` fetch the missing history (git fetch --unshallow, or a full clone) rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      const unread = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.unreadable);
+      if (unread) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${unread[0]}'s tree names ${ORDINAL_HOME} but git could not read it (${unread[1].unreadable}).`
+          + ` A record git cannot show is not one that is absent, so this is not the pre-scheme n/a;`
+          + ` fetch the missing history (git fetch --unshallow, or a full clone) rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      // A RECORD THAT IS NOT JSON. At the parent, nothing about its build can be
+      // established, so it is UNKNOWN — not the pre-scheme n/a it used to pass
+      // as. At HEAD it is this change's own record, broken, so it is red.
+      if (now && now.unparsable) {
+        add(false, 'H ORDINAL INCREASES',
+          `HEAD's ${ORDINAL_HOME} is not valid JSON (${now.unparsable}) — a build with no readable number;`
+          + ` restore the record and rebuild (node tools/launch.mjs --build-only).`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
+      if (before && before.unparsable) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${parent.slice(0, 7)}'s ${ORDINAL_HOME} is not valid JSON (${before.unparsable}), so the parent's build cannot be read;`
+          + ` a record that cannot be parsed is not one that is absent, so this is not the pre-scheme n/a.`
+          + ` Merge a base whose record parses rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
       // THE ORDINAL AND RELEASE COUNT TOO, not only the digest. A hand-edit (or a
       // bad hand-merge) of the record that leaves the digest alone used to be
       // caught by row F against the committed bundle; CI now rebuilds from the

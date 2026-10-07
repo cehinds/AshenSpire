@@ -24,11 +24,10 @@ test('movement spends one action, emits a receipt and survives combat save/resto
   assert.equal(restored.player.formationCell, 'A1');
 });
 // The player's own cell, read from the plan rather than hard-coded: the shipped
-// grid is two rows, so the preferred row C clamps to B (owner's exported
-// config, 2026-09-24; three rows and C2 before).
+// grid is two rows, so the preferred last row F clamps to B.
 const spawn = formationMovePlan(fixture(), 'A1', settings).current;
 test('the player spawns on the shipped grid\'s last row', () => {
-  assert.equal(spawn, 'B2');
+  assert.equal(spawn, 'B1');
 });
 test('disabled, unaffordable, invalid, occupied and out-of-turn moves do not mutate state', () => {
   assert.throws(() => dispatch(fixture(), { type: 'moveCharacter', cell: spawn, settings }), /Already at that position/);

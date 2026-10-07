@@ -5,6 +5,9 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MAP_PRESENTATION as policy } from '../src/content/mapPresentation.js';
+import { authoringNeeds } from './art-authoring.mjs';
+import { policyFor, twinDimensions } from './mobileart-policy.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const sharp = createRequire(import.meta.url)('sharp');
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sources = [
@@ -32,7 +35,8 @@ for (const [id, source] of sources) {
     levels.push({edge, width, height});
   }
   // Every tier and fallback comes from the same registered painting.
-  await sharp(input).resize({width:512,height:512,fit:'inside',withoutEnlargement:true}).webp({quality:74,effort:6})
+  const fallback = twinDimensions(metadata, policyFor(`environments/${id}.webp`));
+  await sharp(input).resize(fallback.width, fallback.height).webp({quality:90,effort:6})
     .toFile(resolve(root, `assets/environments/${id}.webp`));
   maps[`assets/environments/${id}.webp`] = {assetHash:version, levels};
   console.log(`${id}: ${levels.map(l=>l.edge).join('/')}px`);

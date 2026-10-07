@@ -3,7 +3,7 @@
 ## Ground rules
 
 1. **[SPEC.md](SPEC.md) is the source of truth.** Formulas, orderings, and state shapes marked contractual there don't change in a feature PR — change the spec first, in its own PR, then implement.
-2. **No FromSoftware assets or proper nouns.** Every new asset gets a line in [CREDITS.md](CREDITS.md) with source URL + license (CC0 / CC-BY / OFL only), and enters through its established path: runtime art under `assets/` resolves through `assetUrl()` (`src/ui/assetmap.js`) and is listed in `art-manifest.json` (`node tools/art-manifest.mjs --write`); sound effects are `assets/sfx/<id>.ogg` (or `SFX_MANIFEST` in `src/content/sfx.js`); music lives under `music/` and loads through `music/manifest.json`; fonts under `assets/fonts/` are referenced from CSS (`styles/kit.css`).
+2. **No FromSoftware assets or proper nouns.** Every new asset gets a line in [CREDITS.md](CREDITS.md) with source URL + license (CC0 / CC-BY / OFL only), and enters through its established path. Since docs/EXTERNAL-ASSETS-PLAN.md step 13 every asset file — the art (`assets/…` ids, both tiers), sound effects (`assets/sfx/<id>.ogg`), the score's renders (`music/…`, loaded through `music/manifest.json`), the map tiles and the fonts (`assets/fonts/`, referenced from `styles/kit.css`) — enters through a PR to [`cehinds/AshenSpire-art`](https://github.com/cehinds/AshenSpire-art) and its release, then a PR here that bumps `art-release.json` and rewrites `art-manifest.json` (`node tools/art-manifest.mjs --write`). Game code names an asset by its id and resolves it through `assetUrl()` (`src/ui/assetmap.js`), or `SFX_MANIFEST` in `src/content/sfx.js` for a sound. The score's source, `music/score/*.mjs`, stays here.
 3. **Engine stays headless.** Nothing under `src/engine/` may reference `document`, `window`, `localStorage`, or timers. If a change can't be tested headlessly (`node tests/run-node.mjs`, or `tests/index.html` in a browser), it doesn't belong in the engine.
 4. **Content is data.** A new card, relic, **status**, enemy, or event is a data object in one `src/content/` file, validated against its schema (spec §3.14). If you find yourself writing imperative per-entity code, extend the effect/formula/trigger DSL instead (spec §3.4–3.7) — or, as a last resort, use the budgeted `scripts.js` escape hatch (<5% of content, justified in a comment).
 5. **Tests green before merge.** `node tests/run-node.mjs` exits 0 (DEVELOPER.md, *Run & test*; `tests/index.html` runs the engine suite in a browser). New mechanics ship with new assertions.
@@ -100,6 +100,23 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
    - A promotion does not advance the release candidate (the third
      component of `contentBundle.version`); only the owner names a new
      candidate ([docs/versioning.md](docs/versioning.md)).
+   - Every `dev` → `test` promotion also starts `sync-alternatives.yml`.
+     Existing `alternative/dev` → `alternative/test` pairs (including named
+     variants such as `alternative/art/dev` → `alternative/art/test`) receive
+     the promoted snapshot, then the alternative dev result is merged into its
+     test branch. No missing branch is created. Both updates are pushed
+     atomically, without force. Alternative-specific source paths, including
+     deletions, are protected: overlapping upstream edits stop the whole sync
+     for review, even if Git could merge them. Only the generated build ordinal
+     and architecture snapshot are regenerated. Reconcile a blocked sync while
+     preserving the variant, then rerun it from `dev` or `test`.
+   - Alternative dev/test use the same stage-specific checks and build tiers as
+     primary dev/test. The sync explicitly dispatches those workflows because
+     bot pushes do not trigger them. Check the sync and alternative runs as well
+     as primary test; a blocked sync or red alternative check is not a completed
+     promotion. Alternative previews have their own Pages section and README
+     build badges; successful preview runs refresh Pages through the default
+     branch, without changing the Pages environment's allowed branches.
    - Watch the `test` run. A red there is yours to fix with a new PR into
      `dev`, which you then promote again.
    - Never merge to `release` or `main` (see

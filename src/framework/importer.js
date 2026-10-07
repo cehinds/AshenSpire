@@ -123,19 +123,23 @@ export function cardPropertyInstances(card, kindId = null) {
   }
   // A dodge effect is the contract's utility.evasion (the framework entities
   // framework.evasiveGuard / framework.dodgeRoll author it the same way).
-  if ((card.effects || []).some((e) => e.op === 'dodgeRoll')) {
+  if ((card.effects || []).some((e) => e.op === 'dodgeRoll') || card.weightClassPriced === true) {
     properties.push({ propertyId: 'utility.evasion', source: 'AUTHORED' });
   }
   return properties;
 }
 
 /**
- * The PURE dodge — a card whose whole action is the dodge roll (the contract's
- * framework.dodgeRoll: classification.weaponArt + utility.evasion). Its price
- * is the Weight Class's dodge cost, not the authored one; a guard that also
- * dodges (framework.evasiveGuard) keeps its authored price.
+ * The PURE dodge — the contract's framework.dodgeRoll (classification.weaponArt
+ * + utility.evasion). Its price is the Weight Class's dodge cost, not the
+ * authored one; a guard that also dodges (framework.evasiveGuard) keeps its
+ * authored price. Since the owner's 2026-10-05 ruling the Dodge Roll no longer
+ * rolls (it grants Block, Poise and Ward), so the card says so with
+ * `weightClassPriced: true`; a card whose whole action is the dodge roll is
+ * still read as the pure dodge.
  */
 export function isPureDodge(card) {
+  if (card.weightClassPriced === true) return true;
   const effects = card.effects || [];
   return effects.length > 0 && effects.every((e) => e.op === 'dodgeRoll');
 }
@@ -206,7 +210,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   // globally unique, so every import key is namespaced by kind. The legacy id
   // stays verbatim in explicitOverrides.legacyId — save identity is the
   // legacy id and is never rewritten (ALWAYS preserve stable content IDs).
-  const key = (kind, id) => `${kind}.${id}`;
+  const key = legacyEntityKey;
 
   // ---- cards ---------------------------------------------------------------
   for (const card of bundle.cards) {
@@ -538,4 +542,10 @@ export function expectedCounts(bundle) {
     LOCATION: bundle.events.length,
     UI_SURFACE: bundle.equipment.armouryUi ? 1 : 0,
   };
+}
+
+export function legacyEntityKey(kind, id) {
+  if (!id.startsWith('encoded.') && /^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)*$/.test(id)) return `${kind}.${id}`;
+  const encoded = Array.from(id, char => char.codePointAt(0).toString(16).padStart(6, '0')).join('');
+  return `${kind}.encoded.x${encoded}`;
 }
