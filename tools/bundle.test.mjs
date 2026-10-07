@@ -43,6 +43,9 @@ const check = (name, ok, detail) => {
 // can edit its own copy (the EOL cases do) and never the cache.
 function sandbox({ pack = false } = {}) {
   const dir = mkdtempSync(resolve(tmpdir(), 'ashen-bundle-'));
+  // Branch-owned artwork is authored under the selected checkout, outside
+  // the shared packs (artPath resolves non-pack paths against that root).
+  // Portable variant builds read these bytes and validate their catalog hashes.
   for (const d of ['src', 'styles', 'tools', 'content', 'assets-alternative', ...(pack ? ['asset-data'] : [])]) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
@@ -320,6 +323,24 @@ function bundledSkillClaims(html, { restoreCycle = false } = {}) {
     existsSync(outPath) && readFileSync(outPath, 'utf8').length > 500000);
   if (existsSync(outPath)) {
     const html = readFileSync(outPath, 'utf8');
+    const branchCatalogPath = resolve(dir, 'src/ui/alternativeArtCatalog.js');
+    if (existsSync(branchCatalogPath)) {
+      const catalog = JSON.parse(readFileSync(branchCatalogPath, 'utf8')
+        .match(/^export const alternativeArtCatalog = (.+);$/m)[1]);
+      const catalogHashes = Object.entries(catalog.hashes);
+      check('control: selected-source branch artwork catalog contains declared hashes', catalogHashes.length > 0);
+      const mapMatch = html.match(/const alternativeArtMap = (\{[^\n]+\});/);
+      const inlineArt = mapMatch ? JSON.parse(mapMatch[1]) : {};
+      const aliasMatch = html.match(/for \(const \[alias, key\] of (\[[^\n]+\])\) alternativeArtMap\[alias\] = alternativeArtMap\[key\];/);
+      for (const [alias, key] of aliasMatch ? JSON.parse(aliasMatch[1]) : []) inlineArt[alias] = inlineArt[key];
+      const mismatches = catalogHashes.filter(([file, hash]) => {
+        const payload = inlineArt[`assets-alternative/${file}`];
+        return !payload?.startsWith('data:image/webp;base64,')
+          || createHash('sha256').update(Buffer.from(payload.slice('data:image/webp;base64,'.length), 'base64')).digest('hex') !== hash;
+      });
+      check('control: portable branch artwork matches every selected-source catalog hash',
+        mismatches.length === 0, `${mismatches.length} missing or changed: ${mismatches.map(([file]) => file).join(', ')}`);
+    }
     const clean = bundledStartingDecks(html);
     check('control: bundled content validation composes every starting deck', clean.ok, clean.why);
     const planted = bundledStartingDecks(html, { restoreCycle: true });
