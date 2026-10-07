@@ -25,10 +25,11 @@ async function image(url){
 let decoded=new Map();
 async function preload(){
  const urls=[...families.values()].flatMap(m=>Object.values(m.frames).flatMap(f=>[f.path,f.lite]));
- urls.push(...['slash','ward','starbolt','shieldBash'].flatMap(e=>COMBAT_EFFECT_ART[e].map(p=>'../../'+p.replace('assets/','assets-mobile/'))));
+ const effects=new Set(['slash','ward','starbolt','shieldBash',...[...families.values()].flatMap(m=>Object.values(m.sequences).map(s=>s.effect).filter(Boolean))]);
+ urls.push(...[...effects].flatMap(e=>COMBAT_EFFECT_ART[e].map(p=>'../../'+p.replace('assets/','assets-mobile/'))));
  urls.push(...manifest.classes.map(c=>'../../'+alternativeArtCatalog.sprites[c+'-default'].path));
  await Promise.all(urls.map(async u=>decoded.set(u,await image(u))));
- ready=true;render();message('Reaver / sword and Rogue / twin daggers are drafted; 38 base combinations remain pending.');
+ ready=true;render();message(`${families.size} base families drafted; ${manifest.coverage.length-families.size} combinations remain pending.`);
 }
 $('#actor').innerHTML=manifest.classes.map(c=>`<option value="${c}">${c[0].toUpperCase()+c.slice(1)}</option>`).join('');
 $('#loadout').innerHTML=manifest.loadouts.map(l=>`<option value="${l.id}">${l.label}</option>`).join('');
@@ -45,7 +46,7 @@ function selection(){
  $('#play').disabled=$('#restart').disabled=$('#scrub').disabled=!drafted||!ready;
  document.querySelectorAll('[data-action]').forEach(b=>{b.disabled=!drafted;b.classList.toggle('active',b.dataset.action===action);});
  $('#stage-label').textContent=`${$('#actor').value.toUpperCase()} · BASE ARMOUR · ${$('#loadout').selectedOptions[0].textContent.toUpperCase()}`;
- $('#action-note').textContent=action==='down'?'Down holds its final pose until Restart.':action==='power'||action==='spell'?'Weapons are sheathed while casting. Draw / sheath transitions still need review.':'Forward travel returns to the same stance anchor.';
+ $('#action-note').textContent=action==='down'?'Down holds its final pose until Restart.':action==='power'||action==='spell'?($('#loadout').value==='staff'?'Staff stays in hand; the free hand releases the spell.':'Weapons are sheathed while casting. Draw / sheath transitions still need review.'):'Forward travel returns to the same stance anchor.';
  $('#edit').hidden=!drafted||!['attack','power','spell'].includes(action);
  $('#edit').href='../index.html?renewal='+action+'&family='+$('#actor').value;
  $('#board').innerHTML=manifest.coverage.filter(r=>r.classId===$('#actor').value).map(r=>`<div class="card ${r.status}">${manifest.loadouts.find(l=>l.id===r.loadout).label}<span>${r.status==='draft'?'Draft · attack / hurt / down / casts':'Pending artwork'}</span></div>`).join('');

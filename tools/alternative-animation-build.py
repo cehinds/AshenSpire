@@ -75,11 +75,6 @@ manifest = {'schemaVersion':1, 'target':'alternative/dev', 'status':'authoring-p
     'sourceHashes':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (OUT/'source').glob('*.png')},
     'bytes':{'webp':sum(p.stat().st_size for p in FRAMES.glob('*.webp') if '.lite.' not in p.name), 'lite':sum(p.stat().st_size for p in FRAMES.glob('*.lite.webp'))}}
 manifest['families']={'reaver/sword':{'rig':'reaver-sword.rig.json','folder':''}}
-if (OUT/'rogue/manifest.json').exists():
-    manifest['families']['rogue/twinDaggers']={'manifest':'rogue/manifest.json','rig':'rogue/rogue-twinDaggers.rig.json','folder':'rogue/'}
-    for row in manifest['coverage']:
-        if row['classId']=='rogue' and row['loadout']=='twinDaggers': row['status']='draft'
-    manifest['notes'][0]='Two reference families drafted; remaining combinations are pending and never substituted.'
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
 
 def data_url(path):
@@ -108,4 +103,8 @@ for name in ['attack','power','spell']:
         key='assets/combat-effects/'+effect+str(i)+'.webp'
         project['assets'][key]=data_url(ROOT/key.replace('assets/','assets-mobile/',1))
     (OUT/(name+'.pose.json')).write_text(json.dumps(project,separators=(',',':')),encoding='utf-8')
-print(json.dumps({'frames':len(frames),'coverage':len(manifest['coverage']),'draftFamilies':1,'bytes':manifest['bytes']}))
+
+# Refresh coverage only after every portable family project has been written.
+import runpy
+draft_families=runpy.run_path(str(ROOT/'tools/alternative-animation-registry.py'))['refresh']()
+print(json.dumps({'frames':len(frames),'coverage':len(manifest['coverage']),'draftFamilies':draft_families,'bytes':manifest['bytes']}))

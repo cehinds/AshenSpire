@@ -48,3 +48,7 @@ for action in ['attack','power','spell']:
  (OUT/f'{action}.pose.json').write_text(json.dumps(project,separators=(',',':')))
 (OUT/'source/normalization.json').write_text(json.dumps(SHEETS,indent=2)+'\n')
 print(json.dumps({'frames':len(frames),'bytes':manifest['bytes']}))
+
+# Refresh coverage only after every portable family project has been written.
+import runpy
+runpy.run_path(str(ROOT/'tools/alternative-animation-registry.py'))['refresh']()

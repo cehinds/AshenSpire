@@ -52,27 +52,13 @@
   ],
   "frames": {
     "ready": {
-      "path": "frames/ready.webp",
-      "lite": "frames/ready.lite.webp",
+      "path": "starseer/frames/ready.webp",
+      "lite": "starseer/frames/ready.lite.webp",
       "bounds": [
-        104,
-        114,
-        413,
-        465
-      ],
-      "anchor": [
-        256,
-        464
-      ]
-    },
-    "windup": {
-      "path": "frames/windup.webp",
-      "lite": "frames/windup.lite.webp",
-      "bounds": [
-        86,
-        101,
-        360,
-        465
+        121,
+        102,
+        348,
+        466
       ],
       "anchor": [
         256,
@@ -80,13 +66,13 @@
       ]
     },
     "advance": {
-      "path": "frames/advance.webp",
-      "lite": "frames/advance.lite.webp",
+      "path": "starseer/frames/advance.webp",
+      "lite": "starseer/frames/advance.lite.webp",
       "bounds": [
-        68,
-        138,
-        431,
-        465
+        103,
+        134,
+        415,
+        472
       ],
       "anchor": [
         256,
@@ -94,13 +80,13 @@
       ]
     },
     "contact": {
-      "path": "frames/contact.webp",
-      "lite": "frames/contact.lite.webp",
+      "path": "starseer/frames/contact.webp",
+      "lite": "starseer/frames/contact.lite.webp",
       "bounds": [
-        76,
-        150,
-        483,
-        464
+        93,
+        156,
+        501,
+        465
       ],
       "anchor": [
         256,
@@ -108,13 +94,13 @@
       ]
     },
     "follow": {
-      "path": "frames/follow.webp",
-      "lite": "frames/follow.lite.webp",
+      "path": "starseer/frames/follow.webp",
+      "lite": "starseer/frames/follow.lite.webp",
       "bounds": [
-        100,
-        141,
-        420,
-        463
+        98,
+        190,
+        439,
+        466
       ],
       "anchor": [
         256,
@@ -122,40 +108,12 @@
       ]
     },
     "return": {
-      "path": "frames/return.webp",
-      "lite": "frames/return.lite.webp",
+      "path": "starseer/frames/return.webp",
+      "lite": "starseer/frames/return.lite.webp",
       "bounds": [
-        105,
-        118,
-        412,
-        470
-      ],
-      "anchor": [
-        256,
-        464
-      ]
-    },
-    "hurt": {
-      "path": "frames/hurt.webp",
-      "lite": "frames/hurt.lite.webp",
-      "bounds": [
-        87,
-        122,
-        413,
-        464
-      ],
-      "anchor": [
-        256,
-        464
-      ]
-    },
-    "hurt-recover": {
-      "path": "frames/hurt-recover.webp",
-      "lite": "frames/hurt-recover.lite.webp",
-      "bounds": [
-        81,
-        119,
-        403,
+        113,
+        108,
+        347,
         467
       ],
       "anchor": [
@@ -163,14 +121,56 @@
         464
       ]
     },
-    "down": {
-      "path": "frames/down.webp",
-      "lite": "frames/down.lite.webp",
+    "windup": {
+      "path": "starseer/frames/windup.webp",
+      "lite": "starseer/frames/windup.lite.webp",
       "bounds": [
-        77,
-        209,
-        373,
-        462
+        85,
+        27,
+        394,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "hurt": {
+      "path": "starseer/frames/hurt.webp",
+      "lite": "starseer/frames/hurt.lite.webp",
+      "bounds": [
+        108,
+        91,
+        415,
+        465
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "hurt-recover": {
+      "path": "starseer/frames/hurt-recover.webp",
+      "lite": "starseer/frames/hurt-recover.lite.webp",
+      "bounds": [
+        104,
+        98,
+        451,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "down": {
+      "path": "starseer/frames/down.webp",
+      "lite": "starseer/frames/down.lite.webp",
+      "bounds": [
+        80,
+        323,
+        450,
+        461
       ],
       "anchor": [
         256,
@@ -178,13 +178,13 @@
       ]
     },
     "power": {
-      "path": "frames/power.webp",
-      "lite": "frames/power.lite.webp",
+      "path": "starseer/frames/power.webp",
+      "lite": "starseer/frames/power.lite.webp",
       "bounds": [
-        56,
-        107,
-        377,
-        463
+        129,
+        108,
+        357,
+        462
       ],
       "anchor": [
         256,
@@ -192,13 +192,13 @@
       ]
     },
     "channel": {
-      "path": "frames/channel.webp",
-      "lite": "frames/channel.lite.webp",
+      "path": "starseer/frames/channel.webp",
+      "lite": "starseer/frames/channel.lite.webp",
       "bounds": [
-        71,
-        107,
-        367,
-        463
+        122,
+        130,
+        388,
+        462
       ],
       "anchor": [
         256,
@@ -206,13 +206,13 @@
       ]
     },
     "release": {
-      "path": "frames/release.webp",
-      "lite": "frames/release.lite.webp",
+      "path": "starseer/frames/release.webp",
+      "lite": "starseer/frames/release.lite.webp",
       "bounds": [
-        65,
-        109,
-        406,
-        463
+        108,
+        117,
+        409,
+        462
       ],
       "anchor": [
         256,
@@ -222,7 +222,7 @@
   },
   "sequences": {
     "attack": {
-      "label": "Sword attack",
+      "label": "Staff attack",
       "poses": [
         "windup",
         "advance",
@@ -244,7 +244,7 @@
         12,
         0
       ],
-      "effect": "slash",
+      "effect": "impact",
       "impact": 2,
       "hold": false
     },
@@ -347,7 +347,7 @@
       "classId": "reaver",
       "armour": "default",
       "loadout": "sword",
-      "status": "draft"
+      "status": "pending"
     },
     {
       "classId": "reaver",
@@ -431,7 +431,7 @@
       "classId": "rogue",
       "armour": "default",
       "loadout": "twinDaggers",
-      "status": "draft"
+      "status": "pending"
     },
     {
       "classId": "rogue",
@@ -585,20 +585,20 @@
     }
   ],
   "notes": [
-    "3 reference families drafted; remaining combinations are pending and never substituted.",
-    "Casting uses a sheathed sword; ready-to-sheath transition remains an art review item.",
-    "Twin swords and two-weapon sword fighting remain separate authoring entries pending distinct choreography.",
-    "Enemy and non-base-armour animation expansion follows this base-loadout pass.",
-    "No runtime bindings or gameplay equipment rules are changed by this study."
+    "Staff is retained while casting; free hand releases the spell.",
+    "Flattened poses, with separate runtime effects.",
+    "Wind-up uses a dedicated repair to preserve the full staff ornament.",
+    "Final hand contacts and reaction staff-tip margin need review before gameplay binding."
   ],
   "sourceHashes": {
-    "attack.png": "65e2785ff28b9d3092205bf37d29a7cc43444d0a74f8df0a2776e40319b1bd18",
-    "casts.png": "261fa5c9e5724d339fdc58a9631ce626eb994f124e1395a9b6ec5d77f101149f",
-    "reactions.png": "0b0d9a2a050cd14476e63933abb7e641f2522f14ca2a4088024021b96c2d9484"
+    "attack.png": "06530c3f3bc6a82ac7df84a328f63ab84b10e9e65482fcd402936cb7d39d017c",
+    "casts.png": "cd03599d0c4c50ba242d59c85c899b9556ec0820b052e8577c44a717ededd383",
+    "reactions.png": "2c127628b8e77c4d82d935942fe95b5fd5fcb14803abf06a108ba613776e9336",
+    "windup.png": "a5e9aeba82273d15cef1d76f5a6ad4ae903394dc2745a0ea82b5a5a991fd4a12"
   },
   "bytes": {
-    "webp": 566320,
-    "lite": 155614
+    "webp": 451244,
+    "lite": 131682
   },
   "families": {
     "reaver/sword": {
@@ -615,5 +615,7 @@
       "rig": "starseer/starseer-staff.rig.json",
       "folder": "starseer/"
     }
-  }
+  },
+  "classId": "starseer",
+  "loadout": "staff"
 }

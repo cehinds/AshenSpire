@@ -14,8 +14,9 @@ authoring study has not been published as a game asset release.
 The Rogue twin-dagger continuation uses the approved alternative Rogue as its
 first-party reference. Its [source prompts](pose-studio/renewal/rogue/source/prompts.json),
 normalization recipe and source hashes accompany the portable projects. The
-Starseer staff source studies are also first-party generated drafts and remain
-under visual review before registration in the animation preview.
+Starseer staff studies are also first-party generated drafts. Their source
+prompts, repaired wind-up, normalization recipe and editable projects accompany
+the preview; final hand-contact review remains open before gameplay binding.
 
 ## Full card portrait library (2026-10-06)
 
