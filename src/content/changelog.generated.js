@@ -4,13 +4,23 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1697",
-    "date": "2026-10-06",
-    "group": "2026-10-06",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
     "summary": "Rear sprite studies archived for authoring",
     "detail": "The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.",
-    "build": "0.7.1.1058",
+    "build": "0.7.1.1060",
     "pullRequest": 1697,
     "url": "https://github.com/cehinds/AshenSpire/pull/1697"
+  },
+  {
+    "id": "pr-1692",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1059",
+    "pullRequest": 1692,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1692"
   },
   {
     "id": "pr-1693",
