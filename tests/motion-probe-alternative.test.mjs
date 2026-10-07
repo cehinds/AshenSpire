@@ -87,3 +87,23 @@ test('alternative browser predicate rejects absent, duplicate, wrong-layer and b
     assert.match(verdict.detail, reason);
   }
 });
+
+test('every same-door variant plant still changes the current real source', async () => {
+  let corpus;
+  const selftest = source.slice(source.indexOf("if (argv.includes('--selftest')) {"), source.indexOf('\nconst ROOT ='))
+    .replace("await import('./doorplant.mjs')", 'await harness()');
+  await runInNewContext(`(async () => { ${selftest} })()`, {
+    argv: ['--selftest'], ALTERNATIVE: true,
+    process: { exit() {} }, console: { log() {}, error() {}, info() {} },
+    harness: async () => ({ resolveShard: () => null, doorSelftest: async options => { corpus = options; return 0; } }),
+  });
+  assert.equal(corpus.plants.length, 16, 'retain the complete known-bad corpus');
+  assert.ok(corpus.extraCopy.includes('assets-alternative'), 'clean and planted copies must contain the same variant artwork');
+  for (const plant of corpus.plants) {
+    for (const edit of plant.edits || [plant]) {
+      const current = readFileSync(new URL(`../${edit.file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+      assert.ok(current.includes(edit.find), `${plant.name}: drifted mutation in ${edit.file}`);
+      assert.notEqual(edit.find, edit.replace, `${plant.name}: a no-op is not a known-bad`);
+    }
+  }
+});
