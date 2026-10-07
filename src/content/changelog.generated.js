@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Combat matchup rules defined",
     "detail": "Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.",
-    "build": "0.7.1.1062",
+    "build": "0.7.1.1064",
     "pullRequest": 1704,
     "url": "https://github.com/cehinds/AshenSpire/pull/1704"
   },
