@@ -193,7 +193,11 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   target.block -= blocked;
   reconcileWardBlock(target);
   const hpLoss = dmg - blocked;
-  const components = receipt?.components;
+  // Mitigation establishes the surviving types and their proportions. Critical
+  // and tactical modifiers change the final integer budget, so the receipt must
+  // allocate that budget back over those same types before allocating HP loss.
+  const componentShares = receipt && dmg > 0 ? allocateInteger(dmg, receipt.components.map(c => c.amount)) : [];
+  const components = receipt?.components.map((c, i) => ({ ...c, amount: componentShares[i] || 0 }));
   const hpShares = components && dmg > 0 ? allocateInteger(hpLoss, components.map((c) => c.amount)) : [];
   if (hpLoss > 0) target.hp -= hpLoss;
   ctx.emit('damageDealt', {
