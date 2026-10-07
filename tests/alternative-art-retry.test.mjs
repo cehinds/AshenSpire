@@ -130,7 +130,7 @@ test('a failed phone selection restores its dedicated mobile URL without replaci
   assert.equal(picture.querySelector('img'),image);
   assert.equal(source.srcset,map.get(art.mobilePath));
   assert.equal(image.src,map.get(art.path));
-  assert.notEqual(source.srcset,image.src,'the mobile export must remain distinct from the desktop export');
+  assert.equal(source.media,'(max-width: 599px)','the phone retains its authored responsive source even when bytes are shared');
   assert.equal(currentArtUrl(art.mobilePath),map.get(art.mobilePath),'verified mobile IDs use the same resolver');
 });
 
@@ -166,7 +166,8 @@ test('tier arrival refreshes mounted phone and desktop sources while preserving 
   assert.equal(source.media,'(max-width: 599px)');
   assert.equal(alternatives.srcset,`  ${map.get(art.mobilePath)} 1x ,\t${map.get(art.path)} 2x  `);
   assert.equal(unknown.srcset,untouched);
-  const next=new Map([[art.path,'objects/next-desktop.webp'],[art.mobilePath,'objects/next-mobile.webp']]);
+  // Byte-identical catalog aliases also share their verified URL in the next tier.
+  const next=new Map([art.path,art.mobilePath].map(id=>[id,`objects/next-${catalog.hashes[id.split('/').at(-1)]}.webp`]));
   setBuiltInSource(next);
   assert.equal(builtInArtArrived(next),3,'earlier verified object URLs are tracked to their authored IDs');
   assert.equal(source.srcset,next.get(art.mobilePath));

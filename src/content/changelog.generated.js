@@ -4,13 +4,43 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1689",
-    "date": "2026-10-06",
-    "group": "2026-10-06",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
     "summary": "Alternative figures recover and keep moving",
     "detail": "Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.",
-    "build": "0.7.1.1061",
+    "build": "0.7.1.1063",
     "pullRequest": 1689,
     "url": "https://github.com/cehinds/AshenSpire/pull/1689"
+  },
+  {
+    "id": "pr-1691",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1063",
+    "pullRequest": 1691,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
+    "id": "pr-1692",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Skill Level Up works after victory",
+    "detail": "Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.",
+    "build": "0.7.1.1059",
+    "pullRequest": 1692,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1692"
+  },
+  {
+    "id": "pr-1694",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Lighter alternative characters, clearer scenery",
+    "detail": "The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.",
+    "build": "0.7.1.1059",
+    "pullRequest": 1694,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1694"
   },
   {
     "id": "pr-1684",
@@ -21,6 +51,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1057",
     "pullRequest": 1684,
     "url": "https://github.com/cehinds/AshenSpire/pull/1684"
+  },
+  {
+    "id": "pr-1693",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Sharper maps and lighter sprites",
+    "detail": "Maps and backgrounds keep up to 720px of image height, and combat scenes retain their native detail. Sprites use lighter compression within a 480px ceiling. The shared art release and documented export targets apply to regular and alternative builds, with original paintings preserved.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1693,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1693"
   },
   {
     "id": "pr-1690",
