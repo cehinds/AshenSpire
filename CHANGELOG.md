@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **The Windows installer link downloads the installer** ([#1623](https://github.com/cehinds/AshenSpire/pull/1623), `0.7.1.1046`). The README's Windows installer link now downloads the latest `test` installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The `release` and `main` installers have their own direct links.
+
 - **Your route, one choice at a time** ([#1679](https://github.com/cehinds/AshenSpire/pull/1679), `0.7.1.1045`). The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.
 
 - **Inspect your starting stats and relic** ([#1681](https://github.com/cehinds/AshenSpire/pull/1681), `0.7.1.1043`). Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.

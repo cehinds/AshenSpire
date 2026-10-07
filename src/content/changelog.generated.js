@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1623",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "The Windows installer link downloads the installer",
+    "detail": "The README's Windows installer link now downloads the latest test installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The release and main installers have their own direct links.",
+    "build": "0.7.1.1046",
+    "pullRequest": 1623,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1623"
+  },
+  {
     "id": "pr-1679",
     "date": "2026-10-06",
     "group": "2026-10-06",
