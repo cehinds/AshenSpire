@@ -1,5 +1,6 @@
 import { alternativeArtCatalog } from './alternativeArtCatalog.js';
 import { assetUrl } from './assetmap.js';
+import { markArtPlaceholder } from './artFallback.js';
 
 /* ALTERNATIVE_ART_START */
 const alternativeArtMap = {};
@@ -27,6 +28,23 @@ export function alternativeSprite(id, side = 'enemy') {
   const image = new Image();
   image.alt = art.name;
   image.draggable = false;
+  image.addEventListener('error', () => {
+    // Keep the frame and authored crop in place while the failed image is
+    // absent. Retry restores this same figure at its newly resolved URL.
+    const placeholder = document.createElement('span');
+    placeholder.textContent = side === 'player' ? '⚔' : '☠';
+    placeholder.setAttribute('role', 'img');
+    placeholder.setAttribute('aria-label', art.name);
+    placeholder.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'
+      + 'border:2px solid var(--line-soft);border-radius:10px;background:var(--panel);font-size:48px';
+    image.remove();
+    root.append(placeholder);
+    markArtPlaceholder(root, () => {
+      placeholder.remove();
+      crop.append(image);
+      image.src = alternativeArtUrl(art.path);
+    });
+  });
   image.src = alternativeArtUrl(art.path);
   image.style.cssText = `position:absolute;width:${w * scale}px;height:${h * scale}px;left:${-x0 * scale}px;top:${-y0 * scale}px;max-width:none`;
   crop.append(image); stage.append(crop); root.append(stage);

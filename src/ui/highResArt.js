@@ -168,7 +168,9 @@ function idOfUrl(url) {
   }
   // A URL from an earlier source names one alias; its group is recovered from
   // that id's inlined URI, so a folder that covers only another alias still wins.
-  const id = url.startsWith('assets/') ? url : urlToId.get(url) || null;
+  // A failed first load can leave a bare branch-owned ID on screen. The
+  // verified built-in map is authoritative for these additional namespaces.
+  const id = url.startsWith('assets/') || builtInSource()?.has(url) ? url : urlToId.get(url) || null;
   const aliases = inlineIds.get(url) || builtInIds.get(url)
     || (id && (inlineIds.get(ASSET_MAP[id]) || builtInIds.get(builtInSource()?.get(id))));
   if (!aliases || aliases.length < 2) return id || (aliases ? aliases[0] : null);
