@@ -690,7 +690,7 @@ export function createSession({ registries, seedString, endless = false, restore
       enemies: c.enemies.map((e) => ({
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
-        alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        alive: e.alive, intent: e.intent, intentReads: e.intentReads ? { ...e.intentReads } : undefined, statuses: e.statuses, poiseMeter: e.poiseMeter,
         ...(e.wardMeter ? { wardMeter: e.wardMeter } : {}),
         ...(e.ratings ? { ratings: { ...e.ratings } } : {}),
         // WHAT IT HAS ALREADY DONE. The engine records every move that

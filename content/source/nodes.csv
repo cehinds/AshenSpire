@@ -111,15 +111,15 @@ source:unarmed,attackSource,Unarmed,9FC3E8,◇,,,,,Categorized Unarmed identity;
 delivery:melee,delivery,Melee,9FC3E8,◇,,,,,Categorized Melee identity; effects are authored separately.
 delivery:projectile,delivery,Projectile,9FC3E8,◇,,,,,Categorized Projectile identity; effects are authored separately.
 delivery:area,delivery,Area,9FC3E8,◇,,,,,Categorized Area identity; effects are authored separately.
-damage:slashing,damageType,Slashing,9FC3E8,◇,,,,,Categorized Slashing identity; effects are authored separately.
-damage:piercing,damageType,Piercing,9FC3E8,◇,,,,,Categorized Piercing identity; effects are authored separately.
-damage:blunt,damageType,Blunt,9FC3E8,◇,,,,,Categorized Blunt identity; effects are authored separately.
-damage:fire,damageType,Fire,9FC3E8,◇,,,,,Categorized Fire identity; effects are authored separately.
-damage:frost,damageType,Frost,9FC3E8,◇,,,,,Categorized Frost identity; effects are authored separately.
-damage:lightning,damageType,Lightning,9FC3E8,◇,,,,,Categorized Lightning identity; effects are authored separately.
-damage:arcane,damageType,Arcane,9FC3E8,◇,,,,,Categorized Arcane identity; effects are authored separately.
-damage:sacred,damageType,Sacred,9FC3E8,◇,,,,,Categorized Sacred identity; effects are authored separately.
-damage:decay,damageType,Decay,9FC3E8,◇,,,,,Categorized Decay identity; effects are authored separately.
+damage:slashing,damageType,Slashing,9FC3E8,◇,,,,,Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect.
+damage:piercing,damageType,Piercing,9FC3E8,◇,,,,,Bypasses up to 2 Guard; bypasses melee Counter.
+damage:blunt,damageType,Blunt,9FC3E8,◇,,,,,Adds 2 Poise damage once per action against each target.
+damage:fire,damageType,Fire,9FC3E8,◇,,,,,Applies 1 Burn on a Health hit unless the card already prints a Burn effect.
+damage:frost,damageType,Cold,9FC3E8,◇,,,,,Applies 1 Frost on a Health hit unless the card already prints a Frost effect.
+damage:lightning,damageType,Lightning,9FC3E8,◇,,,,,Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.
+damage:arcane,damageType,Force,9FC3E8,◇,,,,,Strips 2 Ward once per action; bypasses melee Counter.
+damage:sacred,damageType,Holy,9FC3E8,◇,,,,,Removes 1 hostile debuff from the attacker after a Health hit.
+damage:decay,damageType,Necrotic,9FC3E8,◇,,,,,Applies 1 Crimson Blight on a Health hit unless the card already prints a Crimson Blight effect.
 technique:heavy,technique,Heavy,9FC3E8,◇,,,,,Categorized Heavy identity; effects are authored separately.
 technique:precision,technique,Precision,9FC3E8,◇,,,,,Categorized Precision identity; effects are authored separately.
 technique:cleave,technique,Cleave,9FC3E8,◇,,,,,Categorized Cleave identity; effects are authored separately.
@@ -436,3 +436,29 @@ progression-whisperglass-die,property,Whisperglass Die,C79C64,🎲,,,,,What Whis
 progression-purse-of-borrowed-shadows,property,Purse of Borrowed Shadows,C79C64,👝,,,,,What Purse of Borrowed Shadows confers when the fight gives it its moment.
 progression-ember-alms-bowl,property,Ember Alms Bowl,C79C64,🥣,,,,,What Ember Alms Bowl confers when the fight gives it its moment.
 progression-ossuary-prayer-wheel,property,Ossuary Prayer Wheel,C79C64,🛞,,,,,What Ossuary Prayer Wheel confers when the fight gives it its moment.
+
+
+camp,,Combat camp,,,,,,,Authored combat identity shared by cards and enemy moves.
+maneuver,,Combat maneuver,,,,,,,Authored combat identity shared by cards and enemy moves.
+school,,Magic school,,,,,,,Authored combat identity shared by cards and enemy moves.
+counterMode,,Counter reach,,,,,,,Authored combat identity shared by cards and enemy moves.
+camp:physical,camp,Physical,D7B36B,⚔,,,,,Selects physical Guard or magical Ward combat rules.
+camp:spell,camp,Spell,9FC3E8,✦,,,,,Selects physical Guard or magical Ward combat rules.
+maneuver:attack,maneuver,Attack,D7B36B,⚔,,,,,Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy.
+maneuver:defend,maneuver,Defend,9FC3E8,🛡,,,,,Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard.
+maneuver:counter,maneuver,Counter,C8A3D8,↩,,,,,"Prepare one reaction. Attack and Smash deal half damage. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter."
+maneuver:sweep,maneuver,Sweep,93C9BC,🌀,,,,,Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it.
+maneuver:ranged,maneuver,Ranged,AAC88A,➶,,,,,"Ranged delivery avoids melee replies. Ranged Counter, spell Counter and defensive Alteration answer it."
+maneuver:smash,maneuver,Smash,DB9871,⚒,,,,,Heavy strike. Deals 50% more damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it.
+school:frost,school,Frost,A6D8EF,❄,,,,,Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo.
+school:fire,school,Fire,E47C43,🔥,,,,,Fire pressure: Burn buildup keeps pressure between turns.
+school:lightning,school,Lightning,E8D46A,ϟ,,,,,Lightning disruption: Sap weakens direct attacks and enables spell follow-ups.
+school:force,school,Force,B99DEC,✦,,,,,Force pressure: strip Ward and bypass melee Counter.
+school:alteration,school,Alteration,9BC8BE,◇,,,,,"Defensive and shaping magic: Ward, resource shaping and control. Answers ranged pressure."
+school:illusion,school,Illusion,C59BD7,◎,,,,,"Tempo and hand control: Weak, confusion, draw and energy tools."
+school:divine,school,Divine,F0D99A,✚,,,,,"Restoration and cleansing: heal, protect and remove hostile effects."
+school:decay,school,Decay,A4BD72,☣,,,,,"Attrition and offerings: Crimson Blight, life transfer and pay-health combos."
+counter:melee,counterMode,Melee counter,D7B36B,◇,,,,,"Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction."
+counter:ranged,counterMode,Ranged counter,D7B36B,◇,,,,,Replies only to incoming physical projectiles. Spells and melee moves do not trigger it.
+counter:spell,counterMode,Spell counter,D7B36B,◇,,,,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health."
+classification.enemyMove,classification,enemyMove,,,INTERNAL,30,,,A scoped action in an enemy move table.

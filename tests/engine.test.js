@@ -2072,7 +2072,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(row.scope === '', `card rows carry no scope ('${row.objectId}')`);
     }
     // The lookups the UI and any future synergy predicate depend on.
-    eq(tagsFor('gorefireSlash').map((tag) => tag.id).join('|'), 'blade|blood|gorefire|source:weapon|delivery:melee|theme:blood', 'Gorefire Slash separates legacy school, source, delivery and theme');
+    eq(tagsFor('gorefireSlash').map((tag) => tag.id).join('|'), 'blade|blood|gorefire|source:weapon|delivery:melee|theme:blood|camp:physical|maneuver:attack', 'Gorefire Slash separates legacy school, source, delivery and theme');
     eq(tagsFor('strike')[0].label, 'Blade', 'strike resolves to the Blade tag');
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
     assert(Array.isArray(tagIdsFor('strike')), 'tag ids always come back as an array');
@@ -2135,9 +2135,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Registries resolve the join onto the object, so a mechanic reads
     // obj.tags whatever table the row was authored in.
     eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood|item:blade', 'the Reaver carries its class tags — and, since plan phase 5a, the item type it favours');
-    eq(REG.cards.get('strike').tags.join('|'), 'blade|source:weapon|delivery:melee', 'a card carries its tags on the def');
+    eq(REG.cards.get('strike').tags.join('|'), 'blade|source:weapon|delivery:melee|camp:physical|maneuver:attack', 'a card carries its tags on the def');
     eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged|favored|item:magic-focus', 'the table resolves by family and id (the leaning and its item type since plan phase 5a)');
-    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee', 'tagIdsOf resolves an unscoped family');
+    eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee|camp:physical|maneuver:attack', 'tagIdsOf resolves an unscoped family');
     eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
       'item:blade|blade|basic|source:weapon|delivery:melee|damage:slashing', 'tagIdsOf resolves an armament, item type included');
     eq(tagIdsOf('class', { id: 'nobody' }).length, 0, 'an untagged object resolves to no tags');
@@ -2170,7 +2170,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const svc = tagService(REG);
     eq(svc, tagService(REG), 'the service is memoised per registries');
 
-    eq(svc.idsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee', 'ids by family and id');
+    eq(svc.idsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee|camp:physical|maneuver:attack', 'ids by family and id');
     eq(svc.tagsOf('card', { id: 'strike' })[0].label, 'Blade', 'resolved to registry rows');
     assert(svc.has('card', { id: 'strike' }, 'blade'), 'has() is true for a carried tag');
     assert(!svc.has('card', { id: 'strike' }, 'venom'), 'has() is false for one it does not carry');
@@ -2181,7 +2181,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(svc.idsOf('armour', armour).join('|'), 'item:armor|starstone', 'a scoped object resolves by (classId, id)');
 
     // The junction is the authority: a doctored copy cannot answer for content.
-    eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade|source:weapon|delivery:melee',
+    eq(svc.idsOf('card', { id: 'strike', tags: ['venom'] }).join('|'), 'blade|source:weapon|delivery:melee|camp:physical|maneuver:attack',
       'a hand-edited tags field does not override the rows');
 
     // Reverse lookup hands back objects, not ids.
@@ -2794,7 +2794,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // else. Effects now allow the legacy card domain plus categorized combat
     // domains; changing the junction must still change validation.
     const kw = contentBundle.keywords.map((k) => k.id);
-    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme'];
+    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme', 'camp', 'maneuver', 'school', 'counterMode'];
     eq(tagIdsAllowedFor(contentBundle, 'effect').sort().join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).sort().join('|'),
       'the derived effect vocabulary includes every approved combat category');
     const repaired = JSON.parse(JSON.stringify(contentBundle));
@@ -8687,7 +8687,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const target = c.enemies.find((e) => e.alive);
     const playable = c.piles.hand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && c.player.energy >= def.cost && (def.manaCost || 0) === 0 && (c.player.stamina ?? 0) >= (def.staminaCost || 0); });
     assert(playable, 'the opening hand holds a playable card');
-    const out = dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+    const out = dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId });
     const played = out.events.find((e) => e.type === 'cardPlayed');
     assert(played, 'cardPlayed fired');
     eq((played.derivedTags || []).join('|'), 'equipment.dualWield', 'the event carries the grip\'s derived tag');
@@ -8705,7 +8705,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const coopHand = coop.players.get('p1').piles.hand;
     const coopCard = coopHand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && (def.manaCost || 0) === 0 && def.cost <= 3; });
     assert(coopCard, 'the co-op hand holds a playable card');
-    const coopPlayed = playCoopCard(coop, 'p1', coopCard.instanceId, coop.enemies.find((e) => e.alive).id).events.find((e) => e.type === 'cardPlayed');
+    const coopPlayed = playCoopCard(coop, 'p1', coopCard.instanceId).events.find((e) => e.type === 'cardPlayed');
     assert(coopPlayed && (coopPlayed.derivedTags || []).join('|') === 'equipment.dualWield', `the co-op event carries the grip's tag — got ${JSON.stringify(coopPlayed && coopPlayed.derivedTags)}`);
     assert(!(coopPlayed.cardTags || []).includes('equipment.dualWield'), 'and not among the card\'s own tags');
     // The predicate reads the card's AUTHORED tags ∪ the derived tags, on the

@@ -465,7 +465,16 @@ async function press({ send, evaluate }, selector, holdMs = 0) {
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...at, button: 'left', clickCount: 1 });
 }
 
-const ATTACK_IN_HAND = `(() => { const c = document.querySelector('.hand .card.type-attack'); return c ? c.dataset.cardId : null; })()`;
+const ATTACK_IN_HAND = `(async () => {
+  const { resolveCard } = await import('/src/model/registries.js');
+  const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
+  const combat = window.__combat;
+  const c = [...document.querySelectorAll('.hand .card:not(.unaffordable)')].find(node => {
+    const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
+    return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst), { targeted: true });
+  });
+  return c ? c.dataset.cardId : null;
+})()`;
 // Turns the probe may end without playing while it waits for an Attack to be
 // drawn (a seed whose opening hand is all Skills; #1475 review).
 const DRAW_TURNS = 4;

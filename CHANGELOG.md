@@ -34,12 +34,17 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Combat cards and enemy moves share tactical rules** ([#1705](https://github.com/cehinds/AshenSpire/pull/1705), `0.7.1.1077`). All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.
+
 - **Both game versions retain their updates** ([#1701](https://github.com/cehinds/AshenSpire/pull/1701), `0.7.1.1067`). Alternative updates preserve the reviewed artwork checks, skill Level Up repairs and both changelog histories while accepting the latest promoted primary build.
 
 - **Alternative figures recover and keep moving** ([#1689](https://github.com/cehinds/AshenSpire/pull/1689), `0.7.1.1065`). Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.
 
 - **Skill Level Up works after victory** ([#1691](https://github.com/cehinds/AshenSpire/pull/1691), `0.7.1.1065`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.
 
+- **Combat matchup rules defined** ([#1704](https://github.com/cehinds/AshenSpire/pull/1704), `0.7.1.1064`). Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.
+
+- **Rear sprite studies archived for authoring** ([#1697](https://github.com/cehinds/AshenSpire/pull/1697), `0.7.1.1061`). The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.
 
 - **Alternative updates keep progressing** ([#1698](https://github.com/cehinds/AshenSpire/pull/1698), `0.7.1.1060`). The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.
 

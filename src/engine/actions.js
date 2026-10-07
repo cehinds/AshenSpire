@@ -39,13 +39,14 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
 import { cardRatingBonus, applyRatingImpact, absorbMeterGuard } from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.js';
+import { isMagicalAttack, ratingDamageMultiplier, attackImpact } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
+import { prepareMatchupHit, completeMatchupHit, matchupPoiseMultiplier, matchupRiderEffects, clearCombatCounter } from './combatMatchups.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -55,9 +56,12 @@ import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbi
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
-export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
-  const ratedBase = base + cardRatingBonus(ctx, source, carrier, 'damage', base);
-  if (ctx.foundation) return F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []).amount;
+export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true } = {}) {
+  const ratedBase = base + (carrier?.skipRatingBonus ? 0 : cardRatingBonus(ctx, source, carrier, 'damage', base));
+  if (ctx.foundation) {
+    const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []).amount;
+    return matchups ? prepareMatchupHit(ctx, source, target, carrier, amount).amount : amount;
+  }
   let dmg = ratedBase;
   const school = carrier && carrier.damageSchool;
   if (source && source.kind === 'player' && school) {
@@ -100,7 +104,8 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
     }
   }
   dmg = Math.floor(dmg);
-  return dmg < 0 ? 0 : dmg;
+  dmg = dmg < 0 ? 0 : dmg;
+  return matchups ? prepareMatchupHit(ctx, source, target, carrier, dmg).amount : dmg;
 }
 
 /**
@@ -117,7 +122,8 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
  *
  *   1. the card INSTANCE (`cardTags`), which model/registries.js writes only
  *      onto an equipment-generated card. Absent means an ordinary card and is
- *      the one genuine miss; `[]` is a profile that grants nothing, and says so.
+ *      the one genuine miss; `[]` grants no inherited identity. An explicitly
+ *      tagged local effect may still describe its own hit.
  *   2. the card ROW in the supplied registries, stamped from that bundle's own
  *      tagging rows.
  *   3. the EFFECT, which came out of that same bundle, and is what speaks for a
@@ -129,7 +135,9 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
  * game's tags for a bundle it never supplied.
  */
 export function attackTagsFor(action, effect, registries) {
-  if (action.card && Array.isArray(action.card.tags)) return action.card.tags;
+  if (action.card && Array.isArray(action.card.tags)) {
+    return action.card.tags.length || !Array.isArray(effect.tags) ? action.card.tags : effect.tags;
+  }
   const cardId = action.card && action.card.cardId;
   if (cardId && registries && registries.cards && registries.cards.has(cardId)) {
     const stamped = registries.cards.get(cardId).tags;
@@ -173,13 +181,15 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if (!target || !target.alive) return 0;
   const targetStatusesBefore = structuredClone(target.statuses || {});
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
-  const ratedBase = base + cardRatingBonus(ctx, source, carrier, 'damage', base);
+  const ratedBase = base + (carrier?.skipRatingBonus ? 0 : cardRatingBonus(ctx, source, carrier, 'damage', base));
   const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
-  const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
+  const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
   // A critical hit multiplies the finished blow, before Block takes its share.
-  const dmg = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
-  if (dmg > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: dmg });
-  const blocked = Math.min(target.block, dmg);
+  const critical = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
+  if (critical > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: critical });
+  const tactical = prepareMatchupHit(ctx, source, target, carrier, critical);
+  const dmg = tactical.amount;
+  const blocked = Math.min(target.block, Math.max(0, dmg - tactical.guardBypass));
   target.block -= blocked;
   reconcileWardBlock(target);
   const hpLoss = dmg - blocked;
@@ -202,11 +212,18 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     isAttack: true,
   });
   if (hpLoss > 0) {
-    if (ctx.ratingsRules) applyRatingImpact(ctx, source, target, carrier);
+    if (ctx.ratingsRules && !carrier?.combatReaction) {
+      const multiplier = matchupPoiseMultiplier(ctx, source, target, carrier);
+      applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null);
+    }
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
-    if (!usesSingleBreakMeter(ctx)) applyArcaneExposure(ctx, source, target, carrier);
+    if (!usesSingleBreakMeter(ctx) && !carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
+  completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss });
+  for (const effect of matchupRiderEffects(ctx, source, target, carrier, { amount: dmg, hpLoss })) {
+    ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
+  }
   return dmg;
 }
 
@@ -413,6 +430,7 @@ function afterHpChange(ctx, target, death = {}) {
 export function staggerEnemy(ctx, enemy) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
   if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
+  clearCombatCounter(enemy);
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
   enemy.skipNextTurn = true;
@@ -429,6 +447,7 @@ export function staggerEnemy(ctx, enemy) {
  * `playerStaggered` with what it took.
  */
 export function staggerPlayer(ctx, player) {
+  clearCombatCounter(player);
   const cfg = (((ctx.registries.balance || {}).stagger || {}).player) || {};
   const actionLoss = Number.isInteger(cfg.actionLoss) ? cfg.actionLoss : 0;
   const applied = {};
@@ -702,6 +721,10 @@ function runOpcode(ctx, action, eff) {
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
       const attackTags = attackTagsFor(action, eff, ctx.registries);
       const impact = ctx.foundation ? F.foundationImpact(ctx, action, hits) : [];
+      // Every queued effect of a committed card shares its carrier budget.
+      // Effect metadata is copied for charges/indices and cannot own that budget.
+      const combatRiderTargets = action.card?.combatRiderTargets || action.meta?.combatRiderTargets || [];
+      if (action.meta) action.meta.combatRiderTargets = combatRiderTargets;
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
@@ -713,7 +736,15 @@ function runOpcode(ctx, action, eff) {
           const carrier = { ...action.card, ...(eff.attack ? { attack: eff.attack } : {}),
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags,
+            combatProfile: eff.combatProfile || action.card?.combatProfile,
+            combatRiderTargets,
             energySpent: action.meta?.energySpent || 0 };
+          if (Array.isArray(carrier.appliedStatusEffects)) {
+            carrier.appliedStatuses = carrier.appliedStatusEffects
+              .filter(effect => !['self', 'owner', 'ally'].includes(effect.target)
+                && (!effect.if || evalPredicate(ctx, effect.if, { ...action, target: t })))
+              .map(effect => effect.status);
+          }
           if (ctx.ratingsRules && action.source?.kind === 'enemy') {
             const attackType = ctx.ratingsRules.enemyAttackType?.[`${action.source.enemyId}:${action.meta?.moveId || action.source.intent?.moveId}`];
             if (attackType && attackType !== 'auto') carrier.damageSchool = attackType;
@@ -730,15 +761,15 @@ function runOpcode(ctx, action, eff) {
           // balance.poise.playerImpactPerHit — the one impact the shipped
           // fight has (plan phase 8, SPEC §13.4k). The ruleset's weapon impact
           // below replaces it wherever a ruleset is handed in.
-          if (!ctx.ratingsRules && !ctx.foundation && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
+          if (!ctx.ratingsRules && !ctx.foundation && !carrier.combatReaction && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
             const perHit = ((ctx.registries.balance || {}).poise || {}).playerImpactPerHit;
             if (Number.isInteger(perHit) && perHit > 0) {
               dealPoiseDamage(ctx, t, perHit);
               ctx.emit('impactDealt', { sourceId: action.source.id, targetId: t.id, amount: perHit, ...(t.poiseMeter ? { poiseMeter: { value: t.poiseMeter.value, max: t.poiseMeter.max } } : {}), ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}) });
             }
           }
-          if (ctx.foundation && !evaded && t.alive && !(action.meta?.foundationAncestry?.length)) {
-            const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)));
+          if (ctx.foundation && !evaded && t.alive && !carrier.combatReaction && !(action.meta?.foundationAncestry?.length)) {
+            const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)) * matchupPoiseMultiplier(ctx, action.source, t, carrier));
             dealPoiseDamage(ctx, t, resistedImpact);
             // The player's meter is real too (plan phase 8): the receipt is
             // emitted for every target, and the armour skill hooks read it.
@@ -948,7 +979,11 @@ function runOpcode(ctx, action, eff) {
     }
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        dealPoiseDamage(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+        const multiplier = matchupPoiseMultiplier(ctx, action.source, t, action.card);
+        const amount = Math.floor(evalNum(ctx, action, eff.amount, 0, t) * multiplier);
+        if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
+          applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
+        } else dealPoiseDamage(ctx, t, amount);
       }
       break;
     }

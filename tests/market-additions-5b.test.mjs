@@ -164,15 +164,16 @@ test('Settings refuses a sale value above the price by name, and only that item\
   assert.equal(cheaper.consumables.find((def) => def.id === b.id).sellValue, 1);
 });
 
-test('with shipped defaults the pre-§14 shelves are byte-identical to buildShopStock, only shopOffers moves, and no stream was added', () => {
+test('with shipped defaults pre-§14 shelves are byte-identical and later streams remain unused', () => {
   // The pre-§14 shelves (cards, relics, flasks, armaments, weapon arts and the
   // Remove price) roll on `shop` and are compared byte for byte. The 5a
   // additions' stock (armour, sigils) and which of them come up DO shift on a
   // given seed, because the 5b offerings' chance rolls come before them on
   // `shopOffers`: SPEC §14.2 orders the roll by the written offerings, and
   // only today's shelves are promised unmoved (review, #1377).
-  // Only §15.4's `sigils` stream was appended after it, and a market draws nothing there.
-  assert.deepEqual(STREAM_NAMES.slice(STREAM_NAMES.indexOf('shopOffers')), ['shopOffers', 'sigils'], 'no stream was inserted before shopOffers');
+  // Sigils and intent visibility were appended later; a market draws neither.
+  assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15, 'no stream was inserted before shopOffers');
+  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility']);
   for (let seed = 1; seed <= 30; seed++) {
     const run = createRunState({ seed, classId: 'reaver', registries: REG });
     run.seenEvents = [];

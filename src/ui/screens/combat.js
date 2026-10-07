@@ -700,8 +700,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
       intent: {
-        name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
-        detail: moveDetail(current, intent),
+        name: intent.hidden ? `${words(intent.stance)} · Move hidden` : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
+        detail: intent.hidden ? 'Exact move, damage, and effects unread.' : moveDetail(current, intent),
+        hidden: intent.hidden, stance: intent.stance, profile: intent.profile,
         active: true,
       },
       skillLabel: 'Move set',
@@ -1359,7 +1360,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return combatantIntent(previewIntent(combat, enemy.id), () => {
       const intent = combatantSubject('enemy', enemy).intent;
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
-    });
+    }, registries);
   }
 
   function renderEnemies() {

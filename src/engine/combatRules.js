@@ -8,6 +8,7 @@ import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
+import { combatProfileFor } from '../model/combatCardProfile.js';
 
 export function rulesFingerprint(rules) {
   let hash = 2166136261;
@@ -59,7 +60,9 @@ export function cardActions(ctx, def, source, target, card, meta, sourceSnapshot
   return rows.map(({ effect, hits, snapshot }) => {
     // Live plays supply snapshots captured before payment. Standalone callers
     // capture here; later hits keep that source if a trigger changes equipment.
-    const carrier = hits > 0 ? snapshot || foundationCarrier(ctx, source, card, effect.attack) : card;
+    const resolved = hits > 0 ? snapshot || foundationCarrier(ctx, source, card, effect.attack) : card;
+    const carrier = hits > 0 ? { ...resolved, appliedStatusEffects: card.appliedStatusEffects,
+      appliedStatuses: card.appliedStatuses } : resolved;
     const action = { effect, source, owner: source, target, card: carrier, meta: { ...meta, foundationHitCount: total, foundationHitOffset: offset } };
     offset += hits; return action;
   });
@@ -80,6 +83,13 @@ export function foundationSource(ctx, entity, carrier = null) {
   const attack = attackDescriptor(carrier || {});
   if (attack.source === 'unarmed') return { ...state.rules.fallbackSource, sourceType: 'unarmed' };
   const kind = attack.source || 'weapon';
+  // Authored enemy moves are their own source; player hands never supply them.
+  if (entity?.kind === 'enemy' && carrier?.combatProfile?.camp && !profile.sources) {
+    return { ...state.rules.fallbackSource, id: `${entity.id}/${carrier.moveId || 'reaction'}`,
+      sourceType: kind, family: kind === 'spell' ? 'focus' : 'natural',
+      damageType: attack.damageType || carrier.combatProfile.damageType || state.rules.fallbackSource.damageType,
+      tags: [...(carrier.tags || [])] };
+  }
   const canonicalHand = (hand) => ({ right: 'mainHand', left: 'offHand' }[hand] || hand);
   const explicitHand = canonicalHand(attack.hand || carrier?.sourceHand);
   const hands = explicitHand ? [explicitHand] : [...new Set([profile.defaultSource || 'mainHand', 'mainHand', 'offHand'])];
@@ -116,7 +126,9 @@ export function foundationCarrier(ctx, entity, carrier = {}, effectAttack = null
   const source = structuredClone(foundationSource(ctx, entity, { ...carrier, attack }));
   if (source.sourceType === 'unarmed') attack.source = 'unarmed';
   const tags = resolvedAttackTags(carrier.tags || [], source, attack, ctx.foundation.rules.damageTypes);
-  return { ...carrier, attack, tags, resolvedSource: source };
+  const typed = combatProfileFor({ ...carrier, attack, tags });
+  return { ...carrier, attack, tags, resolvedSource: source,
+    ...(carrier.combatProfile ? { combatProfile: { ...carrier.combatProfile, damageType: typed.damageType } } : {}) };
 }
 
 export function foundationDamage(ctx, source, target, base, carrier = null, attackTags = []) {

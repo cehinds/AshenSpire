@@ -130,7 +130,7 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
   }
   const resolved = liveTagRows.length
     ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
-    : def.cardTags && def.cardTags.length
+    : def.cardTags != null
       ? service.resolve(def.cardTags)
       : service.tagsOf('card', def);
   // Keep legacy schools for compatibility, but do not print Blood/Heavy twice

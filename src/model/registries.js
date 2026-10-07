@@ -210,9 +210,22 @@ export function createRegistries(contentBundle) {
   const tagFamilies = [...(bundle.tagFamilies || [])];
   const stamped = stampTags(bundle);
   const collection = (source, fallback) => stamped.get(source) || fallback;
+  // Scoped move ids repeat across enemies, so this tagged collection remains
+  // a table; nested enemy moves and tagService both read the stamped rows.
+  registries.enemyMoves = deepFreeze(collection('enemyMoves', bundle.enemyMoves || []));
 
   for (const type of REGISTRY_TYPES) {
-    registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
+    let defs = collection(type, bundle[type]);
+    if (type === 'enemies' && bundle.enemyMoves) {
+      const moves = collection('enemyMoves', bundle.enemyMoves);
+      const byEnemy = new Map();
+      for (const move of moves) {
+        if (!byEnemy.has(move.enemyId)) byEnemy.set(move.enemyId, new Map());
+        byEnemy.get(move.enemyId).set(move.id, move);
+      }
+      defs = (defs || []).map((enemy) => ({ ...enemy, moves: Object.fromEntries(Object.entries(enemy.moves || {}).map(([id, move]) => [id, byEnemy.get(enemy.id)?.get(id) || move])) }));
+    }
+    registries[type] = makeRegistry(TYPE_SINGULAR[type], defs);
   }
   // What each `property` tag confers, keyed by the tag (content/propertyRules.js).
   // Read only by the mount path; a getter throws on an unknown tag like every

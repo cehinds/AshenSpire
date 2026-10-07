@@ -1,6 +1,10 @@
+import { combatMatchups, combatIntent } from '../content/combatMatchups.js';
+import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
+import { clearCombatCounter } from './combatMatchups.js';
+import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { passiveMax } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
-import { cardTargetPlan, assertCardTarget } from '../model/cardTargets.js';
+import { cardTargetPlan, assertCardTarget, immediateCardEffects } from '../model/cardTargets.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 // src/engine/combat.js — action queue + turn loop (generic interpreter)
 // (SPEC §3.9, §4.1–§4.3, §4.6)
@@ -158,6 +162,8 @@ export function createCombat({
       }).value
       : 0);
   const combat = {
+    combatMatchupRules: structuredClone(registries.balance?.combatMatchups || combatMatchups),
+    combatIntentRules: structuredClone(registries.balance?.combatIntent || combatIntent),
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     ...(ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
@@ -436,6 +442,7 @@ function startPlayerTurn(combat) {
   // Poise and Ward guards (gainPoise / gainWard) expire with Block; no
   // retainBlock-style modifier keeps them.
   clearMeterGuards(p);
+  clearCombatCounter(p);
 
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
@@ -521,6 +528,7 @@ function enemyPhase(combat) {
     if (!S.getFlag(combat, e, 'retainBlock')) e.block = 0;
     reconcileWardBlock(e);
     clearMeterGuards(e);
+    clearCombatCounter(e);
   }
   drainQueue(combat);
   if (combat.result) return;
@@ -556,17 +564,19 @@ function enemyPhase(combat) {
         // Commit turn: telegraph stays, do the whileCharging part now,
         // resolve the real payload on a later enemy turn.
         const wc = (move.delay && move.delay.whileCharging) || {};
+        const carrier = enemyMoveCarrier(enemy, move, enemy.intent.moveId);
         if (wc.block != null) {
           combat.enqueue({
             effect: { op: 'block', target: 'self', amount: wc.block },
             source: enemy,
             owner: enemy,
             target: combat.player,
+            card: carrier,
             meta: {},
           });
         }
         for (const eff of wc.effects || []) {
-          combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, meta: {} });
+          combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId: enemy.intent.moveId } });
         }
         enemy.pendingMove = {
           moveId: enemy.intent.moveId,
@@ -603,26 +613,29 @@ function executeMovePayload(combat, enemy, move, moveId) {
   // cancels never happens. This is what did — the inspector's history.
   (enemy.performedMoves ||= []).push(moveId);
   combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
-  if (move.damage != null) {
+  const carrier = enemyMoveCarrier(enemy, move, moveId);
+  if (move.damage != null && carrier.combatProfile.maneuver !== 'counter') {
     combat.enqueue({
       effect: { op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits != null ? move.hits : 1, ...(move.damageSchool ? { damageSchool: move.damageSchool } : {}) },
       source: enemy,
       owner: enemy,
       target: combat.player,
+      card: carrier,
       meta: { moveId },
     });
   }
-  if (move.block != null) {
+  if (move.block != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) {
     combat.enqueue({
       effect: { op: 'block', target: 'self', amount: move.block },
       source: enemy,
       owner: enemy,
       target: combat.player,
+      card: carrier,
       meta: { moveId },
     });
   }
   for (const eff of move.effects || []) {
-    combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, meta: { moveId } });
+    if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage'].includes(eff.op)) combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
   }
 }
 
@@ -654,7 +667,12 @@ function rollIntents(combat, isFirstTurn = false) {
       continue;
     }
     enemy.movesHistory.push(moveId);
+    clearCombatCounter(enemy);
     enemy.intent = buildIntent(def.moves[moveId], moveId, enemy);
+    if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
+    else delete enemy.intentRevealed;
+    primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
+    drainQueue(combat);
   }
 }
 
@@ -688,6 +706,7 @@ function weightedMovePick(combat, enemy, def) {
 
 function buildIntent(move, moveId, enemy = null) {
   return {
+    combatProfile: enemyMoveCarrier(enemy || {}, move, moveId).combatProfile,
     kind: move.intent,
     moveId,
     damage: enemyMoveDamage(enemy, move),
@@ -1011,7 +1030,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
 }
 
 function needsEnemyTarget(def) {
-  return (def.effects || []).some((eff) => eff.target === 'enemy');
+  return immediateCardEffects(def).some((eff) => eff.target === 'enemy');
 }
 
 // Effective numeric cost after relic passives (powerCostReduction, min 0).
@@ -1167,7 +1186,11 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
     // magical and carries Ward, which the registry def cannot (attackImpact).
     ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
   };
+  Object.assign(cardRef, tacticalCarrier(def, cardRef, combat, p));
   const sourceSnapshots = F.cardSourceSnapshots(combat, def, p, cardRef);
+  if (cardRef.combatProfile?.maneuver === 'counter' && sourceSnapshots?.size) {
+    Object.assign(cardRef, sourceSnapshots.values().next().value);
+  }
   const before = { ...R.beforeAbilityPlay(combat, p), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) };
   A.preflightCardHp(combat, def, p, target, before);
   combat.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.authoredTags, abilityKind: cardRef.abilityKind, sourceId: p.id, targetId: target?.id || null, ...before });
@@ -1217,11 +1240,13 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
   if (charges.keys.length) combat.emit('cardChargeConsumed', { keys: charges.keys, cardId: inst.cardId, sourceId: p.id });
   combat.pendingAbilityPlay = { instance: inst, ref: cardRef, kind, printedManaCost: def.manaCost || 0, targetId: target?.id || null, before };
   const charged = new Set();
-  for (const [index, action] of F.cardActions(combat, { ...def, effects: chargedEffects }, p, target, cardRef, meta, sourceSnapshots).entries()) {
+  const tacticalEffects = prepareTacticalCard(combat, p, target, cardRef, chargedEffects, meta, { damageBonus: charges.damage + charges.damageEffect, poiseBonus: charges.break });
+  for (const [index, action] of F.cardActions(combat, { ...def, effects: tacticalEffects }, p, target, cardRef, meta, sourceSnapshots).entries()) {
     action.meta = { ...action.meta, abilityEffectIndex: index };
     R.attachAbilityCharges(action, charges, charged);
     combat.enqueue(action);
   }
+  enqueueCounterWard(combat, p, cardRef, meta);
   combat.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id,
     cardInstanceId: inst.instanceId,
@@ -1369,6 +1394,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
 
+  Object.assign(action.card, tacticalCarrier(def, action.card, combat, p));
   const bindings = computeTokenBindings(def.effects || []);
   const tokenByIndexField = new Map();
   for (const bd of bindings) tokenByIndexField.set(`${bd.index}:${bd.field}`, bd.token);
@@ -1531,13 +1557,16 @@ export function previewIntent(combat, enemyInstanceId) {
   const enemy = findEntity(combat, enemyInstanceId);
   if (!enemy || enemy.kind !== 'enemy') throw new Error(`Unknown enemy instance '${enemyInstanceId}'`);
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
-  const out = { ...intent };
+  const profile = intent.combatProfile || {};
+  const revealed = enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false;
+  if (!revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
+  const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   if (intent.damage != null) {
     const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
     const move = combat.registries.enemies.get(enemy.enemyId).moves[intent.moveId];
     const effect = move?.effects?.find(e => e.op === 'damage');
-    const carrier = damageSchool && damageSchool !== 'auto' ? { damageSchool } : { damageSchool: effect?.damageSchool || move?.damageSchool, tags: effect?.tags || move?.tags || [] };
-    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, [], carrier);
+    const carrier = { ...enemyMoveCarrier(enemy, move || {}, intent.moveId), damageSchool: damageSchool && damageSchool !== 'auto' ? damageSchool : effect?.damageSchool || move?.damageSchool };
+    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, carrier.tags, carrier);
     out.hits = intent.hits != null ? intent.hits : 1;
     out.totalDamage = out.damage * out.hits;
   }

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1705",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Combat cards and enemy moves share tactical rules",
+    "detail": "All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.",
+    "build": "0.7.1.1077",
+    "pullRequest": 1705,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1705"
+  },
+  {
     "id": "pr-1701",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -31,6 +41,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1065",
     "pullRequest": 1691,
     "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
+    "id": "pr-1704",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Combat matchup rules defined",
+    "detail": "Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.",
+    "build": "0.7.1.1064",
+    "pullRequest": 1704,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1704"
+  },
+  {
+    "id": "pr-1697",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Rear sprite studies archived for authoring",
+    "detail": "The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.",
+    "build": "0.7.1.1061",
+    "pullRequest": 1697,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1697"
   },
   {
     "id": "pr-1698",
