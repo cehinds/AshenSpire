@@ -7,13 +7,25 @@ import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems } from '../src/model/combatTacticsRules.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { armCombatCounter, matchupRules, prepareMatchupHit } from '../src/engine/combatMatchups.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
 
 const registries = createRegistries(contentBundle);
+test('headless co-op preview conceals exact move when observer is missing', () => {
+  const combat = fight();
+  const enemy = combat.enemies[0];
+  enemy.intentReads = { knownSeat: true };
+  combat.playerKey = 'unknownSeat';
+  const hidden = previewIntent(combat, enemy.id);
+  assert.equal(hidden.hidden, true);
+  assert.equal(hidden.moveId, null);
+  assert.equal(hidden.damage, undefined);
+  combat.playerKey = 'knownSeat';
+  assert.equal(previewIntent(combat, enemy.id).hidden, false);
+});
 function fight(options = {}) {
   return createCombat({ registries, rng: createRng(449), enemyIds: ['wanderingSoldier'], ...options,
     player: { classId: 'reaver', maxHp: 500, hp: 500, maxMana: 20, energyMax: 3, drawPerTurn: 3,

@@ -30,7 +30,8 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
     const pieces = [];
     if (profile.maneuver === 'counter') {
       const rules = registries?.balance?.combatMatchups?.counter || combatMatchups.counter;
-      const base = move.counterDamage ?? move.damage ?? rules.defaultDamage;
+      const base = enemyMoveDamage(enemy, { ...move,
+        damage: move.counterDamage ?? move.damage ?? rules.defaultDamage });
       pieces.push(`${base} base counter damage`);
       pieces.push(`One eligible hit spends the reaction. Incoming eligible damage × ${rules.incomingMultiplier}; reply only after full Guard or Ward absorption: floor(base × ${rules.retaliationMultiplier}) + ${rules.retaliationFlat} + bonus`);
       if (move.counterPoiseDamage > 0) pieces.push(`${move.counterPoiseDamage} base counter Poise damage × ${rules.poiseMultiplier}`);

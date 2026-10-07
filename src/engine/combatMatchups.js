@@ -140,19 +140,20 @@ export function completeMatchupHit(ctx, source, target, carrier, receipt, { bloc
 /** Once per action and target. Reactions never generate another rider chain. */
 export function matchupRiderEffects(ctx, source, target, carrier, { amount = 0, hpLoss = 0 } = {}) {
   const profile = combatProfileOf(carrier);
-  if (!profile || carrier?.combatReaction || !(amount > 0) || !target?.alive) return [];
+  if (!profile || carrier?.combatReaction || !(amount > 0) || !target) return [];
   const key = ctx.playerIdForEntity?.(target) || target.id;
   const seen = carrier.combatRiderTargets;
   if (seen?.includes(key)) return [];
   const cfg = matchupRules(ctx);
   const type = cfg.damageAliases?.[profile.damageType] || profile.damageType;
   const rider = cfg.damageRiders?.[type];
-  if (!rider || (rider.requiresHpLoss && hpLoss <= 0)) return [];
+  if (!rider || (rider.requiresHpLoss && hpLoss <= 0)
+    || (!target.alive && !(rider.cleanse && source?.alive))) return [];
   if (seen) seen.push(key);
   const effects = [];
-  if (rider.poise) effects.push({ op: 'poiseDamage', amount: rider.poise });
-  if (rider.wardDrain) stripCombatWard(ctx, source, target, rider.wardDrain);
-  if (rider.status && !carrier.appliedStatuses?.includes(rider.status) && ctx.registries?.statuses?.has(rider.status)) {
+  if (target.alive && rider.poise) effects.push({ op: 'poiseDamage', amount: rider.poise });
+  if (target.alive && rider.wardDrain) stripCombatWard(ctx, source, target, rider.wardDrain);
+  if (target.alive && rider.status && !carrier.appliedStatuses?.includes(rider.status) && ctx.registries?.statuses?.has(rider.status)) {
     effects.push({ op: 'applyStatus', status: rider.status, stacks: rider.stacks });
   }
   if (rider.cleanse && source?.alive) {

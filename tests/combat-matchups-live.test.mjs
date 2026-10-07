@@ -246,3 +246,14 @@ test('empty custom combat identity retains local hit vulnerability tags in previ
   assert.equal(c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player').amount, 12);
   assert.equal(getStacks(c.enemies[0], 'bleed'), 0, 'empty card identity does not inherit a tactical Slashing rider');
 });
+
+test('Holy lethal hit cleanses its attacker before the card ends combat', () => {
+  const c = solo('sacredHarvest');
+  c.enemies[0].hp = 1;
+  applyStatus(c, c.player, 'weak', 3);
+  dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: c.enemies[0].id });
+  assert.equal(c.result, 'victory');
+  assert.equal(c.enemies[0].alive, false);
+  assert.equal(getStacks(c.player, 'weak'), 2);
+  assert(c.eventLog.some(event => event.type === 'statusRemoved' && event.targetId === 'player' && event.status === 'weak' && event.amount === 1));
+});

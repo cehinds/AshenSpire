@@ -204,6 +204,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let seats = (myIds && myIds.length ? myIds : [myId]).slice();
   let seatIdx = 0;
   let me = seats[0];
+  let combatantDoor = null;
+  function closeCombatantDoor() {
+    combatantDoor?.close();
+    combatantDoor = null;
+  }
   let selectedEnemy = null;
   let selectedCombatantId = null;
   function selectCombatant(id) {
@@ -433,6 +438,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   function setSeat(i) {
     if (i === seatIdx || !seats[i]) return;
+    closeCombatantDoor();
     disposeProgression();
     seatIdx = i;
     me = seats[i];
@@ -609,6 +615,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    closeCombatantDoor();
     disposeProgression();
     closeClassRespec();
     app.removeEventListener('click', dismissCombatant);
@@ -806,9 +813,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           detail: intent.hidden ? 'Exact move, damage, and effects unread.' : intentTooltip(intent, { victim: 'each hero' }),
         } }
         : { abilities }) };
-      openModal({ title: name, size: 'md', className: 'combatant-door', opener,
+      closeCombatantDoor();
+      combatantDoor = openModal({ title: name, size: 'md', className: 'combatant-door', opener,
         bodyClassName: 'combatant-inspector-body',
         body: host => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+        onClose: () => { combatantDoor = null; },
       });
     });
   }

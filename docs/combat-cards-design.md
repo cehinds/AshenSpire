@@ -1,6 +1,6 @@
-# Combat cards: current candidate and next suggestions
+# Combat cards: rules and next suggestions
 
-Status: implementation candidate, pending merged PR and full validation. Contract: [SPEC §4.7](../SPEC.md#47-tagged-combat-cards-and-readable-enemy-stances). Existing cards and enemy moves receive authored tags; suggestions below add no runtime behavior until implemented separately.
+Implementation: [#1705](https://github.com/cehinds/AshenSpire/pull/1705). Contract: [SPEC §4.7](../SPEC.md#47-tagged-combat-cards-and-readable-enemy-stances). All 260 card families, 17 basic equipment profiles and 103 enemy moves receive authored tags. Suggestions below add no runtime behavior until implemented separately.
 
 ## Core split
 
@@ -11,7 +11,7 @@ Status: implementation candidate, pending merged PR and full validation. Contrac
 
 ## Physical loop
 
-| Type | Current candidate | Answer | Example existing cards |
+| Type | Implemented behavior | Answer | Example existing cards |
 |---|---|---|---|
 | Attack | +50% Poise pressure against prepared Smash or casting; ordinary HP damage unchanged | Defend or melee Counter, unless attack uses bypassing damage | Strike, Ambush, progression Ember Hew |
 | Defend | Printed Block/support protects next enemy phase | Smash gets +50% against physical Guard and +3 Poise when Guard breaks | Defend, Iron Skin, Shield Bastion |
@@ -27,7 +27,7 @@ Important limit: Ranged currently means safe from **melee retaliation**, not bla
 - Counter card retains immediate Block, draw, Prepared and printed statuses. Listed direct damage/Poise becomes reply budget. No printed Block: gain 4 base Guard; all Counters add 2 base magical Ward. No listed damage: default reply base 6. Ratings/modifiers still apply where ordinary rules specify.
 - First eligible positive hit deals half damage and spends reaction. Fully absorbed hit returns `floor(base × 1.5) + 5 + bonus`. Partial absorption spends reaction without return damage. Listed positive reply Poise gets ×1.5; absent Poise stays absent.
 - Melee mode covers eligible physical Attack/Smash. Ranged mode covers physical projectiles. Spell mode covers spells and physical projectiles; against a physical projectile its reply removes Ward without HP damage. Against an incoming spell it can damage caster Health. Reactions cannot chain reactions.
-- Player reaction expires at next player-turn start. Enemy Counter becomes active when next stance is rolled; it expires at that enemy's turn start.
+- Player reaction expires at next player-turn start. Enemy Counter becomes active when next stance is rolled; it expires at that enemy's turn start. Stagger immediately interrupts an armed Counter; death prevents retaliation.
 - Current enemy examples: Gilded Knight Parry, Court Duelist Riposte and Cinder Mantis Folded Blades use melee Counter; Chain Scavenger Chain Snare uses ranged Counter; Mirror Scribe Polished Ward uses Spell Counter. Their old support payloads stay intact; explicit reply base is 6.
 
 ## Spell schools

@@ -143,7 +143,7 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Reaver | briarRefuge (normal) | 100 | 2.9 / 63 |
 | Reaver | chainAmbush (normal) | 100 | 2.3 / 63 |
 | Reaver | bossBellKeeper (boss) | 100 | 22.2 / 63 |
-| Reaver | bossThornMatriarch (boss) | 100 | 21 / 63 |
+| Reaver | bossThornMatriarch (boss) | 100 | 21.9 / 63 |
 | Starseer | loneSoldier (normal) | 100 | 0.7 / 66 |
 | Starseer | patrol (normal) | 100 | 6.7 / 66 |
 | Starseer | packHunt (normal) | 100 | 8.4 / 66 |

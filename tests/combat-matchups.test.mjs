@@ -185,3 +185,16 @@ test('empty card identity permits explicit local hit tags without inheriting reg
   assert.equal(prepareMatchupHit(fixture().ctx, null, null,
     { tags: attackTagsFor(action, { tags: ['starstone'] }, registries), combatProfile: { camp: null } }, 10).profile, null);
 });
+
+test('lethal contact allows source cleansing while dead targets receive no riders', () => {
+  const f = fixture(); f.target.alive = false; f.target.hp = 0;
+  f.target.block = 4; f.target.wardBlock = 2;
+  f.source.statuses.weak = { stacks: 3 };
+  assert.deepEqual(matchupRiderEffects(f.ctx, f.source, f.target, card('attack', 'holy'), { amount: 4, hpLoss: 4 }),
+    [{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }]);
+  for (const type of ['blunt', 'slashing', 'force']) {
+    assert.deepEqual(matchupRiderEffects(f.ctx, f.source, f.target, card('attack', type), { amount: 4, hpLoss: 4 }), []);
+  }
+  assert.equal(f.target.block, 4);
+  assert.equal(f.target.wardBlock, 2);
+});
