@@ -6,19 +6,39 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 
 const reg = createRegistries(contentBundle);
-const rewardIds = new Set(contentBundle.classes.flatMap(c => c.cardPool));
+const legacyReg = reg.legacyProgressionSource;
+const rewardIds = new Set(contentBundle.legacyProgression.classes.flatMap(c => c.cardPool));
 
-test('reward cards have one turn cost; Mana rarity shares remain unchanged', () => {
+test('preserved legacy reward cards retain their pinned Mana rarity shares and one turn cost', () => {
   for (const [rarity, count, manaShare, exceptions] of [['common',62,0.15,5], ['uncommon',63,0.3,0], ['rare',49,0.5,0]]) {
-    const cards = reg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
+    const cards = legacyReg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
     assert.equal(cards.length, count);
     assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * manaShare) - exceptions);
     for (const c of cards) for (const upgraded of [false,true]) {
-      const def = resolveCard(reg, {cardId:c.id,upgraded});
-      const cost = reg.framework.costProfile(def);
+      const def = resolveCard(legacyReg, {cardId:c.id,upgraded});
+      const cost = legacyReg.framework.costProfile(def);
       assert.equal(cost.stamina, def.cost === 'X' ? 0 : def.cost);
       assert.equal(def.staminaCost || 0, 0, 'no obsolete additive stamina charge');
       assert.ok(!def.manaCost || def.cost === 'X' || def.cost >= 1);
+    }
+  }
+});
+
+test('every expanded ability grade pays its authored Action cost and Mana equal to rank', () => {
+  const families = reg.cards.all().filter(card => card.gradeProfiles);
+  assert.equal(families.length, 82, 'forty new families and forty-two retuned existing abilities');
+  for (const card of families) {
+    assert.equal(card.gradeProfiles.length, 6, card.id);
+    for (let rank = 0; rank <= 5; rank++) {
+      const profile = card.gradeProfiles[rank];
+      const def = resolveCard(reg, { cardId: card.id, abilityRank: rank });
+      const cost = reg.framework.costProfile(def);
+      assert.equal(profile.rank, rank, card.id);
+      assert.equal(def.manaCost || 0, rank, `${card.id} grade ${rank}: printed Mana`);
+      assert.equal(def.cost, profile.actionCost, `${card.id} grade ${rank}: authored Actions`);
+      assert.ok(def.cost >= 1 && def.cost <= (rank === 0 ? 3 : rank));
+      assert.equal(cost.stamina, def.cost, 'Actions and Stamina are the same resource');
+      assert.equal(def.staminaCost || 0, 0, 'no additional Stamina charge');
     }
   }
 });
@@ -55,7 +75,7 @@ test('either missing dual resource refuses atomically before payment or card mov
       c.player[missing] = 0;
       const before = { energy: c.player.energy, stamina: c.player.stamina, mana: c.player.mana,
         hand: structuredClone(c.piles.hand), hp: c.enemies[0].hp };
-      assert.throws(() => play(c), new RegExp(`Not enough ${missing}`));
+      assert.throws(() => play(c), missing === 'mana' ? /Not enough mana/ : /Not enough Actions \(Stamina\)/);
       assert.deepEqual({ energy: c.player.energy, stamina: c.player.stamina, mana: c.player.mana,
         hand: c.piles.hand, hp: c.enemies[0].hp }, before);
     }

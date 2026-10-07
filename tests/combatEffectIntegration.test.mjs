@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
+import {legacyContentBundle} from './helpers/legacy-progression-content.mjs';
 import {createRegistries,resolveCard} from '../src/model/registries.js';
 import {combatEffectPlan,combatEffectTags,combatEffectTargetIds} from '../src/model/combatEffects.js';
 import {decorateCombatEffects,combatEffectForEvent,combatEffectReceipt,presentationTargetIds} from '../src/model/combatEffectEvents.js';
@@ -38,7 +39,8 @@ test('cost variants retain auras, defensive identities and actual X spending',()
  assert.equal(combatEffectPlan(x,{energySpent:3}).activation,'mundaneHigh');
 });
 test('real co-op receipts retain the casting seat and a different friendly recipient',()=>{
- const host=createSession({registries:reg,seedString:'GUARD2'});
+ // This receipt fixture replays historical cards after character setup.
+ const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
  for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});
  host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
  const p=host.live.combat.players.get('p2');p.entity.energy=99;p.entity.mana=99;p.entity.stamina=99;

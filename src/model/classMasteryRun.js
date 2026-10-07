@@ -1,3 +1,5 @@
+import { expandedProgression, queueClassMilestone } from './classMilestones.js';
+import { activateAbilitySkill } from './skills.js';
 // SPEC §13.4q. A scoped projection keeps authored content complete while live
 // reward/shop readers see the run owner's current unlocks. Definitions remain
 // readable, including a locked card taught by a book.
@@ -17,6 +19,15 @@ export function openClassMasteryTrack(registries, run, classId) {
   (run.classMasteryState.spentXp ||= {})[classId] ??= spent;
   run.classRewardLevels = { ...run.classRewardLevels, [classId]: run.skills[`class:${classId}`].level };
   run.classMasteryState.earnedXp[classId] ||= 0;
+  if (expandedProgression(run)) {
+    for (let level = 1; level <= held.level; level++) {
+      const receipt = queueClassMilestone(registries, run, classId, level, { veteran: true });
+      if (!receipt) continue;
+      for (const kind of ['cards','armory','relic']) if (receipt.grants[kind]) receipt.grants[kind].state = 'spent';
+    }
+    const ability = registries.balance.progression.classSkills[classId]?.find(id => ['item:magic-focus','combatManeuvers'].includes(id));
+    if (ability) activateAbilitySkill(run, ability);
+  }
 }
 
 export function openRunClassMastery(registries, run, meta, { receiptId, bankable = true } = {}) {
@@ -26,6 +37,7 @@ export function openRunClassMastery(registries, run, meta, { receiptId, bankable
     profile: { classMastery: structuredClone(canonical.classMastery) },
     fullPools: ['draft', 'sealed'].includes(run.custom?.deckMode), initialTreeTiers: [] };
   openClassMasteryTrack(registries, run, run.class);
+  if (expandedProgression(run)) run.initialProgressionPending = true;
   const held = run.skills[`class:${run.class}`].level;
   const tiers = registries.balance.skill.class.tierAt;
   run.classMasteryState.initialTreeTiers = tiers.map((at, index) => index === 0 ? 0 : at).flatMap((at, index) => held >= at ? [index + 1] : []);
@@ -65,17 +77,18 @@ export function masteryReferenceOpen(registries, meta, ref, kinds = null) {
 }
 
 export function registriesForClassMastery(registries, run) {
-  const source = registries.masterySource || registries;
+  const root = registries.masterySource || registries;
+  const source = run && !expandedProgression(run) && root.legacyProgressionSource ? root.legacyProgressionSource : root;
   if (!hasClassMastery(run)) return source;
   const full = () => run.classMasteryState.fullPools === true;
-  const open = (ref, kinds) => full() || masteryReferenceOpen(source, masteryProfileFor(run), ref, kinds);
+  const open = (ref, kinds) => (full() && (!expandedProgression(run) || kinds?.includes('cards'))) || masteryReferenceOpen(source, masteryProfileFor(run), ref, kinds);
   const classRow = id => {
     const cls = source.classes.get(id);
     return { ...cls, cardPool: cls.cardPool.filter(ref => open(ref, ['cards'])) };
   };
   const curve = source.balance.classMastery.xp;
-  return { ...source, masterySource: source, masteryRun: run,
-    balance: { ...source.balance, skill: { ...source.balance.skill, class: { ...source.balance.skill.class,
+  return { ...source, masterySource: source, masteryRun: run, progressionEnabled: expandedProgression(run),
+    balance: { ...source.balance, ...(expandedProgression(run) && run.progressionRuleSnapshot ? {progression:run.progressionRuleSnapshot} : {}), skill: { ...source.balance.skill, class: { ...source.balance.skill.class,
       xp: { ...curve }, tierAt: source.balance.skill.class.tierAt.map((at, index) => index === 0 ? 0 : at) } } },
     classes: { ...source.classes, get: classRow, all: () => source.classes.all().map(cls => classRow(cls.id)) },
     relics: { ...source.relics, all: () => source.relics.all().filter(row => open(row.id, ['relic'])), ids: () => source.relics.ids().filter(id => open(id, ['relic'])) },

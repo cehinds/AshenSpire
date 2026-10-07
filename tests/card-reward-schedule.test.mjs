@@ -25,6 +25,9 @@ import { t } from '../src/ui/strings.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
 const REG = createRegistries(contentBundle);
+// These established co-op schedule cases exercise the automatic level award
+// contract of older saves. Expanded banking is covered by coop-progression-claims.
+const legacySessionRegistry=reg=>({...reg.legacyProgressionSource,balance:{...reg.balance,progression:undefined}});
 
 /** A guaranteed-offer fixture, with the requested schedule patch applied. */
 function withSchedule(patch) {
@@ -202,7 +205,7 @@ function botTurn(combat, memberId) {
 
 /** A one-seat co-op session through its first fight, won, with `reg`'s schedule. */
 function coopFirstSpoils(reg, seedString) {
-  const host = createSession({ registries: reg, seedString });
+  const host = createSession({ registries: legacySessionRegistry(reg), seedString });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.start();
   // This test is about the reward door. Prime the ledger so one modest fight
@@ -449,7 +452,7 @@ test('a Taken levelCard row with no chosenDraftCardIds map at all is refused by 
 
 test('a co-op seat that was away claims its level card through the catch-up', () => {
   const reg = withSchedule({ onLevelUp: true });
-  const host = createSession({ registries: reg, seedString: 'AWAY' });
+  const host = createSession({ registries: legacySessionRegistry(reg), seedString: 'AWAY' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
   for (const member of host.livingMembers()) member.run.level.xp = xpToNext(reg, 1) - 1;
@@ -589,7 +592,7 @@ test('co-op couch seats: a level-card pick on seat A survives switching to seat 
 });
 
 test('co-op: a repeat choice while another seat still chooses grants nothing twice', () => {
-  const host = createSession({ registries: withSchedule({ onLevelUp: true }), seedString: 'SCHEDULE' });
+  const host = createSession({ registries: legacySessionRegistry(withSchedule({ onLevelUp: true })), seedString: 'SCHEDULE' });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.addMember({ id: 'p2', name: 'p2', classId: 'rogue' });
   host.setConnectedMany(['p1', 'p2'], true);

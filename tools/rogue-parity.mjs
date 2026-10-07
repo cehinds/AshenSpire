@@ -8,6 +8,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRunState } from '../src/model/state.js';
 import { COMBAT_OPCODES } from '../src/model/schemas.js';
+import { cardFamilies } from '../src/content/progression/cardFamilies.js';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const projectCapacity4 = process.argv.includes('--project-capacity4');
@@ -49,13 +50,24 @@ check(classGrants.length === 2 && unaccounted.length === 0 && rogueCards.length 
   `got ${rogueCards.length}; grants ${classGrants.join(', ')}; unaccounted ${unaccounted.join(', ')}`);
 check(rogue?.abilityCard === 'prepare' && rogueCards.some((card) => card.id === 'prepare' && card.rarity === 'starter'),
   'Prepare is the Rogue starter ability card (SPEC §13.4f)');
-check(rogue?.cardPool?.length === 43 && rewardCards.length === 43,
-  'Rogue reward pool has exactly 43 reachable cards', `pool ${rogue?.cardPool?.length || 0}, found ${rewardCards.length}`);
-check(JSON.stringify(rewardCards.reduce((out, card) => ({ ...out, [card.rarity]: (out[card.rarity] || 0) + 1 }), {}))
+const legacyRogue = bundle.legacyProgression.classes.find(row => row.id === 'rogue');
+const legacyRewards = legacyRogue.cardPool.map(id => bundle.legacyProgression.cards.find(card => card.id === id)).filter(Boolean);
+const addedFamilies = cardFamilies.filter(row => row.classId === 'rogue');
+check(legacyRogue.cardPool.length === 43 && legacyRewards.length === 43,
+  'preserved Rogue reward pool has exactly 43 reachable cards');
+check(JSON.stringify(legacyRewards.reduce((out, card) => ({ ...out, [card.rarity]: (out[card.rarity] || 0) + 1 }), {}))
   === JSON.stringify({ common: 16, uncommon: 15, rare: 12 }),
-  'Rogue reward rarities are 16 common / 15 uncommon / 12 rare');
-check(rogueCards.every((card) => card.textTemplate && card.upgrade && Object.keys(card.upgrade).length),
-  'every Rogue card has player text and an authored upgrade');
+  'preserved Rogue reward rarities are 16 common / 15 uncommon / 12 rare');
+const expectedPool = [...legacyRogue.cardPool, ...addedFamilies.map(row => row.id)].sort();
+check(addedFamilies.length === 10 && JSON.stringify([...rogue.cardPool].sort()) === JSON.stringify(expectedPool) && rewardCards.length === 53,
+  'expanded Rogue reward pool has exactly the legacy 43 plus ten authored families');
+check(JSON.stringify(rewardCards.reduce((out, card) => ({ ...out, [card.rarity]: (out[card.rarity] || 0) + 1 }), {}))
+  === JSON.stringify({ common: 19, uncommon: 19, rare: 15 }),
+  'expanded Rogue reward rarities are 19 common / 19 uncommon / 15 rare');
+check(rogueCards.every((card) => card.textTemplate && (card.gradeProfiles
+  ? card.gradeProfiles.length === 6 && card.gradeProfiles.every((profile, rank) => profile.rank === rank && profile.textTemplate && profile.effects.length)
+  : card.upgrade && Object.keys(card.upgrade).length)),
+  'every Rogue card has player text and authored upgrades or all six playable grades');
 check(rogue?.startingSignatureCard === 'ambush' && rogueCards.some((card) => card.id === 'ambush' && card.rarity === 'starter'),
   'Ambush is the Rogue starter signature');
 check(rogue?.startingRelic === 'cutpursesCoin' && bundle.relics.some((row) => row.id === 'cutpursesCoin' && row.rarity === 'starter'),
@@ -88,7 +100,7 @@ check(venom?.stackMode === 'add' && venom?.decay === 'perTurnEnd'
 const legal = new Set(COMBAT_OPCODES);
 const effects = [];
 const collect = (rows) => rows.forEach((row) => {
-  effects.push(...(row.effects || []), ...(row.upgrade?.effects || []));
+  effects.push(...(row.effects || []), ...(row.upgrade?.effects || []), ...(row.gradeProfiles || []).flatMap(profile => profile.effects));
 });
 collect(rogueCards);
 const rogueRelic = bundle.relics.find((row) => row.id === 'cutpursesCoin');

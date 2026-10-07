@@ -227,8 +227,8 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
 | `battlefield-stage` | `battlefieldStageModel` + `combatFormation` | `battlefieldStage.js` + `combat.js` | Combat | Shared formation presets and uniform labeled grids, up to 3 columns × 6 rows per side. Actor feet and movement use the same anchors. Ground tilt/skew transform tiles while characters stay upright. Small grids expand for encounter capacity. |
 | `formation-layout-editor` | `formationLayoutConfig` + `combatFormation` | `formationSettings.js` | Settings → Advanced → Interface → Formation layout | Live battlefield preview, illustrated named presets, shared dimensions, footprint width/depth/gap, tile outline and ground tilt/skew. Apply saves a draft through the normal settings owner; row A–F scale/layer and front/back offsets live under Character adjustments. Stacks on narrow screens. |
-| `enemy-target-picker` | `cardTargetPlan` + `TargetLayerModel` legal living IDs | `enemyTargetPicker.js` | Solo combat | Separate numbered enemy buttons with names, current HP, and a 48 physical pixel touch floor. Visible only while a hostile card or flask is armed; full-size sprites can overlap without blocking selection. Invalid sides and defeated enemies cannot spend a card. |
-| `combatant-frame` | `combatantFrame` + `CombatOverheadModel.combatOverheadAnchors` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. Cards start at visible artwork, excluding transparent padding; actions stay 14 screen pixels above the card. Narrow overhead controls retain their reserved formation x anchors when half-field artwork moves inward; measured control bounds keep the stack inside the field, with six screen pixels between same-row controls sharing an overhead band. Painted enemy feet use proportional image coordinates so full and mobile artwork preserve stature. Available presentation growth is shared to retain player/enemy size order. Inspect sits beside intent on short landscape screens. Updates retain the frame, sprite host and input listeners; Lite targeting uses a colored ground ring without cloning art. |
+| `enemy-target-picker` | `cardTargetPlan` + `TargetLayerModel` legal living IDs | `enemyTargetPicker.js` | Solo combat | Separate numbered enemy buttons with names, current HP, and a 48 physical pixel touch floor. A measured clear band avoids the HUD, hand, intent and Information controls. Visible only while a hostile card or flask is armed; full-size sprites can overlap without blocking selection. Invalid sides and defeated enemies cannot spend a card. |
+| `combatant-frame` | `combatantFrame` + `CombatOverheadModel.combatOverheadAnchors` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. Cards start at visible artwork, excluding transparent padding; actions stay 14 screen pixels above the card unless their measured bounds intersect the turn ribbon, when only the controls move below it. Narrow overhead controls retain their reserved formation x anchors when half-field artwork moves inward; measured control bounds keep the stack inside the field, with six screen pixels between controls sharing a physical overhead band, including separate formation rows. Painted enemy feet use proportional image coordinates so full and mobile artwork preserve stature. Available presentation growth is shared to retain player/enemy size order. Inspect sits beside intent on short landscape screens. Updates retain the frame, sprite host and input listeners; Lite targeting uses a colored ground ring without cloning art. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
 | `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` + `paintedOutfits.js` | Solo and co-op combat cards | Rendered player or enemy figure. Player rest resolves stance, readiness, guard, then idle through `combatPose.js`; Prepared, Starstone Charge and Blood Rite have authored outfit poses, intermediate entry/exit sprites, subtle breathing glows, and fades that survive combat redraws. Reduced motion uses a steady glow. [Interactive miniature](../art/readiness-poses/preview.html). |
@@ -366,7 +366,7 @@ custom art does not require a second card implementation.
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
 | `settings-stat-example` | `StatsPreviewModel.statsTopicPreview` | `settings.statsTopicPreviewHtml` | Settings / Advanced / Stats |
 | `settings-level-pace` | `LevelPacePreviewModel.levelPacePreview` → `levelup.levelPace` | `settings.levelPacePreviewHtml` | Settings / Advanced / Progression / Experience and Level-up |
-| `victory-progress` | `rewardProgress` and saved combat XP receipt | `reward.mountRewards` progress panel | Victory modal: green XP fills under yellow; a ready track turns blue and exposes its Level control. Each manual claim resets and refills that track from leftover XP before opening its reward. |
+| `victory-progress` | `rewardProgress`, `rewardXpPresentation` and saved XP receipts | `reward.mountRewards`, `coopXpProgression.mountCoopXpProgression`, `coopProgressionDoor.mountCoopProgressionDoor` | Solo Victory and co-op progression doors show only paid tracks in Class → Character → current skill level order. Bars fill sequentially at one normalized velocity; full bars turn blue immediately, but all Level up controls appear together only when every fill ends and Continue becomes green and enabled. A manual claim opens its funded chooser before residual and newly paid class-to-skill XP refill on return; other settled bars remain stable. Pending choices and co-op XP history survive reload. Capped tracks stay noninteractive; deferred banked levels remain claimable without a new XP receipt. |
 | `victory-xp-receipt` | `combatXpReceipt` + `victoryXpPresentation` over the saved fight reward | `reward.mountRewards` compact Victory | Combat-power and enemy XP count in order; the total grows alongside a compact calculation, with `+…` revealing the full formula. A fixed-height list scrolls as rows arrive, then Continue turns green after its configured pause. |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
@@ -544,7 +544,8 @@ low-contrast danger text.
 | `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt, including exact weapon-package card counts and slot-bound upgrade changes. Authored presentation chooses a sustained-hold tooltip or inline content, with data-owned hold threshold, width, and viewport cap. |
 | `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` inside `renderTray` | Stats tray content: attributes, combat values, resources, relic summary, and the equipment receipts (card packages, requirements, Poise threshold, Equip load with its Weight Class — `armoury.playerLoadReceipt`). |
 | `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` inside `renderTray` | Cards tray content: exact equipment-associated card counts grouped by card/profile in list or grid presentation. |
-| `character-sheet` | `CharacterSheetModel.characterSheetModel` (`characterLadder`, `trackLadder`) + `progression.levelProgress` / `skillProgressRows` | `characterSheet.openCharacterSheet` (xl W1 modal, kit Meter, Rail, Pill) | Armoury Character view, under the level Meter (out of combat). Read-only: Character tab lists levels 1–20 with each step's XP, running total and grants (attribute points, pool growth from the run's own snapshot, deck minimum, feat/class choice per Settings → Rewards); Skills tab lists each weapon, focus, armour and dual-wield track plus the run's own class, levels 1 to the track's cap, with draft rank, rank-up, rarity unlocks, class-tree tiers, feats (every 2nd), linked attribute (every 4th) and +1 card power (every 5th). Opens scrolled to the current level. |
+| `character-sheet` | `CharacterSheetModel.characterSheetModel` (`characterLadder`, `trackLadder`) + `progression.levelProgress` / `skillProgressRows` + `balance.progression.cadence` | `characterSheet.openCharacterSheet` (xl W1 modal, kit Meter, Rail, Pill) | Armoury Character view, under the level Meter (out of combat), with Respec class when available. Character tab lists levels 1–20, step XP, running total and configured grants. Expanded class ladders show guaranteed cards, feats, equipment, relics and attributes at the configured class cadence plus associated-skill XP; Spellcraft and Combat Maneuvers show authored ability grades 0–5. Legacy runs retain draft/rank-up, rarity, class-tree, every-2nd-level feat, every-4th-level linked attribute and every-5th-level card-power rules. Opens scrolled to the current level. |
+| `class-respec` | `classRespec.createClassRespecDraft` / `previewClassRespec` / `classRespecView` | `classRespec.mountClassRespec` (xl kit Modal, labelled controls, keyboard focus trap) | Character sheet and Armoury between encounters; co-op map sends host-owned seat intents. Current mastery options replace earned slots, spent items remain spent. Before → After review shows changes, displaced equipment and retained upgrades/components. Free default, atomic save before charging; Cancel and stale forms leave the run unchanged. |
 | `armoury-region-header` | compatibility semantic ID | replaced by `tray-header` | Historical Armoury-only fold header name. |
 
 ```text
@@ -701,4 +702,75 @@ merchant armament offers and buy/sell inspection, reward armament inspection, an
 
 Item cards: equipmentCard.js owns the uniformly scaled poker canvas. collectibleCard.js composes authored potion/relic effects into that frame for Inventory, merchant shelves, and potion reward inspection. Listing tracks are fixed at 280px; reveals span the grid. Delegated hold feedback paints above card art and inspection gestures reach the existing hold owner. Full-text disclosure remains independent of equip gestures.
 Playing cards: card.renderCard now adds playing-poker-card. The brown-and-gold inset frame, art well and subdued type band match equipment cards. Combat dimensions, resource badges, live values, tag fitting and selected/unaffordable states retain their existing contracts. Validation: tools/card-feedback.mjs covers desktop/phone input and reduced motion; --shots also records the initial hand.
-Combat sizing: fitFan hands uniformly scale the complete 178px canvas to fit the current hand area. Titles and body use 16px canvas type, and titles wrap to two lines. One cost row above the title groups action, mana and stamina badges without covering text. Full details remain available through Information. Ba
+Combat sizing: fitFan hands uniformly scale the complete 178px canvas to fit the current hand area. Titles and body use 16px canvas type, and titles wrap to two lines. One cost row above the title groups action, mana and stamina badges without covering text. Full details remain available through Information. BattlefieldStage grows sprites into available space and grounds their stacks near the hand, preserving HUD/intent clearance. Three-enemy phone fields fit without horizontal scrolling; four or more may scroll. Short-height battles scroll vertically instead of shrinking below readable card sizes.
+
+Mobile combat art: at widths up to 640px, figures render at 90% of their fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents retain their existing layout and size.
+
+Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
+
+Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
+
+World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
+masks, inspectable landmark overlays, and one native location dialog. It is laid
+out in W4b bands: a header, the map scene, and a context band for the selected
+place and its open roads. A Recenter / Enter footer closes the screen
+(`AtlasSelectionModel.js`: a tap selects, Enter travels or opens the current
+place). Local points select a detail pane instead of opening nested dialogs. The
+same renderer serves `world-atlas-preview.html`; its authoring controls and ID
+selector are isolated from the game. Actual service dispatch reuses the existing
+merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
+normalized content contract and `tools/world-atlas-qa.mjs` for browser checks.
+
+Equipment Information appears after the first touch selection, with a configurable delay and fade. Inventory short taps reveal it without equipping, and Inventory and Smith reserve room above their cards so the control remains reachable. The approved 60 percent art allocation remains; mechanics receive at least 54 pixels on the authored canvas.
+
+Shared modals contain keyboard focus in the top dialog, restore the opener on Escape, and activate tabs with arrows, Home and End. Narrow labels scale within readable bounds and settings categories remain horizontally scrollable. See `docs/preview/responsive-type/index.html`.
+
+Reward chooser: playing-card inspection yields face taps to reward selection; the separate Confirm control owns collection. Back retains selection and a failed save exposes a retry status without adding a duplicate card. Touch flicks retain the current shared TouchFlickModel and Accessibility controls.
+
+Selected content inspection: reward radio choices retain Information after Back and redraw. Keyboard focus reveals the same control. Reward, merchant, pile, inventory and smith card rows reserve space above the face, including wrapped rows. Smith extraction/installation item choices and mount rows expose Information without collecting, buying or confirming the service; explicit transaction controls retain ownership.
+
+`map-detail` shares viewport tile selection, decoded-image replacement and engraved fog between traditional/co-op and World Journey/Long Expedition. `mapPresentation.js` holds the tile budget, density cap and route widths; `mapArt.generated.js` owns asset versions and available dimensions. Tiles never carry node discovery or travel permissions.
+
+`local-map-camera` composes fixed-size accessible markers over adaptive detail imagery. `localMapPresentation.js` holds defaults and optional map-ID overrides; `LocalMapCameraModel` derives pan and anchored zoom. `LocalServiceModel` reads existing healing, smithing, refill and level-up plans without mutating the run. World Journey and Long Expedition share this location dialog.
+
+Relic reward rows open a collectible card and full effects before Take relic; Back leaves the reward pending. Map and combat relic slots open the same read-only collectible inspection. Playing-card inspection expands its text area and stacks card/details on phones so complete effects remain readable.
+
+Primary confirmation buttons use green when enabled and neutral styling when native or ARIA disabled. Reward Continue stays gold while any reward remains unresolved and turns green once all rows are taken or explicitly skipped; its existing hold and auto-collect behavior is preserved.
+Combatant overhead controls: `combatantOverhead.js` shares Information and enlarged intent between solo and co-op. Actions anchor 14 screen pixels above the card's visible artwork; if full-height artwork leaves the measured controls intersecting the turn ribbon, only the controls move below it with 14 screen pixels of clearance. Narrow controls retain the reserved formation x coordinate independently of the half-field sprite clamp, with their measured visible control union kept inside the field and six screen pixels between controls sharing a physical overhead band, including separate formation rows. Information stacks above intent, or beside it on short landscape screens, and empty slots collapse. Its selected outline precedes the configured tooltip delay for hover, touch, and focus. Information opens the existing detailed body; overhead input never bubbles into combat targeting.
+
+Ready primary actions lift by 2px and scale to 1.015 without shifting surrounding layout. End Turn is ready only during the player phase when no affordable playable hand card remains; zero-Action cards still use their Mana/Stamina costs. Ready modal footers hide helper copy, retain secondary actions in their own row, and expand the primary button across the container. Reduced motion removes the transition.
+
+Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.
+
+
+Single-dagger coverage adds 32 skins across all 35 catalog armor entries to the
+equipment animation reference component. It selects only right dagger + left empty
+with one-hand grip. The visual miniature includes Rogue single dagger; the
+[full synchronized gallery](../art/dagger-outfits-2026-09-19/index.html) provides
+class/outfit filters, pose order, timing, portrait and conversation references.
+
+### Stats, conversions, and hand rules
+
+Advanced → Stats is the one editing area for everything an attribute turns
+into. Each trait is a topic — Actions, Draw & hand, HP, Stamina, Mana, Poise,
+Ward, AR, DR, PR — holding its stat row (ruleset 7: one editor per row, the
+same fields in the same order — Base, STR, DEX, CON, WIS, INT, Per level, Min,
+Max) and related constants under subsection headings
+(`models/AdvancedSettingsGroups.js` `statsSection`). Draw & hand keeps the
+Opening hand, Draw / turn and Hand size rows beside Retention & discards; Poise
+ends with the legacy meter rows used only while ratings are off.
+`src/ui/models/StatsPreviewModel.js` computes the worked example above each
+topic from the same configured bundle, derived-stat engine, hand rules and
+rating receipt the game uses (a new character through `createRunState`, so
+starting relics are included); `settings.js` renders it and redraws it after
+every edit. In-run previews use the character's current attributes and level;
+outside a run the example is a chosen class's starting attributes.
+
+`src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
+read-only card faces and footer buttons into the turn-end discard selector.
+Checkboxes select card instance IDs. Keep all/Confirm commit once; Close/Escape
+cancel without changing combat state. `src/engine/handRules.js` validates the
+selection independently before the turn can advance.
+
+### Ratings, Poise and Ward
+Advanced → Stats holds a topic for each rating's stat row, plus curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.

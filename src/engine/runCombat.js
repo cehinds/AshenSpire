@@ -60,6 +60,7 @@ export function runCombatPlayer(run) {
     // is the one its character sheet shows (plan phase 9).
     derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
     skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
+    skillFeats: Array.isArray(run.skillFeats) ? [...run.skillFeats] : [],
     critRules: critRulesFor(run.skillFeats), // the skill feats' critical hits (SPEC §13.4o)
     coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
     maxHp: run.maxHp,

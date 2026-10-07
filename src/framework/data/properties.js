@@ -616,6 +616,13 @@ export const properties = {
       "domain": "CLASSIFICATION",
       "visibility": "INTERNAL",
       "priority": 30
+    },
+    {
+      "id": "classification.feat",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "INTERNAL",
+      "priority": 30
     }
   ]
 };

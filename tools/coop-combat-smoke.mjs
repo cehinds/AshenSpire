@@ -46,7 +46,7 @@ function botTurn(C, playerId) {
     });
     const tgt = C.enemies.find((e) => e.alive);
     try {
-      if (card) playCard(C, playerId, card.instanceId, botCardTargetId(REG, C, card, tgt?.id), cardChoicePlan(C, playerId, card.instanceId)?.options[0]?.id);
+      if (card) playCard(C, playerId, card.instanceId, botCardTargetId(REG, C, card, tgt?.id, playerId), cardChoicePlan(C, playerId, card.instanceId)?.options[0]?.id);
       else { endTurn(C, playerId); break; }
     } catch { endTurn(C, playerId); break; }
   }

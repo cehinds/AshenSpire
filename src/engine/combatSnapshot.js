@@ -7,7 +7,7 @@
 import { bindTurnStamina } from '../model/turnStamina.js';
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
@@ -40,7 +40,7 @@ function carryRelicGateKeys(entries) {
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
-  if (combat._buffer !== null || (combat.queue && combat.queue.length)) {
+  if (combat._buffer !== null || (combat.queue && combat.queue.length && !combat.pendingAbilityDiscard)) {
     throw new Error('Combat is still resolving; wait for the action to finish before saving');
   }
   const snapshot = structuredClone({
@@ -82,6 +82,11 @@ export function serializeCombatSnapshot(combat) {
     swapCostRule: combat.swapCostRule,
     swapsLeft: combat.swapsLeft,
     piles: combat.piles,
+    ...(combat.pendingAbilityDiscard ? {
+      pendingAbilityDiscard: combat.pendingAbilityDiscard,
+      pendingAbilityPlay: combat.pendingAbilityPlay,
+      abilityQueue: combat.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
+    } : {}),
     eventLog: combat.eventLog,
     triggerState: [...combat.triggerState.entries()],
     idCounter: combat._idCounter,
@@ -91,6 +96,7 @@ export function serializeCombatSnapshot(combat) {
     skills: combat.skills,
     skillXp: combat.skillXp,
     coreTags: combat.coreTags,
+    skillFeats: combat.skillFeats || [],
     // SPEC §14.3: the fight's consumable counts (a spent revive token stays
     // spent on a reload; the log alone could not keep it so) and the
     // companions it mounted, which a restore mounts again.
@@ -188,6 +194,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     swapsLeft: saved.swapsLeft,
     piles: saved.piles,
     queue: [],
+    ...(saved.pendingAbilityDiscard ? { pendingAbilityDiscard: saved.pendingAbilityDiscard, pendingAbilityPlay: saved.pendingAbilityPlay } : {}),
     eventLog: saved.eventLog,
     _buffer: null,
     triggerState: new Map(carryRelicGateKeys(saved.triggerState)),
@@ -197,6 +204,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // the gates read level 0 and the receipt starts here, as createCombat's do.
     skills: saved.skills ?? {},
     skillXp: saved.skillXp ?? {},
+    skillFeats: Array.isArray(saved.skillFeats) ? saved.skillFeats : [],
     coreTags: Array.isArray(saved.coreTags) ? saved.coreTags : [],
     // A snapshot from before SPEC §14.3 carries neither: no counts (null, so
     // its combat end leaves the run's alone) and no companion mounted.
@@ -213,6 +221,10 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // raw emitter alone would record no XP for the rest of the restored fight.
   attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
+  if (saved.abilityQueue) {
+    const entity = id => id === combat.player.id ? combat.player : combat.enemies.find(e => e.id === id);
+    combat.queue = saved.abilityQueue.map(({ sourceId, ownerId, targetId, ...action }) => ({ ...action, source: entity(sourceId), owner: entity(ownerId), target: entity(targetId) || null }));
+  }
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   // Property mounts are never saved (definitions are not persisted): they are
   // re-derived from the restored loadout and relics, exactly as createCombat
@@ -220,6 +232,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   syncLoadoutProperties(combat);
   syncRelicProperties(combat);
   syncClassProperties(combat);
+  syncFeatProperties(combat);
   syncCompanionProperties(combat);
   syncSigilProperties(combat);
   // The player's poise max is RE-DERIVED, never trusted from the save (plan

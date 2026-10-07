@@ -142,6 +142,7 @@ export const UI_COMPONENTS = Object.freeze({
   // SPEC §14.1: the deck editor, and the Quick Access door that opens it.
   deckEditor: 'deck-editor',
   characterSheet: 'character-sheet',
+  classRespec: 'class-respec',
   deckEditorControl: 'deck-editor-control',
   shopSmithCard: 'shop-smith-card',
   resourceStrip: 'resource-strip',

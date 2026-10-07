@@ -7,9 +7,14 @@
 // friendly-target transaction.
 const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies']);
 
+// Authoritative previews include temporary charges on the resolved grade.
+export function cardNeedsEnemyTarget(def) {
+  return def?.combatPreview?.needsTarget === true || (def?.effects || []).some(effect => effect.target === 'enemy');
+}
+
 export function friendlyTargetMode(def) {
   const effects = def && Array.isArray(def.effects) ? def.effects : [];
-  const hasEnemy = effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
+  const hasEnemy = def?.combatPreview?.needsTarget === true || effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
   const hasAlly = effects.some((effect) => effect.target === 'ally');
   const hasSelf = effects.some((effect) => effect.target === 'self');
   // Enemy cards continue through enemy aiming even when they also have a

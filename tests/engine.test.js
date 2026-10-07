@@ -210,6 +210,13 @@ function testBundle() {
 }
 
 const REG = createRegistries(testBundle());
+// Historical mechanics assertions keep their original card faces. The
+// expansion suites exercise current grades, costs and class reward receipts.
+function legacyProgressionRegistries() {
+  const fixture = testBundle();
+  const legacy = contentBundle.legacyProgression;
+  return createRegistries({ ...fixture, ...legacy, cards: [...legacy.cards, ...TEST_CARDS], legacyProgression: undefined, balance: { ...fixture.balance, progression: undefined } });
+}
 // Historical quota regressions use the pre-kit equipment catalogue explicitly.
 // Shipped complete kits are covered by armament-combat-kits.test.mjs across all items.
 function legacyKitFixture(bundle) {
@@ -292,20 +299,24 @@ function attributeTerms(row, attributes) {
 // nothing. The pin is therefore set on the fight itself, after the opening
 // draw (five cards, inside either cap): with no hand rules nothing recomputes
 // `handMax`, so every later draw reads the pinned value.
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 3, maxStamina = stamina, relicIds = [], flasks = [], handMax = null } = {}) {
+function makeCombat({ registries = REG, seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 3, maxStamina = stamina, relicIds = [], flasks = [], handMax = null } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
     return { instanceId: `c${i + 1}`, cardId: isObj ? d.id : d, upgraded: isObj ? !!d.up : false };
   });
   const c = createCombat({
-    registries: REG,
+    registries,
     rng,
     player: { classId: 'reaver', maxHp, hp, mana, maxMana, stamina, maxStamina, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
   if (handMax != null) c.handMax = handMax;
   return c;
+}
+
+function makeLegacyCombat(options) {
+  return makeCombat({ ...options, registries: legacyProgressionRegistries() });
 }
 
 /**
@@ -455,6 +466,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 6. Keywords + X-cost -----------------------------------------------------
   test('6. Exhaust / Ethereal / Retain / Innate / X-cost / upgrade removes Exhaust', () => {
+    const REG = legacyProgressionRegistries();
     const c = makeCombat({ stamina: 4, deck: ['kickOff', 'lastStand', 'tKeep', 'strike', 'strike'] });
     playFromHand(c, 'kickOff');
     assert(c.piles.exhaust.some((x) => x.cardId === 'kickOff'), 'Exhaust card exhausted on play');
@@ -656,6 +668,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
+    const REG = legacyProgressionRegistries();
+    const makeCombat = makeLegacyCombat;
     const c = makeCombat({ stamina: 4, deck: ['blightTouch'], enemies: ['tGiant'] });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('blightTouch');
@@ -1737,6 +1751,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('20b. Mana is real state: validated maxima, spend/refuse/restore, save migration, and zero/max HUD plans', () => {
+    const REG = legacyProgressionRegistries();
+    const makeCombat = makeLegacyCombat;
     const fresh = createRunState({ seed: 0x6d616e61, classId: 'reaver', registries: REG });
     // THE BASE ALONE, BECAUSE EVERY TERM FLOORS ON ITS OWN. Since 2026-09-24
     // the Mana row reads a spread (STR .1, CON .25, WIS .5, INT .3 — the
@@ -2779,7 +2795,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // domains; changing the junction must still change validation.
     const kw = contentBundle.keywords.map((k) => k.id);
     const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme'];
-    eq(tagIdsAllowedFor(contentBundle, 'effect').join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).join('|'),
+    eq(tagIdsAllowedFor(contentBundle, 'effect').sort().join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).sort().join('|'),
       'the derived effect vocabulary includes every approved combat category');
     const repaired = JSON.parse(JSON.stringify(contentBundle));
     repaired.tagFamilyDomains = [...repaired.tagFamilyDomains.filter((r) => r.family !== 'effect'), { family: 'effect', domain: 'item' }];
@@ -8714,6 +8730,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('85. the skill tracks are derived, climb one curve, are paid by the combat receipt, and gate the progression predicates (plan phase 4a)', () => {
+    // This receipt contract belongs to pre-expansion runs. New authored
+    // grades and Spellcraft receipts have their own expansion regression suite.
+    const REG = createRegistries({ ...contentBundle, ...contentBundle.legacyProgression, legacyProgression: undefined, balance: { ...contentBundle.balance, progression: undefined } });
     // The tracks come from the tree, the framework and the class registry —
     // no list of their own.
     const tracks = skillTracks(REG);
@@ -9237,6 +9256,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('89. unlocks and the swap: a class card is gated by a profile row, and the mirror replaces the core card (plan phase 5c)', () => {
+    const REG = legacyProgressionRegistries();
     // THE UNLOCK TABLE: a class row gates the card; every shipped class is free.
     for (const cls of REG.classes.all()) assert(classAvailable(REG.unlocks, cls.id, {}), `${cls.id} is free`);
     const gate = { id: 'rogueUnlock', kind: 'class', ref: 'rogue', name: 'The Rogue', condition: 'classLevel', param: 3, reveal: 'listed', hint: 'Reach class level 3.' };
@@ -9261,6 +9281,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(pickClassNode(REG, run, 'ironFooting'), true);
     const deckBefore = run.deck.map((c) => c.instanceId).join(','); const relicsBefore = run.relics.join(',');
     run.loadout.sets.armor[0] = 'vigil'; // a set the Reaver earned; the Rogue has no row for it
+    const bladeBeforeSwap = structuredClone(run.skills['item:blade']);
     const receipt = swapRunClass(REG, run, 'rogue');
     eq(receipt.fromLevel, 1, 'the level the old class reached is on the receipt');
     eq(receipt.droppedArmour.join(','), 'armor/reaver/vigil', "the reaver's armour is set aside, by name");
@@ -9272,7 +9293,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(receipt.from, 'reaver'); eq(receipt.to, 'rogue'); eq(receipt.droppedTags.join(','), 'ironFooting', "the reaver's pick has no seat in the rogue tree"); eq(receipt.resetTracks.join(','), 'class:reaver');
     eq(run.class, 'rogue'); eq(run.zones.core, 'rogue', 'the core zone follows'); eq(JSON.stringify(run.coreTags), '[]'); eq(JSON.stringify(run.zones.coreTags), '[]');
     eq(skillLevel(run, 'class:reaver'), 0, 'the class track starts over'); assert(run.skills['class:reaver'] === undefined);
-    assert(run.skills['item:blade'].xp === 50 || run.skills['item:blade'].level >= 1, 'the weapon skill is kept');
+    eq(JSON.stringify(run.skills['item:blade']), JSON.stringify(bladeBeforeSwap), 'the weapon skill and any class bonus XP are kept');
     eq(run.deck.map((c) => c.instanceId).join(','), deckBefore, 'the deck is the run\'s'); eq(run.relics.join(','), relicsBefore, 'so are the relics');
     eq(run.history.filter((h) => h.kind === 'classSwapped').length, 1, 'the swap is a history row');
     eq(swapRunClass(REG, run, 'rogue').droppedTags.length, 0, 'a swap to the same class changes nothing');
@@ -9663,9 +9684,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const { mana: _noMana, ...sansMana } = bal;
     assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
-    const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstoneArc' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
-    assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstoneArc\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
-    assert(said(withCards((c) => (c.id === 'starShower' ? { ...c, upgrade: { ...c.upgrade, manaCost: 1, staminaCost: 1 } } : c))).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'an upgrade introducing Mana also requires the spell buildup floor');
+    const lowGrade = withCards(card => card.id === 'starstoneArc' ? { ...card, gradeProfiles: card.gradeProfiles.map(profile => ({ ...profile, traits: { ...profile.traits, exposureBuildupPerHit: 1 } })) } : card);
+    assert(said(lowGrade).some((e) => /cards\.starstoneArc\.gradeProfiles.*at least 5 Exposure per hit/.test(e)), 'a Mana spell grade building less than buildupPerManaSpell is refused by name');
+    assert(said(withCards(card => {
+      if (card.id !== 'starShower') return card;
+      const { gradeProfiles, abilityKind, abilityRank, abilityFamily, legacyFace, ...legacy } = card;
+      return { ...legacy, ...legacyFace, upgrade: { ...card.upgrade, manaCost: 1, staminaCost: 1 } };
+    })).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a legacy upgrade introducing Mana also requires the spell buildup floor');
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');

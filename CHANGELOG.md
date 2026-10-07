@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Choose each class milestone and retrain your build** ([#1676](https://github.com/cehinds/AshenSpire/pull/1676), `0.7.1.1052`). Class rewards now follow a saved schedule for cards, feats, equipment, relics and attributes. Independent catalog modules add 40 card families with six ranks, 50 feats, 50 ability tags and 10 relics; available choices and level lists populate from their requirements. Spellcraft and Combat Maneuvers offer three cards with an Intelligence chance for a fourth higher-rank option. Actions and Stamina share one pool. Free class retraining previews earned choices without rerolling offers or restoring spent rewards. Solo and co-op XP fill Class, Character and gained skills in order before revealing blue Level Up buttons and a green Continue; remaining XP fills when you return.
+
 - **Crowded combat targets stay selectable** ([#1651](https://github.com/cehinds/AshenSpire/pull/1651), `0.7.1.1048`). Numbered enemy targets make overlapping foes easy to select. Cards reject targets on the wrong side before spending resources, and enemies remain at least as tall as the player without shrinking sprites.
 
 - **The Windows installer link downloads the installer** ([#1623](https://github.com/cehinds/AshenSpire/pull/1623), `0.7.1.1046`). The README's Windows installer link now downloads the latest `test` installer directly instead of opening the build page, where you had to sign in and unzip an artifact. The `release` and `main` installers have their own direct links.

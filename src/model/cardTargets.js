@@ -7,7 +7,7 @@ const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEne
 // Omitted targets keep the engine's existing automatic resolution semantics.
 export function cardTargetPlan(def, actorId, enemies = [], players = [], { solo = false } = {}) {
   const effects = def?.effects || [];
-  const hostile = effects.some(effect => HOSTILE_TARGETS.has(effect.target));
+  const hostile = def?.combatPreview?.needsTarget === true || effects.some(effect => HOSTILE_TARGETS.has(effect.target));
   if (hostile) return { mode: 'enemy', legalIds: enemies.filter(enemy => enemy.alive).map(enemy => enemy.id) };
   const friendly = friendlyTargetPlan(def, actorId, players);
   const actor = players.find(player => player.id === actorId && player.alive && player.connected !== false);

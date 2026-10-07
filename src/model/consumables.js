@@ -128,7 +128,7 @@ export function commitSkillBookRead(registries, run, quote, { inCombat = false, 
     if (classLearned) learnClassCard(registries, run, plan.choice.id);
   }
   else {
-    (run[destination] ||= []).push({ instanceId: unusedInstanceId(run, 'book', plan.choice.id), cardId: plan.choice.id, upgraded: false });
+    (run[destination] ||= []).push({ instanceId: unusedInstanceId(run, 'book', plan.choice.id), cardId: plan.choice.id, upgraded: false, ...(Number.isInteger(plan.lessons.find(row => row.id === plan.choice.id)?.abilityRank) ? {abilityRank:plan.lessons.find(row => row.id === plan.choice.id).abilityRank} : {}) });
   }
   if (bonuses.card) {
     const id = bonuses.card.id;
