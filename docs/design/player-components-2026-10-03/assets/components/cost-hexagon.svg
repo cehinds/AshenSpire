@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none" role="img" aria-labelledby="cost-hexagon-title"><title id="cost-hexagon-title">Empty cost medallion; render actual cost as live text</title><defs>
+      <linearGradient id="cost-hexagon-metal" x1="0" y1="0" x2="0.6" y2="1"><stop stop-color="#514535"/><stop offset=".18" stop-color="#dcc18a"/><stop offset=".38" stop-color="#a88c53"/><stop offset=".64" stop-color="#554837"/><stop offset=".82" stop-color="#bd9c59"/><stop offset="1" stop-color="#534536"/></linearGradient>
+      <linearGradient id="cost-hexagon-soot" x2="0" y2="1"><stop stop-color="#242019"/><stop offset=".45" stop-color="#15130f"/><stop offset="1" stop-color="#0c0c0a"/></linearGradient>
+      <radialGradient id="cost-hexagon-light"><stop stop-color="#d6b667" stop-opacity=".26"/><stop offset="1" stop-color="#d6b667" stop-opacity="0"/></radialGradient>
+    </defs><path d="m24 2 20 11v22L24 46 4 35V13Z" fill="#182830" stroke="url(#cost-hexagon-metal)" stroke-width="2"/><path d="m24 6 16 9v18L24 42 8 33V15Z" stroke="#dae7e4" stroke-opacity=".45"/></svg>

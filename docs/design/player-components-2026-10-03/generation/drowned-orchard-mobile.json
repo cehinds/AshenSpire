@@ -1,0 +1,44 @@
+{
+  "id": "drowned-orchard-mobile",
+  "tool": "image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": false,
+  "refs": [
+    {
+      "path": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-730070f8-3f20-4bb7-b47a-25018a89bc3c.png",
+      "role": "place design and painted style reference; independently recompose in portrait, do not merely crop",
+      "packageReference": "masters/scenes/drowned-orchard-desktop.png",
+      "referenceScope": "delivered package reference"
+    }
+  ],
+  "sourceLore": [
+    {
+      "path": "src/content/surveyQuestLore.js",
+      "keys": [
+        "survey:saltwatch"
+      ],
+      "details": "Salt crust on upper branches, old watermarks below feet, mooring ring above drowned doorway."
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: text-free painted environment layer for AshenSpire, not a screenshot. Style: polished hand-painted dark fantasy environment illustration matching the weathered stone, iron, aged brass and restrained ember warmth of the supplied style reference. Detailed tactile brushwork, atmospheric depth, natural silhouettes, no photographic look. Do not reproduce the reference architecture literally. No people, foreground characters, NPC identities, text, lettering, UI, borders, labels, numbers, stat values, map coordinates, logos or game symbols.\nPrimary request: A tall phone composition of Drowned Orchard, with gnarled salt-encrusted upper branches framing a half-submerged old stone doorway in upper-middle left. The weathered iron mooring ring above the doorway must be clearly visible, while submerged natural old tide stain bands lie below the new waterline. Orchard trunks recede through cool coastal water. No fruit, people, boats, text or measuring marks. Preserve the desktop's drowned coastal architecture and salt-crust textures. Keep lower quarter quieter dark still water for future DOM text. Independently composed portrait, not a crop or shrunken landscape. Opaque full-frame.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-e04ba1f5-1917-4543-a313-9bd2eceb2beb.png",
+  "file": "masters/scenes/drowned-orchard-mobile.png",
+  "sha256": "9b0e75703f8b35cdff952c899f3e4d894ae2b154a6d51dfc60ad990fe10d17d2",
+  "bytes": 2541401,
+  "width": 941,
+  "height": 1672,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "group": "scenes",
+  "master": "masters/scenes/drowned-orchard-mobile.png",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-e04ba1f5-1917-4543-a313-9bd2eceb2beb.png",
+  "transparent_background": false,
+  "stagingMasterRelativePath": "masters/drowned-orchard-mobile.png",
+  "sourceRecordTool": "built-in image_gen.imagegen",
+  "sourceRecordSha256": "4aef0b12fe78761c377accd4cdd0e2ba0e2e3dc5ef24bca8f5856d8edf469c9b",
+  "sourceMasterSha256": "9b0e75703f8b35cdff952c899f3e4d894ae2b154a6d51dfc60ad990fe10d17d2",
+  "reference": "masters/scenes/drowned-orchard-desktop.png",
+  "sourcePromptSha256": "5041623aa3f658409440790973ae812fc56d5a9e5dc6728dbaa1ec88405ab79e"
+}

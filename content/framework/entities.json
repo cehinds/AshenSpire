@@ -1,0 +1,48 @@
+{
+  "comment": "Framework-authored ContentEntity rows: the unarmed fallback package (framework contract: Unarmed fallback). Every other entity is imported from the legacy bundle by src/framework/importer.js. IDs are namespaced 'framework.' so they can never collide with a legacy stable ID.",
+  "entities": [
+    {
+      "id": "framework.unarmedStrike",
+      "kind": "CARD",
+      "nameTermId": "term.unarmedStrike",
+      "descriptionTermId": "term.desc.unarmedStrike",
+      "artId": "asset.fallback.cardArt",
+      "properties": [
+        { "propertyId": "classification.strike", "source": "AUTHORED" },
+        { "propertyId": "damage.blunt", "source": "AUTHORED" },
+        { "propertyId": "damage.physical", "source": "AUTHORED" },
+        { "propertyId": "scaling.strength", "source": "AUTHORED" },
+        { "propertyId": "cost.action", "parameters": { "amount": 1 }, "source": "AUTHORED" },
+        { "propertyId": "targeting.enemy", "source": "AUTHORED" }
+      ],
+      "explicitOverrides": { "attackRatingBonus": 0 }
+    },
+    {
+      "id": "framework.evasiveGuard",
+      "kind": "CARD",
+      "nameTermId": "term.evasiveGuard",
+      "descriptionTermId": "term.desc.evasiveGuard",
+      "artId": "asset.fallback.cardArt",
+      "properties": [
+        { "propertyId": "classification.guard", "source": "AUTHORED" },
+        { "propertyId": "utility.evasion", "source": "AUTHORED" },
+        { "propertyId": "scaling.dexterity", "source": "AUTHORED" },
+        { "propertyId": "cost.action", "parameters": { "amount": 1 }, "source": "AUTHORED" },
+        { "propertyId": "targeting.self", "source": "AUTHORED" }
+      ]
+    },
+    {
+      "id": "framework.dodgeRoll",
+      "kind": "CARD",
+      "nameTermId": "term.dodgeRoll",
+      "descriptionTermId": "term.desc.dodgeRoll",
+      "artId": "asset.fallback.cardArt",
+      "properties": [
+        { "propertyId": "classification.weaponArt", "source": "AUTHORED" },
+        { "propertyId": "utility.evasion", "source": "AUTHORED" },
+        { "propertyId": "cost.stamina", "parameters": { "amount": 1 }, "source": "AUTHORED" },
+        { "propertyId": "targeting.self", "source": "AUTHORED" }
+      ]
+    }
+  ]
+}

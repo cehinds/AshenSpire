@@ -1,0 +1,39 @@
+{
+  "id": "object-battle-axe",
+  "name": "Battle Axe",
+  "tool": "built-in image_gen.imagegen",
+  "toolMode": "generate",
+  "transparentBackground": true,
+  "sourceBoard": {
+    "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/06-armoury-and-inventory.png",
+    "approximateArtWindowBounds": [
+      260,
+      803,
+      335,
+      871
+    ],
+    "coordinateConvention": "[left,top,right,bottom] approximate pixels on1448×1086 original; specific lower inventory object icon only"
+  },
+  "refs": [
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/06-armoury-and-inventory.png",
+      "role": "exact designated weapon icon shape/pose/material reference; no black UI backing or other board imagery"
+    }
+  ],
+  "prompt": "Use case: stylized-concept. Asset type: ONE standalone reusable transparent AshenSpire weapon object cutout matching the designated board06 inventory ICON. The provided full board is only a visual reference; use ONLY the named icon at given coordinates. Create the individual painted weapon high-resolution, not a sheet or screenshot. Preserve its visible shape, diagonal pose, proportions, materials and subtle cool/warm studio highlights from the board. Hand-painted tactile dark fantasy item art, weathered steel, dark leather/wood and modest aged brass. Full object entirely visible, generous transparent margin around every endpoint on a square canvas1254×1254. Background genuinely transparent alpha: remove the black UI square/card behind the object, and leave all pixels outside the weapon silhouette empty. NO painted background, smoke, glow/halo, shadows outside silhouette, floor, scenery, borders, labels, letters, text, numbers, stats, game rules, UI, person or hand. Exactly one weapon, no extra objects.\nNamed target: Battle Axe.\nPrecise visual request: One battle axe from lower inventory grid, second row left. Medium brown wooden haft with dark leather grip and modest brass bands, diagonal grip at lower-left toward head at upper-right. Dark worn steel axehead: a SINGLE broad crescent cutting blade extending on the lower-right side of the head, silver sharpened curved outer edge, a compact squared poll opposite. Match reference head silhouette and ordinary practical proportions. No double-headed axe, giant jagged demon blades, runes or glow.",
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-398259e5-7031-42f6-a503-2c01d4a3be2f.png",
+  "file": "masters/objects/object-battle-axe.png",
+  "sha256": "c7fedbb5bd89b9d4acb1a2d3c1a21e4572fcb7da9931742d535553df0ad8c0c1",
+  "bytes": 747741,
+  "width": 1254,
+  "height": 1254,
+  "imageMode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "acceptedAfterVisualReview": true,
+  "reviewNotes": "Viewed original generated PNG and compared designated board06 inventory icon: isolated full weapon, matching diagonal pose/material family and characteristic shape, true transparent alpha; high-resolution painted reconstruction, no UI backing or labels."
+}

@@ -1,0 +1,848 @@
+// src/engine/coopCombat.js — shared N-player combat runner (Forsaken Together S3).
+//
+// A SEPARATE co-op fight engine that reuses the solo engine's generic opcode /
+// status / trigger primitives (actions.js, statuses.js, triggers.js) but has its
+// own N-player turn loop. Solo combat.js is untouched.
+//
+// Model (StS2-faithful):
+//   • Every present player is in ONE fight vs a SHARED enemy set.
+//   • All players share the player phase; each plays from their OWN hand with
+//     their OWN energy/block, and ends their OWN turn. When every connected,
+//     living player has ended → the enemy phase runs, then a fresh player turn.
+//   • Party-wide debuffs are automatic: everyone attacks the same shared
+//     enemies, so one player's Vulnerable helps all.
+//   • Enemy attacks FAN OUT — a move's player-targeted damage/effects apply to
+//     each living player (each mitigated by their own block); self/enemy effects
+//     (e.g. the enemy's own block) apply once.
+//   • Presence auto-scales: enemy HP scales to the live headcount at fight
+//     start and rescales on join/leave. A player who drops is removed from the
+//     fight; the rest finish. A returner jumps back in and enemies rescale up.
+//
+// Reuse technique: the co-op object `C` is combat-shaped. Before resolving a
+// given player's actions (or an enemy hit ON a player) we point C.player and
+// C.piles at that player, so the entity-generic primitives "just work". Enemies
+// live on the shared C.enemies.
+//
+// v1 limitations (documented, for a later pass): no poise/Stagger in the enemy
+// turn; flask throw-to-ally is S5. Delayed (telegraphed) enemy moves ARE
+// supported. Per-seat once/limitPerTurn gating is handled: setActive publishes
+// C.playerKey and triggers.js scopes player-owned trigger state by it.
+
+import { chargeFlaskId } from '../model/gracerefill.js';
+import { reconcileWardBlock } from '../model/blockPresentation.js';
+import { syncRelicProperties, syncClassProperties, syncLoadoutProperties, syncSigilProperties } from './properties.js';
+import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
+import { cardTargetPlan, assertCardTarget } from '../model/cardTargets.js';
+import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
+
+import * as A from './actions.js';
+import * as F from './combatRules.js';
+import { playerWeightClass } from './combat.js';
+import * as S from '../framework/statusSemantics.js';
+import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
+import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
+import { cardKind } from '../model/tree.js';
+import { gripOf, gripTags } from '../model/loadout.js';
+import { attachSkillXp } from './skillXp.js';
+import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } from '../model/state.js';
+import { refreshCombatRatings, clearMeterGuards } from './combatRatings.js';
+import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
+import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
+import { turnDrawCount, endTurnCardFate, returnUnplayedCards } from './handRules.js';
+import { orderedDrawPile } from '../model/deckRules.js';
+
+const QUEUE_GUARD = 10000;
+
+// Co-op enemy HP scaling by live headcount — sub-linear, StS2-flavoured. The
+// factor comes from balance.coop.headcountHpFactor; the default keeps the pure
+// function usable (tests) and matches that balance value.
+export function coopHpMult(headcount, factor = 0.6) {
+  return 1 + factor * Math.max(0, headcount - 1); // 1p ×1.0, 2p ×1.6, 3p ×2.2, 4p ×2.8
+}
+
+/**
+ * createCoopCombat({ registries, rng, players, enemyIds, extraHpMult?, enemyDamageMult?, enemyStatuses? })
+ *   players = [{ id, classId, maxHp, hp, deck, relicIds, flasks }]
+ * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
+ * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
+ */
+export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null }) {
+  const C = {
+    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
+    ...(ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    foundation: F.createFoundation(ruleset, combatProfiles, registries),
+    registries,
+    rng,
+    turn: 0,
+    phase: 'setup', // 'player' | 'enemy' | 'ended' | 'suspended'
+    result: null,
+    // Pointed at the active seat's own hand size (setActive): each seat counts
+    // cards by its own stat rows, exactly as a solo fight does.
+    handMax: LEGACY_HAND_MAX,
+    enemies: [],
+    eventLog: [],
+    queue: [],
+    triggerState: new Map(),
+    _buffer: null,
+    _emitDepth: 0,
+    _idCounter: 0,
+    // Active-player slots the reused primitives read; pointed per resolution.
+    player: null,
+    piles: null,
+    // Co-op bookkeeping.
+    players: new Map(), // id → P
+    order: [],
+    baseHpMult: 1,
+    extraHpMult,
+    _enemyStatuses: enemyStatuses,
+  };
+  C.emit = (type, payload) => emitEvent(C, type, payload);
+  C._emitEvent = emitEvent;
+  attachSkillXp(C); // plan phase 4a: one receipt per seat, keyed by C.playerKey
+  C.enqueue = (action) => C.queue.push(action);
+  C.nextInstanceId = () => `gen${++C._idCounter}`;
+  // Player combat entities intentionally share the engine id `player`. Events
+  // that resolve against an ally still need the authoritative member id, so
+  // expose the identity of the actual resolved entity rather than whichever
+  // seat happens to be active for source-card bookkeeping.
+  C.playerIdForEntity = (entity) => {
+    for (const [id, P] of C.players) if (P.entity === entity) return id;
+    return null;
+  };
+  // A queued property draw can belong to an inactive seat. Draw through its
+  // own piles and hand rules, then restore the current seat's context.
+  C.drawCardsFor = (entity, amount) => {
+    const seat = C.players.get(C.playerIdForEntity(entity));
+    if (!seat) return A.drawCards(C, amount);
+    const prior = C.players.get(C.playerKey);
+    setActive(C, seat);
+    try { return A.drawCards(C, amount); }
+    finally { setActive(C, prior || null); }
+  };
+
+  const headcount = players.length;
+  C.hpFactor = (registries.balance.coop && registries.balance.coop.headcountHpFactor) || 0.6;
+  C.baseHpMult = coopHpMult(headcount, C.hpFactor) * extraHpMult;
+
+  // Enemies (HP rolled on 'enemyHP', then scaled — determinism preserved).
+  enemyIds.forEach((enemyId, i) => {
+    const def = registries.enemies.get(enemyId);
+    let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
+    hp = Math.max(1, Math.round(hp * C.baseHpMult));
+    C.enemies.push(createEnemyCombatEntity({
+      instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
+      arcaneExposure: C.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
+      damageResistanceBySchool: def.damageResistanceBySchool,
+      damageMult: enemyDamageMult,
+    }));
+  });
+  if (C.ratingsRules) {
+    for (const enemy of C.enemies) {
+      const values = C.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
+      enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
+      for (const id of C.breakMeterVersion === 1 ? ['poise'] : ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+    }
+  }
+
+  // Players — each an entity + own shuffled piles (Innate on top).
+  for (const p of players) addPlayerState(C, p, { initial: true });
+
+  // combatStart per player so each player's relics/statuses hook up.
+  //
+  // THE MOUNT IS INSIDE THIS LOOP, AND THAT IS THE WHOLE OF IT. A co-op owner
+  // key is the ACTIVE seat (triggers.js ownerKeyFor reads C.playerKey, which
+  // setActive moves), so mounting all seats in one pass outside it filed every
+  // seat's relics under whichever seat happened to be active — one owner, two
+  // seats, and the second seat's relic silently conferring nothing. Mounted
+  // under setActive, each seat's carriers land under the key its own scan will
+  // look them up by, which is the per-seat scoping test 24 exists for.
+  for (const P of livingPlayers(C)) {
+    setActive(C, P);
+    syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
+    syncRelicProperties(C, P.entity);
+    syncClassProperties(C, P.entity);
+    syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
+    if (C.ratingsRules) refreshCombatRatings(C);
+    C.emit('combatStart', {});
+  }
+  for (const enemy of C.enemies) {
+    for (const s of C._enemyStatuses) {
+      setActive(C, firstLiving(C));
+      C.enqueue({ effect: { op: 'applyStatus', target: 'self', status: s.status, stacks: s.stacks }, source: enemy, owner: enemy, target: enemy, meta: {} });
+    }
+  }
+  drainQueue(C);
+  rollIntents(C, true);
+  if (!C.result) startPlayerPhase(C);
+  return C;
+}
+
+// ---- player state -----------------------------------------------------------
+function addPlayerState(C, p, { initial = false } = {}) {
+  const entity = createPlayerCombatEntity({
+    classId: p.classId, classUnequipped: p.classUnequipped === true, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
+    maxMana: Number.isFinite(p.maxMana) ? p.maxMana : 0,
+    mana: p.mana,
+    maxStamina: p.maxStamina, stamina: p.stamina,
+    relicIds: p.relicIds || [], flasks: p.flasks || [], flaskCharges: p.flaskCharges || null,
+    energyMax: p.energyMax,
+    drawPerTurn: p.drawPerTurn,
+    damageBySchoolAdd: p.damageBySchoolAdd || {},
+    itemUpgradeLevels: p.itemUpgradeLevels || {},
+    // Co-op players carry no loadout into this engine, so the vessel arrives
+    // only if the caller stamped a threshold; absent stays absent (the HUD
+    // refusal), never a lying 0/0. Same graceful shape as maxMana above.
+    poiseMax: Number.isInteger(p.poiseMax) ? p.poiseMax : 0,
+  });
+  const deck = (p.deck || []).map((c) => ({
+    ...(C.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    instanceId: c.instanceId,
+    cardId: c.cardId,
+    ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
+    upgraded: !!c.upgraded,
+    ...(Number.isInteger(c.rank) && c.rank > 1 ? { rank: c.rank } : {}),
+    ...(Number.isInteger(c.skillBonus) && c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
+    ...(Number.isInteger(c.passiveBlock) && c.passiveBlock > 0 ? { passiveBlock: c.passiveBlock } : {}),
+    ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}), // equipment numbers
+    ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
+    ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.ratingId ? { ratingId: c.ratingId } : {}),
+    ...(Number.isFinite(c.ratingValue) ? { ratingValue: c.ratingValue } : {}),
+    ...(Number.isFinite(c.ratingCap) ? { ratingCap: c.ratingCap } : {}),
+    ...(c.kitRole ? { kitRole: c.kitRole } : {}),
+    ...(c.grantedBy ? { grantedBy: c.grantedBy, grantSource: c.grantSource } : {}),
+    ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
+    ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
+  }));
+  // Play in deck order is each seat owner's own setting (SPEC §14.1): that
+  // seat draws its deck as arranged and rolls nothing for it.
+  const orderedDraw = p.orderedDraw ? { order: deck.map((card) => card.instanceId) } : null;
+  const drawPile = orderedDrawPile(orderedDraw ? deck : C.rng.shuffle('shuffle', deck),
+    (card) => C.registries.framework.isInnate(resolveCard(C.registries, card)));
+  // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): the seat's hand rules are
+  // the shipped behaviour options plus its own opening-hand, draw and
+  // hand-size rows, and its ratings its own rating rows. A seat born before
+  // ruleset 7 keeps what co-op always gave it — a fresh hand of its derived
+  // draw each turn, capped by the retired fallback hand size.
+  const legacy = readsLegacyStatHomes(p);
+  const handRules = legacy ? null : resolveHandRules({}, handStatRows(C.registries, p));
+  const level = Number.isInteger(p.level) && p.level >= 1 ? p.level : 1;
+  const ratingRows = C.ratingsRules ? ratingStatRows(C.registries, p) : null;
+  const P = {
+    id: p.id,
+    level,
+    handRules,
+    handMax: handRules ? scaledCards(handRow(handRules, 'handSize'), p.attributes || {}, level) : LEGACY_HAND_MAX,
+    ratingRows: ratingRows && Object.values(ratingRows).every(Boolean) ? ratingRows : null,
+    derivedStatRuleSnapshot: p.derivedStatRuleSnapshot || null,
+    name: p.name || p.id,
+    classId: p.classId,
+    attributeMode: p.attributeMode,
+    attributes: p.attributes ? { ...p.attributes } : undefined,
+    // The seat's loadout, so the framework Weight Class (dodge pricing and the
+    // dodge check) is decided from THIS player's equipment, not a Light default.
+    loadout: p.loadout ? structuredClone(p.loadout) : null,
+    itemUpgradeLevels: p.itemUpgradeLevels || {},
+    skills: p.skills ? structuredClone(p.skills) : {},
+    coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
+    // SPEC §15.4: the seat's attuned legendary sigils, mounted under its own key.
+    attunedSigils: Array.isArray(p.attunedSigils) ? [...p.attunedSigils] : [],
+    entity,
+    orderedDraw,
+    piles: { draw: drawPile, hand: [], discard: [], exhaust: [] },
+    connected: true,
+    ended: false,
+  };
+  C.players.set(p.id, P);
+  if (!C.order.includes(p.id)) C.order.push(p.id);
+  if (!initial) {
+    // Mid-combat join. Mount the relics they arrive holding under their own
+    // seat key, for the reason the initial loop states — but PUT THE ACTIVE
+    // SEAT BACK. A join can land in the enemy phase, where this function did
+    // not touch the active seat before, and leaving someone else's entity and
+    // piles installed on the shared context is how the next enemy action hits
+    // the wrong hand.
+    const wasActive = C.playerKey ? C.players.get(C.playerKey) : null;
+    setActive(C, P);
+    syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
+    syncRelicProperties(C, P.entity);
+    syncClassProperties(C, P.entity);
+    syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
+    if (C.ratingsRules) refreshCombatRatings(C);
+    setActive(C, wasActive || null);
+    // …and the fresh hand, which is the player phase's business only.
+    if (C.phase === 'player') {
+      setActive(C, P);
+      P.entity.energy = P.entity.energyMax;
+      A.drawCards(C, P.handRules ? turnDrawCount(C, true) : P.entity.drawPerTurn);
+      P.opened = true;
+    }
+    rescaleEnemies(C);
+  }
+  return P;
+}
+
+function setActive(C, P) {
+  C.player = P ? P.entity : null;
+  C.piles = P ? P.piles : null;
+  // The shared action context is combat-shaped: the dodge opcode and the
+  // class-priced cost read `attributes` / `loadout` off it, so the active
+  // seat's own are exposed here — the same fields the solo engine carries.
+  C.attributes = P ? P.attributes : null;
+  C.attributeMode = P ? P.attributeMode || null : null;
+  C.loadout = P ? P.loadout : null;
+  C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
+  C.skills = P ? P.skills : {};
+  // Every player entity carries id 'player', so triggers.js scopes player-owned
+  // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
+  // it, one seat's once-per-combat relic/stance/status consumes the party's.
+  C.playerKey = P ? P.id : null;
+  // The seat's own stat rows: the hand rules and hand size its draws obey,
+  // the level its rows read, and the rating rows its ratings are priced by.
+  C.handRules = P ? P.handRules : null;
+  C.orderedDraw = P ? P.orderedDraw || null : null;
+  C.handMax = P ? P.handMax : LEGACY_HAND_MAX;
+  C.characterLevel = P ? P.level : undefined;
+  C.derivedStatRuleSnapshot = P ? P.derivedStatRuleSnapshot : null;
+  if (P && P.ratingRows && C.ratingsRules) C.ratingsRules.ratings = P.ratingRows;
+}
+
+function firstLiving(C) {
+  return livingPlayers(C)[0] || [...C.players.values()][0];
+}
+function livingPlayers(C) {
+  return C.order.map((id) => C.players.get(id)).filter((P) => P && P.connected && P.entity.alive);
+}
+function connectedCount(C) {
+  return livingPlayers(C).length;
+}
+
+// ---- presence: join / leave rescale ----------------------------------------
+export function joinCombat(C, player) {
+  const existing = C.players.get(player.id);
+  if (existing) { // returning player reconnects to their frozen body
+    existing.connected = true;
+    existing.entity.alive = existing.entity.hp > 0;
+    rescaleEnemies(C);
+    if (C.phase === 'suspended') { C.phase = 'player'; startPlayerPhase(C); }
+    return existing;
+  }
+  return addPlayerState(C, player);
+}
+
+export function leaveCombat(C, playerId) {
+  const P = C.players.get(playerId);
+  if (!P) return;
+  P.connected = false;
+  P.ended = true; // no longer blocks the phase transition
+  rescaleEnemies(C);
+  if (!connectedCount(C)) { C.phase = 'suspended'; return; }
+  maybeEndPlayerPhase(C);
+}
+
+// Enemy HP tracks the live headcount: rescale current + max by the mult delta.
+function rescaleEnemies(C) {
+  const target = coopHpMult(Math.max(1, connectedCount(C)), C.hpFactor) * C.extraHpMult;
+  const ratio = target / C.baseHpMult;
+  if (Math.abs(ratio - 1) < 1e-9) return;
+  for (const e of C.enemies) {
+    if (!e.alive) continue;
+    e.maxHp = Math.max(1, Math.round(e.maxHp * ratio));
+    e.hp = Math.max(1, Math.min(e.maxHp, Math.round(e.hp * ratio)));
+  }
+  C.baseHpMult = target;
+}
+
+// ---- queue + end checks -----------------------------------------------------
+function drainQueue(C) {
+  let guard = 0;
+  while (C.queue.length) {
+    if (++guard > QUEUE_GUARD) throw new Error('Co-op action queue did not drain (trigger loop?)');
+    A.executeAction(C, C.queue.shift());
+    endCheck(C);
+    if (C.result) { C.queue.length = 0; return; }
+  }
+  endCheck(C);
+}
+
+function endCheck(C) {
+  if (C.result) return;
+  // Downed players drop out of the fight; the run-level revive is the session's.
+  for (const P of C.players.values()) {
+    if (P.entity.alive && P.entity.hp <= 0) {
+      P.entity.alive = false;
+      C.emit('playerDowned', { playerId: P.id });
+    }
+  }
+  const anyUp = [...C.players.values()].some((P) => P.connected && P.entity.alive);
+  if (!anyUp) return finish(C, 'defeat');
+  if (C.enemies.length && C.enemies.every((e) => !e.alive)) return finish(C, 'victory');
+}
+
+function finish(C, result) {
+  C.result = result;
+  C.phase = 'ended';
+  C.queue.length = 0;
+  C.emit('combatEnd', { victory: result === 'victory' });
+  C.queue.length = 0;
+}
+
+// ---- player phase -----------------------------------------------------------
+function startPlayerPhase(C) {
+  C.turn += 1;
+  C.phase = 'player';
+  for (const P of livingPlayers(C)) {
+    setActive(C, P);
+    const e = P.entity;
+    F.startFoundationTurn(C, e);
+    P.ended = false;
+    e.counters.cardsPlayedThisTurn = 0;
+    // A turn's Stamina spend belongs to that turn alone. A seat that spent
+    // and then disconnected is retired by leaveCombat without reaching
+    // endOnePlayerTurn, so the counter is zeroed here, at every seat's turn
+    // start, and never survives into a later turn to suppress its recovery.
+    e.counters.staminaSpentThisTurn = 0;
+    if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
+    else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
+    reconcileWardBlock(e);
+    clearMeterGuards(e);
+    // Less what a Stagger took (plan phase 8): owed to this next turn only.
+    e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
+    e.pendingActionLoss = 0;
+    // A seat's FIRST hand is its opening hand, whichever turn it arrives on (a
+    // seat that joins during the enemy phase opens on the next player turn).
+    A.drawCards(C, P.handRules ? turnDrawCount(C, !P.opened) : e.drawPerTurn);
+    P.opened = true;
+    C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
+    fireOwnerHooks(C, e, 'ownerTurnStart');
+    drainQueue(C);
+    if (C.result) return;
+  }
+}
+
+/**
+ * cardChoicePlan(C, playerId, cardInstanceId) → the pending choice playing
+ * this seat's card offers ({ kind, options }), or null — the solo engine's
+ * offer for this seat's class (model/cardChoices.js). playCard's `choice`
+ * answers it.
+ */
+export function cardChoicePlan(C, playerId, cardInstanceId) {
+  const P = C.players.get(playerId);
+  if (!P) throw new Error(`Unknown player '${playerId}'`);
+  const inst = P.piles.hand.find((c) => c.instanceId === cardInstanceId);
+  if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
+  return cardChoice(C.registries, resolveCard(C.registries, inst), P.entity.classId, P.entity.stanceId);
+}
+
+export function playCard(C, playerId, cardInstanceId, targetId, choice) {
+  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice));
+  if (C.result) throw new Error('Combat is over');
+  if (C.phase !== 'player') throw new Error('Not the player phase');
+  const P = C.players.get(playerId);
+  if (!P || !P.connected || !P.entity.alive) throw new Error(`Player '${playerId}' cannot act`);
+  if (P.ended) throw new Error(`Player '${playerId}' already ended their turn`);
+  setActive(C, P);
+  C._buffer = [];
+  try {
+    doPlayCard(C, { cardInstanceId, targetId, choice });
+    return { events: C._buffer };
+  } finally {
+    C._buffer = null;
+  }
+}
+
+function needsEnemyTarget(def) {
+  return (def.effects || []).some((eff) => eff.target === 'enemy');
+}
+function effectiveCost(C, def) {
+  if (def.cost === 'X') return 'X';
+  // Same framework cost authority as the solo engine (hand parity).
+  return F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, {
+    powerCostReduction: passiveSum(C.registries, C.player.relicIds, 'powerCostReduction', C.player.itemUpgradeLevels || {}),
+    weightClass: playerWeightClass(C).weightClass,
+  })).action;
+}
+
+function doPlayCard(C, { cardInstanceId, targetId, choice }) {
+  const p = C.player;
+  const idx = C.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
+  if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
+  const inst = C.piles.hand[idx];
+  const def = resolveCard(C.registries, inst, C.breakMeterVersion || 0);
+  const kws = def.keywords || [];
+  const chosen = assertCardChoice(cardChoice(C.registries, def, p.classId), choice);
+  F.assertFoundationPlayable(C, def, chosen);
+  if (C.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
+
+  const isX = def.cost === 'X';
+  const cost = isX ? p.energy : effectiveCost(C, def);
+  const pools = F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass }));
+  const manaCost = pools.mana;
+  const staminaCost = cost;
+  if (p.energy < cost) throw new Error(`Not enough stamina (need ${cost}, have ${p.energy})`);
+  if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
+  if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
+
+  const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
+    id: entry.id,
+    alive: entry.entity.alive,
+    connected: entry.connected,
+    ended: entry.ended,
+  })));
+  if (friendlyPlan.active) targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);
+  assertCardTarget(cardTargetPlan(def, C.playerKey, C.enemies, [...C.players.values()].map(entry => ({
+    id: entry.id, alive: entry.entity.alive, connected: entry.connected,
+  }))), targetId);
+
+  let target = null;
+  if (targetId != null) {
+    // targetId may be a teammate's member id (ally-targeted co-op cards).
+    if (C.players.has(targetId)) {
+      const AP = C.players.get(targetId);
+      if (!AP.entity.alive) throw new Error(`Ally '${targetId}' is down`);
+      target = AP.entity;
+    } else {
+      target = findEntity(C, targetId);
+      if (!target || !target.alive) throw new Error(`Invalid target '${targetId}'`);
+    }
+  } else if (needsEnemyTarget(def)) {
+    target = C.enemies.find((e) => e.alive) || null;
+    if (!target) throw new Error('No living enemy to target');
+  }
+
+  // The kind tag, not def.type (model/tree.js cardKind) — as solo combat reads it.
+  const kind = cardKind(def);
+  // The grip's derived tags ride the snapshot, as in solo combat (plan phase 3c).
+  const derivedTags = gripTags(gripOf(C.registries, C.loadout, p.classId));
+  const cardRef = {
+    sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+    ratingId: inst.ratingId,
+    ratingValue: inst.ratingValue,
+    ratingCap: inst.ratingCap,
+    equipmentRole: inst.equipmentRole,
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
+    type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    derivedTags,
+    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
+    // rewrites `tags` into the resolved attack tags (the weapon's inherited
+    // ones included), and cardTagIs must read what the card row says.
+    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
+    damageSchool: inst.damageSchool ?? def.damageSchool,
+    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+    // The resolved face's Poise/Ward values: a staff's Strike resolves
+    // magical and carries Ward, which the registry def cannot (attackImpact).
+    ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
+  };
+  const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef);
+
+  p.energy -= cost;
+  if (cost > 0 || isX) C.emit('energySpent', { amount: cost });
+  p.mana -= manaCost;
+  if (manaCost > 0) C.emit('manaSpent', { amount: manaCost });
+  if (staminaCost > 0) C.emit('staminaSpent', { amount: staminaCost });
+  p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + staminaCost;
+
+  C.piles.hand.splice(idx, 1);
+  p.counters.cardsPlayedThisTurn += 1;
+  p.counters.cardsPlayedThisCombat += 1;
+  const meta = {
+    energySpent: cost,
+    manaSpent: manaCost,
+    staminaSpent: staminaCost,
+    ordinalThisTurn: p.counters.cardsPlayedThisTurn,
+    ordinalThisCombat: p.counters.cardsPlayedThisCombat,
+    attackOrdinal: null,
+    ...(chosen != null ? { choice: chosen } : {}),
+  };
+  if (kind === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
+  for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
+  C.emit('cardPlayed', {
+    playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
+    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.tags || [], derivedTags,
+    targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
+    ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
+  });
+  drainQueue(C);
+
+  if (!C.result) {
+    // Same framework placement authority as the solo engine (hand parity).
+    const destination = C.registries.framework.afterPlayDestination(def);
+    if (destination === 'EXHAUST_PILE') {
+      C.piles.exhaust.push(inst);
+      C.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: 'played' });
+    } else if (destination === 'HAND') {
+      C.piles.hand.push(inst);
+    } else if (destination !== 'REMOVED_FROM_PLAY') {
+      C.piles.discard.push(inst);
+    }
+    drainQueue(C);
+  }
+}
+
+// targetId may be an enemy id (offensive flask) OR another player's member id
+// (StS2 throw-to-ally: a self-beneficial flask lands on a chosen ally instead).
+export function useFlask(C, playerId, slot, targetId, chargeKind = null) {
+  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => useFlask(candidate, playerId, slot, targetId, chargeKind));
+  if (C.result) throw new Error('Combat is over');
+  if (C.phase !== 'player') throw new Error('Not the player phase');
+  const P = C.players.get(playerId);
+  if (!P || !P.connected || !P.entity.alive) throw new Error(`Player '${playerId}' cannot act`);
+  const p = P.entity;
+  const chargeId = chargeFlaskId(C.registries, chargeKind);
+  const currentKey = chargeKind && `${chargeKind}Current`;
+  if (chargeId && (!p.flaskCharges || p.flaskCharges[currentKey] <= 0)) throw new Error(`No ${chargeKind} flask charges`);
+  const flask = chargeId ? { flaskId: chargeId } : p.flasks[slot];
+  if (!flask) throw new Error(`No flask in slot ${slot}`);
+  const def = C.registries.flasks.get(flask.flaskId);
+
+  // Throw-to-ally: a non-offensive flask directed at another living player.
+  const ally = targetId && C.players.get(targetId);
+  const thrown = ally && !def.targeted && ally.entity.alive;
+  const recipient = thrown ? ally.entity : p;
+
+  let enemyTarget = null;
+  if (!thrown) {
+    if (targetId != null && !C.players.has(targetId)) {
+      enemyTarget = findEntity(C, targetId);
+      if (!enemyTarget || !enemyTarget.alive) throw new Error(`Invalid target '${targetId}'`);
+    } else if (def.targeted) {
+      enemyTarget = C.enemies.find((e) => e.alive) || null;
+    }
+  }
+
+  if (chargeId) p.flaskCharges[currentKey] -= 1;
+  else p.flasks.splice(slot, 1);
+  // Effects that target 'self'/'player' resolve against the recipient (thrower
+  // or ally); offensive effects still hit the enemy target.
+  setActive(C, thrown ? ally : P);
+  C._buffer = [];
+  try {
+    C.emit(thrown ? 'flaskThrown' : 'flaskUsed', { flaskId: flask.flaskId, slot, from: playerId, to: thrown ? targetId : (enemyTarget ? enemyTarget.id : null) });
+    const amountMult = passiveMult(C.registries, p.relicIds, 'flaskPowerMult');
+    for (const eff of def.effects || []) {
+      C.enqueue({ effect: eff, source: recipient, owner: recipient, target: enemyTarget || recipient, meta: amountMult !== 1 ? { amountMult } : {} });
+    }
+    drainQueue(C);
+    return { events: C._buffer };
+  } finally { C._buffer = null; }
+}
+
+export function endTurn(C, playerId) {
+  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => endTurn(candidate, playerId));
+  if (C.result) throw new Error('Combat is over');
+  if (C.phase !== 'player') throw new Error('Not the player phase');
+  const P = C.players.get(playerId);
+  if (!P || P.ended) return;
+  setActive(C, P);
+  endOnePlayerTurn(C, P);
+  P.ended = true;
+  maybeEndPlayerPhase(C);
+}
+
+function endOnePlayerTurn(C, P) {
+  const p = P.entity;
+  C.emit('playerTurnEnd', { turn: C.turn, playerId: P.id });
+  fireOwnerHooks(C, p, 'ownerTurnEnd');
+  drainQueue(C);
+  if (C.result) return;
+  // Each card still in this seat's hand fires its authored `onTurnEndInHand`
+  // list (Guilt: lose 1 HP, SPEC §5.2) — the solo engine's rule, same order:
+  // after owner hooks, before status decay and the hand discard.
+  let inHandFired = false;
+  for (const card of [...C.piles.hand]) {
+    const hook = resolveCard(C.registries, card).onTurnEndInHand;
+    if (!Array.isArray(hook) || !hook.length) continue;
+    for (const eff of hook) {
+      C.enqueue({ effect: eff, source: p, owner: p, target: p, meta: { cardInstanceId: card.instanceId, cardId: card.cardId, trigger: 'turnEndInHand' } });
+    }
+    inHandFired = true;
+  }
+  if (inHandFired) {
+    drainQueue(C);
+    if (C.result) return;
+  }
+  S.decayAtTurnEnd(C, p);
+  // Stamina refills with the next player turn.
+  p.counters.staminaSpentThisTurn = 0;
+  const keep = [], toDiscard = [], toExhaust = [];
+  for (const card of C.piles.hand) {
+    const def = resolveCard(C.registries, card);
+    const fate = P.handRules ? endTurnCardFate(C, card)
+      : C.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : C.registries.framework.endTurnFate(def);
+    if (fate === 'keep') keep.push(card);
+    else if (fate === 'exhaust') toExhaust.push(card);
+    else toDiscard.push(card);
+  }
+  // Kept cards past the seat's hand size go to the discard, as a solo fight's
+  // overflow does (co-op has no turn-end discard prompt).
+  const overflow = P.handRules && P.handRules.overflow === 'discard' ? keep.splice(C.handMax) : [];
+  C.piles.hand = keep;
+  for (const card of toExhaust) { C.piles.exhaust.push(card); C.emit('cardExhausted', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'ethereal' }); }
+  for (const card of overflow) { C.piles.discard.push(card); C.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' }); }
+  returnUnplayedCards(C, toDiscard);
+  p.energy = 0;
+  drainQueue(C);
+}
+
+function maybeEndPlayerPhase(C) {
+  if (C.result || C.phase !== 'player') return;
+  const active = livingPlayers(C);
+  if (active.length && active.every((P) => P.ended)) {
+    enemyPhase(C);
+    if (C.result) return;
+    rollIntents(C);
+    startPlayerPhase(C);
+  }
+}
+
+// ---- enemy phase (fan-out) --------------------------------------------------
+function enemyPhase(C) {
+  C.phase = 'enemy';
+  C.emit('enemyTurnStart', { turn: C.turn });
+  for (const e of C.enemies) {
+    if (e.alive && !S.getFlag(C, e, 'retainBlock')) e.block = 0;
+    reconcileWardBlock(e);
+    clearMeterGuards(e);
+  }
+  setActive(C, firstLiving(C));
+  drainQueue(C);
+  if (C.result) return;
+
+  for (const enemy of C.enemies) {
+    if (C.result) return;
+    if (!enemy.alive) continue;
+    setActive(C, firstLiving(C));
+    fireOwnerHooks(C, enemy, 'ownerTurnStart');
+    drainQueue(C);
+    if (C.result || !enemy.alive) continue;
+
+    // Staggered (poise meter filled) or skipTurn: the telegraphed move is lost.
+    if (enemy.skipNextTurn || S.getFlag(C, enemy, 'skipTurn')) {
+      enemy.skipNextTurn = false;
+    } else if (enemy.pendingMove) {
+      if (C.turn >= enemy.pendingMove.resolveOnTurn) {
+        const def = C.registries.enemies.get(enemy.enemyId);
+        const move = def.moves[enemy.pendingMove.moveId];
+        const moveId = enemy.pendingMove.moveId;
+        enemy.pendingMove = null;
+        executeMove(C, enemy, move, moveId);
+      }
+    } else if (enemy.intent && enemy.intent.moveId) {
+      const def = C.registries.enemies.get(enemy.enemyId);
+      const move = def.moves[enemy.intent.moveId];
+      if (move.delay) {
+        const wc = move.delay.whileCharging || {};
+        if (wc.block != null) { setActive(C, firstLiving(C)); C.enqueue({ effect: { op: 'block', target: 'self', amount: wc.block }, source: enemy, owner: enemy, target: enemy, meta: {} }); drainQueue(C); }
+        for (const eff of wc.effects || []) applyEnemyEffect(C, enemy, eff);
+        enemy.pendingMove = { moveId: enemy.intent.moveId, resolveOnTurn: C.turn + (move.delay.turns != null ? move.delay.turns : 1) };
+        enemy.intent = { ...enemy.intent, pending: true };
+      } else {
+        executeMove(C, enemy, move, enemy.intent.moveId);
+      }
+    }
+    if (C.result) return;
+    if (enemy.alive) { setActive(C, firstLiving(C)); fireOwnerHooks(C, enemy, 'ownerTurnEnd'); drainQueue(C); if (C.result) return; if (enemy.alive) S.decayAtTurnEnd(C, enemy); }
+  }
+  C.emit('enemyTurnEnd', { turn: C.turn });
+  setActive(C, firstLiving(C));
+  drainQueue(C);
+}
+
+// A move's self/enemy-targeted parts apply once; player-targeted damage +
+// effects fan out to every living player (each blocks independently).
+function executeMove(C, enemy, move, moveId) {
+  (enemy.performedMoves ||= []).push(moveId); // performed, not rolled (see combat.js)
+  C.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
+  if (move.block != null) {
+    setActive(C, firstLiving(C));
+    C.enqueue({ effect: { op: 'block', target: 'self', amount: move.block }, source: enemy, owner: enemy, target: enemy, meta: { moveId } });
+    drainQueue(C);
+    if (C.result) return;
+  }
+  const targets = livingPlayers(C);
+  for (const P of targets) {
+    if (C.result) return;
+    setActive(C, P);
+    if (move.damage != null) {
+      C.enqueue({ effect: { op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits != null ? move.hits : 1 }, source: enemy, owner: enemy, target: P.entity, meta: { moveId } });
+      drainQueue(C);
+      if (C.result) return;
+    }
+  }
+  for (const eff of move.effects || []) applyEnemyEffect(C, enemy, eff, moveId);
+}
+
+// Ops that act on the active seat's card piles (actions.js reads `ctx.piles`,
+// never `eff.target`). An enemy has no piles, so in an enemy effect these are
+// always aimed at the players: they fan out like `target: 'player'` even when
+// the row names no target (Dazed injectors; docs/FINISH.md, Owner decisions).
+const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
+
+// Player-targeted effects (and seat-pile ops) fan out to every living seat;
+// self/enemy effects apply once.
+function applyEnemyEffect(C, enemy, eff, moveId) {
+  if (eff.target === 'player' || SEAT_PILE_OPS.has(eff.op)) {
+    for (const P of livingPlayers(C)) {
+      if (C.result) return;
+      setActive(C, P);
+      C.enqueue({ effect: eff, source: enemy, owner: enemy, target: P.entity, meta: { moveId } });
+      drainQueue(C);
+    }
+  } else {
+    setActive(C, firstLiving(C));
+    C.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: { moveId } });
+    drainQueue(C);
+  }
+}
+
+// ---- enemy intent (mirrors combat.js §4.6) ----------------------------------
+function rollIntents(C, isFirstTurn = false) {
+  for (const enemy of C.enemies) {
+    if (!enemy.alive) continue;
+    if (enemy.pendingMove) { if (enemy.intent) enemy.intent = { ...enemy.intent, pending: true }; continue; }
+    if (enemy.skipNextTurn || S.getFlag(C, enemy, 'skipTurn')) { enemy.intent = { kind: 'staggered', moveId: null }; continue; }
+    const def = C.registries.enemies.get(enemy.enemyId);
+    let moveId;
+    if (isFirstTurn && def.firstMove) moveId = def.firstMove;
+    else moveId = weightedMovePick(C, enemy, def);
+    if (moveId == null) { enemy.intent = { kind: 'unknown', moveId: null }; continue; }
+    enemy.movesHistory.push(moveId);
+    enemy.intent = buildIntent(def.moves[moveId], moveId, enemy);
+  }
+}
+
+function weightedMovePick(C, enemy, def) {
+  const entries = Object.entries(def.moves).filter(([id, mv]) => !mv.locked || enemy.unlockedMoves.includes(id));
+  if (!entries.length) return null;
+  const eligible = entries.filter(([id, mv]) => {
+    if (mv.maxConsecutive == null) return true;
+    let run = 0;
+    for (let i = enemy.movesHistory.length - 1; i >= 0; i--) { if (enemy.movesHistory[i] === id) run++; else break; }
+    return run < mv.maxConsecutive;
+  });
+  const pool = eligible.length ? eligible : entries;
+  const total = pool.reduce((acc, [, mv]) => acc + mv.weight, 0);
+  if (total <= 0) return pool[0][0];
+  let r = C.rng.float('enemyAI') * total;
+  for (const [id, mv] of pool) { r -= mv.weight; if (r < 0) return id; }
+  return pool[pool.length - 1][0];
+}
+
+function buildIntent(move, moveId, enemy = null) {
+  return {
+    kind: move.intent, moveId,
+    damage: enemyMoveDamage(enemy, move),
+    hits: move.damage != null ? (move.hits != null ? move.hits : 1) : null,
+    block: move.block != null ? move.block : null,
+    delayed: !!move.delay, pending: false,
+  };
+}
+
+/** Per-player ending HP + party result, for the session to apply. */
+export function coopOutcome(C) {
+  const survivors = {};
+  for (const P of C.players.values()) survivors[P.id] = { hp: Math.max(0, P.entity.hp), downed: !P.entity.alive };
+  return { survivors, result: C.result || (C.phase === 'suspended' ? 'suspended' : null) };
+}

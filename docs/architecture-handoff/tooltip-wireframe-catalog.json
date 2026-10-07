@@ -1,0 +1,46 @@
+[
+  {
+    "id": "WT0",
+    "name": "Shared tooltip",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WT1",
+    "name": "Compact tooltip",
+    "parent": "WT0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WT2",
+    "name": "Standard tooltip",
+    "parent": "WT0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WT3",
+    "name": "Expanded tooltip",
+    "parent": "WT0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  }
+]

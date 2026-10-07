@@ -1,0 +1,195 @@
+name: windows installer
+
+# Builds AshenSpire-Setup-<version>.exe (desktop/windows/README.md) on a real
+# Windows runner, installs it silently with the high-resolution art (the real
+# download from the pinned art release, through Windows PowerShell 5.1), checks
+# what landed, starts the game once, uninstalls, and uploads the installer as the
+# `windows-installer-<commit>` artifact. A push to `test`, `release` or `main`
+# also replaces the `installer-<branch>` prerelease, whose fixed asset
+# AshenSpire-Setup.exe is the direct download the README links.
+#
+# NOT A PULL-REQUEST GATE FOR THE GAME (owner, 2026-09-26: a PR into `dev` is
+# gated by fast checks only). It runs on a pull request only when the PR touches
+# the desktop wrapper or this file, on every push to `test`, `release` and `main`,
+# and by hand (Actions → windows installer → Run workflow) on any branch.
+
+on:
+  push:
+    branches: [test, release, main, alternative/test, 'alternative/**/test']
+  pull_request:
+    branches: [dev, alternative/dev, 'alternative/**/dev']
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/windows-installer.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: windows-installer-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write # the installer-<branch> prerelease (push only)
+    steps:
+      # Same reason as ci.yml: the bundler reads files verbatim, so CRLF from
+      # autocrlf would make the Windows build differ from the Linux one.
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+
+      - uses: ./.github/actions/setup-node
+
+      # The game's art comes from the pinned release (docs/EXTERNAL-ASSETS-PLAN.md
+      # step 12); the installer stages the light and common packs and pins the
+      # high index, so all three are fetched.
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: all
+
+      - name: NSIS
+        shell: pwsh
+        run: |
+          # The Chocolatey feed sometimes answers 504 and choco then exits 0 having
+          # installed nothing: retry, and fail here, by name, if NSIS is still missing.
+          $have = { (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe') -or (Get-Command makensis -ErrorAction SilentlyContinue) }
+          for ($try = 1; -not (& $have) -and $try -le 4; $try++) {
+            if ($try -gt 1) { Start-Sleep -Seconds (15 * $try) }
+            "NSIS install attempt $try"
+            choco install nsis -y --no-progress
+          }
+          if (-not (& $have)) { throw 'NSIS could not be installed (the Chocolatey feed did not answer)' }
+
+      - name: Build the installer
+        run: node desktop/windows/build-installer.mjs
+
+      - name: Art chooser behavior and preview
+        shell: pwsh
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File tests/windows-art-options.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'art chooser behavior tests failed' }
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File tests/windows-game-options.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'game chooser behavior tests failed' }
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -STA -ExecutionPolicy Bypass -File desktop/windows/art-options.ps1 -Config art-release.json -GameConfig build/windows-installer/stage/app/install-data/installer-build.json -SelectionFile "$env:RUNNER_TEMP\art-selection.ini" -PreviewFile build/windows-installer/art-options-preview.png
+          if ($LASTEXITCODE -ne 0) { throw 'art chooser preview failed' }
+
+      - name: Download art separately with checksum verification
+        shell: pwsh
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File tests/windows-art-download.ps1 -Destination "$env:RUNNER_TEMP\standalone-art.zip"
+          if ($LASTEXITCODE -ne 0) { throw 'standalone art download failed' }
+
+      - name: Install silently, with the high-resolution art
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem build/windows-installer/AshenSpire-Setup-*.exe | Select-Object -First 1
+          $dir = Join-Path $env:RUNNER_TEMP 'AshenSpire'
+          $p = Start-Process $setup.FullName -ArgumentList '/S', "/D=$dir" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "installer exited $($p.ExitCode)" }
+          foreach ($f in 'AshenSpire.exe', 'Uninstall.exe', 'game\AshenSpire.html', 'install-data\fetch-hd-art.ps1', 'install-data\art-options.ps1', 'install-data\art-releases.ps1', 'install-data\game-releases.ps1', 'install-data\installer-build.json', 'install-data\art-release.json') {
+            if (-not (Test-Path (Join-Path $dir $f))) { throw "missing after install: $f" }
+          }
+          $packs = Get-ChildItem (Join-Path $dir 'game\packs') -Name
+          $packs
+          $log = Join-Path $dir 'install-data\hd-art.log'
+          if (Test-Path $log) { '--- hd-art.log ---'; Get-Content $log; '---' } else { 'no hd-art.log: the art step never ran' }
+          if (-not ($packs | Where-Object { $_ -like 'high-*.json' })) {
+            # Diagnose: the same step the installer runs, in the same Windows PowerShell 5.1, with its output here.
+            $pin = Get-Content art-release.json -Raw | ConvertFrom-Json
+            & "$env:SystemRoot\SysWOW64\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+              -File (Join-Path $dir 'install-data\fetch-hd-art.ps1') -Mode Install -InstallDir $dir `
+              -Url "https://github.com/$($pin.repo)/releases/download/$($pin.tag)/$($pin.packs.high.zip)" -Sha256 $pin.packs.high.sha256
+            "direct run exited $LASTEXITCODE"
+            # Whatever the direct run did, the installer's own art step failed: so does this job.
+            throw "the installer's high-resolution art step did not install the high index (see hd-art.log above)"
+          }
+          foreach ($p in 'light-', 'common-', 'high-') {
+            if (-not ($packs | Where-Object { $_ -like "$p*.json" })) { throw "no $p index in game\packs — the high-resolution art did not install" }
+          }
+          $pin = Get-Content art-release.json -Raw | ConvertFrom-Json
+          $installedArt = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AshenSpire').HDArtVersion
+          if ($installedArt -ne $pin.tag) { throw "installed art version was not recorded: $installedArt" }
+          # Every object every index lists is on disk (the game shows no broken art).
+          $missing = 0
+          foreach ($list in 'base-objects.tsv', 'high-objects.tsv') {
+            foreach ($line in Get-Content (Join-Path $dir "install-data\$list")) {
+              if (-not $line) { continue }
+              $rel = $line.Split("`t")[2]
+              if (-not (Test-Path (Join-Path $dir ('game\' + $rel.Replace('/', '\'))))) { $missing++ }
+            }
+          }
+          if ($missing) { throw "$missing objects listed by an index are missing" }
+          "installed: $((Get-ChildItem $dir -Recurse -File | Measure-Object Length -Sum).Sum / 1MB) MB"
+
+      - name: The game starts and stays up
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:RUNNER_TEMP 'AshenSpire\AshenSpire.exe'
+          Start-Process $exe
+          Start-Sleep -Seconds 20
+          # By process name, not the first PID: with no usable GPU the wrapper
+          # relaunches itself once with acceleration off (desktop/electron/main.js).
+          if (-not (Get-Process AshenSpire -ErrorAction SilentlyContinue)) { throw 'AshenSpire.exe is not running 20 s after start' }
+          Get-Process AshenSpire | Stop-Process -Force
+          Start-Sleep -Seconds 3
+
+      - name: Uninstall silently
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP 'AshenSpire'
+          # An unlisted object (a name of 64 hex digits) goes; a look-alike that is
+          # not hex is the player's and stays.
+          $obj = Join-Path $dir 'game\objects\ab'
+          New-Item -ItemType Directory -Force $obj | Out-Null
+          $stray = Join-Path $obj ('ab' + ('0' * 62) + '.png')
+          $mine = Join-Path $obj ('ab' + ('z' * 62) + '.png')
+          Set-Content $stray 'x'; Set-Content $mine 'x'
+          # _?= runs the uninstaller in place, so -Wait waits for it.
+          $p = Start-Process (Join-Path $dir 'Uninstall.exe') -ArgumentList '/S', "_?=$dir" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "uninstaller exited $($p.ExitCode)" }
+          if (Test-Path $stray) { throw 'an unlisted object outlived the uninstall' }
+          if (-not (Test-Path $mine)) { throw 'the uninstall deleted a file that is not an object' }
+          Remove-Item $mine
+          $left = Get-ChildItem $dir -Recurse -File | Where-Object Name -ne 'Uninstall.exe'
+          if ($left) { $left.FullName; throw 'files left after uninstall' }
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-${{ github.sha }}
+          path: |
+            build/windows-installer/AshenSpire-Setup-*.exe
+            build/windows-installer/art-options-preview.png
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+
+      # The direct download. Artifacts need a sign-in and a run id, so a push to
+      # a published branch recreates the rolling `installer-<branch>` prerelease
+      # at this commit with a fixed asset name. Prerelease: never "Latest".
+      - name: Publish the installer download
+        if: github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          $tag = "installer-$env:BRANCH"
+          $exe = @(Get-ChildItem build/windows-installer/AshenSpire-Setup-*.exe)
+          if ($exe.Count -ne 1) { throw "expected one installer, found $($exe.Count)" }
+          $fixed = Join-Path $exe[0].DirectoryName 'AshenSpire-Setup.exe'
+          Copy-Item $exe[0].FullName $fixed
+          gh release delete $tag --cleanup-tag --yes 2>$null
+          $global:LASTEXITCODE = 0
+          gh release create $tag $fixed $exe[0].FullName --prerelease --latest=false --target $env:GITHUB_SHA `
+            --title "Windows installer ($env:BRANCH)" `
+            --notes "Latest Windows installer built from ``$env:BRANCH`` at $env:GITHUB_SHA ($($exe[0].Name)). Replaced on every push to ``$env:BRANCH``."
+          if ($LASTEXITCODE -ne 0) { throw "gh release create exited $LASTEXITCODE" }

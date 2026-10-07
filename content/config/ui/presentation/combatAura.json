@@ -1,0 +1,29 @@
+{
+  "vars": {
+    "fadedBlur": 3
+  },
+  "components": {
+    "powerFrames": {
+      "power1": { "radius": 1.4, "blur": "$fadedBlur", "alpha": 0.55, "brightness": 1.03 },
+      "power2": { "radius": 2.6, "blur": 8, "alpha": 0.95, "brightness": 1.16 },
+      "power3": { "radius": 1.8, "blur": 5, "alpha": 0.7, "brightness": 1.06 }
+    },
+    "colors": {
+      "stamina": "88,225,131",
+      "mana": "91,165,255",
+      "hp": "255,91,102",
+      "power": "220,221,255"
+    }
+  },
+  "behavior": {
+    "guardedRestPoses": ["guard", "shieldGuard", "parry"],
+    "defaultPalette": "power",
+    "guardedPalette": "mana"
+  },
+  "sizing": {
+    "restingGlow": { "innerBlurPx": 2, "outerBlurPx": 4, "innerAlphaHex": "55", "outerAlphaHex": "22" },
+    "spread": 1.3,
+    "faded": { "radius": 1, "alpha": 0.26, "blur": "$fadedBlur" },
+    "lit": { "radius": 1.6, "alpha": 0.8, "blur": 5 }
+  }
+}

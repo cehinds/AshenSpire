@@ -1,0 +1,737 @@
+// src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
+//
+// createRegistries(contentBundle) loads all content into typed, deep-frozen
+// registries keyed by id. Cross-references are by id only; getters THROW on
+// unknown ids (dangling ids are caught earlier by model/validate.js).
+//
+// Headless: no document/window/localStorage/timers.
+
+import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
+import { tagIndex } from './tags.js';
+import { nodeTree } from './tree.js';
+import { itemTypeLabel } from '../content/equipment.js';
+import { shops as shippedShops } from '../content/shops.js';
+import { sigils as shippedSigils } from '../content/sigils.js';
+import { consumables as shippedConsumables } from '../content/consumables.js';
+import { companions as shippedCompanions } from '../content/companions.js';
+import { cloneShops } from './shopKinds.js';
+import { applyCardMods } from './loadout.js';
+import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
+import { resolveRelicModifiers } from './relicModifiers.js';
+import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
+import { cardForSchool, projectAttackCardDamageBundle } from './attackCardDamage.js';
+import { sharedFrameworkBridge } from '../framework/bridge.js';
+import { createEntityTermOverlay } from '../framework/termOverlay.js';
+
+function applyBasicCardProfile(def, profile) {
+  if (!profile) return def;
+  const tags = [...(profile.tags || [])];
+  const effects = (def.effects || []).map((effect) => (
+    effect.op === 'damage' ? { ...effect, tags } : { ...effect }
+  ));
+  return {
+    ...def,
+    name: profile.displayName,
+    icon: profile.icon,
+    flavor: profile.flavor || def.flavor,
+    damageSchool: profile.damageSchool,
+    exposureBuildupPerHit: profile.exposureBuildupPerHit,
+    cardTags: tags,
+    effects,
+    equipmentProfileId: profile.id,
+    equipmentRole: profile.role,
+  };
+}
+
+/** Recursively freeze a value in place (functions and frozen values skipped). */
+export function deepFreeze(value) {
+  if (value === null || typeof value !== 'object') return value;
+  if (Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const key of Object.keys(value)) deepFreeze(value[key]);
+  return value;
+}
+
+// `key` is the field a def is indexed by — `id` everywhere except the property
+// rules table, whose rows are keyed by the tag they give behaviour to.
+function makeRegistry(typeName, defs, key = 'id') {
+  const byId = new Map();
+  for (const def of defs || []) {
+    if (!def || typeof def[key] !== 'string') {
+      throw new Error(`Every ${typeName} def must have a string ${key} (got ${JSON.stringify(def && def[key])})`);
+    }
+    if (byId.has(def[key])) {
+      throw new Error(`Duplicate ${typeName} ${key} '${def[key]}'`);
+    }
+    byId.set(def[key], deepFreeze(def));
+  }
+  return Object.freeze({
+    type: typeName,
+    size: byId.size,
+    get(id) {
+      const d = byId.get(id);
+      if (!d) throw new Error(`Unknown ${typeName} id '${id}'`);
+      return d;
+    },
+    has(id) {
+      return byId.has(id);
+    },
+    ids() {
+      return [...byId.keys()];
+    },
+    all() {
+      return [...byId.values()];
+    },
+  });
+}
+
+// Bundle key → registry property + singular type name for error messages.
+const TYPE_SINGULAR = {
+  attributes: 'attribute',
+  creationModes: 'creation mode',
+  cards: 'card',
+  resources: 'resource',
+  relics: 'relic',
+  statuses: 'status',
+  stances: 'stance',
+  keywords: 'keyword',
+  enemies: 'enemy',
+  encounters: 'encounter',
+  events: 'event',
+  flasks: 'flask',
+  classes: 'class',
+  seats: 'seat',
+};
+
+/**
+ * createRegistries(contentBundle) → frozen registries object.
+ *
+ * contentBundle = {
+ *   version?: string,                    // contentVersion (SPEC §3.12)
+ *   cards?: [], relics?: [], statuses?: [], stances?: [], keywords?: [],
+ *   enemies?: [], encounters?: [], events?: [], flasks?: [], classes?: [],
+ *   balance?: {},                        // flat constants (SPEC §3.3)
+ *   mapConfigs?: { [actNumber]: {...} },
+ *   scripts?: { [name]: function },      // budgeted escape hatch (SPEC §3.1(6))
+ * }
+ *
+ * Missing collections default to empty. Duplicate ids throw.
+ *
+ * Result shape:
+ *   registries.cards.get(id) / .has(id) / .ids() / .all() / .size
+ *   ... same for relics, statuses, stances, keywords, enemies, encounters,
+ *       events, flasks, classes
+ *   registries.balance              — deep-frozen constants object
+ *   registries.mapConfig(act)       — throws on unknown act
+ *   registries.scripts              — frozen { name: fn }
+ *   registries.contentVersion       — string
+ */
+/**
+ * stampTags(bundle) -> Map of source path to a copy of that collection with
+ * every object carrying its `tags` array.
+ *
+ * This is the join, resolved eagerly, exactly once, at boot — the ORM's
+ * navigation property, made concrete. content/source/tagging.csv stays the ONLY
+ * home a tag is authored in (an object arriving with its own `tags` is refused
+ * by model/tags.js), and every object comes out of here with a real array, so a
+ * mechanic reading `obj.tags` never guards for undefined and never has to know
+ * which table the tag came from.
+ *
+ * Which collections get stamped is read from the content's own tagFamilies.csv
+ * `source` column — a family joins by adding a row there, including a nested
+ * one like `equipment.armaments`. `scopeField` supplies the second half of the
+ * parent key for families whose ids repeat (armour, per class).
+ */
+// The families whose pieces carry an item TYPE. Named here rather than derived,
+// because the four-field split below is equipment's contract with the Armoury,
+// not a property of the tag schema.
+const EQUIPMENT_ITEM_FAMILIES = new Set(['armament', 'armour']);
+
+function stampTags(bundle) {
+  const { families, index, kinds: kindsOf, keyOf } = tagIndex(bundle);
+  // PROPERTY TAGS NEVER JOIN `tags`. They are the one domain that confers
+  // behaviour (the property root in content/source/nodes.csv), and their one reader is the
+  // mount path (engine/properties.js). Stamped onto `propertyTags` instead —
+  // and only when an object holds any — so every existing reader of `tags`
+  // (chips, the card/weapon fit check, the class leaning the starting deck
+  // reads) sees exactly what it saw before the domain existed.
+  const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : [])
+    .filter((t) => t && t.domain === 'property').map((t) => t.id));
+  // WHAT THE OBJECT IS is stamped as `kindIds` (not `kinds`: a slot row already
+  // owns that word for the piece kinds it takes). tagIndex keeps the kind rows
+  // apart from the list — every list reader must never see a kind, and this is
+  // the one reader that must (model/tree.js cardKind reads the stamp).
+  const stamped = new Map();
+  for (const spec of families.values()) {
+    // A non-string source is refused BY NAME in model/tags.js. Skipping it here
+    // rather than splitting it keeps the order of events right: the validator
+    // gets to speak, instead of boot throwing before it can.
+    if (!spec.source || typeof spec.source !== 'string') continue;
+    let node = bundle;
+    for (const part of spec.source.split('.')) node = node && typeof node === 'object' ? node[part] : undefined;
+    if (!Array.isArray(node)) continue;
+    stamped.set(spec.source, node.map((def) => {
+      if (!def) return def;
+      const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
+      const authored = index.get(keyOf(spec.family, scope, def.id)) || [];
+      const entityTags = authored.filter((tag) => !propertyIds.has(tag));
+      const propertyTags = authored.filter((tag) => propertyIds.has(tag));
+      const kinds = kindsOf.get(keyOf(spec.family, scope, def.id)) || [];
+      const conferred = { ...(propertyTags.length ? { propertyTags } : {}), ...(kinds.length ? { kindIds: kinds } : {}) };
+      // Equipment splits its stamped tags four ways, exactly as content's
+      // normPiece used to before the tags moved into tagging.csv: the complete
+      // authored vocabulary, the item-type half the Armoury and the smith name
+      // the piece by, and the gameplay/presentation half that stays `tags`. An
+      // item card never infers its type from `kind` or a UI call site.
+      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags, ...conferred };
+      const itemTypeTags = entityTags.filter((tag) => itemTypeLabel(tag));
+      return {
+        ...def,
+        ...conferred,
+        entityTags,
+        itemTypeTags,
+        itemTypes: itemTypeTags.map((tag) => ({ tag, label: itemTypeLabel(tag) })),
+        tags: entityTags.filter((tag) => !itemTypeLabel(tag)),
+      };
+    }));
+  }
+  return stamped;
+}
+
+export function createRegistries(contentBundle) {
+  const bundle = projectAttackCardDamageBundle(contentBundle || {});
+  const registries = {};
+
+  // The tag join, resolved once for every collection tagFamilies.csv names.
+  // Everything below reads a stamped collection where one exists, so `.tags` is
+  // present and correct on every tagged object no matter which door it came in.
+  const tagFamilies = [...(bundle.tagFamilies || [])];
+  const stamped = stampTags(bundle);
+  const collection = (source, fallback) => stamped.get(source) || fallback;
+
+  for (const type of REGISTRY_TYPES) {
+    registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
+  }
+  // What each `property` tag confers, keyed by the tag (content/propertyRules.js).
+  // Read only by the mount path; a getter throws on an unknown tag like every
+  // other registry, and validate.js has already refused a tag with no rule.
+  registries.propertyRules = makeRegistry('property rule', bundle.propertyRules || [], 'tag');
+
+  // The tree itself, and its companions, for the readers that ask it directly
+  // (model/tree.js nodeTree, resolveVariable). The tag tables and the property
+  // rules above are views of these; both are on the registries so a reader can
+  // take whichever shape its question is in.
+  // …and the class tree (plan phase 5b): classId, nodeId, tier — read by
+  // model/classTree.js as a plain table, like the tree's own companions.
+  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree', 'classMastery', 'classSkillFeats']) {
+    registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
+  }
+  registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });
+  registries.tree = nodeTree(registries);
+
+  registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  if (bundle.classMasteryVersion === 1) registries.classMasteryVersion = 1;
+  if (bundle.breakMeterVersion === 1) registries.breakMeterVersion = 1;
+  // The shop kinds and their offerings (SPEC §14.2), as configured for this
+  // run; a bundle without them reads the shipped table.
+  registries.shops = deepFreeze(cloneShops(bundle.shops || shippedShops));
+  // Sigils (SPEC §14.3): what the market's sigil shelf sells into `run.sigils`.
+  // A bundle without them reads the shipped collection.
+  // A sigil is a tagged collection (SPEC §14.4): its property rows are
+  // tagging.csv's, so it is read stamped, `propertyTags` and all.
+  registries.sigils = makeRegistry('sigil', collection('sigils', bundle.sigils || shippedSigils));
+  // Consumables and companions (SPEC §14.3), as configured for this run. A
+  // companion is a tagged collection (its property rows are tagging.csv's),
+  // so it is read stamped; a bundle without either reads the shipped one.
+  registries.consumables = makeRegistry('consumable', bundle.consumables || shippedConsumables);
+  registries.companions = makeRegistry('companion', collection('companions', bundle.companions || shippedCompanions));
+  // Quest steps (E12): which events an Unknown node may roll only once the
+  // run's history earns them. Keyed by event id; absent means ungated.
+  registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
+  // Plan phase 10a: which choices complete which quest (the door reads it),
+  // who speaks each chain step, and the speaker rows themselves.
+  registries.questChains = deepFreeze({ ...(bundle.questChains || {}) });
+  registries.eventSpeakers = deepFreeze({ ...(bundle.eventSpeakers || {}) });
+  registries.speakers = makeRegistry('speaker', bundle.speakers || []);
+  registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
+  // Keepsakes are tagged like everything else; they just live one level down.
+  const creation = { ...(bundle.characterCreation || {}) };
+  if (stamped.has('characterCreation.keepsakes')) {
+    creation.keepsakes = stamped.get('characterCreation.keepsakes');
+  }
+  registries.characterCreation = deepFreeze(creation);
+  // One object, not a copied settings shadow. The run snapshots the resolved
+  // result; authoring and validation still point at this exact content object.
+  registries.derivedStatRules = deepFreeze(bundle.derivedStatRules || {});
+
+  const mapConfigs = deepFreeze({ ...(bundle.mapConfigs || {}) });
+  registries.mapConfigs = mapConfigs;
+  registries.mapConfig = (act) => {
+    const cfg = mapConfigs[act];
+    if (!cfg) throw new Error(`Unknown mapConfig for act '${act}'`);
+    return cfg;
+  };
+
+  // Armaments/armour are tables, not id→def registries: pieces are looked up
+  // by (slot, class) far more often than by bare id, and armour ids repeat
+  // across classes on purpose. They ride along frozen, like balance.
+  // Equipment tables are stamped the same way; each is named by its own family
+  // row (equipment.armaments, equipment.armour, ...), so nothing here lists them.
+  const equipment = { ...(bundle.equipment || {}) };
+  for (const [source, rows] of stamped) {
+    // THE WHOLE PATH, NOT THE FIRST TWO SEGMENTS. `tagFamilies.source` is a
+    // dotted path and stampTags already RESOLVES it to any depth; writing the
+    // result back with `equipment[tail] = rows` assumed depth two, so a family
+    // sourced at `equipment.extras.charms` had its rows dropped onto
+    // `equipment.extras` — replacing the object that held `charms` outright.
+    // The bundle validated, the rows were stamped, and every reader that walked
+    // the declared path (tagService.withTag among them) then found nothing.
+    // Clone down the path so siblings survive, and write at the leaf.
+    const parts = String(source).split('.');
+    if (parts[0] !== 'equipment' || parts.length < 2) continue;
+    let node = equipment;
+    for (let i = 1; i < parts.length - 1; i++) {
+      const key = parts[i];
+      node[key] = (node[key] && typeof node[key] === 'object' && !Array.isArray(node[key]))
+        ? { ...node[key] }
+        : {};
+      node = node[key];
+    }
+    node[parts[parts.length - 1]] = rows;
+  }
+  // The card-tag index equipment fit reads, folded from THIS bundle's tagging
+  // rows rather than the module-global one content/equipment.js folded at
+  // import time. A caller handing us an extended bundle (a test fixture, a
+  // mutant, a modded content set) stamps its cards from the rows it supplied,
+  // so an index built from the shipped rows would answer a different question
+  // than `card.tags` does — two answers, one question, and the fit check
+  // quietly using the stale one.
+  // Derived UNCONDITIONALLY, so `equipment.cardTagging` cannot disagree with
+  // what was stamped. No tagging table at all means no index either — the
+  // missing-table guard in validateEquipment then fires, rather than the fit
+  // check quietly reading a shipped fold that no longer describes this bundle.
+  if (Array.isArray(bundle.tagging)) {
+    equipment.cardTagging = registries.cards.all().filter(card=>card.tags?.length).map(card=>({cardId:card.id,tags:[...card.tags]}));
+  } else {
+    delete equipment.cardTagging;
+  }
+  registries.equipment = deepFreeze(equipment);
+  // The one tag vocabulary, plus the two tables that say who may carry it and
+  // where it is authored (content/tags.js). Rules read these, never a second
+  // hard-coded list — that is what makes a new tag a spreadsheet row.
+  registries.tags = deepFreeze([...(bundle.tags || [])]);
+  registries.tagDomains = deepFreeze([...(bundle.tagDomains || [])]);
+  registries.tagFamilies = deepFreeze(tagFamilies.map((row) => ({ ...row })));
+  registries.tagFamilyDomains = deepFreeze((bundle.tagFamilyDomains || []).map((row) => ({ ...row })));
+  registries.tagging = deepFreeze((bundle.tagging || []).map((row) => ({ ...row })));
+
+  // Visual scaling domains use the same derived-stat engine as run creation.
+  // They are content potential (the largest legal creation allocation), not a
+  // gameplay cap and not a second formula in the HUD.
+  const attributeIds = registries.attributes.ids();
+  const creationCeiling = Math.max(0, ...registries.creationModes.all().map((mode) => mode.maximum || 0));
+  const ceilingAttributes = Object.fromEntries(attributeIds.map((id) => [id, creationCeiling]));
+  const rules = resolveDerivedStatRules(registries.derivedStatRules, { attributeIds, classFields: ['maxHp'] });
+  let hpEquipmentBonus = 0;
+  for (const piece of [...(registries.equipment.armour || []), ...(registries.equipment.armaments || [])]) {
+    for (const raw of (piece && piece.mods) || []) {
+      const match = /^self\.maxHp=\+?(-?\d+)$/.exec(String(raw).trim());
+      if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
+    }
+  }
+  // The label ceiling is the ATTRIBUTE term at the creation ceiling: the
+  // character level's own term (plan phase 6, derivedStats `perLevel`) is not
+  // added here — the trough's geometry reads the authored domainMax, and a
+  // long run's bumps at most widen a plate's number by a digit.
+  const domainRows = registries.classes.all().map((classDef) => {
+    const relic = resolveRelicModifiers(registries, [classDef.startingRelic], { attributes: ceilingAttributes });
+    return {
+      hp: deriveStat(rules, 'hp', { attributes: ceilingAttributes, classDef }).value + relic.resources.hp.total + hpEquipmentBonus,
+      mana: deriveStat(rules, 'mana', { attributes: ceilingAttributes, classDef }).value + relic.resources.mana.total,
+      stamina: deriveStat(rules, 'stamina', { attributes: ceilingAttributes, classDef }).value + relic.resources.stamina.total,
+    };
+  });
+  // Player Poise potential — the largest stagger threshold a loadout can
+  // state: per equipment slot, the best authored piece whose kind that slot
+  // accepts, plus every authored relic bonus. Content potential like hp above
+  // (not a legality proof — it does not check class fit, only slot fit): an
+  // equipment-table edit moves this ceiling, a code edit never does (Law 0
+  // clause 1). Not a derived stat: poise is summed from equipment rows, so it
+  // is derived here from the same tables the receipt reads
+  // (model/statProjection.js playerPoiseThresholdReceipt), not from
+  // derivedStatRules.
+  const poisePieces = [
+    ...((registries.equipment.armaments || []).map((p) => ({ kind: p.kind, poiseThreshold: p.poiseThreshold }))),
+    ...((registries.equipment.armour || []).map((p) => ({ kind: 'armor', poiseThreshold: p.poiseThreshold }))),
+  ];
+  let poiseDomain = 0;
+  for (const slot of registries.equipment.slots || []) {
+    let best = 0;
+    for (const piece of poisePieces) {
+      if ((slot.kinds || []).includes(piece.kind) && Number.isFinite(piece.poiseThreshold) && piece.poiseThreshold > best) best = piece.poiseThreshold;
+    }
+    poiseDomain += best;
+  }
+  for (const relic of registries.relics.all()) {
+    const add = relic.passives && relic.passives.poiseThresholdAdd;
+    if (Number.isFinite(add) && add > 0) poiseDomain += add;
+  }
+  registries.statDomains = deepFreeze({
+    hp: Math.max(...domainRows.map((row) => row.hp)),
+    mana: Math.max(...domainRows.map((row) => row.mana)),
+    stamina: Math.max(...domainRows.map((row) => row.stamina)),
+    poise: poiseDomain,
+  });
+
+  // What can be earned. A table, like equipment — evaluated against saved
+  // progress by model/unlocks.js, never by anything in here.
+  registries.unlocks = deepFreeze([...collection('unlocks', bundle.unlocks || [])]);
+
+  registries.scripts = Object.freeze({ ...(bundle.scripts || {}) });
+  registries.contentVersion = String(bundle.version || bundle.contentVersion || '0');
+
+  // The framework bridge — the decision authority for card lifecycle
+  // vocabulary and keyword terminology (src/framework/bridge.js). It reads
+  // only canonical framework data (never this bundle), so the process-wide
+  // instance serves every registries object, and a plain property keeps it
+  // visible to fixtures that clone registries with spread.
+  registries.framework = sharedFrameworkBridge();
+
+  // Entity words (status/stance names and tooltips) resolve through a
+  // per-bundle framework TermRegistry — the same text verbatim, with the
+  // resolution authority moved to the framework (src/framework/termOverlay.js).
+  registries.frameworkTerms = createEntityTermOverlay(bundle);
+
+  return Object.freeze(registries);
+}
+
+// ---------------------------------------------------------------------------
+// Relic passives (SPEC PASSIVE_KEYS) — data lookups over owned relic defs.
+//
+// The key is a string typed at nine call sites and a mis-typed one returns
+// 1 / 0 / false — a defect that behaves exactly like a relic whose passive is
+// simply not very good. PASSIVE_KEYS says which strings are real, so it does the
+// saying: named once, with the legal set, and the caller still gets its default
+// rather than a thrown boot. Until this the set had NO reader in the whole tree
+// (tools/closedsets.mjs) — the vocabulary was decoration while the relic
+// schema's hand-typed copy was the law.
+// ---------------------------------------------------------------------------
+
+const PASSIVE_SET = new Set(PASSIVE_KEYS);
+const unknownPassives = new Set();
+function knownPassive(key) {
+  if (PASSIVE_SET.has(key) || unknownPassives.has(key)) return;
+  unknownPassives.add(key);
+  console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
+}
+
+/**
+ * carrierRules(registries, tagIds) → the rules a tag set confers, in tag order:
+ * each tag's one rule, kept only if every tag it `requires` is on the same
+ * carrier and none it `excludes` is. An unknown tag throws — validate.js has
+ * already refused it at boot.
+ *
+ * IT LIVES HERE RATHER THAN BESIDE THE MOUNT because two layers ask the same
+ * question and neither may ask the other: engine/properties.js resolves a
+ * carrier's rules to mount them, and the relic sentence in ui/components/card.js
+ * resolves the same rules to read their triggers' numbers (plan phase 2, where a
+ * relic's triggers moved into its rule). Rule resolution is a fact about content;
+ * mounting is what the engine does with it.
+ */
+export function carrierRules(registries, tagIds) {
+  const held = new Set(tagIds || []);
+  const rules = [];
+  for (const tag of tagIds || []) {
+    const rule = registries.propertyRules.get(tag);
+    if ((rule.requires || []).some((t) => !held.has(t))) continue;
+    if ((rule.excludes || []).some((t) => held.has(t))) continue;
+    rules.push(rule);
+  }
+  return rules;
+}
+
+/**
+ * objectKinds(registries, def) → the classification nodes the object carries,
+ * as stamped `kindIds` — what it IS, read off the tags rather than off the
+ * collection it sits in. Every shipped object carries exactly one family kind
+ * (validate.js refuses one that does not) and a card's is the node its type
+ * names, so `objectKinds(REG, strike)` is ['classification.attack'].
+ */
+export function objectKinds(registries, def) {
+  return def && Array.isArray(def.kindIds) ? [...def.kindIds] : [];
+}
+
+/** Whether an object carries a kind, by node id or by its leaf name. */
+export function objectIsKind(registries, def, kind) {
+  const want = String(kind).includes('.') ? String(kind) : `classification.${kind}`;
+  return objectKinds(registries, def).includes(want);
+}
+
+/** The property rules a relic definition confers — empty for a passives-only relic. */
+export function relicPropertyRules(registries, def) {
+  const tags = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  return tags.length ? carrierRules(registries, tags) : [];
+}
+
+// MOUNTED PROPERTY RULES CONFER PASSIVES EXACTLY AS AN OWNED RELIC DOES
+// (engine/properties.js). `mounts` is ONE owner's mount map —
+// { [sourceKey]: { rules } }, what propertyMountsOf(ctx, entity) returns — and
+// is plain data, so this model layer never reaches into the engine. Absent, it
+// reads as nothing mounted: every run-level caller (rewards, shrines, the map)
+// is unchanged, because properties are mounted only inside a fight. Sources are
+// walked sorted, the same order the trigger scan uses.
+function mountedPassiveValues(mounts, key) {
+  const values = [];
+  if (!mounts) return values;
+  for (const sourceKey of Object.keys(mounts).sort()) {
+    for (const rule of mounts[sourceKey].rules || []) {
+      const p = rule.passives;
+      if (p && p[key] !== undefined) values.push(p[key]);
+    }
+  }
+  return values;
+}
+
+/** Product of a multiplicative passive across owned relics and mounted properties (default 1). */
+export function passiveMult(registries, relicIds, key, mounts = null) {
+  knownPassive(key);
+  let m = 1;
+  for (const id of relicIds || []) {
+    const p = registries.relics.get(id).passives;
+    if (p && typeof p[key] === 'number') m *= p[key];
+  }
+  for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') m *= v;
+  return m;
+}
+
+/** Sum of an additive passive across owned relics and mounted properties (default 0). */
+export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}, mounts = null) {
+  knownPassive(key);
+  let s = 0;
+  for (const id of relicIds || []) {
+    const itemRef = `relic/${id}`;
+    const p = resolveUpgradedRelic(registries, itemRef, itemUpgradeLevels[itemRef] || 0).passives;
+    if (p && typeof p[key] === 'number') s += p[key];
+  }
+  for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') s += v;
+  return s;
+}
+
+/** True if any owned relic or mounted property sets the boolean passive. */
+export function passiveFlag(registries, relicIds, key, mounts = null) {
+  knownPassive(key);
+  for (const id of relicIds || []) {
+    const p = registries.relics.get(id).passives;
+    if (p && p[key] === true) return true;
+  }
+  return mountedPassiveValues(mounts, key).some((v) => v === true);
+}
+
+// ---------------------------------------------------------------------------
+// Card resolution — definitions vs instances (SPEC §3.3, §4.3)
+// ---------------------------------------------------------------------------
+
+// Cache resolved upgrade merges per registries object.
+const resolveCache = new WeakMap();
+
+/**
+ * resolveCard(registries, cardInstanceOrRef) → effective (frozen) card def.
+ *
+ * Accepts anything with { cardId, upgraded? }. For upgraded cards the
+ * `upgrade` partial override is merged over the base def:
+ *   - scalar fields (cost, textTemplate, ...) replace the base value
+ *   - `effects` REPLACES the base effects array entirely when present
+ *   - `keywords` REPLACES the base keywords entirely when present (list the
+ *     full upgraded set — this is what lets an upgrade remove Exhaust)
+ *   - `name` defaults to base name + '+'
+ */
+export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
+  const cardId = instanceOrRef.cardId;
+  const authored = registries.cards.get(cardId);
+  const base = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
+  const mods = instanceOrRef.mods;
+  const profileId = instanceOrRef.profileId;
+  const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
+  const sourceArmamentId = instanceOrRef.sourceArmamentId || '';
+  if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
+  const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
+  const rank = cardRank(instanceOrRef);
+  const skillBonus = cardSkillBonus(instanceOrRef);
+  const passiveBlock = cardPassiveBlock(instanceOrRef);
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return base;
+
+  let cache = resolveCache.get(registries);
+  if (!cache) {
+    cache = new Map();
+    resolveCache.set(registries, cache);
+  }
+  // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
+  // has to include them — two Strikes can differ if one was drawn before a
+  // mid-combat weapon swap and the other after.
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+
+  const profile = profileId
+    ? ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === profileId)
+    : null;
+  // The school this card resolves in decides which formulas projected it: a
+  // staff's Strike is magical, so its damage is PR's and its impact Ward's
+  // (model/attackCardDamage.js cardForSchool). Chosen before the upgrade merge
+  // so both faces come from the same side.
+  const school = typeof instanceOrRef.damageSchool === 'string' ? instanceOrRef.damageSchool : profile?.damageSchool;
+  let result = cardForSchool(base, school);
+  if (result !== base) result = deepFreeze(result);
+  if (instanceOrRef.upgraded) result = mergeUpgrade(result);
+  if (profileId) result = applyBasicCardProfile(result, profile);
+  if (mods && mods.length) {
+    const eq = registries.equipment || {};
+    result = deepFreeze(
+      applyCardMods(result, mods, {
+        modFields: eq.modFields || {},
+        limits: (registries.balance.equipment || {}).limits || {},
+      })
+    );
+  }
+  if (hasCarrier) {
+    result = deepFreeze({
+      ...result,
+      ...(typeof instanceOrRef.damageSchool === 'string' ? { damageSchool: instanceOrRef.damageSchool } : {}),
+      ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
+    });
+  }
+  // Smithing changes are exact item/tier content. No source id means there is
+  // no authority for a tier and therefore nothing may be inferred.
+  if (smithingLevel > 0 && !sourceArmamentId) throw new Error('A Smithed card must carry sourceArmamentId');
+  for (let nextTier = 1; nextTier <= smithingLevel; nextTier += 1) {
+    result = applyItemCardUpgradeRows(
+      result,
+      instanceOrRef.kitRole || instanceOrRef.equipmentRole || result.equipmentRole,
+      itemUpgradeRows(registries, `armament/${sourceArmamentId}`, nextTier),
+      registries.attributes.ids(),
+    );
+  }
+  // THE RANK AND THE SKILL BONUS (SPEC §13.4o) land last, on the finished
+  // face: each rank past 1, and each point of the every-5th-level skill
+  // bonus, adds 1 to the card's primary number, so the play, the preview and
+  // the card face all read the same value.
+  if (rank > 1 || skillBonus > 0) result = applyCardRank(result, rank, skillBonus);
+  // A passive tag's Block (SPEC §13.4o) lands on the finished face too.
+  if (passiveBlock > 0) result = applyPassiveBlock(result, passiveBlock);
+  cache.set(key, result);
+  return result;
+}
+
+/**
+ * cardRank(instance) → the instance's rank (SPEC §13.4o), 1 when absent. A
+ * rank is a whole number from 1 up; validateRunShape refuses anything else.
+ */
+export function cardRank(instance) {
+  const rank = instance && instance.rank;
+  return Number.isInteger(rank) && rank >= 1 ? rank : 1;
+}
+
+/**
+ * cardSkillBonus(instance) → the every-5th-level skill bonus the instance
+ * carries (SPEC §13.4o), 0 when absent. Derived, never chosen: `skills.js
+ * stampSkillBonuses` writes it from the run's skill levels.
+ */
+export function cardSkillBonus(instance) {
+  const bonus = instance && instance.skillBonus;
+  return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
+}
+
+/**
+ * cardPassiveBlock(instance) → the Block the run's passive tags add to the
+ * instance (SPEC §13.4o), 0 when absent. Derived, never chosen: `skills.js
+ * stampSkillBonuses` writes it from the run's skill feats.
+ */
+export function cardPassiveBlock(instance) {
+  const bonus = instance && instance.passiveBlock;
+  return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
+}
+
+/**
+ * passiveBlockIndex(card) → the effect a passive Block lands on: the card's
+ * first unconditional Block with a numeric amount, or -1. Once per card, so a
+ * card with two Blocks gains it once.
+ */
+export function passiveBlockIndex(card) {
+  return ((card && card.effects) || []).findIndex((effect) => effect && !effect.if && effect.op === 'block' && typeof effect.amount === 'number');
+}
+
+/** applyPassiveBlock(card, amount) → the face with `amount` added to that Block. */
+export function applyPassiveBlock(card, amount) {
+  const index = passiveBlockIndex(card);
+  if (index === -1 || !amount) return card;
+  const effects = card.effects.map((effect, i) => (i === index ? { ...effect, amount: effect.amount + amount } : effect));
+  return deepFreeze({ ...card, effects });
+}
+
+/**
+ * The ops a rank may move, best first (SPEC §13.4o): a card's PRIMARY NUMBER is
+ * what it is for — damage, then Block, then healing, then a status it applies,
+ * then poise damage. Costs (loseHp) and tempo (draw, energy, mana, discard)
+ * are never primary, so a rank cannot raise a price or snowball a turn.
+ */
+const RANKED_OPS = ['damage', 'block', 'heal', 'applyStatus', 'poiseDamage'];
+// An X-hit card (hits = energy spent) splits its rank as if it hit this often.
+const RANK_FORMULA_HITS = 3;
+
+/**
+ * primaryEffectIndex(card) → the index of the card's PRIMARY NUMBER: its first
+ * unconditional effect of the best RANKED_OPS op present, with a numeric
+ * amount (stacks for a status); -1 when it has none (the rank moves nothing).
+ */
+export function primaryEffectIndex(card) {
+  const effects = (card && card.effects) || [];
+  const numeric = (effect) => (effect.op === 'applyStatus' ? typeof effect.stacks === 'number' : typeof effect.amount === 'number');
+  for (const op of RANKED_OPS) {
+    const index = effects.findIndex((effect) => effect && !effect.if && effect.op === op && numeric(effect));
+    if (index !== -1) return index;
+  }
+  return -1;
+}
+
+/**
+ * rankBonus(effect, steps) → what `steps` rank steps add to the primary number.
+ * One per step; a multi-hit effect splits that across its hits, rounded up, so
+ * the total stays near one per step and a step never passes without a gain.
+ */
+export function rankBonus(effect, steps) {
+  if (!steps) return 0;
+  const hits = typeof effect.hits === 'number' ? effect.hits : effect.hits != null ? RANK_FORMULA_HITS : 1;
+  return Math.ceil(steps / Math.max(1, hits));
+}
+
+/**
+ * applyCardRank(card, rank, skillBonus) → the face at that rank. Each step past
+ * rank 1 adds 1 to the primary number: odd ranks by rule, even ranks until a
+ * skill's rank-step pool is authored (SPEC §13.4o, content phase C). Each
+ * point of `skillBonus` (the every-5th-level flat) adds 1 more, split across
+ * hits the same way.
+ */
+export function applyCardRank(card, rank, skillBonus = 0) {
+  const steps = Math.max(0, cardRank({ rank }) - 1) + cardSkillBonus({ skillBonus });
+  const index = primaryEffectIndex(card);
+  const effects = (card.effects || []).map((effect, i) => {
+    if (i !== index || !steps) return effect;
+    const bonus = rankBonus(effect, steps);
+    return effect.op === 'applyStatus' ? { ...effect, stacks: effect.stacks + bonus } : { ...effect, amount: effect.amount + bonus };
+  });
+  return deepFreeze({ ...card, effects, rank: cardRank({ rank }) });
+}
+
+/** The upgrade half of resolveCard, split out so mods can layer on top. */
+function mergeUpgrade(base) {
+  const up = base.upgrade || {};
+  return deepFreeze({
+    ...base,
+    ...up,
+    name: up.name != null ? up.name : `${base.name}+`,
+    keywords: up.keywords != null ? up.keywords : base.keywords || [],
+    effects: up.effects != null ? up.effects : base.effects,
+    textTemplate: up.textTemplate != null ? up.textTemplate : base.textTemplate,
+    upgraded: true,
+  });
+}

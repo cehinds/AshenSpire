@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 660" font-family="Verdana, Geneva, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16110c"/><stop offset="1" stop-color="#0d0b08"/>
+    </linearGradient>
+  </defs>
+  <rect width="1160" height="620" fill="url(#bg)"/>
+  <text x="580" y="646" fill="#7a6f5a" font-size="13" text-anchor="middle" font-style="italic">Concept direction — silhouette-first vector style: dark mass, one signature accent color, gold rim-light. All art original.</text>
+  <text x="580" y="40" fill="#c9a227" font-size="20" text-anchor="middle" font-family="Georgia, serif" letter-spacing="3">CHARACTER CONCEPTS</text>
+
+  <!-- ================= VAGABOND ================= -->
+  <g transform="translate(170,300)">
+    <ellipse cy="150" rx="80" ry="14" fill="#000" opacity="0.5"/>
+    <!-- cloak mass -->
+    <path d="M-52 140 q-14 -70 -8 -120 q4 -34 26 -52 l14 -12 q20 -10 40 0 l14 12 q22 18 26 52 q6 50 -8 120 q-52 16 -104 0 z" fill="#221c14" stroke="#c9a227" stroke-width="1.5"/>
+    <!-- helm -->
+    <path d="M-18 -58 a18 20 0 0 1 36 0 v14 h-36 z" fill="#2e2719" stroke="#c9a227" stroke-width="1.5"/>
+    <rect x="-14" y="-52" width="28" height="4" fill="#0d0b08"/>
+    <path d="M-4 -76 h8 l4 -16 h-16 z" fill="#2e2719" stroke="#c9a227"/>
+    <!-- pauldron -->
+    <path d="M-52 -30 q-16 4 -14 22 q10 8 26 2 z" fill="#2e2719" stroke="#c9a227"/>
+    <!-- greatsword -->
+    <path d="M58 130 l14 -196 l8 -18 l8 18 l14 196 q-22 10 -44 0 z" fill="#3a352c" stroke="#8a8072" stroke-width="1.5" transform="translate(6,0) rotate(3)"/>
+    <path d="M62 -46 h48" stroke="#c9a227" stroke-width="6" transform="rotate(3)"/>
+    <!-- bloodflame accent -->
+    <path d="M84 -60 q-10 -8 -5 -20 q3 -7 5 -12 q2 5 5 12 q5 12 -5 20 z" fill="#c9502e" transform="rotate(3)"/>
+    <path d="M84 -60 q-4 -5 -2 -11" stroke="#e8a04a" stroke-width="2" fill="none" transform="rotate(3)"/>
+    <!-- shield on back -->
+    <path d="M-70 -10 l22 8 v20 q-2 20 -22 28 q-20 -8 -22 -28 v-20 z" fill="#1c1610" stroke="#c9a227" stroke-width="1.5"/>
+  </g>
+  <text x="170" y="490" fill="#e8dcc0" font-size="16" text-anchor="middle" font-family="Georgia, serif" letter-spacing="2">VAGABOND</text>
+  <text x="170" y="512" fill="#c9502e" font-size="11" text-anchor="middle">accent: bloodflame ember</text>
+  <text x="170" y="530" fill="#7a6f5a" font-size="11" text-anchor="middle">shape language: heavy triangles,</text>
+  <text x="170" y="545" fill="#7a6f5a" font-size="11" text-anchor="middle">wide grounded base</text>
+
+  <!-- ================= ASTROLOGER ================= -->
+  <g transform="translate(450,300)">
+    <ellipse cy="150" rx="70" ry="13" fill="#000" opacity="0.5"/>
+    <!-- robe: tall thin -->
+    <path d="M-30 140 q-12 -80 0 -140 q6 -34 22 -48 q8 -8 16 0 q16 14 22 48 q12 60 0 140 q-30 12 -60 0 z" fill="#1c1a20" stroke="#9fc3e8" stroke-width="1.2"/>
+    <!-- wide hat -->
+    <path d="M-46 -52 q46 -18 92 0 q-14 10 -46 10 q-32 0 -46 -10 z" fill="#23202a" stroke="#9fc3e8" stroke-width="1.2"/>
+    <path d="M-14 -56 a14 16 0 0 1 28 0 v6 h-28 z" fill="#23202a" stroke="#9fc3e8"/>
+    <!-- staff with glintstone -->
+    <path d="M-52 142 l6 -186" stroke="#4a4034" stroke-width="6"/>
+    <circle cx="-45" cy="-56" r="13" fill="#7fa8c9"/>
+    <circle cx="-45" cy="-56" r="20" fill="#7fa8c9" opacity="0.25"/>
+    <circle cx="-45" cy="-56" r="27" fill="#7fa8c9" opacity="0.12"/>
+    <!-- floating glintstones -->
+    <circle cx="52" cy="-70" r="5" fill="#9fc3e8"/>
+    <circle cx="66" cy="-44" r="3.5" fill="#9fc3e8" opacity="0.8"/>
+    <circle cx="44" cy="-24" r="2.5" fill="#9fc3e8" opacity="0.6"/>
+  </g>
+  <text x="450" y="490" fill="#e8dcc0" font-size="16" text-anchor="middle" font-family="Georgia, serif" letter-spacing="2">ASTROLOGER</text>
+  <text x="450" y="512" fill="#9fc3e8" font-size="11" text-anchor="middle">accent: glintstone blue</text>
+  <text x="450" y="530" fill="#7a6f5a" font-size="11" text-anchor="middle">shape language: tall verticals,</text>
+  <text x="450" y="545" fill="#7a6f5a" font-size="11" text-anchor="middle">floating orbitals</text>
+
+  <!-- ================= PROPHET ================= -->
+  <g transform="translate(730,300)">
+    <ellipse cy="150" rx="70" ry="13" fill="#000" opacity="0.5"/>
+    <!-- ragged robe -->
+    <path d="M-36 140 l-6 -20 8 4 -2 -18 8 6 q-10 -70 2 -108 q6 -26 20 -38 q6 -6 12 0 q14 12 20 38 q12 38 2 108 l8 -6 -2 18 8 -4 -6 20 q-36 14 -72 0 z" fill="#241c16" stroke="#b5541c" stroke-width="1.2"/>
+    <!-- hood, face dark -->
+    <path d="M-16 -50 a16 18 0 0 1 32 0 v10 q-16 8 -32 0 z" fill="#160f0a" stroke="#b5541c" stroke-width="1.2"/>
+    <!-- golden halo, cracked -->
+    <circle cx="0" cy="-46" r="30" fill="none" stroke="#c9a227" stroke-width="2.5" stroke-dasharray="40 8 22 8 34 8"/>
+    <!-- censer -->
+    <path d="M46 -20 q14 30 4 58" stroke="#4a4034" stroke-width="2.5" fill="none"/>
+    <path d="M44 40 a10 12 0 0 0 16 0 l-2 -10 h-12 z" fill="#2e2719" stroke="#c9a227"/>
+    <!-- rot butterflies -->
+    <path d="M-58 -30 q-5 -7 -12 -3 q3 7 12 3 z M-58 -30 q-7 -5 -12 2 q7 4 12 -2 z" fill="#b5541c"/>
+    <path d="M-42 -66 q-4 -6 -10 -3 q2 6 10 3 z M-42 -66 q-6 -4 -10 2 q6 3 10 -2 z" fill="#b5541c" opacity="0.8"/>
+  </g>
+  <text x="730" y="490" fill="#e8dcc0" font-size="16" text-anchor="middle" font-family="Georgia, serif" letter-spacing="2">PROPHET</text>
+  <text x="730" y="512" fill="#b5541c" font-size="11" text-anchor="middle">accent: scarlet rot + broken gold</text>
+  <text x="730" y="530" fill="#7a6f5a" font-size="11" text-anchor="middle">shape language: ragged edges,</text>
+  <text x="730" y="545" fill="#7a6f5a" font-size="11" text-anchor="middle">circles and halos</text>
+
+  <!-- ================= BOSS: THE WATCHFUL OMEN ================= -->
+  <g transform="translate(1000,290)">
+    <ellipse cy="164" rx="105" ry="16" fill="#000" opacity="0.5"/>
+    <!-- hunched giant mass -->
+    <path d="M-80 156 q-20 -60 -4 -110 q10 -34 38 -62 q22 -22 46 -26 q30 -4 48 14 q16 16 18 44 q2 40 -14 84 l10 52 q-72 22 -142 4 z" fill="#1a140e" stroke="#8a1a1a" stroke-width="1.5"/>
+    <!-- horns -->
+    <path d="M-6 -46 q-20 -26 -12 -52 q16 12 22 40 z" fill="#2e2719" stroke="#8a1a1a"/>
+    <path d="M28 -50 q6 -30 28 -40 q0 28 -18 46 z" fill="#2e2719" stroke="#8a1a1a"/>
+    <!-- single watching eye -->
+    <ellipse cx="12" cy="-18" rx="16" ry="10" fill="#c9a227"/>
+    <circle cx="12" cy="-18" r="4.5" fill="#0d0b08"/>
+    <ellipse cx="12" cy="-18" rx="24" ry="16" fill="#c9a227" opacity="0.15"/>
+    <!-- held blade: raised, waiting -->
+    <path d="M-96 10 l-18 -120 l6 -16 l10 14 l20 118 q-9 6 -18 4 z" fill="#3a352c" stroke="#8a8072" stroke-width="1.5"/>
+    <path d="M-108 -4 h34" stroke="#8a1a1a" stroke-width="5"/>
+    <!-- delayed-attack motif: hanging gold chains -->
+    <path d="M-30 60 q0 20 -8 34 M6 66 q2 18 -4 34 M40 58 q6 18 2 36" stroke="#c9a227" stroke-width="1.5" fill="none" stroke-dasharray="5 4"/>
+  </g>
+  <text x="1000" y="490" fill="#e8dcc0" font-size="16" text-anchor="middle" font-family="Georgia, serif" letter-spacing="2">THE WATCHFUL OMEN</text>
+  <text x="1000" y="512" fill="#8a1a1a" font-size="11" text-anchor="middle">Act I boss — accent: omen red + gold eye</text>
+  <text x="1000" y="530" fill="#7a6f5a" font-size="11" text-anchor="middle">blade held high = the Delayed intent,</text>
+  <text x="1000" y="545" fill="#7a6f5a" font-size="11" text-anchor="middle">readable in silhouette alone</text>
+
+  <line x1="880" y1="90" x2="880" y2="560" stroke="#3a3226" stroke-width="1"/>
+  <text x="80" y="586" fill="#7a6f5a" font-size="11" font-style="italic">Rule: every combatant must be identifiable from silhouette + accent color alone — art can be swapped for real sprites later without redesign.</text>
+</svg>

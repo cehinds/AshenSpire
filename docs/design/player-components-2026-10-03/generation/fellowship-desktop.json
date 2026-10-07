@@ -1,0 +1,10 @@
+{
+  "id": "fellowship-desktop",
+  "group": "scenes",
+  "reference": "references/11-company-and-history.png",
+  "prompt": "High quality separate production background for Ashen Spire, faithfully matching the referenced screenshot's painterly quiet grandeur: soot black, weathered umber, tangible ruined gothic stone, tarnished bronze, cold grey fog, restrained warm ember accents. Reconstruct as fresh full-resolution artwork, never screenshot crop. Absolutely NO text, lettering, logos, UI, borders, panels, cards, markers or glyphs. From the TOP co-op scene only, wide landscape 16:9 composition: four anonymous travel-worn cloaked figures seen strictly from behind, seated as a loose semicircle around a small campfire, lower edge foreground only; ruined arch and stone stair to left, misty valley and tall distant gothic spire at dusk. Faces and class-specific emblems are never visible, no fifth person. Center upper and middle area dark quiet sky/valley for four independently overlaid lobby cards; flame stays below the card area. Empty hands, no weapons raised. Figures are atmospheric decoration, not selectable player sprites.",
+  "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-d533d0bb-fe2f-423d-8db7-6066996cd2fb.png",
+  "tool": "image_gen.imagegen",
+  "transparent_background": false,
+  "master": "masters/scenes/fellowship-desktop.png"
+}

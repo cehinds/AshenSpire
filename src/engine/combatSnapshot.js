@@ -1,0 +1,274 @@
+// src/engine/combatSnapshot.js — CombatSnapshotService.
+//
+// A save is a committed combat state, not a replay instruction. Registries,
+// RNG, queues, buffers, and runtime methods stay outside persisted data; this
+// service validates the versioned model and reconnects those dependencies.
+
+import { bindTurnStamina } from '../model/turnStamina.js';
+import { validateFoundationSnapshot } from './combatRules.js';
+import { emitEvent } from './triggers.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
+import { stampPlayerPoiseMax } from '../model/state.js';
+import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
+import { attachSkillXp } from './skillXp.js';
+import { refreshCombatRatings } from './combatRatings.js';
+import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
+
+/**
+ * A fight saved before plan phase 2 keyed its relic gates `relic:<owner>:<id>:<i>`;
+ * the mount scan that replaced it keys them `property:<owner>:relic:<id>:<i>`.
+ * The rename is carried here rather than left to sort itself out, because what
+ * those keys hold is `once` and `limitPerTurn` — a Forsaken Medallion that had
+ * already spent its one opening strike would spend it again on the turn the
+ * player reloaded, which is the save reading as a small refund.
+ *
+ * ONE-WAY AND LOSSLESS: each old key names exactly one new key, the new form is
+ * never rewritten, and a snapshot with neither form is untouched. It stays until
+ * no save in the wild predates the move; it costs one pass over a map that holds
+ * a few dozen entries.
+ */
+const RELIC_GATE_KEY = /^relic:(.+):([^:]+):(\d+)$/;
+function carryRelicGateKeys(entries) {
+  if (!Array.isArray(entries)) return entries;
+  return entries.map((entry) => {
+    if (!Array.isArray(entry) || typeof entry[0] !== 'string') return entry;
+    const m = RELIC_GATE_KEY.exec(entry[0]);
+    return m ? [`property:${m[1]}:relic:${m[2]}:${m[3]}`, entry[1]] : entry;
+  });
+}
+
+/** Return the JSON-safe state of one fully committed combat turn. */
+export function serializeCombatSnapshot(combat) {
+  if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
+  if (combat._buffer !== null || (combat.queue && combat.queue.length)) {
+    throw new Error('Combat is still resolving; wait for the action to finish before saving');
+  }
+  const snapshot = structuredClone({
+    version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
+    ...(combat.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
+    ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
+    ...(combat.recovery ? { recovery: combat.recovery } : {}),
+    ...(combat.foundation ? { foundation: combat.foundation } : {}),
+    equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
+    equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
+    removedAttackSlotIds: combat.removedAttackSlotIds,
+    ...(combat.sideboardedEquipmentCardIds?.length ? { sideboardedEquipmentCardIds: combat.sideboardedEquipmentCardIds } : {}),
+    ...(combat.poolDeck ? { poolDeck: true } : {}),
+    itemUpgradeLevels: combat.itemUpgradeLevels,
+    itemMounts: combat.itemMounts,
+    equipmentPoolDeficits: combat.equipmentPoolDeficits,
+    equipmentChanged: !!combat.equipmentChanged,
+    turn: combat.turn,
+    phase: combat.phase,
+    result: combat.result,
+    handMax: combat.handMax,
+    drawPerTurn: combat.drawPerTurn,
+    ...(Number.isInteger(combat.characterLevel) ? { characterLevel: combat.characterLevel } : {}),
+    player: combat.player,
+    enemies: combat.enemies,
+    loadout: combat.loadout,
+    attributes: combat.attributes,
+    attributeMode: combat.attributeMode || null,
+    // THE RULE THE FIGHT WAS PRICED UNDER, AND IT HAS TO RIDE. The Poise
+    // vessel is RE-DERIVED on restore (see below), and it is derived from this
+    // snapshot — leaving it out meant a resumed fight re-priced the meter on
+    // the AUTHORED table. That was invisible while every creation mode
+    // converted one-for-one; the lean mode converts at a fifth, so the same
+    // Constitution was suddenly worth a fifth of the vessel the moment a
+    // player saved and came back.
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+    swapCostRule: combat.swapCostRule,
+    swapsLeft: combat.swapsLeft,
+    piles: combat.piles,
+    eventLog: combat.eventLog,
+    triggerState: [...combat.triggerState.entries()],
+    idCounter: combat._idCounter,
+    emitDepth: combat._emitDepth,
+    // The skill ledger the fight was handed and the XP receipt it has paid so
+    // far (plan phase 4a): a fight resumed mid-way keeps what it earned.
+    skills: combat.skills,
+    skillXp: combat.skillXp,
+    coreTags: combat.coreTags,
+    // SPEC §14.3: the fight's consumable counts (a spent revive token stays
+    // spent on a reload; the log alone could not keep it so) and the
+    // companions it mounted, which a restore mounts again.
+    ...(combat.consumables && typeof combat.consumables === 'object' ? { consumables: combat.consumables } : {}),
+    companions: combat.companions || [],
+    // SPEC §14.4: the sigil slots the fight mounts from, so a restore mounts
+    // the same sigils while their armaments are worn.
+    sigilSlots: combat.sigilSlots && typeof combat.sigilSlots === 'object' ? combat.sigilSlots : {},
+    // SPEC §15.4: the attuned legendaries, which a restore mounts again.
+    attunedSigils: Array.isArray(combat.attunedSigils) ? combat.attunedSigils : [],
+  });
+  assertCombatSnapshot(snapshot);
+  return snapshot;
+}
+
+/** Restore a snapshot without replaying combat start, draws, or enemy rolls. */
+/**
+ * `fallbackAttackSlotCount` is the RUN's birth quota, for a snapshot written
+ * before that field existed. The run is the authority — save.js recovers it at
+ * the load door from the run's own deck — and the snapshot carrying a copy is
+ * an optimisation, so the read falls back rather than the migration writing
+ * into stored data. Healing the snapshot instead would make migration
+ * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
+ * right to assert against: a load must not rewrite a snapshot it understands.
+ */
+// `fallback` is run context: a boolean only when the caller holds the run
+// (main.js resumeRun passes isPoolDeckMode(run)). Left undefined, the
+// snapshot's own flag stands, so a standalone round trip of a Sealed or
+// Draft fight restores it; only a supplied context can disagree.
+function restoredPoolDeck(saved, fallback) {
+  if (saved !== undefined && saved !== true) throw new Error(`combat snapshot poolDeck must be true when present (got ${JSON.stringify(saved)})`);
+  if (typeof fallback === 'boolean' && saved === true && fallback === false) throw new Error('combat snapshot poolDeck disagrees with the run\'s deck mode');
+  return saved === true || fallback === true;
+}
+
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck }) {
+  assertCombatSnapshot(snapshot);
+  const saved = structuredClone(snapshot);
+  if (saved.foundation) validateFoundationSnapshot(saved.foundation);
+  const combat = {
+    registries,
+    rng,
+    ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
+    ...(saved.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
+    // saved by an earlier build holds the creation-scale divisor its ratings
+    // and hand sizes were read through; nothing divides an attribute any more,
+    // so restoring it would put a number into the live combat that no formula
+    // reads and the next save would write out again. The resumed fight is
+    // rated by the one calculation, like every other. `combatSnapshotProblems`
+    // still tolerates the field on disk, so an older save still loads.
+    ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
+    // Absent on a snapshot written before Play in deck order: that fight shuffles.
+    orderedDraw: saved.orderedDraw || null,
+    // Absent on a fight built at the default recovery settings.
+    ...(saved.recovery ? { recovery: saved.recovery } : {}),
+    foundation: saved.foundation || null,
+    equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
+    removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
+    sideboardedEquipmentCardIds: saved.sideboardedEquipmentCardIds || [],
+    // The run's own rule backs the snapshot's flag (model/cardRemoval.js), and
+    // when the caller knows the run the two must agree, never be OR-ed.
+    ...(restoredPoolDeck(saved.poolDeck, fallbackPoolDeck) ? { poolDeck: true } : {}),
+    equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
+      ? saved.equipmentAttackSlotCount
+      : (Number.isFinite(fallbackAttackSlotCount) ? fallbackAttackSlotCount : undefined),
+    itemUpgradeLevels: saved.itemUpgradeLevels || Object.fromEntries(
+      Object.entries(saved.armamentLevels || {}).map(([id, level]) => [`armament/${id}`, level]),
+    ),
+    // Absent on a snapshot written before mounts existed, and left absent:
+    // every reader treats a missing map as "nothing done", and writing `{}`
+    // here would rewrite a snapshot the load already understood.
+    itemMounts: saved.itemMounts,
+    equipmentPoolDeficits: saved.equipmentPoolDeficits,
+    equipmentChanged: saved.equipmentChanged,
+    turn: saved.turn,
+    phase: saved.phase,
+    result: saved.result,
+    handMax: saved.handMax,
+    drawPerTurn: saved.drawPerTurn,
+    // Absent on a fight saved before ruleset 7, whose rows read no level.
+    ...(Number.isInteger(saved.characterLevel) ? { characterLevel: saved.characterLevel } : {}),
+    player: bindTurnStamina({ ...saved.player, stamina: saved.player.energy, maxStamina: saved.player.energyMax ?? saved.player.maxStamina }),
+    enemies: saved.enemies,
+    loadout: saved.loadout,
+    attributes: saved.attributes,
+    // A snapshot from before the field reads the run's creation mode.
+    attributeMode: saved.attributeMode || fallbackAttributeMode || null,
+    // A snapshot written before this field existed has none of its own, so it
+    // reads the RUN's — the same shape fallbackAttackSlotCount above uses, the
+    // run being the authority and the snapshot's copy the optimisation. Null
+    // only for a caller that has neither.
+    derivedStatRuleSnapshot: saved.derivedStatRuleSnapshot || fallbackDerivedStatRuleSnapshot || null,
+    swapCostRule: saved.swapCostRule,
+    swapsLeft: saved.swapsLeft,
+    piles: saved.piles,
+    queue: [],
+    eventLog: saved.eventLog,
+    _buffer: null,
+    triggerState: new Map(carryRelicGateKeys(saved.triggerState)),
+    _idCounter: saved.idCounter,
+    _emitDepth: saved.emitDepth,
+    // A snapshot written before the ledger existed resumes with an empty one:
+    // the gates read level 0 and the receipt starts here, as createCombat's do.
+    skills: saved.skills ?? {},
+    skillXp: saved.skillXp ?? {},
+    coreTags: Array.isArray(saved.coreTags) ? saved.coreTags : [],
+    // A snapshot from before SPEC §14.3 carries neither: no counts (null, so
+    // its combat end leaves the run's alone) and no companion mounted.
+    consumables: saved.consumables && typeof saved.consumables === 'object' ? saved.consumables : null,
+    companions: Array.isArray(saved.companions) ? saved.companions : [],
+    // A snapshot from before SPEC §14.4 carries no slots and mounts no sigil.
+    sigilSlots: saved.sigilSlots && typeof saved.sigilSlots === 'object' && !Array.isArray(saved.sigilSlots) ? saved.sigilSlots : {},
+    // A snapshot from before SPEC §15.4 carries no attuned sigil and mounts none.
+    attunedSigils: Array.isArray(saved.attunedSigils) ? saved.attunedSigils : [],
+  };
+  combat.emit = (type, payload) => emitEvent(combat, type, payload);
+  combat._emitEvent = emitEvent;
+  // The one listener createCombat hooks on the bus, hooked again here: the
+  // raw emitter alone would record no XP for the rest of the restored fight.
+  attachSkillXp(combat);
+  combat.enqueue = (action) => combat.queue.push(action);
+  combat.nextInstanceId = () => `gen${++combat._idCounter}`;
+  // Property mounts are never saved (definitions are not persisted): they are
+  // re-derived from the restored loadout and relics, exactly as createCombat
+  // derives them.
+  syncLoadoutProperties(combat);
+  syncRelicProperties(combat);
+  syncClassProperties(combat);
+  syncCompanionProperties(combat);
+  syncSigilProperties(combat);
+  // The player's poise max is RE-DERIVED, never trusted from the save (plan
+  // phase 8): a fight saved before the formula changed keeps its accumulated
+  // value and takes the receipt's max — Constitution, body armour, relics —
+  // exactly as a fresh fight would (stampPlayerPoiseMax clamps the value).
+  if (combat.ratingsRules) {
+    refreshCombatRatings(combat);
+  } else if (combat.player && combat.loadout) {
+    stampPlayerPoiseMax(combat.player, playerPoiseThresholdReceipt(registries, {
+      loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
+      derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+      ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
+    }).value);
+  }
+  return combat;
+}
+
+/**
+ * Commit the one exact-snapshot record the run and slot summary both project.
+ * Storage and RNG stamping remain createSaveManager responsibilities.
+ */
+export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
+  if (!run || typeof run !== 'object') throw new Error('Cannot save combat without a run');
+  if (typeof nodeId !== 'string' || !nodeId) throw new Error('Combat save requires nodeId');
+  if (typeof encounterId !== 'string' || !encounterId) throw new Error('Combat save requires encounterId');
+  // A FINISHED FIGHT IS NOT A RESUME POINT. Restoring a snapshot whose result
+  // is already set mounts a battlefield with nothing left to kill: no dispatch
+  // reaches the branch that ends the combat, so the run never reaches its
+  // spoils and the save cannot be played out of. The screen that used to allow
+  // this (combat's menu stayed live through the victory hand-off and beat) no
+  // longer does; this is the invariant itself, so no future caller can either.
+  if (combat && combat.result) throw new Error(`Cannot save a combat that has already ended ('${combat.result}')`);
+  const snapshot = serializeCombatSnapshot(combat);
+  run.loadout = structuredClone(combat.loadout);
+  run.flasks = structuredClone(combat.player.flasks);
+  run.flaskCharges = structuredClone(combat.player.flaskCharges);
+  run.equipmentPoolDeficits = structuredClone(combat.equipmentPoolDeficits);
+  run.itemUpgradeLevels = structuredClone(combat.itemUpgradeLevels || {});
+  delete run.armamentLevels;
+  for (const field of ['hp', 'mana', 'stamina']) {
+    run[field] = field === 'stamina' ? Math.min(combat.player.stamina, combat.player.maxStamina) : combat.player[field];
+    const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
+    run[maxField] = combat.player[maxField];
+  }
+  // A fight a service event started (the market's quest event, SPEC §14.3)
+  // keeps saying so, or a reload would resume it as the journey node's fight.
+  const serviceEvent = run.combatEntered?.serviceEvent === true && run.combatEntered.encounterId === encounterId;
+  run.combatEntered = { nodeId, encounterId, ...(serviceEvent ? { serviceEvent: true } : {}), snapshot };
+  return snapshot;
+}

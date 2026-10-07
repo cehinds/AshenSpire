@@ -1,0 +1,463 @@
+#!/usr/bin/env node
+// tools/receipts.mjs — EVERY MERGED PULL REQUEST HAS A RECEIPT BEFORE IT IS PROMOTED.
+//
+// THE DEFECT THIS EXISTS FOR, and it is not hypothetical: #629, #631, #635,
+// #637, #640, #645, #648, #649 and #650 each landed on `dev` with no entry in
+// CHANGELOG.md. Every one was found later, by a person reading the merge log
+// against the file and noticing a gap — #633 came back for #629 four merges
+// afterwards, and #641 came back for three at once. The in-game changelog is a
+// projection of that file (#189), so a missing receipt is missing for a PLAYER
+// too, not only for the repository.
+//
+// Nothing was broken in any of those cases. That is exactly why it kept
+// happening: an unreceipted merge is green, ships, and reads as finished. The
+// only thing that ever caught it was attention, and attention does not scale
+// past the third merge in an evening.
+//
+// THE RULE, and it is bounded on purpose: every merged pull request that is on
+// this branch AND NOT YET on the promotion target must be named by
+// some receipt in CHANGELOG.md. The bound is what makes this affordable and
+// what makes it meaningful — the question is never "has every merge in history
+// got a receipt" (they have not, and the file's own header says which stretch
+// is deliberately unreconstructed). The question is "is this promotion
+// complete", asked while the answer can still be acted on.
+//
+// THREE SHAPES A MERGE ARRIVES IN, because GitHub writes more than one and a
+// gate that knows only one is blind to the rest — #1262 and #1269 landed as
+// squashes and #1268 as a hand-titled merge, and this tool passed all three:
+//   · `Merge pull request #N from …`  a merge commit, anywhere in the range
+//   · `Merge PR #N: …`                a merge commit whose subject was edited
+//   · `… (#N)`                        a squash or rebase merge — counted ONLY on
+//     the first-parent line of the branch, where GitHub puts it. Inside a pull
+//     request's own history the same suffix is an author's reference, not a
+//     landing, and counting it would demand receipts for merges that never were.
+//
+// WHAT IT DOES NOT CHECK, stated so the silence is a decision:
+//   · whether the receipt is TRUE. Prose is not machine-checkable, and a gate
+//     that pretended otherwise would license worse prose, not better.
+//   · whether the ordinal on a receipt is the one committed at that merge, for
+//     any merge but the pull request `--pr` names. History is not re-derived
+//     here; tools/about-changelog.mjs owns the file's shape and order (and
+//     rejects only a stamp AHEAD of the committed build), this its coverage.
+//
+// WHAT `--pr` DOES CHECK ON THE STAMP, because #1315's receipt read
+// `0.7.1.518` while its merge commit shipped box 519 and every gate was green:
+// the named pull request's receipt must carry exactly the release and ordinal
+// of `buildordinal.json` in the tree being checked — the box that pull request
+// ships. On `pull_request` that tree is GitHub's merge of the head into the
+// base, and a head rebuilt against a moved base conflicts on buildordinal.json
+// rather than merging, so the tree's box is the pull request's own.
+//   · direct landings that name no pull request. A receipt names a pull
+//     request; a commit that has none cannot be named by one, and the file's
+//     header already records that class rather than hiding it.
+//
+// Usage
+//   node tools/receipts.mjs --check              origin/test..HEAD (the promotion)
+//   node tools/receipts.mjs --check --since dev  any other range
+//   node tools/receipts.mjs --check --pr <N>     a pull request head: its OWN
+//                                                number must carry a receipt,
+//                                                stamped with this tree's
+//                                                buildordinal.json box
+//   node tools/receipts.mjs --check --pr auto    the same, N read from the
+//                                                Actions event (GITHUB_EVENT_PATH,
+//                                                then GITHUB_REF refs/pull/N/merge)
+//   node tools/receipts.mjs --selftest           the known-bad corpus
+//
+// Exit 0 green, 1 a gap, 2 the harness could not run.
+
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, resolve as pathResolve } from 'node:path';
+import { versionTuple, compareVersions } from './buildversion.mjs';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const CHANGELOG = join(ROOT, 'CHANGELOG.md');
+const BUILDORDINAL = join(ROOT, 'buildordinal.json');
+
+// The one shape a receipt is required to carry. It is the shape every receipt
+// in the file already uses, and it is the shape the in-game projection reads.
+const RECEIPT_REF = /\/pull\/(\d+)\)/g;
+const MERGE_SUBJECT = /^Merge pull request #(\d+)\s/;
+const MERGE_PR_SUBJECT = /^Merge PR #(\d+):/;
+const SQUASH_SUBJECT = /\(#(\d+)\)\s*$/;
+
+// Which pull request, if any, a commit landed. An entry is a subject string (a
+// merge commit, the original shape) or { subject, firstParent } where
+// firstParent says the commit sits on the branch's own first-parent line.
+export function landedPull(entry) {
+  const { subject, firstParent } = typeof entry === 'string'
+    ? { subject: entry, firstParent: false } : entry;
+  const m = MERGE_SUBJECT.exec(subject) || MERGE_PR_SUBJECT.exec(subject)
+    || (firstParent ? SQUASH_SUBJECT.exec(subject) : null);
+  return m ? m[1] : null;
+}
+
+// THE PURE CORE, kept separate from git so the known-bads below can drive it
+// without a repository. Everything this tool concludes is concluded here.
+export function unreceipted(mergeSubjects, changelogText) {
+  const receipted = new Set();
+  for (const m of changelogText.matchAll(RECEIPT_REF)) receipted.add(m[1]);
+  const merged = [];
+  for (const entry of mergeSubjects) {
+    const n = landedPull(entry);
+    if (n && !merged.includes(n)) merged.push(n);
+  }
+  return { receipted, merged, missing: merged.filter((n) => !receipted.has(n)) };
+}
+
+// A PULL REQUEST HEAD IS JUDGED BY ITS OWN NUMBER. On `pull_request` the
+// checkout is GitHub's synthetic merge commit ("Merge <sha> into <sha>"), which
+// names no pull request, so the range walk below cannot see the one being
+// judged; and the other merges in the range are dev's to answer for, on push.
+// The number comes from the event payload, or from `refs/pull/N/merge`.
+export function pullFromEnv(env = process.env) {
+  if (env.GITHUB_EVENT_PATH) {
+    try {
+      const ev = JSON.parse(readFileSync(env.GITHUB_EVENT_PATH, 'utf8'));
+      const n = ev?.pull_request?.number ?? ev?.number;
+      if (Number.isInteger(n) && n > 0) return String(n);
+    } catch { /* fall through to the ref */ }
+  }
+  const m = /^refs\/pull\/(\d+)\//.exec(env.GITHUB_REF || '');
+  return m ? m[1] : null;
+}
+
+// Whether `pull` is named by a receipt, through the same core the range uses.
+export function ownReceipt(pull, changelogText) {
+  return unreceipted([`Merge pull request #${pull} from head`], changelogText).missing.length === 0;
+}
+
+// The stamp on `pull`'s own receipt: the backticked stamp in the parenthetical
+// that links it, ([#N](…/pull/N), `0.7.1.519`). null when nothing stamped
+// follows the link; the raw text when the stamp is there but is prose.
+//
+// NOT TRIMMED. tools/about-changelog.mjs applies its anchored stamp grammar to
+// the span exactly as written, so ` 0.7.1.615 ` is prose there — skipped by
+// the build-order checks and projected with its padding. Trimming here let this
+// gate certify a receipt the authoritative parser does not read as a build.
+export function receiptStamp(pull, changelogText) {
+  const m = new RegExp(`/pull/${pull}\\),\\s*\`([^\`\\n]+)\``).exec(changelogText);
+  return m ? m[1] : null;
+}
+
+// The stamp grammar tools/about-changelog.mjs reads (its STAMP): a release,
+// optionally tagged, then the ordinal. Anchored, so padding is not a stamp.
+const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
+
+// Whether `pull`'s receipt names the box this tree ships. `box` is the parsed
+// buildordinal.json ({ release, ordinal }). null when it does, else the reason
+// it does not — a receipt one build behind the box is exactly #1315.
+export function stampMismatch(pull, changelogText, box) {
+  const expected = `${box.release}.${box.ordinal}`;
+  const stamp = receiptStamp(pull, changelogText);
+  if (stamp === null) return `#${pull}'s receipt carries no \`<release>.<ordinal>\` stamp after its link (expected \`${expected}\`)`;
+  const m = STAMP.exec(stamp);
+  if (!m) return `#${pull}'s receipt is stamped \`${stamp}\`, not a build; this tree ships \`${expected}\``;
+  const [, release, ordinal] = m;
+  // ORDERED THE WAY about-changelog ORDERS IT: buildversion's versionTuple and
+  // compareVersions, digit strings compared as numbers. A raw string compare
+  // called `00.7.1.613` another release while --check-order reads it as the
+  // same build as `0.7.1.613`, so the two required checks disagreed.
+  const got = versionTuple(release, Number(ordinal));
+  const want = versionTuple(box.release, box.ordinal);
+  if (got === null || want === null) return `#${pull}'s receipt is stamped \`${stamp}\`, which cannot be ordered against \`${expected}\``;
+  const releaseOrder = compareVersions(got.slice(0, -1), want.slice(0, -1));
+  if (releaseOrder !== 0 || release.includes('-') !== box.release.includes('-')) {
+    return `#${pull}'s receipt is stamped release ${release}; this tree ships \`${expected}\``;
+  }
+  const order = compareVersions(got, want);
+  if (order === 0) return null;
+  const side = order < 0 ? 'BELOW' : 'ABOVE';
+  return `#${pull}'s receipt is stamped \`${stamp}\`, ${side} the committed box \`${expected}\``;
+}
+
+function readBox() {
+  try {
+    const box = JSON.parse(readFileSync(BUILDORDINAL, 'utf8'));
+    if (typeof box.release === 'string' && Number.isInteger(box.ordinal)) return box;
+  } catch { /* reported by the caller */ }
+  return null;
+}
+
+function checkPull(prArg) {
+  const pull = !prArg || prArg === 'auto' ? pullFromEnv() : prArg;
+  if (!pull || !/^\d+$/.test(pull)) {
+    console.error(`receipts: HARNESS COULD NOT RUN — no pull request number (--pr ${prArg || ''};`
+      + ' no pull_request in GITHUB_EVENT_PATH, no refs/pull/N/merge in GITHUB_REF)');
+    return 2;
+  }
+  const changelog = readFileSync(CHANGELOG, 'utf8');
+  if (unreceipted([], changelog).receipted.size === 0) {
+    console.error('receipts: HARNESS COULD NOT RUN — CHANGELOG.md yielded no pull-request references at all.');
+    return 2;
+  }
+  console.log('receipts — this pull request is named by a receipt in CHANGELOG.md');
+  console.log(`  pull request  #${pull}`);
+  console.log('');
+  if (!ownReceipt(pull, changelog)) {
+    console.log(`  FAIL  #${pull} carries no receipt in CHANGELOG.md`);
+    console.log('');
+    console.log('  Add one at the top of the newest date group, naming this pull request and');
+    console.log('  the build ordinal, then: node tools/about-changelog.mjs --write');
+    console.log('');
+    console.log(`receipts: FAIL — pull request #${pull} carries no receipt`);
+    return 1;
+  }
+  console.log(`  PASS  #${pull} has a receipt`);
+  const box = readBox();
+  if (!box) {
+    console.error('receipts: HARNESS COULD NOT RUN — buildordinal.json is missing or has no release and integer ordinal.');
+    return 2;
+  }
+  const wrong = stampMismatch(pull, changelog, box);
+  if (wrong) {
+    console.log(`  FAIL  ${wrong}`);
+    console.log('');
+    console.log('  The stamp is the box this pull request ships: buildordinal.json as committed');
+    console.log('  in this tree. Re-point the receipt, run node tools/about-changelog.mjs --write,');
+    console.log('  rebuild, and confirm the ordinal did not move again.');
+    console.log('');
+    console.log(`receipts: FAIL — pull request #${pull}'s receipt names a build it does not ship`);
+    return 1;
+  }
+  console.log(`  PASS  #${pull}'s receipt is stamped \`${box.release}.${box.ordinal}\`, the committed box`);
+  console.log('');
+  console.log('receipts: OK — 2 checks passed');
+  return 0;
+}
+
+function git(args, cwd = ROOT) {
+  return execFileSync('git', args, { cwd, encoding: 'utf8' });
+}
+
+function resolve(rev) {
+  try { return git(['rev-parse', '--verify', '--quiet', rev]).trim() || null; }
+  catch { return null; }
+}
+
+// `cwd` and `limit` exist for tests/receipts-window.test.mjs, which drives this
+// against a scratch repository; check() always uses the defaults.
+export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
+  const lines = (args) => git(['log', ...args], cwd).split('\n').filter(Boolean);
+  if (since) {
+    const spec = `${since}..HEAD`;
+    // Every merge commit in the range (the original reach), plus every commit on
+    // the first-parent line, which is where a squash merge lands.
+    return [
+      ...lines(['--merges', '--format=%s', spec]).map((subject) => ({ subject, firstParent: false })),
+      ...lines(['--first-parent', '--format=%s', spec]).map((subject) => ({ subject, firstParent: true })),
+    ];
+  }
+  // THE FALLBACK WINDOW HAS ONE BOUNDARY, not one per walk. Capping each walk at
+  // 40 independently let the merge walk reach far older history than the
+  // first-parent walk, so a squash older than the 40th first-parent commit but
+  // newer than the 40th merge went unexamined and the check read green. The 40
+  // most recent merges set the window; the first-parent walk then covers
+  // everything not already an ancestor of the oldest of them — and never less
+  // than the last 40 first-parent commits it always covered. Both are prefixes
+  // of the same first-parent line, so the longer one contains the shorter.
+  //
+  // THE BOUNDARY IS WHERE THE OLDEST MERGE JOINED THIS LINE, not the merge
+  // itself. The merge walk follows all ancestry, so its 40th merge can sit on a
+  // side branch; `HEAD ^<that merge>` then excludes only what that side branch
+  // descends from, and the first-parent walk runs back to the side branch's old
+  // fork — into history the window never meant to judge. So a boundary is
+  // found in two steps: every descendant of a merge (the full graph —
+  // `--first-parent --ancestry-path` together never reaches a side-branch
+  // merge and returns nothing), then the first-parent commits from HEAD down
+  // to the last one in that set, which is the commit that landed it (or the
+  // merge itself, when it sits on the first-parent line).
+  const merges = lines(['--merges', `--max-count=${limit}`, '--format=%H %s', 'HEAD']).map((l) => {
+    const i = l.indexOf(' ');
+    return { hash: l.slice(0, i), subject: l.slice(i + 1) };
+  });
+  const fp = (extra) => lines(['--first-parent', '--format=%s', ...extra]);
+  let firstParent = fp([`--max-count=${limit}`, 'HEAD']);
+  if (merges.length < limit) firstParent = fp(['HEAD']);
+  else {
+    // EVERY selected merge sets a landing, not only the last one git lists:
+    // the merge walk is date-ordered, so a backdated merge inside a branch that
+    // landed late can come last while an earlier landing sits deeper on this
+    // line. The window reaches the deepest landing of any of them. Each merge's
+    // containing first-parent commits are a prefix of the line; the merge
+    // itself belongs to it too (`A..B` excludes A, and a first-parent merge
+    // titled `… (#N)` is a landing only when walked as a first-parent commit).
+    const line = lines(['--first-parent', '--format=%H %s', 'HEAD']).map((l) => {
+      const i = l.indexOf(' ');
+      return { hash: l.slice(0, i), subject: l.slice(i + 1) };
+    });
+    let reach = 0;
+    for (const { hash } of merges) {
+      const descendants = new Set(git(['rev-list', '--ancestry-path', `${hash}..HEAD`], cwd).split('\n').filter(Boolean));
+      descendants.add(hash);
+      let k = 0;
+      while (k < line.length && descendants.has(line[k].hash)) k += 1;
+      reach = Math.max(reach, k);
+    }
+    const toBoundary = line.slice(0, reach).map(({ subject }) => subject);
+    if (toBoundary.length > firstParent.length) firstParent = toBoundary;
+  }
+  return [
+    ...merges.map(({ subject }) => ({ subject, firstParent: false })),
+    ...firstParent.map((subject) => ({ subject, firstParent: true })),
+  ];
+}
+
+function check(sinceArg) {
+  // The promotion target is the default bound. A checkout that has not fetched
+  // it is NOT silently widened to all of history — that would turn a green into
+  // a meaningless one. It falls back to the last 40 merges and SAYS SO.
+  let since = sinceArg || null;
+  let bound;
+  if (since) {
+    if (!resolve(since)) {
+      console.error(`receipts: cannot resolve --since ${since}`);
+      return 2;
+    }
+    bound = `${since}..HEAD`;
+  } else {
+    since = ['origin/test', 'test'].find((r) => resolve(r)) || null;
+    bound = since ? `${since}..HEAD` : 'the last 40 merges (no promotion target fetched)';
+  }
+
+  const changelog = readFileSync(CHANGELOG, 'utf8');
+  const { receipted, merged, missing } = unreceipted(rangeSubjects(since), changelog);
+
+  // THE FLOOR THAT KEEPS THIS TOOL HONEST. If the reference syntax in
+  // CHANGELOG.md ever changes, this regex quietly matches nothing, every merge
+  // reads as unreceipted, and the tool becomes noise — or, with the comparison
+  // inverted, silently green. Parsing zero references is the tool's own defect
+  // and is reported as one, never as a finding about the changelog.
+  if (receipted.size === 0) {
+    console.error('receipts: HARNESS COULD NOT RUN — CHANGELOG.md yielded no pull-request');
+    console.error('  references at all. The file\'s receipt syntax has moved out from under');
+    console.error(`  ${RECEIPT_REF}. Fix this tool; do not read the result below as a finding.`);
+    return 2;
+  }
+
+  console.log(`receipts — every merged pull request named by a receipt in CHANGELOG.md`);
+  console.log(`  range      ${bound}`);
+  console.log(`  merges     ${merged.length}`);
+  console.log(`  receipts   ${receipted.size} pull request(s) referenced in the file`);
+  console.log('');
+
+  if (missing.length) {
+    for (const n of missing) {
+      console.log(`  FAIL  #${n} merged with no receipt in CHANGELOG.md`);
+    }
+    console.log('');
+    console.log('  A receipt names the pull request and the build ordinal committed at that');
+    console.log('  merge, and the in-game changelog is regenerated from this file:');
+    console.log('');
+    console.log('    node tools/about-changelog.mjs --write && node tools/bundle.mjs');
+    console.log('');
+    console.log(`receipts: FAIL — ${missing.length} of ${merged.length} merged pull request(s) carry no receipt`);
+    return 1;
+  }
+
+  for (const n of merged) console.log(`  PASS  #${n} has a receipt`);
+  // The empty range is a real answer, not an absent one: nothing is owed. It is
+  // counted as the one assertion it is, so the verdict door never sees a zero.
+  const checks = merged.length || 1;
+  if (!merged.length) console.log('  PASS  no pull request has merged into this range — nothing is owed');
+  console.log('');
+  console.log(`receipts: OK — ${checks} checks passed`);
+  return 0;
+}
+
+// THE KNOWN-BADS. Each must go red, and the clean copy must be green, or
+// nothing above proves anything. They drive the pure core directly: a corpus
+// that needed a scratch git repository would be slower and would test git.
+function selftest() {
+  const CLEAN_LOG = ['Merge pull request #12 from a/b', 'Merge pull request #13 from a/c'];
+  const CLEAN_MD = 'x ([#12](https://github.com/o/r/pull/12), `0.5.5.1`)\ny ([#13](https://github.com/o/r/pull/13), `0.5.5.2`)';
+  const plants = [
+    ['a merge with no receipt', [...CLEAN_LOG, 'Merge pull request #14 from a/d'], CLEAN_MD, ['14']],
+    ['the receipt names a different pull request', CLEAN_LOG, CLEAN_MD.replace('/pull/13)', '/pull/31)'), ['13']],
+    ['two merges, one receipt', [...CLEAN_LOG, 'Merge pull request #15 from a/e', 'Merge pull request #16 from a/f'], CLEAN_MD, ['15', '16']],
+    ['a squash merge on the first-parent line with no receipt', [...CLEAN_LOG, { subject: 'Add a thing (#17)', firstParent: true }], CLEAN_MD, ['17']],
+    ['a "Merge PR #N:" merge with no receipt', [...CLEAN_LOG, 'Merge PR #18: ship a thing'], CLEAN_MD, ['18']],
+  ];
+
+  let passed = 0;
+  let red = 0;
+  console.log('receipts --selftest — the known-bads, each driven through the same core');
+  console.log('');
+
+  const clean = unreceipted(CLEAN_LOG, CLEAN_MD);
+  if (clean.missing.length) {
+    console.log(`  RED  clean copy is not green — it reports ${clean.missing.join(', ')} missing.`);
+    console.log('       No plant below proves anything.');
+    console.log('');
+    console.log('receipts-selftest: FAIL — the clean copy is not green');
+    return 1;
+  }
+  console.log('  PASS  clean copy: 2 merges, 2 receipts, nothing missing');
+  passed += 1;
+
+  // The bound on the squash shape: a "(#N)" suffix inside a pull request's own
+  // history (not first-parent) is an author's reference, not a landing.
+  const offLine = unreceipted([...CLEAN_LOG, { subject: 'Fix a thing (#19)', firstParent: false }], CLEAN_MD);
+  if (offLine.missing.length) {
+    console.log(`  RED  a "(#N)" commit off the first-parent line was counted as a landing -> ${offLine.missing.join(', ')}`);
+    red += 1;
+  } else { console.log('  PASS  a "(#N)" commit off the first-parent line is not a landing'); passed += 1; }
+
+  for (const [name, log, md, expected] of plants) {
+    const got = unreceipted(log, md).missing;
+    const ok = got.length === expected.length && got.every((n, i) => n === expected[i]);
+    if (ok) { console.log(`  CAUGHT  "${name}" -> missing ${got.join(', ')}`); passed += 1; }
+    else { console.log(`  RED  "${name}" -> expected ${expected.join(', ')}, got ${got.join(', ') || 'nothing'}`); red += 1; }
+  }
+
+  // A pull request head (--pr): its own number, unnamed, must go red; named, green.
+  if (!ownReceipt('14', CLEAN_MD) && ownReceipt('13', CLEAN_MD)) { console.log('  CAUGHT  "a pull request head with no receipt of its own" -> #14 missing, #13 present'); passed += 1; }
+  else { console.log('  RED  "a pull request head with no receipt of its own" -> ownReceipt did not separate #14 from #13'); red += 1; }
+
+  // The stamp on a pull request head's own receipt (--pr) must be the box the
+  // tree commits. #1315 merged at 0.7.1.518 while its merge shipped box 519.
+  const BOX = { release: '0.5.5', ordinal: 2 };
+  const stampPlants = [
+    ['a receipt stamped below the committed buildordinal.json (#1315)', CLEAN_MD.replace('`0.5.5.2`', '`0.5.5.1`'), /BELOW/],
+    ['a receipt stamped above the committed buildordinal.json', CLEAN_MD.replace('`0.5.5.2`', '`0.5.5.3`'), /ABOVE/],
+    ['a receipt stamped with another release', CLEAN_MD.replace('`0.5.5.2`', '`0.5.4.2`'), /release 0\.5\.4/],
+    ['a receipt with prose where its stamp belongs', CLEAN_MD.replace('`0.5.5.2`', '`dev artifact`'), /not a build/],
+    ['a receipt with no stamp after its link', CLEAN_MD.replace(', `0.5.5.2`', ''), /no `<release>\.<ordinal>` stamp/],
+    ['a receipt whose stamp is padded, which about-changelog reads as prose', CLEAN_MD.replace('`0.5.5.2`', '` 0.5.5.2 `'), /not a build/],
+  ];
+  const cleanStamp = stampMismatch('13', CLEAN_MD, BOX);
+  if (cleanStamp === null) { console.log('  PASS  clean copy: #13\'s receipt is stamped with the committed box'); passed += 1; }
+  else { console.log(`  RED  clean copy: #13's stamp read as wrong -> ${cleanStamp}`); red += 1; }
+  for (const [name, md, expect] of stampPlants) {
+    const got = stampMismatch('13', md, BOX);
+    if (got && expect.test(got)) { console.log(`  CAUGHT  "${name}" -> ${got}`); passed += 1; }
+    else { console.log(`  RED  "${name}" -> ${got || 'read as correct'}`); red += 1; }
+  }
+
+  // The plant that guards the guard: a changelog whose reference syntax moved
+  // must NOT read as "every merge unreceipted" out in the world — check() turns
+  // that into exit 2. Here we prove the core is what makes that detectable.
+  const moved = unreceipted(CLEAN_LOG, CLEAN_MD.replaceAll('/pull/', '/pr/'));
+  if (moved.receipted.size === 0) { console.log('  CAUGHT  "receipt syntax moved" -> zero references parsed, which check() refuses as a harness fault'); passed += 1; }
+  else { console.log('  RED  "receipt syntax moved" -> still parsed references; the floor cannot fire'); red += 1; }
+
+  console.log('');
+  if (red) { console.log(`receipts-selftest: FAIL — ${red} plant(s) did not go red`); return 1; }
+  console.log(`receipts-selftest: OK — ${passed} checks passed`);
+  return 0;
+}
+
+const argv = process.argv.slice(2);
+const invoked = process.argv[1] && fileURLToPath(import.meta.url) === pathResolve(process.argv[1]);
+if (!invoked) { /* imported by a test: export only, run nothing */ }
+else if (argv.includes('--selftest')) process.exit(selftest());
+else if (argv.includes('--check') || argv.length === 0) {
+  const p = argv.indexOf('--pr');
+  if (p >= 0) process.exit(checkPull(argv[p + 1]));
+  const i = argv.indexOf('--since');
+  process.exit(check(i >= 0 ? argv[i + 1] : null));
+} else {
+  console.error('usage: node tools/receipts.mjs [--check] [--since <rev> | --pr <N|auto>] | --selftest');
+  process.exit(2);
+}

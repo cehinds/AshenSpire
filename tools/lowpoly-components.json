@@ -1,0 +1,644 @@
+{
+  "_": "Component inventory for the low-poly class figures. Each painting (docs/art-evidence/2026-09-03/concepts/<class>-concept-v1.png, 1254x1254) is broken into the parts a costume is made of; `crop` is the part's box in painting pixels, `bone` is where it hangs on the rig ('soft' = weighted over several bones like cloth). tools/component-refs.mjs cuts the reference crops and samples each part's palette; tools/lowpoly-blender.py builds each part to its crop and maps it onto the rigged body. Every component also names its `slot` \u2014 head, shoulders, chest, belt, coat (hanging cloth, capes, skirts, tassets), arms (bracers, gauntlets, sleeves, hands), legs, feet, weapon \u2014 so parts compare across classes slot by slot; `slots` gives the painting crop for each slot as a whole.",
+  "rogue": {
+    "hood": {
+      "crop": [
+        430,
+        20,
+        830,
+        340
+      ],
+      "bone": "head",
+      "note": "deep faceted hood, peak leans back, face fully in shadow",
+      "slot": "head"
+    },
+    "cowl": {
+      "crop": [
+        430,
+        290,
+        830,
+        500
+      ],
+      "bone": "neck",
+      "note": "scarf wound round the neck in heavy folds",
+      "slot": "head"
+    },
+    "mantle": {
+      "crop": [
+        320,
+        430,
+        1000,
+        640
+      ],
+      "bone": "spine",
+      "note": "layered leather shoulder cape, pointed tips with gold pyramids",
+      "slot": "shoulders"
+    },
+    "tunic": {
+      "crop": [
+        430,
+        540,
+        820,
+        980
+      ],
+      "bone": "spine",
+      "note": "quilted dark green chest with a diagonal strap and gold pyramid",
+      "slot": "chest"
+    },
+    "belt": {
+      "crop": [
+        400,
+        780,
+        870,
+        900
+      ],
+      "bone": "pelvis",
+      "note": "double dark belt, big gold pyramid buckle",
+      "slot": "belt"
+    },
+    "pouch": {
+      "crop": [
+        700,
+        830,
+        830,
+        1010
+      ],
+      "bone": "pelvis",
+      "note": "leather pouch on the right hip",
+      "slot": "belt"
+    },
+    "skirt": {
+      "crop": [
+        320,
+        950,
+        920,
+        1254
+      ],
+      "bone": "soft",
+      "note": "tunic hem, split in front, layered",
+      "slot": "coat"
+    },
+    "bracer_l": {
+      "crop": [
+        220,
+        730,
+        470,
+        1000
+      ],
+      "bone": "forearm.L",
+      "note": "leather bracer wrapped in straps, gold pyramid at the elbow",
+      "slot": "arms"
+    },
+    "bracer_r": {
+      "crop": [
+        850,
+        740,
+        1080,
+        1000
+      ],
+      "bone": "forearm.R",
+      "note": "same, right",
+      "slot": "arms"
+    },
+    "fist_l": {
+      "crop": [
+        130,
+        970,
+        300,
+        1130
+      ],
+      "bone": "hand.L",
+      "note": "dark glove, bare fingers",
+      "slot": "arms"
+    },
+    "fist_r": {
+      "crop": [
+        880,
+        1000,
+        1080,
+        1140
+      ],
+      "bone": "hand.R",
+      "note": "same, right",
+      "slot": "arms"
+    },
+    "dagger_l": {
+      "crop": [
+        0,
+        1000,
+        320,
+        1254
+      ],
+      "bone": "hand.L",
+      "note": "grey faceted blade, gold guard, held point-down",
+      "slot": "weapon"
+    },
+    "dagger_r": {
+      "crop": [
+        530,
+        1050,
+        950,
+        1254
+      ],
+      "bone": "hand.R",
+      "note": "same, right",
+      "slot": "weapon"
+    },
+    "slots": {
+      "head": [
+        430,
+        20,
+        830,
+        500
+      ],
+      "shoulders": [
+        320,
+        430,
+        1000,
+        640
+      ],
+      "chest": [
+        430,
+        540,
+        820,
+        1000
+      ],
+      "belt": [
+        400,
+        780,
+        870,
+        1010
+      ],
+      "coat": [
+        320,
+        950,
+        920,
+        1254
+      ],
+      "arms": [
+        130,
+        730,
+        1080,
+        1140
+      ],
+      "weapon": [
+        0,
+        1000,
+        950,
+        1254
+      ],
+      "legs": [
+        540,
+        440,
+        880,
+        640
+      ],
+      "feet": [
+        540,
+        620,
+        880,
+        770
+      ]
+    },
+    "trousers": {
+      "crop": [
+        540,
+        440,
+        880,
+        640
+      ],
+      "bone": "soft",
+      "slot": "legs",
+      "note": "dark trousers, from the generated full-body frame; the painting stops at the knee"
+    }
+  },
+  "reaver": {
+    "helm": {
+      "crop": [
+        440,
+        30,
+        800,
+        480
+      ],
+      "bone": "head",
+      "note": "great helm, pointed faceted crown, gold-edged rim, five visor slits",
+      "slot": "head"
+    },
+    "gorget": {
+      "crop": [
+        450,
+        330,
+        830,
+        560
+      ],
+      "bone": "neck",
+      "note": "layered neck plates with gold edge",
+      "slot": "shoulders"
+    },
+    "pauldron_l": {
+      "crop": [
+        130,
+        480,
+        500,
+        850
+      ],
+      "bone": "upper_arm.L",
+      "note": "three rounded plates, gold edges",
+      "slot": "shoulders"
+    },
+    "pauldron_r": {
+      "crop": [
+        830,
+        500,
+        1200,
+        800
+      ],
+      "bone": "upper_arm.R",
+      "note": "same, right",
+      "slot": "shoulders"
+    },
+    "breastplate": {
+      "crop": [
+        400,
+        520,
+        880,
+        860
+      ],
+      "bone": "spine",
+      "note": "faceted plate, gold pyramid on the chest, gold discs at the collar",
+      "slot": "chest"
+    },
+    "cape": {
+      "crop": [
+        150,
+        380,
+        1200,
+        1254
+      ],
+      "bone": "soft",
+      "note": "maroon cape over the shoulders and down the back",
+      "slot": "coat"
+    },
+    "gauntlet_l": {
+      "crop": [
+        20,
+        780,
+        560,
+        1130
+      ],
+      "bone": "forearm.L",
+      "note": "plate gauntlet with gold cuff and knuckle spikes",
+      "slot": "arms"
+    },
+    "gauntlet_r": {
+      "crop": [
+        560,
+        830,
+        1050,
+        1100
+      ],
+      "bone": "forearm.R",
+      "note": "same, right",
+      "slot": "arms"
+    },
+    "sword": {
+      "crop": [
+        390,
+        1000,
+        520,
+        1254
+      ],
+      "bone": "hand.R",
+      "note": "greatsword: wrapped grip, heavy square guard",
+      "slot": "weapon"
+    },
+    "tasset": {
+      "crop": [
+        500,
+        1080,
+        1080,
+        1254
+      ],
+      "bone": "soft",
+      "note": "plate skirt with gold edges",
+      "slot": "coat"
+    },
+    "slots": {
+      "head": [
+        440,
+        30,
+        800,
+        480
+      ],
+      "shoulders": [
+        130,
+        330,
+        1200,
+        850
+      ],
+      "chest": [
+        400,
+        520,
+        880,
+        860
+      ],
+      "coat": [
+        150,
+        380,
+        1200,
+        1254
+      ],
+      "arms": [
+        20,
+        780,
+        1050,
+        1130
+      ],
+      "weapon": [
+        390,
+        1000,
+        520,
+        1254
+      ]
+    }
+  },
+  "starseer": {
+    "hat": {
+      "crop": [
+        200,
+        30,
+        1000,
+        470
+      ],
+      "bone": "head",
+      "note": "huge wavy brim, tall bent crown, dark band with a gold pyramid gem",
+      "slot": "head"
+    },
+    "cowl": {
+      "crop": [
+        380,
+        440,
+        830,
+        660
+      ],
+      "bone": "head",
+      "note": "dark hood under the hat, face in shadow",
+      "slot": "head"
+    },
+    "mantle": {
+      "crop": [
+        200,
+        600,
+        1000,
+        900
+      ],
+      "bone": "spine",
+      "note": "layered shoulder cape, gold-trimmed edges, gold pyramids at the points",
+      "slot": "shoulders"
+    },
+    "pendant": {
+      "crop": [
+        610,
+        690,
+        730,
+        940
+      ],
+      "bone": "spine",
+      "note": "chain of small gold pyramids down the chest",
+      "slot": "chest"
+    },
+    "sash": {
+      "crop": [
+        400,
+        980,
+        900,
+        1110
+      ],
+      "bone": "pelvis",
+      "note": "dark sash, big gold pyramid buckle",
+      "slot": "belt"
+    },
+    "robe": {
+      "crop": [
+        180,
+        900,
+        1050,
+        1254
+      ],
+      "bone": "soft",
+      "note": "long dark robe in vertical folds",
+      "slot": "coat"
+    },
+    "sleeve_r": {
+      "crop": [
+        820,
+        850,
+        1080,
+        1254
+      ],
+      "bone": "forearm.R",
+      "note": "wide dark sleeve",
+      "slot": "arms"
+    },
+    "fist_r": {
+      "crop": [
+        880,
+        850,
+        1050,
+        1000
+      ],
+      "bone": "hand.R",
+      "note": "bare hand gripping the staff",
+      "slot": "arms"
+    },
+    "staff": {
+      "crop": [
+        880,
+        80,
+        1180,
+        1254
+      ],
+      "bone": "hand.R",
+      "note": "dark wood staff with gold rings and an eight-point gold star, orange glowing core",
+      "slot": "weapon"
+    },
+    "slots": {
+      "head": [
+        200,
+        30,
+        1000,
+        660
+      ],
+      "shoulders": [
+        200,
+        600,
+        1000,
+        900
+      ],
+      "chest": [
+        610,
+        690,
+        730,
+        940
+      ],
+      "belt": [
+        400,
+        980,
+        900,
+        1110
+      ],
+      "coat": [
+        180,
+        900,
+        1050,
+        1254
+      ],
+      "arms": [
+        820,
+        850,
+        1080,
+        1254
+      ],
+      "weapon": [
+        880,
+        80,
+        1180,
+        1254
+      ]
+    }
+  },
+  "herald": {
+    "halo": {
+      "crop": [
+        320,
+        0,
+        880,
+        430
+      ],
+      "bone": "head",
+      "note": "thin gold ring with four pyramid spikes",
+      "slot": "head"
+    },
+    "hood": {
+      "crop": [
+        440,
+        90,
+        800,
+        520
+      ],
+      "bone": "head",
+      "note": "deep bronze hood, face in shadow",
+      "slot": "head"
+    },
+    "mantle": {
+      "crop": [
+        190,
+        480,
+        1050,
+        800
+      ],
+      "bone": "spine",
+      "note": "three layered tiers, gold-trimmed, pointed shoulders with gold pyramids",
+      "slot": "shoulders"
+    },
+    "gem": {
+      "crop": [
+        600,
+        560,
+        720,
+        660
+      ],
+      "bone": "spine",
+      "note": "gold triangle at the throat",
+      "slot": "chest"
+    },
+    "beads": {
+      "crop": [
+        440,
+        470,
+        830,
+        1200
+      ],
+      "bone": "spine",
+      "note": "long chain of big dark beads with gold pyramids, pendant at the bottom",
+      "slot": "chest"
+    },
+    "sleeve_l": {
+      "crop": [
+        190,
+        830,
+        600,
+        1254
+      ],
+      "bone": "forearm.L",
+      "note": "wide sleeve, gold edge",
+      "slot": "arms"
+    },
+    "sleeve_r": {
+      "crop": [
+        700,
+        830,
+        1060,
+        1254
+      ],
+      "bone": "forearm.R",
+      "note": "same, right",
+      "slot": "arms"
+    },
+    "hands": {
+      "crop": [
+        520,
+        880,
+        800,
+        1080
+      ],
+      "bone": "hand.L",
+      "note": "hands clasped at the belly",
+      "slot": "arms"
+    },
+    "robe": {
+      "crop": [
+        300,
+        800,
+        1000,
+        1254
+      ],
+      "bone": "soft",
+      "note": "long bronze robe in folds",
+      "slot": "coat"
+    },
+    "slots": {
+      "head": [
+        320,
+        0,
+        880,
+        520
+      ],
+      "shoulders": [
+        190,
+        480,
+        1050,
+        800
+      ],
+      "chest": [
+        440,
+        470,
+        830,
+        1200
+      ],
+      "coat": [
+        300,
+        800,
+        1000,
+        1254
+      ],
+      "arms": [
+        190,
+        830,
+        1060,
+        1254
+      ]
+    }
+  },
+  "_legs_feet": "rogue legs/feet boxes are in docs/art-evidence/2026-09-03/poses/rogue/idle-a.png (1380x776 landscape frame), the only full-body reference; the other classes have none."
+}

@@ -1,0 +1,8 @@
+{
+  "positioning": {
+    "artworkAnchorByHost": { "card": "center", "inspector": "center", "combatant": "bottom" }
+  },
+  "components": {
+    "metadataSlots": { "start": "rarity", "end": "owned" }
+  }
+}

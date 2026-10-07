@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { saveSlotSelectionModel } from '../src/ui/models/SaveSlotSelectionModel.js';
+const slots=[{slot:1,summary:null},{slot:2,summary:{className:'Reaver'}},{slot:3,summary:null}];
+const inRun=saveSlotSelectionModel(slots,{kind:'load',allowEmpty:false});
+assert.equal(inRun.properties.actionSlot,2);
+assert.deepEqual(inRun.children.slice(0,3).map(row=>row.properties.selectable),[false,true,false]);
+assert.equal(saveSlotSelectionModel(slots,{kind:'load',allowEmpty:false,selectedSlot:1}).properties.canContinue,false);
+assert.equal(saveSlotSelectionModel([{slot:1,summary:null}],{kind:'load',allowEmpty:false}).properties.canContinue,false);
+const title=saveSlotSelectionModel(slots,{kind:'load',selectedSlot:1});
+assert.equal(title.properties.canContinue,true);
+assert.equal(title.children.at(-1).behaviors[0].command,'create-in-save-slot');
+assert.equal(saveSlotSelectionModel(slots,{kind:'new',selectedSlot:1,allowEmpty:false}).properties.canContinue,true);
+console.log('menu-slot-availability: OK — 7 checks');

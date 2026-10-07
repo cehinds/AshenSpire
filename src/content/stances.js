@@ -1,0 +1,56 @@
+// src/content/stances.js — Reaver stances as data (SPEC §4.5)
+//
+// At most one stance is active; the enterStance opcode handles exclusivity.
+// Stances are combat-scoped. `class` names the class that owns the stance:
+// a card that enters "a Stance of your choice" (Warrior's Vow) offers every
+// stance its player's class owns (model/cardChoices.js).
+
+export const stances = [
+  {
+    id: 'gorefire',
+    class: 'reaver',
+    name: 'Gorefire Stance',
+    icon: '🔥',
+    onEnter: [{ op: 'loseHp', target: 'self', amount: 2 }],
+    hooks: [
+      {
+        // Every attack HIT the player lands applies 2 Bleed (per hit, so
+        // multi-hit cards like Twinblade Flurry apply it per hit).
+        on: 'damageDealt',
+        if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'eventIsAttack' }] },
+        do: [{ op: 'applyStatus', status: 'bleed', stacks: 2 }],
+      },
+    ],
+    tooltip: 'Your attacks apply 2 Bleed per hit. On entering: take 2 damage (ignores Block).',
+  },
+  {
+    id: 'bulwark',
+    class: 'reaver',
+    name: 'Bulwark Stance',
+    icon: '🛡',
+    onEnter: [{ op: 'block', target: 'self', amount: 3 }],
+    hooks: [
+      {
+        on: 'cardPlayed',
+        if: { p: 'cardTypeIs', type: 'skill' },
+        do: [{ op: 'block', target: 'owner', amount: 2 }],
+      },
+    ],
+    tooltip: 'Whenever you play a Skill, gain 2 Block. On entering: gain 3 Block.',
+  },
+  {
+    // The class ability card's stance (plan phase 5a, proposal §4): Brace
+    // holds the line, and LEAVING it for another stance is the tempo —
+    // the next blows land harder.
+    id: 'brace',
+    class: 'reaver',
+    name: 'Brace',
+    icon: '🦶',
+    onEnter: [{ op: 'block', target: 'self', amount: 4 }],
+    modifiers: { damageTakenMult: 0.75 },
+    hooks: [
+      { on: 'stanceExited', do: [{ op: 'applyStatus', target: 'owner', status: 'strength', stacks: 1 }] },
+    ],
+    tooltip: 'Damage taken −25%. On entering: gain 4 Block. On leaving: gain 1 Strength.',
+  },
+];

@@ -1,0 +1,420 @@
+[
+  {
+    "id": "W0",
+    "name": "Master shell",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1",
+    "name": "Base workspace / modal",
+    "parent": "W0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1a",
+    "name": "Settings",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1b",
+    "name": "Town",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1c",
+    "name": "Character creation",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1d",
+    "name": "Shop",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1e",
+    "name": "Armoury",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1f",
+    "name": "Compendium",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1g",
+    "name": "Profile",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1h",
+    "name": "Discard / Exhaust viewer",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1i",
+    "name": "Smith upgrade",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1j",
+    "name": "Extract card",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1k",
+    "name": "Install card",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1l",
+    "name": "New game slot selection",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1m",
+    "name": "Load game slot selection",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1n",
+    "name": "Inventory selection",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1o",
+    "name": "Item inspection",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1p",
+    "name": "Combatant inspection",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1q",
+    "name": "Potion inspection",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1r",
+    "name": "Save status",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1s",
+    "name": "Rest",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1t",
+    "name": "Rewards",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1u",
+    "name": "Event",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1v",
+    "name": "Shop offers",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1w",
+    "name": "Entity inspector",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W2",
+    "name": "Confirmation variant",
+    "parent": "W0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W2a",
+    "name": "Service confirmation",
+    "parent": "W2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W2b",
+    "name": "Delete save",
+    "parent": "W2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W2c",
+    "name": "Replace save",
+    "parent": "W2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W2d",
+    "name": "Load over active run",
+    "parent": "W2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W2e",
+    "name": "Quit confirmation",
+    "parent": "W2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W3",
+    "name": "Main-menu composition",
+    "parent": "W0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W3a",
+    "name": "Main menu — centered, no preview",
+    "parent": "W3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W3b",
+    "name": "Main menu — Continue highlighted",
+    "parent": "W3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W4",
+    "name": "Gameplay / encounter regions",
+    "parent": "W0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W4a",
+    "name": "Combat — tightly packed footer",
+    "parent": "W4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W4b",
+    "name": "Map — 10 / 60 / 20 / 10",
+    "parent": "W4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W4c",
+    "name": "Quest dialogue — player left, NPC right",
+    "parent": "W4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  }
+]

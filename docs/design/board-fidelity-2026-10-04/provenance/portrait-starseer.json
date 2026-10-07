@@ -1,0 +1,35 @@
+{
+  "id": "portrait-starseer",
+  "name": "starseer",
+  "family": "portraits",
+  "sourceBoard": "01-arrival-and-identity.png",
+  "sourceRegion": [
+    0.058,
+    0.783,
+    0.068,
+    0.073
+  ],
+  "prompt": "Use case: precise-object-edit. The attached image is the authoritative Ashen Spire ARRIVAL AND IDENTITY board. Reconstruct ONLY the named class bust below, faithful to that specific portrait. Deliver ONE high quality large transparent-background PNG portrait cutout, no UI, words, icons, background scene or frame. Show head and both shoulders complete with comfortable alpha margin. Preserve source's grounded painterly medieval dark-fantasy realism, weathered materials, exact silhouette and muted palette. No design reinterpretation. Starseer portrait at bottomleft third row (x84..178,y850..929). Pale adult woman bust almost frontal, long ash-white pale blonde hair spilling from a light gray-beige weathered hood, solemn symmetrical face with gray eyes, high cheekbones, small closed mouth, light worn layered cleric robes and tarnished silver small shoulders. Warm thin rimlight. Not a dark faceless wizard and not a young anime face.",
+  "tool": "built-in image_gen",
+  "mode": "precise-object-edit",
+  "originalReturnedLocalPath": "D:/repos/.codex/generated_images/01a0f976-c95b-7872-8f4f-46e22590c7da/exec-2e647850-bcdd-4893-b3c4-62b210d8c383.png",
+  "referenceRoles": [
+    {
+      "path": "references/01-arrival-and-identity.png",
+      "role": "authoritative portrait silhouette, material and visible face"
+    }
+  ],
+  "review": "Full output compared with named original board01 class bust: hood/helmet silhouette, visible-face distinction and source palette preserved; alpha cutout, no frame or words.",
+  "acceptedAfterVisualReview": true,
+  "file": "masters/portraits/portrait-starseer.png",
+  "sha256": "2f024a5ae1a0ec5f1500d0e78699508178c183e513bda7ac0c6cbb4cd7f7d95b",
+  "bytes": 2273820,
+  "width": 1312,
+  "height": 1199,
+  "imageMode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "savedUnchanged": true
+}

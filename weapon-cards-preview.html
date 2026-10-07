@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Ashen Spire · Every weapon</title>
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/kit.css">
+  <link rel="stylesheet" href="styles/weapon-cards-preview.css">
+</head>
+<body class="weapon-preview">
+  <main>
+    <header><p class="eyebrow">Ashen Spire · Armament collection</p><h1>Every weapon, as a card.</h1>
+      <p>Explore every weapon, shield and staff. These are the same cards used in the game, showing base values before smithing and character bonuses.</p>
+    </header>
+    <form role="search" onsubmit="return false">
+      <label>Find equipment<input id="weapon-search" type="search" placeholder="Name, type or tag" autocomplete="off"></label>
+      <label>Type<select id="weapon-kind"><option value="">All armaments</option></select></label>
+      <button type="reset">Show all</button>
+    </form>
+    <p id="weapon-count" role="status"></p>
+    <section id="weapon-gallery" aria-label="Weapon cards"></section>
+    <p id="weapon-empty" hidden>No equipment matches. Try another name or type.</p>
+  </main>
+  <script type="module" src="src/ui/previews/weaponCards.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+# .github/workflows/quick-start.yml — the Title's Quick start, counted in a real
+# browser, on every pull request into dev.
+#
+# WHY THIS FILE EXISTS. docs/FINISH.md §6: "A quick start gives the first card
+# play in 6 inputs or fewer (baseline 26). Test: a scripted input count." The
+# count is `tools/quick-start-inputs.mjs`: a fresh profile, real clicks and key
+# presses at the controls' own coordinates, each input named, from the Title to
+# the first card the fight records as played. Only the quick route is judged
+# here (`--only quick`, about twenty seconds of browser time); the full
+# character-creation route it is compared with is printed by a bare run.
+#
+# A JOB OF ITS OWN, as map-camera.yml and tutorial-reach.yml are: `core` is a
+# no-browser lane. It serves the SOURCE tree, so it needs no build and no LFS.
+# With no browser the tool exits 2, which tools/verdict.mjs reads as HARNESS.
+
+name: quick start
+
+on:
+  pull_request:
+    branches: [dev, alternative/dev, 'alternative/**/dev']
+  push:
+    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
+  workflow_dispatch:
+
+concurrency:
+  group: quick-start-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+# STEP 12 (docs/EXTERNAL-ASSETS-PLAN.md): serving the checkout reads the fetched
+# art packs, so the job fetches them right after setup-node.
+env:
+  ASHEN_ART_SOURCE: cache
+  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+
+jobs:
+  count:
+    name: quick start input count (real browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # serves the checked-out source tree; reads no LFS object
+
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - uses: ./.github/actions/which-browser
+
+      - name: Quick start reaches the first card play within its input budget
+        run: node tools/verdict.mjs -- node tools/quick-start-inputs.mjs --only quick
+
+      # docs/FINISH.md §5: click to impact ≤ 400 ms at Normal pacing. The same
+      # browser, art and source server; the probe takes Quick start on a pinned
+      # seed and times real clicks to the first damage number (about a minute).
+      - name: Click to impact stays within 400 ms at Normal pacing
+        run: node tools/verdict.mjs -- node tools/click-impact-probe.mjs

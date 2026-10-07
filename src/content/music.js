@@ -1,0 +1,133 @@
+// src/content/music.js — the procedural score, as data (SPEC §3.1(4), §7.4).
+//
+// The synth engine (src/ui/audio.js) knows how to PLAY a bed; what the beds
+// are is content. Adding a mood or a new screen's music is a data edit here,
+// with no change to the engine — same rule the cards and enemies follow.
+//
+// THE SILENCE WORD: a context that should be deliberately quiet is spelled
+// with the exact word 'silence' as its whole value — `credits: 'silence'` —
+// never null, never a missing key, never [] or a zero gain. Those are
+// mistakes and the validator rejects each by name (model/validate.js; the
+// word's one home is MUSIC_SILENCE_WORD in model/schemas.js). A quiet screen
+// must be a decision someone typed, because untyped quiet is how a broken
+// audio path hides. A user music folder naming tracks for a silence context
+// still plays them — the more specific typed intent wins.
+//
+// The music sample manifest sits here too: naming a file for a context makes
+// the engine play that sample instead of synthesizing, and a missing/failed
+// load falls back to the synth, so this stays safe to point at art that
+// doesn't exist yet. (The SFX manifest + recipes live in content/sfx.js —
+// one home per medium.)
+
+import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
+
+// THE SHIPPED SCORE. The repo's music/ folder (music/manifest.json, filled from
+// music/PROMPTS.md). With the Custom music folder setting blank, a page served
+// over http(s) reads it; a context it leaves empty, a missing file or a
+// file:// page (browsers block the fetch) keeps the procedural beds below.
+// This folder is also the ID PREFIX of the score's assets (step 3c,
+// docs/EXTERNAL-ASSETS-PLAN.md §3.9): `music/manifest.json` and
+// `music/<context>/<track>.mp3` resolve through assetUrl(), so the web edition
+// reads them from the common pack's objects, while a single file served over
+// http(s) and the source tree read the music/ folder beside the page.
+export const SHIPPED_MUSIC_FOLDER = 'music';
+
+// A real build can point these at files; missing/failed loads fall back to synth.
+export const MUSIC_MANIFEST = {
+  // combat: 'assets/music/combat.ogg',
+};
+
+// Minor / phrygian-ish scales (semitone offsets from the root) per mood.
+export const SCALES = {
+  calm: [0, 3, 5, 7, 10, 12, 15],
+  tense: [0, 1, 5, 6, 7, 10, 12],
+  dread: [0, 2, 3, 7, 8, 10, 12],
+  hymn: [0, 2, 4, 7, 9, 12, 16], // warmer major-pentatonic-ish (shop/rest/victory)
+  veiled: [0, 3, 5, 6, 10, 12, 15], // dorian-flavored, wistful
+  wrath: [0, 1, 4, 5, 8, 11, 12], // jagged, aggressive (elite/boss)
+};
+
+// Music beds per context. Each context has a `gain`, a `drone` flag, and a set
+// of procedural VARIANTS (root frequency, scale, note cadence in ms) — one is
+// picked at random each time the context starts, so the score varies between a
+// handful of "tracks" even with zero audio files. Shop and Rest have their own
+// calmer sets; Boss/Elite their own darker ones.
+// Each variant may also set `wave` (oscillator timbre) and `lift` (melodic
+// stride through the scale) so variants differ in colour and contour, not just
+// key/tempo — more perceived variety from the same synth.
+export const BEDS = {
+  // DELIBERATE QUIET, SPELLED THE ONE WAY. A scene of the opening may ask for
+  // silence (Advanced → Opening → Music); it switches to this context rather
+  // than calling stopMusic(), because the engine remembers the context it is
+  // in — stopping the sound without changing the context left `music('map')`
+  // returning 'unchanged' when the opening ended, and the map stayed silent
+  // until some other screen changed the bed.
+  quiet: MUSIC_SILENCE_WORD,
+  title: { drone: true, gain: 0.5, variants: [
+    { root: 146.83, scale: 'calm', cadence: 2600, wave: 'triangle', lift: 3 },
+    { root: 130.81, scale: 'dread', cadence: 3000, wave: 'sine', lift: 2 },
+    { root: 164.81, scale: 'calm', cadence: 2400, wave: 'triangle', lift: 4 },
+    { root: 155.56, scale: 'veiled', cadence: 2800, wave: 'sine', lift: 3 },
+  ] },
+  map: { drone: true, gain: 0.42, variants: [
+    { root: 164.81, scale: 'calm', cadence: 2200, wave: 'triangle', lift: 3 },
+    { root: 155.56, scale: 'calm', cadence: 2500, wave: 'sine', lift: 4 },
+    { root: 174.61, scale: 'dread', cadence: 2000, wave: 'triangle', lift: 2 },
+    { root: 146.83, scale: 'veiled', cadence: 2350, wave: 'sine', lift: 3 },
+  ] },
+  combat: { drone: true, gain: 0.5, pulse: true, variants: [
+    { root: 130.81, scale: 'tense', cadence: 1500, wave: 'triangle', lift: 3 },
+    { root: 123.47, scale: 'dread', cadence: 1300, wave: 'square', lift: 2 },
+    { root: 146.83, scale: 'tense', cadence: 1400, wave: 'triangle', lift: 4 },
+    { root: 138.59, scale: 'tense', cadence: 1250, wave: 'sawtooth', lift: 3 },
+    { root: 130.81, scale: 'veiled', cadence: 1350, wave: 'triangle', lift: 5 },
+    { root: 155.56, scale: 'dread', cadence: 1200, wave: 'square', lift: 2 },
+  ] },
+  elite: { drone: true, gain: 0.55, pulse: true, variants: [
+    { root: 110.0, scale: 'tense', cadence: 1150, wave: 'sawtooth', lift: 3 },
+    { root: 103.83, scale: 'dread', cadence: 1050, wave: 'square', lift: 2 },
+    { root: 116.54, scale: 'wrath', cadence: 1100, wave: 'sawtooth', lift: 4 },
+    { root: 98.0, scale: 'wrath', cadence: 1000, wave: 'square', lift: 3 },
+  ] },
+  boss: { drone: true, gain: 0.6, pulse: true, variants: [
+    { root: 98.0, scale: 'dread', cadence: 1000, wave: 'sawtooth', lift: 2 },
+    { root: 92.5, scale: 'wrath', cadence: 900, wave: 'square', lift: 3 },
+    { root: 87.31, scale: 'wrath', cadence: 950, wave: 'sawtooth', lift: 4 },
+    { root: 82.41, scale: 'dread', cadence: 860, wave: 'square', lift: 2 },
+    { root: 103.83, scale: 'wrath', cadence: 920, wave: 'sawtooth', lift: 3 },
+  ] },
+  shop: { drone: true, gain: 0.4, variants: [
+    { root: 196.0, scale: 'hymn', cadence: 2200, wave: 'triangle', lift: 3 },
+    { root: 174.61, scale: 'calm', cadence: 2000, wave: 'sine', lift: 4 },
+    { root: 220.0, scale: 'hymn', cadence: 2400, wave: 'triangle', lift: 2 },
+  ] },
+  rest: { drone: true, gain: 0.34, variants: [
+    { root: 130.81, scale: 'calm', cadence: 3200, wave: 'sine', lift: 3 },
+    { root: 146.83, scale: 'hymn', cadence: 3000, wave: 'sine', lift: 2 },
+    { root: 123.47, scale: 'veiled', cadence: 3400, wave: 'triangle', lift: 3 },
+  ] },
+  victory: { drone: false, gain: 0.5, variants: [
+    { root: 196.0, scale: 'hymn', cadence: 1400, wave: 'triangle', lift: 3 },
+    { root: 220.0, scale: 'hymn', cadence: 1200, wave: 'triangle', lift: 4 },
+    { root: 246.94, scale: 'calm', cadence: 1300, wave: 'sine', lift: 2 },
+  ] },
+};
+
+// THE MAP SOUNDS LIKE WHERE YOU ARE. Each region the map can stand in has its
+// own context, `map-<region id>` (ids from content/config/ui/presentation/
+// environments.json). They share the map's procedural bed, so a region with no
+// recorded track sounds exactly as the map always has; the music folder can
+// name tracks per region, and a region it leaves empty falls back to the
+// folder's plain `map` list (MUSIC_TRACK_FALLBACK) before the synth.
+export const MAP_REGIONS = ['hollow-weald', 'pale-marches', 'cinder-reach', 'drowned-coast', 'ashen-crown'];
+export const MUSIC_TRACK_FALLBACK = {};
+for (const id of MAP_REGIONS) {
+  BEDS[`map-${id}`] = BEDS.map;
+  MUSIC_TRACK_FALLBACK[`map-${id}`] = 'map';
+}
+
+// The context the map screen asks for: its region's, or plain `map` when the
+// region is unknown.
+export function mapMusicContext(regionId) {
+  return MAP_REGIONS.includes(regionId) ? `map-${regionId}` : 'map';
+}

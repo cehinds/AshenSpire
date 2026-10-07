@@ -1,0 +1,397 @@
+{
+  "recoveredOn": "2026-10-03",
+  "referenceThread": "01a0ffde-bdb8-75e1-b27a-29a23598427b",
+  "originalDesignThread": "01a0ee2d-2ae5-7110-90f7-fa014213546a",
+  "files": [
+    {
+      "source": "D:\\repos\\AshenSpire\\docs\\design\\deck-editor\\card-library.png",
+      "copy": "docs/design/deck-editor/card-library.png",
+      "sha256": "275f6eddba37a2afc91724ef36010dbeca2dc0df5df23d81462d0632837b8d50"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\docs\\design\\deck-editor\\deck-workbench.png",
+      "copy": "docs/design/deck-editor/deck-workbench.png",
+      "sha256": "e8347a1fe4d7fe7466eca1f31bf068364789588eed65b60b5a7e62831c9080d1"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\docs\\design\\deck-editor\\mobile-browse.png",
+      "copy": "docs/design/deck-editor/mobile-browse.png",
+      "sha256": "09b127d6894aa89c64018870d4370ecfa20e242f6aab318f5a0a0532c1afb569"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\docs\\design\\deck-editor\\mobile-folded-list.png",
+      "copy": "docs/design/deck-editor/mobile-folded-list.png",
+      "sha256": "3f4cd8f3ee60ba880b890ec87f1622d3db2e96ac40f68fa1147adc1c989acf2c"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\docs\\design\\deck-editor\\mobile-inspect.png",
+      "copy": "docs/design/deck-editor/mobile-inspect.png",
+      "sha256": "4955babc2ae23ad758f72a3491f4e1254f369ea8471b578ca35c8c7af4f905c3"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\docs\\design\\deck-editor\\reading-desk.png",
+      "copy": "docs/design/deck-editor/reading-desk.png",
+      "sha256": "92cd0e8125f83e35944985cbd88e16e671816fa1c4eb13170347e9facb899f0f"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\bloodletting-1024.webp",
+      "copy": "docs/design/deck-editor/assets/cards/bloodletting-1024.webp",
+      "sha256": "c1e9a426cb4eeeebe44fd876985e0062f33c62d221c383292e5c90ef66fdbc56"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\bloodletting-512.webp",
+      "copy": "docs/design/deck-editor/assets/cards/bloodletting-512.webp",
+      "sha256": "4247a85a0dd1675eaaa08ed2dafd969eeedda728520af570447d95660551c0dc"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\gorefire-slash-1024.webp",
+      "copy": "docs/design/deck-editor/assets/cards/gorefire-slash-1024.webp",
+      "sha256": "3dea2df35d76240c01c11aa7f84ca20c739b0192be57e071003b16695eca9f1e"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\gorefire-slash-512.webp",
+      "copy": "docs/design/deck-editor/assets/cards/gorefire-slash-512.webp",
+      "sha256": "da4352d3a9f44e21f9e9b326f1543b5ddd73be508ccb8fc286b37e57599111c5"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\iron-resolve-1024.webp",
+      "copy": "docs/design/deck-editor/assets/cards/iron-resolve-1024.webp",
+      "sha256": "632377ad156e3b68f92c14bfd5021ae33ac35d0f77ecfdca334ed6a14838be45"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\iron-resolve-512.webp",
+      "copy": "docs/design/deck-editor/assets/cards/iron-resolve-512.webp",
+      "sha256": "57934ccba2603602267df4534b8864aa6895d2153b4d7985df99aeddfa417241"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\last-stand-1024.webp",
+      "copy": "docs/design/deck-editor/assets/cards/last-stand-1024.webp",
+      "sha256": "a9dc06422598599f81c01e5ebc21f97a5eb3b2b293055289df80bb432f3ea7e5"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\last-stand-512.webp",
+      "copy": "docs/design/deck-editor/assets/cards/last-stand-512.webp",
+      "sha256": "39e4124857ae4d68e5e14e29f66f572c22d67c6e6cfeff5b86314d30b146e48b"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\shield-defend-1024.webp",
+      "copy": "docs/design/deck-editor/assets/cards/shield-defend-1024.webp",
+      "sha256": "4a194137d97cf89daafb12cfdf2931bac84c8cdce30038b3a01756987b6a5913"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\shield-defend-512.webp",
+      "copy": "docs/design/deck-editor/assets/cards/shield-defend-512.webp",
+      "sha256": "5305ba2079710c94cd055625510c7c104ad93a133d6827f476e7cc362fdd7e3a"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\slashing-strike-1024.webp",
+      "copy": "docs/design/deck-editor/assets/cards/slashing-strike-1024.webp",
+      "sha256": "9a71c9bce3255a8282a4b1ccc854913d8e34d3f4edde9eb713f7fd07eb31766f"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\slashing-strike-512.webp",
+      "copy": "docs/design/deck-editor/assets/cards/slashing-strike-512.webp",
+      "sha256": "48d76da7fc01621f23bd608925d308f9ea20f3ee006d5d8dc44597720363a661"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\weapon-technique-1024.webp",
+      "copy": "docs/design/deck-editor/assets/cards/weapon-technique-1024.webp",
+      "sha256": "5f46b89251ef5628b0944fc0fa77b87d2c74a52791d8143468a09a2a3f48e4fc"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\weapon-technique-512.webp",
+      "copy": "docs/design/deck-editor/assets/cards/weapon-technique-512.webp",
+      "sha256": "1ffcac65b1da52e5a915e5599f6c5b99336fb3b58b5df6fc633bce3d20ca688b"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\manifest.json",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/manifest.json",
+      "sha256": "532caf4c37d484c809f292db874943438cde92e23189d2d33e25e6af46b7df61"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\axe.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/axe.svg",
+      "sha256": "ca4588f5e604efcda6741c0053623cef380e17f72a7cce9c26bf646d6f68fb06"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\bandage.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/bandage.svg",
+      "sha256": "c502aed10dbfd34f9e46065b131dfe001d64111ae411296dbdf7053a00a1cf16"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\banner.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/banner.svg",
+      "sha256": "47a5ce3fbb5a7dd70bd7241210830b9b389aebb8fe953691ee1a60194f4c2d77"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\beam.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/beam.svg",
+      "sha256": "cd279a53182d8045c2b96146780c9ff8d3bd7eb3c071c0cc2a859a6169573451"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\blood.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/blood.svg",
+      "sha256": "d2830e66338851133e244a260767e41935361335e1eca78083e86147f3542526"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\book.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/book.svg",
+      "sha256": "bd5efb082288230efbab3698327c70b183ac914b6c1b8d0b0e9cd7fc46ba35d9"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\boot.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/boot.svg",
+      "sha256": "d9b76a0ceb31945dc250624d27a9279ca39bfd50cb6c9c24643655de02e61aaa"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\bow.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/bow.svg",
+      "sha256": "184e805a47e1f41d0e9682df504ca1bd8db7c503f02e3346005621e6f891bbb3"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\butterfly.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/butterfly.svg",
+      "sha256": "5d4e34e7ca8e7457bdb5b3ff7851d7aac8ae68fbc5f51a4925612d8f3177130f"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\candle.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/candle.svg",
+      "sha256": "f21a5f2ceb51124312c76749773c51e041ada2c82ab1ffc96ee5e089ce2dac3b"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\chain.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/chain.svg",
+      "sha256": "c4fcebc62cb1f41786ee406bda8cff47123928f5d455fa9ba12c5a61f583bb40"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\coffin.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/coffin.svg",
+      "sha256": "03f58698d177a4155b3fd41349778aa57d0b06b9ab5a53ec8be70cabba8dc5d2"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\comet.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/comet.svg",
+      "sha256": "470fd2be5f117bf33c55f849092987da9a93f2bc115780b60f45c85c3752a75f"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\constellation.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/constellation.svg",
+      "sha256": "130d4bfe3ff6c054ceb084435aff20cf97fec2d0a6b36002643d044a470f1bc8"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\counter.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/counter.svg",
+      "sha256": "c33ab3702849e67b531c9feeef8ee60472a7aa5460176e4dde8bd708597ffb1b"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\crown.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/crown.svg",
+      "sha256": "63d67e8daf22f501cde11f3ba4a6bb675fdd32fef967036384470a673e64bd93"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\crystal.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/crystal.svg",
+      "sha256": "570bc220c5a200e45250e6aaa78d66590110755c902f15c4b8105d9b2ec7d138"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\dagger.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/dagger.svg",
+      "sha256": "b2f6e44c2823dde47ab918a3bfb0e704020909c88134f7c547a67c37f606a5f2"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\daggers.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/daggers.svg",
+      "sha256": "dcf9816e6d9f2f75061330c6b6957b357b42056f26472ccd1d73d67acfa54c31"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\default.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/default.svg",
+      "sha256": "45598437e9eb14505a01bb2a83356620fbd70f6bc7508aca7df04c3ad8898fdb"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\dodge.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/dodge.svg",
+      "sha256": "7006ed33c7c4f59b7a6674e34c61b6502711d74c05ef932d451561bc5d586013"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\fist.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/fist.svg",
+      "sha256": "6330f9a45b6d1e3cfcb41adab6dbfb90dae8f875d6f3a37b7bac5ff0a6aa584e"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\flame.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/flame.svg",
+      "sha256": "38503bd9d6b305815395e6195c914d69832a051e2eff41f240d370c9b4e10f29"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\flask.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/flask.svg",
+      "sha256": "9b944f350c8ec0e83694dfad3e923a7c1290a3168b21ef51516eb7568bf1842e"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\flower.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/flower.svg",
+      "sha256": "5fa4b13b459dff177f71bc740a7062f44c7e13c137cd28d10d66a293cff2af1b"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\focus.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/focus.svg",
+      "sha256": "a561122da1a56269ce1da51d79e723ec78fc43730348aac9dcc5195fbf0446c4"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\footwork.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/footwork.svg",
+      "sha256": "cec7e9f4da12077561c63b9304e445875be851f3416e89cb820a54d75be5a30c"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\frost.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/frost.svg",
+      "sha256": "31dbd42d0fbb27e72e2041d06484622d5abf2cbb0acfb594618606e2752aa6d9"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\gear.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/gear.svg",
+      "sha256": "63a2c74e2ab8fa33ec5431c0178244e96c00e5a260295718e33153a728b106f0"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\hammer.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/hammer.svg",
+      "sha256": "0e6efccd4187c903340250aad07dd7f7e55e12dd1b39d0a1b6349809784b8269"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\hand.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/hand.svg",
+      "sha256": "fa0681daf339b6d34c6fbf41e416d8ab807980a99dca516c5111237928676ec4"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\heal.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/heal.svg",
+      "sha256": "8ce96d4f5ef6b2d59258dfaad1d20edeaf5689685a56be4babef2126da547c15"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\hourglass.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/hourglass.svg",
+      "sha256": "0b9a71206491dd8b06cdaf127033ab81717e6f6e3fb7ea638e5b4c38bba5a9b1"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\knifeFan.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/knifeFan.svg",
+      "sha256": "c60765240e8db72df1a698a2df4c9cfac734a54239a05c4363bdadef176bc16c"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\leaf.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/leaf.svg",
+      "sha256": "fc579a3e519ca7312d99ee18ff181772f14563c4bc7d3acfdef5c1c9403179a9"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\lightning.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/lightning.svg",
+      "sha256": "240aa55f876967baf3c26215b5ecd077cc768f3c9bf64ee1016e60c6176e1b31"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\lunge.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/lunge.svg",
+      "sha256": "b853a5ce543e3878d132f4592ad142b912a32b0d43f237b24f7d3d5a96cc1639"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\mask.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/mask.svg",
+      "sha256": "53bf763eb332b14df336bc121b00cadd52b4a51b0d92ac51c76aea07492f4a2a"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\moon.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/moon.svg",
+      "sha256": "1251a468ecfebcbe12bd4cbd50053953944bfeb3851867f6420cb8266d40e822"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\orbit.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/orbit.svg",
+      "sha256": "c0ed15570a9d2bfddb95646dc3e32c53e64bb0bd28dd538bf0de3feab89666d0"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\plague.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/plague.svg",
+      "sha256": "13bb2223670a07f69da0213def6fba5f2de8aac2ca758d1ea9e499b484ca936e"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\scroll.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/scroll.svg",
+      "sha256": "46fe2a96c75044a6ab32ee659ffd6a78b58fd12f9eb3bd98dd8c1bd78ac70296"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\serpent.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/serpent.svg",
+      "sha256": "3f90176bd258cfb5d878403c1f07c7f163800fd9480088ec82fa43f60b1dea13"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\shadow.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/shadow.svg",
+      "sha256": "c826ce8910b9650748dc1bc030d0cf87d5b6a3a000939a8cc59b5f7e45856e4b"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\shield.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/shield.svg",
+      "sha256": "c4953362f539e6221f2a892229005b4a52d78590b3f02e891b01e05f00397f0f"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\shieldwall.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/shieldwall.svg",
+      "sha256": "ab454c4c2264a9a2607f3c4102969260a5c9dd3bfd228c64dde604f64fcc84ff"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\skull.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/skull.svg",
+      "sha256": "42c05c3c60f560fee7c4b1fb6410ad9e370d6d1f5115a1e02bd27f9b6eb2c265"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\smoke.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/smoke.svg",
+      "sha256": "675d8dd9e405a59135314460569150f286eb9af3f6ce5aab09b95c0fa1ab7a1a"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\staff.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/staff.svg",
+      "sha256": "7ce7e79db988fb2118a9b494017f62811760f7b822de5939dea189fa6680be6f"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\stars.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/stars.svg",
+      "sha256": "229265a949024fb68fb6e423239493a2555462cff09c5be9081ed4aef48dfd30"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\sun.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/sun.svg",
+      "sha256": "4ee77df2cf980dc50e3b325851b650008d0d81ef0d4ace9227d8357d864cc481"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\sword.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/sword.svg",
+      "sha256": "add5634be1ab327dd84474587e882e202495332ee06398139c271d0a3c18a748"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\thorns.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/thorns.svg",
+      "sha256": "ba9b4c144637400832e942a0544e5579018018e6199a8e1ab1e75b971c259923"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\void.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/void.svg",
+      "sha256": "688af6f3504c09d4237ab4c2f7d1d52d0d23dca9d6d8238920d025b06a98b6b4"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\wave.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/wave.svg",
+      "sha256": "b8df551ad26882a0832e00d6913a0d238742d297b26ea64978c9e9aff9c9026a"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\cards\\default-outline\\icons\\wound.svg",
+      "copy": "docs/design/deck-editor/assets/cards/default-outline/icons/wound.svg",
+      "sha256": "b083048410c659b49ec71a355527a5b34c04e698d4e7a22186bb04a1729f9b3a"
+    },
+    {
+      "source": "D:\\repos\\AshenSpire\\assets\\bg\\title-city-tower.webp",
+      "copy": "docs/design/deck-editor/assets/backdrop.webp",
+      "sha256": "fb752ab4839744c14c9f08ad7af9463766a9102f109e4d56f9754d7bddce3dd1"
+    }
+  ]
+}

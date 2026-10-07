@@ -1,0 +1,18 @@
+{
+  "sizing": {
+    "standardHeightRem": "$targetRem",
+    "heightMultipliers": { "standard": 1, "tall": 1.5, "double": 2 },
+    "sizeWidths": ["third", "half", "full"],
+    "presets": { "quarter": 25, "third": 30, "half": 50, "full": 100 },
+    "minimumReadableRem": 8,
+    "iconSizeRem": "$targetRem"
+  },
+  "positioning": {
+    "gapRem": 0.5
+  },
+  "components": {
+    "choice": "half",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  }
+}

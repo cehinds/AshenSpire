@@ -1,0 +1,8 @@
+[
+  {
+    "name": "Weapon card workshop",
+    "description": "Inspect the real weapon, shield, and staff cards at desktop and phone widths.",
+    "path": "weapon-cards-preview.html",
+    "enabled": true
+  }
+]

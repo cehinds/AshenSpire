@@ -1,0 +1,395 @@
+// src/model/creationBrief.js — D26's SHORT FORM, as one read model.
+//
+// Constantine, 2026-08-15: "the statte descriptions kind of suck. perhaps have
+// a simplifed verison with just the starting stats, starting armaments
+// selection , and then have the ability to expand by clicking, with tool tips.
+// for character creation I mean"
+//
+// THE FIX IS LAYERED PROSE, NOT A SECOND SET OF PROSE. Every entry here has a
+// FACE (name, the first authored sentence constrained to one line, and value)
+// and a REVEAL (the full sentence plus derived benefits, one tap down). The
+// vocabulary and the tier field are model/disclosure.js; this file is the one
+// place that composes them, so the creation screen and the F1 combat frame
+// cannot answer "what does a stat look like" two different ways.
+//
+// WHAT IS AUTHORED AND WHAT IS DERIVED (Law 0 clause 1 — an entry DESCRIBES,
+// the machinery DERIVES). Authored, once, per row: `sense`, one sentence with
+// NO NUMBER IN IT. Derived here, every render, from the tables that own the
+// facts:
+//
+//   an attribute's FEEDS      every derived stat whose sourceStat is this
+//                             attribute, with its own gain and its own tier
+//                             size — so adding a rule row changes the
+//                             attribute's reveal with nobody editing prose
+//   an attribute's UNLOCKS    every armament that names it in
+//                             equipmentRequirements, with the minimum it asks
+//                             — which is how STRENGTH has an honest reveal on
+//                             a screen where it feeds no pool at all
+//   a derived stat's SOURCE   its own rule row, in words
+//   a derived stat's RECEIPT  statProjection's formula string, unchanged: the
+//                             arithmetic already has one home and this is not
+//                             a second one
+//   an armament's EFFECTS     its `mods` column read through modFields, the
+//                             same vocabulary the Armoury comparison reads
+//   an armament's REQUIREMENTS equipmentRequirementReceipt, met or unmet
+//
+// AN ENTRY THAT FEEDS NOTHING AND UNLOCKS NOTHING SAYS SO. Silence there would
+// be the screen implying a stat matters because it is drawn; the derivation
+// prints "Nothing reads it yet" and that sentence goes stale the moment the
+// tables change, which is the point.
+//
+// THE RELIC IS HERE BECAUSE THE SCREEN NEVER NAMED IT (Bjorn, 2026-08-15): the
+// class-pick panel itemized "Items 6 + relics 0 = 6" one row below a screen
+// that never mentioned the starting relic — and D23 made that relic the carrier
+// of the class's own numbers. Its passive modifiers are derived below; its
+// authored sentence is composed by the caller through the shared relicText
+// renderer (`extras`), because token-filling is a rendering concern with one
+// home already (ui/components/card.js) and this module keeps no copy of it.
+//
+// REMOVAL CONDITION (SOP 1's corollary): deleted the day the creation screen
+// and the combat frame no longer show stats — the split has no subject then.
+
+import { splitByDisclosure } from './disclosure.js';
+import { statProjection } from './statProjection.js';
+import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
+import { orderedAttributes } from './attributes.js';
+import { HAND_STAT_IDS, isStatRowRuleset, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { handRow } from './handRules.js';
+
+/** `mods` → player-readable effect lines, through the modFields vocabulary.
+ *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
+ *  the two copies that made a third site print the raw row. The reasoning about
+ *  an unknown field, which was written here, moved with it. */
+const pieceEffects = (registries, piece) => modEffectLines(registries, piece);
+
+function requirementLines(registries, piece, attributes) {
+  const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+  return receipt.requirements.map((row) => {
+    const def = registries.attributes.get(row.attributeId);
+    const met = Number.isFinite(row.actual) && row.actual >= row.required;
+    return `Needs ${def.shortLabel} ${row.required} — you have ${row.actual == null ? '—' : row.actual}${met ? '' : ' (short)'}`;
+  });
+}
+
+/** The armament entries: what the chosen kit actually puts in your hands. */
+function armamentEntries(registries, run) {
+  const slots = (registries.equipment || {}).slots || [];
+  return equippedPieces(registries, run.loadout, run.class).map((piece) => {
+    const slot = slots.find((row) => (row.kinds || []).includes(piece.kind) && (!piece.hand || piece.hand === 'either' || piece.hand === row.hand));
+    return {
+      id: piece.id,
+      // THE KEY IS THE MODEL'S, NOT THE SCREEN'S. Two hands may hold the same
+      // armament id, so a bare id is not unique on this surface — and a DOM
+      // that keys two faces the same silently opens the wrong reveal. One rule,
+      // stated once, adopted by every surface that draws entries.
+      key: `armament:${slot ? slot.id : piece.kind}:${piece.id}`,
+      slotId: slot ? slot.id : null,
+      kind: 'armament',
+      // Always face-tier: he named the armaments selection as the other half
+      // of the short form, so a starting armament is never behind a tap.
+      disclosure: 'face',
+      face: { label: piece.name, value: slot ? slot.label : '' },
+      reveal: {
+        title: piece.name,
+        sense: piece.blurb || '',
+        lines: [...pieceEffects(registries, piece), ...requirementLines(registries, piece, run.attributes)],
+        receipt: '',
+      },
+    };
+  });
+}
+
+function relicEntry(registries, run, relicId = registries.classes.get(run.class).startingRelic) {
+  const relic = relicId ? registries.relics.get(relicId) : null;
+  if (!relic) return null;
+  // The resource's name is the presentation table's, never an upper-cased id:
+  // a player reads 'Mana', and the engine's key is not a label (Vira's
+  // engine-language finding, 2026-08-15).
+  const named = (id) => (((registries.derivedStatRules || {}).presentation || {})[id] || {}).label || id;
+  const lines = ((relic.passives && relic.passives.modifiers) || []).map((row) => {
+    if (row.tag === 'resource.flat') return `${named(row.resource)} +${row.amount}`;
+    if (row.tag === 'resource.attributeTier') {
+      const def = registries.attributes.get(row.sourceStat);
+      return `${named(row.resource)} +${row.amountPerTier} per ${row.pointsPerTier} ${def.shortLabel}`;
+    }
+    if (row.tag === 'damage.school.flat') return `${row.school} damage +${row.amount}`;
+    return row.tag;
+  });
+  return {
+    id: relic.id,
+    key: `relic:${relic.id}`,
+    kind: 'relic',
+    disclosure: 'face',
+    face: { label: 'Relic', value: relic.name },
+    reveal: { title: relic.name, sense: '', lines, receipt: '' },
+  };
+}
+
+/** Every armament in the class's tables that names this attribute as a gate. */
+function unlockLines(registries, attributeId) {
+  return ((registries.equipment || {}).armaments || [])
+    .filter((piece) => ((piece.requirements && piece.requirements.attributes) || {})[attributeId] != null)
+    .map((piece) => `${piece.name} asks ${piece.requirements.attributes[attributeId]}`);
+}
+
+function foldedSummary(sense) {
+  const text = String(sense || '').trim();
+  const sentence = text.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim();
+  return sentence || text;
+}
+
+// The combat ratings are rows of the derived-stat table (ruleset 7) and read
+// the same way; they are listed as scaling rather than as a pool a point buys.
+const RATING_ROWS = ['ar', 'dr', 'pr', 'ward'];
+const FEED_EXCLUDED = new Set(RATING_ROWS);
+
+// THE RUN'S ROWS WHEN THERE IS A RUN (Codex, #1296): a run born before
+// ruleset 7 fights by its retired formula, and its card must say so.
+function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING_ROWS) {
+  const table = registries.derivedStatRules;
+  const short = registries.attributes.get(attributeId).shortLabel;
+  if (!runRows && !table?.rules) return [];
+  return ids
+    .map((id) => [id, runRows ? runRows[id] : resolvedRuleRow(table, id)])
+    .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
+    .map(([id, rule]) => {
+      const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
+      // A rating row's Max is where its points stop paying, as for every
+      // other bounded fact (Codex, #1321).
+      const cap = Number.isFinite(rule.max) ? rule.max : null;
+      return {
+        id,
+        weight: Number(rule[attributeId]),
+        multiplier: rule.multiplier,
+        line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}${cap !== null ? ` (at most ${cap})` : ''}`,
+        summary: `${label} weight ${rule[attributeId]}${cap !== null ? ` (max ${cap})` : ''}`,
+        cap,
+      };
+    });
+}
+
+/**
+ * attributeCycle(weight, perIncrease) → the fewest points n (up to 100) for
+ * which `n × weight` is whole AND divides evenly by `perIncrease`: after n
+ * points every floor in `floor(floor(n × weight) / perIncrease)` has landed
+ * exactly, so "+X every n points" is what the rule pays, not an average.
+ */
+function attributeCycle(weight, perIncrease) {
+  for (let n = 1; n <= 100; n += 1) {
+    const weighted = n * weight;
+    if (Math.abs(weighted - Math.round(weighted)) > 1e-9) continue;
+    const increases = Math.round(weighted) / perIncrease;
+    if (Math.abs(increases - Math.round(increases)) <= 1e-9 && Math.round(increases) > 0) return n;
+  }
+  return null;
+}
+
+// The compact face names the main benefit; the disclosure keeps every
+// secondary contribution. Values still come from the active run's rules.
+const MAIN_BENEFITS = {
+  strength: [['ar', 'Physical damage / Attack Rating (AR)']],
+  dexterity: [['dr', 'Defense / Defense Rating (DR)']],
+  constitution: [['hp', 'Health'], ['poise', 'Poise']],
+  wisdom: [['ward', 'Ward']],
+  intelligence: [['pr', 'Magic damage / Potency Rating (PR)']],
+};
+
+function mainBenefitSummary(attributeId, feeds, ratings) {
+  return (MAIN_BENEFITS[attributeId] || []).flatMap(([id, label]) => {
+    const feed = feeds.find((fact) => fact.id === id);
+    const rating = ratings.find((fact) => fact.id === id);
+    if (!feed && !rating) return [];
+    const points = feed ? feed.points : attributeCycle(rating.weight, 1);
+    const gain = feed ? feed.perTier : points && Math.round(points * rating.weight * 100) / 100;
+    const cap = (feed || rating).cap;
+    // Legacy global multipliers floor the combined total, so a per-attribute
+    // promise would be misleading. Their exact formula remains in the reveal.
+    const simple = !rating || !Number.isFinite(rating.multiplier) || rating.multiplier === 1;
+    const cadence = points === 1 ? 'per point' : `every ${points} points`;
+    return [`${label} ${simple && Number.isFinite(gain) && points ? `+${gain} ${cadence}` : 'scales with points'}${cap != null ? ` (max ${cap})` : ''}`];
+  }).join(' · ');
+}
+
+/**
+ * One attribute-card model for every authored attribute.
+ *
+ * `attributes` may be an in-progress allocation, so this door deliberately
+ * does not require a valid run. The optional projection only supplies a
+ * class-specific fallback for a rule whose gain is resolved at projection
+ * time; every authored label, sentence, rule and equipment gate still comes
+ * from its owning registry row.
+ */
+export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null, hand = null } = {}) {
+  const rules = ((registries.derivedStatRules || {}).rules) || {};
+  const defaults = ((registries.derivedStatRules || {}).defaults) || {};
+  const presentation = ((registries.derivedStatRules || {}).presentation) || {};
+  const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
+  // A RUN'S HAND ROWS ITS SNAPSHOT NEVER HAD (born before ruleset 7) are its
+  // retired hand groups restated as rows; any other row a run's projection
+  // lacks is not the run's, so its card does not name it (Codex, #1296).
+  // THE HAND A FIGHT DEALS, when the caller has it (`hand`: a fight's own
+  // snapshot mid-combat, or `runHandRules` for the next fight — #1318): its
+  // three rows are the ones a card must state, over the projection's.
+  const handRows = hand
+    ? Object.fromEntries(HAND_STAT_IDS.map((id) => { try { return [id, handRow(hand, id)]; } catch { return [id, null]; } }))
+    : ((projection && projection.handRows) || {});
+  for (const [id, row] of Object.entries(handRows)) {
+    if (row) {
+      projected.set(id, { weights: Object.fromEntries(ruleWeights(row)), pointsPerIncrease: Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1, gain: 1, max: row.max });
+    }
+  }
+  // A RUN BORN BEFORE RULESET 7 HAS TWO POISES: with ratings on it fights by
+  // its rating formula's Poise, not its pool row, so that is the one its cards
+  // name (Codex, #1296). Since ruleset 7 they are one row, listed as a feed.
+  const legacyPoise = !!projection?.ratingRows && !isStatRowRuleset(projection.rulesetVersion)
+    && !!registries.balance?.combatRatings?.enabled;
+  const ratingIds = legacyPoise ? [...RATING_ROWS, 'poise'] : RATING_ROWS;
+  return orderedAttributes(registries).map((authored) => {
+    const def = { ...authored, value: attributes?.[authored.id] };
+    // WHAT THIS ATTRIBUTE FEEDS, as facts before prose. Derived once here so
+    // the fold's line and the face's summary are the same numbers — the rules
+    // are `registries.derivedStatRules`, the run's own derivation.
+    const feedFacts = Object.entries(rules)
+      .filter(([id]) => !FEED_EXCLUDED.has(id) && !(legacyPoise && id === 'poise'))
+      .filter(([id]) => !projection || projected.has(id))
+      // SINCE RULESET 6 A ROW NAMES ITS ATTRIBUTES AS WEIGHTS, so "what this
+      // attribute feeds" is every row that puts a non-zero weight on it — a row
+      // may now feed two attributes and appear on both cards, which the single
+      // `sourceStat` this filter used to read could never express.
+      // THE RUN'S WEIGHTS DECIDE WHICH CARD A STAT IS ON, not the live table:
+      // a player who moves HP from Constitution to Strength in Settings after
+      // starting a run still has a climb whose HP scales with Constitution
+      // (Codex, #1253). The authored row answers only when there is no run.
+      .filter(([id, rule]) => (projected.get(id)?.weights
+        ? Object.entries(projected.get(id).weights).filter(([, weight]) => weight > 0)
+        : ruleWeights({ ...defaults, ...rule })).some(([attrId]) => attrId === def.id))
+      .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
+      .map(([id, rule]) => {
+        // THE RUN'S RULE, NOT THE TABLE'S. A run carries the derived-stat rows
+        // it was BORN under — a settings override tunes the live table while a
+        // climb in progress keeps its own snapshot — so the authored row can
+        // say one thing while the character on screen was priced by another.
+        // The projection is the run's own derivation; reading the authored row
+        // here is the copy-that-nothing-syncs the card exists to avoid (Law 1
+        // clause 2). The authored row answers only when there is no run.
+        const row = projected.get(id);
+        const weight = Number.isFinite(row?.weights?.[def.id]) ? row.weights[def.id]
+          : ruleWeights({ ...defaults, ...rule }).find(([attrId]) => attrId === def.id)?.[1];
+        const perIncrease = Number.isFinite(row?.pointsPerIncrease) ? row.pointsPerIncrease : 1;
+        const gain = Number.isFinite(row?.gain) ? row.gain : 1;
+        if (!Number.isFinite(weight) || weight <= 0) return { id, label: presentation[id].label, perTier: null, points: 1 };
+        // WHAT MY POINTS BUY, said as the CADENCE THE FLOORS ACTUALLY PAY. A
+        // weight of 4 is "+4 every 1 point"; a weight of 0.2 is "+1 every 5
+        // points", never "+0.2 per point" — the term is floored, so a fifth of
+        // a point is nothing until five arrive. An average rate would lie the
+        // same way whenever the steps are uneven: under a divisor of 3 a weight
+        // of 4 pays +1, +1, +2 across three points, so the card says "+4
+        // every 3 points" rather than "+1.33 every 1" (Codex, #1253). The
+        // cycle is the fewest points after which every floor lands exactly;
+        // a rule with no such cycle short enough to read says it scales.
+        const cycle = attributeCycle(weight, perIncrease);
+        // A ROW'S CAP IS PART OF ITS FACT (#1294: a Starseer at base 5 has one
+        // card of room before the cap of 6). Since ruleset 7 every row may
+        // carry a Max, so every bounded fact says where its points stop paying
+        // (Codex, #1296) — a weight with no exact cycle included (Codex,
+        // #1321): the run's own row, or the table's when there is none.
+        // A run saved under ruleset 1–6 states its bound as the retired
+        // `cap`, which prices exactly as a Max (Codex, #1321).
+        const source = row || rule;
+        const bound = Number.isFinite(source.max) ? source.max : source.cap;
+        const cap = Number.isFinite(bound) ? bound : null;
+        if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1, cap };
+        return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };
+      });
+    const unlocks = unlockLines(registries, def.id);
+    const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
+    const scaling = ratingFacts.map(({ line }) => line);
+    const feeds = feedFacts.map(({ label, perTier, points, cap }) => (Number.isFinite(perTier)
+      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`
+      : `${label} scales with ${def.label}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`));
+    // The FACE says what a point buys (Constantine, 2026-09-04: "stats show
+    // flavor text instead of useful information"). The flavour is still the
+    // fold's opening sentence — it is colour, and colour is not what a player
+    // choosing where to spend a level needs on the row itself.
+    // Each fact carries its OWN cadence, because they differ: HP every point
+    // and Stamina every five in the same row would read as one rate if the
+    // divisor sat at the end. `per N pts`, not `/N`, because a label may
+    // already hold a slash ("Actions / turn") and two would read as one rate.
+    const cadence = (points) => (points === 1 ? 'per pt' : `per ${points} pts`);
+    // The hand is three rows of the same table (ruleset 7), the class's own
+    // opening hand among them, so it is listed like every other feed.
+    const faceFacts = feedFacts
+      .filter(({ perTier }) => Number.isFinite(perTier))
+      .map(({ label, perTier, points, cap }) => `+${perTier} ${label} ${cadence(points)}${cap !== null && cap !== undefined ? ` (max ${cap})` : ''}`);
+    // A row that only "scales" (no exact cycle) still says its cap on the face.
+    const scalingCaps = feedFacts
+      .filter(({ perTier, cap }) => !Number.isFinite(perTier) && cap !== null && cap !== undefined)
+      .map(({ label, cap }) => `${label} scales (max ${cap})`);
+    // A capped rating always reaches the face: its points stop paying at the
+    // cap, which the other feeds never say (Codex, #1321).
+    const scalingFacts = (faceFacts.length ? ratingFacts.filter(({ cap }) => cap !== null) : ratingFacts).map(({ summary }) => summary);
+    const stated = [...faceFacts, ...scalingCaps, ...scalingFacts];
+    const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
+    const lines = [...feeds, ...scaling, ...unlocks];
+    return {
+      id: def.id,
+      key: `attribute:${def.id}`,
+      kind: 'attribute',
+      disclosure: def.disclosure,
+      face: { label: def.shortLabel, summary: faceSummary,
+        mainSummary: mainBenefitSummary(def.id, feedFacts, ratingFacts) || faceSummary, value: def.value },
+      reveal: {
+        title: def.label,
+        sense: def.sense,
+        lines: lines.length ? lines : ['Nothing reads it yet.'],
+        flavour: foldedSummary(def.sense),
+        receipt: '',
+      },
+    };
+  });
+}
+
+function derivedEntries(projection) {
+  return projection.derived.map((row) => ({
+    id: row.id,
+    key: `derived:${row.id}`,
+    kind: 'derived',
+    disclosure: row.disclosure,
+    face: { label: row.faceLabel, value: row.value },
+    reveal: {
+      title: row.label,
+      sense: row.sense,
+      lines: [],
+      // THE RECEIPT TIER, and it is the projection's own string — the
+      // arithmetic keeps its single home (Law 1 clause 2).
+      receipt: row.formula,
+    },
+  }));
+}
+
+/**
+ * creationBrief(registries, run) → { stats, armaments, faces, reveals }
+ *
+ * `stats` and `armaments` are every entry in authored order; `faces` and
+ * `reveals` are the same entries split by their own `disclosure` field — the
+ * split is READ, never decided here, and no caller may filter by id.
+ */
+export function creationBrief(registries, run) {
+  const projection = statProjection(registries, run);
+  const stats = [...attributeCardModels(registries, run.attributes, {
+    projection,
+    equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+  }), ...derivedEntries(projection)];
+  const relic = relicEntry(registries, run);
+  // The kit relic (plan phase 5a) rides beside the starting relic; the brief says so.
+  const kitRelic = relicEntry(registries, run, registries.classes.get(run.class).kitRelic);
+  const armaments = [...armamentEntries(registries, run), ...(relic ? [relic] : []), ...(kitRelic && kitRelic.id !== (relic && relic.id) ? [kitRelic] : [])];
+  const split = splitByDisclosure(stats);
+  return {
+    classId: run.class,
+    stats,
+    armaments,
+    faces: split.face,
+    reveals: split.reveal,
+  };
+}

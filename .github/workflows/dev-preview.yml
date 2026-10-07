@@ -1,0 +1,598 @@
+name: dev preview
+
+# GitHub Pages serves `main`, so `dev` has no hosted URL. This workflow gives
+# every push to `dev` (and every PR targeting it) an inspectable artifact of the
+# playable build at that exact commit, without deploying anything.
+#
+# SINCE 2026-09-26 THIS IS WHERE THE dev BUILD IS PUBLISHED. The built HTML is no
+# longer committed on dev — every rebuild uploaded ~284 MB of new Git LFS objects
+# and exhausted the repository's LFS budget — so the `dev-standalone-<sha>` and
+# `dev-preview-<sha>` artifacts below are the build a tester downloads. A workflow
+# artifact was chosen over GitHub Pages and a Release asset: it already existed for
+# every push and PR, costs no LFS, needs no write token, and is per-commit; Pages
+# caps a site at 1 GB (four 255 MB builds) and a Release is the owner's act.
+#
+# PROMOTED BRANCHES TOO. A push to `test`, `release` or `main` builds and uploads
+# `<branch>-standalone-<commit>` the same way, because once this change is
+# promoted those branches stop committing their build as well: `test` is the
+# playtest build, and `release`/`main` keep theirs 90 days (GitHub's maximum)
+# until the owner-approved Releases/Pages publication replaces this.
+#
+# It is deliberately NOT a deployment: it touches no ref.
+
+on:
+  push:
+    branches: [dev, test, release, main, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
+  pull_request:
+    branches: [dev, alternative/dev, 'alternative/**/dev']
+  workflow_dispatch:
+
+concurrency:
+  # A PULL REQUEST'S superseded run may be cancelled; a branch push may not, and
+  # may not be REPLACED while queued either (a group holds one pending run). The
+  # built HTML is not committed, so a push run's upload is the only copy of that
+  # commit's build — so push runs are grouped by commit, never by branch.
+  group: dev-preview-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # The branch a build belongs to: the PR's base, or the pushed branch. It names
+  # the artifacts and the standalone files (src/ui/buildChannel.js reads the
+  # channel from a saved file's name, so a main build must not say `dev`).
+  # A dispatch from `feature/x` carries a slash; the preview job's first step
+  # rewrites CHANNEL without it before anything names a file or an artifact.
+  CHANNEL: ${{ github.base_ref || github.ref_name }}
+  # The pack-shaped build's tier flag for bundle.mjs: light on dev
+  # (owner, 2026-09-26; test joins full art 2026-10-04), high (no flag) on test/release/main.
+  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
+  # The art packs this workflow fetches (docs/EXTERNAL-ASSETS-PLAN.md §2,
+  # tools/fetch-art.mjs --pack): all three on every branch since step 13. The
+  # build carries only its tier's (light and common on dev), but the
+  # workbench copies the high pack's folders the light one lacks.
+  ART_PACKS: all
+
+  # STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
+  # assets-mobile/, the fonts, music/, map-detail/ and art/) left this repository
+  # at step 13; every reader reads the fetched art packs through
+  # tools/art-source.mjs, which fails (naming the fetch) for a pack that is not
+  # fetched. Each job that builds, serves or tests the checkout fetches with
+  # ./.github/actions/fetch-art right after setup-node, and fetches ALL THREE
+  # packs: the high pack is what /assets/ serves from source (tools/serve.mjs) and
+  # what the art checks read, as the assets/ tree was before step 13.
+  # ASHEN_ART_SOURCE=cache is the default behaviour now, kept as a name.
+  ASHEN_ART_SOURCE: cache
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the build is made below from source; nothing reads LFS
+
+      - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      # BUILT FIRST, AND UPLOADED WHENEVER THIS SUCCEEDS. The built HTML is not
+      # committed, so this run's artifacts are the only copy of this commit's
+      # build: a failing gate below still fails the job, but it must not cost the
+      # commit its download (the standalone uploads right below; the preview
+      # package collects and uploads on `steps.build.outcome`).
+      - name: Make the channel safe for a file and artifact name
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from 'node:fs';
+          import { downloadChannel } from './tools/alternative-branches.mjs';
+          const branch = process.env.CHANNEL;
+          appendFileSync(process.env.GITHUB_ENV, `CHANNEL=${branch.replaceAll('/', '-')}\nFILE_CHANNEL=${downloadChannel(branch).replaceAll('/', '-')}\n`);
+          NODE
+
+      - name: Build the game (the pack shape and the light single file)
+        id: build
+        # Light art on dev (owner, 2026-09-26; test linked to full art 2026-10-04); test/release/main default to high.
+        # Either way launch.mjs writes the pack-shaped game into build/ and dist/
+        # and the light single file to build/download/ and the root alias
+        # (docs/EXTERNAL-ASSETS-PLAN.md step 8e).
+        env:
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+        run: node tools/launch.mjs --build-only $ART_TIER
+
+      - name: Record the preview build number
+        if: steps.build.outcome == 'success'
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const b=JSON.parse(fs.readFileSync("buildordinal.json")); fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## ${process.env.CHANNEL} preview\n\n- Build: **${b.release}.${b.ordinal}**\n- Commit: ${process.env.GITHUB_SHA}\n`);'
+
+      # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
+      # a saved file's name to open the dev-only settings, and a plain
+      # AshenSpire.html is an unknown file with them locked. Collected and
+      # uploaded HERE, straight after the build and before any gate or the
+      # preview package, so this commit's only copy of its build always ships.
+      - name: Collect the standalone
+        run: |
+          set -euo pipefail
+          mkdir -p standalone
+          # The root alias is the light single file on every branch since step
+          # 8e: the one inline download (owner answer 3). The full-art single
+          # file and the separate mobile file are retired (owner answers 6, 2).
+          cp AshenSpire.html "standalone/AshenSpire-${FILE_CHANNEL}-preview.html"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CHANNEL }}-standalone-${{ github.sha }}
+          path: standalone/
+          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || ((env.CHANNEL == 'test' || endsWith(github.ref_name, '/test')) && 30 || 14) }}
+
+      - name: Complete armament kits and temporary Guardian skill
+        run: node tests/armament-combat-kits.test.mjs
+
+      - name: Relic artwork resolves to shipped assets
+        run: node --test tests/relic-art.test.mjs
+
+      - name: Mobile rendering and bounded pose preloads
+        run: node --test tests/mobile-performance.test.mjs
+
+      - name: Combat formations and painted ground
+        run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs tests/local-map.test.mjs
+
+      - name: World Journey normalized data and seeded routes
+        run: node tests/world-atlas.test.mjs
+
+      # The harness that decides, for every corpus above and in the dispatch-only
+      # lane, whether a known-bad was armed at all. It read plants as exact bytes,
+      # so on a CRLF checkout every MULTI-LINE plant reported PLANT SITE DRIFTED —
+      # a false red on Windows, invisible on this runner because Linux checks out
+      # LF. That is the shape of defect this lane exists to catch, and the harness
+      # was the one tool with no door of its own. Seconds, no browser, no port.
+      - name: The plant harness can still arm a plant (doorplant's own door)
+        run: node tools/doorplant.mjs --selftest
+
+      # THE ARTIFACT-IDENTITY GATES, AND WHY THEY BELONG HERE RATHER THAN IN
+      # THE DISPATCH-ONLY LANE.
+      #
+      # `dev` went red on these three times on 2026-09-03 — after #575, after
+      # #580's merge, and after the #588/#589/#591/#592 batch — and each time
+      # the artifact a player is handed was not this source. The third was the
+      # worst: build/AshenSpire.html carried two modules that no longer existed
+      # in the tree at all.
+      #
+      # EVERY ONE OF THOSE PULL REQUESTS WAS GREEN ON ITS OWN BRANCH, because
+      # the branch rebuilt. A `pull_request` run checks out `refs/pull/N/merge`,
+      # so it does test a merge — but the merge against the base AS IT STOOD
+      # THEN. Two PRs both green against base X, A merges, and B's green now
+      # describes a tree that no longer exists. The tree produced by merging
+      # them is the one nobody built, and until now nothing looked at it.
+      #
+      # The `push: branches: [dev]` half of this workflow is that missing look:
+      # it runs on the real post-merge result. It does not PREVENT the drift —
+      # preventing it means rebuilding as part of merging, which is a change to
+      # how merges are done and not this file's to make — but it turns "found a
+      # day later by a seat running a tool by hand" into "red within a minute,
+      # on dev, by name".
+      #
+      # Same reasoning as the plant-site detector above, and the same budget:
+      # both are pure reads, no execution and no browser, well under a second,
+      # on the runner this job already pays for. The 3-OS matrix in ci.yml stays
+      # dispatch-only; nothing here re-enables it or spends a Windows minute.
+      - name: Current builds use the 0.7.x.x release series
+        run: node tools/release-series.mjs
+      - name: Release series gate rejects older and malformed versions
+        run: node tools/release-series.mjs --selftest
+
+      # A clean tree after the build (first step of this job) is what used to be
+      # "the committed bundle is this source": if the rebuild had to bump
+      # buildordinal.json, the commit's receipt and its box disagree.
+      - name: The rebuild changed nothing committed
+        run: |
+          set -euo pipefail
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+
+      # #498: 28 plant sites had drifted and only one gate went red — the rest
+      # stayed green while unable to fail. This cheap static detector (no
+      # execution, no browser, <1s) runs on every PR: any NEW drifted
+      # find-string fails here the day the refactor lands, and the checked-in
+      # baseline holds the known backlog to exactly itself.
+      #
+      # AFTER THE BUILD: several plants target the built HTML, which is no
+      # longer committed, so before a build their files do not exist.
+      - name: No plant site has drifted beyond the recorded baseline
+        run: node tools/plantsites.mjs --check
+
+      - name: The shipped artifact is this source, and the number on it is ours
+        run: node tools/buildversion.mjs --check
+
+      - name: The file a player is handed matches the tree that claims it
+        run: node tools/verify-shipped.mjs
+      # Same budget as the gates above: a pure read, no execution, no browser,
+      # well under a second, on the runner this job already pays for. It walks
+      # every in-tree module regardless of who imports it, so a rename that
+      # leaves one dangling import is red here rather than at runtime.
+      #
+      # NOT HERE, and the reason is measured rather than assumed: the check that
+      # the in-game changelog matches CHANGELOG.md (tools/about-changelog.mjs
+      # --check) would be the natural companion, and I put it here first. It
+      # SERVES THE TREE AND DRIVES A BROWSER — it exits 127 with no Chrome on
+      # PATH, and it took this job red doing exactly that. It stays in ci.yml,
+      # under the verdict door, where a browser exists. This lane's rule is not
+      # "cheap-looking"; it is no browser, and that tool needs one.
+      - name: Every named import in the tree resolves against a real export
+        run: node tools/linkcheck.mjs --check
+
+      - name: Combat effect tags, outcomes, and character outlines
+        run: node --test tests/combatEffects.test.mjs tests/combatEffectIntegration.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs tests/combatPose.test.mjs
+
+      - name: Pose studio project schema and event bindings
+        run: node --test pose-studio/tests/model.test.mjs
+
+      - name: Collect the playable build
+        id: collect
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          mkdir -p preview
+          # The readiness-pose gallery and the art/ inspection pages left with
+          # art/ (docs/EXTERNAL-ASSETS-PLAN.md step 13, ART-REPO-PLAN step 6):
+          # cehinds/AshenSpire-art publishes them from its own workflow.
+          # TWO SHAPES, AND THE ROOT IS THE FAST ONE.
+          #
+          # preview/     the de-inlined build: 4.9 MB of HTML beside the art,
+          #              which arrives per screen and stays in the browser
+          #              cache. This is what a phone should open, and it is
+          #              uploaded as the dev-preview artifact.
+          # standalone/  the consolidated single file, every asset inlined.
+          #              Needs no server — double-click it. Uploaded as its
+          #              OWN artifact, dev-standalone; see the upload steps.
+          #
+          # The root used to be the single file, so opening the preview on a
+          # phone meant 57.6 MB before the first frame. The `build` step's
+          # launch.mjs already wrote the pack-shaped game to build/ with this
+          # job's tier (light on dev, high on test/release/main): AshenSpire.html
+          # plus asset-base.json, packs/ and objects/ (docs/EXTERNAL-ASSETS-PLAN.md
+          # steps 3a and 8e); its map tiles and score are common-pack objects
+          # since step 3c, so no map-detail/ or music/ folder comes with it. It is
+          # copied here as built, not rebuilt. build/download/ (the light single
+          # file) stays out: it is the standalone artifact.
+          cp -r build/AshenSpire.html build/asset-base.json build/packs build/objects preview/
+          cp preview/AshenSpire.html preview/index.html
+          # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
+          # The source-module preview pages (world-atlas-, equipment-selection-,
+          # armament-kits-preview.html), the pose studio and docs/preview read
+          # `assets/…` BY PATH (assetUrl() in source mode). They get this tier's
+          # art in preview/workbench/assets/, copied from the FETCHED RELEASE
+          # (the art trees left this repository at step 13): the light pack's
+          # assets-mobile/ on dev, the high pack's assets/ on release/main,
+          # with the common pack's fonts beside either. tools/art-source.mjs
+          # names each cache directory, and fails (naming the fetch) for a pack
+          # that is not fetched. preview/AshenSpire.html must not get a tree: an
+          # id its pack index misses has to 404 visibly, not load quietly from a
+          # tree left beside it.
+          W=preview/workbench
+          mkdir -p "$W/assets"
+          # Assigned first: errexit ignores a failed substitution inside an
+          # argument, which would turn the source into "/.".
+          HIGH_DIR=$(node tools/art-source.mjs --dir assets)
+          if [ "$(echo $WEB_TIER)" = "--light" ]; then
+            LIGHT_DIR=$(node tools/art-source.mjs --dir assets-mobile)
+            cp -r "$LIGHT_DIR"/. "$W/assets/"
+          else
+            cp -r "$HIGH_DIR"/. "$W/assets/"
+          fi
+          mkdir -p "$W/assets/fonts"
+          FONTS_DIR=$(node tools/art-source.mjs --dir assets/fonts)
+          cp -r "$FONTS_DIR"/. "$W/assets/fonts/"
+          # The standalone is collected and uploaded by its own steps, right
+          # after the build, so nothing here can cost a commit its download.
+          cp -r src "$W/src"
+          # Variant-only authoring material stays inside this branch's artifact.
+          if [[ "$GITHUB_REF_NAME" == alternative/* ]] && [ -d docs/design/combat-depth-2026-10-05 ]; then
+            mkdir -p "$W/docs/design"
+            cp -r docs/design/combat-depth-2026-10-05 "$W/docs/design/"
+          fi
+          cp world-atlas-preview.html equipment-selection-preview.html armament-kits-preview.html "$W/"
+          cp tools/serve-preview.mjs "$W/serve-preview.mjs"
+          cp -r styles "$W/styles"
+          # --update=none: the copy above already placed this tier's art under
+          # workbench/assets/ (the light twins on dev); these copies only
+          # add the files it does not ship, and never overwrite its art.
+          cp -r --update=none "$HIGH_DIR/environments" "$W/assets/"
+          mkdir -p "$W/docs/preview"
+          cp -r docs/preview/world-atlas "$W/docs/preview/"
+          cp -r docs/preview/combat-ground "$W/docs/preview/"
+          cp -r docs/preview/combat-formation "$W/docs/preview/"
+          cp -r docs/preview/starting-equipment "$W/docs/preview/"
+          cp -r docs/preview/armament-kits "$W/docs/preview/"
+          cp -r docs/preview/book-library "$W/docs/preview/"
+          cp -r pose-studio "$W/pose-studio"
+          cp -r --update=none "$HIGH_DIR/pose-effects" "$W/assets/"
+          cp -r --update=none "$HIGH_DIR/combat-effects" "$HIGH_DIR/painted-outfits" "$W/assets/"
+          # The game's own folder carries no art tree; verify-external reads
+          # the pack, and this keeps that honest.
+          test ! -e preview/assets
+          {
+            echo "AshenSpire ${CHANNEL} preview"
+            echo "commit:   ${GITHUB_SHA}"
+            echo "ref:      ${GITHUB_REF}"
+            echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo "Open AshenSpire.html locally to play this exact commit."
+            echo "The review pages live in workbench/. For the equipment review, run"
+            echo "node serve-preview.mjs in workbench/ (paths below are relative to it)."
+            echo "Then open http://127.0.0.1:8318/equipment-selection-preview.html."
+            echo "For all 25 armament kits and disposable combat, open http://127.0.0.1:8318/armament-kits-preview.html."
+            echo "Use its class and screen-size controls to test hand choices and Continue."
+            echo "Equipment screenshots and QA: docs/preview/starting-equipment/index.html."
+            echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
+            echo "Open docs/preview/combat-formation/index.html for turn and formation comparisons."
+            echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
+            echo "The art inspection pages (combat-effect catalog, readiness gallery) are"
+            echo "published by cehinds/AshenSpire-art since the art left this repository."
+            echo
+            echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
+            echo "(any static server). Its art is in packs/ and objects/, loaded and"
+            echo "hash-checked at runtime. It needs a server. For the double-clickable"
+            echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
+            echo "from this same run: AshenSpire-${CHANNEL}-preview.html, the light single"
+            echo "file (~31 MB) on every branch. This folder also opens by double-click"
+            echo "while it stays together; on release and main its default art is high."
+            echo
+            echo "This is an inspection artifact, not a deployment. The built HTML is not"
+            echo "committed; this run's artifacts are this commit's build."
+          } > preview/README.txt
+          echo "collected $(find preview -type f | wc -l) files"
+
+      # AFTER "Collect the playable build", BECAUSE THAT STEP CREATES preview/.
+      # These sat before it on the first cut and CI went red with "no build at
+      # preview/AshenSpire.html" — the gate refusing a directory that did not
+      # exist yet, which is the right behaviour and the wrong placement.
+      #
+      # --dir is passed to the selftest too. It plants into a COPY of whatever
+      # --dir names; without it the selftest looks for build/ (since step 8e;
+      # build/web before it), and this job's tree to check is preview/, the
+      # copy this job collected.
+      #
+      # The de-inlined build's art is on disk, not in the HTML, so the guard
+      # that reads the shipped file cannot see it. verify-shipped.mjs still
+      # covers the single file (its art is inside it, and nothing here changed
+      # that); these cover the other shape. Both defects this build actually
+      # had — CSS urls rebased to `../../assets/…`, and map-detail never copied
+      # — were green on disk, which is why the browser-gates job carries a
+      # third check rather than these two standing alone.
+      - name: The de-inlined build carries every asset it will ask for
+        run: node tools/verdict.mjs -- node tools/verify-external.mjs --dir preview
+      - name: That gate still catches its own known-bads
+        run: node tools/verdict.mjs -- node tools/verify-external.mjs --selftest --dir preview
+
+      # TWO ARTIFACTS, NOT ONE FOLDER INSIDE ANOTHER.
+      #
+      # MEASURED on this tree, as downloads — the zipped sizes GitHub actually
+      # serves, not the bytes on disk:
+      #
+      #   one artifact, standalone nested        ~191 MB
+      #   dev-preview-<sha>                      ~152 MB
+      #   dev-standalone-<sha>                    ~39 MB
+      #
+      # The split is not a saving for someone who wanted the preview anyway.
+      # It is the whole download for someone who wanted the other thing: the
+      # double-clickable file was 39 MB of a 191 MB download, and there was no
+      # way to ask for only it. Now there is.
+      #
+      # They stay two DOWNLOADS of one build, not two builds: both come from
+      # the same commit in the same job, and the standalone is the same
+      # AshenSpire.html that verify-shipped.mjs has already proven is this
+      # source. Naming the sha in both makes that visible at the download.
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.collect.outcome == 'success' }}
+        with:
+          name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
+          path: preview/
+          retention-days: 14
+
+  # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
+  #
+  # PROPOSED, not adopted — this job is the subject of its own pull request and
+  # is here to be measured and accepted or rejected, not to be assumed.
+  #
+  # The gap it closes was paid for on 2026-09-07. #720 landed a reachability
+  # regression on `dev`: at a Safari-like 390x650 phone, four combat hand cards
+  # cover one another. `screenreach` catches it in 32 seconds — but `screenreach`
+  # runs only in ci.yml, which is `workflow_dispatch` only, and the job above
+  # runs no browser at all. So #720 merged green, promoted to `test` green, and
+  # the regression was invisible at every gate it met. It surfaced two hours and
+  # two promotions later, on a hand-dispatched matrix opened for a RELEASE — the
+  # last place a defect should first be seen rather than the first.
+  #
+  # WHY THE GATES AND NOT THEIR SELFTESTS. Each of these tools has a `--selftest`
+  # arm that plants known-bads and requires the named red. Those arms are what
+  # prove the gate can fail, and they are also almost all of the cost: in ci.yml
+  # run 321 the four gates below took 79s between them, while the plant arms in
+  # the same job took over 19 minutes — `startup-gate --selftest` alone ran 14m43s
+  # for its eighteen plants. Proving a gate can fail is a property of the gate,
+  # which changes when the gate changes; measuring the tree is a property of the
+  # commit. So the plant arms stay in the dispatched matrix where their cost is
+  # deliberate, and the measurements move here where the regressions are.
+  #
+  # THIS IS NOT A SUBSTITUTE FOR THE MATRIX. Linux only, one runner, no Windows
+  # (2x) and no macOS (10x); it proves nothing about cross-platform behaviour or
+  # about the gates' own ability to fail. It is the cheapest thing that would
+  # have caught #720 on the day it landed.
+  #
+  # COST: one ubuntu-latest runner, roughly 2 minutes when proposed (about 8 by
+  # 2026-09-26, with the external-play and pose-studio steps), per push to
+  # `test`, `release` and `main` since 2026-09-26 (see the job's `if:`); it was
+  # per push to `dev` and per pull request targeting it — measured from run
+  # 321's own step timings:
+  #   hand-side-probe            9s
+  #   shotguard-probe           26s
+  #   startup-gate              72s
+  #   screenreach --only         32s
+  #   map-two-axis-pan          28s   (measured locally at #1229, not on a runner)
+  # plus checkout and node setup. Against that: #720's regression sat undetected
+  # across two promotions and cost three dispatched 3-OS matrices to find.
+  browser-gates:
+    name: the reachability gates a phone would fail
+    # MOVED OFF dev, 2026-09-26, by the owner's ruling that a pull request into
+    # `dev` is gated by fast checks only (about five minutes or less). This job
+    # measured about 8 minutes, so it runs on every push to `test`, `release`
+    # and `main` and on any dispatch — not on a pull request into `dev` or a
+    # push to `dev`, where the `preview` job above still builds and uploads.
+    # Every step below is unchanged; the job-level `if:` reports it as skipped
+    # on a dev PR rather than absent.
+    if: (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'dev')) && !endsWith(github.ref_name, '/dev')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # builds its own de-inlined copy; reads no LFS object
+      - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - uses: ./.github/actions/which-browser
+
+      # THE DE-INLINED BUILD, LOADED RATHER THAN INSPECTED. It builds its own
+      # copy because this job does not share a filesystem with `preview`, and
+      # the build is cheap without the 52.8 MB of base64 the single file carries.
+      - name: The de-inlined build plays, and its art arrives over the wire
+        run: |
+          node tools/bundle.mjs $WEB_TIER --out build/web
+          node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
+
+      # THE SAME BUILD BY DOUBLE-CLICK (docs/EXTERNAL-ASSETS-PLAN.md step 4).
+      # Opened by its file:// URL, no server and no flag that loosens Chrome's
+      # file:// rules: the indexes through their .js twins, the faces through
+      # the font sidecar, the sprites, backdrops and map tiles from the objects
+      # beside the HTML, the masks inline, and the score synthesized. About 30 s.
+      - name: The de-inlined build plays by double-click (file://)
+        run: node tools/verdict.mjs -- node tools/external-play.mjs --file --dir build/web
+
+      # THE INDEX BLOCKED (docs/EXTERNAL-ASSETS-PLAN.md step 5). Every packs/
+      # request held, then refused: the cold boot must draw the startup gate at
+      # once with its "Loading art…" line, hold the title until the load has
+      # failed, then show the title's notice with Retry and no failure banner;
+      # with the block lifted, Retry must load the pinned tier and redraw the
+      # title; combat and the map must mount on placeholders. About 40 s.
+      - name: With its index blocked the de-inlined build boots on placeholders, and Retry loads the art
+        run: node tools/verdict.mjs -- node tools/external-play.mjs --block-index --dir build/web
+
+      # THE PAGES SERVICE WORKER (docs/EXTERNAL-ASSETS-PLAN.md step 6b). The web
+      # edition above, published into a local copy of the Pages shape (the shared
+      # store, asset-base.json, /AshenSpire/sw.js) and served under /AshenSpire/:
+      # "Make available offline" keeps it, the worker's scope is /AshenSpire/,
+      # online the network beats the kept copy, offline the page boots from the
+      # cache and a music object answers a Range with a 206, and the kill-switch
+      # unregisters the worker. About a minute.
+      - name: The hosted web edition keeps offline through the Pages service worker, and its kill-switch unregisters it
+        run: node tools/verdict.mjs -- node tools/pages-offline.mjs --web build/web
+
+      # THE TIER FALLBACK, CSS INCLUDED (docs/EXTERNAL-ASSETS-PLAN.md §3.5, step
+      # 3b). A high-default build whose high index is gone must load light: its
+      # sprites, and its ASSET_CSS backdrops and fonts, from light and common
+      # objects, never a high one. On test this job builds the light tier, so the
+      # high-default edition is built here (about 12 s); on release and main the
+      # build above already is one. The copy is hard links, then the pinned high
+      # index (and its .js twin) is removed — the 404 is the plant, which
+      # external-play --expect-tier names and filters. Run twice: over http, and
+      # by file:// (step 4), where the missing twin is the plant.
+      - name: A high-default build with its high index removed falls back to light, CSS included
+        run: |
+          if [ "$(echo $WEB_TIER)" = "--light" ]; then
+            node tools/bundle.mjs --out build/web-high
+            SRC=build/web-high
+          else
+            SRC=build/web
+          fi
+          rm -rf build/web-nohigh
+          cp -al "$SRC" build/web-nohigh
+          ls build/web-nohigh/packs/high-*.json >/dev/null
+          rm build/web-nohigh/packs/high-*.json build/web-nohigh/packs/high-*.js
+          node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web-nohigh --expect-tier light
+          node tools/verdict.mjs -- node tools/external-play.mjs --file --dir build/web-nohigh --expect-tier light
+
+      - name: Hand-side placement reaches the correct rendered side
+        run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
+
+      - name: Storage gate holds, and a normal boot still saves
+        run: node tools/verdict.mjs -- node tools/shotguard-probe.mjs
+
+      - name: Cold boot owns and consumes the first input before Title exists
+        run: node tools/verdict.mjs -- node tools/startup-gate.mjs
+
+      # THE MAP CAMERA MOVES ON BOTH AXES — the player's hand on it, and the
+      # board's own hand when a pick opens the tray. #1229 landed here because
+      # the second half was measurable and unmeasured: the glide wrote
+      # `scrollLeft = 0`, which is the vertical-only camera's honest answer and
+      # the two-axis camera's far-left pan, and every pick threw the act into
+      # the right half of the screen. The tool is a gate only where something
+      # runs it, and ci.yml was dispatch-only from 2026-08-01 (today it runs on
+      # push to test and release), so this is the door. `--no-screenshots` because the writing arm would dirty
+      # docs/preview/ in a tree the `reproducible` job diffs.
+      - name: Picking a map node brings it to the middle, on both axes
+        run: node tools/verdict.mjs -- node tools/map-two-axis-pan.mjs --no-screenshots
+
+      # SCREENREACH IS DELIBERATELY NOT HERE, AND THIS IS THE RETRACTION OF MY
+      # OWN STEP RATHER THAN A GATE BEING SWITCHED OFF.
+      #
+      # It was added alongside the three above and was the reason this job was
+      # proposed at all: it was the gate that caught #720's card overlap. Then
+      # it was measured, and the measurement did not support the step.
+      #
+      # `screenreach` decides "covered" by hit-testing a control's GEOMETRIC
+      # CENTRE. Two of its three findings at 390x650 are that test meeting
+      # deliberate design rather than a defect:
+      #
+      #   · the combat hand is a FAN. Cards overlap on purpose. Measured on
+      #     `dev`, four of five hand cards report their centre covered by the
+      #     NEXT CARD'S `.ctype` badge, while 27 of 81 sampled points on each
+      #     card still hit that card — a third of every card exposed, which is
+      #     what a fan looks like. The fifth card is 81/81. #720 widened cards
+      #     to 157px on a 390px viewport, which moved the centres under the
+      #     neighbour; it did not make the hand unusable.
+      #   · the creation view toggle is a section header that comes to rest
+      #     straddling a scrolling container's clip edge, so its centre lands
+      #     0.35px inside `.modal-foot`. `scrollIntoView` puts it fully in view
+      #     and the hit test then returns the control itself. The gate already
+      #     calls five fully-scrolled-out controls on that same screen "fine";
+      #     this one is half-scrolled and called covered.
+      #
+      # So the step went red on every push to `dev` AND every pull request into
+      # it, on all of the work other people had in flight, for a reading the
+      # measurements do not support. A standing red that everyone learns to
+      # scroll past is worse than the silence this job was meant to end.
+      #
+      # WHAT WAS NOT DONE. `screenreach` itself is untouched and still runs in
+      # ci.yml exactly as before, plants and all — no gate lost any coverage,
+      # and nothing was skipped, disabled or quarantined to get a tree green.
+      # The three steps above stay because they are green, fast and sound; they
+      # were never the problem.
+      #
+      # WHAT WOULD BRING IT BACK. `screenreach` classifying a control as
+      # reachable when a usable region of it is hittable, rather than only its
+      # centre pixel — at which point it belongs here, because the #720 card
+      # overlap it found is real and the fan is not the whole of it.
+
+      - name: Capture the pose studio on desktop and phone
+        run: node tools/pose-studio-capture.mjs --out "${{ runner.temp }}/pose-studio-evidence"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pose-studio-screenshots
+          path: ${{ runner.temp }}/pose-studio-evidence/
+          retention-days: 14

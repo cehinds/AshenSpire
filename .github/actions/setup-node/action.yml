@@ -1,0 +1,15 @@
+name: Set up Node
+description: >-
+  The one place this repository's workflows name a Node version. Every job
+  that runs node uses this after actions/checkout (a local action can only be
+  read once the tree is checked out).
+
+# Before this existed the version had four spellings across six files — '22',
+# '22.14.0', and '20' (EOL 2026-04-30) on the two dev-push jobs — with nothing
+# recording why they differed. Change it here and every job moves together.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v5
+      with:
+        node-version: '22'

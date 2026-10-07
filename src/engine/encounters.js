@@ -1,0 +1,478 @@
+// src/engine/encounters.js — encounter + reward rolls, shop stock, unknown
+// nodes, shrine math (SPEC §3.8, §6)
+//
+// Procedural systems: seeded algorithms whose every knob comes from content
+// (balance.js, encounters/*.js). Pure functions of (registries, rng, args) —
+// run mutation is limited to explicitly documented counters (flask pity,
+// removal price) plus `applyGraceRefill`, which is the one function here that
+// puts something IN the run — flasks, at a grace, from a pure plan it does not
+// itself compute. Stream usage: encounters → 'enemyAI', card rewards →
+// 'cardRewards', relics → 'relicRewards', flasks → 'flaskRewards',
+// unknown nodes + events → 'events', shop stock → 'shop', cinders → 'misc'.
+//
+// Headless: no document/window/localStorage/timers.
+
+import { passiveMult, passiveFlag } from '../model/registries.js';
+import { relicInRewardPool } from '../model/schemas.js';
+import { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } from '../model/quests.js';
+import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
+import { eligibleWeaponArts } from '../model/armamentTrading.js';
+import { carriedIds } from '../model/loadout.js';
+import { skillSchools, rarityUnlockedAt } from '../model/skills.js';
+import { classDraftPool } from '../model/classTree.js';
+import { cardRewardPlan } from '../model/rewardplan.js';
+
+// ---------------------------------------------------------------------------
+// Encounters
+// ---------------------------------------------------------------------------
+
+/**
+ * rollEncounter(registries, rng, { pool, seat, exclude }) → encounter id.
+ * Weighted pick from the SEAT's pool (SPEC §13.2); `exclude` is the no-repeat
+ * window (pass the last 1–2 fought encounter ids). `seat` is required and an
+ * `act` argument is refused: an act is a tier, and a tier has no pool of its
+ * own — guessing "act 1" would be the default this section exists to remove.
+ */
+export function rollEncounter(registries, rng, { pool, seat, act, exclude = [] } = {}) {
+  if (act !== undefined) throw new Error('rollEncounter: `act` is retired — pass the seat (SPEC §13.2)');
+  if (typeof seat !== 'string' || !seat) throw new Error('rollEncounter: a seat id is required (SPEC §13.2)');
+  const inSeatPool = (e) => e.pool === pool && e.seat === seat;
+  let candidates = registries.encounters.all().filter((e) => inSeatPool(e) && !exclude.includes(e.id));
+  if (candidates.length === 0) {
+    candidates = registries.encounters.all().filter(inSeatPool);
+  }
+  if (candidates.length === 0) throw new Error(`No encounters in pool '${pool}' for seat '${seat}'`);
+  const total = candidates.reduce((a, e) => a + e.weight, 0);
+  let r = rng.float('enemyAI') * total;
+  for (const e of candidates) {
+    r -= e.weight;
+    if (r < 0) return e.id;
+  }
+  return candidates[candidates.length - 1].id;
+}
+
+// ---------------------------------------------------------------------------
+// Combat rewards (SPEC §6)
+// ---------------------------------------------------------------------------
+
+/** Cinder reward for a combat pool, scaled by runeGainMult passives (floored). */
+export function rollRuneReward(registries, rng, pool, relicIds) {
+  const range = registries.balance.rewards.cinders[pool];
+  const base = rng.int('misc', range[0], range[1]);
+  return Math.floor(base * passiveMult(registries, relicIds, 'runeGainMult'));
+}
+
+// The door's rarity odds live in the model (model/rewardOdds.js), so a reader
+// that judges a draw without making it uses the same odds; re-exported here,
+// where every caller already finds them.
+import { cardRewardRarityWeights } from '../model/rewardOdds.js';
+export { cardRewardRarityWeights };
+
+/**
+ * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
+ * card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
+ */
+export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false }) {
+  const bal = registries.balance.rewards;
+  let count = bal.cardChoices;
+  if (pool === 'elite' && passiveFlag(registries, relicIds, 'eliteExtraCardReward')) count += 1;
+
+  const cardPool = registries.classes.get(classId).cardPool;
+  // flatRarity (Custom Climb "Chaos Rewards") ignores the pool weighting and
+  // gives every rarity equal odds — far more rares than normal.
+  const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
+  const byRarity = {};
+  for (const id of cardPool) {
+    const def = registries.cards.get(id);
+    (byRarity[def.rarity] = byRarity[def.rarity] || []).push(id);
+  }
+  const rarities = Object.keys(weights).filter((r) => byRarity[r] && byRarity[r].length && weights[r] > 0);
+  const total = rarities.reduce((a, r) => a + weights[r], 0);
+  if (!total) return [];
+
+  const picks = [];
+  let guard = 0;
+  while (picks.length < count && guard++ < 100) {
+    let roll = rng.float('cardRewards') * total;
+    let rarity = rarities[rarities.length - 1];
+    for (const r of rarities) {
+      roll -= weights[r];
+      if (roll < 0) {
+        rarity = r;
+        break;
+      }
+    }
+    const options = byRarity[rarity].filter((id) => !picks.includes(id));
+    if (!options.length) continue;
+    picks.push(rng.pick('cardRewards', options));
+  }
+  return picks;
+}
+
+// ---------------------------------------------------------------------------
+// The card reward schedule (SPEC §15.1)
+// ---------------------------------------------------------------------------
+
+// The schedule itself — which rows a fight earns, and the chance roll — is
+// model/rewardplan.js `cardRewardPlan`, the one door solo, co-op
+// (tools/session.mjs) and the simulator (tools/runsim.mjs) read it through.
+// This rolls the CARDS for the rows that plan grants.
+
+/**
+ * rollCombatCardOffer(registries, rng, { classId, pool, relicIds, flatRarity,
+ * draftWaiting, levelUps }) → { cardIds, cardMissed, levelCards, rewards }
+ *
+ * The card rows of a won fight's spoils (SPEC §15.1), as model/rewardplan.js
+ * `cardRewardPlan` grants them, with the cards rolled:
+ *   - a waiting skill or class draft takes the card row's seat (§13.4e/g):
+ *     no card row, and nothing is rolled for one — but it does NOT displace
+ *     a level card, which is the level's own reward;
+ *   - else `afterCombat[pool]` off → no card row, nothing rolled;
+ *   - else `chancePct[pool]` below 100 rolls once on 'rewardRolls'
+ *     (0 never offers and rolls nothing; 100 always offers and rolls
+ *     nothing); a miss leaves no card row and sets `cardMissed`, which the
+ *     menu reads as "No card this time.";
+ *   - then the offer itself through rollCardRewardIds on 'cardRewards';
+ *   - with `onLevelUp` on and `levelUps` > 0, min(levelUps,
+ *     onLevelUpMaxPerFight) level-card rows, each one more rollCardRewardIds
+ *     at the door's own odds, AFTER the offer on the same stream.
+ * `rewards` is the slice of the offer object the caller spreads in: always
+ * `cardIds`, and `cardMissed` / `levelCards` only when they say something,
+ * so the shipped schedule writes exactly the bytes it wrote before.
+ * Pure of the run: the caller hands in the level-ups the fight bought.
+ */
+export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds = [], flatRarity = false, draftWaiting = false, levelUps = 0 } = {}) {
+  const plan = cardRewardPlan(registries.balance, { pool, levelsGained: levelUps, draftWaiting }, rng);
+  const roll = () => rollCardRewardIds(registries, rng, { classId, pool, relicIds, flatRarity });
+  const cardIds = plan.offerCard ? roll() : [];
+  const levelCards = [];
+  for (let i = 0; i < plan.levelCards; i++) {
+    const ids = roll();
+    if (ids.length) levelCards.push({ ordinal: levelCards.length, cardIds: ids });
+  }
+  const rewards = { cardIds };
+  if (plan.cardMissed) rewards.cardMissed = true;
+  if (levelCards.length) rewards.levelCards = levelCards;
+  return { cardIds, cardMissed: plan.cardMissed, levelCards, rewards };
+}
+
+/**
+ * rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level,
+ * pool, flatRarity, size }) → distinct card ids for one skill draft (plan
+ * phase 4b): the class reward pool filtered to the track's schools
+ * (model/skills.js skillSchools), rarities unlocked by the level
+ * (balance.skill.rarityUnlock), weighted by the door's own reward odds
+ * (`rarityWeights[pool]`, normal when the pool has no row; equal odds under
+ * Chaos Rewards, as the card offer), `balance.skill.draftSize` picks on the
+ * same 'cardRewards' stream the card offer rolls on. An empty pool rolls
+ * nothing and draws nothing.
+ *
+ * Two optional inputs serve the wise master's lesson (SPEC §14.5): `schools`
+ * replaces the held pieces' schools, and `stream` the stream drawn on.
+ * Omitted, it reads skillSchools and draws on 'cardRewards' exactly as the
+ * reward door always has.
+ */
+export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level, pool = 'normal', flatRarity = false, size, schools: given, stream = 'cardRewards' }) {
+  const skill = registries.balance.skill || {};
+  const count = Number.isInteger(size) ? size : skill.draftSize;
+  const schools = new Set(Array.isArray(given) ? given : skillSchools(registries, loadout, skillId));
+  const unlocked = rarityUnlockedAt(registries, level);
+  if (!schools.size || !unlocked.length || !(count > 0)) return [];
+  const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
+  const byRarity = {};
+  for (const id of registries.classes.get(classId).cardPool) {
+    const def = registries.cards.get(id);
+    if (!unlocked.includes(def.rarity) || !(def.tags || []).some((t) => schools.has(t))) continue;
+    (byRarity[def.rarity] = byRarity[def.rarity] || []).push(id);
+  }
+  const rarities = unlocked.filter((r) => byRarity[r] && byRarity[r].length && weights[r] > 0);
+  const total = rarities.reduce((a, r) => a + weights[r], 0);
+  if (!total) return [];
+  const picks = [];
+  let guard = 0;
+  while (picks.length < count && guard++ < 100) {
+    let roll = rng.float(stream) * total;
+    let rarity = rarities[rarities.length - 1];
+    for (const r of rarities) {
+      roll -= weights[r];
+      if (roll < 0) { rarity = r; break; }
+    }
+    const options = byRarity[rarity].filter((id) => !picks.includes(id));
+    if (!options.length) {
+      if (rarities.every((r) => byRarity[r].every((id) => picks.includes(id)))) break;
+      continue;
+    }
+    picks.push(rng.pick(stream, options));
+  }
+  return picks;
+}
+
+/**
+ * rollClassDraftIds(registries, rng, { classId, coreTags, level, size }) →
+ * distinct tree node ids for one class draft (plan phase 5b): the class's
+ * draftable nodes (model/classTree.js classDraftPool), `balance.skill.draftSize`
+ * picks on the 'cardRewards' stream. An empty pool draws nothing.
+ */
+export function rollClassDraftIds(registries, rng, { classId, coreTags = [], level = 0, size }) {
+  const count = Number.isInteger(size) ? size : (registries.balance.skill || {}).draftSize;
+  const pool = classDraftPool(registries, classId, coreTags, level);
+  if (!pool.length || !(count > 0)) return [];
+  const picks = [];
+  while (picks.length < Math.min(count, pool.length)) {
+    picks.push(rng.pick('cardRewards', pool.filter((id) => !picks.includes(id))));
+  }
+  return picks;
+}
+
+/**
+ * rollFlaskDrop(registries, rng, run) → flask id | null.
+ * StS-style decaying chance: −step on a drop, +step on a miss (clamped),
+ * persisted on run.flaskChancePct.
+ */
+export function rollFlaskDrop(registries, rng, run) {
+  const bal = registries.balance.rewards;
+  if (run.flaskChancePct == null) run.flaskChancePct = bal.flaskDropBasePct;
+  const hit = rng.float('flaskRewards') * 100 < run.flaskChancePct;
+  if (hit) {
+    run.flaskChancePct = Math.max(0, run.flaskChancePct - bal.flaskDropStepPct);
+    const pool = utilityFlaskIds(registries);
+    return pool.length ? rng.pick('flaskRewards', pool) : null;
+  }
+  run.flaskChancePct = Math.min(100, run.flaskChancePct + bal.flaskDropStepPct);
+  return null;
+}
+
+/**
+ * rollRelicReward(registries, rng, ownedIds, { rarities }) → relic id | null.
+ * Excludes owned relics and quest-pool relics (RELIC_POOLS); default pool is
+ * common/uncommon/rare (elite drops); pass ['boss'] for boss rewards.
+ */
+export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common', 'uncommon', 'rare'] } = {}) {
+  const pool = registries.relics
+    .all()
+    .filter((r) => relicInRewardPool(r) && rarities.includes(r.rarity) && !ownedIds.includes(r.id))
+    .map((r) => r.id);
+  return pool.length ? rng.pick('relicRewards', pool) : null;
+}
+
+/**
+ * rollArmamentDrop(registries, rng, { source, found, carried }) → id | null.
+ *
+ * Deterministic on stream 'armaments', like every other reward roll, so a seed
+ * still replays exactly. `source` keys into balance.equipment.drops.chance and
+ * .rarityWeights ('treasure' | 'elite' | 'boss').
+ *
+ * `found` is everything the profile has ever held and `carried` is what this
+ * run already has; a piece in either is a non-event, so the roll prefers
+ * something new and returns null when there is nothing left to give (the
+ * caller pays consolation cinders instead).
+ */
+export function rollArmamentDrop(registries, rng, { source, found = [], carried = [] } = {}) {
+  const cfg = (registries.balance.equipment || {}).drops || {};
+  if (!cfg.enabled) return null;
+  const chance = (cfg.chance || {})[source];
+  if (!chance) return null;
+  if (rng.int('armaments', 1, 100) > chance) return null;
+
+  const weights = (cfg.rarityWeights || {})[source] || {};
+  const seen = new Set([...found, ...carried]);
+  let pool = (registries.equipment.armaments || []).filter((a) => a.unlock === '');
+  if (cfg.preferUnfound) {
+    const fresh = pool.filter((a) => !seen.has(a.id));
+    if (!fresh.length) return null;
+    pool = fresh;
+  }
+
+  // Rarity first (so a rare stays rare however many rares exist), then a piece
+  // from within it. Rarities the pool can't fill are skipped rather than
+  // rolling a null.
+  const rarities = Object.keys(weights).filter((r) => pool.some((a) => a.rarity === r));
+  if (!rarities.length) return null;
+  const total = rarities.reduce((a, r) => a + weights[r], 0);
+  let roll = rng.float('armaments') * total;
+  let rarity = rarities[rarities.length - 1];
+  for (const r of rarities) {
+    roll -= weights[r];
+    if (roll < 0) {
+      rarity = r;
+      break;
+    }
+  }
+  const candidates = pool.filter((a) => a.rarity === rarity && Number(a.dropWeight) > 0);
+  if (!candidates.length) return null;
+  const pieceTotal = candidates.reduce((sum, piece) => sum + piece.dropWeight, 0);
+  let pieceRoll = rng.float('armaments') * pieceTotal;
+  for (const piece of candidates) {
+    pieceRoll -= piece.dropWeight;
+    if (pieceRoll < 0) return piece.id;
+  }
+  return candidates[candidates.length - 1].id;
+}
+
+// ---------------------------------------------------------------------------
+// Shop (SPEC §6 prices — all from balance.shop)
+// ---------------------------------------------------------------------------
+
+/**
+ * buildShopStock(registries, rng, run) → { cards, relics, flasks, removeCost }.
+ * cards/relics/flasks: [{ id, cost }]. Deterministic on stream 'shop'.
+ */
+export function buildShopStock(registries, rng, run) {
+  const bal = registries.balance.shop;
+  const classId = run.class;
+
+  const cardIds = rollShopCards(registries, rng, classId, bal.cardStock);
+  const cards = cardIds.map((id) => ({
+    id,
+    cost: rng.int('shop', ...bal.cardCost[registries.cards.get(id).rarity]),
+  }));
+
+  const relicPool = registries.relics
+    .all()
+    .filter((r) => relicInRewardPool(r) && ['common', 'uncommon', 'rare'].includes(r.rarity) && !run.relics.includes(r.id))
+    .map((r) => r.id);
+  const relics = [];
+  for (let i = 0; i < bal.relicStock && relicPool.length; i++) {
+    const id = rng.pick('shop', relicPool);
+    relicPool.splice(relicPool.indexOf(id), 1);
+    relics.push({ id, cost: rng.int('shop', ...bal.relicCost[registries.relics.get(id).rarity]) });
+  }
+
+  const flaskIds = utilityFlaskIds(registries);
+  const flasks = [];
+  for (let i = 0; i < bal.flaskStock && flaskIds.length; i++) {
+    const id = rng.pick('shop', flaskIds);
+    flasks.push({ id, cost: rng.int('shop', bal.flaskCost[0], bal.flaskCost[1]) });
+  }
+
+  const removeCost = bal.removeBase + bal.removeStep * (run.removesPurchased || 0);
+  const owned = new Set(carriedIds(run.loadout));
+  const armamentPool = (registries.equipment.armaments || [])
+    .filter((piece) => !owned.has(piece.id) && bal.armamentCost?.[piece.rarity]);
+  const armaments = [];
+  for (let i = 0; i < (bal.armamentStock || 0) && armamentPool.length; i++) {
+    const piece = rng.pick('shop', armamentPool);
+    armamentPool.splice(armamentPool.indexOf(piece), 1);
+    armaments.push({ id: piece.id, cost: rng.int('shop', ...bal.armamentCost[piece.rarity]) });
+  }
+  const artPool = eligibleWeaponArts(registries);
+  const weaponArts = [];
+  for (let i = 0; i < (bal.weaponArtStock || 0) && artPool.length; i++) {
+    const id = rng.pick('shop', artPool);
+    artPool.splice(artPool.indexOf(id), 1);
+    weaponArts.push({ id, cost: rng.int('shop', ...bal.weaponArtCost) });
+  }
+  return { cards, relics, flasks, armaments, weaponArts, removeCost };
+}
+
+// Shop card pool = the class pool + neutral colorless cards (StS-faithful:
+// colorless is sold at Merchants, not offered in standard combat rewards).
+// The status/curse colorless are rarity 'special' and excluded here.
+const SHOP_RARITIES = ['common', 'uncommon', 'rare'];
+function rollShopCards(registries, rng, classId, count) {
+  const artIds = new Set(eligibleWeaponArts(registries));
+  const colorless = registries.cards
+    .all()
+    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity) && !artIds.has(c.id))
+    .map((c) => c.id);
+  const pool = [...registries.classes.get(classId).cardPool, ...colorless];
+  const out = [];
+  while (out.length < count && pool.length) {
+    const id = rng.pick('shop', pool);
+    pool.splice(pool.indexOf(id), 1);
+    out.push(id);
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Unknown nodes + shrine math
+// ---------------------------------------------------------------------------
+
+/**
+ * eligibleEventIds(registries, { history }) → the events an Unknown node may
+ * offer now, in registry order: every ungated event, and each quest step whose
+ * history requirement is met and which the run has not already answered.
+ * No draw. The market's quest event (SPEC §14.3) reads the same pool, minus
+ * what the run has seen.
+ */
+export function eligibleEventIds(registries, { history = [] } = {}) {
+  const gates = registries.eventHistoryRequirements || {};
+  const completed = new Set((history || [])
+    .filter((row) => row && row.kind === EVENT_CHOICE_HISTORY_KIND)
+    .map((row) => row.eventId));
+  return registries.events.ids()
+    .filter((id) => !gates[id] || (!completed.has(id) && eventChoiceRequirementMet(gates[id], { history })));
+}
+
+/**
+ * resolveUnknownNode(registries, rng, { seenEvents, tier, history }) →
+ *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
+ * Odds from mapConfigs[tier].unknownWeights — per TIER, beside the geometry
+ * they describe (they used to be `balance.unknownNode`, a flat global that
+ * could not differ per act while the map did). `tier` is required: guessing
+ * tier 1 would be a default nobody authored, which is the fallback this rework
+ * exists to remove. (It was `act`; SPEC §13 made the act number the tier and
+ * the seat the content — unknown odds are geometry, so they stay with the tier.)
+ * Events avoid repeats within a run while unseen ones remain. Stream 'events'
+ * (SPEC §5.6).
+ */
+export function resolveUnknownNode(registries, rng, { seenEvents = [], tier, act, history = [] } = {}) {
+  if (act !== undefined) throw new Error('resolveUnknownNode: `act` is retired — pass the tier (SPEC §13.2)');
+  const cfg = registries.mapConfig(tier);
+  const odds = cfg && cfg.unknownWeights;
+  if (!odds) throw new Error(`resolveUnknownNode: tier ${JSON.stringify(tier)} has no unknownWeights`);
+  const total = Object.values(odds).reduce((a, b) => a + b, 0);
+  let r = rng.float('events') * total;
+  let kind = 'event';
+  for (const [k, w] of Object.entries(odds)) {
+    r -= w;
+    if (r < 0) {
+      kind = k;
+      break;
+    }
+  }
+  if (kind !== 'event') return { kind };
+  // Quest steps (E12): an event with a history requirement is in the pool only
+  // once the run's choices have earned it — and it never falls back in either,
+  // because a step met before the step it answers is a broken chain, not a
+  // repeat. Everything ungated behaves exactly as before.
+  // A gated step the run has already answered is COMPLETE, not re-earned: the
+  // keeper does not come twice for one grave, and the reward it carries is
+  // handed over once. Only gated events are consulted — an ungated event that
+  // appears in the history keeps its shipped behaviour (repeatable across
+  // acts; `seenEvents` de-duplicates within one map).
+  const earned = eligibleEventIds(registries, { history });
+  let pool = earned.filter((id) => !seenEvents.includes(id));
+  if (!pool.length) pool = earned;
+  if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back
+  return { kind: 'event', eventId: rng.pick('events', pool) };
+}
+
+/**
+ * applyGraceRefill(registries, run, { counts }) → the plan it just applied.
+ *
+ * THE ONE MUTATION, and it is listed in this file's header beside flask pity
+ * and the removal price. Everything that decides WHAT to hand over is pure and
+ * lives in model/gracerefill.js, so a screen, a settings row and a sim can each
+ * ask what a grace would do without one of them having to do it.
+ *
+ * AUTOMATIC, NOT A CHOICE. Constantine: "flasks should refill automatically at
+ * graces". The caller fires this on ARRIVAL at the shrine, before Rest or Smith
+ * is offered — resting is one of the two things you can then spend the stop on,
+ * and the flasks are not the price of either.
+ *
+ * IDEMPOTENT BY CONSTRUCTION, which is what makes a re-entry safe: the plan is
+ * a TOP-UP to `count`, so calling it twice at one shrine grants nothing the
+ * second time. A resumed save that re-mounts the shrine cannot double-pour.
+ */
+export function applyGraceRefill(registries, run, opts = {}) {
+  if (run.flaskCharges) {
+    refillFlaskCharges(run.flaskCharges);
+    return { chargePools: structuredClone(run.flaskCharges), grants: [], total: 0, shortfalls: [] };
+  }
+  const plan = graceRefillPlan(registries, run, opts);
+  for (const flaskId of plan.grants) run.flasks.push({ flaskId });
+  return plan;
+}
+

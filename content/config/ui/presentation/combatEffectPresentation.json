@@ -1,0 +1,77 @@
+{
+  "vars": {
+    "fadedOpacity": 0.55,
+    "restingEndScale": 1.04
+  },
+  "behavior": {
+    "subtleEffects": [
+      "steelGlint",
+      "dustStep",
+      "focusMotes",
+      "guardPulse",
+      "weak",
+      "frail",
+      "resist",
+      "strength",
+      "dexterity"
+    ],
+    "layeredCardEffects": [
+      "slash",
+      "shieldBash",
+      "starbolt",
+      "bloodSlash"
+    ],
+    "auraEffects": [
+      "bloodAura",
+      "frostAura",
+      "poisonAura",
+      "sacredAura"
+    ],
+    "cardOpacity": {
+      "layered": 0.72,
+      "plain": 1
+    },
+    "treatments": {
+      "aura": {
+        "sizeScale": 1,
+        "opacity": "$fadedOpacity",
+        "startScale": 0.92,
+        "endScale": "$restingEndScale"
+      },
+      "subtle": {
+        "sizeScale": 0.72,
+        "opacity": "$fadedOpacity",
+        "startScale": 0.9,
+        "endScale": "$restingEndScale"
+      },
+      "full": {
+        "sizeScale": 1,
+        "opacity": 1,
+        "startScale": 0.65,
+        "endScale": 0.9
+      }
+    }
+  },
+  "layering": {
+    "cardEffectLayers": [
+      {
+        "id": "wake",
+        "plane": "behind",
+        "opacity": 0.44,
+        "scale": 1.95,
+        "x": 0.4,
+        "y": 0.35,
+        "mask": "linear-gradient(to right,#000 20%,#0009 55%,transparent 88%)"
+      },
+      {
+        "id": "edge",
+        "plane": "front",
+        "opacity": 0.66,
+        "scale": 1.65,
+        "x": 0.68,
+        "y": 0.35,
+        "mask": "linear-gradient(to right,transparent 24%,#0005 52%,#000 78%)"
+      }
+    ]
+  }
+}

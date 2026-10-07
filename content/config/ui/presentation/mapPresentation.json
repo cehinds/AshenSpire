@@ -1,0 +1,21 @@
+{
+  "vars": {
+    "tile": 512
+  },
+  "behavior": {
+    "presentation": {
+      "tileSize": "$tile",
+      "levels": ["$tile", 1024, 2048, 4096],
+      "pixelRatioCap": 1.5,
+      "concurrentLoads": 3,
+      "cacheTiles": 28,
+      "levelHysteresis": 0.15,
+      "atlasZoomMax": 40,
+      "routeWidth": 3,
+      "routeOutlineWidth": 6
+    }
+  },
+  "sizing": {
+    "closeNodeScale": 2
+  }
+}

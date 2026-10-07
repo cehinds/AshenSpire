@@ -1,0 +1,250 @@
+// tools/serve.mjs — a zero-dependency static file server for local play.
+//
+// Serves the project over http://localhost so the ES-module app (index.html →
+// src/main.js) and the optional music/ folder load correctly (file:// blocks
+// module + audio loading in most browsers). Used by tools/launch.mjs, or run
+// directly:  node tools/serve.mjs [--port N] [--no-open] [--root DIR]
+//
+// THE ART COMES FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md steps 12
+// and 13). Serving a checkout (a root with art-release.json), a request under
+// /assets/ (the high pack), /assets-mobile/ (light), or /assets/fonts/, /music/
+// or /map-detail/ (common) is answered from .art-cache/<tag>/<pack>/ through
+// tools/art-source.mjs: the trees left this repository at step 13. When the
+// high pack is not fetched (node tools/fetch-art.mjs --pack light,common, the
+// fresh-clone fetch), /assets/<id> is answered with the light pack's twin, so
+// the source still plays with art; `--pack all` (CI's) serves the high files
+// the browser gates measure. A pack that is not fetched at all answers 404 and
+// the game draws its placeholders (SPEC §2.4). Any other root (a build folder)
+// is served as it is on disk.
+
+import { createServer } from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
+import { resolve, join, extname, normalize } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { spawn } from 'node:child_process';
+import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
+import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
+import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
+import { existsSync } from 'node:fs';
+
+const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
+  '.wav': 'audio/wav',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.txt': 'text/plain; charset=utf-8',
+};
+
+/** Open a URL in the default browser (best-effort; silent if headless). */
+export function openBrowser(url) {
+  try {
+    if (process.platform === 'win32') {
+      spawn('cmd', ['/c', 'start', '""', url], { stdio: 'ignore', detached: true }).unref();
+    } else if (process.platform === 'darwin') {
+      spawn('open', [url], { stdio: 'ignore', detached: true }).unref();
+    } else {
+      spawn('xdg-open', [url], { stdio: 'ignore', detached: true }).unref();
+    }
+  } catch {
+    /* no browser available — the URL is printed regardless */
+  }
+}
+
+/**
+ * serve({ root, port, open, lan }) → Promise<{ server, url, port }>
+ * Bumps to the next port if the requested one is in use. `lan: true` attaches
+ * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
+ */
+export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false } = {}) {
+  const rootResolved = resolve(root);
+  const checkout = existsSync(join(rootResolved, 'art-release.json'));
+  const notedMissing = new Set(); // one note per missing pack, not one per request
+  let lanLayer = null; // attached after listen (needs the final port)
+  const server = createServer(async (req, res) => {
+    try {
+      if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
+      const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+      if (urlPath === '/__editor/prologue-defaults') {
+        const remote = req.socket.remoteAddress || '';
+        const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
+        const host = req.headers.host || '';
+        const safeHost = /^(localhost|127\.0\.0\.1):\d+$/.test(host);
+        const authorized = editorWrite && local && safeHost;
+        const reply = (status, value) => {
+          res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+          res.end(JSON.stringify(value));
+        };
+        if (!authorized) { reply(403, { ok: false, error: 'Project editing is unavailable on this server.' }); return; }
+        if (req.method === 'GET') { reply(200, { ok: true, projectDefaults: true }); return; }
+        if (req.method !== 'POST' || req.headers.origin !== `http://${host}` || !String(req.headers['content-type']).startsWith('application/json')) {
+          reply(403, { ok: false, error: 'This save must come from the local scene editor.' }); return;
+        }
+        try {
+          const chunks = []; let size = 0;
+          for await (const chunk of req) {
+            size += chunk.length;
+            if (size > 65536) throw new Error('The scene changes are too large.');
+            chunks.push(chunk);
+          }
+          const changes = JSON.parse(Buffer.concat(chunks).toString('utf8')).changes;
+          reply(200, { ok: true, ...await saveFirstStepDefaults(rootResolved, changes) });
+        } catch (error) { reply(400, { ok: false, error: error.message }); }
+        return;
+      }
+      const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '');
+      let filePath = rel ? join(rootResolved, rel) : rootResolved;
+      if (!resolve(filePath).startsWith(rootResolved)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
+      }
+      const tree = checkout ? packTreeOf(rel) : null;
+      if (tree) {
+        try {
+          filePath = artPath(rel, { root: rootResolved });
+        } catch (err) {
+          // The high tier, unfetched: its light twin (same id, smaller file).
+          let twin = null;
+          if (tree === HIGH_TREE) {
+            try { twin = artPath(`assets-mobile/${rel.split(/[\\/]/g).join('/').slice(HIGH_TREE.length + 1)}`, { root: rootResolved }); } catch { /* the light pack is not fetched either */ }
+          }
+          if (!twin) {
+            if (!notedMissing.has(tree)) { notedMissing.add(tree); console.error(`serve: ${err.message}`); }
+            res.writeHead(404);
+            res.end('Not found');
+            return;
+          }
+          if (!notedMissing.has('high-as-light')) { notedMissing.add('high-as-light'); console.error(`serve: ${err.message} — answering /assets/ with the light pack's twins meanwhile`); }
+          filePath = twin;
+        }
+      }
+      let s;
+      try {
+        s = await stat(filePath);
+      } catch {
+        res.writeHead(404);
+        res.end('Not found');
+        return;
+      }
+      if (s.isDirectory()) filePath = join(filePath, 'index.html');
+      let body = await readFile(filePath);
+      // THE BUILD STAMP ON THE PATH CONSTANTINE ACTUALLY PLAYS.
+      //
+      // run.bat / run.sh build the bundle and then serve THE SOURCE TREE, so
+      // the screen he looks at is this server's output, not build/. If only
+      // tools/bundle.mjs stamped the version, every screen he ever sees would
+      // read `UNSTAMPED` and the whole feature would exist for a file he does
+      // not open. So the digest is derived here too — same function, one home
+      // (tools/buildversion.mjs), never a second copy of the arithmetic.
+      //
+      // It is derived PER REQUEST rather than once at boot: the dev server
+      // stays up while the tree is edited, and a stamp that froze at boot would
+      // name a source that is no longer there. That is the same "agreement that
+      // drifts" this whole mechanism exists against, one process in.
+      //
+      // A FAILURE HERE IS VISIBLE, NOT SILENT. If the markers are gone the page
+      // gets the unstamped module and the player reads `0.4.0+UNSTAMPED` on
+      // three screens — loud, and honest about knowing nothing.
+      //
+      // AND THIS PATH NEVER BUMPS THE ORDINAL — it only READS it. A dev server
+      // stays up across edits and re-derives per request; if it bumped, every
+      // reload of an edited tree would burn a build number and rewrite a
+      // committed file underneath whoever is working. So the ordinal is passed
+      // on only when the recorded digest still matches the tree in front of us.
+      // When it does not, nothing is passed and the page keeps `UNBUMPED`: the
+      // version drops its tail rather than wearing an older build's number,
+      // because a missing component is honest and a stale one that sorts is a
+      // lie with a sort order. The digest beside it still names this exact tree.
+      if (rel.split(/[\\/]/).join('/') === VERSION_MODULE) {
+        try {
+          const digest = sourceDigest(rootResolved).digest;
+          // The ordinal and the date move together or not at all: both are
+          // facts of the build that wrote buildordinal.json, so a tree that has
+          // drifted from that record has neither, and half of a stale pair is
+          // worse than none of it.
+          let ordinal = null;
+          let built = null;
+          try {
+            const rec = readOrdinal(rootResolved);
+            if (rec.digest === digest) { ordinal = padOrdinal(rec.ordinal); built = rec.built; }
+          } catch { /* no ordinal home: the page says UNBUMPED/UNDATED, which is true */ }
+          // AND THIS PATH SAYS SO. Constantine plays the source tree through
+          // this server; the bundle is a different artifact with different
+          // bugs, and until now a screenshot could not tell them apart.
+          body = Buffer.from(stampSource(body.toString('utf8'), digest, {
+            ordinal, built, runPath: RUN_PATH_SERVE,
+          }), 'utf8');
+        } catch (err) {
+          console.error(`serve: could not stamp ${VERSION_MODULE} — ${err.message}`);
+          console.error('       the page will read UNSTAMPED, which is what it now knows.');
+        }
+      }
+      const type = MIME[extname(filePath).toLowerCase()] || 'application/octet-stream';
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache' });
+      res.end(body);
+    } catch {
+      res.writeHead(500);
+      res.end('Server error');
+    }
+  });
+
+  return new Promise((done) => {
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`serve: port ${port} in use — trying ${port + 1}`);
+        port += 1;
+        server.listen(port);
+      } else {
+        throw err;
+      }
+    });
+    server.listen(port, async () => {
+      // `port` 0 asks the OS for a free one; name the port it gave.
+      port = server.address().port;
+      const url = `http://localhost:${port}/`;
+      const log = quiet ? () => {} : (line) => console.log(line);
+      log(`\n  ▸ Ashen Spire is live at ${url}`);
+      log(`    Serving ${rootResolved}`);
+      if (lan) {
+        const { attachLan, lanAddress } = await import('./lan.mjs');
+        lanLayer = attachLan(server, { port, root: rootResolved });
+        server.on('close', () => lanLayer.close());
+        log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
+      }
+      log('    Press Ctrl+C to stop.\n');
+      if (open) openBrowser(url);
+      done({ server, url, port });
+    });
+  });
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
+  const args = process.argv.slice(2);
+  const flag = (name, def) => {
+    const i = args.indexOf(name);
+    return i >= 0 && args[i + 1] ? args[i + 1] : def;
+  };
+  serve({
+    port: Number(flag('--port', 8080)),
+    root: flag('--root', ROOT_DIR),
+    open: !args.includes('--no-open'),
+    lan: !args.includes('--no-lan'),
+    editorWrite: args.includes('--editor-write'),
+  });
+}

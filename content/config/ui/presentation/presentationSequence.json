@@ -1,0 +1,214 @@
+{
+  "behavior": {
+    "schemaVersion": 1,
+    "historyDepth": 60,
+    "limits": {
+      "durationMs": {
+        "min": 100,
+        "max": 30000
+      },
+      "poses": {
+        "min": 5,
+        "max": 7
+      },
+      "maxClips": 100,
+      "maxBindings": 100,
+      "clip": {
+        "offsetMs": {
+          "min": -30000,
+          "max": 30000
+        },
+        "durationMs": {
+          "min": 60,
+          "max": 30000
+        },
+        "x": {
+          "min": -1000,
+          "max": 1000
+        },
+        "y": {
+          "min": -600,
+          "max": 600
+        },
+        "size": {
+          "min": 20,
+          "max": 800
+        },
+        "rotationDeg": {
+          "min": -360,
+          "max": 360
+        }
+      },
+      "binding": {
+        "maxTags": 40,
+        "maxTagLength": 80,
+        "priority": {
+          "min": -999,
+          "max": 999
+        }
+      },
+      "asset": {
+        "maxKeyLength": 300,
+        "maxDataUrlLength": 12000000
+      },
+      "anchorPair": 2,
+      "defaultStringLength": 160
+    },
+    "bindingScore": {
+      "objectMatch": 10000
+    },
+    "highActionMinimum": 2,
+    "playback": {
+      "defaultDurationMs": 600,
+      "minimumDurationMs": 96,
+      "maximumDurationMs": 5000,
+      "maxStoredProjectChars": 40000000
+    }
+  },
+  "motion": {
+    "cues": {
+      "anticipation": 0,
+      "release": 0.3,
+      "contact": 0.5,
+      "recovery": 0.78
+    },
+    "frames": {
+      "count": 6,
+      "lastIndex": 5,
+      "reducedMotionIndex": 2
+    }
+  },
+  "positioning": {
+    "anchors": {
+      "hand": [
+        0.4,
+        0.48
+      ],
+      "weapon": [
+        0.49,
+        0.39
+      ],
+      "shield": [
+        0.38,
+        0.55
+      ],
+      "torso": [
+        0.3,
+        0.55
+      ],
+      "feet": [
+        0.3,
+        0.85
+      ],
+      "target": [
+        0.76,
+        0.55
+      ],
+      "ground": [
+        0.52,
+        0.85
+      ]
+    },
+    "referenceWidth": 1000,
+    "referenceHeight": 600,
+    "figureReference": {
+      "width": 230,
+      "height": 350
+    },
+    "travelOrigin": {
+      "x": 0.3,
+      "y": 0.55
+    },
+    "verticalCentreFraction": 0.5
+  },
+  "components": {
+    "starter": {
+      "schemaVersion": 1,
+      "id": "local.shield-bash",
+      "name": "Shield bash · contact study",
+      "actor": "reaver",
+      "duration": 1200,
+      "poses": [
+        "idle",
+        "shieldBash1",
+        "shieldBash2",
+        "shieldBash3",
+        "guard",
+        "idle"
+      ],
+      "anchors": {
+        "hand": [
+          0.4,
+          0.48
+        ],
+        "weapon": [
+          0.49,
+          0.39
+        ],
+        "shield": [
+          0.38,
+          0.55
+        ],
+        "torso": [
+          0.3,
+          0.55
+        ],
+        "feet": [
+          0.3,
+          0.85
+        ],
+        "target": [
+          0.76,
+          0.55
+        ],
+        "ground": [
+          0.52,
+          0.85
+        ]
+      },
+      "clips": [
+        {
+          "id": "clip.contact",
+          "effect": "shieldBash",
+          "cue": "contact",
+          "offset": 0,
+          "duration": 430,
+          "anchor": "shield",
+          "x": 0,
+          "y": 0,
+          "size": 180,
+          "rotation": 0,
+          "opacity": 0.9,
+          "layer": "front",
+          "travel": false,
+          "muted": false
+        }
+      ],
+      "bindings": [
+        {
+          "id": "binding.shield",
+          "name": "Shield attack",
+          "provider": "ashenspire",
+          "kind": "card",
+          "objectId": "",
+          "event": "actionResolved",
+          "all": [
+            "shield"
+          ],
+          "any": [],
+          "none": [],
+          "resource": "any",
+          "priority": 10,
+          "enabled": true
+        }
+      ],
+      "dependencies": [],
+      "assets": {}
+    },
+    "messages": {
+      "duration": "Sequence duration must be {min}–{max} ms",
+      "poses": "Choose {min} to {max} pose frames",
+      "tooManyClips": "Too many effects (maximum {max})"
+    }
+  }
+}

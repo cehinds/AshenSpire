@@ -1,0 +1,143 @@
+{
+  "id": "11b",
+  "name": "Run results and history",
+  "sourceModules": [
+    "src/ui/screens/gameover.js",
+    "src/ui/screens/history.js"
+  ],
+  "sharedAssets": [
+    "assets/reused/ui/components/panel-frame.svg",
+    "assets/reused/ui/components/panel-backed.svg",
+    "assets/reused/ui/components/button-neutral.svg",
+    "assets/reused/ui/components/button-primary-ready.svg",
+    "assets/reused/ui/components/button-disabled.svg",
+    "assets/reused/ui/components/focus-outline.svg",
+    "assets/reused/ui/components/divider-plain.svg",
+    "assets/reused/materials/soot-leather-material.png",
+    "assets/reused/ui/components/item-slot-selected.svg",
+    "assets/reused/ui/components/map-node-visited.svg",
+    "assets/reused/ui/components/divider-plain.svg"
+  ],
+  "mobileComposition": "Atmospheric upper illustration and concise expandable run receipt below.",
+  "family": "history",
+  "reference": "references/11-company-and-history.png",
+  "referenceFeature": "lower",
+  "visualParts": [
+    "Aftermath background",
+    "history thumbnail rows",
+    "outcome badge",
+    "run receipt",
+    "progress timeline with independent nodes",
+    "expandable deck/relic/event details"
+  ],
+  "liveFields": [
+    "run history",
+    "outcome",
+    "seed",
+    "reached acts",
+    "encounter",
+    "play time",
+    "actual collected deck/relics"
+  ],
+  "artwork": {
+    "desktop": [
+      "assets/reused/scenes/spire-vista-desktop.png",
+      "assets/reused/canonical/assets/painted-outfits/reaver/menu.webp"
+    ],
+    "mobile": [
+      "assets/reused/scenes/spire-vista-mobile.png",
+      "assets/reused/canonical/assets/painted-outfits/reaver/menu.webp"
+    ]
+  },
+  "newPerspectiveOptions": {
+    "desktop": [
+      "assets/scenes/aftermath-desktop.webp",
+      "assets/scenes/old-aqueduct-desktop.webp",
+      "assets/scenes/drowned-hamlet-desktop.webp",
+      "assets/scenes/frozen-camp-desktop.webp",
+      "assets/scenes/caldera-rim-desktop.webp",
+      "assets/scenes/drowned-orchard-desktop.webp"
+    ],
+    "mobile": [
+      "assets/scenes/aftermath-mobile.webp",
+      "assets/scenes/old-aqueduct-mobile.webp",
+      "assets/scenes/drowned-hamlet-mobile.webp",
+      "assets/scenes/frozen-camp-mobile.webp",
+      "assets/scenes/caldera-rim-mobile.webp",
+      "assets/scenes/drowned-orchard-mobile.webp"
+    ]
+  },
+  "components": [
+    "assets/components/history-receipt.svg",
+    "assets/components/quest-row.svg",
+    "assets/components/receipt-row.svg",
+    "assets/components/accordion-heading.svg",
+    "assets/components/heading-rule.svg",
+    "assets/components/engraved-folio-frame.svg",
+    "assets/components/engraved-folio-backed.svg",
+    "assets/components/action-neutral.svg",
+    "assets/components/action-ready.svg",
+    "assets/components/action-selected.svg",
+    "assets/components/action-danger.svg",
+    "assets/components/action-disabled.svg",
+    "assets/components/focus-ring.svg",
+    "assets/components/mobile-action-tray.svg"
+  ],
+  "icons": [
+    "assets/reused/ui/icons/history.svg",
+    "assets/reused/ui/icons/boss.svg",
+    "assets/reused/ui/icons/check.svg",
+    "assets/reused/ui/icons/deck.svg",
+    "assets/reused/ui/icons/reset.svg"
+  ],
+  "decorations": [
+    "assets/decorations/second-cairn-fallen.webp",
+    "assets/decorations/second-cairn-raised.webp"
+  ],
+  "layout": {
+    "desktop": {
+      "referenceSize": [
+        1440,
+        900
+      ],
+      "regions": [
+        "context/rail",
+        "main stage or collection",
+        "selected inspector/comparison",
+        "bottom actions"
+      ]
+    },
+    "mobile": {
+      "referenceSize": [
+        390,
+        844
+      ],
+      "regions": [
+        "compact HUD",
+        "upper artwork or selected stage",
+        "one open detail tray",
+        "bottom safe-area actions"
+      ],
+      "note": "Atmospheric upper illustration and concise expandable run receipt below."
+    },
+    "shortLandscape": "Fold context and inspector; allow stage pan and detail scrolling; keep actions reachable."
+  },
+  "layerOrder": [
+    "background",
+    "canonical objects or optional illustrations",
+    "optional decor",
+    "readability veil",
+    "panel material",
+    "frame or socket",
+    "live DOM labels and values",
+    "selection/focus/availability overlay"
+  ],
+  "constraints": [
+    "Use canonical game data for all live fields; the screenshot is a visual reference.",
+    "Choose canonical art or a new perspective option deliberately; never layer duplicate baked figures.",
+    "Separate focus, persistent selection, disabled state and actual legal action.",
+    "October 4 destination paintings are lore-grounded illustrations for events, destination inspection and optional scene backgrounds, not coordinate-compatible atlas replacements or authored combat floors. Bind actual node identity and floor anchors explicitly.",
+    "October 4 props are independent canonical motifs, not new inventory/reward types. Fallen/raised Cairn swords are alternative illustration poses; bind the actual authored scene/choice and never infer state from art."
+  ],
+  "unresolvedIconAliases": []
+}

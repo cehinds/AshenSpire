@@ -1,0 +1,74 @@
+{
+  "id": "hand-gorefire-slash",
+  "name": "Gorefire Slash",
+  "tool": "built-in image_gen.imagegen",
+  "toolMode": "edit",
+  "transparentBackground": false,
+  "sourceBoard": {
+    "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+    "approximateArtWindowBounds": [
+      516,
+      456,
+      608,
+      513
+    ],
+    "coordinateConvention": "[left,top,right,bottom] pixels, approximately on the1448Ã—1086 original; selected miniature only, no UI copying"
+  },
+  "refs": [
+    {
+      "path": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-35f0737a-8540-47a0-836c-0ead6e1be478.png",
+      "role": "edit target; preserve central ability subject and all light/composition"
+    },
+    {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+      "role": "designated small art window reference; do not borrow battlefield architecture outside it"
+    }
+  ],
+  "prompt": "Use case: precise-object-edit. Edit the supplied Gorefire Slash ability painting. The second reference is the original board05; its designated Gorefire Slash small card artwork is the target. Remove ONLY the background battlefield/castle ruins, towers, arches and architecture borrowed from the surrounding screenshot, replacing them with abstract painted near-black charcoal smoke and ember/fire gloom. Preserve the entire existing diagonal sword blade, blade edge, fiery orange/red arcs, sparks, dark foreground rocky fragments, palette, light source, brushwork and camera. Maintain the exact1448Ã—1086 landscape4:3 canvas. No scene architecture, horizon, new objects, characters, text, signature, card frame, labels, UI or crop. The whole image is the high-resolution ability painting.",
+  "previousVersionRecord": "provenance/versions/hand-gorefire-slash-original.json",
+  "previousVersion": {
+    "id": "hand-gorefire-slash",
+    "name": "Gorefire Slash",
+    "tool": "built-in image_gen.imagegen",
+    "toolMode": "generate",
+    "transparentBackground": false,
+    "sourceBoard": {
+      "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+      "approximateArtWindowBounds": [
+        516,
+        456,
+        608,
+        513
+      ],
+      "coordinateConvention": "[left,top,right,bottom] pixels, approximately on the1448Ã—1086 original; selected miniature only, no UI copying"
+    },
+    "refs": [
+      {
+        "path": "D:/repos/.codex/worktrees/04f4/AshenSpire/docs/design/player-components-2026-10-03/references/05-combat-and-threats.png",
+        "role": "composition, subject, palette and light source reference; ONLY designated ability art window"
+      }
+    ],
+    "prompt": "Use case: stylized-concept. Asset type: ONE standalone AshenSpire ability illustration matching a specific existing board05 card artwork, NOT a complete card, screenshot or UI mockup. Source image is a COMPOSITION/COLOR reference. Extract and faithfully paint ONLY the named small art-window subject described below at high resolution. Fill the entire output image with that painting: no card frame, name, cost medallion, numbers, text, labels, bottom parchment, borders, UI, extra figure, invented item lore or new composition. Match the board's richly painted gloomy charcoal brushwork and explosive localized light. Output landscape 4:3 aspect ratio, width1536 height1152. The reference board has another aspect ratio; do NOT follow its outer aspect ratio. Keep important silhouettes visible on a compact horizontal card-art window.\nNamed reference artwork: Gorefire Slash.\nPrecise target: Upper desktop combat hand, third selected card art window. Diagonal bright steel sword blade rises bottom-left to upper-right, with several vigorous ember-red/orange fire arcs sweeping across and along the blade. Dark charred rocky/smoke background with hot ember sparks, intense narrow white-orange blade edge, fire band low across painting. NO warrior or human silhouette. Preserve the board's blade-only diagonal composition.",
+    "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-35f0737a-8540-47a0-836c-0ead6e1be478.png",
+    "status": "superseded",
+    "reason": "Borrowed battlefield ruins outside the designated small art window; background-only cleanup needed.",
+    "sha256": "80369a964d903da422bf5e9d5898c95e01de16cdfece34556fc392a07b429b36",
+    "bytes": 2774241,
+    "width": 1448,
+    "height": 1086,
+    "imageMode": "RGB"
+  },
+  "originalReturnedLocalPath": "D:\\repos\\.codex\\generated_images\\01a0fcf9-1360-7ff2-9f17-ba5c21fa918a\\exec-a03fff1c-3ffc-40c2-9f1c-6d6c105f185d.png",
+  "file": "masters/abilities/hand-gorefire-slash.png",
+  "sha256": "41166c497c83486cdf300318dd6b3ac6e7baa73f92e42343e5d10dba7a4dc0cd",
+  "bytes": 2608893,
+  "width": 1448,
+  "height": 1086,
+  "imageMode": "RGB",
+  "alphaExtrema": null,
+  "savedUnchanged": true,
+  "formatConversion": false,
+  "aspectRatio": 1.3333333333333333,
+  "acceptedAfterVisualReview": true,
+  "reviewNotes": "Visually compared with designated board05 art window for subject, silhouette, composition, color/light, absence of UI/text; standalone4:3 painting."
+}

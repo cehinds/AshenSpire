@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — Combat workshop</title>
+<link rel="stylesheet" href="combat-prototypes.css"></head>
+<body><main>
+<header><p class="eyebrow">ASHENSPIRE · COMBAT WORKSHOP</p><h1>Three ways to survive.</h1><p>Test the new combat rules with a heavy weapon, fast Bleed attacks, or scarce mana.</p></header>
+<form id="setup"><label>Build<select id="build"></select></label><label>Encounter<select id="scenario"></select></label><label>Seed<input id="seed" type="number" min="1" value="1"></label><button type="submit">Start encounter</button></form>
+<details><summary>Configure rules</summary><p>Changes apply when starting an encounter. Restore defaults to undo experiments.</p><label for="rules">Combat rules (JSON)</label><textarea id="rules" spellcheck="false" rows="14"></textarea><button id="defaults" type="button">Restore defaults</button></details>
+<p id="error" role="alert"></p>
+<section id="arena" aria-label="Combatants"></section>
+<div class="turn"><strong id="turn"></strong><button id="suggest" type="button">Play suggested card</button><button id="end" type="button">End turn</button></div>
+<section aria-label="Your hand"><h2>Your hand</h2><p class="hint">Choose an enemy, then play a card. Dodge Roll stays in your hand until used.</p><div id="hand"></div></section>
+<section class="receipt"><h2>Last action</h2><p id="receipt" aria-live="polite">Choose a card to begin.</p></section>
+<details><summary>Combat log</summary><ol id="log"></ol></details>
+<footer>Prototype rules only. Uses the solo combat engine; this workshop does not modify your saved runs. Armor and resource caps are controlled test fixtures.</footer>
+</main><script type="module" src="combat-prototypes-ui.js"></script></body></html>

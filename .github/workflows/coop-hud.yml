@@ -1,0 +1,70 @@
+# .github/workflows/coop-hud.yml — the co-op formation HUD top, in a real
+# browser, when dev is promoted to test (and on release).
+#
+# WHY THIS FILE EXISTS (#1368, D22 in docs/FINISH.md). styles/combat.css gives
+# the co-op board's `.hud-top` a flex row in short landscape. The only check
+# that sees what that row does is `tools/coop-hud-top.mjs`: it opens the real
+# co-op board (`?shot=coop`) at 390x844, 844x390 and 1280x800 and fails on
+# overlap, a part clipped by any edge of the screen, a lost part (resource
+# bars, the default HP row, Leave, quick settings, or the fight
+# label off the compact band), horizontal overflow, a part painted over the
+# battlefield, or a compact band that wrapped to two rows.
+# tests/coop-hud-top.test.mjs runs the judge's known-bad corpus with no browser.
+#
+# WHERE IT RUNS (owner, 2026-10-02: "that test should be in the dev to test"):
+# on a push to `test` or `release`, not on a pull request into `dev` or a push
+# to `dev`. Its PR runs were stalling in checkout and holding merges into `dev`
+# (DEVELOPER.md, *Which checks gate a pull request*). Dispatch it by hand to
+# read it on a branch before promotion.
+#
+# A JOB OF ITS OWN, like map-camera.yml: `core` is a no-browser lane. It serves
+# the SOURCE tree, so it needs no build and no LFS. With no browser the tool
+# exits 2 and the door reads it as HARNESS, never as a pass.
+
+name: coop hud
+
+on:
+  push:
+    branches: [test, release, alternative/test, 'alternative/**/test']
+  workflow_dispatch:
+
+concurrency:
+  group: coop-hud-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+# STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
+# assets-mobile/, the fonts, music/, map-detail/ and art/) left this repository
+# at step 13; every reader reads the fetched art packs through
+# tools/art-source.mjs, which fails (naming the fetch) for a pack that is not
+# fetched. Each job that builds, serves or tests the checkout fetches with
+# ./.github/actions/fetch-art right after setup-node, and fetches ALL THREE
+# packs: the high pack is what /assets/ serves from source (tools/serve.mjs) and
+# what the art checks read, as the assets/ tree was before step 13.
+# ASHEN_ART_SOURCE=cache is the default behaviour now, kept as a name.
+env:
+  ASHEN_ART_SOURCE: cache
+  ART_PACKS: all
+
+jobs:
+  hudtop:
+    name: co-op HUD top layout (real browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # serves the checked-out source tree; reads no LFS object
+
+      - uses: ./.github/actions/setup-node
+      # The art packs, before anything builds, serves or tests this checkout (step 12).
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - uses: ./.github/actions/which-browser
+
+      - name: The co-op formation HUD top neither overlaps, clips nor overflows (#1368)
+        run: node tools/verdict.mjs -- node tools/coop-hud-top.mjs
