@@ -117,6 +117,20 @@ Cleansing is an explicit event; the meter otherwise lasts the run.
 
 Avoid unlimited energy refunds, recursive card generation, combat cleansing, and unrestricted Exhaust recovery. Each trigger must name its timing and limit. Status removal must respect statuses that are explicitly non-removable.
 
+## Cooperative run consequences
+
+Recommended co-op rule: a failed corruption roll permanently eliminates only that player's seat for the current run. Other surviving players continue the shared combat and run. If the failed roll eliminates the last living seat, the shared session ends in defeat, including after a final boss victory.
+
+- Track terminal seat participation separately from HP, `alive`, temporary downed state, and network connection: for example, `participation: 'eliminatedCorruption'` plus an elimination receipt ID. A downed player is not automatically corruption-eliminated.
+- An eliminated seat cannot act, rejoin as a replacement character, receive later rewards, or revive during this run. Healing, normal co-op revival, reconnecting, and cleansing cannot clear this terminal outcome. Starting a new run clears it.
+- A failed mid-combat Rupture roll records that seat's elimination before the played card's effects. Committed costs remain spent; cancel that seat's unresolved card benefits. Continue surviving seats' normal shared combat flow unless no living seat remains.
+- After a victory, freeze the authoritative eligible roster and resolve checks for all living Blighted seats in the session's stable seat order before awarding anything. Use the ordinary resolved recovery/HP state to determine who is living; connection status alone never exempts a seat. Normal downed/revival rules remain separate from permanent corruption elimination.
+- Record each checked seat's outcome. Reward only surviving eligible seats after the complete check batch commits. Do not grant a shared final run victory if the batch leaves no living seat.
+- The session authority rolls once. Persist the session outcome, per-seat meter/outcome changes, RNG counters, and receipt IDs atomically before publishing effects, rewards, or victory. A partial save must not leave one seat rewarded while another seat's death check can still be rerolled.
+- Receipt identity includes session ID, combat ID, seat ID, and threshold crossing or post-victory check kind. Reloads, retries, duplicate completion callbacks, and reconnects reuse the committed outcomes; they never revive an eliminated seat or reroll its check.
+
+These co-op consequences are also **proposed, not implemented**. They require a terminal seat outcome in addition to existing combat HP/downed handling; merely setting HP to zero would incorrectly allow normal revival.
+
 ## Persistence and receipts
 
 Minimal proposed run state:
@@ -142,7 +156,7 @@ ashenBlight: {
 - Give every threshold roll a crossing ID and every post-victory check a unique combat ID. Store its rolled outcome before granting rewards or presenting final victory.
 - Reloads and duplicate completion callbacks reuse the recorded outcome; they cannot reroll or charge a card twice.
 - Old saves default to zero Ashen Blight, no overlay, no native-family play locks, and no pending checks. Validate numeric bounds and mode/state combinations.
-- Cooperative play requires separate corruption state and receipts per player. One player's preview or card play cannot corrupt another player's run state.
+- Cooperative play requires separate corruption state and receipts per player, plus the terminal participation and atomic session outcome rules above. One player's preview or card play cannot corrupt another player's meter; a corruption death ends the shared session only when no living seat remains.
 
 Current integration references: `src/content/statuses.js` defines Crimson Blight; `src/engine/runCombat.js` owns run-to-combat projection and combat-to-run pool updates; `src/engine/combat.js` places played Exhaust cards; `src/engine/save.js` saves runs and RNG counters; `src/engine/rng.js` defines named streams. Implementation must also update run initialization/serialization and combat snapshot validation.
 
