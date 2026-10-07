@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-06
 
+- **Lighter alternative characters, clearer scenery** ([#1694](https://github.com/cehinds/AshenSpire/pull/1694), `0.7.1.1057`). The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.
+
 - **Alternative builds gain class progression and retraining** ([#1686](https://github.com/cehinds/AshenSpire/pull/1686), `0.7.1.1054`). Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.
 
 - **Choose each class milestone and retrain your build** ([#1676](https://github.com/cehinds/AshenSpire/pull/1676), `0.7.1.1052`). Class rewards now follow a saved schedule for cards, feats, equipment, relics and attributes. Independent catalog modules add 40 card families with six ranks, 50 feats, 50 ability tags and 10 relics; available choices and level lists populate from their requirements. Spellcraft and Combat Maneuvers offer three cards with an Intelligence chance for a fourth higher-rank option. Actions and Stamina share one pool. Free class retraining previews earned choices without rerolling offers or restoring spent rewards. Solo and co-op XP fill Class, Character and gained skills in order before revealing blue Level Up buttons and a green Continue; remaining XP fills when you return.

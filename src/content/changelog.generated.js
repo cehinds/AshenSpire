@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1694",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Lighter alternative characters, clearer scenery",
+    "detail": "The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.",
+    "build": "0.7.1.1057",
+    "pullRequest": 1694,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1694"
+  },
+  {
     "id": "pr-1686",
     "date": "2026-10-06",
     "group": "2026-10-06",
