@@ -1,0 +1,312 @@
+{
+  "reaver-default": {
+    "right": [
+      801,
+      768
+    ],
+    "left": [
+      228,
+      704
+    ]
+  },
+  "starseer-default": {
+    "right": [
+      866,
+      723
+    ],
+    "left": [
+      362,
+      710
+    ]
+  },
+  "herald-default": {
+    "right": [
+      811,
+      744
+    ],
+    "left": [
+      236,
+      740
+    ]
+  },
+  "rogue-default": {
+    "right": [
+      844,
+      735
+    ],
+    "left": [
+      315,
+      730
+    ]
+  },
+  "reaver-vigil": {
+    "right": [
+      808,
+      776
+    ],
+    "left": [
+      274,
+      705
+    ]
+  },
+  "reaver-oathsworn": {
+    "right": [
+      826,
+      737
+    ],
+    "left": [
+      244,
+      699
+    ]
+  },
+  "starseer-eclipse": {
+    "right": [
+      845,
+      684
+    ],
+    "left": [
+      306,
+      669
+    ]
+  },
+  "starseer-starlit": {
+    "right": [
+      850,
+      735
+    ],
+    "left": [
+      330,
+      715
+    ]
+  },
+  "starseer-astral": {
+    "right": [
+      849,
+      715
+    ],
+    "left": [
+      315,
+      699
+    ]
+  },
+  "starseer-rimeweave": {
+    "right": [
+      870,
+      747
+    ],
+    "left": [
+      322,
+      734
+    ]
+  },
+  "herald-ossuary": {
+    "right": [
+      789,
+      735
+    ],
+    "left": [
+      232,
+      711
+    ]
+  },
+  "herald-emberhabit": {
+    "right": [
+      863,
+      720
+    ],
+    "left": [
+      242,
+      699
+    ]
+  },
+  "herald-pilgrim": {
+    "right": [
+      811,
+      749
+    ],
+    "left": [
+      256,
+      726
+    ]
+  },
+  "rogue-nightveil": {
+    "right": [
+      866,
+      744
+    ],
+    "left": [
+      346,
+      734
+    ]
+  },
+  "rogue-duelist": {
+    "right": [
+      850,
+      732
+    ],
+    "left": [
+      315,
+      709
+    ]
+  },
+  "rogue-shadow": {
+    "right": [
+      852,
+      759
+    ],
+    "left": [
+      287,
+      738
+    ]
+  },
+  "rogue-waywatcher": {
+    "right": [
+      892,
+      741
+    ],
+    "left": [
+      312,
+      727
+    ]
+  },
+  "starseer-wayfarerPlate": {
+    "right": [
+      856,
+      733
+    ],
+    "left": [
+      317,
+      717
+    ]
+  },
+  "herald-wayfarerPlate": {
+    "right": [
+      824,
+      749
+    ],
+    "left": [
+      276,
+      719
+    ]
+  },
+  "rogue-wayfarerPlate": {
+    "right": [
+      829,
+      739
+    ],
+    "left": [
+      341,
+      711
+    ]
+  },
+  "reaver-nightweave": {
+    "right": [
+      827,
+      723
+    ],
+    "left": [
+      294,
+      668
+    ]
+  },
+  "herald-nightweave": {
+    "right": [
+      797,
+      741
+    ],
+    "left": [
+      241,
+      731
+    ]
+  },
+  "rogue-nightweave": {
+    "right": [
+      847,
+      722
+    ],
+    "left": [
+      346,
+      698
+    ]
+  },
+  "reaver-warden": {
+    "right": [
+      821,
+      748
+    ],
+    "left": [
+      276,
+      737
+    ]
+  },
+  "reaver-bastion": {
+    "right": [
+      870,
+      746
+    ],
+    "left": [
+      322,
+      623
+    ]
+  },
+  "reaver-riteVestments": {
+    "right": [
+      805,
+      746
+    ],
+    "left": [
+      250,
+      687
+    ]
+  },
+  "starseer-riteVestments": {
+    "right": [
+      869,
+      671
+    ],
+    "left": [
+      320,
+      654
+    ]
+  },
+  "rogue-riteVestments": {
+    "right": [
+      818,
+      733
+    ],
+    "left": [
+      302,
+      711
+    ]
+  },
+  "reaver-gutterLeathers": {
+    "right": [
+      842,
+      769
+    ],
+    "left": [
+      265,
+      713
+    ]
+  },
+  "starseer-gutterLeathers": {
+    "right": [
+      831,
+      717
+    ],
+    "left": [
+      244,
+      695
+    ]
+  },
+  "herald-gutterLeathers": {
+    "right": [
+      840,
+      740
+    ],
+    "left": [
+      256,
+      736
+    ]
+  }
+}
