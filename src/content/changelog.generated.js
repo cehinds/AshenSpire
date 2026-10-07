@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1702",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Clearer header with fewer controls",
+    "detail": "Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.",
+    "build": "0.7.1.1063",
+    "pullRequest": 1702,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1702"
+  },
+  {
     "id": "pr-1697",
     "date": "2026-10-07",
     "group": "2026-10-07",
