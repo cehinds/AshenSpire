@@ -523,6 +523,11 @@ async function main() {
     await clickSel('#cz-armours .equip-chip .equipment-choose', 'Choose armour');
     for (let step = 0; step < 8; step += 1) {
       if (await evalIn(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+      if (await evalIn(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {
+        while (await evalIn(`!!document.querySelector('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])') && document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
+          await clickSel('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])', 'a starting ability');
+        }
+      }
       await clickSel('#cz-next', 'Next (towards Review)');
     }
     await until(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`, 'the Review stage');

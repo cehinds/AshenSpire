@@ -224,7 +224,8 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     if (!usesSingleBreakMeter(ctx) && !carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
-  completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss });
+  completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
+    applySmashBreakPoise: amount => dealPoiseDamage(ctx, target, amount) });
   for (const effect of matchupRiderEffects(ctx, source, target, carrier, { amount: dmg, hpLoss })) {
     ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }

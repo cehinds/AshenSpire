@@ -6,5 +6,11 @@ export function coopEnemyIntent(enemy, seatId, profile = null) {
   const identity = intent.profile || intent.combatProfile || profile || {};
   const read = enemy.intentReads ? enemy.intentReads[seatId] === true : !identity.camp;
   if ((intent.hidden || !read) && intent.kind !== 'staggered') return concealIntent(intent, identity);
-  return { ...intent, profile: identity, stance: combatIntentStance(intent, identity), hidden: false, revealed: true };
+  // The host prices each observer's own defenses. Selecting a different seat
+  // cannot bypass the reveal gate or reuse another seat's tactical preview.
+  const preview = enemy.intentPreviews?.[seatId] || intent;
+  const previewIdentity = preview.profile || preview.combatProfile || identity;
+  if (preview.hidden && preview.kind !== 'staggered') return concealIntent(preview, previewIdentity);
+  return { ...preview, profile: previewIdentity,
+    stance: combatIntentStance(preview, previewIdentity), hidden: false, revealed: true };
 }

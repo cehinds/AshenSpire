@@ -136,9 +136,9 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Reaver | patrol (normal) | 100 | 10.8 / 63 |
 | Reaver | packHunt (normal) | 100 | 10.8 / 63 |
 | Reaver | twinPatrol (normal) | 100 | 3.7 / 63 |
-| Reaver | bruiser (normal) | 100 | 9.7 / 63 |
+| Reaver | bruiser (normal) | 100 | 9.8 / 63 |
 | Reaver | eliteWyrm (elite) | 100 | 18.1 / 63 |
-| Reaver | bossOmen (boss) | 100 | 16.9 / 63 |
+| Reaver | bossOmen (boss) | 100 | 17 / 63 |
 | Reaver | lanternFlight (normal) | 100 | 1.3 / 63 |
 | Reaver | briarRefuge (normal) | 100 | 2.9 / 63 |
 | Reaver | chainAmbush (normal) | 100 | 2.3 / 63 |
@@ -161,12 +161,12 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Rogue | packHunt (normal) | 100 | 10 / 53 |
 | Rogue | twinPatrol (normal) | 100 | 2.6 / 53 |
 | Rogue | bruiser (normal) | 99.7 | 7.8 / 53 |
-| Rogue | eliteWyrm (elite) | 96.3 | 25.5 / 53 |
+| Rogue | eliteWyrm (elite) | 96.3 | 25.6 / 53 |
 | Rogue | bossOmen (boss) | 86.3 | 31.2 / 53 |
 | Rogue | lanternFlight (normal) | 100 | 1.7 / 53 |
 | Rogue | briarRefuge (normal) | 100 | 1 / 53 |
 | Rogue | chainAmbush (normal) | 100 | 1.7 / 53 |
-| Rogue | bossBellKeeper (boss) | 90.7 | 30.8 / 53 |
+| Rogue | bossBellKeeper (boss) | 90.7 | 30.9 / 53 |
 | Rogue | bossThornMatriarch (boss) | 91.3 | 31.5 / 53 |
 | Herald | loneSoldier (normal) | 100 | 0.3 / 53 |
 | Herald | patrol (normal) | 100 | 3.1 / 53 |

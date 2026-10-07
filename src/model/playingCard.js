@@ -199,6 +199,8 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     // what a live number is compared against to be marked raised or lowered.
     tokens: freeze(preview ? { ...base, ...preview.tokens } : { ...base }),
     baseTokens: freeze({ ...base }),
+    damageSequences: freeze((preview?.damageSequences || []).map(sequence => freeze({ ...sequence,
+      hitDamages: freeze([...(sequence.hitDamages || [])]) }))),
     hasPreview: !!preview,
   });
 }

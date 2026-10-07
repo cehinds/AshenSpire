@@ -1,6 +1,7 @@
 import { combatMatchups, combatIntent } from '../content/combatMatchups.js';
 import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter } from './combatMatchups.js';
+import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { passiveMax } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
@@ -1401,6 +1402,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
 
   const values = [];
   const tokens = {};
+  const damageSequences = [];
   const charges = R.matchingAbilityCharges(p, action.card, { enemyAvailable: living.length > 0 });
   const chargedEffects = R.abilityChargedEffects(def.effects || [], charges, living.length > 0);
   if (chargedEffects !== def.effects) {
@@ -1408,6 +1410,10 @@ export function previewCard(combat, cardInstanceId, targetId) {
     action.target ||= living[0] || null;
   }
   const applied = new Set();
+  // One detached tactical timeline per prospective target for the whole card.
+  // Damage effects execute in authored order, so later effects must see a
+  // Counter, Guard, Ward, and rider budget spent by earlier contacts.
+  const damagePreviewStates = new Map(living.map(enemy => [enemy.id, damagePreviewState(combat, enemy)]));
   chargedEffects.forEach((eff, i) => {
     if (typeof eff.op !== 'string') return;
     const authoredIndex = (def.effects || []).indexOf(eff);
@@ -1428,13 +1434,23 @@ export function previewCard(combat, cardInstanceId, targetId) {
           entry.sourceBuildup = structuredClone(carrier.resolvedSource.buildup || []);
           attackTags = carrier.tags;
         }
-        const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
-        entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, carrier);
         entry.hits = evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
+        entry.perTargetHitDamages = {};
         for (const e of living) {
           const b = evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
-          entry.perTarget[e.id] = A.computeAttackDamage(combat, p, e, b, attackTags, carrier);
+          const result = previewDamageHits(combat, p, e, b, attackTags, carrier, entry.hits,
+            damagePreviewStates.get(e.id));
+          entry.perTarget[e.id] = result.damage;
+          entry.perTargetHitDamages[e.id] = result.hitDamages;
+          if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
+            hitDamages: result.hitDamages, totalDamage: result.totalDamage });
+        }
+        if (entry.value == null) {
+          const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
+          entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, carrier);
+          entry.hitDamages = Array.from({ length: Math.max(0, Math.floor(entry.hits)) }, () => entry.value);
+          entry.totalDamage = entry.hitDamages.reduce((sum, amount) => sum + amount, 0);
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
@@ -1505,6 +1521,12 @@ export function previewCard(combat, cardInstanceId, targetId) {
       if (token) {
         entry.token = token;
         tokens[token] = entry.value;
+        if (eff.op === 'damage' && entry.hitDamages?.length > 1
+          && entry.hitDamages.some(amount => amount !== entry.hitDamages[0])) {
+          const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
+          if (hitsToken) damageSequences.push({ amountToken: token, hitsToken,
+            hitDamages: entry.hitDamages, totalDamage: entry.totalDamage });
+        }
       }
       const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
       if (hitsToken && entry.hits != null) tokens[hitsToken] = entry.hits;
@@ -1525,6 +1547,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,
     tokens,
+    damageSequences,
   };
 }
 
@@ -1549,7 +1572,7 @@ function evalPreview(combat, action, value, target) {
 
 /**
  * previewIntent(combat, enemyInstanceId) → live intent for the UI (SPEC §4.6):
- * { kind, moveId, damage, hits, totalDamage, block, delayed, pending }
+ * { kind, moveId, damage, hits, hitDamages, totalDamage, block, delayed, pending }
  * Attack numbers include the enemy's attack modifiers and the player's
  * damage-taken modifiers, recomputed live through the same §4.2 math.
  */
@@ -1566,9 +1589,8 @@ export function previewIntent(combat, enemyInstanceId) {
     const move = combat.registries.enemies.get(enemy.enemyId).moves[intent.moveId];
     const effect = move?.effects?.find(e => e.op === 'damage');
     const carrier = { ...enemyMoveCarrier(enemy, move || {}, intent.moveId), damageSchool: damageSchool && damageSchool !== 'auto' ? damageSchool : effect?.damageSchool || move?.damageSchool };
-    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, carrier.tags, carrier);
-    out.hits = intent.hits != null ? intent.hits : 1;
-    out.totalDamage = out.damage * out.hits;
+    Object.assign(out, previewDamageHits(combat, enemy, combat.player, intent.damage, carrier.tags, carrier,
+      intent.hits != null ? intent.hits : 1));
   }
   out.pending = !!enemy.pendingMove;
   return out;

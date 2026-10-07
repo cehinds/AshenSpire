@@ -1,0 +1,94 @@
+[
+  {
+    "classId": "reaver",
+    "width": 390,
+    "height": 844,
+    "ids": [
+      "quickstep"
+    ],
+    "count": 1,
+    "saved": true,
+    "errors": []
+  },
+  {
+    "classId": "rogue",
+    "width": 390,
+    "height": 844,
+    "ids": [
+      "quickCut"
+    ],
+    "count": 1,
+    "saved": true,
+    "errors": []
+  },
+  {
+    "classId": "starseer",
+    "width": 390,
+    "height": 844,
+    "ids": [
+      "cometFragment",
+      "starbladePhalanx"
+    ],
+    "count": 2,
+    "saved": true,
+    "errors": []
+  },
+  {
+    "classId": "herald",
+    "width": 390,
+    "height": 844,
+    "ids": [
+      "penance",
+      "blightward"
+    ],
+    "count": 2,
+    "saved": true,
+    "errors": []
+  },
+  {
+    "classId": "reaver",
+    "width": 1440,
+    "height": 900,
+    "ids": [
+      "quickstep"
+    ],
+    "count": 1,
+    "saved": true,
+    "errors": []
+  },
+  {
+    "classId": "rogue",
+    "width": 1440,
+    "height": 900,
+    "ids": [
+      "quickCut"
+    ],
+    "count": 1,
+    "saved": true,
+    "errors": []
+  },
+  {
+    "classId": "starseer",
+    "width": 1440,
+    "height": 900,
+    "ids": [
+      "cometFragment",
+      "starbladePhalanx"
+    ],
+    "count": 2,
+    "saved": true,
+    "errors": []
+  },
+  {
+    "classId": "herald",
+    "width": 1440,
+    "height": 900,
+    "ids": [
+      "penance",
+      "blightward"
+    ],
+    "count": 2,
+    "saved": true,
+    "errors": []
+  }
+]
