@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1686",
+    "date": "2026-10-06",
+    "group": "2026-10-06",
+    "summary": "Alternative builds gain class progression and retraining",
+    "detail": "Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.",
+    "build": "0.7.1.1054",
+    "pullRequest": 1686,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1686"
+  },
+  {
     "id": "pr-1676",
     "date": "2026-10-06",
     "group": "2026-10-06",
