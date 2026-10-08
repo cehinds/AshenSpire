@@ -3840,6 +3840,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    must pin the circle to a size the zoom does not choose. */
 .card-inspection-target > .card-info-button,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+/* A clue is a word; the formation column must not clip it to a number badge. */
+:root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 /* WCF3: the selected card and its inspect control share one glow. The hand
@@ -4858,6 +4860,13 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   transform: rotate(var(--hand-card-angle)) !important;
   z-index: auto !important;
 }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected,.gp-focus) {
+  /* Keep horizontal reveal independent of the existing animated fan lift. */
+  translate: var(--hand-upcast-shift, 0px) 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card.gp-focus {
+  z-index: 51 !important;
+}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) {
   transform: translateY(calc(-1 * var(--hand-selection-lift))) !important;
   z-index: 50 !important;
@@ -5249,6 +5258,16 @@ button[data-button-size] {
   grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   column-gap: 0; row-gap: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-row-gap));
 }
+
+/* The Bestiary lists identities rather than thumbnail collections. One column
+   keeps encountered names readable at the phone rung. Shared kit controls,
+   typography and workspace scrolling still own the presentation. */
+.bestiary-list.cp-grid, :root[data-layout='narrow'] .bestiary .bestiary-list.cp-grid { grid-template-columns: minmax(0, 1fr); }
+:root[data-layout='narrow'] .bestiary .w1-split { grid-template-rows: minmax(0, 7fr) minmax(0, 13fr); }
+.enemy-intent-prediction.as-pane { flex: 0 0 auto; gap: .6rem; padding: 0; overflow: visible; }
+.enemy-intent-prediction .as-row.setting { flex-direction: column; align-items: stretch; padding: 0; }
+.enemy-intent-prediction .as-row.setting > .r-trail { width: 100%; max-width: 100%; margin-left: 0; }
+.enemy-intent-prediction select, .enemy-intent-prediction > .as-btn { width: 100%; max-width: 100%; min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
 
 /* ═══ W1 CATEGORY NAVIGATION — kit/categoryNav.js ═══════════════════════════ */
 /* ONE component for every categorized W1 surface (Settings, Shop, Armoury,
@@ -6071,7 +6090,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) { .combat-expansion-controls { width:min(220px,46%); } .combat-recovery-controls button { min-height:44px; } }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,select) { pointer-events:auto; }
-@media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:44px; } }
+@media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:max(44px, var(--tap-floor)); } }
 
 /* Keep the protection readout clear of the centered turn ribbon. */
 .field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; }

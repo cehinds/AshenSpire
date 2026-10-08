@@ -19,6 +19,8 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // number displayed comes from previewCard / previewIntent — no math here.
 
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
+import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
@@ -697,8 +699,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     const def = registries.enemies.get(entity.enemyId);
     const intent = previewIntent(combat, entity.id);
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { registries, combatMatchupRules: combat.combatMatchupRules }) : null;
     const currentMoveId = intent.moveId;
-    const skills = Object.entries(def.moves || {}).map(([moveId, move]) => ({
+    const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
       detail: moveDetail(move, moveId === currentMoveId ? intent : null, entity),
       active: moveId === currentMoveId,
@@ -709,6 +712,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const past = entity.performedMoves || [];
     return {
       role: 'enemy',
+      ...(learning ? { learning, perception: combat.skills?.perception?.level || 0,
+        prediction: knowledgePredictionModel(combat, entity),
+        onPredict: (actionSerial, maneuver) => {
+          dispatch(combat, { type: 'predictIntent', enemyInstanceId: entity.id, actionSerial, maneuver });
+          return { accepted: true, prediction: maneuver };
+        } } : {}),
       name: def.name,
       subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
       resources: inspectorResources([
@@ -719,20 +728,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
       intent: {
-        name: intent.hidden ? `${words(intent.stance)} · Move hidden` : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
+        name: intent.hidden ? intent.label || '?' : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
         detail: intent.hidden ? 'Exact move, damage, and effects unread.' : moveDetail(current, intent),
-        hidden: intent.hidden, stance: intent.stance, profile: intent.profile,
+        hidden: intent.hidden, knowledgeRead: intent.knowledgeRead, stance: intent.stance, profile: intent.profile,
         active: true,
       },
       skillLabel: 'Move set',
-      moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
+      moveCards: learning ? learning.moveCards : enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
       skills,
       statuses: statusDetails(entity),
       entityId: entity.id,
       history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
-      traits: (def.tags || []).map((tag) => ({ name: words(tag) })),
+      traits: learning ? learning.traits : (def.tags || []).map((tag) => ({ name: words(tag) })),
       // No authored lore exists for enemies yet; unknown, not none.
-      lore: null,
+      lore: learning ? learning.lore : null,
     };
   }
 

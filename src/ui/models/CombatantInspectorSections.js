@@ -36,7 +36,10 @@ export function projectCombatantInspector(subject, text = (id) => id) {
   const resources = subject.resources || [];
   const hp = resources.find((r) => r.label === 'HP') || null;
   const block = resources.find((r) => r.label === t('combat.protection.block'));
-  const intent = subject.intent?.hidden ? {
+  const intent = subject.intent?.hidden && subject.intent.knowledgeRead ? {
+    name: ['?', 'Attack?', 'Magic?', 'Preparing?'].includes(subject.intent.name) ? subject.intent.name : '?',
+    detail: 'Exact action unread. Wisdom, Intelligence, character level and run Perception improve intent reads.',
+  } : subject.intent?.hidden ? {
     name: `${combatIntentStance(subject.intent)} · Move hidden`,
     detail: 'Exact move, damage, and effects unread. Wisdom and Intelligence improve intent reads.',
   } : subject.intent;

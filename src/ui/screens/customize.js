@@ -1876,9 +1876,11 @@ export function mountCustomize(app, {
     attachTooltip(close, () => t('creation.leave.tip'));
     close.addEventListener('click', onBack);
   }
-  start.addEventListener('click', () => {
-    if (beginProblem()) return;
-    onStart({
+  let startPending = false;
+  start.addEventListener('click', async () => {
+    if (startPending || beginProblem()) return;
+    startPending = true; start.disabled = true;
+    try { await onStart({
       classId: state.classId,
       seedString: seedInput.value.trim(),
       journeyProfile: journeySelect.value || null,
@@ -1891,7 +1893,10 @@ export function mountCustomize(app, {
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,
       ...(hasPoints(state.attributeMode) && state.attributes ? { attributes: { ...state.attributes } } : {}),
-    });
+    }); } finally {
+      startPending = false;
+      if (app.contains(start)) updateStartRefusal();
+    }
   });
   updateStartRefusal();
 }
