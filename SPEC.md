@@ -1088,7 +1088,9 @@ committed random outcomes and per-cycle budgets survive saves. Solo, co-op,
 enemy actions, and both presentation variants share the headless contract.
 
 Version 2 also uses the contract's **Card lifecycle and labels** rules: the
-bottom type line stays separate from camp and stance; a paid Power instance
+bottom type line preserves authored Counter/Smash/Sweep/Ranged/Defend/Attack/Spell
+identities for maneuver/offensive cards and Power/Skill/Status for support;
+lifecycle remains an independent property. A paid Power instance
 Exhausts after resolving while its installed effect lasts for that combat.
 Another owned copy or a legal Replica pays for its own cast unless an authored
 family limit applies. Skills normally remain reusable; deck-added Status
