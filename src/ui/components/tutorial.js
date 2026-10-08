@@ -68,11 +68,11 @@ export function mountTutorial(root, { onDone }) {
   const spot = veil.querySelector('.tut-spot');
   const bubble = veil.querySelector('.tut-bubble');
   // The static Popover is deliberately pointer-transparent so compact layouts
-  // cannot make a covered card unplayable. Move its real controls beside it in
-  // the veil: a direct child can opt back into pointer input through the veil,
-  // while a descendant of the transparent Popover cannot in Chromium.
+  // cannot make a covered card unplayable. Move its real controls beside the
+  // veil as a sibling overlay: they remain part of the callout visually, but
+  // do not inherit either pointer-transparent ancestor in Chromium.
   const actions = bubble.querySelector('.tut-row');
-  veil.appendChild(actions);
+  root.appendChild(actions);
   let i = 0;
 
   // Keep every number below in ONE space: the veil's own local coordinates.
@@ -151,8 +151,8 @@ export function mountTutorial(root, { onDone }) {
     const bubbleStyle = getComputedStyle(bubble);
     const insetX = Number.parseFloat(bubbleStyle.paddingRight) || 0;
     const insetY = Number.parseFloat(bubbleStyle.paddingTop) || 0;
-    actions.style.left = `${pick.left + b.width - actionBox.width - insetX}px`;
-    actions.style.top = `${pick.top + b.height - actionBox.height - insetY}px`;
+    actions.style.left = `${clamp(pick.left + b.width - actionBox.width - insetX, view.width - actionBox.width - MARGIN)}px`;
+    actions.style.top = `${clamp(pick.top + b.height - actionBox.height - insetY, view.height - actionBox.height - MARGIN)}px`;
     return true;
   }
 
@@ -176,6 +176,7 @@ export function mountTutorial(root, { onDone }) {
     done = true;
     removeEventListener('keydown', onKey, true);
     removeEventListener('resize', onResize);
+    actions.remove();
     veil.remove();
     onDone();
   }
