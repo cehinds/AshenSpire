@@ -291,6 +291,7 @@ export function wireBattlefieldStage(field, model) {
         .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
     }));
     const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
+      lockX: true, size: Math.max(44, ...boxes.map(box => box.intentRect?.height || 0)),
       obstacles: boxes.flatMap(box => box.controls.map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,

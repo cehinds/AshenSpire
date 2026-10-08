@@ -9,13 +9,31 @@ export function combatOverheadAnchorX({ width, x, controlWidth, inset = 6 }) {
 // Tap areas follow the measured feet until final sprite fitting brings two
 // formation rows together. Space only these targets, inside the stage, so a
 // neighbouring figure cannot take the owner's complete tap area.
-export function combatTargetAnchors({ width, height, targets, size = 44, obstacles = [] }) {
+export function combatTargetAnchors({ width, height, targets, size = 44, obstacles = [], lockX = false }) {
   const half = size / 2;
   const controls = targets.map(target => ({ ...target, side: 'target', width: Math.max(size, target.width || 0),
     y: Math.min(Math.max(target.y, half), Math.max(half, height - half)) }));
   const intersects = (control, x, obstacle) => x - control.width / 2 < obstacle.right
     && x + control.width / 2 > obstacle.left
     && control.y - half < obstacle.bottom && control.y + half > obstacle.top;
+  if (lockX) {
+    // Option C shares one vertical center line with the combatant and intent.
+    // Resolve crowded footer rows vertically without detaching the plate.
+    const placed = [];
+    for (const control of controls.toSorted((a,b) => a.y-b.y)) {
+      const blockers = [...obstacles, ...placed.map(p => ({ left:p.x-p.width/2,
+        right:p.x+p.width/2, top:p.y-half, bottom:p.y+half }))];
+      for (let pass=0;pass<=blockers.length;pass++) {
+        const covered=blockers.filter(o => intersects(control,control.x,o));
+        if (!covered.length) break;
+        const nextY=Math.max(...covered.map(o => o.bottom+half+2));
+        if (nextY>height-half) break;
+        control.y=nextY;
+      }
+      placed.push({ ...control, obstructed:blockers.some(o => intersects(control,control.x,o)) });
+    }
+    return placed;
+  }
   let anchors;
   // A translated target can join another footer band; repack those final
   // bounds before checking the fixed, already placed intent/Inspect controls.
