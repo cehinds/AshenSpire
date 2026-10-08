@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-10-08
 
 - **Loading keeps your combat checkpoint** ([#1733](https://github.com/cehinds/AshenSpire/pull/1733), `0.7.1.1124`). Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.
+- **Valid card content keeps building through strict checks** ([#1732](https://github.com/cehinds/AshenSpire/pull/1732), `0.7.1.1124`). The bundler keeps adjacent static imports separate and accepts legal empty statements between whitespace. Strict syntax and refusal checks stay active; card effects and appearance are unchanged.
 
 - **Combat controls respond promptly and upcasts keep legal targets** ([#1728](https://github.com/cehinds/AshenSpire/pull/1728), `0.7.1.1122`). Accepted plays immediately lock further actions while the hand and fighters stay in place for their animation. Escape cancels a selected Counter card before closing the tutorial. Co-op Upcast appears under a selected card and opens only its rank chooser. Solo and co-op show legal targets for the selected rank, ask for a new target when its destination changes, and spend nothing before the final play. Cards with a higher base rank keep that rank when no upcast is chosen.
 
