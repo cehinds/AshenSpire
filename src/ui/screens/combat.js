@@ -47,6 +47,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
+import { createStanceLedger } from '../../model/alternativeStance.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
@@ -173,6 +174,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // and the band's compact/expanded grip went on 2026-09-11; nothing in
         // the bag steers the HUD now, the parameter keeps the callers' shape.
         quickSettings: { settings: meta.settings || {} },
+        overlayHtml: '<div class="combat-blight-hud" aria-live="polite"></div>',
       }))}
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
@@ -221,6 +223,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
+  const heldStances = createStanceLedger();
   let readinessOrder = [];
   let visualPlans = new Map();
   const barrierVisuals = new Map();
@@ -229,6 +232,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const event of events) {
       if (appliedVisualEvents.has(event)) continue;
       appliedVisualEvents.add(event);
+      heldStances.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
       playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
       readinessOrder = readinessAfterEvent(readinessOrder, event, 'player');
     }
@@ -1000,6 +1004,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const pv = dv(p);
     const key = JSON.stringify([p, pv, readSettings()]);
     if (topbarRenderKey === key) return;
+    $('.combat-blight-hud').innerHTML = ashenBlightBarHtml(p, { compact: true });
     // THE MAIN HUD BAR STACK — HP, MP, SP, vertically. Which rows appear is
     // content/resources.js's business, not this screen's. Player Poise belongs
     // only on the combat character card's model surface; it is deliberately
@@ -1309,7 +1314,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, heldStances.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1387,6 +1392,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else if (!selected && selectedFlask == null) selectCombatant('player');
     });
     if (!existing) zone.appendChild(box);
+    stageFor(box)?.setStance?.(heldStances.get());
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
     playerRenderKey = renderKey;
   }
@@ -1671,11 +1677,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, mana: combat.player.mana, maxMana: combat.player.maxMana, settings: readSettings(), draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
     const expandedHost = $('.combat-expansion-controls');
     if (combat.combatExpansionVersion === 2) {
-      const actor = dv(combat.player), ward = actor.persistentWard || combat.player.persistentWard;
-      const stance = actor.combatStance?.maneuver;
-      expandedHost.innerHTML = `<div class="combat-protection-values">Block ${actor.block || 0} · Barrier ${actor.barrier || 0} · Ward ${ward?.value || 0}/${ward?.max || 0}${stance ? ` · ${esc(stance[0].toUpperCase() + stance.slice(1))}` : ''}</div>${ashenBlightBarHtml(combat.player, { compact: true })}
-        ${combat.player.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" data-blight-feat>Choose Blight feat</button>' : ''}
-        <div class="combat-recovery-controls">${recoveryControls(combat, combat.player).map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || busy || enemyPlayback || combat.result || combat.player.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(registries.statuses.get(row.status).name)}`} · ${row.costPerStack} SP</button>`).join('')}</div>`;
+      const pendingFeat = combat.player.ashenBlight?.milestones.some(row => row.path === null);
+      const recoveries = recoveryControls(combat, combat.player);
+      expandedHost.hidden = !pendingFeat && !recoveries.length;
+      expandedHost.innerHTML = `${pendingFeat ? '<button class="primary" data-blight-feat>Choose Blight feat</button>' : ''}${recoveries.length ? `<div class="combat-recovery-controls">${recoveries.map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || busy || enemyPlayback || combat.result || combat.player.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(registries.statuses.get(row.status).name)}`} · ${row.costPerStack} SP</button>`).join('')}</div>` : ''}`;
       expandedHost.querySelector('[data-blight-feat]')?.addEventListener('click', () => {
         if (busy || expansionChoiceShell || combat.result) return;
         const pending = combat.player.ashenBlight.milestones.find(row => row.path === null);
@@ -1684,7 +1689,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           onChoose: selection => expansionIntent({ type: 'chooseBlightFeat', ...selection }) });
       });
       for (const node of expandedHost.querySelectorAll('[data-control-recovery]')) node.addEventListener('click', () => expansionIntent({ type: 'recoverControl', selections: [{ status: node.dataset.controlRecovery, stacks: 1 }] }));
-    } else expandedHost.replaceChildren();
+    } else { expandedHost.replaceChildren(); expandedHost.hidden = true; }
 
   }
 
@@ -2231,7 +2236,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
       const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
       const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, action }) }];
+      return [event.cardInstanceId, { stanceCard: { ...definition, cardTags: tags }, aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, action }) }];
     }));
     // Nothing between here and playTimeline may prevent the timeline from
     // starting: busy is already true, and only the timeline's finish releases
@@ -2797,4 +2802,3 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
 }
 import { equipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';
-

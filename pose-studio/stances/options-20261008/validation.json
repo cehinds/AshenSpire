@@ -1,0 +1,19 @@
+{
+  "url": "http://127.0.0.1:4391/pose-studio/stances/options-20261008/index.html",
+  "boards": 12,
+  "candidates": 60,
+  "uniqueLabels": 60,
+  "confirmedChoices": 12,
+  "viewports": [
+    "1500x1050",
+    "390x844"
+  ],
+  "selectionReplacement": true,
+  "selectionPersistence": true,
+  "enlargeAndEscape": true,
+  "copyChoices": true,
+  "mobileNoOverflow": true,
+  "errors": [],
+  "failed": [],
+  "browser": "Browser plugin not available; regular Playwright with Chrome."
+}
