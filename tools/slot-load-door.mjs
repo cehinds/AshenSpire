@@ -219,6 +219,14 @@ try {
       await wait(300);
     }
   };
+  const advanceTurn = async () => {
+    const turn = await ev('window.__combat.turn');
+    await click('.end-turn');
+    await wait(750);
+    await confirmIfAsked();
+    await until(`window.__combat.turn > ${turn} && window.__combat.phase === 'player'`, 'the next player turn');
+    await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'combat timeline settlement');
+  };
 
   await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
   await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'combat boot');
@@ -293,26 +301,46 @@ try {
     // enemy HP and the piles differ at the abandon point: the enemies and
     // cards checks below then catch a reload that skipped the reset, the way
     // the HP and hand checks already do.
-    const struck = await ev(`window.__combat.enemies.map((e) => e.hp)`);
-    const hand = await ev(`window.__combat.piles.hand.map((card) => card.instanceId)`);
     let played = null;
-    for (const instanceId of hand) {
-      await click(`.hand .card[data-instance-id=${JSON.stringify(instanceId)}]`);
-      const target = await ev(`(() => { const e=document.querySelector('.enemy.targetable:not(.dead)'); return !!e; })()`);
-      if (!target) { await ev(`document.querySelector('.hand .card.selected')?.click()`); await wait(180); continue; }
-      await click('.enemy.targetable:not(.dead)');
-      await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'the attack to settle');
-      await wait(300);
-      if (JSON.stringify(await ev(`window.__combat.enemies.map((e) => e.hp)`)) !== JSON.stringify(struck)) { played = instanceId; break; }
+    // An expanded opener can contain only guards and deferred Counters. Read
+    // effective effects (equipment instances can change the base card), then
+    // draw naturally through the real End Turn door until an attack is in hand.
+    // The entry receipt remains untouched, so the reload must still reproduce
+    // the original opening hand, HP, enemies and deck exactly.
+    for (let draw = 0; draw < 3 && !played; draw += 1) {
+      const attacks = await ev(`(async () => {
+        const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
+        const { immediateCardEffects } = await import('/src/model/cardTargets.js');
+        return window.__combat.piles.hand.filter(card => {
+          const el = document.querySelector('.hand .card[data-instance-id="' + CSS.escape(card.instanceId) + '"]');
+          return el && !el.classList.contains('unaffordable') && immediateCardEffects(resolveCombatCard(window.__combat, card))
+            .some(effect => effect.op === 'damage' && ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target));
+        }).map(card => card.instanceId);
+      })()`);
+      for (const instanceId of attacks) {
+        const beforeAttack = await ev(`({ hp: window.__combat.enemies.map(e => e.hp), played: window.__combat.player.counters.cardsPlayedThisCombat || 0 })`);
+        await click(`.hand .card[data-instance-id=${JSON.stringify(instanceId)}]`);
+        const target = await ev(`(() => {
+          if (document.querySelector('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])'))
+            return '.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])';
+          return document.querySelector('.enemy.targetable:not(.dead)') ? '.enemy.targetable:not(.dead)' : null;
+        })()`);
+        if (target) await click(target);
+        await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'the attack to settle');
+        await wait(300);
+        const afterAttack = await ev(`({ hp: window.__combat.enemies.map(e => e.hp), played: window.__combat.player.counters.cardsPlayedThisCombat || 0 })`);
+        if (afterAttack.played > beforeAttack.played && afterAttack.hp.some((hp, i) => hp < beforeAttack.hp[i])) { played = instanceId; break; }
+        if (afterAttack.played === beforeAttack.played) {
+          // A targetless attempt must not leave an aim armed for End Turn.
+          for (const type of ['keyDown', 'keyUp']) await cdp.send('Input.dispatchKeyEvent', {
+            type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
+          }, sessionId);
+        }
+      }
+      if (!played && draw < 2) await advanceTurn();
     }
-    if (!played) throw new Error(`no card in the opening hand [${hand}] struck an enemy`);
-    await click('.end-turn');
-    // End Turn is a held beat; a tap asks first. Answer the way forward.
-    await wait(750);
-    await confirmIfAsked();
-    await until(`window.__combat.turn > 1 && window.__combat.phase === 'player'`, 'the next player turn')
-      .catch(async (error) => { throw new Error(`${error.message} (${JSON.stringify(await ev(`({ turn: window.__combat.turn, phase: window.__combat.phase, endTurn: document.querySelector('.end-turn')?.outerHTML.slice(0, 200), active: document.activeElement?.className, top: (() => { const r=document.querySelector('.end-turn').getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2)?.className; })() })`))})`); });
-    await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'combat timeline settlement');
+    if (!played) throw new Error('no affordable immediate attack struck an enemy within three natural hands');
+    await advanceTurn();
     await until(`!document.querySelector('.modal-veil, .quick-nav-veil')`, 'a clear board');
     await wait(300);
     const abandoned = await pose();
