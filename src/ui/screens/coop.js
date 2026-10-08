@@ -222,7 +222,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           if (snap) render();
         }
       } catch (error) {
-        if (!disposed) { bankFailures.set(member.id, error.message || 'Enemy learning remains pending.'); if (snap) render(); }
+        if (!disposed) { bankFailures.set(member.id, error.message || t('knowledge.save.pending')); if (snap) render(); }
       } finally { banking.delete(member.id); }
     }
   }
@@ -819,9 +819,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     renderProgression();
     if (bankFailures.size) {
-      const retry = button({ label: 'Retry saving enemy knowledge' });
+      const retry = button({ label: t('knowledge.save.retry') });
       retry.addEventListener('click', () => { bankAttempts.clear(); bankFailures.clear(); void bankOwnedLearning(snap); render(); });
-      app.append(el('aside', { class: 'coop-learning-save-status', role: 'status' }, [el('p', { text: 'Enemy learning is retained and waiting to be saved.' }), retry]));
+      app.append(el('aside', { class: 'coop-learning-save-status', role: 'status' }, [el('p', { text: t('knowledge.save.retained') }), retry]));
     }
   }
 

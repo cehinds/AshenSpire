@@ -2,6 +2,7 @@ import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { renderEnemyKnowledge } from '../components/enemyKnowledge.js';
 import { el, button, pane, options, optionCard, pageDoor, statusText, titleS } from '../kit/index.js';
 import { workspaceFrame, land } from '../components/w1Workspace.js';
+import { t } from '../strings.js';
 
 export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemyId = null }) {
   let closed = false;
@@ -22,13 +23,13 @@ export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemy
   // Unencountered definitions are not projected into DOM/accessible labels.
   const views = definitions.map(def => projectEnemyKnowledge(def, learned[def.id], { registries }));
   let selectedId = views.find(view => view.id === initialEnemyId)?.id || views[0]?.id || null;
-  const detail = el('div', { class: 'cp-detail bestiary-detail', role: 'region', 'aria-label': 'Enemy knowledge details' });
-  const list = options([], { class: 'cp-grid cp-scroll bestiary-list', 'aria-label': 'Encountered enemies' });
-  const back = button({ label: 'Back', role: 'exit', attrs: { 'data-back': '' } });
+  const detail = el('div', { class: 'cp-detail bestiary-detail', role: 'region', 'aria-label': t('knowledge.details') });
+  const list = options([], { class: 'cp-grid cp-scroll bestiary-list', 'aria-label': t('knowledge.encountered') });
+  const back = button({ label: t('common.back'), role: 'exit', attrs: { 'data-back': '' } });
   const door = workspaceFrame(pageDoor({
-    eyebrow: 'Lifetime enemy knowledge', title: 'Bestiary', size: 'xl',
+    eyebrow: t('knowledge.heading'), title: t('knowledge.bestiary'), size: 'xl',
     body: pane({ children: el('div', { class: 'w1-split' }, [el('div', { class: 'cp-list' }, list), detail]) }),
-    bodyClassName: 'compendium-body', primary: back, footSize: 'short', onClose: leave, closeLabel: 'Close Bestiary',
+    bodyClassName: 'compendium-body', primary: back, footSize: 'short', onClose: leave, closeLabel: t('knowledge.close'),
   }));
   function paintDetail() {
     const view = views.find(entry => entry.id === selectedId);
@@ -37,15 +38,15 @@ export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemy
       control.setAttribute('aria-pressed', String(selected));
       control.classList.toggle('is-selected', selected);
     }
-    detail.replaceChildren(...(view ? [titleS(view.name), renderEnemyKnowledge(view)] : [statusText('Meet an enemy in a real encounter to begin learning about it.')]));
+    detail.replaceChildren(...(view ? [titleS(view.name), renderEnemyKnowledge(view)] : [statusText(t('knowledge.empty.help'))]));
   }
   list.replaceChildren(...views.map(view => {
-    const control = optionCard({ name: view.name, meta: `${view.progress.label} · ${view.progress.points} / ${view.progress.target}`,
+    const control = optionCard({ name: view.name, meta: t('knowledge.progress', { label: view.progress.label, points: view.progress.points, target: view.progress.target }),
       selected: view.id === selectedId, attrs: { dataset: { member: view.id }, 'aria-controls': 'bestiary-facts' } });
     control.addEventListener('click', () => { selectedId = view.id; paintDetail(); });
     return control;
   }));
-  if (!views.length) list.append(statusText('No enemies encountered yet.'));
+  if (!views.length) list.append(statusText(t('knowledge.empty')));
   detail.id = 'bestiary-facts';
   paintDetail();
   app.replaceChildren(el('div', { class: 'screen compendium bestiary', dataset: { surface: 'bestiary' } }, door));
