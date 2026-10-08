@@ -17,5 +17,5 @@
 .combat:has(.alternative-backdrop) .hand-area { background:transparent; }
 /* Large figures can leave no empty callout region on short screens. The
    tutorial's informational surface passes board input; its exits stay active. */
-.tut-bubble { pointer-events:none; }
+.tut-veil > .tut-bubble { pointer-events:none; }
 .tut-bubble :is(.tut-next,.tut-skip) { pointer-events:auto; }
