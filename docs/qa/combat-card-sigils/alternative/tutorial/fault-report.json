@@ -1,0 +1,17 @@
+{
+  "source": "196d6240218c8fc85163aed701fdd5909e26d6d0",
+  "boundary": "Source tutorial input and all exits in Edge; full hosted tutorial corpus remains required.",
+  "cases": [],
+  "faults": [
+    {
+      "name": "offscreen-controls",
+      "offscreen": true,
+      "covered": true
+    },
+    {
+      "name": "covered-controls",
+      "offscreen": false,
+      "covered": true
+    }
+  ]
+}
