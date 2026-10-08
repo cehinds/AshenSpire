@@ -1798,6 +1798,13 @@ export function previewIntent(combat, enemyInstanceId) {
   const revealed = enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false;
   if (!knowledge && !revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
   const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
+  // The armed payload is public only after this observer's read gate. This is
+  // base counter damage, matching the inspector's prepared reaction value.
+  if (out.stance === 'countering') {
+    const counter = enemy.combatCounter;
+    out.counterDamage = counter?.payload?.hp ?? counter?.damage ?? 0;
+    out.counterPoiseDamage = counter?.payload?.poise ?? counter?.poiseDamage ?? 0;
+  }
   if (intent.damage != null) {
     const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
     const move = expandedEnemyMove(enemy, combat.registries.enemies.get(enemy.enemyId).moves[intent.moveId], intent.moveId, combat);
