@@ -1010,7 +1010,7 @@ Enemy definition shape (content file):
 
 ### 4.7 Tagged combat cards and readable enemy stances
 
-**Future expansion proposal:** [Combat expansion notes](docs/combat-cards-expansion-proposal.md) describe later candidate rules for persistent stances, Evade, Counter coverage, Ward/Poise resistance, recovery cards, Sleep/Prone, tag interactions, upcasting, and three Ashen Blight feat stages. This documentation reference does not change the implemented §4.7 rules below; each runtime revision requires a separate accepted contract and implementation.
+**Future expansion proposal:** [Combat expansion notes](docs/combat-cards-expansion-proposal.md) describe later candidate rules for persistent stances, Evade, Counter coverage, Ward/Poise resistance, recovery cards, Sleep/Prone, tag interactions, upcasting, and three Ashen Blight feat stages. This documentation reference does not change the existing §4.7 rules below; each runtime revision requires a separate accepted contract and implementation.
 
 **Contract status: planned.** This section must land in its own specification PR before the implementation PR. It extends ordinary action resolution for authored tactical profiles; it does not replace persistent class stances (§4.5), invent a new card type, or claim the full combat/equipment cutover is complete. Design examples and unimplemented suggestions live in [combat-cards-design](docs/combat-cards-design.md).
 

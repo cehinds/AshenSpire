@@ -5,7 +5,7 @@ Read the enemy's stance, choose a response, and build openings through protectio
 - **Proposal status**
   - These are revised design rules for review.
   - Values labelled Suggested are starting points for playtesting.
-  - This expansion follows the currently implemented tagged-combat contract in SPEC §4.7.
+  - This expansion follows the existing tagged-combat contract in SPEC §4.7.
   - It proposes later revisions; it does not change that runtime contract by itself.
   - The Reaver example defines the proposed Counter arithmetic.
 
@@ -42,7 +42,7 @@ Read the enemy's stance, choose a response, and build openings through protectio
 
 - **Shared player and enemy rules**
   - Enemies use the same camps, stances, reach, targeting, and damage tags.
-  - Telegraph the actual selected move, including its printed damage and special effects.
+  - Always show the selected move's stance. When its details are revealed under the current intent-visibility rules, show its actual printed damage and special effects; do not reveal hidden details through previews.
   - Equipment, weaknesses, protection, and resistance are inspectable.
   - Every class should start with at least one Attack, Smash, and Counter.
   - Strike is Attack; Defend is Defend; Stomp is Smash; Quick Step or Dodge is Counter.

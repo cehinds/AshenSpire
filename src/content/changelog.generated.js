@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1713",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Plans: recover from control and build around Blight",
+    "detail": "The next combat proposal gives Sleep, Paralysis and Dazed recovery cards with clear Stamina costs, caps Sleep healing and Ward restoration, and trades Prone's ranged protection for greater Contact damage. Three Blight milestones offer feats with two benefits and one drawback. Counter coverage, school interactions, tag combos and optional upcasting are documented for future implementation; gameplay does not change in this update.",
+    "build": "0.7.1.1094",
+    "pullRequest": 1713,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1713"
+  },
+  {
     "id": "pr-1711",
     "date": "2026-10-07",
     "group": "2026-10-07",
