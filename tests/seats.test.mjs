@@ -26,7 +26,7 @@ const ORDER = defaultSeatOrder(REG);
 // remain unused during map generation; every older counter stays compared.
 function mapCountersBeforeCombatStreams(counters) {
   const historical = { ...counters };
-  for (const stream of ['combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight']) {
+  for (const stream of ['combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue']) {
     assert.equal(historical[stream], 0, `building a map draws nothing on ${stream}`);
     delete historical[stream];
   }

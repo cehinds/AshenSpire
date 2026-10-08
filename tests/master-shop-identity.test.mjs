@@ -51,8 +51,8 @@ for (const [name, [registries, build]] of Object.entries(CASES)) {
       assert.equal(JSON.stringify(stock), JSON.stringify(FIXTURE[name][key]), `${name} ${key}`);
       const kept = FIXTURE.counters[`${name}:${key}`];
       // Sigils and intent visibility append after capture; shops use neither.
-      const { sigils: drawnOnSigils = 0, enemyIntentVisibility: intentReads = 0, combatAvoidance: avoidance = 0, statusRecovery: recovery = 0, statusPressure: pressure = 0, ashenBlight: blight = 0, ...existing } = counters;
-      assert.deepEqual([avoidance, recovery, pressure, blight], [0, 0, 0, 0], "legacy shops draw no expanded combat streams");
+      const { sigils: drawnOnSigils = 0, enemyIntentVisibility: intentReads = 0, combatAvoidance: avoidance = 0, statusRecovery: recovery = 0, statusPressure: pressure = 0, ashenBlight: blight = 0, enemyIntentClue: clue = 0, ...existing } = counters;
+      assert.deepEqual([avoidance, recovery, pressure, blight, clue], [0, 0, 0, 0, 0], "legacy shops draw no expanded combat or knowledge streams");
       if (kept) assert.equal(drawnOnSigils, 0, `${name} ${key}: nothing drawn on sigils`);
       if (kept) assert.equal(intentReads, 0, `${name} ${key}: nothing drawn on intent visibility`);
       if (kept) assert.deepEqual(existing, kept, `${name} ${key}: the streams drawn`);
