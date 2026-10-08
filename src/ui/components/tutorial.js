@@ -282,7 +282,7 @@ export function mountTutorial(root, { onDone }) {
   }
   addEventListener('resize', onResize);
 
-  veil.querySelector('.tut-next').addEventListener('click', next);
-  veil.querySelector('.tut-skip').addEventListener('click', finish);
+  actions.querySelector('.tut-next').addEventListener('click', next);
+  actions.querySelector('.tut-skip').addEventListener('click', finish);
   show();
 }
