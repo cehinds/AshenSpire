@@ -13,18 +13,34 @@
 // instead of ending its turn. refusalsFor(combat) hands out that set and
 // clears it when a new player turn begins.
 
-import { resolveCard } from '../src/model/registries.js';
 import { cardTargetPlan } from '../src/model/cardTargets.js';
 import { cardPlayCosts, cardNeedsEnemyTargetNow } from '../src/engine/combat.js';
 import { cardNeedsEnemyTargetForPlayer } from '../src/engine/coopCombat.js';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import { controlGate, recoveryControls } from '../src/engine/combatStatusControl.js';
+
+/** Required choices and affordable recovery are actions, never deck cards. */
+export function botControlAction(combat) {
+  if (combat.combatExpansionVersion !== 2 || combat.result || combat.phase !== 'player') return null;
+  const pending = combat.player.ashenBlight?.milestones?.find(row => row.path === null);
+  if (pending) return { type: 'chooseBlightFeat', threshold: pending.threshold, path: 'martial' };
+  for (const row of recoveryControls(combat, combat.player)) {
+    if (row.disabled) continue;
+    const count = Math.min(row.stacks, Math.floor(combat.player.energy / row.costPerStack));
+    if (count > 0) return { type: 'recoverControl', selections: [{ status: row.status, stacks: count }] };
+  }
+  return null;
+}
 
 /** The hand's playable, affordable cards, in hand order, minus this turn's refusals. */
 function isAffordable(registries, combat, refused, h) {
   const p = combat.player;
   if (refused.has(h.instanceId)) return false;
-  const def = resolveCard(registries, { cardId: h.cardId, upgraded: h.upgraded });
+  const def = resolveCombatCard({ ...combat, registries }, h);
   if ((def.keywords || []).includes('unplayable')) return false;
+  if (combat.combatExpansionVersion === 2 && (!controlGate(combat, p, def).allowed
+    || p.ashenBlight?.milestones?.some(row => row.path === null))) return false;
   const cost = cardPlayCosts(combat, h.instanceId);
   return cost.energy <= p.energy && cost.mana <= p.mana && cost.stamina <= p.stamina;
 }
@@ -47,7 +63,9 @@ export function botCardTargetId(registries, combat, hand, enemyId, playerId = un
     : combat.player?.id;
   if (combat.players && !ownerId) throw new Error('A co-op target preview requires the card owner');
   const ownerRegistries = combat.registriesForPlayer?.(ownerId) || registries;
-  const def = resolveCard(ownerRegistries, hand);
+  const owner = combat.players?.get(ownerId)?.entity || combat.player;
+  const def = resolveCombatCard({ ...combat, registries: ownerRegistries, player: owner,
+    combatExpansionVersion: owner?.combatExpansionVersion || combat.combatExpansionVersion }, hand);
   const plan = cardTargetPlan(def, ownerId, combat.enemies);
   if (plan.mode === 'enemy') return enemyId;
   const hostile = combat.players
@@ -95,7 +113,7 @@ export function manaChargeWouldPay(registries, combat, refused = new Set()) {
  * to try first, or null to end the turn. A refused charge also ends the turn.
  */
 export function outOfPlaysAction(registries, combat, refused = new Set()) {
-  return manaChargeWouldPay(registries, combat, refused) ? { type: 'useFlask', chargeKind: 'mana' } : null;
+  return botControlAction(combat) || (manaChargeWouldPay(registries, combat, refused) ? { type: 'useFlask', chargeKind: 'mana' } : null);
 }
 
 // ---- the decision digest ----------------------------------------------------

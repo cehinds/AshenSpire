@@ -12,6 +12,8 @@ import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
 import { refreshCombatRatings } from './combatRatings.js';
+import { controlRestrictions } from './combatStatusControl.js';
+import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 
 /**
@@ -45,10 +47,12 @@ export function serializeCombatSnapshot(combat) {
   }
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: combat.combatExpansionRules, combatKey: combat.combatKey,
+      expansionActionSerial: combat.expansionActionSerial || 0, pendingExpansionActions: combat.pendingExpansionActions || 0, allocatedAttributes: combat.allocatedAttributes } : {}),
     ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
-    ...(combat.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
     ...(combat.recovery ? { recovery: combat.recovery } : {}),
@@ -141,10 +145,12 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   const combat = {
     registries,
     rng,
+    ...(saved.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: saved.combatExpansionRules, combatKey: saved.combatKey,
+      expansionActionSerial: saved.expansionActionSerial || 0, pendingExpansionActions: saved.pendingExpansionActions || 0, allocatedAttributes: saved.allocatedAttributes } : {}),
     ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
     ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
-    ...(saved.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    ...([1, 2].includes(saved.breakMeterVersion) ? { breakMeterVersion: saved.breakMeterVersion } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
     // saved by an earlier build holds the creation-scale divisor its ratings
     // and hand sizes were read through; nothing divides an attribute any more,
@@ -226,10 +232,21 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   if (saved.abilityQueue) {
+    const groups = new Map();
+    for (const action of saved.abilityQueue) {
+      const group = action.meta?.expansionGroup;
+      if (!group) continue;
+      if (!groups.has(group.key)) groups.set(group.key, group);
+      action.meta.expansionGroup = groups.get(group.key);
+    }
     const entity = id => id === combat.player.id ? combat.player : combat.enemies.find(e => e.id === id);
     combat.queue = saved.abilityQueue.map(({ sourceId, ownerId, targetId, ...action }) => ({ ...action, source: entity(sourceId), owner: entity(ownerId), target: entity(targetId) || null }));
   }
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
+  if (combat.combatExpansionVersion === 2) {
+    combat.combatControlRestrictions = entity => controlRestrictions(combat, entity);
+    combat.restorationModifierPercent = (entity, kind) => ashenBlightRestorationPercent(combat, entity, kind, String(entity.combatOwnerCycle || 0));
+  }
   // Property mounts are never saved (definitions are not persisted): they are
   // re-derived from the restored loadout and relics, exactly as createCombat
   // derives them.
@@ -272,6 +289,12 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   // longer does; this is the invariant itself, so no future caller can either.
   if (combat && combat.result) throw new Error(`Cannot save a combat that has already ended ('${combat.result}')`);
   const snapshot = serializeCombatSnapshot(combat);
+  if (combat.combatExpansionVersion === 2) {
+    run.ashenBlight = structuredClone(combat.player.ashenBlight);
+    run.ashenBlightBasePools = structuredClone(combat.player.baseResourceMaxima);
+    run.energyMax = combat.player.energyMax;
+    run.drawPerTurn = combat.player.drawPerTurn;
+  }
   run.loadout = structuredClone(combat.loadout);
   run.flasks = structuredClone(combat.player.flasks);
   run.flaskCharges = structuredClone(combat.player.flaskCharges);

@@ -10,32 +10,27 @@
 // (registries.frameworkTerms); this door moves the SEMANTICS reads of every
 // engine consumer behind the framework as well.
 //
-// (Plain import-then-export consts: the standalone bundler rewrites modules
-// and does not handle the `export { … } from` re-export form.)
-import {
-  getStatusInstance as adoptedGetStatusInstance,
-  getStacks as adoptedGetStacks,
-  hasStatus as adoptedHasStatus,
-  applyStatus as adoptedApplyStatus,
-  removeStatus as adoptedRemoveStatus,
-  decayAtTurnEnd as adoptedDecayAtTurnEnd,
-  advanceStatusClock as adoptedAdvanceStatusClock,
-  getMult as adoptedGetMult,
-  getAdd as adoptedGetAdd,
-  getFlag as adoptedGetFlag,
-  getCap as adoptedGetCap,
-  anyCombatantFlag as adoptedAnyCombatantFlag,
-} from '../engine/statuses.js';
+// Forwarding functions keep reciprocal modules live in the standalone loader.
+// It rewrites named imports as eager reads and cannot preserve re-export bindings.
+import * as Adopted from '../engine/statuses.js';
 
-export const getStatusInstance = adoptedGetStatusInstance;
-export const getStacks = adoptedGetStacks;
-export const hasStatus = adoptedHasStatus;
-export const applyStatus = adoptedApplyStatus;
-export const removeStatus = adoptedRemoveStatus;
-export const decayAtTurnEnd = adoptedDecayAtTurnEnd;
-export const advanceStatusClock = adoptedAdvanceStatusClock;
-export const getMult = adoptedGetMult;
-export const getAdd = adoptedGetAdd;
-export const getFlag = adoptedGetFlag;
-export const getCap = adoptedGetCap;
-export const anyCombatantFlag = adoptedAnyCombatantFlag;
+export function getStatusInstance(...args) { return Adopted.getStatusInstance(...args); }
+export function getStacks(...args) { return Adopted.getStacks(...args); }
+export function hasStatus(...args) { return Adopted.hasStatus(...args); }
+export function applyStatus(...args) { return Adopted.applyStatus(...args); }
+export function removeStatus(...args) { return Adopted.removeStatus(...args); }
+export function decayAtTurnEnd(...args) { return Adopted.decayAtTurnEnd(...args); }
+export function advanceStatusClock(...args) { return Adopted.advanceStatusClock(...args); }
+export function getMult(...args) { return Adopted.getMult(...args); }
+export function getAdd(...args) { return Adopted.getAdd(...args); }
+export function getFlag(...args) { return Adopted.getFlag(...args); }
+export function getCap(...args) { return Adopted.getCap(...args); }
+export function anyCombatantFlag(...args) { return Adopted.anyCombatantFlag(...args); }
+
+// Explicit v2 pressure/recovery shares the same framework authority boundary.
+import * as Control from '../engine/combatStatusControl.js';
+export function applyStatusPressure(...args) { return Control.applyStatusPressure(...args); }
+export function controlRestrictions(...args) { return Control.controlRestrictions(...args); }
+export function controlGate(...args) { return Control.controlGate(...args); }
+export function recoveryControls(...args) { return Control.recoveryControls(...args); }
+export function manualRecovery(...args) { return Control.manualRecovery(...args); }

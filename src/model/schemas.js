@@ -47,6 +47,12 @@ export const COMBAT_OPCODES = Object.freeze([
   // before the matching meter fills, until the owner's next turn.
   'gainPoise',
   'gainWard',
+  'gainBarrier',
+  'buildup',
+  'wardDamage',
+  'completeCombatAction',
+  'grantRollMode',
+  'retain',
   'dodgeRoll',
   'applyStatus',
   'removeStatus',
@@ -106,6 +112,8 @@ export const TARGETS = Object.freeze([
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
+  'ashenBlightPaid', 'barrierGained', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
+  'combatAvoidanceResolved',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
@@ -512,7 +520,13 @@ export const EFFECT_SPECS = Object.freeze({
   // `amount` plus the card's Block rating bonus (engine/actions.js
   // computeMeterGuardGain), held as entity.poiseGuard / entity.wardGuard.
   gainPoise: { allowed: [], required: ['amount'], refs: {} },
-  gainWard: { allowed: [], required: ['amount'], refs: {} },
+  gainWard: { allowed: ['oncePerCombat'], required: ['amount'], refs: {} },
+  grantRollMode: { allowed: ['roll', 'advantage', 'disadvantage'], required: ['roll'], refs: {} },
+  retain: { allowed: [], required: ['amount'], refs: {} },
+  gainBarrier: { allowed: [], required: ['amount'], refs: {} },
+  wardDamage: { allowed: [], required: ['amount'], refs: {} },
+  completeCombatAction: { allowed: [], required: [], refs: {} },
+  buildup: { allowed: ['status', 'camp', 'recoveryProfile', 'traits', 'chance', 'advantage', 'disadvantage'], required: ['status', 'amount'], refs: { status: 'statuses' } },
   // The dodge roll (framework contract: Weight Class and Dodge Roll): a
   // target and nothing else — the check, the die and the guard are the
   // framework's, and the price is the Weight Class's.
@@ -762,6 +776,24 @@ export const SCHEMAS = Object.freeze({
     retired: opt(mapOf(str)),
   }),
   card: obj({
+    minCombatExpansionVersion: opt(int),
+    corrupted: opt(bool),
+    ashenBlightCost: opt(int),
+    counterCoverage: opt(any),
+    counterPayload: opt(any),
+    evade: opt(any),
+    upcast: opt(any),
+    usableWhile: opt(arr(str)),
+    projectile: opt(bool),
+    pronePoiseBonus: opt(num),
+    comboHook: opt(any),
+    schoolEffect: opt(str),
+    breakPoiseBonus: opt(num),
+    reach: opt(str),
+    targeting: opt(str),
+    traits: opt(arr(str)),
+    stanceTrigger: opt(any),
+    stanceExpiry: opt(any),
     id: str,
     name: str,
     class: str, // a class id or 'colorless' (checked in validate.js)

@@ -17,9 +17,9 @@ import {createSession,restoreSession} from '../tools/session.mjs';
 const root=createRegistries(contentBundle);
 const graded=(cardId,abilityRank,id)=>({...createCardInstance(cardId),instanceId:id,abilityRank});
 const liveCard=(piles,id)=>Object.values(piles).filter(Array.isArray).flat().find(card=>card.instanceId===id);
-function runFor(inst,{legacy=false,classId='starseer'}={}){
+function runFor(inst,{legacy=false,classId='starseer',combatExpansionVersion=2}={}){
   const source=legacy?root.legacyProgressionSource:root;
-  const run=createRunState({registries:source,classId,seed:11,attributeMode:'standard'});
+  const run=createRunState({registries:source,classId,seed:11,attributeMode:'standard',combatExpansionVersion});
   openRunClassMastery(source,run,{}, {receiptId:`entry-${classId}-${legacy}`});
   run.deck.unshift(inst);
   return deserializeRun(serializeRun(run));
@@ -67,7 +67,7 @@ function sessionFor(rows){
   session.start();
   for(const row of rows){
     const member=session.session.members.get(row.id);
-    member.run=runFor(row.card,{legacy:row.legacy,classId:row.classId||'starseer'});
+    member.run=runFor(row.card,{legacy:row.legacy,classId:row.classId||'starseer',combatExpansionVersion:row.combatExpansionVersion||2});
     if(row.skillFeats)member.run.skillFeats=[...row.skillFeats];
     const options=initialClassTreeChoices(registriesForClassMastery(root,member.run),member.run);
     if(options.length)assert.equal(session.chooseMasteryNode(row.id,options[0]).ok,true);
@@ -162,7 +162,7 @@ test('actual co-op settlement banks printed spell XP on the saved linear curve f
 });
 
 test('owned class feat rules mount through the real co-op member transport after reload',()=>{
-  const inst=graded('progression-rime-mirror',0,'transport-rime'),session=sessionFor([{id:'a',card:inst,skillFeats:['progression-mirror-of-rime']}]);
+  const inst=graded('progression-rime-mirror',0,'transport-rime'),session=sessionFor([{id:'a',card:inst,skillFeats:['progression-mirror-of-rime'],combatExpansionVersion:1}]);
   enterFirstCombat(session);
   const combat=session.live.combat,seat=combat.players.get('a'),card=liveCard(seat.piles,inst.instanceId),enemy=combat.enemies[0];
   assert.equal(card.abilityRank,0);assert.ok(seat.piles.hand.includes(card));

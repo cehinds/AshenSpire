@@ -1,3 +1,4 @@
+import { expansionStatuses } from './combatStatusRules.js';
 // src/content/balance.js — every global tuning constant (SPEC §3.1(4))
 //
 // Code never embeds a balance number; a balance change is a one-file diff here.
@@ -109,6 +110,7 @@ export const balanceWords = Object.freeze({
 
 
 const cardValueStatusMultipliers = {
+  ...Object.fromEntries(expansionStatuses.map(status => [status.id, 1])),
   strength: 1,
   dexterity: 1,
   weak: 1,

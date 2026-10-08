@@ -7,7 +7,8 @@ import { beginDeckEdit } from '../src/model/deckRules.js';
 import { deckVariantKey, openDeckEdit } from '../src/ui/models/DeckEditorModel.js';
 
 const REG = createRegistries(contentBundle);
-const freshRun = () => createRunState({ seed: 0x5eed, classId: 'reaver', registries: REG });
+// Keep the historical equipment filler allocation used by these edit plants.
+const freshRun = () => createRunState({ seed: 0x5eed, classId: 'reaver', registries: REG, combatExpansionVersion: 1 });
 
 test('Undo restores every successful add, remove and reorder including allocation and mint state', () => {
   const run = freshRun();

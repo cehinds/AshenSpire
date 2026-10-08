@@ -73,6 +73,7 @@ import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint,
 import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
+import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
@@ -102,7 +103,7 @@ import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
-import { executeRunEffects, drawCards, discardFromHand } from './engine/actions.js';
+import { executeRunEffects, drawCards, discardFromHand, executeAction } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
@@ -1149,14 +1150,17 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}) };
+  const legacyArcaneShot = shotState === 'combat' && shotParams.get('shotArcane') === 'matrix';
+  const combatExpansionVersion = legacyArcaneShot ? 1 : 2;
+  const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
+    breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
   // the old Exposure states; the pose must also carry their older rules.
-  if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') delete configSnapshot.breakMeterVersion;
+  if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    profileMeta: saves.loadMeta(),
+    profileMeta: saves.loadMeta(), combatExpansionVersion,
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
@@ -1377,6 +1381,12 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   if (run.pendingFinish) {
     const victory = run.pendingFinish.victory;
     return showFinishedRun(victory);
+  }
+  if (run.combatPendingOutcome) {
+    const pending = run.combatPendingOutcome;
+    const ended = restoreCombatSnapshot({ registries, rng, snapshot: pending.snapshot });
+    const encounter = combatEncounterFor(registries, run, { nodeId: pending.nodeId, encounterId: pending.encounterId });
+    return onCombatEnd(pending.result, ended, encounter);
   }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
@@ -2680,9 +2690,10 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
+  const entryRng = run.combatExpansionVersion === 2 && !savedSnapshot ? createRng(rng.seed, rng.getCounters()) : rng;
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
-    rng,
+    rng: entryRng,
     run,
     settings: saves.loadMeta().settings || {},
     // The shot door's override, when parked (null otherwise — createCombat
@@ -2695,6 +2706,17 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     enemyStatuses: cm.enemyStatuses,
     playerStatuses: cm.playerStatuses,
   });
+  if (combat.combatExpansionVersion === 2) {
+    const durable = candidate => commitExpansionCandidate({ run, candidate, nodeId, encounterId,
+      saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
+    if (!savedSnapshot) {
+      durable(combat);
+      rng.restoreCounters(entryRng.getCounters());
+      combat.rng = rng;
+    }
+    combat.beforeCombatCommit = durable;
+    if (combat.result) return onCombatEnd(combat.result, combat, enc);
+  }
   // A restored combat owns the live loadout copy from its snapshot. Rejoin it
   // to the run so later swaps and the post-combat receipt share one object.
   xpCombat = combat;
@@ -2714,6 +2736,21 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   // eight-card hand labelled ten — a silent shortfall here would quietly turn
   // every downstream sliver measurement into a fact about a different hand.
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') drawArmamentKitPreview(combat);
+  if (shotState === 'combat' && shotParams.has('shotExpansion')) {
+    // Memory-only QA pose. Cards still play through the production interpreter.
+    const ids = ['emberDart', 'barrageCounter', 'rimeNeedle', 'drowsingMote', 'shieldBash', 'dodgeRoll', 'blightedTransmute', 'shatterOpportunity'];
+    combat.piles.draw.push(...combat.piles.hand);
+    combat.piles.hand = ids.map((cardId, index) => ({ cardId, instanceId: `expansion-shot-${index}`, upgraded: false }));
+    combat.player.energy = Math.max(combat.player.energy, 6);
+    combat.player.energyMax = Math.max(combat.player.energyMax, 6);
+    combat.player.maxStamina = combat.player.energyMax;
+    combat.player.mana = combat.player.maxMana = Math.max(combat.player.maxMana, 8);
+    const control = shotParams.get('shotExpansion');
+    if (['sleep', 'paralysis', 'dazed'].includes(control)) {
+      combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: control, stacks: 2 }, source: combat.player, owner: combat.player, target: combat.player });
+      while (combat.queue.length) executeAction(combat, combat.queue.shift());
+    }
+  }
   if (shotState === 'combat' && shotParams.has('shotHand')) {
     const wantHand = Number(shotParams.get('shotHand'));
     if (!Number.isInteger(wantHand) || wantHand < 1 || wantHand > combat.handMax) {
@@ -2814,6 +2851,7 @@ function victoryTitle(enc) {
 }
 
 async function onCombatEnd(result, combat, enc) {
+  delete run.combatPendingOutcome;
   if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
   const xpBefore = {
@@ -2985,7 +3023,7 @@ async function onCombatEnd(result, combat, enc) {
  */
 function rollCardRows(pool, levelUps) {
   return rollCombatCardOffer(registries, rng, {
-    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: false,
+    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: false, combatExpansionVersion: run.combatExpansionVersion || 1,
     levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
   }).rewards;
 }
