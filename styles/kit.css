@@ -2826,7 +2826,7 @@ button.beat-hold:active, .as-btn.beat-hold:active {
 .as-spot-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
 .as-spot { position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25), 0 0 0 9999px rgba(0, 0, 0, 0.55); pointer-events: none; transition: left 200ms, top 200ms, width 200ms, height 200ms; }
 .as-spot-veil > .as-pop { position: absolute; pointer-events: none; padding: 1.35rem 1.5rem calc(var(--tap-floor) + 2.7rem); display: flex; flex-direction: column; gap: 0.75rem; }
-.as-spot-veil > .as-btnrow { position: absolute; z-index: 1; pointer-events: auto; }
+.as-spot-veil > .tut-row { position: absolute; z-index: 1; pointer-events: auto; max-width: calc(100% - 24px); }
 .reduced-motion .as-spot { transition: none; }
 
 /* ═══ PILL TONES · STATPAIR SIZES · KEYCAP FLOAT · BUTTONROW WIDE ══════════ */
