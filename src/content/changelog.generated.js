@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1749",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: seeded combat checks complete and report failures",
+    "detail": "Combat simulator checks allow complete seeded fleets to finish, require both repeated fleets to succeed, and report subprocess failures. Lane-specific checks load only their selected tools.",
+    "build": "0.7.1.1133",
+    "pullRequest": 1749,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1749"
+  },
+  {
     "id": "pr-1734",
     "date": "2026-10-08",
     "group": "2026-10-08",
