@@ -9,9 +9,9 @@ import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
-import { controlRestrictions } from './combatStatusControl.js';
+import * as Control from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
-import { drawCards } from './actions.js';
+import * as Actions from './actions.js';
 import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function rulesFingerprint(rules) {
@@ -248,7 +248,7 @@ export function candidateState(ctx) {
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
   if (candidate.combatExpansionVersion === 2 || candidate.sharedExpansionVersion === 2) {
-    candidate.combatControlRestrictions = entity => controlRestrictions({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity);
+    candidate.combatControlRestrictions = entity => Control.controlRestrictions({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity);
     candidate.restorationModifierPercent = (entity, kind) => ashenBlightRestorationPercent({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity, kind, String(entity?.combatOwnerCycle || 0));
   }
   if (ctx.players) candidate.playerIdForEntity = (entity) => {
@@ -257,7 +257,7 @@ export function candidateState(ctx) {
   };
   if (ctx.players) candidate.drawCardsFor = (entity, amount) => {
     const seat = candidate.players.get(candidate.playerIdForEntity(entity));
-    if (!seat) return drawCards(candidate, amount);
+    if (!seat) return Actions.drawCards(candidate, amount);
     const fields = ['player', 'piles', 'playerKey', 'registries', 'attributes', 'allocatedAttributes', 'combatExpansionVersion',
       'loadout', 'itemUpgradeLevels', 'skills', 'attributeMode', 'orderedDraw', 'handRules', 'handMax', 'classId', 'characterLevel', 'derivedStatRuleSnapshot'];
     const previous = Object.fromEntries(fields.map(key => [key, candidate[key]]));
@@ -270,7 +270,7 @@ export function candidateState(ctx) {
       orderedDraw: seat.orderedDraw || null, handRules: seat.handRules, handMax: seat.handMax,
       classId: seat.entity.classId, characterLevel: seat.level, derivedStatRuleSnapshot: seat.derivedStatRuleSnapshot });
     if (seat.ratingRows && candidate.ratingsRules) candidate.ratingsRules.ratings = seat.ratingRows;
-    try { return drawCards(candidate, amount); }
+    try { return Actions.drawCards(candidate, amount); }
     finally { Object.assign(candidate, previous); if (candidate.ratingsRules) candidate.ratingsRules.ratings = previousRatings; }
   };
   return candidate;

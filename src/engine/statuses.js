@@ -20,7 +20,7 @@
 import { MODIFIER_KEYS } from '../model/schemas.js';
 import { resolveStackApplications, stackMagnitude } from '../model/combatRules.js';
 import { ratingValue } from '../model/combatRatings.js';
-import { applyExpansionActiveStatus, afterStatusGrant } from './combatStatusControl.js';
+import * as Control from './combatStatusControl.js';
 
 export function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -42,7 +42,7 @@ export function hasStatus(entity, statusId) {
  * meter onFill (SPEC §3.7). Emits statusApplied (and meterFilled on fill).
  */
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
-  if (applyExpansionActiveStatus(ctx, target, statusId, stacks, source)) return;
+  if (Control.applyExpansionActiveStatus(ctx, target, statusId, stacks, source)) return;
   const def = ctx.registries.statuses.get(statusId);
   if (!target || !target.alive) return;
   const wasAbsent = getStacks(target, statusId) <= 0;
@@ -131,7 +131,7 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
 
   if (def.proc) checkProcFill(ctx, target, statusId, def, inst, source);
   else if (inst.meter) checkMeterFill(ctx, target, statusId, def, inst);
-  afterStatusGrant(ctx, target, statusId);
+  Control.afterStatusGrant(ctx, target, statusId);
 }
 
 // Threshold-proc fill (#61, Constantine's direction 2026-08-06). Deliberate
