@@ -54,3 +54,12 @@
 - Independent reviewer `sigil_review` approved source through `77a847ae6b` for PR #1729. Findings were verified and corrected: historical Power lifecycle help; narrow-card title clearance under UI zoom; full upgraded effects and family limits; readable conditions, targets, discard choices, nonlethal payments and charge timing; unequal live hit sequences; Concealed duration and canonical reveal rules.
 - The focused identity, equipment, rank, presentation, solo/co-op hit-preview and status-reach checks cover the changed contracts. The complete hosted core suite and branch promotion checks are recorded on the PR.
 - The reusable [component catalog](component-catalog.html) and its [model/renderer inventory](COMPONENT-CATALOG.md) include the sigil band and adaptive fitter.
+
+## Alternative integration evidence
+
+- Independent reviewer `sigil_review` approved PR #1731 runtime `cd4536f6b7`. The shared model, sigil renderer and fitter match the approved regular implementation. Both histories, receipts and credits are retained.
+- Alternative art, stage hooks, class weapon animations, pacing and scenery are preserved. The canonical expanded/corrupted-card styles load before alternative overrides.
+- Source evidence at `cd4536f6b7` covers 2,186 native faces per desktop and touch-phone viewport, all ten actions/eight schools, 120/124/144/200px widths and restoration after resizing. Geometry, loaded artwork, accessible names, sigil selection and Information/Escape/focus checks pass.
+- [Alternative desktop combat](qa/combat-card-sigils/alternative/source/desktop-combat.png), [phone Information](qa/combat-card-sigils/alternative/source/phone-inspection.png), [desktop legend](qa/combat-card-sigils/alternative/source/desktop-sigil-gallery.png), [phone legend](qa/combat-card-sigils/alternative/source/phone-sigil-gallery.png), [source report](qa/combat-card-sigils/alternative/source/report.json).
+- All 50 focused checks pass, including the alternative card animation and stage contracts. Build, standalone evidence and hosted promotion outcomes are recorded separately after their checks finish.
+- PR #1732 fixes the heavy parse gate's legal doubled-semicolon import fixture. It changes bundler syntax acceptance without changing card behavior; the same reviewed patch is present on both branches.
