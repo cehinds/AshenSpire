@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1716",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Full-run checks choose a starting ability",
+    "detail": "The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.",
+    "build": "0.7.1.1098",
+    "pullRequest": 1716,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1716"
+  },
+  {
+    "id": "pr-1714",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Starting abilities respect your deck copy limit",
+    "detail": "Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.",
+    "build": "0.7.1.1097",
+    "pullRequest": 1714,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1714"
+  },
+  {
     "id": "pr-1713",
     "date": "2026-10-07",
     "group": "2026-10-07",
