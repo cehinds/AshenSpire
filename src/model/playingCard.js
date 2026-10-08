@@ -31,8 +31,104 @@ import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
+import { combatProfileFor } from './combatCardProfile.js';
 
 const freeze = (value) => Object.freeze(value);
+
+export function combatCardType(def) {
+  const p = combatProfileFor(def);
+  if (p.maneuver === 'counter') return 'Counter';
+  if (p.camp === 'spell') return 'Spell';
+  return p.maneuver && p.maneuver !== 'casting' ? p.maneuver[0].toUpperCase() + p.maneuver.slice(1)
+    : def.type[0].toUpperCase() + def.type.slice(1);
+}
+
+/** Plain complete effect text. Numeric values come from the resolved preview. */
+export function combatCardSummary(def, preview = null, registries = null) {
+  const bindings = computeTokenBindings(def.effects || []), tokens = { ...staticCardTokens(def), ...preview?.tokens };
+  const value = (effect, index, field = 'amount') => {
+    const token = bindings.find(row => row.index === index && row.field === field)?.token;
+    const live = preview?.values?.[index];
+    return tokens[token] ?? (live?.op === effect.op ? live.value : undefined) ?? (typeof effect[field] === 'number' ? effect[field] : '?');
+  };
+  const title = id => registries?.statuses?.has(id) ? registries.statuses.get(id).name : id[0].toUpperCase() + id.slice(1);
+  const condition = pred => {
+    if (!pred) return '';
+    if (pred.p === 'hasStatus') return `${pred.of === 'self' ? 'you have' : pred.of === 'allEnemies' ? 'an enemy has' : 'the target has'} ${title(pred.status)}`;
+    if (pred.p === 'hasBlock') return 'you have Block';
+    if (pred.p === 'hpBelowPct') return `${pred.of === 'self' ? 'your' : 'target'} HP is at most ${pred.pct}%`;
+    if (pred.p === 'firstCardThisTurn') return 'this is your first card this turn';
+    if (pred.p === 'inStance') return `you are in ${pred.stance}`;
+    if (pred.p === 'turnMetric') {
+      const names = { cardsPlayed: 'cards played', attacksPlayed: 'attacks played', manaSpent: 'Mana spent', hpLostSinceTurnStart: 'HP lost', discarded: 'cards discarded', offeringsPaid: 'offerings paid', previousSpell: 'previous Spell', sameCardPlays: 'plays of this card', cardPlaysCombat: 'cards played this combat' };
+      const name = names[pred.metric] || (pred.tag ? `${pred.tag} cards played` : pred.metric);
+      return `${name} ${pred.atLeast !== undefined ? `at least ${pred.atLeast}` : `at most ${pred.atMost}`}`;
+    }
+    if (pred.p === 'chargeAvailable') return 'its prepared charge is available';
+    if (pred.p === 'not') { const text = condition(pred.pred); return text ? `not (${text})` : ''; }
+    if (['all', 'any'].includes(pred.p)) { const parts = pred.preds.map(condition); return parts.every(Boolean) ? parts.join(pred.p === 'all' ? ' and ' : ' or ') : ''; }
+    return '';
+  };
+  const p = combatProfileFor(def), parts = [];
+  if (p.maneuver === 'counter' && def.counterCoverage) {
+    const coverage = def.counterCoverage;
+    const area = coverage.targeting?.length === 1 && coverage.targeting[0] === 'area' ? 'Area ' : coverage.targeting?.includes('area') ? '' : 'single ';
+    const camp = coverage.camps?.length === 2 ? 'attacks and spells' : coverage.camps?.includes('spell') ? 'spells' : 'attacks';
+    const reach = coverage.reaches?.length === 1 ? ` at ${title(coverage.reaches[0])} range` : '';
+    parts.push(`Counter ${area}${camp}${reach}`);
+  }
+  for (const [index, effect] of (def.effects || []).entries()) {
+    const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies' : '';
+    let text;
+    switch (effect.op) {
+      case 'damage': { const hits = preview?.values?.[index]?.hits ?? effect.hits ?? 1; text = `${p.maneuver === 'counter' ? 'Counter return' : 'Deal'} ${n} damage${typeof hits === 'number' && hits > 1 ? ` ×${hits}` : ''}${area}`; break; }
+      case 'block': text = `Gain ${n} Block`; break;
+      case 'gainBarrier': text = `Gain ${n} Barrier`; break;
+      case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
+      case 'gainPoise': text = `Gain ${n} Poise guard`; break;
+      case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
+      case 'applyStatus': if (['invulnerability', 'decoy'].includes(effect.status)) return null; text = `Gain ${value(effect, index, 'stacks')} ${title(effect.status)}${effect.target === 'enemy' ? ' on target' : area}`; break;
+      case 'removeStatus': text = `Remove ${n} ${title(effect.status)}${area}`; break;
+      case 'draw': text = `Draw ${n}`; break;
+      case 'discard': text = `Discard ${n}`; break;
+      case 'heal': text = `Heal ${n} HP`; break;
+      case 'loseHp': text = `Pay ${n} HP`; break;
+      case 'gainEnergy': text = `Gain ${n} SP`; break;
+      case 'restoreMana': text = `Restore ${n} Mana`; break;
+      case 'restoreStamina': text = `Restore ${n} SP`; break;
+      case 'poiseDamage': text = `${p.maneuver === 'counter' ? 'Counter return' : 'Deal'} ${n} Poise${area}`; break;
+      case 'wardDamage': text = `${p.maneuver === 'counter' ? 'Counter return' : 'Deal'} ${n} Ward impact${area}`; break;
+      case 'retain': text = `Retain ${n}`; break;
+      case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
+      case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
+      case 'addCard': text = `Add ${effect.count || 1} ${registries?.cards?.has(effect.card) ? registries.cards.get(effect.card).name : effect.card} to ${effect.pile || 'hand'}`; break;
+      case 'grantCardCharge': {
+        const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
+          .filter(([key]) => effect[key] !== undefined).map(([key, label]) => `+${typeof effect[key] === 'number' ? effect[key] : '?'} ${label}`);
+        text = `Next ${effect.cardType || effect.abilityKind || 'matching card'}: ${bonuses.join(', ')}`; break;
+      }
+      default: return null; // Keep authored descriptions for complex effects.
+    }
+    if (effect.if) { const prefix = condition(effect.if); if (!prefix) return null; text = `If ${prefix}: ${text[0].toLowerCase() + text.slice(1)}`; }
+    if (effect.oncePerTurn) text += ' once per turn';
+    parts.push(text);
+  }
+  if (p.maneuver === 'counter') {
+    const payload = def.counterPayload || {}, returns = [];
+    for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
+      if (def.effects.some(effect => effect.op === op)) continue;
+      const live = preview?.values?.find(row => row.op === op)?.value;
+      const amount = live ?? payload[key];
+      if (typeof amount === 'number' && amount > 0) returns.push(`${amount} ${label}`);
+    }
+    if (returns.length) parts.push(`Counter: return ${returns.join(' + ')}`);
+    if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
+  }
+  if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
+  if (def.comboHook) return null;
+  for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
+  return parts.length ? `${parts.join('. ')}.` : null;
+}
 
 /**
  * The numbers a card's own template substitutes, before any live preview.
@@ -86,7 +182,7 @@ export function staticCardTokens(def) {
  *              a raised number can be marked as raised.
  */
 export function playingCardModel(registries, ref, { preview = null } = {}) {
-  const def = resolveCard(registries, ref);
+  const def = preview?.resolvedDefinition || resolveCard(registries, ref);
   const base = staticCardTokens(def);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii

@@ -157,5 +157,17 @@ export const tagDomains = [
     "label": "Counter reach",
     "aside": false,
     "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "reach",
+    "label": "Reach",
+    "aside": false,
+    "blurb": "Inspection details for combat techniques."
+  },
+  {
+    "id": "trait",
+    "label": "Combat traits",
+    "aside": false,
+    "blurb": "Inspection details for combat techniques."
   }
 ];

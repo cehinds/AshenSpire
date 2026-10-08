@@ -4,6 +4,8 @@
 // src/engine names any of these ids. The Elden Ring layer (Bleed, Crimson Blight,
 // Stagger, Madness) lives here as data, exactly like the StS layer.
 
+import { expansionStatuses } from './combatStatusRules.js';
+
 export const statuses = [
   // ---- StS layer (SPEC §4.4 table) ----------------------------------------
   {
@@ -853,4 +855,5 @@ export const statuses = [
     schoolDamageVulnerability: { school: 'magic' },
     tooltip: 'Magic-school HP damage is increased while this lasts.',
   },
+  ...expansionStatuses,
 ];

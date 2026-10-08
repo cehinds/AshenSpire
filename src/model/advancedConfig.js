@@ -1169,7 +1169,8 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (legacyRatings) configured.balance.combatRatings.enabled = false;
   if (!settingsOrSnapshot?.overrides || settingsOrSnapshot.classMasteryVersion === 1) configured.classMasteryVersion = 1;
-  if (configured.balance.combatRatings.enabled && (!settingsOrSnapshot?.overrides || settingsOrSnapshot.breakMeterVersion === 1)) configured.breakMeterVersion = 1;
+  if (settingsOrSnapshot?.breakMeterVersion === 2) configured.breakMeterVersion = 2;
+  else if (configured.balance.combatRatings.enabled && (!settingsOrSnapshot?.overrides || settingsOrSnapshot.breakMeterVersion === 1)) configured.breakMeterVersion = 1;
   // THE RATING ROWS ARE THE TABLE'S (ruleset 7). A reader with no run behind
   // it — creation, a headless fixture — reads these; a run reads its own
   // snapshot's through model/statRows.js ratingsConfigFor.

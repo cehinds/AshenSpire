@@ -20935,5 +20935,1427 @@ export const tagging = [
     "scope": "",
     "objectId": "bindingParry",
     "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "school:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "damage:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fireCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "school:lightning"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lightningCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "alterationCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "damage:sacred"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "divineCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "counter:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "decayCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "counter:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barrageCounter",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeNeedle",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeNeedle",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeNeedle",
+    "tagId": "school:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeNeedle",
+    "tagId": "damage:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeNeedle",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeNeedle",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeNeedle",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeNeedle",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberDart",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberDart",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberDart",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberDart",
+    "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberDart",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberDart",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberDart",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberDart",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "staticNeedle",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "staticNeedle",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "staticNeedle",
+    "tagId": "school:lightning"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "staticNeedle",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "staticNeedle",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "staticNeedle",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "staticNeedle",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "staticNeedle",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceNudge",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceNudge",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceNudge",
+    "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceNudge",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceNudge",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceNudge",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceNudge",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "forceNudge",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "drowsingMote",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "drowsingMote",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "drowsingMote",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "drowsingMote",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "drowsingMote",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "drowsingMote",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "drowsingMote",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "drowsingMote",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "holySpark",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "holySpark",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "holySpark",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "holySpark",
+    "tagId": "damage:sacred"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "holySpark",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "holySpark",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "holySpark",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "holySpark",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rotMote",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rotMote",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rotMote",
+    "tagId": "school:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rotMote",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rotMote",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rotMote",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rotMote",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rotMote",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "earthGrounding",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "earthGrounding",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "earthGrounding",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "earthGrounding",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "earthGrounding",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "earthGrounding",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "earthGrounding",
+    "tagId": "trait:grounded"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "earthGrounding",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "restfulDream",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "restfulDream",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "restfulDream",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "restfulDream",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "restfulDream",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "restfulDream",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "restfulDream",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanctuaryCleanse",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanctuaryCleanse",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanctuaryCleanse",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanctuaryCleanse",
+    "tagId": "damage:sacred"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanctuaryCleanse",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanctuaryCleanse",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanctuaryCleanse",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedTransmute",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedTransmute",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedTransmute",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedTransmute",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedTransmute",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedTransmute",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedSecondBloom",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedSecondBloom",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedSecondBloom",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedSecondBloom",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedSecondBloom",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedSecondBloom",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedBlightward",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedBlightward",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedBlightward",
+    "tagId": "school:divine"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedBlightward",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedBlightward",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightedBlightward",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dreamHarvest",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dreamHarvest",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dreamHarvest",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dreamHarvest",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dreamHarvest",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dreamHarvest",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidRecovery",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidRecovery",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidRecovery",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidRecovery",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidRecovery",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidRecovery",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "groundedResolve",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "groundedResolve",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "groundedResolve",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "groundedResolve",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "groundedResolve",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "groundedResolve",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "clearHead",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "clearHead",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "clearHead",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "clearHead",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowGuardRiposte",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowGuardRiposte",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowGuardRiposte",
+    "tagId": "maneuver:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowGuardRiposte",
+    "tagId": "counter:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowGuardRiposte",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowGuardRiposte",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crawlingShot",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crawlingShot",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crawlingShot",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crawlingShot",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crawlingShot",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crawlingShot",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCovenant",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCovenant",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCovenant",
+    "tagId": "school:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCovenant",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCovenant",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberCovenant",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shatterOpportunity",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shatterOpportunity",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shatterOpportunity",
+    "tagId": "school:frost"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shatterOpportunity",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shatterOpportunity",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shatterOpportunity",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phaseWard",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phaseWard",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phaseWard",
+    "tagId": "school:alteration"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phaseWard",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phaseWard",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phaseWard",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phaseWard",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionDecoy",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionDecoy",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionDecoy",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionDecoy",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionDecoy",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionDecoy",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "illusionDecoy",
+    "tagId": "source:spell"
   }
 ];

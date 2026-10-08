@@ -82,6 +82,7 @@ import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
 export const TOKENIZABLE_OPS = Object.freeze([
+  'gainBarrier', 'buildup',
   'discard', 'removeStatus', 'grantCardCharge',
   'damage',
   'block',
@@ -102,6 +103,7 @@ export const TOKENIZABLE_OPS = Object.freeze([
 // Ops whose LITERAL numeric value MUST have a bound token in the template
 // (a player-visible number with no token is a validation error).
 export const REQUIRED_TOKEN_OPS = Object.freeze([
+  'gainBarrier', 'buildup',
   'damage',
   'block',
   'gainPoise',
@@ -293,7 +295,7 @@ export function computeTokenBindings(effects) {
       return;
     }
     const field = eff.op === 'applyStatus' ? 'stacks' : eff.op === 'loseMaxHpPct' ? 'pct' : 'amount';
-    const base = eff.op === 'applyStatus' ? eff.status : eff.op;
+    const base = ['applyStatus', 'buildup'].includes(eff.op) ? eff.status : eff.op;
     if (typeof base !== 'string') return; // malformed; schema pass reports it
     push(base, i, field, eff.op, typeof eff[field] === 'number');
     if (eff.op === 'damage' && eff.hits != null) {

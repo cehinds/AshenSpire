@@ -9,7 +9,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
+import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardSummary } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -29,6 +29,7 @@ import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
 import { combatProfileFor, combatProfileTags } from '../../model/combatCardProfile.js';
+import { ashenBlightCardLabel } from './ashenBlight.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -134,7 +135,7 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
  */
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
-  const def = resolveCard(registries, ref);
+  const def = opts.preview?.resolvedDefinition || resolveCard(registries, ref);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
   // way to innerHTML — the tag junction, the cost profile, the type row, the
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
@@ -143,7 +144,12 @@ export function renderCard(registries, ref, opts = {}) {
   const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null });
   const combatProfile = combatProfileFor(def);
   const combatTags = combatProfileTags(combatProfile, registries);
-  const model = { ...rawModel, tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
+  const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2;
+  const stanceLabel = combatProfile.maneuver && `${combatProfile.maneuver[0].toUpperCase()}${combatProfile.maneuver.slice(1)}`;
+  const model = { ...rawModel, ...(expanded && stanceLabel ? { type: { ...rawModel.type, label: stanceLabel,
+    subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
+    ...(expanded ? { faceType: combatCardType(def) } : {}),
+    tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   const sourcePiece = ref.sourceArmamentId
     ? registries.equipment?.armaments?.find(piece => piece.id === ref.sourceArmamentId)
     : null;
@@ -154,6 +160,8 @@ export function renderCard(registries, ref, opts = {}) {
   // divide. `as-card` is the recipe; the old class names stay as the hooks
   // every tool and screen reads.
   el.className = playingCardClasses(model) + ' illustrated-card';
+  if (def.corrupted) el.classList.add('corrupted-card');
+  if (expanded) el.classList.add('expanded-combat-card');
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.
@@ -244,17 +252,18 @@ export function renderCard(registries, ref, opts = {}) {
     el.innerHTML = illustratedCardHtml(model,{
       // A weight-priced card (the Dodge Roll) keeps its live numbers at glance
       // size and folds its per-class price table into one clause.
-      rules:at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/\. (?=[A-Z])/g,'.\n'),
+      rules: expanded && combatCardSummary(def, opts.preview, registries) ? esc(combatCardSummary(def, opts.preview, registries)) : at==='glance'&&def.weightClassPriced?fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+'\nCost reflects your current weight.':fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/\. (?=[A-Z])/g,'.\n'),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
+    if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
     // A ranked card (SPEC §13.4o) wears its rank in the top right of its art; the
     // number it adds is already in the face's text.
     if(model.rankBadge){const badge=document.createElement('span');badge.className='card-rank';badge.textContent=model.rankBadge;badge.title=model.rankHelp;el.appendChild(badge);}
-    if(model.abilityRank!==null){const label=document.createElement('span');label.className='card-ability-type';label.textContent=`${model.type.glyph} ${model.type.label}${model.type.subtype ? ` · ${model.type.subtype}` : ''}`;label.title=model.type.help;el.appendChild(label);}
+    if(model.abilityRank!==null&&!expanded){const label=document.createElement('span');label.className='card-ability-type';label.textContent=`${model.type.glyph} ${model.type.label}${model.type.subtype ? ` · ${model.type.subtype}` : ''}`;label.title=model.type.help;el.appendChild(label);}
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
     for (const node of kept)el.append(node);
     el.dataset.level=at;

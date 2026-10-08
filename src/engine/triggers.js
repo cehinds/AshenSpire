@@ -14,6 +14,7 @@ import { TRIGGER_EVENTS } from '../model/schemas.js';
 import { getStacks } from '../framework/statusSemantics.js';
 import { advanceStatusClock } from './statuses.js';
 import { abilityMetric, recordAbilityEvent, priorAbilityEntity } from './abilityRiders.js';
+import { dispatchCombatCombos } from './combatExpansionCombos.js';
 
 const MAX_EMIT_DEPTH = 64;
 const PLAYER_TARGET_EVENTS = new Set(['damageDealt', 'hpLost', 'healed', 'statusApplied', 'statusExpired']);
@@ -49,6 +50,7 @@ export function emitEvent(ctx, type, payload = {}) {
     throw new Error(`Trigger recursion exceeded ${MAX_EMIT_DEPTH} (event '${type}')`);
   }
   try {
+    dispatchCombatCombos(ctx, event);
     scanTriggers(ctx, event);
   } finally {
     ctx._emitDepth -= 1;

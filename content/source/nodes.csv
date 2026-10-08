@@ -462,3 +462,22 @@ counter:melee,counterMode,Melee counter,D7B36B,◇,,,,,"Replies to eligible mele
 counter:ranged,counterMode,Ranged counter,D7B36B,◇,,,,,Replies only to incoming physical projectiles. Spells and melee moves do not trigger it.
 counter:spell,counterMode,Spell counter,D7B36B,◇,,,,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health."
 classification.enemyMove,classification,enemyMove,,,INTERNAL,30,,,A scoped action in an enemy move table.
+reach,,Reach,,,,,,,Inspection details for combat techniques.
+trait,,Combat traits,,,,,,,Inspection details for combat techniques.
+maneuver:casting,maneuver,Spell,9FC3E8,◇,,,,,A spell stance. Counter coverage depends on school and delivery.
+reach:contact,reach,Contact,9FC3E8,◇,,,,,At melee reach.
+reach:near,reach,Near,9FC3E8,◇,,,,,Normal ranged reach.
+reach:far,reach,Far,9FC3E8,◇,,,,,Extended ranged reach.
+targeting:single,targeting,Single,9FC3E8,◇,,,,,One direct target.
+targeting:area,targeting,Area,9FC3E8,◇,,,,,An area action; most Counters do not cover it.
+trait:adequateReach,trait,Adequatereach,9FC3E8,◇,,,,,Adequatereach combat interaction.
+trait:closing,trait,Closing,9FC3E8,◇,,,,,Closing combat interaction.
+trait:conductive,trait,Conductive,9FC3E8,◇,,,,,Conductive combat interaction.
+trait:grounded,trait,Grounded,9FC3E8,◇,,,,,Grounded combat interaction.
+trait:insulated,trait,Insulated,9FC3E8,◇,,,,,Insulated combat interaction.
+trait:mental,trait,Mental,9FC3E8,◇,,,,,Mental combat interaction.
+trait:projectile,trait,Projectile,9FC3E8,◇,,,,,Projectile combat interaction.
+trait:reveal,trait,Reveal,9FC3E8,◇,,,,,Reveal combat interaction.
+trait:shattering,trait,Shattering,9FC3E8,◇,,,,,Shattering combat interaction.
+trait:unavoidable,trait,Unavoidable,9FC3E8,◇,,,,,Unavoidable combat interaction.
+trait:unreflectable,trait,Unreflectable,9FC3E8,◇,,,,,Unreflectable combat interaction.

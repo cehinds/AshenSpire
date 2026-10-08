@@ -75,7 +75,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, cardChoicePlan } from '../src/engine/combat.js';
 import { emitEvent } from '../src/engine/triggers.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
-import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine, DIGEST_LINE } from './simbot.mjs';
+import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, botControlAction, createDecisionDigest, fightFingerprint, digestLine, DIGEST_LINE } from './simbot.mjs';
 import { createRunLoop, payFightXp, fleetSeed } from './simrun.mjs';
 import { bossTierScale } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
@@ -587,6 +587,8 @@ function botFight(run, rng, encounterId, cm, stats, pickRandom, policy) {
   let guard = 0;
   // A fight still open after STALEMATE_TURNS turns is conceded (runsim.mjs).
   while (!combat.result && guard++ < 9000 && combat.turn <= STALEMATE_TURNS) {
+    const control = botControlAction(combat);
+    if (control) { botDispatch(combat, control); continue; }
     if (combat.player.hp < combat.player.maxHp * (MUTATE === 'flask' ? 0.75 : 0.55)) {
       // CHARGE VESSEL FIRST — mirrors runsim.mjs, which carries the reason in
       // full: `chargeKind` is the door the player's own flask buttons use, and
