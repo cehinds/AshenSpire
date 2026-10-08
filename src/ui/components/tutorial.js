@@ -67,6 +67,12 @@ export function mountTutorial(root, { onDone }) {
 
   const spot = veil.querySelector('.tut-spot');
   const bubble = veil.querySelector('.tut-bubble');
+  // The static Popover is deliberately pointer-transparent so compact layouts
+  // cannot make a covered card unplayable. Move its real controls beside it in
+  // the veil: a direct child can opt back into pointer input through the veil,
+  // while a descendant of the transparent Popover cannot in Chromium.
+  const actions = bubble.querySelector('.tut-row');
+  veil.appendChild(actions);
   let i = 0;
 
   // Keep every number below in ONE space: the veil's own local coordinates.
@@ -141,6 +147,12 @@ export function mountTutorial(root, { onDone }) {
     const pick = candidates.find((c) => !clear.some((k) => overlaps(c, k))) || candidates[0];
     bubble.style.left = `${pick.left}px`;
     bubble.style.top = `${pick.top}px`;
+    const actionBox = anchorLocalBox(veil, actions);
+    const bubbleStyle = getComputedStyle(bubble);
+    const insetX = Number.parseFloat(bubbleStyle.paddingRight) || 0;
+    const insetY = Number.parseFloat(bubbleStyle.paddingTop) || 0;
+    actions.style.left = `${pick.left + b.width - actionBox.width - insetX}px`;
+    actions.style.top = `${pick.top + b.height - actionBox.height - insetY}px`;
     return true;
   }
 
