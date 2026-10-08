@@ -1161,7 +1161,7 @@ if (CORE) {
 // Seeds are runsim's fixed formula, so the run is the same every time; it takes
 // a few seconds. The selftest plants a throw inside a fight, a stalled fight and
 // a boss-less map cycle, and requires a clean fleet to repeat seed for seed.
-{
+if (CORE || (SELFTESTS && selftestInGroup(options.selftestGroup, 'runsim'))) {
   const { execFileSync } = await import('node:child_process');
   const { RUNSIM_FLEET_TIMEOUT_MS, RUNSIM_SELFTEST_TIMEOUT_MS } = await import('../tools/runsim-selftest-policy.mjs');
   const runSim = (args) => {
