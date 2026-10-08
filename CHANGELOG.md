@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Alternative updates retain combat plans and starting choices** ([#1715](https://github.com/cehinds/AshenSpire/pull/1715), `0.7.1.1100`). The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.
+
 - **Full-run checks choose a starting ability** ([#1716](https://github.com/cehinds/AshenSpire/pull/1716), `0.7.1.1098`). The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.
 
 - **Starting abilities respect your deck copy limit** ([#1714](https://github.com/cehinds/AshenSpire/pull/1714), `0.7.1.1097`). Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.

@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1715",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates retain combat plans and starting choices",
+    "detail": "The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.",
+    "build": "0.7.1.1100",
+    "pullRequest": 1715,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1715"
+  },
+  {
+    "id": "pr-1716",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Full-run checks choose a starting ability",
+    "detail": "The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.",
+    "build": "0.7.1.1098",
+    "pullRequest": 1716,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1716"
+  },
+  {
+    "id": "pr-1714",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Starting abilities respect your deck copy limit",
+    "detail": "Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.",
+    "build": "0.7.1.1097",
+    "pullRequest": 1714,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1714"
+  },
+  {
     "id": "pr-1712",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -11,6 +41,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1095",
     "pullRequest": 1712,
     "url": "https://github.com/cehinds/AshenSpire/pull/1712"
+  },
+  {
+    "id": "pr-1713",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Plans: recover from control and build around Blight",
+    "detail": "The next combat proposal gives Sleep, Paralysis and Dazed recovery cards with clear Stamina costs, caps Sleep healing and Ward restoration, and trades Prone's ranged protection for greater Contact damage. Three Blight milestones offer feats with two benefits and one drawback. Counter coverage, school interactions, tag combos and optional upcasting are documented for future implementation; gameplay does not change in this update.",
+    "build": "0.7.1.1094",
+    "pullRequest": 1713,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1713"
   },
   {
     "id": "pr-1711",
