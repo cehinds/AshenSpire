@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1755",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat shows Blight only when it matters",
+    "detail": "The separate Block, Barrier and Ward summary box is removed. Positive Ashen Blight occupies a wider centered header bar, with its own row on phones, and disappears at zero. Recovery and Blight feat buttons remain reachable above combat figures.",
+    "build": "0.7.1.1138",
+    "pullRequest": 1755,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1755"
+  },
+  {
     "id": "pr-1748",
     "date": "2026-10-08",
     "group": "2026-10-08",
