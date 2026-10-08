@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Alternative figures keep idle life and respect reduced motion** ([#1746](https://github.com/cehinds/AshenSpire/pull/1746), `0.7.1.1143`). Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.
 - **Alternative combat keeps its art with the complete tactical rules** ([#1740](https://github.com/cehinds/AshenSpire/pull/1740), `0.7.1.1142`). The alternative battlefield and class motions now use Martial and Spell tactics, enemy learning, full upcast prices and saved Blight outcomes. Counter preparation uses the played card, paid rank and character, and phone Upcast controls stay reachable. Corrupted cards keep readable volcanic trim while both development histories and alternative artwork remain preserved.
 
 
@@ -41,6 +42,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
 - **Counters prepare the right action and Upcast stays reachable** ([#1742](https://github.com/cehinds/AshenSpire/pull/1742), `0.7.1.1134`). Expanded Counter cards prepare defense or casting using the played card, its paid Upcast rank and its character in solo and co-op. The selected card's Upcast chooser stays within the phone screen. Corrupted cards keep their full volcanic trim across illustrated cards, rarities and card themes while effect text stays readable.
+
+- **Behind the scenes: alternative sync keeps the full history efficiently** ([#1747](https://github.com/cehinds/AshenSpire/pull/1747), `0.7.1.1133`). Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.
 
 - **Read enemy clues and learn their Bestiary** ([#1734](https://github.com/cehinds/AshenSpire/pull/1734), `0.7.1.1132`). Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.
 
