@@ -15,6 +15,7 @@ import { cardTargetPlan } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { combatCardView } from '../models/CombatCardView.js';
+import { combatSnapshotCardCosts } from '../models/CombatSnapshotCardCosts.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { openUpcastChoice } from '../components/upcastChoice.js';
 import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
@@ -511,20 +512,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // Power reduction and its live Weight Class (the pure dodge is class-priced),
   // in every pool the host checks — Energy, Mana AND Stamina.
   function snapshotCosts(def, player) {
-    if (def.combatPreview) {
-      const preview = def.combatPreview;
-      return { energy: preview.costIsX ? 0 : preview.cost, mana: preview.manaCost, stamina: preview.staminaCost, preview };
-    }
-    const pools = registries.framework.costProfile(def, {
-      powerCostReduction: passiveSum(registries, player.relicIds, 'powerCostReduction', player.itemUpgradeLevels || {}),
-      weightClass: player.weightClass || null,
-    });
-    return {
-      energy: pools.variable ? 0 : pools.action, mana: pools.mana || 0, stamina: pools.stamina || 0,
-      // The same numbers as a live preview, so the card face and its tooltip
-      // show what the host will charge (renderCard reads opts.preview).
-      preview: { costIsX: !!pools.variable, cost: pools.action, manaCost: pools.mana || 0, staminaCost: pools.stamina || 0, tokens: {} },
-    };
+    return combatSnapshotCardCosts(memberRegistries(), def, player);
   }
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.pendingAbilityDiscard || player.ended || !player.alive || !player.connected) return false;
