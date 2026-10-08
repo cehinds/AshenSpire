@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1746",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative figures keep idle life and respect reduced motion",
+    "detail": "Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.",
+    "build": "0.7.1.1143",
+    "pullRequest": 1746,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1746"
+  },
+  {
     "id": "pr-1737",
     "date": "2026-10-08",
     "group": "2026-10-08",
