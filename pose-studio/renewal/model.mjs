@@ -1,4 +1,9 @@
 // Authoring sampler: frame time and travel are independent of image dimensions.
+// Equipment is deliberately not an input until tag-combination choreography exists.
+export function defaultFamily(registry, classId) {
+  return registry.families[classId] ?? null;
+}
+
 export function hitFlashOpacity(action, progress, { reduced = false } = {}) {
   if (reduced || action !== 'hurt' || progress < 0 || progress >= .55) return 0;
   return .72 * (1 - progress / .55);
