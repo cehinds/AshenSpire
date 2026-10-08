@@ -271,8 +271,10 @@ if (!entrySrc) fail('no <script type="module" src="..."> entry found in index.ht
 //   import * as N from './x.js';
 //   import './x.js';                       (side-effect only)
 // Trailing empty statements are legal module syntax (e.g. `import './x.js';;`).
+// Match a side-effect import first so the multi-line `from` form cannot swallow
+// it together with a later named import.
 const IMPORT_RE =
-  /^[ \t]*import\b(?:[\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
+  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?:[\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
 
 function resolveSpecifier(fromAbs, spec) {
   if (!spec.startsWith('.')) {
