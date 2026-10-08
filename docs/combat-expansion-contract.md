@@ -1,6 +1,3 @@
-
-
-
 # Combat expansion implementation contract
 
 Owner authorization: implement the revised combat notes in one delivery and land them in regular and alternative dev/test (2026-10-07).
@@ -49,7 +46,8 @@ Owner authorization: implement the revised combat notes in one delivery and land
   - Native corrupted cards pay irreversible printed Blight on every accepted play and Exhaust for that combat. Ordinary Decay causes no Blight.
   - Crossing 25/50/75 queues the matching locked-tier choice once. At 100, resolve the one-time 90% loss check before card effects or choices; survivors convert the entire present/future deck.
   - Blighted survivors make one saved 5% death check at each subsequent combat entry. Reloads, retries, clones, and reward reopening cannot repeat any check or feat claim.
-  - Converted cards retain their ordinary lifecycle and receive the revised notes' cheaper Action cost and authored damage/healing/temporary-protection bonuses. Recovery and upcast surcharges are excluded.
+  - In solo, a failed 100-threshold or later 5% check ends the run. In co-op, either failure permanently corruption-eliminates only the checked seat; surviving seats continue, and the shared run ends in defeat only when no living seat remains. Corruption elimination is separate from HP, downed state, and connection state; it cannot be revived or cleared, and the host commits the per-seat outcome plus any shared terminal outcome atomically before card effects, rewards, or broadcast.
+  - Converted cards retain their ordinary lifecycle and receive the revised notes' cheaper Action cost and authored damage/healing/temporary-protection bonuses. Recovery and upcast surcharges are excluded. Every converted ordinary card has a visible printed Ashen Blight price of `+0`; an accepted play records that zero payment while the meter remains capped at 100 and never repeats the threshold check. Native corrupted cards retain and record their authored printed price, with the applied meter delta saturating at zero at the cap.
   - X-cost cards retain X; only fixed ordinary Action costs receive the conversion discount. Cinder Sight uses an explicitly selected eligible buildup, with authored-order selection as the deterministic default. Ashen Heart spends its cycle budget on its first positive authored restoration attempt even if the pool is full.
   - Milestone attribute benefits use an effective-attribute projection without changing allocated points. Accepted corruption payments and committed encounter outcomes persist before presentation/broadcast; a failed durable save rejects the candidate. Revival cannot intercept terminal Blight loss.
   - The run bar, milestone choices, feat drawbacks, printed card price, and fading volcanic treatment must be playable and inspectable in both game variants.
