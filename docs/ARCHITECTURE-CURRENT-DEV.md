@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `codex/python-sync-checkout-20261008`
-- Source commit: `897260ed2154d25495a9521e4940078b2e07aa27`
+- Source branch: `dev`
+- Source commit: `ab8c92a5b5cc31a5814648e0f97be9b9d628b429`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
