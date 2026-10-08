@@ -242,9 +242,9 @@ const PROBE = `(() => {
   if (!veil) return { veil: false };
   const vw = innerWidth, vh = innerHeight;
   const box = (sel) => {
-    // Tutorial controls are siblings of the pointer-transparent veil so the
-    // veil cannot make the board beneath it unplayable. Measure those live
-    // document controls while the veil remains the tutorial-presence guard.
+    // Controls remain inside the pointer-transparent veil and own their hit
+    // lane independently of the prose bubble. Measure those live controls
+    // while the veil remains the tutorial-presence guard.
     const el = document.querySelector(sel);
     if (!el) return null;
     const r = el.getBoundingClientRect();

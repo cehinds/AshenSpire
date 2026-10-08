@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1737",
     "date": "2026-10-08",
     "group": "2026-10-08",
-    "summary": "Alternative sigils and tutorial controls finish their integration",
-    "detail": "Alternative combat retains its battlefield artwork and animation pacing while gaining the completed action and school sigils, combined combat input behavior, and tutorial controls that avoid cards, combat controls, and visible fighter targets across desktop and phone layouts.",
-    "build": "0.7.1.1135",
+    "summary": "Alternative tutorial controls stay reachable",
+    "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
+    "build": "0.7.1.1140",
     "pullRequest": 1737,
     "url": "https://github.com/cehinds/AshenSpire/pull/1737"
   },
