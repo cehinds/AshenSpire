@@ -11,7 +11,8 @@ export function sigilHtml(id, kind = 'action', { tooltip = true } = {}) {
 export function cardSigilsHtml(identity, damageTypes = []) {
   if (!identity) return '';
   // Card taps belong to selection; Information owns their explanations.
-  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}">${sigilHtml(identity.action, 'action', {tooltip:false})}${sigilHtml(identity.school, 'school', {tooltip:false})}${damageTypes.length ? `<span class="card-damage-types">${damageTypes.map(esc).join(' · ')}</span>` : ''}</div>`;
+  const label = ACTION_SIGILS[identity.action]?.label || '';
+  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}">${sigilHtml(identity.action, 'action', {tooltip:false})}<span class="card-type-name">${esc(label)}</span></div>`;
 }
 
 export function sigilExplanationHtml(identity) {

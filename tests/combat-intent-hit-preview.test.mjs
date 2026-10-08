@@ -43,6 +43,20 @@ const amounts = ({ combat, enemy }, target = 'p1') => combat.eventLog
   .filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id && (!combat.players || event.targetPlayerId === target))
   .map(event => event.amount);
 
+for (const coop of [false,true]) test(`${coop ? 'co-op' : 'solo'} exact Counter reads expose prepared HP and Poise separately`, () => {
+  const f=fight({coop,maneuver:'counter',counter:false});
+  f.enemy.combatCounter={version:2,payload:{hp:0,poise:4,ward:0}};
+  const shown=f.preview();
+  assert.equal(shown.counterDamage,0);
+  assert.equal(shown.counterPoiseDamage,4);
+  f.enemy.intentRevealed=false;
+  if(coop) f.enemy.intentReads={p1:false,p2:true};
+  const hidden=f.preview();
+  assert.equal(hidden.hidden,true);
+  assert.equal(hidden.counterDamage,undefined);
+  assert.equal(hidden.counterPoiseDamage,undefined);
+});
+
 for (const coop of [false, true]) for (const block of [1, 6]) {
   test(`${coop ? 'co-op' : 'solo'} multi-hit Counter preview spends only one charge with Block${block}`, () => {
     const f = fight({ coop, block });
