@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The in-run Load door, driven in the real page (SPEC §3.12, §9 M2).
 //
-// Two claims, both through src/main.js's own door — the Quick Menu's Load row
+// These claims run through src/main.js's own door — the Quick Menu's Load row
 // → loadActiveSlot → confirmSlotLoad → resumeRun — never a copy of it:
 //
 //   NEWER   Loading a slot a newer build wrote, mid-run, is refused up front:
@@ -19,12 +19,13 @@
 //           open (REFUSED-KEEPS-RUN). `?shotRefusedSlot=3` plants it.
 //   RESTART Abandoning a legacy fight mid-combat and loading the slot
 //           restarts that fight from its entry receipt: turn 1, the same HP,
-//           the same opening hand, an unchanged deck. tests/midcombat-reload
+//           the same opening hand, RNG seed/counters, an unchanged deck. tests/midcombat-reload
 //           proves the same legacy property against a hand-copied mirror of
 //           enterCombat; this is the production load door itself.
-//   SNAPSHOT Expanded combat commits each accepted transaction. Its separate
-//           default-version fixture must load the exact committed snapshot,
-//           including resources, piles, enemies and random-stream counters.
+//   SNAPSHOT Expanded combat retains explicit Save Game checkpoints. Its
+//           default-version fixture saves a later turn, advances an unsaved
+//           turn, then loads the exact checkpoint: resources, piles, enemies,
+//           RNG seed and random-stream counters.
 //   OVERLAY-FOCUS  The same refused load, launched from the in-run
 //           overlay's quick navigation instead of the combat ☰ menu: the
 //           overlay stays open until resumeRun knows the outcome, so "Keep
@@ -95,9 +96,15 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'combat entry stops writing its receipt',
-        file: 'src/main.js',
-        find: '  if (!resuming) persist();',
-        replace: '  // slot-load-door selftest plant',
+        // The original deletion is now protected by the v2 durable opening
+        // checkpoint. Omit BOTH saves to plant the same missing-entry defect;
+        // the old deletion alone no longer produces an observed regression.
+        edits: [
+          { file: 'src/main.js', find: '  if (!resuming) persist();',
+            replace: '  // slot-load-door selftest plant' },
+          { file: 'src/main.js', find: '      durable(combat);',
+            replace: '      // slot-load-door selftest plant: omit the v2 entry checkpoint too' },
+        ],
         expectRed: /RED SLOT-LOAD-MIDCOMBAT-RESTART/,
       },
       {
@@ -202,6 +209,7 @@ try {
       hand: ids('hand'),
       cards: ['draw', 'hand', 'discard', 'exhaust'].flatMap(ids).sort(),
       enemies: c.enemies.map((e) => ({ id: e.enemyId, hp: e.hp })),
+      rng: { seed: c.rng.seed, counters: c.rng.getCounters() },
       liveDeck: spoils.liveDeck, savedDeck: spoils.savedDeck,
     };
   })()`);
@@ -361,6 +369,10 @@ try {
     if (!same(reloaded.hand, opening.hand)) problems.push(`hand [${reloaded.hand}] vs [${opening.hand}]`);
     if (!same(reloaded.cards, opening.cards)) problems.push('the fight holds different cards');
     if (!same(reloaded.enemies, opening.enemies)) problems.push(`enemies ${JSON.stringify(reloaded.enemies)} vs ${JSON.stringify(opening.enemies)}`);
+    // A wrong seed can restore identical current geometry from a snapshot,
+    // while changing the next random draw. Compare the full RNG receipt now.
+    if (reloaded.rng.seed !== opening.rng.seed) problems.push(`RNG seed ${reloaded.rng.seed} vs ${opening.rng.seed}`);
+    if (!same(reloaded.rng.counters, opening.rng.counters)) problems.push(`RNG counters ${JSON.stringify(reloaded.rng.counters)} vs ${JSON.stringify(opening.rng.counters)}`);
     if (!same(reloaded.liveDeck, opening.liveDeck) || !same(reloaded.savedDeck, opening.savedDeck)) problems.push('the deck changed');
     check(problems.length === 0, 'SLOT-LOAD-MIDCOMBAT-RESTART',
       problems.length ? problems.join('; ') : `turn 1, HP ${reloaded.playerHp}, the same ${reloaded.hand.length}-card opening hand, deck of ${reloaded.liveDeck.length} unchanged`);
@@ -447,30 +459,40 @@ try {
   } catch (error) {
     check(false, 'SLOT-LOAD-OVERLAY-FOCUS', error.message);
   }
-  // A fresh default-version document exercises the expanded save contract
-  // through the same Load door, rather than forcing entry-restart semantics
-  // onto the transaction snapshots that current runs intentionally persist.
+  // A fresh default-version document exercises an explicit expanded Save
+  // Game checkpoint and the same Load door after a later unsaved action.
   try {
     await ev('window.__staleDoc = 1');
     await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat` }, sessionId);
     await until(`!window.__staleDoc && !location.search.includes('shotCombatVersion') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'a fresh expanded combat');
+    if (!(await ev('window.__combat.combatExpansionVersion === 2'))) throw new Error('the default fixture is not expanded combat');
     await advanceTurn();
     await advanceTurn();
-    const committed = await ev(`(async () => {
+    await click('#combat-menu');
+    await until(`!!document.querySelector('.qn-row[data-act="save"]')`, 'the Quick Menu Save Game row');
+    await click('.qn-row[data-act="save"]');
+    await until(`document.querySelector('.qn-row[data-act="save"] .qn-label')?.textContent === 'Saved · Slot 1'`, 'the successful Save Game checkpoint');
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
+    await until(`!document.querySelector('.quick-nav-veil')`, 'the saved Quick Menu to close');
+    const snapshotWithRng = () => ev(`(async () => {
       const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');
-      return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: window.__combat.rng.getCounters() });
+      return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: { seed: window.__combat.rng.seed, counters: window.__combat.rng.getCounters() } });
     })()`);
-    const committedPose = await pose();
+    const saved = await snapshotWithRng();
+    const savedPose = await pose();
+    if (savedPose.turn <= 1) throw new Error('Save Game did not capture a later turn');
+    await advanceTurn();
+    const unsavedPose = await pose();
+    check(unsavedPose.turn > savedPose.turn && await snapshotWithRng() !== saved, 'SLOT-LOAD-EXPANDED-UNSAVED',
+      `the live fight advances from saved turn ${savedPose.turn} to distinct unsaved turn ${unsavedPose.turn}`);
     await ev('window.__combat.__slotLoadProbe = true');
     await openLoadSlot(1);
     await confirmIfAsked();
     await until(`!!window.__combat && !window.__combat.__slotLoadProbe && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the restored expanded snapshot');
-    const restored = await ev(`(async () => {
-      const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');
-      return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: window.__combat.rng.getCounters() });
-    })()`);
-    check(committedPose.turn > 1 && restored === committed, 'SLOT-LOAD-EXPANDED-SNAPSHOT',
-      restored === committed ? `the new combat restores exact committed turn ${committedPose.turn}, resources, piles, enemies and RNG` : 'the restored combat differs from its committed snapshot');
+    const restored = await snapshotWithRng();
+    check(restored === saved, 'SLOT-LOAD-EXPANDED-SNAPSHOT',
+      restored === saved ? `the new combat restores exact saved turn ${savedPose.turn}, resources, piles, enemies, RNG seed and counters` : 'the restored combat differs from its explicit Save Game checkpoint');
   } catch (error) {
     check(false, 'SLOT-LOAD-EXPANDED-SNAPSHOT', error.message);
   }
