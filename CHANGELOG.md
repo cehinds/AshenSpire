@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
-- **Combat intents and targets share the approved option C layout** ([#1750](https://github.com/cehinds/AshenSpire/pull/1750), `0.7.1.1137`). Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.
+- **Combat intents and targets share the approved option C layout** ([#1750](https://github.com/cehinds/AshenSpire/pull/1750), `0.7.1.1138`). Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.
 
 - **Behind the scenes: alternative sync keeps the full history efficiently** ([#1747](https://github.com/cehinds/AshenSpire/pull/1747), `0.7.1.1133`). Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.
 
