@@ -1,4 +1,5 @@
 import { alternativeSprite, alternativePlayerId } from './alternativeArt.js';
+import { createAlternativeCardStage } from './alternativeCardStage.js';
 import { armamentIconAsset } from '../model/equipmentArt.js';
 import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
 import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
@@ -771,6 +772,8 @@ export function playerSprite(customization = {}, classId, armourId = 'default', 
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && presentation.view !== 'portrait') {
+    const cardStage = createAlternativeCardStage(classId, { still: style === 'rendered' || Boolean(presentation.view) });
+    if (cardStage) { registerStage(cardStage.el, cardStage); return cardStage.el; }
     const alternative = alternativeSprite(alternativePlayerId(classId, armourId), 'player');
     if (alternative) return alternative;
   }
