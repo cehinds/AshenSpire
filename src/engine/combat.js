@@ -1167,12 +1167,14 @@ function effectiveCost(combat, def) {
 // What playing this card costs right now, in every pool: Actions (X spends
 // them all), Mana and Stamina, weight class and relic reductions applied. The
 // one pricing doPlayCard pays, exported so a bot can ask before it plays.
-function playCosts(combat, def) {
+export function resolvedCardPlayCosts(combat, def) {
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
   const stamina = (def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def)) + (def.upcastSurcharge || 0);
   return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - R.matchingAbilityCharges(combat.player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
 }
+
+function playCosts(combat, def) { return resolvedCardPlayCosts(combat, def); }
 
 /** cardPlayCosts(combat, cardInstanceId) → { energy, mana, stamina } for a card in hand. */
 export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
@@ -1509,7 +1511,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   }
   const p = combat.player;
   const isX = def.cost === 'X';
-  const shownCost = isX ? p.energy : effectiveCost(combat, def);
+  const paidCosts = playCosts(combat, def);
+  const shownCost = combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
   const living = combat.enemies.filter((e) => e.alive);
 
@@ -1750,9 +1753,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     type: def.type,
     cost: shownCost,
     costIsX: isX,
-    manaCost: playCosts(combat, def).mana,
-    // The stamina badge in a fight is the class-priced one for the pure dodge.
-    staminaCost: shownCost,
+    manaCost: paidCosts.mana,
+    // Expanded badges and affordability use the same complete receipt as pay.
+    staminaCost: combat.combatExpansionVersion === 2 ? paidCosts.stamina : shownCost,
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,
     tokens,
