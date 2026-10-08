@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1721",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative previews document the current published release",
+    "detail": "Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.",
+    "build": "0.7.1.1101",
+    "pullRequest": 1721,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1721"
+  },
+  {
     "id": "pr-1715",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -11,6 +21,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1100",
     "pullRequest": 1715,
     "url": "https://github.com/cehinds/AshenSpire/pull/1715"
+  },
+  {
+    "id": "pr-1720",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "README shows the current published game",
+    "detail": "The README illustrates character creation, exploration, card combat and shops with screenshots from the published release candidate, including a phone view. Future README updates verify and refresh the gallery for the latest published release.",
+    "build": "0.7.1.1099",
+    "pullRequest": 1720,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1720"
   },
   {
     "id": "pr-1716",
