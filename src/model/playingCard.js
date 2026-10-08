@@ -32,6 +32,7 @@ import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor } from './combatCardProfile.js';
+import { cardSigilIdentity } from '../content/combatSigils.js';
 
 const freeze = (value) => Object.freeze(value);
 
@@ -280,6 +281,7 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     }),
     costs,
     tags,
+    sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
     paint: freeze({
       typeColor: typeRow ? typeRow.color : null,
       radiusPx: typeRow ? typeRow.radius : null,

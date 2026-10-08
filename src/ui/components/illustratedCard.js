@@ -2,6 +2,8 @@ import {CARD_COMPONENTS} from '../../content/cardComponents.generated.js';
 import {assetUrl} from '../assetmap.js';
 import {esc} from './tooltip.js';
 import {playingCardArt} from '../cardArtwork.js';
+import {cardSigilsHtml} from './combatSigilView.js';
+import {fitIllustratedCards} from './illustratedCardFitter.js';
 
 export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended}={}) {
   const override=CARD_COMPONENTS.cards[id]?.layers.find(l=>l.bind==='artwork')?.href;
@@ -24,11 +26,14 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
   const portraitArt=painting?.startsWith('assets/cards/extended/');
   const layers=doc.layers.map(l=>({...l,...costLayers[l.id],...(portraitArt&&l.bind==='artwork'?{visible:true,fit:'cover',trim:null}: {})})).filter(l=>l.visible!==false).map(source=>{
     let l=equipmentArtwork&&source.bind==='artwork'?{...source,...doc.equipmentArtwork}:source;
-    if(model.faceType&&l.bind==='rules')l={...l,autoFit:true,minFontSize:14,maxLines:12};
+    if(model.sigils&&l.bind==='rules')l={...l,autoFit:true,minFontSize:22,maxLines:null};
+    else if(model.faceType&&l.bind==='rules')l={...l,autoFit:true,minFontSize:14,maxLines:12};
     if(model.faceType&&l.bind==='tags')l={...l,fontSize:30,minFontSize:24,maxFontSize:30,fontWeight:'bold',maxLines:1,autoFit:true};
     const position=`left:${l.x/doc.width*100}%;top:${l.y/doc.height*100}%;width:${l.w/doc.width*100}%;height:${l.h/doc.height*100}%;opacity:${l.opacity};filter:hue-rotate(${Number.isFinite(l.hue)?l.hue:0}deg);transform:rotate(${l.rotation}deg);`;
     let body='';
-    if(l.type==='image'){
+    if(l.bind==='tags'&&model.sigils){
+      body=cardSigilsHtml(model.sigils,model.tags.filter(tag=>tag.id.startsWith('damage:')).map(tag=>tag.label));
+    }else if(l.type==='image'){
       const href=l.bind==='artwork'?(painting||l.href):l.href;
       if(href){
         const [x,y,w,h]=l.trim||[0,0,l.imageWidth||1,l.imageHeight||1];
@@ -45,48 +50,4 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
   return `<div class="illustrated-card-face" data-cost-layout="${costLayout}" aria-label="${esc(model.name)}" data-design-width="${doc.width}" style="--illustrated-ratio:${doc.width}/${doc.height}">${layers}</div>`;
 }
 
-// Keep type within authored bounds. Measure unclamped text, then restore the
-// visible line budget so long descriptions stop shrinking at the readable floor.
-// THE WHOLE HAND IN STEP. Each probe writes a font size and reads the text's
-// box, and a read after a write is a synchronous layout. One text at a time
-// that was up to eight layouts per text, per card: about ninety on the first
-// frame of a fight. Every text now takes the same probe of its own search in
-// the same pass (write all sizes, then read all boxes), so a batch costs the
-// search's nine passes however many cards it holds. Each text's search, and so
-// its result, is unchanged: probes of different texts never share a box.
-export function fitIllustratedCards(cards){
-  const faces=[];
-  for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
-  const widths=faces.map(face=>face.clientWidth);
-  const texts=[];
-  faces.forEach((face,i)=>{
-    if(!widths[i])return;
-    const scale=widths[i]/Number(face.dataset.designWidth);
-    for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
-      const lines=Number(text.dataset.maxLines)||1;
-      const low=Number(text.dataset.minFont)*scale;
-      texts.push({text,scale,lines,low,high:Math.max(low,Number(text.dataset.maxFont)*scale),boxHeight:0});
-    }
-  });
-  if(!texts.length)return;
-  for(const t of texts)t.boxHeight=t.text.parentElement.clientHeight;
-  // One probe for every text still searching: all writes, then all reads.
-  const probe=(list,sizeOf)=>{
-    for(const t of list){t.text.style.webkitLineClamp='unset';t.text.style.fontSize=sizeOf(t)+'px';}
-    return list.map(t=>{const size=sizeOf(t);return t.text.scrollHeight<=Math.min(t.boxHeight,size*1.25*t.lines)+1 && t.text.scrollWidth<=t.text.clientWidth+1;});
-  };
-  const atHigh=probe(texts,t=>t.high);
-  const searching=[];
-  texts.forEach((t,i)=>{if(atHigh[i])t.result=t.high;else{t.lo=t.low;t.hi=t.high;searching.push(t);}});
-  for(let i=0;i<7&&searching.length;i++){
-    const mid=t=>(t.lo+t.hi)/2;
-    const ok=probe(searching,mid);
-    searching.forEach((t,j)=>{const m=mid(t);if(ok[j])t.lo=m;else t.hi=m;});
-  }
-  for(const t of searching)t.result=t.lo;
-  for(const t of texts){
-    t.text.style.fontSize=t.result+'px';
-    t.text.style.webkitLineClamp=String(t.lines);
-    t.text.dataset.fittedFont=String(t.result/t.scale);
-  }
-}
+export { fitIllustratedCards };

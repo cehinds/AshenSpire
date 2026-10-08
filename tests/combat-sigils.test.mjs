@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../src/content/combatSigils.js';
 import { compactCardRules, cardSigilsHtml, sigilExplanationHtml, sigilHtml } from '../src/ui/components/combatSigilView.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { playingCardModel, combatCardType } from '../src/model/playingCard.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 
 test('all requested identities have unique monochrome geometry', () => {
   assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defend','counter','sweep','ranged','smash','spell','power','skill','status']);
@@ -39,4 +44,18 @@ test('marks preserve readable accessible names and inspection explanations', () 
 test('short damage wording retains numbers, types, timing, targets and conditions', () => {
   const original = 'Deal <span class="val">9</span> Piercing damage to all enemies.\nGain 4 Guard until next turn. If Guard breaks, deal 3 Cold damage.';
   assert.equal(compactCardRules(original), '<span class="val">9</span> Piercing damage to all enemies. Gain 4 Guard until next turn. If Guard breaks, deal 3 Cold damage.');
+});
+
+test('every base, upgrade, authored rank and equipment profile uses the shared identity', () => {
+  const reg = createRegistries(contentBundle), actions = new Set(), schools = new Set();
+  const refs = contentBundle.cards.flatMap(card => [{cardId:card.id}, {cardId:card.id,upgraded:true}, ...(card.gradeProfiles || []).map((_,abilityRank)=>({cardId:card.id,abilityRank}))]);
+  for (const profile of reg.equipment.basicCardProfiles || []) refs.push({cardId:profile.role === 'defend' ? 'defend' : 'strike',profileId:profile.id});
+  for (const ref of refs) for (const expanded of [false, true]) {
+    const def = expanded ? applyCombatExpansionCard(resolveCard(reg, ref)) : resolveCard(reg, ref);
+    const model = playingCardModel(reg, ref, {preview: expanded ? {resolvedDefinition:def} : null});
+    assert.deepEqual(model.sigils, cardSigilIdentity(combatCardType(def), combatProfileFor(def)), JSON.stringify(ref));
+    assert.ok(Object.isFrozen(model.sigils));
+    actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
+  }
+  assert.equal(actions.size, 10); assert.equal(schools.size, 8);
 });

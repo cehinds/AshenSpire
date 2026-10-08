@@ -12,6 +12,9 @@ const browser=await chromium.connectOverCDP(launched.wsUrl);
 const base=`http://localhost:${server.server.address().port}`;
 const standalone=process.argv.includes('--standalone');
 const report={source:process.env.SIGIL_SOURCE_SHA || null,build:process.env.SIGIL_BUILD_VERSION || null,surface:standalone?'standalone':'source',devices:[]};
+// audio.js deliberately probes optional SFX samples and synthesizes missing
+// cues. Retain these requests in the report; required art and code must load.
+const requiredFailures=failed=>failed.filter(f=>!f.includes('favicon')&&!/^404 .*\/assets\/sfx\/[^/]+\.ogg$/.test(f));
 function cardGeometry(cards){return cards.map(c=>{
  const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
  const r=text.getBoundingClientRect(),top=title.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect(),damage=c.querySelector('.card-damage-types'),words=damage?.getBoundingClientRect();
@@ -40,8 +43,16 @@ try {
   const page=await context.newPage();const errors=[],failed=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('response',r=>{if(r.status()>=400 && new URL(r.url()).origin===base)failed.push(`${r.status()} ${r.url()}`);});
-  await page.goto(base+(standalone?'/AshenSpire.html':'/index.html')+'?shot=combat',{waitUntil:'domcontentloaded',timeout:120000});
-  await page.waitForSelector('.hand .card [data-primary-sigil]');
+  await page.goto(base+(standalone?'/AshenSpire.html':'/index.html')+'?shot=combat',{waitUntil:'commit',timeout:120000});
+  console.log(`${name}: page connected`);
+  page.on('console', msg=>{if(msg.type()==='error')console.error(msg.text());});
+  try { await page.waitForSelector('.hand .card [data-primary-sigil]',{timeout:120000}); }
+  catch(error){
+   await page.screenshot({path:resolve(output,name+'-failure.png')});
+   console.error(JSON.stringify({url:page.url(),errors,failed,body:(await page.locator('body').innerText()).slice(0,2000)}));
+   throw error;
+  }
+  console.log(`${name}: hand ready`);
   assert.equal(await page.evaluate(()=>window.__combat.combatExpansionVersion),2,'live fixture uses expanded combat');
   await page.evaluate(()=>document.fonts.ready);
   await page.waitForTimeout(800);
@@ -49,7 +60,10 @@ try {
   await page.screenshot({path:resolve(output,name+'-combat.png')});
   const beforeInspect=await page.evaluate(()=>JSON.stringify({plays:window.__combat.eventLog.filter(e=>e.type==='cardPlayed'),energy:window.__combat.player.energy,mana:window.__combat.player.mana,stamina:window.__combat.player.stamina}));
   const card=page.locator('.hand .card').last(),glyph=card.locator('.combat-sigil-action');
-  if(phone)await glyph.tap();else await glyph.click();
+  // The native hand hit lane intentionally owns pointer events over the face.
+  // Tap the mark's screen position through that lane, as a player does.
+  const mark = await glyph.boundingBox(), point={x:mark.x+mark.width/2,y:mark.y+mark.height/2};
+  if(phone)await page.touchscreen.tap(point.x,point.y);else await page.mouse.click(point.x,point.y);
   assert.ok(await card.locator('.card-info-button').isVisible(),'sigil tap selects the card');
   if(phone)await card.locator('.card-info-button').tap();else await card.locator('.card-info-button').click();
   await page.locator('.card-inspection-modal .inspection-sigils').waitFor();
@@ -65,7 +79,7 @@ try {
    assert.ok(geometry.every(g=>g.accessibleName?.includes(g.actionName)&&(!g.schoolName||g.accessibleName.includes(g.schoolName))),'standalone action and school names remain accessible');
    assert.ok(geometry.every(g=>g.damageTypes.every(word=>g.accessibleName?.includes(word))),'standalone damage words remain accessible');
    assert.equal(errors.length,0,errors.join('\n'));
-   assert.equal(failed.filter(f=>!f.includes('favicon')).length,0,failed.join('\n'));
+   assert.equal(requiredFailures(failed).length,0,failed.join('\n'));
    report.devices.push({name,hand:geometry,errors,failed});await context.close();continue;
   }
   const refs=await page.evaluate(async()=>{
@@ -73,15 +87,23 @@ try {
    const {createRegistries,resolveCard}=await import('/src/model/registries.js');
    const {renderCard,scheduleCardFits}=await import('/src/ui/components/card.js');
    const {playingCardModel}=await import('/src/model/playingCard.js');
+   const {previewCard}=await import('/src/engine/combat.js');
    const registries=createRegistries(contentBundle);
    const refs=contentBundle.cards.flatMap(c=>[
     {cardId:c.id}, {cardId:c.id,upgraded:true},
     ...(c.gradeProfiles||[]).map((p,abilityRank)=>({cardId:c.id,abilityRank})),
    ]);
    for(const p of registries.equipment.basicCardProfiles||[])refs.push({cardId:p.role==='defend'?'defend':'strike',profileId:p.id});
+   refs.push(...refs.map(ref=>({...ref,qaExpanded:true})));
+   const combat=window.__combat,originalHand=combat.piles.hand;
+   const previewFor=ref=>{
+    if(!ref.qaExpanded)return null;
+    combat.piles.hand=[{...ref,instanceId:'sigil-corpus-preview'}];
+    return previewCard(combat,'sigil-corpus-preview',combat.enemies.find(e=>e.alive)?.id);
+   };
    const picked=[],actions=new Set(),schools=new Set();let corrupted=false,rankFive=false;
    for(const ref of refs){
-    const model=playingCardModel(registries,ref),identity=model.sigils,def=resolveCard(registries,ref);
+    const preview=previewFor(ref),model=playingCardModel(registries,ref,{preview}),identity=model.sigils,def=preview?.resolvedDefinition||resolveCard(registries,ref);
     if(!actions.has(identity.action)||(identity.school&&!schools.has(identity.school))||(def.corrupted&&!corrupted)||(model.abilityRank===5&&!rankFive)){
      picked.push(ref);actions.add(identity.action);if(identity.school)schools.add(identity.school);
      if(def.corrupted)corrupted=true;if(model.abilityRank===5)rankFive=true;
@@ -89,9 +111,10 @@ try {
    }
    const ordered=[...picked,...refs.filter(ref=>!picked.includes(ref))];
    const app=document.querySelector('#app');app.replaceChildren();
-   const style=document.createElement('style');style.textContent='.sigil-corpus{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:28px;padding:35px 20px;background:#1d1712;width:100%;box-sizing:border-box}.sigil-corpus .card{width:100%!important;max-width:200px!important;margin:auto}.sigil-corpus:not([data-corpus-expanded]) .card[data-qa-deferred="true"]{display:none!important}@media(max-width:500px){.sigil-corpus{grid-template-columns:repeat(2,minmax(0,1fr))}}';document.head.append(style);
+   const style=document.createElement('style');style.textContent='html,body,#app{height:auto!important;overflow:visible!important;min-height:100vh}body{background:#1d1712}.sigil-corpus{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:28px;padding:35px 20px;background:#1d1712;width:100%;box-sizing:border-box}.sigil-corpus .card{width:100%!important;max-width:200px!important;margin:auto}.sigil-corpus:not([data-corpus-expanded]) .card[data-qa-deferred="true"]{display:none!important}@media(max-width:500px){.sigil-corpus{grid-template-columns:repeat(2,minmax(0,1fr))}}';document.head.append(style);
    const gallery=document.createElement('div');gallery.className='sigil-corpus';app.append(gallery);
-   ordered.forEach((ref,index)=>{const card=renderCard(registries,ref,{level:'inspect',inspection:false});card.dataset.qaRef=JSON.stringify(ref);card.dataset.qaDeferred=String(index>=picked.length);gallery.append(card);});
+   ordered.forEach((ref,index)=>{const card=renderCard(registries,ref,{level:'inspect',inspection:false,preview:previewFor(ref)});card.dataset.qaRef=JSON.stringify(ref);card.dataset.qaDeferred=String(index>=picked.length);gallery.append(card);});
+   combat.piles.hand=originalHand;
    scheduleCardFits(gallery.querySelectorAll('.card'));
    return refs.length;
   });
@@ -112,7 +135,7 @@ try {
   assert.ok(geometry.every(g=>g.damageTypes.every(word=>g.accessibleName?.includes(word))),'card names expose damage words');
   assert.ok(geometry.every(g=>g.extraTabStops===0),'sigils add no keyboard stops');
   assert.equal(errors.length,0,errors.join('\n'));
-  assert.equal(failed.filter(f=>!f.includes('favicon')).length,0,failed.join('\n'));
+  assert.equal(requiredFailures(failed).length,0,failed.join('\n'));
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal overflow');
   report.devices.push({name,refs,fullyReadable:geometry.length,expanded:geometry.filter(g=>g.expanded).length,minFont:Math.min(...geometry.map(g=>g.font)),actions:[...new Set(geometry.map(g=>g.action))],schools:[...new Set(geometry.map(g=>g.school).filter(Boolean))],errors,failed});
   console.log(`${name}: ${refs} complete native faces`);
