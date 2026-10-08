@@ -1,5 +1,5 @@
 {
-  "source": null,
+  "source": "77a847ae6bb3a5c84ed475442ba9b44a423d0c0e",
   "build": null,
   "surface": "source",
   "devices": [
@@ -7,8 +7,30 @@
       "name": "desktop",
       "refs": 2186,
       "fullyReadable": 2186,
-      "expanded": 299,
+      "expanded": 328,
       "minFont": 12.2222,
+      "widths": [
+        {
+          "width": 120,
+          "complete": 2186,
+          "minFont": 8.85417
+        },
+        {
+          "width": 124,
+          "complete": 2186,
+          "minFont": 9.14931
+        },
+        {
+          "width": 144,
+          "complete": 2186,
+          "minFont": 10.6219
+        },
+        {
+          "width": 200,
+          "complete": 2186,
+          "minFont": 12.2222
+        }
+      ],
       "actions": [
         "attack",
         "defend",
@@ -33,15 +55,37 @@
       ],
       "errors": [],
       "failed": [
-        "404 http://localhost:60246/assets/sfx/holdTick.ogg"
+        "404 http://localhost:62964/assets/sfx/holdTick.ogg"
       ]
     },
     {
       "name": "phone",
       "refs": 2186,
       "fullyReadable": 2186,
-      "expanded": 299,
+      "expanded": 331,
       "minFont": 11.1833,
+      "widths": [
+        {
+          "width": 120,
+          "complete": 2186,
+          "minFont": 8.85417
+        },
+        {
+          "width": 124,
+          "complete": 2186,
+          "minFont": 9.14931
+        },
+        {
+          "width": 144,
+          "complete": 2186,
+          "minFont": 10.6219
+        },
+        {
+          "width": 200,
+          "complete": 2186,
+          "minFont": 12.2222
+        }
+      ],
       "actions": [
         "attack",
         "defend",
@@ -66,10 +110,10 @@
       ],
       "errors": [],
       "failed": [
-        "404 http://localhost:60246/assets/sfx/nodeTravel.ogg",
-        "404 http://localhost:60246/assets/sfx/cardDraw.ogg",
-        "404 http://localhost:60246/assets/sfx/turnStinger.ogg",
-        "404 http://localhost:60246/assets/sfx/holdTick.ogg"
+        "404 http://localhost:62964/assets/sfx/nodeTravel.ogg",
+        "404 http://localhost:62964/assets/sfx/cardDraw.ogg",
+        "404 http://localhost:62964/assets/sfx/turnStinger.ogg",
+        "404 http://localhost:62964/assets/sfx/holdTick.ogg"
       ]
     }
   ]
