@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Alternative combat opens up with option C",
     "detail": "Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.",
-    "build": "0.7.1.1148",
+    "build": "0.7.1.1150",
     "pullRequest": 1751,
     "url": "https://github.com/cehinds/AshenSpire/pull/1751"
+  },
+  {
+    "id": "pr-1746",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative figures keep idle life and respect reduced motion",
+    "detail": "Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.",
+    "build": "0.7.1.1143",
+    "pullRequest": 1746,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1746"
   },
   {
     "id": "pr-1737",
