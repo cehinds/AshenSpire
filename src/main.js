@@ -3,7 +3,7 @@ import { queueInitialProgression } from './model/initialProgression.js';
 import { isAbilitySkill } from './model/abilityGrades.js';
 import { expandedProgression } from './model/classMilestones.js';
 import { claimClassMilestoneReward, rollClassMilestoneRewards } from './model/classMilestoneOffers.js';
-import { completedRunMeta, commitRunFinish } from './model/runCompletion.js';
+import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
 import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
@@ -77,6 +77,9 @@ import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
+import { createBrowserSaveManager } from './engine/browserSave.js';
+import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
+import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
@@ -117,8 +120,9 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
+import { mountBestiary } from './ui/screens/bestiary.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
-import { seedSettingsDefaults, seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoice } from './model/settingsDefaults.js';
+import { seedSettingsDefaults, seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoiceAsync } from './model/settingsDefaults.js';
 import { BUILD_VERSION } from './buildversion.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
@@ -296,7 +300,7 @@ if (shotState === 'crisis') {
   bootStorage.setItem(META_KEY, String(bootStorage.getItem(META_KEY)).slice(0, 24));
   bootStorage.removeItem(META_BACKUP_KEY);
 }
-const saves = createSaveManager(bootStorage);
+const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: navigator.locks });
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
 // EPHEMERAL store above. Read only when shotState is truthy, so a normal boot
@@ -1096,6 +1100,7 @@ function showLobby() {
       // solo map honoured their setting.
       mountCoop(app, {
         registries, conn, myId, myIds, meta: saves.loadMeta(),
+        bankEnemyKnowledge: saves.bankEnemyKnowledge ? value => saves.bankEnemyKnowledge(value) : null,
         onSettingsChange: persistSettingsChange,
         onLeave: () => showTitle(),
       });
@@ -1107,7 +1112,32 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
+const runStartOwner = createRunStartOwner();
+function newRun(config) {
+  const asked = config.seedString || randomSeedString();
+  const why = seedProblem(asked);
+  if (why) {
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))} — ${why}`);
+    console.error('[seed] refused at newRun:', { seedString: config.seedString, why });
+    return Promise.resolve({ ok: false, reason: why });
+  }
+  // Screenshot boot composes its fixture immediately after this call. Its
+  // memory profile is synchronous and must preserve that same-stack contract.
+  if (shotState) {
+    const profile = saves.ensureProfile();
+    if (!profile.ok) throw new Error(`Profile could not be saved: ${profile.reason}`);
+    return beginPreparedRun({ ...config, seedString: asked });
+  }
+  const surface = app.firstElementChild, previousRun = run;
+  return runStartOwner.start({
+    prepare: () => saves.ensureProfile(),
+    isCurrent: () => app.firstElementChild === surface && run === previousRun,
+    adopt: () => beginPreparedRun({ ...config, seedString: asked }),
+    onFailure: error => showSettingsNotice(`Profile could not be saved: ${error.message}`, 'profile'),
+  });
+}
+
+function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1147,11 +1177,23 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
   // and it is one line above the run being made, so the write order is the ask.
   // A refused seed returns above and creates nothing.
-  saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
   const legacyArcaneShot = shotState === 'combat' && shotParams.get('shotArcane') === 'matrix';
-  const combatExpansionVersion = legacyArcaneShot ? 1 : 2;
+  const shotCombatVersion = shotState === 'combat' ? shotParams.get('shotCombatVersion') : null;
+  if (shotCombatVersion !== null && !['1', '2'].includes(shotCombatVersion)) {
+    throw new Error('shotCombatVersion must be 1 or 2');
+  }
+  const combatExpansionVersion = legacyArcaneShot || shotCombatVersion === '1' ? 1 : 2;
+  const shotKnowledgeVersion = shotState === 'combat' ? shotParams.get('shotKnowledgeVersion') : null;
+  if (shotKnowledgeVersion !== null && !['0', '1'].includes(shotKnowledgeVersion)) {
+    throw new Error('shotKnowledgeVersion must be 0 or 1');
+  }
+  // Checkpoint fixtures can disable knowledge independently of combat rules.
+  // Normal runs and default expanded shots keep accepted knowledge durable.
+  const enemyKnowledgeVersion = shotKnowledgeVersion === null
+    ? legacyArcaneShot || shotCombatVersion === '1' ? null : 1
+    : shotKnowledgeVersion === '0' ? null : 1;
   const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
@@ -1160,7 +1202,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   rebuildRegistries(configSnapshot);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    profileMeta: saves.loadMeta(), combatExpansionVersion,
+    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion,
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
@@ -1170,6 +1212,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (quickStart) run.quickStart = true;
   if (!shotState) {
     openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
+    openRunEnemyKnowledge(run, { receiptId: run.classMasteryState.receiptId, bankable: true });
     registries = registriesForClassMastery(registries, run);
   }
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
@@ -1329,7 +1372,9 @@ function refusedRunLanding(slot) {
 // hand until the second pass hands back a run. A refusal restores the
 // registries and calls `onRefused` — the title by default; the in-run Load
 // door passes its own, which keeps the run on screen (confirmSlotLoad).
+let terminalResume = null;
 function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
+  if (terminalResume) return terminalResume;
   const liveRegistries = registries;
   const refused = () => {
     if (registries !== liveRegistries) {
@@ -1380,13 +1425,13 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   if (run.prologue?.version === 1) { migratePrologueState(run); persist(); }
   if (run.pendingFinish) {
     const victory = run.pendingFinish.victory;
-    return showFinishedRun(victory);
+    return resumeTerminal(() => showFinishedRun(victory));
   }
   if (run.combatPendingOutcome) {
     const pending = run.combatPendingOutcome;
     const ended = restoreCombatSnapshot({ registries, rng, snapshot: pending.snapshot });
     const encounter = combatEncounterFor(registries, run, { nodeId: pending.nodeId, encounterId: pending.encounterId });
-    return onCombatEnd(pending.result, ended, encounter);
+    return resumeTerminal(() => onCombatEnd(pending.result, ended, encounter));
   }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
@@ -1404,6 +1449,16 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   } else {
     showMap();
   }
+}
+
+function resumeTerminal(operation) {
+  const previouslyInert = app.inert;
+  app.inert = true;
+  terminalResume = Promise.resolve().then(operation).finally(() => {
+    app.inert = previouslyInert;
+    terminalResume = null;
+  });
+  return terminalResume;
 }
 
 function saveSlotRecords() {
@@ -1682,6 +1737,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
+    onBestiary: showBestiary,
     onProfile: showProfile,
     onSettings: showSettings,
     onOffline: showOfflinePlay,
@@ -1708,8 +1764,8 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     }
   }
   if (settingsChoicePending) {
-    const choose = (apply) => {
-      const result = commitSettingsChoice(saves.loadMeta(), BUILD_VERSION, {
+    const choose = async (apply) => {
+      const result = await commitSettingsChoiceAsync(saves.loadMeta(), BUILD_VERSION, {
         apply,
         load: () => saves.loadMeta(),
         save: meta => saves.saveMeta(meta),
@@ -1725,14 +1781,14 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
         const changes = keepLocalSettings(activeSettings, promotionFor(SETTINGS_DEFAULTS, promotionDebug()));
         return persistSettingsChange(changes);
       }),
-      onDefaults: () => choose(() => {
-        let saved = true;
+      onDefaults: () => choose(async () => {
+        const writes = [];
         resetKeys(activeSettings, changes => {
           const result = persistSettingsChange(changes);
-          saved &&= result?.ok !== false;
+          writes.push(Promise.resolve(result));
           return result;
         }, allResettableKeys());
-        return { ok: saved };
+        return { ok: (await Promise.all(writes)).every(result => result?.ok !== false) };
       }),
     });
   }
@@ -1759,11 +1815,13 @@ function showProfile() {
   });
 }
 
-function persistSettingsChange(changed) {
+async function persistSettingsChange(changed) {
   if (!saves.profileStatus().quarantined) {
     activeMeta = saves.loadMeta();
     activeSettings = activeMeta.settings || (activeMeta.settings = {});
   }
+  const settingsBefore = structuredClone(activeSettings);
+  const runRulesBefore = run?.advancedConfigSnapshot ? structuredClone(run.advancedConfigSnapshot) : null;
   // A value the player moves off a promoted one is theirs from now on.
   const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
@@ -1787,7 +1845,21 @@ function persistSettingsChange(changed) {
   if (Object.keys(changed || {}).some((key) => STAT_ROWS_CHANGED_MEANING.test(key))) activeSettings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   if (seed) activeSettings[SEED_KEY] = seed;
   activeMeta.settings = activeSettings;
-  const res = saves.saveMeta(activeMeta);
+  const res = await saves.saveMeta(activeMeta);
+  if (res?.ok === false) {
+    activeSettings = settingsBefore;
+    activeMeta.settings = settingsBefore;
+    if (run && runRulesBefore) {
+      run.advancedConfigSnapshot = runRulesBefore;
+      rebuildRegistries(runRulesBefore, run);
+      if (xpCombat) xpCombat.registries = registries;
+      persist();
+    }
+    applyDisplaySettings(activeSettings);
+    refreshHudQuickSettings(app, activeSettings);
+    showSettingsNotice(QUARANTINE_NOTICE);
+    return res;
+  }
   applyDisplaySettings(activeSettings);
   refreshHudQuickSettings(app, activeSettings);
   remountMapIfShowing(changed);
@@ -1840,7 +1912,10 @@ function showSettings() {
 }
 
 function showOfflinePlay() {
-  openOfflinePlay({ transfer: createSaveTransfer(bootStorage, registries), assertImportAllowed: () => {
+  const transfer = createSaveTransfer(bootStorage, registries);
+  const ownedTransfer = { ...transfer, restore: text => saves.withProfile
+    ? saves.withProfile(() => transfer.restore(text)) : transfer.restore(text) };
+  openOfflinePlay({ transfer: ownedTransfer, assertImportAllowed: () => {
     if (run) throw new Error('Return to the title screen before importing saves.');
     let persistent = false;
     try { persistent = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
@@ -1944,6 +2019,10 @@ function showHistory() {
  * The Compendium — every armament the Spire keeps, most of it withheld.
  * A PROFILE surface: no run, no class, so `meta.found` is the whole of "yours".
  */
+function showBestiary() {
+  mountBestiary(app, { registries, meta: saves.loadMeta(), onBack: () => { showTitle(); document.getElementById('bestiary')?.focus(); } });
+}
+
 function showCompendium() {
   mountCompendium(app, { registries, meta: saves.loadMeta(), onBack: showTitle });
 }
@@ -2117,36 +2196,61 @@ function treasureSmithingReward() {
   return grantSmithingReward(registries, run, 'treasure', smithingRewardId(run, 'treasure'), rng);
 }
 
-function finishRun(victory) {
-  return commitRunFinish(run, {
+async function finishRun(victory) {
+  const finishedRun = run, finishedSlot = activeSlot, finishedRegistries = registries, finishedRng = rng;
+  const owned = () => run === finishedRun && activeSlot === finishedSlot;
+  const checkpoint = () => {
+    if (!owned()) throw new Error('The active run changed while completion was pending.');
+    if (!shotState) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
+    stampSkillBonuses(finishedRegistries, finishedRun);
+    const saved = saves.saveRun(finishedRun, finishedRng, finishedSlot);
+    if (!saved.ok) throw new Error(`Run completion checkpoint was not saved: ${saved.reason}`);
+  };
+  const resultRecord = runResult(victory);
+  return commitRunFinishAsync(finishedRun, {
     victory,
-    finishId: run.classMasteryState?.receiptId || crypto.randomUUID(),
-    checkpoint: persist,
-    bank: () => {
-      if (!hasClassMastery(run)) return;
-      const bank = saves.bankClassMastery(run, registries);
+    finishId: finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
+    checkpoint,
+    bank: async () => {
+      const knowledge = saves.bankEnemyKnowledge ? await saves.bankEnemyKnowledge(finishedRun) : { ok: true };
+      if (!knowledge.ok) throw new Error(`Enemy learning was not saved: ${knowledge.reason}`);
+      checkpoint();
+      if (!hasClassMastery(finishedRun)) return;
+      const bank = await saves.bankClassMastery(finishedRun, finishedRegistries);
       if (!bank.ok) throw new Error(`Class mastery was not saved: ${bank.reason}`);
-      adoptClassMasteryProfile(run, bank.meta);
-      if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+      adoptClassMasteryProfile(finishedRun, bank.meta);
+      checkpoint();
+      if (bank.warning && owned()) showSettingsNotice(bank.warning, 'profile');
     },
-    complete: (pending) => {
-      const result = { ...runResult(pending.victory), finishId: pending.id };
-      const completed = completedRunMeta(registries, saves.loadMeta(), result);
+    complete: (pending) => saves.withProfile ? saves.withProfile(writer => {
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      const result = { ...resultRecord, victory: pending.victory, finishId: pending.id };
+      const completed = completedRunMeta(finishedRegistries, writer.loadMeta(), result);
+      const saved = writer.saveMeta(completed.meta);
+      if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
+      return completed.unlocked.map((id) => finishedRegistries.unlocks.find((u) => u.id === id)).filter(Boolean);
+    }) : (() => {
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      const result = { ...resultRecord, victory: pending.victory, finishId: pending.id };
+      const completed = completedRunMeta(finishedRegistries, saves.loadMeta(), result);
       const saved = saves.saveMeta(completed.meta);
       if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
-      return completed.unlocked.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
-    },
+      return completed.unlocked.map((id) => finishedRegistries.unlocks.find((u) => u.id === id)).filter(Boolean);
+    })(),
     clear: () => {
-      saves.clearRun(activeSlot);
-      if (saves.hasRun(activeSlot)) throw new Error('The completed run could not be cleared from its slot.');
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      saves.clearRun(finishedSlot);
+      if (saves.hasRun(finishedSlot)) throw new Error('The completed run could not be cleared from its slot.');
     },
   });
 }
 
-function showFinishedRun(victory) {
-  const result = finishRun(victory);
+async function showFinishedRun(victory) {
+  const finishedRun = run, finishedSlot = activeSlot, finishedRegistries = registries;
+  const result = await finishRun(victory);
+  if (run !== finishedRun || activeSlot !== finishedSlot) return result;
   const retry = () => showFinishedRun(victory);
-  mountGameOver(app, { registries, game: run, victory, earned: result.earned,
+  mountGameOver(app, { registries: finishedRegistries, game: finishedRun, victory, earned: result.earned,
     onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry });
   if (!result.ok) openSaveStatusReview({
     ...runIdentityParts(), savedAt: run.savedAt ?? null, error: result.error, onRetry: retry,
@@ -2696,6 +2800,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     rng: entryRng,
     run,
     settings: saves.loadMeta().settings || {},
+    enemyKnowledgeProfile: saves.loadMeta().enemyKnowledge,
     // The shot door's override, when parked (null otherwise — createCombat
     // then derives the threshold from the loadout receipt, the real path).
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
@@ -2707,8 +2812,21 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     playerStatuses: cm.playerStatuses,
   });
   if (combat.combatExpansionVersion === 2) {
-    const durable = candidate => commitExpansionCandidate({ run, candidate, nodeId, encounterId,
-      saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
+    const durable = candidate => {
+      const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
+        saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
+      if (committed.ok && run.enemyKnowledgeState && saves.bankEnemyKnowledge) {
+        const learningRun = run, learningRng = rng, learningSlot = activeSlot;
+        saves.bankEnemyKnowledge(learningRun).then(result => {
+          // The accepted action already saved the complete pending ledger.
+          // A failed profile bank keeps it intact; successful acknowledgments
+          // are checkpointed without reopening the encounter or rolling reads.
+          if (run === learningRun) saves.saveRun(learningRun, learningRng, learningSlot);
+          if (!result.ok) showSettingsNotice(`Enemy learning remains pending: ${result.reason}`, 'profile');
+        }).catch(error => showSettingsNotice(`Enemy learning remains pending: ${error.message}`, 'profile'));
+      }
+      return committed;
+    };
     if (!savedSnapshot) {
       durable(combat);
       rng.restoreCounters(entryRng.getCounters());
@@ -2851,6 +2969,19 @@ function victoryTitle(enc) {
 }
 
 async function onCombatEnd(result, combat, enc) {
+  const learningRun = run, learningSlot = activeSlot;
+  const owned = () => run === learningRun && activeSlot === learningSlot;
+  if (saves.bankEnemyKnowledge) {
+    const learning = await saves.bankEnemyKnowledge(learningRun);
+    if (!owned()) return;
+    if (!learning.ok) showSettingsNotice(`Enemy learning remains pending: ${learning.reason}`, 'profile');
+    persist();
+  }
+  // Keep the exact terminal replay receipt through every asynchronous bank
+  // and animation. Ordinary XP, room completion and the reward/finish receipt
+  // are then installed synchronously before the next durable checkpoint.
+  if (result === 'victory') await victoryBeat(app.querySelector('.combat'), { title: victoryTitle(enc), ms: registries.balance.ui.victoryBeat.ms });
+  if (!owned()) return;
   delete run.combatPendingOutcome;
   if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
@@ -2919,8 +3050,6 @@ async function onCombatEnd(result, combat, enc) {
   // A breath between the last blow and the spoils (components/victoryBeat.js):
   // the combat screen is still mounted here, so the beat stands over it and
   // the door opens when it lifts. Reduced motion resolves at once.
-  await victoryBeat(app.querySelector('.combat'), { title: victoryTitle(enc), ms: registries.balance.ui.victoryBeat.ms });
-
   run.stats.fightsWon += 1;
   if (run.legacyDungeon) resolveDungeonNode(run);
   else if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
@@ -3231,17 +3360,22 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
-    onClaimSkill: (skillId) => {
-      const before = hasClassMastery(run) && skillId.startsWith('class:') ? { skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), classRewardLevels: { ...run.classRewardLevels }, ...(expandedProgression(run) ? {classMilestones:structuredClone(run.classMilestones || {})} : {}) } : null;
-      const claim = claimBankedSkillLevel(registries, run, skillId);
-      if (claim && before && run.classMasteryState.bankable) {
-        const bank = saves.bankClassMastery(run, registries);
+    onClaimSkill: async (skillId) => {
+      const claimRun = run, claimRegistries = registries;
+      const needsBank = hasClassMastery(claimRun) && skillId.startsWith('class:') && claimRun.classMasteryState.bankable;
+      const candidate = needsBank ? structuredClone(claimRun) : claimRun;
+      const claim = claimBankedSkillLevel(claimRegistries, candidate, skillId);
+      if (claim && needsBank) {
+        const bank = await saves.bankClassMastery(candidate, claimRegistries);
+        if (run !== claimRun || run.pendingReward !== checkpoint) return null;
         if (!bank.ok) {
-          Object.assign(run, before);
           showSettingsNotice(`Class level was not saved: ${bank.reason}`, 'profile');
           return null;
         }
-        adoptClassMasteryProfile(run, bank.meta);
+        adoptClassMasteryProfile(candidate, bank.meta);
+        for (const key of ['skills', 'classMasteryState', 'classRewardLevels', 'classMilestones']) {
+          if (Object.hasOwn(candidate, key)) claimRun[key] = candidate[key];
+        }
         if (bank.warning) showSettingsNotice(bank.warning, 'profile');
       }
       if (claim && skillId === classSkillId(run.class)) {

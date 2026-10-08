@@ -34,6 +34,16 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Combat shows Blight only when it matters** ([#1755](https://github.com/cehinds/AshenSpire/pull/1755), `0.7.1.1138`). The separate Block, Barrier and Ward summary box is removed. Positive Ashen Blight occupies a wider centered header bar, with its own row on phones, and disappears at zero. Recovery and Blight feat buttons remain reachable above combat figures.
+
+- **Combat scenery reaches the top of the screen** ([#1748](https://github.com/cehinds/AshenSpire/pull/1748), `0.7.1.1136`). The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.
+
+- **Behind the scenes: alternative sync keeps the full history efficiently** ([#1747](https://github.com/cehinds/AshenSpire/pull/1747), `0.7.1.1133`). Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.
+
+- **Read enemy clues and learn their Bestiary** ([#1734](https://github.com/cehinds/AshenSpire/pull/1734), `0.7.1.1132`). Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.
+
+- **Saved fights load with their intended combat rules** ([#1736](https://github.com/cehinds/AshenSpire/pull/1736), `0.7.1.1130`). Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.
+
 - **Behind the scenes: complete combat checks finish within their limits** ([#1739](https://github.com/cehinds/AshenSpire/pull/1739), `0.7.1.1128`). Nothing you play changes. The full discovered-test, self-test and mobile-layout sets now run in exhaustive parallel pieces, so every original check still runs while each automated job remains within its 20-minute limit.
 
 - **Combat prices and checkpoints stay consistent** ([#1733](https://github.com/cehinds/AshenSpire/pull/1733), `0.7.1.1127`). Upcast cards show their full SP and Mana price before payment; solo and co-op apply the same Mana discount. Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.

@@ -41,7 +41,8 @@ test('fresh runs roll only core cards and ungated global equipment/relics', () =
     assert.equal(run.skills[`class:${cls.id}`].level, 0);
     assert.equal(run.skills[`class:${cls.id}`].xp, 0);
     assert.equal(run.level.xp, 0);
-    assert.equal(Object.keys(run.skills).length, 1);
+    assert.equal(Object.keys(run.skills).length, 2);
+    assert.deepEqual(run.skills.perception, { level: 0, xp: 0, pendingDrafts: 0 });
     for (let seed = 0; seed < 100; seed++) {
       const cards = rollCardRewardIds(reg, rng, { classId: cls.id, pool: 'boss' });
       assert.ok(cards.every(id => !gated.some(row => row.kind === 'cards' && row.ref === id)));

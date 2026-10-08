@@ -18,6 +18,8 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // number displayed comes from previewCard / previewIntent — no math here.
 
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
+import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
@@ -169,6 +171,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // and the band's compact/expanded grip went on 2026-09-11; nothing in
         // the bag steers the HUD now, the parameter keeps the callers' shape.
         quickSettings: { settings: meta.settings || {} },
+        overlayHtml: '<div class="combat-blight-hud" aria-live="polite"></div>',
       }))}
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
@@ -693,8 +696,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     const def = registries.enemies.get(entity.enemyId);
     const intent = previewIntent(combat, entity.id);
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { registries, combatMatchupRules: combat.combatMatchupRules }) : null;
     const currentMoveId = intent.moveId;
-    const skills = Object.entries(def.moves || {}).map(([moveId, move]) => ({
+    const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
       detail: moveDetail(move, moveId === currentMoveId ? intent : null, entity),
       active: moveId === currentMoveId,
@@ -705,6 +709,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const past = entity.performedMoves || [];
     return {
       role: 'enemy',
+      ...(learning ? { learning, perception: combat.skills?.perception?.level || 0,
+        prediction: knowledgePredictionModel(combat, entity),
+        onPredict: (actionSerial, maneuver) => {
+          dispatch(combat, { type: 'predictIntent', enemyInstanceId: entity.id, actionSerial, maneuver });
+          return { accepted: true, prediction: maneuver };
+        } } : {}),
       name: def.name,
       subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
       resources: inspectorResources([
@@ -715,20 +725,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
       intent: {
-        name: intent.hidden ? `${words(intent.stance)} · Move hidden` : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
+        name: intent.hidden ? intent.label || '?' : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
         detail: intent.hidden ? 'Exact move, damage, and effects unread.' : moveDetail(current, intent),
-        hidden: intent.hidden, stance: intent.stance, profile: intent.profile,
+        hidden: intent.hidden, knowledgeRead: intent.knowledgeRead, stance: intent.stance, profile: intent.profile,
         active: true,
       },
       skillLabel: 'Move set',
-      moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
+      moveCards: learning ? learning.moveCards : enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
       skills,
       statuses: statusDetails(entity),
       entityId: entity.id,
       history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
-      traits: (def.tags || []).map((tag) => ({ name: words(tag) })),
+      traits: learning ? learning.traits : (def.tags || []).map((tag) => ({ name: words(tag) })),
       // No authored lore exists for enemies yet; unknown, not none.
-      lore: null,
+      lore: learning ? learning.lore : null,
     };
   }
 
@@ -988,6 +998,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const pv = dv(p);
     const key = JSON.stringify([p, pv, readSettings()]);
     if (topbarRenderKey === key) return;
+    $('.combat-blight-hud').innerHTML = ashenBlightBarHtml(p, { compact: true });
     // THE MAIN HUD BAR STACK — HP, MP, SP, vertically. Which rows appear is
     // content/resources.js's business, not this screen's. Player Poise belongs
     // only on the combat character card's model surface; it is deliberately
@@ -1657,11 +1668,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, mana: combat.player.mana, maxMana: combat.player.maxMana, settings: readSettings(), draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
     const expandedHost = $('.combat-expansion-controls');
     if (combat.combatExpansionVersion === 2) {
-      const actor = dv(combat.player), ward = actor.persistentWard || combat.player.persistentWard;
-      const stance = actor.combatStance?.maneuver;
-      expandedHost.innerHTML = `<div class="combat-protection-values">Block ${actor.block || 0} · Barrier ${actor.barrier || 0} · Ward ${ward?.value || 0}/${ward?.max || 0}${stance ? ` · ${esc(stance[0].toUpperCase() + stance.slice(1))}` : ''}</div>${ashenBlightBarHtml(combat.player, { compact: true })}
-        ${combat.player.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" data-blight-feat>Choose Blight feat</button>' : ''}
-        <div class="combat-recovery-controls">${recoveryControls(combat, combat.player).map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || busy || enemyPlayback || combat.result || combat.player.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(registries.statuses.get(row.status).name)}`} · ${row.costPerStack} SP</button>`).join('')}</div>`;
+      const pendingFeat = combat.player.ashenBlight?.milestones.some(row => row.path === null);
+      const recoveries = recoveryControls(combat, combat.player);
+      expandedHost.hidden = !pendingFeat && !recoveries.length;
+      expandedHost.innerHTML = `${pendingFeat ? '<button class="primary" data-blight-feat>Choose Blight feat</button>' : ''}${recoveries.length ? `<div class="combat-recovery-controls">${recoveries.map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || busy || enemyPlayback || combat.result || combat.player.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(registries.statuses.get(row.status).name)}`} · ${row.costPerStack} SP</button>`).join('')}</div>` : ''}`;
       expandedHost.querySelector('[data-blight-feat]')?.addEventListener('click', () => {
         if (busy || expansionChoiceShell || combat.result) return;
         const pending = combat.player.ashenBlight.milestones.find(row => row.path === null);
@@ -1670,7 +1680,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           onChoose: selection => expansionIntent({ type: 'chooseBlightFeat', ...selection }) });
       });
       for (const node of expandedHost.querySelectorAll('[data-control-recovery]')) node.addEventListener('click', () => expansionIntent({ type: 'recoverControl', selections: [{ status: node.dataset.controlRecovery, stacks: 1 }] }));
-    } else expandedHost.replaceChildren();
+    } else { expandedHost.replaceChildren(); expandedHost.hidden = true; }
 
   }
 

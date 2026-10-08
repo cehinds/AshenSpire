@@ -3,6 +3,56 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1755",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat shows Blight only when it matters",
+    "detail": "The separate Block, Barrier and Ward summary box is removed. Positive Ashen Blight occupies a wider centered header bar, with its own row on phones, and disappears at zero. Recovery and Blight feat buttons remain reachable above combat figures.",
+    "build": "0.7.1.1138",
+    "pullRequest": 1755,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1755"
+  },
+  {
+    "id": "pr-1748",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat scenery reaches the top of the screen",
+    "detail": "The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.",
+    "build": "0.7.1.1136",
+    "pullRequest": 1748,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1748"
+  },
+  {
+    "id": "pr-1747",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: alternative sync keeps the full history efficiently",
+    "detail": "Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.",
+    "build": "0.7.1.1133",
+    "pullRequest": 1747,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1747"
+  },
+  {
+    "id": "pr-1734",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Read enemy clues and learn their Bestiary",
+    "detail": "Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.",
+    "build": "0.7.1.1132",
+    "pullRequest": 1734,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1734"
+  },
+  {
+    "id": "pr-1736",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Saved fights load with their intended combat rules",
+    "detail": "Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.",
+    "build": "0.7.1.1130",
+    "pullRequest": 1736,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1736"
+  },
+  {
     "id": "pr-1739",
     "date": "2026-10-08",
     "group": "2026-10-08",
