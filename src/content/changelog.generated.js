@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Read enemy clues and learn their Bestiary",
     "detail": "Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.",
-    "build": "0.7.1.1127",
+    "build": "0.7.1.1128",
     "pullRequest": 1734,
     "url": "https://github.com/cehinds/AshenSpire/pull/1734"
+  },
+  {
+    "id": "pr-1733",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Loading keeps your combat checkpoint",
+    "detail": "Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.",
+    "build": "0.7.1.1126",
+    "pullRequest": 1733,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1733"
   },
   {
     "id": "pr-1732",
@@ -21,16 +31,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1124",
     "pullRequest": 1732,
     "url": "https://github.com/cehinds/AshenSpire/pull/1732"
-  },
-  {
-    "id": "pr-1733",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
-    "summary": "Loading keeps your combat checkpoint",
-    "detail": "Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.",
-    "build": "0.7.1.1124",
-    "pullRequest": 1733,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1733"
   },
   {
     "id": "pr-1728",
