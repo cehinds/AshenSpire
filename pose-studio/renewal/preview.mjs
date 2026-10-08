@@ -1,3 +1,4 @@
+import { cardActionFor } from '../../src/model/alternativeCardAnimation.js';
 import { ANIM_SPEEDS } from '../../src/ui/fx.js';
 import { auraFilter } from '../../src/ui/combatAura.js';
 import { COMBAT_EFFECT_ART } from '../../src/content/combatEffectArt.js';
@@ -6,7 +7,7 @@ import { durationFor, sampleSequence, hitFlashOpacity, defaultFamily } from './m
 const $=s=>document.querySelector(s), canvas=$('#preview'), ctx=canvas.getContext('2d');
 const flashCanvas=document.createElement('canvas');flashCanvas.width=flashCanvas.height=512;
 const flashContext=flashCanvas.getContext('2d');
-const response=await fetch('./base-action-registry.json');
+const response=await fetch('./cards/registry.json');
 if(!response.ok)throw Error('Cannot load renewal manifest');
 const manifest=await response.json(), images=new Map(), families=new Map();
 for(const [key,entry] of Object.entries(manifest.families)){const r=await fetch('./'+entry.manifest);if(!r.ok)throw Error('Cannot load family: '+key);families.set(key,await r.json());}
@@ -25,9 +26,10 @@ let decoded=new Map();
 async function preload(){
  const urls=[...families.values()].flatMap(m=>Object.values(m.frames).flatMap(f=>[f.path,f.lite]));
  const effects=new Set(['slash','ward','starbolt','shieldBash',...[...families.values()].flatMap(m=>Object.values(m.sequences).map(s=>s.effect).filter(Boolean))]);
+ effects.delete('arrow');effects.add('thrust');
  urls.push(...[...effects].flatMap(e=>COMBAT_EFFECT_ART[e].map(p=>'../../'+p.replace('assets/','assets-mobile/'))));
  await Promise.all(urls.map(async u=>decoded.set(u,await image(u))));
- ready=true;render();message('4 classes · 3 base actions each · equipment does not change the animation.');
+ ready=true;render();message('4 classes · 8 card motions each · base weapons, independent of equipment.');
 }
 $('#actor').innerHTML=manifest.classes.map(c=>`<option value="${c}">${c[0].toUpperCase()+c.slice(1)}</option>`).join('');
 $('#actions').innerHTML=manifest.actions.map(id=>`<button data-action="${id}">${family().sequences[id].label}</button>`).join('');
@@ -38,17 +40,17 @@ function selection(){
  const drafted=available();
  const entry=defaultFamily(manifest,$('#actor').value);
  $('#workshop-project').hidden=!drafted;$('#workshop-project').href=entry.rig;
- document.querySelector('[data-action=attack]').textContent=family().sequences.attack.label;
+ document.querySelectorAll('[data-action]').forEach(b=>b.textContent=b.dataset.action==='ranged'&&['starseer','herald'].includes($('#actor').value)?'Ranged · class default':family().sequences[b.dataset.action].label);
  $('#coverage').textContent='Base armour · '+family().referenceWeapon;
  $('#play').disabled=$('#restart').disabled=$('#scrub').disabled=!drafted||!ready;
  $('#hit').disabled=!ready||$('#reduced').checked||!duration();
  document.querySelectorAll('[data-action]').forEach(b=>{b.disabled=!drafted;b.classList.toggle('active',b.dataset.action===action);});
  $('#stage-label').textContent=`${$('#actor').value.toUpperCase()} · BASE ARMOUR · ${seq().label.toUpperCase()}`;
- const guardNotes={reaver:'Raise the sword, brace, and recover.',rogue:'Cross the daggers, brace, and recover.',starseer:'Brace behind the staff, then recover.',herald:'Raise the left shield, brace, and recover. Sword stays in the right hand.'};
- $('#action-note').textContent=action==='power'?'Gather, release, and return. Existing power effects stay separate from the painted figure.':action==='defense'?guardNotes[$('#actor').value]:'Wind up, dash into contact, follow through, and return to the starting stance.';
+ const notes={attack:'Load, dash into contact, and recover.',smash:'Raise for a heavy overhead blow, then return.',sweep:'Coil low and sweep across the target.',counter:'Deflect, riposte, and recover.',defend:'Raise guard, brace, and recover.',spell:'Gather, invoke, and recover.',ranged:'Aim, release, and recover. Uses the class’s base ranged weapon.',rangedMagic:'Cast toward the target. Staff points upward and spellbooks remain open.'};
+ $('#action-note').textContent=notes[action];
  $('#edit').hidden=!drafted;
- $('#edit').href='../index.html?renewal='+action+'&family='+$('#actor').value+'&study=base';
- $('#board').innerHTML=manifest.classes.map(c=>`<div class="card draft">${c[0].toUpperCase()+c.slice(1)}<span>Strike · Defense · Power</span></div>`).join('');
+ $('#edit').href='../index.html?renewal='+action+'&family='+$('#actor').value+'&study=cards';
+ $('#board').innerHTML=manifest.classes.map(c=>`<div class="card draft">${c[0].toUpperCase()+c.slice(1)}<span>Attack · Smash · Sweep · Counter<br>Defend · Spell · Ranged</span></div>`).join('');
  $('#timeline').innerHTML=drafted?seq().poses.map((p,i)=>`<button class="frame" data-frame="${i}" aria-label="Inspect ${p}"><img src="${family().frames[p].path}" alt="${p}"><span>${String(i+1).padStart(2,'0')} · ${p}</span></button>`).join(''):'';
  render();
 }
@@ -66,23 +68,26 @@ function render(){
  ctx.strokeStyle='#859b6755';ctx.beginPath();ctx.moveTo(120,486);ctx.lineTo(880,486);ctx.stroke();
  if(!ready)return;
  const reduce=$('#reduced').checked, instant=!d;
- const pose=(instant||reduce)?(action==='power'?'power':action==='defense'?'guard-brace':'ready'):seq().poses[sampled.index];
+ const pose=(instant||reduce)?seq().poses[seq().impact]:seq().poses[sampled.index];
  const frame=family().frames[pose],img=decoded.get($('#quality').value==='lite'?frame.lite:frame.path);
  const aura=$('#aura').value, filter=aura==='none'?'none':auraFilter(action==='power'?'power2':'idle',aura==='guard'?'guard':'idle',aura==='guard'?[]:[aura],aura!=='guard');
- const x=410+(reduce?0:sampled.x),size=470;
- drawFigure(img,x,530,size,filter);
+ const size=320*512/(464-family().frames.ready.bounds[1]);
+ const x=410+(reduce?0:sampled.x)*size/512, floor=486+48*size/512;
+ drawFigure(img,x,floor,size,filter);
  const flash=hitFlashOpacity('hurt',hitProgress(performance.now()),{reduced:reduce||instant});
  if(flash){
    flashContext.clearRect(0,0,512,512);
    flashContext.globalCompositeOperation='source-over';flashContext.drawImage(img,0,0,512,512);
    flashContext.globalCompositeOperation='source-in';flashContext.fillStyle='#ff2424';flashContext.fillRect(0,0,512,512);
-   ctx.save();ctx.globalAlpha=flash;drawFigure(flashCanvas,x,530,size);ctx.restore();
+   ctx.save();ctx.globalAlpha=flash;drawFigure(flashCanvas,x,floor,size);ctx.restore();
  }
- const effect=$('#effect').value==='auto'?seq().effect:$('#effect').value;
+ const selectedEffect=$('#effect').value==='auto'?seq().effect:$('#effect').value;
+ const effect=selectedEffect==='arrow'?'thrust':selectedEffect;
  const progress=sampled.progress;
- if(effect&&effect!=='none'&&!reduce&&!instant&&progress>=.4&&progress<.9){
-   const t=(progress-.4)/.5,index=Math.min(5,Math.floor(t*6)),url='../../'+COMBAT_EFFECT_ART[effect][index].replace('assets/','assets-mobile/');
-   const fx=decoded.get(url),projectile=effect==='starbolt',shield=effect==='shieldBash'||effect==='ward';
+ const contact=seq().durations.slice(0,seq().impact).reduce((a,b)=>a+b,0)/260;
+ if(effect&&effect!=='none'&&!reduce&&!instant&&progress>=contact&&progress<.98){
+   const t=(progress-contact)/(1-contact),index=Math.min(5,Math.floor(t*6)),url='../../'+COMBAT_EFFECT_ART[effect][index].replace('assets/','assets-mobile/');
+   const fx=decoded.get(url),projectile=['starbolt','sacredbolt'].includes(effect)||(action==='ranged'&&effect==='thrust'),shield=effect==='shieldBash'||effect==='ward';
    ctx.save();ctx.globalAlpha=effect==='slash'?.52:.7;
    const fxX=projectile?x+120+t*270:shield?x+95:x+150,fxY=shield?310:280,fxSize=shield?190:220;
    ctx.drawImage(fx,fxX-fxSize/2,fxY-fxSize/2,fxSize,fxSize);ctx.restore();
@@ -90,7 +95,7 @@ function render(){
  ctx.fillStyle='#84947d';ctx.textAlign='center';ctx.font='10px system-ui';ctx.fillText('SHARED FLOOR ANCHOR',410,552);
 }
 $('#actor').onchange=selection;
-$('#actions').onclick=e=>{const button=e.target.closest('[data-action]');if(button){action=button.dataset.action;selection();}};
+$('#actions').onclick=e=>{const button=e.target.closest('[data-action]');if(button){const requested=button.dataset.action;const spell=requested==='spell'||requested==='rangedMagic';const maneuver=requested==='spell'?'attack':requested==='rangedMagic'?'ranged':requested;action=cardActionFor({cardTags:['camp:'+(spell?'spell':'physical'),'maneuver:'+maneuver]},$('#actor').value);selection();}};
 $('#play').onclick=()=>{if(!ready||!available())return;if($('#reduced').checked||!duration()){time=duration();stop();render();return;}playing=!playing;if(time>=duration())reset();$('#play').textContent=playing?'Ⅱ Pause':'▶ Play';last=performance.now();};
 $('#restart').onclick=()=>{stop();reset();};
 $('#hit').onclick=()=>{hitAt=performance.now();render();};

@@ -134,6 +134,15 @@ export function withAlternativeArt(manifest, root = ROOT) {
   const match = readFileSync(catalogFile, 'utf8').match(/^export const alternativeArtCatalog = (.+);\r?$/m);
   if (!match) throw new Error('Alternative art catalog must be generated before packing');
   const catalog = JSON.parse(match[1]);
+  const actionsFile = resolve(root, 'src/content/alternativeCardAnimations.js');
+  if (existsSync(actionsFile)) {
+    const actions = readFileSync(actionsFile, 'utf8').match(/^export const alternativeCardAnimations = (.+);\r?$/m);
+    if (!actions) throw new Error('Alternative card actions must be generated before packing');
+    for (const [file, hash] of Object.entries(JSON.parse(actions[1]).hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+    }
+  }
   const assets = { ...manifest.assets };
   for (const [file, expected] of Object.entries(catalog.hashes)) {
     if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
