@@ -4,7 +4,7 @@ The runtime implements [enemy-knowledge-contract.md](enemy-knowledge-contract.md
 
 ## Compiled gameplay evidence, 2026-10-08
 
-The final regular standalone artifact is `0.7.1.1132`, digest `8a6108c4f4`. All four launcher aliases refreshed successfully. Build identity, shipped-file, receipt and changelog-order gates passed. Browser probes read the embedded ordinal and digest from the actual compiled document and required the same identity after reload.
+The final regular standalone artifact is `0.7.1.1133`, digest `4e42ce132e`, including the simulator validation follow-up #1749. All four launcher aliases refreshed successfully. Build identity, shipped-file, receipt and changelog-order gates passed. Browser probes read the embedded ordinal and digest from the actual compiled document and required the same identity after reload.
 
 Microsoft Edge exercised actual game controls at 1440 × 900 and 390 × 844 with reduced motion. The phone browser enabled native touch (`navigator.maxTouchPoints = 1`). These captures were visually inspected.
 
@@ -29,6 +29,8 @@ The actual browser-save facade was exercised in two browser realms with real loc
 Headless checks cover solo/co-op continuation, private host-seeded reads, owned-seat wire projection, acknowledgment before adoption, delayed/multi-hit/cancelled actions, inert previews and rejections, bounded monotonic profile receipts, staged disclosure and asynchronous run ownership. The actual main combat wrapper and browser-save manager regression also verifies that legacy expanded runs retain their encounter-entry checkpoint while opted-in runs save accepted learning exactly.
 
 The frozen reconciled source completed all 373 discovered files and 3,245 tests with zero failures. Its hosted exhaustive run completed both tool self-test groups and the bundler parse gate; all 149 core checks passed, while the ordering step correctly rejected the then-unfinished build receipt. The final build resolves that mismatch. Complete local tool-suite execution and exact final-head promotion checks are tracked separately. Independent regular and alternative reviews found no actionable source issues.
+
+The follow-up runner completed all 374 discovered files and 3,249 tests with zero failures on the frozen validation checkout at `a724058ad8`. Four real-subprocess regressions require successful complete fleets before determinism can pass, and nine lane-isolation regressions preserve discovery-only and link-only boundaries. All five actual simulator self-test checks passed in the focused run. Clean controls use the existing 120-second fleet budget; the three planted-failure deadlines remain 60 seconds, and the outer budget derives from all child budgets. Failed children retain their exit, signal and error diagnostics. The corrected alternative head `f139e21ec4` also passed every hosted discovery shard and the core suite. Complete local tooling and final promotion outcomes are recorded in the delivery PRs.
 
 Optional `/assets/sfx/` samples used the existing procedural fallback after 404 responses. Pre-gesture AudioContext policy warnings were recorded. The final compiled probes reported no runtime exception, required-resource failure or unexpected console error.
 
