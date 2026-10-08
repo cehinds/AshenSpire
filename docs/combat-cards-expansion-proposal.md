@@ -647,6 +647,8 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - Rank 4 adds 3 Mana and 3 Stamina.
   - Other resource and Action costs remain printed.
   - Free-play effects do not waive the rank surcharge unless explicitly stated.
+  - Mana discounts apply to the complete Mana price, including the rank surcharge, with a minimum cost of zero.
+  - Solo and co-op badges use the same paid price. If a co-op host has not supplied that rank preview, show the conservative authored price as an estimate.
 
 - **Rank benefits**
   - Per-rank bonuses can improve damage, protection, impact, buildup, or a named chance.
@@ -669,17 +671,17 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - General setting: Ask to upcast after target selection.
   - Default: OFF.
   - Selecting an eligible card reveals an Upcast button directly beneath it.
-  - Press Upcast to choose a rank in an inline selector.
+  - Press Upcast to open the rank choice dialog.
   - Preview the total costs, changes, and odds.
   - Then choose the target and play at that selected rank.
   - Playing normally uses the base rank without a modal.
-  - Unaffordable higher ranks remain visible but disabled with their missing resource shown.
+  - Higher ranks remain visible. Selecting one updates the total resource badges and affordability before payment.
 
 - **Optional automatic prompt**
   - When the setting is ON, choose a target first.
   - Open the rank modal before committing the play.
   - Cancel returns to the selected card and target with the prior rank selection intact; no play is committed.
-  - Offer Cast at base rank, affordable higher ranks, and Cancel.
+  - Offer the base rank, unlocked higher ranks, and Cancel. Payment rechecks the selected rank against the available resources.
   - Self-targeted techniques open rank selection directly.
   - Cancel spends nothing, changes no stance, and rolls no dice.
 

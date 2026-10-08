@@ -56,6 +56,7 @@ import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 
 import * as A from './actions.js';
 import * as R from './abilityRiders.js';
+import * as SoloCombatCosts from './combat.js';
 import { previewCard as soloPreviewCard, previewIntent as soloPreviewIntent, cardNeedsEnemyTargetNow } from './combat.js';
 import * as F from './combatRules.js';
 import { playerWeightClass } from './combat.js';
@@ -673,10 +674,11 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   if (C.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
-  const cost = (isX ? p.energy : effectiveCost(C, def)) + (def.upcastSurcharge || 0);
+  const expandedCosts = C.combatExpansionVersion === 2 ? SoloCombatCosts.resolvedCardPlayCosts(C, def) : null;
+  let cost = expandedCosts?.energy ?? ((isX ? p.energy : effectiveCost(C, def)) + (def.upcastSurcharge || 0));
   const pools = F.foundationCosts(C, def, playerWeightClass(C).weightClass, C.registries.framework.costProfile(def, { weightClass: playerWeightClass(C).weightClass }));
   let manaCost = Math.max(0, pools.mana - R.matchingAbilityCharges(p, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount) + (def.upcastSurcharge || 0);
-  const staminaCost = cost;
+  let staminaCost = expandedCosts?.stamina ?? cost;
 
   const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
     id: entry.id,
@@ -760,7 +762,9 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
     if (target && target.kind !== 'enemy') throw new Error('Buildup charge requires a living enemy target');
     target ||= C.enemies.find(e => e.alive) || null;
   }
-  manaCost = Math.max(0, pools.mana - charges.manaDiscount) + (def.upcastSurcharge || 0);
+  if (C.combatExpansionVersion === 2) {
+    ({ energy: cost, mana: manaCost, stamina: staminaCost } = SoloCombatCosts.resolvedCardPlayCosts(C, def));
+  } else manaCost = Math.max(0, pools.mana - charges.manaDiscount) + (def.upcastSurcharge || 0);
   if (p.energy < cost) throw new Error('Not enough Actions (Stamina) to play this card');
   if (p.mana < manaCost) throw new Error('Not enough mana to play this card');
   if (preflightOnly) return { energy: cost, mana: manaCost };
