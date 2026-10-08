@@ -14,7 +14,7 @@ import { payAshenBlight, rollAshenBlightEncounter, chooseAshenBlightFeat, beginA
 import { createAshenBlightState } from '../model/ashenBlight.js';
 import { decodeCoopCombatSnapshot } from './coopCombatSnapshot.js';
 import { bindTurnStamina } from '../model/turnStamina.js';
-import { settleExpandedPools } from './combatExpansionProjection.js';
+import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { passiveMax } from '../model/registries.js';
 // src/engine/coopCombat.js — shared N-player combat runner (Forsaken Together S3).
@@ -164,7 +164,15 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     }
     for (const enemy of saved.enemies) if (!registries.enemies.has(enemy.enemyId)) throw new Error('Saved co-op enemy is unavailable');
     Object.assign(C, saved);
-    for (const P of C.players.values()) bindTurnStamina(P.entity);
+    for (const P of C.players.values()) {
+      bindTurnStamina(P.entity);
+      // Older expanded seats omitted this equipment context. The member's
+      // saved run is the fallback authority; a current seat's own copy wins.
+      const member = players.find(player => player.id === P.id);
+      if (P.entity.combatExpansionVersion === 2 && member) for (const key of [
+        'equipmentProfileRuleSnapshot', 'equipmentAttackSlotCount', 'removedAttackSlotIds', 'itemMounts', 'poolDeck',
+      ]) if (P[key] === undefined && member[key] !== undefined) P[key] = structuredClone(member[key]);
+    }
     setActive(C, C.players.get(saved.playerKey) || firstLiving(C));
     return C;
   }
@@ -237,6 +245,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
 
 // ---- player state -----------------------------------------------------------
 function addPlayerState(C, p, { initial = false } = {}) {
+  const previousOwnerId = initial ? null : C.playerKey;
   C.registerPlayerRegistries?.(p.id, p.registries);
   const registries = C.registriesForPlayer?.(p.id) || C.registries;
   const entity = createPlayerCombatEntity({
@@ -267,6 +276,10 @@ function addPlayerState(C, p, { initial = false } = {}) {
     instanceId: c.instanceId,
     cardId: c.cardId,
     ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
+    ...(c.equipmentAttackSlotId ? { equipmentAttackSlotId: c.equipmentAttackSlotId } : {}),
+    ...(c.equipmentPlanFingerprint ? { equipmentPlanFingerprint: c.equipmentPlanFingerprint } : {}),
+    ...(c.weaponId ? { weaponId: c.weaponId } : {}),
+    ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
     upgraded: !!c.upgraded,
     ...(Number.isInteger(c.abilityRank) ? { abilityRank: c.abilityRank } : {}),
     ...(c.legacyAbility === true ? { legacyAbility: true } : {}),
@@ -317,6 +330,13 @@ function addPlayerState(C, p, { initial = false } = {}) {
     // dodge check) is decided from THIS player's equipment, not a Light default.
     loadout: p.loadout ? structuredClone(p.loadout) : null,
     itemUpgradeLevels: p.itemUpgradeLevels || {},
+    ...(entity.combatExpansionVersion === 2 ? {
+      equipmentProfileRuleSnapshot: p.equipmentProfileRuleSnapshot ? structuredClone(p.equipmentProfileRuleSnapshot) : undefined,
+      equipmentAttackSlotCount: p.equipmentAttackSlotCount,
+      removedAttackSlotIds: structuredClone(p.removedAttackSlotIds || []),
+      itemMounts: structuredClone(p.itemMounts || {}),
+      ...(p.poolDeck === true ? { poolDeck: true } : {}),
+    } : {}),
     skills: p.skills ? structuredClone(p.skills) : {},
     skillFeats: Array.isArray(p.skillFeats) ? [...p.skillFeats] : [],
     coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
@@ -333,6 +353,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     Object.assign(entity, expandedEquipmentProjection(C.registriesForPlayer(p.id), P.loadout, entity.classId, C.combatExpansionRules.equipment));
     setActive(C, P);
     settleExpandedPools(C, entity, { allocatedAttributes: P.allocatedAttributes });
+    refreshExpandedLoadout(C, entity);
     if (!initial || !entity.alive) initializePersistentWard(entity, entity.ratings?.ward || 0);
   }
   if (!C.order.includes(p.id)) C.order.push(p.id);
@@ -343,7 +364,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     // not touch the active seat before, and leaving someone else's entity and
     // piles installed on the shared context is how the next enemy action hits
     // the wrong hand.
-    const wasActive = C.playerKey ? C.players.get(C.playerKey) : null;
+    const wasActive = C.players.get(previousOwnerId) || null;
     setActive(C, P);
     syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
@@ -361,6 +382,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     }
     rescaleEnemies(C);
   }
+  if (!initial) setActive(C, C.players.get(previousOwnerId) || null);
   return P;
 }
 
@@ -381,6 +403,11 @@ function setActive(C, P) {
   C.attributeMode = P ? P.attributeMode || null : null;
   C.loadout = P ? P.loadout : null;
   C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
+  C.equipmentProfileRuleSnapshot = P?.equipmentProfileRuleSnapshot;
+  C.equipmentAttackSlotCount = P?.equipmentAttackSlotCount;
+  C.removedAttackSlotIds = P?.removedAttackSlotIds || [];
+  C.itemMounts = P?.itemMounts || {};
+  if (P?.poolDeck) C.poolDeck = true; else delete C.poolDeck;
   C.skills = P ? P.skills : {};
   // Every player entity carries id 'player', so triggers.js scopes player-owned
   // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
@@ -591,7 +618,7 @@ export function chooseBlightFeat(C, playerId, choice) {
   setActive(C, P);
   const feat = chooseAshenBlightFeat(C, P.entity, choice);
   settleExpandedPools(C, P.entity, { allocatedAttributes: P.allocatedAttributes });
-  setActive(C, P); refreshCombatRatings(C);
+  setActive(C, P); refreshExpandedLoadout(C, P.entity); refreshCombatRatings(C);
   return { ok: true, feat };
 }
 

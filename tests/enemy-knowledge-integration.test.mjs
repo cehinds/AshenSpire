@@ -17,6 +17,49 @@ import { skillTracks, awardSkillXp, bankSkillXp, claimBankedSkillLevel } from '.
 import { skillProgressRows, staleSkillTracks } from '../src/model/progression.js';
 import { characterSheetModel } from '../src/ui/models/CharacterSheetModel.js';
 import { combatEnemyKnowledgeProblems } from '../src/model/enemyKnowledgeCombat.js';
+import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
+import { createSaveManager } from '../src/engine/save.js';
+
+test('knowledge opted-in predictions and resolved XP retain exact durable checkpoints and refused writes roll back', () => {
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ registries, seed: 11, classId: 'reaver' });
+  Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 0, maximumExact: 0, minimumClue: 0, maximumClue: 0 });
+  openRunEnemyKnowledge(run, { bankable: true, receiptId: 'knowledge-checkpoint-owned-run' });
+  const nodeId = 'n1_4', encounterId = 'patrol';
+  run.combatEntered = { nodeId, encounterId };
+  const rng = createRng(run.seed), entries = new Map();
+  const saves = createSaveManager({ getItem: key => entries.get(key) ?? null,
+    setItem: (key, value) => entries.set(key, value), removeItem: key => entries.delete(key) });
+  const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
+  let refused = false, writes = 0;
+  const durable = candidate => commitExpansionCandidate({ run, candidate, nodeId, encounterId,
+    saveCandidate: (next, committedRng) => {
+      if (refused) return { ok: false, error: 'Knowledge checkpoint refused' };
+      writes++; return saves.saveRun(next, committedRng);
+    } });
+  durable(combat); combat.beforeCombatCommit = durable;
+  const before = serializeCombatSnapshot(combat), beforeRun = structuredClone(run), beforeRng = rng.getCounters();
+  const intent = { type: 'predictIntent', enemyInstanceId: 'e1', actionSerial: combat.enemies[0].knowledgeAction.serial,
+    maneuver: combat.enemies[0].knowledgeAction.category };
+  refused = true;
+  assert.throws(() => dispatch(combat, intent), /Knowledge checkpoint refused/);
+  assert.deepEqual(serializeCombatSnapshot(combat), before);
+  assert.deepEqual(run, beforeRun); assert.deepEqual(rng.getCounters(), beforeRng);
+  refused = false; dispatch(combat, intent);
+  assert.equal(writes, 2, 'accepted prediction writes despite unchanged Blight');
+  let loaded = saves.loadRun(registries);
+  let restored = restoreCombatSnapshot({ registries, rng: createRng(loaded.seed, loaded.streamCounters), snapshot: loaded.combatEntered.snapshot });
+  assert.deepEqual(restored.enemyKnowledge, combat.enemyKnowledge);
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(writes, 3, 'resolved learning and next reads write despite unchanged Blight');
+  assert.equal(run.skills.perception.xp, 1);
+  loaded = saves.loadRun(registries);
+  restored = restoreCombatSnapshot({ registries, rng: createRng(loaded.seed, loaded.streamCounters), snapshot: loaded.combatEntered.snapshot });
+  assert.deepEqual(loaded.skills.perception, run.skills.perception);
+  assert.deepEqual(restored.enemyKnowledge, combat.enemyKnowledge);
+  assert.deepEqual(restored.enemies[0].knowledgeAction, combat.enemies[0].knowledgeAction);
+  assert.deepEqual(restored.rng.getCounters(), rng.getCounters());
+});
 
 function fixture({ registries = createRegistries(contentBundle), enemyId = 'wanderingSoldier', counter = false, responseCard = 'shieldBash', exact = false } = {}) {
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
