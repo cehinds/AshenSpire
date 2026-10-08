@@ -218,7 +218,11 @@ async function main() {
           await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
           await wait(pt.hold + 250);
           await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
-          await wait(600);
+          const transitionEnd = Date.now() + 4000;
+          while (Date.now() < transitionEnd) {
+            if (await evalIn(`window.__combat?.result != null || window.__combat?.turn > ${turn} || window.__combat?.phase !== 'player'`)) break;
+            await wait(100);
+          }
         }
         await until(`window.__combat?.result != null || window.__combat?.turn > ${turn}`, `turn ${turn + 1} or the fight's end`, 10000);
         continue;

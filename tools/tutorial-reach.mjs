@@ -242,7 +242,10 @@ const PROBE = `(() => {
   if (!veil) return { veil: false };
   const vw = innerWidth, vh = innerHeight;
   const box = (sel) => {
-    const el = veil.querySelector(sel);
+    // Tutorial controls are siblings of the pointer-transparent veil so the
+    // veil cannot make the board beneath it unplayable. Measure those live
+    // document controls while the veil remains the tutorial-presence guard.
+    const el = document.querySelector(sel);
     if (!el) return null;
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
@@ -260,7 +263,7 @@ const PROBE = `(() => {
   return {
     veil: true, vw, vh,
     zoom: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1,
-    label: veil.querySelector('.tut-next').textContent,
+    label: document.querySelector('.tut-next')?.textContent || '',
     next: box('.tut-next'), skip: box('.tut-skip'),
     spot: { left: Math.round(spot.left), top: Math.round(spot.top), width: Math.round(spot.width), height: Math.round(spot.height) },
   };
