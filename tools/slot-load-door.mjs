@@ -138,14 +138,20 @@ function connectCdp(wsUrl) {
   const socket = new WebSocket(wsUrl);
   let nextId = 0;
   const pending = new Map();
+  const exceptions = [];
   socket.onmessage = (event) => {
     const message = JSON.parse(event.data);
+    if (message.method === 'Runtime.exceptionThrown') {
+      const detail = message.params?.exceptionDetails;
+      exceptions.push(detail?.exception?.description || detail?.text || 'unknown page exception');
+    }
     if (message.id == null || !pending.has(message.id)) return;
     const { yes, no } = pending.get(message.id);
     pending.delete(message.id);
     message.error ? no(new Error(message.error.message)) : yes(message.result);
   };
   return {
+    exceptions,
     ready: new Promise((yes, no) => { socket.onopen = yes; socket.onerror = no; }),
     send(method, params = {}, sessionId) {
       const id = ++nextId;
@@ -204,7 +210,8 @@ try {
       if (await ev(expression).catch(() => false)) return true;
       await wait(70);
     }
-    throw new Error(`timeout waiting for ${waitingFor}`);
+    const pageState = await ev(`({ url: location.href, ready: document.readyState, combat: !!window.__combat, text: document.body?.innerText?.slice(0, 800) })`).catch((error) => ({ unavailable: error.message }));
+    throw new Error(`timeout waiting for ${waitingFor}; page=${JSON.stringify(pageState)}; exceptions=${JSON.stringify(cdp.exceptions)}`);
   };
   const click = async (selector) => {
     const point = await ev(pointerTargetExpression(selector));
