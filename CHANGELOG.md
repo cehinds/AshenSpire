@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Next combat rules accepted for implementation** ([#1718](https://github.com/cehinds/AshenSpire/pull/1718), `0.7.1.1099`). Defines the complete Martial and Spell expansion: whole-action counters and evasion, persistent Ward, control recovery, optional upcasting, and three run-lasting Blight feat stages. Old runs keep their saved rules. This contract update prepares the runtime implementation; gameplay does not change yet.
+
 - **Full-run checks choose a starting ability** ([#1716](https://github.com/cehinds/AshenSpire/pull/1716), `0.7.1.1098`). The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.
 
 - **Starting abilities respect your deck copy limit** ([#1714](https://github.com/cehinds/AshenSpire/pull/1714), `0.7.1.1097`). Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.

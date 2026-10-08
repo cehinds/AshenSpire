@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1718",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Next combat rules accepted for implementation",
+    "detail": "Defines the complete Martial and Spell expansion: whole-action counters and evasion, persistent Ward, control recovery, optional upcasting, and three run-lasting Blight feat stages. Old runs keep their saved rules. This contract update prepares the runtime implementation; gameplay does not change yet.",
+    "build": "0.7.1.1099",
+    "pullRequest": 1718,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1718"
+  },
+  {
     "id": "pr-1716",
     "date": "2026-10-07",
     "group": "2026-10-07",
