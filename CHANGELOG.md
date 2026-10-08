@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Learn enemy clues in the alternative battlefield** ([#1741](https://github.com/cehinds/AshenSpire/pull/1741), `0.7.1.1142`). Unknown intents, committed predictions and automatic Perception training join the alternative combat. Real encounters and tactical responses unlock five persistent Bestiary stages, with exact saves and private co-op reads. Existing battlefield artwork, weapon animations, card sigils, prices and reachable tutorial controls stay intact.
+
 - **Alternative tutorial controls stay reachable** ([#1737](https://github.com/cehinds/AshenSpire/pull/1737), `0.7.1.1140`). Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.
 
 - **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1741",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Learn enemy clues in the alternative battlefield",
+    "detail": "Unknown intents, committed predictions and automatic Perception training join the alternative combat. Real encounters and tactical responses unlock five persistent Bestiary stages, with exact saves and private co-op reads. Existing battlefield artwork, weapon animations, card sigils, prices and reachable tutorial controls stay intact.",
+    "build": "0.7.1.1142",
+    "pullRequest": 1741,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1741"
+  },
+  {
     "id": "pr-1737",
     "date": "2026-10-08",
     "group": "2026-10-08",
