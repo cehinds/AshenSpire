@@ -14,11 +14,13 @@ const standalone=process.argv.includes('--standalone');
 const report={source:process.env.SIGIL_SOURCE_SHA || null,build:process.env.SIGIL_BUILD_VERSION || null,surface:standalone?'standalone':'source',devices:[]};
 function cardGeometry(cards){return cards.map(c=>{
  const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
- const r=text.getBoundingClientRect(),top=title.getBoundingClientRect();
+ const r=text.getBoundingClientRect(),top=title.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect(),damage=c.querySelector('.card-damage-types'),words=damage?.getBoundingClientRect();
  return {ref:c.dataset.qaRef||c.dataset.cardId,action:c.querySelector('[data-primary-sigil]').dataset.primarySigil,
   school:c.querySelector('.combat-sigil-school')?.dataset.sigil||null,
   clipped:text.scrollHeight>text.parentElement.clientHeight+1||text.scrollWidth>text.clientWidth+1,
   overlapsTitle:r.top<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),
+  damageTypes:damage?.textContent.split(' · ')||[],
+  footerOutside:!!words&&(words.bottom>face.bottom+1||words.left<face.left-1||words.right>face.right+1||words.top<r.bottom-1),
   expanded:c.querySelector('.illustrated-card-face').dataset.rulesExpanded==='true',
   accessibleName:c.getAttribute('aria-label'),actionName:c.querySelector('.combat-sigil-action').getAttribute('aria-label'),
   schoolName:c.querySelector('.combat-sigil-school')?.getAttribute('aria-label')||null,
@@ -59,8 +61,9 @@ try {
   assert.equal(await page.evaluate(()=>JSON.stringify({plays:window.__combat.eventLog.filter(e=>e.type==='cardPlayed'),energy:window.__combat.player.energy,mana:window.__combat.player.mana,stamina:window.__combat.player.stamina})),beforeInspect,'inspection spends no resources and plays no card');
   if(standalone){
    const geometry=await page.locator('.hand .card').evaluateAll(cardGeometry);
-   assert.ok(geometry.every(g=>!g.clipped&&!g.overlapsTitle),'standalone hand effects remain complete');
+   assert.ok(geometry.every(g=>!g.clipped&&!g.overlapsTitle&&!g.footerOutside),'standalone hand effects and damage words remain complete');
    assert.ok(geometry.every(g=>g.accessibleName?.includes(g.actionName)&&(!g.schoolName||g.accessibleName.includes(g.schoolName))),'standalone action and school names remain accessible');
+   assert.ok(geometry.every(g=>g.damageTypes.every(word=>g.accessibleName?.includes(word))),'standalone damage words remain accessible');
    assert.equal(errors.length,0,errors.join('\n'));
    assert.equal(failed.filter(f=>!f.includes('favicon')).length,0,failed.join('\n'));
    report.devices.push({name,hand:geometry,errors,failed});await context.close();continue;
@@ -100,12 +103,13 @@ try {
   await page.waitForFunction(()=>[...document.querySelectorAll('.sigil-corpus [data-card-binding="rules"]')].every(text=>text.dataset.rulesComplete==='true'));
   const geometry=await page.locator('.sigil-corpus .card').evaluateAll(cardGeometry);
   await page.screenshot({path:resolve(output,name+'-cards.png'),clip:{x:0,y:0,width:phone?390:1440,height:phone?844:1000}});
-  const bad=geometry.filter(g=>g.clipped||g.overlapsTitle);
+  const bad=geometry.filter(g=>g.clipped||g.overlapsTitle||g.footerOutside);
   writeFileSync(resolve(output,name+'-geometry.json'),JSON.stringify(geometry,null,2)+'\n');
   assert.equal(bad.length,0,JSON.stringify(bad.slice(0,6)));
   assert.equal(new Set(geometry.map(g=>g.action)).size,10,'all primary actions covered');
   assert.equal(new Set(geometry.map(g=>g.school).filter(Boolean)).size,8,'all spell schools covered');
   assert.ok(geometry.every(g=>g.accessibleName?.includes(g.actionName)&&(!g.schoolName||g.accessibleName.includes(g.schoolName))),'card names expose action and school');
+  assert.ok(geometry.every(g=>g.damageTypes.every(word=>g.accessibleName?.includes(word))),'card names expose damage words');
   assert.ok(geometry.every(g=>g.extraTabStops===0),'sigils add no keyboard stops');
   assert.equal(errors.length,0,errors.join('\n'));
   assert.equal(failed.filter(f=>!f.includes('favicon')).length,0,failed.join('\n'));
