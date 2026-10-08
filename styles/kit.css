@@ -5256,7 +5256,9 @@ button[data-button-size] {
    typography and workspace scrolling still own the presentation. */
 .bestiary-list.cp-grid, :root[data-layout='narrow'] .bestiary .bestiary-list.cp-grid { grid-template-columns: minmax(0, 1fr); }
 :root[data-layout='narrow'] .bestiary .w1-split { grid-template-rows: minmax(0, 7fr) minmax(0, 13fr); }
-.enemy-intent-prediction.as-pane { gap: .6rem; }
+.enemy-intent-prediction.as-pane { flex: 0 0 auto; gap: .6rem; padding: 0; overflow: visible; }
+.enemy-intent-prediction .as-row.setting { flex-direction: column; align-items: stretch; }
+.enemy-intent-prediction select, .enemy-intent-prediction > .as-btn { width: 100%; max-width: 100%; min-height: 44px; }
 
 /* ═══ W1 CATEGORY NAVIGATION — kit/categoryNav.js ═══════════════════════════ */
 /* ONE component for every categorized W1 surface (Settings, Shop, Armoury,
