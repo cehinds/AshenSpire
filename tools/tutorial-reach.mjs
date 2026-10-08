@@ -100,8 +100,8 @@ if (process.argv.includes('--selftest')) {
       {
         // THE LOCKOUT ITSELF: the button row pushed off the bottom of the
         // viewport, which is the state the header says makes the veil
-        // un-dismissable AND persistent across a reload. The row is a root
-        // sibling; transform displaces its real controls after inline placement.
+        // un-dismissable AND persistent across a reload. Transform displaces
+        // the real controls after inline placement in either coordinate owner.
         name: 'the coach mark buttons are pushed off the bottom of the viewport (the un-dismissable veil)',
         file: 'styles/ui.css',
         append: '.tut-row { transform: translateY(4000px) !important; }',
@@ -110,8 +110,8 @@ if (process.argv.includes('--selftest')) {
       {
         // The other way the same lockout arrives: something else answers the
         // hit-test at the button's own coordinates, so a REAL click lands on
-        // the veil instead of the control. el.click() would not notice. The
-        // detached row sits above the veil, so cover that control layer too.
+        // the veil instead of the control. el.click() would not notice. Cover
+        // the real button row as well, independently of its coordinate owner.
         name: 'a transparent layer covers the buttons — a real click lands on the veil',
         file: 'styles/ui.css',
         append: '.tut-veil::after, .tut-bubble::after, .tut-row::after { content: ""; position: fixed; inset: 0; z-index: 99999; pointer-events: auto; }',
