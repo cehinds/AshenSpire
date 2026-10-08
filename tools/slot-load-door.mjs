@@ -17,11 +17,14 @@
 //           resumeRun swaps the live run only after a successful load, so
 //           the climb in hand stands and a notice says the slot could not
 //           open (REFUSED-KEEPS-RUN). `?shotRefusedSlot=3` plants it.
-//   RESTART Abandoning a fight mid-combat (no Save Game) and loading the slot
+//   RESTART Abandoning a legacy fight mid-combat and loading the slot
 //           restarts that fight from its entry receipt: turn 1, the same HP,
 //           the same opening hand, RNG seed/counters, an unchanged deck. tests/midcombat-reload
-//           proves the same property against a hand-copied mirror of
+//           proves the same legacy property against a hand-copied mirror of
 //           enterCombat; this is the production load door itself.
+//   SNAPSHOT Default new combat carries knowledge and commits each accepted
+//           transaction. Its fixture must load the exact committed snapshot,
+//           including resources, piles, enemies and random-stream counters.
 //   OVERLAY-FOCUS  The same refused load, launched from the in-run
 //           overlay's quick navigation instead of the combat ☰ menu: the
 //           overlay stays open until resumeRun knows the outcome, so "Keep
@@ -235,7 +238,7 @@ try {
     await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'combat timeline settlement');
   };
 
-  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
+  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotCombatVersion=1&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
   await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'combat boot');
   measuring = true;
   const opening = await pose();
@@ -454,6 +457,33 @@ try {
       `a refused load from the overlay's quick navigation keeps the overlay and the run, and "Keep playing" returns focus to #${launcher} (${JSON.stringify({ ...after, liveDeck: after.liveDeck.length, keptDeck })})`);
   } catch (error) {
     check(false, 'SLOT-LOAD-OVERLAY-FOCUS', error.message);
+  }
+  // A fresh default-version document exercises the expanded save contract
+  // through the same Load door, rather than forcing entry-restart semantics
+  // onto the transaction snapshots that current runs intentionally persist.
+  try {
+    await ev('window.__staleDoc = 1');
+    await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat` }, sessionId);
+    await until(`!window.__staleDoc && !location.search.includes('shotCombatVersion') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'a fresh expanded combat');
+    await advanceTurn();
+    await advanceTurn();
+    const committed = await ev(`(async () => {
+      const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');
+      return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: { seed: window.__combat.rng.seed, counters: window.__combat.rng.getCounters() } });
+    })()`);
+    const committedPose = await pose();
+    await ev('window.__combat.__slotLoadProbe = true');
+    await openLoadSlot(1);
+    await confirmIfAsked();
+    await until(`!!window.__combat && !window.__combat.__slotLoadProbe && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the restored expanded snapshot');
+    const restored = await ev(`(async () => {
+      const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');
+      return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: { seed: window.__combat.rng.seed, counters: window.__combat.rng.getCounters() } });
+    })()`);
+    check(committedPose.turn > 1 && restored === committed, 'SLOT-LOAD-EXPANDED-SNAPSHOT',
+      restored === committed ? `the new combat restores exact committed turn ${committedPose.turn}, resources, piles, enemies and RNG` : 'the restored combat differs from its committed snapshot');
+  } catch (error) {
+    check(false, 'SLOT-LOAD-EXPANDED-SNAPSHOT', error.message);
   }
   await cdp.send('Target.closeTarget', { targetId });
 } catch (error) {
