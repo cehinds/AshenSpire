@@ -23,9 +23,10 @@
 //           proves the same legacy property against a hand-copied mirror of
 //           enterCombat; this is the production load door itself.
 //   SNAPSHOT Expanded combat retains explicit Save Game checkpoints. Its
-//           default-version fixture saves a later turn, advances an unsaved
-//           turn, then loads the exact checkpoint: resources, piles, enemies,
-//           RNG seed and random-stream counters.
+//           default-version fixture first reloads its opening checkpoint
+//           after an ordinary turn. It then saves a later turn, advances an
+//           unsaved turn, and loads the exact checkpoint: resources, piles,
+//           enemies, RNG seed and random-stream counters.
 //   OVERLAY-FOCUS  The same refused load, launched from the in-run
 //           overlay's quick navigation instead of the combat ☰ menu: the
 //           overlay stays open until resumeRun knows the outcome, so "Keep
@@ -108,6 +109,13 @@ if (process.argv.includes('--selftest')) {
         expectRed: /RED SLOT-LOAD-MIDCOMBAT-RESTART/,
       },
       {
+        name: 'expanded combat entry stops writing its opening checkpoint',
+        file: 'src/main.js',
+        find: '      durable(combat);',
+        replace: '      // slot-load-door selftest plant: omit the expanded entry checkpoint',
+        expectRed: /RED SLOT-LOAD-EXPANDED-ENTRY/,
+      },
+      {
         name: 'resume restarts the fight from a fresh draw',
         file: 'src/main.js',
         find: '  rng = createRng(run.seed, run.streamCounters);',
@@ -116,7 +124,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('slot-load-door --selftest: OK — 6/6 known-bads observed red');
+  if (code === 0) console.log('slot-load-door --selftest: OK — 7/7 known-bads observed red');
   process.exit(code);
 }
 
@@ -466,6 +474,20 @@ try {
     await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat` }, sessionId);
     await until(`!window.__staleDoc && !location.search.includes('shotCombatVersion') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'a fresh expanded combat');
     if (!(await ev('window.__combat.combatExpansionVersion === 2'))) throw new Error('the default fixture is not expanded combat');
+    const snapshotWithRng = () => ev(`(async () => {
+      const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');
+      return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: { seed: window.__combat.rng.seed, counters: window.__combat.rng.getCounters() } });
+    })()`);
+    const entry = await snapshotWithRng();
+    const entryPose = await pose();
+    await advanceTurn();
+    await ev('window.__combat.__slotLoadProbe = true');
+    await openLoadSlot(1);
+    await confirmIfAsked();
+    await until(`!!window.__combat && !window.__combat.__slotLoadProbe && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the restored expanded entry');
+    const restoredEntry = await snapshotWithRng();
+    check(entryPose.turn === 1 && restoredEntry === entry, 'SLOT-LOAD-EXPANDED-ENTRY',
+      restoredEntry === entry ? 'ordinary unsaved combat restores the exact opening snapshot, RNG seed and counters' : 'ordinary combat replaced or changed its opening checkpoint');
     await advanceTurn();
     await advanceTurn();
     await click('#combat-menu');
@@ -475,16 +497,12 @@ try {
     await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
     await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
     await until(`!document.querySelector('.quick-nav-veil')`, 'the saved Quick Menu to close');
-    const snapshotWithRng = () => ev(`(async () => {
-      const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');
-      return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: { seed: window.__combat.rng.seed, counters: window.__combat.rng.getCounters() } });
-    })()`);
     const saved = await snapshotWithRng();
     const savedPose = await pose();
     if (savedPose.turn <= 1) throw new Error('Save Game did not capture a later turn');
     await advanceTurn();
     const unsavedPose = await pose();
-    check(unsavedPose.turn > savedPose.turn && await snapshotWithRng() !== saved, 'SLOT-LOAD-EXPANDED-UNSAVED',
+    check(unsavedPose.turn > savedPose.turn && (await snapshotWithRng()) !== saved, 'SLOT-LOAD-EXPANDED-UNSAVED',
       `the live fight advances from saved turn ${savedPose.turn} to distinct unsaved turn ${unsavedPose.turn}`);
     await ev('window.__combat.__slotLoadProbe = true');
     await openLoadSlot(1);
