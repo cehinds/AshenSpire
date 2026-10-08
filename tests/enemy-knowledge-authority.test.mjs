@@ -3,7 +3,7 @@ import { createRng } from '../src/engine/rng.js';
 import { snapshotEnemyKnowledgeRules } from '../src/model/enemyKnowledgeRules.js';
 import { knowledgePoints } from '../src/model/enemyKnowledgeProfile.js';
 import { combatEnemyKnowledgeProblems } from '../src/model/enemyKnowledgeCombat.js';
-import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, resolveKnowledgeAction, creditKnowledgeResponse, recordKnowledgeEvent } from '../src/engine/enemyKnowledge.js';
+import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, resolveKnowledgeAction, creditKnowledgeResponse, recordKnowledgeEvent, addKnowledgeObserver } from '../src/engine/enemyKnowledge.js';
 const rules = snapshotEnemyKnowledgeRules(); rules.reads.baseExact = 0; rules.reads.baseClue = 0;
 const encounter = { id: 'unique-run/1/node/fight', enemyIds: ['soldier'] };
 function combat() {
@@ -89,6 +89,22 @@ assert.deepEqual(a.enemies[0].knowledgeAction, b.enemies[0].knowledgeAction);
 assert.equal(a.rng.getCounters().enemyIntentVisibility, 1); // only the discarded solo fixture read
 assert.equal(a.enemyKnowledge.readCounters.enemyIntentVisibility, 2);
 assert.equal(a.enemyKnowledge.readCounters.enemyIntentClue, 2);
+const originalJoinAction = structuredClone(a.enemies[0].knowledgeAction);
+a.players.set('new', { entity: { id: 'player', alive: true }, skills: { perception: { xp: 0, level: 0, pendingDrafts: 0 } }, attributes: {}, characterLevel: 1 });
+addKnowledgeObserver(a, 'new');
+assert.equal(a.enemyKnowledge.readCounters.enemyIntentVisibility, 3);
+assert.equal(a.enemies[0].knowledgeAction.serial, originalJoinAction.serial);
+for (const id of ['a', 'z']) assert.deepEqual(a.enemies[0].knowledgeAction.reads[id], originalJoinAction.reads[id]);
+assert.equal(knowledgePoints(a.enemyKnowledge.owners.new.pending.enemies.soldier), 1);
+const joined = JSON.stringify(a);
+addKnowledgeObserver(a, 'new'); assert.equal(JSON.stringify(a), joined);
+assert.throws(() => addKnowledgeObserver(a, 'foreign'), /unavailable/); assert.equal(JSON.stringify(a), joined);
+a.players.get('new').connected = false; rollEnemyKnowledge(a, a.enemies[0]);
+assert.equal(a.enemies[0].knowledgeAction.reads.new, undefined);
+a.players.get('new').connected = true; const reconnectCounter = a.enemyKnowledge.readCounters.enemyIntentVisibility;
+addKnowledgeObserver(a, 'new'); assert.equal(a.enemyKnowledge.readCounters.enemyIntentVisibility, reconnectCounter + 1);
+const reconnected = JSON.stringify(a); addKnowledgeObserver(a, 'new'); assert.equal(JSON.stringify(a), reconnected);
+assert.deepEqual(combatEnemyKnowledgeProblems(a.enemyKnowledge, a.enemies, { coop: true }), []);
 assert.throws(() => initializeCombatKnowledge(a, { rules, encounter, privateSeed: null }), /host-private/);
 // Every owner has a separate tactical bonus cap and only the responding owner pays.
 const u = coop(['a', 'z']);
@@ -111,5 +127,19 @@ const malformedEnemies = structuredClone(u.enemies);
 malformedEnemies[0].knowledgeAction.reads.a.visibility = 'exact';
 assert.ok(combatEnemyKnowledgeProblems(u.enemyKnowledge, malformedEnemies, { coop: true }).length);
 assert.ok(combatEnemyKnowledgeProblems(undefined, u.enemies).length);
+const savedExecuted = combat();
+predictEnemyIntent(savedExecuted, 'player', 'e1', 1, 'Smash');
+resolveKnowledgeAction(savedExecuted, savedExecuted.enemies[0]);
+assert.deepEqual(combatEnemyKnowledgeProblems(savedExecuted.enemyKnowledge, savedExecuted.enemies), []);
+for (const mutate of [
+  read => { read.correct = false; },
+  read => { read.correct = null; },
+  read => { read.visibility = 'clue'; read.label = 'Magic?'; read.prediction = null; read.correct = null; read.credited = false; },
+]) {
+  const bad = structuredClone(savedExecuted.enemies); mutate(bad[0].knowledgeAction.reads.player);
+  assert.ok(combatEnemyKnowledgeProblems(savedExecuted.enemyKnowledge, bad).length);
+}
+const premature = combat(); premature.enemies[0].knowledgeAction.reads.player.resolved = true;
+assert.ok(combatEnemyKnowledgeProblems(premature.enemyKnowledge, premature.enemies).length);
 assert.throws(() => initializeCombatKnowledge(u, { rules, bankable: true, encounter: null, privateSeed: 1 }), /unique encounter/);
 console.log('PASS enemy knowledge authority helpers: inert/rejected predictions, execution-only XP, delay continuity and independent owner caps');

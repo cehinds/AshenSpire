@@ -5249,6 +5249,13 @@ button[data-button-size] {
   column-gap: 0; row-gap: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-row-gap));
 }
 
+/* The Bestiary lists identities rather than thumbnail collections. One column
+   keeps encountered names readable at the phone rung. Shared kit controls,
+   typography and workspace scrolling still own the presentation. */
+.bestiary-list.cp-grid, :root[data-layout='narrow'] .bestiary .bestiary-list.cp-grid { grid-template-columns: minmax(0, 1fr); }
+:root[data-layout='narrow'] .bestiary .w1-split { grid-template-rows: minmax(0, 7fr) minmax(0, 13fr); }
+.enemy-intent-prediction.as-pane { gap: .6rem; }
+
 /* ═══ W1 CATEGORY NAVIGATION — kit/categoryNav.js ═══════════════════════════ */
 /* ONE component for every categorized W1 surface (Settings, Shop, Armoury,
    Compendium, Profile, the pile viewer). models/CategoryNavModel.js decides

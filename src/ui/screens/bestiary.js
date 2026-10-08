@@ -4,6 +4,18 @@ import { el, button, pane, options, optionCard, pageDoor, statusText, titleS } f
 import { workspaceFrame, land } from '../components/w1Workspace.js';
 
 export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemyId = null }) {
+  let closed = false;
+  function leave() {
+    if (closed) return;
+    closed = true;
+    app.removeEventListener('keydown', onKey);
+    onBack?.();
+  }
+  function onKey(event) {
+    if (event.key === 'Escape' && !event.defaultPrevented && !document.querySelector('[aria-modal="true"]')) {
+      event.preventDefault(); leave();
+    }
+  }
   const learned = meta.enemyKnowledge?.enemies || {};
   const definitions = registries.enemies.all().filter(def => Object.hasOwn(learned, def.id))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -16,7 +28,7 @@ export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemy
   const door = workspaceFrame(pageDoor({
     eyebrow: 'Lifetime enemy knowledge', title: 'Bestiary', size: 'xl',
     body: pane({ children: el('div', { class: 'w1-split' }, [el('div', { class: 'cp-list' }, list), detail]) }),
-    bodyClassName: 'compendium-body', primary: back, footSize: 'short', onClose: onBack, closeLabel: 'Close Bestiary',
+    bodyClassName: 'compendium-body', primary: back, footSize: 'short', onClose: leave, closeLabel: 'Close Bestiary',
   }));
   function paintDetail() {
     const view = views.find(entry => entry.id === selectedId);
@@ -37,6 +49,8 @@ export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemy
   detail.id = 'bestiary-facts';
   paintDetail();
   app.replaceChildren(el('div', { class: 'screen compendium bestiary', dataset: { surface: 'bestiary' } }, door));
-  back.addEventListener('click', onBack);
+  back.addEventListener('click', leave);
+  app.addEventListener('keydown', onKey);
   land(list.querySelector('button') || back);
+  return () => { closed = true; app.removeEventListener('keydown', onKey); };
 }

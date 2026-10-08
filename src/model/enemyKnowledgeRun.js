@@ -11,7 +11,7 @@ export function openRunEnemyKnowledge(run, { receiptId = null, bankable = false 
   if (run.enemyKnowledgeRules?.version !== 1) return false;
   if (bankable && (!knowledgeKey(receiptId) || receiptId.length > 128)) throw new Error('Enemy learning requires a caller-owned unique run receipt');
   run.enemyKnowledgeState = { version: 1, receiptId, bankable, visitOrdinal: 0, currentEncounter: null,
-    pending: emptyEnemyKnowledge(), appliedXp: {} };
+    pending: emptyEnemyKnowledge(), recoveryTargets: {}, appliedXp: {} };
   run.skills ||= {};
   run.skills[PERCEPTION_SKILL] = { xp: 0, level: 0, pendingDrafts: 0 };
   return true;
@@ -84,6 +84,11 @@ export function enemyKnowledgeRunProblems(run, enemyIds = null) {
   if (!object(state) || state.version !== 1 || typeof state.bankable !== 'boolean' || !count(state.visitOrdinal)
     || (state.bankable && (!knowledgeKey(state.receiptId) || state.receiptId.length > 128)) || !object(state.appliedXp)) return [...problems, 'run.enemyKnowledgeState is invalid'];
   problems.push(...enemyKnowledgeProblems(state.pending, enemyIds));
+  if (state.recoveryTargets !== undefined) {
+    if (!object(state.recoveryTargets)) problems.push('Enemy knowledge recovery targets require a bounded definition ledger');
+    else for (const [id, target] of Object.entries(state.recoveryTargets)) if (!knowledgeKey(id) || (enemyIds && !enemyIds.has(id))
+      || !Number.isInteger(target) || target < 20 || target > 50 || state.pending?.enemies?.[id]?.target !== target) problems.push('Enemy knowledge recovery target requires its retained pending ledger');
+  }
   for (const [id, xp] of Object.entries(state.appliedXp)) if (!knowledgeKey(id) || !count(xp)) problems.push('run enemy Perception receipts require valid identity and XP');
   const encounter = state.currentEncounter;
   if (encounter !== null && (!object(encounter) || !knowledgeKey(encounter.id) || !knowledgeKey(encounter.nodeId)

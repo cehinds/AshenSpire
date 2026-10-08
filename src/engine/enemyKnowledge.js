@@ -16,20 +16,7 @@ export function initializeCombatKnowledge(combat, { rules, encounter = null, ban
   combat.enemyKnowledge = { version: 1, rules: structuredClone(rules), encounter: structuredClone(encounter), bankable,
     nextSerial: 0, owners: {}, ...(combat.players instanceof Map ? { privateSeed,
       readCounters: { enemyIntentVisibility: 0, enemyIntentClue: 0 } } : {}) };
-  for (const owner of observers(combat)) combat.enemyKnowledge.owners[owner.id] = {
-    knowledge: structuredClone(profiles[owner.id] || emptyEnemyKnowledge()), pending: emptyEnemyKnowledge(), earnedXp: 0,
-    feedback: [], counterEnemyIds: [],
-  };
-  if (bankable && encounter) for (const owner of Object.values(combat.enemyKnowledge.owners)) {
-    const entered = { version: 1, enemies: Object.fromEntries(encounter.enemyIds.map(id => [id, {
-      target: enemyMasteryTarget(rules, id), receipts: { [encounter.id]: { bonus: false } },
-    }])) };
-    const accepted = mergeEnemyKnowledge(entered, owner.knowledge);
-    owner.pending.enemies = Object.fromEntries(Object.entries(accepted.enemies)
-      .filter(([, row]) => Object.hasOwn(row.receipts, encounter.id))
-      .map(([id, row]) => [id, { target: row.target, receipts: { [encounter.id]: { bonus: row.receipts[encounter.id].bonus } } }]));
-    owner.knowledge = accepted;
-  }
+  for (const owner of observers(combat).filter(row => row.entity?.alive && row.connected)) combat.enemyKnowledge.owners[owner.id] = newKnowledgeOwner(combat.enemyKnowledge, profiles[owner.id]);
   return combat.enemyKnowledge;
 }
 function observers(combat) {
@@ -40,6 +27,45 @@ function observers(combat) {
     attributes: combat.attributes, level: combat.characterLevel || 1, ended: false, connected: true }];
 }
 const observerFor = (combat, id) => observers(combat).find(row => row.id === id);
+
+function newKnowledgeOwner(state, profile = emptyEnemyKnowledge()) {
+  const owner = { knowledge: structuredClone(profile), pending: emptyEnemyKnowledge(), earnedXp: 0, feedback: [], counterEnemyIds: [] };
+  if (state.bankable && state.encounter) {
+    const encounter = state.encounter;
+    const entered = { version: 1, enemies: Object.fromEntries(encounter.enemyIds.map(id => [id, {
+      target: enemyMasteryTarget(state.rules, id), receipts: { [encounter.id]: { bonus: false } },
+    }])) };
+    const accepted = mergeEnemyKnowledge(entered, owner.knowledge);
+    owner.pending.enemies = Object.fromEntries(Object.entries(accepted.enemies)
+      .filter(([, row]) => Object.hasOwn(row.receipts, encounter.id))
+      .map(([id, row]) => [id, { target: row.target, receipts: { [encounter.id]: { bonus: row.receipts[encounter.id].bonus } } }]));
+    owner.knowledge = accepted;
+  }
+  return owner;
+}
+function storeReadCounters(state, rng) {
+  if (!Object.hasOwn(state, 'privateSeed')) return;
+  const counters = rng.getCounters();
+  state.readCounters = { enemyIntentVisibility: counters.enemyIntentVisibility, enemyIntentClue: counters.enemyIntentClue };
+}
+// Join/rejoin keeps every existing observer's read, prediction and action
+// serial. A returning observer receives only reads it has never been given.
+export function addKnowledgeObserver(combat, ownerId, profile = emptyEnemyKnowledge()) {
+  const state = combat.enemyKnowledge, owner = observerFor(combat, ownerId);
+  if (!state || !knowledgeKey(ownerId) || !owner?.entity?.alive || !owner.connected || combat.result) throw new Error('Enemy knowledge observer is unavailable');
+  const problems = enemyKnowledgeProblems(profile);
+  if (problems.length) throw new Error(problems.join('; '));
+  if (!Object.hasOwn(state.owners, ownerId)) state.owners[ownerId] = newKnowledgeOwner(state, profile);
+  else state.owners[ownerId].knowledge = mergeEnemyKnowledge(profile, state.owners[ownerId].knowledge);
+  const rng = Object.hasOwn(state, 'privateSeed') ? createRng(state.privateSeed, state.readCounters) : combat.rng;
+  const selected = combat.enemies.filter(enemy => enemy.alive && enemy.knowledgeAction && !enemy.knowledgeAction.executed && !enemy.knowledgeAction.cancelled)
+    .sort((a, b) => a.knowledgeAction.serial - b.knowledgeAction.serial);
+  for (const enemy of selected) if (!Object.hasOwn(enemy.knowledgeAction.reads, ownerId)) {
+    enemy.knowledgeAction.reads[ownerId] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, enemy.knowledgeAction.category);
+  }
+  storeReadCounters(state, rng);
+  return state.owners[ownerId];
+}
 
 function feedback(combat, enemy, outcome) {
   for (const [id, read] of Object.entries(enemy.knowledgeAction?.reads || {})) {
@@ -59,13 +85,10 @@ export function rollEnemyKnowledge(combat, enemy, { charging = false } = {}) {
   const rng = Object.hasOwn(state, 'privateSeed') ? createRng(state.privateSeed, state.readCounters) : combat.rng;
   const action = { serial: ++state.nextSerial, category, executed: false, reads: {} };
   for (const owner of observers(combat).filter(row => row.entity?.alive && row.connected)) {
-    if (!Object.hasOwn(state.owners, owner.id)) state.owners[owner.id] = { knowledge: emptyEnemyKnowledge(), pending: emptyEnemyKnowledge(), earnedXp: 0, feedback: [], counterEnemyIds: [] };
+    if (!Object.hasOwn(state.owners, owner.id)) state.owners[owner.id] = newKnowledgeOwner(state);
     action.reads[owner.id] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, category);
   }
-  if (Object.hasOwn(state, 'privateSeed')) {
-    const counters = rng.getCounters();
-    state.readCounters = { enemyIntentVisibility: counters.enemyIntentVisibility, enemyIntentClue: counters.enemyIntentClue };
-  }
+  storeReadCounters(state, rng);
   enemy.knowledgeAction = action;
   return true;
 }

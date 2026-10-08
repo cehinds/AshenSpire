@@ -1,6 +1,6 @@
 import { enemyKnowledgeRuleProblems } from './enemyKnowledgeRules.js';
 import { enemyKnowledgeProblems, knowledgeKey } from './enemyKnowledgeProfile.js';
-import { PREDICTION_CHOICES } from './enemyIntentKnowledge.js';
+import { PREDICTION_CHOICES, broadIntentLabel } from './enemyIntentKnowledge.js';
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const count = value => Number.isSafeInteger(value) && value >= 0;
 const choices = new Set([...PREDICTION_CHOICES, 'Staggered']);
@@ -49,9 +49,13 @@ export function combatEnemyKnowledgeProblems(state, enemies, { enemyIds = null, 
     for (const [ownerId, read] of Object.entries(action.reads)) {
       if (!Object.hasOwn(state.owners, ownerId) || !object(read) || !['exact', 'clue', 'unknown'].includes(read.visibility)
         || (read.visibility === 'exact' ? read.label !== null : read.visibility === 'unknown' ? read.label !== '?' : !['Attack?', 'Magic?', 'Preparing?'].includes(read.label))
+        || (read.visibility === 'clue' && read.label !== broadIntentLabel(action.category))
+        || (action.category === 'Staggered' && read.visibility !== 'exact')
         || (read.prediction !== null && (!PREDICTION_CHOICES.includes(read.prediction) || read.visibility !== 'unknown'))
         || typeof read.resolved !== 'boolean' || typeof read.credited !== 'boolean' || (read.credited && read.visibility !== 'unknown')
         || (read.correct !== null && (typeof read.correct !== 'boolean' || !read.resolved || read.prediction === null))
+        || (read.resolved && !action.executed && !action.cancelled)
+        || (action.executed && read.correct !== (read.prediction === null ? null : read.prediction === action.category))
         || (action.executed && !read.resolved) || (action.cancelled && (action.executed || !read.resolved || read.correct !== null))) problems.push(`enemy ${enemy.id} observer ${ownerId} has an invalid committed read`);
     }
   }

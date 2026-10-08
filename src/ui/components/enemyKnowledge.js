@@ -1,4 +1,4 @@
-import { el, eyebrow, titleS, prose, statusText, row, hairline, button } from '../kit/index.js';
+import { el, eyebrow, titleS, prose, statusText, row, hairline, button, pane } from '../kit/index.js';
 import { renderEnemyMoveCards } from './enemyMoveCards.js';
 import { PREDICTION_CHOICES } from '../../model/enemyIntentKnowledge.js';
 
@@ -30,10 +30,10 @@ export function renderEnemyKnowledge(view, { perception = null } = {}) {
 // This renderer receives an owner-specific allowlisted read model, never the
 // selected action. Only an authority acknowledgment can confirm acceptance.
 export function renderIntentPrediction(model, onPredict) {
-  const status = el('p', { class: 'as-status-text', role: 'status', 'aria-live': 'polite', text: model.prediction
+  const status = el('p', { class: 'as-prose', role: 'status', 'aria-live': 'polite', text: model.prediction
     ? `Prediction: ${model.prediction}. ${model.resolved ? model.correct === true ? 'Correct.' : model.correct === false ? 'Incorrect.' : 'Action cancelled.' : 'Awaiting the action.'}`
     : 'Choose the actual action you expect. XP is earned only after a correct prediction resolves.' });
-  const panel = el('section', { class: 'enemy-intent-prediction' }, [eyebrow('Prediction'), status]);
+  const panel = pane({ attrs: { class: 'enemy-intent-prediction' }, children: [eyebrow('Prediction'), status] });
   if (!model.eligible) return panel;
   const choices = el('select', { 'aria-label': 'Predicted enemy action', class: 'as-btn' }, PREDICTION_CHOICES.map(choice => el('option', { value: choice, text: choice })));
   const commit = button({ label: 'Predict action' });
