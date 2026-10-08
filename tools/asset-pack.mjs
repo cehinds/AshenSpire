@@ -146,11 +146,22 @@ export function withAlternativeArt(manifest, root = ROOT) {
       if (actionCatalog.filePaths?.[file]) catalog.filePaths[file] = actionCatalog.filePaths[file];
     }
   }
+  const stancesFile = resolve(root, 'src/content/alternativeSelectedStances.js');
+  if (existsSync(stancesFile)) {
+    const stances = readFileSync(stancesFile, 'utf8').match(/^export const alternativeSelectedStances = (.+);\r?$/m);
+    if (!stances) throw new Error('Selected stances must be exported before packing');
+    const stancesCatalog = JSON.parse(stances[1]);
+    for (const [file, hash] of Object.entries(stancesCatalog.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+      if (stancesCatalog.filePaths?.[file]) catalog.filePaths[file] = stancesCatalog.filePaths[file];
+    }
+  }
   const assets = { ...manifest.assets };
   for (const [file, expected] of Object.entries(catalog.hashes)) {
-    if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
+    if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
     const id = catalog.filePaths[file] || `assets-display/alternative/${file}`;
-    if (!/^assets-display\/(alternative|shared)\/[a-zA-Z0-9-]+\.webp$/.test(id) || id.split('/').at(-1) !== file) throw new Error(`Invalid display art path: ${id}`);
+    if (!/^assets-display\/(alternative|shared)\/(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(id) || !id.endsWith('/' + file)) throw new Error(`Invalid display art path: ${id}`);
     const bytes = readFileSync(resolve(root, id));
     if (sha256(bytes) !== expected) throw new Error(`Alternative art changed: ${file}; regenerate its catalog`);
     if (assets[id]) throw new Error(`Alternative art ID collides with a pinned pack: ${id}`);

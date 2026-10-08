@@ -1,6 +1,6 @@
 // Organize existing, hash-verified exports without repainting or re-encoding them.
 import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs';
-import { basename, resolve, sep } from 'node:path';
+import { basename, dirname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 
@@ -11,6 +11,7 @@ const write = organize || process.argv.includes('--write');
 const specs = [
   ['src/ui/alternativeArtCatalog.js', 'alternativeArtCatalog'],
   ['src/content/alternativeCardAnimations.js', 'alternativeCardAnimations'],
+  ['src/content/alternativeSelectedStances.js', 'alternativeSelectedStances'],
 ];
 const catalogs = specs.map(([file, name]) => {
   const source = readFileSync(resolve(root, file), 'utf8');
@@ -23,7 +24,7 @@ const sharedFiles = new Set(Object.values(catalogs[0].value.sprites)
   .flatMap(sprite => [basename(sprite.path), basename(sprite.mobilePath)]));
 const paths = {};
 for (const catalog of catalogs) for (const file of Object.keys(catalog.value.hashes)) {
-  if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid export name: ${file}`);
+  if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid export name: ${file}`);
   paths[file] = `assets-display/${sharedFiles.has(file) ? 'shared' : 'alternative'}/${file}`;
 }
 
@@ -45,12 +46,13 @@ if (organize) {
       if (!existsSync(from) && existsSync(to)) continue; // Already organized; verified below.
       if (!existsSync(from)) throw new Error(`Missing original export: ${file}`);
       if (existsSync(to)) throw new Error(`Destination already exists: ${id}`);
+      mkdirSync(dirname(to), { recursive: true });
       renameSync(from, to);
     }
   }
   function relocate(value) {
     if (typeof value === 'string' && value.startsWith('assets-alternative/')) {
-      const id = paths[basename(value)];
+      const id = paths[value.slice('assets-alternative/'.length)];
       if (!id) throw new Error(`Unregistered export path: ${value}`);
       return id;
     }

@@ -1,4 +1,5 @@
 import { alternativeCardAnimations } from '../content/alternativeCardAnimations.js';
+import { alternativeSelectedStances } from '../content/alternativeSelectedStances.js';
 import { durationFor, sampleSequence, hitFlashOpacity } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
@@ -29,6 +30,8 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   if (classicAppearance()) return null;
   const family = alternativeCardAnimations.classes[classId];
   if (!family) return null;
+  const heldFrames = alternativeSelectedStances.classes[classId]?.frames || {};
+  const frames = { ...family.frames, ...Object.fromEntries(Object.entries(heldFrames).map(([stance, frame]) => ['stance-'+stance, frame])) };
   const el = document.createElement('div');
   el.className = 'pose-stage painted-stage alternative-card-stage';
   el.dataset.animationSet = 'class-cards-'+classId;
@@ -55,7 +58,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   placeholder.setAttribute('role','img');placeholder.setAttribute('aria-label',classId+' character');
   placeholder.style.cssText='position:absolute;inset:0;text-align:center;font-size:64px;';el.append(placeholder);
   async function preload(){
-    const results=await Promise.allSettled(Object.entries(family.frames).map(async([name,frame])=>{
+    const results=await Promise.allSettled(Object.entries(frames).map(async([name,frame])=>{
       images.set(name,await load(alternativeArtUrl(frame[lite?'lite':'path'])).ready);
     }));
     if(disposed)return false;
@@ -66,9 +69,9 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   }
   let down = null;
   if (DEFEATED_ART[classId]?.file) load(assetUrl(DEFEATED_ART[classId].file)).ready.then(image => { down=image; paint(); }).catch(()=>{});
-  let pose='ready', rest='idle', playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, disposed=false;
+  let pose='ready', rest='idle', stance=null, playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, disposed=false;
   let resources=[], reactionTimer=null;
-  const restPose = () => rest === 'defeated' ? 'defeated' : ['defend','guard','counter'].includes(rest) ? 'guard-brace' : 'ready';
+  const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : ['defend','guard','counter'].includes(rest) ? 'guard-brace' : 'ready';
   function paint(now=performance.now()) {
     if (disposed) return;
     ctx.clearRect(0,0,768,544);
@@ -111,7 +114,14 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],
     get pose(){return pose;},
     get rest(){return rest;},
-    get presentation(){return {rest,pose,action:playing?.action,elapsed,duration:playing?.duration,resources,savedAt:Date.now()};},
+    get stance(){return stance;},
+    get presentation(){return {rest,pose,stance,action:playing?.action,elapsed,duration:playing?.duration,resources,savedAt:Date.now()};},
+    setStance(next){
+      stance=Object.hasOwn(heldFrames,next)?next:null;
+      el.dataset.stance=stance||'neutral';
+      if(!playing){pose=restPose();paint();}
+      return !!stance;
+    },
     setPose(next){if(family.frames[next]){playing=null;pose=next;paint();return true;}return false;},
     seek(action, time, duration=260){
       const sequence=family.sequences[action];if(!sequence||disposed)return false;
