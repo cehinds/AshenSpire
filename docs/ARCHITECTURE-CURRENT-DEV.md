@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `alternative/dev`
-- Source commit: `4cf6798e4a06c1df94d8240d73da9ba5763277c8`
+- Source commit: `395efe5fe6bb3e2b84fdfadd9d7c7618b43313a2`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -25,13 +25,13 @@
 | Headless simulation/services | `src/engine/` | 41 |
 | Screen presenters/hosts | `src/ui/screens/` | 34 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
-| Component models and behavior records | `src/ui/models/` | 90 |
-| DOM components and observer adapters | `src/ui/components/` | 119 |
+| Component models and behavior records | `src/ui/models/` | 92 |
+| DOM components and observer adapters | `src/ui/components/` | 120 |
 | Code-side content adapters | `src/content/` | 154 |
 | Authoritative JSON/CSV content | `content/source/` | 32 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 440 |
-| Architecture/tooling | `tools/` | 446 |
+| Tests | `tests/` | 442 |
+| Architecture/tooling | `tools/` | 447 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **12918**.
-Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 42, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 56, `.jpg` 282, `.js` 749, `.json` 769, `.log` 1, `.md` 208, `.mjs` 814, `.nojekyll` 1, `.nsi` 1, `.png` 1720, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.txt` 40, `.webp` 7337, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
+Tracked files: **12944**.
+Extensions: `.bat` 1, `.cjs` 14, `.cmd` 3, `.css` 42, `.csv` 35, `.gitattributes` 4, `.gitignore` 5, `.html` 56, `.jpg` 282, `.js` 752, `.json` 772, `.log` 1, `.md` 211, `.mjs` 817, `.nojekyll` 1, `.nsi` 1, `.png` 1734, `.ps1` 10, `.py` 58, `.sh` 4, `.sql` 1, `.svg` 734, `.txt` 40, `.webp` 7337, `.woff2` 9, `.yml` 17, `.zip` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

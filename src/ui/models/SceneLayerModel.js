@@ -10,11 +10,11 @@ const freeze = (value) => {
 // painted horizon BELOW the combatants' feet when the footer grows.
 export function battlefieldBackdropConfig({ height, fieldTop, fieldHeight, formation }, config = wireframeUi.scene) {
   // Use all possible cells, not just living actors: deaths must not pan the
-  // painting. Align with the furthest row itself, preserving more skyline
-  // rather than magnifying the foreground with an extra half-row of ground.
+  // painting. Leave half a row of painted ground above the furthest feet;
+  // otherwise the skyline sits too low behind the HUD on narrow screens.
   const cells = formation?.cells || [];
   const groundTop = cells.length
-    ? Math.max(0, Math.min(...cells.map(cell => cell.ground)))
+    ? Math.max(0, Math.min(...cells.map(cell => cell.ground)) - (formation.rowSpacing || 0) / 2)
     : fieldHeight * (1 - config.floorFraction);
   const floorTop = fieldTop + groundTop;
   return freeze({ ...config, floorFraction: 1 - Math.max(0, Math.min(height, floorTop)) / height });

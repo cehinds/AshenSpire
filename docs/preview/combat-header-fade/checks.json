@@ -1,0 +1,89 @@
+[
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "geometry": {
+      "url": "http://localhost:8642/index.html?shot=combat",
+      "title": "Ashen Spire",
+      "scene": "HM-ENV-03",
+      "mask": "linear-gradient(rgb(0, 0, 0) 0px, rgb(0, 0, 0) 35.9099px, rgba(0, 0, 0, 0) 100%)",
+      "opaque": 35.909855769230774,
+      "vitalityEnd": 35.909855769230774,
+      "skyCoversHeader": true,
+      "headerEnd": 84.40625,
+      "bannerTop": 84.40625,
+      "noOverflow": true
+    },
+    "menuOpened": "QUICK MENU\nSettings\n⌨\nControls\n⛶\nFullscreen\nFullscreen off.\nOFF\n♫\nMusic\nMusic on · volume 50%.\nON\n▦\nInventory\n♟\nCharacter\n↥\nLoad\n💾\nSave\n↯\nSave and Quit\n⏻\nQuit ",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failed": [
+      "404 http://localhost:8642/assets/sfx/nodeTravel.ogg",
+      "404 http://localhost:8642/assets/sfx/turnStinger.ogg",
+      "404 http://localhost:8642/assets/sfx/cardDraw.ogg"
+    ]
+  },
+  {
+    "size": {
+      "width": 1440,
+      "height": 1000
+    },
+    "geometry": {
+      "url": "http://localhost:8642/index.html?shot=combat",
+      "title": "Ashen Spire",
+      "scene": "HM-ENV-03",
+      "mask": "linear-gradient(rgb(0, 0, 0) 0px, rgb(0, 0, 0) 35.9505px, rgba(0, 0, 0, 0) 100%)",
+      "opaque": 35.950520833333336,
+      "vitalityEnd": 35.950520833333336,
+      "skyCoversHeader": true,
+      "headerEnd": 99.953125,
+      "bannerTop": 99.953125,
+      "noOverflow": true
+    },
+    "menuOpened": "QUICK MENU\nSettings\n⌨\nControls\n⛶\nFullscreen\nFullscreen off.\nOFF\n♫\nMusic\nMusic on · volume 50%.\nON\n▦\nInventory\n♟\nCharacter\n↥\nLoad\n💾\nSave\n↯\nSave and Quit\n⏻\nQuit ",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failed": [
+      "404 http://localhost:8642/assets/sfx/nodeTravel.ogg",
+      "404 http://localhost:8642/assets/sfx/cardDraw.ogg",
+      "404 http://localhost:8642/assets/sfx/turnStinger.ogg"
+    ]
+  },
+  {
+    "size": {
+      "width": 844,
+      "height": 390
+    },
+    "geometry": {
+      "url": "http://localhost:8642/index.html?shot=combat",
+      "title": "Ashen Spire",
+      "scene": "HM-ENV-03",
+      "mask": "linear-gradient(rgb(0, 0, 0) 0px, rgb(0, 0, 0) 25.6246px, rgba(0, 0, 0, 0) 100%)",
+      "opaque": 25.624574200236967,
+      "vitalityEnd": 25.624574200236967,
+      "skyCoversHeader": true,
+      "headerEnd": 45.703125,
+      "bannerTop": 45.703125,
+      "noOverflow": true
+    },
+    "menuOpened": "QUICK MENU\nSettings\n⌨\nControls\n⛶\nFullscreen\nFullscreen off.\nOFF\n♫\nMusic\nMusic on · volume 50%.\nON\n▦\nInventory\n♟\nCharacter\n↥\nLoad\n💾\nSave\n↯\nSave and Quit\n⏻\nQuit ",
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "failed": [
+      "404 http://localhost:8642/assets/sfx/nodeTravel.ogg",
+      "404 http://localhost:8642/assets/sfx/cardDraw.ogg",
+      "404 http://localhost:8642/assets/sfx/turnStinger.ogg"
+    ]
+  }
+]

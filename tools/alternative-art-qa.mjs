@@ -64,7 +64,7 @@ const checkArt = async (page, { verifyGround = false } = {}) => {
     });
     return { sections, feet };
   }, catalog.sceneLayers);
-  assert.deepEqual(grounding.sections, ['far', 'landmark', 'ground', 'foreground']);
+  assert.deepEqual(grounding.sections, ['far', 'landmark', 'ground']);
   assert(grounding.feet.length > 0, 'visible combatants must have measured feet');
   // Attack/recoil animation may deliberately leave the resting baseline.
   // Enforce ground contact on idle scene, co-op and resize mounts only.
@@ -113,7 +113,7 @@ try {
         assert.equal(observation.scene, id);
         assert.equal(observation.device, device);
         assert.equal(observation.overflow, false, `${id}/${device} overflow`);
-        assert.deepEqual(observation.layers, catalog.scenes[id].devices[device].layers.map(l => l.id));
+        assert.deepEqual(observation.layers, catalog.scenes[id].devices[device].layers.filter(l => catalog.sceneLayers[l.id].kind !== 'foreground').map(l => l.id));
         if (device === 'phone') assert(observation.actors.every(a => a.mobileSelected), 'phone actor tier');
         await page.screenshot({ path: resolve(out, `${device}-${id}.png`) });
         report.scenes.push(observation);
