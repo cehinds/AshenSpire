@@ -38,6 +38,31 @@ feature/* ──► dev ──► test ──► release ──► main
 - UI changes also include the [component catalog](docs/component-catalog.html) in the PR/merge summary. Update the catalog and its visual miniature when a component ID, model, renderer, composition, or reuse surface changes.
 - Balance number changes cite the reasoning. There is no win-rate target (owner rulings D1 and D16 in docs/FINISH.md), and every balance number stays configurable.
 
+### README screenshots
+
+Whenever the root README is updated, verify its screenshot gallery against the
+latest published build in the [Release history](https://cehinds.github.io/AshenSpire/release/).
+If that release changed, replace the gallery with real captures from that
+published build in the same PR. If it has not changed, verify that the existing
+gallery still identifies that build; identical images do not need recapturing.
+
+- Embed representative gameplay images with short captions and useful alt text:
+  character creation, exploration, card combat, and a shop or progression screen.
+  Include a phone view when the released game supports that layout.
+- Identify the channel, full version, source commit, capture date, viewport, and
+  pinned playable URL in the gallery's capture record. Keep each release's images
+  in `docs/preview/releases/<full-version>/` and update the README image paths.
+- Wait for the actual screen and its artwork to finish loading. Inspect every
+  image for readability, missing artwork, cropped controls, and loading screens
+  before committing it. Use the game's existing screenshot states where useful
+  and record them; do not present posed captures as completed playthroughs.
+- Use the Release channel's published version, not a newer Dev/Test snapshot or
+  an installer's publication timestamp. Label release candidates accurately and
+  keep alternative previews and older QA evidence clearly identified.
+- In the PR verification notes, name the release checked and whether the gallery
+  was refreshed or verified unchanged. Screenshot maintenance does not authorize
+  advancing `release` or `main` or publishing a release.
+
 ### A pull request is not done until it is merged and promoted
 
 Owner's rule, 2026-09-18 (merging handed to sessions 2026-09-26), for every
