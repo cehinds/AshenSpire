@@ -46,11 +46,49 @@ A browser roguelike with card combat, equipment, skill training, exploration, an
 
 ## Screenshots
 
+From the latest published **release candidate, 0.7.1.1060**, captured on
+2026-10-08 UTC. [Play this build](https://cehinds.github.io/AshenSpire/release/1060/)
+or see the [capture details](docs/preview/releases/0.7.1.1060/README.md).
+The Test and Alternative previews above may contain newer development work.
+
+**Character creation.** Choose a class with its own combat style, then shape
+your attributes, keepsake, and equipment.
+
+![Character creation showing the four classes and the Reaver's starting statistics](docs/preview/releases/0.7.1.1060/creation.png)
+
+**Exploration.** Follow a seeded route through encounters toward the act boss.
+
+![The Pale Marches map showing a revealed route and encounter nodes](docs/preview/releases/0.7.1.1060/map.png)
+
+**Card combat.** Read enemy intentions, manage Stamina, and play weapon and
+class cards to attack or defend.
+
+![Reaver combat with enemy attack intentions and a hand of four cards](docs/preview/releases/0.7.1.1060/combat.png)
+
+**Shops and equipment.** Spend cinders on armaments, relics, flasks, books,
+and services between fights.
+
+![Merchant offering relics, with categories for equipment and services](docs/preview/releases/0.7.1.1060/shop.png)
+
+<details>
+<summary>Combat on a phone (390 × 844)</summary>
+
+![Phone layout with combatants, enemy intentions, cards, and turn controls](docs/preview/releases/0.7.1.1060/combat-phone.png)
+
+</details>
+
+<details>
+<summary>Earlier previews and component QA</summary>
+
+These captures document earlier builds and component checks.
+
 - [Title](docs/preview/title.png) · [Map](docs/preview/map.png) · [Combat](docs/preview/combat.png) · [Game page](https://cehinds.github.io/AshenSpire/AshenSpire.html).
 - **Armoury:** [Equipment](docs/preview/armoury-simple-equipment-1440.png) · [Character](docs/preview/armoury-simple-character-1440.png) · [Inventory](docs/preview/armoury-simple-inventory-1440.png) · [Cards](docs/preview/armoury-simple-cards-1440.png) · [Phone cards](docs/preview/armoury-simple-cards-390.png).
 - **Title flow:** [Folded wide](docs/preview/startup-folded-wide-1440x900.png) · [Folded phone](docs/preview/startup-folded-mobile-390x844.png) · [Title wide](docs/preview/title-menu-wide-1440x900.png) · [Load phone](docs/preview/title-load-mobile-390x844.png).
 - **Catalog QA:** [Title family](docs/preview/component-catalog-title-wide-1440x900.png) · [Startup family](docs/preview/component-catalog-startup-mobile-390x844.png) · [Class sprites](docs/preview/class-sprites.svg) · [Menu control audit](docs/preview/menu-control-audit.md).
 - Screenshots carry their captured build stamp. Inspect regenerated images before committing them.
+
+</details>
 
 ## UI library and design
 
