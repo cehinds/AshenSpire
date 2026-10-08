@@ -561,6 +561,16 @@ async function main() {
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat board');
     await wait(700); // auto-zoom re-flexes on a 150ms debounce, plus a boot re-apply
     return evalIn(`(async () => {
+      // The expanded Reaver opener may legitimately draw only Counters and
+      // friendly actions. This cell verifies Escape while a CARD target is
+      // armed, not the shuffle, so give the shot fixture one authored,
+      // affordable hostile card instead of mistaking Shield Bash's deferred
+      // reply for an immediate attack.
+      const combat = window.__combat;
+      if (!combat.piles.hand.some(card => card.instanceId === 'tutorial-reach-attack')) {
+        combat.piles.hand.unshift({ instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false });
+        window.__renderCombatForShot();
+      }
       const m = await import('/src/ui/components/tutorial.js');
       window.__tutDone = 0;
       m.mountTutorial(document.getElementById('app'), { onDone: () => { window.__tutDone++; } });
@@ -829,21 +839,31 @@ async function main() {
     ok(savedRules?.expansion === 2 && savedRules?.defense === 2,
       'first-run: expanded combat and defense versions survive the actual creation save', JSON.stringify(savedRules));
 
-    // A brand-new run intentionally carries no utility flask. Seed one valid
-    // saved-run row, then reload through CONTINUE so the standalone cell reaches
-    // Blight Coating through the real save loader and combat constructor rather
-    // than mutating the rendered combat object. The profile stays first-run:
-    // seenTutorial is still absent/false and the coach marks must mount itself.
+    // A brand-new run intentionally carries no utility flask, and its expanded
+    // opener may contain no immediate hostile card. Seed both fixtures through
+    // the durable run/profile, then reload through CONTINUE so the standalone
+    // cell reaches them through the real save loader and combat constructor
+    // rather than mutating the rendered combat object. The profile stays
+    // first-run: seenTutorial is still absent/false and the coach marks must
+    // mount itself.
     const seededFlask = await evalIn(`(() => {
       const key = 'sote_run_v1';
       const raw = localStorage.getItem(key);
       if (!raw) return false;
       const saved = JSON.parse(raw);
       saved.flasks = [{ flaskId: 'blightCoating' }];
+      saved.deck = saved.deck.filter(card => card.instanceId !== 'tutorial-reach-attack');
+      saved.deck.unshift({ instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false });
       localStorage.setItem(key, JSON.stringify(saved));
-      return JSON.parse(localStorage.getItem(key)).flasks?.[0]?.flaskId === 'blightCoating';
+      const metaKey = 'sote_meta_v1';
+      const meta = JSON.parse(localStorage.getItem(metaKey));
+      meta.settings.playInDeckOrder = true;
+      localStorage.setItem(metaKey, JSON.stringify(meta));
+      const reread = JSON.parse(localStorage.getItem(key));
+      return reread.flasks?.[0]?.flaskId === 'blightCoating'
+        && reread.deck?.[0]?.instanceId === 'tutorial-reach-attack';
     })()`);
-    ok(seededFlask, 'first-run: valid Blight Coating row entered through the durable run save');
+    ok(seededFlask, 'first-run: valid attack and Blight Coating rows entered through the durable save');
     await cdp.send('Page.navigate', { url: base }, S);
     await passStartupGate();
     await until(`!!document.querySelector('.slot-continue:not([disabled])')`, 'the title screen with the flask-seeded run');
