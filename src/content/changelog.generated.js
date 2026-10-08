@@ -6,11 +6,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1715",
     "date": "2026-10-07",
     "group": "2026-10-07",
-    "summary": "Alternative combat plans and starting ability choices stay aligned",
-    "detail": "The alternative build keeps its art and animations while adding the latest combat design notes and honoring configured starting ability copy limits. Sleep, Prone, upcasting and Blight stages remain plans for future implementation.",
-    "build": "0.7.1.1097",
+    "summary": "Alternative combat plans and starting choices stay aligned",
+    "detail": "The alternative build keeps its art and animations while adding the latest combat design notes and honoring configured starting ability copy limits. The full-run browser check completes required ability choices with a bounded selection loop. Sleep, Prone, upcasting and Blight stages remain plans for future implementation.",
+    "build": "0.7.1.1100",
     "pullRequest": 1715,
     "url": "https://github.com/cehinds/AshenSpire/pull/1715"
+  },
+  {
+    "id": "pr-1716",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Full-run checks choose a starting ability",
+    "detail": "The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.",
+    "build": "0.7.1.1098",
+    "pullRequest": 1716,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1716"
   },
   {
     "id": "pr-1714",

@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
-- **Alternative combat plans and starting ability choices stay aligned** ([#1715](https://github.com/cehinds/AshenSpire/pull/1715), `0.7.1.1097`). The alternative build keeps its art and animations while adding the latest combat design notes and honoring configured starting ability copy limits. Sleep, Prone, upcasting and Blight stages remain plans for future implementation.
+- **Alternative combat plans and starting choices stay aligned** ([#1715](https://github.com/cehinds/AshenSpire/pull/1715), `0.7.1.1100`). The alternative build keeps its art and animations while adding the latest combat design notes and honoring configured starting ability copy limits. The full-run browser check completes required ability choices with a bounded selection loop. Sleep, Prone, upcasting and Blight stages remain plans for future implementation.
+
+- **Full-run checks choose a starting ability** ([#1716](https://github.com/cehinds/AshenSpire/pull/1716), `0.7.1.1098`). The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.
 
 - **Starting abilities respect your deck copy limit** ([#1714](https://github.com/cehinds/AshenSpire/pull/1714), `0.7.1.1097`). Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.
 
