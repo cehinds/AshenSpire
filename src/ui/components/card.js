@@ -152,7 +152,10 @@ export function renderCard(registries, ref, opts = {}) {
     subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
-  const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
+  // Authored clauses carry family limits and charge/payment constraints that
+  // the generic effect summary cannot express. Keep those complete on the face.
+  const needsAuthoredClauses = /once per turn from this family|cannot stack with itself|payment must leave/.test(def.textTemplate);
+  const faceSummary = expanded && !needsAuthoredClauses ? combatCardSummary(def, opts.preview, registries) : null;
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
   const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { serve } from './serve.mjs';
 import { launchBrowser } from './browser.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -11,17 +12,17 @@ const launched=await launchBrowser({prefix:'sigil-',browser:process.env.CHROME,a
 const browser=await chromium.connectOverCDP(launched.wsUrl);
 const base=`http://localhost:${server.server.address().port}`;
 const standalone=process.argv.includes('--standalone');
-const report={source:process.env.SIGIL_SOURCE_SHA || null,build:process.env.SIGIL_BUILD_VERSION || null,surface:standalone?'standalone':'source',devices:[]};
+const report={source:process.env.SIGIL_SOURCE_SHA || execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),build:process.env.SIGIL_BUILD_VERSION || null,surface:standalone?'standalone':'source',devices:[]};
 // audio.js deliberately probes optional SFX samples and synthesizes missing
 // cues. Retain these requests in the report; required art and code must load.
 const requiredFailures=failed=>failed.filter(f=>!f.includes('favicon')&&!/^404 .*\/assets\/sfx\/[^/]+\.ogg$/.test(f));
 function cardGeometry(cards){return cards.map(c=>{
  const text=c.querySelector('[data-card-binding="rules"]'),title=c.querySelector('[data-card-binding="name"]');
- const r=text.getBoundingClientRect(),top=title.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect(),damage=c.querySelector('.card-damage-types'),words=damage?.getBoundingClientRect();
+ const r=text.getBoundingClientRect(),top=title.getBoundingClientRect(),face=c.querySelector('.illustrated-card-face').getBoundingClientRect(),panel=c.querySelector('[data-component="panel"]')?.getBoundingClientRect(),damage=c.querySelector('.card-damage-types'),words=damage?.getBoundingClientRect();
  return {ref:c.dataset.qaRef||c.dataset.cardId,action:c.querySelector('[data-primary-sigil]').dataset.primarySigil,
   school:c.querySelector('.combat-sigil-school')?.dataset.sigil||null,
   clipped:text.scrollHeight>text.parentElement.clientHeight+1||text.scrollWidth>text.clientWidth+1,
-  overlapsTitle:r.top<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),
+  overlapsTitle:Math.min(r.top,panel?.top??r.top)<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),ruleTop:r.top-face.top,
   damageTypes:damage?.textContent.split(' · ')||[],
   footerOutside:!!words&&(words.bottom>face.bottom+1||words.left<face.left-1||words.right>face.right+1||words.top<r.bottom-1),
   expanded:c.querySelector('.illustrated-card-face').dataset.rulesExpanded==='true',
@@ -129,6 +130,19 @@ try {
   const bad=geometry.filter(g=>g.clipped||g.overlapsTitle||g.footerOutside);
   writeFileSync(resolve(output,name+'-geometry.json'),JSON.stringify(geometry,null,2)+'\n');
   assert.equal(bad.length,0,JSON.stringify(bad.slice(0,6)));
+  const widths=[];
+  for(const width of [120,124,144,200,null]){
+   await page.evaluate(async width=>{
+    const cards=[...document.querySelectorAll('.sigil-corpus .card')];
+    for(const card of cards)card.style.setProperty('width',width?width+'px':'100%','important');
+    const {scheduleCardFits}=await import('/src/ui/components/card.js');scheduleCardFits(cards);
+    await new Promise(requestAnimationFrame);await new Promise(requestAnimationFrame);
+   },width);
+   const resized=await page.locator('.sigil-corpus .card').evaluateAll(cardGeometry);
+   assert.equal(resized.filter(g=>g.clipped||g.overlapsTitle||g.footerOutside).length,0,JSON.stringify({width,bad:resized.filter(g=>g.clipped||g.overlapsTitle||g.footerOutside).slice(0,6)}));
+   if(width)widths.push({width,complete:resized.length,minFont:Math.min(...resized.map(g=>g.font))});
+   else assert.ok(resized.every((g,i)=>Math.abs(g.ruleTop-geometry[i].ruleTop)<1&&Math.abs(g.font-geometry[i].font)<.1),'resize restores the original geometry');
+  }
   assert.equal(new Set(geometry.map(g=>g.action)).size,10,'all primary actions covered');
   assert.equal(new Set(geometry.map(g=>g.school).filter(Boolean)).size,8,'all spell schools covered');
   assert.ok(geometry.every(g=>g.accessibleName?.includes(g.actionName)&&(!g.schoolName||g.accessibleName.includes(g.schoolName))),'card names expose action and school');
@@ -137,7 +151,7 @@ try {
   assert.equal(errors.length,0,errors.join('\n'));
   assert.equal(requiredFailures(failed).length,0,failed.join('\n'));
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal overflow');
-  report.devices.push({name,refs,fullyReadable:geometry.length,expanded:geometry.filter(g=>g.expanded).length,minFont:Math.min(...geometry.map(g=>g.font)),actions:[...new Set(geometry.map(g=>g.action))],schools:[...new Set(geometry.map(g=>g.school).filter(Boolean))],errors,failed});
+  report.devices.push({name,refs,fullyReadable:geometry.length,expanded:geometry.filter(g=>g.expanded).length,minFont:Math.min(...geometry.map(g=>g.font)),widths,actions:[...new Set(geometry.map(g=>g.action))],schools:[...new Set(geometry.map(g=>g.school).filter(Boolean))],errors,failed});
   console.log(`${name}: ${refs} complete native faces`);
   await context.close();
  }

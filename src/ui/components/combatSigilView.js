@@ -23,8 +23,18 @@ export function sigilExplanationHtml(identity) {
   }).join('')}</div>`;
 }
 
-// Only remove the redundant damage verb and layout whitespace; conditions,
-// targets, durations, damage names and live numeric markup stay verbatim.
+// Shorten repeated prose, keeping numeric markup, target scope, turn limits,
+// charge expiry/stacking and HP-payment floors intact.
 export function compactCardRules(html) {
-  return html.replace(/\s+/g, ' ').replace(/(^|\. )Deal /g, '$1').trim();
+  return html.replace(/\s+/g, ' ').replace(/(^|\. |: )Deal /g, '$1')
+    .replace(/to the selected enemy/g, 'to target')
+    .replace(/to every living enemy/g, 'to all enemies')
+    .replace(/card\(s\)/g, 'cards')
+    .replace(/If you previously played at least (\d+) ([\w-]+) cards this turn/g, 'If $1+ $2 cards played this turn')
+    .replace(/ and If /g, ' and ')
+    .replace(/once per turn from this family/g, 'once per turn per family')
+    .replace(/HP; the payment must leave at least one HP/g, 'HP (leave at least 1 HP)')
+    .replace(/Your next /g, 'Next ')
+    .replace(/minimum zero/g, 'min 0')
+    .replace(/this charge cannot stack with itself/g, 'cannot stack with itself').trim();
 }
