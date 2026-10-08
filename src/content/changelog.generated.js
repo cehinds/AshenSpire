@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1737",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative tutorial controls stay reachable",
+    "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
+    "build": "0.7.1.1138",
+    "pullRequest": 1737,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1737"
+  },
+  {
     "id": "pr-1731",
     "date": "2026-10-08",
     "group": "2026-10-08",
