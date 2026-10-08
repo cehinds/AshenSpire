@@ -47,7 +47,7 @@ const skillRows = (registries) => balanceOf(registries).skill || {};
 export function characterSheetRegistries(registries, run) {
   const scoped = registriesForClassMastery(registries, run);
   return { ...scoped, progressionEnabled: expandedProgression(run),
-    balance: { ...scoped.balance, ...(expandedProgression(run) && run.progressionRuleSnapshot
+    balance: { ...scoped.balance, ...(run.enemyKnowledgeRules ? { enemyKnowledge: run.enemyKnowledgeRules } : {}), ...(expandedProgression(run) && run.progressionRuleSnapshot
       ? { progression: run.progressionRuleSnapshot } : {}) } };
 }
 
@@ -183,9 +183,9 @@ export function trackLadder(registries, run, track) {
         if (bonus.classFeatChancePct > 0) grants.push({ kind: 'classFeat', pct: Math.min(100, bonus.classFeatChancePct) });
         if (bonus.classCardChancePct > 0) grants.push({ kind: 'classCard', pct: Math.min(100, bonus.classCardChancePct) });
       }
-    } else grants.push({ kind: 'cardDraft', rank: ability ? abilityRankAt(registries, level) : Math.min(level, rankMax),
+    } else if (track.kind !== 'perception') grants.push({ kind: 'cardDraft', rank: ability ? abilityRankAt(registries, level) : Math.min(level, rankMax),
       ...(ability ? { ability: true, choices: registries.balance.progression.ability.draftSize } : {}) });
-    if (track.kind !== 'class' && !ability) {
+    if (track.kind !== 'class' && track.kind !== 'perception' && !ability) {
       for (const rarity of Object.keys(unlock)) {
         if (unlock[rarity] === level && level > 1) grants.push({ kind: 'rarity', rarity });
       }
@@ -223,7 +223,7 @@ export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OF
   registries = characterSheetRegistries(registries, run);
   const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
   const ownTrackId = classId ? classSkillId(classId) : null;
-  const tracks = skillTracks(registries)
+  const tracks = skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules })
     .filter((t) => t.kind !== 'class' || t.id === ownTrackId)
     .sort((a, b) => (b.id === ownTrackId) - (a.id === ownTrackId))
     .map((t) => trackLadder(registries, run, t));

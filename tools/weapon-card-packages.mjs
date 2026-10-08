@@ -76,6 +76,7 @@ function makeRun(registries, rightHand, leftHand) {
     // This is the pre-kit migration corpus, paired with unstamped legacy
     // combat snapshots below. Expanded birth/save is covered separately.
     combatExpansionVersion: 1,
+    enemyKnowledgeVersion: null,
   });
   run.loadout.sets.rightHand[0] = rightHand;
   run.loadout.sets.leftHand[0] = leftHand;
@@ -238,6 +239,7 @@ const creationLeft = createRunState({
   classId: 'reaver',
   registries: baseRegistries,
   combatExpansionVersion: 1,
+  enemyKnowledgeVersion: null,
   startingHands: { rightHand: null, leftHand: 'straightSword' },
 });
 

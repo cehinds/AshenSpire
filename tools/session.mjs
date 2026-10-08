@@ -7,6 +7,11 @@ import {combatXpGains} from '../src/model/rewardprogress.js';
 import {coopProgressionProblems} from '../src/model/coopProgression.js';
 import {createClassRespecDraft,classRespecView,previewClassRespec,applyClassRespec,classRespecAvailability} from '../src/model/classRespec.js';
 import { openRunClassMastery, registriesForClassMastery } from '../src/model/classMasteryRun.js';
+import { openRunEnemyKnowledge, openKnowledgeEncounter, acknowledgeKnowledgeBank, enemyKnowledgeRunProblems } from '../src/model/enemyKnowledgeRun.js';
+import { candidateState } from '../src/engine/combatRules.js';
+import { emptyEnemyKnowledge, enemyKnowledgeProblems, mergeEnemyKnowledge } from '../src/model/enemyKnowledgeProfile.js';
+import { reconcileCombatKnowledge, knowledgePredictionModel } from '../src/engine/enemyKnowledge.js';
+import { predictCoopIntent } from '../src/engine/coopCombat.js';
 import { initialClassTreeChoices, pickInitialClassTreeNode } from '../src/model/classTree.js';
 import { normalizeMasteryProfile, masteryProfileProblems } from '../src/model/classMasteryProfile.js';
 // tools/session.mjs — server-authoritative co-op run (Forsaken Together S2).
@@ -31,6 +36,7 @@ import { advancedConfigSnapshot } from '../src/model/advancedConfig.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
+import { isPoolDeckMode } from '../src/model/cardRemoval.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells,addToStorage,carriedIds } from '../src/model/loadout.js';
 import { stampSkillBonuses,skillTracks,spendSkillDraft,pendingSkillLevelCount,claimBankedSkillLevel } from '../src/model/skills.js';
@@ -140,7 +146,13 @@ export function restoreSession(registries, data, { saveSession = null } = {}) {
   return s;
 }
 
-export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null, saveSession = null, combatExpansionVersion = 2 }) {
+export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null, saveSession = null, combatExpansionVersion = 2, knowledgeAuthority = null }) {
+  knowledgeAuthority = restore ? restore.knowledgeAuthority || null : knowledgeAuthority;
+  if (knowledgeAuthority && (typeof knowledgeAuthority.roomId !== 'string' || !knowledgeAuthority.roomId || knowledgeAuthority.roomId.length > 128
+    || !Number.isInteger(knowledgeAuthority.privateSeed) || knowledgeAuthority.privateSeed < 0 || knowledgeAuthority.privateSeed > 0xffffffff
+    || (restore && knowledgeAuthority.visitOrdinal === undefined)
+    || !Number.isSafeInteger(knowledgeAuthority.visitOrdinal ?? 0) || (knowledgeAuthority.visitOrdinal ?? 0) < 0)) throw new Error('Enemy knowledge requires a unique caller-owned room identity, private read seed and valid encounter ordinal');
+  if (knowledgeAuthority) knowledgeAuthority = { ...structuredClone(knowledgeAuthority), visitOrdinal: knowledgeAuthority.visitOrdinal ?? 0 };
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
   const memberCombatVersion = restore ? (restore.advancedConfigSnapshot?.breakMeterVersion === 2 ? 2 : 1) : combatExpansionVersion;
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
@@ -229,6 +241,13 @@ export function createSession({ registries, seedString, endless = false, restore
         }
         const legacyKit = md.run.schemaVersion === 1;
         migrateRunSchema(md.run);
+        const knowledgeProblems = [...enemyKnowledgeRunProblems(md.run, new Set(registries.enemies.ids())),
+          ...enemyKnowledgeProblems(md.enemyKnowledge || emptyEnemyKnowledge(), new Set(registries.enemies.ids()))];
+        if (knowledgeProblems.length) throw new Error(knowledgeProblems.join('; '));
+        if (Boolean(md.run.enemyKnowledgeState) !== Boolean(knowledgeAuthority)
+          || (knowledgeAuthority && (!md.run.enemyKnowledgeState.bankable
+            || md.run.enemyKnowledgeState.receiptId !== knowledgeAuthority.roomId
+            || md.run.enemyKnowledgeState.visitOrdinal > knowledgeAuthority.visitOrdinal))) throw new Error('Member enemy learning does not match its room authority');
         const progressionProblems=coopProgressionProblems(md.run);if(progressionProblems.length)throw new Error(progressionProblems.join('; '));
         // SPEC §15.4, rarity at every door: this door restores a run without
         // loadRun, so it asks the same sigil questions engine/save.js does.
@@ -255,6 +274,7 @@ export function createSession({ registries, seedString, endless = false, restore
           id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
           discoveredArmaments,
+          enemyKnowledge: structuredClone(md.enemyKnowledge || emptyEnemyKnowledge()),
           playInDeckOrder: md.playInDeckOrder === true,
           catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
         });
@@ -319,12 +339,14 @@ export function createSession({ registries, seedString, endless = false, restore
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
 
-  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [], classMastery = undefined, playInDeckOrder = false }) {
+  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [], classMastery = undefined, playInDeckOrder = false, enemyKnowledge = emptyEnemyKnowledge() }) {
     const index = order++;
     const entitlement = [...new Set(discoveredArmaments || [])];
     const profile = classMastery === undefined ? { discoveredArmaments: entitlement } : normalizeMasteryProfile({ discoveredArmaments: entitlement, classMastery });
     if (classMastery !== undefined && masteryProfileProblems(profile).length) throw new Error('co-op class mastery profile is malformed');
-    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile, combatExpansionVersion: memberCombatVersion });
+    if (enemyKnowledgeProblems(enemyKnowledge, new Set(registries.enemies.ids())).length) throw new Error('Co-op enemy knowledge profile is malformed');
+    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile, combatExpansionVersion: memberCombatVersion, enemyKnowledgeVersion: knowledgeAuthority ? 1 : null });
+    if (knowledgeAuthority) openRunEnemyKnowledge(run, { receiptId: knowledgeAuthority.roomId, bankable: true });
     if (classMastery !== undefined || run.progressionRulesVersion===1) openRunClassMastery(registries, run, profile, { receiptId: `coop:${seed}:${id}`, bankable: false });
     // The party's order, not the default: a member's run rides the session's
     // seats exactly as it rides the session's act and floor (SPEC §13.4).
@@ -339,6 +361,7 @@ export function createSession({ registries, seedString, endless = false, restore
       spriteStyle: spriteStyle || DEFAULT_SPRITE_STYLE, // animated poses / rendered PNG / classic SVG / sigil glyph
       run, // per-member build: deck/relics/flasks/hp/maxHp/cinders
       discoveredArmaments: entitlement,
+      enemyKnowledge: structuredClone(enemyKnowledge),
       rng: memberRng(seed, index),
       playInDeckOrder: playInDeckOrder === true, // the seat owner's Play in deck order (SPEC §14.1)
       catchup: [], // pending missed-node choices (S4 replay)
@@ -466,7 +489,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const checkpoint = typeof saveSession === 'function' ? {
       state: structuredClone(Object.fromEntries(Object.entries(session).filter(([key]) => key !== 'members'))),
       members: [...members].map(([id, member]) => [id, structuredClone(Object.fromEntries(Object.entries(member).filter(([key]) => key !== 'rng'))), member.rng.getCounters()]),
-      rng: rng.getCounters(), live,
+      rng: rng.getCounters(), live, knowledgeVisit: knowledgeAuthority?.visitOrdinal,
     } : null;
     try { return travelTo(nodeId); }
     catch (error) {
@@ -475,6 +498,7 @@ export function createSession({ registries, seedString, endless = false, restore
       Object.assign(session, checkpoint.state);
       for (const [id, saved, counters] of checkpoint.members) { const member = members.get(id); Object.assign(member, saved); member.rng.restoreCounters(counters); }
       rng.restoreCounters(checkpoint.rng); live = checkpoint.live;
+      if (knowledgeAuthority) knowledgeAuthority.visitOrdinal = checkpoint.knowledgeVisit;
       return { ok: false, error: error.message };
     }
   }
@@ -586,6 +610,10 @@ export function createSession({ registries, seedString, endless = false, restore
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
       itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
       itemMounts: m.run.itemMounts ? structuredClone(m.run.itemMounts) : undefined,
+      equipmentProfileRuleSnapshot: m.run.equipmentProfileRuleSnapshot ? structuredClone(m.run.equipmentProfileRuleSnapshot) : undefined,
+      equipmentAttackSlotCount: m.run.equipmentAttackSlotCount,
+      removedAttackSlotIds: structuredClone(m.run.removedAttackSlotIds || []),
+      ...(isPoolDeckMode(m.run) ? { poolDeck: true } : {}),
       // THE SEAT'S POISE THRESHOLD, derived the way the solo engine derives it
       // (combat.js: the armour rule over the loadout, relics and tiers). The
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
@@ -597,6 +625,15 @@ export function createSession({ registries, seedString, endless = false, restore
   if (restore?.liveCombat) {
     const saved = restore.liveCombat;
     const combat = createCoopCombat({ registries, rng, players: [...members.values()].map(memberAsPlayer), enemyIds: [], snapshot: saved.snapshot });
+    const knowledge = combat.enemyKnowledge;
+    if (Boolean(knowledge) !== Boolean(knowledgeAuthority)) throw new Error('Saved combat enemy learning does not match its room authority');
+    if (knowledge && (!knowledge.bankable || knowledge.encounter?.visit !== knowledgeAuthority.visitOrdinal
+      || knowledge.privateSeed !== ((knowledgeAuthority.privateSeed ^ Math.imul(knowledgeAuthority.visitOrdinal, 0x9e3779b1)) >>> 0))) throw new Error('Saved combat enemy learning authority is inconsistent');
+    for (const ownerId of Object.keys(knowledge?.owners || {})) {
+      const run = members.get(ownerId)?.run;
+      if (!run || JSON.stringify(run.enemyKnowledgeState.currentEncounter) !== JSON.stringify(knowledge.encounter)
+        || JSON.stringify(run.enemyKnowledgeRules) !== JSON.stringify(knowledge.rules)) throw new Error('Saved combat learning does not match its owning member');
+    }
     for (const P of combat.players.values()) {
       if (!members.has(P.id)) throw new Error(`Cannot restore combat seat '${P.id}': its run was refused.`);
       P.connected = false;
@@ -618,6 +655,20 @@ export function createSession({ registries, seedString, endless = false, restore
       ? bossEncounterForNode(registries, session.mapGraph, session.cursorId, { seat: currentSeat(), tier: contentAct() })
       : rollEncounter(registries, rng, { pool, seat: currentSeat() }));
     const enc = registries.encounters.get(encounterId);
+    const learners = connectedMembers().filter(member => member.run.enemyKnowledgeRules);
+    let knowledge = null;
+    if (knowledgeAuthority && learners.length) {
+      const visit = (knowledgeAuthority.visitOrdinal || 0) + 1;
+      let encounter;
+      for (const member of learners) {
+        member.run.enemyKnowledgeState.visitOrdinal = visit - 1;
+        encounter = openKnowledgeEncounter(member.run, session.cursorId || 'combat', encounterId, enc.enemies, member.enemyKnowledge);
+      }
+      knowledgeAuthority.visitOrdinal = visit;
+      knowledge = { rules: learners[0].run.enemyKnowledgeRules, encounter, bankable: true,
+        privateSeed: (knowledgeAuthority.privateSeed ^ Math.imul(visit, 0x9e3779b1)) >>> 0,
+        profiles: Object.fromEntries(learners.map(member => [member.id, mergeEnemyKnowledge(member.run.enemyKnowledgeState.pending, member.enemyKnowledge)])) };
+    }
     if (forcedEncounterId) pool = enc.pool;
     const loop = loopCount();
     // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; 1 at the
@@ -631,6 +682,7 @@ export function createSession({ registries, seedString, endless = false, restore
       combatExpansionRules: connectedMembers().find(member => member.run.combatExpansionVersion === 2)?.run.combatExpansionRules || null,
       breakMeterVersion: session.advancedConfigSnapshot?.breakMeterVersion,
       registries, rng,
+      knowledge,
       players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
       enemyLevels: enemyLevelsForFight(registries, session, enc.enemies, enc),
@@ -741,6 +793,8 @@ export function createSession({ registries, seedString, endless = false, restore
       combatExpansionRules: c.combatExpansionRules, combatStatusRules: c.combatStatusRules,
       ...([1, 2].includes(c.breakMeterVersion) ? { breakMeterVersion: c.breakMeterVersion } : {}),
       ...(c.combatMatchupRules ? { combatMatchupRules: structuredClone(c.combatMatchupRules) } : {}),
+      ...(c.enemyKnowledge ? { enemyKnowledge: { version: 1, rules: structuredClone(c.enemyKnowledge.rules),
+        owners: structuredClone(c.enemyKnowledge.owners) } } : {}),
       receiptSeq: ++combatReceiptSeq,
       opening,
       events,
@@ -755,6 +809,8 @@ export function createSession({ registries, seedString, endless = false, restore
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
         alive: e.alive, intent: e.intent, intentReads: e.intentReads ? { ...e.intentReads } : undefined, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        ...(e.knowledgeAction ? { knowledgeAction: structuredClone(e.knowledgeAction),
+          intentPredictions: Object.fromEntries([...c.players.keys()].map(id => [id, knowledgePredictionModel(c, e, id)])) } : {}),
         intentPreviews: Object.fromEntries([...c.players.keys()].map(id => [id, previewCoopIntent(c, id, e.id)])),
         ...(e.wardMeter ? { wardMeter: e.wardMeter } : {}),
         ...(e.ratings ? { ratings: { ...e.ratings } } : {}),
@@ -819,11 +875,16 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // Route a member's combat intents to the live shared fight.
-  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier = 0, selectedBuildup = undefined) {
+  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
     if (!live) return { ok: false, error: 'no combat' };
     try { playCard(live.combat, memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup); }
     catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
+  }
+  function combatPredict(memberId, enemyInstanceId, actionSerial, maneuver) {
+    if (!live) return { ok: false, error: 'no combat' };
+    try { predictCoopIntent(live.combat, memberId, enemyInstanceId, actionSerial, maneuver); return settleCombat(); }
+    catch (error) { return { ok: false, error: error.message }; }
   }
   function combatRecovery(memberId, selections) {
     if (!live) return { ok: false, error: 'no combat' };
@@ -877,6 +938,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // The levels each seat's award bought, for its level card (SPEC §15.1).
     const levelUpsBy = {};
     for (const m of livingMembers()) {
+      if (c.enemyKnowledge?.owners[m.id]) reconcileCombatKnowledge(m.run, c, m.id);
       const s = outcome.survivors[m.id];
       if (!s) continue;
       m.run.hp = s.downed ? 0 : Math.max(0, s.hp);
@@ -944,7 +1006,14 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!live) return;
     if (connected) {
       const m = members.get(memberId);
-      if (m) joinCombat(live.combat, memberAsPlayer(m));
+      if (m) {
+        const encounter = live.combat.enemyKnowledge?.encounter;
+        if (encounter && m.run.enemyKnowledgeState?.currentEncounter?.id !== encounter.id) {
+          m.run.enemyKnowledgeState.visitOrdinal = encounter.visit - 1;
+          openKnowledgeEncounter(m.run, encounter.nodeId, encounter.encounterId, encounter.enemyIds, m.enemyKnowledge);
+        }
+        joinCombat(live.combat, { ...memberAsPlayer(m), enemyKnowledgeProfile: m.enemyKnowledge });
+      }
     } else {
       leaveCombat(live.combat, memberId);
     }
@@ -1665,7 +1734,61 @@ export function createSession({ registries, seedString, endless = false, restore
     return result;
   }
   function cancelMemberClassRespec(memberId,draftId){const form=respecForms.get(memberId);if(!form || form.id!==draftId)return {ok:false};respecForms.delete(memberId);return {ok:true};}
+  function acknowledgeEnemyLearning(memberId, receipts) {
+    const member = members.get(memberId);
+    if (!member || !member.connected || enemyKnowledgeProblems(receipts, new Set(registries.enemies.ids())).length) return { ok: false };
+    const next = structuredClone(member.run);
+    if (live?.combat.enemyKnowledge?.owners[memberId]) reconcileCombatKnowledge(next, live.combat, memberId);
+    if (!next.enemyKnowledgeState) return { ok: false };
+    // Only earned receipts owned by this seat may be acknowledged.
+    for (const [id, row] of Object.entries(receipts.enemies)) for (const [receiptId, receipt] of Object.entries(row.receipts)) {
+      const earned = next.enemyKnowledgeState.pending.enemies[id];
+      if (!earned || earned.target !== row.target || !Object.hasOwn(earned.receipts, receiptId) || (receipt.bonus && !earned.receipts[receiptId].bonus)) return { ok: false };
+    }
+    acknowledgeKnowledgeBank(next, receipts);
+    const profile = mergeEnemyKnowledge(receipts, member.enemyKnowledge);
+    const combatCandidate = live?.combat ? candidateState(live.combat) : null;
+    const candidateOwner = combatCandidate?.enemyKnowledge?.owners[memberId];
+    if (candidateOwner) {
+      acknowledgeKnowledgeBank({ enemyKnowledgeState: { pending: candidateOwner.pending } }, receipts);
+      candidateOwner.knowledge = mergeEnemyKnowledge(profile, candidateOwner.knowledge);
+    }
+    const saved = serialize({ combatCandidate });
+    if (saved && typeof saveSession === 'function') {
+      const row = saved.members.find(row => row.id === memberId); row.run = next; row.enemyKnowledge = profile;
+      // Member and combat acknowledgments cross one durable boundary.
+      try { if (saveSession(saved) === false) return { ok: false }; }
+      catch { return { ok: false }; }
+    }
+    member.run = next; member.enemyKnowledge = profile;
+    const owner = live?.combat.enemyKnowledge?.owners[memberId];
+    if (owner) { owner.pending = candidateOwner.pending; owner.knowledge = candidateOwner.knowledge; }
+    return { ok: true };
+  }
+  function retainEnemyLearning(memberId, recovery) {
+    const member = members.get(memberId);
+    if (!member?.connected || !member.run.enemyKnowledgeState || enemyKnowledgeProblems(recovery?.pending, new Set(registries.enemies.ids())).length) return { ok: false };
+    const next = structuredClone(member.run);
+    if (live?.combat.enemyKnowledge?.owners[memberId]) reconcileCombatKnowledge(next, live.combat, memberId);
+    const trusted = mergeEnemyKnowledge(next.enemyKnowledgeState.pending, member.enemyKnowledge);
+    for (const [id, row] of Object.entries(recovery.pending.enemies)) {
+      const known = trusted.enemies[id];
+      if (!known || known.target !== row.target || Object.entries(row.receipts).some(([receiptId, receipt]) => !Object.hasOwn(known.receipts, receiptId) || (receipt.bonus && !known.receipts[receiptId].bonus))) return { ok: false };
+    }
+    if (Object.entries(recovery.recoveryTargets || {}).some(([id, target]) => trusted.enemies[id]?.target !== target || recovery.pending.enemies[id]?.target !== target)) return { ok: false };
+    next.enemyKnowledgeState.pending = mergeEnemyKnowledge(recovery.pending, next.enemyKnowledgeState.pending);
+    next.enemyKnowledgeState.recoveryTargets = { ...next.enemyKnowledgeState.recoveryTargets, ...recovery.recoveryTargets };
+    const saved = serialize();
+    if (saved && typeof saveSession === 'function') {
+      saved.members.find(row => row.id === memberId).run = next;
+      if (saveSession(saved) === false) return { ok: false };
+    }
+    member.run = next;
+    return { ok: true };
+  }
   function memberView(m) {
+    const learningRun = structuredClone(m.run);
+    if (live?.combat.enemyKnowledge?.owners[m.id]) reconcileCombatKnowledge(learningRun, live.combat, m.id);
     const scoped=registriesForClassMastery(registries,m.run),expanded=m.run.progressionRulesVersion===1;
     const pendingIds=new Set(pendingClassMilestones(m.run).map(grant=>grant.id));
     return {
@@ -1673,7 +1796,9 @@ export function createSession({ registries, seedString, endless = false, restore
       ...(expanded?{progressionRulesVersion:1,pendingLevels:[...(pendingLevelCount(scoped,m.run)>0?[{skillId:'character',label:'Character',level:m.run.level.level,count:pendingLevelCount(scoped,m.run)}]:[]),...skillTracks(scoped).filter(track=>!track.id.startsWith('class:')||track.id===`class:${m.run.class}`).flatMap(track=>{const count=pendingSkillLevelCount(scoped,m.run,track.id);return count?[{skillId:track.id,label:track.label,level:m.run.skills[track.id]?.level || 0,count}]:[];})],pendingProgression:{skillDrafts:Object.values(m.run.abilityOffers || {}).filter(offer=>offer.level<=(m.run.skills[offer.skillId]?.level || 0)&&(m.run.skills[offer.skillId]?.pendingDrafts || 0)>0&&!m.run.abilityDraftClaims?.[offer.skillId]?.[offer.offerId]),classMilestoneRewards:Object.values(m.run.classMilestoneOffers || {}).filter(offer=>pendingIds.has(offer.receiptId)),levelCards:Object.values(m.run.coopLevelCards || {}).filter(offer=>!offer.taken)}}:{}),
       classRespecAvailable: session.scene.kind==='map' && classRespecAvailability(registriesForClassMastery(registries,m.run),m.run).ok,
       ...(respecForms.get(m.id)?.view ? {classRespec:structuredClone(respecForms.get(m.id).view)} : {}),
-      skills: structuredClone(m.run.skills),
+      skills: structuredClone(learningRun.skills),
+      ...(m.run.enemyKnowledgeState ? { enemyKnowledgeRules: structuredClone(m.run.enemyKnowledgeRules),
+        enemyKnowledgeState: structuredClone(learningRun.enemyKnowledgeState), enemyKnowledge: structuredClone(m.enemyKnowledge) } : {}),
       coreTags: [...m.run.coreTags],
       ...(m.run.classMasteryState ? { classMasteryState: structuredClone(m.run.classMasteryState) } : {}),
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
@@ -1729,6 +1854,7 @@ export function createSession({ registries, seedString, endless = false, restore
     for (const m of members.values()) syncZones(m.run);
     return {
       v: 1,
+      ...(knowledgeAuthority ? { knowledgeAuthority: structuredClone(knowledgeAuthority) } : {}),
       seed: session.seed,
       seedString: session.seedString,
       endless: session.endless,
@@ -1748,7 +1874,8 @@ export function createSession({ registries, seedString, endless = false, restore
       order,
       members: [...members.values()].map((m) => ({
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
-        run: m.run, discoveredArmaments: [...m.discoveredArmaments], catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
+        run: (() => { const run = structuredClone(m.run); if (combat?.enemyKnowledge?.owners[m.id]) reconcileCombatKnowledge(run, combat, m.id); return run; })(),
+        enemyKnowledge: structuredClone(m.enemyKnowledge), discoveredArmaments: [...m.discoveredArmaments], catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
         ...(m.playInDeckOrder ? { playInDeckOrder: true } : {}),
       })),
       // THE EVIDENCE BYTES, byte-equal to what came in. A refused member's
@@ -1821,7 +1948,7 @@ export function createSession({ registries, seedString, endless = false, restore
     addMember, setConnected, setConnectedMany, connectedMembers, livingMembers,
     start, chooseNode, chooseMasteryNode, resolveNode,
     previewMemberClassRespec,applyMemberClassRespec,cancelMemberClassRespec,
-    combatPlay, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat, setCombatSave, combatRecovery, combatBlightFeat,
+    combatPlay, combatPredict, acknowledgeEnemyLearning, retainEnemyLearning, combatChooseDiscard, combatEndTurn, flaskIntent, autoResolveCombat, setCombatSave, combatRecovery, combatBlightFeat,
     chooseReward, chooseAbilityDraft,claimMemberSkillLevel,chooseClassMilestone,chooseMemberLevelCard, shrineChoice, eventChoice, eventContinue, resolveCatchup, partyHistory,
     snapshot, serialize, contentAct, loopCount,
     get scene() { return session.scene; },

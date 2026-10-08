@@ -305,8 +305,8 @@
       "digest": "0df767382db6375e"
     },
     "tools/slot-load-door.mjs": {
-      "count": 6,
-      "digest": "9f0f43754b557d8c"
+      "count": 7,
+      "digest": "b35d8c916e6d823a"
     },
     "tools/startup-gate.mjs": {
       "count": 26,
@@ -341,8 +341,8 @@
       "digest": "edaf8f33b2ee919a"
     },
     "tools/tutorial-reach.mjs": {
-      "count": 1,
-      "digest": "8ecba2d09176de17"
+      "count": 2,
+      "digest": "a44c1e0b0012988e"
     },
     "tools/ui-sweep.mjs": {
       "count": 3,

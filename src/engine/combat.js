@@ -8,11 +8,12 @@ import * as Blight from './ashenBlight.js';
 import { enqueueExpandedAction, previewExpandedActions } from './combatExpansionActions.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
-import { settleExpandedPools } from './combatExpansionProjection.js';
+import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
+import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { passiveMax } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
 import { cardTargetPlan, assertCardTarget, immediateCardEffects } from '../model/cardTargets.js';
@@ -137,6 +138,7 @@ export function createCombat({
   // null — every recovery setting at its default — keeps the idle-Stamina rule
   // below and writes no recovery state into the fight or its save.
   recoveryRules = null,
+  knowledge = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
   orderedDraw = false,
@@ -334,6 +336,7 @@ export function createCombat({
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
 
+  if (knowledge) initializeCombatKnowledge(combat, knowledge);
   if (combat.ratingsRules) {
     refreshCombatRatings(combat);
     for (const enemy of combat.enemies) {
@@ -391,6 +394,7 @@ export function createCombat({
   }
 
   if (combatExpansionVersion === 2) {
+    refreshExpandedLoadout(combat, combat.player, { refreshPoise: false });
     const entry = Blight.rollAshenBlightEncounter(combat, combat.player, combatKey);
     if (entry.terminal) { combat.turn = 1; combat.player.alive = false; combat.player.hp = 0; combat.phase = 'ended'; combat.result = 'defeat'; combat.emit('ashenBlightLost', { targetId: combat.player.id, reason: 'encounter' }); return combat; }
   }
@@ -609,6 +613,7 @@ function enemyPhase(combat) {
 
     if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked || Control.consumeControlActionLoss(combat, enemy)) {
       // Staggered / skip: the telegraphed move does not happen.
+      if (!enemy.pendingMove) cancelKnowledgeAction(combat, enemy);
       enemy.skipNextTurn = false;
     } else if (enemy.pendingMove) {
       if (combat.turn >= enemy.pendingMove.resolveOnTurn) {
@@ -744,7 +749,10 @@ function rollIntents(combat, isFirstTurn = false) {
     clearCombatCounter(enemy);
     enemy.intent = buildIntent(def.moves[moveId], moveId, enemy, combat);
     setCombatStance(combat, enemy, enemyMoveCarrier(enemy, def.moves[moveId], moveId, combat));
-    if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
+    if (combat.enemyKnowledge) {
+      rollEnemyKnowledge(combat, enemy, { charging: !!def.moves[moveId].delay });
+      delete enemy.intentRevealed;
+    } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
     else delete enemy.intentRevealed;
     primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
     drainQueue(combat);
@@ -809,12 +817,15 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
  * The action queue drains fully before this returns (SPEC §3.9).
  */
 export function dispatch(combat, intent) {
-  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent));
+  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: intent.type !== 'predictIntent' });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
     if (intent.type !== 'chooseDiscard') R.assertNoAbilityChoice(combat);
     switch (intent.type) {
+      case 'predictIntent':
+        predictEnemyIntent(combat, combat.playerKey || 'player', intent.enemyInstanceId, intent.actionSerial, intent.maneuver);
+        break;
       case 'recoverControl': {
         if (combat.phase !== 'player') throw new Error('Recovery requires your turn');
         const result = Control.manualRecovery(combat, combat.player, intent.selections);
@@ -828,6 +839,7 @@ export function dispatch(combat, intent) {
         combat.player.attributes = { ...combat.attributes };
         combat.drawPerTurn = combat.player.drawPerTurn;
         if (combat.handRules) combat.handMax = scaledCards(handRow(combat.handRules, 'handSize'), combat.attributes, combat.characterLevel);
+        refreshExpandedLoadout(combat, combat.player);
         refreshCombatRatings(combat);
         break;
       }
@@ -1155,12 +1167,14 @@ function effectiveCost(combat, def) {
 // What playing this card costs right now, in every pool: Actions (X spends
 // them all), Mana and Stamina, weight class and relic reductions applied. The
 // one pricing doPlayCard pays, exported so a bot can ask before it plays.
-function playCosts(combat, def) {
+export function resolvedCardPlayCosts(combat, def) {
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
   const stamina = (def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def)) + (def.upcastSurcharge || 0);
   return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - R.matchingAbilityCharges(combat.player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
 }
+
+function playCosts(combat, def) { return resolvedCardPlayCosts(combat, def); }
 
 /** cardPlayCosts(combat, cardInstanceId) → { energy, mana, stamina } for a card in hand. */
 export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
@@ -1472,6 +1486,17 @@ export function getEntity(combat, id) {
  * perTarget maps every living enemy's instance id → the damage it would take.
  */
 export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
+  if (combat.enemyKnowledge && !combat._knowledgePreview) {
+    const visible = F.candidateState(combat);
+    visible._knowledgePreview = true;
+    for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
+      enemy.intent = { kind: 'unknown', moveId: null };
+      delete enemy.combatStance;
+      delete enemy.combatCounter;
+      delete enemy.pendingMove;
+    }
+    return previewCard(visible, cardInstanceId, targetId, upcastRanks);
+  }
   const inst =
     combat.piles.hand.find((c) => c.instanceId === cardInstanceId) ||
     combat.piles.draw.find((c) => c.instanceId === cardInstanceId) ||
@@ -1486,7 +1511,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   }
   const p = combat.player;
   const isX = def.cost === 'X';
-  const shownCost = isX ? p.energy : effectiveCost(combat, def);
+  const paidCosts = playCosts(combat, def);
+  const shownCost = combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
   const living = combat.enemies.filter((e) => e.alive);
 
@@ -1727,9 +1753,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     type: def.type,
     cost: shownCost,
     costIsX: isX,
-    manaCost: playCosts(combat, def).mana,
-    // The stamina badge in a fight is the class-priced one for the pure dodge.
-    staminaCost: shownCost,
+    manaCost: paidCosts.mana,
+    // Expanded badges and affordability use the same complete receipt as pay.
+    staminaCost: combat.combatExpansionVersion === 2 ? paidCosts.stamina : shownCost,
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,
     tokens,
@@ -1767,8 +1793,10 @@ export function previewIntent(combat, enemyInstanceId) {
   if (!enemy || enemy.kind !== 'enemy') throw new Error(`Unknown enemy instance '${enemyInstanceId}'`);
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const profile = intent.combatProfile || {};
+  const knowledge = knowledgeIntentProjection(combat, enemy);
+  if (knowledge && !knowledge.exact) return knowledge.intent;
   const revealed = enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false;
-  if (!revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
+  if (!knowledge && !revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
   const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   if (intent.damage != null) {
     const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
@@ -1779,5 +1807,10 @@ export function previewIntent(combat, enemyInstanceId) {
       intent.hits != null ? intent.hits : 1));
   }
   out.pending = !!enemy.pendingMove;
+  if (knowledge) {
+    out.actionSerial = knowledge.actionSerial || enemy.knowledgeAction?.serial || 0;
+    out.knowledgeRead = 'exact';
+    out.label = intent.kind === 'staggered' ? 'Staggered' : enemy.knowledgeAction?.category;
+  }
   return out;
 }

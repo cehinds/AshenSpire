@@ -2,12 +2,13 @@
 
 Read the enemy's stance, choose a response, and build openings through protection, control, positioning, and card sequencing.
 
-- **Proposal status**
-  - These are revised design rules for review.
-  - Values labelled Suggested are starting points for playtesting.
-  - This expansion follows the existing tagged-combat contract in SPEC §4.7.
-  - It proposes later revisions; it does not change that runtime contract by itself.
-  - The Reaver example defines the proposed Counter arithmetic.
+- **Implementation and playtesting**
+  - The accepted combat rules now have a version-2 runtime implementation, introduced in [#1723](https://github.com/cehinds/AshenSpire/pull/1723).
+  - New runs use the expanded rules. Existing runs keep the rules saved with their run.
+  - Values labelled Suggested are configurable starting values for playtesting.
+  - [The implementation contract](combat-expansion-contract.md) records the final ownership, Counter charge, rounding, recovery, Power lifecycle, and compatibility rules. It takes precedence over earlier proposal wording below.
+  - The Reaver example defines the authored Counter reply: fully absorb the eligible action, then return the damage and Poise printed on the card.
+  - [Enemy knowledge](enemy-knowledge-contract.md) records the separately coordinated hidden-intent, Perception, and bestiary expansion.
 
 ## Camps and combat identities
 
@@ -32,6 +33,14 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - A Force spell can deal Blunt damage and still use PR and magical defenses.
   - A Lightning spell can deal Piercing damage and still apply magical Paralysis.
 
+- **Support and deck card types**
+  - **Power:** play a paid card once, Exhaust that instance, and keep its buff for the combat unless an effect explicitly removes it.
+  - **Skill:** reusable buffs, protection, recovery, or deck manipulation; normally Discard after use. A printed Exhaust or Retain rule still applies.
+  - **Status:** usually a harmful card added to the deck. Its text states whether it can be played and how it is removed.
+  - These types appear at the bottom of support and deck cards. Offensive and maneuver cards show their action type there.
+  - Deck Status cards are separate from active status gauges and the recovery controls shown while incapacitated.
+  - Each owned Power copy or legal Replica has its own paid cast; copying an effect does not count as a new card play.
+
 - **One active stance**
   - Attack, Defend, Counter, Sweep, Ranged, Smash, or Casting.
   - The last stance-triggering effect replaces the previous stance.
@@ -42,7 +51,7 @@ Read the enemy's stance, choose a response, and build openings through protectio
 
 - **Shared player and enemy rules**
   - Enemies use the same camps, stances, reach, targeting, and damage tags.
-  - Always show the selected move's stance. When its details are revealed under the current intent-visibility rules, show its actual printed damage and special effects; do not reveal hidden details through previews.
+  - Enemy clues follow the active intent-visibility rules. When details are revealed, show the permitted stance or action, printed damage, and special effects; keep hidden details out of previews. The enemy-knowledge contract defines the separately coordinated unknown and broad clues.
   - Equipment, weaknesses, protection, and resistance are inspectable.
   - Every class should start with at least one Attack, Smash, and Counter.
   - Strike is Attack; Defend is Defend; Stomp is Smash; Quick Step or Dodge is Counter.
@@ -638,6 +647,8 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - Rank 4 adds 3 Mana and 3 Stamina.
   - Other resource and Action costs remain printed.
   - Free-play effects do not waive the rank surcharge unless explicitly stated.
+  - Mana discounts apply to the complete Mana price, including the rank surcharge, with a minimum cost of zero.
+  - Solo and co-op badges use the same paid price. If a co-op host has not supplied that rank preview, show the conservative authored price as an estimate.
 
 - **Rank benefits**
   - Per-rank bonuses can improve damage, protection, impact, buildup, or a named chance.
@@ -660,17 +671,17 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - General setting: Ask to upcast after target selection.
   - Default: OFF.
   - Selecting an eligible card reveals an Upcast button directly beneath it.
-  - Press Upcast to choose a rank in an inline selector.
+  - Press Upcast to open the rank choice dialog.
   - Preview the total costs, changes, and odds.
   - Then choose the target and play at that selected rank.
   - Playing normally uses the base rank without a modal.
-  - Unaffordable higher ranks remain visible but disabled with their missing resource shown.
+  - Higher ranks remain visible. Selecting one updates the total resource badges and affordability before payment.
 
 - **Optional automatic prompt**
   - When the setting is ON, choose a target first.
   - Open the rank modal before committing the play.
   - Cancel returns to the selected card and target with the prior rank selection intact; no play is committed.
-  - Offer Cast at base rank, affordable higher ranks, and Cancel.
+  - Offer the base rank, unlocked higher ranks, and Cancel. Payment rechecks the selected rank against the available resources.
   - Self-targeted techniques open rank selection directly.
   - Cancel spends nothing, changes no stance, and rolls no dice.
 
@@ -875,9 +886,20 @@ Read the enemy's stance, choose a response, and build openings through protectio
 
 ## Delivery scope
 
-- **Documentation proposal**
-  - These notes update the future expansion design.
-  - Existing shipped tagged-combat rules remain governed by SPEC §4.7.
-  - New mechanics require their own accepted state, save, preview, and implementation contracts.
-  - No runtime code, card catalog, or live balance is changed by merging this write-up.
-  - Enemy behavior, multiplayer ownership, saved outcomes, and recovery budgets must follow the same rules when implemented.
+- **Implemented expansion**
+  - New runs use version 2 of the Martial and Spell rules. Existing runs keep their saved rules.
+  - [The implementation contract](combat-expansion-contract.md) governs final values, ownership, rounding, card lifecycle, and compatibility.
+  - Solo, co-op, enemies, card previews, and saved fights share those rules.
+  - [Card sigils](combat-card-sigils.md) explain the action and school marks. Damage types remain written; inspection explains secondary tags.
+
+- **Loading a fight**
+  - Ordinary combat actions preserve the latest durable checkpoint, initially the fight's entry.
+  - Explicit Save Game records the current fight. Later ordinary actions leave that checkpoint intact.
+  - Irreversible Blight payments, milestone choices, encounter checks, and terminal outcomes are saved before adoption and presentation.
+  - A failed required save rejects the whole play, including costs and RNG changes. Zero-cost corrupted plays still record their payment receipt.
+  - Blight's effective stats update live equipment ratings and Poise without changing allocated points; reloading preserves the same projection.
+
+- **Playtest delivery**
+  - The implementation must reach regular and alternative dev/test with each channel's required checks passing.
+  - Alternative presentation and animation changes remain preserved during reconciliation.
+  - [Enemy knowledge](enemy-knowledge-contract.md) remains a separately coordinated runtime expansion.
