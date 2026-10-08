@@ -2,10 +2,11 @@ import {createRequire}from'node:module';import assert from'node:assert/strict';i
 const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const out=(process.env.STANCE_QA_OUT || 'outputs/stance-qa')+'/'; mkdirSync(out,{recursive:true});
 const base=process.env.STANCE_GAME_URL || 'http://127.0.0.1:4393/index.html';
-const b=await chromium.launch({headless:true,...(process.env.CHROME ? {executablePath:process.env.CHROME} : {})}),errors=[],results=[];
+const b=await chromium.launch({headless:true,...(process.env.CHROME ? {executablePath:process.env.CHROME} : {})}),errors=[],httpErrors=[],browserNotices=[],results=[];
 try{
  for(const actor of ['reaver','rogue','starseer','herald']){
-  const p=await b.newPage({viewport:{width:1440,height:1000}});p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+  const p=await b.newPage({viewport:{width:1440,height:1000}});p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error'){if(m.text().startsWith('Blocked call to navigator.vibrate'))browserNotices.push(m.text());else errors.push(m.text());}});
+  p.on('response',r=>{if(r.status()>=400)httpErrors.push({url:r.url(),status:r.status()});});
   await p.goto(base+'?shot=combat&shotClass='+actor);await p.waitForSelector('.hand .card');
   await p.waitForSelector('.alternative-card-stage[data-pose]');
   for(const [cardId,stance]of [['strike','offensive'],['defend','defensive'],['starstonePebble','casting']]){
@@ -20,6 +21,7 @@ try{
 
   await p.close();
  }
- assert.deepEqual(errors,[]);writeFileSync(out+'game-qa.json',JSON.stringify({results,errors,viewports:['1440x1000','390x844']},null,2));console.log(JSON.stringify({results,errors}));
+ writeFileSync(out+'game-qa.json',JSON.stringify({results,errors,httpErrors,browserNotices,viewports:['1440x1000','390x844']},null,2));console.log(JSON.stringify({results,errors,httpErrors,browserNotices}));assert.deepEqual(errors,[]);assert.deepEqual(httpErrors,[]);
 }finally{await b.close();}
+
 
