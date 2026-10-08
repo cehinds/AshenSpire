@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Alternative sigils and tutorial controls finish their integration** ([#1737](https://github.com/cehinds/AshenSpire/pull/1737), `0.7.1.1135`). Alternative combat retains its battlefield artwork and animation pacing while gaining the completed action and school sigils, combined combat input behavior, and tutorial controls that avoid cards, combat controls, and visible fighter targets across desktop and phone layouts.
+
 - **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
 
 - **Valid card content keeps building through strict checks** ([#1732](https://github.com/cehinds/AshenSpire/pull/1732), `0.7.1.1124`). The bundler keeps adjacent static imports separate and accepts legal empty statements between whitespace. Strict syntax and refusal checks stay active; card effects and appearance are unchanged.
