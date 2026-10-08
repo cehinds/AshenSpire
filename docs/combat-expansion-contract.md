@@ -1,3 +1,4 @@
+
 # Combat expansion implementation contract
 
 Owner authorization: implement the revised combat notes in one delivery and land them in regular and alternative dev/test (2026-10-07).
@@ -5,7 +6,7 @@ Owner authorization: implement the revised combat notes in one delivery and land
 - **Accepted rules**
   - The complete rules in [the revised combat notes](combat-cards-expansion-proposal.md) are the behavioral contract for expansion version 2.
   - Values labelled Suggested become configurable initial defaults for this implementation, not omitted features.
-  - This implementation contract overrides conflicting earlier proposal wording: Counter mitigation/reply is consumed by its first eligible incoming action, and large authored buildup can complete multiple protected or active fills in one action.
+  - This implementation contract overrides conflicting earlier proposal wording: prepared Counter mitigation and reply are one charge consumed by the first eligible committed incoming action, even when that action does not qualify for a return. Mitigation therefore applies to that action only, not the rest of the prepared window. Large authored buildup can complete multiple protected or active fills in one action, including Frozen, Sleep, and Paralysis; version 2 retires their earlier one-new-stack-per-action exception.
   - The concrete Reaver example takes precedence over the retired version-1 automatic Counter return multiplier and flat bonus: return exactly the authored reply after the attack action is fully absorbed.
   - Counter preparation grants only authored protection. A card with no protection effect grants none; its preview must make that clear.
   - Shield Bash is Counter, including its mounted variants; its authored Block and Poise reply follow the same preparation and full-action qualification rules.
@@ -17,20 +18,20 @@ Owner authorization: implement the revised combat notes in one delivery and land
   - Solo, co-op seats, previews, and enemy attacks use the same rules. The host's combat snapshot owns shared tuning; player-specific state remains on the acting seat.
 
 - **State and ownership**
-  - Each actor carries one persistent `combatStance`, prepared Counter coverage/payload, persistent Ward and starting-Ward cap, status gauges/stacks, recovery/Resolve state, and once-per-cycle budgets.
+  - Each actor carries one persistent tactical `combatStance`, prepared Counter coverage/payload, persistent Ward and starting-Ward cap, status gauges/stacks, recovery/Resolve state, and once-per-cycle budgets. Existing class stances entered through `enterStance` (including Gorefire, Bulwark, and Brace) remain in the separate actor `stance` channel and coexist with `combatStance`; class-stance replacement continues only within that existing channel.
   - Each accepted action has one saved resolution receipt per affected target: modifiers, avoidance roll, all direct-damage contacts, absorbed damage, independent status pressure, and eventual reaction.
   - A multi-hit action rolls avoidance once and returns at most one Counter after the complete action's direct contacts, independent status pressure, and impact. Stagger, incapacitation, replacement stance, defeat, or interruption cancels a pending reaction.
-  - Sum direct-damage contacts after authored modifiers, apply the stance multiplier to the action total, and round positive damage up once before distributing it over contacts. Mixed-camp actions apply coverage to eligible contacts; a reply still requires the complete incoming direct-damage action to cause no HP loss.
+  - Every action has exactly one camp, and every direct-damage contact in that action inherits it; mixed-camp actions are invalid. Sum direct-damage contacts after authored modifiers, apply the stance multiplier to the action total, and round positive damage up once before distributing it over contacts. Damage type remains per contact and does not change camp. A reply still requires the complete incoming direct-damage action to cause no HP loss.
   - The first eligible committed incoming action spends the prepared Counter's mitigation/reply charge whether or not fully absorbed. The stance remains visible but cannot rearm or halve another action without new preparation.
   - Distance avoidance is checked once before explicit Evade. A successful distance check preserves the explicit Evade charge; a failed distance check permits one d20 Evade roll. Evade requires strictly greater than its DC, with no automatic natural-20 success.
-  - Stance, preparation, avoidance, and action receipts belong to the actor/seat. Class Power buffs remain independently authored modifiers, not an additional tactical stance.
+  - Tactical stance, preparation, avoidance, and action receipts belong to the actor/seat. Existing class stances and Class Power buffs remain independently authored state/modifiers, not additional tactical stances.
   - Preview, cancelled target selection, failed affordability, and rejected plays consume no resources, RNG, stance, rank, milestone, or Blight.
   - Random outcomes commit through the existing seeded streams and survive save/restore; reopening or copying a resolved action cannot reroll it.
 
 - **Protection and control**
   - Version 2 uses persistent Ward for magical damage reduction and complete magical gauge fills; temporary Barrier remains separate from Martial Block.
   - Completed status gauges spend Ward or physical Poise protection as specified in the revised notes; a fill that reaches zero protection may apply its stack.
-  - Authored buildup units are distinct from explicit active-stack grants. A large buildup can complete multiple fills with retained overflow and the authored faster follow-up threshold, up to its active-stack cap; version-1 once-per-action pressure caps do not apply. Reaction/wake finalization still occurs once per complete action.
+  - Authored buildup units are distinct from explicit active-stack grants. A large buildup can complete multiple fills with retained overflow and the authored faster follow-up threshold, up to its active-stack cap; version-1 once-per-action pressure caps, including the Frozen/Sleep/Paralysis exception, do not apply. Reaction/wake finalization still occurs once per complete action.
   - Sleep/Paralysis/Dazed expose recovery actions outside deck piles and lock ordinary cards. End Turn and built-in recovery remain legal through simultaneous locks.
   - Recovery costs, automatic escape, Resolve fallback, Sleep restoration caps/fractional carry, Prone modifiers, status counters, elemental interactions, and equipment resistances follow the revised notes.
 
