@@ -67,6 +67,12 @@ export function mountTutorial(root, { onDone }) {
 
   const spot = veil.querySelector('.tut-spot');
   const bubble = veil.querySelector('.tut-bubble');
+  // The static Popover is deliberately pointer-transparent so compact layouts
+  // cannot make a covered card unplayable. Move its real controls beside the
+  // veil as a sibling overlay: they remain part of the callout visually, but
+  // do not inherit either pointer-transparent ancestor in Chromium.
+  const actions = bubble.querySelector('.tut-row');
+  root.appendChild(actions);
   let i = 0;
 
   // Keep every number below in ONE space: the veil's own local coordinates.
@@ -141,6 +147,12 @@ export function mountTutorial(root, { onDone }) {
     const pick = candidates.find((c) => !clear.some((k) => overlaps(c, k))) || candidates[0];
     bubble.style.left = `${pick.left}px`;
     bubble.style.top = `${pick.top}px`;
+    const actionBox = anchorLocalBox(veil, actions);
+    const bubbleStyle = getComputedStyle(bubble);
+    const insetX = Number.parseFloat(bubbleStyle.paddingRight) || 0;
+    const insetY = Number.parseFloat(bubbleStyle.paddingTop) || 0;
+    actions.style.left = `${clamp(pick.left + b.width - actionBox.width - insetX, view.width - actionBox.width - MARGIN)}px`;
+    actions.style.top = `${clamp(pick.top + b.height - actionBox.height - insetY, view.height - actionBox.height - MARGIN)}px`;
     return true;
   }
 
@@ -148,7 +160,7 @@ export function mountTutorial(root, { onDone }) {
     const step = steps[i];
     veil.querySelector('.tut-title').textContent = typeof step.title === 'function' ? step.title() : step.title;
     veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
-    veil.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
+    actions.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
     if (!place()) next(); // target vanished between filter and show
   }
 
@@ -164,6 +176,7 @@ export function mountTutorial(root, { onDone }) {
     done = true;
     removeEventListener('keydown', onKey, true);
     removeEventListener('resize', onResize);
+    actions.remove();
     veil.remove();
     onDone();
   }
@@ -270,7 +283,7 @@ export function mountTutorial(root, { onDone }) {
   }
   addEventListener('resize', onResize);
 
-  veil.querySelector('.tut-next').addEventListener('click', next);
-  veil.querySelector('.tut-skip').addEventListener('click', finish);
+  actions.querySelector('.tut-next').addEventListener('click', next);
+  actions.querySelector('.tut-skip').addEventListener('click', finish);
   show();
 }

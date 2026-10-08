@@ -207,14 +207,24 @@ async function main() {
       lastPicked = picked;
       if (args.includes('--debug')) console.log('    picked', JSON.stringify(picked));
       if (!picked) {
-        // End Turn asks for a hold while playable cards remain (as
-        // tools/full-run-probe.mjs presses it).
-        const pt = await evalIn(`(() => { const r = document.querySelector('.combat .end-turn')?.getBoundingClientRect(); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null; })()`);
-        if (!pt) throw new Error('no End Turn');
-        await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
-        await wait(1100);
-        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
-        await wait(600);
+        // A selected card consumes the first End Turn hold by cancelling its
+        // targeting state. Mirror full-run-probe's bounded retry instead of
+        // burning every sampling attempt on that same unchanged hand.
+        const turn = await evalIn(`window.__combat.turn`);
+        for (let attempt = 0; attempt < 3 && await evalIn(`window.__combat?.turn === ${turn} && window.__combat?.phase === 'player'`); attempt += 1) {
+          const pt = await evalIn(`(() => { const el = document.querySelector('.combat .end-turn'); const r = el?.getBoundingClientRect(); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2, hold: Number(el.dataset.holdMs) || 600 } : null; })()`);
+          if (!pt) throw new Error('no End Turn');
+          await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }, S);
+          await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
+          await wait(pt.hold + 250);
+          await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
+          const transitionEnd = Date.now() + 4000;
+          while (Date.now() < transitionEnd) {
+            if (await evalIn(`window.__combat?.result != null || window.__combat?.turn > ${turn} || window.__combat?.phase !== 'player'`)) break;
+            await wait(100);
+          }
+        }
+        await until(`window.__combat?.result != null || window.__combat?.turn > ${turn}`, `turn ${turn + 1} or the fight's end`, 10000);
         continue;
       }
       const before = await played();

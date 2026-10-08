@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1731",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative cards show action and school sigils",
+    "detail": "Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.",
+    "build": "0.7.1.1134",
+    "pullRequest": 1731,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1731"
+  },
+  {
     "id": "pr-1733",
     "date": "2026-10-08",
     "group": "2026-10-08",
