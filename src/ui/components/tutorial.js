@@ -68,11 +68,11 @@ export function mountTutorial(root, { onDone }) {
   const spot = veil.querySelector('.tut-spot');
   const bubble = veil.querySelector('.tut-bubble');
   // The static Popover is deliberately pointer-transparent so compact layouts
-  // cannot make a covered card unplayable. Move its real controls beside the
-  // veil as a sibling overlay: they remain part of the callout visually, but
-  // do not inherit either pointer-transparent ancestor in Chromium.
+  // cannot make a covered card unplayable. Keep the real controls beside the
+  // prose inside the veil, with their own pointer input. The veil remains the
+  // common coordinate space and the tutorial's existing control contract.
   const actions = bubble.querySelector('.tut-row');
-  root.appendChild(actions);
+  veil.appendChild(actions);
   let i = 0;
 
   // Keep every number below in ONE space: the veil's own local coordinates.
@@ -151,8 +151,30 @@ export function mountTutorial(root, { onDone }) {
     const bubbleStyle = getComputedStyle(bubble);
     const insetX = Number.parseFloat(bubbleStyle.paddingRight) || 0;
     const insetY = Number.parseFloat(bubbleStyle.paddingTop) || 0;
-    actions.style.left = `${clamp(pick.left + b.width - actionBox.width - insetX, view.width - actionBox.width - MARGIN)}px`;
-    actions.style.top = `${clamp(pick.top + b.height - actionBox.height - insetY, view.height - actionBox.height - MARGIN)}px`;
+    // Static prose may cover artwork, but an active button must not cover a
+    // card or another control. Place the smaller row independently when the
+    // full callout has no clear rectangle on a compact battlefield.
+    const rowAt = (x, y) => ({
+      left: clamp(x, view.width - actionBox.width - MARGIN),
+      top: clamp(y, view.height - actionBox.height - MARGIN),
+      width: actionBox.width, height: actionBox.height,
+    });
+    const hard = Array.from(root.querySelectorAll('.hand .card, .combat button, .combat [role="button"], .combat .intent, .combat .energy-orb'), n => anchorLocalBox(veil, n));
+    // Keep each figure's central target region clear without treating its
+    // oversized decorative artwork as an input surface that fills the board.
+    for (const n of root.querySelectorAll('.combatant .sprite')) {
+      const r = anchorLocalBox(veil, n);
+      const width = Math.min(64, r.width), height = Math.min(64, r.height);
+      hard.push({left:r.left + (r.width - width) / 2, top:r.top + (r.height - height) / 2, width, height});
+    }
+    hard.push(box);
+    const rowCandidates = [rowAt(pick.left + b.width - actionBox.width - insetX, pick.top + b.height - actionBox.height - insetY)];
+    const rowXs = [MARGIN, view.width - actionBox.width - MARGIN, ...hard.flatMap(k => [k.left - actionBox.width - GAP, k.left + k.width + GAP])];
+    const rowYs = [MARGIN, view.height - actionBox.height - MARGIN, ...hard.flatMap(k => [k.top - actionBox.height - GAP, k.top + k.height + GAP])];
+    for (const y of rowYs) for (const x of rowXs) rowCandidates.push(rowAt(x, y));
+    const rowPick = rowCandidates.find(c => !hard.some(k => overlaps(c, k))) || rowCandidates[0];
+    actions.style.left = `${rowPick.left}px`;
+    actions.style.top = `${rowPick.top}px`;
     return true;
   }
 
@@ -203,9 +225,10 @@ export function mountTutorial(root, { onDone }) {
     // handler, which runs after this capture listener. Yield the SAME event
     // without preventing or stopping it: combat clears its card/flask selection
     // and targetable enemies, while this tutorial remains mounted and onDone
-    // stays untouched. A selected self-card has no targetable enemy, so it still
-    // follows the tutorial's ordinary one-press exit.
+    // stays untouched. A self Counter arms the player instead, and owns the
+    // same cancel-before-exit ordering without spending its preparation.
     if (root.querySelector('.enemy-row .enemy.targetable')) return;
+    if (root.querySelector('.combatant.player.armed')) return;
     ev.preventDefault();
     ev.stopPropagation();
     finish();

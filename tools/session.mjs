@@ -31,6 +31,7 @@ import { advancedConfigSnapshot } from '../src/model/advancedConfig.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
+import { isPoolDeckMode } from '../src/model/cardRemoval.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells,addToStorage,carriedIds } from '../src/model/loadout.js';
 import { stampSkillBonuses,skillTracks,spendSkillDraft,pendingSkillLevelCount,claimBankedSkillLevel } from '../src/model/skills.js';
@@ -586,6 +587,10 @@ export function createSession({ registries, seedString, endless = false, restore
       relicIds: m.run.relics, flasks: m.run.flasks, flaskCharges: m.run.flaskCharges,
       itemUpgradeLevels: { ...(m.run.itemUpgradeLevels || {}) },
       itemMounts: m.run.itemMounts ? structuredClone(m.run.itemMounts) : undefined,
+      equipmentProfileRuleSnapshot: m.run.equipmentProfileRuleSnapshot ? structuredClone(m.run.equipmentProfileRuleSnapshot) : undefined,
+      equipmentAttackSlotCount: m.run.equipmentAttackSlotCount,
+      removedAttackSlotIds: structuredClone(m.run.removedAttackSlotIds || []),
+      ...(isPoolDeckMode(m.run) ? { poolDeck: true } : {}),
       // THE SEAT'S POISE THRESHOLD, derived the way the solo engine derives it
       // (combat.js: the armour rule over the loadout, relics and tiers). The
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
@@ -819,7 +824,7 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // Route a member's combat intents to the live shared fight.
-  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier = 0, selectedBuildup = undefined) {
+  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
     if (!live) return { ok: false, error: 'no combat' };
     try { playCard(live.combat, memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup); }
     catch (e) { return { ok: false, error: e.message }; }

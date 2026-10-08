@@ -38,7 +38,9 @@ const registries = createRegistries(contentBundle);
 // same stream order (seats, then map), and the same persist.
 function newSeededRun(saves) {
   saves.ensureProfile();
-  const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: saves.loadMeta() });
+  // This entry-restart mirror covers historical saves. Expanded combat's
+  // durable transaction hook and exact snapshots are tested separately.
+  const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: saves.loadMeta(), combatExpansionVersion: 1 });
   run.seedString = seedToString(SEED);
   run.customization = { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = { ascension: 0, mods: {}, deckMode: 'standard' };

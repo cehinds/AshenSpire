@@ -57,7 +57,9 @@ jobs:
   reach:
     name: tutorial reach ${{ matrix.shard.name }} (real browser)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Checkout and art preparation count against this budget too. Keep the
+    # complete browser shards while matching the exhaustive CI job budget.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:

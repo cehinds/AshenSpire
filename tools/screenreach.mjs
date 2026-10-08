@@ -71,7 +71,7 @@ import { serve } from './serve.mjs';
 // literal shape of the covered map node — and re-runs this whole tool against
 // the copy: same serve.mjs, same browser, same hit-test.
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
   const corpus = {
     tool: 'screenreach.mjs',
     args: ['--only', '390x650'],
@@ -192,8 +192,11 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   };
-  const selftestCode = await doorSelftest(corpus);
-  if (selftestCode === 0) console.log(`screenreach-selftest: OK — ${corpus.plants.length} plants, ${corpus.plants.length} caught`);
+  const shard = resolveShard();
+  const ran = selectShard(corpus.plants, shard).length;
+  const selftestCode = await doorSelftest({ ...corpus, shard });
+  if (selftestCode === 0 && shard) console.log(`screenreach-selftest: shard ${shard.index}/${shard.count} of a ${corpus.plants.length}-plant corpus`);
+  if (selftestCode === 0) console.log(`screenreach-selftest: OK — ${ran} plants, ${ran} caught`);
   process.exit(selftestCode);
 }
 

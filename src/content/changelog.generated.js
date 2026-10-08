@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1737",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative tutorial controls stay reachable",
+    "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1737,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1737"
+  },
+  {
     "id": "pr-1731",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -11,6 +21,56 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1134",
     "pullRequest": 1731,
     "url": "https://github.com/cehinds/AshenSpire/pull/1731"
+  },
+  {
+    "id": "pr-1736",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Saved fights load with their intended combat rules",
+    "detail": "Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.",
+    "build": "0.7.1.1130",
+    "pullRequest": 1736,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1736"
+  },
+  {
+    "id": "pr-1739",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: complete combat checks finish within their limits",
+    "detail": "Nothing you play changes. The full discovered-test, self-test and mobile-layout sets now run in exhaustive parallel pieces, so every original check still runs while each automated job remains within its 20-minute limit.",
+    "build": "0.7.1.1128",
+    "pullRequest": 1739,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1739"
+  },
+  {
+    "id": "pr-1733",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat prices and checkpoints stay consistent",
+    "detail": "Upcast cards show their full SP and Mana price before payment; solo and co-op apply the same Mana discount. Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.",
+    "build": "0.7.1.1127",
+    "pullRequest": 1733,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1733"
+  },
+  {
+    "id": "pr-1732",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Valid card content keeps building through strict checks",
+    "detail": "The bundler keeps adjacent static imports separate and accepts legal empty statements between whitespace. Strict syntax and refusal checks stay active; card effects and appearance are unchanged.",
+    "build": "0.7.1.1124",
+    "pullRequest": 1732,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1732"
+  },
+  {
+    "id": "pr-1728",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat controls respond promptly and upcasts keep legal targets",
+    "detail": "Accepted plays immediately lock further actions while the hand and fighters stay in place for their animation. Escape cancels a selected Counter card before closing the tutorial. Co-op Upcast appears under a selected card and opens only its rank chooser. Solo and co-op show legal targets for the selected rank, ask for a new target when its destination changes, and spend nothing before the final play. Cards with a higher base rank keep that rank when no upcast is chosen.",
+    "build": "0.7.1.1122",
+    "pullRequest": 1728,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1728"
   },
   {
     "id": "pr-1729",
