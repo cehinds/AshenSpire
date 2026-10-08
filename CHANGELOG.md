@@ -34,7 +34,19 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Alternative tutorial controls stay reachable** ([#1737](https://github.com/cehinds/AshenSpire/pull/1737), `0.7.1.1140`). Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.
+
 - **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
+
+- **Saved fights load with their intended combat rules** ([#1736](https://github.com/cehinds/AshenSpire/pull/1736), `0.7.1.1130`). Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.
+
+- **Behind the scenes: complete combat checks finish within their limits** ([#1739](https://github.com/cehinds/AshenSpire/pull/1739), `0.7.1.1128`). Nothing you play changes. The full discovered-test, self-test and mobile-layout sets now run in exhaustive parallel pieces, so every original check still runs while each automated job remains within its 20-minute limit.
+
+- **Combat prices and checkpoints stay consistent** ([#1733](https://github.com/cehinds/AshenSpire/pull/1733), `0.7.1.1127`). Upcast cards show their full SP and Mana price before payment; solo and co-op apply the same Mana discount. Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.
+
+- **Valid card content keeps building through strict checks** ([#1732](https://github.com/cehinds/AshenSpire/pull/1732), `0.7.1.1124`). The bundler keeps adjacent static imports separate and accepts legal empty statements between whitespace. Strict syntax and refusal checks stay active; card effects and appearance are unchanged.
+
+- **Combat controls respond promptly and upcasts keep legal targets** ([#1728](https://github.com/cehinds/AshenSpire/pull/1728), `0.7.1.1122`). Accepted plays immediately lock further actions while the hand and fighters stay in place for their animation. Escape cancels a selected Counter card before closing the tutorial. Co-op Upcast appears under a selected card and opens only its rank chooser. Solo and co-op show legal targets for the selected rank, ask for a new target when its destination changes, and spend nothing before the final play. Cards with a higher base rank keep that rank when no upcast is chosen.
 
 - **Actions and schools have distinct card sigils** ([#1729](https://github.com/cehinds/AshenSpire/pull/1729), `0.7.1.1118`). A large monochrome action mark leads a smaller school mark and written damage types. Information explains each mark and keeps the detailed tags. Complete effects adapt to the available card space while preserving costs, ranks, conditions and durations.
 
