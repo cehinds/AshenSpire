@@ -608,6 +608,37 @@ test('each claim lifts the reward IT unlocked, not an older one still waiting', 
   } finally { Object.assign(globalThis, saved); }
 });
 
+test('async skill banking holds reward actions and ignores completion after the mounted screen is replaced', async () => {
+  for (const leave of [false, true]) {
+    const dom = rewardDom(), saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+    Object.assign(globalThis, dom);
+    try {
+      const app = document.createElement('main'); document.body.append(app);
+      const run = climber(); run.skills = { 'item:blade': { level: 0, xp: 100, pendingDrafts: 0 } };
+      let settle, done = 0, writes = 0;
+      const rewards = { cardIds: ['rend', 'stomp'], xpGains: { level: 0, tracks: { 'item:blade': 100 } } };
+      const checkpoint = { rewards, states: {} };
+      mountRewards(app, { registries, run, rewards, checkpoint, onDone: () => done++, onPersist: () => { writes++; },
+        onClaimSkill: () => new Promise(resolve => { settle = resolve; }),
+        saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) } });
+      app.querySelector('.reward-level-up[data-track="item:blade"]').click();
+      assert.equal(app.querySelector('#reward-continue').disabled, true);
+      app.querySelector('#reward-continue').click();
+      assert.equal(done, 0);
+      const host = app.querySelector('.reward-claim-layout');
+      app.querySelector('.reward-kind[data-kind="card"]').click();
+      assert.equal(app.querySelector('.reward-claim-layout'), host, 'nonbutton rows cannot navigate during a pending claim');
+      if (leave) app.innerHTML = '<p id="replacement">New screen</p>';
+      settle(claimBankedSkillLevel(registries, run, 'item:blade'));
+      await Promise.resolve(); await Promise.resolve();
+      assert.equal(!!app.querySelector('#reward-level-continue'), !leave);
+      if (!leave) { assert.ok(writes > 0); assert.equal(checkpoint.skillClaims['item:blade'], 1); }
+      if (leave) assert.ok(app.querySelector('#replacement'));
+      app.remove();
+    } finally { Object.assign(globalThis, saved); }
+  }
+});
+
 test('all ready tracks carry Level up together; a later skill may be claimed first', () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));

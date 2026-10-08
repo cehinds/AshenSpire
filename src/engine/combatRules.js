@@ -225,7 +225,8 @@ export function grantFoundationEvade(ctx, source) {
 export function consumeFoundationEvade(ctx, source, target, carrier) {
   if (!ctx.foundation || !target?.evade || carrier?.attack?.dodgeable === false) return false;
   target.evade--;
-  ctx.emit('attackEvaded', { sourceId: source?.id, targetId: target.id, targetPlayerId: ctx.playerIdForEntity?.(target), charges: target.evade });
+  ctx.emit('attackEvaded', { sourceId: source?.id, targetId: target.id, targetPlayerId: ctx.playerIdForEntity?.(target), charges: target.evade,
+    ...(source?.knowledgeAction ? { enemyActionSerial: source.knowledgeAction.serial } : {}) });
   return true;
 }
 
@@ -277,10 +278,10 @@ export function candidateState(ctx) {
 }
 
 /** Reject malformed/looping actions without consuming cards, pools or RNG. */
-export function foundationTransaction(ctx, execute) {
+export function foundationTransaction(ctx, execute, { advanceAction = true } = {}) {
   const candidate = candidateState(ctx);
   candidate._foundationTransaction = true;
-  if (candidate.foundation) {
+  if (candidate.foundation && advanceAction) {
     candidate.foundation.actionSerial++;
     candidate.foundation.eventCount = 0;
     candidate.foundation.rolls = {}; candidate.foundation.counts = {};

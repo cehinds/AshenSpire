@@ -47,7 +47,7 @@ test('rewardRolls is appended after every stream before it, so no existing strea
   // `shopOffers` (SPEC §14.2), `sigils` (SPEC §15.4) and intent reads (§4.7) were appended
   // after it; tests/shop-kinds.test.mjs and tests/legendary-sigils.test.mjs hold those.
   const at = STREAM_NAMES.indexOf('rewardRolls');
-  assert.deepEqual(STREAM_NAMES.slice(at + 1), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight']);
+  assert.deepEqual(STREAM_NAMES.slice(at + 1), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue']);
   assert.deepEqual(STREAM_NAMES.slice(0, at), [
     'map', 'shuffle', 'cardRewards', 'relicRewards', 'flaskRewards', 'armaments', 'enemyAI', 'enemyHP',
     'events', 'shop', 'misc', 'smith', 'combatProcs', 'seats',
