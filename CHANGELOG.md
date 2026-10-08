@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-08
+
+- **Combat cards keep their chosen targets and cancel safely** ([#1728](https://github.com/cehinds/AshenSpire/pull/1728), `0.7.1.1113`). Escape cancels an armed self Counter before closing the tutorial. Changing an upcast rank checks the legal target for that rank in solo and co-op, and each co-op card uses its owner's saved combat rules. If no rank is sent, a card keeps its authored base rank.
+
 ## 2026-10-07
 
 - **Martial and Spell combat is playable** ([#1723](https://github.com/cehinds/AshenSpire/pull/1723), `0.7.1.1111`). New runs use persistent stances, whole-action counters and evasion, Ward, typed defenses, status buildup and recovery, optional upcasting, and run-long Ashen Blight. Cards show their action at the bottom with compact effects and inspected tags; Powers Exhaust while their buffs stay active for the fight. Solo and co-op share the rules and saved outcomes. Existing runs retain their original combat rules.

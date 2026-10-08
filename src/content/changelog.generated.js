@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1728",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat cards keep their chosen targets and cancel safely",
+    "detail": "Escape cancels an armed self Counter before closing the tutorial. Changing an upcast rank checks the legal target for that rank in solo and co-op, and each co-op card uses its owner's saved combat rules. If no rank is sent, a card keeps its authored base rank.",
+    "build": "0.7.1.1113",
+    "pullRequest": 1728,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1728"
+  },
+  {
     "id": "pr-1723",
     "date": "2026-10-07",
     "group": "2026-10-07",
