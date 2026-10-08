@@ -506,3 +506,15 @@ sheets; prompts are in `source/base-action-prompts.json` and each class retains
 its `source/base-normalization.json` recipe.
 These are authoring assets with empty gameplay bindings; no third-party artwork
 was downloaded and no third-party license is claimed.
+
+### Alternative held stance studies (2026-10-07)
+
+`pose-studio/stances/` preserves four base-player stance sheets generated with
+OpenAI's built-in image generator from the project's own rear character
+references, exact prompts, source hashes, normalization recipes and portable
+authoring projects. Enemy held frames reuse the project's existing attack,
+guard and buff paintings and retain their original provenance; these are
+adaptations rather than newly painted enemy art. This package is authoring
+material with a separate integration seam and empty gameplay bindings.
+Other canonical armour cells remain explicitly unpainted. No third-party
+artwork was downloaded and no third-party license is claimed.
