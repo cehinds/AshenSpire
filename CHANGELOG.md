@@ -38,7 +38,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
 
-- **Combat build checks keep their full coverage** ([#1739](https://github.com/cehinds/AshenSpire/pull/1739), `0.7.1.1128`). Combat validation runs in complete, smaller groups so promoted builds can finish their checks within each job's time limit. Every discovered test and known-defect case is retained.
+- **Behind the scenes: complete combat checks finish within their limits** ([#1739](https://github.com/cehinds/AshenSpire/pull/1739), `0.7.1.1128`). Nothing you play changes. The full discovered-test, self-test and mobile-layout sets now run in exhaustive parallel pieces, so every original check still runs while each automated job remains within its 20-minute limit.
 
 - **Combat prices and checkpoints stay consistent** ([#1733](https://github.com/cehinds/AshenSpire/pull/1733), `0.7.1.1127`). Upcast cards show their full SP and Mana price before payment; solo and co-op apply the same Mana discount. Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.
 
