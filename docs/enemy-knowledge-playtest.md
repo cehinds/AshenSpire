@@ -34,6 +34,16 @@ Optional `/assets/sfx/` samples used the existing procedural fallback after 404 
 
 ## Alternative and delivery
 
-The reconciled alternative source also passed actual desktop and native-touch phone gameplay, prediction, exact reload and Bestiary checks. Protected-path auditing retained all variant art and the parent's pricing, checkpoint and sigil controls. Its final generated artifact and compiled captures are recorded separately before promotion.
+The final alternative standalone artifact is `0.7.1.1142`, digest `f4eda67363`. All four launcher aliases refreshed; build identity, shipping, own receipt, promotion receipt coverage and ordering gates passed. The actual compiled document exposed that same identity throughout desktop and native-touch phone gameplay and reload.
+
+The compiled alternative passed the same committed Spell prediction, automatic level-1 Perception without a draft, full snapshot/RNG reload, five-stage Bestiary, 44-pixel controls, overflow and Escape-focus checks. All three compiled Load cases also passed: legacy encounter entry, legacy explicit checkpoint and latest knowledge accepted action. Its three captures were visually inspected and preserve the distinct character, enemy and backdrop art.
+
+Protected-path auditing against the merged parent covered 1,636 paths, with no unexpected changes or protected art changes. Shared engine and main code match the regular final implementation. Both the parent #1737/1140 and regular #1734/1132 histories remain alongside this alternative #1741/1142 receipt. Independent final source review found no issues.
+
+![Compiled alternative desktop combat](preview/enemy-knowledge/alternative/combat-desktop.png)
+
+![Compiled alternative native-touch prediction](preview/enemy-knowledge/alternative/prediction-phone.png)
+
+![Compiled alternative native-touch Bestiary](preview/enemy-knowledge/alternative/bestiary-phone.png)
 
 Regular and alternative dev/test promotions remain tracked delivery work. No release/main promotion is included. Phone evidence uses a browser viewport with native touch; physical handset and owner acceptance remain separate.
