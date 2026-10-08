@@ -1520,7 +1520,7 @@
 .combatant-leading .intent {
   --intent-accent: #ef4949;
   border: calc(2px / var(--ui-zoom, 1)) solid var(--intent-accent);
-  background: var(--combat-panel-texture, #201b15);
+  background-color: #201b15;
   background-size: cover;
   box-shadow: inset 0 1px 0 #ffffff36, 0 2px 5px #0009;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -1560,6 +1560,9 @@
   :root .combat[data-layout='formation'] .combatant-leading {
     flex-direction: row; align-items: flex-end;
   }
+  :root .combat[data-layout='formation'] .combatant-leading > .combatant-info {
+    position: absolute; right: calc(100% + 4px); bottom: 0;
+  }
   /* The expanded relic tray can extend beyond its HUD row. Only its actual
      controls should intercept a press on the battlefield below. */
   :root:has(.combat) .hud-relics { pointer-events: none; }
@@ -1594,7 +1597,7 @@
 .combatant.enemy[data-intent-visibility='unknown'] { --enemy-intent-accent: #c88aeb; --enemy-intent-outline: dashed; }
 :root .combat[data-composition='option-c'] .enemy:is(.context-selected,.targetable,.hover-target)::after {
   box-sizing: border-box; border: calc(2px / var(--ui-zoom, 1)) var(--enemy-intent-outline) var(--enemy-intent-accent);
-  border-radius: calc(8px / var(--ui-zoom, 1)); background: var(--combat-panel-texture); background-size: cover;
+  border-radius: calc(8px / var(--ui-zoom, 1)); background-color: #201b15; background-size: cover;
   z-index: 880;
 }
 :root .combat[data-composition='option-c'] .enemy:is(.targetable,.hover-target) .sprite { outline: none; }

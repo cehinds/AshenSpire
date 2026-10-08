@@ -54,8 +54,11 @@ try {
     await page.keyboard.press('Escape');
     await page.locator('.combatant-door').waitFor({state:'hidden'});
     await page.waitForTimeout(150); // Modal focus restoration completes before the next command.
-    await page.keyboard.press('Escape');
-    await page.waitForFunction(() => !document.querySelector('.combatant.context-selected'));
+    await page.mouse.move(0,height-1);
+    // Restored Inspect focus can own a tooltip scope above reading selection.
+    for (let scope=0;scope<2 && await page.locator('.combatant.context-selected').count();scope++) {
+      await page.keyboard.press('Escape'); await page.waitForTimeout(100);
+    }
     assert.equal(await page.locator('.combatant.context-selected').count(),0,'Escape clears selection');
     console.log('PASS layout and selection',width,height);
     await page.close();
