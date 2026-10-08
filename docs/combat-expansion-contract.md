@@ -8,6 +8,7 @@ Owner authorization: implement the revised combat notes in one delivery and land
   - This implementation contract overrides conflicting earlier proposal wording: Counter mitigation/reply is consumed by its first eligible incoming action, and large authored buildup can complete multiple protected or active fills in one action.
   - The concrete Reaver example takes precedence over the retired version-1 automatic Counter return multiplier and flat bonus: return exactly the authored reply after the attack action is fully absorbed.
   - Counter preparation grants only authored protection. A card with no protection effect grants none; its preview must make that clear.
+  - Shield Bash is Counter, including its mounted variants; its authored Block and Poise reply follow the same preparation and full-action qualification rules.
   - Every shipped class and enemy move receives explicit camp, stance, reach, targeting, and applicable school/damage/trait tags. Existing Attack/Skill/Power lifecycle remains a separate property.
 
 - **Activation and compatibility**
