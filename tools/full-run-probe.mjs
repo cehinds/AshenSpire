@@ -254,6 +254,16 @@ async function skipTutorial() {
 }
 const savedRun = () => ev(`(() => { try { const r = JSON.parse(localStorage.getItem('sote_run_v1') || 'null'); const g = r && (r.run || r.game || r); return g ? { seed: g.seedString, floor: g.floor, act: g.actNumber, hp: g.hp, maxHp: g.maxHp } : null; } catch { return null; } })()`);
 
+// The visible ability fold owns its gate. Read its semantic selection state
+// after each trusted press; never toggle a chosen ability or overfill a pool.
+const STARTING_ABILITY_FOLD = '#cz-equipment-fold details[open] [data-equipment-section="startingAbilities"]';
+function startingAbilityChoice({ continueBlocked, choices = [] }) {
+  if (!continueBlocked) return null;
+  const choice = choices.find(({ cardId, selected, disabled }) => cardId && !selected && !disabled);
+  if (!choice) throw new Error('no legal starting ability while Continue is blocked');
+  return choice.cardId;
+}
+
 // ---- TITLE → CLASS SELECT → BEGIN → the act map -----------------------------
 async function newGameFromTitle(label) {
   await until(`!!document.querySelector('.title-menu .slot-new')`, `the title's New Game door (${label})`);
@@ -286,11 +296,20 @@ async function newGameFromTitle(label) {
     if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
     // Starting maneuvers/spells are required choices. Complete the open fold
     // through its real Choose controls before asking its Continue to advance.
-    const abilityFold = '#cz-equipment-fold details[open] [data-equipment-section="startingAbilities"]';
+    const abilityFold = STARTING_ABILITY_FOLD;
     if (await has(abilityFold)) {
-      while (await ev(`document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
-        const cardId = await ev(`document.querySelector(${JSON.stringify(abilityFold + ' .cc-ability-choose[aria-pressed="false"]:not(:disabled)')})?.closest('.cc-ability-choice')?.dataset.cardId`);
-        if (!cardId) throw new Error(`no legal starting ability while Continue is blocked; screen ${JSON.stringify(await ev(SCREEN))}`);
+      while (true) {
+        const snapshot = await ev(`(() => ({
+          continueBlocked: document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true',
+          choices: [...document.querySelectorAll(${JSON.stringify(abilityFold + ' .cc-ability-choose')})].map(button => ({
+            cardId: button.closest('.cc-ability-choice')?.dataset.cardId,
+            selected: button.getAttribute('aria-pressed') === 'true', disabled: button.disabled,
+          })),
+        }))()`);
+        let cardId;
+        try { cardId = startingAbilityChoice(snapshot); }
+        catch (error) { throw new Error(`${error.message}; screen ${JSON.stringify(await ev(SCREEN))}`); }
+        if (cardId === null) break;
         const choice = `${abilityFold} .cc-ability-choice[data-card-id=${JSON.stringify(cardId)}] .cc-ability-choose`;
         await press(choice);
         await until(`document.querySelector(${JSON.stringify(choice)})?.getAttribute('aria-pressed') === 'true'`, `the starting ability ${cardId} to be chosen`);
@@ -512,6 +531,38 @@ if (argv.includes('--selftest')) {
     const got = door.done || door.press || (door.wait ? 'wait' : null);
     plants.push([`door: ${name}`, want, null, got]);
   }
+  // Creation plants use the SAME choice planner as the actual DOM driver.
+  // Simulate the UI gate opening at one or two distinct selected abilities.
+  const creationChoices = (count) => {
+    const choices = ['first', 'second', 'third'].map(cardId => ({ cardId, selected: false, disabled: false }));
+    const picked = [];
+    for (let step = 0; step < 4; step++) {
+      const cardId = startingAbilityChoice({ continueBlocked: picked.length < count, choices });
+      if (cardId === null) return picked.join(',') + ':ready';
+      if (picked.includes(cardId)) return 'toggled a selected ability';
+      picked.push(cardId);
+      choices.find(choice => choice.cardId === cardId).selected = true;
+    }
+    return 'never completed';
+  };
+  plants.push(['creation: one required maneuver selects once then advances', 'first:ready', null, creationChoices(1)]);
+  plants.push(['creation: two required spells select distinct unchosen abilities', 'first,second:ready', null, creationChoices(2)]);
+  plants.push(['creation: selected and disabled abilities are skipped', 'legal', null, startingAbilityChoice({
+    continueBlocked: true, choices: [
+      { cardId: 'selected', selected: true, disabled: false },
+      { cardId: 'disabled', selected: false, disabled: true },
+      { cardId: 'legal', selected: false, disabled: false },
+    ],
+  })]);
+  plants.push(['creation: enabled Continue never selects an extra ability', null, null, startingAbilityChoice({
+    continueBlocked: false, choices: [{ cardId: 'extra', selected: false, disabled: false }],
+  })]);
+  let blockedCreation = 'accepted';
+  try { startingAbilityChoice({ continueBlocked: true, choices: [
+    { cardId: 'selected', selected: true, disabled: false },
+    { cardId: 'disabled', selected: false, disabled: true },
+  ] }); } catch (error) { blockedCreation = error.message; }
+  plants.push(['creation: a blocked gate without a legal choice fails', 'no legal starting ability while Continue is blocked', null, blockedCreation]);
   // CDP plants: a call the browser never answers is rejected by its bound; a
   // call pending when the socket drops is rejected at once, as is any later.
   const quiet = cdpCalls(() => {}, { timeoutMs: 50 });
