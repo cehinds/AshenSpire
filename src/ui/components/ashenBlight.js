@@ -6,6 +6,7 @@ export function ashenBlightBarHtml(owner, { compact = false, cooperative = false
   if (owner?.combatExpansionVersion !== 2) return '';
   const state = owner.ashenBlight;
   const value = state?.value || 0;
+  if (value <= 0) return '';
   const terminal = state?.thresholdOutcome === 'lost' || state?.entries?.some(row => row.outcome === 'lost');
   const stage = value >= 100 ? terminal ? 'Lost to the Blight' : 'Blighted'
     : value >= 75 ? 'Infernal' : value >= 50 ? 'Kindled' : value >= 25 ? 'Singed' : 'Unmarked';
