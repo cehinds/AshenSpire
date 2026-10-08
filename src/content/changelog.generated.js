@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Alternative tutorial controls stay reachable",
     "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
-    "build": "0.7.1.1138",
+    "build": "0.7.1.1140",
     "pullRequest": 1737,
     "url": "https://github.com/cehinds/AshenSpire/pull/1737"
   },
@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Saved fights load with their intended combat rules",
     "detail": "Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.",
-    "build": "0.7.1.1129",
+    "build": "0.7.1.1130",
     "pullRequest": 1736,
     "url": "https://github.com/cehinds/AshenSpire/pull/1736"
   },
