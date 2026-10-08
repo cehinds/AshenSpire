@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1725",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Power and card-label rules clarified",
+    "detail": "Defines expanded Power casts that Exhaust their paid card instance while its installed effect lasts for the combat. Preserves authored action labels, reusable Skills, and separate deck Status cards. Additional copies and Replicas remain separate paid casts. This contract prepares the combat implementation; gameplay does not change yet.",
+    "build": "0.7.1.1103",
+    "pullRequest": 1725,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1725"
+  },
+  {
+    "id": "pr-1726",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Enemy knowledge rules defined",
+    "detail": "Specifies unknown and broad enemy clues, run Perception from successful predictions, and five-stage persistent bestiary knowledge. Defines saved receipts, bounded counter bonuses and private co-op reads. This is the contract for a later gameplay update; the game does not change yet.",
+    "build": "0.7.1.1102",
+    "pullRequest": 1726,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1726"
+  },
+  {
     "id": "pr-1718",
     "date": "2026-10-07",
     "group": "2026-10-07",
