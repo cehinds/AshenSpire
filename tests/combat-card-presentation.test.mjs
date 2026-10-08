@@ -29,7 +29,19 @@ test('summary uses live bindings and preserves full conditional effects', () => 
   assert.match(lucid, /you have Sleep/); assert.match(lucid, /Remove 1 Sleep/); assert.match(lucid, /gain 2 Barrier/);
 });
 test('complex passive cards preserve authored text rather than hiding trigger rules', () => {
-  for (const id of ['emberCovenant','shatterOpportunity']) assert.equal(combatCardSummary(card(id), null, reg), null);
+  for (const id of ['emberCovenant','shatterOpportunity','earthGrounding','restfulDream','starPath']) assert.equal(combatCardSummary(card(id), null, reg), null);
+});
+
+test('summaries retain ally and random targets, removal quantities and resolved hit counts', () => {
+  assert.match(combatCardSummary(card('rallyingBanner'), null, reg), /Ally gains 10 Block/);
+  assert.match(combatCardSummary(card('sharedFlame'), null, reg), /Heal an ally for 7 HP/);
+  assert.match(combatCardSummary(card('ashOath'), null, reg), /to an ally/);
+  assert.match(combatCardSummary(card('pilfer'), null, reg), /Discard 1 at random/);
+  assert.match(combatCardSummary(card('ambush'), {tokens:{damage:4}}, reg), /Remove all Prepared/);
+  const random = {type:'attack',effects:[{op:'damage',target:'randomEnemy',amount:4,hits:{f:'x'}}]};
+  assert.equal(combatCardSummary(random, null, reg), null);
+  assert.match(combatCardSummary(random, {values:[{op:'damage',value:4,hits:0}]}, reg), /4 damage ×0 to a random enemy/);
+  assert.match(combatCardSummary(card('sanctuaryCleanse'), null, reg), /Usable through Sleep, Paralysis, Dazed/);
 });
 
 test('expanded grade summaries retain added buildup together with authored limits', () => {
@@ -50,6 +62,10 @@ test('expanded grade summaries retain added buildup together with authored limit
   assert.match(constellation, /distinct starstone card IDs played at least 2 this turn/);
   const shelter = combatCardSummary(grade('progression-pilgrim-s-shelter'), null, reg);
   assert.match(shelter, /you began this turn with HP at most 50%/);
+  const reprisal = combatCardSummary(grade('progression-crimson-reprisal'), null, reg);
+  assert.match(reprisal, /HP lost at least 1 since your previous turn began/);
+  assert.match(combatCardSummary(grade('progression-back-alley-cut'), null, reg), /not \(the target has Block before this card\)/);
+  assert.match(combatCardSummary(grade('progression-silent-exchange'), null, reg), /Choose and discard 1/);
 });
 
 test('temporary tier options keep nonzero base separate and never offer locked tiers', async () => {

@@ -59,14 +59,17 @@ export function combatCardSummary(def, preview = null, registries = null) {
   const condition = pred => {
     if (!pred) return '';
     if (pred.p === 'hasStatus') return `${pred.of === 'self' ? 'you have' : pred.of === 'allEnemies' ? 'an enemy has' : 'the target has'} ${title(pred.status)}`;
-    if (pred.p === 'hasBlock') return 'you have Block';
+    if (pred.p === 'hasBlock') return `${pred.of === 'self' ? 'you' : 'the target'} ${pred.of === 'self' ? 'have' : 'has'} Block${pred.snapshot === 'beforePlay' ? ' before this card' : ''}`;
     if (pred.p === 'hpBelowPct') return `${pred.of === 'self' ? 'your' : 'target'} HP is at most ${pred.pct}%`;
     if (pred.p === 'firstCardThisTurn') return 'this is your first card this turn';
     if (pred.p === 'inStance') return `you are in ${pred.stance}`;
     if (pred.p === 'turnMetric') {
       const names = { cardsPlayed: 'cards played', attacksPlayed: 'attacks played', manaSpent: 'Mana spent', hpLostSinceTurnStart: 'HP lost', discarded: 'cards discarded', offeringsPaid: 'offerings paid', previousSpell: 'previous Spell', sameCardPlays: 'plays of this card', cardPlaysCombat: 'cards played this combat' };
-      const threshold = pred.atLeast !== undefined ? `at least ${pred.atLeast}` : `at most ${pred.atMost}`;
+      const threshold = [pred.atLeast !== undefined ? `at least ${pred.atLeast}` : '', pred.atMost !== undefined ? `at most ${pred.atMost}` : ''].filter(Boolean).join(' and ');
+      if (!threshold) return '';
+      if (pred.metric === 'sameCardPlays' && pred.cardId && pred.cardId !== def.id) return '';
       if (pred.metric === 'turnStartHpPct') return `you began this turn with HP ${threshold}%`;
+      if (pred.metric === 'hpLostSinceTurnStart') return `HP lost ${threshold} since your previous turn began`;
       const name = names[pred.metric] || (['tagPlays', 'distinctTagPlays'].includes(pred.metric) && pred.tag
         ? `${pred.metric === 'distinctTagPlays' ? 'distinct ' : ''}${pred.tag} card${pred.metric === 'distinctTagPlays' ? ' IDs' : 's'} played` : null);
       if (!name) return '';
@@ -80,20 +83,21 @@ export function combatCardSummary(def, preview = null, registries = null) {
   };
   const p = combatProfileFor(def), parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
-    const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies' : '';
+    const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
+      : effect.target === 'randomEnemy' ? ' to a random enemy' : '';
     let text;
     switch (effect.op) {
-      case 'damage': { const hits = preview?.values?.[index]?.hits ?? effect.hits ?? 1; text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} damage${typeof hits === 'number' && hits > 1 ? ` ×${hits}` : ''}${area}`; break; }
-      case 'block': text = `Gain ${n} Block`; break;
+      case 'damage': { const hits = preview?.values?.[index]?.hits ?? effect.hits ?? 1; if (typeof hits !== 'number') return null; text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} damage${hits !== 1 ? ` ×${hits}` : ''}${area}`; break; }
+      case 'block': text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Block`; break;
       case 'gainBarrier': text = `Gain ${n} Barrier`; break;
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
       case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
-      case 'applyStatus': if (['invulnerability', 'decoy'].includes(effect.status)) return null; text = `Gain ${value(effect, index, 'stacks')} ${title(effect.status)}${effect.target === 'enemy' ? ' on target' : area}`; break;
-      case 'removeStatus': text = `Remove ${n} ${title(effect.status)}${area}`; break;
+      case 'applyStatus': if (['invulnerability', 'decoy', 'grounded', 'sleep', 'concealed'].includes(effect.status)) return null; text = `${effect.target === 'self' ? 'Gain' : 'Apply'} ${value(effect, index, 'stacks')} ${title(effect.status)}${effect.target === 'enemy' ? ' to target' : effect.target === 'ally' ? ' to an ally' : area}${effect.duration !== undefined ? ` for ${effect.duration} turns` : ''}`; break;
+      case 'removeStatus': text = `Remove ${effect.amount === undefined ? 'all' : n} ${title(effect.status)}${effect.target === 'enemy' ? ' from target' : effect.target === 'ally' ? ' from an ally' : area}`; break;
       case 'draw': text = `Draw ${n}`; break;
-      case 'discard': text = `Discard ${n}`; break;
-      case 'heal': text = `Heal ${n} HP`; break;
+      case 'discard': text = `${effect.choose ? 'Choose and discard' : 'Discard'} ${n}${effect.random ? ' at random' : ''}`; break;
+      case 'heal': text = `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${n} HP`; break;
       case 'loseHp': text = `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`; break;
       case 'gainEnergy': text = `Gain ${n} SP`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
@@ -114,6 +118,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       default: return null; // Keep authored descriptions for complex effects.
     }
     if (effect.if) { const prefix = condition(effect.if); if (!prefix) return null; text = `If ${prefix}: ${text[0].toLowerCase() + text.slice(1)}`; }
+    if (text.includes('?')) return null; // Unresolved formulas keep their authored tokens.
     if (effect.oncePerTurn) text += ' once per turn per family';
     parts.push(text);
   }
@@ -130,6 +135,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
   }
   if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
   if (def.comboHook) return null;
+  if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
   for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
   return parts.length ? `${parts.join('. ')}.` : null;
 }
