@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1732",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Valid card content keeps building through strict checks",
+    "detail": "The bundler keeps adjacent static imports separate and accepts legal empty statements between whitespace. Strict syntax and refusal checks stay active; card effects and appearance are unchanged.",
+    "build": "0.7.1.1124",
+    "pullRequest": 1732,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1732"
+  },
+  {
+    "id": "pr-1728",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Combat controls respond promptly and upcasts keep legal targets",
+    "detail": "Accepted plays immediately lock further actions while the hand and fighters stay in place for their animation. Escape cancels a selected Counter card before closing the tutorial. Co-op Upcast appears under a selected card and opens only its rank chooser. Solo and co-op show legal targets for the selected rank, ask for a new target when its destination changes, and spend nothing before the final play. Cards with a higher base rank keep that rank when no upcast is chosen.",
+    "build": "0.7.1.1122",
+    "pullRequest": 1728,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1728"
+  },
+  {
     "id": "pr-1729",
     "date": "2026-10-08",
     "group": "2026-10-08",
