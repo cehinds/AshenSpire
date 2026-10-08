@@ -8933,5 +8933,12 @@ export const uiStrings = [
     "short": "Enemy learning is retained and waiting to be saved.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "combat.intent.partial",
+    "extends": "",
+    "short": "{stance} ?",
+    "full": "",
+    "tip": ""
   }
 ];

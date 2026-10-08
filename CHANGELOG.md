@@ -41,6 +41,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **Alternative figures keep idle life and respect reduced motion** ([#1746](https://github.com/cehinds/AshenSpire/pull/1746), `0.7.1.1143`). Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.
 
 - **Alternative tutorial controls stay reachable** ([#1737](https://github.com/cehinds/AshenSpire/pull/1737), `0.7.1.1140`). Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.
+- **Combat intents and targets share the approved option C layout** ([#1750](https://github.com/cehinds/AshenSpire/pull/1750), `0.7.1.1142`). Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The approved pointed shield and inner-loop Counter symbol match the named card footers; counters show HP and Poise with distinct damage symbols. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.
 
 - **Combat shows Blight only when it matters** ([#1755](https://github.com/cehinds/AshenSpire/pull/1755), `0.7.1.1138`). The separate Block, Barrier and Ward summary box is removed. Positive Ashen Blight occupies a wider centered header bar, with its own row on phones, and disappears at zero. Recovery and Blight feat buttons remain reachable above combat figures.
 
@@ -63,6 +64,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **Combat controls respond promptly and upcasts keep legal targets** ([#1728](https://github.com/cehinds/AshenSpire/pull/1728), `0.7.1.1122`). Accepted plays immediately lock further actions while the hand and fighters stay in place for their animation. Escape cancels a selected Counter card before closing the tutorial. Co-op Upcast appears under a selected card and opens only its rank chooser. Solo and co-op show legal targets for the selected rank, ask for a new target when its destination changes, and spend nothing before the final play. Cards with a higher base rank keep that rank when no upcast is chosen.
 
 - **Actions and schools have distinct card sigils** ([#1729](https://github.com/cehinds/AshenSpire/pull/1729), `0.7.1.1118`). A large monochrome action mark leads a smaller school mark and written damage types. Information explains each mark and keeps the detailed tags. Complete effects adapt to the available card space while preserving costs, ranks, conditions and durations.
+
 
 ## 2026-10-07
 

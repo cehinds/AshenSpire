@@ -2,14 +2,14 @@
 // a card name, damage element, class colour, or inferred effect.
 const mark = (label, shape, help) => Object.freeze({ label, shape, help });
 export const ACTION_SIGILS = Object.freeze({
-  attack: mark('Attack', '<path d="M7 25 24 8m-7 0h7v7M5 20l7 7"/>', 'A direct attack.'),
+  attack: mark('Attack', '<path d="m6 3 17 20-3 3L3 6Zm20 0L9 23l3 3L29 6ZM5 20l7 7m8-7 7 7M3 29l5-5m16 0 5 5"/>', 'A direct attack.'),
   defend: mark('Defend', '<path d="M16 4 26 8v9c0 6-10 11-10 11S6 23 6 17V8Z"/>', 'Guard or other defensive support.'),
-  counter: mark('Counter', '<path d="M7 12a10 10 0 1 1 0 14M7 5v7h7M7 12l10 10"/>', 'Prepare a reply to a qualifying incoming action. Inspect for its conditions.'),
+  counter: mark('Counter', '<path d="M16 3 28 7v10c0 7-12 13-12 13S4 24 4 17V7Z"/><path d="M21 13a6 6 0 1 0 1 7M21 8v5h-5"/>', 'Prepare a reply to a qualifying incoming action. Inspect for its conditions.'),
   sweep: mark('Sweep', '<path d="M4 23q12-24 24 0M4 23h24M24 18l4 5-4 5"/>', 'An attack across several targets.'),
   ranged: mark('Ranged', '<path d="M8 4q16 12 0 24M8 4v24M3 16h24m-6-5 6 5-6 5"/>', 'An attack made at range.'),
   smash: mark('Smash', '<path d="m9 5 15 4-2 8-15-4ZM15 15l-4 13M23 22l4 5M5 20l-3 4"/>', 'A heavy, forceful attack.'),
-  spell: mark('Spell', '<path d="m16 3 4 9 9 4-9 4-4 9-4-9-9-4 9-4Z"/>', 'A spell. Its smaller mark identifies the school.'),
-  power: mark('Power', '<path d="M5 25h22M6 22 4 9l8 6 4-11 4 11 8-6-2 13Z"/>', 'Cast once; its buff lasts for this combat. The paid card leaves play.'),
+  spell: mark('Spell', '<path d="m6 29 15-19"/><circle cx="22" cy="8" r="6"/><path d="m22 3 1 4 4 1-4 1-1 4-1-4-4-1 4-1Z"/>', 'A spell. Information identifies its school.'),
+  power: mark('Power', '<path d="M13 28V13H8L16 3l8 10h-5v15ZM4 16v6m-3-3h6m19 1v8m-4-4h8"/>', 'Cast once; its buff lasts for this combat. The paid card leaves play.'),
   skill: mark('Skill', '<path d="M5 17v-5l4-4 4 4v3l5-8 5 3-4 7h7v5l-9 6H9Z"/>', 'Reusable utility or a buff. Inspect for its effects.'),
   status: mark('Status', '<path d="m16 3 13 25H3ZM16 11v7m0 5h.01"/>', 'A status-effect card added to the deck, usually harmful.'),
 });
