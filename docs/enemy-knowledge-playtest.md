@@ -8,8 +8,9 @@ The enemy-knowledge runtime implements the independently merged contract in
 Real normal-run interaction through the game served from this feature worktree,
 in Microsoft Edge with reduced motion. Desktop: 1440 by 900. Phone: 390 by 844;
 the phone context has native touch enabled (`navigator.maxTouchPoints = 1`).
-These initial captures document source-game testing; final generated-bundle
-captures and delivery checks will be added before merge.
+Source-game tests exercised the complete normal run below. Generated-bundle
+testing also verified build `0.7.1.1127`, digest `25d883ae82`, at
+`/AshenSpire.html`; final combined-build captures will be refreshed before merge.
 
 - Quick start, initial class choice and the first map encounter were entered
   through normal controls. The pack contained two Blight Hounds and a Grave Wisp.
@@ -29,9 +30,17 @@ captures and delivery checks will be added before merge.
   draft, then confirmed Continue and returned to the map. All three rewards
   were claimed; Perception remained level 1, XP 1, pendingDrafts 0, and its
   encounter credit remained 4. The selected cards were present in the saved deck.
-- The learned Bestiary showed five stages, 1/30 progress before the tactical
-  bonus, next threshold 6, locked resources/moves, and no page overflow. Back and
+- The learned Bestiary showed five stages, 2/30 Blight Hound progress after the
+  tactical bonus and 1/30 Grave Wisp progress, next threshold 6, locked
+  resources/moves, and no page overflow. Back and
   Escape returned to the title; keyboard inspector Escape restored its opener.
+- Native touch opened the compiled inspector through its normal enemy selection
+  controls. The select and Predict action button measured 44 physical pixels
+  high; the panel had no horizontal overflow and its nine native options had
+  no inserted glossary children. A ready Spell prediction executed correctly,
+  advanced Perception automatically, and reloaded with the exact combat,
+  Perception, feedback and RNG projection. The selected formation sprite's
+  glow does not trap Inspect controls beneath adjacent enemy art.
 
 ![Real desktop combat](preview/enemy-knowledge/combat-desktop.png)
 
@@ -53,6 +62,28 @@ delayed/multi-hit/cancelled actions, inert previews/rejections, and learned-stag
 DOM-model disclosure. Review also reproduced and fixed stale asynchronous
 reward, start-run and terminal-completion ownership paths.
 
+The source game's normal Load controls were also checked in two explicit
+combat fixtures. After two accepted turns, the legacy combat fixture restored
+its exact turn-1 encounter entry. The default knowledge-enabled combat restored
+its exact committed turn-3 snapshot. Both comparisons included the serialized
+combat, RNG seed and all stream counters, after the restored combat object was
+adopted. The focused slot-load integration checks passed 23/23; the stock browser
+driver and its known-bad corpus remain part of the hosted promotion checks.
+
+The fresh local core run passed 370 discovered files and 3,232 tests, all 122
+engine regression cases, and 150 checks with zero failures. Independent regular
+and alternative source reviews found no actionable issues. Alternative focused
+checks passed 69/69, with protected-path auditing retaining all variant art.
+
+The reconciled alternative source was also exercised with the same saved normal
+run at desktop and native-touch phone sizes. It retained its character, enemy
+and backdrop art while showing two Attack clues and one wholly unknown action.
+A ready Spell prediction advanced Perception to level 1 without a draft on both
+devices, and reload preserved the exact saved projection. Native inspection used
+the visible figure and its normal Inspect button; the prediction controls were
+44 pixels high with no panel overflow and nine plain native options. Final
+compiled alternative captures and promotion checks are tracked separately.
+
 Optional audio samples returned 404 and used the existing procedural fallback.
 Map/music requests cancelled during navigation were recorded separately. No
 JavaScript runtime exception was observed in the gameplay interactions.
@@ -62,4 +93,5 @@ JavaScript runtime exception was observed in the gameplay interactions.
 Source implementation and focused validation are committed. Final generated
 receipt/build, complete local tool suite, PR checks and regular/alternative
 dev/test promotions remain pending. This evidence does not claim release/main
-promotion or owner/device acceptance.
+promotion or physical owner/device acceptance. Phone evidence is a browser
+viewport with native touch enabled, rather than a physical handset test.

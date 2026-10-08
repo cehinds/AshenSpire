@@ -240,6 +240,7 @@ const creationLeft = createRunState({
   classId: 'reaver',
   registries: baseRegistries,
   combatExpansionVersion: 1,
+  enemyKnowledgeVersion: null,
   startingHands: { rightHand: null, leftHand: 'straightSword' },
 });
 
