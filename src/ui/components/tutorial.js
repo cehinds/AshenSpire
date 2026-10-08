@@ -68,11 +68,11 @@ export function mountTutorial(root, { onDone }) {
   const spot = veil.querySelector('.tut-spot');
   const bubble = veil.querySelector('.tut-bubble');
   // The static Popover is deliberately pointer-transparent so compact layouts
-  // cannot make a covered card unplayable. Move its real controls beside the
-  // veil as a sibling overlay: they remain part of the callout visually, but
-  // do not inherit either pointer-transparent ancestor in Chromium.
+  // cannot make a covered card unplayable. Keep the real controls beside the
+  // prose inside the veil, with their own pointer input. The veil remains the
+  // common coordinate space and the tutorial's existing control contract.
   const actions = bubble.querySelector('.tut-row');
-  root.appendChild(actions);
+  veil.appendChild(actions);
   let i = 0;
 
   // Keep every number below in ONE space: the veil's own local coordinates.

@@ -103,7 +103,7 @@ if (process.argv.includes('--selftest')) {
         // un-dismissable AND persistent across a reload.
         name: 'the coach mark buttons are pushed off the bottom of the viewport (the un-dismissable veil)',
         file: 'styles/ui.css',
-        append: '.tut-bubble .tut-row { position: relative; top: 4000px; }',
+        append: '.tut-veil > .tut-row { top: 4000px !important; }',
         expectRed: /(FAIL|off-screen|not hit-testable|unreachable|✗)/i,
       },
       {
@@ -112,7 +112,7 @@ if (process.argv.includes('--selftest')) {
         // the veil instead of the control. el.click() would not notice.
         name: 'a transparent layer covers the buttons — a real click lands on the veil',
         file: 'styles/ui.css',
-        append: '.tut-veil::after, .tut-bubble::after { content: ""; position: fixed; inset: 0; z-index: 99999; }',
+        append: '.tut-veil::after, .tut-bubble::after { content: ""; position: fixed; inset: 0; z-index: 99999; pointer-events: auto; }',
         expectRed: /(FAIL|not hit-testable|covered|unreachable|✗)/i,
       },
     ],
