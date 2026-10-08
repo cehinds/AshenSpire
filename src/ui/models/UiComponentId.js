@@ -139,11 +139,10 @@ export const UI_COMPONENTS = Object.freeze({
   mountCandidateCard: 'mount-candidate-card',
   mountRow: 'mount-row',
   mountServicePreview: 'mount-service-preview',
-  // SPEC §14.1: the deck editor, and the Quick Access door that opens it.
+  // SPEC §14.1: the deck editor opened from the Armoury or an eligible Rest site.
   deckEditor: 'deck-editor',
   characterSheet: 'character-sheet',
   classRespec: 'class-respec',
-  deckEditorControl: 'deck-editor-control',
   shopSmithCard: 'shop-smith-card',
   resourceStrip: 'resource-strip',
   modeChoice: 'mode-choice',

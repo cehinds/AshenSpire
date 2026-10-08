@@ -969,7 +969,7 @@ settings.row.cardWidth_inspect,,Reading card width,How wide a card is in the win
 settings.row.cardSizeExport,,Export card sizes,"Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.",
 settings.row.levelUpValue,,Level-up value,"How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.",
 settings.row.deckEditing,,Deck editing,"Add, remove and arrange your cards between fights. Off: the deck changes only through rewards, the merchant and the Armoury.",
-settings.row.deckEditingWhere,,Where you can edit,"Free opens the editor from the map and the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.",
+settings.row.deckEditingWhere,,Where you can edit,"Free opens the editor from the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.",
 settings.row.deckMinUnlimited,,No minimum deck size,"Let the editor confirm a deck of any size, however small.",
 settings.row.deckMinSize,,Minimum deck size,The fewest cards the editor lets you confirm. Rewards and purchases can still move the deck outside it; the editor then asks you to bring it back.,
 settings.row.deckMaxUnlimited,,No maximum deck size,"Let the editor confirm a deck of any size, however large.",
@@ -1297,3 +1297,11 @@ progression.feat.emptyHint,,Choose feats from character and skill level rewards.
 combat.enemyTarget.choose,,,Choose an enemy target,
 combat.enemyTarget.health,,,{hp}/{maxHp} HP,
 combat.enemyTarget.label,,,"Target {number}: {name}, {hp} of {maxHp} HP",
+
+creation.abilities.maneuvers,,COMBAT MANEUVER,COMBAT MANEUVER,Choose one Rank 1 combat maneuver after armaments.
+creation.abilities.spells,,STARTING SPELLS,STARTING SPELLS,Choose two distinct Rank 1 spells after armaments.
+creation.abilities.progress,,{chosen}/{count} chosen · Rank {rank},{chosen}/{count} chosen · Rank {rank},{chosen}/{count} chosen · Rank {rank}
+creation.abilities.choose,,Learn ability,Learn ability,Learn this starting ability.
+creation.abilities.remove,,Unpick ability,Unpick ability,Unpick this starting ability choice.
+creation.abilities.chooseLabel,,Learn ability {name},Learn ability {name},Learn ability {name}
+creation.abilities.summary,,Starting ability,Starting ability,Starting ability

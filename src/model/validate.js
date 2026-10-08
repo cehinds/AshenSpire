@@ -12,6 +12,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { handRulesDefaults } from '../content/handRules.js';
+import { combatIntentRulesProblems, combatMatchupRulesProblems } from './combatTacticsRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
@@ -124,6 +125,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'sigils', // SPEC §14.3: sigils, sold at the market into run.sigils (content/sigils.js)
   'consumables', // SPEC §14.3: skill books and revive tokens (content/consumables.js)
   'companions', // SPEC §14.3: temporary companions (content/companions.js)
+  'enemyMoves', // Scoped moves participate in the same canonical tag join.
   'mapConfigs',
   'scripts',
   'equipment',
@@ -375,6 +377,8 @@ function collectContentProblems(bundle, errors = []) {
   // runs, and an events section that SHIPS is cross-referenced exactly as before.
   const eventsDoorOpen = b.events == null;
 
+  for (const problem of b.balance?.combatMatchups !== undefined ? combatMatchupRulesProblems(b.balance.combatMatchups, 'balance.combatMatchups') : []) err('balance.combatMatchups', problem);
+  for (const problem of b.balance?.combatIntent !== undefined ? combatIntentRulesProblems(b.balance.combatIntent, 'balance.combatIntent') : []) err('balance.combatIntent', problem);
   const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
   if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
     err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');

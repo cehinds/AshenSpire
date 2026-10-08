@@ -1,0 +1,134 @@
+[
+  {
+    "id": "reaver-nightweave",
+    "classId": "reaver",
+    "outfitId": "nightweave",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, not an atlas. Image 1 is the approved rear Reaver identity, art style and correct straight sword reference. Image 2 is the canonical Reaver wearing Nightweave clothing reference. Dress the SAME broad-shouldered Reaver from image 1 in Nightweave: deep muted indigo layered robe with frayed hems, restrained antique-gold star/moon embroidery, brown belt. Keep Reaver closed steel visor helmet, broad warrior proportions, ragged RED back cloak, boots and gauntlets, and one lowered perfectly straight longsword with collinear blade, grip and pommel. The robe must remain clearly visible beneath the red cloak, especially torso sides, arms and legs. Rear three-quarter right, back of head and back dominate, looking away toward upper right. Highly detailed painted weathered dark fantasy realism exactly matching image 1. Full body, all cloak and sword tips INSIDE central 80% of canvas with at least 8% clear margin on EVERY side. True transparent alpha including limb gaps. No floor, no shadow, no aura, no glow backing, no vignette, no UI, text, border, extra equipment or scenery. One grounded idle pose. Portrait canvas.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/reaver-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/assets-mobile/painted-outfits/shared-reaver-nightweave/menu.webp"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "reaver-riteVestments",
+    "classId": "reaver",
+    "outfitId": "riteVestments",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: reaver. Broad armored sellsword, closed steel visor helmet, ragged RED back cloak, a perfectly straight lowered longsword with collinear blade/grip/pommel. Keep his red cloak but expose the new clothing clearly on arms, torso sides and lower body. Replace torso and legs armor/clothing with Rite Vestments: austere dark burgundy-brown long ritual robe and simple stole, brass clasp, rope belt, weathered plain cloth. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/reaver-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/herald-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "reaver-gutterLeathers",
+    "classId": "reaver",
+    "outfitId": "gutterLeathers",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: reaver. Broad armored sellsword, closed steel visor helmet, ragged RED back cloak, a perfectly straight lowered longsword with collinear blade/grip/pommel. Keep his red cloak but expose the new clothing clearly on arms, torso sides and lower body. Replace torso and legs armor/clothing with Gutter Leathers: charcoal olive fitted leather coat, layered short shoulder cape, stitched bracers, brown cross-straps and split skirt. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/reaver-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/rogue-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "starseer-wayfarerPlate",
+    "classId": "starseer",
+    "outfitId": "wayfarerPlate",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: starseer. Lean hooded arcane scholar, astrolabe and scrolls at belt, the same tall slender staff with contained blue starstone and brass armillary head; retain the hood and staff from image 1, not the other class's equipment. Replace torso and legs armor/clothing with Wayfarer Plate: weathered articulated steel plate with subtle oxidized green-gray coloration, layered pauldrons, chainmail, tassets and brown leather straps. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/starseer-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/reaver-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "starseer-riteVestments",
+    "classId": "starseer",
+    "outfitId": "riteVestments",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: starseer. Lean hooded arcane scholar, astrolabe and scrolls at belt, the same tall slender staff with contained blue starstone and brass armillary head; retain the hood and staff from image 1, not the other class's equipment. Replace torso and legs armor/clothing with Rite Vestments: austere dark burgundy-brown long ritual robe and simple stole, brass clasp, rope belt, weathered plain cloth. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/starseer-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/herald-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "starseer-gutterLeathers",
+    "classId": "starseer",
+    "outfitId": "gutterLeathers",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: starseer. Lean hooded arcane scholar, astrolabe and scrolls at belt, the same tall slender staff with contained blue starstone and brass armillary head; retain the hood and staff from image 1, not the other class's equipment. Replace torso and legs armor/clothing with Gutter Leathers: charcoal olive fitted leather coat, layered short shoulder cape, stitched bracers, brown cross-straps and split skirt. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/starseer-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/rogue-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "herald-wayfarerPlate",
+    "classId": "herald",
+    "outfitId": "wayfarerPlate",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: herald. Hooded pilgrim priest, prayer beads and small book, same lowered mace/sceptre in right hand and hanging brass censer in left as image 1. Ember color only inside censer, no cast glow. Replace torso and legs armor/clothing with Wayfarer Plate: weathered articulated steel plate with subtle oxidized green-gray coloration, layered pauldrons, chainmail, tassets and brown leather straps. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/herald-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/reaver-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "herald-nightweave",
+    "classId": "herald",
+    "outfitId": "nightweave",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: herald. Hooded pilgrim priest, prayer beads and small book, same lowered mace/sceptre in right hand and hanging brass censer in left as image 1. Ember color only inside censer, no cast glow. Replace torso and legs armor/clothing with Nightweave: dark indigo layered robes, frayed hems, restrained antique gold star/moon embroidery, brown belt. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/herald-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/starseer-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "herald-gutterLeathers",
+    "classId": "herald",
+    "outfitId": "gutterLeathers",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: herald. Hooded pilgrim priest, prayer beads and small book, same lowered mace/sceptre in right hand and hanging brass censer in left as image 1. Ember color only inside censer, no cast glow. Replace torso and legs armor/clothing with Gutter Leathers: charcoal olive fitted leather coat, layered short shoulder cape, stitched bracers, brown cross-straps and split skirt. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/herald-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/rogue-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "rogue-wayfarerPlate",
+    "classId": "rogue",
+    "outfitId": "wayfarerPlate",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: rogue. Slim hooded agile scavenger, utility belt pouches, same two short straight daggers, one in each hand, low balanced stance as image 1. Replace torso and legs armor/clothing with Wayfarer Plate: weathered articulated steel plate with subtle oxidized green-gray coloration, layered pauldrons, chainmail, tassets and brown leather straps. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/rogue-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/reaver-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "rogue-nightweave",
+    "classId": "rogue",
+    "outfitId": "nightweave",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: rogue. Slim hooded agile scavenger, utility belt pouches, same two short straight daggers, one in each hand, low balanced stance as image 1. Replace torso and legs armor/clothing with Nightweave: dark indigo layered robes, frayed hems, restrained antique gold star/moon embroidery, brown belt. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/rogue-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/starseer-default-rear.png"
+    ],
+    "transparent_background": true
+  },
+  {
+    "id": "rogue-riteVestments",
+    "classId": "rogue",
+    "outfitId": "riteVestments",
+    "prompt": "Use case: identity-preserve. Create ONE full-body AshenSpire idle combat sprite, NOT an atlas. Image 1 is the approved wearer identity, equipment, rear view and detailed painted art style reference. Image 2 is ONLY the target armor materials/clothing reference. Wearer: rogue. Slim hooded agile scavenger, utility belt pouches, same two short straight daggers, one in each hand, low balanced stance as image 1. Replace torso and legs armor/clothing with Rite Vestments: austere dark burgundy-brown long ritual robe and simple stole, brass clasp, rope belt, weathered plain cloth. Preserve the wearer's proportions, headwear and equipment from image 1. Do not transform them into image 2's class. The target armor must be clearly visible and distinguishable. Rear three-quarter right: seen from BEHIND, back of head and back dominate, face away toward upper right. Highly detailed painted weathered dark fantasy realism; tactile metal, threadbare cloth and worn leather; soft neutral upper-left lighting. One grounded idle pose. Portrait 1024x1536. Zoom OUT: the ENTIRE figure including all weapon tips and cloth must fit within x=100..924, y=130..1400; generous transparent margins on all four edges. True transparent alpha, including limb gaps. No background, floor, contact shadow, aura, glow backing, vignette, UI, text, border, scenery, extra limbs or equipment. No animation strip. CRITICAL FRAMING OVERRIDE: render character at only 65 percent of the reference image scale; zoom far out to surround the entire figure with a broad empty transparent border. Do not copy the tight reference framing.",
+    "referenced_image_paths": [
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/rogue-default-rear.png",
+      "D:/repos/.codex/worktrees/combat-perspective-art/AshenSpire/docs/design/combat-depth-2026-10-05/masters/herald-default-rear.png"
+    ],
+    "transparent_background": true
+  }
+]

@@ -12,6 +12,14 @@ const enemies = [{ id: 'e1', alive: true }, { id: 'e2', alive: false }, { id: 'e
 const players = [{ id: 'p1', alive: true, connected: true }, { id: 'p2', alive: true, connected: true }];
 const def = (...targets) => ({ effects: targets.map(target => ({ target })) });
 
+test('unarmed combat board projects a safe target plan before any card is selected', () => {
+  for (const selectedCard of [null, undefined]) {
+    assert.deepEqual(cardTargetPlan(selectedCard, 'p1', enemies, players), {
+      mode: 'friendly', legalIds: ['p1'],
+    });
+  }
+});
+
 test('hostile targets stay on living enemies, including mixed source-side effects', () => {
   for (const target of ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies']) {
     const plan = cardTargetPlan(def(target, 'self'), 'p1', enemies, players);

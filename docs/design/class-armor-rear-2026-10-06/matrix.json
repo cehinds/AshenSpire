@@ -1,0 +1,676 @@
+[
+  {
+    "armorName": "Wayfarer Plate",
+    "classId": "reaver",
+    "supported": true,
+    "canonicalIds": [
+      "armor/reaver/default",
+      "armor/reaver/wayfarerPlate"
+    ],
+    "appearanceId": "reaver-default",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Wayfarer Plate",
+    "classId": "starseer",
+    "supported": true,
+    "canonicalIds": [
+      "armor/starseer/wayfarerPlate"
+    ],
+    "appearanceId": "starseer-wayfarerPlate",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Wayfarer Plate",
+    "classId": "herald",
+    "supported": true,
+    "canonicalIds": [
+      "armor/herald/wayfarerPlate"
+    ],
+    "appearanceId": "herald-wayfarerPlate",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Wayfarer Plate",
+    "classId": "rogue",
+    "supported": true,
+    "canonicalIds": [
+      "armor/rogue/wayfarerPlate"
+    ],
+    "appearanceId": "rogue-wayfarerPlate",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Ashen Vigil",
+    "classId": "reaver",
+    "supported": true,
+    "canonicalIds": [
+      "armor/reaver/vigil"
+    ],
+    "appearanceId": "reaver-vigil",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Ashen Vigil",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Ashen Vigil",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Ashen Vigil",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Gilded Oathsworn",
+    "classId": "reaver",
+    "supported": true,
+    "canonicalIds": [
+      "armor/reaver/oathsworn"
+    ],
+    "appearanceId": "reaver-oathsworn",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Gilded Oathsworn",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Gilded Oathsworn",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Gilded Oathsworn",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Warden Mail",
+    "classId": "reaver",
+    "supported": true,
+    "canonicalIds": [
+      "armor/reaver/warden"
+    ],
+    "appearanceId": "reaver-warden",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Warden Mail",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Warden Mail",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Warden Mail",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Nightweave",
+    "classId": "reaver",
+    "supported": true,
+    "canonicalIds": [
+      "armor/reaver/nightweave"
+    ],
+    "appearanceId": "reaver-nightweave",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Nightweave",
+    "classId": "starseer",
+    "supported": true,
+    "canonicalIds": [
+      "armor/starseer/default",
+      "armor/starseer/nightweave"
+    ],
+    "appearanceId": "starseer-default",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Nightweave",
+    "classId": "herald",
+    "supported": true,
+    "canonicalIds": [
+      "armor/herald/nightweave"
+    ],
+    "appearanceId": "herald-nightweave",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Nightweave",
+    "classId": "rogue",
+    "supported": true,
+    "canonicalIds": [
+      "armor/rogue/nightweave"
+    ],
+    "appearanceId": "rogue-nightweave",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Eclipse Habit",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Eclipse Habit",
+    "classId": "starseer",
+    "supported": true,
+    "canonicalIds": [
+      "armor/starseer/eclipse"
+    ],
+    "appearanceId": "starseer-eclipse",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Eclipse Habit",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Eclipse Habit",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Starlit Silks",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Starlit Silks",
+    "classId": "starseer",
+    "supported": true,
+    "canonicalIds": [
+      "armor/starseer/starlit"
+    ],
+    "appearanceId": "starseer-starlit",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Starlit Silks",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Starlit Silks",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Astral Vestment",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Astral Vestment",
+    "classId": "starseer",
+    "supported": true,
+    "canonicalIds": [
+      "armor/starseer/astral"
+    ],
+    "appearanceId": "starseer-astral",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Astral Vestment",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Astral Vestment",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Rite Vestments",
+    "classId": "reaver",
+    "supported": true,
+    "canonicalIds": [
+      "armor/reaver/riteVestments"
+    ],
+    "appearanceId": "reaver-riteVestments",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Rite Vestments",
+    "classId": "starseer",
+    "supported": true,
+    "canonicalIds": [
+      "armor/starseer/riteVestments"
+    ],
+    "appearanceId": "starseer-riteVestments",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Rite Vestments",
+    "classId": "herald",
+    "supported": true,
+    "canonicalIds": [
+      "armor/herald/default",
+      "armor/herald/riteVestments"
+    ],
+    "appearanceId": "herald-default",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Rite Vestments",
+    "classId": "rogue",
+    "supported": true,
+    "canonicalIds": [
+      "armor/rogue/riteVestments"
+    ],
+    "appearanceId": "rogue-riteVestments",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Ossuary Weave",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Ossuary Weave",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Ossuary Weave",
+    "classId": "herald",
+    "supported": true,
+    "canonicalIds": [
+      "armor/herald/ossuary"
+    ],
+    "appearanceId": "herald-ossuary",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Ossuary Weave",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Emberlight Habit",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Emberlight Habit",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Emberlight Habit",
+    "classId": "herald",
+    "supported": true,
+    "canonicalIds": [
+      "armor/herald/emberhabit"
+    ],
+    "appearanceId": "herald-emberhabit",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Emberlight Habit",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Pilgrim Wrap",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Pilgrim Wrap",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Pilgrim Wrap",
+    "classId": "herald",
+    "supported": true,
+    "canonicalIds": [
+      "armor/herald/pilgrim"
+    ],
+    "appearanceId": "herald-pilgrim",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Pilgrim Wrap",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Gutter Leathers",
+    "classId": "reaver",
+    "supported": true,
+    "canonicalIds": [
+      "armor/reaver/gutterLeathers"
+    ],
+    "appearanceId": "reaver-gutterLeathers",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Gutter Leathers",
+    "classId": "starseer",
+    "supported": true,
+    "canonicalIds": [
+      "armor/starseer/gutterLeathers"
+    ],
+    "appearanceId": "starseer-gutterLeathers",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Gutter Leathers",
+    "classId": "herald",
+    "supported": true,
+    "canonicalIds": [
+      "armor/herald/gutterLeathers"
+    ],
+    "appearanceId": "herald-gutterLeathers",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Gutter Leathers",
+    "classId": "rogue",
+    "supported": true,
+    "canonicalIds": [
+      "armor/rogue/default",
+      "armor/rogue/gutterLeathers"
+    ],
+    "appearanceId": "rogue-default",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Nightveil Coat",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Nightveil Coat",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Nightveil Coat",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Nightveil Coat",
+    "classId": "rogue",
+    "supported": true,
+    "canonicalIds": [
+      "armor/rogue/nightveil"
+    ],
+    "appearanceId": "rogue-nightveil",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Duelist Jerkin",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Duelist Jerkin",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Duelist Jerkin",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Duelist Jerkin",
+    "classId": "rogue",
+    "supported": true,
+    "canonicalIds": [
+      "armor/rogue/duelist"
+    ],
+    "appearanceId": "rogue-duelist",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Shadow Mantle",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Shadow Mantle",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Shadow Mantle",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Shadow Mantle",
+    "classId": "rogue",
+    "supported": true,
+    "canonicalIds": [
+      "armor/rogue/shadow"
+    ],
+    "appearanceId": "rogue-shadow",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Bastion Harness",
+    "classId": "reaver",
+    "supported": true,
+    "canonicalIds": [
+      "armor/reaver/bastion"
+    ],
+    "appearanceId": "reaver-bastion",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Bastion Harness",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Bastion Harness",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Bastion Harness",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Rimeweave Robes",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Rimeweave Robes",
+    "classId": "starseer",
+    "supported": true,
+    "canonicalIds": [
+      "armor/starseer/rimeweave"
+    ],
+    "appearanceId": "starseer-rimeweave",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  },
+  {
+    "armorName": "Rimeweave Robes",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Rimeweave Robes",
+    "classId": "rogue",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Waywatcher Coat",
+    "classId": "reaver",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Waywatcher Coat",
+    "classId": "starseer",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Waywatcher Coat",
+    "classId": "herald",
+    "supported": false,
+    "canonicalIds": [],
+    "appearanceId": null,
+    "reason": "No (wearer class, armor) record. armourForClass and equippedIn resolve class-scoped armor; not a current wearable appearance."
+  },
+  {
+    "armorName": "Waywatcher Coat",
+    "classId": "rogue",
+    "supported": true,
+    "canonicalIds": [
+      "armor/rogue/waywatcher"
+    ],
+    "appearanceId": "rogue-waywatcher",
+    "reason": "Defined in canonical outfits; unlock/stat requirements are conditional eligibility, not missing artwork."
+  }
+]

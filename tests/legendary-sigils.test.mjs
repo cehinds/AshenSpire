@@ -375,9 +375,10 @@ test('FINISH: market and blacksmith stock over 200 seeds never offers a legendar
 // The drop
 // ---------------------------------------------------------------------------
 
-test('the `sigils` stream is appended last, so no stream above it moves', () => {
-  assert.equal(STREAM_NAMES.at(-1), 'sigils');
-  assert.equal(STREAM_NAMES.indexOf('shopOffers'), STREAM_NAMES.length - 2);
+test('the `sigils` stream retains its appended index after later stream additions', () => {
+  assert.equal(STREAM_NAMES.indexOf('sigils'), 16);
+  assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
+  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility']);
 });
 
 test('FINISH: with defaults no sigil ever drops and no stream counter moves', () => {

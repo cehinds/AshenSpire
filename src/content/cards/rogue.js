@@ -349,7 +349,7 @@ export const rogueCards = [
     id: 'nockAndWait', name: 'Nock and Wait', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: [], icon: '🎯',
     flavor: "The string drawn, the breath held.\n\nA dock archer waits for the tide bell, when every head on the quay turns at once. The bell has rung at the wrong hours since the Burning.\n\nThe archers have learned to wait for the heads instead.",
     effects: [{ op: 'draw', amount: 2 }, prepare()],
-    textTemplate: 'Draw {draw} cards. Become Prepared.',
+    textTemplate: 'Prepare Ranged Counter. Draw {draw} cards. Become Prepared.',
     upgrade: { effects: [{ op: 'draw', amount: 3 }, prepare()] },
   },
   {
@@ -370,7 +370,7 @@ export const rogueCards = [
     id: 'bindingParry', name: 'Binding Parry', class: 'rogue', rarity: 'rare', cost: 1, type: 'skill', keywords: [], icon: '⚔',
     flavor: "The blade caught, turned, and held aside.\n\nA duelling master of the Court taught it for coin to anyone who asked, dock thieves among them. When the Court learned whom he had taught, it stitched his hands.\n\nHe teaches it still, by describing it.",
     effects: [{ op: 'block', target: 'self', amount: 12 }, prepare(), { op: 'draw', amount: 1 }],
-    textTemplate: 'Gain {block} Block. Become Prepared. Draw {draw} card.',
+    textTemplate: 'Gain {block} Block. Prepare Melee Counter. Become Prepared. Draw {draw} card.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 16 }, prepare(), { op: 'draw', amount: 1 }] },
   },
   {

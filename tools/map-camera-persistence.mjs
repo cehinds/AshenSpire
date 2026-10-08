@@ -611,6 +611,11 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
       // so it takes one press per section to walk there.
       for (let step = 0; step < 8; step += 1) {
         if (await evaluate(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+        if (await evaluate(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {
+          while (await evaluate(`!!document.querySelector('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])') && document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
+            await press('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])');
+          }
+        }
         await press('#cz-next');
       }
       await waitFor('the Review stage (flush case)', `document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)

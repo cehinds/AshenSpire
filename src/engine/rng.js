@@ -49,6 +49,7 @@ export const STREAM_NAMES = Object.freeze([
   // every existing seed rolls exactly what it rolled before. A save written
   // before the stream existed starts it at 0.
   'sigils',
+  'enemyIntentVisibility',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;

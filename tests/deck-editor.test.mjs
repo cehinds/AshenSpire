@@ -9,8 +9,8 @@
 // The DOM half (the production screen over tests/helpers/reward-dom.mjs): a
 // card added and removed by tap, by the ＋/－ buttons, and by a keyboard and a
 // gamepad dispatch; Done disabled with the refusal as visible text; Cancel
-// through the screen; the Quick Access door under `free` only; the shrine's
-// Rest card under `restOnly` only, and never the camp's.
+// through the screen; Armoury under `free`, with no map-header door; the
+// shrine's Rest card under `restOnly` only, and never the camp's.
 //   node --test tests/deck-editor.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -303,16 +303,16 @@ test('confirm succeeds only inside the bounds', () => {
   assert.equal(edit.confirm().ok, true);
 });
 
-test('the doors: free opens Quick Access and the Armoury, restOnly only a deckEdit place\'s Rest, off none', () => {
+test('the doors: free opens the Armoury, restOnly only a deckEdit place\'s Rest, off none', () => {
   const shrine = locationServices(REG, locationTags(REG, 'shrine'));
   const camp = locationServices(REG, locationTags(REG, 'camp'));
   for (const id of ['shrine', 'inn', 'chapel']) assert.ok(locationTags(REG, id).includes('deckEdit'), `${id} carries deckEdit`);
   assert.equal(locationTags(REG, 'camp').includes('deckEdit'), false, 'the camp does not');
-  assert.deepEqual({ ...deckEditorDoors({ settings: {}, services: shrine }) }, { quickAccess: true, armoury: true, rest: false });
-  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: shrine }) }, { quickAccess: false, armoury: false, rest: true });
-  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: camp }) }, { quickAccess: false, armoury: false, rest: false });
-  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditing: false }, services: shrine }) }, { quickAccess: false, armoury: false, rest: false });
-  assert.deepEqual({ ...deckEditorDoors({ settings: {}, inCombat: true, services: shrine }) }, { quickAccess: false, armoury: false, rest: false });
+  assert.deepEqual({ ...deckEditorDoors({ settings: {}, services: shrine }) }, { armoury: true, rest: false });
+  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: shrine }) }, { armoury: false, rest: true });
+  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: camp }) }, { armoury: false, rest: false });
+  assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditing: false }, services: shrine }) }, { armoury: false, rest: false });
+  assert.deepEqual({ ...deckEditorDoors({ settings: {}, inCombat: true, services: shrine }) }, { armoury: false, rest: false });
 });
 
 // ---- the DOM ---------------------------------------------------------------
@@ -915,18 +915,17 @@ test('DOM: a second editor cannot open while one is live', async () => {
   });
 });
 
-test('DOM: the Quick Access door shows under free only; the shrine Rest card under restOnly only', async () => {
+test('DOM: the header omits Edit Deck in every mode; the shrine Rest card remains restOnly', async () => {
   const { runHudHtml } = await import('../src/ui/components/runHud.js');
   const { mountRest } = await import('../src/ui/screens/rest.js');
   const { createLocationVisit } = await import('../src/engine/locations.js');
   withDom(() => {
     const run = freshRun();
     const meta = { settings: {} };
-    for (const [settings, shown] of [[{}, true], [{ deckEditingWhere: 'restOnly' }, false], [{ deckEditing: false }, false]]) {
-      const doors = deckEditorDoors({ settings });
-      const markup = runHudHtml({ registries: REG, run, meta, place: 'map', deckDoor: doors.quickAccess });
-      assert.equal(markup.includes('id="open-deck-editor"'), shown, `Quick Access door under ${JSON.stringify(settings)}`);
-      assert.equal(markup.includes('data-ui-component="deck-editor-control"'), shown);
+    for (const settings of [{}, { deckEditingWhere: 'restOnly' }, { deckEditing: false }]) {
+      const markup = runHudHtml({ registries: REG, run, meta, place: 'map' });
+      assert.equal(markup.includes('id="open-deck-editor"'), false, `No header deck door under ${JSON.stringify(settings)}`);
+      assert.equal(markup.includes('data-ui-component="deck-editor-control"'), false);
     }
     for (const [settings, locationId, shown] of [
       [{ deckEditingWhere: 'restOnly' }, 'shrine', true],

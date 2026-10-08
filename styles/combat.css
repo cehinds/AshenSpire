@@ -218,35 +218,34 @@
    selectable. The 48px touch floor is physical even at a reduced UI zoom. */
 .enemy-target-picker {
   position: absolute;
-  top: calc(var(--turn-ribbon-top, 0px) + 48px / var(--ui-zoom, 1));
-  left: calc(8px / var(--ui-zoom, 1));
-  right: calc(8px / var(--ui-zoom, 1));
-  /* Placement reserves space outside intent/Information controls. The row
-     stays above figure hitboxes without covering those inspection controls. */
+  inset: 0;
   z-index: 1250;
-  display: flex;
-  gap: calc(6px / var(--ui-zoom, 1));
-  overflow-x: auto;
-  pointer-events: auto;
+  pointer-events: none;
 }
 .enemy-target-picker[hidden] { display: none; }
 .enemy-target-button {
-  flex: 1 0 calc(72px / var(--ui-zoom, 1));
-  min-width: 0;
-  min-height: calc(48px / var(--ui-zoom, 1));
-  padding: 4px 6px;
+  position: absolute;
+  width: calc(88px / var(--ui-zoom, 1));
+  height: calc(88px / var(--ui-zoom, 1));
+  box-sizing: border-box;
+  padding: calc(4px / var(--ui-zoom, 1));
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: calc(3px / var(--ui-zoom, 1));
   border: 1px solid var(--gold);
   border-radius: var(--r-3);
   background: #211c17f2;
   color: var(--gold);
   font: inherit;
+  font-size: calc(12px / var(--ui-zoom, 1));
+  line-height: 1.15;
   cursor: pointer;
   touch-action: manipulation;
+  pointer-events: auto;
 }
-.enemy-target-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.enemy-target-name { white-space: normal; text-align: center; max-width: 100%; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .enemy-target-health { font-size: .8em; color: #eee2cf; }
 .enemy-target-button:is(:hover, :focus-visible) { outline: 2px solid var(--gold); outline-offset: -3px; background: #493c29; }
 .enemy-target-button:disabled { opacity: .5; cursor: default; }
@@ -1534,6 +1533,14 @@
   white-space: nowrap; letter-spacing: 0;
 }
 .combatant-leading .intent .as-glyph { font-size: inherit; }
+.combatant-leading .intent-stance {
+  font: 700 calc(11px / var(--ui-zoom, 1))/1.2 var(--font-ui, sans-serif);
+  letter-spacing: .02em;
+}
+.combatant-leading .intent:has(.intent-stance) { flex-wrap: wrap; }
+.combatant-leading .intent:has(.intent-stance) .intent-stance { flex-basis: 100%; text-align: center; }
+.combatant-leading .intent[data-intent-hidden='true'] { --intent-accent: #e5d5ad; }
+.combat-rule-hint { margin-block: .5rem; padding: .5rem; border-left: 2px solid #d9bc74; font-size: .9em; line-height: 1.4; }
 .combatant-leading .intent.attack { --intent-accent: #ffac94; }
 .combatant-leading .intent.block { --intent-accent: #a7defb; }
 .combatant-leading .intent.debuff { --intent-accent: #d6afff; }

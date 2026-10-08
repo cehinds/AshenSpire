@@ -34,6 +34,26 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Alternative updates retain combat plans and starting choices** ([#1715](https://github.com/cehinds/AshenSpire/pull/1715), `0.7.1.1100`). The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.
+
+- **Full-run checks choose a starting ability** ([#1716](https://github.com/cehinds/AshenSpire/pull/1716), `0.7.1.1098`). The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.
+
+- **Starting abilities respect your deck copy limit** ([#1714](https://github.com/cehinds/AshenSpire/pull/1714), `0.7.1.1097`). Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.
+
+- **Alternative Counters retain readable clauses and charges** ([#1712](https://github.com/cehinds/AshenSpire/pull/1712), `0.7.1.1095`). Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.
+
+- **Plans: recover from control and build around Blight** ([#1713](https://github.com/cehinds/AshenSpire/pull/1713), `0.7.1.1094`). The next combat proposal gives Sleep, Paralysis and Dazed recovery cards with clear Stamina costs, caps Sleep healing and Ward restoration, and trades Prone's ranged protection for greater Contact damage. Three Blight milestones offer feats with two benefits and one drawback. Counter coverage, school interactions, tag combos and optional upcasting are documented for future implementation; gameplay does not change in this update.
+
+- **Counter cards show the reply they prepare** ([#1711](https://github.com/cehinds/AshenSpire/pull/1711), `0.7.1.1093`). Choosing an enemy for immediate support no longer changes the printed Counter damage. One-use damage charges stay in the preview when an earlier damage effect has no contacts. Solo and co-op show the same armed reply.
+
+- **Alternative combat gains tactical cards and readable stances** ([#1706](https://github.com/cehinds/AshenSpire/pull/1706), `0.7.1.1092`). Physical and spell cards, damage effects and guarded Counters now follow the shared combat rules. Hidden enemy moves keep their stances visible, and co-op reads stay private to each character. The alternative battlefield retains its figures, layered scenery, motion and update history.
+
+- **Combat cards and enemy moves share tactical rules** ([#1705](https://github.com/cehinds/AshenSpire/pull/1705), `0.7.1.1089`). All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.
+
+- **Square targets and starting abilities** ([#1703](https://github.com/cehinds/AshenSpire/pull/1703), `0.7.1.1080`). Enemy selection buttons form a square grid near their foes and move apart when crowded. After armaments, Starseer and Herald choose two distinct Rank 1 spells; Reaver and Rogue choose one Rank 1 combat maneuver. Legal choices follow equipped weapons and the selected cards enter the saved starting deck.
+
+- **Clearer header with fewer controls** ([#1702](https://github.com/cehinds/AshenSpire/pull/1702), `0.7.1.1074`). Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.
+
 - **More class animations to preview** ([#1707](https://github.com/cehinds/AshenSpire/pull/1707), `0.7.1.1068`). The alternative animation atelier adds Rogue twin daggers, Starseer staff and Herald sword-and-shield studies. The Herald keeps the sword in the right hand and shield on the left arm through attacks and reactions. Current attack timing, forward movement and return, red hit flashes, down poses and casting are available in the preview. These are authoring studies; gameplay integration and the remaining base loadouts are still pending.
 
 - **Both game versions retain their updates** ([#1701](https://github.com/cehinds/AshenSpire/pull/1701), `0.7.1.1067`). Alternative updates preserve the reviewed artwork checks, skill Level Up repairs and both changelog histories while accepting the latest promoted primary build.
@@ -42,13 +62,15 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Skill Level Up works after victory** ([#1691](https://github.com/cehinds/AshenSpire/pull/1691), `0.7.1.1065`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.
 
+- **Combat matchup rules defined** ([#1704](https://github.com/cehinds/AshenSpire/pull/1704), `0.7.1.1064`). Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.
+
+- **Rear sprite studies archived for authoring** ([#1697](https://github.com/cehinds/AshenSpire/pull/1697), `0.7.1.1061`). The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.
 
 - **Alternative updates keep progressing** ([#1698](https://github.com/cehinds/AshenSpire/pull/1698), `0.7.1.1060`). The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.
 
 - **Preview the new alternative character animations** ([#1695](https://github.com/cehinds/AshenSpire/pull/1695), `0.7.1.1060`). The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.
 
 - **Skill Level Up works after victory** ([#1692](https://github.com/cehinds/AshenSpire/pull/1692), `0.7.1.1059`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.
-
 
 ## 2026-10-06
 

@@ -3,6 +3,106 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1715",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative updates retain combat plans and starting choices",
+    "detail": "The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.",
+    "build": "0.7.1.1100",
+    "pullRequest": 1715,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1715"
+  },
+  {
+    "id": "pr-1716",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Full-run checks choose a starting ability",
+    "detail": "The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.",
+    "build": "0.7.1.1098",
+    "pullRequest": 1716,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1716"
+  },
+  {
+    "id": "pr-1714",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Starting abilities respect your deck copy limit",
+    "detail": "Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.",
+    "build": "0.7.1.1097",
+    "pullRequest": 1714,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1714"
+  },
+  {
+    "id": "pr-1712",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative Counters retain readable clauses and charges",
+    "detail": "Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.",
+    "build": "0.7.1.1095",
+    "pullRequest": 1712,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1712"
+  },
+  {
+    "id": "pr-1713",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Plans: recover from control and build around Blight",
+    "detail": "The next combat proposal gives Sleep, Paralysis and Dazed recovery cards with clear Stamina costs, caps Sleep healing and Ward restoration, and trades Prone's ranged protection for greater Contact damage. Three Blight milestones offer feats with two benefits and one drawback. Counter coverage, school interactions, tag combos and optional upcasting are documented for future implementation; gameplay does not change in this update.",
+    "build": "0.7.1.1094",
+    "pullRequest": 1713,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1713"
+  },
+  {
+    "id": "pr-1711",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Counter cards show the reply they prepare",
+    "detail": "Choosing an enemy for immediate support no longer changes the printed Counter damage. One-use damage charges stay in the preview when an earlier damage effect has no contacts. Solo and co-op show the same armed reply.",
+    "build": "0.7.1.1093",
+    "pullRequest": 1711,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1711"
+  },
+  {
+    "id": "pr-1706",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative combat gains tactical cards and readable stances",
+    "detail": "Physical and spell cards, damage effects and guarded Counters now follow the shared combat rules. Hidden enemy moves keep their stances visible, and co-op reads stay private to each character. The alternative battlefield retains its figures, layered scenery, motion and update history.",
+    "build": "0.7.1.1092",
+    "pullRequest": 1706,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1706"
+  },
+  {
+    "id": "pr-1705",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Combat cards and enemy moves share tactical rules",
+    "detail": "All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.",
+    "build": "0.7.1.1089",
+    "pullRequest": 1705,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1705"
+  },
+  {
+    "id": "pr-1703",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Square targets and starting abilities",
+    "detail": "Enemy selection buttons form a square grid near their foes and move apart when crowded. After armaments, Starseer and Herald choose two distinct Rank 1 spells; Reaver and Rogue choose one Rank 1 combat maneuver. Legal choices follow equipped weapons and the selected cards enter the saved starting deck.",
+    "build": "0.7.1.1080",
+    "pullRequest": 1703,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1703"
+  },
+  {
+    "id": "pr-1702",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Clearer header with fewer controls",
+    "detail": "Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.",
+    "build": "0.7.1.1074",
+    "pullRequest": 1702,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1702"
+  },
+  {
     "id": "pr-1707",
     "date": "2026-10-07",
     "group": "2026-10-07",
@@ -41,6 +141,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1065",
     "pullRequest": 1691,
     "url": "https://github.com/cehinds/AshenSpire/pull/1691"
+  },
+  {
+    "id": "pr-1704",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Combat matchup rules defined",
+    "detail": "Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.",
+    "build": "0.7.1.1064",
+    "pullRequest": 1704,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1704"
+  },
+  {
+    "id": "pr-1697",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Rear sprite studies archived for authoring",
+    "detail": "The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.",
+    "build": "0.7.1.1061",
+    "pullRequest": 1697,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1697"
   },
   {
     "id": "pr-1698",

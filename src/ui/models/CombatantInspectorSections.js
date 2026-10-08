@@ -7,6 +7,7 @@
 // Poise) beside the sprite.
 
 import { t } from '../strings.js';
+import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 
 export const INSPECTOR_SECTION_ORDER = Object.freeze(['summary', 'state', 'history', 'abilities', 'traits', 'lore']);
 
@@ -35,9 +36,13 @@ export function projectCombatantInspector(subject, text = (id) => id) {
   const resources = subject.resources || [];
   const hp = resources.find((r) => r.label === 'HP') || null;
   const block = resources.find((r) => r.label === t('combat.protection.block'));
+  const intent = subject.intent?.hidden ? {
+    name: `${combatIntentStance(subject.intent)} · Move hidden`,
+    detail: 'Exact move, damage, and effects unread. Wisdom and Intelligence improve intent reads.',
+  } : subject.intent;
   const summary = [
     hp && { label: text('inspector.summary.hp'), value: `${hp.value} / ${hp.max}` },
-    subject.intent && { label: text('inspector.summary.intent'), value: subject.intent.name, detail: subject.intent.detail || '' },
+    intent && { label: text('inspector.summary.intent'), value: intent.name, detail: intent.detail || '' },
     { label: text('inspector.summary.defense'), value: text('inspector.summary.block', { amount: block?.value ?? 0 }) },
   ].filter(Boolean);
   // Current state: active pools other than HP/Block, then active effects. A

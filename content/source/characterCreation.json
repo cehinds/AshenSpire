@@ -22,24 +22,28 @@
   ],
   "classes": {
     "reaver": {
+      "startingAbility": { "skillId": "combatManeuvers", "count": 1, "rank": 1 },
       "armourIds": ["default", "vigil"],
       "handIds": ["straightSword", "roundShield", "greatsword", "buckler"],
       "equipSlotIds": [],
       "relicIds": ["forsakenMedallion", "goldenSprout"]
     },
     "starseer": {
+      "startingAbility": { "skillId": "item:magic-focus", "count": 2, "rank": 1 },
       "armourIds": ["default", "eclipse"],
       "handIds": ["ashStaff", "starstoneStaff"],
       "equipSlotIds": [],
       "relicIds": ["starstoneShard", "goldenSprout"]
     },
     "rogue": {
+      "startingAbility": { "skillId": "combatManeuvers", "count": 1, "rank": 1 },
       "armourIds": ["default", "nightveil"],
       "handIds": ["dagger", "buckler", "shortbow", "parryDagger"],
       "equipSlotIds": [],
       "relicIds": ["cutpursesCoin", "goldenSprout"]
     },
     "herald": {
+      "startingAbility": { "skillId": "item:magic-focus", "count": 2, "rank": 1 },
       "armourIds": ["default", "ossuary"],
       "handIds": ["boneSceptre", "emberlightSceptre"],
       "equipSlotIds": [],
