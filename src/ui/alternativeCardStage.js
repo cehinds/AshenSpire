@@ -5,7 +5,7 @@ import { auraFilter } from './combatAura.js';
 import { reducedMotionRequested } from './motion.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { assetUrl } from './assetmap.js';
-import { ANIM_SPEEDS, getAnimSpeed } from './fx.js';
+import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
 
 const aliases = { idle: 'ready', guard: 'defend', guardHit: 'defend', cast: 'spell', power: 'spell', buff: 'spell' };
 const cached = new Map();

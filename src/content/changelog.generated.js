@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Cards animate with each class's base weapons",
     "detail": "Alternative combat now plays attack, smash, sweep, counter, defend, spell and ranged motions from the card type. Reaver uses a two-handed greatsword and crossbow, Rogue twin daggers and bow, Starseer staff and open book, and Herald unarmed strikes and book casting. Attacks advance and return, hits flash red, and the atelier and deck preview share the new motions. Equipment-tag combinations and stance families remain separate work.",
-    "build": "0.7.1.1104",
+    "build": "0.7.1.1105",
     "pullRequest": 1727,
     "url": "https://github.com/cehinds/AshenSpire/pull/1727"
   },

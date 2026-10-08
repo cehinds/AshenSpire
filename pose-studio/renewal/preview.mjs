@@ -1,5 +1,5 @@
 import { cardActionFor } from '../../src/model/alternativeCardAnimation.js';
-import { ANIM_SPEEDS } from '../../src/ui/fx.js';
+import { ANIM_SPEEDS } from '../../src/ui/animationPace.js';
 import { auraFilter } from '../../src/ui/combatAura.js';
 import { COMBAT_EFFECT_ART } from '../../src/content/combatEffectArt.js';
 import { durationFor, sampleSequence, hitFlashOpacity, defaultFamily } from './model.mjs';

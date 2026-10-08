@@ -3,7 +3,7 @@ import { createPaintedStage } from '../paintedOutfits.js';
 import { createAlternativeCardStage } from '../alternativeCardStage.js';
 import { alternativeCardAnimations } from '../../content/alternativeCardAnimations.js';
 import { sampleSequence, durationFor } from '../../model/alternativeCardAnimation.js';
-import { ANIM_SPEEDS, getAnimSpeed } from '../fx.js';
+import { ANIM_SPEEDS, getAnimSpeed } from '../animationPace.js';
 import { reducedMotionRequested } from '../motion.js';
 import { t } from '../strings.js';
 import { resolveCard } from '../../model/registries.js';
