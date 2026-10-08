@@ -2,14 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
 import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSequence, hitFlashOpacity } from '../src/model/alternativeCardAnimation.js';
 import { alternativeCardAnimations as catalog } from '../src/content/alternativeCardAnimations.js';
 import { ANIM_SPEEDS } from '../src/ui/fx.js';
 import { validate } from '../pose-studio/model.mjs';
 
-const root=new URL('../',import.meta.url);
-const json=path=>JSON.parse(readFileSync(new URL(path,root)));
+const root=fileURLToPath(new URL('../',import.meta.url));
+const json=path=>JSON.parse(readFileSync(resolve(root,path)));
 const card=(maneuver,camp='physical')=>({id:'test',cardTags:['camp:'+camp,'maneuver:'+maneuver]});
 
 test('card identity selects class-default motions independently of equipped weapons',()=>{
@@ -79,7 +81,7 @@ test('every runtime frame ships in both tiers with matching recorded hashes and 
   assert.deepEqual(frame.anchor,[256,464]);
   assert.ok(frame.bounds.every(n=>n>0&&n<512));
   for(const path of [frame.path,frame.lite]){
-   const bytes=readFileSync(new URL(path,root));
+   const bytes=readFileSync(resolve(root,path));
    assert.equal(createHash('sha256').update(bytes).digest('hex'),catalog.hashes[path.split('/').at(-1)]);
   }
  }
