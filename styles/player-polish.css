@@ -5,6 +5,7 @@
   --polish-frame: url('../assets/player-polish/ui/components/panel-frame.svg');
   --polish-slot: url('../assets/player-polish/ui/components/item-slot.svg');
   --polish-slot-selected: url('../assets/player-polish/ui/components/item-slot-selected.svg');
+  --combat-panel-texture: linear-gradient(#201b15b8, #100d09c9), url('../assets/player-polish/materials/soot-leather-material.webp');
 }
 .engraved-icon {
   display:inline-block; flex:0 0 auto; width:24px; height:24px;
@@ -278,6 +279,13 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 /* Keep the measured HUD clearance and native formation floor anchors. Only
    the opaque backing is removed; combatants must not stand behind HP. */
 :root .combat[data-layout='formation'] > .combat-hud.shared-hud { z-index:20; background:none; border:0; pointer-events:none; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud { align-self: start; margin: 0; top: 0; isolation: isolate; }
+.combat > .combat-hud::before {
+  content: ''; position: absolute; inset: 0 0 -22px; z-index: -1; pointer-events: none;
+  background: var(--combat-panel-texture); background-size: cover;
+  mask-image: linear-gradient(#000 65%, transparent); -webkit-mask-image: linear-gradient(#000 65%, transparent);
+}
+.combat > .combat-hud :is(.hud-vitals-panel,.hud-identity,.hud-center,.hud-trail) { background: none; border-image: none; }
 .combat > .combat-hud .hud-info-row,
 .combat > .combat-hud .hud-vitals-panel,
 .combat > .combat-hud .hud-control-grid,
@@ -433,8 +441,9 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root[data-layout='narrow'] .title-screen .title-traveler { top:17%; height:28%; }
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand { overflow:visible; scrollbar-width:none; }
 :root[data-layout='narrow'] .combat .turn-ribbon { font-size:1.2rem; }
-:root[data-layout='narrow'] .combat .combatant-leading .intent { font-size:calc(18px / var(--ui-zoom,1)) !important; min-width:calc(56px / var(--ui-zoom,1)); }
-:root[data-layout='narrow'] .combat .combatant-leading .intent .as-glyph { display:none; }
+:root .combat .combatant-leading .intent { width:calc(96px / var(--ui-zoom,1)); min-width:calc(96px / var(--ui-zoom,1)); max-width:none; }
+:root .combat[data-composition='option-c'] > .combat-hud.shared-hud { background: none; }
+:root .combat[data-composition='option-c'] .combat-action-row { background: var(--combat-panel-texture); background-size: cover; }
 :root .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }
 :root .rest-screen.choice-screen .rest-door { flex:0 1 48%; max-height:48%; background-color:#17130fd4; background-image:none; }
 :root .rest-screen.choice-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:4.5rem; }
