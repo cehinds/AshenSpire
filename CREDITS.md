@@ -518,3 +518,10 @@ adaptations rather than newly painted enemy art. This package is authoring
 material with a separate integration seam and empty gameplay bindings.
 Other canonical armour cells remain explicitly unpainted. No third-party
 artwork was downloaded and no third-party license is claimed.
+
+`pose-studio/stances/options-20261008/` adds twelve first-party ImageGen
+comparison paintings containing sixty stance candidates for owner selection.
+The exact prompts and reference identities are retained in its manifest.
+The PNG paintings are unchanged originals; native HTML labels and CSS cell
+views support review. No candidate is promoted into a runtime asset by this
+selection package.

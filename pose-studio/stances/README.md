@@ -8,6 +8,11 @@ of action frames, reactions, impacts and timing.
 
 ## Preview and projects
 
+The owner's follow-up selection boards are in
+[`options-20261008/index.html`](options-20261008/index.html): five new options
+for each class's Attack, Defend and Casting, with labels beneath every candidate.
+These remain separate from the initial draft exports pending the owner's choices.
+
 From the repository root:
 
 ```powershell
