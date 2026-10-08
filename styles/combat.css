@@ -677,16 +677,15 @@
    a nested painted stage; bobbing their common parent keeps one timeline
    across that swap, so the nested stage's .pose-layer is not a carrier
    (#1475 review). The Glyph style is a sigil panel, not a figure, and
-   stays put. Alternative silhouettes carry their complete clipped figure
-   on the common stage, preserving the same phase and per-slot delays. */
+   stays put. */
 @keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
-.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
+.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
 /* A fallen combatant holds still: the idle bob kept every dead sprite on the
    compositor's per-frame list for the rest of the fight. A downed co-op
    player is fallen too (its Classic figure bobbed on .facing). */
-.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette),
-.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: none; }
+.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage),
+.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -700,17 +699,17 @@
   animation: none;
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
-.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-duration: 2.6s; }
+.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-duration: 2.6s; }
 /* WCF3: one glow over the whole selected assembly — intent, the delayed
    inspect control, art, name and lower stack — never one per child. */
 .combatant.context-selected > .combatant-stack {
   filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
-.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -0.9s; }
-.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -1.7s; }
-.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -2.3s; }
-.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: none; }
+.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -0.9s; }
+.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -1.7s; }
+.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation-delay: -2.3s; }
+.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
 /* ---------- short-wide combat composition (#27) ---------------------------
@@ -1521,7 +1520,7 @@
 .combatant-leading .intent {
   --intent-accent: #ef4949;
   border: calc(2px / var(--ui-zoom, 1)) solid var(--intent-accent);
-  background: var(--combat-panel-texture, #201b15);
+  background-color: #201b15;
   background-size: cover;
   box-shadow: inset 0 1px 0 #ffffff36, 0 2px 5px #0009;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -1561,6 +1560,9 @@
   :root .combat[data-layout='formation'] .combatant-leading {
     flex-direction: row; align-items: flex-end;
   }
+  :root .combat[data-layout='formation'] .combatant-leading > .combatant-info {
+    position: absolute; right: calc(100% + 4px); bottom: 0;
+  }
   /* The expanded relic tray can extend beyond its HUD row. Only its actual
      controls should intercept a press on the battlefield below. */
   :root:has(.combat) .hud-relics { pointer-events: none; }
@@ -1595,7 +1597,7 @@
 .combatant.enemy[data-intent-visibility='unknown'] { --enemy-intent-accent: #c88aeb; --enemy-intent-outline: dashed; }
 :root .combat[data-composition='option-c'] .enemy:is(.context-selected,.targetable,.hover-target)::after {
   box-sizing: border-box; border: calc(2px / var(--ui-zoom, 1)) var(--enemy-intent-outline) var(--enemy-intent-accent);
-  border-radius: calc(8px / var(--ui-zoom, 1)); background: var(--combat-panel-texture); background-size: cover;
+  border-radius: calc(8px / var(--ui-zoom, 1)); background-color: #201b15; background-size: cover;
   z-index: 880;
 }
 :root .combat[data-composition='option-c'] .enemy:is(.targetable,.hover-target) .sprite { outline: none; }

@@ -150,9 +150,13 @@ export function wireBattlefieldStage(field, model) {
     const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
+    if (window.innerHeight <= 480) for (const actor of actors) {
+      actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
+    }
     const fitFormation = () => {
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         handTop: handRect ? handRect.top - fieldRect.top + 22 : null,
+        handLeft: handRect ? handRect.left - fieldRect.left : 0,
         solo: solo && window.innerHeight > 480,
         sizes: fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow }) });
       const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
