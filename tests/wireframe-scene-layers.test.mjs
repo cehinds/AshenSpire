@@ -6,6 +6,7 @@ import { targetLayer, targetOutline } from '../src/ui/models/TargetLayerModel.js
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import { ENVIRONMENTS } from '../src/content/environments.js';
+import { LEGACY_SCENES } from '../src/model/legacyDungeon.js';
 
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 const scenes = ENVIRONMENTS.flatMap(region => region.scenes);
@@ -18,17 +19,20 @@ const project = ([vx, vy, vw, vh], width, height, ax, ay) => [(ax - vx) * width 
 test('full-screen backdrop grounds the figures using the battlefield window', () => {
   for (const [width, height, fieldTop, fieldHeight] of [[1910, 986, 98, 469], [390, 844, 84, 400], [844, 390, 40, 240]]) {
     const formation = combatFormation({ width, height: fieldHeight, friends: ['p1'], enemies: ['e1', 'e2'] });
-    const config = battlefieldBackdropConfig({ height: fieldHeight, fieldTop: 0, fieldHeight, formation });
-    const expectedFloor = fieldTop + Math.max(0, Math.min(...formation.cells.map(cell => cell.ground)));
-    assert.deepEqual(config, battlefieldBackdropConfig({ height: fieldHeight, fieldTop: 0, fieldHeight, formation: { ...formation, slots: [] } }), 'deaths do not pan the painting');
-    for (const scene of scenes) {
-      const layers = sceneWindowLayers({ width, height, windowTop: fieldTop, windowHeight: fieldHeight, scene, config });
+    const sceneHeight = fieldTop + fieldHeight;
+    const config = battlefieldBackdropConfig({ height: sceneHeight, fieldTop, fieldHeight, formation });
+    const expectedFloor = fieldTop + Math.max(0, Math.min(...formation.cells.map(cell => cell.ground)) - formation.rowSpacing / 2);
+    assert.deepEqual(config, battlefieldBackdropConfig({ height: sceneHeight, fieldTop, fieldHeight, formation: { ...formation, slots: [] } }), 'deaths do not pan the painting');
+    for (const scene of [...scenes, ...LEGACY_SCENES]) {
+      const layers = sceneWindowLayers({ width, height, windowTop: 0, windowHeight: sceneHeight, scene, config });
       const [x, y, w, h] = scene.box;
       const [, paintedFloor] = project(layers.frame.viewBox, width, height, x, y + scene.floorStart * h);
-      assert.ok(near(paintedFloor, expectedFloor), `${scene.id}: painting and formation share a floor`);
+      assert.ok(near(paintedFloor, expectedFloor), `${scene.id}: skyline clears the furthest feet by half a row`);
       for (const slot of formation.slots) assert.ok(fieldTop + slot.ground >= paintedFloor - 1e-6, 'feet meet or extend below the floor within projection roundoff');
       const [vx, vy, vw, vh] = layers.skyline.viewBox;
       assert.ok(vx >= x && vy >= y && vx + vw <= x + w + 1e-9 && vy + vh <= y + h + 1e-9, 'battlefield crop stays inside its atlas cell');
+      const [, paintedSkyTop] = project(layers.frame.viewBox, width, height, x, y);
+      assert.ok(paintedSkyTop <= 1e-6, 'sky covers the header without an empty top band');
       const html = illustratedBackgroundHtml({ region: 'test', scene: scene.id, viewBox: scene.box, layers: [] });
       assert.ok(html.includes(`<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${scene.box.join(' ')}" overflow="hidden">`), 'frame continuation clips adjacent atlas cells');
     }
