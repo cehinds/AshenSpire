@@ -44,6 +44,8 @@
 - Source at `77a847ae6b`: 2,186 native faces on each viewport, covering base cards, upgrades, all authored ranks and equipment profiles in both authored and live expanded combat forms.
 - Desktop 1440×1000 and phone 390×844 with touch emulation: no clipped effects, title overlaps, damage footer overflow, added sigil tab stops, or runtime errors. All ten actions and eight schools are covered. Minimum catalog rule text is 12.22px desktop and 11.18px phone.
 - Tapping the action mark selects the card through the existing hand hit lane. Information spends no resources or card plays; Escape closes it and restores focus.
+- All 2,186 faces also pass at 120, 124, 144 and 200px widths, with original geometry restored after resizing. The smallest 120px fixture uses 8.85px rule text; Information provides the enlarged card and full rules.
+- Standalone build `0.7.1.1118` passes desktop and phone hand geometry, artwork loading, accessible names, sigil-position selection, Information and Escape/focus checks: [desktop combat](qa/combat-card-sigils/standalone/desktop-combat.png), [phone Information](qa/combat-card-sigils/standalone/phone-inspection.png), [report](qa/combat-card-sigils/standalone/report.json).
 - Required code and artwork load. Optional SFX `.ogg` probes return 404 and use the existing synthesized audio fallback. Physical-device and subjective owner acceptance are separate.
 - [Desktop combat](qa/combat-card-sigils/source/desktop-combat.png), [phone Information](qa/combat-card-sigils/source/phone-inspection.png), [desktop legend in cards](qa/combat-card-sigils/source/desktop-sigil-gallery.png), [phone legend in cards](qa/combat-card-sigils/source/phone-sigil-gallery.png), [report](qa/combat-card-sigils/source/report.json).
 
