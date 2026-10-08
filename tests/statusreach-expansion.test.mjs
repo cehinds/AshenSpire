@@ -31,6 +31,8 @@ test('Star Path grants its printed Concealed utility at either grade and Sweep r
     const preview = previewCard(combat, 'path');
     assert.equal(preview.tokens.concealed, 1);
     assert.match(combatCardSummary(definition, preview, registries), /Gain 1 Concealed/);
+    assert.match(combatCardSummary(definition, preview, registries), /for 2 turns/);
+    assert.match(combatCardSummary(definition, preview, registries), /Sweep and Holy revelation clear it/);
     // Full inspection reads the already resolved face. Avoid resolving its
     // permanent grade a second time through this static inspection adapter.
     const resolvedRegistry = { ...registries, cards: { ...registries.cards,
