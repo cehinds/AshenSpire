@@ -2396,7 +2396,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (targetId) lastTargetId = targetId;
       expansionChoiceShell = openUpcastChoice({ definition, opener: combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`),
         onClosed: () => { expansionChoiceShell = null; },
-        onChoose: selectedRank => { upcastRanksByCard.set(instanceId, Number(selectedRank)); playCard(instanceId, targetId, choice, Number(selectedRank)); } });
+        onChoose: selectedRank => {
+          upcastRanksByCard.set(instanceId, Number(selectedRank));
+          const plan = cardTargets(instanceId);
+          const previousTarget = targetId ?? (plan.mode === 'friendly' ? combat.player.id : null);
+          if (!plan.legalIds.includes(previousTarget)) {
+            selected = plan.mode === 'enemy' ? instanceId : null;
+            selfArm = plan.mode === 'friendly' ? instanceId : null;
+            handRenderKey = null; renderHand(); syncCardSelection();
+            return;
+          }
+          playCard(instanceId, targetId, choice, Number(selectedRank));
+        } });
       return;
     }
     // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it

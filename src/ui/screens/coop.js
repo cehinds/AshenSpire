@@ -11,9 +11,10 @@ import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { coopEnemyIntent } from '../models/CoopIntentModel.js';
 import { openModal } from '../kit/index.js';
 import { cardChoice } from '../../model/cardChoices.js';
+import { cardTargetPlan } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
-import { resolveCombatCard } from '../../engine/combatExpansion.js';
+import { combatCardView } from '../models/CombatCardView.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { openUpcastChoice } from '../components/upcastChoice.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
@@ -360,7 +361,25 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         closeCardChoice(); const seatAtOpen = me;
         const shell = openUpcastChoice({ definition: def,
           onClosed: () => { if (cardChoiceShell === shell) cardChoiceShell = null; },
-          onChoose: ranks => { if (me === seatAtOpen) send({ ...obj, upcastTier: Number(ranks) }); },
+          onChoose: ranks => {
+            if (me !== seatAtOpen) return;
+            upcastTiersByCard.set(upcastKey(inst.instanceId), Number(ranks));
+            const scene = snap?.scene;
+            const chosen = cardDef(inst);
+            const plan = cardTargetPlan(chosen, me, scene?.enemies, scene?.players);
+            const previousTarget = obj.targetId ?? (plan.mode === 'friendly' ? me : null);
+            if (!plan.legalIds.includes(previousTarget)) {
+              if (plan.mode === 'friendly') { armFriendlyTargeting(inst.instanceId); return; }
+              armedFriendlyCard = null; render();
+              const targetShell = openCardChoiceModal({ cardName: chosen.name,
+                plan: { kind: 'target', options: (scene?.enemies || []).filter(enemy => plan.legalIds.includes(enemy.id))
+                  .map(enemy => ({ id: enemy.id, name: registries.enemies.get(enemy.enemyId)?.name || enemy.id })) },
+                onClosed: () => { if (cardChoiceShell === targetShell) cardChoiceShell = null; },
+                onChoose: targetId => { if (me === seatAtOpen) send({ ...obj, targetId, upcastTier: Number(ranks) }); },
+              }); cardChoiceShell = targetShell; return;
+            }
+            send({ ...obj, upcastTier: Number(ranks) });
+          },
         }); cardChoiceShell = shell; return;
       }
     }
@@ -665,10 +684,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const memberRegistries=()=>{const member=myMember();return member?registriesForClassMastery(registries,{...member,class:member.classId}):registries;};
   const cardDef = (c) => {
     const seat = snap?.scene?.players?.find(entry => entry.id === me);
-    const ranks = upcastTiersByCard.get(upcastKey(c.instanceId)) || 0;
-    const preview = (ranks ? c.upcastPreviews?.[ranks] : null) || c.combatPreview;
-    return { ...(preview?.resolvedDefinition || resolveCombatCard({ registries: memberRegistries(), player: seat,
-      combatExpansionVersion: seat?.combatExpansionVersion || 1 }, c, { upcastTier: ranks })), combatPreview: preview };
+    return combatCardView({ registries: memberRegistries(), player: seat,
+      combatExpansionVersion: seat?.combatExpansionVersion || 1,
+      breakMeterVersion: snap?.scene?.breakMeterVersion ?? c.breakMeterVersion ?? 0 },
+    c, upcastTiersByCard.get(upcastKey(c.instanceId)));
   };
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
@@ -1109,7 +1128,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       registries:memberRegistries(), fitFan: true,
       wireCard: (el, entry) => {
         if (upcastOptions(entry.def).length && meP?.combatExpansionVersion === 2) {
-          const upcast = document.createElement('button'); upcast.className = 'card-upcast'; upcast.textContent = entry.def.upcastTier ? `Upcast +${entry.def.upcastTier}` : 'Upcast';
+          const surcharge = (entry.def.upcastTier ?? entry.def.upcast.baseTier) - entry.def.upcast.baseTier;
+          const upcast = document.createElement('button'); upcast.className = 'card-upcast'; upcast.textContent = surcharge ? `Upcast +${surcharge}` : 'Upcast';
           upcast.disabled = pacing || meP.ended || !meP.alive;
           upcast.addEventListener('click', event => {
             event.stopPropagation(); closeCardChoice(); const seatAtOpen = me;
@@ -1118,7 +1138,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
               onChoose: ranks => {
                 if (me !== seatAtOpen) return;
                 upcastTiersByCard.set(upcastKey(entry.inst.instanceId), Number(ranks));
-                if (friendlyTargetPlan(entry.def, me, sc.players).active) armFriendlyTargeting(entry.inst.instanceId);
+                if (friendlyTargetPlan(cardDef(entry.inst), me, sc.players).active) armFriendlyTargeting(entry.inst.instanceId);
                 else render();
               },
             }); cardChoiceShell = shell;
