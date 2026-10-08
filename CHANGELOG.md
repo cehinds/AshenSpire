@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
-- **Combat intents and targets share the approved option C layout** ([#1750](https://github.com/cehinds/AshenSpire/pull/1750), `0.7.1.1140`). Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The approved pointed shield and inner-loop Counter symbol match the named card footers; counters show HP and Poise with distinct damage symbols. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.
+- **Combat intents and targets share the approved option C layout** ([#1750](https://github.com/cehinds/AshenSpire/pull/1750), `0.7.1.1142`). Intent plates use centered icons, readable values and matching textured selection plates. Unknown actions are purple, partial clues gold and revealed actions red. The approved pointed shield and inner-loop Counter symbol match the named card footers; counters show HP and Poise with distinct damage symbols. The larger solo player overlaps the hand at the waist, enemies move toward the center and the HUD fades into the battlefield.
+
+- **Combat shows Blight only when it matters** ([#1755](https://github.com/cehinds/AshenSpire/pull/1755), `0.7.1.1138`). The separate Block, Barrier and Ward summary box is removed. Positive Ashen Blight occupies a wider centered header bar, with its own row on phones, and disappears at zero. Recovery and Blight feat buttons remain reachable above combat figures.
 
 - **Combat scenery reaches the top of the screen** ([#1748](https://github.com/cehinds/AshenSpire/pull/1748), `0.7.1.1136`). The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.
 
