@@ -22,7 +22,7 @@ function cardGeometry(cards){return cards.map(c=>{
  return {ref:c.dataset.qaRef||c.dataset.cardId,action:c.querySelector('[data-primary-sigil]').dataset.primarySigil,
   school:c.querySelector('.combat-sigil-school')?.dataset.sigil||null,
   clipped:text.scrollHeight>text.parentElement.clientHeight+1||text.scrollWidth>text.clientWidth+1,
-  overlapsTitle:Math.min(r.top,panel?.top??r.top)<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),ruleTop:r.top-face.top,
+  overlapsTitle:Math.min(r.top,panel?.top??r.top)<top.bottom-1,font:Number.parseFloat(getComputedStyle(text).fontSize),ruleTop:r.top-face.top,titleBottom:top.bottom-face.top,panelTop:panel?.top-face.top,
   damageTypes:damage?.textContent.split(' · ')||[],
   footerOutside:!!words&&(words.bottom>face.bottom+1||words.left<face.left-1||words.right>face.right+1||words.top<r.bottom-1),
   expanded:c.querySelector('.illustrated-card-face').dataset.rulesExpanded==='true',

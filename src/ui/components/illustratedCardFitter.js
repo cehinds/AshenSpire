@@ -51,8 +51,10 @@ export function fitIllustratedCards(cards) {
   for(const row of rules){
     row.height=row.face.clientHeight;row.top=row.layer.offsetTop;row.panelTop=row.panel?.offsetTop;row.panelHeight=row.panel?.clientHeight;row.artTop=row.art?.offsetTop;
     const title=row.face.querySelector('[data-card-binding="name"]');
-    const titleBottom=title?title.getBoundingClientRect().bottom-row.face.getBoundingClientRect().top:0;
-    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-titleBottom-2*row.scale);
+    // Offsets stay in layout pixels, including the native UI zoom and rotated
+    // hand. Mixing a screen rectangle with offsetTop shrinks this boundary.
+    const titleBottom=title?title.parentElement.offsetTop+title.offsetTop+title.offsetHeight:0;
+    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-titleBottom-Math.max(2,2*row.scale));
     row.authoredHeight=row.boxHeight;
     if(row.text.scrollHeight>row.boxHeight+row.growthLimit+1){
       // Supported narrow shelves use the authored minimum only after the
