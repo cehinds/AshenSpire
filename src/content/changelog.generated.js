@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1712",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Alternative Counters retain readable clauses and charges",
+    "detail": "Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.",
+    "build": "0.7.1.1095",
+    "pullRequest": 1712,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1712"
+  },
+  {
+    "id": "pr-1711",
+    "date": "2026-10-07",
+    "group": "2026-10-07",
+    "summary": "Counter cards show the reply they prepare",
+    "detail": "Choosing an enemy for immediate support no longer changes the printed Counter damage. One-use damage charges stay in the preview when an earlier damage effect has no contacts. Solo and co-op show the same armed reply.",
+    "build": "0.7.1.1093",
+    "pullRequest": 1711,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1711"
+  },
+  {
     "id": "pr-1706",
     "date": "2026-10-07",
     "group": "2026-10-07",

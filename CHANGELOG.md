@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
-- **Alternative Counters retain readable clauses and charges** ([#1712](https://github.com/cehinds/AshenSpire/pull/1712), `0.7.1.1093`). Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.
+- **Alternative Counters retain readable clauses and charges** ([#1712](https://github.com/cehinds/AshenSpire/pull/1712), `0.7.1.1095`). Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.
 
 - **Counter cards show the reply they prepare** ([#1711](https://github.com/cehinds/AshenSpire/pull/1711), `0.7.1.1093`). Choosing an enemy for immediate support no longer changes the printed Counter damage. One-use damage charges stay in the preview when an earlier damage effect has no contacts. Solo and co-op show the same armed reply.
 
