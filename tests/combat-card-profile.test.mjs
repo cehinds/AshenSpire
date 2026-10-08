@@ -72,9 +72,14 @@ test('counter faces describe deferred replies while keeping immediate support vi
   const counterCards = contentBundle.cards.filter(card => combatProfileFor(card).maneuver === 'counter');
   assert.ok(counterCards.length > 0);
   for (const card of counterCards) {
-    assert.match(card.textTemplate, /Prepare (?:Melee|Ranged|Spell) Counter/, card.id);
+    const preparation = /(?:Prepare (?:(?:Melee|Ranged|Spell)|a (?:frost|fire|lightning|force|alteration|illusion|divine|decay)) Counter|Counter Contact attacks for)/;
+    assert.match(card.textTemplate, preparation, card.id);
+    if (card.minCombatExpansionVersion === 2) {
+      assert.ok(card.counterCoverage, `${card.id}: explicit coverage`);
+      assert.ok(card.counterPayload, `${card.id}: explicit deferred payload`);
+    }
     for (const grade of card.gradeProfiles || []) {
-      assert.match(grade.textTemplate, /Prepare (?:Melee|Ranged|Spell) Counter/, `${card.id} rank ${grade.rank}`);
+      assert.match(grade.textTemplate, preparation, `${card.id} rank ${grade.rank}`);
     }
   }
   const parry = contentBundle.cards.find(card => card.id === 'bindingParry');

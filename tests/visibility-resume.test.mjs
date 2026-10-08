@@ -48,6 +48,8 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { finishCardDrag } from '../src/ui/cardDragEnd.js';
 import { affordableCards } from '../tools/simbot.mjs';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import { cardTargetPlan } from '../src/model/cardTargets.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LIFECYCLE_EVENTS = ['visibilitychange', 'pagehide', 'pageshow', 'freeze', 'resume', 'blur', 'focus', 'beforeunload', 'unload'];
@@ -151,8 +153,9 @@ function midCombat() {
 // plays a card. So the ONLY thing between a backgrounded drag and a played
 // card is finishCardDrag's own cancelled check.
 function liveDragOps(combat, played) {
-  const cardId = combat.piles.hand[0]?.instanceId;
-  assert.ok(cardId, 'the hand still holds a card to drag');
+  const cardId = affordableCards(combat.registries, combat).find(card => cardTargetPlan(resolveCombatCard(combat, card), combat.player.id,
+    combat.enemies, [combat.player], { solo: true }).mode === 'enemy')?.instanceId;
+  assert.ok(cardId, 'the hand still holds an affordable enemy-targeted card to drag');
   return {
     teardown: () => true,
     overHand: () => false,

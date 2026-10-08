@@ -143,3 +143,14 @@ enemyMove,delivery
 enemyMove,damageType
 enemyMove,technique
 enemyMove,theme
+card,reach
+card,trait
+basicCardProfile,reach
+basicCardProfile,targeting
+basicCardProfile,trait
+enemyMove,reach
+enemyMove,targeting
+enemyMove,trait
+effect,reach
+effect,targeting
+effect,trait

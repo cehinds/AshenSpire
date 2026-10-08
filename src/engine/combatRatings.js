@@ -1,14 +1,14 @@
 import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack } from '../model/combatRatings.js';
-import { propertyMountsOf } from './properties.js';
+import * as Properties from './properties.js';
 import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
 import * as statuses from '../framework/statusSemantics.js';
-import { clearCombatCounter } from './combatMatchups.js';
+import * as Matchups from './combatMatchups.js';
 
 export function refreshCombatRatings(ctx) {
   if (!ctx.ratingsRules) return;
   const receipt = ratingReceipt(ctx.registries, ctx, ctx.ratingsRules);
-  for (const mount of Object.values(propertyMountsOf(ctx, ctx.player) || {})) {
+  for (const mount of Object.values(Properties.propertyMountsOf(ctx, ctx.player) || {})) {
     for (const rule of mount.rules || []) {
       const values = { name: rule.tag, kind: 'property' };
       for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) {
@@ -58,7 +58,7 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
   while (meter.value >= meter.max && breaks < 100) {
     meter.value -= meter.max;
     breaks++;
-    clearCombatCounter(target, ctx);
+    Matchups.clearCombatCounter(target, ctx);
     if (target.kind === 'player') target.pendingActionLoss = (target.pendingActionLoss || 0) + cfg[magical && !single ? 'wardActionLoss' : 'poiseActionLoss'];
     else {
       target.skipNextTurn = true;
@@ -84,7 +84,7 @@ function foldedMagicImpact(ctx, source, target, carrier, baseImpact) {
   const authored = target.kind === 'enemy' ? ctx.registries.enemies.get(target.enemyId).arcaneExposure : null;
   const schoolMult = balance.arcaneExposure?.schoolBuildupMultipliers?.[carrier?.damageSchool] || 0;
   const perHit = carrier?.exposureBuildupPerHit || 0;
-  const mounts = propertyMountsOf(ctx, source);
+  const mounts = Properties.propertyMountsOf(ctx, source);
   const mult = passiveMult(ctx.registries, source?.relicIds || [], 'exposureBuildupMult', mounts);
   const add = passiveSum(ctx.registries, source?.relicIds || [], 'magicalImpactAdd', {}, mounts);
   const buildup = perHit * schoolMult * (authored?.buildupMultiplier ?? 1) * mult * balance.exposure.foldScale;

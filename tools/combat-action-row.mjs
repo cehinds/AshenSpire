@@ -516,13 +516,13 @@ async function main() {
             if (state === 'armed') {
               if (hand < 6) continue;
               const attackIndex = await evaluate(`(async () => {
-                const { resolveCard } = await import('/src/model/registries.js');
+                const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
                 const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
                 const combat = window.__combat;
                 return [...document.querySelectorAll('.hand .card')].findIndex(node => {
                   if (node.getAttribute('aria-disabled') === 'true' || node.classList.contains('unaffordable')) return false;
                   const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
-                  return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst), { targeted: true });
+                  return inst && hasImmediateHostileDamage(resolveCombatCard(combat, inst), { targeted: true });
                 });
               })()`);
               let armed = false;

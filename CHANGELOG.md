@@ -34,6 +34,14 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Martial and Spell combat is playable** ([#1723](https://github.com/cehinds/AshenSpire/pull/1723), `0.7.1.1111`). New runs use persistent stances, whole-action counters and evasion, Ward, typed defenses, status buildup and recovery, optional upcasting, and run-long Ashen Blight. Cards show their action at the bottom with compact effects and inspected tags; Powers Exhaust while their buffs stay active for the fight. Solo and co-op share the rules and saved outcomes. Existing runs retain their original combat rules.
+
+- **Power and card-label rules clarified** ([#1725](https://github.com/cehinds/AshenSpire/pull/1725), `0.7.1.1103`). Defines expanded Power casts that Exhaust their paid card instance while its installed effect lasts for the combat. Preserves authored action labels, reusable Skills, and separate deck Status cards. Additional copies and Replicas remain separate paid casts. This contract prepares the combat implementation; gameplay does not change yet.
+
+- **Enemy knowledge rules defined** ([#1726](https://github.com/cehinds/AshenSpire/pull/1726), `0.7.1.1102`). Specifies unknown and broad enemy clues, run Perception from successful predictions, and five-stage persistent bestiary knowledge. Defines saved receipts, bounded counter bonuses and private co-op reads. This is the contract for a later gameplay update; the game does not change yet.
+
+- **Next combat rules accepted for implementation** ([#1718](https://github.com/cehinds/AshenSpire/pull/1718), `0.7.1.1100`). Defines the complete Martial and Spell expansion: whole-action counters and evasion, persistent Ward, control recovery, optional upcasting, and three run-lasting Blight feat stages. Old runs keep their saved rules. This contract update prepares the runtime implementation; gameplay does not change yet.
+
 - **README shows the current published game** ([#1720](https://github.com/cehinds/AshenSpire/pull/1720), `0.7.1.1099`). The README illustrates character creation, exploration, card combat and shops with screenshots from the published release candidate, including a phone view. Future README updates verify and refresh the gallery for the latest published release.
 
 - **Full-run checks choose a starting ability** ([#1716](https://github.com/cehinds/AshenSpire/pull/1716), `0.7.1.1098`). The browser probe completes required combat-maneuver or spell choices through their normal controls before advancing to Review. It covers one-choice and two-choice classes without changing creation rules or weakening the checks.

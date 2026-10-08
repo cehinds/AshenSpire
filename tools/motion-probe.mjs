@@ -451,12 +451,12 @@ async function press({ send, evaluate }, selector, holdMs = 0) {
 }
 
 const ATTACK_IN_HAND = `(async () => {
-  const { resolveCard } = await import('/src/model/registries.js');
+  const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
   const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
   const combat = window.__combat;
   const c = [...document.querySelectorAll('.hand .card:not(.unaffordable)')].find(node => {
     const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
-    return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst), { targeted: true });
+    return inst && hasImmediateHostileDamage(resolveCombatCard(combat, inst), { targeted: true });
   });
   return c ? c.dataset.cardId : null;
 })()`;

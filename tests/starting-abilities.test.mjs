@@ -8,7 +8,8 @@ import { stampDeck } from '../src/model/loadout.js';
 import { resolveCard } from '../src/model/registries.js';
 
 const registries = createRegistries(contentBundle);
-const birth = (classId, extra = {}) => createRunState({ seed: 42, classId, registries, ...extra });
+// Historical additive deck-size contract; v2 starter coverage has a deck cap.
+const birth = (classId, extra = {}) => createRunState({ seed: 42, classId, registries, combatExpansionVersion: 1, ...extra });
 
 for (const [classId, count, kind] of [['reaver', 1, 'maneuver'], ['rogue', 1, 'maneuver'], ['starseer', 2, 'spell'], ['herald', 2, 'spell']]) {
   test(`${classId} chooses ${count} legal Rank 1 ${kind} cards that survive restamp and save`, () => {
@@ -30,6 +31,22 @@ for (const [classId, count, kind] of [['reaver', 1, 'maneuver'], ['rogue', 1, 'm
     assert.deepEqual(validateRunShape(restored), []);
   });
 }
+
+test('expanded starters retain every selected Rank 1 ability within their capped deck after restamp and reload', () => {
+  for (const classId of ['reaver', 'rogue', 'starseer', 'herald']) {
+    const original = birth(classId, { combatExpansionVersion: 2 });
+    const plan = startingAbilityPlan(registries, original);
+    const ids = plan.choices.slice(0, plan.count).map(card => card.id);
+    const run = birth(classId, { combatExpansionVersion: 2, startingAbilityIds: ids });
+    assert.equal(run.combatExpansionVersion, 2);
+    assert.ok(run.deck.length <= registries.balance.startingDeckSize);
+    assert.equal(run.deck.filter(card => ids.includes(card.cardId) && card.abilityRank === 1).length, plan.count);
+    stampDeck(registries, run);
+    const restored = deserializeRun(serializeRun(run));
+    assert.equal(restored.deck.filter(card => ids.includes(card.cardId) && card.abilityRank === 1).length, plan.count);
+    assert.deepEqual(validateRunShape(restored), []);
+  }
+});
 
 test('birth rejects missing, duplicate, wrong-kind and unavailable choices', () => {
   const run = birth('starseer');

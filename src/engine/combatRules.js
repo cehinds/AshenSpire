@@ -9,6 +9,10 @@ import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
+import * as Control from './combatStatusControl.js';
+import { ashenBlightRestorationPercent } from './ashenBlight.js';
+import * as Actions from './actions.js';
+import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function rulesFingerprint(rules) {
   let hash = 2166136261;
@@ -139,7 +143,7 @@ export function foundationCarrier(ctx, entity, carrier = {}, effectAttack = null
     ...(carrier.combatProfile ? { combatProfile: { ...carrier.combatProfile, damageType: typed.damageType } } : {}) };
 }
 
-export function foundationDamage(ctx, source, target, base, carrier = null, attackTags = []) {
+export function foundationDamage(ctx, source, target, base, carrier = null, attackTags = [], { beforeDefense = false } = {}) {
   const rules = ctx.foundation.rules;
   const weapon = foundationSource(ctx, source, carrier);
   const attack = attackDescriptor(carrier || {});
@@ -162,8 +166,8 @@ export function foundationDamage(ctx, source, target, base, carrier = null, atta
   multiplier = attackerMultiplier * Math.min(rules.vulnerabilityCap, multiplier * (1 + vulnerability));
   const components = resolveDamageComponents(rules, {
     components: weights.map((c) => ({ type: c.type, amount: Math.max(0, base) * c.weight / totalWeight })),
-    armor: defense.armor || 0, penetration: attack.penetration || 0,
-    resistances: groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}), immunities: defense.immunities || [], multiplier,
+    armor: beforeDefense ? 0 : defense.armor || 0, penetration: attack.penetration || 0,
+    resistances: beforeDefense ? {} : groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}), immunities: beforeDefense ? [] : defense.immunities || [], multiplier,
     flatBonus: (source ? S.getAdd(ctx, source, 'attackDamageAdd') : 0) + (source?.damageBySchoolAdd?.[carrier?.damageSchool] || 0),
   });
   return { components, amount: components.reduce((sum, c) => sum + c.amount, 0), source: weapon, tags: attackTags };
@@ -243,9 +247,31 @@ export function candidateState(ctx) {
   attachSkillXp(candidate);
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
+  if (candidate.combatExpansionVersion === 2 || candidate.sharedExpansionVersion === 2) {
+    candidate.combatControlRestrictions = entity => Control.controlRestrictions({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity);
+    candidate.restorationModifierPercent = (entity, kind) => ashenBlightRestorationPercent({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity, kind, String(entity?.combatOwnerCycle || 0));
+  }
   if (ctx.players) candidate.playerIdForEntity = (entity) => {
     for (const [id, seat] of candidate.players) if (seat.entity === entity) return id;
     return null;
+  };
+  if (ctx.players) candidate.drawCardsFor = (entity, amount) => {
+    const seat = candidate.players.get(candidate.playerIdForEntity(entity));
+    if (!seat) return Actions.drawCards(candidate, amount);
+    const fields = ['player', 'piles', 'playerKey', 'registries', 'attributes', 'allocatedAttributes', 'combatExpansionVersion',
+      'loadout', 'itemUpgradeLevels', 'skills', 'attributeMode', 'orderedDraw', 'handRules', 'handMax', 'classId', 'characterLevel', 'derivedStatRuleSnapshot'];
+    const previous = Object.fromEntries(fields.map(key => [key, candidate[key]]));
+    const previousRatings = candidate.ratingsRules?.ratings;
+    Object.assign(candidate, { player: seat.entity, piles: seat.piles, playerKey: seat.id,
+      registries: candidate.registriesForPlayer?.(seat.id) || candidate.registries,
+      attributes: effectiveAshenBlightAttributes(seat.entity, seat.allocatedAttributes || seat.attributes),
+      allocatedAttributes: seat.allocatedAttributes || seat.attributes, combatExpansionVersion: seat.entity.combatExpansionVersion || 1,
+      loadout: seat.loadout, itemUpgradeLevels: seat.itemUpgradeLevels, skills: seat.skills || {}, attributeMode: seat.attributeMode || null,
+      orderedDraw: seat.orderedDraw || null, handRules: seat.handRules, handMax: seat.handMax,
+      classId: seat.entity.classId, characterLevel: seat.level, derivedStatRuleSnapshot: seat.derivedStatRuleSnapshot });
+    if (seat.ratingRows && candidate.ratingsRules) candidate.ratingsRules.ratings = seat.ratingRows;
+    try { return Actions.drawCards(candidate, amount); }
+    finally { Object.assign(candidate, previous); if (candidate.ratingsRules) candidate.ratingsRules.ratings = previousRatings; }
   };
   return candidate;
 }
@@ -263,6 +289,11 @@ export function foundationTransaction(ctx, execute) {
   const result = execute(candidate);
   delete candidate._foundationTransaction;
   delete candidate._foundationAncestry;
+  // Hosts save the accepted candidate before any stable entity or RNG changes.
+  // This function is intentionally absent from detached previews.
+  if ((ctx.combatExpansionVersion === 2 || ctx.sharedExpansionVersion === 2) && typeof ctx.beforeCombatCommit === 'function') {
+    if (ctx.beforeCombatCommit(candidate)?.ok === false) throw new Error('Combat save was refused; the action was not committed');
+  }
   // Public combat entities and seats are stable handles. Commit the detached
   // values into those handles and reconnect paused actions to the same graph.
   const entities = new Map();

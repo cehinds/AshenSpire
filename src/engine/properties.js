@@ -36,7 +36,7 @@
 import { carrierRules } from '../model/registries.js';
 import { breakPropertyRule } from '../model/breakMeter.js';
 import { equippedPieces, pieceItemRef } from '../model/loadout.js';
-import { triggerOwnerKey } from './triggers.js';
+import * as Triggers from './triggers.js';
 
 // The carrier kinds the loadout owns. syncLoadoutProperties manages these and
 // never touches another kind's mounts (a relic or class carrier, later phases).
@@ -117,7 +117,7 @@ export function unmountProperties(ctx, carrier) {
 /** One owner's mount map, for the passive readers — null when nothing is mounted. */
 export function propertyMountsOf(ctx, entity) {
   if (!entity || !ctx || !ctx.propertyMounts) return null;
-  return ctx.propertyMounts[triggerOwnerKey(ctx, entity)] || null;
+  return ctx.propertyMounts[Triggers.triggerOwnerKey(ctx, entity)] || null;
 }
 
 /**
@@ -211,7 +211,7 @@ function coreTagsOf(combat, owner) {
 export function syncClassProperties(combat, entity) {
   const owner = entity || (combat && combat.player);
   if (!combat || !owner || !owner.classId || owner.classUnequipped) return;
-  const ownerKey = triggerOwnerKey(combat, owner);
+  const ownerKey = Triggers.triggerOwnerKey(combat, owner);
   const carrier = classCarrier(combat.registries, owner.classId, ownerKey, coreTagsOf(combat, owner));
   if (!carrier) return;
   const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
@@ -228,7 +228,7 @@ export function featCarrier(registries, featId, ownerKey) {
 export function syncFeatProperties(combat, entity, featIds) {
   const owner = entity || combat?.player;
   if (!owner || !combat) return;
-  const ownerKey = triggerOwnerKey(combat, owner);
+  const ownerKey = Triggers.triggerOwnerKey(combat, owner);
   const seat = combat.players instanceof Map ? [...combat.players.values()].find(row => row.entity === owner) : null;
   const ids = featIds ?? seat?.skillFeats ?? owner.skillFeats ?? combat.skillFeats ?? [];
   const wanted = [...new Set(ids)].map(id => featCarrier(combat.registries, id, ownerKey)).filter(Boolean);
@@ -263,7 +263,7 @@ export function companionCarrier(registries, companionId, ownerKey) {
 export function syncCompanionProperties(combat) {
   const owner = combat && combat.player;
   if (!owner || !Array.isArray(combat.companions)) return;
-  const ownerKey = triggerOwnerKey(combat, owner);
+  const ownerKey = Triggers.triggerOwnerKey(combat, owner);
   for (const id of combat.companions) {
     const carrier = companionCarrier(combat.registries, id, ownerKey);
     if (!carrier) continue;
@@ -295,7 +295,7 @@ export function syncSigilProperties(combat, entity, attunedSigils) {
   if (!combat || !owner) return;
   const ids = attunedSigils !== undefined ? attunedSigils : combat.attunedSigils;
   if (!Array.isArray(ids)) return;
-  const ownerKey = triggerOwnerKey(combat, owner);
+  const ownerKey = Triggers.triggerOwnerKey(combat, owner);
   for (const id of ids) {
     const carrier = sigilCarrier(combat.registries, id, ownerKey);
     if (!carrier) continue;
@@ -313,7 +313,7 @@ export function syncSigilProperties(combat, entity, attunedSigils) {
 export function syncRelicProperties(combat, entity) {
   const owner = entity || (combat && combat.player);
   if (!combat || !owner) return;
-  const ownerKey = triggerOwnerKey(combat, owner);
+  const ownerKey = Triggers.triggerOwnerKey(combat, owner);
   for (const relicId of owner.relicIds || []) {
     const carrier = relicCarrier(combat.registries, relicId, ownerKey);
     if (!carrier) continue;
@@ -341,7 +341,7 @@ export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels
   // The slots ride the combat (`combat.sigilSlots`, SPEC §14.4) for the solo
   // seat; a co-op seat handing in its own kit carries none in v1.
   const slots = sigilSlots !== undefined ? sigilSlots : (loadout === undefined ? combat.sigilSlots : null);
-  const ownerKey = triggerOwnerKey(combat, owner);
+  const ownerKey = Triggers.triggerOwnerKey(combat, owner);
   const wanted = kit
     ? loadoutCarriers(combat.registries, kit, owner.classId, ownerKey, tiers || {}, slots || null)
     : [];
