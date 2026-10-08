@@ -11,15 +11,15 @@ console.log('Launching combat browser');
 const browser = await chromium.launch({ channel: 'msedge', headless: true, timeout: 30000 });
 const errors = [], requests = [], optionalSourceRequests = [], reports = [];
 try {
-  for (const [width,height] of [[390,844],[1440,900],[320,640],[844,390]]) {
+  for (const [width,height] of [[390,844],[1440,900],[320,640],[844,390],[800,465]]) {
     if (process.env.QA_WIDTH && width !== Number(process.env.QA_WIDTH)) continue;
     const page = await browser.newPage({ viewport: { width,height }, hasTouch:width<600 });
     page.on('pageerror', error => errors.push(error.message));
     page.on('response', response => {
       if(response.status()<400) return;
       const failure={url:response.url(),status:response.status()};
-      // Source previews probe recorded SFX before using their synthesized fallback.
-      const optional=!base.includes('AshenSpire.html') && response.status()===404 && /\/assets\/sfx\/[A-Za-z0-9_-]+\.ogg$/.test(new URL(response.url()).pathname);
+      // HTTP previews probe recorded SFX before using their synthesized fallback.
+      const optional=!base.startsWith('file:') && response.status()===404 && /\/assets\/sfx\/[A-Za-z0-9_-]+\.ogg$/.test(new URL(response.url()).pathname);
       (optional ? optionalSourceRequests : requests).push(failure);
     });
     console.log('Loading combat',width,height);
@@ -71,6 +71,19 @@ try {
       await page.keyboard.press('Escape'); await page.waitForTimeout(100);
     }
     assert.equal(await page.locator('.combatant.context-selected').count(),0,'Escape clears selection');
+    if (shot==='combat') {
+      await page.locator('.combat-potions').click();
+      const use=page.locator('.combat-potion-menu .potion-use[aria-label="Use Blight Coating"]');
+      await use.waitFor();
+      if(await use.getAttribute('data-beat')==='hold') {
+        await use.hover(); await page.mouse.down(); await page.waitForTimeout(1300); await page.mouse.up();
+      } else await use.click();
+      const confirm=page.locator('.confirmation-modal .confirmation-confirm');
+      if(await confirm.isVisible()) await confirm.click();
+      await page.locator('.combat-potion-menu').waitFor({state:'hidden'});
+      await page.waitForTimeout(500); await page.keyboard.press('Escape');
+      console.log('PASS potion dialog above overlapping cards',width,height);
+    }
     if (shot==='combat' && (width===390 || width===1440)) {
       const card=page.locator('.hand .card:not(.unaffordable)').first();
       await card.click();

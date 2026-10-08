@@ -1612,5 +1612,5 @@
 :root .combat[data-composition='option-c'] .enemy:is(.context-selected,.hover-target)::after { box-shadow: 0 0 8px var(--enemy-intent-accent); }
 :root .combat[data-waist-overlap='true'] .player .combatant-card > :is(.nm,.meters) { visibility: hidden; }
 :root .combat[data-waist-overlap='true'] .player::after { display: none; }
-:root .combat[data-composition='option-c'] > .hand-area { position: relative; z-index: 2100; pointer-events: none; }
+:root .combat[data-composition='option-c'] > .hand-area { position: relative; z-index: 3; pointer-events: none; }
 :root .combat[data-composition='option-c'] > .hand-area :is(.card,.combat-action-row) { pointer-events: auto; }
