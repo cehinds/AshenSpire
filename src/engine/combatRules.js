@@ -248,8 +248,8 @@ export function candidateState(ctx) {
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
   if (candidate.combatExpansionVersion === 2 || candidate.sharedExpansionVersion === 2) {
-    candidate.combatControlRestrictions = entity => controlRestrictions({ ...candidate, combatExpansionVersion: entity.combatExpansionVersion || 1 }, entity);
-    candidate.restorationModifierPercent = (entity, kind) => ashenBlightRestorationPercent({ ...candidate, combatExpansionVersion: entity.combatExpansionVersion || 1 }, entity, kind, String(entity.combatOwnerCycle || 0));
+    candidate.combatControlRestrictions = entity => controlRestrictions({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity);
+    candidate.restorationModifierPercent = (entity, kind) => ashenBlightRestorationPercent({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity, kind, String(entity?.combatOwnerCycle || 0));
   }
   if (ctx.players) candidate.playerIdForEntity = (entity) => {
     for (const [id, seat] of candidate.players) if (seat.entity === entity) return id;

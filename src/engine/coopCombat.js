@@ -150,9 +150,9 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     try { return A.drawCards(C, amount); }
     finally { setActive(C, prior || null); }
   };
-  C.combatControlRestrictions = entity => controlRestrictions({ ...C, combatExpansionVersion: entity.combatExpansionVersion || 1 }, entity);
+  C.combatControlRestrictions = entity => controlRestrictions({ ...C, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity);
   C.restorationModifierPercent = (entity, kind) => ashenBlightRestorationPercent(
-    { ...C, combatExpansionVersion: entity.combatExpansionVersion || 1 }, entity, kind, String(entity.combatOwnerCycle || 0));
+    { ...C, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity, kind, String(entity?.combatOwnerCycle || 0));
   if (snapshot) {
     const saved = decodeCoopCombatSnapshot(snapshot);
     if (saved.foundation) F.validateFoundationSnapshot(saved.foundation);
@@ -789,7 +789,7 @@ function finishAbilityPlay(C) {
   const play = R.abilityResolved(C);
   if (!play) return;
   const inst = play.instance;
-  const def = resolveCard(C.registries, inst, C.breakMeterVersion || 0);
+  const def = resolveCombatCard(C, inst);
 
   if (!C.result) {
     // Same framework placement authority as the solo engine (hand parity).

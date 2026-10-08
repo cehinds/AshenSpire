@@ -6071,3 +6071,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,select) { pointer-events:auto; }
 @media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:44px; } }
+
+/* Keep the protection readout clear of the centered turn ribbon. */
+.field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; }
+@media(max-width:600px) { .field > .combat-expansion-controls { top:48px; } }

@@ -71,6 +71,11 @@ function rewriteTags(def, row, maneuver) {
 
 export function applyCombatExpansionCard(def) {
   def = applyCombatExpansionMartial(def);
+  // Each paid Power instance leaves the usable deck for this combat. Its
+  // installed status remains active; old runs never enter this projection.
+  if (def.type === 'power' && !(def.keywords || []).includes('exhaust')) {
+    def = { ...def, keywords: [...(def.keywords || []), 'exhaust'] };
+  }
   const row = combatExpansionSpellProfiles[def.equipmentProfileId] || combatExpansionCardOverlay[def.id];
   if (!row) return def;
   const originalTags = def.cardTags || def.tags || [];
@@ -102,6 +107,11 @@ export function applyCombatExpansionCard(def) {
   // These independent control payloads create the school's non-damage opening.
   if (def.id === 'hex') append({ op: 'buildup', target: 'enemy', status: 'sleep', amount: 4, camp: 'spell', recoveryProfile: 'mental' });
   if (def.id === 'attune') append({ op: 'gainWard', target: 'self', amount: 1, oncePerCombat: 'alteration-ward' });
+  if (def.id === 'starPath') {
+    append({ op: 'applyStatus', target: 'self', status: 'concealed', stacks: 1, duration: 2 });
+    card.textTemplate += ' Gain {concealed} Concealed for 2 turns. Sweep and Holy reveal it.';
+    if (card.upgrade?.textTemplate) card.upgrade.textTemplate += ' Gain {concealed} Concealed for 2 turns. Sweep and Holy reveal it.';
+  }
   if (def.id === 'moonrendCut' || def.id === 'gravityWell') append({ op: 'applyStatus', target: AREA.has(def.id) ? 'allEnemies' : 'enemy', status: 'prone', stacks: 1 });
   if (def.id === 'meteorite' || def.id === 'starfallBeam') { card.traits = [...(def.traits || []), 'unreflectable']; card.tags.push('trait:unreflectable'); card.cardTags.push('trait:unreflectable'); }
   const revise = (list, chance) => list.map(effect => ({ ...effect,

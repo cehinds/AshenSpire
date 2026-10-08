@@ -295,6 +295,25 @@ test('school edges modify only explicitly selected printed effect and weakness w
   assert.deepEqual(f.queue.map(action => action.effect.amount), [7, 6, 4]);
 });
 
+test('Spell Piercing does not borrow Martial Guard bypass and Counter Ward uses one fractional edge', () => {
+  const f = fixture();
+  const spell = carrier('casting', { camp: 'spell', school: 'lightning', damageType: 'piercing', reach: 'near' });
+  assert.equal(previewTacticalAction(f.ctx, f.source, f.target, spell, [{ amount: 4 }]).guardBypass, 0);
+  for (const [incomingType, expected] of [['slashing', 2.5], ['blunt', 1.5]]) {
+    const row = fixture();
+    const counter = carrier('counter', { camp: 'spell', school: 'fire', schoolEffect: 'ward', damageType: 'piercing' });
+    setCombatStance(row.ctx, row.target, counter);
+    armCombatCounter(row.ctx, row.target, counter, { payload: { ward: 2 },
+      coverage: { camps: ['spell'], reaches: ['near'], targeting: ['single'], effects: ['damage'] } });
+    const incoming = carrier('casting', { camp: 'spell', school: 'frost', damageType: incomingType, reach: 'near' });
+    const receipt = beginTacticalAction(row.ctx, row.source, row.target, incoming, [{ amount: 4 }]);
+    recordTacticalContact(receipt, { wardResisted: 4 });
+    completeTacticalAction(row.ctx, row.source, row.target, incoming, receipt);
+    assert.equal(row.queue[0].effect.amount, expected);
+    assert.equal(row.queue[0].card.combatWardEdgeApplied, true);
+  }
+});
+
 test('co-op receipt identity belongs to seat, not duplicate player entity ids', () => {
   const f = fixture(); const other = { ...f.target, attributes: { dexterity: 10, wisdom: 3, intelligence: 4 } };
   f.ctx.playerIdForEntity = entity => entity === other ? 'seat-b' : entity === f.target ? 'seat-a' : null;

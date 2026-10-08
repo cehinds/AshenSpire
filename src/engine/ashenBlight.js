@@ -1,6 +1,6 @@
 import { ASHEN_BLIGHT_RULES, ashenBlightFeat } from '../content/ashenBlight.js';
-import { createAshenBlightState, createAshenBlightCombatState, ashenBlightProblems, ashenBlightCombatProblems, ashenBlightBonuses } from '../model/ashenBlight.js';
-export { ashenBlightBonuses, effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
+import { createAshenBlightState, createAshenBlightCombatState, ashenBlightProblems, ashenBlightCombatProblems, ashenBlightBonuses, effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
+export { ashenBlightBonuses, effectiveAshenBlightAttributes };
 
 const enabled = ctx => ctx?.combatExpansionVersion === 2;
 const textKey = (value, name) => { if (typeof value !== 'string' || !value) throw new Error(`${name} must be a non-empty string`); };

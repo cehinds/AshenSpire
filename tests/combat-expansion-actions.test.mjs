@@ -90,3 +90,15 @@ test('expanded critical hits multiply once and still announce the original multi
   assert.equal(out.events.filter(event => event.type === 'critHit').length, 1);
   assert.equal(out.events.find(event => event.type === 'critHit').multiplier, 2);
 });
+
+
+test('un-aimed card faces show offense while target inspection preserves Ward mitigation', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5 }]);
+  enemy.persistentWard.value = enemy.persistentWard.max = 20;
+  const unAimed = previewCard(combat, 'paired');
+  const aimed = previewCard(combat, 'paired', enemy.id);
+  const row = unAimed.values.find(value => value.op === 'damage');
+  assert.equal(unAimed.tokens[row.token], 5);
+  assert.equal(row.perTarget[enemy.id], 0);
+  assert.equal(aimed.tokens[row.token], 0);
+});

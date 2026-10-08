@@ -47,7 +47,7 @@ test('rewardRolls is appended after every stream before it, so no existing strea
   // `shopOffers` (SPEC §14.2), `sigils` (SPEC §15.4) and intent reads (§4.7) were appended
   // after it; tests/shop-kinds.test.mjs and tests/legendary-sigils.test.mjs hold those.
   const at = STREAM_NAMES.indexOf('rewardRolls');
-  assert.deepEqual(STREAM_NAMES.slice(at + 1), ['shopOffers', 'sigils', 'enemyIntentVisibility']);
+  assert.deepEqual(STREAM_NAMES.slice(at + 1), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight']);
   assert.deepEqual(STREAM_NAMES.slice(0, at), [
     'map', 'shuffle', 'cardRewards', 'relicRewards', 'flaskRewards', 'armaments', 'enemyAI', 'enemyHP',
     'events', 'shop', 'misc', 'smith', 'combatProcs', 'seats',
@@ -205,7 +205,7 @@ function botTurn(combat, memberId) {
 
 /** A one-seat co-op session through its first fight, won, with `reg`'s schedule. */
 function coopFirstSpoils(reg, seedString) {
-  const host = createSession({ registries: legacySessionRegistry(reg), seedString });
+  const host = createSession({ registries: legacySessionRegistry(reg), seedString, combatExpansionVersion: 1 });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.start();
   // This test is about the reward door. Prime the ledger so one modest fight
@@ -452,7 +452,7 @@ test('a Taken levelCard row with no chosenDraftCardIds map at all is refused by 
 
 test('a co-op seat that was away claims its level card through the catch-up', () => {
   const reg = withSchedule({ onLevelUp: true });
-  const host = createSession({ registries: legacySessionRegistry(reg), seedString: 'AWAY' });
+  const host = createSession({ registries: legacySessionRegistry(reg), seedString: 'AWAY', combatExpansionVersion: 1 });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
   for (const member of host.livingMembers()) member.run.level.xp = xpToNext(reg, 1) - 1;
@@ -592,7 +592,7 @@ test('co-op couch seats: a level-card pick on seat A survives switching to seat 
 });
 
 test('co-op: a repeat choice while another seat still chooses grants nothing twice', () => {
-  const host = createSession({ registries: legacySessionRegistry(withSchedule({ onLevelUp: true })), seedString: 'SCHEDULE' });
+  const host = createSession({ registries: legacySessionRegistry(withSchedule({ onLevelUp: true })), seedString: 'SCHEDULE', combatExpansionVersion: 1 });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.addMember({ id: 'p2', name: 'p2', classId: 'rogue' });
   host.setConnectedMany(['p1', 'p2'], true);

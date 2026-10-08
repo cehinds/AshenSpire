@@ -3830,3 +3830,4 @@ card,,illusionDecoy,damage:arcane
 card,,illusionDecoy,reach:contact
 card,,illusionDecoy,targeting:single
 card,,illusionDecoy,source:spell
+card,,lowGuardRiposte,source:weapon

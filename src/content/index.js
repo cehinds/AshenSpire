@@ -28,6 +28,7 @@ import { coopCards } from './cards/coop.js';
 import { armamentCards } from './cards/armaments.js';
 import { corruptedCards } from './cards/corrupted.js';
 import { combatExpansionCombos } from './combatExpansionCombos.js';
+import { combatExpansionLore } from './combatExpansionLore.js';
 import { combatExpansionNewCards } from './combatExpansionCards.js';
 import { relics } from './relics.js';
 import { flasks } from './flasks.js';
@@ -71,7 +72,7 @@ import { derivedStatRules } from './derivedStats.js';
 import { characterCreation } from './generated/characterCreation.js';
 import { deriveEnemyMoves } from '../model/enemyMoveSources.js';
 
-const expansionCards = [...corruptedCards, ...combatExpansionNewCards, ...combatExpansionCombos].map(({ tags, cardTags, ...card }) => card);
+const expansionCards = [...corruptedCards, ...combatExpansionNewCards, ...combatExpansionCombos].map(({ tags, cardTags, ...card }) => ({ ...card, flavor: combatExpansionLore[card.id] }));
 const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards, ...armamentCards, ...expansionCards];
 const enemies = [...act1Enemies, ...act2Enemies, ...act3Enemies];
 const enemyMoves = deriveEnemyMoves(enemies);

@@ -552,7 +552,14 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
-  if (combatProfile.maneuver === 'counter') html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+  if (combatProfile.maneuver === 'counter') {
+    if (def.counterCoverage) {
+      const c = def.counterCoverage;
+      const names = { physical: 'Martial', spell: 'Spell', contact: 'Contact', near: 'Near', far: 'Far', single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
+      const coverage = [c.camps, c.reaches, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
+      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
+    } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+  }
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];

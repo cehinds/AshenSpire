@@ -9,8 +9,55 @@ import { matchupRiderEffects, beginTacticalAction, setCombatStance, armCombatCou
   recordTacticalContact, completeTacticalAction } from '../src/engine/combatMatchups.js';
 import { combatExpansionEntityProblems } from '../src/model/combatTacticsRules.js';
 import { previewAvoidance } from '../src/engine/combatAvoidance.js';
+import { applyStatusPressure } from '../src/engine/combatStatusControl.js';
+import { createCombat, previewCard } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
 
 const registries = createRegistries(contentBundle);
+
+test('Sweeping Blow authors bodily Off Balance pressure without changing legacy cards or other Sweeps', () => {
+  const original = resolveCard(registries, { cardId: 'sweepingBlow' }, 1);
+  const before = JSON.stringify(original);
+  const projected = applyCombatExpansionMartial(original);
+  assert.deepEqual(projected.effects.find(effect => effect.status === 'offBalance'), {
+    op: 'buildup', target: 'allEnemies', status: 'offBalance', amount: 3,
+    camp: 'physical', recoveryProfile: 'bodily',
+  });
+  assert.equal(combatProfileFor(projected).maneuver, 'sweep');
+  assert.equal(projected.targeting, 'area');
+  assert.match(projected.textTemplate, /Off Balance buildup/);
+  assert.equal(JSON.stringify(original), before);
+  assert.ok(!original.effects.some(effect => effect.status === 'offBalance'));
+  assert.ok(!applyCombatExpansionMartial(resolveCard(registries, { cardId: 'hewingArc' }, 1)).effects
+    .some(effect => effect.status === 'offBalance'));
+  const f = fixture(), pressure = projected.effects.find(effect => effect.status === 'offBalance');
+  const first = applyStatusPressure(f.ctx, f.source, pressure.status, pressure.amount, f.target, pressure);
+  assert.equal(first.acceptedBuildup, 3);
+  assert.equal(f.source.statuses.offBalance, undefined);
+  const second = applyStatusPressure(f.ctx, f.source, pressure.status, pressure.amount, f.target, pressure);
+  assert.equal(second.activeAdded, 1);
+  assert.equal(f.source.statuses.offBalance.stacks, 1);
+});
+
+test('base and upgraded Sweeping Blow full previews bind their printed Off Balance amount', () => {
+  for (const upgraded of [false, true]) {
+    const ref = { cardId: 'sweepingBlow', instanceId: 'sweep-preview', upgraded };
+    const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2,
+      enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 100, hp: 100,
+        maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10,
+        drawPerTurn: 1, deck: [ref] } });
+    const preview = previewCard(combat, ref.instanceId, combat.enemies[0].id);
+    assert.equal(preview.tokens.offBalance, 3);
+    assert.match(preview.resolvedDefinition.textTemplate, /\{offBalance\} Off Balance buildup/);
+    const fullText = preview.resolvedDefinition.textTemplate.replace(/\{([^}]+)\}/g,
+      (match, token) => preview.tokens[token] ?? match);
+    assert.match(fullText, /Add 3 Off Balance buildup to ALL enemies/);
+    assert.ok(!fullText.includes('{'), fullText);
+  }
+  const projected = applyCombatExpansionMartial({ ...registries.cards.get('sweepingBlow'),
+    upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 8 }], textTemplate: 'Deal {damage} damage twice.' } });
+  assert.match(projected.upgrade.textTemplate, /Off Balance buildup/);
+});
 const player = () => ({ id: 'player', kind: 'player', alive: true, hp: 50, block: 0,
   statuses: {}, ratings: { ar: 4, dr: 3, pr: 9 } });
 const fixture = () => {
@@ -117,6 +164,18 @@ test('status-only previews do not advertise damage avoidance or consume readines
   f.target.combatEvade = { charges: 1, bonus: 0 };
   assert.equal(previewAvoidance(f.ctx, f.target, { reach: 'contact' }, 0).chance, 0);
   assert.equal(f.target.combatEvade.charges, 1);
+});
+
+test('player action carriers expose actual electrical equipment traits to an enemy school Counter', () => {
+  const f = fixture(), def = resolveCard(registries, { cardId: 'strike', abilityRank: 0 }, 2);
+  f.target.combatTraits = { conductive: true, insulated: true };
+  let card = tacticalCarrier(def, {}, f.ctx, f.target);
+  assert.ok(card.combatProfile.traits.includes('conductive'));
+  assert.ok(card.combatProfile.traits.includes('insulated'));
+  f.target.statuses.grounded = { stacks: 1 };
+  card = tacticalCarrier(def, {}, f.ctx, f.target);
+  assert.ok(card.combatProfile.traits.includes('grounded'));
+  assert.ok(!card.combatProfile.traits.includes('conductive'));
 });
 
 test('permanent grades retain Quickstep Block, bonus draws and once-per-turn support', () => {

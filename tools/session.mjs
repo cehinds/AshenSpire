@@ -140,7 +140,9 @@ export function restoreSession(registries, data, { saveSession = null } = {}) {
   return s;
 }
 
-export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null, saveSession = null }) {
+export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null, saveSession = null, combatExpansionVersion = 2 }) {
+  if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
+  const memberCombatVersion = restore ? (restore.advancedConfigSnapshot?.breakMeterVersion === 2 ? 2 : 1) : combatExpansionVersion;
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   // Each member's open shrine visit (engine/locations.js), by member id.
   const shrineVisits = new Map();
@@ -170,7 +172,7 @@ export function createSession({ registries, seedString, endless = false, restore
   let order = restore ? restore.order : 0;
 
   const session = {
-    ...(restore ? (restore.advancedConfigSnapshot ? { advancedConfigSnapshot: structuredClone(restore.advancedConfigSnapshot) } : {}) : { advancedConfigSnapshot: { ...advancedConfigSnapshot(), breakMeterVersion: 2 } }),
+    ...(restore ? (restore.advancedConfigSnapshot ? { advancedConfigSnapshot: structuredClone(restore.advancedConfigSnapshot) } : {}) : { advancedConfigSnapshot: { ...advancedConfigSnapshot(), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 } }),
     id: `s${(seed % 100000).toString(36)}`,
     seedString: restore ? restore.seedString : seedToString(seed),
     seed,
@@ -322,7 +324,7 @@ export function createSession({ registries, seedString, endless = false, restore
     const entitlement = [...new Set(discoveredArmaments || [])];
     const profile = classMastery === undefined ? { discoveredArmaments: entitlement } : normalizeMasteryProfile({ discoveredArmaments: entitlement, classMastery });
     if (classMastery !== undefined && masteryProfileProblems(profile).length) throw new Error('co-op class mastery profile is malformed');
-    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile });
+    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile, combatExpansionVersion: memberCombatVersion });
     if (classMastery !== undefined || run.progressionRulesVersion===1) openRunClassMastery(registries, run, profile, { receiptId: `coop:${seed}:${id}`, bankable: false });
     // The party's order, not the default: a member's run rides the session's
     // seats exactly as it rides the session's act and floor (SPEC §13.4).

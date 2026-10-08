@@ -10,12 +10,12 @@ test('large face labels match the maneuver while spell Counters remain Counter',
   for (const [id, label] of [['strike','Attack'],['defend','Defend'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Counter'],['barrageCounter','Counter'],['emberDart','Spell']]) assert.equal(combatCardType(card(id)), label, id);
 });
 test('Counter summary distinguishes protection from return and includes card Evade', () => {
-  assert.match(combatCardSummary(card('barrageCounter'), null, reg), /Counter Area attacks and spells/);
+  assert.doesNotMatch(combatCardSummary(card('barrageCounter'), null, reg), /Counter|Area|Contact|attacks and spells/);
   assert.match(combatCardSummary(card('shieldBash'), null, reg), /Gain \d+ Block/);
-  assert.match(combatCardSummary(card('shieldBash'), null, reg), /Counter.*Poise/);
+  assert.match(combatCardSummary(card('shieldBash'), null, reg), /Return.*Poise/);
   const dodge = combatCardSummary(card('dodgeRoll'), null, reg);
-  assert.match(dodge, /prepare one Evade/);
-  assert.match(dodge, /Counter.*damage/);
+  assert.match(dodge, /Prepare one Evade/);
+  assert.match(dodge, /Return.*damage/);
 });
 test('new spell summary contains its explicit gauge pressure and chance', () => {
   const text = combatCardSummary(card('emberDart'), null, reg);
@@ -38,4 +38,18 @@ test('temporary tier options keep nonzero base separate and never offer locked t
   assert.deepEqual(plan.options.map(option => option.id), ['2','3','5']);
   assert.match(plan.options[1].name, /tier 3 \(\+1\)/);
   assert.match(plan.options[2].tooltip, /\+3 SP and \+3 Mana/);
+});
+
+test('compact Counter face leaves complete delivery coverage in inspection', async () => {
+  const { cardDetailHtml } = await import('../src/ui/components/card.js');
+  const html = cardDetailHtml(reg, {cardId:'barrageCounter', upgraded:false});
+  for (const term of ['Counter coverage:', 'Martial', 'Spell', 'Contact', 'Near', 'Far', 'Area', 'status pressure']) assert.ok(html.includes(term), term);
+});
+
+test('primary Power and Status labels precede camps; utility skills remain Skill', () => {
+  for (const id of ['emberCovenant','shatterOpportunity','rallyingStandard']) assert.equal(combatCardType(card(id)), 'Power', id);
+  assert.equal(combatCardType({id:'fixture-status',type:'status',cardTags:['camp:spell']}), 'Status');
+  assert.equal(combatCardType({id:'fixture-curse',type:'curse',cardTags:['camp:spell']}), 'Status');
+  assert.equal(combatCardType(card('dreamHarvest')), 'Skill');
+  assert.equal(combatCardType(card('emberDart')), 'Spell');
 });

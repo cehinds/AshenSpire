@@ -367,7 +367,8 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const profile = normalizedProfile(carrier);
   const avoidance = previewAvoidance(ctx, target, profile, amount, { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
   const guardBefore = number(target?.block) - Math.min(number(target?.block), number(target?.wardBlock));
-  const pierce = profiles.some((p, i) => amounts[i] > 0 && cfg.damageAliases[p.damageType] === 'piercing' || amounts[i] > 0 && p.damageType === 'piercing');
+  const pierce = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0
+    && (cfg.damageAliases[p.damageType] === 'piercing' || p.damageType === 'piercing'));
   return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts,
     guardBefore, guardBypass: pierce && !carrier?.combatReaction ? Math.min(amount, guardBefore, cfg.damageRiders.piercing?.guardBypass || 0) : 0,
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
@@ -436,7 +437,8 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const queue = [];
   const enqueue = effect => {
     const action = { effect, source: target, owner: target, target: source,
-      card: { ...receipt.counter.carrier, combatReaction: true, skipRatingBonus: true }, meta: { combatCounterReaction: true } };
+      card: { ...receipt.counter.carrier, combatReaction: true, skipRatingBonus: true,
+        ...(effect.op === 'wardDamage' ? { combatWardEdgeApplied: true } : {}) }, meta: { combatCounterReaction: true } };
     queue.push(action); ctx.enqueue?.(action);
   };
   if (receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0 && target?.alive) {
@@ -464,7 +466,15 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const caster = hasTrait(source, 'caster');
   if (magical && !caster && counter.payload.hpAgainstNonCaster !== true) payload.hp = 0;
   const schoolEffect = counter.schoolEffect;
-  if (schoolEffect && schoolEffect in payload) payload[schoolEffect] = Math.floor(payload[schoolEffect] * schoolReturnMultiplier(ctx, counter, receipt.profile));
+  const edges = receipt.profiles.filter((profile, index) => receipt.covered[index])
+    .map(profile => schoolReturnMultiplier(ctx, counter, profile));
+  const schoolEdge = edges.some(edge => edge < 1) ? Math.min(...edges) : Math.max(1, ...edges);
+  if (schoolEffect && schoolEffect in payload && schoolEffect !== 'ward') payload[schoolEffect] = Math.floor(payload[schoolEffect] * schoolEdge);
+  // Ward pressure retains fractional carry. A declared school edge replaces
+  // Piercing's generic Ward advantage; the same return never multiplies both.
+  const pierceWard = magical && counter.carrier.combatProfile?.damageType === 'piercing';
+  const wardEdge = schoolEffect === 'ward' && schoolEdge !== 1 ? schoolEdge : pierceWard ? 1.25 : 1;
+  payload.ward *= wardEdge;
   ctx.emit?.('combatCounterTriggered', { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
     sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 });
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });

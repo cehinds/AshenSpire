@@ -14,6 +14,12 @@ const groups = {
 export const combatExpansionMartialOverlay = Object.fromEntries(Object.entries(groups)
   .flatMap(([maneuver, ids]) => ids.split(' ').map(id => [id, { maneuver }])));
 combatExpansionMartialOverlay.nockAndWait = { maneuver: 'counter', reach: 'near', counterMode: 'ranged' };
+// A wide sweep disrupts footing through authored bodily pressure, rather than
+// granting every Sweep an automatic active status. Two base sweeps fill 6.
+combatExpansionMartialOverlay.sweepingBlow.buildup = {
+  op: 'buildup', target: 'allEnemies', status: 'offBalance', amount: 3,
+  camp: 'physical', recoveryProfile: 'bodily',
+};
 const AREA = new Set(['ricochet', 'fanOfKnives', 'toxicVolley', 'arrowVolley']);
 const FAR = new Set(['aimedShot', 'barbedArrow']);
 const EVADES = new Set(['evasiveGuard', 'dodgeRoll', 'quickstep', 'backstep', 'acrobaticsRogue', 'shadowstep', 'progression-nightstep']);
@@ -83,6 +89,14 @@ export function applyCombatExpansionMartial(def) {
   const card = { ...def, tags: rewritten, cardTags: rewritten, reach, targeting,
     effects: pressureEffects(def.effects), ...(role.maneuver === 'support' ? { stanceTrigger: false } : {}) };
   if (def.upgrade?.effects) card.upgrade = { ...def.upgrade, effects: pressureEffects(def.upgrade.effects) };
+  if (row.buildup) {
+    card.effects.push(structuredClone(row.buildup));
+    card.textTemplate = `${def.textTemplate} Add {offBalance} Off Balance buildup to ALL enemies.`;
+    if (card.upgrade?.effects) {
+      card.upgrade.effects.push(structuredClone(row.buildup));
+      card.upgrade.textTemplate = `${def.upgrade.textTemplate ?? def.textTemplate} Add {offBalance} Off Balance buildup to ALL enemies.`;
+    }
+  }
   if (role.maneuver === 'smash') card.breakPoiseBonus = 3;
   if (role.maneuver === 'ranged') card.projectile = true;
   if (role.maneuver === 'counter') {

@@ -1394,8 +1394,7 @@ function finishAbilityPlay(combat) {
   const inst = play.instance;
   const def = resolveCombatCard(combat, inst);
 
-  // Placement after resolution (SPEC §4.3): Exhaust → exhaust pile;
-  // Powers are removed from play (NOT exhausted); everything else → discard.
+  // Expanded Powers carry Exhaust; legacy Powers without it leave play.
   // The destination is the framework's call; this engine moves the card.
   if (!combat.result) {
     const destination = combat.registries.framework.afterPlayDestination(def);
@@ -1626,6 +1625,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.hitDamages = Array.from({ length: Math.max(0, Math.floor(entry.hits)) }, () => entry.value);
           entry.totalDamage = entry.hitDamages.reduce((sum, amount) => sum + amount, 0);
         }
+        // An un-aimed face states the card's offensive amount. Target rows
+        // retain exact mitigation for inspection and target previews.
+        if (combat.combatExpansionVersion === 2 && !targetId && !isCounterReply) {
+          const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
+          entry.faceValue = A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true });
+        }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
         // the boosted number. Engine states the fact; display reads it.
@@ -1700,7 +1705,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       const token = tokenByIndexField.get(`${authoredIndex}:${valueField}`);
       if (token) {
         entry.token = token;
-        tokens[token] = entry.value;
+        tokens[token] = entry.faceValue ?? entry.value;
         if (eff.op === 'damage' && entry.hitDamages?.length > 1
           && entry.hitDamages.some(amount => amount !== entry.hitDamages[0])) {
           const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);

@@ -934,7 +934,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'wardDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) Control.spendPersistentWard(ctx, t,
-        evalNum(ctx, action, eff.amount, 0, t) * (action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
+        evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
       break;
     }
     case 'buildup': {

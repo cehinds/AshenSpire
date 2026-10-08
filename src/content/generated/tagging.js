@@ -22357,5 +22357,11 @@ export const tagging = [
     "scope": "",
     "objectId": "illusionDecoy",
     "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowGuardRiposte",
+    "tagId": "source:weapon"
   }
 ];

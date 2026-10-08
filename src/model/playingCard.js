@@ -37,6 +37,9 @@ const freeze = (value) => Object.freeze(value);
 
 export function combatCardType(def) {
   const p = combatProfileFor(def);
+  if (def.type === 'power') return 'Power';
+  if (['status', 'curse'].includes(def.type)) return 'Status';
+  if (def.type === 'skill' && !p.maneuver) return 'Skill';
   if (p.maneuver === 'counter') return 'Counter';
   if (p.camp === 'spell') return 'Spell';
   return p.maneuver && p.maneuver !== 'casting' ? p.maneuver[0].toUpperCase() + p.maneuver.slice(1)
@@ -70,18 +73,11 @@ export function combatCardSummary(def, preview = null, registries = null) {
     return '';
   };
   const p = combatProfileFor(def), parts = [];
-  if (p.maneuver === 'counter' && def.counterCoverage) {
-    const coverage = def.counterCoverage;
-    const area = coverage.targeting?.length === 1 && coverage.targeting[0] === 'area' ? 'Area ' : coverage.targeting?.includes('area') ? '' : 'single ';
-    const camp = coverage.camps?.length === 2 ? 'attacks and spells' : coverage.camps?.includes('spell') ? 'spells' : 'attacks';
-    const reach = coverage.reaches?.length === 1 ? ` at ${title(coverage.reaches[0])} range` : '';
-    parts.push(`Counter ${area}${camp}${reach}`);
-  }
   for (const [index, effect] of (def.effects || []).entries()) {
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies' : '';
     let text;
     switch (effect.op) {
-      case 'damage': { const hits = preview?.values?.[index]?.hits ?? effect.hits ?? 1; text = `${p.maneuver === 'counter' ? 'Counter return' : 'Deal'} ${n} damage${typeof hits === 'number' && hits > 1 ? ` ×${hits}` : ''}${area}`; break; }
+      case 'damage': { const hits = preview?.values?.[index]?.hits ?? effect.hits ?? 1; text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} damage${typeof hits === 'number' && hits > 1 ? ` ×${hits}` : ''}${area}`; break; }
       case 'block': text = `Gain ${n} Block`; break;
       case 'gainBarrier': text = `Gain ${n} Barrier`; break;
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
@@ -96,8 +92,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'gainEnergy': text = `Gain ${n} SP`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} SP`; break;
-      case 'poiseDamage': text = `${p.maneuver === 'counter' ? 'Counter return' : 'Deal'} ${n} Poise${area}`; break;
-      case 'wardDamage': text = `${p.maneuver === 'counter' ? 'Counter return' : 'Deal'} ${n} Ward impact${area}`; break;
+      case 'poiseDamage': text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} Poise${area}`; break;
+      case 'wardDamage': text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} Ward impact${area}`; break;
       case 'retain': text = `Retain ${n}`; break;
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
@@ -121,10 +117,10 @@ export function combatCardSummary(def, preview = null, registries = null) {
       const amount = live ?? payload[key];
       if (typeof amount === 'number' && amount > 0) returns.push(`${amount} ${label}`);
     }
-    if (returns.length) parts.push(`Counter: return ${returns.join(' + ')}`);
+    if (returns.length) parts.push(`Return ${returns.join(' + ')}`);
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
   }
-  if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
+  if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
   if (def.comboHook) return null;
   for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
   return parts.length ? `${parts.join('. ')}.` : null;

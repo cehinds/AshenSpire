@@ -73,13 +73,13 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { cardChoice } from '../src/model/cardChoices.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, cardChoicePlan } from '../src/engine/combat.js';
-import { emitEvent } from '../src/engine/triggers.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, botControlAction, createDecisionDigest, fightFingerprint, digestLine, DIGEST_LINE } from './simbot.mjs';
 import { createRunLoop, payFightXp, fleetSeed } from './simrun.mjs';
 import { bossTierScale } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { hasStatus } from '../src/engine/statuses.js';
+import { candidateState } from '../src/engine/combatRules.js';
 
 const REG = createRegistries(contentBundle);
 const argv = process.argv.slice(2);
@@ -296,31 +296,12 @@ function resolvedLiveHpLoss(combat, hand, def, target) {
 // the exact authoritative target. No product state, RNG counter, pile, log,
 // target or trace object is touched by this probe.
 // The function-valued keys a combat carries, each rebound to the probe below.
-const PROBE_DOORS = ['emit', '_emitEvent', 'enqueue', 'nextInstanceId'];
 function cloneCombatForOrderedProbe(combat) {
   if (combat.queue.length || combat._buffer) throw new Error('ordered lethal probe requires a settled dispatch boundary');
-  const state = {};
-  // Every function on the combat is a door bound to it (emit, enqueue, the id
-  // counter) or a module helper (createCombat's `_emitEvent`): none is state,
-  // and structuredClone refuses functions outright (DataCloneError). Each is
-  // skipped and rebound to the probe below; one not in PROBE_DOORS throws.
-  for (const [key, value] of Object.entries(combat)) {
-    if (key === 'registries' || key === 'rng') continue;
-    if (typeof value === 'function') {
-      // A door this probe does not rebind would be missing from the probe and
-      // fail later, or quietly; refuse it here, by name (PR #1492 review).
-      if (!PROBE_DOORS.includes(key)) throw new Error(`ordered lethal probe: combat.${key} is a function the probe does not rebind`);
-      continue;
-    }
-    state[key] = key === 'eventLog' ? [] : value;
-  }
-  const probe = structuredClone(state);
-  probe.registries = combat.registries;
-  probe.rng = createRng(combat.rng.seed, combat.rng.getCounters());
-  probe._emitEvent = emitEvent;
-  probe.emit = (type, payload) => emitEvent(probe, type, payload);
-  probe.enqueue = (action) => probe.queue.push(action);
-  probe.nextInstanceId = () => `gen${++probe._idCounter}`;
+  // Use the same detached graph as engine previews. Status/restoration/draw
+  // callbacks belong to the probe; accepted-play persistence stays omitted.
+  const probe = candidateState(combat);
+  probe.eventLog = [];
   return probe;
 }
 

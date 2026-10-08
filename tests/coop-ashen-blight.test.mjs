@@ -16,6 +16,25 @@ import { mountCombatCombo } from '../src/engine/combatExpansionCombos.js';
 
 const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards,
   ...corruptedCards.filter(card => !contentBundle.cards.some(row => row.id === card.id))] });
+
+test('co-op birth defaults to expanded rules and restored older sessions keep new seats on their saved version', () => {
+  const current = createSession({ registries, seedString: 'BIRTH2' });
+  const expanded = current.addMember({ id: 'a', name: 'A', classId: 'reaver' });
+  assert.equal(expanded.run.combatExpansionVersion, 2);
+  assert.equal(current.serialize().advancedConfigSnapshot.breakMeterVersion, 2);
+  const legacy = createSession({ registries, seedString: 'BIRTH1', combatExpansionVersion: 1 });
+  const original = legacy.addMember({ id: 'a', name: 'A', classId: 'reaver' });
+  assert.equal(original.run.combatExpansionVersion, 1);
+  assert.equal(original.run.ashenBlight, undefined);
+  legacy.start();
+  const restored = restoreSession(registries, legacy.serialize());
+  assert.deepEqual(restored.refusedMembers(), []);
+  const joined = restored.addMember({ id: 'b', name: 'B', classId: 'herald' });
+  assert.equal(joined.run.combatExpansionVersion, 1);
+  assert.equal(joined.run.ashenBlight, undefined);
+  assert.equal(restored.serialize().advancedConfigSnapshot.breakMeterVersion, 1);
+});
+
 function player(id, cardId = 'blightedTransmute') {
   return { id, classId: 'herald', combatExpansionVersion: 2, maxHp: 80, hp: 70,
     maxStamina: 30, stamina: 30, energyMax: 30, maxMana: 30, mana: 30, drawPerTurn: 3,

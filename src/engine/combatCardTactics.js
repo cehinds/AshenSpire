@@ -38,7 +38,7 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
     const identity = piece && attackDescriptor(piece);
     carrier.combatProfile.damageType = identity?.damageType || (kind === 'unarmed' ? 'blunt' : null);
   }
-  return carrier;
+  return combatExpansionEnabled(ctx) ? expansionCarrierTraits(carrier, source) : carrier;
 }
 
 function counterFormulaContext(ctx, source, target, meta) {

@@ -22,4 +22,3 @@ export const corruptedCards = [
     flavor: 'The brand flares outward, sheltering the body while darkening what remains within.',
   },
 ];
-export const CORRUPTED_CARD_IDS = Object.freeze(corruptedCards.map(card => card.id));

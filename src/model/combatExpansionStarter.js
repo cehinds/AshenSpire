@@ -17,7 +17,9 @@ export function ensureExpandedStarterCoverage(registries, run) {
     if (!registries.cards.has(cardId)) throw new Error(`Expanded starter requires authored '${cardId}'`);
     const instanceId = `expansionStarter:${run.class}:${maneuver}`;
     if (run.deck.some(card => card.instanceId === instanceId)) throw new Error(`Conflicting expanded starter '${instanceId}'`);
-    run.deck.push({ instanceId, cardId, upgraded: false, grantSource: source });
+    const authored = registries.cards.get(cardId);
+    run.deck.push({ instanceId, cardId, upgraded: false, grantSource: source,
+      ...(run.progressionRulesVersion === 1 && authored.gradeProfiles ? { abilityRank: 0 } : {}) });
     added.push(cardId);
   }
   if (!added.length) return added;
