@@ -1,0 +1,139 @@
+{
+  "built": {
+    "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+    "release": "0.7.1",
+    "ordinal": 1156,
+    "digest": "748eaa974e",
+    "built": "2026-10-08"
+  },
+  "cases": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "statePreserved": true,
+      "default": "alternative",
+      "classicToggle": true,
+      "hiddenWithDebugOff": true,
+      "cardActions": 2
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "statePreserved": true,
+      "default": "alternative",
+      "classicToggle": true,
+      "hiddenWithDebugOff": true,
+      "cardActions": 2
+    },
+    {
+      "name": "desktop-coop",
+      "width": 1440,
+      "height": 1000,
+      "appearances": [
+        "alternative",
+        "classic"
+      ],
+      "sameSnapshot": true,
+      "transport": "canned screenshot state"
+    },
+    {
+      "name": "phone-coop",
+      "width": 390,
+      "height": 844,
+      "appearances": [
+        "alternative",
+        "classic"
+      ],
+      "sameSnapshot": true,
+      "transport": "canned screenshot state"
+    }
+  ],
+  "errors": [],
+  "network": [],
+  "httpErrors": [
+    {
+      "url": "http://localhost:4497/assets/sfx/holdTick.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/cardPlay.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/holdCommit.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/block.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/holdTick.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/cardPlay.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/holdCommit.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/block.ogg",
+      "status": 404,
+      "type": "Fetch"
+    }
+  ],
+  "optionalSfxProbes": [
+    {
+      "url": "http://localhost:4497/assets/sfx/holdTick.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/cardPlay.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/holdCommit.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/block.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/holdTick.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/cardPlay.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/holdCommit.ogg",
+      "status": 404,
+      "type": "Fetch"
+    },
+    {
+      "url": "http://localhost:4497/assets/sfx/block.ogg",
+      "status": 404,
+      "type": "Fetch"
+    }
+  ]
+}
