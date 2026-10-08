@@ -1,0 +1,622 @@
+{
+  "schemaVersion": 1,
+  "status": "selection-candidates-only",
+  "referenceRole": "Character identity and paint style only; all candidate poses are newly generated.",
+  "layout": {
+    "columns": 3,
+    "rows": 2,
+    "occupied": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "boards": [
+    {
+      "id": "reaver-defend",
+      "actor": "reaver",
+      "stance": "defend",
+      "path": "boards/reaver-defend.png",
+      "reference": "../source/reaver-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same rusty closed helmet and Wayfarer plate. ONE continuous full deep crimson cape covers the back, no shredded strips. One huge straight greatsword, wielded with BOTH hands in attack and defend. No shield, no daggers.\nAll five options are defend HELD stances.\nCell 1: Low diagonal guard. Wide bent-knee braced stance; both hands in FRONT of sternum hold greatsword diagonally upwards, blade between torso and incoming enemy on screen-right.\nCell 2: High roof guard. Both hands in FRONT above forehead, greatsword forms an angled roof over head toward enemy-right; elbows forward, crouched planted feet.\nCell 3: Forward middle guard. Both hands directly in FRONT at chest level, greatsword points upward-forward toward enemy-right, firm compact central guard.\nCell 4: Hanging guard. Both hands ahead of chest holding hilt high, blade hangs diagonally DOWN in the forward screen-right space; braced knees; covers incoming enemy.\nCell 5: Low gate guard. Both hands ahead at waist, sword slopes upward through FORWARD space toward enemy-right; grounded deep wide stance.",
+      "options": [
+        {
+          "id": "reaver-defend-1",
+          "label": "D1",
+          "name": "Low diagonal guard",
+          "description": "Wide bent-knee braced stance; both hands in FRONT of sternum hold greatsword diagonally upwards, blade between torso and incoming enemy on screen-right.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "reaver-defend-2",
+          "label": "D2",
+          "name": "High roof guard",
+          "description": "Both hands in FRONT above forehead, greatsword forms an angled roof over head toward enemy-right; elbows forward, crouched planted feet.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "reaver-defend-3",
+          "label": "D3",
+          "name": "Forward middle guard",
+          "description": "Both hands directly in FRONT at chest level, greatsword points upward-forward toward enemy-right, firm compact central guard.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "reaver-defend-4",
+          "label": "D4",
+          "name": "Hanging guard",
+          "description": "Both hands ahead of chest holding hilt high, blade hangs diagonally DOWN in the forward screen-right space; braced knees; covers incoming enemy.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "reaver-defend-5",
+          "label": "D5",
+          "name": "Low gate guard",
+          "description": "Both hands ahead at waist, sword slopes upward through FORWARD space toward enemy-right; grounded deep wide stance.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "rogue-defend",
+      "actor": "rogue",
+      "stance": "defend",
+      "path": "boards/rogue-defend.png",
+      "reference": "../source/rogue-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same hood, brown Gutter Leathers and faded teal cloak. One small dagger in each hand in attack/defend; exactly two daggers, not swords.\nAll five options are defend HELD stances.\nCell 1: Forward crossed guard. Crouch facing RIGHT. BOTH elbows and hands extend in FRONT of sternum toward enemy-right. Daggers form X directly ahead of chest, NOT beside shoulder/back/flank.\nCell 2: Split forward guard. Both forearms in FRONT ahead of chest, hands clearly screen-right of torso; dagger one high at face, one low at ribs, braced knees.\nCell 3: Compact center guard. Both fists close together in FRONT of chest pointing toward enemy-right; daggers upright slightly apart forming compact defensive V; elbows forward.\nCell 4: High forward parry. Both arms raised FORWARD in front of face, both dagger points angled outward in enemy-right space; crouched wide feet, no lateral crossed-arm pose.\nCell 5: Low forward cover. Low crouch, both hands ahead of torso on screen-right with one dagger covering chest and the other abdomen, both blades guarding FRONT.",
+      "options": [
+        {
+          "id": "rogue-defend-1",
+          "label": "D1",
+          "name": "Forward crossed guard",
+          "description": "Crouch facing RIGHT. BOTH elbows and hands extend in FRONT of sternum toward enemy-right. Daggers form X directly ahead of chest, NOT beside shoulder/back/flank.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "rogue-defend-2",
+          "label": "D2",
+          "name": "Split forward guard",
+          "description": "Both forearms in FRONT ahead of chest, hands clearly screen-right of torso; dagger one high at face, one low at ribs, braced knees.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "rogue-defend-3",
+          "label": "D3",
+          "name": "Compact center guard",
+          "description": "Both fists close together in FRONT of chest pointing toward enemy-right; daggers upright slightly apart forming compact defensive V; elbows forward.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "rogue-defend-4",
+          "label": "D4",
+          "name": "High forward parry",
+          "description": "Both arms raised FORWARD in front of face, both dagger points angled outward in enemy-right space; crouched wide feet, no lateral crossed-arm pose.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "rogue-defend-5",
+          "label": "D5",
+          "name": "Low forward cover",
+          "description": "Low crouch, both hands ahead of torso on screen-right with one dagger covering chest and the other abdomen, both blades guarding FRONT.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "starseer-casting",
+      "actor": "starseer",
+      "stance": "casting",
+      "path": "boards/starseer-casting.png",
+      "reference": "../source/starseer-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same pointed hood, dark navy Nightweave robe, gold embroidery and long ornate staff with celestial circular head. No sword/shield. Staff two-handed for attack/defend. Casting: staff in anatomical RIGHT hand, open book in anatomical LEFT.\nAll five options are casting HELD stances.\nCell 1: Chest-level reading. Book supported at chest height in FRONT of the torso toward screen-right, head bowed toward pages. Staff right hand raised straight upward-forward.\nCell 2: Waist-level reading. Book LEFT hand at waist height extended FORWARD toward enemy-right, pages tilted upward BACK toward the hood's eyes, right-hand staff upright beside front foot.\nCell 3: Close-focus reading. Book LEFT hand just below chin directly in FRONT toward screen-right, elbows naturally bent; right staff held upward-forward, hood visibly reading.\nCell 4: Extended front tome. Left forearm reaches FORWARD, holding open book just beyond chest in screen-right space; open pages angled up/inward toward own head. Right staff raised diagonally up.\nCell 5: Braced reading. Slight knee bend; LEFT hand book in FRONT at solar plexus, open pages angled toward own hood; RIGHT hand upward staff and head following book.\nCRITICAL BOOK GEOMETRY: Enemy and character gaze are toward screen RIGHT. The book is physically AHEAD of the sternum in that same front-facing direction (screen-right of torso), NEVER behind back or out on viewer-left. Left arm reaches around/across in FRONT to support underside of book. Book open in shallow V with inside pages tilted UP and INWARD toward the character's face so character can READ it. From rear camera we see its OUTER COVER/back underside or oblique top page edges; do NOT show pages facing away from character toward the viewer. Keep head looking toward book, credible wrist/grip and exactly one book. Do not reuse old reference book placement/orientation.",
+      "options": [
+        {
+          "id": "starseer-casting-1",
+          "label": "C1",
+          "name": "Chest-level reading",
+          "description": "Book supported at chest height in FRONT of the torso toward screen-right, head bowed toward pages. Staff right hand raised straight upward-forward.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "starseer-casting-2",
+          "label": "C2",
+          "name": "Waist-level reading",
+          "description": "Book LEFT hand at waist height extended FORWARD toward enemy-right, pages tilted upward BACK toward the hood's eyes, right-hand staff upright beside front foot.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "starseer-casting-3",
+          "label": "C3",
+          "name": "Close-focus reading",
+          "description": "Book LEFT hand just below chin directly in FRONT toward screen-right, elbows naturally bent; right staff held upward-forward, hood visibly reading.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "starseer-casting-4",
+          "label": "C4",
+          "name": "Extended front tome",
+          "description": "Left forearm reaches FORWARD, holding open book just beyond chest in screen-right space; open pages angled up/inward toward own head. Right staff raised diagonally up.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "starseer-casting-5",
+          "label": "C5",
+          "name": "Braced reading",
+          "description": "Slight knee bend; LEFT hand book in FRONT at solar plexus, open pages angled toward own hood; RIGHT hand upward staff and head following book.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "herald-casting",
+      "actor": "herald",
+      "stance": "casting",
+      "path": "boards/herald-casting.png",
+      "reference": "../source/herald-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same rust-red hood and Rite Vestments with crosses and belt. UNARMED: no sword, staff, shield or dagger. Casting uses one open book in left hand, right hand gestures.\nAll five options are casting HELD stances.\nCell 1: Chest-level prayer book. LEFT hand book in FRONT at chest height toward screen-right, hood looking at inward/upward facing pages; right palm forward above it.\nCell 2: Low reading book. LEFT hand book in FRONT at waist height on screen-right, pages tilted toward the reader's eyes; head inclined down, right palm near face.\nCell 3: Raised reading book. LEFT hand book held in FRONT near chin on screen-right, pages FACE own hood; right hand spread-finger gesture beside face.\nCell 4: Extended front book. LEFT arm gently extends FORWARD toward enemy-right holding book at chest height, pages tilted up/back toward reader; right hand raised blessing.\nCell 5: Compact prayer posture. LEFT hand supports open book IN FRONT close to sternum screen-right, pages inward to reader; knees lightly bent, right hand over book without obscuring it.\nCRITICAL BOOK GEOMETRY: Enemy and character gaze are toward screen RIGHT. The book is physically AHEAD of the sternum in that same front-facing direction (screen-right of torso), NEVER behind back or out on viewer-left. Left arm reaches around/across in FRONT to support underside of book. Book open in shallow V with inside pages tilted UP and INWARD toward the character's face so character can READ it. From rear camera we see its OUTER COVER/back underside or oblique top page edges; do NOT show pages facing away from character toward the viewer. Keep head looking toward book, credible wrist/grip and exactly one book. Do not reuse old reference book placement/orientation.",
+      "options": [
+        {
+          "id": "herald-casting-1",
+          "label": "C1",
+          "name": "Chest-level prayer book",
+          "description": "LEFT hand book in FRONT at chest height toward screen-right, hood looking at inward/upward facing pages; right palm forward above it.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "herald-casting-2",
+          "label": "C2",
+          "name": "Low reading book",
+          "description": "LEFT hand book in FRONT at waist height on screen-right, pages tilted toward the reader's eyes; head inclined down, right palm near face.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "herald-casting-3",
+          "label": "C3",
+          "name": "Raised reading book",
+          "description": "LEFT hand book held in FRONT near chin on screen-right, pages FACE own hood; right hand spread-finger gesture beside face.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "herald-casting-4",
+          "label": "C4",
+          "name": "Extended front book",
+          "description": "LEFT arm gently extends FORWARD toward enemy-right holding book at chest height, pages tilted up/back toward reader; right hand raised blessing.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "herald-casting-5",
+          "label": "C5",
+          "name": "Compact prayer posture",
+          "description": "LEFT hand supports open book IN FRONT close to sternum screen-right, pages inward to reader; knees lightly bent, right hand over book without obscuring it.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "reaver-attack",
+      "actor": "reaver",
+      "stance": "attack",
+      "path": "boards/reaver-attack.png",
+      "reference": "../source/reaver-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same rusty closed helmet and Wayfarer plate. ONE continuous full deep crimson cape covers the back, no shredded strips. One huge straight greatsword, wielded with BOTH hands in attack and defend. No shield, no daggers.\nAll five options are attack HELD stances.\nCell 1: Shoulder ready. Wide feet, greatsword TWO hands forward at shoulder height, blade angled up-forward toward enemy-right, poised to strike.\nCell 2: High ready. Two hands above head in the forward space, blade up diagonally; balanced upright wide feet, ready not swinging.\nCell 3: Low forward ready. Two hands ahead at waist, blade diagonally forward-up enemy-right; bent knees and leaning ready.\nCell 4: Middle ready. Both hands forward at chest, greatsword blade extends diagonally up toward enemy-right; compact planted body.\nCell 5: Side-to-front ready. Greatsword held BOTH hands beside front shoulder but hands ahead of torso, tip up; rear foot planted, forward foot bent.",
+      "options": [
+        {
+          "id": "reaver-attack-1",
+          "label": "A1",
+          "name": "Shoulder ready",
+          "description": "Wide feet, greatsword TWO hands forward at shoulder height, blade angled up-forward toward enemy-right, poised to strike.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "reaver-attack-2",
+          "label": "A2",
+          "name": "High ready",
+          "description": "Two hands above head in the forward space, blade up diagonally; balanced upright wide feet, ready not swinging.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "reaver-attack-3",
+          "label": "A3",
+          "name": "Low forward ready",
+          "description": "Two hands ahead at waist, blade diagonally forward-up enemy-right; bent knees and leaning ready.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "reaver-attack-4",
+          "label": "A4",
+          "name": "Middle ready",
+          "description": "Both hands forward at chest, greatsword blade extends diagonally up toward enemy-right; compact planted body.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "reaver-attack-5",
+          "label": "A5",
+          "name": "Side-to-front ready",
+          "description": "Greatsword held BOTH hands beside front shoulder but hands ahead of torso, tip up; rear foot planted, forward foot bent.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "reaver-casting",
+      "actor": "reaver",
+      "stance": "casting",
+      "path": "boards/reaver-casting.png",
+      "reference": "../source/reaver-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same rusty closed helmet and Wayfarer plate. ONE continuous full deep crimson cape covers the back, no shredded strips. One huge straight greatsword, wielded with BOTH hands in attack and defend. No shield, no daggers.\nAll five options are casting HELD stances.\nCell 1: Forward palms. Sword visibly sheathed on back. Two open palms extended FRONT toward enemy-right at chest height, erect posture.\nCell 2: Raised palms. Sword sheathed on back, both palms above shoulders reaching forward, planted wide feet.\nCell 3: One high one low. Sword sheathed on back, one open palm high forward and other palm low forward, deliberate channeling.\nCell 4: Close focus. Sword sheathed on back, two open hands forward close together at chest, elbows bent.\nCell 5: Braced channel. Sword sheathed on back, deep balanced knees and both open hands forward at shoulder height.",
+      "options": [
+        {
+          "id": "reaver-casting-1",
+          "label": "C1",
+          "name": "Forward palms",
+          "description": "Sword visibly sheathed on back. Two open palms extended FRONT toward enemy-right at chest height, erect posture.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "reaver-casting-2",
+          "label": "C2",
+          "name": "Raised palms",
+          "description": "Sword sheathed on back, both palms above shoulders reaching forward, planted wide feet.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "reaver-casting-3",
+          "label": "C3",
+          "name": "One high one low",
+          "description": "Sword sheathed on back, one open palm high forward and other palm low forward, deliberate channeling.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "reaver-casting-4",
+          "label": "C4",
+          "name": "Close focus",
+          "description": "Sword sheathed on back, two open hands forward close together at chest, elbows bent.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "reaver-casting-5",
+          "label": "C5",
+          "name": "Braced channel",
+          "description": "Sword sheathed on back, deep balanced knees and both open hands forward at shoulder height.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "rogue-attack",
+      "actor": "rogue",
+      "stance": "attack",
+      "path": "boards/rogue-attack.png",
+      "reference": "../source/rogue-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same hood, brown Gutter Leathers and faded teal cloak. One small dagger in each hand in attack/defend; exactly two daggers, not swords.\nAll five options are attack HELD stances.\nCell 1: Forward twin ready. Low wide athletic crouch, both daggers in front toward enemy-right, one high one low, distinct visible hands.\nCell 2: High-low reverse grip. One dagger forward up at chest, other dagger forward low reverse grip, bent front knee.\nCell 3: Twin point ready. Both fists ahead of torso, daggers point forward-right separated shoulder-width, leaning ready.\nCell 4: Upright knife ready. Balanced wide feet, both daggers held forward near shoulders in poised upright readiness.\nCell 5: Deep ambush ready. Deep planted crouch with both dagger hands ahead of knees/chest toward enemy-right, no swing.",
+      "options": [
+        {
+          "id": "rogue-attack-1",
+          "label": "A1",
+          "name": "Forward twin ready",
+          "description": "Low wide athletic crouch, both daggers in front toward enemy-right, one high one low, distinct visible hands.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "rogue-attack-2",
+          "label": "A2",
+          "name": "High-low reverse grip",
+          "description": "One dagger forward up at chest, other dagger forward low reverse grip, bent front knee.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "rogue-attack-3",
+          "label": "A3",
+          "name": "Twin point ready",
+          "description": "Both fists ahead of torso, daggers point forward-right separated shoulder-width, leaning ready.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "rogue-attack-4",
+          "label": "A4",
+          "name": "Upright knife ready",
+          "description": "Balanced wide feet, both daggers held forward near shoulders in poised upright readiness.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "rogue-attack-5",
+          "label": "A5",
+          "name": "Deep ambush ready",
+          "description": "Deep planted crouch with both dagger hands ahead of knees/chest toward enemy-right, no swing.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "rogue-casting",
+      "actor": "rogue",
+      "stance": "casting",
+      "path": "boards/rogue-casting.png",
+      "reference": "../source/rogue-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same hood, brown Gutter Leathers and faded teal cloak. One small dagger in each hand in attack/defend; exactly two daggers, not swords.\nAll five options are casting HELD stances.\nCell 1: Forward palms. Daggers sheathed in belt, both open hands extended FRONT at chest, upright planted feet.\nCell 2: High-low channel. Daggers sheathed at belt, one open palm ahead high and other ahead near waist.\nCell 3: Raised channel. Daggers sheathed, both open hands raised forward near face, balanced stance.\nCell 4: Close-focus channel. Daggers sheathed, two open hands close together in FRONT of sternum, bent elbows.\nCell 5: Low braced channel. Daggers sheathed, bent knees, both open palms forward at shoulder level.",
+      "options": [
+        {
+          "id": "rogue-casting-1",
+          "label": "C1",
+          "name": "Forward palms",
+          "description": "Daggers sheathed in belt, both open hands extended FRONT at chest, upright planted feet.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "rogue-casting-2",
+          "label": "C2",
+          "name": "High-low channel",
+          "description": "Daggers sheathed at belt, one open palm ahead high and other ahead near waist.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "rogue-casting-3",
+          "label": "C3",
+          "name": "Raised channel",
+          "description": "Daggers sheathed, both open hands raised forward near face, balanced stance.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "rogue-casting-4",
+          "label": "C4",
+          "name": "Close-focus channel",
+          "description": "Daggers sheathed, two open hands close together in FRONT of sternum, bent elbows.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "rogue-casting-5",
+          "label": "C5",
+          "name": "Low braced channel",
+          "description": "Daggers sheathed, bent knees, both open palms forward at shoulder level.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "starseer-attack",
+      "actor": "starseer",
+      "stance": "attack",
+      "path": "boards/starseer-attack.png",
+      "reference": "../source/starseer-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same pointed hood, dark navy Nightweave robe, gold embroidery and long ornate staff with celestial circular head. No sword/shield. Staff two-handed for attack/defend. Casting: staff in anatomical RIGHT hand, open book in anatomical LEFT.\nAll five options are attack HELD stances.\nCell 1: Diagonal staff ready. Two hands grip staff in FRONT of waist, staff angled up-forward toward enemy-right; wide planted feet.\nCell 2: High staff ready. Two hands forward above shoulders, long staff angled diagonal up in ready overhead stance, no swing.\nCell 3: Low staff ready. Two hands forward at hip height, staff diagonally up-forward, bent knees.\nCell 4: Middle staff ready. Two hands ahead of chest, staff obliquely forward across ready stance, forward foot bent.\nCell 5: Forward staff point. Two hands ahead with staff angled outward toward screen-right, poised ready, no strike.",
+      "options": [
+        {
+          "id": "starseer-attack-1",
+          "label": "A1",
+          "name": "Diagonal staff ready",
+          "description": "Two hands grip staff in FRONT of waist, staff angled up-forward toward enemy-right; wide planted feet.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "starseer-attack-2",
+          "label": "A2",
+          "name": "High staff ready",
+          "description": "Two hands forward above shoulders, long staff angled diagonal up in ready overhead stance, no swing.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "starseer-attack-3",
+          "label": "A3",
+          "name": "Low staff ready",
+          "description": "Two hands forward at hip height, staff diagonally up-forward, bent knees.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "starseer-attack-4",
+          "label": "A4",
+          "name": "Middle staff ready",
+          "description": "Two hands ahead of chest, staff obliquely forward across ready stance, forward foot bent.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "starseer-attack-5",
+          "view": {"x":512,"y":512,"width":530,"height":512},
+          "label": "A5",
+          "name": "Forward staff point",
+          "description": "Two hands ahead with staff angled outward toward screen-right, poised ready, no strike.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "starseer-defend",
+      "actor": "starseer",
+      "stance": "defend",
+      "path": "boards/starseer-defend.png",
+      "reference": "../source/starseer-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same pointed hood, dark navy Nightweave robe, gold embroidery and long ornate staff with celestial circular head. No sword/shield. Staff two-handed for attack/defend. Casting: staff in anatomical RIGHT hand, open book in anatomical LEFT.\nAll five options are defend HELD stances.\nCell 1: Forward horizontal guard. Both hands extend FRONT at upper chest toward enemy-right, staff horizontal guarding the front, not behind shoulder.\nCell 2: Forward diagonal guard. Two hands in FRONT at chest, staff diagonal upwards covering enemy-right incoming space, bent knees.\nCell 3: High roof guard. Two hands ahead above forehead, staff overhead angled like a roof, balanced brace.\nCell 4: Low front guard. Two hands ahead at waist, staff across FRONT diagonally, deep crouch toward enemy-right.\nCell 5: Upright front barrier. Two hands ahead of sternum grip staff upright in forward space toward enemy-right, planted wide feet.",
+      "options": [
+        {
+          "id": "starseer-defend-1",
+          "view": {"x":0,"y":0,"width":550,"height":512},
+          "label": "D1",
+          "name": "Forward horizontal guard",
+          "description": "Both hands extend FRONT at upper chest toward enemy-right, staff horizontal guarding the front, not behind shoulder.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "starseer-defend-2",
+          "label": "D2",
+          "name": "Forward diagonal guard",
+          "description": "Two hands in FRONT at chest, staff diagonal upwards covering enemy-right incoming space, bent knees.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "starseer-defend-3",
+          "label": "D3",
+          "name": "High roof guard",
+          "description": "Two hands ahead above forehead, staff overhead angled like a roof, balanced brace.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "starseer-defend-4",
+          "view": {"x":0,"y":512,"width":550,"height":512},
+          "label": "D4",
+          "name": "Low front guard",
+          "description": "Two hands ahead at waist, staff across FRONT diagonally, deep crouch toward enemy-right.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "starseer-defend-5",
+          "view": {"x":512,"y":495,"width":512,"height":529},
+          "label": "D5",
+          "name": "Upright front barrier",
+          "description": "Two hands ahead of sternum grip staff upright in forward space toward enemy-right, planted wide feet.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "herald-attack",
+      "actor": "herald",
+      "stance": "attack",
+      "path": "boards/herald-attack.png",
+      "reference": "../source/herald-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same rust-red hood and Rite Vestments with crosses and belt. UNARMED: no sword, staff, shield or dagger. Casting uses one open book in left hand, right hand gestures.\nAll five options are attack HELD stances.\nCell 1: Forward martial ready. Unarmed fists both in FRONT of body toward enemy-right, one chest high one waist low, wide planted feet.\nCell 2: High martial ready. Both fists forward near face, elbows tucked, bent front knee ready.\nCell 3: Low martial ready. Deep planted stance, one fist forward at ribs and other ahead at chest, no strike.\nCell 4: Open-hand martial ready. Both open martial hands in FRONT at shoulder height, palms toward enemy-right, unarmed balanced ready.\nCell 5: Compact fist ready. Both fists near sternum but in FRONT, knees bent, ready to drive forward without punching.",
+      "options": [
+        {
+          "id": "herald-attack-1",
+          "label": "A1",
+          "name": "Forward martial ready",
+          "description": "Unarmed fists both in FRONT of body toward enemy-right, one chest high one waist low, wide planted feet.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "herald-attack-2",
+          "label": "A2",
+          "name": "High martial ready",
+          "description": "Both fists forward near face, elbows tucked, bent front knee ready.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "herald-attack-3",
+          "label": "A3",
+          "name": "Low martial ready",
+          "description": "Deep planted stance, one fist forward at ribs and other ahead at chest, no strike.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "herald-attack-4",
+          "label": "A4",
+          "name": "Open-hand martial ready",
+          "description": "Both open martial hands in FRONT at shoulder height, palms toward enemy-right, unarmed balanced ready.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "herald-attack-5",
+          "label": "A5",
+          "name": "Compact fist ready",
+          "description": "Both fists near sternum but in FRONT, knees bent, ready to drive forward without punching.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "herald-defend",
+      "actor": "herald",
+      "stance": "defend",
+      "path": "boards/herald-defend.png",
+      "reference": "../source/herald-default.png",
+      "prompt": "Use case: stylized-concept. Create ONE stance selection comparison plate with EXACTLY FIVE full-body copies of the SAME reference character. Layout must be a STRICT THREE-COLUMN TWO-ROW grid on a genuinely transparent 1536x1024 canvas: cells top-left=1, top-middle=2, top-right=3, bottom-left=4, bottom-middle=5, bottom-right=EMPTY. Each copy wholly contained within its own 512x512 cell, with generous 25px clear gutters, common scale and feet around y=470 within each row. NO text, numbers, borders, background, shadows, magic haze or extra figures. The UI will label each option underneath. Preserve reference costume, materials, palette and painted gritty dark fantasy style. Reference is CHARACTER IDENTITY ONLY: replace its existing poses entirely. Rear three-quarter from behind the left shoulder, torso and head facing screen RIGHT toward the enemy; only a little side face visible, never frontal. Exactly two arms/two hands, anatomically credible grips. These are HELD readiness stances, not action strikes or movement frames. Five clearly different poses; keep full feet, all props and weapon tips inside each cell.\nCHARACTER: Same rust-red hood and Rite Vestments with crosses and belt. UNARMED: no sword, staff, shield or dagger. Casting uses one open book in left hand, right hand gestures.\nAll five options are defend HELD stances.\nCell 1: Forward forearm shield. Both forearms in FRONT covering chest/face toward enemy-right, fists raised; low planted brace.\nCell 2: High center guard. Both fists in FRONT of face, elbows tucked forward, compact crouch.\nCell 3: Forward crossed guard. Forearms crossed directly in FRONT of sternum toward enemy-right, NOT beside back or shoulder, deep braced knees.\nCell 4: Split upper-lower guard. One forearm high in FRONT of face and other low FRONT abdomen, fists guarding incoming right.\nCell 5: Open-palmed front cover. Both open hands in FRONT shoulder-width with elbows bent and palms toward enemy-right, stable crouched stance.",
+      "options": [
+        {
+          "id": "herald-defend-1",
+          "label": "D1",
+          "name": "Forward forearm shield",
+          "description": "Both forearms in FRONT covering chest/face toward enemy-right, fists raised; low planted brace.",
+          "column": 0,
+          "row": 0
+        },
+        {
+          "id": "herald-defend-2",
+          "label": "D2",
+          "name": "High center guard",
+          "description": "Both fists in FRONT of face, elbows tucked forward, compact crouch.",
+          "column": 1,
+          "row": 0
+        },
+        {
+          "id": "herald-defend-3",
+          "label": "D3",
+          "name": "Forward crossed guard",
+          "description": "Forearms crossed directly in FRONT of sternum toward enemy-right, NOT beside back or shoulder, deep braced knees.",
+          "column": 2,
+          "row": 0
+        },
+        {
+          "id": "herald-defend-4",
+          "label": "D4",
+          "name": "Split upper-lower guard",
+          "description": "One forearm high in FRONT of face and other low FRONT abdomen, fists guarding incoming right.",
+          "column": 0,
+          "row": 1
+        },
+        {
+          "id": "herald-defend-5",
+          "label": "D5",
+          "name": "Open-palmed front cover",
+          "description": "Both open hands in FRONT shoulder-width with elbows bent and palms toward enemy-right, stable crouched stance.",
+          "column": 1,
+          "row": 1
+        }
+      ]
+    }
+  ]
+}

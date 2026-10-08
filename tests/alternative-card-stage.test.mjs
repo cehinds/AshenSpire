@@ -31,6 +31,15 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     setAnimSpeed('normal');
     stage=createAlternativeCardStage('reaver');await stage.ready;
     assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
+    stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
+    stage.play('attack',260);step(115);
+    stage.setStance('casting');assert.equal(stage.pose,'attack-contact','receipt selection must not interrupt the action');
+    step(145);assert.equal(stage.pose,'stance-casting');
+    assert.match(paints.at(-1).args[0].url,/stances\/reaver\/casting\.webp$/);
+    stage.setRestPose('defeated');assert.equal(stage.pose,'defeated','death overrides selected art');
+    stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
+    stage.setStance(null);stage.setRestPose('counter');assert.equal(stage.pose,'guard-brace','counter remains unchanged');
+    stage.setRestPose('idle');
     stage.play('attack',260,['stamina']);step(115);
     assert.equal(stage.pose,'attack-contact');
     assert.equal(paints.at(-1).args[1],208,'the figure has advanced 80 pixels');
@@ -46,6 +55,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.seek('sweep',115);assert.equal(stage.pose,'sweep-contact');assert.equal(raf.size,0);
     stage.setRestPose('idle');
     reduced=true;stage.play('attack');assert.equal(stage.pose,'ready');assert.equal(stage.play('hit'),false);
+    stage.setStance('defensive');stage.play('defend');assert.equal(stage.pose,'stance-defensive','reduced motion retains the readable selected pose');
+    stage.setStance(null);
     reduced=false;setAnimSpeed('instant');assert.equal(stage.play('hit'),false);
     stage.play('attack',0);assert.equal(raf.size,0);
     setAnimSpeed('normal');stage.play('attack');assert.equal(raf.size,1);

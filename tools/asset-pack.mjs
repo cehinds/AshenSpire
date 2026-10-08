@@ -143,9 +143,18 @@ export function withAlternativeArt(manifest, root = ROOT) {
       catalog.hashes[file] = hash;
     }
   }
+  const stancesFile = resolve(root, 'src/content/alternativeSelectedStances.js');
+  if (existsSync(stancesFile)) {
+    const stances = readFileSync(stancesFile, 'utf8').match(/^export const alternativeSelectedStances = (.+);\r?$/m);
+    if (!stances) throw new Error('Selected stances must be exported before packing');
+    for (const [file, hash] of Object.entries(JSON.parse(stances[1]).hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+    }
+  }
   const assets = { ...manifest.assets };
   for (const [file, expected] of Object.entries(catalog.hashes)) {
-    if (!/^[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
+    if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
     const id = `assets-alternative/${file}`;
     const bytes = readFileSync(resolve(root, id));
     if (sha256(bytes) !== expected) throw new Error(`Alternative art changed: ${file}; regenerate its catalog`);
