@@ -402,12 +402,12 @@ async function main() {
   const armAttackTarget = async () => {
     for (let guard = 0; guard < 8; guard++) {
       const pt = await evalIn(`(async () => {
-        const { resolveCard } = await import('/src/model/registries.js');
+        const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
         const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
         const combat = window.__combat;
         const c = [...document.querySelectorAll('.hand .card:not(.unaffordable)')].find(node => {
           const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
-          return inst && hasImmediateHostileDamage(resolveCard(combat.registries, inst), { targeted: true });
+          return inst && hasImmediateHostileDamage(resolveCombatCard(combat, inst), { targeted: true });
         });
         if (!c) return null;
         const r = c.getBoundingClientRect();
