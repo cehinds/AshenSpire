@@ -45,6 +45,8 @@ Owner authorization: implement the revised combat notes in one delivery and land
   - Crossing 25/50/75 queues the matching locked-tier choice once. At 100, resolve the one-time 90% loss check before card effects or choices; survivors convert the entire present/future deck.
   - Blighted survivors make one saved 5% death check at each subsequent combat entry. Reloads, retries, clones, and reward reopening cannot repeat any check or feat claim.
   - Converted cards retain their ordinary lifecycle and receive the revised notes' cheaper Action cost and authored damage/healing/temporary-protection bonuses. Recovery and upcast surcharges are excluded.
+  - X-cost cards retain X; only fixed ordinary Action costs receive the conversion discount. Cinder Sight uses an explicitly selected eligible buildup, with authored-order selection as the deterministic default. Ashen Heart spends its cycle budget on its first positive authored restoration attempt even if the pool is full.
+  - Milestone attribute benefits use an effective-attribute projection without changing allocated points. Accepted corruption payments and committed encounter outcomes persist before presentation/broadcast; a failed durable save rejects the candidate. Revival cannot intercept terminal Blight loss.
   - The run bar, milestone choices, feat drawbacks, printed card price, and fading volcanic treatment must be playable and inspectable in both game variants.
 
 - **Verification and delivery**
