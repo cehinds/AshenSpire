@@ -4,6 +4,7 @@ import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
 import * as statuses from '../framework/statusSemantics.js';
 import * as Matchups from './combatMatchups.js';
+import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 export function refreshCombatRatings(ctx) {
   if (!ctx.ratingsRules) return;
@@ -30,7 +31,7 @@ export function refreshCombatRatings(ctx) {
   }
 }
 
-export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null, { triggerHit = true } = {}) {
+export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null, { triggerHit = true, knowledgeMatchup = false } = {}) {
   if (!ctx.ratingsRules || !target?.alive) return;
   const magical = isMagicalAttack(ctx, carrier);
   const single = usesSingleBreakMeter(ctx);
@@ -51,6 +52,7 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
       ...meterGuardReceipt(target, meterName), value: meter.value, max: meter.max, breaks: 0, label });
     return;
   }
+  creditKnowledgeImpact(ctx, target, amount, knowledgeMatchup);
   meter.value += amount;
   const cfg = ctx.ratingsRules.breaks;
   let breaks = 0;

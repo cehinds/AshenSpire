@@ -304,7 +304,7 @@ export function mountRewards(app, {
   };
 
   function take(row, viaKind) {
-    if (states[row.key]) return false;
+    if (skillClaimPending || states[row.key]) return false;
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
@@ -567,7 +567,7 @@ export function mountRewards(app, {
   }
 
   function claimLevel() {
-    if (!xpAnimationDone || refill || pendingLevelCount(registries, run) < 1 || !onClaimLevel) return;
+    if (skillClaimPending || !xpAnimationDone || refill || pendingLevelCount(registries, run) < 1 || !onClaimLevel) return;
     const claim = onClaimLevel();
     if (!claim) return;
     claimedLevels += 1;
@@ -599,39 +599,66 @@ export function mountRewards(app, {
   const characterLevelRow = (row) => ['levelChoice', 'levelCard'].includes(row.kind) && !row.source;
   const draftUnlocked = (row) => Number.isInteger(row.requiredLevel) ? unlocked(row) : !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
 
+  let skillClaimPending = false;
   function claimSkill(skillId) {
+    if (skillClaimPending) return;
     if (!xpAnimationDone || refill || !onClaimSkill || pendingSkillLevelCount(registries, run, skillId) < 1) return;
     // The owned cards' skill bonus before the claim, to say which ones it raised.
     const owned = () => [...run.deck, ...(run.sideboard || [])].filter(Boolean);
     const bonusBefore = new Map(owned().map((inst) => [inst, skillBonusFor(registries, run, inst)]));
     const beforeSkills = structuredClone(run.skills || {});
-    const claim = onClaimSkill(skillId);
-    if (!claim) return;
-    claimBonusStarts = {};
-    for (const award of claim.skillAwards || []) {
-      if (!(award.gained > 0)) continue;
-      const before = beforeSkills[award.skillId] || { level: 0, xp: 0 };
-      rewards.xpGains ||= { level: 0, tracks: {} };
-      rewards.xpGains.tracks ||= {};
-      rewards.xpGains.tracks[award.skillId] = (rewards.xpGains.tracks[award.skillId] || 0) + award.gained;
-      claimBonusStarts[award.skillId] = before;
-      animatedTracks.add(award.skillId);
+    const claimHost = app.querySelector('.reward-claim-layout') || app.querySelector('.reward-door');
+    const mounted = () => claimHost?.isConnected && (app.querySelector('.reward-claim-layout') === claimHost || app.querySelector('.reward-door') === claimHost);
+    skillClaimPending = true;
+    let result;
+    try { result = onClaimSkill(skillId); } catch (error) { skillClaimPending = false; throw error; }
+    const complete = claim => {
+      skillClaimPending = false;
+      if (!mounted()) return;
+      unlockControls();
+      if (!claim) return;
+      claimBonusStarts = {};
+      for (const award of claim.skillAwards || []) {
+        if (!(award.gained > 0)) continue;
+        const before = beforeSkills[award.skillId] || { level: 0, xp: 0 };
+        rewards.xpGains ||= { level: 0, tracks: {} };
+        rewards.xpGains.tracks ||= {};
+        rewards.xpGains.tracks[award.skillId] = (rewards.xpGains.tracks[award.skillId] || 0) + award.gained;
+        claimBonusStarts[award.skillId] = before;
+        animatedTracks.add(award.skillId);
+      }
+      claimedSkills[skillId] = (claimedSkills[skillId] || 0) + 1;
+      persistProgress();
+      refreshProgress();
+      const open = plan.rows.filter((row) => draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
+      const mine = open.filter((row) => row.requiredLevel === claim.after || row.claimOrdinal === claimedSkills[skillId]);
+      const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
+      // Every flatEvery levels a skill's cards may gain +1 (SPEC §13.4o): said here,
+      // since the number lands on the card faces rather than as a row to take —
+      // and only for the cards it actually raised (a card sums its tracks' flats).
+      const raised = owned().filter((inst) => skillBonusFor(registries, run, inst) > (bonusBefore.get(inst) || 0)).length;
+      const unlocks = run.classMasteryState && skillId.startsWith('class:') ? registries.classMastery.filter(row => row.classId === skillId.slice(6) && row.level === claim.after).map(row => masteryUnlockName(registries, row)) : [];
+      const unlockedLine = unlocks.length ? ` Unlocked: ${unlocks.join(', ')}.` : '';
+      const flat = raised ? ` ${raised} card${raised === 1 ? '' : 's'} gain${raised === 1 ? 's' : ''} +1.` : '';
+      const mastery = run.classMasteryState && skillId.startsWith('class:');
+      openLevelView(skillId, `${label}${mastery ? ' mastery' : ''} · Level ${claim.after}`, `Your ${label}${mastery ? ' mastery' : ' skill'} is now level ${claim.after}.${flat}${unlockedLine}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
+    };
+    let unlockControls = () => {};
+    if (result?.then) {
+      const controls = [...app.querySelectorAll('button')].map(control => [control, control.disabled]);
+      const menu = app.querySelector('.reward-menu'), menuInert = menu?.inert;
+      for (const [control] of controls) control.disabled = true;
+      if (menu) menu.inert = true;
+      claimHost?.setAttribute('aria-busy', 'true');
+      unlockControls = () => { for (const [control, disabled] of controls) control.disabled = disabled; if (menu) menu.inert = menuInert; claimHost?.setAttribute('aria-busy', 'false'); };
+      return result.then(complete, error => {
+        skillClaimPending = false;
+        if (!mounted()) return;
+        unlockControls();
+        app.querySelector('.reward-menu')?.append(el('p', { role: 'status', text: error.message || 'Skill claim could not be saved.' }));
+      });
     }
-    claimedSkills[skillId] = (claimedSkills[skillId] || 0) + 1;
-    persistProgress();
-    refreshProgress();
-    const open = plan.rows.filter((row) => draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
-    const mine = open.filter((row) => row.requiredLevel === claim.after || row.claimOrdinal === claimedSkills[skillId]);
-    const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
-    // Every flatEvery levels a skill's cards may gain +1 (SPEC §13.4o): said here,
-    // since the number lands on the card faces rather than as a row to take —
-    // and only for the cards it actually raised (a card sums its tracks' flats).
-    const raised = owned().filter((inst) => skillBonusFor(registries, run, inst) > (bonusBefore.get(inst) || 0)).length;
-    const unlocks = run.classMasteryState && skillId.startsWith('class:') ? registries.classMastery.filter(row => row.classId === skillId.slice(6) && row.level === claim.after).map(row => masteryUnlockName(registries, row)) : [];
-    const unlockedLine = unlocks.length ? ` Unlocked: ${unlocks.join(', ')}.` : '';
-    const flat = raised ? ` ${raised} card${raised === 1 ? '' : 's'} gain${raised === 1 ? 's' : ''} +1.` : '';
-    const mastery = run.classMasteryState && skillId.startsWith('class:');
-    openLevelView(skillId, `${label}${mastery ? ' mastery' : ''} · Level ${claim.after}`, `Your ${label}${mastery ? ' mastery' : ' skill'} is now level ${claim.after}.${flat}${unlockedLine}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
+    return complete(result);
   }
 
   // THE LEVEL POPUP. What this claim unlocked, as the list's own blue rows:
@@ -703,6 +730,7 @@ export function mountRewards(app, {
           const add = button({ label: '+', className: 'reward-stat-add', disabled: points < 1, attrs: { 'aria-label': `Increase ${attr.label}` } });
           add.addEventListener('click', () => {
             if (!run.level?.unspentPoints) return;
+            if (skillClaimPending) return;
             onAllocateStat(id);
             persistProgress();
             draw();
@@ -824,6 +852,7 @@ export function mountRewards(app, {
 
   // ---- the menu ------------------------------------------------------------
   function renderMenu(focusKind = null) {
+    if (skillClaimPending) return;
     const mode = collectMode();
     const pending = plan.rows.filter((r) => !states[r.key] && !r.blockedBy);
     // THE ONE-LINE NOTES (SPEC §15.1): a card chance that missed leaves no
@@ -873,6 +902,7 @@ export function mountRewards(app, {
       attachTooltip(btn, () => `<div class="tt-title">${esc(tTip('reward.skip'))}</div>${esc(tFull('reward.skip'))}`);
       btn.addEventListener('click', (ev) => {
         ev.stopPropagation();
+        if (skillClaimPending) return;
         states[btn.dataset.skip] = 'skipped';
         persistProgress();
         renderMenu(btn.dataset.skip);
@@ -883,7 +913,7 @@ export function mountRewards(app, {
       ? `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Collects remaining battle loot. Unfinished level rewards are saved for later.')}`
       : `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Leave with your chosen loot. Unfinished level rewards are saved for later.')}`));
     const finish = () => {
-      if (!xpAnimationDone || refill) return;
+      if (skillClaimPending || !xpAnimationDone || refill) return;
       // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
@@ -960,7 +990,7 @@ export function mountRewards(app, {
       });
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
-        if (!xpAnimationDone || refill) return;
+        if (skillClaimPending || !xpAnimationDone || refill) return;
         if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat') return renderChooser(row);
         if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
@@ -1004,6 +1034,7 @@ export function mountRewards(app, {
   // place; the menu, its focus and its tooltips stay where they are. With no
   // menu on screen (a chooser or detail is open) there is nothing to patch.
   function refreshProgressView() {
+    if (skillClaimPending) return;
     const layout = app.querySelector('.reward-claim-layout');
     const panel = layout?.querySelector('.reward-progress');
     const next = panel ? progressPanel() : null;
@@ -1132,6 +1163,7 @@ export function mountRewards(app, {
   // commits nothing; Back restores the exact menu state, and Take is the only
   // collection door from the detail.
   function renderDetail(row) {
+    if (skillClaimPending) return;
     const body = rowBody(row);
     const isFlask = row.kind === 'flask';
     const kindLabel = t(isFlask ? 'reward.kind.potion' : row.kind === 'relic' ? 'reward.kind.relic' : 'reward.kind.armament');
@@ -1164,6 +1196,7 @@ export function mountRewards(app, {
   // One chooser for the card offer and for a skill draft (plan phase 4b): the
   // row hands in its cards; which deck write Confirm makes is the row's kind.
   function renderChooser(row = plan.rows.find((r) => r.kind === 'card')) {
+    if (skillClaimPending) return;
     const taken = () => states[row.key];
     const isMilestone = row.kind === 'classMilestone';
     // A class draft chooses among tree NODES (plan phase 5b): each is a tile

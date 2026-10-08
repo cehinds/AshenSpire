@@ -5,6 +5,8 @@ import { recoveryRulesProblems } from './recoveryRules.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems } from './combatTacticsRules.js';
 import { statusControlProblems } from './combatStatusState.js';
+import { combatEnemyKnowledgeProblems } from './enemyKnowledgeCombat.js';
+import { perceptionProblems } from './perception.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -261,6 +263,8 @@ export function combatSnapshotProblems(snapshot) {
   problems.push(...entityProblems(snapshot.player, 'player', { player: true }));
   if (!Array.isArray(snapshot.enemies)) problems.push('enemies must be an array');
   else snapshot.enemies.forEach((enemy, index) => problems.push(...entityProblems(enemy, `enemies[${index}]`)));
+  if (Array.isArray(snapshot.enemies)) problems.push(...combatEnemyKnowledgeProblems(snapshot.enemyKnowledge, snapshot.enemies, { ownerIds: new Set(['player']) }));
+  if (snapshot.enemyKnowledge?.rules?.perception) problems.push(...perceptionProblems(snapshot.skills?.perception, snapshot.enemyKnowledge.rules.perception));
   if (snapshot.combatExpansionVersion !== undefined && ![1, 2].includes(snapshot.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2');
   if (snapshot.combatExpansionVersion === 2) problems.push(...combatExpansionRulesProblems(snapshot.combatExpansionRules));
   for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((enemy, i) => [`enemies[${i}]`, enemy])]) {
@@ -335,6 +339,9 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     has(registries.enemies, enemy?.enemyId, `enemies[${index}].enemyId`);
     for (const id of Object.keys(enemy?.statuses || {})) has(registries.statuses, id, `enemies[${index}].statuses`);
   }
+  if (snapshot.enemyKnowledge) problems.push(...combatEnemyKnowledgeProblems(snapshot.enemyKnowledge, snapshot.enemies || [], {
+    enemyIds: new Set(registries.enemies.ids()), ownerIds: new Set(['player']),
+  }));
   for (const pile of SNAPSHOT_PILES) {
     for (const card of snapshot.piles?.[pile] || []) has(registries.cards, card?.cardId, `piles.${pile}.cardId`);
   }

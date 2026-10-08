@@ -493,10 +493,12 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
   seed.onChange(() => { seedRefusal(); refreshSummary(); });
 
   back.addEventListener('click', onBack);
-  start.addEventListener('click', () => {
-    if (startProblem()) return; // the refusal already said why, at the button
+  let startPending = false;
+  start.addEventListener('click', async () => {
+    if (startPending || startProblem()) return; // the refusal already said why, at the button
+    startPending = true; start.disabled = true;
     const mapShape = mapShapeEntry();
-    onStart({
+    try { await onStart({
       classId: state.classId,
       seedString: seedInput.value.trim(),
       custom: {
@@ -508,7 +510,10 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
         ...(mapShape ? { mapShape } : {}),
         ...(state.firstSeat ? { firstSeat: state.firstSeat } : {}),
       },
-    });
+    }); } finally {
+      startPending = false;
+      if (app.contains(start)) seedRefusal();
+    }
   });
 
   refreshModChips();

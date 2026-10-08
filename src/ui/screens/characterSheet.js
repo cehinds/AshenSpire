@@ -192,6 +192,7 @@ export function skillTrackButton(registries, run, track, progress) {
 // some level of THIS track pays, at the first level that pays it, so armour
 // never promises a rank-up and a track with no feats never promises one.
 export function cadenceLine(registries, track) {
+  if (track.kind === 'perception') return 'Run-only Perception advances automatically through correct predictions of wholly unknown actions and successful tactical responses. It improves intent reads and grants no drafts, card ranks, feats or attribute points.';
   const s = (registries.balance && registries.balance.skill) || {};
   const first = (kind) => { const row = track.rows.find((r) => r.grants.some((g) => g.kind === kind)); return row ? row.level : null; };
   const parts = [];

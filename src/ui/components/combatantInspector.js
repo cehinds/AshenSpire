@@ -15,6 +15,7 @@ import { decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
 import { renderEnemyMoveCards } from './enemyMoveCards.js';
+import { renderEnemyKnowledge, renderIntentPrediction } from './enemyKnowledge.js';
 import { projectCombatantInspector as projectSections } from '../models/CombatantInspectorSections.js';
 import { t } from '../strings.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
@@ -112,8 +113,10 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
     heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
     projectedSection(byId.summary),
     projectedSection(byId.state),
+    subject.learning ? renderEnemyKnowledge(subject.learning, { perception: subject.perception }) : null,
+    subject.prediction ? renderIntentPrediction(subject.prediction, subject.onPredict) : null,
     projectedSection(byId.history),
-    abilities,
+    subject.learning ? null : abilities,
     projectedSection(byId.traits),
     projectedSection(byId.lore),
   ].filter(Boolean).map(decorateKeywords);
