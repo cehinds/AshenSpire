@@ -2,6 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatIntentPresentation as view } from '../src/ui/models/CombatIntentModel.js';
 
+test('knowledge reads retain unknown and broad-clue privacy', () => {
+  const hidden = { kind:'unknown', stance:'unknown', moveId:null, hidden:true, damage:999 };
+  assert.equal(view({ ...hidden, knowledgeRead:'unknown', label:'?' }).visibility, 'unknown');
+  for (const [label,title] of [['Attack?','Attacking ?'],['Magic?','Preparing ?'],['Preparing?','Preparing ?']]) {
+    const result = view({ ...hidden, knowledgeRead:'clue', label });
+    assert.equal(result.title,title);
+    assert.equal(result.parts[0].value,null);
+  }
+  assert.equal(view({ ...hidden, knowledgeRead:'clue', label:'private action' }).visibility,'unknown');
+});
+
 test('unknown and three partial families never expose concealed values', () => {
   assert.deepEqual(view({ kind:'unknown', moveId:null }), {visibility:'unknown', title:'?', parts:[], stance:'unknown'});
   for (const [stance,title,icon] of [

@@ -5,6 +5,15 @@ import { intentBadge } from '../uiContent.js';
 // hidden amount from enemy definitions, a move id, or the host's private state.
 export function combatIntentPresentation(intent = {}) {
   intent ||= {};
+  // Knowledge reads contain only an observer's broad clue, never private stance.
+  if (intent.hidden && intent.knowledgeRead) {
+    if (intent.knowledgeRead !== 'clue' || !['Attack?', 'Magic?', 'Preparing?'].includes(intent.label)) {
+      return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown' };
+    }
+    const attacking = intent.label === 'Attack?';
+    return { visibility: 'partial', title: attacking ? 'Attacking ?' : 'Preparing ?',
+      stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : 'prepare', value: null }] };
+  }
   const stance = combatIntentStance(intent);
   const partial = intent.hidden === true;
   const unknown = !partial && (!intent.kind || intent.kind === 'unknown' || intent.moveId === null) && intent.kind !== 'staggered';
