@@ -87,7 +87,15 @@ export function combatCardSummary(def, preview = null, registries = null) {
       : effect.target === 'randomEnemy' ? ' to a random enemy' : '';
     let text;
     switch (effect.op) {
-      case 'damage': { const hits = preview?.values?.[index]?.hits ?? effect.hits ?? 1; if (typeof hits !== 'number') return null; text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} damage${hits !== 1 ? ` ×${hits}` : ''}${area}`; break; }
+      case 'damage': {
+        const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
+        if (typeof hits !== 'number') return null;
+        const sequence = live?.hitDamages;
+        const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
+        const damage = unequal ? `${sequence.join(' + ')} damage (${live.totalDamage} total across ${sequence.length} hits)`
+          : `${n} damage${hits !== 1 ? ` ×${hits}` : ''}`;
+        text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`; break;
+      }
       case 'block': text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Block`; break;
       case 'gainBarrier': text = `Gain ${n} Barrier`; break;
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
