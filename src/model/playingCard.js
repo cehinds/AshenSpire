@@ -66,7 +66,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
     if (pred.p === 'turnMetric') {
       const names = { cardsPlayed: 'cards played', attacksPlayed: 'attacks played', manaSpent: 'Mana spent', hpLostSinceTurnStart: 'HP lost', discarded: 'cards discarded', offeringsPaid: 'offerings paid', previousSpell: 'previous Spell', sameCardPlays: 'plays of this card', cardPlaysCombat: 'cards played this combat' };
       const name = names[pred.metric] || (pred.tag ? `${pred.tag} cards played` : pred.metric);
-      return `${name} ${pred.atLeast !== undefined ? `at least ${pred.atLeast}` : `at most ${pred.atMost}`}`;
+      if (pred.metric === 'previousSpell' && pred.atLeast === 1) return 'your previous card this turn was a Spell';
+      return `${name} ${pred.atLeast !== undefined ? `at least ${pred.atLeast}` : `at most ${pred.atMost}`}${pred.metric === 'cardPlaysCombat' ? '' : ' this turn'}`;
     }
     if (pred.p === 'chargeAvailable') return 'its prepared charge is available';
     if (pred.p === 'not') { const text = condition(pred.pred); return text ? `not (${text})` : ''; }
@@ -89,7 +90,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'draw': text = `Draw ${n}`; break;
       case 'discard': text = `Discard ${n}`; break;
       case 'heal': text = `Heal ${n} HP`; break;
-      case 'loseHp': text = `Pay ${n} HP`; break;
+      case 'loseHp': text = `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`; break;
       case 'gainEnergy': text = `Gain ${n} SP`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} SP`; break;
@@ -101,13 +102,15 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'addCard': text = `Add ${effect.count || 1} ${registries?.cards?.has(effect.card) ? registries.cards.get(effect.card).name : effect.card} to ${effect.pile || 'hand'}`; break;
       case 'grantCardCharge': {
         const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
-          .filter(([key]) => effect[key] !== undefined).map(([key, label]) => `+${typeof effect[key] === 'number' ? effect[key] : '?'} ${label}`);
-        text = `Next ${effect.cardType || effect.abilityKind || 'matching card'}: ${bonuses.join(', ')}`; break;
+          .filter(([key]) => effect[key] !== undefined).map(([key, label]) => key === 'manaDiscount'
+            ? `${value(effect, index, key)} less Mana (min 0)` : `+${value(effect, index, key)} ${label}`);
+        const match = [effect.cardType, effect.abilityKind, effect.cardTag].filter(Boolean).join(' ');
+        text = `Next ${match || 'matching card'} this turn: ${bonuses.join(', ')}; cannot stack with itself`; break;
       }
       default: return null; // Keep authored descriptions for complex effects.
     }
     if (effect.if) { const prefix = condition(effect.if); if (!prefix) return null; text = `If ${prefix}: ${text[0].toLowerCase() + text.slice(1)}`; }
-    if (effect.oncePerTurn) text += ' once per turn';
+    if (effect.oncePerTurn) text += ' once per turn per family';
     parts.push(text);
   }
   if (p.maneuver === 'counter') {

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatCardType, combatCardSummary } from '../src/model/playingCard.js';
 const reg = createRegistries(contentBundle);
@@ -30,6 +30,22 @@ test('summary uses live bindings and preserves full conditional effects', () => 
 });
 test('complex passive cards preserve authored text rather than hiding trigger rules', () => {
   for (const id of ['emberCovenant','shatterOpportunity']) assert.equal(combatCardSummary(card(id), null, reg), null);
+});
+
+test('expanded grade summaries retain added buildup together with authored limits', () => {
+  const grade = id => applyCombatExpansionCard(resolveCard(reg, {cardId:id, abilityRank:5}));
+  const offering = combatCardSummary(grade('progression-crown-of-scars'), null, reg);
+  assert.match(offering, /Offer 3 HP \(leave at least 1 HP\)/);
+  assert.match(offering, /offerings paid at least 1 this turn/);
+  assert.match(offering, /once per turn per family/);
+  assert.match(offering, /Add 3 Crimson Blight buildup/);
+  const orbit = combatCardSummary(grade('progression-cinder-orbit'), null, reg);
+  assert.match(orbit, /your previous card this turn was a Spell/);
+  assert.match(orbit, /Add 4 Burn buildup/);
+  const ward = grade('progression-firmament-ward');
+  const charged = combatCardSummary(ward, {tokens:{chargeManaDiscount:2}}, reg);
+  assert.match(charged, /Next spell this turn: 2 less Mana \(min 0\); cannot stack with itself/);
+  assert.match(charged, /Gain 2 Barrier once per turn per family/);
 });
 
 test('temporary tier options keep nonzero base separate and never offer locked tiers', async () => {
