@@ -39,7 +39,7 @@ export const enemyKnowledge = {
     perEnemy: {},
     [NOTE]: { encountersToMaster: 'Lifetime enemy mastery points, from 20 through 50; a real encounter earns one and a successful tactical response adds one.' },
   },
-  [NOTE]: { version: 'Saved enemy knowledge contract version; one opts new runs into broad clues and Perception.' },
 };
+// Saved contract version one opts new runs into broad clues and Perception.
 // Version is contract metadata, so Advanced exposes only tuning values.
 export const enemyKnowledgeTuning = { reads: enemyKnowledge.reads, perception: enemyKnowledge.perception, bestiary: enemyKnowledge.bestiary };
