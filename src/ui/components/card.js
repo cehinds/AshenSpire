@@ -562,6 +562,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // meta line as the same tag and value atoms the card face uses.
   let html = `<div class="tt-title">${esc(def.name)}</div>`
     + `<div class="ti-meta"><span class="as-tag">${esc(def.type)}</span><span class="ti-cost">${costText}</span></div>`;
+  if (pools.estimated) html += '<div class="combat-rule-hint">Estimated price; temporary discounts may lower it.</div>';
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
