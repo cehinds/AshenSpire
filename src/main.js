@@ -1180,7 +1180,11 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   activeSlot = slot;
   const seed = seedFromString(asked);
   const legacyArcaneShot = shotState === 'combat' && shotParams.get('shotArcane') === 'matrix';
-  const combatExpansionVersion = legacyArcaneShot ? 1 : 2;
+  const shotCombatVersion = shotState === 'combat' ? shotParams.get('shotCombatVersion') : null;
+  if (shotCombatVersion !== null && !['1', '2'].includes(shotCombatVersion)) {
+    throw new Error('shotCombatVersion must be 1 or 2');
+  }
+  const combatExpansionVersion = legacyArcaneShot || shotCombatVersion === '1' ? 1 : 2;
   const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
@@ -1189,7 +1193,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   rebuildRegistries(configSnapshot);
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion: legacyArcaneShot ? null : 1,
+    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion: legacyArcaneShot || shotCombatVersion === '1' ? null : 1,
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
