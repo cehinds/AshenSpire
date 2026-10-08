@@ -6083,7 +6083,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:44px; } }
 
 /* Recovery and pending feat actions have no permanent protection box. */
-.field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; }
+.field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; z-index:2600; }
 @media(max-width:600px) { .field > .combat-expansion-controls { top:48px; } }
 
 /* Positive Blight occupies the open center of the floating header. A phone
