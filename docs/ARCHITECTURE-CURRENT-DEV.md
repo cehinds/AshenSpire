@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `dev`
-- Source commit: `a43c3fa1883a66557d938008975a0ca6bc53cc0f`
+- Source branch: `codex/card-sigil-bundler-fix-20261008`
+- Source commit: `5f9942e112a1d3f5f80d0799a10190f7d2644b37`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve

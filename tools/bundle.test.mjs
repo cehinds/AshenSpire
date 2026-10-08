@@ -517,7 +517,7 @@ for (const [label, find, replace, expectMsg] of STRICT_ONLY) {
   const src = readFileSync(p, 'utf8');
   // Legal, hideous, and semantically identical: no blank lines, doubled
   // semicolons, an unused binding, deep nesting in a dead branch.
-  const ugly = src
+  const ugly = "import * as __uglyBalance from './balance.js'; ; ;\nimport './balance.js';;\n" + src
     .replace(/\n\n+/g, '\n')
     .replace(/;\n/g, ';;\n')
     + '\nconst __unused = ((((1))));\nif (false) { if (false) { if (false) { /* nothing */ } } }\n';
