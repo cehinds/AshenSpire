@@ -143,7 +143,11 @@ if (CORE) {
   // section. A red run prints the reporter's whole output: a file that dies
   // before registering a test (a syntax error, a missing import) shows its
   // exception ABOVE that section, and the section alone would drop the reason.
-  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  // Simulation files spawn their own CPU-heavy processes. Bound Windows file
+  // workers so concurrent local builds do not starve those existing deadlines;
+  // discovery, assertions and subprocess timeouts remain unchanged.
+  const workerArgs = process.platform === 'win32' ? ['--test-concurrency=4'] : [];
+  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...workerArgs, ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
   const out = `${result.stdout || ''}${result.stderr || ''}`;
   const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
   const ok = result.status === 0 && !stale.length && count('fail') === 0;

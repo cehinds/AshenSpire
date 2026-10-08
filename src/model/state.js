@@ -42,6 +42,9 @@ import { coreTagsProblems } from './classTree.js';
 import { classLibraryProblems } from './classLibraryState.js';
 import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
+import { createAshenBlightState, ashenBlightProblems, effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
+import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
+import { createCombatExpansionRuleSnapshot, combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
@@ -128,6 +131,7 @@ export function createRunState({
   seed,
   classId,
   registries,
+  combatExpansionVersion = 2,
   attributeMode = undefined,
   attributes: requestedAttributes = undefined,
   derivedStatOptions = {},
@@ -139,6 +143,7 @@ export function createRunState({
   startingAbilityIds = undefined,
   profileMeta = {},
 }) {
+  if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
@@ -178,7 +183,9 @@ export function createRunState({
   const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
-    advancedConfigSnapshot: advancedConfigSnapshot(profileMeta.settings || {}),
+    combatExpansionVersion,
+    ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
+    advancedConfigSnapshot: { ...advancedConfigSnapshot(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
@@ -323,6 +330,7 @@ export function createRunState({
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
   // statement about the deck a run BEGINS with, not about later arrivals.
   orderStartingDeck(registries, run);
+  ensureExpandedStarterCoverage(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -369,6 +377,8 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
+  const effectiveAttributes = effectiveAshenBlightAttributes(run);
+  const blightStaminaPenalty = run.combatExpansionVersion === 2 ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
   // A smaller starting pool used to multiply every `pointsPerTier` by the
   // ratio, which is the same as handing each formula an inflated attribute:
@@ -407,7 +417,7 @@ export function initializeRunDerivedStats(run, registries, {
         const persistedMax = run[maxField];
         const adjustment = maxField === 'maxHp' ? run.maxHpAdjustment : 0;
         if (!Number.isFinite(persistedMax) || !Number.isInteger(adjustment)) continue;
-        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value;
+        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value;
         inferred[maxField] = persistedMax - derived - adjustment;
       }
     }
@@ -455,7 +465,7 @@ export function initializeRunDerivedStats(run, registries, {
   // D22 changes the base formula.
   if (run.maxHpAdjustment === undefined) {
     if (restoredExisting && Number.isFinite(run.maxHp)) {
-      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value;
+      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value;
       run.maxHpAdjustment = run.maxHp - (oldDerivedHp + hpEquipmentBonus);
     } else run.maxHpAdjustment = 0;
     note(run, {
@@ -486,9 +496,10 @@ export function initializeRunDerivedStats(run, registries, {
       if (!Number.isInteger(value) || value < 0) {
         throw new Error(`Persisted ${key} must be a non-negative integer under its derived-stat snapshot`);
       }
+      const sharedStamina = run.combatExpansionVersion === 2 && key === 'energyMax';
       const equipmentBonus = key === 'maxMana' ? run.equipmentPoolBonuses.maxMana
-        : key === 'maxStamina' ? run.equipmentPoolBonuses.maxStamina : 0;
-      const expected = Math.max(0, deriveStat(restored.rules, statId, { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value + equipmentBonus);
+        : key === 'maxStamina' || sharedStamina ? run.equipmentPoolBonuses.maxStamina : 0;
+      const expected = Math.max(0, deriveStat(restored.rules, sharedStamina ? 'stamina' : statId, { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value + equipmentBonus - (['maxStamina', 'energyMax'].includes(key) ? blightStaminaPenalty : 0));
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
     // MAX-HP HOME 1 of 3 (the validating one). Same formula as home 2 below and
@@ -497,7 +508,7 @@ export function initializeRunDerivedStats(run, registries, {
     // collapse what you cannot watch drift. It states its number so a tool can
     // compare the three instead of trusting that they agree.
     const expectedMaxHp = Math.max(1,
-      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value
+      deriveStat(restored.rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value
       + hpEquipmentBonus + run.maxHpAdjustment);
     note(run, {
       kind: 'compute',
@@ -548,7 +559,7 @@ export function initializeRunDerivedStats(run, registries, {
     Object.entries(hostRules.rules).map(([id, r]) => [id, ruleTierSize(r)]),
   );
   const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
-    attributes: run.attributes,
+    attributes: effectiveAttributes,
     tierSizes,
   });
   const receipt = existingIsCurrent
@@ -559,11 +570,11 @@ export function initializeRunDerivedStats(run, registries, {
       relicModifierReceipt,
     });
   const rules = receipt.rules;
-  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
-  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
-  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
-  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
-  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const hp = deriveStat(rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
+  const mana = deriveStat(rules, 'mana', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
+  const stamina = deriveStat(rules, 'stamina', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
+  const energy = deriveStat(rules, 'energy', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
+  const draw = deriveStat(rules, 'draw', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
 
   const oldHpMax = run.maxHp;
   const oldHp = run.hp;
@@ -584,8 +595,8 @@ export function initializeRunDerivedStats(run, registries, {
   });
   run.maxHp = derivedMaxHp;
   run.maxMana = Math.max(0, mana.value + run.equipmentPoolBonuses.maxMana);
-  run.maxStamina = Math.max(0, stamina.value + run.equipmentPoolBonuses.maxStamina);
-  run.energyMax = energy.value;
+  run.maxStamina = Math.max(0, stamina.value + run.equipmentPoolBonuses.maxStamina - blightStaminaPenalty);
+  run.energyMax = run.combatExpansionVersion === 2 ? run.maxStamina : energy.value;
   run.drawPerTurn = draw.value;
   run.damageBySchoolAdd = structuredClone(
     receipt.relicModifiers && receipt.relicModifiers.damageBySchoolAdd
@@ -917,6 +928,39 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
+  if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
+  if (run.advancedConfigSnapshot?.breakMeterVersion !== undefined && ![1, 2].includes(run.advancedConfigSnapshot.breakMeterVersion)) problems.push('advancedConfigSnapshot.breakMeterVersion must be 1 or 2');
+  if (run.combatExpansionVersion === 2 && run.advancedConfigSnapshot?.breakMeterVersion !== 2) problems.push('Expanded runs require breakMeterVersion 2');
+  if (run.combatExpansionVersion === 2) problems.push(...ashenBlightProblems(run.ashenBlight), ...combatExpansionRulesProblems(run.combatExpansionRules));
+  else if (run.ashenBlight !== undefined || run.ashenBlightBasePools !== undefined || run.combatPendingOutcome !== undefined || run.combatExpansionRules !== undefined) problems.push('Ashen Blight fields require combatExpansionVersion 2');
+  if (run.ashenBlightBasePools !== undefined) {
+    const pools = run.ashenBlightBasePools;
+    if (!typeOk(pools, 'object')) problems.push('ashenBlightBasePools must be an object');
+    else for (const field of ['maxHp', 'maxMana', 'maxStamina']) {
+      if (!Number.isSafeInteger(pools[field]) || pools[field] < (field === 'maxHp' ? 1 : 0)) problems.push(`ashenBlightBasePools.${field} must be a valid unboosted maximum`);
+    }
+  }
+  const validateExpandedSnapshot = (snapshot, path, terminal = false) => {
+    if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
+    if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
+    problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
+    const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
+    if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
+      && prior[field].some((receipt, index) => JSON.stringify(receipt) !== JSON.stringify(saved[field][index])))) problems.push(`${path} cannot roll back accepted Ashen Blight receipts`);
+    if (terminal && JSON.stringify(saved) !== JSON.stringify(prior)) problems.push(`${path} terminal Ashen Blight must match the persisted run`);
+  };
+  if (run.combatPendingOutcome !== undefined) {
+    const pending = run.combatPendingOutcome;
+    if (!typeOk(pending, 'object')) problems.push('combatPendingOutcome must be an object');
+    else {
+      if (!['victory', 'defeat'].includes(pending.result)) problems.push('combatPendingOutcome.result must be victory or defeat');
+      for (const field of ['nodeId', 'encounterId']) if (typeof pending[field] !== 'string' || !pending[field]) problems.push(`combatPendingOutcome.${field} must identify its fight`);
+      for (const problem of combatSnapshotProblems(pending.snapshot)) problems.push(`combatPendingOutcome.snapshot.${problem}`);
+      if (pending.snapshot?.phase !== 'ended' || pending.snapshot?.result !== pending.result) problems.push('combatPendingOutcome.snapshot must contain the matching ended fight');
+      validateExpandedSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot', true);
+      if (run.combatEntered !== null) problems.push('combatPendingOutcome cannot coexist with combatEntered');
+    }
+  }
   problems.push(...classMilestoneProblems(run));
   problems.push(...abilityDraftClaimProblems(run));
   if (run.classRewardLevels !== undefined) {
@@ -1032,6 +1076,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (entered.serviceEvent !== undefined && typeof entered.serviceEvent !== 'boolean') problems.push('combatEntered.serviceEvent must be true or false when present');
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
+      validateExpandedSnapshot(entered.snapshot, 'combatEntered.snapshot');
     }
   }
   // A respec withdraws what the record names (FINISH D13a), so it may never

@@ -21,6 +21,18 @@ import { actTitle } from '../src/ui/uiContent.js';
 
 const REG = createRegistries(contentBundle);
 const ORDER = defaultSeatOrder(REG);
+
+// Appended combat streams are outside the historical map fixture. They must
+// remain unused during map generation; every older counter stays compared.
+function mapCountersBeforeCombatStreams(counters) {
+  const historical = { ...counters };
+  for (const stream of ['combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight']) {
+    assert.equal(historical[stream], 0, `building a map draws nothing on ${stream}`);
+    delete historical[stream];
+  }
+  return historical;
+}
+
 const topology = (graph) => Object.values(graph.nodes).map(({ id, floor, col, type, next, resolved, encounterId }) => ({ id, floor, col, type, next, resolved, encounterId }));
 
 test('13.1 the closed set: three seats, one baseline each, in region order', () => {
@@ -105,7 +117,7 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     // `rewardRolls` (SPEC §15.1) is appended after the fixture was taken; a
     // map draws nothing on it, so it is left out beside `seats` and asserted 0.
     // Shop offers, sigils and intent visibility likewise append after capture.
-    const { seats: _liveSeats, rewardRolls: _rewardRolls, shopOffers: _shopOffers, sigils: _sigils, enemyIntentVisibility: _intentReads, ...liveCounters } = liveRng.getCounters();
+    const { seats: _liveSeats, rewardRolls: _rewardRolls, shopOffers: _shopOffers, sigils: _sigils, enemyIntentVisibility: _intentReads, ...liveCounters } = mapCountersBeforeCombatStreams(liveRng.getCounters());
     assert.equal(_sigils, 0, 'building a map draws nothing on sigils');
     assert.equal(_intentReads, 0, 'building a map draws nothing on intent visibility');
     assert.equal(_rewardRolls, 0, 'building a map draws nothing on rewardRolls');
@@ -115,7 +127,7 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     const rng = createRng(seed);
     const g = buildActMap(PRE_SEAT_REG, rng, ORDER[tier - 1], tier);
     const after = { counters: rng.getCounters(), nodes: Object.values(g.nodes).map(({ id, floor, col, type, next, resolved, encounterId, destinationLabel }) => ({ id, floor, col, type, next, resolved, encounterId, destinationLabel })), bossIds: g.bossIds, startIds: g.startIds };
-    const { seats, rewardRolls, shopOffers, sigils, enemyIntentVisibility, ...counters } = after.counters;
+    const { seats, rewardRolls, shopOffers, sigils, enemyIntentVisibility, ...counters } = mapCountersBeforeCombatStreams(after.counters);
     assert.equal(rewardRolls, 0);
     assert.equal(shopOffers, 0);
     assert.equal(sigils, 0);

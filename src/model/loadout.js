@@ -4,6 +4,7 @@ import {
   applyMountOverrides, extraMountInstances, itemMountEntries, mountKey, ownerItemRef,
 } from './cardMounts.js';
 import { deriveStat } from './derivedStats.js';
+import { effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
 import { ratingsConfigFor, LEGACY_RATING_FORMULA } from './statRows.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
@@ -2812,8 +2813,11 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
   // The character level rides the derivation (plan phase 6): the snapshot's
   // `perLevel` rows move with it, and a run whose snapshot has none reads 0.
   const level = run.level && Number.isInteger(run.level.level) && run.level.level >= 1 ? run.level.level : 1;
+  const expanded = run.combatExpansionVersion === 2;
+  const attributes = effectiveAshenBlightAttributes(run);
+  const staminaPenalty = expanded ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
-    attributes: run.attributes,
+    attributes,
     classDef,
     level,
   });
@@ -2822,14 +2826,19 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
   applyPool('maxHp', 'hp', derived.value, equipmentBonus, nextMax, run.maxHpAdjustment);
   for (const [maxField, statId] of [['maxMana', 'mana'], ['maxStamina', 'stamina']]) {
     const poolDerived = deriveStat(run.derivedStatRuleSnapshot.rules, statId, {
-      attributes: run.attributes,
+      attributes,
       classDef,
       level,
     });
-    const poolMax = Math.max(0, poolDerived.value + bonuses[maxField]);
+    const poolMax = Math.max(0, poolDerived.value + bonuses[maxField] - (statId === 'stamina' ? staminaPenalty : 0));
     applyPool(maxField, statId, poolDerived.value, bonuses[maxField], poolMax);
   }
   run.equipmentPoolBonuses = { ...bonuses };
+  if (expanded) {
+    run.energyMax = run.maxStamina;
+    run.ashenBlightBasePools = Object.fromEntries([['maxHp', 'hp'], ['maxMana', 'mana'], ['maxStamina', 'stamina']].map(([field, stat]) => [field,
+      Math.max(field === 'maxHp' ? 1 : 0, deriveStat(run.derivedStatRuleSnapshot.rules, stat, { attributes: run.attributes, classDef, level }).value + bonuses[field] + (field === 'maxHp' ? run.maxHpAdjustment : 0))]));
+  }
   run.equipmentPoolDeficits = Object.fromEntries(
     EQUIPMENT_POOL_FIELDS.map((field) => [EQUIPMENT_POOL_CURRENT[field], results[field].deficit]),
   );
@@ -3026,7 +3035,8 @@ export function stampDeck(registries, run, cards, {
   // BEFORE the stamping loop (in place — list IS run.deck here) means a
   // newly composed instance is stamped like any other card below.
   if (cards == null) reconcileGrantedCards(registries, run);
-  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run).map((row) => [row.role, row]));
+  const effectiveAttributes = effectiveAshenBlightAttributes(run);
+  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, effectiveAttributes, run.equipmentProfileRuleSnapshot, run).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
     let row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
@@ -3037,7 +3047,7 @@ export function stampDeck(registries, run, cards, {
         ? (registries.equipment.armaments || []).find((candidate) => candidate.id === owner) || null
         : null;
       row = { role: inst.kitRole || 'attack', profile, piece };
-      row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot, run);
+      row.receipt = roleAmountReceipt(registries, row, effectiveAttributes, run.equipmentProfileRuleSnapshot, run);
     }
     if (row && row.profile) {
       const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];

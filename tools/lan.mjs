@@ -117,8 +117,8 @@ export function attachLan(server, { port, root }) {
   }
   function persistGame() {
     if (!savePath || !session || !session.game) return;
-    const data = session.game.serialize(); // null during a live fight
-    if (data) { try { writeFileSync(savePath, JSON.stringify(data)); savedGame = data; } catch { /* disk full/RO */ } }
+    const data = session.game.serialize();
+    if (data) persistRespecSnapshot(data);
   }
   function persistRespecSnapshot(data) {
     if(!savePath)throw new Error('The host has no session save destination.');
@@ -197,14 +197,14 @@ export function attachLan(server, { port, root }) {
   // persist the run at safe boundaries (serialize() is null mid-combat).
   function broadcastState() {
     if (!session.game) return;
+    if (session.game.scene.kind !== 'complete') persistGame();
     broadcastLanSnapshot(session.clients, session.game.snapshot(), wsEncode);
     if (session.game.scene.kind === 'complete') clearSave(); // run over — forget it
-    else persistGame();
   }
 
   // Start the server-authoritative run from the lobby roster.
   function startGame() {
-    const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless });
+    const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless, saveSession: persistRespecSnapshot });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
       game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, classMastery: cl.classMastery, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder });
@@ -239,8 +239,10 @@ export function attachLan(server, { port, root }) {
       case 'classRespecCancel': g.cancelMemberClassRespec(id,msg.draftId); break;
       case 'resync': broadcastState(); return;
       case 'chooseMasteryNode': g.chooseMasteryNode(id, msg.nodeId); break;
-      case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
-      case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice); break;
+      case 'chooseNode': progressionIntent(() => g.chooseNode(id, msg.nodeId)); break;
+      case 'playCard': progressionIntent(() => g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice, msg.upcastTier ?? msg.upcastRanks ?? 0, msg.selectedBuildup)); break;
+      case 'recoverControl': progressionIntent(() => g.combatRecovery(id, msg.selections)); break;
+      case 'chooseBlightFeat': progressionIntent(() => g.combatBlightFeat(id, { threshold: msg.threshold, path: msg.path })); break;
       case 'chooseDiscard': g.combatChooseDiscard(id, msg.cardInstanceIds); break;
       case 'endTurn': g.combatEndTurn(id); break;
       case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
@@ -371,7 +373,7 @@ export function attachLan(server, { port, root }) {
   // launcher restarted), restore it from disk first; then assign each connected
   // client to a member (in order) and tell it which member it now controls.
   function resumeGame() {
-    if (!session.game) { session.game = restoreSession(REG, savedGame); session.started = true; }
+    if (!session.game) { session.game = restoreSession(REG, savedGame, { saveSession: persistRespecSnapshot }); session.started = true; }
     const game = session.game;
     const memberIds = [...game.session.members.keys()];
     const socks = [...session.clients.entries()];
