@@ -2,12 +2,13 @@
 
 Read the enemy's stance, choose a response, and build openings through protection, control, positioning, and card sequencing.
 
-- **Proposal status**
-  - These are revised design rules for review.
-  - Values labelled Suggested are starting points for playtesting.
-  - This expansion follows the existing tagged-combat contract in SPEC §4.7.
-  - It proposes later revisions; it does not change that runtime contract by itself.
-  - The Reaver example defines the proposed Counter arithmetic.
+- **Implementation and playtesting**
+  - The accepted combat rules now have a version-2 runtime implementation, introduced in [#1723](https://github.com/cehinds/AshenSpire/pull/1723).
+  - New runs use the expanded rules. Existing runs keep the rules saved with their run.
+  - Values labelled Suggested are configurable starting values for playtesting.
+  - [The implementation contract](combat-expansion-contract.md) records the final ownership, Counter charge, rounding, recovery, Power lifecycle, and compatibility rules. It takes precedence over earlier proposal wording below.
+  - The Reaver example defines the authored Counter reply: fully absorb the eligible action, then return the damage and Poise printed on the card.
+  - [Enemy knowledge](enemy-knowledge-contract.md) records the separately coordinated hidden-intent, Perception, and bestiary expansion.
 
 ## Camps and combat identities
 
@@ -31,6 +32,14 @@ Read the enemy's stance, choose a response, and build openings through protectio
   - Traits: Evade, Unreflectable, Grounded, Interrupt, or another explicitly listed effect.
   - A Force spell can deal Blunt damage and still use PR and magical defenses.
   - A Lightning spell can deal Piercing damage and still apply magical Paralysis.
+
+- **Support and deck card types**
+  - **Power:** play a paid card once, Exhaust that instance, and keep its buff for the combat unless an effect explicitly removes it.
+  - **Skill:** reusable buffs, protection, recovery, or deck manipulation; normally Discard after use. A printed Exhaust or Retain rule still applies.
+  - **Status:** usually a harmful card added to the deck. Its text states whether it can be played and how it is removed.
+  - These types appear at the bottom of support and deck cards. Offensive and maneuver cards show their action type there.
+  - Deck Status cards are separate from active status gauges and the recovery controls shown while incapacitated.
+  - Each owned Power copy or legal Replica has its own paid cast; copying an effect does not count as a new card play.
 
 - **One active stance**
   - Attack, Defend, Counter, Sweep, Ranged, Smash, or Casting.
