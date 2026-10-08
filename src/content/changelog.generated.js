@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1757",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Choose your game appearance",
+    "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
+    "build": "0.7.1.1156",
+    "pullRequest": 1757,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1757"
+  },
+  {
     "id": "pr-1751",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -11,16 +21,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1152",
     "pullRequest": 1751,
     "url": "https://github.com/cehinds/AshenSpire/pull/1751"
-  },
-  {
-    "id": "pr-1757",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
-    "summary": "Choose your game appearance",
-    "detail": "The alternative appearance is now the default. With the debug flag on, Classic appearance restores the previous character art, animation and battlefield layout without changing the run. Art libraries distinguish classic, alternative and shared assets. The shorter README puts every channel beside its full published build number, illustrates the current Release candidate, lists implemented features, and highlights AI authorship, third-party licences and unresolved asset records.",
-    "build": "0.7.1.1153",
-    "pullRequest": 1757,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1757"
   },
   {
     "id": "pr-1745",
@@ -43,16 +43,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1746"
   },
   {
-    "id": "pr-1737",
-    "date": "2026-10-08",
-    "group": "2026-10-08",
-    "summary": "Alternative tutorial controls stay reachable",
-    "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
-    "build": "0.7.1.1140",
-    "pullRequest": 1737,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1737"
-  },
-  {
     "id": "pr-1750",
     "date": "2026-10-08",
     "group": "2026-10-08",
@@ -61,6 +51,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1142",
     "pullRequest": 1750,
     "url": "https://github.com/cehinds/AshenSpire/pull/1750"
+  },
+  {
+    "id": "pr-1737",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative tutorial controls stay reachable",
+    "detail": "Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1737,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1737"
   },
   {
     "id": "pr-1755",
@@ -3733,16 +3733,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1234"
   },
   {
-    "id": "pr-1228",
-    "date": "2026-09-20",
-    "group": "2026-09-20",
-    "summary": "Your level and every skill you are training now have bars you can watch",
-    "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
-    "build": "0.7.1.342",
-    "pullRequest": 1228,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1228"
-  },
-  {
     "id": "pr-1232",
     "date": "2026-09-20",
     "group": "2026-09-20",
@@ -3751,16 +3741,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.341",
     "pullRequest": 1232,
     "url": "https://github.com/cehinds/AshenSpire/pull/1232"
-  },
-  {
-    "id": "pr-1227",
-    "date": "2026-09-20",
-    "group": "2026-09-20",
-    "summary": "Combat and combat animation have their own Settings section",
-    "detail": "The General tab now offers Combat beside Display and Audio, in two groups: Animation & effects holds Character sprites, Combat pacing, Rendering quality, Screen shake and Show played card animation, and Armaments holds Combat Armaments and Phone Armaments location. Every one of those switches moved there — pacing, quality, shake and the card animation were filed beside the title screen's lit-city pause, Character sprites was behind Advanced, and the Armaments rows sat with the accent colour — so each now has one place to be found and none is drawn twice. Advanced → Combat & actors still holds the balance constants and now says where the feel settings went. Your existing choices are unchanged; only where you find them moved.",
-    "build": "0.7.1.340",
-    "pullRequest": 1227,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1227"
   },
   {
     "id": "pr-1229",
@@ -3783,6 +3763,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1233"
   },
   {
+    "id": "pr-1228",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Your level and every skill you are training now have bars you can watch",
+    "detail": "The Armoury's Character page named your level and showed nothing of the climb. A gold bar now sits under your class description with the XP you have toward the next level, and says so when a point is waiting to be assigned at a shrine. Below it, a new Skill progression section lists your class ladder and every track you have actually trained — a weapon group, an armour weight, dual-wielding — each with its level, the XP toward its next one, and a marker when a card draft is waiting for you at the next reward. Tracks you have never touched stay out of the way. The numbers are the same ones the shrine spends.",
+    "build": "0.7.1.342",
+    "pullRequest": 1228,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1228"
+  },
+  {
     "id": "pr-1225",
     "date": "2026-09-20",
     "group": "2026-09-20",
@@ -3801,6 +3791,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.332",
     "pullRequest": 1226,
     "url": "https://github.com/cehinds/AshenSpire/pull/1226"
+  },
+  {
+    "id": "pr-1227",
+    "date": "2026-09-20",
+    "group": "2026-09-20",
+    "summary": "Combat and combat animation have their own Settings section",
+    "detail": "The General tab now offers Combat beside Display and Audio, in two groups: Animation & effects holds Character sprites, Combat pacing, Rendering quality, Screen shake and Show played card animation, and Armaments holds Combat Armaments and Phone Armaments location. Every one of those switches moved there — pacing, quality, shake and the card animation were filed beside the title screen's lit-city pause, Character sprites was behind Advanced, and the Armaments rows sat with the accent colour — so each now has one place to be found and none is drawn twice. Advanced → Combat & actors still holds the balance constants and now says where the feel settings went. Your existing choices are unchanged; only where you find them moved.",
+    "build": "0.7.1.340",
+    "pullRequest": 1227,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1227"
   },
   {
     "id": "pr-1217",
@@ -4023,16 +4023,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1199"
   },
   {
-    "id": "pr-1187",
-    "date": "2026-09-19",
-    "group": "2026-09-19",
-    "summary": "The Last Lantern opens a new quest, and the road offers new gear",
-    "detail": "Help a stranded caravan with oil or effort, then meet it again for a reward that remembers your choice. Frost Spear, Cinder Axe and Dusk Chime bring three new weapon Arts; Bastion Harness, Rimeweave Robes and Waywatcher Coat trade protection, Frost and Stamina against their own drawbacks. Four new relics offer travel rewards, stronger Exposure, portable healing or cheaper Powers. Every weapon has smith upgrades and uses existing artwork throughout the Armoury, shops and compendium. Reward cards now have fixed resource costs distributed by rarity: about 30%, 50% and 70% of Common, Uncommon and Rare cards use Stamina, including 15%, 30% and 50% using both Mana and Stamina. Most weapon attacks still cost Actions only; caster rewards favor higher rarities once unlocked.",
-    "build": "0.7.1.226",
-    "pullRequest": 1187,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1187"
-  },
-  {
     "id": "pr-1194",
     "date": "2026-09-19",
     "group": "2026-09-19",
@@ -4091,6 +4081,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.192",
     "pullRequest": 1189,
     "url": "https://github.com/cehinds/AshenSpire/pull/1189"
+  },
+  {
+    "id": "pr-1187",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The Last Lantern opens a new quest, and the road offers new gear",
+    "detail": "Help a stranded caravan with oil or effort, then meet it again for a reward that remembers your choice. Frost Spear, Cinder Axe and Dusk Chime bring three new weapon Arts; Bastion Harness, Rimeweave Robes and Waywatcher Coat trade protection, Frost and Stamina against their own drawbacks. Four new relics offer travel rewards, stronger Exposure, portable healing or cheaper Powers. Every weapon has smith upgrades and uses existing artwork throughout the Armoury, shops and compendium. Reward cards now have fixed resource costs distributed by rarity: about 30%, 50% and 70% of Common, Uncommon and Rare cards use Stamina, including 15%, 30% and 50% using both Mana and Stamina. Most weapon attacks still cost Actions only; caster rewards favor higher rarities once unlocked.",
+    "build": "0.7.1.226",
+    "pullRequest": 1187,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1187"
   },
   {
     "id": "pr-1186",
@@ -4203,16 +4203,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1141"
   },
   {
-    "id": "pr-1140",
-    "date": "2026-09-18",
-    "group": "2026-09-18",
-    "summary": "The rest of the game’s look-and-timing settings move out of the code",
-    "detail": "Nothing you see changes in play, and as before that is checked rather than hoped. Fourteen more parts of the game kept presentation settings written into the program: where a weapon effect attaches to each painted figure, how long explanations wait before opening, the Reaver’s attack animation, the drifting ash on the title screen, where fighters plant their feet, the Armoury’s default proportions, and the timings of combat effects. All of it now lives as plain, organised settings files with the rest. Every one of those parts was recorded before the move and is held to exactly what it produced before, and a further check refuses to let a stray number creep back in beside its new home.",
-    "build": "0.7.1.92",
-    "pullRequest": 1140,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1140"
-  },
-  {
     "id": "pr-1149",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -4273,6 +4263,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1143"
   },
   {
+    "id": "pr-1140",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The rest of the game’s look-and-timing settings move out of the code",
+    "detail": "Nothing you see changes in play, and as before that is checked rather than hoped. Fourteen more parts of the game kept presentation settings written into the program: where a weapon effect attaches to each painted figure, how long explanations wait before opening, the Reaver’s attack animation, the drifting ash on the title screen, where fighters plant their feet, the Armoury’s default proportions, and the timings of combat effects. All of it now lives as plain, organised settings files with the rest. Every one of those parts was recorded before the move and is held to exactly what it produced before, and a further check refuses to let a stray number creep back in beside its new home.",
+    "build": "0.7.1.92",
+    "pullRequest": 1140,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1140"
+  },
+  {
     "id": "pr-1133",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -4301,16 +4301,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.80",
     "pullRequest": 1132,
     "url": "https://github.com/cehinds/AshenSpire/pull/1132"
-  },
-  {
-    "id": "pr-1124",
-    "date": "2026-09-18",
-    "group": "2026-09-18",
-    "summary": "The last of the game’s look-and-layout settings move out of the code",
-    "detail": "Nothing you see changes in play — that is the point, and it is checked rather than hoped. Ten parts of the game still kept their presentation settings written into the program itself: the map’s tile sizes and zoom limits, the stances a fighter can hold, which animation each kind of action plays, where the class medallion sits on each painted figure, the environment paintings and their scenes, the map node icons and their descriptions, the in-run menu, the gamepad button names, and the timings and artwork of the combat pose stage. All of it now lives as plain, organised settings files alongside the rest, so a value can be changed in one readable place instead of hunted through the code. Every one of those parts was recorded before the move and is held to exactly what it produced before — same values, in the same order — and a further check refuses to let a stray number creep back into the code beside its new home.",
-    "build": "0.7.1.78",
-    "pullRequest": 1124,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1124"
   },
   {
     "id": "pr-1129",
@@ -4343,6 +4333,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1119"
   },
   {
+    "id": "pr-1124",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The last of the game’s look-and-layout settings move out of the code",
+    "detail": "Nothing you see changes in play — that is the point, and it is checked rather than hoped. Ten parts of the game still kept their presentation settings written into the program itself: the map’s tile sizes and zoom limits, the stances a fighter can hold, which animation each kind of action plays, where the class medallion sits on each painted figure, the environment paintings and their scenes, the map node icons and their descriptions, the in-run menu, the gamepad button names, and the timings and artwork of the combat pose stage. All of it now lives as plain, organised settings files alongside the rest, so a value can be changed in one readable place instead of hunted through the code. Every one of those parts was recorded before the move and is held to exactly what it produced before — same values, in the same order — and a further check refuses to let a stray number creep back into the code beside its new home.",
+    "build": "0.7.1.78",
+    "pullRequest": 1124,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1124"
+  },
+  {
     "id": "pr-1126",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -4351,16 +4351,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.77",
     "pullRequest": 1126,
     "url": "https://github.com/cehinds/AshenSpire/pull/1126"
-  },
-  {
-    "id": "pr-1120",
-    "date": "2026-09-18",
-    "group": "2026-09-18",
-    "summary": "A check on the game’s own content builder is whole again",
-    "detail": "Nothing you see changes. The tool that packs the game’s content keeps a list of the eight parts a finished pack must contain, and tests itself by removing each one in turn to prove the right checker catches it. One of those eight — the events, the things that happen to you on the road — had stopped being caught the way the list says. Instead of one plain report that the events were missing, the content checker raised seventeen complaints about quests, speakers and a relic that all pointed at events which are in fact present, and never mentioned the one part that was gone. The checker now leaves that part to the tool that owns it and says so once, plainly. Nothing about the events themselves was wrong, and every check the content checker made before it still runs: a pack that ships an empty list of events is still refused, in all seventeen ways.",
-    "build": "0.7.1.77",
-    "pullRequest": 1120,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1120"
   },
   {
     "id": "pr-1116",
@@ -4381,6 +4371,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.75",
     "pullRequest": 1111,
     "url": "https://github.com/cehinds/AshenSpire/pull/1111"
+  },
+  {
+    "id": "pr-1120",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A check on the game’s own content builder is whole again",
+    "detail": "Nothing you see changes. The tool that packs the game’s content keeps a list of the eight parts a finished pack must contain, and tests itself by removing each one in turn to prove the right checker catches it. One of those eight — the events, the things that happen to you on the road — had stopped being caught the way the list says. Instead of one plain report that the events were missing, the content checker raised seventeen complaints about quests, speakers and a relic that all pointed at events which are in fact present, and never mentioned the one part that was gone. The checker now leaves that part to the tool that owns it and says so once, plainly. Nothing about the events themselves was wrong, and every check the content checker made before it still runs: a pack that ships an empty list of events is still refused, in all seventeen ways.",
+    "build": "0.7.1.77",
+    "pullRequest": 1120,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1120"
   },
   {
     "id": "pr-1113",
@@ -4503,16 +4503,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1104"
   },
   {
-    "id": "pr-1003",
-    "date": "2026-09-15",
-    "group": "2026-09-15",
-    "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
-    "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down — however you aimed, by tapping the card's information, by dragging it, or by its number key.",
-    "build": "0.7.1.59",
-    "pullRequest": 1003,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1003"
-  },
-  {
     "id": "pr-994",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -4521,6 +4511,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.58",
     "pullRequest": 994,
     "url": "https://github.com/cehinds/AshenSpire/pull/994"
+  },
+  {
+    "id": "pr-1003",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
+    "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down — however you aimed, by tapping the card's information, by dragging it, or by its number key.",
+    "build": "0.7.1.59",
+    "pullRequest": 1003,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1003"
   },
   {
     "id": "pr-1101",
