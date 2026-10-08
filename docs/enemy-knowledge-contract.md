@@ -54,7 +54,11 @@ of tactical combat version 2. No release/main publication is authorized.
   auto-upgrades or persistent class mastery. Bestiary levels never add Perception.
 - The authority accepts one `predictIntent(enemyInstanceId, actionSerial, maneuver)` per
   observer per action while it is wholly `?`, before that action resolves.
-  Choices are Attack, Smash, Sweep, Ranged, Defend, Counter, Casting, Preparing.
+  Choices are Attack, Smash, Sweep, Ranged, Defend, Counter, Spell, Casting,
+  Preparing. `Spell` means a ready spell payload; `Casting` means its committed
+  preparation/charge. `Preparing` is the fallback prediction category for other
+  support actions, not a new mechanical stance. Use the same precedence as the
+  clue mapping to normalize every authored move to one prediction category.
   The request validates phase, living seat/enemy, current serial and choice.
   Rejected requests are transactional and consume no resources or randomness.
   A prediction cannot be replaced or repeatedly submitted to farm credit.
