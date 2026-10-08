@@ -1,0 +1,68 @@
+{
+  "id": "emberHound",
+  "name": "Ember Hound",
+  "family": "companion",
+  "source": "src/content/companions.js",
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Loyal alert hound of banked coals, charcoal fur with dim amber warmth beneath, ears raised, four paws firmly planted, gentle watchful stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "file": "continuation/sprites/emberHound-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-157f6f52-1450-42ed-9626-52486f8d7da8.png",
+  "validation": {
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.6370633443196615,
+    "visibleBounds": [
+      162,
+      12,
+      1327,
+      997
+    ],
+    "anchor": [
+      744.5,
+      997
+    ],
+    "sha256": "388bbf5d314d887ef86de46912aa0b15b482910b10ddd9287f50adcce3701c98",
+    "alphaThreshold": 32
+  },
+  "referenceImages": [
+    "masters/emberHound.png"
+  ],
+  "promptUsed": "Edit target: the supplied Ember Hound sprite. Preserve its canine identity, friendly alert expression, charcoal fur and glowing ember cracks, anatomical four legs and long tail. Rotate the entire body into rear three-quarter view from BEHIND, back and haunches nearest viewer, head and body looking away toward upper-right into battle alongside the player. Full animal including paws and tail, generously padded edges, grounded idle stance. Detailed painterly dark fantasy. True transparent alpha everywhere outside silhouette, no colored backdrop, halo, floor, shadows or text. Landscape 1536x1024.",
+  "previousView": {
+    "file": "masters/emberHound.png",
+    "validation": {
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.6787796020507812,
+      "visibleBounds": [
+        160,
+        73,
+        1364,
+        958
+      ],
+      "anchor": [
+        762.0,
+        958
+      ],
+      "sha256": "66dd9a8bf65b1d263a5bce3962bf4e008a351bb0d2e3bc49b85e0e3364f7ad08"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Loyal alert hound of banked coals, charcoal fur with dim amber warmth beneath, ears raised, four paws firmly planted, gentle watchful stance. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+  }
+}

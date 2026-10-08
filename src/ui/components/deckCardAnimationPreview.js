@@ -1,5 +1,10 @@
 import { el, button } from '../kit/index.js';
 import { createPaintedStage } from '../paintedOutfits.js';
+import { createAlternativeCardStage } from '../alternativeCardStage.js';
+import { displayAppearance } from '../displayAppearance.js';
+import { alternativeCardAnimations } from '../../content/alternativeCardAnimations.js';
+import { sampleSequence, durationFor } from '../../model/alternativeCardAnimation.js';
+import { ANIM_SPEEDS, getAnimSpeed } from '../animationPace.js';
 import { reducedMotionRequested } from '../motion.js';
 import { t } from '../strings.js';
 import { resolveCard } from '../../model/registries.js';
@@ -17,7 +22,10 @@ export function deckCardAnimationPlan(registries, run, ref) {
   const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
   const plan = resolveCombatAnimation({ ...definition, cardTags: tags,
     animationTags: combatEffectTags(registries, definition), sourceArmamentId: ref.sourceArmamentId,
-  }, equippedPieces(registries, run.loadout, run.class), { animation });
+  }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, appearance: displayAppearance() });
+  const sequence = plan.alternative && alternativeCardAnimations.classes[run.class]?.sequences[plan.technique];
+  if (sequence) return { animation: null, plan, sequence, frames: sequence.poses, armourId: 'default',
+    duration: durationFor(sequence, ANIM_SPEEDS[getAnimSpeed()]), frameMs: 260 / sequence.poses.length };
   const clip = animationClip(animation, plan.technique);
   const frames = clip?.frames || COMBAT_SEQUENCES[plan.technique] || [plan.technique];
   return { animation, plan, frames, armourId: figureSpec(registries, run.loadout, run.class).armourId,
@@ -25,7 +33,7 @@ export function deckCardAnimationPlan(registries, run, ref) {
 }
 
 /** Lazy desktop-only playback. Pausing freezes the exact frame; disposal owns every listener/frame. */
-export function deckCardAnimationPreview({ registries, run, ref, paused = false, onPaused = () => {} }, { createStage = createPaintedStage } = {}) {
+export function deckCardAnimationPreview({ registries, run, ref, paused = false, onPaused = () => {} }, { createStage = (classId, armourId, options) => createAlternativeCardStage(classId) || createPaintedStage(classId, armourId, options) } = {}) {
   const root = el('section', { class: 'deck-editor-animation', 'aria-label': t('deckEditor.animation') });
   const host = el('div', { class: 'deck-editor-animation-stage', 'aria-hidden': 'true' });
   const toggle = button({ label: t(paused ? 'deckEditor.animation.play' : 'deckEditor.animation.pause'), className: 'deck-editor-animation-toggle' });
@@ -37,7 +45,9 @@ export function deckCardAnimationPreview({ registries, run, ref, paused = false,
   let userPaused = paused || reducedMotionRequested();
   const stop = () => { if (tick !== null) cancelAnimationFrame(tick); tick = null; lastTime = null; };
   const paint = () => {
-    const next = Math.floor(elapsed / playback.frameMs) % frames.length;
+    const time = playback.duration ? elapsed % playback.duration : 0;
+    const next = playback.sequence ? sampleSequence(playback.sequence,time,playback.duration).index : Math.floor(elapsed / playback.frameMs) % frames.length;
+    if (playback.sequence && stage.seek) { stage.seek(playback.plan.technique,time,playback.duration); index=next; return; }
     if (next !== index) { stage.setPose(frames[next]); index = next; }
   };
   const frame = time => {
@@ -62,7 +72,7 @@ export function deckCardAnimationPreview({ registries, run, ref, paused = false,
       frames = playback.frames.filter(pose => stage?.poses.includes(pose));
       if (stage) host.replaceChildren(stage.el);
     }
-    const available = !!stage && frames.length > 1;
+    const available = !!stage && frames.length > 1 && playback.duration !== 0;
     caption.textContent = t(available ? 'deckEditor.animation' : frames.length ? 'deckEditor.animation.still' : 'deckEditor.animation.unavailable');
     host.hidden = !frames.length;
     toggle.disabled = !available;

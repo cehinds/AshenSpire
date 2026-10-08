@@ -34,7 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Alternative figures keep idle life and respect reduced motion** ([#1746](https://github.com/cehinds/AshenSpire/pull/1746), `0.7.1.1143`). Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.
+
+- **Alternative tutorial controls stay reachable** ([#1737](https://github.com/cehinds/AshenSpire/pull/1737), `0.7.1.1140`). Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.
+
 - **Combat scenery reaches the top of the screen** ([#1748](https://github.com/cehinds/AshenSpire/pull/1748), `0.7.1.1136`). The skyline sits higher while fighters stay grounded. The Vitality header shares the cards' dark leather background, staying opaque behind the resources and fading away by the Player or Enemy Turn banner.
+- **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
 
 - **Behind the scenes: alternative sync keeps the full history efficiently** ([#1747](https://github.com/cehinds/AshenSpire/pull/1747), `0.7.1.1133`). Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.
 
@@ -56,9 +61,17 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Martial and Spell combat is playable** ([#1723](https://github.com/cehinds/AshenSpire/pull/1723), `0.7.1.1111`). New runs use persistent stances, whole-action counters and evasion, Ward, typed defenses, status buildup and recovery, optional upcasting, and run-long Ashen Blight. Cards show their action at the bottom with compact effects and inspected tags; Powers Exhaust while their buffs stay active for the fight. Solo and co-op share the rules and saved outcomes. Existing runs retain their original combat rules.
 
+- **Cards animate with each class's base weapons** ([#1727](https://github.com/cehinds/AshenSpire/pull/1727), `0.7.1.1106`). Alternative combat now plays attack, smash, sweep, counter, defend, spell and ranged motions from the card type. Reaver uses a two-handed greatsword and crossbow, Rogue twin daggers and bow, Starseer staff and open book, and Herald unarmed strikes and book casting. Attacks advance and return, hits flash red, and the atelier and deck preview share the new motions. Equipment-tag combinations and stance families remain separate work.
+
 - **Power and card-label rules clarified** ([#1725](https://github.com/cehinds/AshenSpire/pull/1725), `0.7.1.1103`). Defines expanded Power casts that Exhaust their paid card instance while its installed effect lasts for the combat. Preserves authored action labels, reusable Skills, and separate deck Status cards. Additional copies and Replicas remain separate paid casts. This contract prepares the combat implementation; gameplay does not change yet.
 
+- **Alternative previews document the current published release** ([#1721](https://github.com/cehinds/AshenSpire/pull/1721), `0.7.1.1102`). Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.
+
 - **Enemy knowledge rules defined** ([#1726](https://github.com/cehinds/AshenSpire/pull/1726), `0.7.1.1102`). Specifies unknown and broad enemy clues, run Perception from successful predictions, and five-stage persistent bestiary knowledge. Defines saved receipts, bounded counter bonuses and private co-op reads. This is the contract for a later gameplay update; the game does not change yet.
+
+- **Base class actions are ready to preview** ([#1719](https://github.com/cehinds/AshenSpire/pull/1719), `0.7.1.1101`). The alternative animation atelier offers a dashing strike, defense and power for each class in base armour. Equipped weapons share the class's default animation. Reaver wears a full cape, Herald keeps the shield left and sword right, and the preview includes a red hit flash. These are editable animation studies; live combat integration and weapon-tag combinations come later.
+
+- **Alternative updates retain combat plans and starting choices** ([#1715](https://github.com/cehinds/AshenSpire/pull/1715), `0.7.1.1100`). The alternative version accepts future combat plans and shared starting ability updates while retaining its custom artwork and both changelog histories. Required starting abilities are also included in automated adventure checks.
 
 - **Next combat rules accepted for implementation** ([#1718](https://github.com/cehinds/AshenSpire/pull/1718), `0.7.1.1100`). Defines the complete Martial and Spell expansion: whole-action counters and evasion, persistent Ward, control recovery, optional upcasting, and three run-lasting Blight feat stages. Old runs keep their saved rules. This contract update prepares the runtime implementation; gameplay does not change yet.
 
@@ -68,9 +81,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Starting abilities respect your deck copy limit** ([#1714](https://github.com/cehinds/AshenSpire/pull/1714), `0.7.1.1097`). Raising the class spell and Power copy limit now lets character creation offer an ability already granted by your starting equipment. The preview and the finished deck use the same setting.
 
+- **Alternative Counters retain readable clauses and charges** ([#1712](https://github.com/cehinds/AshenSpire/pull/1712), `0.7.1.1095`). Conditional Counter clauses keep their printed values while preparation arms only eligible effects. One-use damage charges remain visible after effects with no contacts. The alternative battlefield and animation studies are preserved.
+
 - **Plans: recover from control and build around Blight** ([#1713](https://github.com/cehinds/AshenSpire/pull/1713), `0.7.1.1094`). The next combat proposal gives Sleep, Paralysis and Dazed recovery cards with clear Stamina costs, caps Sleep healing and Ward restoration, and trades Prone's ranged protection for greater Contact damage. Three Blight milestones offer feats with two benefits and one drawback. Counter coverage, school interactions, tag combos and optional upcasting are documented for future implementation; gameplay does not change in this update.
 
 - **Counter cards show the reply they prepare** ([#1711](https://github.com/cehinds/AshenSpire/pull/1711), `0.7.1.1093`). Choosing an enemy for immediate support no longer changes the printed Counter damage. One-use damage charges stay in the preview when an earlier damage effect has no contacts. Solo and co-op show the same armed reply.
+
+- **Alternative combat gains tactical cards and readable stances** ([#1706](https://github.com/cehinds/AshenSpire/pull/1706), `0.7.1.1092`). Physical and spell cards, damage effects and guarded Counters now follow the shared combat rules. Hidden enemy moves keep their stances visible, and co-op reads stay private to each character. The alternative battlefield retains its figures, layered scenery, motion and update history.
 
 - **Combat cards and enemy moves share tactical rules** ([#1705](https://github.com/cehinds/AshenSpire/pull/1705), `0.7.1.1089`). All current cards and enemy moves carry physical or spell identities, damage riders and counterplay. Counters wait for guarded hits, Stagger cancels reactions, and Wisdom/Intelligence reveal hidden moves while stances stay visible. Co-op uses each character’s own read; saves retain combat tuning.
 
@@ -78,20 +95,39 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Clearer header with fewer controls** ([#1702](https://github.com/cehinds/AshenSpire/pull/1702), `0.7.1.1074`). Edit Deck stays in Armaments instead of appearing twice. Thin black edges make header text, health bars, relics and controls easier to see over artwork.
 
+- **More class animations to preview** ([#1707](https://github.com/cehinds/AshenSpire/pull/1707), `0.7.1.1068`). The alternative animation atelier adds Rogue twin daggers, Starseer staff and Herald sword-and-shield studies. The Herald keeps the sword in the right hand and shield on the left arm through attacks and reactions. Current attack timing, forward movement and return, red hit flashes, down poses and casting are available in the preview. These are authoring studies; gameplay integration and the remaining base loadouts are still pending.
+
+- **Both game versions retain their updates** ([#1701](https://github.com/cehinds/AshenSpire/pull/1701), `0.7.1.1067`). Alternative updates preserve the reviewed artwork checks, skill Level Up repairs and both changelog histories while accepting the latest promoted primary build.
+
+- **Alternative figures recover and keep moving** ([#1689](https://github.com/cehinds/AshenSpire/pull/1689), `0.7.1.1065`). Retry restores missing combat and dialogue artwork in place. Each alternative figure shares one idle animation that stops when fallen or when Reduced motion is enabled. Crowded combat controls and the short-landscape merchant remain reachable, with alternative artwork and both update histories preserved.
+
+- **Skill Level Up works after victory** ([#1691](https://github.com/cehinds/AshenSpire/pull/1691), `0.7.1.1065`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the alternative standalone build. Earned XP and queued choices are retained.
+
 - **Combat matchup rules defined** ([#1704](https://github.com/cehinds/AshenSpire/pull/1704), `0.7.1.1064`). Defines shared player and enemy combat tags, deferred Counters, stance reads, spell roles and combo suggestions. Runtime changes follow separately; Ashen Blight remains a proposal.
 
 - **Rear sprite studies archived for authoring** ([#1697](https://github.com/cehinds/AshenSpire/pull/1697), `0.7.1.1061`). The editor-ready archive contains 31 character appearances and 26,071 editable weapon combinations, with corrected facing and character layers above equipment. Game sprites and equipment bindings remain unchanged.
 
 - **Alternative updates keep progressing** ([#1698](https://github.com/cehinds/AshenSpire/pull/1698), `0.7.1.1060`). The alternative version can regenerate its artwork during automatic updates using the same pinned encoder as the reviewed exports.
 
+- **Preview the new alternative character animations** ([#1695](https://github.com/cehinds/AshenSpire/pull/1695), `0.7.1.1060`). The animation atelier has a five-pose Reaver sword attack, forward movement and return, a red hit flash, hurt and down poses, and separate power and spell casts at the current combat pace. Existing effects follow the new silhouette. Full and light artwork and editable Workshop projects are available for review; the coverage board identifies the remaining base weapon combinations. This is an authoring preview, with gameplay integration still pending.
+
 - **Skill Level Up works after victory** ([#1692](https://github.com/cehinds/AshenSpire/pull/1692), `0.7.1.1059`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.
 
 ## 2026-10-06
 
+
+
+- **Lighter alternative characters, clearer scenery** ([#1694](https://github.com/cehinds/AshenSpire/pull/1694), `0.7.1.1059`). The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.
+
+- **Alternative battles use the completed art collection** ([#1684](https://github.com/cehinds/AshenSpire/pull/1684), `0.7.1.1057`). All 32 named combat settings have four independent layers with desktop and phone compositions. The collection has 59 canonical idle appearances, including the approved rear companions and speakers; dedicated armor appearances resolve before older aliases. Phone exports keep the artwork smaller while the current HUD, cards and footer stay in place. Sprite feet remain grounded when co-op battles resize between desktop and phone.
+
 - **Sharper maps and lighter sprites** ([#1693](https://github.com/cehinds/AshenSpire/pull/1693), `0.7.1.1057`). Maps and backgrounds keep up to 720px of image height, and combat scenes retain their native detail. Sprites use lighter compression within a 480px ceiling. The shared art release and documented export targets apply to regular and alternative builds, with original paintings preserved.
+
 - **Landscape targets clear the intent labels** ([#1690](https://github.com/cehinds/AshenSpire/pull/1690), `0.7.1.1056`). Enemy tap areas and health columns move below nearby intent controls when space is tight, while their figures keep the same ground positions. The overlap check keeps the player's fitted tap area above the hand, and all five desktop and phone layouts are checked independently.
 
 - **Short-screen controls keep their own space** ([#1688](https://github.com/cehinds/AshenSpire/pull/1688), `0.7.1.1054`). Crowded enemy feet and health columns stay separate without moving their artwork. Intent labels remain reachable in short landscape views, and the merchant header sits below the HUD. Browser checks follow the actual tap areas; portable build checks include authored alternative artwork.
+
+- **Alternative builds gain class progression and retraining** ([#1686](https://github.com/cehinds/AshenSpire/pull/1686), `0.7.1.1054`). Class milestones, independently registered card, feat and relic catalogs, free retraining and ordered XP claims now work with the alternative battlefield. Its own artwork, formation and saved layouts are retained, with both update histories preserved.
 
 - **Choose each class milestone and retrain your build** ([#1676](https://github.com/cehinds/AshenSpire/pull/1676), `0.7.1.1052`). Class rewards now follow a saved schedule for cards, feats, equipment, relics and attributes. Independent catalog modules add 40 card families with six ranks, 50 feats, 50 ability tags and 10 relics; available choices and level lists populate from their requirements. Spellcraft and Combat Maneuvers offer three cards with an Intelligence chance for a fourth higher-rank option. Actions and Stamina share one pool. Free class retraining previews earned choices without rerolling offers or restoring spent rewards. Solo and co-op XP fill Class, Character and gained skills in order before revealing blue Level Up buttons and a green Continue; remaining XP fills when you return.
 
@@ -101,6 +137,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Your route, one choice at a time** ([#1679](https://github.com/cehinds/AshenSpire/pull/1679), `0.7.1.1045`). The map keeps the act name, Entrance, evenly spaced encounter circles and Boss on one desktop line. Empty circles fill with the encounters you enter, your current position is ringed, and your route returns with a saved run. On phones the title sits above the complete bar.
 
+- **Alternative characters keep pace** ([#1683](https://github.com/cehinds/AshenSpire/pull/1683), `0.7.1.1045`). The alternative preview gains the ready-to-play character defaults, compact class cards, stat and relic detail dialogs, and continuous Smith upgrades. Its own battlefield and artwork stay intact, with both update histories preserved.
+
 - **Inspect your starting stats and relic** ([#1681](https://github.com/cehinds/AshenSpire/pull/1681), `0.7.1.1043`). Select a resource or relic in the class preview to read its details. Stat dialogs define the resource and show its current calculation at the bottom. Escape closes the dialog in one press and returns focus to the selected control.
 
 - **Ready to begin, easier to read** ([#1674](https://github.com/cehinds/AshenSpire/pull/1674), `0.7.1.1041`). Character creation starts with Reaver, Standard attributes, Old Cinder and basic equipment selected. Compact class previews keep the sprite beside the details; full attribute names and a single stat row make the choices easier to scan. Main attribute bonuses are now one point each, with existing saves keeping their prior rules. Character cards, close buttons and the game menu are aligned and corrected.
@@ -109,11 +147,15 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Upgrade items in one continuous visit** ([#1675](https://github.com/cehinds/AshenSpire/pull/1675), `0.7.1.1038`). Open an item with one press and see every card upgrade expanded. After each upgrade, choose another item while Smithing Stones remain. The header shows the available stones beside a clear close button, and Back to Shrine fills the footer.
 
+- **Alternative artwork loads from the web packs** ([#1673](https://github.com/cehinds/AshenSpire/pull/1673), `0.7.1.1038`). The hosted alternative game loads its sprites and scenery through verified asset packs. Its portable download keeps the same artwork embedded for offline play.
+
 - **Your character, gear and deck share one Armory** ([#1671](https://github.com/cehinds/AshenSpire/pull/1671), `0.7.1.1036`). Switch between Character, Armory and Edit Deck at the top. Progression brings your level, attributes and character sheet together; available points open the familiar level-up choices. Skills open their cards, tags, bonuses and reward tree. Acquired feats fill a responsive grid with their effects and detail windows. The close button keeps its proper shape.
 
 - **Alternative combat keeps its own battlefield** ([#1668](https://github.com/cehinds/AshenSpire/pull/1668), `0.7.1.1034`). New dev changes flow into alternative/dev after a protected merge verifies that its battlefield, HUD, cards and footer stay unchanged. Background and sprite updates remain eligible; unrelated conflicts stop for review. The pipeline builds and publishes the updated alternative preview.
 
 - **Alternative previews stay current without losing their changes** ([#1667](https://github.com/cehinds/AshenSpire/pull/1667), `0.7.1.1033`). Promoted updates synchronize existing alternative development and test branches when their custom files remain intact; overlapping changes stop for review. Alternative previews use the same checks, have their own numbered build section and README badges, and keep Combat Studio authoring material in their preview downloads. The README now uses concise bullets while retaining every existing link.
+
+- **Alternative combat faces the battlefield** ([#1670](https://github.com/cehinds/AshenSpire/pull/1670), `0.7.1.1033`). The alternative build uses rear-view hero armor, detailed facing enemies, thin gold and red outlines, and a layered Hollow Weald scene. The existing cards, HUD and footer stay playable above a fading textured base, with separate phone and desktop combat placement.
 
 - **Plans: modular class rewards and retraining** ([#1666](https://github.com/cehinds/AshenSpire/pull/1666), `0.7.1.1032`). The progression contract now defines class reward milestones, six ability ranks, one shared Actions and Stamina resource, independent content modules, class retraining, and the ordered XP reveal. This entry specifies the implementation contract; gameplay follows in separate changes.
 
@@ -122,9 +164,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **Drive class mastery in full browser gates** ([#1662](https://github.com/cehinds/AshenSpire/pull/1662), `0.7.1.1029`). The cold-boot walkthrough and map-camera persistence drive choose required class mastery nodes before entering the map, including when the walkthrough starts a second run. Both use real input and preserve the combat, storage and camera assertions; mastery door priority is covered by probe selftests.
 
 - **Class mastery follows the profile into every new run** ([#1658](https://github.com/cehinds/AshenSpire/pull/1658), `0.7.1.1027`). New solo runs and co-op seats open at profile mastery with core card pools, global item gates and a fresh tree pick per open tier. Solo claims bank cumulative XP immediately and add their unlocks to live rewards. Co-op reads profile mastery without banking earned progress. Books retain their named lessons, class swaps open at their own mastery, and legacy saves keep prior progression. Terminal save failures retain an idempotent receipt and offer Retry. Four hundred seeded runs finish without crashes or soft locks; browser reward, creation, tree-reset and quota-retry receipts live in docs/qa/class-mastery. Quick start still reaches its first played card in six inputs.
+
 - **The downloaded game opens again** ([#1659](https://github.com/cehinds/AshenSpire/pull/1659), `0.7.1.1024`). The bundled game could stop before the title screen while checking class mastery and report that it could not create a loadout. The shared token helper now loads without that dependency loop. Card artwork, costs and gameplay rules are unchanged.
 
 - **Every card gets its own painting** ([#1656](https://github.com/cehinds/AshenSpire/pull/1656), `0.7.1.1022`). All 220 card identities and 17 equipment profiles now have portrait artwork in the existing card frame. Upgrades share their base painting, with names, costs and rules kept readable over the same card layout. The taller artwork leaves room to choose a crop in the card assembler, which also offers eight alternate paintings.
+
 - **Plans: class progress kept safely** ([#1655](https://github.com/cehinds/AshenSpire/pull/1655), `0.7.1.1020`). Class mastery now has durable profile storage. Separate runs add their earned XP through receipts that make retries safe, and settings saves retain newer class progress. Returning profiles keep every authored unlock at level zero; live runs adopt mastery in the following update.
 
 - **Plans: class levels that last** ([#1654](https://github.com/cehinds/AshenSpire/pull/1654), `0.7.1.1018`). The class mastery plan now has its card bundles, equipment, relics and twenty class feats authored, with checks that keep every starting kit intact and every school deep enough to offer a choice. This supplies the data for lasting class levels; runs still use their earlier progression until the profile and run screens adopt it.

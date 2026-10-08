@@ -1,0 +1,21 @@
+/* Alternative build: artwork and scenery stay independent of the live HUD. */
+.alternative-backdrop { opacity:1; background:#241d15; overflow:hidden; }
+.alternative-backdrop::before,.alternative-backdrop::after { display:none; }
+.alternative-scene { position:absolute; width:100%; height:100%; overflow:visible; }
+.alternative-scene-layer { pointer-events:none; }
+.alternative-companion-icon { display:inline-flex; flex:none; width:2rem; height:2rem; }
+.alternative-companion-icon img { width:100%; height:100%; object-fit:contain; }
+.alternative-card-fade { position:absolute;left:0;right:0;bottom:0;height:42%;z-index:1;pointer-events:none;background-size:cover;mask-image:linear-gradient(transparent,#000 50%); }
+:root[data-display-appearance='alternative'] .combat .hand-area { position:relative;z-index:3; }
+.combat .alternative-figure .alternative-silhouette { position:absolute;inset:0;width:100%;height:100%;transform:none; }
+.alternative-crop { position:absolute;inset:0;overflow:hidden; }
+.combat .combatant .alternative-silhouette { --edge-color:#d9bd7b;--edge:calc(.65px / var(--sprite-zoom,1)); filter:drop-shadow(var(--edge) 0 0 var(--edge-color)) drop-shadow(calc(-1 * var(--edge)) 0 0 var(--edge-color)) drop-shadow(0 var(--edge) 0 var(--edge-color)) drop-shadow(0 calc(-1 * var(--edge)) 0 var(--edge-color)); }
+.combat .combatant.enemy .alternative-silhouette { --edge-color:#c84136; }
+.combat .combatant .alternative-figure img { object-fit:fill; }
+/* Let the alpha-cropped figure own its box, including co-op's older 110px slot. */
+:root[data-layout='narrow'] .combat.coop .coop-seat .sprite:has(.alternative-figure, .alternative-card-stage) { width:max-content; height:auto; }
+.combat:has(.alternative-backdrop) .hand-area { background:transparent; }
+/* Large figures can leave no empty callout region on short screens. The
+   tutorial's informational surface passes board input; its exits stay active. */
+.tut-veil > .tut-bubble { pointer-events:none; }
+.tut-bubble :is(.tut-next,.tut-skip) { pointer-events:auto; }

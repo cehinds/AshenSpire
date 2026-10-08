@@ -28,6 +28,10 @@ The project schema and resolver live in `src/model/presentationSequence.js`. Ent
 
 ## Distribution and tests
 
+The [card-action atelier](renewal/index.html) offers attack, smash, sweep, counter, defend, spell and physical/magic ranged actions for every base-armour class. Card types select the same choreography in the preview, deck and alternative combat. Reaver uses a full cape, two-handed greatsword and crossbow; Rogue twin daggers and bow; Starseer staff and open spellbook; Herald unarmed and open spellbook. Equipment-tag combinations remain deferred. See [sources, exports and validation](renewal/cards/README.md). The earlier [base-action studies](renewal/BASE-ACTIONS.md) remain available.
+
+For alternative sprite studies, shields stay on the character's anatomical left hand/forearm; swords stay in the right hand. Casting may sheath the sword and free the right hand, while retaining the shield on the left. Preserve that assignment through wind-up, contact, recovery, hurt and down poses. Check each painted pose in Workshop; a mirrored image or valid export schema does not establish correct handedness.
+
 `node pose-studio/package.mjs` assembles `build/pose-studio-app/`, including the application, shared modules, referenced libraries and current standalone game. Run its launcher without the repository. Package export from the UI saves an authoring project, while this command packages the application itself.
 
 `node --test pose-studio/tests/model.test.mjs` checks schemas, cue timing, payments, conflicts, asset frames, undo and service-event deduplication. `node pose-studio/tests/direct-editing.mjs` checks mouse/touch sizing, removal, timeline dragging/trimming, zoom, undo and portable persistence. See [the tool comparison and interaction review](UX-REVIEW.md). `node pose-studio/tests/browser.mjs` exercises editing, package round trips, accessibility, desktop/phone rendering and game overrides. Set `POSE_STUDIO_PLAYWRIGHT` to a Playwright module if it is not on Node's module path, `CHROME_PATH` to the browser executable, and `POSE_STUDIO_EVIDENCE` to a screenshot output directory outside the repository.

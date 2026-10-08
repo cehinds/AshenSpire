@@ -1,0 +1,68 @@
+{
+  "id": "starReader",
+  "name": "The Star Reader",
+  "family": "speaker",
+  "source": "content/source/speakers.csv",
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly hooded star reader in faded midnight robes, aged brass astrolabe held close and rolled star chart, restrained blue starstone ornament. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "file": "continuation/sprites/starReader-rear.png",
+  "status": "generated",
+  "referenceImages": [
+    "masters/starReader.png"
+  ],
+  "promptUsed": "Edit the supplied Star Reader. Preserve elderly hooded identity, faded midnight robes, embroidered gold constellations, astrolabe in one hand and rolled chart in other, blue starstone trinkets. Back of hood/cloak dominant, instruments peeking around sides. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-3da1a2dc-d634-40ed-9ab9-8c52729eeb84.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5373140970865885,
+    "visibleBounds": [
+      129,
+      44,
+      893,
+      1489
+    ],
+    "anchor": [
+      511.0,
+      1489
+    ],
+    "sha256": "bcb5fcf009618b07507b2cb8ba345df38fd653d6be59be6c3ec2b63748bcae08",
+    "alphaThreshold": 32
+  },
+  "previousView": {
+    "file": "masters/starReader.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.49807167053222656,
+      "visibleBounds": [
+        107,
+        11,
+        952,
+        1522
+      ],
+      "anchor": [
+        529.5,
+        1522
+      ],
+      "sha256": "3c63b19bb037700fb4a6ea0aa56b3dfb552cd529bbcb20189d5d0db1f0fd4484"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly hooded star reader in faded midnight robes, aged brass astrolabe held close and rolled star chart, restrained blue starstone ornament. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+  }
+}

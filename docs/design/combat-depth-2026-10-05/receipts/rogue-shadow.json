@@ -1,0 +1,70 @@
+{
+  "id": "rogue-shadow",
+  "name": "Shadow Mantle \u00b7 Rogue",
+  "family": "armor",
+  "classId": "rogue",
+  "outfitId": "shadow",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A lean river-city scavenger, hood and scarf partly covering the face, close-fitting layered leather armor, torn coat tails, practical pouches, two short blades held low. Subtle ash patina and restrained cold teal accents. Outfit: Shadow Mantle. Lore: The hem remembers every alley. Material palette: plate #292136, plateLt #534066, leather #2A2430, under #17131F. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/rogue-shadow-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-46079f31-cb4d-46f6-b62b-83b5c94acb64.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5785929361979166,
+    "visibleBounds": [
+      33,
+      20,
+      1016,
+      1487
+    ],
+    "anchor": [
+      524.5,
+      1487
+    ],
+    "sha256": "e1a83f561882bacdf2ed3425eaecadcea7b89949cac96c146609559a671471bd"
+  },
+  "referenceImages": [
+    "masters/rogue-shadow.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/rogue-shadow.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.6403217315673828,
+      "visibleBounds": [
+        86,
+        69,
+        980,
+        1453
+      ],
+      "anchor": [
+        533.0,
+        1453
+      ],
+      "sha256": "8f9bf4c788ffb1a3ad6af0b61a68bdefc0f43fdb1bf8ff3922248386179ea976"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A lean river-city scavenger, hood and scarf partly covering the face, close-fitting layered leather armor, torn coat tails, practical pouches, two short blades held low. Subtle ash patina and restrained cold teal accents. Outfit: Shadow Mantle. Lore: The hem remembers every alley. Material palette: plate #292136, plateLt #534066, leather #2A2430, under #17131F. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

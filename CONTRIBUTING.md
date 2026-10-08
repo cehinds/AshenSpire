@@ -40,6 +40,21 @@ feature/* ──► dev ──► test ──► release ──► main
 
 ### README screenshots
 
+Keep the README concise: play/download table, release screenshots, feature
+checkboxes, essential guides and a prominent AI acknowledgement. Detailed setup,
+authoring and QA links belong in `docs/PROJECT-GUIDE.md`.
+
+Every listed playable channel, including primary Dev/Test/Release/Main and all
+alternatives, carries its published build badge beside its play/download links.
+Use that channel's `latest/build.svg`, linked to its history. Verify every listed
+badge and play/download target whenever the README changes. Installer build
+records identify installer payloads separately from hosted game builds; a build
+chooser must name the selected game version. Pinned examples name the full version.
+
+Check only implemented features; release acceptance stays open until its own
+evidence is complete. Describe AI authorship of original project work alongside
+third-party fonts/software and unresolved provenance. Never infer an asset licence.
+
 Whenever the root README is updated, verify its screenshot gallery against the
 latest published build in the [Release history](https://cehinds.github.io/AshenSpire/release/).
 If that release changed, replace the gallery with real captures from that

@@ -1,0 +1,68 @@
+{
+  "id": "roadWarden",
+  "name": "The Road Warden",
+  "family": "speaker",
+  "source": "content/source/speakers.csv",
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Weathered veteran road warden in practical old green-black mail and hooded cloak, lantern held low and a sturdy walking spear, calm guarded pose. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "file": "continuation/sprites/roadWarden-rear.png",
+  "status": "generated",
+  "referenceImages": [
+    "masters/roadWarden.png"
+  ],
+  "promptUsed": "Edit the supplied Road Warden. Preserve olive green hood/cloak, battered mail, tall straight walking spear and low amber lantern. Keep spear perfectly straight and fully inside canvas including tip, and keep lantern visible beside body. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-103b1029-aa5d-4675-afe9-181b6904c474.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.6350091298421224,
+    "visibleBounds": [
+      161,
+      34,
+      941,
+      1450
+    ],
+    "anchor": [
+      551.0,
+      1450
+    ],
+    "sha256": "51a6ea4eb0eb062a0098ed4e1e34567de5e19e8050fa6295219a0c605d9e2af2",
+    "alphaThreshold": 32
+  },
+  "previousView": {
+    "file": "masters/roadWarden.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5798511505126953,
+      "visibleBounds": [
+        86,
+        10,
+        936,
+        1508
+      ],
+      "anchor": [
+        511.0,
+        1508
+      ],
+      "sha256": "8e469ce8710db403f4a0c563070e7a1d085d2be63ffffd146ad9d60080011e54"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Weathered veteran road warden in practical old green-black mail and hooded cloak, lantern held low and a sturdy walking spear, calm guarded pose. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+  }
+}

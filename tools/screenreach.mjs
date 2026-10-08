@@ -76,6 +76,8 @@ if (process.argv.includes('--selftest')) {
     tool: 'screenreach.mjs',
     args: ['--only', '390x650'],
     timeoutMs: 600000,
+    // Variant hit-test carriers require the authored figures in the copy.
+    extraCopy: ['assets-display'],
     plants: [
       {
         // #28 moved the bar BELOW the map, so re-floating it is not one
@@ -144,7 +146,7 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+.*\.enemy-pose-stage/,
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.alternative-silhouette \[authored-neighbour\])/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
@@ -527,7 +529,16 @@ const PROBE = `(() => {
         + ' (travel ' + Math.round(travelX) + 'x' + Math.round(travelY) + ', at ' + Math.round(port.scrollLeft) + ',' + Math.round(port.scrollTop) + ')');
       continue;
     }
-    covered.push(name(c) + '  <-  ' + name(hit));
+    // Identify an authored neighbouring figure without treating an arbitrary
+    // image, a failed-art placeholder, or this intent's own enemy as that defect.
+    const intentOwner = c.matches('.intent') ? c.closest('.combatant.enemy') : null;
+    const silhouette = hit?.closest('.alternative-silhouette');
+    const actor = silhouette?.closest('[data-alternative-sprite]');
+    const blockerOwner = actor?.closest('.combatant.enemy');
+    const authoredNeighbour = intentOwner && blockerOwner && intentOwner !== blockerOwner
+      && hit.tagName === 'IMG' && hit.complete && hit.naturalWidth > 0 && hit.naturalHeight > 0;
+    covered.push(name(c) + '  <-  ' + name(hit)
+      + (authoredNeighbour ? ' via .alternative-silhouette [authored-neighbour]' : ''));
   }
   const visual = [];
   // The shared class-pick narrow composition expects one cp-body text
@@ -647,7 +658,7 @@ async function main() {
       const tail = sc.overlay ? `  (overlay screen: ${sc.overlay})` : '';
       console.log(`    ${sc.name.padEnd(8)} zoom ${String(r.z).padEnd(5)} local ${r.local.padEnd(10)} ${String(r.total).padStart(3)} controls · ${r.scrolledOut} scrolled-out (fine) · ${r.covered.length} COVERED${tail}`);
       for (const c of r.covered) console.log(`               ✗ ${c}`);
-      if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered[0]}`);
+      if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered.join('; ')}`);
       for (const finding of r.visual) console.log(`               ✗ ${finding}`);
       if (r.visual.length) fails.push(`${shape} ${sc.name}: ${r.visual[0]}`);
     }

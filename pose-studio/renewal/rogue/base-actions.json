@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "target": "alternative/dev",
+  "status": "authoring-preview",
+  "classId": "rogue",
+  "armour": "default",
+  "referenceWeapon": "Twin daggers",
+  "selection": "class-default",
+  "equipmentIndependent": true,
+  "frames": {
+    "ready": {
+      "path": "rogue/frames/ready.webp",
+      "lite": "rogue/frames/ready.lite.webp",
+      "bounds": [
+        95,
+        116,
+        404,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "windup": {
+      "path": "rogue/frames/windup.webp",
+      "lite": "rogue/frames/windup.lite.webp",
+      "bounds": [
+        79,
+        126,
+        380,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "advance": {
+      "path": "rogue/frames/advance.webp",
+      "lite": "rogue/frames/advance.lite.webp",
+      "bounds": [
+        80,
+        125,
+        417,
+        466
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "contact": {
+      "path": "rogue/frames/contact.webp",
+      "lite": "rogue/frames/contact.lite.webp",
+      "bounds": [
+        70,
+        128,
+        441,
+        465
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "follow": {
+      "path": "rogue/frames/follow.webp",
+      "lite": "rogue/frames/follow.lite.webp",
+      "bounds": [
+        76,
+        130,
+        395,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "return": {
+      "path": "rogue/frames/return.webp",
+      "lite": "rogue/frames/return.lite.webp",
+      "bounds": [
+        94,
+        131,
+        401,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "power": {
+      "path": "rogue/frames/power.webp",
+      "lite": "rogue/frames/power.lite.webp",
+      "bounds": [
+        72,
+        115,
+        404,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "channel": {
+      "path": "rogue/frames/channel.webp",
+      "lite": "rogue/frames/channel.lite.webp",
+      "bounds": [
+        78,
+        121,
+        407,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "release": {
+      "path": "rogue/frames/release.webp",
+      "lite": "rogue/frames/release.lite.webp",
+      "bounds": [
+        70,
+        121,
+        419,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-rise": {
+      "path": "rogue/frames/base-guard-rise.webp",
+      "lite": "rogue/frames/base-guard-rise.lite.webp",
+      "bounds": [
+        89,
+        115,
+        394,
+        460
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-brace": {
+      "path": "rogue/frames/base-guard-brace.webp",
+      "lite": "rogue/frames/base-guard-brace.lite.webp",
+      "bounds": [
+        93,
+        143,
+        398,
+        460
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-return": {
+      "path": "rogue/frames/base-guard-return.webp",
+      "lite": "rogue/frames/base-guard-return.lite.webp",
+      "bounds": [
+        95,
+        113,
+        408,
+        460
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    }
+  },
+  "sequences": {
+    "attack": {
+      "label": "Base strike \u00b7 dash",
+      "poses": [
+        "windup",
+        "advance",
+        "contact",
+        "follow",
+        "return"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        96,
+        96,
+        0
+      ],
+      "effect": "slash",
+      "impact": 2,
+      "hold": false
+    },
+    "defense": {
+      "label": "Base defense",
+      "poses": [
+        "ready",
+        "guard-rise",
+        "guard-brace",
+        "guard-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -3,
+        -6,
+        -3,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "power": {
+      "label": "Base power",
+      "poses": [
+        "ready",
+        "power",
+        "channel",
+        "release",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    }
+  },
+  "bytes": {
+    "webp": 552120,
+    "lite": 157356
+  },
+  "sourceHashes": {
+    "base-defense.png": "e76fac02139b7d8c3cf1278ff8603fdda7d3341a6e82ce7823445bbbe7fcb9e0"
+  }
+}

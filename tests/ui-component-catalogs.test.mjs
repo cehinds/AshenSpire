@@ -85,6 +85,16 @@ test('every reusable component contract of tools/ui-components.mjs holds on this
   assert.deepEqual(findings(receipt()), []);
 });
 
+test('alternative formation still requires the named bounded fitter and its model import', () => {
+  const r=receipt();
+  for (const source of [
+    r.battlefieldStage.replace('fitAlternativeSprites({', 'unboundedSprites({'),
+    r.battlefieldStage.replace('../models/AlternativeFormationModel.js', '../models/UnknownModel.js'),
+  ]) {
+    assert.match(findings({...r,battlefieldStage:source}).join('\n'), /C8 combat composition/);
+  }
+});
+
 // An empty family names itself: with the Markdown Rendered-family table gone,
 // the message says that catalog listed no Armoury ids, not only that every
 // Armoury id is one-sided.

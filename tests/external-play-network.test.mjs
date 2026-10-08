@@ -29,7 +29,7 @@ test('file launches exempt only optional local launcher LAN paths, including Win
 test('the file launcher exemption preserves strict failures for remote hosts and other paths', () => {
   for (const url of [
     'file://server/api/lan/info', 'file:////server/api/lan/info',
-    'file:///D:/objects/ab/missing.webp', 'file:///D:/assets-alternative/graveWisp.webp',
+    'file:///D:/objects/ab/missing.webp', 'file:///D:/assets-display/alternative/graveWisp.webp',
     'file:///D:/nested/api/lan/info', 'file:///D:/api/lantern/info',
     'file:///D:/api/other/info', 'file:///D:/API/LAN/info',
     'https://example.test/api/lan/info', 'http://localhost:8317/api/lan/info',

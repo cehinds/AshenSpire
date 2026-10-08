@@ -1,0 +1,30 @@
+{
+  "id": "drowned-coast-phone-foreground",
+  "kind": "foreground",
+  "phoneOnly": true,
+  "region": "drowned-coast",
+  "transparent": true,
+  "resultFile": "scenes/shared/drowned-coast/foreground-phone.png",
+  "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's drowned-coast combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY rotting ship timbers, barnacled dark stone and a hanging rusted chain at outer edges. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Cold salt-grey wet materials, no lava or flames.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-5de6d069-ed27-4698-aba0-11500ddc79fb.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "153292f7ef3613ce246137e82122ed0b65087eda3d7ae423cbf0a04cabdf9025",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6630840301513672,
+  "visibleBounds": [
+    0,
+    0,
+    1024,
+    1536
+  ],
+  "alphaThreshold": 32
+}
