@@ -1353,3 +1353,4 @@ creation.abilities.summary,,Starting ability,Starting ability,Starting ability
 "knowledge.save.pending","","Enemy learning remains pending.","",""
 "knowledge.save.retry","","Retry saving enemy knowledge","",""
 "knowledge.save.retained","","Enemy learning is retained and waiting to be saved.","",""
+"combat.intent.partial","","{stance} ?","",""
