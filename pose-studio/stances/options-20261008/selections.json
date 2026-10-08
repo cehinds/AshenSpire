@@ -2,9 +2,7 @@
   "schemaVersion": 1,
   "status": "owner-selected-pose-identities",
   "selectedInChatOn": "2026-10-08",
-  "remainingClasses": [
-    "herald"
-  ],
+  "remainingClasses": [],
   "choices": [
     {
       "actor": "reaver",
@@ -180,6 +178,63 @@
         "sha256": "5396fde6e1feb53cc947590c8c84625458e6d5b8d2f84caa4b072ed1579afefc"
       },
       "generationSource": "D:\\repos\\.codex\\generated_images\\01a119f7-2a07-7fa3-8d06-39a01c0f36cf\\exec-e4e64ae6-d261-48d3-bd58-c4813e63634f.png"
+    },
+    {
+      "actor": "herald",
+      "stance": "attack",
+      "name": "Compact fist readiness",
+      "sourceOption": "herald-attack-5",
+      "reference": "selection-references/herald-attack.png",
+      "source": {
+        "path": "boards/herald-attack.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 512,
+          "y": 512,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "57ba42551afe73fd2b48b6850e876b5caff68a022056a3e3fc0977c8c57e2208"
+      }
+    },
+    {
+      "actor": "herald",
+      "stance": "defend",
+      "name": "Raised forward fist guard",
+      "sourceOption": "herald-defend-2",
+      "reference": "selection-references/herald-defend.png",
+      "source": {
+        "path": "boards/herald-defend.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 512,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "878822d559541c34595c09ef9ea44bc3ab1b55f735ac1a25da7ed24e0f3a04a0"
+      }
+    },
+    {
+      "actor": "herald",
+      "stance": "casting",
+      "name": "Open book and raised hand · preparing",
+      "sourceOption": "herald-casting-1",
+      "reference": "selection-references/herald-casting.png",
+      "source": {
+        "path": "boards/herald-casting.png",
+        "width": 1536,
+        "height": 1024,
+        "view": {
+          "x": 0,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        },
+        "sha256": "173809c0ab589d58f3c2f7e46049c48772130d414ebc4e37722177fcfff06e0a"
+      }
     }
   ]
 }

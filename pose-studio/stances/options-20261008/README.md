@@ -23,8 +23,11 @@ the exact prompts, reference paths, cell positions and stable candidate IDs.
 `generation-receipts.json` preserves generated source locations and the follow-up
 correction prompts used for the final boards.
 
-`selections.json` records the owner's nine annotated Reaver, Rogue and Starseer choices,
+`selections.json` records the owner's 12 annotated choices for Reaver, Rogue, Starseer and Herald,
 with exact source viewports and reference screenshots. Reaver's defending pose
 intentionally uses attack option A3. Rogue's attack and preparing selections
 retain the original source frames. The confirmed gallery shows these choices
 separately from the 60 candidates; runtime exports remain unchanged.
+
+Herald selections: Attack A5, Defend D2, Preparing/Casting C1. All four classes
+now have three owner-selected pose identities.
