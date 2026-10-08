@@ -11,6 +11,14 @@ Owner authorization: implement the revised combat notes in one delivery and land
   - Shield Bash is Counter, including its mounted variants; its authored Block and Poise reply follow the same preparation and full-action qualification rules.
   - Every shipped class and enemy move receives explicit camp, stance, reach, targeting, and applicable school/damage/trait tags. Existing Attack/Skill/Power lifecycle remains a separate property.
 
+- **Card lifecycle and labels (version 2)**
+  - The card's bottom type line states Attack, Skill, Power, Status, or a retained separate lifecycle type. Martial/Spell camp, tactical stance, school, reach, and damage type do not replace that lifecycle label.
+  - A Power is a paid cast with a combat-long buff or installed hooks. After its accepted play resolves, that card instance goes to Exhaust for this combat; it cannot be replayed from ordinary discard/shuffle. Its installed effect stays active until combat ends or an explicitly authored removal removes it. Power preparation grants no automatic extra buff.
+  - This once-cast rule belongs to the accepted card instance, not a global lock on the Power identity. Another owned copy or a legal Replica is its own paid cast with its own costs and Blight; an authored once-per-family limit still applies. Effect echoes do not count as new card plays.
+  - Skills normally resolve reusable buffs, protection, utility, or deck manipulation and then follow ordinary discard/shuffle. An explicitly authored Exhaust, Retain, or other lifecycle instruction still takes precedence.
+  - Status cards are cards added to deck piles, usually as debuffs; their authored playability, costs, and removal rules determine how they behave. They remain distinct from active entity status stacks/gauges and the generated recovery controls outside deck piles.
+  - This version-2 Power Exhaust destination overrides the legacy powers-pile destination only for expanded fights. Version-1 runs and snapshots retain their existing destinations and installed-hook behavior. Solo, co-op, save/restore, Replica, and previews share the same instance ownership and destination rules.
+
 - **Activation and compatibility**
   - New runs snapshot `combatExpansionVersion: 2`, `breakMeterVersion: 2`, and their tuning. For those fights this contract supersedes SPEC §13.4p's version-1 one-meter rules. Old runs and old combat snapshots retain their carried versions and behavior; an absent expansion version is version 1.
   - Direct headless fixtures may explicitly select either rules version. Current-shape saves validate carried expansion fields; migration never draws random numbers.
