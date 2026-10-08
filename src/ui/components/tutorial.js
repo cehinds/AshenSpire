@@ -162,7 +162,7 @@ export function mountTutorial(root, { onDone }) {
     const hard = Array.from(root.querySelectorAll('.hand .card, .combat button, .combat [role="button"], .combat .intent, .combat .energy-orb'), n => anchorLocalBox(veil, n));
     // Keep each figure's central target region clear without treating its
     // oversized decorative artwork as an input surface that fills the board.
-    for (const n of root.querySelectorAll('.combatant')) {
+    for (const n of root.querySelectorAll('.combatant .sprite')) {
       const r = anchorLocalBox(veil, n);
       const width = Math.min(64, r.width), height = Math.min(64, r.height);
       hard.push({left:r.left + (r.width - width) / 2, top:r.top + (r.height - height) / 2, width, height});
