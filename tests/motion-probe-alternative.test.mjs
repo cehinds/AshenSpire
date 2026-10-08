@@ -14,19 +14,26 @@ const idleSource = source.slice(source.indexOf('async function idle('), source.i
 // tree. Animation objects stand in for measured Web Animations state; the
 // same-door browser plants separately exercise real CSS and document clocks.
 async function inspect({ missing = false, duplicate = false, imageCarrier = false, flat = false,
-  offClock = false, unloaded = false, transparent = false } = {}) {
+  offClock = false, unloaded = false, transparent = false, canvas = false, blank = false } = {}) {
   const dom = rewardDom();
   const originalDocument = globalThis.document, originalImage = globalThis.Image;
   globalThis.document = dom.document;
   globalThis.Image = function Image() { return dom.document.createElement('img'); };
   try {
     const figure = alternativeSprite('reaver-default', 'player');
+    if (canvas) {
+      figure.className = 'pose-stage painted-stage alternative-card-stage';
+      const painted = dom.document.createElement('canvas');
+      painted.width = painted.height = 2;
+      painted.getContext = () => ({ getImageData: () => ({ data: new Uint8ClampedArray([0, 0, 0, blank ? 0 : 255]) }) });
+      figure.replaceChildren(painted);
+    }
     const frame = dom.document.createElement('div'); frame.className = 'combatant player';
     const sprite = dom.document.createElement('div'); sprite.className = 'sprite';
     sprite.appendChild(figure); frame.appendChild(sprite); dom.document.body.appendChild(frame);
     const name = dom.document.createElement('span'); name.className = 'nm'; name.textContent = 'Reaver'; frame.appendChild(name);
-    const stage = figure.querySelector('.alternative-silhouette'), crop = figure.querySelector('.alternative-crop');
-    const image = figure.querySelector('img');
+    const stage = canvas ? figure : figure.querySelector('.alternative-silhouette'), crop = canvas ? figure.querySelector('canvas') : figure.querySelector('.alternative-crop');
+    const image = figure.querySelector(canvas ? 'canvas' : 'img');
     const walk = node => [node, ...node.children.flatMap(walk)];
     for (const node of walk(dom.document.body)) {
       Object.defineProperty(node, 'parentElement', { get() { return this.parentNode; } });
@@ -152,7 +159,7 @@ test('every same-door variant plant still changes the current real source', asyn
     process: { exit() {} }, console: { log() {}, error() {}, info() {} },
     harness: async () => ({ resolveShard: () => null, doorSelftest: async options => { corpus = options; return 0; } }),
   });
-  assert.equal(corpus.plants.length, 16, 'retain the complete known-bad corpus');
+  assert.equal(corpus.plants.length, 18, 'retain the complete corpus plus blank-canvas and canvas reduced-motion plants');
   assert.ok(corpus.extraCopy.includes('assets-alternative'), 'clean and planted copies must contain the same variant artwork');
   for (const plant of corpus.plants) {
     for (const edit of plant.edits || [plant]) {
@@ -160,5 +167,24 @@ test('every same-door variant plant still changes the current real source', asyn
       assert.ok(current.includes(edit.find), `${plant.name}: drifted mutation in ${edit.file}`);
       assert.notEqual(edit.find, edit.replace, `${plant.name}: a no-op is not a known-bad`);
     }
+  }
+});
+
+
+test('canvas figure requires painted pixels and exactly one clocked stage carrier', async () => {
+  const [clean] = await inspect({ canvas: true });
+  assert.equal(clean.ok, true, clean.detail);
+  assert.match(clean.detail, /canvas moved by sprite-idle on div.pose-stage.painted-stage/);
+  for (const [fault, reason] of [
+    [{ blank: true }, /canvas has no painted pixels/],
+    [{ missing: true }, /no idle animation/],
+    [{ duplicate: true }, /bobbed twice/],
+    [{ imageCarrier: true }, /outside the alternative silhouette carrier/],
+    [{ offClock: true }, /off the document clock/],
+    [{ transparent: true }, /no visible figure image/],
+  ]) {
+    const [verdict] = await inspect({ canvas: true, ...fault });
+    assert.equal(verdict.ok, false, JSON.stringify(fault));
+    assert.match(verdict.detail, reason);
   }
 });

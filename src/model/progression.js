@@ -100,7 +100,8 @@ export function levelProgress(registries, run) {
  * screen.
  */
 export function skillProgressRows(registries, run, { includeUntouched = false } = {}) {
-  const tracks = skillTracks(registries);
+  if (run.enemyKnowledgeRules) registries = { ...registries, balance: { ...registries.balance, enemyKnowledge: run.enemyKnowledgeRules } };
+  const tracks = skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules });
   const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
   const ownId = classId ? classSkillId(classId) : null;
   if (ownId && !tracks.some((track) => track.id === ownId)) {
@@ -115,7 +116,7 @@ export function skillProgressRows(registries, run, { includeUntouched = false } 
     const pendingDrafts = row && Number.isInteger(row.pendingDrafts) && row.pendingDrafts > 0 ? row.pendingDrafts : 0;
     const own = track.id === ownId;
     const touched = level > 0 || xp > 0 || pendingDrafts > 0;
-    if (!includeUntouched && !own && !touched) return;
+    if (!includeUntouched && !own && !touched && track.kind !== 'perception') return;
     // A track at its ceiling (SPEC §13.4o) has no next level: a full bar, no
     // step past the cap.
     const cap = skillMaxLevel(registries, track.kind);
@@ -138,7 +139,8 @@ export function skillProgressRows(registries, run, { includeUntouched = false } 
       order,
       value: capped ? `Level ${level} · max` : `${xp} / ${cost} XP`,
       sense: (capped ? `${track.label} — level ${level}, the highest it goes.` : `${track.label} — level ${level}, ${Math.max(0, cost - xp)} XP to level ${level + 1}.`)
-        + (pendingDrafts ? ` ${draftsLabel} waiting at the next reward.` : ''),
+        + (pendingDrafts ? ` ${draftsLabel} waiting at the next reward.` : '')
+        + (track.kind === 'perception' ? ' Run-only; advances automatically through correct unknown predictions and successful responses. Grants no drafts or attribute points.' : ''),
     });
   });
   rows.sort((a, b) => (Number(b.own) - Number(a.own)) || (b.level - a.level) || (b.xp - a.xp) || (a.order - b.order));
@@ -152,7 +154,7 @@ export function skillProgressRows(registries, run, { includeUntouched = false } 
  * pending drafts, and a summary that omits it lies about what is waiting.
  */
 export function staleSkillTracks(registries, run) {
-  const known = new Set(skillTracks(registries).map((track) => track.id));
+  const known = new Set(skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules }).map((track) => track.id));
   const ledger = (run && run.skills && typeof run.skills === 'object') ? run.skills : {};
   return Object.keys(ledger).filter((id) => !known.has(id));
 }

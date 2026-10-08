@@ -34,7 +34,7 @@ import { el, button, buttonRow, titleS, prose } from '../kit/index.js';
 // of the two rules applied to which line.
 const STEPS = [
   { sel: '.energy-orb', title: () => t('combat.actions'), text: 'Cards spend stamina. It refills each turn. Sapphire diamonds around the orb show your available mana.' },
-  { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'Enemies telegraph their next move. The number is the exact damage they will deal to you.' },
+  { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'An enemy intent shows an unknown action, a broad clue, or an exact read. Inspect an enemy for learned details and prediction controls.' },
   { sel: '.hand .card', title: 'Play cards', text: 'Click a card or press 1–9. Attacks need a target — click an enemy, or drag the card onto it.' },
   { sel: '.end-turn', title: 'End your turn',
     text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent stamina and most Block are lost at your next turn.` },

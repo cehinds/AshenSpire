@@ -681,12 +681,12 @@
    on the common stage, preserving the same phase and per-slot delays. */
 @keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
-.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
+.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
 /* A fallen combatant holds still: the idle bob kept every dead sprite on the
    compositor's per-frame list for the rest of the fight. A downed co-op
    player is fallen too (its Classic figure bobbed on .facing). */
-.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette),
-.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: none; }
+.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage),
+.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -700,17 +700,17 @@
   animation: none;
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
-.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-duration: 2.6s; }
+.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation-duration: 2.6s; }
 /* WCF3: one glow over the whole selected assembly — intent, the delayed
    inspect control, art, name and lower stack — never one per child. */
 .combatant.context-selected > .combatant-stack {
   filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
-.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -0.9s; }
-.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -1.7s; }
-.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation-delay: -2.3s; }
-.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette) { animation: none; }
+.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation-delay: -0.9s; }
+.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation-delay: -1.7s; }
+.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation-delay: -2.3s; }
+.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
 /* ---------- short-wide combat composition (#27) ---------------------------
@@ -1381,7 +1381,12 @@
 /* Names stay above every silhouette, including the shallow rear row. Frames
    do not create stacking contexts; only sprite art participates in depth. */
 :root .combat[data-layout='formation'] .field .combatant { transform:none; }
-:root .combat[data-layout='formation'] .combatant-stack { left:0; transform:none; }
+:root .combat[data-layout='formation'] .combatant-stack { left:0; transform:none; filter:none; }
+/* Selection glow belongs to the artwork: filtering the shared stack traps
+   its Inspect/intent controls underneath a neighbouring sprite. */
+:root .combat[data-layout='formation'] .combatant.context-selected .sprite {
+ filter:var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
+}
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) { position:relative; z-index:1000; }
 :root .combat[data-layout='formation'] .combatant .nm { background:#17130fa6; border-radius:3px; }
 

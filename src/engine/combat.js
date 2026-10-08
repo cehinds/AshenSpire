@@ -13,6 +13,7 @@ import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, enqueueCoun
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
+import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { passiveMax } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
 import { cardTargetPlan, assertCardTarget, immediateCardEffects } from '../model/cardTargets.js';
@@ -137,6 +138,7 @@ export function createCombat({
   // null — every recovery setting at its default — keeps the idle-Stamina rule
   // below and writes no recovery state into the fight or its save.
   recoveryRules = null,
+  knowledge = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
   orderedDraw = false,
@@ -334,6 +336,7 @@ export function createCombat({
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
 
+  if (knowledge) initializeCombatKnowledge(combat, knowledge);
   if (combat.ratingsRules) {
     refreshCombatRatings(combat);
     for (const enemy of combat.enemies) {
@@ -610,6 +613,7 @@ function enemyPhase(combat) {
 
     if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked || Control.consumeControlActionLoss(combat, enemy)) {
       // Staggered / skip: the telegraphed move does not happen.
+      if (!enemy.pendingMove) cancelKnowledgeAction(combat, enemy);
       enemy.skipNextTurn = false;
     } else if (enemy.pendingMove) {
       if (combat.turn >= enemy.pendingMove.resolveOnTurn) {
@@ -745,7 +749,10 @@ function rollIntents(combat, isFirstTurn = false) {
     clearCombatCounter(enemy);
     enemy.intent = buildIntent(def.moves[moveId], moveId, enemy, combat);
     setCombatStance(combat, enemy, enemyMoveCarrier(enemy, def.moves[moveId], moveId, combat));
-    if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
+    if (combat.enemyKnowledge) {
+      rollEnemyKnowledge(combat, enemy, { charging: !!def.moves[moveId].delay });
+      delete enemy.intentRevealed;
+    } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
     else delete enemy.intentRevealed;
     primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
     drainQueue(combat);
@@ -810,12 +817,15 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
  * The action queue drains fully before this returns (SPEC §3.9).
  */
 export function dispatch(combat, intent) {
-  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent));
+  if (!combat._foundationTransaction && (combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: intent.type !== 'predictIntent' });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
     if (intent.type !== 'chooseDiscard') R.assertNoAbilityChoice(combat);
     switch (intent.type) {
+      case 'predictIntent':
+        predictEnemyIntent(combat, combat.playerKey || 'player', intent.enemyInstanceId, intent.actionSerial, intent.maneuver);
+        break;
       case 'recoverControl': {
         if (combat.phase !== 'player') throw new Error('Recovery requires your turn');
         const result = Control.manualRecovery(combat, combat.player, intent.selections);
@@ -1476,6 +1486,17 @@ export function getEntity(combat, id) {
  * perTarget maps every living enemy's instance id → the damage it would take.
  */
 export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
+  if (combat.enemyKnowledge && !combat._knowledgePreview) {
+    const visible = F.candidateState(combat);
+    visible._knowledgePreview = true;
+    for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
+      enemy.intent = { kind: 'unknown', moveId: null };
+      delete enemy.combatStance;
+      delete enemy.combatCounter;
+      delete enemy.pendingMove;
+    }
+    return previewCard(visible, cardInstanceId, targetId, upcastRanks);
+  }
   const inst =
     combat.piles.hand.find((c) => c.instanceId === cardInstanceId) ||
     combat.piles.draw.find((c) => c.instanceId === cardInstanceId) ||
@@ -1772,8 +1793,10 @@ export function previewIntent(combat, enemyInstanceId) {
   if (!enemy || enemy.kind !== 'enemy') throw new Error(`Unknown enemy instance '${enemyInstanceId}'`);
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const profile = intent.combatProfile || {};
+  const knowledge = knowledgeIntentProjection(combat, enemy);
+  if (knowledge && !knowledge.exact) return knowledge.intent;
   const revealed = enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false;
-  if (!revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
+  if (!knowledge && !revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
   const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   if (intent.damage != null) {
     const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
@@ -1784,5 +1807,10 @@ export function previewIntent(combat, enemyInstanceId) {
       intent.hits != null ? intent.hits : 1));
   }
   out.pending = !!enemy.pendingMove;
+  if (knowledge) {
+    out.actionSerial = knowledge.actionSerial || enemy.knowledgeAction?.serial || 0;
+    out.knowledgeRead = 'exact';
+    out.label = intent.kind === 'staggered' ? 'Staggered' : enemy.knowledgeAction?.category;
+  }
   return out;
 }

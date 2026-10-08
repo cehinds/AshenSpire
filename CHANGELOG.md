@@ -34,9 +34,15 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-08
 
+- **Alternative figures keep idle life and respect reduced motion** ([#1746](https://github.com/cehinds/AshenSpire/pull/1746), `0.7.1.1143`). Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.
+
 - **Alternative tutorial controls stay reachable** ([#1737](https://github.com/cehinds/AshenSpire/pull/1737), `0.7.1.1140`). Next and Skip avoid cards, combat controls and fighter targets on small screens while instructions allow card plays. Current combat prices and save checkpoints join the distinct sigils and complete effects, preserving the alternative battlefield art and animations.
 
 - **Alternative cards show action and school sigils** ([#1731](https://github.com/cehinds/AshenSpire/pull/1731), `0.7.1.1134`). Alternative combat keeps its battlefield artwork and class weapon animations while gaining the distinct monochrome marks, written damage types and complete adaptive effects. Information explains the marks and retains detailed tags, with both development histories preserved.
+
+- **Behind the scenes: alternative sync keeps the full history efficiently** ([#1747](https://github.com/cehinds/AshenSpire/pull/1747), `0.7.1.1133`). Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.
+
+- **Read enemy clues and learn their Bestiary** ([#1734](https://github.com/cehinds/AshenSpire/pull/1734), `0.7.1.1132`). Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.
 
 - **Saved fights load with their intended combat rules** ([#1736](https://github.com/cehinds/AshenSpire/pull/1736), `0.7.1.1130`). Load checks cover existing fights that restart from their entry and expanded fights that restore their encounter or explicit Save Game checkpoint after later unsaved actions. Full resources, piles, enemies and random streams match the checkpoint, and refused loads preserve the live fight and return focus.
 

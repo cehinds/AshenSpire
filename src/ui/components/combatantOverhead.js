@@ -42,6 +42,16 @@ export function combatantInfo(name, open) {
 }
 
 export function combatantIntent(intent, content, registries = null) {
+  if (intent?.hidden && intent.knowledgeRead) {
+    const node = document.createElement('button'); node.type = 'button';
+    node.className = 'intent overhead-control unknown dashed knowledge-read';
+    node.dataset.focusable = 'true'; node.dataset.intentHidden = 'true';
+    node.setAttribute('aria-label', `Intent: ${intent.label || '?'}`);
+    const label = document.createElement('span'); label.textContent = intent.label || '?'; node.append(label);
+    markUiComponent(node, UI.intentIndicator, 'unknown');
+    attachTooltip(node, () => `<div class="tt-title">Intent: ${esc(intent.label || '?')}</div>Exact action unread. Wisdom, Intelligence, character level and run Perception improve intent reads.`, { selectionFirst: true, intent: 'above', align: 'center' });
+    return node;
+  }
   const stance = combatIntentStance(intent);
   const stanceLabel = stance.charAt(0).toUpperCase() + stance.slice(1);
   const badge = intent?.hidden ? {

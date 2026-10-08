@@ -1,6 +1,7 @@
 // Tactical profiles share the ordinary action queue. No card IDs or UI state.
 import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchups.js';
 import * as Avoidance from './combatAvoidance.js';
+import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -161,11 +162,11 @@ export function completeMatchupHit(ctx, source, target, carrier, receipt, { bloc
       const poise = counter.poiseDamage > 0 ? Math.floor(counter.poiseDamage * cfg.counter.poiseMultiplier) : 0;
       const wardOnly = ['spell', 'magic'].includes(counter.mode) && !isSpell(receipt.profile);
       ctx.emit?.('combatCounterTriggered', { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source), sourceId: target.id, targetId: source.id, amount, poiseDamage: wardOnly ? 0 : poise, wardOnly });
-      if (wardOnly) stripCombatWard(ctx, target, source, amount);
+      if (wardOnly) creditKnowledgeBenefit(ctx, target, source, { amount: stripCombatWard(ctx, target, source, amount), kind: 'counter', actionSerial: source.knowledgeAction?.serial });
       else {
         const reactionCarrier = { ...counter.carrier, combatReaction: true, skipRatingBonus: true };
-        ctx.enqueue({ effect: { op: 'damage', amount }, source: target, owner: target, target: source, card: reactionCarrier, meta: { combatCounterReaction: true } });
-        if (poise > 0) ctx.enqueue({ effect: { op: 'poiseDamage', amount: poise }, source: target, owner: target, target: source, card: reactionCarrier, meta: { combatCounterReaction: true } });
+        ctx.enqueue({ effect: { op: 'damage', amount }, source: target, owner: target, target: source, card: reactionCarrier, meta: { combatCounterReaction: true, enemyKnowledgeActionSerial: source.knowledgeAction?.serial } });
+        if (poise > 0) ctx.enqueue({ effect: { op: 'poiseDamage', amount: poise }, source: target, owner: target, target: source, card: reactionCarrier, meta: { combatCounterReaction: true, enemyKnowledgeActionSerial: source.knowledgeAction?.serial } });
       }
     }
   }
@@ -362,6 +363,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
     ? weighted.reduce((sum, weight, index) => sum + weight * (Number(options.contactModifiers[index]?.percent) || 0), 0) / rawTotal
     : Number(options.percent) || 0;
   const stanceAmount = Math.max(0, Math.ceil(rawTotal - 1e-9));
+  const knowledgeBonus = Math.max(0, stanceAmount - contacts.reduce((sum, contact) => sum + (contact.effect === 'status' ? 0 : number(contact.amount)), 0));
   const amount = Math.max(0, Math.ceil(stanceAmount * Math.max(0, 1 + statusPercent / 100) - 1e-9));
   const amounts = allocateTacticalDamage(amount, contacts.map(contact => contact.effect === 'status' ? 0 : number(contact.amount)));
   const profile = normalizedProfile(carrier);
@@ -369,7 +371,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const guardBefore = number(target?.block) - Math.min(number(target?.block), number(target?.wardBlock));
   const pierce = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0
     && (cfg.damageAliases[p.damageType] === 'piercing' || p.damageType === 'piercing'));
-  return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts,
+  return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts, knowledgeBonus,
     guardBefore, guardBypass: pierce && !carrier?.combatReaction ? Math.min(amount, guardBefore, cfg.damageRiders.piercing?.guardBypass || 0) : 0,
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
     counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
@@ -438,7 +440,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const enqueue = effect => {
     const action = { effect, source: target, owner: target, target: source,
       card: { ...receipt.counter.carrier, combatReaction: true, skipRatingBonus: true,
-        ...(effect.op === 'wardDamage' ? { combatWardEdgeApplied: true } : {}) }, meta: { combatCounterReaction: true } };
+        ...(effect.op === 'wardDamage' ? { combatWardEdgeApplied: true } : {}) }, meta: { combatCounterReaction: true, enemyKnowledgeActionSerial: source.knowledgeAction?.serial } };
     queue.push(action); ctx.enqueue?.(action);
   };
   if (receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0 && target?.alive) {

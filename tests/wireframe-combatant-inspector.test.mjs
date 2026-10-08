@@ -23,6 +23,17 @@ const enemy = {
   lore: null,
 };
 
+test('owned hidden reads preserve only the four clue labels through the inspector summary', () => {
+  for (const name of ['?', 'Attack?', 'Magic?', 'Preparing?', 'Secret future move']) {
+    const view = projectCombatantInspector({ ...enemy, intent: { hidden: true, knowledgeRead: true, name, stance: 'defending', profile: { school: 'fire' } } });
+    const intent = view.sections[0].rows.find(row => row.label === 'Intent');
+    assert.equal(intent.value, name === 'Secret future move' ? '?' : name);
+    assert.ok(intent.detail.includes('Perception'));
+    assert.ok(!JSON.stringify(intent).includes('defending'));
+    assert.ok(!JSON.stringify(intent).includes('fire'));
+  }
+});
+
 test('sections follow the W1w order with lore last', () => {
   const view = projectCombatantInspector(enemy);
   assert.deepEqual(view.sections.map((s) => s.id), [...INSPECTOR_SECTION_ORDER]);
