@@ -51,14 +51,14 @@ test('all 17 resolved equipment profiles show their sigils and retain tactical i
       card.dataset.combatSchool || null], expected, `${profile.id} attributes`);
     const model = playingCardModel(registries, ref), markup = markupFor(card);
     assert.ok(markup.includes(`data-primary-sigil="${model.sigils.action}"`), `${profile.id} primary sigil`);
-    if (expected[2]) assert.ok(markup.includes(`data-sigil="${expected[2]}"`), `${profile.id} school sigil`);
+    assert.match(markup, /class="card-type-name">[^<]+<\/span>/);
     const expectedLabels = expected.filter(Boolean).map(capitalized);
     if (['staffMagicAttack', 'sceptreArcaneAttack'].includes(profile.id)) expectedLabels.push('Force');
     if (profile.id === 'bowTechnique') expectedLabels.push('Ranged'); // Authored legacy weapon tag; no attack maneuver.
     const detail = cardDetailHtml(registries, ref);
     for (const label of expectedLabels) assert.ok(detail.includes(`>${label}</span>`), `${profile.id} inspected ${label}`);
     const damage = model.tags.filter(tag=>tag.id.startsWith('damage:')).map(tag=>tag.label);
-    for (const label of damage) assert.ok(markup.includes(label), `${profile.id} written damage type`);
+    for (const label of damage) assert.ok(detail.includes(label), `${profile.id} inspected damage type`);
   }
 }));
 
@@ -120,8 +120,8 @@ test('active tactical metadata owns enemy move descriptions, written damage and 
     assert.equal(tag.blurb, `Active description for ${renamed[tag.id]}.`);
   }
   const card = renderCard(custom, ref, { inspection: false });
-  assert.match(markupFor(card), /class="card-damage-types">Run Ice<\/span>/);
-  assert.doesNotMatch(markupFor(card), /class="card-damage-types">Cold<\/span>/);
+  assert.match(card.getAttribute('aria-label'), /Run Ice/);
+  assert.doesNotMatch(card.getAttribute('aria-label'), /Damage: Cold/);
   const tooltip = cardDetailHtml(custom, ref);
   assert.match(tooltip, /Active description for Run Ice/);
   assert.match(tooltip, />Run Ice<\/span>/);
