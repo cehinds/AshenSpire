@@ -44,7 +44,7 @@ export function combatantInfo(name, open) {
 export function combatantIntent(intent, content, registries = null) {
   if (intent?.hidden && intent.knowledgeRead) {
     const node = document.createElement('button'); node.type = 'button';
-    node.className = 'intent overhead-control unknown dashed';
+    node.className = 'intent overhead-control unknown dashed knowledge-read';
     node.dataset.focusable = 'true'; node.dataset.intentHidden = 'true';
     node.setAttribute('aria-label', `Intent: ${intent.label || '?'}`);
     const label = document.createElement('span'); label.textContent = intent.label || '?'; node.append(label);

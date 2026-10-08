@@ -726,7 +726,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       intent: {
         name: intent.hidden ? intent.label || '?' : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
         detail: intent.hidden ? 'Exact move, damage, and effects unread.' : moveDetail(current, intent),
-        hidden: intent.hidden, stance: intent.stance, profile: intent.profile,
+        hidden: intent.hidden, knowledgeRead: intent.knowledgeRead, stance: intent.stance, profile: intent.profile,
         active: true,
       },
       skillLabel: 'Move set',
