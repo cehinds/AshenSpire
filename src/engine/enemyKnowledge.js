@@ -130,6 +130,7 @@ function payPerception(combat, enemy, ownerId, reason) {
 export function resolveKnowledgeAction(combat, enemy) {
   const action = enemy?.knowledgeAction;
   if (!combat.enemyKnowledge || !action || action.executed || action.cancelled || !enemy.alive) return;
+  if (enemy.intent?.kind === 'staggered') { cancelKnowledgeAction(combat, enemy); return; }
   action.executed = true;
   for (const [ownerId, read] of Object.entries(action.reads)) {
     read.resolved = true;
@@ -137,6 +138,14 @@ export function resolveKnowledgeAction(combat, enemy) {
     if (read.correct) payPerception(combat, enemy, ownerId, 'prediction');
   }
   feedback(combat, enemy, 'executed');
+}
+export function cancelKnowledgeAction(combat, enemy) {
+  const action = enemy?.knowledgeAction;
+  if (!combat.enemyKnowledge || !action || action.executed || action.cancelled) return false;
+  action.cancelled = true;
+  for (const read of Object.values(action.reads)) { read.resolved = true; read.correct = null; }
+  feedback(combat, enemy, 'cancelled');
+  return true;
 }
 // Called only after a real avoidance, retaliation or realized matchup benefit.
 // Preparing a card, computing a preview and arming a reaction never call it.
@@ -163,11 +172,7 @@ export function recordKnowledgeEvent(combat, event) {
     { committed: true, kind: 'evade', amount: 1, actionSerial: event.enemyActionSerial });
   if (event.type === 'enemyDied') {
     const enemy = combat.enemies.find(row => row.id === (event.targetId || event.enemyInstanceId || event.enemyId));
-    if (enemy?.knowledgeAction && !enemy.knowledgeAction.executed && !enemy.knowledgeAction.cancelled) {
-      enemy.knowledgeAction.cancelled = true;
-      for (const read of Object.values(enemy.knowledgeAction.reads)) { read.resolved = true; read.correct = null; }
-      feedback(combat, enemy, 'cancelled');
-    }
+    cancelKnowledgeAction(combat, enemy);
   }
 }
 export function attachEnemyKnowledge(combat) {
