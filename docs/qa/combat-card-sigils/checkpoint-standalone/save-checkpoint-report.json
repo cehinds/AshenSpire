@@ -1,0 +1,62 @@
+{
+  "source": "ac7b84f7ecb1e455c3c69e6481cd244e5c816eef",
+  "capturedUtc": "2026-10-08T14:15:55.004Z",
+  "driver": "Unchanged stock slot-load-door scenario and assertions, with local Playwright CDP transport/lifetime adapter",
+  "status": "PASS",
+  "checks": [
+    {
+      "code": "SLOT-LOAD-OPENING",
+      "detail": "the fight opens on turn 1 with 4 cards at HP 63"
+    },
+    {
+      "code": "SLOT-LOAD-NEWER-NOTICE",
+      "detail": "the newer-save notice opens (\"This climb is from a newer version\")"
+    },
+    {
+      "code": "SLOT-LOAD-NEWER-KEEPS-RUN",
+      "detail": "the live run and its fight are still standing and the title never mounted ({\"board\":true,\"title\":false,\"liveDeck\":11,\"keptDeck\":true})"
+    },
+    {
+      "code": "SLOT-LOAD-REFUSED-KEEPS-RUN",
+      "detail": "a slot loadRun refuses leaves the live run and its fight standing, and says so ({\"notice\":\"This save could not be loaded\",\"board\":true,\"title\":false,\"liveDeck\":11,\"keptDeck\":true})"
+    },
+    {
+      "code": "SLOT-LOAD-MIDCOMBAT-POSE",
+      "detail": "the fight moved on to turn 2 after rc3 struck (enemies [16,19] -> [7,19], hand rc1,weaponArt:roundShield:shieldBash,rc2,kit:straightSword:guard)"
+    },
+    {
+      "code": "SLOT-LOAD-MIDCOMBAT-RESTART",
+      "detail": "turn 1, HP 63, the same 4-card opening hand, deck of 11 unchanged"
+    },
+    {
+      "code": "SLOT-LOAD-NEWER-AT-CONFIRM",
+      "detail": "a slot aged behind the open confirmation is refused at the press and the run stands ({\"notice\":\"This climb is from a newer version\",\"board\":true,\"title\":false,\"liveDeck\":11})"
+    },
+    {
+      "code": "SLOT-LOAD-OVERLAY-FOCUS",
+      "detail": "a refused load from the overlay's quick navigation keeps the overlay and the run, and \"Keep playing\" returns focus to #ov-quicknav ({\"active\":\"#ov-quicknav\",\"same\":true,\"connected\":true,\"overlay\":true,\"board\":true,\"liveDeck\":11,\"keptDeck\":true})"
+    },
+    {
+      "code": "SLOT-LOAD-EXPANDED-ENTRY",
+      "detail": "ordinary unsaved combat restores the exact opening snapshot, RNG seed and counters"
+    },
+    {
+      "code": "SLOT-LOAD-EXPANDED-UNSAVED",
+      "detail": "the live fight advances from saved turn 3 to distinct unsaved turn 4"
+    },
+    {
+      "code": "SLOT-LOAD-EXPANDED-SNAPSHOT",
+      "detail": "the new combat restores exact saved turn 3, resources, piles, enemies, RNG seed and counters"
+    }
+  ],
+  "entryMutant": {
+    "status": "CAUGHT",
+    "target": "src/main.js",
+    "removed": "      durable(combat);",
+    "method": "HTTP response override serves exactly the same one-site removal without editing checkout files",
+    "expectedRed": "SLOT-LOAD-EXPANDED-ENTRY",
+    "otherChecksPassed": 10
+  },
+  "fullHostedSevenMutantCorpus": "pending",
+  "firstColdBootAttempt": "UNKNOWN; not counted as passed"
+}
