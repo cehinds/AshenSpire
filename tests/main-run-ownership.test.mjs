@@ -62,3 +62,47 @@ test('actual screenshot new-run entry adopts its synchronous memory fixture befo
   fixture.start({ seedString: 'SHOWCASE' });
   assert.deepEqual(fixture.current(), { seed: 'SHOWCASE' });
 });
+
+function combatOutcomeFixture() {
+  const bank = deferred(), beat = deferred(), checkpoints = [];
+  const fixture = new Function('bank', 'beat', 'checkpoints', `
+    const original = { seed: 'A', combatPendingOutcome: { result: 'victory' } };
+    let run = original, activeSlot = 1, xpCombat = {}, beats = 0, settlements = 0;
+    const saves = { bankEnemyKnowledge: () => bank.promise };
+    const app = { querySelector: () => ({}) }, registries = { balance: { ui: { victoryBeat: { ms: 0 } } } };
+    const persist = () => checkpoints.push(run.seed), showSettingsNotice = () => {}, victoryTitle = () => 'VICTORY';
+    const victoryBeat = () => { beats++; return beat.promise; };
+    const runCombatEnd = () => { settlements++; throw new Error('Unexpected stale combat settlement'); };
+    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    return { end: () => onCombatEnd('victory', xpCombat, { pool: 'normal' }),
+      change: () => { run = { seed: 'B', combatPendingOutcome: { result: 'defeat' } }; activeSlot = 2; },
+      facts: () => ({ beats, settlements, originalPending: !!original.combatPendingOutcome, currentPending: !!run.combatPendingOutcome }) };
+  `)(bank, beat, checkpoints);
+  return { ...fixture, bank, beat, checkpoints };
+}
+
+test('actual combat outcome abandons stale settlement after either asynchronous handoff', async () => {
+  for (const boundary of ['bank', 'beat']) {
+    const fixture = combatOutcomeFixture(), operation = fixture.end();
+    if (boundary === 'bank') fixture.change();
+    fixture.bank.resolve({ ok: true });
+    await Promise.resolve(); await Promise.resolve();
+    if (boundary === 'beat') fixture.change();
+    fixture.beat.resolve(); await operation;
+    assert.deepEqual(fixture.checkpoints, boundary === 'bank' ? [] : ['A']);
+    assert.deepEqual(fixture.facts(), { beats: boundary === 'bank' ? 0 : 1, settlements: 0, originalPending: true, currentPending: true });
+  }
+});
+
+test('actual terminal resume shields navigation immediately and duplicate Continue shares its operation', async () => {
+  const gate = deferred(); let calls = 0;
+  const fixture = new Function('operation', `
+    let terminalResume = null; const app = { inert: false }, refusedRunLanding = () => {};
+    ${body('function resumeRun(', '\nfunction resumeTerminal(')}
+    ${body('function resumeTerminal(', '\nfunction saveSlotRecords(')}
+    return { start: () => resumeTerminal(operation), duplicate: () => resumeRun(2), inert: () => app.inert };
+  `)(() => { calls++; return gate.promise; });
+  const first = fixture.start(); assert.equal(fixture.inert(), true);
+  assert.equal(fixture.duplicate(), first); await Promise.resolve(); assert.equal(calls, 1);
+  gate.resolve(); await first; assert.equal(fixture.inert(), false);
+});
