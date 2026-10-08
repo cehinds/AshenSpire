@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-07
 
+- **Cards animate with each class's base weapons** ([#1727](https://github.com/cehinds/AshenSpire/pull/1727), `0.7.1.1104`). Alternative combat now plays attack, smash, sweep, counter, defend, spell and ranged motions from the card type. Reaver uses a two-handed greatsword and crossbow, Rogue twin daggers and bow, Starseer staff and open book, and Herald unarmed strikes and book casting. Attacks advance and return, hits flash red, and the atelier and deck preview share the new motions. Equipment-tag combinations and stance families remain separate work.
+
 - **Alternative previews document the current published release** ([#1721](https://github.com/cehinds/AshenSpire/pull/1721), `0.7.1.1102`). Alternative preview documentation includes the primary release screenshot gallery and its maintenance rule while retaining alternative gameplay, artwork and both changelog histories.
 
 - **Base class actions are ready to preview** ([#1719](https://github.com/cehinds/AshenSpire/pull/1719), `0.7.1.1101`). The alternative animation atelier offers a dashing strike, defense and power for each class in base armour. Equipped weapons share the class's default animation. Reaver wears a full cape, Herald keeps the shield left and sword right, and the preview includes a red hit flash. These are editable animation studies; live combat integration and weapon-tag combinations come later.
