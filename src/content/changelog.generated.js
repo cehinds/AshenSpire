@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-07",
     "summary": "Martial and Spell combat is playable",
     "detail": "New runs use persistent stances, whole-action counters and evasion, Ward, typed defenses, status buildup and recovery, optional upcasting, and run-long Ashen Blight. Cards show their action at the bottom with compact effects and inspected tags; Powers Exhaust while their buffs stay active for the fight. Solo and co-op share the rules and saved outcomes. Existing runs retain their original combat rules.",
-    "build": "0.7.1.1108",
+    "build": "0.7.1.1111",
     "pullRequest": 1723,
     "url": "https://github.com/cehinds/AshenSpire/pull/1723"
   },
