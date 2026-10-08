@@ -20,6 +20,32 @@ const EVADES = new Set(['evasiveGuard', 'dodgeRoll', 'quickstep', 'backstep', 'a
 const POISE_REPLIES = { shieldBash: 4, riposte: 4, rondelParry: 4, bindingParry: 3, spikedReprisal: 5,
   'progression-crimson-reprisal': 5, evasiveGuard: 2, backstep: 3, acrobaticsRogue: 3,
   shadowstep: 4, 'progression-nightstep': 4, nockAndWait: 3 };
+// These are the authored, ungraded v2 source amounts. Permanent primary
+// damage improvements become Poise improvements on zero-HP Counters; they
+// never restore HP retaliation. Conditional grade effects keep their gates.
+const REPLY_SOURCE_BASE = {
+  shieldBash: { damage: 3, poise: 0 }, riposte: { damage: 4, poise: 0 },
+  rondelParry: { damage: 0, poise: 5 }, bindingParry: { damage: 0, poise: 0 },
+  spikedReprisal: { damage: 4, poise: 0 }, 'progression-crimson-reprisal': { damage: 5, poise: 0 },
+  evasiveGuard: { damage: 0, poise: 0 }, backstep: { damage: 0, poise: 0 },
+  acrobaticsRogue: { damage: 0, poise: 0 }, shadowstep: { damage: 0, poise: 0 },
+  'progression-nightstep': { damage: 0, poise: 0 }, nockAndWait: { damage: 0, poise: 0 },
+};
+const addedAmount = (amount, delta) => typeof amount === 'number' ? Math.max(0, amount + delta)
+  : { f: 'add', args: [amount, delta], min: 0 };
+function replyProjection(def) {
+  const baseline = REPLY_SOURCE_BASE[def.id], conditional = [];
+  let damage = 0, poise = 0;
+  for (const effect of def.effects || []) {
+    if (!['damage', 'poiseDamage'].includes(effect.op)) continue;
+    if (effect.if || effect.oncePerTurn) {
+      conditional.push({ ...structuredClone(effect), op: 'poiseDamage' });
+    } else if (effect.op === 'damage') damage += typeof effect.amount === 'number' ? effect.amount : 0;
+    else poise += typeof effect.amount === 'number' ? effect.amount : 0;
+  }
+  return { amount: POISE_REPLIES[def.id] + Math.max(0, damage - baseline.damage)
+    + Math.max(0, poise - baseline.poise), conditional };
+}
 const UPCAST = {
   shieldBash: { blockPerRank: 2, poisePerRank: 1 }, bashingBlow: { damagePerRank: 2, poisePerRank: 1 },
   stomp: { damagePerRank: 2, poisePerRank: 1 }, ironSkin: { blockPerRank: 2 },
@@ -67,11 +93,12 @@ export function applyCombatExpansionMartial(def) {
     card.counterCoverage = { camps: ['physical'], reaches: [role.counterMode === 'ranged' ? 'near' : 'contact', ...(role.counterMode === 'ranged' ? ['far'] : [])],
       targeting: ['single'], effects: ['damage'], ...(role.counterMode === 'ranged' ? {} : { maneuvers: ['attack', 'smash'] }) };
     if (POISE_REPLIES[def.id]) {
-      const returnPoise = def.id === 'shieldBash' ? def.effects.find(effect => effect.op === 'poiseDamage')?.amount ?? 4 : POISE_REPLIES[def.id];
+      const reply = replyProjection(def), returnPoise = reply.amount;
       card.counterPayload = { hp: 0, poise: returnPoise, ward: 0, hpRating: false,
         ...(role.counterMode === 'ranged' ? {} : { smashPoiseBonus: 2 }) };
       card.effects = card.effects.filter(effect => !['damage', 'poiseDamage', 'wardDamage'].includes(effect.op));
       card.effects.push({ op: 'poiseDamage', target: 'enemy', amount: returnPoise });
+      card.effects.push(...reply.conditional);
       const supportText = def.id === 'shieldBash' ? 'Gain {block} Block.' : (def.textTemplate || '').split('. ').filter(sentence => !/Counter|base reply|Poise damage|^Deal /i.test(sentence)).join('. ');
       card.textTemplate = `${supportText}${supportText ? ' ' : ''}Prepare ${role.counterMode === 'ranged' ? 'Ranged' : 'Melee'} Counter: return {poiseDamage} Poise when the full incoming action is absorbed.${role.counterMode === 'ranged' ? '' : ' Return +2 Poise against Smash.'}${EVADES.has(def.id) ? ' Prepare one Evade.' : ''}`;
       // The version-2 projection is already the resolved rank/break definition.
@@ -80,12 +107,22 @@ export function applyCombatExpansionMartial(def) {
   }
   if (EVADES.has(def.id)) card.evade = { charges: 1, bonus: 0 };
   if (['quickstep', 'dodgeRoll'].includes(def.id)) {
-    const draw = def.id === 'quickstep' ? [{ op: 'draw', amount: 1 }] : [];
-    card.effects = [{ op: 'block', target: 'self', amount: 5 }, { op: 'damage', target: 'enemy', amount: 3 }, ...draw];
+    const originalBlock = def.id === 'quickstep' ? 4 : 3;
+    let primaryBlock = false;
+    const support = card.effects.filter(effect => !['damage', 'poiseDamage', 'wardDamage', 'gainWard', 'gainPoise'].includes(effect.op))
+      .map(effect => {
+        if (effect.op !== 'block' || effect.if || effect.oncePerTurn || primaryBlock) return effect;
+        primaryBlock = true;
+        return { ...effect, amount: addedAmount(effect.amount, 5 - originalBlock) };
+      });
+    if (!primaryBlock) support.unshift({ op: 'block', target: 'self', amount: 5 });
+    // Quickstep's new base draw supplements, rather than erases, earned draws.
+    if (def.id === 'quickstep') support.push({ op: 'draw', amount: 1 });
+    card.effects = [...support, { op: 'damage', target: 'enemy', amount: 3 }];
     card.counterPayload = { hp: 3, poise: 0, ward: 0 };
     // Equipment ratingId can point at DR for the guard face; the reply uses AR.
     delete card.ratingId; delete card.ratingValue; delete card.ratingCap;
-    card.textTemplate = `Gain {block} Block. Prepare one Evade and Melee Counter: return {damage} damage when the full incoming action is absorbed.${draw.length ? ' Draw {draw} card.' : ''}`;
+    card.textTemplate = `Gain {block} Block. Prepare one Evade and Melee Counter: return {damage} damage when the full incoming action is absorbed.${def.id === 'quickstep' ? ' Draw {draw} card.' : ''}`;
     delete card.upgrade; delete card.singleBreak;
   }
   if (UPCAST[def.id]) card.upcast = { baseTier: 0, unlockedTiers: [1, 2, 3], maximumTier: 3, ...UPCAST[def.id] };

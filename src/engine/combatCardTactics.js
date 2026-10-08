@@ -111,6 +111,12 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
         }
         if (authored.hp !== undefined) payload.hp += Math.max(0, Number(damageBonus) || 0);
         if (authored.poise !== undefined) payload.poise += Math.max(0, Number(poiseBonus) || 0);
+        // Authored base reply lanes coexist with conditional permanent-grade
+        // bonuses. Evaluate their original gate at preparation, never on return.
+        if (authored.poise !== undefined) for (const effect of effects) {
+          if (effect.op !== 'poiseDamage' || (!effect.if && !effect.oncePerTurn)) continue;
+          payload.poise += counterEffectPreview(ctx, source, target, carrier, effect, meta)?.total || 0;
+        }
         if (authored.hpAgainstNonCaster !== undefined) payload.hpAgainstNonCaster = authored.hpAgainstNonCaster;
       }
       armCombatCounter(ctx, source, carrier, { ...numbers, payload });

@@ -340,6 +340,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   let selected = null; // card instanceId in click-targeting mode
   const upcastRanksByCard = new Map();
+  let upcastPreviewRefresh = false;
   let expansionChoiceShell = null;
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
@@ -518,7 +519,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // released until its observer runs — so an outgoing mount can be notified
     // once after its own DOM is gone. It has nothing left to re-dress.
     if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) return;
-    if (lit !== null || (!selected && !selfArm)) return;
+    if (upcastPreviewRefresh || lit !== null || (!selected && !selfArm)) return;
     selected = null;
     selfArm = null;
     // The stage, THEN the sync. `syncCardSelection` dresses what is already
@@ -1692,7 +1693,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     picker.value = String(selectedTier);
     for (const event of ['pointerdown', 'pointerup', 'click', 'keydown']) controls.addEventListener(event, e => e.stopPropagation());
     toggle.addEventListener('click', () => { picker.hidden = !picker.hidden; toggle.setAttribute('aria-expanded', String(!picker.hidden)); if (!picker.hidden) picker.focus(); });
-    picker.addEventListener('change', () => { upcastRanksByCard.set(inst.instanceId, Number(picker.value)); handRenderKey = null; renderHand(); });
+    picker.addEventListener('change', () => {
+      upcastRanksByCard.set(inst.instanceId, Number(picker.value));
+      // Repainting the rank releases the prior inspection node. This is still
+      // the same selected play, so its targeting must survive that release.
+      upcastPreviewRefresh = true;
+      try { handRenderKey = null; renderHand(); }
+      finally { upcastPreviewRefresh = false; }
+      syncCardSelection();
+    });
     controls.append(toggle, picker); card.appendChild(controls);
   }
 

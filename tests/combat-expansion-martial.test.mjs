@@ -42,7 +42,7 @@ test('a bow equipment projection keeps Ranged delivery and spell basics retain a
 
 test('Quickstep and Dodge print Block5 plus DR and return exactly3 plus AR without restoring Ward', () => {
   for (const id of ['quickstep', 'dodgeRoll']) {
-    const f = fixture(), def = applyCombatExpansionMartial(registries.cards.get(id));
+    const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 0 }, 2));
     const carrier = tacticalCarrier(def, { cardId: id, type: def.type });
     const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
     assert.equal(f.target.combatCounter.payload.hp, 7);
@@ -63,7 +63,7 @@ test('printed zero HP cannot invent an AR/PR return and explicit bonuses remain 
 
 test('authored impact Counter is especially punishing only to its covered Smash contact', () => {
   for (const maneuver of ['attack', 'smash']) {
-    const f = fixture(), def = applyCombatExpansionMartial(registries.cards.get('riposte'));
+    const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'riposte', abilityRank: 0 }, 2));
     const carrier = tacticalCarrier(def, { cardId: def.id });
     prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
     const incoming = { combatProfile: { camp: 'physical', maneuver, reach: 'contact', targeting: 'single' } };
@@ -75,7 +75,7 @@ test('authored impact Counter is especially punishing only to its covered Smash 
 });
 
 test('Shield Bash is Counter with authored Block and Poise instead of immediate Smash damage', () => {
-  const f = fixture(), def = applyCombatExpansionMartial(registries.cards.get('shieldBash'));
+  const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'shieldBash', abilityRank: 0 }, 2));
   const carrier = tacticalCarrier(def, { cardId: def.id, type: def.type });
   const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
   assert.equal(combatProfileFor(def).maneuver, 'counter');
@@ -117,6 +117,29 @@ test('status-only previews do not advertise damage avoidance or consume readines
   f.target.combatEvade = { charges: 1, bonus: 0 };
   assert.equal(previewAvoidance(f.ctx, f.target, { reach: 'contact' }, 0).chance, 0);
   assert.equal(f.target.combatEvade.charges, 1);
+});
+
+test('permanent grades retain Quickstep Block, bonus draws and once-per-turn support', () => {
+  const card = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'quickstep', abilityRank: 5 }, 2));
+  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 17);
+  assert.equal(card.effects.filter(effect => effect.op === 'draw' && !effect.oncePerTurn).reduce((sum, effect) => sum + effect.amount, 0), 2);
+  assert.ok(card.effects.some(effect => effect.op === 'block' && effect.oncePerTurn === 'grade-block' && effect.amount === 2));
+  assert.ok(card.effects.some(effect => effect.op === 'draw' && effect.oncePerTurn === 'grade-draw' && effect.amount === 1));
+});
+
+test('zero-HP Counter grades move earned primary damage to Poise and preserve conditional reply bonuses', () => {
+  for (const [id, expected] of [['shieldBash', 20], ['riposte', 16], ['progression-crimson-reprisal', 18]]) {
+    const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 5 }, 2));
+    const carrier = tacticalCarrier(def);
+    const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
+    assert.equal(f.target.combatCounter.payload.hp, 0, id);
+    assert.equal(f.target.combatCounter.payload.poise, expected, id);
+    assert.ok(support.some(effect => effect.op === 'draw' && effect.oncePerTurn === 'grade-draw'), id);
+  }
+  const f = fixture(); f.target.block = 1;
+  const def = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'riposte', abilityRank: 5 }, 2));
+  prepareTacticalCard(f.ctx, f.target, f.source, tacticalCarrier(def), def.effects);
+  assert.equal(f.target.combatCounter.payload.poise, 20);
 });
 
 test('Prone combo impact is conditional on a successful Contact return, while conditional Evade needs Prone', () => {

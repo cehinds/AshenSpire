@@ -12,6 +12,7 @@ import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight
 import { createAshenBlightState } from '../src/model/ashenBlight.js';
 import { corruptedCards } from '../src/content/cards/corrupted.js';
 import { candidateState } from '../src/engine/combatRules.js';
+import { mountCombatCombo } from '../src/engine/combatExpansionCombos.js';
 
 const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards,
   ...corruptedCards.filter(card => !contentBundle.cards.some(row => row.id === card.id))] });
@@ -57,10 +58,14 @@ test('per-character terminal Blight saves before effects and never revives when 
   for (const threshold of [25, 50, 75]) chooseAshenBlightFeat({ combatExpansionVersion: 2 }, native, { threshold, path: 'martial' });
   const combat = fight(seed, [native, player('b', 'defend')]); let saved;
   combat.beforeCombatCommit = candidate => { saved = serializeCoopCombatSnapshot(candidate); };
+  mountCombatCombo(combat, combat.players.get('a').entity, { ...registries.cards.get('emberCovenant'), cardId: 'emberCovenant' });
+  const barrierBefore = combat.players.get('a').entity.wardBarrier;
   const cardsBefore = combat.players.get('a').piles.hand.length;
   playCard(combat, 'a', 'a-native');
   const actor = combat.players.get('a').entity;
   assert.equal(actor.hp, 0); assert.equal(actor.alive, false); assert.equal(actor.blightTerminal, true);
+  assert.equal(actor.wardBarrier, barrierBefore, 'terminal accepted payment grants no Covenant protection');
+  assert.equal(combat.queue.length, 0, 'the surviving seat can proceed without an unresolved bonus');
   assert.equal(actor.counters.cardsPlayedThisCombat, 0, 'card effects/play hooks did not run');
   assert.equal(combat.players.get('a').piles.hand.length, cardsBefore - 1, 'accepted card exhausted while its draw effect did not run');
   assert.equal(combat.players.get('a').piles.exhaust.some(card => card.instanceId === 'a-native'), true);

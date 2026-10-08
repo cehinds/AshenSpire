@@ -950,7 +950,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             <button class="subtle coop-leave" id="coop-leave">Leave</button>
           </div>
         </header>
-        ${ashenBlightBarHtml(meP, { compact: true })}
+        ${ashenBlightBarHtml(meP, { compact: true, cooperative: true })}
         ${progressionError ? `<p class="combat-error" role="status">${esc(progressionError)}</p>` : ''}
         ${meP?.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" id="coop-blight-feat">Choose Blight feat</button>' : ''}
         ${combatBackdropHtml(snap)}

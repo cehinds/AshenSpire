@@ -11,6 +11,8 @@ import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { createSaveManager } from '../src/engine/save.js';
 import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight.js';
 import { awardLevelXp, applyLevelUp, xpToNext } from '../src/model/levelup.js';
+import { mountCombatCombo } from '../src/engine/combatExpansionCombos.js';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 
 const registries = createRegistries(contentBundle);
 function fixture(seed = 11) {
@@ -54,6 +56,23 @@ test('refused durable solo save leaves run, card, resources, effects and RNG unc
   assert.deepEqual(rng.getCounters(), counters);
 });
 
+test('victory after temporary SP gain saves bounded run pools and exact terminal combat pools', () => {
+  const { run, rng } = fixture(), save = manager();
+  const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
+  combat.beforeCombatCommit = commitOwner(run, save);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'save-native' });
+  assert.ok(combat.player.stamina > combat.player.maxStamina);
+  const enemy = combat.enemies[0]; enemy.hp = 1; enemy.block = 0; enemy.wardBarrier = 0; enemy.combatStance = 'attacking'; delete enemy.combatCounter;
+  const strike = combat.piles.hand.find(card => resolveCombatCard(combat, card).effects.some(effect => effect.op === 'damage'));
+  assert.ok(strike);
+  dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: enemy.id });
+  assert.equal(combat.result, 'victory'); assert.ok(combat.player.stamina > combat.player.maxStamina);
+  const loaded = save.loadRun(registries);
+  assert.ok(loaded, 'the production save accepts a victory with temporary SP');
+  assert.equal(loaded.stamina, loaded.maxStamina);
+  assert.equal(loaded.combatPendingOutcome.snapshot.player.stamina, combat.player.stamina);
+});
+
 test('terminal Blight durable outcome survives production reload with projected maxima and no reroll', () => {
   const seed = Array.from({ length: 100 }, (_, i) => i + 1).find(value => createRng(value).float('ashenBlight') < .9);
   const { run, rng } = fixture(seed), save = manager(), baseHp = run.maxHp;
@@ -62,8 +81,12 @@ test('terminal Blight durable outcome survives production reload with projected 
   const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
   assert.ok(combat.player.maxHp > baseHp, 'CON feats project the derived HP maximum');
   combat.beforeCombatCommit = commitOwner(run, save);
+  mountCombatCombo(combat, combat.player, { ...registries.cards.get('emberCovenant'), cardId: 'emberCovenant' });
+  const barrierBefore = combat.player.wardBarrier;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'save-native' });
   assert.equal(combat.result, 'defeat'); assert.equal(combat.player.ashenBlight.thresholdOutcome, 'lost');
+  assert.equal(combat.player.wardBarrier, barrierBefore, 'terminal accepted payment grants no Covenant protection');
+  assert.equal(combat.queue.length, 0, 'terminal snapshot contains no queued bonus');
   const loaded = save.loadRun(registries);
   assert.ok(loaded, `terminal pending outcome passes production save validation: ${save.runStatus().reason}`);
   assert.equal(loaded.combatEntered, null); assert.equal(loaded.combatPendingOutcome.result, 'defeat');

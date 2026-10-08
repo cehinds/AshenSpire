@@ -7,7 +7,8 @@ export function mountCombatCombo(ctx, owner, carrier) {
 export function dispatchCombatCombos(ctx, event) {
   const owners = ctx.players ? [...ctx.players.values()].map(seat => seat.entity) : [ctx.player];
   for (const owner of owners) {
-    if (owner?.combatExpansionVersion !== 2 || !owner.alive) continue;
+    if (owner?.combatExpansionVersion !== 2 || !owner.alive || owner.ashenBlight?.thresholdOutcome === 'lost'
+      || owner.ashenBlight?.entries?.some(row => row.outcome === 'lost')) continue;
     for (const [id, row] of Object.entries(owner.combatComboHooks || {})) {
       const hook = row.hook;
       if (hook.on !== event.type || !(event.amount > 0)) continue;

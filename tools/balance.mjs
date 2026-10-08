@@ -276,10 +276,6 @@ if (unbeatableCount === 0) {
   P(`- **No unbeatable-by-construction encounters** (SPEC §9 acceptance):`);
   P(`  all ${REG.encounters.all().length} encounters — every pool, not just the`);
   P('  elites and bosses tabled above — resolved to refDPS > self-heal. ✓');
-} else if (process.argv.includes('--write')) {
-  const { writeFileSync } = await import('node:fs');
-  writeFileSync(new URL('../docs/BALANCE.md', import.meta.url), out.join('\n') + '\n', 'utf8');
-  console.log('Wrote docs/BALANCE.md (historical combat version 1 reference)');
 } else {
   P(`- **${unbeatableCount} UNBEATABLE-BY-CONSTRUCTION encounter(s)** — SPEC §9`);
   P('  acceptance FAILS this run:');
@@ -342,6 +338,10 @@ if (process.argv.includes('--check')) {
     process.exit(1);
   }
   console.log('docs/BALANCE.md is current (balance --check)');
+} else if (process.argv.includes('--write')) {
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(new URL('../docs/BALANCE.md', import.meta.url), out.join('\n') + '\n', 'utf8');
+  console.log('Wrote docs/BALANCE.md (historical combat version 1 reference)');
 } else {
   console.log(out.join('\n'));
 }

@@ -7,6 +7,7 @@ export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, 
     next.ashenBlight = structuredClone(candidate.player.ashenBlight);
     next.ashenBlightBasePools = structuredClone(candidate.player.baseResourceMaxima);
     for (const field of ['hp', 'mana', 'stamina', 'maxHp', 'maxMana', 'maxStamina', 'energyMax', 'drawPerTurn']) next[field] = candidate.player[field];
+    next.stamina = Math.min(next.stamina, next.maxStamina);
     next.combatPendingOutcome = { nodeId, encounterId, result: candidate.result, snapshot: serializeCombatSnapshot(candidate) };
     next.combatEntered = null;
   } else commitCombatSnapshot({ run: next, combat: candidate, nodeId, encounterId });
