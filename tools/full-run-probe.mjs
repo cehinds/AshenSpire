@@ -257,8 +257,10 @@ const savedRun = () => ev(`(() => { try { const r = JSON.parse(localStorage.getI
 // The visible ability fold owns its gate. Read its semantic selection state
 // after each trusted press; never toggle a chosen ability or overfill a pool.
 const STARTING_ABILITY_FOLD = '#cz-equipment-fold details[open] [data-equipment-section="startingAbilities"]';
-function startingAbilityChoice({ continueBlocked, choices = [] }) {
+const STARTING_ABILITY_SELECTION_LIMIT = 8;
+function startingAbilityChoice({ continueBlocked, choices = [] }, selections = 0) {
   if (!continueBlocked) return null;
+  if (selections >= STARTING_ABILITY_SELECTION_LIMIT) throw new Error('starting ability selection limit reached while Continue is blocked');
   const choice = choices.find(({ cardId, selected, disabled }) => cardId && !selected && !disabled);
   if (!choice) throw new Error('no legal starting ability while Continue is blocked');
   return choice.cardId;
@@ -292,6 +294,7 @@ async function newGameFromTitle(label) {
   await openFace('armour');
   await press('#cz-armours .equip-chip .equipment-poker-card');
   await press('#cz-armours .equip-chip .equipment-choose');
+  let abilitySelections = 0;
   for (let i = 0; i < 8; i++) {
     if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
     // Starting maneuvers/spells are required choices. Complete the open fold
@@ -307,11 +310,12 @@ async function newGameFromTitle(label) {
           })),
         }))()`);
         let cardId;
-        try { cardId = startingAbilityChoice(snapshot); }
+        try { cardId = startingAbilityChoice(snapshot, abilitySelections); }
         catch (error) { throw new Error(`${error.message}; screen ${JSON.stringify(await ev(SCREEN))}`); }
         if (cardId === null) break;
         const choice = `${abilityFold} .cc-ability-choice[data-card-id=${JSON.stringify(cardId)}] .cc-ability-choose`;
         await press(choice);
+        abilitySelections++;
         await until(`document.querySelector(${JSON.stringify(choice)})?.getAttribute('aria-pressed') === 'true'`, `the starting ability ${cardId} to be chosen`);
       }
     }
@@ -563,6 +567,20 @@ if (argv.includes('--selftest')) {
     { cardId: 'disabled', selected: false, disabled: true },
   ] }); } catch (error) { blockedCreation = error.message; }
   plants.push(['creation: a blocked gate without a legal choice fails', 'no legal starting ability while Continue is blocked', null, blockedCreation]);
+  let alternatingGate = 'accepted';
+  const alternatingChoices = ['first', 'second'].map(cardId => ({ cardId, selected: false, disabled: false }));
+  let alternatingSelections = 0;
+  try {
+    while (true) {
+      const cardId = startingAbilityChoice({ continueBlocked: true, choices: alternatingChoices }, alternatingSelections);
+      alternatingSelections++;
+      for (const choice of alternatingChoices) choice.selected = choice.cardId === cardId;
+    }
+  } catch (error) { alternatingGate = `${error.message}; selections ${alternatingSelections}`; }
+  plants.push(['creation: a blocked replacement pool stops at its selection bound',
+    'starting ability selection limit reached while Continue is blocked; selections 8', null, alternatingGate]);
+  plants.push(['creation: a ready gate at the selection limit still advances', null, null,
+    startingAbilityChoice({ continueBlocked: false }, STARTING_ABILITY_SELECTION_LIMIT)]);
   // CDP plants: a call the browser never answers is rejected by its bound; a
   // call pending when the socket drops is rejected at once, as is any later.
   const quiet = cdpCalls(() => {}, { timeoutMs: 50 });
