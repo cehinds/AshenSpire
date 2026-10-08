@@ -52,6 +52,8 @@ gallery still identifies that build; identical images do not need recapturing.
 - Identify the channel, full version, source commit, capture date, viewport, and
   pinned playable URL in the gallery's capture record. Keep each release's images
   in `docs/preview/releases/<full-version>/` and update the README image paths.
+  New files under "docs/preview/" are ignored by default; explicitly stage only
+  the intended gallery files with "git add -f -- <paths>".
 - Wait for the actual screen and its artwork to finish loading. Inspect every
   image for readability, missing artwork, cropped controls, and loading screens
   before committing it. Use the game's existing screenshot states where useful
