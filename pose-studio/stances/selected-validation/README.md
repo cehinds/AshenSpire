@@ -40,3 +40,10 @@ meter disappears at zero. The shared renderer also passes values -1, 0, 1,
 35 and 100. The phone also shows Stand up when prone and opens the pending
 Blight feat chooser. No page errors or horizontal overflow occurred. The accompanying
 `blight-*.png` captures show positive and zero solo states and phone co-op.
+
+After reconciling alternative/dev through 3df7b3ec4e, the 19 focused stance
+tests still pass. `merged-source-qa.json` repeats all twelve selected card
+poses, four fresh-phone Lite loads, independent co-op seats and own-turn
+reset against the merged source. No unexpected page or request errors occur.
+The browser sequence waits for combat input to unlock before injecting its
+next card, since a held pose may paint before the last effect finishes.

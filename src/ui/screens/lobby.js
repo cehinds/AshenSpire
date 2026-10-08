@@ -48,6 +48,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     startingKitId: null,
     discoveredArmaments: [...new Set(meta.discoveredArmaments || [])],
     classMastery: structuredClone(meta.classMastery || {}),
+    enemyKnowledge: structuredClone(meta.enemyKnowledge || { version: 1, enemies: {} }),
     tint: localStorage.getItem(TINT_KEY) || 'gold',
     spriteStyle: localStorage.getItem('sote_lan_style') || DEFAULT_SPRITE_STYLE,
     ready: false,
@@ -152,7 +153,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, enemyKnowledge: state.enemyKnowledge, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
             // The seat draws by its owner's Play in deck order (SPEC §14.1).
             playInDeckOrder: playInDeckOrder(meta.settings || {}) });
         } else if (msg.t === 'roster') {

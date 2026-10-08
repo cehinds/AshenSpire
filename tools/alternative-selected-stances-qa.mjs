@@ -23,6 +23,8 @@ try{
   await p.goto(base+'?shot=combat&shotClass='+actor);await p.waitForSelector('.hand .card');
   await p.waitForSelector('.alternative-card-stage[data-pose]');
   for(const [cardId,stance]of [['strike','offensive'],['defend','defensive'],['starstonePebble','casting']]){
+   // A held pose can paint before the final effects release combat input.
+   await p.waitForFunction(()=>document.querySelector('.end-turn')?.disabled===false);
    await p.evaluate(({cardId})=>{const c=window.__combat;c.phase='player';c.player.energy=20;c.player.mana=40;c.player.stamina=40;c.player.statuses={};for(const e of c.enemies){e.hp=1000;e.maxHp=1000;e.alive=true;}c.piles.hand=[{cardId,instanceId:'qa-'+cardId,upgraded:false}];window.__renderCombatForShot();},{cardId});
    await p.keyboard.press('1');
    if(cardId==='defend')await p.locator('.combatant.player').click();else await p.keyboard.press('1');

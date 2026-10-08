@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-08",
     "summary": "Alternative heroes hold their selected combat poses",
     "detail": "Reaver, Rogue, Starseer and Herald use the twelve chosen Attack, Defend and Prepare poses after card actions. Books and defensive guards follow the selected artwork. Each co-op player keeps their own pose until their next turn; counters keep their existing presentation for a later selection pass. The separate Block, Barrier and Ward box is removed. Ashen Blight now appears as a wider centered header bar only above zero, with its own row on phones.",
-    "build": "0.7.1.1144",
+    "build": "0.7.1.1146",
     "pullRequest": 1745,
     "url": "https://github.com/cehinds/AshenSpire/pull/1745"
+  },
+  {
+    "id": "pr-1746",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Alternative figures keep idle life and respect reduced motion",
+    "detail": "Authored class figures share the battlefield's existing idle rhythm, pause when down and honor reduced motion. Browser checks inspect painted canvas pixels, the correct class art and a single clocked carrier, and reject blank art or continued canvas movement under reduced motion.",
+    "build": "0.7.1.1143",
+    "pullRequest": 1746,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1746"
   },
   {
     "id": "pr-1737",
@@ -31,6 +41,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1134",
     "pullRequest": 1731,
     "url": "https://github.com/cehinds/AshenSpire/pull/1731"
+  },
+  {
+    "id": "pr-1747",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Behind the scenes: alternative sync keeps the full history efficiently",
+    "detail": "Sync downloads current files while retaining every commit needed to compare both development histories. Historical artwork is fetched only when needed, allowing the existing checks to run within their time limit.",
+    "build": "0.7.1.1133",
+    "pullRequest": 1747,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1747"
+  },
+  {
+    "id": "pr-1734",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Read enemy clues and learn their Bestiary",
+    "detail": "Hidden intents show unknown, Attack, Magic or Preparing clues until read exactly. Correct predictions of wholly unknown actions and successful tactical responses train run-only Perception automatically. Real encounters and tactical bonuses unlock five persistent Bestiary stages without replay farming. Solo saves and private co-op reads keep accepted learning exact, and failed profile writes retain learning for retry.",
+    "build": "0.7.1.1132",
+    "pullRequest": 1734,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1734"
   },
   {
     "id": "pr-1736",

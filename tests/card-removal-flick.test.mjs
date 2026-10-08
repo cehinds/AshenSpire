@@ -35,7 +35,7 @@ export function runCardRemovalFlickTests() {
   // A Starseer: its bound cards leave three basic attacks under the cap, so a
   // middle one exists (a sword-and-shield Reaver's kits and Dodge Roll leave one).
   // This regression constructs the original headless combat/swap contract.
-  const run = createRunState({ seed: 671, classId: 'starseer', registries, combatExpansionVersion: 1 });
+  const run = createRunState({ seed: 671, classId: 'starseer', registries, combatExpansionVersion: 1, enemyKnowledgeVersion: null });
   const attacks = run.deck.filter(card => card.equipmentAttackSlotId);
   const retired = attacks[1];
   check(removeDeckCard(run, retired.instanceId, { keepOne: true }), 'merchant can remove a middle basic attack');
@@ -64,7 +64,11 @@ export function runCardRemovalFlickTests() {
   loaded.combatEntered = { nodeId: 'n1', encounterId: 'e1', snapshot };
   saves.saveRun(loaded, createRng(671));
   const resumed = saves.loadRun(registries);
-  check(!!resumed && resumed.removedAttackSlotIds.includes(retired.equipmentAttackSlotId), 'saved fight passes the run migration and load door');
+  const resumedStatus = saves.runStatus();
+  check(
+    !!resumed && resumed.removedAttackSlotIds.includes(retired.equipmentAttackSlotId),
+    `saved fight passes the run migration and load door (${resumedStatus.state}: ${resumedStatus.reason ?? 'no reason'})`,
+  );
   const restored = restoreCombatSnapshot({ registries, rng: createRng(671), snapshot });
   restored.player.energy = 10; // isolate slot persistence from the second swap's resource cost
   dispatch(restored, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
