@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-08",
     "group": "2026-10-08",
     "summary": "Alternative combat opens up with option C",
-    "detail": "Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.",
-    "build": "0.7.1.1150",
+    "detail": "The approved pointed shield and inner-loop Counter match the named card footers, with distinct HP and Poise damage symbols. Side-tree foreground layers are removed, the larger player overlaps the cards at the waist and enemies stand closer to the center. Textured intent plates and centered selection plates share their outline and color; the top HUD fades into the scene.",
+    "build": "0.7.1.1152",
     "pullRequest": 1751,
     "url": "https://github.com/cehinds/AshenSpire/pull/1751"
   },
