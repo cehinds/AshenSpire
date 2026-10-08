@@ -123,9 +123,10 @@ async function main() {
       const r = e.getBoundingClientRect();
       const { x, y } = e.matches('.combatant, .hand .card') ? ${pointerTargetExpression(sel)}
         : { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      return { x, y };
+      return { x, y, hit: document.elementFromPoint(x, y)?.outerHTML.slice(0, 180) };
     })()`);
     if (!pt) throw new Error(`no element for ${label} (${sel})`);
+    if (args.includes('--debug')) console.log('    input', label, sel, JSON.stringify(pt));
     await clickAt(pt.x, pt.y);
     if (settle) await wait(300);
   };
@@ -259,6 +260,9 @@ async function main() {
       targetableEnemies: [...document.querySelectorAll('.enemy.targetable')].map(e => e.dataset.eid),
       targetablePlayer: !!document.querySelector('.player.targetable'),
       cardsPlayed: window.__combat?.player?.counters?.cardsPlayedThisCombat,
+      phase: window.__combat?.phase, player: { energy: window.__combat?.player?.energy, stamina: window.__combat?.player?.stamina, mana: window.__combat?.player?.mana, statuses: window.__combat?.player?.statuses },
+      modal: document.querySelector(".card-choice, .confirmation-modal")?.innerText,
+      body: document.body.innerText.slice(-2500),
     })`).catch(() => null)));
     process.exitCode = 1;
   } finally {
