@@ -40,10 +40,10 @@ function counterFormulaContext(ctx, source, target, meta) {
 }
 
 /** Per-effect preparation value used by both the card face and armed reply. */
-export function counterEffectPreview(ctx, source, target, carrier, effect, meta = {}) {
+export function counterEffectPreview(ctx, source, target, carrier, effect, meta = {}, { ignoreCondition = false } = {}) {
   const action = { source, owner: source, target, card: carrier, meta };
   const formulas = counterFormulaContext(ctx, source, target, meta);
-  if (!['damage', 'poiseDamage'].includes(effect.op) || (effect.if && !evalPredicate(ctx, effect.if, action))) return null;
+  if (!['damage', 'poiseDamage'].includes(effect.op) || (!ignoreCondition && effect.if && !evalPredicate(ctx, effect.if, action))) return null;
   const base = Math.max(0, Math.floor(evaluate(effect.amount ?? 0, formulas)));
   const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas)))
     * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));

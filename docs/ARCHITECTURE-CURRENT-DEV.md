@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `alternative/dev`
-- Source commit: `026619e945a794137bffbba98faa01773062b8bd`
+- Source branch: `codex/counter-preview-alternative-20261007`
+- Source commit: `d71966a525264d66d726d815df3dc889233d31ea`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve

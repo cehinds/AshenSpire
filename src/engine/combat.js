@@ -1410,6 +1410,34 @@ export function previewCard(combat, cardInstanceId, targetId) {
     action.target ||= living[0] || null;
   }
   const applied = new Set();
+  // Preparation adds the charge once to the whole Counter. Its display belongs
+  // to the first eligible contact, even if an earlier opcode has no contacts.
+  const counterPreviews = new Map();
+  const previewCounter = (resolvedTarget, index) => {
+    const key = resolvedTarget?.id || null;
+    if (!counterPreviews.has(key)) {
+      const eligible = chargedEffects.map(effect => effect.op === 'damage'
+        ? counterEffectPreview(combat, p, resolvedTarget, action.card, effect, { energySpent: shownCost }) : null);
+      // Conditional text prints each branch's potential value, like other cards;
+      // preparation and charge ownership still use only eligible branches.
+      const replies = chargedEffects.map(effect => effect.op === 'damage'
+        ? counterEffectPreview(combat, p, resolvedTarget, action.card, effect,
+          { energySpent: shownCost }, { ignoreCondition: true }) : null);
+      let bonusIndex = eligible.findIndex(reply => reply?.hits > 0);
+      if (bonusIndex < 0) bonusIndex = chargedEffects.findIndex(effect => effect.op === 'damage');
+      const bonus = Math.max(0, charges.damage + charges.damageEffect);
+      counterPreviews.set(key, replies.map((reply, effectIndex) => {
+        const hitDamages = Array.from({ length: reply?.hits || 0 }, () => reply.value);
+        if (effectIndex === bonusIndex && bonus) {
+          if (!hitDamages.length) hitDamages.push(0);
+          hitDamages[0] += bonus;
+        }
+        return { damage: hitDamages[0] || 0, hitDamages,
+          totalDamage: hitDamages.reduce((sum, amount) => sum + amount, 0) };
+      }));
+    }
+    return counterPreviews.get(key)[index];
+  };
   // One detached tactical timeline per prospective target for the whole card.
   // Damage effects execute in authored order, so later effects must see a
   // Counter, Guard, Ward, and rider budget spent by earlier contacts.
@@ -1436,19 +1464,13 @@ export function previewCard(combat, cardInstanceId, targetId) {
         }
         const isCounterReply = action.card.combatProfile?.maneuver === 'counter';
         entry.hits = isCounterReply
-          ? counterEffectPreview(combat, p, primary, action.card, eff, action.meta)?.hits || 0
+          ? previewCounter(primary, i).hitDamages.length
           : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         entry.perTargetHitDamages = {};
         for (const e of living) {
-          const counter = isCounterReply && counterEffectPreview(combat, p, e, action.card, eff, action.meta);
-          const result = counter
-            ? (() => {
-              const hitDamages = Array.from({ length: counter.hits }, () => counter.value);
-              if (hitDamages.length) hitDamages[0] += (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
-              return { damage: hitDamages[0] || 0, hitDamages,
-                totalDamage: hitDamages.reduce((sum, amount) => sum + amount, 0) };
-            })()
+          const result = isCounterReply
+            ? previewCounter(e, i)
             : previewDamageHits(combat, p, e,
               evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
               attackTags, carrier, entry.hits, damagePreviewStates.get(e.id));
@@ -1458,12 +1480,8 @@ export function previewCard(combat, cardInstanceId, targetId) {
             hitDamages: result.hitDamages, totalDamage: result.totalDamage });
         }
         if (entry.value == null && isCounterReply) {
-          const counter = counterEffectPreview(combat, p, primary, action.card, eff, action.meta);
-          const hitDamages = Array.from({ length: counter?.hits || 0 }, () => counter.value);
-          if (hitDamages.length) hitDamages[0] += (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
-          entry.value = hitDamages[0] || 0;
-          entry.hitDamages = hitDamages;
-          entry.totalDamage = hitDamages.reduce((sum, amount) => sum + amount, 0);
+          const result = previewCounter(primary, i);
+          Object.assign(entry, { value: result.damage, hitDamages: result.hitDamages, totalDamage: result.totalDamage });
         } else if (entry.value == null) {
           const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           entry.value = A.computeAttackDamage(combat, p, primary && primary.kind === 'enemy' ? primary : null, base, attackTags, carrier);
@@ -1473,7 +1491,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
         // the boosted number. Engine states the fact; display reads it.
-        if (attackTags.length && primary && primary.kind === 'enemy') {
+        if (!isCounterReply && attackTags.length && primary && primary.kind === 'enemy') {
           for (const [sid, inst] of Object.entries(primary.statuses || {})) {
             if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
             const sdef = combat.registries.statuses.get(sid);
