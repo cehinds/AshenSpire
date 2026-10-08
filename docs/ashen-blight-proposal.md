@@ -2,6 +2,8 @@
 
 **Status: PROPOSED — NOT IMPLEMENTED.** Rules, sample cards, card appearance, persistence, cleansing, and full-meter consequences below are design recommendations. Existing combat Blight does not currently implement this run mechanic.
 
+The [latest expansion notes](combat-cards-expansion-proposal.md#three-ashen-blight-reward-stages) propose three reward milestones at 25/50/75, with two buffs and one debuff per chosen feat, while retaining the requested 90% run-loss event at 100. Use that revision for the current recommended stages and card/status interactions; the material below records earlier corruption concepts and alternatives.
+
 Ashen Blight offers cheap emergency power in exchange for risk that persists through the run. Native corruption cards Exhaust for the current combat and return at the next encounter. Corruption remains after those cards return.
 
 ## Separate run corruption from combat Blight
