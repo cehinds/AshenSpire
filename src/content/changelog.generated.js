@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1729",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Actions and schools have distinct card sigils",
+    "detail": "A large monochrome action mark leads a smaller school mark and written damage types. Information explains each mark and keeps the detailed tags. Complete effects adapt to the available card space while preserving costs, ranks, conditions and durations.",
+    "build": "0.7.1.1118",
+    "pullRequest": 1729,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1729"
+  },
+  {
     "id": "pr-1723",
     "date": "2026-10-07",
     "group": "2026-10-07",
