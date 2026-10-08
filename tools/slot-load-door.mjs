@@ -488,6 +488,9 @@ try {
     const restoredEntry = await snapshotWithRng();
     check(entryPose.turn === 1 && restoredEntry === entry, 'SLOT-LOAD-EXPANDED-ENTRY',
       restoredEntry === entry ? 'ordinary unsaved combat restores the exact opening snapshot, RNG seed and counters' : 'ordinary combat replaced or changed its opening checkpoint');
+    // Loading installs the new combat before the confirmation input shield
+    // finishes closing. Wait for its actual removal before the next action.
+    await until(`!document.querySelector('.modal-veil, .quick-nav-veil, .confirmation-veil')`, 'the restored entry input shield to close');
     await advanceTurn();
     await advanceTurn();
     await click('#combat-menu');
