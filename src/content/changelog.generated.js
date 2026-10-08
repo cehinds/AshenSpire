@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1756",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Victory rewards stay clear and touch maps respond immediately",
+    "detail": "Long reward titles wrap inside their column, keeping progression readable on desktop. Selecting a map destination on a touch screen immediately reveals its details and enabled controls; desktop keeps its camera and tray sequence.",
+    "build": "0.7.1.1140",
+    "pullRequest": 1756,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1756"
+  },
+  {
     "id": "pr-1755",
     "date": "2026-10-08",
     "group": "2026-10-08",
