@@ -822,6 +822,12 @@ async function main() {
     await wait(500);
     const haveFight = await evalIn(`!!document.querySelector('.map-node.monster.reachable')`);
     ok(haveFight, 'first-run: the first floor offers a fight to walk into');
+    const savedRules = await evalIn(`(() => {
+      const saved = JSON.parse(localStorage.getItem('sote_run_v1') || 'null');
+      return { expansion: saved?.combatExpansionVersion, defense: saved?.advancedConfigSnapshot?.breakMeterVersion };
+    })()`);
+    ok(savedRules?.expansion === 2 && savedRules?.defense === 2,
+      'first-run: expanded combat and defense versions survive the actual creation save', JSON.stringify(savedRules));
 
     // A brand-new run intentionally carries no utility flask. Seed one valid
     // saved-run row, then reload through CONTINUE so the standalone cell reaches
