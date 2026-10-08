@@ -51,7 +51,7 @@ Read the enemy's stance, choose a response, and build openings through protectio
 
 - **Shared player and enemy rules**
   - Enemies use the same camps, stances, reach, targeting, and damage tags.
-  - Always show the selected move's stance. When its details are revealed under the current intent-visibility rules, show its actual printed damage and special effects; do not reveal hidden details through previews.
+  - Enemy clues follow the active intent-visibility rules. When details are revealed, show the permitted stance or action, printed damage, and special effects; keep hidden details out of previews. The enemy-knowledge contract defines the separately coordinated unknown and broad clues.
   - Equipment, weaknesses, protection, and resistance are inspectable.
   - Every class should start with at least one Attack, Smash, and Counter.
   - Strike is Attack; Defend is Defend; Stomp is Smash; Quick Step or Dodge is Counter.

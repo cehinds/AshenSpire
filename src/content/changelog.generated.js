@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1733",
+    "date": "2026-10-08",
+    "group": "2026-10-08",
+    "summary": "Loading keeps your combat checkpoint",
+    "detail": "Ordinary actions preserve the latest encounter or explicit Save Game checkpoint. Blight payments, choices and terminal outcomes save before taking effect, including zero-cost corrupted plays; a failed required save rejects the whole action. Blight feats refresh live equipment and Poise consistently with loading, and co-op joins preserve the active character.",
+    "build": "0.7.1.1124",
+    "pullRequest": 1733,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1733"
+  },
+  {
     "id": "pr-1728",
     "date": "2026-10-08",
     "group": "2026-10-08",
