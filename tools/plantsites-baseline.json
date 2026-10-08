@@ -305,8 +305,8 @@
       "digest": "0df767382db6375e"
     },
     "tools/slot-load-door.mjs": {
-      "count": 7,
-      "digest": "b35d8c916e6d823a"
+      "count": 8,
+      "digest": "c6512ad9276c2202"
     },
     "tools/startup-gate.mjs": {
       "count": 26,
